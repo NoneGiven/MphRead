@@ -15,7 +15,7 @@ namespace MphRead
 
         public static Model GetModelByName(string name, int defaultRecolor = 0)
         {
-            EntityMetadata? entityMeta = Metadata.GetByName(name);
+            EntityMetadata? entityMeta = Metadata.GetEntityByName(name);
             if (entityMeta == null)
             {
                 throw new ProgramException("No entity with this name is known. Please provide metadata for a custom entity.");
@@ -25,7 +25,7 @@ namespace MphRead
 
         public static Model GetModelByPath(string path, int defaultRecolor = 0)
         {
-            EntityMetadata? entityMeta = Metadata.GetByPath(path);
+            EntityMetadata? entityMeta = Metadata.GetEntityByPath(path);
             if (entityMeta == null)
             {
                 throw new ProgramException("No entity at this path is known. Please provide metadata for a custom entity.");

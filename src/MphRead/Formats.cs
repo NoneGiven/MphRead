@@ -518,11 +518,24 @@ namespace MphRead
     {
         public Float(int intValue)
         {
-            IntValue = intValue;
+            Value = intValue / (float)(1 << 12);
         }
 
-        public readonly int IntValue;
-        public float FloatValue => IntValue / (float)(1 << 12);
+        public Float(double floatValue)
+        {
+            Value = (float)(floatValue > 0
+                ? (floatValue) * (1 << 12) + 0.5f
+                : (floatValue) * (1 << 12) - 0.5f);
+        }
+
+        public Float(float floatValue)
+        {
+            Value = floatValue > 0
+                ? (floatValue) * (1 << 12) + 0.5f
+                : (floatValue) * (1 << 12) - 0.5f;
+        }
+
+        public float Value { get; }
     }
 
     // size: 12
@@ -533,6 +546,27 @@ namespace MphRead
             X = x;
             Y = y;
             Z = z;
+        }
+
+        public Vector3(int x, int y, int z)
+        {
+            X = new Float(x);
+            Y = new Float(y);
+            Z = new Float(z);
+        }
+
+        public Vector3(double x, double y, double z)
+        {
+            X = new Float(x);
+            Y = new Float(y);
+            Z = new Float(z);
+        }
+
+        public Vector3(float x, float y, float z)
+        {
+            X = new Float(x);
+            Y = new Float(y);
+            Z = new Float(z);
         }
 
         public readonly Float X;
