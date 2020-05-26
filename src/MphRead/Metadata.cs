@@ -126,7 +126,8 @@ namespace MphRead
         }
 
         public EntityMetadata(string name, IEnumerable<string> recolors, string? remove = null,
-            bool animation = false, string? animationPath = null, bool texture = false, MdlSuffix mdlSuffix = MdlSuffix.None)
+            bool animation = false, string? animationPath = null, bool texture = false,
+            MdlSuffix mdlSuffix = MdlSuffix.None, string? archive = null, string? recolorName = null)
         {
             Name = name;
             string suffix = "";
@@ -134,7 +135,14 @@ namespace MphRead
             {
                 suffix = "_mdl";
             }
-            ModelPath = $@"models\{name}{suffix}_Model.bin";
+            if (archive == null)
+            {
+                ModelPath = $@"models\{name}{suffix}_Model.bin";
+            }
+            else
+            {
+                ModelPath = $@"_archives\{archive}\{name}_Model.bin";
+            } 
             if (remove != null)
             {
                 name = name.Replace(remove, "");
@@ -145,13 +153,24 @@ namespace MphRead
             }
             if (animation)
             {
-                AnimationPath = animationPath ?? $@"models\{name}{suffix}_Anim.bin";
+                if (animationPath != null)
+                {
+                    AnimationPath = animationPath;
+                }
+                else if (archive != null)
+                {
+                    AnimationPath = $@"_archives\{archive}\{name}_Anim.bin";
+                }
+                else
+                {
+                    AnimationPath = $@"models\{name}{suffix}_Anim.bin";
+                }
             }
             var recolorList = new List<RecolorMetadata>();
             foreach (string recolor in recolors)
             {
-                string recolorModel = $@"models\{name}_{recolor}_Model.bin";
-                string texturePath = texture ? $@"models\{name}_{recolor}_Tex.bin" : recolorModel;
+                string recolorModel = $@"models\{recolorName ?? name}_{recolor}_Model.bin";
+                string texturePath = texture ? $@"models\{recolorName ?? name}_{recolor}_Tex.bin" : recolorModel;
                 recolorList.Add(new RecolorMetadata(recolor, recolorModel, texturePath));
             }
             Recolors = recolorList;
@@ -407,6 +426,10 @@ namespace MphRead
                 "Level AbeTest"
             };
 
+        // todo: unused files unit1_b2, unit2_b2, unit3_b1, unit3_b2, unit4_b1, unit4_b2
+        // per mph-viewer metadata, these use cylinderroom/bigeyeroom files instead
+        // --> are they actually used in-game with those other files, or are the rooms unused altogether?
+        // if the former, we should add extra indices for loading the unused files. if the latter, just replace the strings.
         public static readonly IReadOnlyDictionary<string, RoomMetadata> RoomMetadata
             = new Dictionary<string, RoomMetadata>()
             {
@@ -4487,6 +4510,22 @@ namespace MphRead
                         mdlSuffix: MdlSuffix.All)
                 },
                 {
+                    "Trace_lod0",
+                    new EntityMetadata("Trace_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Trace")
+                },
+                {
                     "Trace_lod1",
                     new EntityMetadata("Trace_lod1",
                         remove: "_lod1",
@@ -4500,6 +4539,23 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true)
+                },
+                {
+                    "TraceAlt_lod0",
+                    new EntityMetadata("TraceAlt_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Trace",
+                        recolorName: "Trace")
                 },
                 {
                     "unit1_land_plat1",

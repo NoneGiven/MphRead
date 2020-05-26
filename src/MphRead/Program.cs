@@ -20,13 +20,13 @@ namespace MphRead
             }
             else
             {
-                Model model = Read.GetModelByName("Crate01");
+                Model model = Read.GetModelByName("Trace_lod0", 5);
                 renderer.AddModel(model);
                 Nop();
             }
             renderer.Run();
         }
-        
+
         private static void Nop() { }
     }
 

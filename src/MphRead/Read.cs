@@ -33,13 +33,47 @@ namespace MphRead
             return GetModel(entityMeta, defaultRecolor);
         }
 
+        public static Model GetRoomByName(string name)
+        {
+            RoomMetadata? roomMeta = Metadata.GetRoomByName(name);
+            if (roomMeta == null)
+            {
+                throw new ProgramException("No room with this name is known. Please provide metadata for a custom room.");
+            }
+            return GetRoom(roomMeta);
+        }
+
+        public static Model GetRoomById(int id)
+        {
+            RoomMetadata? roomMeta = Metadata.GetRoomById(id);
+            if (roomMeta == null)
+            {
+                throw new ProgramException("No room with this ID is known.");
+            }
+            return GetRoom(roomMeta);
+        }
+
+        private static Model GetRoom(RoomMetadata roomMeta)
+        {
+            var recolors = new List<RecolorMetadata>()
+            {
+                new RecolorMetadata("default", roomMeta.ModelPath, roomMeta.TexturePath ?? roomMeta.ModelPath)
+            };
+            return GetModel(roomMeta.Name, roomMeta.ModelPath, recolors, defaultRecolor: 0);
+        }
+        
         private static Model GetModel(EntityMetadata entityMeta, int defaultRecolor)
         {
-            if (defaultRecolor < 0 || defaultRecolor > entityMeta.Recolors.Count)
+            return GetModel(entityMeta.Name, entityMeta.ModelPath, entityMeta.Recolors, defaultRecolor);
+        }
+
+        private static Model GetModel(string name, string modelPath, IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor)
+        {
+            if (defaultRecolor < 0 || defaultRecolor > recolorMeta.Count)
             {
                 throw new ProgramException("The specified recolor index is invalid for this entity.");
             }
-            string path = Path.Combine(Paths.FileSystem, entityMeta.ModelPath);
+            string path = Path.Combine(Paths.FileSystem, modelPath);
             ReadOnlySpan<byte> initialBytes = ReadBytes(path);
             Header header = ReadStruct<Header>(initialBytes[0..Sizes.Header]);
             IReadOnlyList<Bone> bones = DoOffsets<Bone>(initialBytes, header.BoneOffset, header.BoneCount);
@@ -52,27 +86,27 @@ namespace MphRead
             }
             IReadOnlyList<Material> materials = DoOffsets<Material>(initialBytes, header.MaterialOffset, header.MaterialCount);
             var recolors = new List<Recolor>();
-            foreach (RecolorMetadata recolorMeta in entityMeta.Recolors)
+            foreach (RecolorMetadata meta in recolorMeta)
             {
                 ReadOnlySpan<byte> modelBytes = initialBytes;
                 Header modelHeader = header;
-                if (recolorMeta.ModelPath != path)
+                if (meta.ModelPath != path)
                 {
-                    modelBytes = ReadBytes(recolorMeta.ModelPath);
+                    modelBytes = ReadBytes(meta.ModelPath);
                     modelHeader = ReadStruct<Header>(modelBytes[0..Sizes.Header]);
                 }
                 IReadOnlyList<Texture> textures = DoOffsets<Texture>(modelBytes, modelHeader.TextureOffset, modelHeader.TextureCount);
                 IReadOnlyList<Palette> palettes = DoOffsets<Palette>(modelBytes, modelHeader.PaletteOffset, modelHeader.PaletteCount);
                 ReadOnlySpan<byte> textureBytes = modelBytes;
-                if (recolorMeta.TexturePath != recolorMeta.ModelPath)
+                if (meta.TexturePath != meta.ModelPath)
                 {
-                    textureBytes = ReadBytes(recolorMeta.TexturePath);
+                    textureBytes = ReadBytes(meta.TexturePath);
                 }
                 ReadOnlySpan<byte> paletteBytes = textureBytes;
-                if (recolorMeta.PalettePath != recolorMeta.TexturePath)
+                if (meta.PalettePath != meta.TexturePath)
                 {
-                    paletteBytes = ReadBytes(recolorMeta.PalettePath);
-                    if (recolorMeta.SeparatePaletteHeader)
+                    paletteBytes = ReadBytes(meta.PalettePath);
+                    if (meta.SeparatePaletteHeader)
                     {
                         Header paletteHeader = ReadStruct<Header>(paletteBytes[0..Sizes.Header]);
                         palettes = DoOffsets<Palette>(paletteBytes, paletteHeader.PaletteOffset, paletteHeader.PaletteCount);
@@ -88,9 +122,9 @@ namespace MphRead
                 {
                     paletteData.Add(GetPaletteData(palette, paletteBytes));
                 }
-                recolors.Add(new Recolor(recolorMeta.Name, textures, palettes, textureData, paletteData));
+                recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
             }
-            return new Model(entityMeta.Name, header, bones, meshes, materials, dlists, instructions, recolors, defaultRecolor);
+            return new Model(name, header, bones, meshes, materials, dlists, instructions, recolors, defaultRecolor);
         }
 
         private static ReadOnlySpan<byte> ReadBytes(string path)
