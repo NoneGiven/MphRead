@@ -20,7 +20,7 @@ namespace MphRead
             }
             else
             {
-                Model model = Read.GetModelByName("Trace_lod0", 5);
+                Model model = Read.GetModelByName("WeavelGun", 2);
                 renderer.AddModel(model);
                 Nop();
             }

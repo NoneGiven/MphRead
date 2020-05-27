@@ -3890,6 +3890,17 @@ namespace MphRead
                 // pal_Team01-02 are broken if extracted with the main model's header info
                 // (uses palette 3 instead of 1, 7 instead of 0).
                 {
+                    "Guardian_lod0",
+                    new EntityMetadata("Guardian_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01"
+                        },
+                        texture: true,
+                        archive: "Guardian")
+                },
+                {
                     "Guardian_lod1",
                     new EntityMetadata("Guardian_lod1",
                         remove: "_lod1",
@@ -3973,6 +3984,22 @@ namespace MphRead
                     new EntityMetadata("JumpPad_Station")
                 },
                 {
+                    "Kanden_lod0",
+                    new EntityMetadata("Kanden_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Kanden")
+                },
+                {
                     "Kanden_lod1",
                     new EntityMetadata("Kanden_lod1",
                         remove: "_lod1",
@@ -3986,6 +4013,55 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true)
+                },
+                {
+                    "KandenAlt_lod0",
+                    new EntityMetadata("KandenAlt_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Kanden",
+                        recolorName: "Kanden")
+                },
+                {
+                    "KandenAlt_TailBomb",
+                    new EntityMetadata("KandenAlt_TailBomb",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        animation: false,
+                        texture: true,
+                        archive: "Kanden",
+                        recolorName: "Kanden")
+                },
+                {
+                    "KandenGun",
+                    new EntityMetadata("KandenGun",
+                        recolors: new List<string>()
+                        {
+                            "img_01",
+                            "img_02",
+                            "img_03",
+                            "img_04",
+                            "img_Team01",
+                            "img_Team02"
+                        },
+                        texture: true,
+                        archive: "localKanden")
                 },
                 {
                     "koth_data_flow",
@@ -4048,6 +4124,22 @@ namespace MphRead
                     new EntityMetadata("MoverTest")
                 },
                 {
+                    "Nox_lod0",
+                    new EntityMetadata("Nox_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Nox")
+                },
+                {
                     "Nox_lod1",
                     new EntityMetadata("Nox_lod1",
                         remove: "_lod1",
@@ -4061,6 +4153,38 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true)
+                },
+                {
+                    "NoxAlt_lod0",
+                    new EntityMetadata("NoxAlt_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Nox",
+                        recolorName: "Nox")
+                },
+                {
+                    "NoxGun",
+                    new EntityMetadata("NoxGun",
+                        recolors: new List<string>()
+                        {
+                            "img_01",
+                            "img_02",
+                            "img_03",
+                            "img_04",
+                            "img_Team01",
+                            "img_Team02"
+                        },
+                        texture: true,
+                        archive: "localNox")
                 },
                 {
                     "octolith_bounty_img",
@@ -4265,6 +4389,22 @@ namespace MphRead
                     new EntityMetadata("SamusShip", collision: true)
                 },
                 {
+                    "Samus_lod0",
+                    new EntityMetadata("Samus_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_team01",
+                            "pal_team02"
+                        },
+                        texture: true,
+                        archive: "Samus")
+                },
+                {
                     "Samus_lod1",
                     new EntityMetadata("Samus_lod1",
                         remove: "_lod1",
@@ -4278,6 +4418,39 @@ namespace MphRead
                             "pal_team02"
                         },
                         texture: true)
+                },
+                {
+                    "SamusAlt_lod0",
+                    new EntityMetadata("SamusAlt_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_team01",
+                            "pal_team02"
+                        },
+                        animation: false,
+                        texture: true,
+                        archive: "Samus",
+                        recolorName: "Samus")
+                },
+                {
+                    "SamusGun",
+                    new EntityMetadata("SamusGun",
+                        recolors: new List<string>()
+                        {
+                            "img_01",
+                            "img_02",
+                            "img_03",
+                            "img_04",
+                            "img_Team01",
+                            "img_Team02"
+                        },
+                        texture: true,
+                        archive: "localSamus")
                 },
                 {
                     "SecretSwitch",
@@ -4341,6 +4514,22 @@ namespace MphRead
                     new EntityMetadata("SphinkTick_lod0", remove: "_lod0")
                 },
                 {
+                    "Spire_lod0",
+                    new EntityMetadata("Spire_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Spire")
+                },
+                {
                     "Spire_lod1",
                     new EntityMetadata("Spire_lod1",
                         remove: "_lod1",
@@ -4356,6 +4545,38 @@ namespace MphRead
                         texture: true)
                 },
                 {
+                    "SpireAlt_lod0",
+                    new EntityMetadata("SpireAlt_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Spire",
+                        recolorName: "Spire")
+                },
+                {
+                    "SpireGun",
+                    new EntityMetadata("SpireGun",
+                        recolors: new List<string>()
+                        {
+                            "img_01",
+                            "img_02",
+                            "img_03",
+                            "img_04",
+                            "img_Team01",
+                            "img_Team02"
+                        },
+                        texture: true,
+                        archive: "localSpire")
+                },
+                {
                     "splashRing",
                     new EntityMetadata("splashRing")
                 },
@@ -4365,6 +4586,22 @@ namespace MphRead
                         animation: false,
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
+                },
+                {
+                    "Sylux_lod0",
+                    new EntityMetadata("Sylux_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Sylux")
                 },
                 {
                     "Sylux_lod1",
@@ -4380,6 +4617,38 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true)
+                },
+                {
+                    "SyluxAlt_lod0",
+                    new EntityMetadata("SyluxAlt_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Sylux",
+                        recolorName: "Sylux")
+                },
+                {
+                    "SyluxGun",
+                    new EntityMetadata("SyluxGun",
+                        recolors: new List<string>()
+                        {
+                            "img_01",
+                            "img_02",
+                            "img_03",
+                            "img_04",
+                            "img_Team01",
+                            "img_Team02"
+                        },
+                        texture: true,
+                        archive: "localSylux")
                 },
                 {
                     "TearParticle",
@@ -4558,6 +4827,21 @@ namespace MphRead
                         recolorName: "Trace")
                 },
                 {
+                    "TraceGun",
+                    new EntityMetadata("TraceGun",
+                        recolors: new List<string>()
+                        {
+                            "img_01",
+                            "img_02",
+                            "img_03",
+                            "img_04",
+                            "img_Team01",
+                            "img_Team02"
+                        },
+                        texture: true,
+                        archive: "localTrace")
+                },
+                {
                     "unit1_land_plat1",
                     new EntityMetadata("unit1_land_plat1", animation: false, collision: true)
                 },
@@ -4674,6 +4958,22 @@ namespace MphRead
                     new EntityMetadata("warwasp_lod0", remove: "_lod0")
                 },
                 {
+                    "Weavel_lod0",
+                    new EntityMetadata("Weavel_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Weavel")
+                },
+                {
                     "Weavel_lod1",
                     new EntityMetadata("Weavel_lod1",
                         remove: "_lod1",
@@ -4687,6 +4987,55 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true)
+                },
+                {
+                    "WeavelAlt_lod0",
+                    new EntityMetadata("WeavelAlt_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Weavel",
+                        recolorName: "Weavel")
+                },
+                {
+                    "WeavelAlt_Turret_lod0",
+                    new EntityMetadata("WeavelAlt_Turret_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Weavel",
+                        recolorName: "Weavel")
+                },
+                {
+                    "WeavelGun",
+                    new EntityMetadata("WeavelGun",
+                        recolors: new List<string>()
+                        {
+                            "img_01",
+                            "img_02",
+                            "img_03",
+                            "img_04",
+                            "img_Team01",
+                            "img_Team02"
+                        },
+                        texture: true,
+                        archive: "localWeavel")
                 },
                 {
                     "zoomer",

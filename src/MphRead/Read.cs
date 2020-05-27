@@ -67,6 +67,23 @@ namespace MphRead
             return GetModel(entityMeta.Name, entityMeta.ModelPath, entityMeta.Recolors, defaultRecolor);
         }
 
+        public static Model GetModelDirect(string path)
+        {
+            string name = Path.GetFileNameWithoutExtension(path);
+            var recolors = new List<RecolorMetadata>()
+            {
+                new RecolorMetadata("default", path)
+            };
+            return GetModel(name, path, recolors, defaultRecolor: 0);
+        }
+
+        public static Header GetHeader(string path)
+        {
+            path = Path.Combine(Paths.FileSystem, path);
+            ReadOnlySpan<byte> bytes = ReadBytes(path);
+            return ReadStruct<Header>(bytes[0..Sizes.Header]);
+        }
+
         private static Model GetModel(string name, string modelPath, IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor)
         {
             if (defaultRecolor < 0 || defaultRecolor > recolorMeta.Count)
