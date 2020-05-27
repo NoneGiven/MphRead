@@ -107,6 +107,7 @@ namespace MphRead
             {
                 ReadOnlySpan<byte> modelBytes = initialBytes;
                 Header modelHeader = header;
+                // todo: this check is causing a double load (full path vs. relative)
                 if (meta.ModelPath != path)
                 {
                     modelBytes = ReadBytes(meta.ModelPath);

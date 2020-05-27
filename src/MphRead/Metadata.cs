@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO.Compression;
 using System.Linq;
 
 namespace MphRead
@@ -177,26 +178,28 @@ namespace MphRead
         }
 
         public EntityMetadata(string name, bool animation = true, bool collision = false,
-            bool texture = false, string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None)
+            bool texture = false, string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None,
+            string? archive = null, string? addToAnim = null)
         {
             Name = name;
+            string path = archive == null ? "models" : $@"_archives\{archive}";
             string suffix = "";
             if (mdlSuffix != MdlSuffix.None)
             {
                 suffix = "_mdl";
             }
-            ModelPath = $@"models\{name}{suffix}_Model.bin";
+            ModelPath = $@"{path}\{name}{suffix}_Model.bin";
             if (mdlSuffix != MdlSuffix.All)
             {
                 suffix = "";
             }
             if (animation)
             {
-                AnimationPath = $@"models\{name}{suffix}_Anim.bin";
+                AnimationPath = $@"{path}\{name}{addToAnim}{suffix}_Anim.bin";
             }
             if (collision)
             {
-                CollisionPath = $@"models\{name}{suffix}_Collision.bin";
+                CollisionPath = $@"{path}\{name}{suffix}_Collision.bin";
             }
             string recolorModel = ModelPath;
             if (share != null)
@@ -3526,6 +3529,20 @@ namespace MphRead
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
+                    "alt_ice",
+                    new EntityMetadata("alt_ice",
+                        modelPath: @"_archives\common\alt_ice_mdl_Model.bin",
+                        animationPath: null,
+                        collisionPath: null,
+                        new List<RecolorMetadata>()
+                        {
+                            new RecolorMetadata("default",
+                                modelPath: @"_archives\common\samus_ice_img_Model.bin",
+                                texturePath: @"_archives\common\samus_ice_img_Model.bin",
+                                palettePath: @"_archives\common\samus_ice_img_Model.bin")
+                        })
+                },
+                {
                     "arcWelder1",
                     new EntityMetadata("arcWelder1", animation: false)
                 },
@@ -3709,6 +3726,14 @@ namespace MphRead
                     new EntityMetadata("CylinderBoss")
                 },
                 {
+                    "deathParticle",
+                    new EntityMetadata("deathParticle", animation: false, texture: true, archive: "effectsBase")
+                },
+                {
+                    "deepspace",
+                    new EntityMetadata("deepspace", archive: "shipSpace")
+                },
+                {
                     "Door_Unit4_RM1",
                     new EntityMetadata("Door_Unit4_RM1", animation: false, collision: true)
                 },
@@ -3733,6 +3758,10 @@ namespace MphRead
                 {
                     "energyBeam",
                     new EntityMetadata("energyBeam")
+                },
+                {
+                    "filter",
+                    new EntityMetadata("filter", animation: false, archive: "common")
                 },
                 {
                     "flagbase_bounty",
@@ -3803,6 +3832,10 @@ namespace MphRead
                         share: @"models\GenericEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
+                },
+                {
+                    "geo1",
+                    new EntityMetadata("geo1", animation: false, texture: true, archive: "effectsBase")
                 },
                 {
                     "GhostSwitch",
@@ -3923,6 +3956,10 @@ namespace MphRead
                     new EntityMetadata("Guardian_Stasis")
                 },
                 {
+                    "gunSmoke",
+                    new EntityMetadata("gunSmoke", archive: "common")
+                },
+                {
                     "Ice_Console",
                     new EntityMetadata("Ice_Console",
                         share: @"models\IceEquipTextureShare_img_Model.bin",
@@ -3954,6 +3991,18 @@ namespace MphRead
                         share: @"models\IceEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
+                },
+                {
+                    "iceShard",
+                    new EntityMetadata("iceShard", animation: false, archive: "common")
+                },
+                {
+                    "iceWave",
+                    new EntityMetadata("iceWave", archive: "common")
+                },
+                {
+                    "items_base",
+                    new EntityMetadata("items_base", animation: false, archive: "common")
                 },
                 {
                     "JumpPad_Alimbic",
@@ -4120,6 +4169,10 @@ namespace MphRead
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
+                    "lines",
+                    new EntityMetadata("lines", addToAnim: "_Idle", archive: "frontend2d")
+                },
+                {
                     "MoverTest",
                     new EntityMetadata("MoverTest")
                 },
@@ -4187,6 +4240,20 @@ namespace MphRead
                         archive: "localNox")
                 },
                 {
+                    "nox_ice",
+                    new EntityMetadata("nox_ice",
+                        modelPath: @"_archives\common\nox_ice_mdl_Model.bin",
+                        animationPath: null,
+                        collisionPath: null,
+                        new List<RecolorMetadata>()
+                        {
+                            new RecolorMetadata("default",
+                                modelPath: @"_archives\common\samus_ice_img_Model.bin",
+                                texturePath: @"_archives\common\samus_ice_img_Model.bin",
+                                palettePath: @"_archives\common\samus_ice_img_Model.bin")
+                        })
+                },
+                {
                     "octolith_bounty_img",
                     new EntityMetadata("octolith_bounty_img", animation: false)
                 },
@@ -4208,6 +4275,14 @@ namespace MphRead
                 {
                     "octolith_simple",
                     new EntityMetadata("octolith_simple", animation: false)
+                },
+                {
+                    "particles",
+                    new EntityMetadata("particles", animation: false, texture: true, archive: "effectsBase")
+                },
+                {
+                    "particles2",
+                    new EntityMetadata("particles2", animation: false, texture: true, archive: "effectsBase")
                 },
                 {
                     "PickUp_AmmoExp",
@@ -4453,6 +4528,20 @@ namespace MphRead
                         archive: "localSamus")
                 },
                 {
+                    "samus_ice",
+                    new EntityMetadata("samus_ice",
+                        modelPath: @"_archives\common\samus_ice_mdl_Model.bin",
+                        animationPath: null,
+                        collisionPath: null,
+                        new List<RecolorMetadata>()
+                        {
+                            new RecolorMetadata("default",
+                                modelPath: @"_archives\common\samus_ice_img_Model.bin",
+                                texturePath: @"_archives\common\samus_ice_img_Model.bin",
+                                palettePath: @"_archives\common\samus_ice_img_Model.bin")
+                        })
+                },
+                {
                     "SecretSwitch",
                     new EntityMetadata("SecretSwitch",
                         modelPath: @"models\SecretSwitch_Model.bin",
@@ -4502,8 +4591,16 @@ namespace MphRead
                     new EntityMetadata("shriekbat")
                 },
                 {
+                    "slots",
+                    new EntityMetadata("slots", addToAnim: "_Idle", archive: "frontend2d")
+                },
+                {
                     "smasher",
                     new EntityMetadata("smasher", animation: false, collision: true)
+                },
+                {
+                    "sniperBeam",
+                    new EntityMetadata("sniperBeam", archive: "common")
                 },
                 {
                     "SniperTarget",
@@ -4842,6 +4939,10 @@ namespace MphRead
                         archive: "localTrace")
                 },
                 {
+                    "trail",
+                    new EntityMetadata("trail", animation: false, archive: "common")
+                },
+                {
                     "unit1_land_plat1",
                     new EntityMetadata("unit1_land_plat1", animation: false, collision: true)
                 },
@@ -5040,6 +5141,20 @@ namespace MphRead
                 {
                     "zoomer",
                     new EntityMetadata("zoomer")
+                },
+                // 2D images only, no mesh/dlist, probably just swapped in for other textures on models
+                {
+                    "doubleDamage_img",
+                    new EntityMetadata("doubleDamage_img", animation: false, archive: "common")
+                },
+                // todo?: seemingly 2D images only, no polygons render even though they have a mesh/dlist
+                {
+                    "arcWelder",
+                    new EntityMetadata("arcWelder", animation: false, archive: "common")
+                },
+                {
+                    "electroTrail",
+                    new EntityMetadata("electroTrail", animation: false, archive: "common")
                 }
             };
     }

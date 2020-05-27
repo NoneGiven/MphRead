@@ -20,7 +20,11 @@ namespace MphRead
             }
             else
             {
-                Model model = Read.GetModelByName("WeavelGun", 2);
+                string prefix = @"_archives\shipSpace\";
+                Header header = Read.GetHeader(prefix + "deepspace_Model.bin");
+                Model model = Read.GetModelDirect(prefix + "deepspace_Model.bin");
+                //Model model = Read.GetModelByName("particles2");
+                model.ExportImages();
                 renderer.AddModel(model);
                 Nop();
             }
