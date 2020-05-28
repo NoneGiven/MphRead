@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 
 namespace MphRead
 {
@@ -318,9 +319,9 @@ namespace MphRead
     public class Node
     {
         public string Name { get; }
-        public int ParentId { get; }
-        public int ChildId { get; }
-        public int NextId { get; }
+        public int ParentIndex { get; }
+        public int ChildIndex { get; }
+        public int NextIndex { get; }
         public bool Enabled { get; set; }
         public int MeshCount { get; }
         public int MeshId { get; }
@@ -329,14 +330,14 @@ namespace MphRead
         public Vector3 Position { get; set; }
         public Vector3 Vector1 { get; }
         public Vector3 Vector2 { get; }
-        public Matrix43 NodeTransform { get; }
+        public Matrix4x4 Transform { get; set; }
         
         public Node(RawNode raw)
         {
             Name = raw.Name;
-            ParentId = raw.ParentId;
-            ChildId = raw.ChildId;
-            NextId = raw.NextId;
+            ParentIndex = raw.ParentId;
+            ChildIndex = raw.ChildId;
+            NextIndex = raw.NextId;
             Enabled = raw.Enabled != 0;
             MeshCount = raw.MeshCount;
             MeshId = raw.MeshId;
@@ -349,7 +350,6 @@ namespace MphRead
             Position = new Vector3(raw.Position);
             Vector1 = new Vector3(raw.Vector1);
             Vector2 = new Vector3(raw.Vector2);
-            NodeTransform = new Matrix43(raw.NodeTransform);
         }
     }
 

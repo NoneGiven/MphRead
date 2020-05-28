@@ -30,6 +30,7 @@ namespace MphRead
         public readonly Vector3Fx Four;
     }
 
+    // todo: replace with built-in types
     public struct Vector3
     {
         public float X;
@@ -49,6 +50,14 @@ namespace MphRead
             Y = vector.Y.FloatValue;
             Z = vector.Z.FloatValue;
         }
+    }
+
+    public struct Vector4
+    {
+        public float A;
+        public float B;
+        public float C;
+        public float D;
     }
 
     public struct Matrix43

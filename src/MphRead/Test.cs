@@ -125,10 +125,7 @@ namespace MphRead
         {
             foreach (Model model in GetAllModels())
             {
-                foreach (Material material in model.Materials)
-                {
-
-                }
+                
             }
         }
 

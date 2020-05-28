@@ -175,7 +175,7 @@ namespace MphRead
         public readonly byte Type;
         public readonly byte Field8D;
         public readonly ushort Field8E;
-        public readonly Matrix43Fx NodeTransform;
+        public readonly Matrix43Fx Transform; // scratch space
         public readonly uint FieldC0;
         public readonly uint FieldC4;
         public readonly uint FieldC8;

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing.Drawing2D;
 using System.Linq;
+using System.Numerics;
 using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Mathematics;
 using OpenToolkit.Windowing.Common;
@@ -77,18 +79,18 @@ namespace MphRead
         private bool _wireframe = false;
         private bool _faceCulling = true;
         private bool _textureFiltering = true;
+        private bool _applyTansforms = false;
 
         private static readonly Color4 _clearColor = new Color4(0.4f, 0.4f, 0.4f, 1.0f);
-        
+
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
-        
+
         public RenderWindow(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
             : base(gameWindowSettings, nativeWindowSettings)
         {
         }
 
-        // todo: move most/all of this into the Read stage,
-        // return class like "RoomData" with both relevant metadata + Model object
+        // todo: move most/all of this into "scene setup"
         public void AddRoom(string name, int layerMask)
         {
             if (_rooms.Count > 0)
@@ -124,11 +126,11 @@ namespace MphRead
             if (nodeIndex != -1)
             {
                 nodeName = model.Nodes[nodeIndex].Name;
-                nodeId = model.Nodes[nodeIndex].ChildId;
+                nodeId = model.Nodes[nodeIndex].ChildIndex;
             }
             FilterNodes(model, roomLayerMask);
             // todo: scene min/max coordinates?
-            // todo: compute node matrices
+            ComputeMatrices(model, index: 0); // todo: do this for all models
             _models.Add(model);
         }
 
@@ -170,7 +172,74 @@ namespace MphRead
                 }
             }
         }
-        
+
+        private void ComputeMatrices(Model model, int index)
+        {
+            if (model.Nodes.Count == 0 || index == UInt16.MaxValue)
+            {
+                return;
+            }
+            Matrix4x4 transform = default;
+            for (int i = index; i != UInt16.MaxValue;)
+            {
+                Node node = model.Nodes[i];
+                ComputeTansforms(ref transform, node.Scale, node.Angle, node.Position);
+                if (node.ParentIndex == UInt16.MaxValue)
+                {
+                    node.Transform = transform;
+                }
+                else
+                {
+                    node.Transform = transform * model.Nodes[node.ParentIndex].Transform;
+                }
+                if (node.ChildIndex != UInt16.MaxValue)
+                {
+                    ComputeMatrices(model, node.ChildIndex);
+                }
+                // todo: do whatever with NodePosition/NodeInitialPosition?
+                i = node.NextIndex;
+            }
+        }
+
+        private void ComputeTansforms(ref Matrix4x4 transform, Vector3 scale, Vector3 angle, Vector3 position)
+        {
+            float sin_ax = MathF.Sin(angle.X);
+            float sin_ay = MathF.Sin(angle.Y);
+            float sin_az = MathF.Sin(angle.Z);
+            float cos_ax = MathF.Cos(angle.X);
+            float cos_ay = MathF.Cos(angle.Y);
+            float cos_az = MathF.Cos(angle.Z);
+
+            float v18 = cos_ax * cos_az;
+            float v19 = cos_ax * sin_az;
+            float v20 = cos_ax * cos_ay;
+
+            float v22 = sin_ax * sin_ay;
+
+            float v17 = v19 * sin_ay;
+
+            transform.M11 = scale.X * cos_ay * cos_az;
+            transform.M12 = scale.X * cos_ay * sin_az;
+            transform.M13 = scale.X * -sin_ay;
+
+            transform.M21 = scale.Y * ((v22 * cos_az) - v19);
+            transform.M22 = scale.Y * ((v22 * sin_az) + v18);
+            transform.M23 = scale.Y * sin_ax * cos_ay;
+
+            transform.M31 = scale.Z * (v18 * sin_ay + sin_ax * sin_az);
+            transform.M32 = scale.Z * ((v17 + (v19 * sin_ay)) - (sin_ax * cos_az));
+            transform.M33 = scale.Z * v20;
+
+            transform.M41 = position.X;
+            transform.M42 = position.Y;
+            transform.M43 = position.Z;
+
+            transform.M14 = 0;
+            transform.M24 = 0;
+            transform.M34 = 0;
+            transform.M44 = 1;
+        }
+
         public void AddModel(Model model)
         {
             _models.Add(model);
@@ -227,7 +296,7 @@ namespace MphRead
             _shaderLocations.Ambient = GL.GetUniformLocation(prog, "ambient");
             _shaderLocations.Specular = GL.GetUniformLocation(prog, "specular");
         }
-        
+
         private void PrintMenu()
         {
             Console.Clear();
@@ -284,7 +353,7 @@ namespace MphRead
                 // - if render mode is not Normal, but there are no non-opaque pixels, set to Normal
                 // - if render mode is Normal, but there are non-opaque pixels, set to AlphaTest
                 // - if render mode is Translucent, material alpha is 31, and texture format is DirectRgba, set to AlphaTest
-                
+
                 GL.BindTexture(TextureTarget.Texture2D, _textureCount);
                 GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
                     PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
