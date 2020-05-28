@@ -26,6 +26,11 @@ namespace MphRead
             _window = new RenderWindow(settings, native);
         }
 
+        public void AddRoom(string name, int layerMask = 0)
+        {
+            _window.AddRoom(name, layerMask);
+        }
+
         public void AddModel(Model model)
         {
             _window.AddModel(model);
@@ -42,8 +47,23 @@ namespace MphRead
         }
     }
 
+    public class ShaderLocations
+    {
+        public int IsBillboard { get; set; }
+        public int UseLight { get; set; }
+        public int UseTexture { get; set; }
+        public int Light1Color { get; set; }
+        public int Light1Vector { get; set; }
+        public int Light2Color { get; set; }
+        public int Light2Vector { get; set; }
+        public int Diffuse { get; set; }
+        public int Ambient { get; set; }
+        public int Specular { get; set; }
+    }
+
     public class RenderWindow : GameWindow
     {
+        private readonly List<Model> _rooms = new List<Model>();
         private readonly List<Model> _models = new List<Model>();
 
         private float _angle = 0.0f;
@@ -59,12 +79,102 @@ namespace MphRead
         private bool _textureFiltering = true;
 
         private static readonly Color4 _clearColor = new Color4(0.4f, 0.4f, 0.4f, 1.0f);
-
+        
+        private readonly ShaderLocations _shaderLocations = new ShaderLocations();
+        
         public RenderWindow(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
             : base(gameWindowSettings, nativeWindowSettings)
         {
         }
 
+        // todo: move most/all of this into the Read stage,
+        // return class like "RoomData" with both relevant metadata + Model object
+        public void AddRoom(string name, int layerMask)
+        {
+            if (_rooms.Count > 0)
+            {
+                throw new InvalidOperationException();
+            }
+            RoomMetadata? metadata = Metadata.GetRoomByName(name);
+            if (metadata == null)
+            {
+                throw new InvalidOperationException();
+            }
+            int roomLayerMask;
+            if (layerMask != 0)
+            {
+                roomLayerMask = layerMask;
+            }
+            else if (metadata.LayerId != 0)
+            {
+                roomLayerMask = ((1 << metadata.LayerId) & 0xFF) << 6;
+            }
+            else
+            {
+                roomLayerMask = -1;
+            }
+            Model model = Read.GetRoomByName(name);
+            // todo: use room scale
+            float roomScale = Float.FromFixed(model.Header.ScaleBase) * (1 << (int)model.Header.ScaleFactor);
+            // todo: do whatever with NodePosition/NodeInitialPosition
+            // todo: convert each node's scale/angle/pos (RawNode vs. Node?)
+            // todo: use this name and ID (or remove this code)
+            string nodeName = "rmMain";
+            int nodeId = -1;
+            int nodeIndex = model.Bones.IndexOf(b => b.Name.StartsWith("rm"));
+            if (nodeIndex != -1)
+            {
+                nodeName = model.Bones[nodeIndex].Name;
+                nodeId = model.Bones[nodeIndex].ChildId;
+            }
+            FilterNodes(model, roomLayerMask);
+            // todo: convert each materials's scale/translate s/t
+            _models.Add(model);
+        }
+
+        // todo: remove this
+        private readonly HashSet<string> _tempDisabledNodes = new HashSet<string>();
+
+        private void FilterNodes(Model model, int layerMask)
+        {
+            foreach (Bone node in model.Bones.Where(b => b.Name.StartsWith("_")))
+            {
+                int flags = 0;
+                // we actually have to step through 4 characters at a time rather than using Contains,
+                // based on the game's behavior with e.g. "_ml_s010blocks", which is not visible in SP or MP;
+                // while it presumably would be in SP since it contains "_s01", that isn't picked up
+                for (int i = 0; node.Name.Length - i >= 4; i += 4)
+                {
+                    string chunk = node.Name.Substring(i, 4);
+                    if (chunk.StartsWith("_s") && Int32.TryParse(chunk.Substring(2), out int id))
+                    {
+                        flags = (int)((uint)flags & 0xC03F | (((uint)flags << 18 >> 24) | (uint)(1 << id)) << 6);
+                    }
+                    else if (chunk == "_ml0")
+                    {
+                        flags |= (int)NodeLayer.Multiplayer0;
+                    }
+                    else if (chunk == "_ml1")
+                    {
+                        flags |= (int)NodeLayer.Multiplayer1;
+                    }
+                    else if (chunk == "_mpu")
+                    {
+                        flags |= (int)NodeLayer.MultiplayerU;
+                    }
+                    else if (chunk == "_ctf")
+                    {
+                        flags |= (int)NodeLayer.CaptureTheFlag;
+                    }
+                }
+                if ((flags & layerMask) == 0)
+                {
+                    //node.Enabled = 0;
+                    _tempDisabledNodes.Add(model.Name + node.Name);
+                }
+            }
+        }
+        
         public void AddModel(Model model)
         {
             _models.Add(model);
@@ -73,6 +183,30 @@ namespace MphRead
         protected override void OnLoad()
         {
             GL.ClearColor(_clearColor);
+
+            GL.Enable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.Texture2D);
+            GL.PolygonMode(MaterialFace.FrontAndBack,
+                    _wireframe
+                    ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
+                    : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
+
+            GL.DepthFunc(DepthFunction.Lequal);
+
+            InitShaders();
+
+            foreach (Model model in _models)
+            {
+                InitTextures(model);
+            }
+
+            PrintMenu();
+
+            base.OnLoad();
+        }
+
+        private void InitShaders()
+        {
             int vtxS = GL.CreateShader(ShaderType.VertexShader);
             GL.ShaderSource(vtxS, Shaders.VertexShader);
             GL.CompileShader(vtxS);
@@ -86,25 +220,18 @@ namespace MphRead
             GL.DetachShader(prog, vtxS);
             GL.DetachShader(prog, frgS);
 
-            GL.Enable(EnableCap.DepthTest);
-            GL.Enable(EnableCap.Texture2D);
-            GL.PolygonMode(MaterialFace.FrontAndBack,
-                    _wireframe
-                    ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
-                    : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
-
-            GL.DepthFunc(DepthFunction.Lequal);
-
-            foreach (Model model in _models)
-            {
-                InitTextures(model);
-            }
-
-            PrintMenu();
-
-            base.OnLoad();
+            _shaderLocations.IsBillboard = GL.GetUniformLocation(prog, "is_billboard");
+            _shaderLocations.UseLight = GL.GetUniformLocation(prog, "use_light");
+            _shaderLocations.UseTexture = GL.GetUniformLocation(prog, "use_texture");
+            _shaderLocations.Light1Color = GL.GetUniformLocation(prog, "light1col");
+            _shaderLocations.Light1Vector = GL.GetUniformLocation(prog, "light1vec");
+            _shaderLocations.Light2Color = GL.GetUniformLocation(prog, "light2col");
+            _shaderLocations.Light2Vector = GL.GetUniformLocation(prog, "light2vec");
+            _shaderLocations.Diffuse = GL.GetUniformLocation(prog, "diffuse");
+            _shaderLocations.Ambient = GL.GetUniformLocation(prog, "ambient");
+            _shaderLocations.Specular = GL.GetUniformLocation(prog, "specular");
         }
-
+        
         private void PrintMenu()
         {
             Console.Clear();
@@ -142,18 +269,21 @@ namespace MphRead
                     Texture texture = model.Textures[material.TextureId];
                     width = texture.Width;
                     height = texture.Height;
+                    bool decal = material.RenderMode == RenderMode.Decal;
                     foreach (ColorRgba pixel in model.GetPixels(material.TextureId, material.PaletteId))
                     {
-                        pixels.Add(((uint)pixel.Red << 0) | ((uint)pixel.Green << 8)
-                                | ((uint)pixel.Blue << 16) | ((uint)pixel.Alpha << 24));
+                        uint red = pixel.Red;
+                        uint green = pixel.Green;
+                        uint blue = pixel.Blue;
+                        uint alpha = (uint)((decal ? 255 : pixel.Alpha) * material.Alpha / 31.0f);
+                        pixels.Add((red << 0) | (green << 8) | (blue << 16) | (alpha << 24));
                     }
                 }
                 else
                 {
-                    pixels.Add(((uint)255 << 0) | ((uint)255 << 8)
-                                | ((uint)255 << 16) | ((uint)255 << 24));
+                    pixels.Add(((uint)255 << 0) | ((uint)255 << 8) | ((uint)255 << 16) | ((uint)255 << 24));
                 }
-
+                
                 GL.BindTexture(TextureTarget.Texture2D, _textureCount);
                 GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
                     PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
@@ -331,9 +461,9 @@ namespace MphRead
                                 {
                                     z = (int)(z | 0xFFFF0000);
                                 }
-                                vtxX = x / 4096.0f;
-                                vtxY = y / 4096.0f;
-                                vtxZ = z / 4096.0f;
+                                vtxX = Float.FromFixed(x);
+                                vtxY = Float.FromFixed(y);
+                                vtxZ = Float.FromFixed(z);
                                 GL.Vertex3(vtxX, vtxY, vtxZ);
                             }
                             break;
@@ -374,8 +504,8 @@ namespace MphRead
                                 {
                                     y = (int)(y | 0xFFFF0000);
                                 }
-                                vtxX = x / 4096.0f;
-                                vtxY = y / 4096.0f;
+                                vtxX = Float.FromFixed(x);
+                                vtxY = Float.FromFixed(y);
                                 GL.Vertex3(vtxX, vtxY, vtxZ);
                             }
                             break;
@@ -392,8 +522,8 @@ namespace MphRead
                                 {
                                     z = (int)(z | 0xFFFF0000);
                                 }
-                                vtxX = x / 4096.0f;
-                                vtxZ = z / 4096.0f;
+                                vtxX = Float.FromFixed(x);
+                                vtxZ = Float.FromFixed(z);
                                 GL.Vertex3(vtxX, vtxY, vtxZ);
                             }
                             break;
@@ -410,8 +540,8 @@ namespace MphRead
                                 {
                                     z = (int)(z | 0xFFFF0000);
                                 }
-                                vtxY = y / 4096.0f;
-                                vtxZ = z / 4096.0f;
+                                vtxY = Float.FromFixed(y);
+                                vtxZ = Float.FromFixed(z);
                                 GL.Vertex3(vtxX, vtxY, vtxZ);
                             }
                             break;
@@ -433,9 +563,9 @@ namespace MphRead
                                 {
                                     z = (int)(z | 0xFFFFFC00);
                                 }
-                                vtxX += x / 4096.0f;
-                                vtxY += y / 4096.0f;
-                                vtxZ += z / 4096.0f;
+                                vtxX += Float.FromFixed(x);
+                                vtxY += Float.FromFixed(y);
+                                vtxZ += Float.FromFixed(z);
                                 GL.Vertex3(vtxX, vtxY, vtxZ);
                             }
                             break;

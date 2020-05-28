@@ -125,23 +125,11 @@ namespace MphRead
         {
             foreach (Model model in GetAllModels())
             {
-                foreach (Material material in model.Materials)
+                foreach (Texture tex in model.Textures)
                 {
-                    if (material.RenderMode == RenderMode.Normal)
+                    if (tex.Format == TextureFormat.Palette8Bit)
                     {
-                        Nop();
-                    }
-                    else if (material.RenderMode == RenderMode.Decal)
-                    {
-                        Nop();
-                    }
-                    else if (material.RenderMode == RenderMode.Translucent)
-                    {
-                        Nop();
-                    }
-                    else
-                    {
-                        Nop();
+                        System.Diagnostics.Debugger.Break();
                     }
                 }
             }
@@ -176,6 +164,10 @@ namespace MphRead
             foreach (KeyValuePair<string, EntityMetadata> meta in Metadata.EntityMetadata)
             {
                 yield return Read.GetModelByName(meta.Key);
+            }
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                yield return Read.GetRoomByName(meta.Key);
             }
         }
 

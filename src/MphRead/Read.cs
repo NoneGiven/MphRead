@@ -205,6 +205,14 @@ namespace MphRead
                             index &= 0x1F;
                             alpha = AlphaFromA3I5(entry);
                         }
+                        if (texture.Format == TextureFormat.Palette2Bit || texture.Format == TextureFormat.Palette4Bit
+                            || texture.Format == TextureFormat.Palette8Bit)
+                        {
+                            if (texture.Opaque == 0 && index == 0)
+                            {
+                                alpha = 0;
+                            }
+                        }
                         data.Add(new TextureData(index, alpha));
                     }
                 }
@@ -225,72 +233,6 @@ namespace MphRead
                 data.Add(new PaletteData(entry));
             }
             return data;
-        }
-
-        private static IReadOnlyList<ColorRgba> DoPixels(Texture texture, Palette palette,
-            ReadOnlySpan<byte> textureBytes, ReadOnlySpan<byte> paletteBytes)
-        {
-            var pixels = new List<ColorRgba>();
-            int pixelCount = texture.Width * texture.Height;
-            int entriesPerByte = 1;
-            if (texture.Format == TextureFormat.Palette2Bit)
-            {
-                entriesPerByte = 4;
-            }
-            else if (texture.Format == TextureFormat.Palette4Bit)
-            {
-                entriesPerByte = 2;
-            }
-            if (pixelCount % entriesPerByte != 0)
-            {
-                throw new ProgramException($"Pixel count {pixelCount} is not divisible by {entriesPerByte}.");
-            }
-            pixelCount /= entriesPerByte;
-            for (int pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++)
-            {
-                if (texture.Format == TextureFormat.DirectRgb || texture.Format == TextureFormat.DirectRgba)
-                {
-                    ushort color = SpanReadUshort(textureBytes, (int)(texture.ImageOffset + pixelIndex * 2));
-                    byte alpha = texture.Format == TextureFormat.DirectRgb ? (byte)255 : AlphaFromShort(color);
-                    pixels.Add(ColorFromShort(color, alpha));
-                }
-                else
-                {
-                    byte entry = textureBytes[(int)(texture.ImageOffset + pixelIndex)];
-                    for (int entryIndex = 0; entryIndex < entriesPerByte; entryIndex++)
-                    {
-                        uint index = (uint)(entry >> ((pixelIndex * entriesPerByte + entryIndex) % entriesPerByte
-                            * (8 / entriesPerByte)));
-                        byte alpha = 255;
-                        if (texture.Format == TextureFormat.Palette2Bit)
-                        {
-                            index &= 0x3;
-                        }
-                        else if (texture.Format == TextureFormat.Palette4Bit)
-                        {
-                            index &= 0xF;
-                        }
-                        else if (texture.Format == TextureFormat.PaletteA5I3)
-                        {
-                            index &= 0x7;
-                            alpha = AlphaFromA5I3(entry);
-                        }
-                        else if (texture.Format == TextureFormat.PaletteA3I5)
-                        {
-                            index &= 0x1F;
-                            alpha = AlphaFromA3I5(entry);
-                        }
-                        int offset = (int)(palette.Offset + index * 2);
-                        if (offset >= paletteBytes.Length)
-                        {
-                            throw new ProgramException("Offset points beyond palette bytes.");
-                        }
-                        ushort color = SpanReadUshort(paletteBytes, offset);
-                        pixels.Add(ColorFromShort(color, alpha));
-                    }
-                }
-            }
-            return pixels;
         }
 
         private static ColorRgba ColorFromShort(ushort value, byte alpha)

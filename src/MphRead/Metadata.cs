@@ -37,18 +37,18 @@ namespace MphRead
         //public uint Unknown22 { get; }
         public Vector3 RoomSize { get; } // not in structure
 
-        public RoomMetadata(string name, string inGameName, string modelPath, string animationPath,
-            string collisionPath, string? texturePath, string? entityPath, string? nodePath, string? roomNodeName,
-            uint battleTimeLimit, uint timeLimit, short pointLimit, short layerId, ushort fogEnabled, ushort fog,
-            ushort fogColor, uint fogSlope, uint fogOffset, ColorRgba light1Color, Vector3 light1Vector,
-            ColorRgba light2Color, Vector3 light2Vector, Vector3 roomSize)
+        public RoomMetadata(string name, string inGameName, string pathName, string modelPath,
+            string animationPath, string collisionPath, string? texturePath, string? entityPath, string? nodePath,
+            string? roomNodeName, uint battleTimeLimit, uint timeLimit, short pointLimit, short layerId, ushort fogEnabled,
+            ushort fog, ushort fogColor, uint fogSlope, uint fogOffset, ColorRgba light1Color,
+            Vector3 light1Vector, ColorRgba light2Color, Vector3 light2Vector, Vector3 roomSize)
         {
             Name = name;
             InGameName = inGameName;
             // case-insensitive use of the name here
-            ModelPath = $@"_archives\{name}\{modelPath}";
-            AnimationPath = $@"_archives\{name}\{animationPath}";
-            CollisionPath = $@"_archives\{name}\{collisionPath}";
+            ModelPath = $@"_archives\{pathName}\{modelPath}";
+            AnimationPath = $@"_archives\{pathName}\{animationPath}";
+            CollisionPath = $@"_archives\{pathName}\{collisionPath}";
             TexturePath = texturePath == null ? null : $@"levels\textures\{texturePath}";
             EntityPath = entityPath == null ? null : $@"levels\entities\{entityPath}";
             NodePath = nodePath == null ? null : $@"levels\nodeData\{nodePath}";
@@ -441,6 +441,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_CX",
                         "todo:inGameName",
+                        "unit1_CX",
                         "unit1_CX_Model.bin",
                         "unit1_CX_Anim.bin",
                         "unit1_CX_Collision.bin",
@@ -468,6 +469,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_CZ",
                         "todo:inGameName",
+                        "unit1_CZ",
                         "unit1_CZ_Model.bin",
                         "unit1_CZ_Anim.bin",
                         "unit1_CZ_Collision.bin",
@@ -495,6 +497,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_MORPH_CX",
                         "todo:inGameName",
+                        "unit1_morph_CX",
                         "unit1_morph_CX_Model.bin",
                         "unit1_morph_CX_Anim.bin",
                         "unit1_morph_CX_Collision.bin",
@@ -522,6 +525,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_MORPH_CZ",
                         "todo:inGameName",
+                        "unit1_morph_CZ",
                         "unit1_morph_CZ_Model.bin",
                         "unit1_morph_CZ_Anim.bin",
                         "unit1_morph_CZ_Collision.bin",
@@ -549,6 +553,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_CX",
                         "todo:inGameName",
+                        "unit2_CX",
                         "unit2_CX_Model.bin",
                         "unit2_CX_Anim.bin",
                         "unit2_CX_Collision.bin",
@@ -576,6 +581,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_CZ",
                         "todo:inGameName",
+                        "unit2_CZ",
                         "unit2_CZ_Model.bin",
                         "unit2_CZ_Anim.bin",
                         "unit2_CZ_Collision.bin",
@@ -603,6 +609,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT3_CX",
                         "todo:inGameName",
+                        "unit3_CX",
                         "unit3_CX_Model.bin",
                         "unit3_CX_Anim.bin",
                         "unit3_CX_Collision.bin",
@@ -630,6 +637,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT3_CZ",
                         "todo:inGameName",
+                        "unit3_CZ",
                         "unit3_CZ_Model.bin",
                         "unit3_CZ_Anim.bin",
                         "unit3_CZ_Collision.bin",
@@ -657,6 +665,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT4_CX",
                         "todo:inGameName",
+                        "unit4_CX",
                         "unit4_CX_Model.bin",
                         "unit4_CX_Anim.bin",
                         "unit4_CX_Collision.bin",
@@ -684,6 +693,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT4_CZ",
                         "todo:inGameName",
+                        "unit4_CZ",
                         "unit4_CZ_Model.bin",
                         "unit4_CZ_Anim.bin",
                         "unit4_CZ_Collision.bin",
@@ -711,6 +721,7 @@ namespace MphRead
                     new RoomMetadata(
                         "CYLINDER_C1",
                         "todo:inGameName",
+                        "Cylinder_C1_CZ",
                         "Cylinder_C1_model.bin",
                         "Cylinder_C1_anim.bin",
                         "Cylinder_C1_collision.bin",
@@ -738,6 +749,7 @@ namespace MphRead
                     new RoomMetadata(
                         "BIGEYE_C1",
                         "todo:inGameName",
+                        "BigEye_C1_CZ",
                         "bigeye_c1_model.bin",
                         "bigeye_c1_anim.bin",
                         "bigeye_c1_collision.bin",
@@ -765,6 +777,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_RM1_CX",
                         "todo:inGameName",
+                        "UNIT1_RM1_CX",
                         "UNIT1_RM1_CX_Model.bin",
                         "UNIT1_RM1_CX_Anim.bin",
                         "UNIT1_RM1_CX_Collision.bin",
@@ -792,6 +805,7 @@ namespace MphRead
                     new RoomMetadata(
                         "GOREA_C1",
                         "todo:inGameName",
+                        "Gorea_C1_CZ",
                         "Gorea_c1_Model.bin",
                         "Gorea_c1_Anim.bin",
                         "Gorea_c1_Collision.bin",
@@ -819,6 +833,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT3_MORPH_CZ",
                         "todo:inGameName",
+                        "unit3_morph_CZ",
                         "unit3_morph_CZ_Model.bin",
                         "unit3_morph_CZ_Anim.bin",
                         "unit3_morph_CZ_Collision.bin",
@@ -846,6 +861,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_LAND",
                         "todo:inGameName",
+                        "unit1_Land",
                         "unit1_Land_Model.bin",
                         "unit1_Land_Anim.bin",
                         "unit1_Land_Collision.bin",
@@ -873,6 +889,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_C0",
                         "todo:inGameName",
+                        "unit1_C0",
                         "unit1_C0_Model.bin",
                         "unit1_C0_Anim.bin",
                         "unit1_C0_Collision.bin",
@@ -900,6 +917,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_RM1",
                         "todo:inGameName",
+                        "unit1_RM1",
                         "unit1_RM1_Model.bin",
                         "unit1_RM1_Anim.bin",
                         "unit1_RM1_Collision.bin",
@@ -927,6 +945,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_C4",
                         "todo:inGameName",
+                        "unit1_C4",
                         "unit1_C4_Model.bin",
                         "unit1_C4_Anim.bin",
                         "unit1_C4_Collision.bin",
@@ -954,6 +973,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_RM6",
                         "todo:inGameName",
+                        "unit1_RM6",
                         "unit1_RM6_Model.bin",
                         "unit1_RM6_Anim.bin",
                         "unit1_RM6_Collision.bin",
@@ -981,6 +1001,7 @@ namespace MphRead
                     new RoomMetadata(
                         "CRYSTALROOM",
                         "todo:inGameName",
+                        "crystalroom",
                         "crystalroom_Model.bin",
                         "crystalroom_anim.bin",
                         "crystalroom_collision.bin",
@@ -1008,6 +1029,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_RM4",
                         "todo:inGameName",
+                        "mp3",
                         "mp3_Model.bin",
                         "mp3_Anim.bin",
                         "mp3_Collision.bin",
@@ -1035,6 +1057,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_TP1",
                         "todo:inGameName",
+                        "TeleportRoom",
                         "TeleportRoom_Model.bin",
                         "TeleportRoom_Anim.bin",
                         "TeleportRoom_Collision.bin",
@@ -1062,6 +1085,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_B1",
                         "todo:inGameName",
+                        "bigeyeroom",
                         "bigeyeroom_Model.bin",
                         "bigeyeroom_Anim.bin",
                         "bigeyeroom_Collision.bin",
@@ -1089,6 +1113,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_C1",
                         "todo:inGameName",
+                        "unit1_C1",
                         "unit1_C1_Model.bin",
                         "unit1_C1_Anim.bin",
                         "unit1_C1_Collision.bin",
@@ -1116,6 +1141,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_C2",
                         "todo:inGameName",
+                        "unit1_C2",
                         "unit1_C2_Model.bin",
                         "unit1_C2_Anim.bin",
                         "unit1_C2_Collision.bin",
@@ -1143,6 +1169,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_C5",
                         "todo:inGameName",
+                        "unit1_C5",
                         "unit1_C5_Model.bin",
                         "unit1_C5_Anim.bin",
                         "unit1_C5_Collision.bin",
@@ -1170,6 +1197,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_RM2",
                         "todo:inGameName",
+                        "unit1_rm2",
                         "unit1_rm2_Model.bin",
                         "unit1_rm2_Anim.bin",
                         "unit1_rm2_Collision.bin",
@@ -1197,6 +1225,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_RM3",
                         "todo:inGameName",
+                        "unit1_rm3",
                         "unit1_rm3_Model.bin",
                         "unit1_rm3_Anim.bin",
                         "unit1_rm3_Collision.bin",
@@ -1224,6 +1253,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_RM5",
                         "todo:inGameName",
+                        "mp7",
                         "mp7_Model.bin",
                         "mp7_Anim.bin",
                         "mp7_Collision.bin",
@@ -1251,6 +1281,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_C3",
                         "todo:inGameName",
+                        "unit1_C3",
                         "unit1_C3_Model.bin",
                         "unit1_C3_Anim.bin",
                         "unit1_C3_Collision.bin",
@@ -1278,6 +1309,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_TP2",
                         "todo:inGameName",
+                        "TeleportRoom",
                         "TeleportRoom_Model.bin",
                         "TeleportRoom_Anim.bin",
                         "TeleportRoom_Collision.bin",
@@ -1305,6 +1337,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1_B2",
                         "todo:inGameName",
+                        "cylinderroom",
                         "cylinderroom_Model.bin",
                         "cylinderroom_Anim.bin",
                         "cylinderroom_Collision.bin",
@@ -1332,6 +1365,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_LAND",
                         "todo:inGameName",
+                        "unit2_Land",
                         "unit2_Land_Model.bin",
                         "unit2_Land_Anim.bin",
                         "unit2_Land_Collision.bin",
@@ -1359,6 +1393,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_C0",
                         "todo:inGameName",
+                        "unit2_C0",
                         "unit2_C0_Model.bin",
                         "unit2_C0_Anim.bin",
                         "unit2_C0_Collision.bin",
@@ -1386,6 +1421,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_C1",
                         "todo:inGameName",
+                        "unit2_C1",
                         "unit2_C1_Model.bin",
                         "unit2_C1_Anim.bin",
                         "unit2_C1_Collision.bin",
@@ -1413,6 +1449,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_RM1",
                         "todo:inGameName",
+                        "mp1",
                         "mp1_Model.bin",
                         "mp1_Anim.bin",
                         "mp1_Collision.bin",
@@ -1440,6 +1477,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_C2",
                         "todo:inGameName",
+                        "unit2_C2",
                         "unit2_C2_Model.bin",
                         "unit2_C2_Anim.bin",
                         "unit2_C2_Collision.bin",
@@ -1467,6 +1505,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_RM2",
                         "todo:inGameName",
+                        "mp1",
                         "mp1_Model.bin",
                         "mp1_Anim.bin",
                         "mp1_Collision.bin",
@@ -1494,6 +1533,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_C3",
                         "todo:inGameName",
+                        "unit2_C3",
                         "unit2_C3_Model.bin",
                         "unit2_C3_Anim.bin",
                         "unit2_C3_Collision.bin",
@@ -1521,6 +1561,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_RM3",
                         "todo:inGameName",
+                        "unit2_RM3",
                         "unit2_RM3_Model.bin",
                         "unit2_RM3_Anim.bin",
                         "unit2_RM3_Collision.bin",
@@ -1548,6 +1589,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_C4",
                         "todo:inGameName",
+                        "unit2_C4",
                         "unit2_C4_Model.bin",
                         "unit2_C4_Anim.bin",
                         "unit2_C4_Collision.bin",
@@ -1575,6 +1617,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_TP1",
                         "todo:inGameName",
+                        "TeleportRoom",
                         "TeleportRoom_Model.bin",
                         "TeleportRoom_Anim.bin",
                         "TeleportRoom_Collision.bin",
@@ -1602,6 +1645,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_B1",
                         "todo:inGameName",
+                        "cylinderroom",
                         "cylinderroom_Model.bin",
                         "cylinderroom_Anim.bin",
                         "cylinderroom_Collision.bin",
@@ -1629,6 +1673,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_C6",
                         "todo:inGameName",
+                        "unit2_C6",
                         "unit2_C6_Model.bin",
                         "unit2_C6_Anim.bin",
                         "unit2_C6_Collision.bin",
@@ -1656,6 +1701,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_C7",
                         "todo:inGameName",
+                        "unit2_C7",
                         "unit2_C7_Model.bin",
                         "unit2_C7_Anim.bin",
                         "unit2_C7_Collision.bin",
@@ -1683,6 +1729,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_RM4",
                         "todo:inGameName",
+                        "unit2_RM4",
                         "unit2_RM4_Model.bin",
                         "unit2_RM4_Anim.bin",
                         "unit2_RM4_Collision.bin",
@@ -1710,6 +1757,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_RM5",
                         "todo:inGameName",
+                        "mp10",
                         "mp10_Model.bin",
                         "mp10_Anim.bin",
                         "mp10_Collision.bin",
@@ -1737,6 +1785,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_RM6",
                         "todo:inGameName",
+                        "mp10",
                         "mp10_Model.bin",
                         "mp10_Anim.bin",
                         "mp10_Collision.bin",
@@ -1764,6 +1813,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_RM7",
                         "todo:inGameName",
+                        "mp10",
                         "mp10_Model.bin",
                         "mp10_Anim.bin",
                         "mp10_Collision.bin",
@@ -1791,6 +1841,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_RM8",
                         "todo:inGameName",
+                        "unit2_RM8",
                         "unit2_RM8_Model.bin",
                         "unit2_RM8_Anim.bin",
                         "unit2_RM8_Collision.bin",
@@ -1818,6 +1869,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_TP2",
                         "todo:inGameName",
+                        "TeleportRoom",
                         "TeleportRoom_Model.bin",
                         "TeleportRoom_Anim.bin",
                         "TeleportRoom_Collision.bin",
@@ -1845,6 +1897,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2_B2",
                         "todo:inGameName",
+                        "bigeyeroom",
                         "bigeyeroom_Model.bin",
                         "bigeyeroom_Anim.bin",
                         "bigeyeroom_Collision.bin",
@@ -1872,6 +1925,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT3_LAND",
                         "todo:inGameName",
+                        "unit3_Land",
                         "unit3_Land_Model.bin",
                         "unit3_Land_Anim.bin",
                         "unit3_Land_Collision.bin",
@@ -1899,6 +1953,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT3_C0",
                         "todo:inGameName",
+                        "unit3_C0",
                         "unit3_C0_Model.bin",
                         "unit3_C0_Anim.bin",
                         "unit3_C0_Collision.bin",
@@ -1926,6 +1981,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT3_C2",
                         "todo:inGameName",
+                        "unit3_c2",
                         "unit3_c2_Model.bin",
                         "unit3_c2_Anim.bin",
                         "unit3_c2_Collision.bin",
@@ -1953,6 +2009,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT3_RM1",
                         "todo:inGameName",
+                        "unit3_rm1",
                         "unit3_rm1_Model.bin",
                         "unit3_rm1_Anim.bin",
                         "unit3_rm1_Collision.bin",
@@ -1980,6 +2037,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT3_RM4",
                         "todo:inGameName",
+                        "mp5",
                         "mp5_Model.bin",
                         "mp5_Anim.bin",
                         "mp5_Collision.bin",
@@ -2007,6 +2065,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT3_TP1",
                         "todo:inGameName",
+                        "TeleportRoom",
                         "TeleportRoom_Model.bin",
                         "TeleportRoom_Anim.bin",
                         "TeleportRoom_Collision.bin",
@@ -2034,6 +2093,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT3_B1",
                         "todo:inGameName",
+                        "cylinderroom",
                         "cylinderroom_Model.bin",
                         "cylinderroom_Anim.bin",
                         "cylinderroom_Collision.bin",
@@ -2061,6 +2121,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT3_C1",
                         "todo:inGameName",
+                        "unit3_C1",
                         "unit3_C1_Model.bin",
                         "unit3_C1_Anim.bin",
                         "unit3_C1_Collision.bin",
@@ -2088,6 +2149,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT3_RM2",
                         "todo:inGameName",
+                        "unit3_rm2",
                         "unit3_rm2_Model.bin",
                         "unit3_rm2_Anim.bin",
                         "unit3_rm2_Collision.bin",
@@ -2115,6 +2177,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT3_RM3",
                         "todo:inGameName",
+                        "e3Level",
                         "e3Level_Model.bin",
                         "e3Level_Anim.bin",
                         "e3Level_Collision.bin",
@@ -2142,6 +2205,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT3_TP2",
                         "todo:inGameName",
+                        "TeleportRoom",
                         "TeleportRoom_Model.bin",
                         "TeleportRoom_Anim.bin",
                         "TeleportRoom_Collision.bin",
@@ -2169,6 +2233,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT3_B2",
                         "todo:inGameName",
+                        "bigeyeroom",
                         "bigeyeroom_Model.bin",
                         "bigeyeroom_Anim.bin",
                         "bigeyeroom_Collision.bin",
@@ -2196,6 +2261,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT4_LAND",
                         "todo:inGameName",
+                        "unit4_Land",
                         "unit4_Land_Model.bin",
                         "unit4_Land_Anim.bin",
                         "unit4_Land_Collision.bin",
@@ -2223,6 +2289,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT4_RM1",
                         "todo:inGameName",
+                        "unit4_RM1",
                         "unit4_RM1_Model.bin",
                         "unit4_RM1_Anim.bin",
                         "unit4_RM1_Collision.bin",
@@ -2250,6 +2317,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT4_RM3",
                         "todo:inGameName",
+                        "mp12",
                         "mp12_Model.bin",
                         "mp12_Anim.bin",
                         "mp12_Collision.bin",
@@ -2277,6 +2345,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT4_C0",
                         "todo:inGameName",
+                        "unit4_C0",
                         "unit4_C0_Model.bin",
                         "unit4_C0_Anim.bin",
                         "unit4_C0_Collision.bin",
@@ -2304,6 +2373,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT4_TP1",
                         "todo:inGameName",
+                        "TeleportRoom",
                         "TeleportRoom_Model.bin",
                         "TeleportRoom_Anim.bin",
                         "TeleportRoom_Collision.bin",
@@ -2331,6 +2401,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT4_B1",
                         "todo:inGameName",
+                        "bigeyeroom",
                         "bigeyeroom_Model.bin",
                         "bigeyeroom_Anim.bin",
                         "bigeyeroom_Collision.bin",
@@ -2358,6 +2429,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT4_C1",
                         "todo:inGameName",
+                        "unit4_c1",
                         "unit4_c1_Model.bin",
                         "unit4_c1_Anim.bin",
                         "unit4_c1_Collision.bin",
@@ -2385,6 +2457,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT4_RM2",
                         "todo:inGameName",
+                        "unit4_rm2",
                         "unit4_rm2_Model.bin",
                         "unit4_rm2_Anim.bin",
                         "unit4_rm2_Collision.bin",
@@ -2412,6 +2485,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT4_RM4",
                         "todo:inGameName",
+                        "mp11",
                         "mp11_Model.bin",
                         "mp11_Anim.bin",
                         "mp11_Collision.bin",
@@ -2439,6 +2513,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT4_RM5",
                         "todo:inGameName",
+                        "unit4_rm5",
                         "unit4_rm5_Model.bin",
                         "unit4_rm5_Anim.bin",
                         "unit4_rm5_Collision.bin",
@@ -2466,6 +2541,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT4_TP2",
                         "todo:inGameName",
+                        "TeleportRoom",
                         "TeleportRoom_Model.bin",
                         "TeleportRoom_Anim.bin",
                         "TeleportRoom_Collision.bin",
@@ -2493,6 +2569,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT4_B2",
                         "todo:inGameName",
+                        "cylinderroom",
                         "cylinderroom_Model.bin",
                         "cylinderroom_Anim.bin",
                         "cylinderroom_Collision.bin",
@@ -2520,6 +2597,7 @@ namespace MphRead
                     new RoomMetadata(
                         "Gorea_Land",
                         "todo:inGameName",
+                        "Gorea_Land",
                         "Gorea_Land_Model.bin",
                         "Gorea_Land_Anim.bin",
                         "Gorea_Land_Collision.bin",
@@ -2547,6 +2625,7 @@ namespace MphRead
                     new RoomMetadata(
                         "Gorea_Peek",
                         "todo:inGameName",
+                        "Gorea_b2",
                         "Gorea_b2_Model.bin",
                         "Gorea_b2_Anim.bin",
                         "Gorea_b2_Collision.bin",
@@ -2574,6 +2653,7 @@ namespace MphRead
                     new RoomMetadata(
                         "Gorea_b1",
                         "todo:inGameName",
+                        "Gorea_b1",
                         "Gorea_b1_Model.bin",
                         "Gorea_b1_Anim.bin",
                         "Gorea_b1_Collision.bin",
@@ -2601,6 +2681,7 @@ namespace MphRead
                     new RoomMetadata(
                         "Gorea_b2",
                         "todo:inGameName",
+                        "Gorea_b2",
                         "Gorea_b2_Model.bin",
                         "Gorea_b2_Anim.bin",
                         "Gorea_b2_Collision.bin",
@@ -2628,6 +2709,7 @@ namespace MphRead
                     new RoomMetadata(
                         "MP1 SANCTORUS",
                         "todo:inGameName",
+                        "mp1",
                         "mp1_Model.bin",
                         "mp1_Anim.bin",
                         "mp1_Collision.bin",
@@ -2655,6 +2737,7 @@ namespace MphRead
                     new RoomMetadata(
                         "MP2 HARVESTER",
                         "todo:inGameName",
+                        "mp2",
                         "mp2_Model.bin",
                         "mp2_Anim.bin",
                         "mp2_Collision.bin",
@@ -2682,6 +2765,7 @@ namespace MphRead
                     new RoomMetadata(
                         "MP3 PROVING GROUND",
                         "todo:inGameName",
+                        "mp3",
                         "mp3_Model.bin",
                         "mp3_Anim.bin",
                         "mp3_Collision.bin",
@@ -2709,6 +2793,7 @@ namespace MphRead
                     new RoomMetadata(
                         "MP4 HIGHGROUND - EXPANDED",
                         "todo:inGameName",
+                        "mp4",
                         "mp4_Model.bin",
                         "mp4_Anim.bin",
                         "mp4_Collision.bin",
@@ -2736,6 +2821,7 @@ namespace MphRead
                     new RoomMetadata(
                         "MP4 HIGHGROUND",
                         "todo:inGameName",
+                        "unit1_rm1",
                         "unit1_rm1_Model.bin",
                         "unit1_rm1_Anim.bin",
                         "unit1_rm1_Collision.bin",
@@ -2763,6 +2849,7 @@ namespace MphRead
                     new RoomMetadata(
                         "MP5 FUEL SLUICE",
                         "todo:inGameName",
+                        "mp5",
                         "mp5_Model.bin",
                         "mp5_Anim.bin",
                         "mp5_Collision.bin",
@@ -2790,6 +2877,7 @@ namespace MphRead
                     new RoomMetadata(
                         "MP6 HEADSHOT",
                         "todo:inGameName",
+                        "mp6",
                         "mp6_Model.bin",
                         "mp6_Anim.bin",
                         "mp6_Collision.bin",
@@ -2817,6 +2905,7 @@ namespace MphRead
                     new RoomMetadata(
                         "MP7 PROCESSOR CORE",
                         "todo:inGameName",
+                        "mp7",
                         "mp7_Model.bin",
                         "mp7_Anim.bin",
                         "mp7_Collision.bin",
@@ -2844,6 +2933,7 @@ namespace MphRead
                     new RoomMetadata(
                         "MP8 FIRE CONTROL",
                         "todo:inGameName",
+                        "mp8",
                         "mp8_Model.bin",
                         "mp8_Anim.bin",
                         "mp8_Collision.bin",
@@ -2871,6 +2961,7 @@ namespace MphRead
                     new RoomMetadata(
                         "MP9 CRYOCHASM",
                         "todo:inGameName",
+                        "mp9",
                         "mp9_Model.bin",
                         "mp9_Anim.bin",
                         "mp9_Collision.bin",
@@ -2898,6 +2989,7 @@ namespace MphRead
                     new RoomMetadata(
                         "MP10 OVERLOAD",
                         "todo:inGameName",
+                        "mp10",
                         "mp10_Model.bin",
                         "mp10_Anim.bin",
                         "mp10_Collision.bin",
@@ -2925,6 +3017,7 @@ namespace MphRead
                     new RoomMetadata(
                         "MP11 BREAKTHROUGH",
                         "todo:inGameName",
+                        "mp11",
                         "mp11_Model.bin",
                         "mp11_Anim.bin",
                         "mp11_Collision.bin",
@@ -2952,6 +3045,7 @@ namespace MphRead
                     new RoomMetadata(
                         "MP12 SIC TRANSIT",
                         "todo:inGameName",
+                        "mp12",
                         "mp12_Model.bin",
                         "mp12_Anim.bin",
                         "mp12_Collision.bin",
@@ -2979,6 +3073,7 @@ namespace MphRead
                     new RoomMetadata(
                         "MP13 ACCELERATOR",
                         "todo:inGameName",
+                        "mp13",
                         "mp13_Model.bin",
                         "mp13_Anim.bin",
                         "mp13_Collision.bin",
@@ -3006,6 +3101,7 @@ namespace MphRead
                     new RoomMetadata(
                         "MP14 OUTER REACH",
                         "todo:inGameName",
+                        "mp14",
                         "mp14_Model.bin",
                         "mp14_Anim.bin",
                         "mp14_Collision.bin",
@@ -3033,6 +3129,7 @@ namespace MphRead
                     new RoomMetadata(
                         "CTF1 FAULT LINE - EXPANDED",
                         "todo:inGameName",
+                        "ctf1",
                         "ctf1_Model.bin",
                         "ctf1_Anim.bin",
                         "ctf1_Collision.bin",
@@ -3060,6 +3157,7 @@ namespace MphRead
                     new RoomMetadata(
                         "CTF1_FAULT LINE",
                         "todo:inGameName",
+                        "unit4_rm5",
                         "unit4_rm5_Model.bin",
                         "unit4_rm5_Anim.bin",
                         "unit4_rm5_Collision.bin",
@@ -3087,6 +3185,7 @@ namespace MphRead
                     new RoomMetadata(
                         "AD1 TRANSFER LOCK BT",
                         "todo:inGameName",
+                        "ad1",
                         "ad1_Model.bin",
                         "ad1_Anim.bin",
                         "ad1_Collision.bin",
@@ -3114,6 +3213,7 @@ namespace MphRead
                     new RoomMetadata(
                         "AD1 TRANSFER LOCK DM",
                         "todo:inGameName",
+                        "unit2_rm4",
                         "unit2_rm4_Model.bin",
                         "unit2_rm4_Anim.bin",
                         "unit2_rm4_Collision.bin",
@@ -3141,6 +3241,7 @@ namespace MphRead
                     new RoomMetadata(
                         "AD2 MAGMA VENTS",
                         "todo:inGameName",
+                        "ad2",
                         "ad2_Model.bin",
                         "ad2_Anim.bin",
                         "ad2_Collision.bin",
@@ -3168,6 +3269,7 @@ namespace MphRead
                     new RoomMetadata(
                         "AD2 ALINOS PERCH",
                         "todo:inGameName",
+                        "unit1_rm2",
                         "unit1_rm2_Model.bin",
                         "unit1_rm2_Anim.bin",
                         "unit1_rm2_Collision.bin",
@@ -3195,6 +3297,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT1 ALINOS LANDFALL",
                         "todo:inGameName",
+                        "unit1_Land",
                         "unit1_Land_Model.bin",
                         "unit1_Land_Anim.bin",
                         "unit1_Land_Collision.bin",
@@ -3222,6 +3325,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT2 LANDING BAY",
                         "todo:inGameName",
+                        "unit2_Land",
                         "unit2_Land_Model.bin",
                         "unit2_Land_Anim.bin",
                         "unit2_Land_Collision.bin",
@@ -3249,6 +3353,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT 3 VESPER STARPORT",
                         "todo:inGameName",
+                        "unit3_Land",
                         "unit3_Land_Model.bin",
                         "unit3_Land_Anim.bin",
                         "unit3_Land_Collision.bin",
@@ -3276,6 +3381,7 @@ namespace MphRead
                     new RoomMetadata(
                         "UNIT 4 ARCTERRA BASE",
                         "todo:inGameName",
+                        "unit4_land",
                         "unit4_land_Model.bin",
                         "unit4_land_Anim.bin",
                         "unit4_land_Collision.bin",
@@ -3303,6 +3409,7 @@ namespace MphRead
                     new RoomMetadata(
                         "Gorea Prison",
                         "todo:inGameName",
+                        "Gorea_b2",
                         "Gorea_b2_Model.bin",
                         "Gorea_b2_Anim.bin",
                         "Gorea_b2_Collision.bin",
@@ -3330,6 +3437,7 @@ namespace MphRead
                     new RoomMetadata(
                         "E3 FIRST HUNT",
                         "todo:inGameName",
+                        "e3Level",
                         "e3Level_Model.bin",
                         "e3Level_Anim.bin",
                         "e3Level_Collision.bin",
@@ -3357,6 +3465,7 @@ namespace MphRead
                     new RoomMetadata(
                         "Level TestLevel",
                         "todo:inGameName",
+                        "testLevel",
                         "testLevel_Model.bin",
                         "testLevel_Anim.bin",
                         "testLevel_Collision.bin",
@@ -3384,6 +3493,7 @@ namespace MphRead
                     new RoomMetadata(
                         "Level AbeTest",
                         "todo:inGameName",
+                        "testLevel",
                         "testLevel_Model.bin",
                         "testLevel_Anim.bin",
                         "testLevel_Collision.bin",

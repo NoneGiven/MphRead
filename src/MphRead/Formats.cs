@@ -380,16 +380,13 @@ namespace MphRead
         Mirror = 2
     }
 
-    // Unknown3:
-    // - JumpPad_Beam    > blinn6    (tex 0, pal 0)
-    // - TeleporterSmall > lambert22 (tex 2, pal 2)
     public enum RenderMode : byte
     {
         Normal = 0,
         Decal = 1,
         Translucent = 2,
         Unknown3 = 3,
-        Unknown4 = 4 // ?
+        Unknown4 = 4
     }
 
     public enum CullingMode : byte
@@ -513,14 +510,42 @@ namespace MphRead
         public readonly ushort MatrixCount;
     }
 
+    public enum EntityType
+    {
+        Platform = 0x0,
+        Object = 0x1,
+        AlimbicDoor = 0x3,
+        Item = 0x4,
+        Pickup = 0x6,
+        JumpPad = 0x9,
+        Teleporter = 0xE,
+        Artifact = 0x11,
+        CameraSeq = 0x12,
+        ForceField = 0x13,
+        EnergyBeam = 0x1A,
+    }
+
+    public enum NodeLayer
+    {
+        Multiplayer0 = 0x0008,
+        Multiplayer1 = 0x0010,
+        MultiplayerU = 0x0020,
+        CaptureTheFlag = 0x4000
+    }
+
     // size: 4
     public readonly struct Float
     {
-        public Float(int intValue)
+        public static float FromFixed(int intValue)
         {
-            Value = intValue / (float)(1 << 12);
+            return intValue / (float)(1 << 12);
         }
 
+        public Float(int intValue)
+        {
+            Value = FromFixed(intValue);
+        }
+        
         public Float(double floatValue)
         {
             Value = (float)(floatValue > 0
@@ -615,6 +640,7 @@ namespace MphRead
         public readonly ushort ChildId;
         public readonly ushort NextId;
         public readonly ushort Field46;
+        // todo: good candidate for RawNode vs. Node
         public readonly uint Enabled;
         public readonly ushort MeshCount;
         public readonly ushort MeshId;

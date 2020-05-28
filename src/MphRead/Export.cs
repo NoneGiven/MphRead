@@ -566,9 +566,9 @@ namespace MphRead
                         {
                             z = (int)(z | 0xFFFF0000);
                         }
-                        vtx_state[0] = x / 4096.0f;
-                        vtx_state[1] = y / 4096.0f;
-                        vtx_state[2] = z / 4096.0f;
+                        vtx_state[0] = Float.FromFixed(x);
+                        vtx_state[1] = Float.FromFixed(y);
+                        vtx_state[2] = Float.FromFixed(z);
                         if (curMeshActive)
                         {
                             meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state));
@@ -615,8 +615,8 @@ namespace MphRead
                         {
                             y = (int)(y | 0xFFFF0000);
                         }
-                        vtx_state[0] = x / 4096.0f;
-                        vtx_state[1] = y / 4096.0f;
+                        vtx_state[0] = Float.FromFixed(x);
+                        vtx_state[1] = Float.FromFixed(y);
                         if (curMeshActive)
                         {
                             meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state));
@@ -636,8 +636,8 @@ namespace MphRead
                         {
                             z = (int)(z | 0xFFFF0000);
                         }
-                        vtx_state[0] = x / 4096.0f;
-                        vtx_state[2] = z / 4096.0f;
+                        vtx_state[0] = Float.FromFixed(x);
+                        vtx_state[2] = Float.FromFixed(z);
                         if (curMeshActive)
                         {
                             meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state));
@@ -657,8 +657,8 @@ namespace MphRead
                         {
                             z = (int)(z | 0xFFFF0000);
                         }
-                        vtx_state[1] = y / 4096.0f;
-                        vtx_state[2] = z / 4096.0f;
+                        vtx_state[1] = Float.FromFixed(y);
+                        vtx_state[2] = Float.FromFixed(z);
                         if (curMeshActive)
                         {
                             meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state));
@@ -683,9 +683,9 @@ namespace MphRead
                         {
                             z = (int)(z | 0xFFFFFC00);
                         }
-                        vtx_state[0] += x / 4096.0f;
-                        vtx_state[1] += y / 4096.0f;
-                        vtx_state[2] += z / 4096.0f;
+                        vtx_state[0] += Float.FromFixed(x);
+                        vtx_state[1] += Float.FromFixed(y);
+                        vtx_state[2] += Float.FromFixed(z);
                         if (curMeshActive)
                         {
                             meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state));
