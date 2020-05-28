@@ -93,7 +93,7 @@ namespace MphRead
             string path = Path.Combine(Paths.FileSystem, modelPath);
             ReadOnlySpan<byte> initialBytes = ReadBytes(path);
             Header header = ReadStruct<Header>(initialBytes[0..Sizes.Header]);
-            IReadOnlyList<Bone> bones = DoOffsets<Bone>(initialBytes, header.BoneOffset, header.BoneCount);
+            IReadOnlyList<RawNode> nodes = DoOffsets<RawNode>(initialBytes, header.NodeOffset, header.NodeCount);
             IReadOnlyList<Mesh> meshes = DoOffsets<Mesh>(initialBytes, header.MeshOffset, header.MeshCount);
             IReadOnlyList<DisplayList> dlists = DoOffsets<DisplayList>(initialBytes, header.DlistOffset, header.MeshCount);
             var instructions = new List<IReadOnlyList<RenderInstruction>>();
@@ -142,7 +142,7 @@ namespace MphRead
                 }
                 recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
             }
-            return new Model(name, header, bones, meshes, materials, dlists, instructions, recolors, defaultRecolor);
+            return new Model(name, header, nodes, meshes, materials, dlists, instructions, recolors, defaultRecolor);
         }
 
         private static ReadOnlySpan<byte> ReadBytes(string path)

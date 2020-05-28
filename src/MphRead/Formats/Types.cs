@@ -1,69 +1,70 @@
 namespace MphRead
 {
     // size: 4
-    public readonly struct Float
+    public readonly struct Fixed
     {
-        public static float FromFixed(int intValue)
-        {
-            return intValue / (float)(1 << 12);
-        }
+        public int Value { get; }
 
-        public Float(int intValue)
-        {
-            Value = FromFixed(intValue);
-        }
+        public float FloatValue => ToFloat(Value);
 
-        public Float(double floatValue)
+        public static float ToFloat(int value)
         {
-            Value = (float)(floatValue > 0
-                ? (floatValue) * (1 << 12) + 0.5f
-                : (floatValue) * (1 << 12) - 0.5f);
+            return value / (float)(1 << 12);
         }
-
-        public Float(float floatValue)
-        {
-            Value = floatValue > 0
-                ? (floatValue) * (1 << 12) + 0.5f
-                : (floatValue) * (1 << 12) - 0.5f;
-        }
-
-        public float Value { get; }
     }
 
     // size: 12
-    public readonly struct Vector3
+    public readonly struct Vector3Fx
     {
-        public Vector3(Float x, Float y, Float z)
-        {
-            X = x;
-            Y = y;
-            Z = z;
-        }
+        public readonly Fixed X;
+        public readonly Fixed Y;
+        public readonly Fixed Z;
+    }
 
-        public Vector3(int x, int y, int z)
-        {
-            X = new Float(x);
-            Y = new Float(y);
-            Z = new Float(z);
-        }
+    // size: 48
+    public readonly struct Matrix43Fx
+    {
+        public readonly Vector3Fx One;
+        public readonly Vector3Fx Two;
+        public readonly Vector3Fx Three;
+        public readonly Vector3Fx Four;
+    }
+
+    public struct Vector3
+    {
+        public float X;
+        public float Y;
+        public float Z;
 
         public Vector3(double x, double y, double z)
         {
-            X = new Float(x);
-            Y = new Float(y);
-            Z = new Float(z);
+            X = (float)x;
+            Y = (float)y;
+            Z = (float)z;
         }
 
-        public Vector3(float x, float y, float z)
+        public Vector3(Vector3Fx vector)
         {
-            X = new Float(x);
-            Y = new Float(y);
-            Z = new Float(z);
+            X = vector.X.FloatValue;
+            Y = vector.Y.FloatValue;
+            Z = vector.Z.FloatValue;
         }
+    }
 
-        public readonly Float X;
-        public readonly Float Y;
-        public readonly Float Z;
+    public struct Matrix43
+    {
+        public Vector3 One;
+        public Vector3 Two;
+        public Vector3 Three;
+        public Vector3 Four;
+
+        public Matrix43(Matrix43Fx matrix)
+        {
+            One = new Vector3(matrix.One);
+            Two = new Vector3(matrix.Two);
+            Three = new Vector3(matrix.Three);
+            Four = new Vector3(matrix.Four);
+        }
     }
 
     // size: 3

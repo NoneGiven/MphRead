@@ -114,32 +114,27 @@ namespace MphRead
                 roomLayerMask = -1;
             }
             Model model = Read.GetRoomByName(name);
-            // todo: use scene scale>
-            float sceneScale = Float.FromFixed(model.Header.ScaleBase) * (1 << (int)model.Header.ScaleFactor);
+            // todo: use scene scale?
+            float sceneScale = model.Header.ScaleBase.FloatValue * (1 << (int)model.Header.ScaleFactor);
             // todo: do whatever with NodePosition/NodeInitialPosition?
-            // todo: convert each node's scale/angle/pos (RawNode vs. Node)
             // todo: use this name and ID?
             string nodeName = "rmMain";
             int nodeId = -1;
-            int nodeIndex = model.Bones.IndexOf(b => b.Name.StartsWith("rm"));
+            int nodeIndex = model.Nodes.IndexOf(b => b.Name.StartsWith("rm"));
             if (nodeIndex != -1)
             {
-                nodeName = model.Bones[nodeIndex].Name;
-                nodeId = model.Bones[nodeIndex].ChildId;
+                nodeName = model.Nodes[nodeIndex].Name;
+                nodeId = model.Nodes[nodeIndex].ChildId;
             }
             FilterNodes(model, roomLayerMask);
-            // todo: convert each materials's scale/translate s/t
             // todo: scene min/max coordinates?
             // todo: compute node matrices
             _models.Add(model);
         }
 
-        // todo: remove this
-        private readonly HashSet<string> _tempDisabledNodes = new HashSet<string>();
-
         private void FilterNodes(Model model, int layerMask)
         {
-            foreach (Bone node in model.Bones.Where(b => b.Name.StartsWith("_")))
+            foreach (Node node in model.Nodes.Where(b => b.Name.StartsWith("_")))
             {
                 int flags = 0;
                 // we actually have to step through 4 characters at a time rather than using Contains,
@@ -171,8 +166,7 @@ namespace MphRead
                 }
                 if ((flags & layerMask) == 0)
                 {
-                    //node.Enabled = 0;
-                    _tempDisabledNodes.Add(model.Name + node.Name);
+                    node.Enabled = false;
                 }
             }
         }
@@ -500,9 +494,9 @@ namespace MphRead
                                 {
                                     z = (int)(z | 0xFFFF0000);
                                 }
-                                vtxX = Float.FromFixed(x);
-                                vtxY = Float.FromFixed(y);
-                                vtxZ = Float.FromFixed(z);
+                                vtxX = Fixed.ToFloat(x);
+                                vtxY = Fixed.ToFloat(y);
+                                vtxZ = Fixed.ToFloat(z);
                                 GL.Vertex3(vtxX, vtxY, vtxZ);
                             }
                             break;
@@ -543,8 +537,8 @@ namespace MphRead
                                 {
                                     y = (int)(y | 0xFFFF0000);
                                 }
-                                vtxX = Float.FromFixed(x);
-                                vtxY = Float.FromFixed(y);
+                                vtxX = Fixed.ToFloat(x);
+                                vtxY = Fixed.ToFloat(y);
                                 GL.Vertex3(vtxX, vtxY, vtxZ);
                             }
                             break;
@@ -561,8 +555,8 @@ namespace MphRead
                                 {
                                     z = (int)(z | 0xFFFF0000);
                                 }
-                                vtxX = Float.FromFixed(x);
-                                vtxZ = Float.FromFixed(z);
+                                vtxX = Fixed.ToFloat(x);
+                                vtxZ = Fixed.ToFloat(z);
                                 GL.Vertex3(vtxX, vtxY, vtxZ);
                             }
                             break;
@@ -579,8 +573,8 @@ namespace MphRead
                                 {
                                     z = (int)(z | 0xFFFF0000);
                                 }
-                                vtxY = Float.FromFixed(y);
-                                vtxZ = Float.FromFixed(z);
+                                vtxY = Fixed.ToFloat(y);
+                                vtxZ = Fixed.ToFloat(z);
                                 GL.Vertex3(vtxX, vtxY, vtxZ);
                             }
                             break;
@@ -602,9 +596,9 @@ namespace MphRead
                                 {
                                     z = (int)(z | 0xFFFFFC00);
                                 }
-                                vtxX += Float.FromFixed(x);
-                                vtxY += Float.FromFixed(y);
-                                vtxZ += Float.FromFixed(z);
+                                vtxX += Fixed.ToFloat(x);
+                                vtxY += Fixed.ToFloat(y);
+                                vtxZ += Fixed.ToFloat(z);
                                 GL.Vertex3(vtxX, vtxY, vtxZ);
                             }
                             break;

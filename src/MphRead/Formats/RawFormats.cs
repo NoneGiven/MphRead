@@ -74,12 +74,12 @@ namespace MphRead
         public readonly ushort TexcoordAnimationId;
         public readonly ushort Field62;
         public readonly uint MatrixId;
-        public readonly uint ScaleS;
-        public readonly uint ScaleT;
+        public readonly Fixed ScaleS;
+        public readonly Fixed ScaleT;
         public readonly ushort RotZ;
         public readonly ushort Field72;
-        public readonly uint TranslateS;
-        public readonly uint TranslateT;
+        public readonly Fixed TranslateS;
+        public readonly Fixed TranslateT;
         public readonly ushort MaterialAnimationId;
         public readonly ushort Field7E;
         public readonly byte PackedRepeatMode;
@@ -119,12 +119,12 @@ namespace MphRead
     public readonly struct Header
     {
         public readonly uint ScaleFactor;
-        public readonly int ScaleBase;
+        public readonly Fixed ScaleBase;
         public readonly uint Unknown3;
         public readonly uint Unknown4;
         public readonly uint MaterialOffset;
         public readonly uint DlistOffset;
-        public readonly uint BoneOffset;
+        public readonly uint NodeOffset;
         public readonly ushort NodeAnimationCount;
         public readonly byte Flags;
         public readonly byte Field1F;
@@ -141,7 +141,7 @@ namespace MphRead
         public readonly uint NodeInitialPosition;
         public readonly uint NodePosition;
         public readonly ushort MaterialCount;
-        public readonly ushort BoneCount;
+        public readonly ushort NodeCount;
         public readonly uint TextureMatrices;
         public readonly uint NodeAnimation;
         public readonly uint TextureCoordinateAnimations;
@@ -152,7 +152,7 @@ namespace MphRead
     }
 
     // size: ?
-    public readonly struct Bone
+    public readonly struct RawNode
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
         public readonly string Name;
@@ -160,26 +160,22 @@ namespace MphRead
         public readonly ushort ChildId;
         public readonly ushort NextId;
         public readonly ushort Field46;
-        // todo: good candidate for RawNode vs. Node
         public readonly uint Enabled;
         public readonly ushort MeshCount;
         public readonly ushort MeshId;
-        public readonly Vector3 Scale;
+        public readonly Vector3Fx Scale;
         public readonly short AngleX;
         public readonly short AngleY;
         public readonly short AngleZ;
         public readonly ushort Field62;
-        public readonly Vector3 Position;
+        public readonly Vector3Fx Position;
         public readonly uint Field70;
-        public readonly Vector3 Vector1;
-        public readonly Vector3 Vector2;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly byte Type;
         public readonly byte Field8D;
         public readonly ushort Field8E;
-        public readonly Vector3 NodeTransform0;
-        public readonly Vector3 NodeTransform1;
-        public readonly Vector3 NodeTransform2;
-        public readonly Vector3 NodeTransform3;
+        public readonly Matrix43Fx NodeTransform;
         public readonly uint FieldC0;
         public readonly uint FieldC4;
         public readonly uint FieldC8;

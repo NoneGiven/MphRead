@@ -11,7 +11,7 @@ namespace MphRead
     {
         public string Name { get; }
         public Header Header { get; }
-        public IReadOnlyList<Bone> Bones { get; }
+        public IReadOnlyList<Node> Nodes { get; }
         public IReadOnlyList<Mesh> Meshes { get; }
         public IReadOnlyList<Material> Materials { get; }
         public IReadOnlyList<DisplayList> DisplayLists { get; }
@@ -43,7 +43,7 @@ namespace MphRead
 
         public IReadOnlyList<Recolor> Recolors { get; }
 
-        public Model(string name, Header header, IReadOnlyList<Bone> bones, IReadOnlyList<Mesh> meshes,
+        public Model(string name, Header header, IReadOnlyList<RawNode> nodes, IReadOnlyList<Mesh> meshes,
             IReadOnlyList<Material> materials, IReadOnlyList<DisplayList> dlists,
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions, IReadOnlyList<Recolor> recolors,
             int defaultRecolor)
@@ -51,7 +51,7 @@ namespace MphRead
             ThrowIfInvalidEnums(materials);
             Name = name;
             Header = header;
-            Bones = bones;
+            Nodes = nodes.Select(n => new Node(n)).ToList();
             Meshes = meshes;
             Materials = materials;
             DisplayLists = dlists;
@@ -312,6 +312,44 @@ namespace MphRead
                     throw new ProgramException($"Invalid texture format {texture.Format}.");
                 }
             }
+        }
+    }
+
+    public class Node
+    {
+        public string Name { get; }
+        public int ParentId { get; }
+        public int ChildId { get; }
+        public int NextId { get; }
+        public bool Enabled { get; set; }
+        public int MeshCount { get; }
+        public int MeshId { get; }
+        public Vector3 Scale { get; set; }
+        public Vector3 Angle { get; set; }
+        public Vector3 Position { get; set; }
+        public Vector3 Vector1 { get; }
+        public Vector3 Vector2 { get; }
+        public Matrix43 NodeTransform { get; }
+        
+        public Node(RawNode raw)
+        {
+            Name = raw.Name;
+            ParentId = raw.ParentId;
+            ChildId = raw.ChildId;
+            NextId = raw.NextId;
+            Enabled = raw.Enabled != 0;
+            MeshCount = raw.MeshCount;
+            MeshId = raw.MeshId;
+            Scale = new Vector3(raw.Scale);
+            Angle = new Vector3(
+                raw.AngleX / 65536.0 * 2.0 * Math.PI,
+                raw.AngleY / 65536.0 * 2.0 * Math.PI,
+                raw.AngleZ / 65536.0 * 2.0 * Math.PI
+            );
+            Position = new Vector3(raw.Position);
+            Vector1 = new Vector3(raw.Vector1);
+            Vector2 = new Vector3(raw.Vector2);
+            NodeTransform = new Matrix43(raw.NodeTransform);
         }
     }
 
