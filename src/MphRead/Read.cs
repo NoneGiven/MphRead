@@ -243,7 +243,7 @@ namespace MphRead
             return new ColorRgba(red, green, blue, alpha);
         }
 
-        private static byte AlphaFromShort(ushort value) => (value & 0x8000) == 0x8000 ? (byte)255 : (byte)0;
+        private static byte AlphaFromShort(ushort value) => (value & 0x8000) == 0 ? (byte)255 : (byte)0;
 
         private static byte AlphaFromA5I3(byte value) => (byte)((value >> 3) / 31.0f * 255.0f);
 

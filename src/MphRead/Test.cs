@@ -125,12 +125,9 @@ namespace MphRead
         {
             foreach (Model model in GetAllModels())
             {
-                foreach (Texture tex in model.Textures)
+                foreach (Material material in model.Materials)
                 {
-                    if (tex.Format == TextureFormat.Palette8Bit)
-                    {
-                        System.Diagnostics.Debugger.Break();
-                    }
+
                 }
             }
         }

@@ -20,10 +20,11 @@ namespace MphRead
             }
             else
             {
+                //Test.TestRenderModes();
                 //Model model = Read.GetRoomByName("CRYSTALROOM");
                 //model.ExportImages();
                 renderer.AddRoom("MP3 PROVING GROUND");
-                renderer.AddModel(Read.GetModelByName("Trace_lod1"));
+                renderer.AddModel(Read.GetModelByName("pick_health_A"));
                 Nop();
             }
             renderer.Run();

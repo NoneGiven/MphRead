@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Mathematics;
 using OpenToolkit.Windowing.Common;
@@ -114,11 +115,11 @@ namespace MphRead
                 roomLayerMask = -1;
             }
             Model model = Read.GetRoomByName(name);
-            // todo: use room scale
-            float roomScale = Float.FromFixed(model.Header.ScaleBase) * (1 << (int)model.Header.ScaleFactor);
-            // todo: do whatever with NodePosition/NodeInitialPosition
-            // todo: convert each node's scale/angle/pos (RawNode vs. Node?)
-            // todo: use this name and ID (or remove this code)
+            // todo: use scene scale>
+            float sceneScale = Float.FromFixed(model.Header.ScaleBase) * (1 << (int)model.Header.ScaleFactor);
+            // todo: do whatever with NodePosition/NodeInitialPosition?
+            // todo: convert each node's scale/angle/pos (RawNode vs. Node)
+            // todo: use this name and ID?
             string nodeName = "rmMain";
             int nodeId = -1;
             int nodeIndex = model.Bones.IndexOf(b => b.Name.StartsWith("rm"));
@@ -129,6 +130,8 @@ namespace MphRead
             }
             FilterNodes(model, roomLayerMask);
             // todo: convert each materials's scale/translate s/t
+            // todo: scene min/max coordinates?
+            // todo: compute node matrices
             _models.Add(model);
         }
 
@@ -283,12 +286,47 @@ namespace MphRead
                 {
                     pixels.Add(((uint)255 << 0) | ((uint)255 << 8) | ((uint)255 << 16) | ((uint)255 << 24));
                 }
+
+                // todo:
+                // - if render mode is not Normal, but there are no non-opaque pixels, set to Normal
+                // - if render mode is Normal, but there are non-opaque pixels, set to AlphaTest
+                // - if render mode is Translucent, material alpha is 31, and texture format is DirectRgba, set to AlphaTest
                 
                 GL.BindTexture(TextureTarget.Texture2D, _textureCount);
                 GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
                     PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+                switch (material.XRepeat)
+                {
+                case RepeatMode.Clamp:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+                    break;
+                case RepeatMode.Repeat:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+                    break;
+                case RepeatMode.Mirror:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.MirroredRepeat);
+                    break;
+                }
+                switch (material.YRepeat)
+                {
+                case RepeatMode.Clamp:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+                    break;
+                case RepeatMode.Repeat:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+                    break;
+                case RepeatMode.Mirror:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat);
+                    break;
+                }
                 GL.BindTexture(TextureTarget.Texture2D, 0);
             }
         }
