@@ -35,7 +35,7 @@ namespace MphRead
 
         public void AddModel(string name, int recolor = 0)
         {
-            _window.AddModel(name, 0);
+            _window.AddModel(name, recolor);
         }
 
         public void Run()
@@ -65,7 +65,7 @@ namespace MphRead
 
     public class RenderWindow : GameWindow
     {
-        private readonly List<Model> _rooms = new List<Model>();
+        private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
 
         private float _angle = 0.0f;
@@ -92,13 +92,16 @@ namespace MphRead
 
         public void AddRoom(string name, int layerMask)
         {
-            if (_rooms.Count > 0)
+            if (_roomLoaded)
             {
                 throw new InvalidOperationException();
             }
-            _models.Add(SceneSetup.LoadRoom(name, layerMask));
+            _roomLoaded = true;
+            (Model model, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask);
+            _models.Add(model);
+            _models.AddRange(entities);
         }
-
+        
         public void AddModel(string name, int recolor)
         {
             Model model = Read.GetModelByName(name, recolor);

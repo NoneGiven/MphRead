@@ -3518,6 +3518,42 @@ namespace MphRead
                 }
             };
 
+        public static readonly IReadOnlyList<string> JumpPads = new List<string>()
+        {
+            "JumpPad",
+            "JumpPad_Alimbic",
+            "JumpPad_Ice",
+            "JumpPad_IceStation",
+            "JumpPad_Lava",
+            "JumpPad_Station"
+        };
+
+        public static readonly IReadOnlyList<string> Items = new List<string>()
+        {
+            "pick_health_B",
+            "pick_health_A",
+            "pick_health_C",
+            "pick_dblDamage",
+            "PickUp_EnergyExp",
+            "pick_wpn_electro",
+            "PickUp_MissileExp",
+            "pick_wpn_jackhammer",
+            "pick_wpn_snipergun",
+            "pick_wpn_shotgun",
+            "pick_wpn_mortar",
+            "pick_wpn_ghostbuster",
+            "pick_wpn_gorea",
+            "pick_ammo_green", // todo: dedup?
+            "pick_ammo_green",
+            "pick_ammo_orange",
+            "pick_ammo_orange",
+            "pick_invis",
+            "PickUp_AmmoExp",
+            "Artifact_Key",
+            "pick_deathball",
+            "pick_wpn_all"
+        };
+
         public static readonly IReadOnlyDictionary<string, EntityMetadata> EntityMetadata
             = new Dictionary<string, EntityMetadata>()
             {

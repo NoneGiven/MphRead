@@ -42,6 +42,9 @@ namespace MphRead
             }
         }
 
+        public Vector3 Position { get; set; }
+        public float Rotation { get; set; }
+        
         public IReadOnlyList<Recolor> Recolors { get; }
 
         public Model(string name, Header header, IReadOnlyList<RawNode> nodes, IReadOnlyList<Mesh> meshes,

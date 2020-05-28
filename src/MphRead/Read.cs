@@ -267,30 +267,27 @@ namespace MphRead
                 EntityEntry entry = ReadStruct<EntityEntry>(bytes[start..end]);
                 if ((entry.LayerMask & (1 << layerId)) != 0)
                 {
-                    // todo: probably going to have to read the different entity formats here
-                    int offset = (int)entry.DataOffset;
-                    var type = (EntityType)SpanReadUshort(bytes, ref offset);
-                    ushort someId = SpanReadUshort(bytes, ref offset);
+                    start = (int)entry.DataOffset;
+                    end = start + Sizes.EntityDataHeader;
+                    EntityDataHeader init = ReadStruct<EntityDataHeader>(bytes[start..end]);
+                    var type = (EntityType)init.Type;
+                    end = start + entry.Length;
+                    // todo: handle more entity types
                     if (type == EntityType.JumpPad)
                     {
-                        // Length includes the 4 bytes for offset and type
-                        Debug.Assert(entry.Length == Sizes.JumpPadEntityData + 4);
-                        start = offset;
-                        end = offset + Sizes.JumpPadEntityData;
+                        Debug.Assert(entry.Length == Sizes.JumpPadEntityData);
                         JumpPadEntityData data = ReadStruct<JumpPadEntityData>(bytes[start..end]);
-                        entities.Add(new Entity<JumpPadEntityData>(entry, type, someId, data));
+                        entities.Add(new Entity<JumpPadEntityData>(entry, type, init.SomeId, data));
                     }
                     else if (type == EntityType.Item || type == EntityType.Pickup)
                     {
-                        Debug.Assert(entry.Length == Sizes.ItemEntityData + 4);
-                        start = offset;
-                        end = offset + Sizes.ItemEntityData;
+                        Debug.Assert(entry.Length == Sizes.ItemEntityData);
                         ItemEntityData data = ReadStruct<ItemEntityData>(bytes[start..end]);
-                        entities.Add(new Entity<ItemEntityData>(entry, type, someId, data));
+                        entities.Add(new Entity<ItemEntityData>(entry, type, init.SomeId, data));
                     }
                     else
                     {
-                        entities.Add(new Entity(entry, type, someId));
+                        entities.Add(new Entity(entry, type, init.SomeId));
                     }
                 }
             }

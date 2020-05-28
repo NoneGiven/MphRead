@@ -2,13 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 
 namespace MphRead
 {
     public static class SceneSetup
     {
-        public static Model LoadRoom(string name, int layerMask)
+        private static readonly Random _random = new Random();
+
+        public static (Model, IReadOnlyList<Model>) LoadRoom(string name, int layerMask)
         {
             RoomMetadata? metadata = Metadata.GetRoomByName(name);
             if (metadata == null)
@@ -28,25 +29,26 @@ namespace MphRead
             {
                 roomLayerMask = -1;
             }
-            Model model = Read.GetRoomByName(name);
+            Model room = Read.GetRoomByName(name);
             // todo: use scene scale?
-            float sceneScale = model.Header.ScaleBase.FloatValue * (1 << (int)model.Header.ScaleFactor);
+            float sceneScale = room.Header.ScaleBase.FloatValue * (1 << (int)room.Header.ScaleFactor);
             // todo: do whatever with NodePosition/NodeInitialPosition?
             // todo: use this name and ID?
             string nodeName = "rmMain";
             int nodeId = -1;
-            int nodeIndex = model.Nodes.IndexOf(b => b.Name.StartsWith("rm"));
+            int nodeIndex = room.Nodes.IndexOf(b => b.Name.StartsWith("rm"));
             if (nodeIndex != -1)
             {
-                nodeName = model.Nodes[nodeIndex].Name;
-                nodeId = model.Nodes[nodeIndex].ChildIndex;
+                nodeName = room.Nodes[nodeIndex].Name;
+                nodeId = room.Nodes[nodeIndex].ChildIndex;
             }
-            FilterNodes(model, roomLayerMask);
+            FilterNodes(room, roomLayerMask);
             // todo: scene min/max coordinates?
-            ComputeMatrices(model, index: 0);
+            ComputeMatrices(room, index: 0);
             // todo: load animations
-            LoadEntities(metadata);
-            return model;
+            IReadOnlyList<Model> entities = LoadEntities(metadata);
+            // todo: area ID/portals?
+            return (room, entities);
         }
 
         private static void FilterNodes(Model model, int layerMask)
@@ -155,28 +157,55 @@ namespace MphRead
             transform.M44 = 1;
         }
 
-        private static void LoadEntities(RoomMetadata metadata)
+        private static IReadOnlyList<Model> LoadEntities(RoomMetadata metadata)
         {
+            var models = new List<Model>();
             if (metadata.EntityPath == null)
             {
-                return;
+                return models;
             }
             IReadOnlyList<Entity> entities = Read.GetEntities(metadata.EntityPath, metadata.LayerId);
             foreach (Entity entity in entities)
             {
                 if (entity.Type == EntityType.JumpPad)
                 {
-                    JumpPadEntityData data = ((Entity<JumpPadEntityData>)entity).Data;
+                    models.AddRange(LoadJumpPad(((Entity<JumpPadEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.Item)
                 {
-                    ItemEntityData data = ((Entity<ItemEntityData>)entity).Data;
+                    models.Add(LoadItem(((Entity<ItemEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.Pickup)
                 {
+                    // todo: pickups? delayed items?
                     ItemEntityData data = ((Entity<ItemEntityData>)entity).Data;
                 }
             }
+            return models;
+        }
+
+        // todo: avoid loading things multiple times
+        private static IReadOnlyList<Model> LoadJumpPad(JumpPadEntityData data)
+        {
+            // todo: load animations
+            var list = new List<Model>();
+            string modelName = Metadata.JumpPads[(int)data.ModelId];
+            Model model = Read.GetModelByName(modelName);
+            model.Position = new Vector3(data.Position);
+            list.Add(model);
+            model = Read.GetModelByName("JumpPad_Beam");
+            model.Position = new Vector3(data.Position);
+            list.Add(model);
+            return list;
+        }
+
+        private static Model LoadItem(ItemEntityData data)
+        {
+            // todo: load animations
+            Model model = Read.GetModelByName(Metadata.Items[(int)data.ModelId]);
+            model.Position = new Vector3(data.Position);
+            model.Rotation = _random.Next(0x8000) / (float)0x7FFF * 360;
+            return model;
         }
     }
 }
