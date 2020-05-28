@@ -357,7 +357,7 @@ namespace MphRead
     {
         public string NodeName { get; }
         public short LayerMask { get; }
-        public ushort Length { get; }
+        public ushort Length { get; } // todo: this isn't the enum?
         public ushort Type { get; }
         public ushort SomeId { get; }
 
@@ -373,10 +373,6 @@ namespace MphRead
             Length = entry.Length;
             Type = type;
             SomeId = someId;
-            //if (!Enum.IsDefined(typeof(EntityType), Type))
-            //{
-            //    throw new ProgramException($"Invalid entity type {Type}.");
-            //}
         }
     }
     

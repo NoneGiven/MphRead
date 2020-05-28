@@ -249,7 +249,7 @@ namespace MphRead
 
         private static byte AlphaFromA3I5(byte value) => (byte)((value >> 5) / 7.0f * 255.0f);
 
-        public static void GetEntities(string path, int layerId)
+        public static IReadOnlyList<Entity> GetEntities(string path, int layerId)
         {
             path = Path.Combine(Paths.FileSystem, path);
             ReadOnlySpan<byte> bytes = ReadBytes(path);
@@ -273,7 +273,7 @@ namespace MphRead
                     entities.Add(new Entity(entry, type, someId));
                 }
             }
-            Nop();
+            return entities;
         }
         
         private static void Nop() { }
