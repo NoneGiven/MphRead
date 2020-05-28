@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -268,9 +269,29 @@ namespace MphRead
                 {
                     // todo: probably going to have to read the different entity formats here
                     int offset = (int)entry.DataOffset;
-                    ushort type = SpanReadUshort(bytes, ref offset);
+                    var type = (EntityType)SpanReadUshort(bytes, ref offset);
                     ushort someId = SpanReadUshort(bytes, ref offset);
-                    entities.Add(new Entity(entry, type, someId));
+                    if (type == EntityType.JumpPad)
+                    {
+                        // Length includes the 4 bytes for offset and type
+                        Debug.Assert(entry.Length == Sizes.JumpPadEntityData + 4);
+                        start = offset;
+                        end = offset + Sizes.JumpPadEntityData;
+                        JumpPadEntityData data = ReadStruct<JumpPadEntityData>(bytes[start..end]);
+                        entities.Add(new Entity<JumpPadEntityData>(entry, type, someId, data));
+                    }
+                    else if (type == EntityType.Item || type == EntityType.Pickup)
+                    {
+                        Debug.Assert(entry.Length == Sizes.ItemEntityData + 4);
+                        start = offset;
+                        end = offset + Sizes.ItemEntityData;
+                        ItemEntityData data = ReadStruct<ItemEntityData>(bytes[start..end]);
+                        entities.Add(new Entity<ItemEntityData>(entry, type, someId, data));
+                    }
+                    else
+                    {
+                        entities.Add(new Entity(entry, type, someId));
+                    }
                 }
             }
             return entities;

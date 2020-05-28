@@ -357,22 +357,29 @@ namespace MphRead
     {
         public string NodeName { get; }
         public short LayerMask { get; }
-        public ushort Length { get; } // todo: this isn't the enum?
-        public ushort Type { get; }
+        public ushort Length { get; }
+        public EntityType Type { get; }
         public ushort SomeId { get; }
 
-        public Entity()
-        {
-            NodeName = "";
-        }
-        
-        public Entity(EntityEntry entry, ushort type, ushort someId)
+        public Entity(EntityEntry entry, EntityType type, ushort someId)
         {
             NodeName = entry.NodeName;
             LayerMask = entry.LayerMask;
             Length = entry.Length;
+            // todo: once all of these are accounted for, throw if not defined
             Type = type;
             SomeId = someId;
+        }
+    }
+
+    public class Entity<T> : Entity where T : struct
+    {
+        public T Data { get; }
+
+        public Entity(EntityEntry entry, EntityType type, ushort someId, T data)
+            : base(entry, type, someId)
+        {
+            Data = data;
         }
     }
     

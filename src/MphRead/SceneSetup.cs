@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -160,7 +161,22 @@ namespace MphRead
             {
                 return;
             }
-            Read.GetEntities(metadata.EntityPath, metadata.LayerId);
+            IReadOnlyList<Entity> entities = Read.GetEntities(metadata.EntityPath, metadata.LayerId);
+            foreach (Entity entity in entities)
+            {
+                if (entity.Type == EntityType.JumpPad)
+                {
+                    JumpPadEntityData data = ((Entity<JumpPadEntityData>)entity).Data;
+                }
+                else if (entity.Type == EntityType.Item)
+                {
+                    ItemEntityData data = ((Entity<ItemEntityData>)entity).Data;
+                }
+                else if (entity.Type == EntityType.Pickup)
+                {
+                    ItemEntityData data = ((Entity<ItemEntityData>)entity).Data;
+                }
+            }
         }
     }
 }

@@ -8,6 +8,8 @@ namespace MphRead
         public static readonly int Header = Marshal.SizeOf(typeof(Header));
         public static readonly int EntityHeader = Marshal.SizeOf(typeof(EntityHeader));
         public static readonly int EntityEntry = Marshal.SizeOf(typeof(EntityEntry));
+        public static readonly int JumpPadEntityData = Marshal.SizeOf(typeof(JumpPadEntityData));
+        public static readonly int ItemEntityData = Marshal.SizeOf(typeof(ItemEntityData));
     }
 
     public readonly struct TextureData
@@ -208,6 +210,62 @@ namespace MphRead
         public readonly short LayerMask;
         public readonly ushort Length;
         public readonly uint DataOffset;
+    }
+
+    // size: 148
+    public readonly struct JumpPadEntityData
+    {
+        public readonly Vector3Fx Position;
+        public readonly Vector3Fx Vector2;
+        public readonly Vector3Fx Vector3;
+        public readonly uint Field24;
+        public readonly uint Field28;
+        public readonly uint Field2C;
+        public readonly uint Field30;
+        public readonly uint Field34;
+        public readonly uint Field38;
+        public readonly uint Field3C;
+        public readonly uint Field40;
+        public readonly uint Field44;
+        public readonly uint Field48;
+        public readonly uint Field4C;
+        public readonly uint Field50;
+        public readonly uint Field54;
+        public readonly uint Field58;
+        public readonly uint Field5C;
+        public readonly uint Field60;
+        public readonly uint Field64;
+        public readonly uint Field68;
+        public readonly Vector3Fx Vector4;
+        public readonly uint Field78;
+        public readonly short Field7C;
+        public readonly ushort Field7E;
+        public readonly byte Field80;
+        public readonly byte Field81;
+        public readonly short Field82;
+        public readonly uint ModelId;
+        public readonly uint BeamType;
+        public readonly uint Field8C;
+    }
+
+    // size: 72
+    public readonly struct ItemEntityData
+    {
+        public readonly Vector3Fx Position;
+        public readonly uint FieldC;
+        public readonly uint Field10;
+        public readonly uint Field14;
+        public readonly uint Field18;
+        public readonly uint Field1C;
+        public readonly uint Field20;
+        public readonly uint ItemId;
+        public readonly uint Id;
+        public readonly uint Field2C;
+        public readonly uint Field30;
+        public readonly uint Field34;
+        public readonly uint Field38;
+        public readonly uint Field3C;
+        public readonly uint Field40;
     }
 
     // size: 32
