@@ -406,6 +406,8 @@ namespace MphRead
                     float vtxX = 0;
                     float vtxY = 0;
                     float vtxZ = 0;
+                    // note: calling this every frame will have some overhead (iterating and ifs),
+                    // but baking it in on load would prevent e.g. vertex color toggle
                     foreach (RenderInstruction instruction in list)
                     {
                         switch (instruction.Code)
@@ -429,7 +431,7 @@ namespace MphRead
                             }
                             else
                             {
-                                throw new ProgramException("Invalid geo type");
+                                throw new ProgramException("Invalid geometry type");
                             }
                             break;
                         case InstructionCode.COLOR:
