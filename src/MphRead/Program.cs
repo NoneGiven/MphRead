@@ -16,7 +16,7 @@ namespace MphRead
                 {
                     Int32.TryParse(args[1], out recolor);
                 }
-                renderer.AddModel(Read.GetModelByName(args[0], recolor));
+                renderer.AddModel(args[0], recolor);
             }
             else
             {
@@ -24,7 +24,7 @@ namespace MphRead
                 //Model model = Read.GetRoomByName("CRYSTALROOM");
                 //model.ExportImages();
                 renderer.AddRoom("MP3 PROVING GROUND");
-                renderer.AddModel(Read.GetModelByName("pick_health_A"));
+                renderer.AddModel("pick_health_A");
                 Nop();
             }
             renderer.Run();
