@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace MphRead
 {
@@ -42,6 +43,8 @@ namespace MphRead
             FilterNodes(model, roomLayerMask);
             // todo: scene min/max coordinates?
             ComputeMatrices(model, index: 0);
+            // todo: load animations
+            LoadEntities(metadata);
             return model;
         }
 
@@ -149,6 +152,15 @@ namespace MphRead
             transform.M24 = 0;
             transform.M34 = 0;
             transform.M44 = 1;
+        }
+
+        private static void LoadEntities(RoomMetadata metadata)
+        {
+            if (metadata.EntityPath == null)
+            {
+                return;
+            }
+            Read.GetEntities(metadata.EntityPath, metadata.LayerId);
         }
     }
 }

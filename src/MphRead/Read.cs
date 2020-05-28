@@ -61,7 +61,7 @@ namespace MphRead
             };
             return GetModel(roomMeta.Name, roomMeta.ModelPath, recolors, defaultRecolor: 0);
         }
-        
+
         private static Model GetModel(EntityMetadata entityMeta, int defaultRecolor)
         {
             return GetModel(entityMeta.Name, entityMeta.ModelPath, entityMeta.Recolors, defaultRecolor);
@@ -248,6 +248,35 @@ namespace MphRead
         private static byte AlphaFromA5I3(byte value) => (byte)((value >> 3) / 31.0f * 255.0f);
 
         private static byte AlphaFromA3I5(byte value) => (byte)((value >> 5) / 7.0f * 255.0f);
+
+        public static void GetEntities(string path, int layerId)
+        {
+            path = Path.Combine(Paths.FileSystem, path);
+            ReadOnlySpan<byte> bytes = ReadBytes(path);
+            EntityHeader header = ReadStruct<EntityHeader>(bytes[0..Sizes.EntityHeader]);
+            if (header.Version != 2)
+            {
+                throw new ProgramException($"Unexpected entity header version {header.Version}.");
+            }
+            var entities = new List<Entity>();
+            for (int i = 0; entities.Count < header.Lengths[layerId]; i++)
+            {
+                int start = Sizes.EntityHeader + Sizes.EntityEntry * i;
+                int end = start + Sizes.EntityEntry;
+                EntityEntry entry = ReadStruct<EntityEntry>(bytes[start..end]);
+                if ((entry.LayerMask & (1 << layerId)) != 0)
+                {
+                    // todo: probably going to have to read the different entity formats here
+                    int offset = (int)entry.DataOffset;
+                    ushort type = SpanReadUshort(bytes, ref offset);
+                    ushort someId = SpanReadUshort(bytes, ref offset);
+                    entities.Add(new Entity(entry, type, someId));
+                }
+            }
+            Nop();
+        }
+        
+        private static void Nop() { }
 
         private static IReadOnlyList<RenderInstruction> DoRenderInstructions(ReadOnlySpan<byte> bytes, DisplayList dlist)
         {

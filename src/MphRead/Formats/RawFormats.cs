@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.InteropServices;
 
 namespace MphRead
@@ -5,6 +6,8 @@ namespace MphRead
     public static class Sizes
     {
         public static readonly int Header = Marshal.SizeOf(typeof(Header));
+        public static readonly int EntityHeader = Marshal.SizeOf(typeof(EntityHeader));
+        public static readonly int EntityEntry = Marshal.SizeOf(typeof(EntityEntry));
     }
 
     public readonly struct TextureData
@@ -188,5 +191,115 @@ namespace MphRead
         public readonly uint FieldE4;
         public readonly uint FieldE8;
         public readonly uint FieldEC;
+    }
+
+    // size: 36
+    public readonly struct EntityHeader
+    {
+        public readonly uint Version;
+        public readonly EntityLengthArray Lengths;
+    }
+
+    // size: 24
+    public readonly struct EntityEntry
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
+        public readonly string NodeName;
+        public readonly short LayerMask;
+        public readonly ushort Length;
+        public readonly uint DataOffset;
+    }
+
+    // size: 32
+    public readonly struct EntityLengthArray
+    {
+        public readonly ushort Length00;
+        public readonly ushort Length01;
+        public readonly ushort Length02;
+        public readonly ushort Length03;
+        public readonly ushort Length04;
+        public readonly ushort Length05;
+        public readonly ushort Length06;
+        public readonly ushort Length07;
+        public readonly ushort Length08;
+        public readonly ushort Length09;
+        public readonly ushort Length10;
+        public readonly ushort Length11;
+        public readonly ushort Length12;
+        public readonly ushort Length13;
+        public readonly ushort Length14;
+        public readonly ushort Length15;
+
+        public ushort this[int index]
+        {
+            get
+            {
+                if (index == 0)
+                {
+                    return Length00;
+                }
+                else if (index == 1)
+                {
+                    return Length01;
+                }
+                else if (index == 2)
+                {
+                    return Length02;
+                }
+                else if (index == 3)
+                {
+                    return Length03;
+                }
+                else if (index == 4)
+                {
+                    return Length04;
+                }
+                else if (index == 5)
+                {
+                    return Length05;
+                }
+                else if (index == 6)
+                {
+                    return Length06;
+                }
+                else if (index == 7)
+                {
+                    return Length07;
+                }
+                else if (index == 8)
+                {
+                    return Length08;
+                }
+                else if (index == 9)
+                {
+                    return Length09;
+                }
+                else if (index == 10)
+                {
+                    return Length10;
+                }
+                else if (index == 11)
+                {
+                    return Length11;
+                }
+                else if (index == 12)
+                {
+                    return Length12;
+                }
+                else if (index == 13)
+                {
+                    return Length13;
+                }
+                else if (index == 14)
+                {
+                    return Length14;
+                }
+                else if (index == 15)
+                {
+                    return Length15;
+                }
+                throw new IndexOutOfRangeException();
+            }
+        }
     }
 }

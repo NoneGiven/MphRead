@@ -353,7 +353,34 @@ namespace MphRead
         }
     }
 
-    public enum EntityType
+    public class Entity
+    {
+        public string NodeName { get; }
+        public short LayerMask { get; }
+        public ushort Length { get; }
+        public ushort Type { get; }
+        public ushort SomeId { get; }
+
+        public Entity()
+        {
+            NodeName = "";
+        }
+        
+        public Entity(EntityEntry entry, ushort type, ushort someId)
+        {
+            NodeName = entry.NodeName;
+            LayerMask = entry.LayerMask;
+            Length = entry.Length;
+            Type = type;
+            SomeId = someId;
+            //if (!Enum.IsDefined(typeof(EntityType), Type))
+            //{
+            //    throw new ProgramException($"Invalid entity type {Type}.");
+            //}
+        }
+    }
+    
+    public enum EntityType : ushort
     {
         Platform = 0x0,
         Object = 0x1,
