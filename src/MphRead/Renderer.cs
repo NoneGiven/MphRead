@@ -654,16 +654,11 @@ namespace MphRead
                 _textureFiltering = !_textureFiltering;
                 int minParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMagFilter.Nearest;
                 int magParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMagFilter.Nearest;
-                int i = 0;
-                foreach (Model model in _models)
+                for (int i = 1; i <= _textureCount; i++)
                 {
-                    foreach (Material material in model.Materials)
-                    {
-                        i++;
-                        GL.BindTexture(TextureTarget.Texture2D, i);
-                        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
-                        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
-                    }
+                    GL.BindTexture(TextureTarget.Texture2D, i);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
                 }
                 PrintMenu();
             }

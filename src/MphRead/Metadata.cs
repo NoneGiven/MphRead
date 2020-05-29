@@ -34,7 +34,7 @@ namespace MphRead
         //public string ArchivePath { get; }
         //public uint Unknown21 { get; }
         //public uint Unknown22 { get; }
-        public Vector3 RoomSize { get; } // not in structure
+        public Vector3 RoomSize { get; } // not in struct
 
         public RoomMetadata(string name, string inGameName, string pathName, string modelPath,
             string animationPath, string collisionPath, string? texturePath, string? entityPath, string? nodePath,
