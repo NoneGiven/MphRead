@@ -198,12 +198,17 @@ namespace MphRead
             list.Add(model2);
             return list;
         }
-        
+
         private static Model LoadItem(ItemEntityData data)
         {
             // todo: load animations
-            Model model = Read.GetModelByName(Metadata.Items[(int)data.ModelId]);
-            model.Position = new Vector3(data.Position);
+            (string name, float offset) = Metadata.Items[(int)data.ModelId];
+            Model model = Read.GetModelByName(name);
+            model.Position = new Vector3(
+                data.Position.X.FloatValue,
+                data.Position.Y.FloatValue + offset,
+                data.Position.Z.FloatValue
+            );
             model.Rotation = new Vector3(0, _random.Next(0x8000) / (float)0x7FFF * 360, 0);
             model.Type = ModelType.Item;
             return model;

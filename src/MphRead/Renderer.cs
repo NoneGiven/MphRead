@@ -290,13 +290,11 @@ namespace MphRead
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.PushMatrix();
                 float height = 0;
-                // todo: there's some initial height getting set that we're missing here so ours is halfway in the floor
                 if (model.Type == ModelType.Item)
                 {
                     float rotation = (float)(model.Rotation.Y + elapsedTime * 360 * 0.35) % 360;
                     model.Rotation = new Vector3(model.Rotation.X, rotation, model.Rotation.Z);
-                    // todo: use min Y here
-                    height = 0 + (MathF.Sin(model.Rotation.Y / 180 * MathF.PI) + 1) / 8f;
+                    height = (MathF.Sin(model.Rotation.Y / 180 * MathF.PI) + 1) / 8f;
                 }
                 GL.Translate(model.Position.X, model.Position.Y + height, model.Position.Z);
                 if (model.Type == ModelType.Room)
