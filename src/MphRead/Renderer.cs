@@ -108,7 +108,6 @@ namespace MphRead
         public void AddModel(string name, int recolor)
         {
             Model model = Read.GetModelByName(name, recolor);
-            model.Position = new Vector3(0, 0, -2);
             SceneSetup.ComputeMatrices(model, index: 0);
             _models.Add(model);
         }
