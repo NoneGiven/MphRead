@@ -65,6 +65,7 @@ namespace MphRead
     {
         private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
+        private readonly Dictionary<Model, List<int>> _textureMap = new Dictionary<Model, List<int>>();
 
         private float _angle = 0.0f;
         private float _elevation = 0.0f;
@@ -185,6 +186,7 @@ namespace MphRead
 
         private void InitTextures(Model model)
         {
+            _textureMap.Add(model, new List<int>());
             int minParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMagFilter.Nearest;
             int magParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMagFilter.Nearest;
             foreach (Material material in model.Materials)
@@ -212,6 +214,8 @@ namespace MphRead
                 {
                     pixels.Add(((uint)255 << 0) | ((uint)255 << 8) | ((uint)255 << 16) | ((uint)255 << 24));
                 }
+
+                _textureMap[model].Add(_textureCount);
 
                 // todo:
                 // - if render mode is not Normal, but there are no non-opaque pixels, set to Normal
@@ -284,7 +288,6 @@ namespace MphRead
         private void RenderScene(double elapsedTime)
         {
             // todo: process animations
-            int i = 0;
             foreach (Model model in _models)
             {
                 GL.MatrixMode(MatrixMode.Modelview);
@@ -305,14 +308,13 @@ namespace MphRead
                 GL.Rotate(model.Rotation.X, 1, 0, 0);
                 GL.Rotate(model.Rotation.Y, 0, 1, 0);
                 GL.Rotate(model.Rotation.Z, 0, 0, 1);
-                RenderModel(model, i);
-                i += model.Materials.Count;
+                RenderModel(model);
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.PopMatrix();
             }
         }
         
-        private void RenderModel(Model model, int index)
+        private void RenderModel(Model model)
         {
             foreach (Mesh mesh in model.Meshes)
             {
@@ -344,7 +346,7 @@ namespace MphRead
                         width = texture.Width;
                         height = texture.Height;
                     }
-                    GL.BindTexture(TextureTarget.Texture2D, index + mesh.MaterialId + 1);
+                    GL.BindTexture(TextureTarget.Texture2D, _textureMap[model][mesh.MaterialId]);
                     GL.MatrixMode(MatrixMode.Texture);
                     GL.LoadIdentity();
                     GL.Scale(1.0f / width, 1.0f / height, 1.0f);
