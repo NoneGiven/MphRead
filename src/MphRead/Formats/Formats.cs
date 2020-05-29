@@ -10,6 +10,8 @@ namespace MphRead
 {
     public class Model
     {
+        public ModelType Type { get; set; }
+
         public string Name { get; }
         public Header Header { get; }
         public IReadOnlyList<Node> Nodes { get; }
@@ -43,7 +45,7 @@ namespace MphRead
         }
 
         public Vector3 Position { get; set; }
-        public float Rotation { get; set; }
+        public Vector3 Rotation { get; set; }
         
         public IReadOnlyList<Recolor> Recolors { get; }
 

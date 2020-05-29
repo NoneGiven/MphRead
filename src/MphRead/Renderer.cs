@@ -71,7 +71,8 @@ namespace MphRead
         private float _distance = 5.0f;
         private bool _leftMouse = false;
         public int _textureCount = 0;
-
+        public float _roomScale = 1;
+        
         private bool _showTextures = true;
         private bool _showColors = true;
         private bool _wireframe = false;
@@ -95,9 +96,10 @@ namespace MphRead
                 throw new InvalidOperationException();
             }
             _roomLoaded = true;
-            (Model model, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask);
-            _models.Add(model);
+            (Model room, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask);
+            _models.Insert(0, room);
             _models.AddRange(entities);
+            _roomScale = room.Header.ScaleBase.FloatValue * (1 << (int)room.Header.ScaleFactor);
         }
         
         public void AddModel(string name, int recolor)
@@ -264,7 +266,7 @@ namespace MphRead
             float aspect = (vp[2] - vp[0]) / (vp[3] - vp[1]);
 
             GL.MatrixMode(MatrixMode.Projection);
-            float fov = MathHelper.DegreesToRadians(90.0f);
+            float fov = MathHelper.DegreesToRadians(80.0f);
             var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.02f, 100.0f);
             GL.LoadMatrix(ref perspectiveMatrix);
 
@@ -274,278 +276,310 @@ namespace MphRead
             GL.Rotate(_elevation, 1, 0, 0);
             GL.Rotate(_angle, 0, 1, 0);
 
-            RenderScene();
+            RenderScene(args.Time);
             SwapBuffers();
             base.OnRenderFrame(args);
         }
 
-        private void RenderScene()
+        private void RenderScene(double elapsedTime)
         {
+            // todo: process animations
             int i = 0;
             foreach (Model model in _models)
             {
-                foreach (Mesh mesh in model.Meshes)
+                GL.MatrixMode(MatrixMode.Modelview);
+                GL.PushMatrix();
+                float height = 0;
+                // todo: there's some initial height getting set that we're missing here so ours is halfway in the floor
+                if (model.Type == ModelType.Item)
                 {
-                    Material material = model.Materials[mesh.MaterialId];
-                    if (_faceCulling)
+                    float rotation = (float)(model.Rotation.Y + elapsedTime * 360 * 0.35);
+                    while (rotation > 360)
                     {
-                        GL.Enable(EnableCap.CullFace);
-                        if (material.Culling == CullingMode.Neither)
-                        {
-                            GL.Disable(EnableCap.CullFace);
-                        }
-                        else if (material.Culling == CullingMode.Back)
-                        {
-                            GL.CullFace(CullFaceMode.Back);
-                        }
-                        else if (material.Culling == CullingMode.Front)
-                        {
-                            GL.CullFace(CullFaceMode.Front);
-                        }
+                        rotation -= 360;
                     }
-                    if (_showTextures && !_wireframe)
+                    model.Rotation = new Vector3(model.Rotation.X, rotation, model.Rotation.Z);
+                    // todo: use min Y here
+                    height = 0 + (MathF.Sin(model.Rotation.Y / 180 * MathF.PI) + 1) / 8f;
+                }
+                GL.Translate(model.Position.X, model.Position.Y + height, model.Position.Z);
+                if (model.Type == ModelType.Room)
+                {
+                    // todo: lights
+                    GL.Scale(_roomScale, _roomScale, _roomScale);
+                }
+                GL.Rotate(model.Rotation.X, 1, 0, 0);
+                GL.Rotate(model.Rotation.Y, 0, 1, 0);
+                GL.Rotate(model.Rotation.Z, 0, 0, 1);
+                RenderModel(model, i);
+                i += model.Materials.Count;
+                GL.MatrixMode(MatrixMode.Modelview);
+                GL.PopMatrix();
+            }
+        }
+        
+        private void RenderModel(Model model, int index)
+        {
+            foreach (Mesh mesh in model.Meshes)
+            {
+                Material material = model.Materials[mesh.MaterialId];
+                if (_faceCulling)
+                {
+                    GL.Enable(EnableCap.CullFace);
+                    if (material.Culling == CullingMode.Neither)
                     {
-                        ushort width = 1;
-                        ushort height = 1;
-                        ushort textureId = material.TextureId;
-                        if (textureId != UInt16.MaxValue)
-                        {
-                            Texture texture = model.Textures[textureId];
-                            width = texture.Width;
-                            height = texture.Height;
-                        }
-                        GL.BindTexture(TextureTarget.Texture2D, i + mesh.MaterialId + 1);
-                        GL.MatrixMode(MatrixMode.Texture);
-                        GL.LoadIdentity();
-                        GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+                        GL.Disable(EnableCap.CullFace);
                     }
-                    else
+                    else if (material.Culling == CullingMode.Back)
                     {
-                        GL.BindTexture(TextureTarget.Texture2D, 0);
+                        GL.CullFace(CullFaceMode.Back);
                     }
-                    // always call this regardless of the _showColors setting,
-                    // otherwise one object's vertex colors will affect the others
-                    GL.Color3(1f, 1f, 1f);
-                    IReadOnlyList<RenderInstruction> list = model.RenderInstructionLists[mesh.DlistId];
-                    float vtxX = 0;
-                    float vtxY = 0;
-                    float vtxZ = 0;
-                    // note: calling this every frame will have some overhead (iterating and ifs),
-                    // but baking it in on load would prevent e.g. vertex color toggle
-                    foreach (RenderInstruction instruction in list)
+                    else if (material.Culling == CullingMode.Front)
                     {
-                        switch (instruction.Code)
-                        {
-                        case InstructionCode.BEGIN_VTXS:
-                            if (instruction.Arguments[0] == 0)
-                            {
-                                GL.Begin(PrimitiveType.Triangles);
-                            }
-                            else if (instruction.Arguments[0] == 1)
-                            {
-                                GL.Begin(PrimitiveType.Quads);
-                            }
-                            else if (instruction.Arguments[0] == 2)
-                            {
-                                GL.Begin(PrimitiveType.TriangleStrip);
-                            }
-                            else if (instruction.Arguments[0] == 3)
-                            {
-                                GL.Begin(PrimitiveType.QuadStrip);
-                            }
-                            else
-                            {
-                                throw new ProgramException("Invalid geometry type");
-                            }
-                            break;
-                        case InstructionCode.COLOR:
-                            {
-                                if (_showColors)
-                                {
-                                    uint rgb = instruction.Arguments[0];
-                                    uint r = (rgb >> 0) & 0x1F;
-                                    uint g = (rgb >> 5) & 0x1F;
-                                    uint b = (rgb >> 10) & 0x1F;
-                                    GL.Color3(r / 31.0f, g / 31.0f, b / 31.0f);
-                                }
-                            }
-                            break;
-                        case InstructionCode.NORMAL:
-                            {
-                                uint xyz = instruction.Arguments[0];
-                                int x = (int)((xyz >> 0) & 0x3FF);
-                                if ((x & 0x200) > 0)
-                                {
-                                    x = (int)(x | 0xFFFFFC00);
-                                }
-                                int y = (int)((xyz >> 10) & 0x3FF);
-                                if ((y & 0x200) > 0)
-                                {
-                                    y = (int)(y | 0xFFFFFC00);
-                                }
-                                int z = (int)((xyz >> 20) & 0x3FF);
-                                if ((z & 0x200) > 0)
-                                {
-                                    z = (int)(z | 0xFFFFFC00);
-                                }
-                                GL.Normal3(x / 512.0f, y / 512.0f, z / 512.0f);
-                            }
-                            break;
-                        case InstructionCode.TEXCOORD:
-                            {
-                                uint st = instruction.Arguments[0];
-                                int s = (int)((st >> 0) & 0xFFFF);
-                                if ((s & 0x8000) > 0)
-                                {
-                                    s = (int)(s | 0xFFFF0000);
-                                }
-                                int t = (int)((st >> 16) & 0xFFFF);
-                                if ((t & 0x8000) > 0)
-                                {
-                                    t = (int)(t | 0xFFFF0000);
-                                }
-                                GL.TexCoord2(s / 16.0f, t / 16.0f);
-                            }
-                            break;
-                        case InstructionCode.VTX_16:
-                            {
-                                uint xy = instruction.Arguments[0];
-                                int x = (int)((xy >> 0) & 0xFFFF);
-                                if ((x & 0x8000) > 0)
-                                {
-                                    x = (int)(x | 0xFFFF0000);
-                                }
-                                int y = (int)((xy >> 16) & 0xFFFF);
-                                if ((y & 0x8000) > 0)
-                                {
-                                    y = (int)(y | 0xFFFF0000);
-                                }
-                                int z = (int)(instruction.Arguments[1] & 0xFFFF);
-                                if ((z & 0x8000) > 0)
-                                {
-                                    z = (int)(z | 0xFFFF0000);
-                                }
-                                vtxX = Fixed.ToFloat(x);
-                                vtxY = Fixed.ToFloat(y);
-                                vtxZ = Fixed.ToFloat(z);
-                                GL.Vertex3(vtxX, vtxY, vtxZ);
-                            }
-                            break;
-                        case InstructionCode.VTX_10:
-                            {
-                                uint xyz = instruction.Arguments[0];
-                                int x = (int)((xyz >> 0) & 0x3FF);
-                                if ((x & 0x200) > 0)
-                                {
-                                    x = (int)(x | 0xFFFFFC00);
-                                }
-                                int y = (int)((xyz >> 10) & 0x3FF);
-                                if ((y & 0x200) > 0)
-                                {
-                                    y = (int)(y | 0xFFFFFC00);
-                                }
-                                int z = (int)((xyz >> 20) & 0x3FF);
-                                if ((z & 0x200) > 0)
-                                {
-                                    z = (int)(z | 0xFFFFFC00);
-                                }
-                                vtxX = x / 64.0f;
-                                vtxY = y / 64.0f;
-                                vtxZ = z / 64.0f;
-                                GL.Vertex3(vtxX, vtxY, vtxZ);
-                            }
-                            break;
-                        case InstructionCode.VTX_XY:
-                            {
-                                uint xy = instruction.Arguments[0];
-                                int x = (int)((xy >> 0) & 0xFFFF);
-                                if ((x & 0x8000) > 0)
-                                {
-                                    x = (int)(x | 0xFFFF0000);
-                                }
-                                int y = (int)((xy >> 16) & 0xFFFF);
-                                if ((y & 0x8000) > 0)
-                                {
-                                    y = (int)(y | 0xFFFF0000);
-                                }
-                                vtxX = Fixed.ToFloat(x);
-                                vtxY = Fixed.ToFloat(y);
-                                GL.Vertex3(vtxX, vtxY, vtxZ);
-                            }
-                            break;
-                        case InstructionCode.VTX_XZ:
-                            {
-                                uint xz = instruction.Arguments[0];
-                                int x = (int)((xz >> 0) & 0xFFFF);
-                                if ((x & 0x8000) > 0)
-                                {
-                                    x = (int)(x | 0xFFFF0000);
-                                }
-                                int z = (int)((xz >> 16) & 0xFFFF);
-                                if ((z & 0x8000) > 0)
-                                {
-                                    z = (int)(z | 0xFFFF0000);
-                                }
-                                vtxX = Fixed.ToFloat(x);
-                                vtxZ = Fixed.ToFloat(z);
-                                GL.Vertex3(vtxX, vtxY, vtxZ);
-                            }
-                            break;
-                        case InstructionCode.VTX_YZ:
-                            {
-                                uint yz = instruction.Arguments[0];
-                                int y = (int)((yz >> 0) & 0xFFFF);
-                                if ((y & 0x8000) > 0)
-                                {
-                                    y = (int)(y | 0xFFFF0000);
-                                }
-                                int z = (int)((yz >> 16) & 0xFFFF);
-                                if ((z & 0x8000) > 0)
-                                {
-                                    z = (int)(z | 0xFFFF0000);
-                                }
-                                vtxY = Fixed.ToFloat(y);
-                                vtxZ = Fixed.ToFloat(z);
-                                GL.Vertex3(vtxX, vtxY, vtxZ);
-                            }
-                            break;
-                        case InstructionCode.VTX_DIFF:
-                            {
-                                uint xyz = instruction.Arguments[0];
-                                int x = (int)((xyz >> 0) & 0x3FF);
-                                if ((x & 0x200) > 0)
-                                {
-                                    x = (int)(x | 0xFFFFFC00);
-                                }
-                                int y = (int)((xyz >> 10) & 0x3FF);
-                                if ((y & 0x200) > 0)
-                                {
-                                    y = (int)(y | 0xFFFFFC00);
-                                }
-                                int z = (int)((xyz >> 20) & 0x3FF);
-                                if ((z & 0x200) > 0)
-                                {
-                                    z = (int)(z | 0xFFFFFC00);
-                                }
-                                vtxX += Fixed.ToFloat(x);
-                                vtxY += Fixed.ToFloat(y);
-                                vtxZ += Fixed.ToFloat(z);
-                                GL.Vertex3(vtxX, vtxY, vtxZ);
-                            }
-                            break;
-                        case InstructionCode.END_VTXS:
-                            GL.End();
-                            break;
-                        case InstructionCode.MTX_RESTORE:
-                        case InstructionCode.DIF_AMB:
-                        case InstructionCode.NOP:
-                            break;
-                        default:
-                            throw new ProgramException("Unknown opcode");
-                        }
+                        GL.CullFace(CullFaceMode.Front);
                     }
                 }
-                i += model.Materials.Count;
+                if (_showTextures && !_wireframe)
+                {
+                    ushort width = 1;
+                    ushort height = 1;
+                    ushort textureId = material.TextureId;
+                    if (textureId != UInt16.MaxValue)
+                    {
+                        Texture texture = model.Textures[textureId];
+                        width = texture.Width;
+                        height = texture.Height;
+                    }
+                    GL.BindTexture(TextureTarget.Texture2D, index + mesh.MaterialId + 1);
+                    GL.MatrixMode(MatrixMode.Texture);
+                    GL.LoadIdentity();
+                    GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+                }
+                else
+                {
+                    GL.BindTexture(TextureTarget.Texture2D, 0);
+                }
+                // always call this regardless of the _showColors setting,
+                // otherwise one object's vertex colors will affect the others
+                GL.Color3(1f, 1f, 1f);
+                IReadOnlyList<RenderInstruction> list = model.RenderInstructionLists[mesh.DlistId];
+                float vtxX = 0;
+                float vtxY = 0;
+                float vtxZ = 0;
+                // note: calling this every frame will have some overhead (iterating and ifs),
+                // but baking it in on load would prevent e.g. vertex color toggle
+                foreach (RenderInstruction instruction in list)
+                {
+                    switch (instruction.Code)
+                    {
+                    case InstructionCode.BEGIN_VTXS:
+                        if (instruction.Arguments[0] == 0)
+                        {
+                            GL.Begin(PrimitiveType.Triangles);
+                        }
+                        else if (instruction.Arguments[0] == 1)
+                        {
+                            GL.Begin(PrimitiveType.Quads);
+                        }
+                        else if (instruction.Arguments[0] == 2)
+                        {
+                            GL.Begin(PrimitiveType.TriangleStrip);
+                        }
+                        else if (instruction.Arguments[0] == 3)
+                        {
+                            GL.Begin(PrimitiveType.QuadStrip);
+                        }
+                        else
+                        {
+                            throw new ProgramException("Invalid geometry type");
+                        }
+                        break;
+                    case InstructionCode.COLOR:
+                        {
+                            if (_showColors)
+                            {
+                                uint rgb = instruction.Arguments[0];
+                                uint r = (rgb >> 0) & 0x1F;
+                                uint g = (rgb >> 5) & 0x1F;
+                                uint b = (rgb >> 10) & 0x1F;
+                                GL.Color3(r / 31.0f, g / 31.0f, b / 31.0f);
+                            }
+                        }
+                        break;
+                    case InstructionCode.NORMAL:
+                        {
+                            uint xyz = instruction.Arguments[0];
+                            int x = (int)((xyz >> 0) & 0x3FF);
+                            if ((x & 0x200) > 0)
+                            {
+                                x = (int)(x | 0xFFFFFC00);
+                            }
+                            int y = (int)((xyz >> 10) & 0x3FF);
+                            if ((y & 0x200) > 0)
+                            {
+                                y = (int)(y | 0xFFFFFC00);
+                            }
+                            int z = (int)((xyz >> 20) & 0x3FF);
+                            if ((z & 0x200) > 0)
+                            {
+                                z = (int)(z | 0xFFFFFC00);
+                            }
+                            GL.Normal3(x / 512.0f, y / 512.0f, z / 512.0f);
+                        }
+                        break;
+                    case InstructionCode.TEXCOORD:
+                        {
+                            uint st = instruction.Arguments[0];
+                            int s = (int)((st >> 0) & 0xFFFF);
+                            if ((s & 0x8000) > 0)
+                            {
+                                s = (int)(s | 0xFFFF0000);
+                            }
+                            int t = (int)((st >> 16) & 0xFFFF);
+                            if ((t & 0x8000) > 0)
+                            {
+                                t = (int)(t | 0xFFFF0000);
+                            }
+                            GL.TexCoord2(s / 16.0f, t / 16.0f);
+                        }
+                        break;
+                    case InstructionCode.VTX_16:
+                        {
+                            uint xy = instruction.Arguments[0];
+                            int x = (int)((xy >> 0) & 0xFFFF);
+                            if ((x & 0x8000) > 0)
+                            {
+                                x = (int)(x | 0xFFFF0000);
+                            }
+                            int y = (int)((xy >> 16) & 0xFFFF);
+                            if ((y & 0x8000) > 0)
+                            {
+                                y = (int)(y | 0xFFFF0000);
+                            }
+                            int z = (int)(instruction.Arguments[1] & 0xFFFF);
+                            if ((z & 0x8000) > 0)
+                            {
+                                z = (int)(z | 0xFFFF0000);
+                            }
+                            vtxX = Fixed.ToFloat(x);
+                            vtxY = Fixed.ToFloat(y);
+                            vtxZ = Fixed.ToFloat(z);
+                            GL.Vertex3(vtxX, vtxY, vtxZ);
+                        }
+                        break;
+                    case InstructionCode.VTX_10:
+                        {
+                            uint xyz = instruction.Arguments[0];
+                            int x = (int)((xyz >> 0) & 0x3FF);
+                            if ((x & 0x200) > 0)
+                            {
+                                x = (int)(x | 0xFFFFFC00);
+                            }
+                            int y = (int)((xyz >> 10) & 0x3FF);
+                            if ((y & 0x200) > 0)
+                            {
+                                y = (int)(y | 0xFFFFFC00);
+                            }
+                            int z = (int)((xyz >> 20) & 0x3FF);
+                            if ((z & 0x200) > 0)
+                            {
+                                z = (int)(z | 0xFFFFFC00);
+                            }
+                            vtxX = x / 64.0f;
+                            vtxY = y / 64.0f;
+                            vtxZ = z / 64.0f;
+                            GL.Vertex3(vtxX, vtxY, vtxZ);
+                        }
+                        break;
+                    case InstructionCode.VTX_XY:
+                        {
+                            uint xy = instruction.Arguments[0];
+                            int x = (int)((xy >> 0) & 0xFFFF);
+                            if ((x & 0x8000) > 0)
+                            {
+                                x = (int)(x | 0xFFFF0000);
+                            }
+                            int y = (int)((xy >> 16) & 0xFFFF);
+                            if ((y & 0x8000) > 0)
+                            {
+                                y = (int)(y | 0xFFFF0000);
+                            }
+                            vtxX = Fixed.ToFloat(x);
+                            vtxY = Fixed.ToFloat(y);
+                            GL.Vertex3(vtxX, vtxY, vtxZ);
+                        }
+                        break;
+                    case InstructionCode.VTX_XZ:
+                        {
+                            uint xz = instruction.Arguments[0];
+                            int x = (int)((xz >> 0) & 0xFFFF);
+                            if ((x & 0x8000) > 0)
+                            {
+                                x = (int)(x | 0xFFFF0000);
+                            }
+                            int z = (int)((xz >> 16) & 0xFFFF);
+                            if ((z & 0x8000) > 0)
+                            {
+                                z = (int)(z | 0xFFFF0000);
+                            }
+                            vtxX = Fixed.ToFloat(x);
+                            vtxZ = Fixed.ToFloat(z);
+                            GL.Vertex3(vtxX, vtxY, vtxZ);
+                        }
+                        break;
+                    case InstructionCode.VTX_YZ:
+                        {
+                            uint yz = instruction.Arguments[0];
+                            int y = (int)((yz >> 0) & 0xFFFF);
+                            if ((y & 0x8000) > 0)
+                            {
+                                y = (int)(y | 0xFFFF0000);
+                            }
+                            int z = (int)((yz >> 16) & 0xFFFF);
+                            if ((z & 0x8000) > 0)
+                            {
+                                z = (int)(z | 0xFFFF0000);
+                            }
+                            vtxY = Fixed.ToFloat(y);
+                            vtxZ = Fixed.ToFloat(z);
+                            GL.Vertex3(vtxX, vtxY, vtxZ);
+                        }
+                        break;
+                    case InstructionCode.VTX_DIFF:
+                        {
+                            uint xyz = instruction.Arguments[0];
+                            int x = (int)((xyz >> 0) & 0x3FF);
+                            if ((x & 0x200) > 0)
+                            {
+                                x = (int)(x | 0xFFFFFC00);
+                            }
+                            int y = (int)((xyz >> 10) & 0x3FF);
+                            if ((y & 0x200) > 0)
+                            {
+                                y = (int)(y | 0xFFFFFC00);
+                            }
+                            int z = (int)((xyz >> 20) & 0x3FF);
+                            if ((z & 0x200) > 0)
+                            {
+                                z = (int)(z | 0xFFFFFC00);
+                            }
+                            vtxX += Fixed.ToFloat(x);
+                            vtxY += Fixed.ToFloat(y);
+                            vtxZ += Fixed.ToFloat(z);
+                            GL.Vertex3(vtxX, vtxY, vtxZ);
+                        }
+                        break;
+                    case InstructionCode.END_VTXS:
+                        GL.End();
+                        break;
+                    case InstructionCode.MTX_RESTORE:
+                    case InstructionCode.DIF_AMB:
+                    case InstructionCode.NOP:
+                        break;
+                    default:
+                        throw new ProgramException("Unknown opcode");
+                    }
+                }
             }
         }
 

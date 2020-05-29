@@ -24,7 +24,7 @@ namespace MphRead
                 //Model model = Read.GetRoomByName("CRYSTALROOM");
                 //model.ExportImages();
                 renderer.AddRoom("MP3 PROVING GROUND");
-                renderer.AddModel("pick_health_A");
+                //renderer.AddModel("pick_health_A");
                 Nop();
             }
             renderer.Run();

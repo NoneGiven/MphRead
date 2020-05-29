@@ -1,5 +1,12 @@
 namespace MphRead
 {
+    public enum ModelType
+    {
+        Generic,
+        Room,
+        Item
+    }
+
     public enum PolygonMode : uint
     {
         Modulate = 0,

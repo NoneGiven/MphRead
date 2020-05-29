@@ -30,8 +30,6 @@ namespace MphRead
                 roomLayerMask = -1;
             }
             Model room = Read.GetRoomByName(name);
-            // todo: use scene scale?
-            float sceneScale = room.Header.ScaleBase.FloatValue * (1 << (int)room.Header.ScaleFactor);
             // todo: do whatever with NodePosition/NodeInitialPosition?
             // todo: use this name and ID?
             string nodeName = "rmMain";
@@ -48,6 +46,7 @@ namespace MphRead
             // todo: load animations
             IReadOnlyList<Model> entities = LoadEntities(metadata);
             // todo: area ID/portals?
+            room.Type = ModelType.Room;
             return (room, entities);
         }
 
@@ -190,21 +189,23 @@ namespace MphRead
             // todo: load animations
             var list = new List<Model>();
             string modelName = Metadata.JumpPads[(int)data.ModelId];
-            Model model = Read.GetModelByName(modelName);
-            model.Position = new Vector3(data.Position);
-            list.Add(model);
-            model = Read.GetModelByName("JumpPad_Beam");
-            model.Position = new Vector3(data.Position);
-            list.Add(model);
+            Model model1 = Read.GetModelByName(modelName);
+            model1.Position = new Vector3(data.Position);
+            list.Add(model1);
+            Model model2 = Read.GetModelByName("JumpPad_Beam");
+            model2.Position = new Vector3(model1.Position.X, model1.Position.Y + 0.2f, model1.Position.Z);
+            model2.Rotation = new Vector3(90, 0, 0);
+            list.Add(model2);
             return list;
         }
-
+        
         private static Model LoadItem(ItemEntityData data)
         {
             // todo: load animations
             Model model = Read.GetModelByName(Metadata.Items[(int)data.ModelId]);
             model.Position = new Vector3(data.Position);
-            model.Rotation = _random.Next(0x8000) / (float)0x7FFF * 360;
+            model.Rotation = new Vector3(0, _random.Next(0x8000) / (float)0x7FFF * 360, 0);
+            model.Type = ModelType.Item;
             return model;
         }
     }
