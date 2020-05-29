@@ -81,10 +81,10 @@ namespace MphRead
         private bool _wireframe = false;
         private bool _faceCulling = true;
         private bool _textureFiltering = true;
-        private bool _applyTansforms = false;
 
         private static readonly Color4 _clearColor = new Color4(0.4f, 0.4f, 0.4f, 1.0f);
 
+        private int _shaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
 
         public RenderWindow(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
@@ -146,23 +146,23 @@ namespace MphRead
             int frgS = GL.CreateShader(ShaderType.FragmentShader);
             GL.ShaderSource(frgS, Shaders.FragmentShader);
             GL.CompileShader(frgS);
-            int prog = GL.CreateProgram();
-            GL.AttachShader(prog, vtxS);
-            GL.AttachShader(prog, frgS);
-            GL.LinkProgram(prog);
-            GL.DetachShader(prog, vtxS);
-            GL.DetachShader(prog, frgS);
+            _shaderProgramId = GL.CreateProgram();
+            GL.AttachShader(_shaderProgramId, vtxS);
+            GL.AttachShader(_shaderProgramId, frgS);
+            GL.LinkProgram(_shaderProgramId);
+            GL.DetachShader(_shaderProgramId, vtxS);
+            GL.DetachShader(_shaderProgramId, frgS);
 
-            _shaderLocations.IsBillboard = GL.GetUniformLocation(prog, "is_billboard");
-            _shaderLocations.UseLight = GL.GetUniformLocation(prog, "use_light");
-            _shaderLocations.UseTexture = GL.GetUniformLocation(prog, "use_texture");
-            _shaderLocations.Light1Color = GL.GetUniformLocation(prog, "light1col");
-            _shaderLocations.Light1Vector = GL.GetUniformLocation(prog, "light1vec");
-            _shaderLocations.Light2Color = GL.GetUniformLocation(prog, "light2col");
-            _shaderLocations.Light2Vector = GL.GetUniformLocation(prog, "light2vec");
-            _shaderLocations.Diffuse = GL.GetUniformLocation(prog, "diffuse");
-            _shaderLocations.Ambient = GL.GetUniformLocation(prog, "ambient");
-            _shaderLocations.Specular = GL.GetUniformLocation(prog, "specular");
+            _shaderLocations.IsBillboard = GL.GetUniformLocation(_shaderProgramId, "is_billboard");
+            _shaderLocations.UseLight = GL.GetUniformLocation(_shaderProgramId, "use_light");
+            _shaderLocations.UseTexture = GL.GetUniformLocation(_shaderProgramId, "use_texture");
+            _shaderLocations.Light1Color = GL.GetUniformLocation(_shaderProgramId, "light1col");
+            _shaderLocations.Light1Vector = GL.GetUniformLocation(_shaderProgramId, "light1vec");
+            _shaderLocations.Light2Color = GL.GetUniformLocation(_shaderProgramId, "light2col");
+            _shaderLocations.Light2Vector = GL.GetUniformLocation(_shaderProgramId, "light2vec");
+            _shaderLocations.Diffuse = GL.GetUniformLocation(_shaderProgramId, "diffuse");
+            _shaderLocations.Ambient = GL.GetUniformLocation(_shaderProgramId, "ambient");
+            _shaderLocations.Specular = GL.GetUniformLocation(_shaderProgramId, "specular");
         }
 
         private void PrintMenu()
