@@ -67,13 +67,15 @@ namespace MphRead
         private readonly List<Model> _models = new List<Model>();
         private readonly Dictionary<Model, List<int>> _textureMap = new Dictionary<Model, List<int>>();
 
+        private CameraMode _cameraMode = CameraMode.Pivot;
         private float _angle = 0.0f;
         private float _elevation = 0.0f;
         private float _distance = 5.0f;
+        private Vector3 _cameraPosition = default;
         private bool _leftMouse = false;
         public int _textureCount = 0;
         public float _roomScale = 1;
-        
+
         private bool _showTextures = true;
         private bool _showColors = true;
         private bool _wireframe = false;
@@ -102,10 +104,11 @@ namespace MphRead
             _models.AddRange(entities);
             _roomScale = room.Header.ScaleBase.FloatValue * (1 << (int)room.Header.ScaleFactor);
         }
-        
+
         public void AddModel(string name, int recolor)
         {
             Model model = Read.GetModelByName(name, recolor);
+            model.Position = new Vector3(0, 0, -2);
             SceneSetup.ComputeMatrices(model, index: 0);
             _models.Add(model);
         }
@@ -274,20 +277,90 @@ namespace MphRead
             var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.02f, 100.0f);
             GL.LoadMatrix(ref perspectiveMatrix);
 
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.LoadIdentity();
-            GL.Translate(0, 0, _distance * -1);
-            GL.Rotate(_elevation, 1, 0, 0);
-            GL.Rotate(_angle, 0, 1, 0);
+            TransformCamera();
+            _cameraPosition = GetCameraPosition();
 
             RenderScene(args.Time);
             SwapBuffers();
             base.OnRenderFrame(args);
         }
 
+        private void TransformCamera()
+        {
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadIdentity();
+            if (_cameraMode == CameraMode.Pivot)
+            {
+                GL.Translate(0, 0, _distance * -1);
+                GL.Rotate(_elevation, 1, 0, 0);
+                GL.Rotate(_angle, 0, 1, 0);
+            }
+        }
+
+        private float ConvertToRadians(float angle)
+        {
+            return MathF.PI / 180 * angle;
+        }
+
+        private Vector3 GetCameraPosition()
+        {
+            if (_cameraMode == CameraMode.Pivot)
+            {
+                float angle = _angle + 90;
+                if (angle > 360)
+                {
+                    angle -= 360;
+                }
+                float elevation = _elevation + 90;
+                if (elevation > 360)
+                {
+                    elevation -= 360;
+                }
+                float theta = ConvertToRadians(angle);
+                float phi = ConvertToRadians(elevation);
+                float x = MathF.Round(_distance * MathF.Cos(theta), 4);
+                float y = MathF.Round(_distance * MathF.Sin(theta) * MathF.Cos(phi), 4) * -1;
+                float z = MathF.Round(_distance * MathF.Sin(theta) * MathF.Sin(phi), 4);
+                return new Vector3(x, y, z);
+            }
+            return default;
+        }
+
+        private int CompareModels(Model one, Model two)
+        {
+            if (one.Type == ModelType.Room)
+            {
+                if (two.Type != ModelType.Room)
+                {
+                    return -1;
+                }
+                return 0;
+            }
+            else if (two.Type == ModelType.Room)
+            {
+                return 1;
+            }
+            // todo: use built-in types the whole way through
+            var camera = new System.Numerics.Vector3(_cameraPosition.X, _cameraPosition.Y, _cameraPosition.Z);
+            var vectorOne = new System.Numerics.Vector3(one.Position.X, one.Position.Y, one.Position.Z);
+            var vectorTwo = new System.Numerics.Vector3(two.Position.X, two.Position.Y, two.Position.Z);
+            float distanceOne = System.Numerics.Vector3.Distance(camera, vectorOne);
+            float distanceTwo = System.Numerics.Vector3.Distance(camera, vectorTwo);
+            if (distanceOne == distanceTwo)
+            {
+                return 0;
+            }
+            if (distanceOne < distanceTwo)
+            {
+                return 1;
+            }
+            return -1;
+        }
+
         private void RenderScene(double elapsedTime)
         {
             // todo: process animations
+            _models.Sort(CompareModels);
             foreach (Model model in _models)
             {
                 GL.MatrixMode(MatrixMode.Modelview);
@@ -313,7 +386,7 @@ namespace MphRead
                 GL.PopMatrix();
             }
         }
-        
+
         private void RenderModel(Model model)
         {
             foreach (Mesh mesh in model.Meshes)
@@ -670,6 +743,18 @@ namespace MphRead
                 _angle = 0;
                 _distance = 5.0f;
             }
+            else if (e.Key == Key.P)
+            {
+                // todo: alternate camera mode
+                if (_cameraMode == CameraMode.Pivot)
+                {
+                    _cameraMode = CameraMode.Roam;
+                }
+                else
+                {
+                    _cameraMode = CameraMode.Pivot;
+                }
+            }
             else if (e.Control && e.Key == Key.O)
             {
                 LoadModel();
@@ -714,6 +799,12 @@ namespace MphRead
                     Console.WriteLine(ex.Message);
                 }
             }
+        }
+
+        private enum CameraMode
+        {
+            Pivot,
+            Roam
         }
     }
 }
