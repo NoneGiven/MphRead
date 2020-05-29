@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -15,7 +16,7 @@ namespace MphRead
 
         public static Model GetModelByName(string name, int defaultRecolor = 0)
         {
-            EntityMetadata? entityMeta = Metadata.GetByName(name);
+            EntityMetadata? entityMeta = Metadata.GetEntityByName(name);
             if (entityMeta == null)
             {
                 throw new ProgramException("No entity with this name is known. Please provide metadata for a custom entity.");
@@ -25,7 +26,7 @@ namespace MphRead
 
         public static Model GetModelByPath(string path, int defaultRecolor = 0)
         {
-            EntityMetadata? entityMeta = Metadata.GetByPath(path);
+            EntityMetadata? entityMeta = Metadata.GetEntityByPath(path);
             if (entityMeta == null)
             {
                 throw new ProgramException("No entity at this path is known. Please provide metadata for a custom entity.");
@@ -33,16 +34,67 @@ namespace MphRead
             return GetModel(entityMeta, defaultRecolor);
         }
 
+        public static Model GetRoomByName(string name)
+        {
+            RoomMetadata? roomMeta = Metadata.GetRoomByName(name);
+            if (roomMeta == null)
+            {
+                throw new ProgramException("No room with this name is known. Please provide metadata for a custom room.");
+            }
+            return GetRoom(roomMeta);
+        }
+
+        public static Model GetRoomById(int id)
+        {
+            RoomMetadata? roomMeta = Metadata.GetRoomById(id);
+            if (roomMeta == null)
+            {
+                throw new ProgramException("No room with this ID is known.");
+            }
+            return GetRoom(roomMeta);
+        }
+
+        private static Model GetRoom(RoomMetadata roomMeta)
+        {
+            var recolors = new List<RecolorMetadata>()
+            {
+                new RecolorMetadata("default", roomMeta.ModelPath, roomMeta.TexturePath ?? roomMeta.ModelPath)
+            };
+            return GetModel(roomMeta.Name, roomMeta.ModelPath, recolors, defaultRecolor: 0);
+        }
+
         private static Model GetModel(EntityMetadata entityMeta, int defaultRecolor)
         {
-            if (defaultRecolor < 0 || defaultRecolor > entityMeta.Recolors.Count)
+            return GetModel(entityMeta.Name, entityMeta.ModelPath, entityMeta.Recolors, defaultRecolor);
+        }
+
+        public static Model GetModelDirect(string path)
+        {
+            string name = Path.GetFileNameWithoutExtension(path);
+            var recolors = new List<RecolorMetadata>()
+            {
+                new RecolorMetadata("default", path)
+            };
+            return GetModel(name, path, recolors, defaultRecolor: 0);
+        }
+
+        public static Header GetHeader(string path)
+        {
+            path = Path.Combine(Paths.FileSystem, path);
+            ReadOnlySpan<byte> bytes = ReadBytes(path);
+            return ReadStruct<Header>(bytes[0..Sizes.Header]);
+        }
+
+        private static Model GetModel(string name, string modelPath, IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor)
+        {
+            if (defaultRecolor < 0 || defaultRecolor > recolorMeta.Count)
             {
                 throw new ProgramException("The specified recolor index is invalid for this entity.");
             }
-            string path = Path.Combine(Paths.FileSystem, entityMeta.ModelPath);
+            string path = Path.Combine(Paths.FileSystem, modelPath);
             ReadOnlySpan<byte> initialBytes = ReadBytes(path);
             Header header = ReadStruct<Header>(initialBytes[0..Sizes.Header]);
-            IReadOnlyList<Bone> bones = DoOffsets<Bone>(initialBytes, header.BoneOffset, header.BoneCount);
+            IReadOnlyList<RawNode> nodes = DoOffsets<RawNode>(initialBytes, header.NodeOffset, header.NodeCount);
             IReadOnlyList<Mesh> meshes = DoOffsets<Mesh>(initialBytes, header.MeshOffset, header.MeshCount);
             IReadOnlyList<DisplayList> dlists = DoOffsets<DisplayList>(initialBytes, header.DlistOffset, header.MeshCount);
             var instructions = new List<IReadOnlyList<RenderInstruction>>();
@@ -50,29 +102,30 @@ namespace MphRead
             {
                 instructions.Add(DoRenderInstructions(initialBytes, dlist));
             }
-            IReadOnlyList<Material> materials = DoOffsets<Material>(initialBytes, header.MaterialOffset, header.MaterialCount);
+            IReadOnlyList<RawMaterial> materials = DoOffsets<RawMaterial>(initialBytes, header.MaterialOffset, header.MaterialCount);
             var recolors = new List<Recolor>();
-            foreach (RecolorMetadata recolorMeta in entityMeta.Recolors)
+            foreach (RecolorMetadata meta in recolorMeta)
             {
                 ReadOnlySpan<byte> modelBytes = initialBytes;
                 Header modelHeader = header;
-                if (recolorMeta.ModelPath != path)
+                // todo: this check is causing a double load (full path vs. relative)
+                if (meta.ModelPath != path)
                 {
-                    modelBytes = ReadBytes(recolorMeta.ModelPath);
+                    modelBytes = ReadBytes(meta.ModelPath);
                     modelHeader = ReadStruct<Header>(modelBytes[0..Sizes.Header]);
                 }
                 IReadOnlyList<Texture> textures = DoOffsets<Texture>(modelBytes, modelHeader.TextureOffset, modelHeader.TextureCount);
                 IReadOnlyList<Palette> palettes = DoOffsets<Palette>(modelBytes, modelHeader.PaletteOffset, modelHeader.PaletteCount);
                 ReadOnlySpan<byte> textureBytes = modelBytes;
-                if (recolorMeta.TexturePath != recolorMeta.ModelPath)
+                if (meta.TexturePath != meta.ModelPath)
                 {
-                    textureBytes = ReadBytes(recolorMeta.TexturePath);
+                    textureBytes = ReadBytes(meta.TexturePath);
                 }
                 ReadOnlySpan<byte> paletteBytes = textureBytes;
-                if (recolorMeta.PalettePath != recolorMeta.TexturePath)
+                if (meta.PalettePath != meta.TexturePath)
                 {
-                    paletteBytes = ReadBytes(recolorMeta.PalettePath);
-                    if (recolorMeta.SeparatePaletteHeader)
+                    paletteBytes = ReadBytes(meta.PalettePath);
+                    if (meta.SeparatePaletteHeader)
                     {
                         Header paletteHeader = ReadStruct<Header>(paletteBytes[0..Sizes.Header]);
                         palettes = DoOffsets<Palette>(paletteBytes, paletteHeader.PaletteOffset, paletteHeader.PaletteCount);
@@ -88,9 +141,9 @@ namespace MphRead
                 {
                     paletteData.Add(GetPaletteData(palette, paletteBytes));
                 }
-                recolors.Add(new Recolor(recolorMeta.Name, textures, palettes, textureData, paletteData));
+                recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
             }
-            return new Model(entityMeta.Name, header, bones, meshes, materials, dlists, instructions, recolors, defaultRecolor);
+            return new Model(name, header, nodes, meshes, materials, dlists, instructions, recolors, defaultRecolor);
         }
 
         private static ReadOnlySpan<byte> ReadBytes(string path)
@@ -153,6 +206,14 @@ namespace MphRead
                             index &= 0x1F;
                             alpha = AlphaFromA3I5(entry);
                         }
+                        if (texture.Format == TextureFormat.Palette2Bit || texture.Format == TextureFormat.Palette4Bit
+                            || texture.Format == TextureFormat.Palette8Bit)
+                        {
+                            if (texture.Opaque == 0 && index == 0)
+                            {
+                                alpha = 0;
+                            }
+                        }
                         data.Add(new TextureData(index, alpha));
                     }
                 }
@@ -175,72 +236,6 @@ namespace MphRead
             return data;
         }
 
-        private static IReadOnlyList<ColorRgba> DoPixels(Texture texture, Palette palette,
-            ReadOnlySpan<byte> textureBytes, ReadOnlySpan<byte> paletteBytes)
-        {
-            var pixels = new List<ColorRgba>();
-            int pixelCount = texture.Width * texture.Height;
-            int entriesPerByte = 1;
-            if (texture.Format == TextureFormat.Palette2Bit)
-            {
-                entriesPerByte = 4;
-            }
-            else if (texture.Format == TextureFormat.Palette4Bit)
-            {
-                entriesPerByte = 2;
-            }
-            if (pixelCount % entriesPerByte != 0)
-            {
-                throw new ProgramException($"Pixel count {pixelCount} is not divisible by {entriesPerByte}.");
-            }
-            pixelCount /= entriesPerByte;
-            for (int pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++)
-            {
-                if (texture.Format == TextureFormat.DirectRgb || texture.Format == TextureFormat.DirectRgba)
-                {
-                    ushort color = SpanReadUshort(textureBytes, (int)(texture.ImageOffset + pixelIndex * 2));
-                    byte alpha = texture.Format == TextureFormat.DirectRgb ? (byte)255 : AlphaFromShort(color);
-                    pixels.Add(ColorFromShort(color, alpha));
-                }
-                else
-                {
-                    byte entry = textureBytes[(int)(texture.ImageOffset + pixelIndex)];
-                    for (int entryIndex = 0; entryIndex < entriesPerByte; entryIndex++)
-                    {
-                        uint index = (uint)(entry >> ((pixelIndex * entriesPerByte + entryIndex) % entriesPerByte
-                            * (8 / entriesPerByte)));
-                        byte alpha = 255;
-                        if (texture.Format == TextureFormat.Palette2Bit)
-                        {
-                            index &= 0x3;
-                        }
-                        else if (texture.Format == TextureFormat.Palette4Bit)
-                        {
-                            index &= 0xF;
-                        }
-                        else if (texture.Format == TextureFormat.PaletteA5I3)
-                        {
-                            index &= 0x7;
-                            alpha = AlphaFromA5I3(entry);
-                        }
-                        else if (texture.Format == TextureFormat.PaletteA3I5)
-                        {
-                            index &= 0x1F;
-                            alpha = AlphaFromA3I5(entry);
-                        }
-                        int offset = (int)(palette.Offset + index * 2);
-                        if (offset >= paletteBytes.Length)
-                        {
-                            throw new ProgramException("Offset points beyond palette bytes.");
-                        }
-                        ushort color = SpanReadUshort(paletteBytes, offset);
-                        pixels.Add(ColorFromShort(color, alpha));
-                    }
-                }
-            }
-            return pixels;
-        }
-
         private static ColorRgba ColorFromShort(ushort value, byte alpha)
         {
             byte red = (byte)(((value >> 0) & 0x1F) << 3);
@@ -249,11 +244,57 @@ namespace MphRead
             return new ColorRgba(red, green, blue, alpha);
         }
 
-        private static byte AlphaFromShort(ushort value) => (value & 0x8000) == 0x8000 ? (byte)255 : (byte)0;
+        private static byte AlphaFromShort(ushort value) => (value & 0x8000) == 0 ? (byte)255 : (byte)0;
 
         private static byte AlphaFromA5I3(byte value) => (byte)((value >> 3) / 31.0f * 255.0f);
 
         private static byte AlphaFromA3I5(byte value) => (byte)((value >> 5) / 7.0f * 255.0f);
+
+        public static IReadOnlyList<Entity> GetEntities(string path, int layerId)
+        {
+            path = Path.Combine(Paths.FileSystem, path);
+            ReadOnlySpan<byte> bytes = ReadBytes(path);
+            EntityHeader header = ReadStruct<EntityHeader>(bytes[0..Sizes.EntityHeader]);
+            if (header.Version != 2)
+            {
+                throw new ProgramException($"Unexpected entity header version {header.Version}.");
+            }
+            var entities = new List<Entity>();
+            for (int i = 0; entities.Count < header.Lengths[layerId]; i++)
+            {
+                int start = Sizes.EntityHeader + Sizes.EntityEntry * i;
+                int end = start + Sizes.EntityEntry;
+                EntityEntry entry = ReadStruct<EntityEntry>(bytes[start..end]);
+                if ((entry.LayerMask & (1 << layerId)) != 0)
+                {
+                    start = (int)entry.DataOffset;
+                    end = start + Sizes.EntityDataHeader;
+                    EntityDataHeader init = ReadStruct<EntityDataHeader>(bytes[start..end]);
+                    var type = (EntityType)init.Type;
+                    end = start + entry.Length;
+                    // todo: handle more entity types
+                    if (type == EntityType.JumpPad)
+                    {
+                        Debug.Assert(entry.Length == Sizes.JumpPadEntityData);
+                        JumpPadEntityData data = ReadStruct<JumpPadEntityData>(bytes[start..end]);
+                        entities.Add(new Entity<JumpPadEntityData>(entry, type, init.SomeId, data));
+                    }
+                    else if (type == EntityType.Item || type == EntityType.Pickup)
+                    {
+                        Debug.Assert(entry.Length == Sizes.ItemEntityData);
+                        ItemEntityData data = ReadStruct<ItemEntityData>(bytes[start..end]);
+                        entities.Add(new Entity<ItemEntityData>(entry, type, init.SomeId, data));
+                    }
+                    else
+                    {
+                        entities.Add(new Entity(entry, type, init.SomeId));
+                    }
+                }
+            }
+            return entities;
+        }
+        
+        private static void Nop() { }
 
         private static IReadOnlyList<RenderInstruction> DoRenderInstructions(ReadOnlySpan<byte> bytes, DisplayList dlist)
         {

@@ -16,17 +16,17 @@ namespace MphRead
                 {
                     Int32.TryParse(args[1], out recolor);
                 }
-                renderer.AddModel(Read.GetModelByName(args[0], recolor));
+                renderer.AddModel(args[0], recolor);
             }
             else
             {
-                Model model = Read.GetModelByName("Crate01");
-                renderer.AddModel(model);
+                renderer.AddRoom("MP3 PROVING GROUND");
+                renderer.AddModel("Crate01");
                 Nop();
             }
             renderer.Run();
         }
-        
+
         private static void Nop() { }
     }
 

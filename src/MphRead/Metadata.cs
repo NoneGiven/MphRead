@@ -1,11 +1,72 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace MphRead
 {
-    public class LevelMetadata
+    public class RoomMetadata
     {
-        // todo
+        public string Name { get; }
+        public string InGameName { get; } // not in struct
+        public string ModelPath { get; }
+        public string AnimationPath { get; }
+        public string CollisionPath { get; }
+        public string? TexturePath { get; }
+        public string? EntityPath { get; }
+        public string? NodePath { get; }
+        public string? RoomNodeName { get; }
+        public uint BattleTimeLimit { get; }
+        public uint TimeLimit { get; }
+        public short PointLimit { get; }
+        public short LayerId { get; }
+        //public uint Unknown32 { get; }
+        public ushort FogEnabled { get; }
+        public ushort Fog { get; }
+        public ushort FogColor { get; }
+        //public short Unknown36 { get; }
+        public uint FogSlope { get; }
+        public uint FogOffset { get; }
+        public ColorRgba Light1Color { get; }
+        public Vector3 Light1Vector { get; }
+        public ColorRgba Light2Color { get; }
+        public Vector3 Light2Vector { get; }
+        //public string ArchiveName { get; }
+        //public string ArchivePath { get; }
+        //public uint Unknown21 { get; }
+        //public uint Unknown22 { get; }
+        public Vector3 RoomSize { get; } // not in struct
+
+        public RoomMetadata(string name, string inGameName, string pathName, string modelPath,
+            string animationPath, string collisionPath, string? texturePath, string? entityPath, string? nodePath,
+            string? roomNodeName, uint battleTimeLimit, uint timeLimit, short pointLimit, short layerId, ushort fogEnabled,
+            ushort fog, ushort fogColor, uint fogSlope, uint fogOffset, ColorRgba light1Color,
+            Vector3 light1Vector, ColorRgba light2Color, Vector3 light2Vector, Vector3 roomSize)
+        {
+            Name = name;
+            InGameName = inGameName;
+            // case-insensitive use of the name here
+            ModelPath = $@"_archives\{pathName}\{modelPath}";
+            AnimationPath = $@"_archives\{pathName}\{animationPath}";
+            CollisionPath = $@"_archives\{pathName}\{collisionPath}";
+            TexturePath = texturePath == null ? null : $@"levels\textures\{texturePath}";
+            EntityPath = entityPath == null ? null : $@"levels\entities\{entityPath}";
+            NodePath = nodePath == null ? null : $@"levels\nodeData\{nodePath}";
+            RoomNodeName = roomNodeName;
+            BattleTimeLimit = battleTimeLimit;
+            TimeLimit = timeLimit;
+            PointLimit = pointLimit;
+            LayerId = layerId;
+            FogEnabled = fogEnabled;
+            Fog = fog;
+            FogColor = fogColor;
+            FogSlope = fogSlope;
+            FogOffset = fogOffset;
+            Light1Color = light1Color;
+            Light1Vector = light1Vector;
+            Light2Color = light2Color;
+            Light2Vector = light2Vector;
+            RoomSize = roomSize;
+        }
     }
 
     public enum MdlSuffix
@@ -65,7 +126,8 @@ namespace MphRead
         }
 
         public EntityMetadata(string name, IEnumerable<string> recolors, string? remove = null,
-            bool animation = false, string? animationPath = null, bool texture = false, MdlSuffix mdlSuffix = MdlSuffix.None)
+            bool animation = false, string? animationPath = null, bool texture = false,
+            MdlSuffix mdlSuffix = MdlSuffix.None, string? archive = null, string? recolorName = null)
         {
             Name = name;
             string suffix = "";
@@ -73,7 +135,14 @@ namespace MphRead
             {
                 suffix = "_mdl";
             }
-            ModelPath = $@"models\{name}{suffix}_Model.bin";
+            if (archive == null)
+            {
+                ModelPath = $@"models\{name}{suffix}_Model.bin";
+            }
+            else
+            {
+                ModelPath = $@"_archives\{archive}\{name}_Model.bin";
+            } 
             if (remove != null)
             {
                 name = name.Replace(remove, "");
@@ -84,39 +153,52 @@ namespace MphRead
             }
             if (animation)
             {
-                AnimationPath = animationPath ?? $@"models\{name}{suffix}_Anim.bin";
+                if (animationPath != null)
+                {
+                    AnimationPath = animationPath;
+                }
+                else if (archive != null)
+                {
+                    AnimationPath = $@"_archives\{archive}\{name}_Anim.bin";
+                }
+                else
+                {
+                    AnimationPath = $@"models\{name}{suffix}_Anim.bin";
+                }
             }
             var recolorList = new List<RecolorMetadata>();
             foreach (string recolor in recolors)
             {
-                string recolorModel = $@"models\{name}_{recolor}_Model.bin";
-                string texturePath = texture ? $@"models\{name}_{recolor}_Tex.bin" : recolorModel;
+                string recolorModel = $@"models\{recolorName ?? name}_{recolor}_Model.bin";
+                string texturePath = texture ? $@"models\{recolorName ?? name}_{recolor}_Tex.bin" : recolorModel;
                 recolorList.Add(new RecolorMetadata(recolor, recolorModel, texturePath));
             }
             Recolors = recolorList;
         }
 
         public EntityMetadata(string name, bool animation = true, bool collision = false,
-            bool texture = false, string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None)
+            bool texture = false, string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None,
+            string? archive = null, string? addToAnim = null)
         {
             Name = name;
+            string path = archive == null ? "models" : $@"_archives\{archive}";
             string suffix = "";
             if (mdlSuffix != MdlSuffix.None)
             {
                 suffix = "_mdl";
             }
-            ModelPath = $@"models\{name}{suffix}_Model.bin";
+            ModelPath = $@"{path}\{name}{suffix}_Model.bin";
             if (mdlSuffix != MdlSuffix.All)
             {
                 suffix = "";
             }
             if (animation)
             {
-                AnimationPath = $@"models\{name}{suffix}_Anim.bin";
+                AnimationPath = $@"{path}\{name}{addToAnim}{suffix}_Anim.bin";
             }
             if (collision)
             {
-                CollisionPath = $@"models\{name}{suffix}_Collision.bin";
+                CollisionPath = $@"{path}\{name}{suffix}_Collision.bin";
             }
             string recolorModel = ModelPath;
             if (share != null)
@@ -168,7 +250,7 @@ namespace MphRead
 
     public static class Metadata
     {
-        public static EntityMetadata? GetByName(string name)
+        public static EntityMetadata? GetEntityByName(string name)
         {
             if (EntityMetadata.TryGetValue(name, out EntityMetadata? metadata))
             {
@@ -177,7 +259,7 @@ namespace MphRead
             return null;
         }
 
-        public static EntityMetadata? GetByPath(string path)
+        public static EntityMetadata? GetEntityByPath(string path)
         {
             KeyValuePair<string, EntityMetadata> result = EntityMetadata.FirstOrDefault(r => r.Value.ModelPath == path);
             if (result.Key == null)
@@ -186,6 +268,3295 @@ namespace MphRead
             }
             return result.Value;
         }
+
+        public static RoomMetadata? GetRoomByName(string name)
+        {
+            if (RoomMetadata.TryGetValue(name, out RoomMetadata? metadata))
+            {
+                return metadata;
+            }
+            return null;
+        }
+
+        public static RoomMetadata? GetRoomById(int id)
+        {
+            if (id < 0 || id > _roomIds.Count)
+            {
+                throw new ArgumentException(nameof(id));
+            }
+            if (RoomMetadata.TryGetValue(_roomIds[id], out RoomMetadata? metadata))
+            {
+                return metadata;
+            }
+            return null;
+        }
+
+        private static uint TimeLimit(uint minutes, uint seconds, uint frames)
+        {
+            return minutes * 3600 + seconds * 60 + frames;
+        }
+        
+        private static ushort FogColor(byte r, byte g, byte b)
+        {
+            return (ushort)(r | g << 5 | b << 10);
+        }
+
+        private static readonly IReadOnlyList<string> _roomIds
+            = new List<string>()
+            {
+                "UNIT1_CX",
+                "UNIT1_CX",
+                "UNIT1_CZ",
+                "UNIT1_CZ",
+                "UNIT1_MORPH_CX",
+                "UNIT1_MORPH_CX",
+                "UNIT1_MORPH_CZ",
+                "UNIT1_MORPH_CZ",
+                "UNIT2_CX",
+                "UNIT2_CX",
+                "UNIT2_CZ",
+                "UNIT2_CZ",
+                "UNIT3_CX",
+                "UNIT3_CX",
+                "UNIT3_CZ",
+                "UNIT3_CZ",
+                "UNIT4_CX",
+                "UNIT4_CX",
+                "UNIT4_CZ",
+                "UNIT4_CZ",
+                "CYLINDER_C1",
+                "BIGEYE_C1",
+                "UNIT1_RM1_CX",
+                "UNIT1_RM1_CX",
+                "GOREA_C1",
+                "UNIT3_MORPH_CZ",
+                "UNIT3_MORPH_CZ",
+                "UNIT1_LAND",
+                "UNIT1_C0",
+                "UNIT1_RM1",
+                "UNIT1_C4",
+                "UNIT1_RM6",
+                "CRYSTALROOM",
+                "UNIT1_RM4",
+                "UNIT1_TP1",
+                "UNIT1_B1",
+                "UNIT1_C1",
+                "UNIT1_C2",
+                "UNIT1_C5",
+                "UNIT1_RM2",
+                "UNIT1_RM3",
+                "UNIT1_RM5",
+                "UNIT1_C3",
+                "UNIT1_TP2",
+                "UNIT1_B2",
+                "UNIT2_LAND",
+                "UNIT2_C0",
+                "UNIT2_C1",
+                "UNIT2_RM1",
+                "UNIT2_C2",
+                "UNIT2_RM2",
+                "UNIT2_C3",
+                "UNIT2_RM3",
+                "UNIT2_C4",
+                "UNIT2_TP1",
+                "UNIT2_B1",
+                "UNIT2_C6",
+                "UNIT2_C7",
+                "UNIT2_RM4",
+                "UNIT2_RM5",
+                "UNIT2_RM6",
+                "UNIT2_RM7",
+                "UNIT2_RM8",
+                "UNIT2_TP2",
+                "UNIT2_B2",
+                "UNIT3_LAND",
+                "UNIT3_C0",
+                "UNIT3_C2",
+                "UNIT3_RM1",
+                "UNIT3_RM4",
+                "UNIT3_TP1",
+                "UNIT3_B1",
+                "UNIT3_C1",
+                "UNIT3_RM2",
+                "UNIT3_RM3",
+                "UNIT3_TP2",
+                "UNIT3_B2",
+                "UNIT4_LAND",
+                "UNIT4_RM1",
+                "UNIT4_RM3",
+                "UNIT4_C0",
+                "UNIT4_TP1",
+                "UNIT4_B1",
+                "UNIT4_C1",
+                "UNIT4_RM2",
+                "UNIT4_RM4",
+                "UNIT4_RM5",
+                "UNIT4_TP2",
+                "UNIT4_B2",
+                "Gorea_Land",
+                "Gorea_Peek",
+                "Gorea_b1",
+                "Gorea_b2",
+                "MP1 SANCTORUS",
+                "MP2 HARVESTER",
+                "MP3 PROVING GROUND",
+                "MP4 HIGHGROUND - EXPANDED",
+                "MP4 HIGHGROUND",
+                "MP5 FUEL SLUICE",
+                "MP6 HEADSHOT",
+                "MP7 PROCESSOR CORE",
+                "MP8 FIRE CONTROL",
+                "MP9 CRYOCHASM",
+                "MP10 OVERLOAD",
+                "MP11 BREAKTHROUGH",
+                "MP12 SIC TRANSIT",
+                "MP13 ACCELERATOR",
+                "MP14 OUTER REACH",
+                "CTF1 FAULT LINE - EXPANDED",
+                "CTF1_FAULT LINE",
+                "AD1 TRANSFER LOCK BT",
+                "AD1 TRANSFER LOCK DM",
+                "AD2 MAGMA VENTS",
+                "AD2 ALINOS PERCH",
+                "UNIT1 ALINOS LANDFALL",
+                "UNIT2 LANDING BAY",
+                "UNIT 3 VESPER STARPORT",
+                "UNIT 4 ARCTERRA BASE",
+                "Gorea Prison",
+                "E3 FIRST HUNT",
+                "Level TestLevel",
+                "Level AbeTest"
+            };
+
+        // todo: unused files unit1_b2, unit2_b2, unit3_b1, unit3_b2, unit4_b1, unit4_b2
+        // per mph-viewer metadata, these use cylinderroom/bigeyeroom files instead
+        // --> are they actually used in-game with those other files, or are the rooms unused altogether?
+        // if the former, we should add extra indices for loading the unused files. if the latter, just replace the strings.
+        public static readonly IReadOnlyDictionary<string, RoomMetadata> RoomMetadata
+            = new Dictionary<string, RoomMetadata>()
+            {
+                {
+                    "UNIT1_CX",
+                    new RoomMetadata(
+                        "UNIT1_CX",
+                        // todo: all in-game names
+                        "inGameName",
+                        "unit1_CX",
+                        "unit1_CX_Model.bin",
+                        "unit1_CX_Anim.bin",
+                        "unit1_CX_Collision.bin",
+                        null,
+                        null,
+                        null,
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(10, 0, 0))
+                },
+                {
+                    "UNIT1_CZ",
+                    new RoomMetadata(
+                        "UNIT1_CZ",
+                        "inGameName",
+                        "unit1_CZ",
+                        "unit1_CZ_Model.bin",
+                        "unit1_CZ_Anim.bin",
+                        "unit1_CZ_Collision.bin",
+                        null,
+                        null,
+                        null,
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(0, 0, 10))
+                },
+                {
+                    "UNIT1_MORPH_CX",
+                    new RoomMetadata(
+                        "UNIT1_MORPH_CX",
+                        "inGameName",
+                        "unit1_morph_CX",
+                        "unit1_morph_CX_Model.bin",
+                        "unit1_morph_CX_Anim.bin",
+                        "unit1_morph_CX_Collision.bin",
+                        null,
+                        null,
+                        null,
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(31, 18, 6),
+                        0x4,
+                        65180,
+                        new ColorRgba(31, 18, 6, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 6, 4, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(10, 0, 0))
+                },
+                {
+                    "UNIT1_MORPH_CZ",
+                    new RoomMetadata(
+                        "UNIT1_MORPH_CZ",
+                        "inGameName",
+                        "unit1_morph_CZ",
+                        "unit1_morph_CZ_Model.bin",
+                        "unit1_morph_CZ_Anim.bin",
+                        "unit1_morph_CZ_Collision.bin",
+                        null,
+                        null,
+                        null,
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(0, 0, 10))
+                },
+                {
+                    "UNIT2_CX",
+                    new RoomMetadata(
+                        "UNIT2_CX",
+                        "inGameName",
+                        "unit2_CX",
+                        "unit2_CX_Model.bin",
+                        "unit2_CX_Anim.bin",
+                        "unit2_CX_Collision.bin",
+                        null,
+                        null,
+                        null,
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(18, 31, 18),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 31, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(10.378662, 0, 0))
+                },
+                {
+                    "UNIT2_CZ",
+                    new RoomMetadata(
+                        "UNIT2_CZ",
+                        "inGameName",
+                        "unit2_CZ",
+                        "unit2_CZ_Model.bin",
+                        "unit2_CZ_Anim.bin",
+                        "unit2_CZ_Collision.bin",
+                        null,
+                        null,
+                        null,
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(18, 31, 18),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 31, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(0, 0, 10.378662))
+                },
+                {
+                    "UNIT3_CX",
+                    new RoomMetadata(
+                        "UNIT3_CX",
+                        "inGameName",
+                        "unit3_CX",
+                        "unit3_CX_Model.bin",
+                        "unit3_CX_Anim.bin",
+                        "unit3_CX_Collision.bin",
+                        null,
+                        null,
+                        null,
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(24, 20, 31),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 20, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(10, 0, 0))
+                },
+                {
+                    "UNIT3_CZ",
+                    new RoomMetadata(
+                        "UNIT3_CZ",
+                        "inGameName",
+                        "unit3_CZ",
+                        "unit3_CZ_Model.bin",
+                        "unit3_CZ_Anim.bin",
+                        "unit3_CZ_Collision.bin",
+                        null,
+                        null,
+                        null,
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(24, 20, 31),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 20, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(0, 0, 10))
+                },
+                {
+                    "UNIT4_CX",
+                    new RoomMetadata(
+                        "UNIT4_CX",
+                        "inGameName",
+                        "unit4_CX",
+                        "unit4_CX_Model.bin",
+                        "unit4_CX_Anim.bin",
+                        "unit4_CX_Collision.bin",
+                        null,
+                        null,
+                        null,
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(20, 27, 31),
+                        0x4,
+                        65152,
+                        new ColorRgba(20, 27, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(8, 8, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(10, 0, 0))
+                },
+                {
+                    "UNIT4_CZ",
+                    new RoomMetadata(
+                        "UNIT4_CZ",
+                        "inGameName",
+                        "unit4_CZ",
+                        "unit4_CZ_Model.bin",
+                        "unit4_CZ_Anim.bin",
+                        "unit4_CZ_Collision.bin",
+                        null,
+                        null,
+                        null,
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(20, 27, 31),
+                        0x4,
+                        65152,
+                        new ColorRgba(20, 27, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(8, 8, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(0, 0, 10))
+                },
+                {
+                    "CYLINDER_C1",
+                    new RoomMetadata(
+                        "CYLINDER_C1",
+                        "inGameName",
+                        "Cylinder_C1_CZ",
+                        "Cylinder_C1_model.bin",
+                        "Cylinder_C1_anim.bin",
+                        "Cylinder_C1_collision.bin",
+                        null,
+                        null,
+                        null,
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(8, 28, 20),
+                        0x4,
+                        65535,
+                        new ColorRgba(8, 28, 20, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 6, 12, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(0, 2.295166, 22.654053))
+                },
+                {
+                    "BIGEYE_C1",
+                    new RoomMetadata(
+                        "BIGEYE_C1",
+                        "inGameName",
+                        "BigEye_C1_CZ",
+                        "bigeye_c1_model.bin",
+                        "bigeye_c1_anim.bin",
+                        "bigeye_c1_collision.bin",
+                        null,
+                        null,
+                        null,
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(8, 28, 20),
+                        0x4,
+                        65535,
+                        new ColorRgba(8, 28, 20, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 6, 12, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(0, -1.869873, 22.653809))
+                },
+                {
+                    "UNIT1_RM1_CX",
+                    new RoomMetadata(
+                        "UNIT1_RM1_CX",
+                        "inGameName",
+                        "UNIT1_RM1_CX",
+                        "UNIT1_RM1_CX_Model.bin",
+                        "UNIT1_RM1_CX_Anim.bin",
+                        "UNIT1_RM1_CX_Collision.bin",
+                        null,
+                        null,
+                        null,
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x4,
+                        65535,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(10, 0, 0))
+                },
+                {
+                    "GOREA_C1",
+                    new RoomMetadata(
+                        "GOREA_C1",
+                        "inGameName",
+                        "Gorea_C1_CZ",
+                        "Gorea_c1_Model.bin",
+                        "Gorea_c1_Anim.bin",
+                        "Gorea_c1_Collision.bin",
+                        null,
+                        null,
+                        null,
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(8, 28, 20),
+                        0x4,
+                        65535,
+                        new ColorRgba(8, 28, 20, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 6, 12, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(0, 0, 20))
+                },
+                {
+                    "UNIT3_MORPH_CZ",
+                    new RoomMetadata(
+                        "UNIT3_MORPH_CZ",
+                        "inGameName",
+                        "unit3_morph_CZ",
+                        "unit3_morph_CZ_Model.bin",
+                        "unit3_morph_CZ_Anim.bin",
+                        "unit3_morph_CZ_Collision.bin",
+                        null,
+                        null,
+                        null,
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(24, 20, 31),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 20, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(0, 0, 10))
+                },
+                {
+                    "UNIT1_LAND",
+                    new RoomMetadata(
+                        "UNIT1_LAND",
+                        "inGameName",
+                        "unit1_Land",
+                        "unit1_Land_Model.bin",
+                        "unit1_Land_Anim.bin",
+                        "unit1_Land_Collision.bin",
+                        "unit1_Land_Tex.bin",
+                        "unit1_Land_Ent.bin",
+                        "unit1_Land_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT1_C0",
+                    new RoomMetadata(
+                        "UNIT1_C0",
+                        "inGameName",
+                        "unit1_C0",
+                        "unit1_C0_Model.bin",
+                        "unit1_C0_Anim.bin",
+                        "unit1_C0_Collision.bin",
+                        "unit1_c0_Tex.bin",
+                        "unit1_C0_Ent.bin",
+                        "unit1_C0_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT1_RM1",
+                    new RoomMetadata(
+                        "UNIT1_RM1",
+                        "inGameName",
+                        "unit1_RM1",
+                        "unit1_RM1_Model.bin",
+                        "unit1_RM1_Anim.bin",
+                        "unit1_RM1_Collision.bin",
+                        "unit1_RM1_Tex.bin",
+                        "unit1_RM1_Ent.bin",
+                        "unit1_RM1_Node.bin",
+                        null,
+                        TimeLimit(6, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT1_C4",
+                    new RoomMetadata(
+                        "UNIT1_C4",
+                        "inGameName",
+                        "unit1_C4",
+                        "unit1_C4_Model.bin",
+                        "unit1_C4_Anim.bin",
+                        "unit1_C4_Collision.bin",
+                        "unit1_c4_Tex.bin",
+                        "unit1_C4_Ent.bin",
+                        "unit1_C4_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT1_RM6",
+                    new RoomMetadata(
+                        "UNIT1_RM6",
+                        "inGameName",
+                        "unit1_RM6",
+                        "unit1_RM6_Model.bin",
+                        "unit1_RM6_Anim.bin",
+                        "unit1_RM6_Collision.bin",
+                        "unit1_RM6_Tex.bin",
+                        "unit1_RM6_Ent.bin",
+                        "unit1_RM6_Node.bin",
+                        null,
+                        TimeLimit(6, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-41, 41, 6))
+                },
+                {
+                    "CRYSTALROOM",
+                    new RoomMetadata(
+                        "CRYSTALROOM",
+                        "inGameName",
+                        "crystalroom",
+                        "crystalroom_Model.bin",
+                        "crystalroom_anim.bin",
+                        "crystalroom_collision.bin",
+                        "crystalroom_Tex.bin",
+                        "crystalroom_Ent.bin",
+                        "crystalroom_node.bin",
+                        null,
+                        TimeLimit(6, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(19, 29, 31),
+                        0x4,
+                        65535,
+                        new ColorRgba(19, 29, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 6, 12, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(32, -72, 72))
+                },
+                {
+                    "UNIT1_RM4",
+                    new RoomMetadata(
+                        "UNIT1_RM4",
+                        "inGameName",
+                        "mp3",
+                        "mp3_Model.bin",
+                        "mp3_Anim.bin",
+                        "mp3_Collision.bin",
+                        "mp3_Tex.bin",
+                        "unit1_RM4_Ent.bin",
+                        "unit1_RM4_Node.bin",
+                        null,
+                        TimeLimit(6, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT1_TP1",
+                    new RoomMetadata(
+                        "UNIT1_TP1",
+                        "inGameName",
+                        "TeleportRoom",
+                        "TeleportRoom_Model.bin",
+                        "TeleportRoom_Anim.bin",
+                        "TeleportRoom_Collision.bin",
+                        "TeleportRoom_Tex.bin",
+                        "Unit1_TP1_Ent.bin",
+                        "unit1_TP1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 18, 6),
+                        0x6,
+                        65350,
+                        new ColorRgba(8, 28, 20, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(20, 8, 8, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT1_B1",
+                    new RoomMetadata(
+                        "UNIT1_B1",
+                        "inGameName",
+                        "bigeyeroom",
+                        "bigeyeroom_Model.bin",
+                        "bigeyeroom_Anim.bin",
+                        "bigeyeroom_Collision.bin",
+                        "bigeyeroom_Tex.bin",
+                        "unit1_b1_Ent.bin",
+                        "unit2_b2_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(12, 6, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(12, 6, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(31, 25, 21, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-11, 10, 0))
+                },
+                {
+                    "UNIT1_C1",
+                    new RoomMetadata(
+                        "UNIT1_C1",
+                        "inGameName",
+                        "unit1_C1",
+                        "unit1_C1_Model.bin",
+                        "unit1_C1_Anim.bin",
+                        "unit1_C1_Collision.bin",
+                        "unit1_c1_Tex.bin",
+                        "unit1_C1_Ent.bin",
+                        "unit1_C1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(13, -27, 26))
+                },
+                {
+                    "UNIT1_C2",
+                    new RoomMetadata(
+                        "UNIT1_C2",
+                        "inGameName",
+                        "unit1_C2",
+                        "unit1_C2_Model.bin",
+                        "unit1_C2_Anim.bin",
+                        "unit1_C2_Collision.bin",
+                        "unit1_c2_Tex.bin",
+                        "unit1_C2_Ent.bin",
+                        "unit1_C2_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT1_C5",
+                    new RoomMetadata(
+                        "UNIT1_C5",
+                        "inGameName",
+                        "unit1_C5",
+                        "unit1_C5_Model.bin",
+                        "unit1_C5_Anim.bin",
+                        "unit1_C5_Collision.bin",
+                        "unit1_c5_Tex.bin",
+                        "unit1_C5_Ent.bin",
+                        "unit1_RM5_Node.bin",
+                        null,
+                        TimeLimit(6, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x3,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 18, 6),
+                        0x4,
+                        65300,
+                        new ColorRgba(31, 18, 6, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 9, 4, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT1_RM2",
+                    new RoomMetadata(
+                        "UNIT1_RM2",
+                        "inGameName",
+                        "unit1_rm2",
+                        "unit1_rm2_Model.bin",
+                        "unit1_rm2_Anim.bin",
+                        "unit1_rm2_Collision.bin",
+                        "unit1_RM2_Tex.bin",
+                        "unit1_RM2_Ent.bin",
+                        "unit1_RM2_Node.bin",
+                        null,
+                        TimeLimit(6, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x3,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-37, 45, -1))
+                },
+                {
+                    "UNIT1_RM3",
+                    new RoomMetadata(
+                        "UNIT1_RM3",
+                        "inGameName",
+                        "unit1_rm3",
+                        "unit1_rm3_Model.bin",
+                        "unit1_rm3_Anim.bin",
+                        "unit1_rm3_Collision.bin",
+                        "unit1_RM3_Tex.bin",
+                        "unit1_RM3_Ent.bin",
+                        "unit1_RM3_Node.bin",
+                        null,
+                        TimeLimit(6, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x3,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(25, -27, 20))
+                },
+                {
+                    "UNIT1_RM5",
+                    new RoomMetadata(
+                        "UNIT1_RM5",
+                        "inGameName",
+                        "mp7",
+                        "mp7_Model.bin",
+                        "mp7_Anim.bin",
+                        "mp7_Collision.bin",
+                        "mp7_Tex.bin",
+                        "unit1_RM5_Ent.bin",
+                        "unit1_RM5_Node.bin",
+                        null,
+                        TimeLimit(6, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x3,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 18, 6),
+                        0x4,
+                        65180,
+                        new ColorRgba(31, 18, 6, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 6, 4, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT1_C3",
+                    new RoomMetadata(
+                        "UNIT1_C3",
+                        "inGameName",
+                        "unit1_C3",
+                        "unit1_C3_Model.bin",
+                        "unit1_C3_Anim.bin",
+                        "unit1_C3_Collision.bin",
+                        "unit1_c3_Tex.bin",
+                        "unit1_C3_Ent.bin",
+                        "unit1_C3_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT1_TP2",
+                    new RoomMetadata(
+                        "UNIT1_TP2",
+                        "inGameName",
+                        "TeleportRoom",
+                        "TeleportRoom_Model.bin",
+                        "TeleportRoom_Anim.bin",
+                        "TeleportRoom_Collision.bin",
+                        "TeleportRoom_Tex.bin",
+                        "Unit1_TP2_Ent.bin",
+                        "unit1_TP2_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x2,
+                        1,
+                        0x0,
+                        FogColor(31, 18, 6),
+                        0x6,
+                        65350,
+                        new ColorRgba(8, 28, 20, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 6, 12, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-37, 45, -1))
+                },
+                {
+                    "UNIT1_B2",
+                    new RoomMetadata(
+                        "UNIT1_B2",
+                        "inGameName",
+                        "cylinderroom",
+                        "cylinderroom_Model.bin",
+                        "cylinderroom_Anim.bin",
+                        "cylinderroom_Collision.bin",
+                        "cylinderroom_Tex.bin",
+                        "unit1_b2_Ent.bin",
+                        "unit2_b1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(12, 6, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(12, 6, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(31, 25, 21, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(25, -27, 20))
+                },
+                {
+                    "UNIT2_LAND",
+                    new RoomMetadata(
+                        "UNIT2_LAND",
+                        "inGameName",
+                        "unit2_Land",
+                        "unit2_Land_Model.bin",
+                        "unit2_Land_Anim.bin",
+                        "unit2_Land_Collision.bin",
+                        "unit2_Land_Tex.bin",
+                        "unit2_Land_Ent.bin",
+                        "unit2_Land_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(18, 31, 18),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 24, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT2_C0",
+                    new RoomMetadata(
+                        "UNIT2_C0",
+                        "inGameName",
+                        "unit2_C0",
+                        "unit2_C0_Model.bin",
+                        "unit2_C0_Anim.bin",
+                        "unit2_C0_Collision.bin",
+                        "unit2_c0_Tex.bin",
+                        "unit2_C0_Ent.bin",
+                        "unit2_C0_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(18, 31, 18),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 31, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT2_C1",
+                    new RoomMetadata(
+                        "UNIT2_C1",
+                        "inGameName",
+                        "unit2_C1",
+                        "unit2_C1_Model.bin",
+                        "unit2_C1_Anim.bin",
+                        "unit2_C1_Collision.bin",
+                        "unit2_c1_Tex.bin",
+                        "unit2_C1_Ent.bin",
+                        "unit2_C1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(18, 31, 18),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 31, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-24, 27, 0))
+                },
+                {
+                    "UNIT2_RM1",
+                    new RoomMetadata(
+                        "UNIT2_RM1",
+                        "inGameName",
+                        "mp1",
+                        "mp1_Model.bin",
+                        "mp1_Anim.bin",
+                        "mp1_Collision.bin",
+                        "mp1_Tex.bin",
+                        "unit2_RM1_Ent.bin",
+                        "unit2_RM1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(18, 31, 18),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 31, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(17, -14, 14))
+                },
+                {
+                    "UNIT2_C2",
+                    new RoomMetadata(
+                        "UNIT2_C2",
+                        "inGameName",
+                        "unit2_C2",
+                        "unit2_C2_Model.bin",
+                        "unit2_C2_Anim.bin",
+                        "unit2_C2_Collision.bin",
+                        "unit2_c2_Tex.bin",
+                        "unit2_C2_Ent.bin",
+                        "unit2_C2_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(18, 31, 18),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 31, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT2_RM2",
+                    new RoomMetadata(
+                        "UNIT2_RM2",
+                        "inGameName",
+                        "mp1",
+                        "mp1_Model.bin",
+                        "mp1_Anim.bin",
+                        "mp1_Collision.bin",
+                        "mp1_Tex.bin",
+                        "unit2_RM2_Ent.bin",
+                        "unit2_RM2_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x2,
+                        1,
+                        0x0,
+                        FogColor(18, 31, 18),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 31, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT2_C3",
+                    new RoomMetadata(
+                        "UNIT2_C3",
+                        "inGameName",
+                        "unit2_C3",
+                        "unit2_C3_Model.bin",
+                        "unit2_C3_Anim.bin",
+                        "unit2_C3_Collision.bin",
+                        "unit2_c3_Tex.bin",
+                        "unit2_C3_Ent.bin",
+                        "unit2_C3_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(18, 31, 18),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 31, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-49, 48, 0))
+                },
+                {
+                    "UNIT2_RM3",
+                    new RoomMetadata(
+                        "UNIT2_RM3",
+                        "inGameName",
+                        "unit2_RM3",
+                        "unit2_RM3_Model.bin",
+                        "unit2_RM3_Anim.bin",
+                        "unit2_RM3_Collision.bin",
+                        "unit2_RM3_Tex.bin",
+                        "unit2_RM3_Ent.bin",
+                        "unit2_RM3_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x3,
+                        1,
+                        0x0,
+                        FogColor(18, 31, 18),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 31, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(48, -49, 47))
+                },
+                {
+                    "UNIT2_C4",
+                    new RoomMetadata(
+                        "UNIT2_C4",
+                        "inGameName",
+                        "unit2_C4",
+                        "unit2_C4_Model.bin",
+                        "unit2_C4_Anim.bin",
+                        "unit2_C4_Collision.bin",
+                        "unit2_c4_Tex.bin",
+                        "unit2_C4_Ent.bin",
+                        "unit2_C4_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(18, 31, 18),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 31, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-70, 70, -21.227783))
+                },
+                {
+                    "UNIT2_TP1",
+                    new RoomMetadata(
+                        "UNIT2_TP1",
+                        "inGameName",
+                        "TeleportRoom",
+                        "TeleportRoom_Model.bin",
+                        "TeleportRoom_Anim.bin",
+                        "TeleportRoom_Collision.bin",
+                        "TeleportRoom_Tex.bin",
+                        "Unit2_TP1_Ent.bin",
+                        "unit2_TP1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x3,
+                        1,
+                        0x0,
+                        FogColor(17, 29, 16),
+                        0x6,
+                        65350,
+                        new ColorRgba(8, 28, 20, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 6, 12, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(48, -70, 70))
+                },
+                {
+                    "UNIT2_B1",
+                    new RoomMetadata(
+                        "UNIT2_B1",
+                        "inGameName",
+                        "cylinderroom",
+                        "cylinderroom_Model.bin",
+                        "cylinderroom_Anim.bin",
+                        "cylinderroom_Collision.bin",
+                        "cylinderroom_Tex.bin",
+                        "unit2_b1_Ent.bin",
+                        "unit2_b1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(12, 6, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(12, 6, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(31, 25, 21, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT2_C6",
+                    new RoomMetadata(
+                        "UNIT2_C6",
+                        "inGameName",
+                        "unit2_C6",
+                        "unit2_C6_Model.bin",
+                        "unit2_C6_Anim.bin",
+                        "unit2_C6_Collision.bin",
+                        "unit2_c6_Tex.bin",
+                        "unit2_C6_Ent.bin",
+                        "unit2_C6_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(18, 31, 18),
+                        0x4,
+                        65152,
+                        new ColorRgba(18, 31, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT2_C7",
+                    new RoomMetadata(
+                        "UNIT2_C7",
+                        "inGameName",
+                        "unit2_C7",
+                        "unit2_C7_Model.bin",
+                        "unit2_C7_Anim.bin",
+                        "unit2_C7_Collision.bin",
+                        "unit2_c7_Tex.bin",
+                        "unit2_C7_Ent.bin",
+                        "unit2_C7_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(18, 31, 18),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 31, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT2_RM4",
+                    new RoomMetadata(
+                        "UNIT2_RM4",
+                        "inGameName",
+                        "unit2_RM4",
+                        "unit2_RM4_Model.bin",
+                        "unit2_RM4_Anim.bin",
+                        "unit2_RM4_Collision.bin",
+                        "unit2_RM4_Tex.bin",
+                        "unit2_RM4_Ent.bin",
+                        "unit2_RM4_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x1,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(29, 20, 10),
+                        0x4,
+                        65152,
+                        new ColorRgba(29, 20, 10, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT2_RM5",
+                    new RoomMetadata(
+                        "UNIT2_RM5",
+                        "inGameName",
+                        "mp10",
+                        "mp10_Model.bin",
+                        "mp10_Anim.bin",
+                        "mp10_Collision.bin",
+                        "mp10_Tex.bin",
+                        "unit2_RM5_Ent.bin",
+                        "unit2_RM5_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x1,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(0, 25, 31),
+                        0x4,
+                        31727,
+                        new ColorRgba(24, 31, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-43, 44, 0))
+                },
+                {
+                    "UNIT2_RM6",
+                    new RoomMetadata(
+                        "UNIT2_RM6",
+                        "inGameName",
+                        "mp10",
+                        "mp10_Model.bin",
+                        "mp10_Anim.bin",
+                        "mp10_Collision.bin",
+                        "mp10_Tex.bin",
+                        "unit2_RM6_Ent.bin",
+                        "unit2_RM6_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x2,
+                        1,
+                        0x0,
+                        FogColor(18, 31, 18),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 31, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(33, -33, 55))
+                },
+                {
+                    "UNIT2_RM7",
+                    new RoomMetadata(
+                        "UNIT2_RM7",
+                        "inGameName",
+                        "mp10",
+                        "mp10_Model.bin",
+                        "mp10_Anim.bin",
+                        "mp10_Collision.bin",
+                        "mp10_Tex.bin",
+                        "unit2_RM7_Ent.bin",
+                        "unit2_RM7_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x3,
+                        1,
+                        0x0,
+                        FogColor(0, 31, 10),
+                        0x4,
+                        31727,
+                        new ColorRgba(24, 31, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT2_RM8",
+                    new RoomMetadata(
+                        "UNIT2_RM8",
+                        "inGameName",
+                        "unit2_RM8",
+                        "unit2_RM8_Model.bin",
+                        "unit2_RM8_Anim.bin",
+                        "unit2_RM8_Collision.bin",
+                        "unit2_RM8_Tex.bin",
+                        "unit2_RM8_Ent.bin",
+                        "unit2_RM8_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x1,
+                        0x1,
+                        0,
+                        0x0,
+                        FogColor(29, 20, 10),
+                        0x4,
+                        65152,
+                        new ColorRgba(29, 20, 10, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT2_TP2",
+                    new RoomMetadata(
+                        "UNIT2_TP2",
+                        "inGameName",
+                        "TeleportRoom",
+                        "TeleportRoom_Model.bin",
+                        "TeleportRoom_Anim.bin",
+                        "TeleportRoom_Collision.bin",
+                        "TeleportRoom_Tex.bin",
+                        "Unit2_TP2_Ent.bin",
+                        "unit2_TP2_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x4,
+                        1,
+                        0x0,
+                        FogColor(17, 29, 16),
+                        0x6,
+                        65350,
+                        new ColorRgba(8, 28, 20, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 6, 12, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT2_B2",
+                    new RoomMetadata(
+                        "UNIT2_B2",
+                        "inGameName",
+                        "bigeyeroom",
+                        "bigeyeroom_Model.bin",
+                        "bigeyeroom_Anim.bin",
+                        "bigeyeroom_Collision.bin",
+                        "bigeyeroom_Tex.bin",
+                        "unit2_b2_Ent.bin",
+                        "unit2_b2_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(12, 6, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(12, 6, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(31, 25, 21, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT3_LAND",
+                    new RoomMetadata(
+                        "UNIT3_LAND",
+                        "inGameName",
+                        "unit3_Land",
+                        "unit3_Land_Model.bin",
+                        "unit3_Land_Anim.bin",
+                        "unit3_Land_Collision.bin",
+                        "unit3_Land_Tex.bin",
+                        "unit3_Land_Ent.bin",
+                        "unit3_Land_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(24, 20, 31),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 20, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT3_C0",
+                    new RoomMetadata(
+                        "UNIT3_C0",
+                        "inGameName",
+                        "unit3_C0",
+                        "unit3_C0_Model.bin",
+                        "unit3_C0_Anim.bin",
+                        "unit3_C0_Collision.bin",
+                        "unit3_c0_Tex.bin",
+                        "unit3_C0_Ent.bin",
+                        "unit3_C0_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(24, 20, 31),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 20, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT3_C2",
+                    new RoomMetadata(
+                        "UNIT3_C2",
+                        "inGameName",
+                        "unit3_c2",
+                        "unit3_c2_Model.bin",
+                        "unit3_c2_Anim.bin",
+                        "unit3_c2_Collision.bin",
+                        "unit3_c2_Tex.bin",
+                        "unit3_c2_Ent.bin",
+                        "unit3_c2_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x32,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(24, 20, 31),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 20, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-22, 18, -2))
+                },
+                {
+                    "UNIT3_RM1",
+                    new RoomMetadata(
+                        "UNIT3_RM1",
+                        "inGameName",
+                        "unit3_rm1",
+                        "unit3_rm1_Model.bin",
+                        "unit3_rm1_Anim.bin",
+                        "unit3_rm1_Collision.bin",
+                        "unit3_rm1_Tex.bin",
+                        "unit3_RM1_Ent.bin",
+                        "unit3_RM1_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x32,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(24, 20, 31),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 20, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(13.299805, -15, 11))
+                },
+                {
+                    "UNIT3_RM4",
+                    new RoomMetadata(
+                        "UNIT3_RM4",
+                        "inGameName",
+                        "mp5",
+                        "mp5_Model.bin",
+                        "mp5_Anim.bin",
+                        "mp5_Collision.bin",
+                        "mp5_Tex.bin",
+                        "unit3_RM4_Ent.bin",
+                        "unit3_RM4_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x32,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(24, 20, 31),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 20, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT3_TP1",
+                    new RoomMetadata(
+                        "UNIT3_TP1",
+                        "inGameName",
+                        "TeleportRoom",
+                        "TeleportRoom_Model.bin",
+                        "TeleportRoom_Anim.bin",
+                        "TeleportRoom_Collision.bin",
+                        "TeleportRoom_Tex.bin",
+                        "Unit3_TP1_Ent.bin",
+                        "unit3_TP1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x5,
+                        1,
+                        0x0,
+                        FogColor(20, 27, 31),
+                        0x6,
+                        65350,
+                        new ColorRgba(8, 28, 20, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 6, 12, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT3_B1",
+                    new RoomMetadata(
+                        "UNIT3_B1",
+                        "inGameName",
+                        "cylinderroom",
+                        "cylinderroom_Model.bin",
+                        "cylinderroom_Anim.bin",
+                        "cylinderroom_Collision.bin",
+                        "cylinderroom_Tex.bin",
+                        "unit3_b1_Ent.bin",
+                        "unit2_b1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(12, 6, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(12, 6, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(31, 25, 21, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT3_C1",
+                    new RoomMetadata(
+                        "UNIT3_C1",
+                        "inGameName",
+                        "unit3_C1",
+                        "unit3_C1_Model.bin",
+                        "unit3_C1_Anim.bin",
+                        "unit3_C1_Collision.bin",
+                        "unit3_c1_Tex.bin",
+                        "unit3_C1_Ent.bin",
+                        "unit3_C1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(24, 20, 31),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 20, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT3_RM2",
+                    new RoomMetadata(
+                        "UNIT3_RM2",
+                        "inGameName",
+                        "unit3_rm2",
+                        "unit3_rm2_Model.bin",
+                        "unit3_rm2_Anim.bin",
+                        "unit3_rm2_Collision.bin",
+                        "unit3_rm2_Tex.bin",
+                        "unit3_RM2_Ent.bin",
+                        "unit3_RM2_Node.bin",
+                        null,
+                        TimeLimit(8, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(24, 20, 31),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 20, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT3_RM3",
+                    new RoomMetadata(
+                        "UNIT3_RM3",
+                        "inGameName",
+                        "e3Level",
+                        "e3Level_Model.bin",
+                        "e3Level_Anim.bin",
+                        "e3Level_Collision.bin",
+                        "e3Level_Tex.bin",
+                        "unit3_RM3_Ent.bin",
+                        "unit3_RM3_Node.bin",
+                        null,
+                        TimeLimit(8, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(24, 20, 31),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 20, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT3_TP2",
+                    new RoomMetadata(
+                        "UNIT3_TP2",
+                        "inGameName",
+                        "TeleportRoom",
+                        "TeleportRoom_Model.bin",
+                        "TeleportRoom_Anim.bin",
+                        "TeleportRoom_Collision.bin",
+                        "TeleportRoom_Tex.bin",
+                        "Unit3_TP2_Ent.bin",
+                        "unit3_TP2_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x6,
+                        1,
+                        0x0,
+                        FogColor(20, 27, 31),
+                        0x6,
+                        65350,
+                        new ColorRgba(8, 28, 20, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 6, 12, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-19, 27, -1))
+                },
+                {
+                    "UNIT3_B2",
+                    new RoomMetadata(
+                        "UNIT3_B2",
+                        "inGameName",
+                        "bigeyeroom",
+                        "bigeyeroom_Model.bin",
+                        "bigeyeroom_Anim.bin",
+                        "bigeyeroom_Collision.bin",
+                        "bigeyeroom_Tex.bin",
+                        "unit3_b2_Ent.bin",
+                        "unit2_b2_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x2,
+                        1,
+                        0x0,
+                        FogColor(12, 6, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(12, 6, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(31, 25, 21, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(15, -29, 26))
+                },
+                {
+                    "UNIT4_LAND",
+                    new RoomMetadata(
+                        "UNIT4_LAND",
+                        "inGameName",
+                        "unit4_Land",
+                        "unit4_Land_Model.bin",
+                        "unit4_Land_Anim.bin",
+                        "unit4_Land_Collision.bin",
+                        "unit4_Land_Tex.bin",
+                        "unit4_Land_Ent.bin",
+                        "unit4_Land_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(10, 14, 16),
+                        0x4,
+                        65300,
+                        new ColorRgba(10, 14, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 4, 8, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT4_RM1",
+                    new RoomMetadata(
+                        "UNIT4_RM1",
+                        "inGameName",
+                        "unit4_RM1",
+                        "unit4_RM1_Model.bin",
+                        "unit4_RM1_Anim.bin",
+                        "unit4_RM1_Collision.bin",
+                        "unit4_RM1_Tex.bin",
+                        "unit4_RM1_Ent.bin",
+                        "unit4_RM1_Node.bin",
+                        null,
+                        TimeLimit(6, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(20, 27, 31),
+                        0x4,
+                        65152,
+                        new ColorRgba(20, 27, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(8, 8, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT4_RM3",
+                    new RoomMetadata(
+                        "UNIT4_RM3",
+                        "inGameName",
+                        "mp12",
+                        "mp12_Model.bin",
+                        "mp12_Anim.bin",
+                        "mp12_Collision.bin",
+                        "mp12_Tex.bin",
+                        "unit4_RM3_Ent.bin",
+                        "unit4_RM3_Node.bin",
+                        null,
+                        TimeLimit(6, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(10, 14, 16),
+                        0x4,
+                        65300,
+                        new ColorRgba(10, 14, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 4, 8, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-23, 41, -29))
+                },
+                {
+                    "UNIT4_C0",
+                    new RoomMetadata(
+                        "UNIT4_C0",
+                        "inGameName",
+                        "unit4_C0",
+                        "unit4_C0_Model.bin",
+                        "unit4_C0_Anim.bin",
+                        "unit4_C0_Collision.bin",
+                        "unit4_c0_Tex.bin",
+                        "unit4_C0_Ent.bin",
+                        "unit4_C0_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(20, 27, 31),
+                        0x4,
+                        65300,
+                        new ColorRgba(20, 27, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(8, 8, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(30, -27, 42))
+                },
+                {
+                    "UNIT4_TP1",
+                    new RoomMetadata(
+                        "UNIT4_TP1",
+                        "inGameName",
+                        "TeleportRoom",
+                        "TeleportRoom_Model.bin",
+                        "TeleportRoom_Anim.bin",
+                        "TeleportRoom_Collision.bin",
+                        "TeleportRoom_Tex.bin",
+                        "Unit4_TP1_Ent.bin",
+                        "unit4_TP1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x7,
+                        1,
+                        0x0,
+                        FogColor(20, 27, 31),
+                        0x6,
+                        65350,
+                        new ColorRgba(8, 28, 20, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 6, 12, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT4_B1",
+                    new RoomMetadata(
+                        "UNIT4_B1",
+                        "inGameName",
+                        "bigeyeroom",
+                        "bigeyeroom_Model.bin",
+                        "bigeyeroom_Anim.bin",
+                        "bigeyeroom_Collision.bin",
+                        "bigeyeroom_Tex.bin",
+                        "unit4_b1_Ent.bin",
+                        "unit2_b2_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(12, 6, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(12, 6, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(31, 25, 21, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT4_C1",
+                    new RoomMetadata(
+                        "UNIT4_C1",
+                        "inGameName",
+                        "unit4_c1",
+                        "unit4_c1_Model.bin",
+                        "unit4_c1_Anim.bin",
+                        "unit4_c1_Collision.bin",
+                        "unit4_c1_Tex.bin",
+                        "unit4_c1_Ent.bin",
+                        "unit4_c1_Node.bin",
+                        null,
+                        TimeLimit(5, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x5,
+                        0x1,
+                        1,
+                        0x1,
+                        FogColor(0, 0, 0),
+                        0x4,
+                        65300,
+                        new ColorRgba(10, 14, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 4, 8, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-32, 31, -3.599854))
+                },
+                {
+                    "UNIT4_RM2",
+                    new RoomMetadata(
+                        "UNIT4_RM2",
+                        "inGameName",
+                        "unit4_rm2",
+                        "unit4_rm2_Model.bin",
+                        "unit4_rm2_Anim.bin",
+                        "unit4_rm2_Collision.bin",
+                        "unit4_rm2_Tex.bin",
+                        "unit4_RM2_Ent.bin",
+                        "unit4_RM2_Node.bin",
+                        null,
+                        TimeLimit(5, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x5,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(10, 14, 16),
+                        0x4,
+                        65300,
+                        new ColorRgba(10, 14, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 4, 8, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(24, -30, 29))
+                },
+                {
+                    "UNIT4_RM4",
+                    new RoomMetadata(
+                        "UNIT4_RM4",
+                        "inGameName",
+                        "mp11",
+                        "mp11_Model.bin",
+                        "mp11_Anim.bin",
+                        "mp11_Collision.bin",
+                        "mp11_Tex.bin",
+                        "unit4_RM4_Ent.bin",
+                        "unit4_RM4_Node.bin",
+                        null,
+                        TimeLimit(6, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(20, 27, 31),
+                        0x4,
+                        65152,
+                        new ColorRgba(20, 27, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(8, 8, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT4_RM5",
+                    new RoomMetadata(
+                        "UNIT4_RM5",
+                        "inGameName",
+                        "unit4_rm5",
+                        "unit4_rm5_Model.bin",
+                        "unit4_rm5_Anim.bin",
+                        "unit4_rm5_Collision.bin",
+                        "unit4_rm5_Tex.bin",
+                        "unit4_RM5_Ent.bin",
+                        "unit4_RM5_Node.bin",
+                        null,
+                        TimeLimit(5, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x5,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(10, 14, 16),
+                        0x4,
+                        65300,
+                        new ColorRgba(10, 14, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 4, 8, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT4_TP2",
+                    new RoomMetadata(
+                        "UNIT4_TP2",
+                        "inGameName",
+                        "TeleportRoom",
+                        "TeleportRoom_Model.bin",
+                        "TeleportRoom_Anim.bin",
+                        "TeleportRoom_Collision.bin",
+                        "TeleportRoom_Tex.bin",
+                        "Unit4_TP2_Ent.bin",
+                        "unit4_TP2_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x7,
+                        1,
+                        0x0,
+                        FogColor(20, 27, 31),
+                        0x6,
+                        65350,
+                        new ColorRgba(8, 28, 20, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 6, 12, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-72, 70, 0))
+                },
+                {
+                    "UNIT4_B2",
+                    new RoomMetadata(
+                        "UNIT4_B2",
+                        "inGameName",
+                        "cylinderroom",
+                        "cylinderroom_Model.bin",
+                        "cylinderroom_Anim.bin",
+                        "cylinderroom_Collision.bin",
+                        "cylinderroom_Tex.bin",
+                        "unit4_b2_Ent.bin",
+                        "unit2_b1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(12, 6, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(12, 6, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(31, 25, 21, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(23.5, -26, 26))
+                },
+                {
+                    "Gorea_Land",
+                    new RoomMetadata(
+                        "Gorea_Land",
+                        "inGameName",
+                        "Gorea_Land",
+                        "Gorea_Land_Model.bin",
+                        "Gorea_Land_Anim.bin",
+                        "Gorea_Land_Collision.bin",
+                        "Gorea_Land_Tex.bin",
+                        "Gorea_Land_Ent.bin",
+                        "Gorea_Land_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(17, 29, 16),
+                        0x6,
+                        65330,
+                        new ColorRgba(17, 29, 16, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 6, 12, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "Gorea_Peek",
+                    new RoomMetadata(
+                        "Gorea_Peek",
+                        "inGameName",
+                        "Gorea_b2",
+                        "Gorea_b2_Model.bin",
+                        "Gorea_b2_Anim.bin",
+                        "Gorea_b2_Collision.bin",
+                        "Gorea_b2_Tex.bin",
+                        "Gorea_Peek_Ent.bin",
+                        "Gorea_b2_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(17, 29, 16),
+                        0x5,
+                        65535,
+                        new ColorRgba(19, 27, 16, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 6, 12, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "Gorea_b1",
+                    new RoomMetadata(
+                        "Gorea_b1",
+                        "inGameName",
+                        "Gorea_b1",
+                        "Gorea_b1_Model.bin",
+                        "Gorea_b1_Anim.bin",
+                        "Gorea_b1_Collision.bin",
+                        "Gorea_b1_Tex.bin",
+                        "Gorea_b1_Ent.bin",
+                        "Gorea_b1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x1,
+                        FogColor(9, 18, 24),
+                        0x4,
+                        32550,
+                        new ColorRgba(18, 24, 27, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 18, 24, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-72, 70, 0))
+                },
+                {
+                    "Gorea_b2",
+                    new RoomMetadata(
+                        "Gorea_b2",
+                        "inGameName",
+                        "Gorea_b2",
+                        "Gorea_b2_Model.bin",
+                        "Gorea_b2_Anim.bin",
+                        "Gorea_b2_Collision.bin",
+                        "Gorea_b2_Tex.bin",
+                        "Gorea_b2_Ent.bin",
+                        "Gorea_b2_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x2,
+                        1,
+                        0x0,
+                        FogColor(16, 30, 25),
+                        0x4,
+                        65535,
+                        new ColorRgba(18, 16, 14, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(27, 18, 9, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(23.5, -26, 26))
+                },
+                {
+                    "MP1 SANCTORUS",
+                    new RoomMetadata(
+                        "MP1 SANCTORUS",
+                        "inGameName",
+                        "mp1",
+                        "mp1_Model.bin",
+                        "mp1_Anim.bin",
+                        "mp1_Collision.bin",
+                        "mp1_Tex.bin",
+                        "mp1_Ent.bin",
+                        "mp1_Node.bin",
+                        null,
+                        TimeLimit(5, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(18, 31, 18),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 31, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "MP2 HARVESTER",
+                    new RoomMetadata(
+                        "MP2 HARVESTER",
+                        "inGameName",
+                        "mp2",
+                        "mp2_Model.bin",
+                        "mp2_Anim.bin",
+                        "mp2_Collision.bin",
+                        "mp2_Tex.bin",
+                        "mp2_Ent.bin",
+                        "mp2_Node.bin",
+                        null,
+                        TimeLimit(5, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x1,
+                        1,
+                        0x1,
+                        FogColor(25, 30, 20),
+                        0x4,
+                        65152,
+                        new ColorRgba(25, 30, 20, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 11, 6, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "MP3 PROVING GROUND",
+                    new RoomMetadata(
+                        "MP3 PROVING GROUND",
+                        "inGameName",
+                        "mp3",
+                        "mp3_Model.bin",
+                        "mp3_Anim.bin",
+                        "mp3_Collision.bin",
+                        "mp3_Tex.bin",
+                        "mp3_Ent.bin",
+                        "mp3_Node.bin",
+                        null,
+                        TimeLimit(5, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x5,
+                        65180,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new Vector3(-76, 81, -7.127930))
+                },
+                {
+                    "MP4 HIGHGROUND - EXPANDED",
+                    new RoomMetadata(
+                        "MP4 HIGHGROUND - EXPANDED",
+                        "inGameName",
+                        "mp4",
+                        "mp4_Model.bin",
+                        "mp4_Anim.bin",
+                        "mp4_Collision.bin",
+                        "mp4_Tex.bin",
+                        "mp4_Ent.bin",
+                        "mp4_Node.bin",
+                        null,
+                        TimeLimit(6, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x5,
+                        65200,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(32, -42, 31))
+                },
+                {
+                    "MP4 HIGHGROUND",
+                    new RoomMetadata(
+                        "MP4 HIGHGROUND",
+                        "inGameName",
+                        "unit1_rm1",
+                        "unit1_rm1_Model.bin",
+                        "unit1_rm1_Anim.bin",
+                        "unit1_rm1_Collision.bin",
+                        "unit1_rm1_Tex.bin",
+                        "mp4_dm1_Ent.bin",
+                        "mp4_dm1_Node.bin",
+                        null,
+                        TimeLimit(6, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x5,
+                        65200,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-76, 81, -7.127930))
+                },
+                {
+                    "MP5 FUEL SLUICE",
+                    new RoomMetadata(
+                        "MP5 FUEL SLUICE",
+                        "inGameName",
+                        "mp5",
+                        "mp5_Model.bin",
+                        "mp5_Anim.bin",
+                        "mp5_Collision.bin",
+                        "mp5_Tex.bin",
+                        "mp5_Ent.bin",
+                        "mp5_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(24, 20, 31),
+                        0x3,
+                        65152,
+                        new ColorRgba(18, 22, 30, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(32, -40.748779, 31))
+                },
+                {
+                    "MP6 HEADSHOT",
+                    new RoomMetadata(
+                        "MP6 HEADSHOT",
+                        "inGameName",
+                        "mp6",
+                        "mp6_Model.bin",
+                        "mp6_Anim.bin",
+                        "mp6_Collision.bin",
+                        "mp6_Tex.bin",
+                        "mp6_Ent.bin",
+                        "mp6_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(24, 20, 31),
+                        0x3,
+                        65152,
+                        new ColorRgba(18, 22, 30, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-72, 72, -3))
+                },
+                {
+                    "MP7 PROCESSOR CORE",
+                    new RoomMetadata(
+                        "MP7 PROCESSOR CORE",
+                        "inGameName",
+                        "mp7",
+                        "mp7_Model.bin",
+                        "mp7_Anim.bin",
+                        "mp7_Collision.bin",
+                        "mp7_Tex.bin",
+                        "mp7_Ent.bin",
+                        "mp7_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 18, 6),
+                        0x6,
+                        65300,
+                        new ColorRgba(31, 18, 6, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 6, 4, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(23, -42, 42))
+                },
+                {
+                    "MP8 FIRE CONTROL",
+                    new RoomMetadata(
+                        "MP8 FIRE CONTROL",
+                        "inGameName",
+                        "mp8",
+                        "mp8_Model.bin",
+                        "mp8_Anim.bin",
+                        "mp8_Collision.bin",
+                        "mp8_Tex.bin",
+                        "mp8_Ent.bin",
+                        "mp8_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x32,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(20, 24, 31),
+                        0x3,
+                        65152,
+                        new ColorRgba(18, 22, 30, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "MP9 CRYOCHASM",
+                    new RoomMetadata(
+                        "MP9 CRYOCHASM",
+                        "inGameName",
+                        "mp9",
+                        "mp9_Model.bin",
+                        "mp9_Anim.bin",
+                        "mp9_Collision.bin",
+                        "mp9_Tex.bin",
+                        "mp9_Ent.bin",
+                        "mp9_Node.bin",
+                        null,
+                        TimeLimit(6, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(20, 27, 31),
+                        0x5,
+                        65152,
+                        new ColorRgba(20, 27, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(8, 8, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "MP10 OVERLOAD",
+                    new RoomMetadata(
+                        "MP10 OVERLOAD",
+                        "inGameName",
+                        "mp10",
+                        "mp10_Model.bin",
+                        "mp10_Anim.bin",
+                        "mp10_Collision.bin",
+                        "mp10_Tex.bin",
+                        "mp10_Ent.bin",
+                        "mp10_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(18, 31, 18),
+                        0x5,
+                        65152,
+                        new ColorRgba(24, 31, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-68, 60, 0))
+                },
+                {
+                    "MP11 BREAKTHROUGH",
+                    new RoomMetadata(
+                        "MP11 BREAKTHROUGH",
+                        "inGameName",
+                        "mp11",
+                        "mp11_Model.bin",
+                        "mp11_Anim.bin",
+                        "mp11_Collision.bin",
+                        "mp11_Tex.bin",
+                        "mp11_Ent.bin",
+                        "mp11_Node.bin",
+                        null,
+                        TimeLimit(8, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(20, 27, 31),
+                        0x5,
+                        65152,
+                        new ColorRgba(20, 27, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(8, 8, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(36, -27, 26))
+                },
+                {
+                    "MP12 SIC TRANSIT",
+                    new RoomMetadata(
+                        "MP12 SIC TRANSIT",
+                        "inGameName",
+                        "mp12",
+                        "mp12_Model.bin",
+                        "mp12_Anim.bin",
+                        "mp12_Collision.bin",
+                        "mp12_Tex.bin",
+                        "mp12_Ent.bin",
+                        "mp12_Node.bin",
+                        null,
+                        TimeLimit(8, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(10, 14, 18),
+                        0x6,
+                        65300,
+                        new ColorRgba(10, 14, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 4, 8, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "MP13 ACCELERATOR",
+                    new RoomMetadata(
+                        "MP13 ACCELERATOR",
+                        "inGameName",
+                        "mp13",
+                        "mp13_Model.bin",
+                        "mp13_Anim.bin",
+                        "mp13_Collision.bin",
+                        "mp13_Tex.bin",
+                        "mp13_Ent.bin",
+                        "mp13_Node.bin",
+                        null,
+                        TimeLimit(8, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(24, 20, 31),
+                        0x3,
+                        65152,
+                        new ColorRgba(18, 22, 30, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "MP14 OUTER REACH",
+                    new RoomMetadata(
+                        "MP14 OUTER REACH",
+                        "inGameName",
+                        "mp14",
+                        "mp14_Model.bin",
+                        "mp14_Anim.bin",
+                        "mp14_Collision.bin",
+                        "mp14_tex.bin",
+                        "mp14_Ent.bin",
+                        "mp14_Node.bin",
+                        null,
+                        TimeLimit(8, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(24, 20, 31),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 20, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-68, 60, 0))
+                },
+                {
+                    "CTF1 FAULT LINE - EXPANDED",
+                    new RoomMetadata(
+                        "CTF1 FAULT LINE - EXPANDED",
+                        "inGameName",
+                        "ctf1",
+                        "ctf1_Model.bin",
+                        "ctf1_Anim.bin",
+                        "ctf1_Collision.bin",
+                        "ctf1_Tex.bin",
+                        "ctf1_Ent.bin",
+                        "ctf1_Node.bin",
+                        null,
+                        TimeLimit(5, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x5,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(10, 14, 18),
+                        0x6,
+                        65300,
+                        new ColorRgba(10, 14, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 4, 8, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(39, -27, 26))
+                },
+                {
+                    "CTF1_FAULT LINE",
+                    new RoomMetadata(
+                        "CTF1_FAULT LINE",
+                        "inGameName",
+                        "unit4_rm5",
+                        "unit4_rm5_Model.bin",
+                        "unit4_rm5_Anim.bin",
+                        "unit4_rm5_Collision.bin",
+                        "unit4_rm5_Tex.bin",
+                        "ctf1_dm1_Ent.bin",
+                        "ctf1_dm1_Node.bin",
+                        null,
+                        TimeLimit(5, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x5,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(10, 14, 18),
+                        0x6,
+                        65300,
+                        new ColorRgba(10, 14, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 4, 8, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "AD1 TRANSFER LOCK BT",
+                    new RoomMetadata(
+                        "AD1 TRANSFER LOCK BT",
+                        "inGameName",
+                        "ad1",
+                        "ad1_Model.bin",
+                        "ad1_Anim.bin",
+                        "ad1_Collision.bin",
+                        "ad1_Tex.bin",
+                        "ad1_Ent.bin",
+                        "ad1_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x1,
+                        0x1,
+                        0,
+                        0x0,
+                        FogColor(29, 20, 10),
+                        0x4,
+                        65152,
+                        new ColorRgba(29, 20, 10, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "AD1 TRANSFER LOCK DM",
+                    new RoomMetadata(
+                        "AD1 TRANSFER LOCK DM",
+                        "inGameName",
+                        "unit2_rm4",
+                        "unit2_rm4_Model.bin",
+                        "unit2_rm4_Anim.bin",
+                        "unit2_rm4_Collision.bin",
+                        "unit2_rm4_Tex.bin",
+                        "ad1_dm1_Ent.bin",
+                        "ad1_dm1_Node.bin",
+                        "rmGoal",
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x1,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(29, 20, 10),
+                        0x4,
+                        65300,
+                        new ColorRgba(29, 20, 10, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-71, 85, 2))
+                },
+                {
+                    "AD2 MAGMA VENTS",
+                    new RoomMetadata(
+                        "AD2 MAGMA VENTS",
+                        "inGameName",
+                        "ad2",
+                        "ad2_Model.bin",
+                        "ad2_Anim.bin",
+                        "ad2_Collision.bin",
+                        "ad2_Tex.bin",
+                        "ad2_Ent.bin",
+                        "ad2_Node.bin",
+                        null,
+                        TimeLimit(6, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x3,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x5,
+                        65200,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(21, -53, 59))
+                },
+                {
+                    "AD2 ALINOS PERCH",
+                    new RoomMetadata(
+                        "AD2 ALINOS PERCH",
+                        "inGameName",
+                        "unit1_rm2",
+                        "unit1_rm2_Model.bin",
+                        "unit1_rm2_Anim.bin",
+                        "unit1_rm2_Collision.bin",
+                        "unit1_rm2_Tex.bin",
+                        "ad2_dm1_Ent.bin",
+                        "ad2_dm1_Node.bin",
+                        null,
+                        TimeLimit(6, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x3,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x5,
+                        65200,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "UNIT1 ALINOS LANDFALL",
+                    new RoomMetadata(
+                        "UNIT1 ALINOS LANDFALL",
+                        "inGameName",
+                        "unit1_Land",
+                        "unit1_Land_Model.bin",
+                        "unit1_Land_Anim.bin",
+                        "unit1_Land_Collision.bin",
+                        "unit1_Land_Tex.bin",
+                        "unit1_Land_dm1_Ent.bin",
+                        "unit1_Land_dm1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(31, 24, 18),
+                        0x4,
+                        65180,
+                        new ColorRgba(31, 24, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(13, 12, 7, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "UNIT2 LANDING BAY",
+                    new RoomMetadata(
+                        "UNIT2 LANDING BAY",
+                        "inGameName",
+                        "unit2_Land",
+                        "unit2_Land_Model.bin",
+                        "unit2_Land_Anim.bin",
+                        "unit2_Land_Collision.bin",
+                        "unit2_Land_Tex.bin",
+                        "unit2_Land_dm1_Ent.bin",
+                        "unit2_Land_dm1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(18, 31, 18),
+                        0x4,
+                        65152,
+                        new ColorRgba(24, 31, 24, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(7, 11, 15, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-23, 25, -11))
+                },
+                {
+                    "UNIT 3 VESPER STARPORT",
+                    new RoomMetadata(
+                        "UNIT 3 VESPER STARPORT",
+                        "inGameName",
+                        "unit3_Land",
+                        "unit3_Land_Model.bin",
+                        "unit3_Land_Anim.bin",
+                        "unit3_Land_Collision.bin",
+                        "unit3_Land_Tex.bin",
+                        "unit3_Land_dm1_Ent.bin",
+                        "unit3_Land_dm1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(24, 20, 31),
+                        0x3,
+                        65152,
+                        new ColorRgba(18, 22, 30, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(28, -27, 26))
+                },
+                {
+                    "UNIT 4 ARCTERRA BASE",
+                    new RoomMetadata(
+                        "UNIT 4 ARCTERRA BASE",
+                        "inGameName",
+                        "unit4_land",
+                        "unit4_land_Model.bin",
+                        "unit4_land_Anim.bin",
+                        "unit4_land_Collision.bin",
+                        "unit4_land_Tex.bin",
+                        "unit4_land_dm1_Ent.bin",
+                        "unit4_land_dm1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(10, 14, 18),
+                        0x6,
+                        65300,
+                        new ColorRgba(10, 14, 18, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(4, 4, 8, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                },
+                {
+                    "Gorea Prison",
+                    new RoomMetadata(
+                        "Gorea Prison",
+                        "inGameName",
+                        "Gorea_b2",
+                        "Gorea_b2_Model.bin",
+                        "Gorea_b2_Anim.bin",
+                        "Gorea_b2_Collision.bin",
+                        "Gorea_b2_Tex.bin",
+                        "Gorea_b2_dm_Ent.bin",
+                        "Gorea_b2_dm_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x64,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(16, 30, 25),
+                        0x4,
+                        65535,
+                        new ColorRgba(18, 16, 14, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(27, 18, 9, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(300, -300, 300))
+                },
+                {
+                    "E3 FIRST HUNT",
+                    new RoomMetadata(
+                        "E3 FIRST HUNT",
+                        "inGameName",
+                        "e3Level",
+                        "e3Level_Model.bin",
+                        "e3Level_Anim.bin",
+                        "e3Level_Collision.bin",
+                        "e3level_Tex.bin",
+                        "e3Level_Ent.bin",
+                        "e3Level_Node.bin",
+                        null,
+                        TimeLimit(6, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x3,
+                        0x1,
+                        1,
+                        0x0,
+                        FogColor(24, 20, 31),
+                        0x5,
+                        65152,
+                        new ColorRgba(24, 20, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(9, 8, 14, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-44, 42, -5))
+                },
+                {
+                    "Level TestLevel",
+                    new RoomMetadata(
+                        "Level TestLevel",
+                        "inGameName",
+                        "testLevel",
+                        "testLevel_Model.bin",
+                        "testLevel_Anim.bin",
+                        "testLevel_Collision.bin",
+                        null,
+                        "testLevel_Ent.bin",
+                        "testLevel_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(8, 16, 31),
+                        0x5,
+                        65152,
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(10, 10, 31, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(29, -42, 42))
+                },
+                {
+                    "Level AbeTest",
+                    new RoomMetadata(
+                        "Level AbeTest",
+                        "inGameName",
+                        "testLevel",
+                        "testLevel_Model.bin",
+                        "testLevel_Anim.bin",
+                        "testLevel_Collision.bin",
+                        null,
+                        "testLevelAbe1_Ent.bin",
+                        "testLevelAbe1_Node.bin",
+                        null,
+                        TimeLimit(20, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x32,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(8, 16, 31),
+                        0x5,
+                        65152,
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(0.099854, -1, 0),
+                        new ColorRgba(10, 10, 31, 0),
+                        new Vector3(0, 0.999756, -0.099854),
+                        new Vector3(-300, 300, -300))
+                }
+            };
+
+        public static readonly IReadOnlyList<string> JumpPads = new List<string>()
+        {
+            /* 0 */ "JumpPad",
+            /* 1 */ "JumpPad_Alimbic",
+            /* 2 */ "JumpPad_Ice",
+            /* 3 */ "JumpPad_IceStation",
+            /* 4 */ "JumpPad_Lava",
+            /* 5 */ "JumpPad_Station"
+        };
+
+        public static readonly IReadOnlyList<(string, float)> Items
+            = new List<(string, float)>()
+        {
+            /*  0 */ ("pick_health_B", 0.487792969f),
+            /*  1 */ ("pick_health_A", 0.424316406f),
+            /*  2 */ ("pick_health_C", 0.524414063f),
+            /*  3 */ ("pick_dblDamage", 0.521484375f),
+            /*  4 */ ("PickUp_EnergyExp", 1.39990234f),
+            /*  5 */ ("pick_wpn_electro", 0.558837891f),
+            /*  6 */ ("PickUp_MissileExp", 0.515136719f),
+            /*  7 */ ("pick_wpn_jackhammer", 0.540771484f),
+            /*  8 */ ("pick_wpn_snipergun", 0.550781250f),
+            /*  9 */ ("pick_wpn_shotgun", 0.544921875f),
+            /* 10 */ ("pick_wpn_mortar", 0.481933594f),
+            /* 11 */ ("pick_wpn_ghostbuster", 0.606933594f),
+            /* 12 */ ("pick_wpn_gorea", 0.406982422f),
+            // todo: dedup?
+            /* 13 */ ("pick_ammo_green", 0.307128906f),
+            /* 14 */ ("pick_ammo_green", 0.307128906f),
+            /* 15 */ ("pick_ammo_orange", 0.375732422f),
+            /* 16 */ ("pick_ammo_orange", 0.375732422f),
+            /* 17 */ ("pick_invis", 0.511962891f),
+            /* 18 */ ("PickUp_AmmoExp", 0.502929688f),
+            /* 19 */ ("Artifact_Key", 0.351074219f),
+            /* 20 */ ("pick_deathball", 0.558837891f),
+            /* 21 */ ("pick_wpn_all", 0.444580078f),
+            // unused
+            /* 22 */ ("pick_wpn_missile", 0.558837891f)
+        };
 
         public static readonly IReadOnlyDictionary<string, EntityMetadata> EntityMetadata
             = new Dictionary<string, EntityMetadata>()
@@ -306,6 +3677,20 @@ namespace MphRead
                         },
                         animationPath: @"models\AlimbicTurret_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
+                },
+                {
+                    "alt_ice",
+                    new EntityMetadata("alt_ice",
+                        modelPath: @"_archives\common\alt_ice_mdl_Model.bin",
+                        animationPath: null,
+                        collisionPath: null,
+                        new List<RecolorMetadata>()
+                        {
+                            new RecolorMetadata("default",
+                                modelPath: @"_archives\common\samus_ice_img_Model.bin",
+                                texturePath: @"_archives\common\samus_ice_img_Model.bin",
+                                palettePath: @"_archives\common\samus_ice_img_Model.bin")
+                        })
                 },
                 {
                     "arcWelder1",
@@ -491,6 +3876,14 @@ namespace MphRead
                     new EntityMetadata("CylinderBoss")
                 },
                 {
+                    "deathParticle",
+                    new EntityMetadata("deathParticle", animation: false, texture: true, archive: "effectsBase")
+                },
+                {
+                    "deepspace",
+                    new EntityMetadata("deepspace", archive: "shipSpace")
+                },
+                {
                     "Door_Unit4_RM1",
                     new EntityMetadata("Door_Unit4_RM1", animation: false, collision: true)
                 },
@@ -515,6 +3908,10 @@ namespace MphRead
                 {
                     "energyBeam",
                     new EntityMetadata("energyBeam")
+                },
+                {
+                    "filter",
+                    new EntityMetadata("filter", animation: false, archive: "common")
                 },
                 {
                     "flagbase_bounty",
@@ -585,6 +3982,10 @@ namespace MphRead
                         share: @"models\GenericEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
+                },
+                {
+                    "geo1",
+                    new EntityMetadata("geo1", animation: false, texture: true, archive: "effectsBase")
                 },
                 {
                     "GhostSwitch",
@@ -672,6 +4073,17 @@ namespace MphRead
                 // pal_Team01-02 are broken if extracted with the main model's header info
                 // (uses palette 3 instead of 1, 7 instead of 0).
                 {
+                    "Guardian_lod0",
+                    new EntityMetadata("Guardian_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01"
+                        },
+                        texture: true,
+                        archive: "Guardian")
+                },
+                {
                     "Guardian_lod1",
                     new EntityMetadata("Guardian_lod1",
                         remove: "_lod1",
@@ -692,6 +4104,10 @@ namespace MphRead
                 {
                     "Guardian_Stasis",
                     new EntityMetadata("Guardian_Stasis")
+                },
+                {
+                    "gunSmoke",
+                    new EntityMetadata("gunSmoke", archive: "common")
                 },
                 {
                     "Ice_Console",
@@ -727,6 +4143,18 @@ namespace MphRead
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
+                    "iceShard",
+                    new EntityMetadata("iceShard", animation: false, archive: "common")
+                },
+                {
+                    "iceWave",
+                    new EntityMetadata("iceWave", archive: "common")
+                },
+                {
+                    "items_base",
+                    new EntityMetadata("items_base", animation: false, archive: "common")
+                },
+                {
                     "JumpPad_Alimbic",
                     new EntityMetadata("JumpPad_Alimbic")
                 },
@@ -755,6 +4183,22 @@ namespace MphRead
                     new EntityMetadata("JumpPad_Station")
                 },
                 {
+                    "Kanden_lod0",
+                    new EntityMetadata("Kanden_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Kanden")
+                },
+                {
                     "Kanden_lod1",
                     new EntityMetadata("Kanden_lod1",
                         remove: "_lod1",
@@ -768,6 +4212,55 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true)
+                },
+                {
+                    "KandenAlt_lod0",
+                    new EntityMetadata("KandenAlt_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Kanden",
+                        recolorName: "Kanden")
+                },
+                {
+                    "KandenAlt_TailBomb",
+                    new EntityMetadata("KandenAlt_TailBomb",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        animation: false,
+                        texture: true,
+                        archive: "Kanden",
+                        recolorName: "Kanden")
+                },
+                {
+                    "KandenGun",
+                    new EntityMetadata("KandenGun",
+                        recolors: new List<string>()
+                        {
+                            "img_01",
+                            "img_02",
+                            "img_03",
+                            "img_04",
+                            "img_Team01",
+                            "img_Team02"
+                        },
+                        texture: true,
+                        archive: "localKanden")
                 },
                 {
                     "koth_data_flow",
@@ -826,8 +4319,28 @@ namespace MphRead
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
+                    "lines",
+                    new EntityMetadata("lines", addToAnim: "_Idle", archive: "frontend2d")
+                },
+                {
                     "MoverTest",
                     new EntityMetadata("MoverTest")
+                },
+                {
+                    "Nox_lod0",
+                    new EntityMetadata("Nox_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Nox")
                 },
                 {
                     "Nox_lod1",
@@ -843,6 +4356,52 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true)
+                },
+                {
+                    "NoxAlt_lod0",
+                    new EntityMetadata("NoxAlt_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Nox",
+                        recolorName: "Nox")
+                },
+                {
+                    "NoxGun",
+                    new EntityMetadata("NoxGun",
+                        recolors: new List<string>()
+                        {
+                            "img_01",
+                            "img_02",
+                            "img_03",
+                            "img_04",
+                            "img_Team01",
+                            "img_Team02"
+                        },
+                        texture: true,
+                        archive: "localNox")
+                },
+                {
+                    "nox_ice",
+                    new EntityMetadata("nox_ice",
+                        modelPath: @"_archives\common\nox_ice_mdl_Model.bin",
+                        animationPath: null,
+                        collisionPath: null,
+                        new List<RecolorMetadata>()
+                        {
+                            new RecolorMetadata("default",
+                                modelPath: @"_archives\common\samus_ice_img_Model.bin",
+                                texturePath: @"_archives\common\samus_ice_img_Model.bin",
+                                palettePath: @"_archives\common\samus_ice_img_Model.bin")
+                        })
                 },
                 {
                     "octolith_bounty_img",
@@ -866,6 +4425,14 @@ namespace MphRead
                 {
                     "octolith_simple",
                     new EntityMetadata("octolith_simple", animation: false)
+                },
+                {
+                    "particles",
+                    new EntityMetadata("particles", animation: false, texture: true, archive: "effectsBase")
+                },
+                {
+                    "particles2",
+                    new EntityMetadata("particles2", animation: false, texture: true, archive: "effectsBase")
                 },
                 {
                     "PickUp_AmmoExp",
@@ -1047,6 +4614,22 @@ namespace MphRead
                     new EntityMetadata("SamusShip", collision: true)
                 },
                 {
+                    "Samus_lod0",
+                    new EntityMetadata("Samus_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_team01",
+                            "pal_team02"
+                        },
+                        texture: true,
+                        archive: "Samus")
+                },
+                {
                     "Samus_lod1",
                     new EntityMetadata("Samus_lod1",
                         remove: "_lod1",
@@ -1060,6 +4643,53 @@ namespace MphRead
                             "pal_team02"
                         },
                         texture: true)
+                },
+                {
+                    "SamusAlt_lod0",
+                    new EntityMetadata("SamusAlt_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_team01",
+                            "pal_team02"
+                        },
+                        animation: false,
+                        texture: true,
+                        archive: "Samus",
+                        recolorName: "Samus")
+                },
+                {
+                    "SamusGun",
+                    new EntityMetadata("SamusGun",
+                        recolors: new List<string>()
+                        {
+                            "img_01",
+                            "img_02",
+                            "img_03",
+                            "img_04",
+                            "img_Team01",
+                            "img_Team02"
+                        },
+                        texture: true,
+                        archive: "localSamus")
+                },
+                {
+                    "samus_ice",
+                    new EntityMetadata("samus_ice",
+                        modelPath: @"_archives\common\samus_ice_mdl_Model.bin",
+                        animationPath: null,
+                        collisionPath: null,
+                        new List<RecolorMetadata>()
+                        {
+                            new RecolorMetadata("default",
+                                modelPath: @"_archives\common\samus_ice_img_Model.bin",
+                                texturePath: @"_archives\common\samus_ice_img_Model.bin",
+                                palettePath: @"_archives\common\samus_ice_img_Model.bin")
+                        })
                 },
                 {
                     "SecretSwitch",
@@ -1111,8 +4741,16 @@ namespace MphRead
                     new EntityMetadata("shriekbat")
                 },
                 {
+                    "slots",
+                    new EntityMetadata("slots", addToAnim: "_Idle", archive: "frontend2d")
+                },
+                {
                     "smasher",
                     new EntityMetadata("smasher", animation: false, collision: true)
+                },
+                {
+                    "sniperBeam",
+                    new EntityMetadata("sniperBeam", archive: "common")
                 },
                 {
                     "SniperTarget",
@@ -1121,6 +4759,22 @@ namespace MphRead
                 {
                     "SphinkTick_lod0",
                     new EntityMetadata("SphinkTick_lod0", remove: "_lod0")
+                },
+                {
+                    "Spire_lod0",
+                    new EntityMetadata("Spire_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Spire")
                 },
                 {
                     "Spire_lod1",
@@ -1138,6 +4792,38 @@ namespace MphRead
                         texture: true)
                 },
                 {
+                    "SpireAlt_lod0",
+                    new EntityMetadata("SpireAlt_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Spire",
+                        recolorName: "Spire")
+                },
+                {
+                    "SpireGun",
+                    new EntityMetadata("SpireGun",
+                        recolors: new List<string>()
+                        {
+                            "img_01",
+                            "img_02",
+                            "img_03",
+                            "img_04",
+                            "img_Team01",
+                            "img_Team02"
+                        },
+                        texture: true,
+                        archive: "localSpire")
+                },
+                {
                     "splashRing",
                     new EntityMetadata("splashRing")
                 },
@@ -1147,6 +4833,22 @@ namespace MphRead
                         animation: false,
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
+                },
+                {
+                    "Sylux_lod0",
+                    new EntityMetadata("Sylux_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Sylux")
                 },
                 {
                     "Sylux_lod1",
@@ -1162,6 +4864,38 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true)
+                },
+                {
+                    "SyluxAlt_lod0",
+                    new EntityMetadata("SyluxAlt_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Sylux",
+                        recolorName: "Sylux")
+                },
+                {
+                    "SyluxGun",
+                    new EntityMetadata("SyluxGun",
+                        recolors: new List<string>()
+                        {
+                            "img_01",
+                            "img_02",
+                            "img_03",
+                            "img_04",
+                            "img_Team01",
+                            "img_Team02"
+                        },
+                        texture: true,
+                        archive: "localSylux")
                 },
                 {
                     "TearParticle",
@@ -1292,6 +5026,22 @@ namespace MphRead
                         mdlSuffix: MdlSuffix.All)
                 },
                 {
+                    "Trace_lod0",
+                    new EntityMetadata("Trace_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Trace")
+                },
+                {
                     "Trace_lod1",
                     new EntityMetadata("Trace_lod1",
                         remove: "_lod1",
@@ -1305,6 +5055,42 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true)
+                },
+                {
+                    "TraceAlt_lod0",
+                    new EntityMetadata("TraceAlt_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Trace",
+                        recolorName: "Trace")
+                },
+                {
+                    "TraceGun",
+                    new EntityMetadata("TraceGun",
+                        recolors: new List<string>()
+                        {
+                            "img_01",
+                            "img_02",
+                            "img_03",
+                            "img_04",
+                            "img_Team01",
+                            "img_Team02"
+                        },
+                        texture: true,
+                        archive: "localTrace")
+                },
+                {
+                    "trail",
+                    new EntityMetadata("trail", animation: false, archive: "common")
                 },
                 {
                     "unit1_land_plat1",
@@ -1423,6 +5209,22 @@ namespace MphRead
                     new EntityMetadata("warwasp_lod0", remove: "_lod0")
                 },
                 {
+                    "Weavel_lod0",
+                    new EntityMetadata("Weavel_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Weavel")
+                },
+                {
                     "Weavel_lod1",
                     new EntityMetadata("Weavel_lod1",
                         remove: "_lod1",
@@ -1438,8 +5240,71 @@ namespace MphRead
                         texture: true)
                 },
                 {
+                    "WeavelAlt_lod0",
+                    new EntityMetadata("WeavelAlt_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Weavel",
+                        recolorName: "Weavel")
+                },
+                {
+                    "WeavelAlt_Turret_lod0",
+                    new EntityMetadata("WeavelAlt_Turret_lod0",
+                        remove: "_lod0",
+                        recolors: new List<string>()
+                        {
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
+                        },
+                        texture: true,
+                        archive: "Weavel",
+                        recolorName: "Weavel")
+                },
+                {
+                    "WeavelGun",
+                    new EntityMetadata("WeavelGun",
+                        recolors: new List<string>()
+                        {
+                            "img_01",
+                            "img_02",
+                            "img_03",
+                            "img_04",
+                            "img_Team01",
+                            "img_Team02"
+                        },
+                        texture: true,
+                        archive: "localWeavel")
+                },
+                {
                     "zoomer",
                     new EntityMetadata("zoomer")
+                },
+                // 2D images only, no mesh/dlist, probably just swapped in for other textures on models
+                {
+                    "doubleDamage_img",
+                    new EntityMetadata("doubleDamage_img", animation: false, archive: "common")
+                },
+                // todo?: seemingly 2D images only, no polygons render even though they have a mesh/dlist
+                {
+                    "arcWelder",
+                    new EntityMetadata("arcWelder", animation: false, archive: "common")
+                },
+                {
+                    "electroTrail",
+                    new EntityMetadata("electroTrail", animation: false, archive: "common")
                 }
             };
     }

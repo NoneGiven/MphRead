@@ -4,21 +4,17 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
+using System.Numerics;
 
 namespace MphRead
 {
-    public static class Sizes
-    {
-        public static readonly int Header = Marshal.SizeOf(typeof(Header));
-        public static readonly int Bone = Marshal.SizeOf(typeof(Bone));
-    }
-
     public class Model
     {
+        public ModelType Type { get; set; }
+
         public string Name { get; }
         public Header Header { get; }
-        public IReadOnlyList<Bone> Bones { get; }
+        public IReadOnlyList<Node> Nodes { get; }
         public IReadOnlyList<Mesh> Meshes { get; }
         public IReadOnlyList<Material> Materials { get; }
         public IReadOnlyList<DisplayList> DisplayLists { get; }
@@ -48,19 +44,22 @@ namespace MphRead
             }
         }
 
+        public Vector3 Position { get; set; }
+        public Vector3 Rotation { get; set; }
+        
         public IReadOnlyList<Recolor> Recolors { get; }
 
-        public Model(string name, Header header, IReadOnlyList<Bone> bones, IReadOnlyList<Mesh> meshes,
-            IReadOnlyList<Material> materials, IReadOnlyList<DisplayList> dlists,
+        public Model(string name, Header header, IReadOnlyList<RawNode> nodes, IReadOnlyList<Mesh> meshes,
+            IReadOnlyList<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions, IReadOnlyList<Recolor> recolors,
             int defaultRecolor)
         {
             ThrowIfInvalidEnums(materials);
             Name = name;
             Header = header;
-            Bones = bones;
+            Nodes = nodes.Select(n => new Node(n)).ToList();
             Meshes = meshes;
-            Materials = materials;
+            Materials = materials.Select(m => new Material(m)).ToList();
             DisplayLists = dlists;
             RenderInstructionLists = renderInstructions;
             Recolors = recolors;
@@ -213,9 +212,9 @@ namespace MphRead
             bitmap.Save(imagePath);
         }
 
-        private static void ThrowIfInvalidEnums(IEnumerable<Material> materials)
+        private static void ThrowIfInvalidEnums(IEnumerable<RawMaterial> materials)
         {
-            foreach (Material material in materials)
+            foreach (RawMaterial material in materials)
             {
                 if (!Enum.IsDefined(typeof(RenderMode), material.RenderMode))
                 {
@@ -322,296 +321,119 @@ namespace MphRead
         }
     }
 
-    public readonly struct TextureData
+    // todo: look at and use more fields from the raw struct (same for Material)
+    public class Node
     {
-        public readonly uint Data;
-        public readonly byte Alpha;
+        public string Name { get; }
+        public int ParentIndex { get; }
+        public int ChildIndex { get; }
+        public int NextIndex { get; }
+        public bool Enabled { get; set; }
+        public int MeshCount { get; }
+        public int MeshId { get; }
+        public Vector3 Scale { get; set; }
+        public Vector3 Angle { get; set; }
+        public Vector3 Position { get; set; }
+        public Vector3 Vector1 { get; }
+        public Vector3 Vector2 { get; }
+        public Matrix4x4 Transform { get; set; }
+        
+        public Node(RawNode raw)
+        {
+            Name = raw.Name;
+            ParentIndex = raw.ParentId;
+            ChildIndex = raw.ChildId;
+            NextIndex = raw.NextId;
+            Enabled = raw.Enabled != 0;
+            MeshCount = raw.MeshCount;
+            MeshId = raw.MeshId;
+            Scale = new Vector3(raw.Scale);
+            Angle = new Vector3(
+                raw.AngleX / 65536.0 * 2.0 * Math.PI,
+                raw.AngleY / 65536.0 * 2.0 * Math.PI,
+                raw.AngleZ / 65536.0 * 2.0 * Math.PI
+            );
+            Position = new Vector3(raw.Position);
+            Vector1 = new Vector3(raw.Vector1);
+            Vector2 = new Vector3(raw.Vector2);
+        }
+    }
 
-        public TextureData(uint data, byte alpha)
+    public class Material
+    {
+        public string Name { get; }
+        public CullingMode Culling { get; }
+        public byte Alpha { get; }
+        public int PaletteId { get; }
+        public int TextureId { get; }
+        public RepeatMode XRepeat { get; }
+        public RepeatMode YRepeat { get; }
+        public RenderMode RenderMode { get; set; }
+
+        public Material(RawMaterial raw)
+        {
+            Name = raw.Name;
+            Culling = raw.Culling;
+            Alpha = raw.Alpha;
+            PaletteId = raw.PaletteId;
+            TextureId = raw.TextureId;
+            XRepeat = raw.XRepeat;
+            YRepeat = raw.YRepeat;
+            RenderMode = raw.RenderMode;
+        }
+    }
+
+    public class Entity
+    {
+        public string NodeName { get; }
+        public short LayerMask { get; }
+        public ushort Length { get; }
+        public EntityType Type { get; }
+        public ushort SomeId { get; }
+
+        public Entity(EntityEntry entry, EntityType type, ushort someId)
+        {
+            NodeName = entry.NodeName;
+            LayerMask = entry.LayerMask;
+            Length = entry.Length;
+            // todo: once all of these are accounted for, throw if not defined
+            Type = type;
+            SomeId = someId;
+        }
+    }
+
+    public class Entity<T> : Entity where T : struct
+    {
+        public T Data { get; }
+
+        public Entity(EntityEntry entry, EntityType type, ushort someId, T data)
+            : base(entry, type, someId)
         {
             Data = data;
-            Alpha = alpha;
         }
     }
-
-    public readonly struct PaletteData
+    
+    public enum EntityType : ushort
     {
-        public readonly ushort Data;
-
-        public PaletteData(ushort data)
-        {
-            Data = data;
-        }
+        Platform = 0x0,
+        Object = 0x1,
+        AlimbicDoor = 0x3,
+        Item = 0x4,
+        Pickup = 0x6,
+        JumpPad = 0x9,
+        Teleporter = 0xE,
+        Artifact = 0x11,
+        CameraSeq = 0x12,
+        ForceField = 0x13,
+        EnergyBeam = 0x1A,
     }
 
-    // size: 4
-    public readonly struct Mesh
+    public enum NodeLayer
     {
-        public readonly ushort MaterialId;
-        public readonly ushort DlistId;
-    }
-
-    // size: 32
-    public readonly struct DisplayList
-    {
-        public readonly uint Offset;
-        public readonly uint Size;
-        // [Q] what are these needed for?
-        public readonly int XMinimum;
-        public readonly int YMinimum;
-        public readonly int ZMinimum;
-        public readonly int XMaximum;
-        public readonly int YMaximum;
-        public readonly int ZMaximum;
-    }
-
-    public enum PolygonMode : uint
-    {
-        Modulate = 0,
-        Decal = 1,
-        Toon = 2,
-        Shadow = 3
-    }
-
-    public enum RepeatMode : byte
-    {
-        Clamp = 0,
-        Repeat = 1,
-        Mirror = 2
-    }
-
-    // Unknown3:
-    // - JumpPad_Beam    > blinn6    (tex 0, pal 0)
-    // - TeleporterSmall > lambert22 (tex 2, pal 2)
-    public enum RenderMode : byte
-    {
-        Normal = 0,
-        Decal = 1,
-        Translucent = 2,
-        Unknown3 = 3,
-        Unknown4 = 4 // ?
-    }
-
-    public enum CullingMode : byte
-    {
-        Neither = 0,
-        Front = 1,
-        Back = 2
-    }
-
-    // size: 132
-    public readonly struct Material
-    {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
-        public readonly string Name;
-        [MarshalAs(UnmanagedType.U1)]
-        public readonly bool Light;
-        public readonly CullingMode Culling;
-        public readonly byte Alpha;
-        public readonly byte Wireframe;
-        public readonly ushort PaletteId;
-        public readonly ushort TextureId;
-        public readonly RepeatMode XRepeat;
-        public readonly RepeatMode YRepeat;
-        public readonly ColorRgb Diffuse;
-        public readonly ColorRgb Ambient;
-        public readonly ColorRgb Specular;
-        public readonly byte Field53;
-        public readonly PolygonMode PolygonMode;
-        public readonly RenderMode RenderMode;
-        public readonly byte AnimationFlags;
-        public readonly ushort Field5A;
-        public readonly uint TexcoordTransformMode;
-        public readonly ushort TexcoordAnimationId;
-        public readonly ushort Field62;
-        public readonly uint MatrixId;
-        public readonly uint ScaleS;
-        public readonly uint ScaleT;
-        public readonly ushort RotZ;
-        public readonly ushort Field72;
-        public readonly uint TranslateS;
-        public readonly uint TranslateT;
-        public readonly ushort MaterialAnimationId;
-        public readonly ushort Field7E;
-        public readonly byte PackedRepeatMode;
-        public readonly byte Field81;
-        public readonly ushort Field82;
-    }
-
-    public enum TextureFormat : ushort
-    {
-        Palette2Bit = 0, // RGB4
-        Palette4Bit = 1, // RGB16
-        Palette8Bit = 2, // RGB256
-        DirectRgb = 3,   // RGB -- not entirely sure if this is RGB or RGBA; the alpha bit is always 1 for format 5
-        PaletteA5I3 = 4, // A5I3 
-        DirectRgba = 5,  // RGBA
-        PaletteA3I5 = 6  // A3I5
-    }
-
-    // size: 40
-    public readonly struct Texture
-    {
-        public readonly TextureFormat Format;
-        public readonly ushort Width;
-        public readonly ushort Height;
-        public readonly ushort Padding;
-        public readonly uint ImageOffset;
-        public readonly uint ImageSize;
-        public readonly uint Unknown7;
-        public readonly uint Unknown8;
-        public readonly uint VramOffset;
-        public readonly uint Opaque;
-        public readonly uint Unknown11;
-        public readonly byte PackedSize;
-        public readonly byte NativeTextureFormat;
-        public readonly ushort TextureObjRef;
-    }
-
-    // size: 16
-    public readonly struct Palette
-    {
-        public readonly uint Offset;
-        public readonly uint Count;
-        public readonly uint Unknown4;
-        public readonly uint UnknownReference5;
-    }
-
-    // size: 100
-    public readonly struct Header
-    {
-        public readonly uint ScaleFactor;
-        public readonly int ScaleBase;
-        public readonly uint Unknown3;
-        public readonly uint Unknown4;
-        public readonly uint MaterialOffset;
-        public readonly uint DlistOffset;
-        public readonly uint BoneOffset;
-        public readonly ushort NodeAnimationCount;
-        public readonly byte Flags;
-        public readonly byte Field1F;
-        public readonly uint UnknownNodeId;
-        public readonly uint MeshOffset;
-        public readonly ushort TextureCount;
-        public readonly ushort Field2A;
-        public readonly uint TextureOffset;
-        public readonly ushort PaletteCount;
-        public readonly ushort Field32;
-        public readonly uint PaletteOffset;
-        public readonly uint UnknownAnimationCount;
-        public readonly uint Unknown8;
-        public readonly uint NodeInitialPosition;
-        public readonly uint NodePosition;
-        public readonly ushort MaterialCount;
-        public readonly ushort BoneCount;
-        public readonly uint TextureMatrices;
-        public readonly uint NodeAnimation;
-        public readonly uint TextureCoordinateAnimations;
-        public readonly uint MaterialAnimations;
-        public readonly uint TextureAnimations;
-        public readonly ushort MeshCount;
-        public readonly ushort MatrixCount;
-    }
-
-    // size: 4
-    public readonly struct Float
-    {
-        public Float(int intValue)
-        {
-            IntValue = intValue;
-        }
-
-        public readonly int IntValue;
-        public float FloatValue => IntValue / (float)(1 << 12);
-    }
-
-    // size: 12
-    public readonly struct Vector3
-    {
-        public Vector3(Float x, Float y, Float z)
-        {
-            X = x;
-            Y = y;
-            Z = z;
-        }
-
-        public readonly Float X;
-        public readonly Float Y;
-        public readonly Float Z;
-    }
-
-    // size: 3
-    public readonly struct ColorRgb
-    {
-        public ColorRgb(byte red, byte green, byte blue)
-        {
-            Red = red;
-            Green = green;
-            Blue = blue;
-        }
-
-        public readonly byte Red;
-        public readonly byte Green;
-        public readonly byte Blue;
-    }
-
-    // size: 4
-    public readonly struct ColorRgba
-    {
-        public ColorRgba(byte red, byte green, byte blue, byte alpha)
-        {
-            Red = red;
-            Green = green;
-            Blue = blue;
-            Alpha = alpha;
-        }
-
-        public readonly byte Red;
-        public readonly byte Green;
-        public readonly byte Blue;
-        public readonly byte Alpha;
-    }
-
-    // size: ?
-    public readonly struct Bone
-    {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
-        public readonly string Name;
-        public readonly ushort ParentId;
-        public readonly ushort ChildId;
-        public readonly ushort NextId;
-        public readonly ushort Field46;
-        public readonly uint Enabled;
-        public readonly ushort MeshCount;
-        public readonly ushort MeshId;
-        public readonly Vector3 Scale;
-        public readonly short AngleX;
-        public readonly short AngleY;
-        public readonly short AngleZ;
-        public readonly ushort Field62;
-        public readonly Vector3 Position;
-        public readonly uint Field70;
-        public readonly Vector3 Vector1;
-        public readonly Vector3 Vector2;
-        public readonly byte Type;
-        public readonly byte Field8D;
-        public readonly ushort Field8E;
-        public readonly Vector3 NodeTransform0;
-        public readonly Vector3 NodeTransform1;
-        public readonly Vector3 NodeTransform2;
-        public readonly Vector3 NodeTransform3;
-        public readonly uint FieldC0;
-        public readonly uint FieldC4;
-        public readonly uint FieldC8;
-        public readonly uint FieldCC;
-        public readonly uint FieldD0;
-        public readonly uint FieldD4;
-        public readonly uint FieldD8;
-        public readonly uint FieldDC;
-        public readonly uint FieldE0;
-        public readonly uint FieldE4;
-        public readonly uint FieldE8;
-        public readonly uint FieldEC;
+        Multiplayer0 = 0x0008,
+        Multiplayer1 = 0x0010,
+        MultiplayerU = 0x0020,
+        CaptureTheFlag = 0x4000
     }
 
     public enum InstructionCode : uint
