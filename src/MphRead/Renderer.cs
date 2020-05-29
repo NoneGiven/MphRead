@@ -198,11 +198,14 @@ namespace MphRead
                 ushort width = 1;
                 ushort height = 1;
                 var pixels = new List<uint>();
+                bool onlyOpaque = true;
+                TextureFormat textureFormat = TextureFormat.Palette2Bit;
                 if (material.TextureId != UInt16.MaxValue)
                 {
                     Texture texture = model.Textures[material.TextureId];
                     width = texture.Width;
                     height = texture.Height;
+                    textureFormat = texture.Format;
                     bool decal = material.RenderMode == RenderMode.Decal;
                     foreach (ColorRgba pixel in model.GetPixels(material.TextureId, material.PaletteId))
                     {
@@ -211,6 +214,10 @@ namespace MphRead
                         uint blue = pixel.Blue;
                         uint alpha = (uint)((decal ? 255 : pixel.Alpha) * material.Alpha / 31.0f);
                         pixels.Add((red << 0) | (green << 8) | (blue << 16) | (alpha << 24));
+                        if (alpha < 255)
+                        {
+                            onlyOpaque = false;
+                        }
                     }
                 }
                 else
@@ -220,10 +227,27 @@ namespace MphRead
 
                 _textureMap[model].Add(_textureCount);
 
-                // todo:
+                // - if material alpha is less than 31, and render mode is not Translucent, set to Translucent
                 // - if render mode is not Normal, but there are no non-opaque pixels, set to Normal
                 // - if render mode is Normal, but there are non-opaque pixels, set to AlphaTest
                 // - if render mode is Translucent, material alpha is 31, and texture format is DirectRgba, set to AlphaTest
+                if (material.Alpha < 31)
+                {
+                    material.RenderMode = RenderMode.Translucent;
+                }
+                if (material.RenderMode != RenderMode.Normal && onlyOpaque)
+                {
+                    material.RenderMode = RenderMode.Normal;
+                }
+                else if (material.RenderMode == RenderMode.Normal && !onlyOpaque)
+                {
+                    material.RenderMode = RenderMode.AlphaTest;
+                }
+                if (material.RenderMode == RenderMode.Translucent && material.Alpha == 31
+                    && (textureFormat == TextureFormat.DirectRgb || textureFormat == TextureFormat.DirectRgba))
+                {
+                    material.RenderMode = RenderMode.AlphaTest;
+                }
 
                 GL.BindTexture(TextureTarget.Texture2D, _textureCount);
                 GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
@@ -412,7 +436,7 @@ namespace MphRead
                 {
                     ushort width = 1;
                     ushort height = 1;
-                    ushort textureId = material.TextureId;
+                    int textureId = material.TextureId;
                     if (textureId != UInt16.MaxValue)
                     {
                         Texture texture = model.Textures[textureId];

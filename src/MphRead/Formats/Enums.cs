@@ -28,7 +28,8 @@ namespace MphRead
         Decal = 1,
         Translucent = 2,
         Unknown3 = 3,
-        Unknown4 = 4
+        Unknown4 = 4,
+        AlphaTest = 5 // viewer only
     }
 
     public enum CullingMode : byte

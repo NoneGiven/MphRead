@@ -55,7 +55,7 @@ namespace MphRead
     }
 
     // size: 132
-    public readonly struct Material
+    public readonly struct RawMaterial
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
         public readonly string Name;

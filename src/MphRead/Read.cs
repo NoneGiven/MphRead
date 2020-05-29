@@ -102,7 +102,7 @@ namespace MphRead
             {
                 instructions.Add(DoRenderInstructions(initialBytes, dlist));
             }
-            IReadOnlyList<Material> materials = DoOffsets<Material>(initialBytes, header.MaterialOffset, header.MaterialCount);
+            IReadOnlyList<RawMaterial> materials = DoOffsets<RawMaterial>(initialBytes, header.MaterialOffset, header.MaterialCount);
             var recolors = new List<Recolor>();
             foreach (RecolorMetadata meta in recolorMeta)
             {

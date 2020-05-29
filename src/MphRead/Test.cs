@@ -125,7 +125,13 @@ namespace MphRead
         {
             foreach (Model model in GetAllModels())
             {
-                
+                foreach (Material material in model.Materials)
+                {
+                    if (material.Alpha < 31 && material.RenderMode != RenderMode.Translucent)
+                    {
+                        System.Diagnostics.Debugger.Break();
+                    }
+                }
             }
         }
 

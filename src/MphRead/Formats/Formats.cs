@@ -50,7 +50,7 @@ namespace MphRead
         public IReadOnlyList<Recolor> Recolors { get; }
 
         public Model(string name, Header header, IReadOnlyList<RawNode> nodes, IReadOnlyList<Mesh> meshes,
-            IReadOnlyList<Material> materials, IReadOnlyList<DisplayList> dlists,
+            IReadOnlyList<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions, IReadOnlyList<Recolor> recolors,
             int defaultRecolor)
         {
@@ -59,7 +59,7 @@ namespace MphRead
             Header = header;
             Nodes = nodes.Select(n => new Node(n)).ToList();
             Meshes = meshes;
-            Materials = materials;
+            Materials = materials.Select(m => new Material(m)).ToList();
             DisplayLists = dlists;
             RenderInstructionLists = renderInstructions;
             Recolors = recolors;
@@ -212,9 +212,9 @@ namespace MphRead
             bitmap.Save(imagePath);
         }
 
-        private static void ThrowIfInvalidEnums(IEnumerable<Material> materials)
+        private static void ThrowIfInvalidEnums(IEnumerable<RawMaterial> materials)
         {
-            foreach (Material material in materials)
+            foreach (RawMaterial material in materials)
             {
                 if (!Enum.IsDefined(typeof(RenderMode), material.RenderMode))
                 {
@@ -321,6 +321,7 @@ namespace MphRead
         }
     }
 
+    // todo: look at and use more fields from the raw struct (same for Material)
     public class Node
     {
         public string Name { get; }
@@ -355,6 +356,30 @@ namespace MphRead
             Position = new Vector3(raw.Position);
             Vector1 = new Vector3(raw.Vector1);
             Vector2 = new Vector3(raw.Vector2);
+        }
+    }
+
+    public class Material
+    {
+        public string Name { get; }
+        public CullingMode Culling { get; }
+        public byte Alpha { get; }
+        public int PaletteId { get; }
+        public int TextureId { get; }
+        public RepeatMode XRepeat { get; }
+        public RepeatMode YRepeat { get; }
+        public RenderMode RenderMode { get; set; }
+
+        public Material(RawMaterial raw)
+        {
+            Name = raw.Name;
+            Culling = raw.Culling;
+            Alpha = raw.Alpha;
+            PaletteId = raw.PaletteId;
+            TextureId = raw.TextureId;
+            XRepeat = raw.XRepeat;
+            YRepeat = raw.YRepeat;
+            RenderMode = raw.RenderMode;
         }
     }
 
