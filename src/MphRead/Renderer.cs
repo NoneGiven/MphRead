@@ -293,11 +293,7 @@ namespace MphRead
                 // todo: there's some initial height getting set that we're missing here so ours is halfway in the floor
                 if (model.Type == ModelType.Item)
                 {
-                    float rotation = (float)(model.Rotation.Y + elapsedTime * 360 * 0.35);
-                    while (rotation > 360)
-                    {
-                        rotation -= 360;
-                    }
+                    float rotation = (float)(model.Rotation.Y + elapsedTime * 360 * 0.35) % 360;
                     model.Rotation = new Vector3(model.Rotation.X, rotation, model.Rotation.Z);
                     // todo: use min Y here
                     height = 0 + (MathF.Sin(model.Rotation.Y / 180 * MathF.PI) + 1) / 8f;
