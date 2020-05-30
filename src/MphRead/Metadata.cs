@@ -3539,7 +3539,6 @@ namespace MphRead
             /* 10 */ ("pick_wpn_mortar", 0.481933594f),
             /* 11 */ ("pick_wpn_ghostbuster", 0.606933594f),
             /* 12 */ ("pick_wpn_gorea", 0.406982422f),
-            // todo: dedup?
             /* 13 */ ("pick_ammo_green", 0.307128906f),
             /* 14 */ ("pick_ammo_green", 0.307128906f),
             /* 15 */ ("pick_ammo_orange", 0.375732422f),

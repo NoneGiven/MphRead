@@ -55,7 +55,7 @@ namespace MphRead
             foreach (Node node in model.Nodes)
             {
                 // todo: there's probably some node or mesh property that hides these things
-                if (node.Name == "etagDoorN" || node.Name == "etagDoorS")
+                if (node.Name.Contains("etagDoor"))
                 {
                     node.Enabled = false;
                     continue;
@@ -187,12 +187,11 @@ namespace MphRead
                 else if (entity.Type == EntityType.Pickup)
                 {
                     // todo: pickups? delayed items?
-                    ItemEntityData data = ((Entity<ItemEntityData>)entity).Data;
                 }
             }
             return models;
         }
-
+        
         // todo: avoid loading things multiple times
         private static IReadOnlyList<Model> LoadJumpPad(JumpPadEntityData data)
         {
