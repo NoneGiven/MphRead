@@ -21,7 +21,7 @@ namespace MphRead
             else
             {
                 renderer.AddRoom("MP3 PROVING GROUND");
-                renderer.AddModel("PickUp_MissileExp");
+                renderer.AddModel("Crate01");
                 Nop();
             }
             renderer.Run();
