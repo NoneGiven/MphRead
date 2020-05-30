@@ -279,7 +279,7 @@ namespace MphRead
                         JumpPadEntityData data = ReadStruct<JumpPadEntityData>(bytes[start..end]);
                         entities.Add(new Entity<JumpPadEntityData>(entry, type, init.SomeId, data));
                     }
-                    else if (type == EntityType.Item || type == EntityType.Pickup)
+                    else if (type == EntityType.Item)
                     {
                         Debug.Assert(entry.Length == Sizes.ItemEntityData);
                         ItemEntityData data = ReadStruct<ItemEntityData>(bytes[start..end]);

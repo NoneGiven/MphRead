@@ -77,7 +77,6 @@ namespace MphRead
         public float _roomScale = 1;
 
         private bool _showTextures = true;
-        private bool _showUntextured = false;
         private bool _showColors = true;
         private bool _wireframe = false;
         private bool _faceCulling = true;
@@ -172,7 +171,6 @@ namespace MphRead
             Console.WriteLine(" - Scroll mouse wheel to zoom");
             Console.WriteLine(" - Hold left mouse button to rotate");
             Console.WriteLine($" - T toggles texturing ({FormatOnOff(_showTextures)})");
-            Console.WriteLine($" - U toggles showing untextured objects ({FormatOnOff(_showUntextured)})");
             Console.WriteLine($" - C toggles vertex colours ({FormatOnOff(_showColors)})");
             Console.WriteLine($" - Q toggles wireframe ({FormatOnOff(_wireframe)})");
             Console.WriteLine($" - B toggles face culling ({FormatOnOff(_faceCulling)})");
@@ -513,10 +511,6 @@ namespace MphRead
                     {
                         continue;
                     }
-                    if (material.TextureId == UInt16.MaxValue && !_showUntextured)
-                    {
-                        continue;
-                    }
                     GL.Uniform1(_shaderLocations.IsBillboard, node.Type == 1 ? 1 : 0);
                     RenderMesh(model, mesh, material);
                 }
@@ -841,11 +835,6 @@ namespace MphRead
                 {
                     GL.Disable(EnableCap.Texture2D);
                 }
-                PrintMenu();
-            }
-            else if (e.Key == Key.U)
-            {
-                _showUntextured = !_showUntextured;
                 PrintMenu();
             }
             else if (e.Key == Key.C)
