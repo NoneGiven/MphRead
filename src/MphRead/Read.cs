@@ -65,9 +65,11 @@ namespace MphRead
 
         private static Model GetModel(EntityMetadata entityMeta, int defaultRecolor)
         {
-            return GetModel(entityMeta.Name, entityMeta.ModelPath, entityMeta.Recolors, defaultRecolor);
+            Model model = GetModel(entityMeta.Name, entityMeta.ModelPath, entityMeta.Recolors, defaultRecolor);
+            model.Animate = entityMeta.Animate;
+            return model;
         }
-
+        
         public static Model GetModelDirect(string path)
         {
             string name = Path.GetFileNameWithoutExtension(path);
