@@ -29,8 +29,8 @@ namespace MphRead
                 roomLayerMask = -1;
             }
             Model room = Read.GetRoomByName(name);
-            // todo: do whatever with NodePosition/NodeInitialPosition?
-            // todo: use this name and ID?
+            // todo?: do whatever with NodePosition/NodeInitialPosition
+            // todo?: use this name and ID
             string nodeName = "rmMain";
             int nodeId = -1;
             int nodeIndex = room.Nodes.IndexOf(b => b.Name.StartsWith("rm"));
@@ -40,11 +40,11 @@ namespace MphRead
                 nodeId = room.Nodes[nodeIndex].ChildIndex;
             }
             FilterNodes(room, roomLayerMask);
-            // todo: scene min/max coordinates?
+            // todo?: scene min/max coordinates
             ComputeMatrices(room, index: 0);
             // todo: load animations
             IReadOnlyList<Model> entities = LoadEntities(metadata);
-            // todo: area ID/portals?
+            // todo?: area ID/portals
             room.Type = ModelType.Room;
             return (room, entities);
         }
@@ -121,7 +121,7 @@ namespace MphRead
                 {
                     ComputeMatrices(model, node.ChildIndex);
                 }
-                // todo: do whatever with NodePosition/NodeInitialPosition?
+                // todo?: do whatever with NodePosition/NodeInitialPosition
                 i = node.NextIndex;
             }
         }
@@ -185,7 +185,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Pickup)
                 {
-                    // todo: pickups? delayed items?
+                    // todo?: pickups? delayed items?
                 }
             }
             return models;
