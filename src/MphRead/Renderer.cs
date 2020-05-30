@@ -291,6 +291,7 @@ namespace MphRead
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
+            OnKeyHeld();
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             float[] vp = new float[4];
@@ -820,6 +821,30 @@ namespace MphRead
         {
             _distance -= e.OffsetY / 1.5f;
             base.OnMouseWheel(e);
+        }
+
+        private void OnKeyHeld()
+        {
+            if (KeyboardState.IsKeyDown(Key.Up))
+            {
+                _elevation += 1;
+                _elevation = Math.Clamp(_elevation, -90.0f, 90.0f);
+            }
+            else if (KeyboardState.IsKeyDown(Key.Down))
+            {
+                _elevation -= 1f;
+                _elevation = Math.Clamp(_elevation, -90.0f, 90.0f);
+            }
+            if (KeyboardState.IsKeyDown(Key.Left))
+            {
+                _angle += 1f;
+                _angle %= 360f;
+            }
+            else if (KeyboardState.IsKeyDown(Key.Right))
+            {
+                _angle -= 1f;
+                _angle %= 360f;
+            }
         }
 
         protected override void OnKeyDown(KeyboardKeyEventArgs e)
