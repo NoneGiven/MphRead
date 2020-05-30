@@ -212,7 +212,7 @@ namespace MphRead
         private static Model LoadItem(ItemEntityData data)
         {
             // todo: load animations
-            (string name, float offset) = Metadata.Items[(int)data.ModelId];
+            (string name, float offset, bool animate) = Metadata.Items[(int)data.ModelId];
             Model model = Read.GetModelByName(name);
             model.Position = new Vector3(
                 data.Position.X.FloatValue,
@@ -221,6 +221,7 @@ namespace MphRead
             );
             model.Rotation = new Vector3(0, _random.Next(0x8000) / (float)0x7FFF * 360, 0);
             model.Type = ModelType.Item;
+            model.Animate = animate;
             ComputeMatrices(model, index: 0);
             return model;
         }

@@ -3523,33 +3523,33 @@ namespace MphRead
             /* 5 */ "JumpPad_Station"
         };
 
-        public static readonly IReadOnlyList<(string, float)> Items
-            = new List<(string, float)>()
+        public static readonly IReadOnlyList<(string, float, bool)> Items
+            = new List<(string, float, bool)>()
         {
-            /*  0 */ ("pick_health_B", 0.487792969f),
-            /*  1 */ ("pick_health_A", 0.424316406f),
-            /*  2 */ ("pick_health_C", 0.524414063f),
-            /*  3 */ ("pick_dblDamage", 0.521484375f),
-            /*  4 */ ("PickUp_EnergyExp", 1.39990234f),
-            /*  5 */ ("pick_wpn_electro", 0.558837891f),
-            /*  6 */ ("PickUp_MissileExp", 0.515136719f),
-            /*  7 */ ("pick_wpn_jackhammer", 0.540771484f),
-            /*  8 */ ("pick_wpn_snipergun", 0.550781250f),
-            /*  9 */ ("pick_wpn_shotgun", 0.544921875f),
-            /* 10 */ ("pick_wpn_mortar", 0.481933594f),
-            /* 11 */ ("pick_wpn_ghostbuster", 0.606933594f),
-            /* 12 */ ("pick_wpn_gorea", 0.406982422f),
-            /* 13 */ ("pick_ammo_green", 0.307128906f),
-            /* 14 */ ("pick_ammo_green", 0.307128906f),
-            /* 15 */ ("pick_ammo_orange", 0.375732422f),
-            /* 16 */ ("pick_ammo_orange", 0.375732422f),
-            /* 17 */ ("pick_invis", 0.511962891f),
-            /* 18 */ ("PickUp_AmmoExp", 0.502929688f),
-            /* 19 */ ("Artifact_Key", 0.351074219f),
-            /* 20 */ ("pick_deathball", 0.558837891f),
-            /* 21 */ ("pick_wpn_all", 0.444580078f),
+            /*  0 */ ("pick_health_B", 0.487792969f, false),
+            /*  1 */ ("pick_health_A", 0.424316406f, false),
+            /*  2 */ ("pick_health_C", 0.524414063f, false),
+            /*  3 */ ("pick_dblDamage", 0.521484375f, false),
+            /*  4 */ ("PickUp_EnergyExp", 1.39990234f, true),
+            /*  5 */ ("pick_wpn_electro", 0.558837891f, false),
+            /*  6 */ ("PickUp_MissileExp", 0.515136719f, true),
+            /*  7 */ ("pick_wpn_jackhammer", 0.540771484f, false),
+            /*  8 */ ("pick_wpn_snipergun", 0.550781250f, false),
+            /*  9 */ ("pick_wpn_shotgun", 0.544921875f, false),
+            /* 10 */ ("pick_wpn_mortar", 0.481933594f, false),
+            /* 11 */ ("pick_wpn_ghostbuster", 0.606933594f, false),
+            /* 12 */ ("pick_wpn_gorea", 0.406982422f, false),
+            /* 13 */ ("pick_ammo_green", 0.307128906f, false),
+            /* 14 */ ("pick_ammo_green", 0.307128906f, false),
+            /* 15 */ ("pick_ammo_orange", 0.375732422f, false),
+            /* 16 */ ("pick_ammo_orange", 0.375732422f, false),
+            /* 17 */ ("pick_invis", 0.511962891f, false),
+            /* 18 */ ("PickUp_AmmoExp", 0.502929688f, false),
+            /* 19 */ ("Artifact_Key", 0.351074219f, true),
+            /* 20 */ ("pick_deathball", 0.558837891f, false),
+            /* 21 */ ("pick_wpn_all", 0.444580078f, false),
             // unused
-            /* 22 */ ("pick_wpn_missile", 0.558837891f)
+            /* 22 */ ("pick_wpn_missile", 0.558837891f, false)
         };
 
         public static readonly IReadOnlyDictionary<string, EntityMetadata> EntityMetadata
