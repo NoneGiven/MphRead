@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using OpenToolkit.Mathematics;
 
 namespace MphRead
@@ -191,7 +190,7 @@ namespace MphRead
             }
             return models;
         }
-        
+
         // todo: avoid loading things multiple times
         private static IReadOnlyList<Model> LoadJumpPad(JumpPadEntityData data)
         {
