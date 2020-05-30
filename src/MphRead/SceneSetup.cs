@@ -203,7 +203,8 @@ namespace MphRead
             list.Add(model1);
             Model model2 = Read.GetModelByName("JumpPad_Beam");
             model2.Position = new Vector3(model1.Position.X, model1.Position.Y + 0.2f, model1.Position.Z);
-            model2.Rotation = new Vector3(90, 0, 0);
+            model2.Rotation = new Vector3(-90, 0, 0);
+            model2.Animate = true;
             ComputeMatrices(model2, index: 0);
             list.Add(model2);
             return list;
