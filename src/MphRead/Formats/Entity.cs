@@ -27,7 +27,7 @@ namespace MphRead
         public readonly ushort SomeId;
     }
 
-    // size: 152
+    // size: 148
     public readonly struct JumpPadEntityData
     {
         public readonly EntityDataHeader Header;
@@ -64,7 +64,7 @@ namespace MphRead
         public readonly uint Field8C;
     }
 
-    // size: 76
+    // size: 72
     public readonly struct ItemEntityData
     {
         public readonly EntityDataHeader Header;

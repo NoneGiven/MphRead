@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
+using OpenToolkit.Mathematics;
 
 namespace MphRead
 {
@@ -95,7 +95,7 @@ namespace MphRead
             {
                 return;
             }
-            Matrix4x4 transform = default;
+            Matrix4 transform = default;
             for (int i = index; i != UInt16.MaxValue;)
             {
                 Node node = model.Nodes[i];
@@ -117,33 +117,33 @@ namespace MphRead
             }
         }
 
-        private static void ComputeTansforms(ref Matrix4x4 transform, Vector3 scale, Vector3 angle, Vector3 position)
+        private static void ComputeTansforms(ref Matrix4 transform, Vector3 scale, Vector3 angle, Vector3 position)
         {
-            float sin_ax = MathF.Sin(angle.X);
-            float sin_ay = MathF.Sin(angle.Y);
-            float sin_az = MathF.Sin(angle.Z);
-            float cos_ax = MathF.Cos(angle.X);
-            float cos_ay = MathF.Cos(angle.Y);
-            float cos_az = MathF.Cos(angle.Z);
+            float sinAx = MathF.Sin(angle.X);
+            float sinAy = MathF.Sin(angle.Y);
+            float sinAz = MathF.Sin(angle.Z);
+            float cosAx = MathF.Cos(angle.X);
+            float cosAy = MathF.Cos(angle.Y);
+            float cosAz = MathF.Cos(angle.Z);
 
-            float v18 = cos_ax * cos_az;
-            float v19 = cos_ax * sin_az;
-            float v20 = cos_ax * cos_ay;
+            float v18 = cosAx * cosAz;
+            float v19 = cosAx * sinAz;
+            float v20 = cosAx * cosAy;
 
-            float v22 = sin_ax * sin_ay;
+            float v22 = sinAx * sinAy;
 
-            float v17 = v19 * sin_ay;
+            float v17 = v19 * sinAy;
 
-            transform.M11 = scale.X * cos_ay * cos_az;
-            transform.M12 = scale.X * cos_ay * sin_az;
-            transform.M13 = scale.X * -sin_ay;
+            transform.M11 = scale.X * cosAy * cosAz;
+            transform.M12 = scale.X * cosAy * sinAz;
+            transform.M13 = scale.X * -sinAy;
 
-            transform.M21 = scale.Y * ((v22 * cos_az) - v19);
-            transform.M22 = scale.Y * ((v22 * sin_az) + v18);
-            transform.M23 = scale.Y * sin_ax * cos_ay;
+            transform.M21 = scale.Y * ((v22 * cosAz) - v19);
+            transform.M22 = scale.Y * ((v22 * sinAz) + v18);
+            transform.M23 = scale.Y * sinAx * cosAy;
 
-            transform.M31 = scale.Z * (v18 * sin_ay + sin_ax * sin_az);
-            transform.M32 = scale.Z * ((v17 + (v19 * sin_ay)) - (sin_ax * cos_az));
+            transform.M31 = scale.Z * (v18 * sinAy + sinAx * sinAz);
+            transform.M32 = scale.Z * ((v17 + (v19 * sinAy)) - (sinAx * cosAz));
             transform.M33 = scale.Z * v20;
 
             transform.M41 = position.X;
@@ -190,7 +190,7 @@ namespace MphRead
             var list = new List<Model>();
             string modelName = Metadata.JumpPads[(int)data.ModelId];
             Model model1 = Read.GetModelByName(modelName);
-            model1.Position = new Vector3(data.Position);
+            model1.Position = data.Position.ToFloatVector();
             list.Add(model1);
             Model model2 = Read.GetModelByName("JumpPad_Beam");
             model2.Position = new Vector3(model1.Position.X, model1.Position.Y + 0.2f, model1.Position.Z);

@@ -293,7 +293,7 @@ namespace MphRead
             }
             return entities;
         }
-        
+
         private static void Nop() { }
 
         private static IReadOnlyList<RenderInstruction> DoRenderInstructions(ReadOnlySpan<byte> bytes, DisplayList dlist)

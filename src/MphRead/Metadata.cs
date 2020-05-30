@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using OpenToolkit.Mathematics;
 
 namespace MphRead
 {
     public class RoomMetadata
     {
         public string Name { get; }
-        public string InGameName { get; } // not in struct
+        public string InGameName { get; }
         public string ModelPath { get; }
         public string AnimationPath { get; }
         public string CollisionPath { get; }
@@ -19,22 +20,16 @@ namespace MphRead
         public uint TimeLimit { get; }
         public short PointLimit { get; }
         public short LayerId { get; }
-        //public uint Unknown32 { get; }
         public ushort FogEnabled { get; }
         public ushort Fog { get; }
         public ushort FogColor { get; }
-        //public short Unknown36 { get; }
         public uint FogSlope { get; }
         public uint FogOffset { get; }
         public ColorRgba Light1Color { get; }
         public Vector3 Light1Vector { get; }
         public ColorRgba Light2Color { get; }
         public Vector3 Light2Vector { get; }
-        //public string ArchiveName { get; }
-        //public string ArchivePath { get; }
-        //public uint Unknown21 { get; }
-        //public uint Unknown22 { get; }
-        public Vector3 RoomSize { get; } // not in struct
+        public Vector3 RoomSize { get; }
 
         public RoomMetadata(string name, string inGameName, string pathName, string modelPath,
             string animationPath, string collisionPath, string? texturePath, string? entityPath, string? nodePath,
@@ -142,7 +137,7 @@ namespace MphRead
             else
             {
                 ModelPath = $@"_archives\{archive}\{name}_Model.bin";
-            } 
+            }
             if (remove != null)
             {
                 name = name.Replace(remove, "");
@@ -295,7 +290,7 @@ namespace MphRead
         {
             return minutes * 3600 + seconds * 60 + frames;
         }
-        
+
         private static ushort FogColor(byte r, byte g, byte b)
         {
             return (ushort)(r | g << 5 | b << 10);
@@ -459,10 +454,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(10, 0, 0))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(10f, 0f, 0f))
                 },
                 {
                     "UNIT1_CZ",
@@ -487,10 +482,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(0, 0, 10))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(0f, 0f, 10f))
                 },
                 {
                     "UNIT1_MORPH_CX",
@@ -515,10 +510,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(31, 18, 6, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 6, 4, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(10, 0, 0))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(10f, 0f, 0f))
                 },
                 {
                     "UNIT1_MORPH_CZ",
@@ -543,10 +538,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(0, 0, 10))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(0f, 0f, 10f))
                 },
                 {
                     "UNIT2_CX",
@@ -571,10 +566,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 31, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(10.378662, 0, 0))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(10.378662f, 0f, 0f))
                 },
                 {
                     "UNIT2_CZ",
@@ -599,10 +594,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 31, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(0, 0, 10.378662))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(0f, 0f, 10.378662f))
                 },
                 {
                     "UNIT3_CX",
@@ -627,10 +622,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 20, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(10, 0, 0))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(10f, 0f, 0f))
                 },
                 {
                     "UNIT3_CZ",
@@ -655,10 +650,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 20, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(0, 0, 10))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(0f, 0f, 10f))
                 },
                 {
                     "UNIT4_CX",
@@ -683,10 +678,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(20, 27, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(8, 8, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(10, 0, 0))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(10f, 0f, 0f))
                 },
                 {
                     "UNIT4_CZ",
@@ -711,10 +706,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(20, 27, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(8, 8, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(0, 0, 10))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(0f, 0f, 10f))
                 },
                 {
                     "CYLINDER_C1",
@@ -739,10 +734,10 @@ namespace MphRead
                         0x4,
                         65535,
                         new ColorRgba(8, 28, 20, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 6, 12, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(0, 2.295166, 22.654053))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(0f, 2.295166f, 22.654053f))
                 },
                 {
                     "BIGEYE_C1",
@@ -767,10 +762,10 @@ namespace MphRead
                         0x4,
                         65535,
                         new ColorRgba(8, 28, 20, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 6, 12, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(0, -1.869873, 22.653809))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(0f, -1.869873f, 22.653809f))
                 },
                 {
                     "UNIT1_RM1_CX",
@@ -795,10 +790,10 @@ namespace MphRead
                         0x4,
                         65535,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(10, 0, 0))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(10f, 0f, 0f))
                 },
                 {
                     "GOREA_C1",
@@ -823,10 +818,10 @@ namespace MphRead
                         0x4,
                         65535,
                         new ColorRgba(8, 28, 20, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 6, 12, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(0, 0, 20))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(0f, 0f, 20f))
                 },
                 {
                     "UNIT3_MORPH_CZ",
@@ -851,10 +846,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 20, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(0, 0, 10))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(0f, 0f, 10f))
                 },
                 {
                     "UNIT1_LAND",
@@ -879,10 +874,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT1_C0",
@@ -907,10 +902,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT1_RM1",
@@ -935,10 +930,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT1_C4",
@@ -963,10 +958,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT1_RM6",
@@ -991,10 +986,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-41, 41, 6))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-41f, 41f, 6f))
                 },
                 {
                     "CRYSTALROOM",
@@ -1019,10 +1014,10 @@ namespace MphRead
                         0x4,
                         65535,
                         new ColorRgba(19, 29, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 6, 12, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(32, -72, 72))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(32f, -72f, 72f))
                 },
                 {
                     "UNIT1_RM4",
@@ -1047,10 +1042,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT1_TP1",
@@ -1075,10 +1070,10 @@ namespace MphRead
                         0x6,
                         65350,
                         new ColorRgba(8, 28, 20, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(20, 8, 8, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT1_B1",
@@ -1103,10 +1098,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(12, 6, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(31, 25, 21, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-11, 10, 0))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-11f, 10f, 0f))
                 },
                 {
                     "UNIT1_C1",
@@ -1131,10 +1126,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(13, -27, 26))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(13f, -27f, 26f))
                 },
                 {
                     "UNIT1_C2",
@@ -1159,10 +1154,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT1_C5",
@@ -1187,10 +1182,10 @@ namespace MphRead
                         0x4,
                         65300,
                         new ColorRgba(31, 18, 6, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 9, 4, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT1_RM2",
@@ -1215,10 +1210,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-37, 45, -1))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-37f, 45f, -1f))
                 },
                 {
                     "UNIT1_RM3",
@@ -1243,10 +1238,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(25, -27, 20))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(25f, -27f, 20f))
                 },
                 {
                     "UNIT1_RM5",
@@ -1271,10 +1266,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(31, 18, 6, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 6, 4, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT1_C3",
@@ -1299,10 +1294,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT1_TP2",
@@ -1327,10 +1322,10 @@ namespace MphRead
                         0x6,
                         65350,
                         new ColorRgba(8, 28, 20, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 6, 12, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-37, 45, -1))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-37f, 45f, -1f))
                 },
                 {
                     "UNIT1_B2",
@@ -1355,10 +1350,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(12, 6, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(31, 25, 21, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(25, -27, 20))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(25f, -27f, 20f))
                 },
                 {
                     "UNIT2_LAND",
@@ -1383,10 +1378,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 24, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT2_C0",
@@ -1411,10 +1406,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 31, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT2_C1",
@@ -1439,10 +1434,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 31, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-24, 27, 0))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-24f, 27f, 0f))
                 },
                 {
                     "UNIT2_RM1",
@@ -1467,10 +1462,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 31, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(17, -14, 14))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(17f, -14f, 14f))
                 },
                 {
                     "UNIT2_C2",
@@ -1495,10 +1490,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 31, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT2_RM2",
@@ -1523,10 +1518,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 31, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT2_C3",
@@ -1551,10 +1546,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 31, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-49, 48, 0))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-49f, 48f, 0f))
                 },
                 {
                     "UNIT2_RM3",
@@ -1579,10 +1574,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 31, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(48, -49, 47))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(48f, -49f, 47f))
                 },
                 {
                     "UNIT2_C4",
@@ -1607,10 +1602,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 31, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-70, 70, -21.227783))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-70f, 70f, -21.227783f))
                 },
                 {
                     "UNIT2_TP1",
@@ -1635,10 +1630,10 @@ namespace MphRead
                         0x6,
                         65350,
                         new ColorRgba(8, 28, 20, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 6, 12, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(48, -70, 70))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(48f, -70f, 70f))
                 },
                 {
                     "UNIT2_B1",
@@ -1663,10 +1658,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(12, 6, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(31, 25, 21, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT2_C6",
@@ -1691,10 +1686,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(18, 31, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT2_C7",
@@ -1719,10 +1714,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 31, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT2_RM4",
@@ -1747,10 +1742,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(29, 20, 10, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT2_RM5",
@@ -1775,10 +1770,10 @@ namespace MphRead
                         0x4,
                         31727,
                         new ColorRgba(24, 31, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-43, 44, 0))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-43f, 44f, 0f))
                 },
                 {
                     "UNIT2_RM6",
@@ -1803,10 +1798,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 31, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(33, -33, 55))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(33f, -33f, 55f))
                 },
                 {
                     "UNIT2_RM7",
@@ -1831,10 +1826,10 @@ namespace MphRead
                         0x4,
                         31727,
                         new ColorRgba(24, 31, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT2_RM8",
@@ -1859,10 +1854,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(29, 20, 10, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT2_TP2",
@@ -1887,10 +1882,10 @@ namespace MphRead
                         0x6,
                         65350,
                         new ColorRgba(8, 28, 20, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 6, 12, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT2_B2",
@@ -1915,10 +1910,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(12, 6, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(31, 25, 21, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT3_LAND",
@@ -1943,10 +1938,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 20, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT3_C0",
@@ -1971,10 +1966,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 20, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT3_C2",
@@ -1999,10 +1994,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 20, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-22, 18, -2))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-22f, 18f, -2f))
                 },
                 {
                     "UNIT3_RM1",
@@ -2027,10 +2022,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 20, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(13.299805, -15, 11))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(13.299805f, -15f, 11f))
                 },
                 {
                     "UNIT3_RM4",
@@ -2055,10 +2050,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 20, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT3_TP1",
@@ -2083,10 +2078,10 @@ namespace MphRead
                         0x6,
                         65350,
                         new ColorRgba(8, 28, 20, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 6, 12, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT3_B1",
@@ -2111,10 +2106,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(12, 6, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(31, 25, 21, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT3_C1",
@@ -2139,10 +2134,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 20, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT3_RM2",
@@ -2167,10 +2162,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 20, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT3_RM3",
@@ -2195,10 +2190,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 20, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT3_TP2",
@@ -2223,10 +2218,10 @@ namespace MphRead
                         0x6,
                         65350,
                         new ColorRgba(8, 28, 20, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 6, 12, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-19, 27, -1))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-19f, 27f, -1f))
                 },
                 {
                     "UNIT3_B2",
@@ -2251,10 +2246,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(12, 6, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(31, 25, 21, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(15, -29, 26))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(15f, -29f, 26f))
                 },
                 {
                     "UNIT4_LAND",
@@ -2279,10 +2274,10 @@ namespace MphRead
                         0x4,
                         65300,
                         new ColorRgba(10, 14, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 4, 8, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT4_RM1",
@@ -2307,10 +2302,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(20, 27, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(8, 8, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT4_RM3",
@@ -2335,10 +2330,10 @@ namespace MphRead
                         0x4,
                         65300,
                         new ColorRgba(10, 14, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 4, 8, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-23, 41, -29))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-23f, 41f, -29f))
                 },
                 {
                     "UNIT4_C0",
@@ -2363,10 +2358,10 @@ namespace MphRead
                         0x4,
                         65300,
                         new ColorRgba(20, 27, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(8, 8, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(30, -27, 42))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(30f, -27f, 42f))
                 },
                 {
                     "UNIT4_TP1",
@@ -2391,10 +2386,10 @@ namespace MphRead
                         0x6,
                         65350,
                         new ColorRgba(8, 28, 20, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 6, 12, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT4_B1",
@@ -2419,10 +2414,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(12, 6, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(31, 25, 21, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT4_C1",
@@ -2447,10 +2442,10 @@ namespace MphRead
                         0x4,
                         65300,
                         new ColorRgba(10, 14, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 4, 8, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-32, 31, -3.599854))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-32f, 31f, -3.599854f))
                 },
                 {
                     "UNIT4_RM2",
@@ -2475,10 +2470,10 @@ namespace MphRead
                         0x4,
                         65300,
                         new ColorRgba(10, 14, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 4, 8, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(24, -30, 29))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(24f, -30f, 29f))
                 },
                 {
                     "UNIT4_RM4",
@@ -2503,10 +2498,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(20, 27, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(8, 8, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT4_RM5",
@@ -2531,10 +2526,10 @@ namespace MphRead
                         0x4,
                         65300,
                         new ColorRgba(10, 14, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 4, 8, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT4_TP2",
@@ -2559,10 +2554,10 @@ namespace MphRead
                         0x6,
                         65350,
                         new ColorRgba(8, 28, 20, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 6, 12, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-72, 70, 0))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-72f, 70f, 0f))
                 },
                 {
                     "UNIT4_B2",
@@ -2587,10 +2582,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(12, 6, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(31, 25, 21, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(23.5, -26, 26))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(23.5f, -26f, 26f))
                 },
                 {
                     "Gorea_Land",
@@ -2615,10 +2610,10 @@ namespace MphRead
                         0x6,
                         65330,
                         new ColorRgba(17, 29, 16, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 6, 12, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "Gorea_Peek",
@@ -2643,10 +2638,10 @@ namespace MphRead
                         0x5,
                         65535,
                         new ColorRgba(19, 27, 16, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 6, 12, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "Gorea_b1",
@@ -2671,10 +2666,10 @@ namespace MphRead
                         0x4,
                         32550,
                         new ColorRgba(18, 24, 27, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 18, 24, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-72, 70, 0))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-72f, 70f, 0f))
                 },
                 {
                     "Gorea_b2",
@@ -2699,10 +2694,10 @@ namespace MphRead
                         0x4,
                         65535,
                         new ColorRgba(18, 16, 14, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(27, 18, 9, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(23.5, -26, 26))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(23.5f, -26f, 26f))
                 },
                 {
                     "MP1 SANCTORUS",
@@ -2727,10 +2722,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 31, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "MP2 HARVESTER",
@@ -2755,10 +2750,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(25, 30, 20, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 11, 6, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "MP3 PROVING GROUND",
@@ -2783,10 +2778,10 @@ namespace MphRead
                         0x5,
                         65180,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0.099854, -1, 0),
-                        new Vector3(-76, 81, -7.127930))
+                        new Vector3(0.099854f, -1f, 0f),
+                        new Vector3(-76f, 81f, -7.127930f))
                 },
                 {
                     "MP4 HIGHGROUND - EXPANDED",
@@ -2811,10 +2806,10 @@ namespace MphRead
                         0x5,
                         65200,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(32, -42, 31))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(32f, -42f, 31f))
                 },
                 {
                     "MP4 HIGHGROUND",
@@ -2839,10 +2834,10 @@ namespace MphRead
                         0x5,
                         65200,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-76, 81, -7.127930))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-76f, 81f, -7.127930f))
                 },
                 {
                     "MP5 FUEL SLUICE",
@@ -2867,10 +2862,10 @@ namespace MphRead
                         0x3,
                         65152,
                         new ColorRgba(18, 22, 30, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(32, -40.748779, 31))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(32f, -40.748779f, 31f))
                 },
                 {
                     "MP6 HEADSHOT",
@@ -2895,10 +2890,10 @@ namespace MphRead
                         0x3,
                         65152,
                         new ColorRgba(18, 22, 30, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-72, 72, -3))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-72f, 72f, -3f))
                 },
                 {
                     "MP7 PROCESSOR CORE",
@@ -2923,10 +2918,10 @@ namespace MphRead
                         0x6,
                         65300,
                         new ColorRgba(31, 18, 6, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 6, 4, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(23, -42, 42))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(23f, -42f, 42f))
                 },
                 {
                     "MP8 FIRE CONTROL",
@@ -2951,10 +2946,10 @@ namespace MphRead
                         0x3,
                         65152,
                         new ColorRgba(18, 22, 30, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "MP9 CRYOCHASM",
@@ -2979,10 +2974,10 @@ namespace MphRead
                         0x5,
                         65152,
                         new ColorRgba(20, 27, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(8, 8, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "MP10 OVERLOAD",
@@ -3007,10 +3002,10 @@ namespace MphRead
                         0x5,
                         65152,
                         new ColorRgba(24, 31, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-68, 60, 0))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-68f, 60f, 0f))
                 },
                 {
                     "MP11 BREAKTHROUGH",
@@ -3035,10 +3030,10 @@ namespace MphRead
                         0x5,
                         65152,
                         new ColorRgba(20, 27, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(8, 8, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(36, -27, 26))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(36f, -27f, 26f))
                 },
                 {
                     "MP12 SIC TRANSIT",
@@ -3063,10 +3058,10 @@ namespace MphRead
                         0x6,
                         65300,
                         new ColorRgba(10, 14, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 4, 8, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "MP13 ACCELERATOR",
@@ -3091,10 +3086,10 @@ namespace MphRead
                         0x3,
                         65152,
                         new ColorRgba(18, 22, 30, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "MP14 OUTER REACH",
@@ -3119,10 +3114,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 20, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-68, 60, 0))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-68f, 60f, 0f))
                 },
                 {
                     "CTF1 FAULT LINE - EXPANDED",
@@ -3147,10 +3142,10 @@ namespace MphRead
                         0x6,
                         65300,
                         new ColorRgba(10, 14, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 4, 8, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(39, -27, 26))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(39f, -27f, 26f))
                 },
                 {
                     "CTF1_FAULT LINE",
@@ -3175,10 +3170,10 @@ namespace MphRead
                         0x6,
                         65300,
                         new ColorRgba(10, 14, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 4, 8, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "AD1 TRANSFER LOCK BT",
@@ -3203,10 +3198,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(29, 20, 10, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "AD1 TRANSFER LOCK DM",
@@ -3231,10 +3226,10 @@ namespace MphRead
                         0x4,
                         65300,
                         new ColorRgba(29, 20, 10, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-71, 85, 2))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-71f, 85f, 2f))
                 },
                 {
                     "AD2 MAGMA VENTS",
@@ -3259,10 +3254,10 @@ namespace MphRead
                         0x5,
                         65200,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(21, -53, 59))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(21f, -53f, 59f))
                 },
                 {
                     "AD2 ALINOS PERCH",
@@ -3287,10 +3282,10 @@ namespace MphRead
                         0x5,
                         65200,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "UNIT1 ALINOS LANDFALL",
@@ -3315,10 +3310,10 @@ namespace MphRead
                         0x4,
                         65180,
                         new ColorRgba(31, 24, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(13, 12, 7, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "UNIT2 LANDING BAY",
@@ -3343,10 +3338,10 @@ namespace MphRead
                         0x4,
                         65152,
                         new ColorRgba(24, 31, 24, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(7, 11, 15, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-23, 25, -11))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-23f, 25f, -11f))
                 },
                 {
                     "UNIT 3 VESPER STARPORT",
@@ -3371,10 +3366,10 @@ namespace MphRead
                         0x3,
                         65152,
                         new ColorRgba(18, 22, 30, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(28, -27, 26))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(28f, -27f, 26f))
                 },
                 {
                     "UNIT 4 ARCTERRA BASE",
@@ -3399,10 +3394,10 @@ namespace MphRead
                         0x6,
                         65300,
                         new ColorRgba(10, 14, 18, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(4, 4, 8, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "Gorea Prison",
@@ -3427,10 +3422,10 @@ namespace MphRead
                         0x4,
                         65535,
                         new ColorRgba(18, 16, 14, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(27, 18, 9, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(300, -300, 300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(300f, -300f, 300f))
                 },
                 {
                     "E3 FIRST HUNT",
@@ -3455,10 +3450,10 @@ namespace MphRead
                         0x5,
                         65152,
                         new ColorRgba(24, 20, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(9, 8, 14, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-44, 42, -5))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-44f, 42f, -5f))
                 },
                 {
                     "Level TestLevel",
@@ -3483,10 +3478,10 @@ namespace MphRead
                         0x5,
                         65152,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(10, 10, 31, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(29, -42, 42))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(29f, -42f, 42f))
                 },
                 {
                     "Level AbeTest",
@@ -3511,10 +3506,10 @@ namespace MphRead
                         0x5,
                         65152,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0.099854, -1, 0),
+                        new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(10, 10, 31, 0),
-                        new Vector3(0, 0.999756, -0.099854),
-                        new Vector3(-300, 300, -300))
+                        new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
                 }
             };
 

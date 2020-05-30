@@ -2,17 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Vector2f = OpenToolkit.Mathematics.Vector2;
-using Vector3f = OpenToolkit.Mathematics.Vector3;
+using OpenToolkit.Mathematics;
 
 namespace MphRead
 {
     public struct Vertex
     {
-        public Vector3f Position { get; set; }
-        public Vector3f Normal { get; set; }
-        public Vector3f Color { get; set; }
-        public Vector2f Uv { get; set; }
+        public Vector3 Position { get; set; }
+        public Vector3 Normal { get; set; }
+        public Vector3 Color { get; set; }
+        public Vector2 Uv { get; set; }
     }
 
     public static class Export
@@ -170,7 +169,7 @@ namespace MphRead
                 sb.Append(floatarrayTag);
                 for (int i = 0; i < meshVerts.Count; i += 3)
                 {
-                    var normal = Vector3f.Cross(
+                    var normal = Vector3.Cross(
                         meshVerts[i + 1].Position - meshVerts[i].Position,
                         meshVerts[i + 2].Position - meshVerts[i].Position);
                     normal.Normalize();
@@ -259,7 +258,7 @@ namespace MphRead
                             Position = vert.Position,
                             Color = vert.Color,
                             Normal = vert.Normal,
-                            Uv = new Vector2f(vert.Uv.X * (1.0f / tex.Width), vert.Uv.Y * (1.0f / tex.Height))
+                            Uv = new Vector2(vert.Uv.X * (1.0f / tex.Width), vert.Uv.Y * (1.0f / tex.Height))
                         };
                         string texCoord = $"{FloatFormat(newVert.Uv.X)} {FloatFormat(newVert.Uv.Y)} ";
                         sb.Append(texCoord);
@@ -792,10 +791,10 @@ namespace MphRead
         {
             return new Vertex()
             {
-                Position = new Vector3f(vtx_state[0], vtx_state[1], vtx_state[2]),
-                Normal = new Vector3f(nrm_state[0], nrm_state[1], nrm_state[2]),
-                Color = new Vector3f(col_state[0], col_state[1], col_state[2]),
-                Uv = new Vector2f(uv_state[0], uv_state[1])
+                Position = new Vector3(vtx_state[0], vtx_state[1], vtx_state[2]),
+                Normal = new Vector3(nrm_state[0], nrm_state[1], nrm_state[2]),
+                Color = new Vector3(col_state[0], col_state[1], col_state[2]),
+                Uv = new Vector2(uv_state[0], uv_state[1])
             };
         }
     }
