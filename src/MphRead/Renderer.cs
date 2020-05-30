@@ -194,35 +194,30 @@ namespace MphRead
             int magParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMagFilter.Nearest;
             foreach (Material material in model.Materials)
             {
-                _textureCount++;
-                ushort width = 1;
-                ushort height = 1;
-                var pixels = new List<uint>();
-                bool onlyOpaque = true;
-                TextureFormat textureFormat = TextureFormat.Palette2Bit;
-                if (material.TextureId != UInt16.MaxValue)
+                if (material.TextureId == UInt16.MaxValue)
                 {
-                    Texture texture = model.Textures[material.TextureId];
-                    width = texture.Width;
-                    height = texture.Height;
-                    textureFormat = texture.Format;
-                    bool decal = material.RenderMode == RenderMode.Decal;
-                    foreach (ColorRgba pixel in model.GetPixels(material.TextureId, material.PaletteId))
-                    {
-                        uint red = pixel.Red;
-                        uint green = pixel.Green;
-                        uint blue = pixel.Blue;
-                        uint alpha = (uint)((decal ? 255 : pixel.Alpha) * material.Alpha / 31.0f);
-                        pixels.Add((red << 0) | (green << 8) | (blue << 16) | (alpha << 24));
-                        if (alpha < 255)
-                        {
-                            onlyOpaque = false;
-                        }
-                    }
+                    _textureMap[model].Add(-1);
+                    continue;
                 }
-                else
+                _textureCount++;
+                var pixels = new List<uint>();
+                Texture texture = model.Textures[material.TextureId];
+                ushort width = texture.Width;
+                ushort height = texture.Height;
+                TextureFormat textureFormat = texture.Format;
+                bool decal = material.RenderMode == RenderMode.Decal;
+                bool onlyOpaque = true;
+                foreach (ColorRgba pixel in model.GetPixels(material.TextureId, material.PaletteId))
                 {
-                    pixels.Add(((uint)255 << 0) | ((uint)255 << 8) | ((uint)255 << 16) | ((uint)255 << 24));
+                    uint red = pixel.Red;
+                    uint green = pixel.Green;
+                    uint blue = pixel.Blue;
+                    uint alpha = (uint)((decal ? 255 : pixel.Alpha) * material.Alpha / 31.0f);
+                    pixels.Add((red << 0) | (green << 8) | (blue << 16) | (alpha << 24));
+                    if (alpha < 255)
+                    {
+                        onlyOpaque = false;
+                    }
                 }
 
                 _textureMap[model].Add(_textureCount);
@@ -528,13 +523,18 @@ namespace MphRead
             ushort width = 1;
             ushort height = 1;
             int textureId = material.TextureId;
-            if (textureId != UInt16.MaxValue)
+            if (textureId == UInt16.MaxValue)
             {
+                GL.Disable(EnableCap.Texture2D);
+            }
+            else if (_showTextures)
+            {
+                GL.Enable(EnableCap.Texture2D);
                 Texture texture = model.Textures[textureId];
                 width = texture.Width;
                 height = texture.Height;
+                GL.BindTexture(TextureTarget.Texture2D, _textureMap[model][mesh.MaterialId]);
             }
-            GL.BindTexture(TextureTarget.Texture2D, _textureMap[model][mesh.MaterialId]);
             GL.MatrixMode(MatrixMode.Texture);
             GL.LoadIdentity();
             // todo: texcoord animations
