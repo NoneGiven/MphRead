@@ -20,8 +20,8 @@ namespace MphRead
             }
             else
             {
-                //renderer.AddRoom("MP3 PROVING GROUND");
-                renderer.AddModel("PickUp_EnergyExp");
+                renderer.AddRoom("Gorea_b2");
+                renderer.AddModel("PickUp_MissileExp");
                 Nop();
             }
             renderer.Run();

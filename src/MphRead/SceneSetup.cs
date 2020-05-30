@@ -199,10 +199,12 @@ namespace MphRead
             string modelName = Metadata.JumpPads[(int)data.ModelId];
             Model model1 = Read.GetModelByName(modelName);
             model1.Position = data.Position.ToFloatVector();
+            ComputeMatrices(model1, index: 0);
             list.Add(model1);
             Model model2 = Read.GetModelByName("JumpPad_Beam");
             model2.Position = new Vector3(model1.Position.X, model1.Position.Y + 0.2f, model1.Position.Z);
             model2.Rotation = new Vector3(90, 0, 0);
+            ComputeMatrices(model2, index: 0);
             list.Add(model2);
             return list;
         }
@@ -219,6 +221,7 @@ namespace MphRead
             );
             model.Rotation = new Vector3(0, _random.Next(0x8000) / (float)0x7FFF * 360, 0);
             model.Type = ModelType.Item;
+            ComputeMatrices(model, index: 0);
             return model;
         }
     }
