@@ -78,7 +78,6 @@ namespace MphRead
         public string? AnimationPath { get; }
         public string? CollisionPath { get; }
         public IReadOnlyList<RecolorMetadata> Recolors { get; }
-        public Vector3? Rotation { get; }
         public bool Animate { get; }
 
         public EntityMetadata(string name, string modelPath, string? animationPath, string? collisionPath,
@@ -175,7 +174,7 @@ namespace MphRead
 
         public EntityMetadata(string name, bool animation = true, bool collision = false,
             bool texture = false, string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None,
-            string? archive = null, string? addToAnim = null, Vector3? rotation = null, bool animate = false)
+            string? archive = null, string? addToAnim = null, bool animate = false)
         {
             Name = name;
             string path = archive == null ? "models" : $@"_archives\{archive}";
@@ -207,7 +206,6 @@ namespace MphRead
             {
                 new RecolorMetadata("default", recolorModel, texture ? $@"models\{name}{suffix}_Tex.bin" : recolorModel)
             };
-            Rotation = rotation;
             Animate = animate;
         }
     }
