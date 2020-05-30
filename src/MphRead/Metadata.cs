@@ -78,6 +78,7 @@ namespace MphRead
         public string? AnimationPath { get; }
         public string? CollisionPath { get; }
         public IReadOnlyList<RecolorMetadata> Recolors { get; }
+        public bool Animate { get; }
 
         public EntityMetadata(string name, string modelPath, string? animationPath, string? collisionPath,
             IReadOnlyList<RecolorMetadata> recolors)
@@ -173,7 +174,7 @@ namespace MphRead
 
         public EntityMetadata(string name, bool animation = true, bool collision = false,
             bool texture = false, string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None,
-            string? archive = null, string? addToAnim = null)
+            string? archive = null, string? addToAnim = null, bool animate = false)
         {
             Name = name;
             string path = archive == null ? "models" : $@"_archives\{archive}";
@@ -205,6 +206,7 @@ namespace MphRead
             {
                 new RecolorMetadata("default", recolorModel, texture ? $@"models\{name}{suffix}_Tex.bin" : recolorModel)
             };
+            Animate = animate;
         }
     }
 
@@ -3712,7 +3714,7 @@ namespace MphRead
                 },
                 {
                     "Artifact_Key",
-                    new EntityMetadata("Artifact_Key")
+                    new EntityMetadata("Artifact_Key", animate: true)
                 },
                 {
                     "Artifact01",
@@ -4434,11 +4436,11 @@ namespace MphRead
                 },
                 {
                     "PickUp_EnergyExp",
-                    new EntityMetadata("PickUp_EnergyExp")
+                    new EntityMetadata("PickUp_EnergyExp", animate: true)
                 },
                 {
                     "PickUp_MissileExp",
-                    new EntityMetadata("PickUp_MissileExp")
+                    new EntityMetadata("PickUp_MissileExp", animate: true)
                 },
                 {
                     "pick_ammo_green",
