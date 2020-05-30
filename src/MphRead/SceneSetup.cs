@@ -52,8 +52,18 @@ namespace MphRead
 
         private static void FilterNodes(Model model, int layerMask)
         {
-            foreach (Node node in model.Nodes.Where(b => b.Name.StartsWith("_")))
+            foreach (Node node in model.Nodes)
             {
+                // todo: there's probably some node or mesh property that hides these things
+                if (node.Name == "etagDoorN" || node.Name == "etagDoorS")
+                {
+                    node.Enabled = false;
+                    continue;
+                }
+                if (!node.Name.StartsWith("_"))
+                {
+                    continue;
+                }
                 int flags = 0;
                 // we actually have to step through 4 characters at a time rather than using Contains,
                 // based on the game's behavior with e.g. "_ml_s010blocks", which is not visible in SP or MP;
