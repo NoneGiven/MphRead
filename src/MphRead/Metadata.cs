@@ -137,7 +137,7 @@ namespace MphRead
             else
             {
                 ModelPath = $@"_archives\{archive}\{name}_Model.bin";
-            } 
+            }
             if (remove != null)
             {
                 name = name.Replace(remove, "");
@@ -290,7 +290,7 @@ namespace MphRead
         {
             return minutes * 3600 + seconds * 60 + frames;
         }
-        
+
         private static ushort FogColor(byte r, byte g, byte b)
         {
             return (ushort)(r | g << 5 | b << 10);

@@ -47,7 +47,7 @@ namespace MphRead
         public Vector3 Position { get; set; }
         public Vector3 Rotation { get; set; }
         public bool Animate { get; set; }
-        
+
         public IReadOnlyList<Recolor> Recolors { get; }
 
         public Model(string name, Header header, IReadOnlyList<RawNode> nodes, IReadOnlyList<Mesh> meshes,
@@ -339,7 +339,7 @@ namespace MphRead
         public Vector3 Vector2 { get; }
         public byte Type { get; }
         public Matrix4 Transform { get; set; }
-        
+
         public Node(RawNode raw)
         {
             Name = raw.Name;
@@ -423,7 +423,7 @@ namespace MphRead
             Data = data;
         }
     }
-    
+
     public enum EntityType : ushort
     {
         Platform = 0x0,
@@ -526,7 +526,7 @@ namespace MphRead
             return ("", "");
         });
     }
-    
+
     public static class CollectionExtensions
     {
         public static int IndexOf<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate)

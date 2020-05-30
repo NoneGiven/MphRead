@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Mathematics;
@@ -296,7 +295,7 @@ namespace MphRead
                 GL.BindTexture(TextureTarget.Texture2D, 0);
             }
         }
-        
+
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -422,7 +421,7 @@ namespace MphRead
                 GL.PopMatrix();
             }
         }
-        
+
         private void UpdateUniforms()
         {
             // todo: set lights
@@ -469,7 +468,7 @@ namespace MphRead
             GL.Disable(EnableCap.Blend);
             GL.UseProgram(0);
         }
-        
+
         private void RenderModel(Model model)
         {
             GL.UseProgram(_shaderProgramId);
@@ -548,7 +547,7 @@ namespace MphRead
             GL.Translate(material.TranslateS, material.TranslateT, 0.0f);
             GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
             GL.Scale(1.0f / width, 1.0f / height, 1.0f);
-            GL.Uniform1(_shaderLocations.UseTexture, GL.IsEnabled(EnableCap.Texture2D) ? 1 :0);
+            GL.Uniform1(_shaderLocations.UseTexture, GL.IsEnabled(EnableCap.Texture2D) ? 1 : 0);
             // todo: lighting
             if (_faceCulling)
             {
@@ -786,7 +785,7 @@ namespace MphRead
             }
             // todo: turn off the lights
         }
-        
+
         protected override void OnResize(ResizeEventArgs e)
         {
             GL.Viewport(0, 0, Size.X, Size.Y);
@@ -841,7 +840,7 @@ namespace MphRead
                 else
                 {
                     GL.Disable(EnableCap.Texture2D);
-                } 
+                }
                 PrintMenu();
             }
             else if (e.Key == Key.U)
