@@ -69,7 +69,7 @@ namespace MphRead
             model.Animate = entityMeta.Animate;
             return model;
         }
-        
+
         public static Model GetModelDirect(string path)
         {
             string name = Path.GetFileNameWithoutExtension(path);

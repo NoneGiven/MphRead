@@ -209,7 +209,7 @@ namespace MphRead
             Animate = animate;
         }
     }
-    
+
     public class RecolorMetadata
     {
         public string Name { get; }
