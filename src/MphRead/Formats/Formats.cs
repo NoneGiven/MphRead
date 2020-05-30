@@ -351,9 +351,9 @@ namespace MphRead
             MeshId = raw.MeshId;
             Scale = raw.Scale.ToFloatVector();
             Angle = new Vector3(
-                raw.AngleX / 65536 * 2 * MathF.PI,
-                raw.AngleY / 65536 * 2 * MathF.PI,
-                raw.AngleZ / 65536 * 2 * MathF.PI
+                raw.AngleX / 65536.0f * 2.0f * MathF.PI,
+                raw.AngleY / 65536.0f * 2.0f * MathF.PI,
+                raw.AngleZ / 65536.0f * 2.0f * MathF.PI
             );
             Position = raw.Position.ToFloatVector();
             Vector1 = raw.Vector1.ToFloatVector();
