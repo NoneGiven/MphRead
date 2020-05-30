@@ -1,3 +1,5 @@
+using OpenToolkit.Mathematics;
+
 namespace MphRead
 {
     // size: 4
@@ -19,6 +21,11 @@ namespace MphRead
         public readonly Fixed X;
         public readonly Fixed Y;
         public readonly Fixed Z;
+
+        public Vector3 ToFloatVector()
+        {
+            return new Vector3(X.FloatValue, Y.FloatValue, Z.FloatValue);
+        }
     }
 
     // size: 48
@@ -28,52 +35,6 @@ namespace MphRead
         public readonly Vector3Fx Two;
         public readonly Vector3Fx Three;
         public readonly Vector3Fx Four;
-    }
-
-    // todo: replace with built-in types
-    public struct Vector3
-    {
-        public float X;
-        public float Y;
-        public float Z;
-
-        public Vector3(double x, double y, double z)
-        {
-            X = (float)x;
-            Y = (float)y;
-            Z = (float)z;
-        }
-
-        public Vector3(Vector3Fx vector)
-        {
-            X = vector.X.FloatValue;
-            Y = vector.Y.FloatValue;
-            Z = vector.Z.FloatValue;
-        }
-    }
-
-    public struct Vector4
-    {
-        public float A;
-        public float B;
-        public float C;
-        public float D;
-    }
-
-    public struct Matrix43
-    {
-        public Vector3 One;
-        public Vector3 Two;
-        public Vector3 Three;
-        public Vector3 Four;
-
-        public Matrix43(Matrix43Fx matrix)
-        {
-            One = new Vector3(matrix.One);
-            Two = new Vector3(matrix.Two);
-            Three = new Vector3(matrix.Three);
-            Four = new Vector3(matrix.Four);
-        }
     }
 
     // size: 3

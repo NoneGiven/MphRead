@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Numerics;
+using OpenToolkit.Mathematics;
 
 namespace MphRead
 {
@@ -46,6 +46,7 @@ namespace MphRead
 
         public Vector3 Position { get; set; }
         public Vector3 Rotation { get; set; }
+        public bool Animate { get; set; }
         
         public IReadOnlyList<Recolor> Recolors { get; }
 
@@ -336,7 +337,8 @@ namespace MphRead
         public Vector3 Position { get; set; }
         public Vector3 Vector1 { get; }
         public Vector3 Vector2 { get; }
-        public Matrix4x4 Transform { get; set; }
+        public byte Type { get; }
+        public Matrix4 Transform { get; set; }
         
         public Node(RawNode raw)
         {
@@ -347,15 +349,16 @@ namespace MphRead
             Enabled = raw.Enabled != 0;
             MeshCount = raw.MeshCount;
             MeshId = raw.MeshId;
-            Scale = new Vector3(raw.Scale);
+            Scale = raw.Scale.ToFloatVector();
             Angle = new Vector3(
-                raw.AngleX / 65536.0 * 2.0 * Math.PI,
-                raw.AngleY / 65536.0 * 2.0 * Math.PI,
-                raw.AngleZ / 65536.0 * 2.0 * Math.PI
+                raw.AngleX / 65536 * 2 * MathF.PI,
+                raw.AngleY / 65536 * 2 * MathF.PI,
+                raw.AngleZ / 65536 * 2 * MathF.PI
             );
-            Position = new Vector3(raw.Position);
-            Vector1 = new Vector3(raw.Vector1);
-            Vector2 = new Vector3(raw.Vector2);
+            Position = raw.Position.ToFloatVector();
+            Vector1 = raw.Vector1.ToFloatVector();
+            Vector2 = raw.Vector2.ToFloatVector();
+            Type = raw.Type;
         }
     }
 
@@ -369,6 +372,10 @@ namespace MphRead
         public RepeatMode XRepeat { get; }
         public RepeatMode YRepeat { get; }
         public RenderMode RenderMode { get; set; }
+        public float ScaleS { get; }
+        public float ScaleT { get; }
+        public float TranslateS { get; }
+        public float TranslateT { get; }
 
         public Material(RawMaterial raw)
         {
@@ -380,6 +387,10 @@ namespace MphRead
             XRepeat = raw.XRepeat;
             YRepeat = raw.YRepeat;
             RenderMode = raw.RenderMode;
+            ScaleS = raw.ScaleS.FloatValue;
+            ScaleT = raw.ScaleT.FloatValue;
+            TranslateS = raw.TranslateS.FloatValue;
+            TranslateT = raw.TranslateT.FloatValue;
         }
     }
 
