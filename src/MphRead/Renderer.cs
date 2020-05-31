@@ -206,7 +206,7 @@ namespace MphRead
                 ushort width = texture.Width;
                 ushort height = texture.Height;
                 TextureFormat textureFormat = texture.Format;
-                bool decal = material.RenderMode == RenderMode.Decal;
+                bool decal = material.PolygonMode == PolygonMode.Decal;
                 bool onlyOpaque = true;
                 foreach (ColorRgba pixel in model.GetPixels(material.TextureId, material.PaletteId))
                 {

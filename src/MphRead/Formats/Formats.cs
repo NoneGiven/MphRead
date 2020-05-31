@@ -383,6 +383,7 @@ namespace MphRead
         public int TextureId { get; }
         public RepeatMode XRepeat { get; }
         public RepeatMode YRepeat { get; }
+        public PolygonMode PolygonMode { get; set; }
         public RenderMode RenderMode { get; set; }
         public int TexcoordAnimationId { get; set; }
         public float ScaleS { get; }
@@ -399,6 +400,7 @@ namespace MphRead
             TextureId = raw.TextureId;
             XRepeat = raw.XRepeat;
             YRepeat = raw.YRepeat;
+            PolygonMode = raw.PolygonMode;
             RenderMode = raw.RenderMode;
             TexcoordAnimationId = raw.TexcoordAnimationId;
             ScaleS = raw.ScaleS.FloatValue;
