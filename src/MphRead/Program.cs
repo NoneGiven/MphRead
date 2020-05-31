@@ -20,7 +20,7 @@ namespace MphRead
             }
             else
             {
-                renderer.AddRoom("MP3 PROVING GROUND");
+                renderer.AddRoom("CRYSTALROOM");
                 renderer.AddModel("Crate01");
                 Nop();
             }

@@ -92,6 +92,219 @@ namespace MphRead
         public readonly ushort Field82;
     }
 
+    // size: 24
+    public readonly struct AnimationHeader
+    {
+        public readonly uint NodeGroupOffset;
+        public readonly uint Field4; // todo?: some offset
+        public readonly uint MaterialGroupOffset;
+        public readonly uint TexcoordGroupOffset;
+        public readonly uint TextureGroupOffset;
+        public readonly ushort Count; // todo: always 1?
+        public readonly ushort Field16; // todo: always 0?
+    }
+
+    // size: ?
+    public readonly struct MaterialAnimationGroup
+    {
+        public readonly uint FrameCount;
+        public readonly uint ColorLutOffset;
+        public readonly uint AnimationCount;
+        public readonly uint AnimationOffset;
+        public readonly ushort AnimationFrame;
+        public readonly ushort Field12;
+        public readonly uint Field14;
+        public readonly uint Field18;
+        public readonly uint Field1C;
+        public readonly uint Field20;
+        public readonly uint Field24;
+        public readonly uint Field28;
+        public readonly uint Field2C;
+        public readonly uint Field30;
+        public readonly uint Field34;
+        public readonly uint Field38;
+        public readonly uint Field3C;
+        public readonly uint Field40;
+        public readonly uint Field44;
+        public readonly uint Field48;
+        public readonly uint Field4C;
+        public readonly uint Field50;
+        public readonly uint Field54;
+        public readonly uint Field58;
+        public readonly uint Field5C;
+        public readonly uint Field60;
+        public readonly uint Field64;
+        public readonly uint Field68;
+        public readonly uint Field6C;
+        public readonly uint Field70;
+        public readonly uint Field74;
+        public readonly uint Field78;
+        public readonly uint Field7C;
+        public readonly uint Field80;
+        public readonly uint Field84;
+        public readonly uint Field88;
+    }
+
+    // size: ?
+    public readonly struct TextureAnimationGroup
+    {
+        public readonly uint FrameCount;
+        public readonly uint Field4;
+        public readonly ushort AnimationCount;
+        public readonly ushort FieldA;
+        public readonly uint FrameDataOffset;
+        public readonly uint TextureIdOffset;
+        public readonly uint PaletteOffset;
+        public readonly uint AnimationOffset;
+        public readonly ushort AnimationFrame;
+        public readonly ushort Field1E;
+        public readonly uint Field20;
+        public readonly uint Field24;
+        public readonly uint Field28;
+    }
+
+    // size: 28
+    public readonly struct RawTexcoordAnimationGroup
+    {
+        public readonly uint FrameCount;
+        public readonly uint ScaleLutOffset;
+        public readonly uint RotateLutOffset;
+        public readonly uint TranslateLutOffset;
+        public readonly uint AnimationCount;
+        public readonly uint AnimationOffset;
+        public readonly ushort AnimationFrame;
+        public readonly ushort Field1A;
+    }
+
+    // size: ?
+    public readonly struct NodeAnimationGroup
+    {
+        public readonly uint Data;
+        public readonly uint Fixed32Pointer;
+        public readonly uint UInt16Pointer;
+        public readonly uint Int32Pointer;
+        public readonly uint AnimationOffset;
+    }
+
+    // size: 140
+    public readonly struct MaterialAnimation
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
+        public readonly string Name;
+        public readonly uint Field40;
+        public readonly byte DiffuseBlendFactorR;
+        public readonly byte DiffuseBlendFactorG;
+        public readonly byte DiffuseBlendFactorB;
+        public readonly byte Field47;
+        public readonly ushort DiffuseLutLengthR;
+        public readonly ushort DiffuseLutLengthG;
+        public readonly ushort DiffuseLutLengthB;
+        public readonly ushort DiffuseLutStartIndexR;
+        public readonly ushort DiffuseLutStartIndexG;
+        public readonly ushort DiffuseLutStartIndexB;
+        public readonly byte AmbientBlendFactorR;
+        public readonly byte AmbientBlendFactorG;
+        public readonly byte AmbientBlendFactorB;
+        public readonly byte Field57;
+        public readonly ushort AmbientLutLengthR;
+        public readonly ushort AmbientLutLengthG;
+        public readonly ushort AmbientLutLengthB;
+        public readonly ushort AmbientLutStartIndexR;
+        public readonly ushort AmbientLutStartIndexG;
+        public readonly ushort AmbientLutStartIndexB;
+        public readonly byte SpecularBlendFactorR;
+        public readonly byte SpecularBlendFactorG;
+        public readonly byte SpecularBlendFactorB;
+        public readonly byte Field67;
+        public readonly ushort SpecularLutLengthR;
+        public readonly ushort SpecularLutLengthG;
+        public readonly ushort SpecularLutLengthB;
+        public readonly ushort SpecularLutStartIndexR;
+        public readonly ushort SpecularLutStartIndexG;
+        public readonly ushort SpecularLutStartIndexB;
+        public readonly uint Field74;
+        public readonly uint Field78;
+        public readonly uint Field7C;
+        public readonly uint Field80;
+        public readonly byte AlphaBlendFactor;
+        public readonly byte Field85;
+        public readonly ushort AlphaLutLength;
+        public readonly ushort AlphaLutStartIndex;
+        public readonly ushort MaterialId;
+    }
+
+    // size: ?
+    public readonly struct TextureAnimation
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public readonly string Name;
+        public readonly ushort Count;
+        public readonly ushort StartIndex;
+        public readonly ushort MinimumPaletteId;
+        public readonly ushort MaterialId;
+        public readonly ushort MinimumTextureId;
+        public readonly ushort Field2A;
+    }
+
+    // size: ?
+    public readonly struct RawTexcoordAnimation
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public readonly string Name;
+        public readonly byte ScaleBlendS;
+        public readonly byte ScaleBlendT;
+        public readonly ushort ScaleLutLengthS;
+        public readonly ushort ScaleLutLengthT;
+        public readonly ushort ScaleLutIndexS;
+        public readonly ushort ScaleLutIndexT;
+        public readonly byte RotateBlendZ;
+        public readonly byte Field2B;
+        public readonly ushort RotateLutLengthZ;
+        public readonly ushort RotateLutIndexZ;
+        public readonly byte TranslateBlendS;
+        public readonly byte TranslateBlendT;
+        public readonly ushort TranslateLutLengthS;
+        public readonly ushort TranslateLutLengthT;
+        public readonly ushort TranslateLutIndexS;
+        public readonly ushort TranslateLutIndexT;
+        public readonly ushort Field3A;
+    }
+
+    // size: ?
+    public readonly struct NodeAnimation
+    {
+        public readonly byte Field0;
+        public readonly byte Field1;
+        public readonly byte Field2;
+        public readonly byte Flags;
+        public readonly ushort Field4;
+        public readonly ushort Field6;
+        public readonly ushort Field8;
+        public readonly ushort FieldA;
+        public readonly ushort FieldC;
+        public readonly ushort FieldE;
+        public readonly byte Field10;
+        public readonly byte Field11;
+        public readonly byte Field12;
+        public readonly byte Field13;
+        public readonly ushort Field14;
+        public readonly ushort Field16;
+        public readonly ushort Field18;
+        public readonly ushort Field1A;
+        public readonly ushort Field1C;
+        public readonly ushort Field1E;
+        public readonly byte Field20;
+        public readonly byte Field21;
+        public readonly byte Field22;
+        public readonly byte Field23;
+        public readonly ushort Field24;
+        public readonly ushort Field26;
+        public readonly ushort Field28;
+        public readonly ushort Field2A;
+        public readonly ushort Field2C;
+        public readonly ushort Field2E;
+    }
+
     // size: 40
     public readonly struct Texture
     {
@@ -156,7 +369,7 @@ namespace MphRead
         public readonly ushort MatrixCount;
     }
 
-    // size: ?
+    // size: 240
     public readonly struct RawNode
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
