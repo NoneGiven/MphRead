@@ -69,7 +69,7 @@ namespace MphRead
         private static Model GetModel(EntityMetadata meta, int defaultRecolor)
         {
             Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.Recolors, defaultRecolor);
-            model.Animate = meta.Animate || (meta.AnimationPath != null);
+            model.Animate = (meta.AnimationPath != null);
             return model;
         }
 
@@ -171,7 +171,7 @@ namespace MphRead
             }
             return model;
         }
-        
+
         private class AnimationResults
         {
             public List<NodeAnimationGroup> NodeAnimationGroups { get; } = new List<NodeAnimationGroup>();

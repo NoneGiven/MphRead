@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks.Dataflow;
 using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Mathematics;
 using OpenToolkit.Windowing.Common;
@@ -506,13 +505,10 @@ namespace MphRead
         {
             if (node.MeshCount > 0 && node.Enabled)
             {
-                if (model.Animate)
-                {
-                    GL.MatrixMode(MatrixMode.Modelview);
-                    GL.PushMatrix();
-                    Matrix4 transform = node.Transform;
-                    GL.MultTransposeMatrix(ref transform);
-                }
+                GL.MatrixMode(MatrixMode.Modelview);
+                GL.PushMatrix();
+                Matrix4 transform = node.Transform;
+                GL.MultTransposeMatrix(ref transform);
                 int meshStart = node.MeshId / 2;
                 for (int i = 0; i < node.MeshCount; i++)
                 {
@@ -527,11 +523,8 @@ namespace MphRead
                     GL.Uniform1(_shaderLocations.IsBillboard, node.Type == 1 ? 1 : 0);
                     RenderMesh(model, mesh, material);
                 }
-                if (model.Animate)
-                {
-                    GL.MatrixMode(MatrixMode.Modelview);
-                    GL.PopMatrix();
-                }
+                GL.MatrixMode(MatrixMode.Modelview);
+                GL.PopMatrix();
             }
         }
 
@@ -560,7 +553,7 @@ namespace MphRead
             }
             return values[start + index1];
         }
-        
+
         private void AnimateTexcoords(Model model, Material material, int width, int height)
         {
             if (model.TexcoordAnimationGroups.Count > 0)
@@ -610,7 +603,7 @@ namespace MphRead
             }
             GL.MatrixMode(MatrixMode.Texture);
             GL.LoadIdentity();
-            if (textureId != UInt16.MaxValue && material.TexcoordAnimationId != -1)
+            if (model.Animate && textureId != UInt16.MaxValue && material.TexcoordAnimationId != -1)
             {
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
                 AnimateTexcoords(model, material, width, height);

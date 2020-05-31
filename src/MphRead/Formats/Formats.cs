@@ -431,7 +431,7 @@ namespace MphRead
             Animations = animations;
         }
     }
-    
+
     public class TexcoordAnimation
     {
         public string Name { get; }
