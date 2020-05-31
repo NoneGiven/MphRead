@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Mathematics;
@@ -81,9 +82,15 @@ namespace MphRead
         private bool _wireframe = false;
         private bool _faceCulling = true;
         private bool _textureFiltering = true;
+        private bool _lighting = true;
 
         private static readonly Color4 _clearColor = new Color4(0, 0, 0, 1);
         private static readonly float _frameTime = 1.0f / 30.0f;
+
+        private Vector4 _light1Vector = default;
+        private Vector4 _light1Color = default;
+        private Vector4 _light2Vector = default;
+        private Vector4 _light2Color = default;
 
         private int _shaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
@@ -100,12 +107,26 @@ namespace MphRead
                 throw new InvalidOperationException();
             }
             _roomLoaded = true;
-            (Model room, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask);
+            (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask);
             _models.Insert(0, room);
             _models.AddRange(entities);
             _roomScale = room.Header.ScaleBase.FloatValue * (1 << (int)room.Header.ScaleFactor);
+            _light1Vector = new Vector4(roomMeta.Light1Vector);
+            _light1Color = new Vector4(
+                roomMeta.Light1Color.Red / 255.0f,
+                roomMeta.Light1Color.Green / 255.0f,
+                roomMeta.Light1Color.Blue / 255.0f,
+                roomMeta.Light1Color.Alpha / 255.0f
+            );
+            _light2Vector = new Vector4(roomMeta.Light2Vector);
+            _light2Color = new Vector4(
+                roomMeta.Light2Color.Red / 255.0f,
+                roomMeta.Light2Color.Green / 255.0f,
+                roomMeta.Light2Color.Blue / 255.0f,
+                roomMeta.Light2Color.Alpha / 255.0f
+            );
         }
-
+        
         public void AddModel(string name, int recolor)
         {
             Model model = Read.GetModelByName(name, recolor);
@@ -176,6 +197,7 @@ namespace MphRead
             Console.WriteLine($" - Q toggles wireframe ({FormatOnOff(_wireframe)})");
             Console.WriteLine($" - B toggles face culling ({FormatOnOff(_faceCulling)})");
             Console.WriteLine($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})");
+            Console.WriteLine($" - L toggles lighting ({FormatOnOff(_lighting)})");
             Console.WriteLine($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
             Console.WriteLine(" - R resets the camera");
             Console.WriteLine(" - Ctrl+O then enter \"model_name [recolor]\" to load");
@@ -295,9 +317,8 @@ namespace MphRead
             OnKeyHeld();
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            float[] vp = new float[4];
-            GL.GetFloat(GetPName.Viewport, vp);
-            float aspect = (vp[2] - vp[0]) / (vp[3] - vp[1]);
+            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
+            float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
 
             GL.MatrixMode(MatrixMode.Projection);
             float fov = MathHelper.DegreesToRadians(80.0f);
@@ -413,7 +434,6 @@ namespace MphRead
                 GL.Translate(model.Position.X, model.Position.Y + height, model.Position.Z);
                 if (model.Type == ModelType.Room)
                 {
-                    // todo: lights
                     GL.Scale(_roomScale, _roomScale, _roomScale);
                 }
                 GL.Rotate(model.Rotation.X, 1, 0, 0);
@@ -432,15 +452,18 @@ namespace MphRead
             }
         }
 
-        private void UpdateUniforms()
+        private void SetLights()
         {
-            // todo: set lights
+            GL.Uniform4(_shaderLocations.Light1Vector, _light1Vector);
+            GL.Uniform4(_shaderLocations.Light1Color, _light1Color);
+            GL.Uniform4(_shaderLocations.Light2Vector, _light2Vector);
+            GL.Uniform4(_shaderLocations.Light2Color, _light2Color);
         }
-
+        
         private void RenderRoom(Model model)
         {
             GL.UseProgram(_shaderProgramId);
-            UpdateUniforms();
+            SetLights();
             // pass 1: opaque
             GL.DepthMask(true);
             foreach (Node node in model.Nodes)
@@ -482,7 +505,6 @@ namespace MphRead
         private void RenderModel(Model model)
         {
             GL.UseProgram(_shaderProgramId);
-            UpdateUniforms();
             // pass 1: opaque
             foreach (Node node in model.Nodes)
             {
@@ -615,7 +637,39 @@ namespace MphRead
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
             }
             GL.Uniform1(_shaderLocations.UseTexture, GL.IsEnabled(EnableCap.Texture2D) ? 1 : 0);
-            // todo: lighting
+            if (_lighting && material.Lighting != 0)
+            {
+                // todo: would be nice if the approaches for this and the room lights were the same
+                var ambient = new Vector4(
+                    material.Ambient.Red / 255.0f,
+                    material.Ambient.Green / 255.0f,
+                    material.Ambient.Blue / 255.0f,
+                    1.0f
+                );
+                var diffuse = new Vector4(
+                    material.Diffuse.Red / 255.0f,
+                    material.Diffuse.Green / 255.0f,
+                    material.Diffuse.Blue / 255.0f,
+                    1.0f
+                );
+                var specular = new Vector4(
+                    material.Specular.Red / 255.0f,
+                    material.Specular.Green / 255.0f,
+                    material.Specular.Blue / 255.0f,
+                    1.0f
+                );
+                GL.Enable(EnableCap.Lighting);
+                GL.Material(MaterialFace.Front, MaterialParameter.Ambient, ambient);
+                GL.Material(MaterialFace.Front, MaterialParameter.Diffuse, diffuse);
+                GL.Uniform4(_shaderLocations.Ambient, ambient);
+                GL.Uniform4(_shaderLocations.Diffuse, diffuse);
+                GL.Uniform4(_shaderLocations.Specular, specular);
+                GL.Uniform1(_shaderLocations.UseLight, 1);
+            }
+            else
+            {
+                GL.Uniform1(_shaderLocations.UseLight, 0);
+            } 
             if (_faceCulling)
             {
                 GL.Enable(EnableCap.CullFace);
@@ -850,7 +904,10 @@ namespace MphRead
                     throw new ProgramException("Unknown opcode");
                 }
             }
-            // todo: turn off the lights
+            if (_lighting)
+            {
+                GL.Disable(EnableCap.Lighting);
+            }
         }
 
         protected override void OnResize(ResizeEventArgs e)
@@ -968,6 +1025,11 @@ namespace MphRead
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
                 }
+                PrintMenu();
+            }
+            else if (e.Key == Key.L)
+            {
+                _lighting = !_lighting;
                 PrintMenu();
             }
             else if (e.Key == Key.R)

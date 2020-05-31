@@ -8,7 +8,7 @@ namespace MphRead
     {
         private static readonly Random _random = new Random();
 
-        public static (Model, IReadOnlyList<Model>) LoadRoom(string name, int layerMask)
+        public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, int layerMask)
         {
             RoomMetadata? metadata = Metadata.GetRoomByName(name);
             if (metadata == null)
@@ -45,7 +45,7 @@ namespace MphRead
             IReadOnlyList<Model> entities = LoadEntities(metadata);
             // todo?: area ID/portals
             room.Type = ModelType.Room;
-            return (room, entities);
+            return (room, metadata, entities);
         }
 
         private static void FilterNodes(Model model, int layerMask)

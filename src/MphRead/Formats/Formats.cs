@@ -377,12 +377,16 @@ namespace MphRead
     public class Material
     {
         public string Name { get; }
+        public byte Lighting { get; } // todo: probably a bool
         public CullingMode Culling { get; }
         public byte Alpha { get; }
         public int PaletteId { get; }
         public int TextureId { get; }
         public RepeatMode XRepeat { get; }
         public RepeatMode YRepeat { get; }
+        public readonly ColorRgb Diffuse;
+        public readonly ColorRgb Ambient;
+        public readonly ColorRgb Specular;
         public PolygonMode PolygonMode { get; set; }
         public RenderMode RenderMode { get; set; }
         public int TexcoordAnimationId { get; set; }
@@ -394,12 +398,16 @@ namespace MphRead
         public Material(RawMaterial raw)
         {
             Name = raw.Name;
+            Lighting = raw.Lighting;
             Culling = raw.Culling;
             Alpha = raw.Alpha;
             PaletteId = raw.PaletteId;
             TextureId = raw.TextureId;
             XRepeat = raw.XRepeat;
             YRepeat = raw.YRepeat;
+            Diffuse = raw.Diffuse;
+            Ambient = raw.Ambient;
+            Specular = raw.Specular;
             PolygonMode = raw.PolygonMode;
             RenderMode = raw.RenderMode;
             TexcoordAnimationId = raw.TexcoordAnimationId;

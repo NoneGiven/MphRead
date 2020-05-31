@@ -59,7 +59,7 @@ namespace MphRead
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
         public readonly string Name;
-        public readonly byte Light;
+        public readonly byte Lighting;
         public readonly CullingMode Culling;
         public readonly byte Alpha;
         public readonly byte Wireframe;
