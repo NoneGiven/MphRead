@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks.Dataflow;
 using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Mathematics;
 using OpenToolkit.Windowing.Common;
@@ -83,6 +84,7 @@ namespace MphRead
         private bool _textureFiltering = true;
 
         private static readonly Color4 _clearColor = new Color4(0, 0, 0, 1);
+        private static readonly float _frameTime = 1.0f / 30.0f;
 
         private int _shaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
@@ -379,12 +381,27 @@ namespace MphRead
             return -1;
         }
 
+        private void ProcessAnimations(Model model, double elapsedTime)
+        {
+            foreach (TexcoordAnimationGroup group in model.TexcoordAnimationGroups)
+            {
+                group.Time += elapsedTime;
+                int increment = (int)(group.Time / _frameTime);
+                if (increment != 0)
+                {
+                    group.CurrentFrame += increment;
+                    group.Time -= increment * _frameTime;
+                }
+                group.CurrentFrame %= group.FrameCount;
+            }
+        }
+
         private void RenderScene(double elapsedTime)
         {
-            // todo: process animations
             _models.Sort(CompareModels);
             foreach (Model model in _models)
             {
+                ProcessAnimations(model, elapsedTime);
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.PushMatrix();
                 float height = 0;
@@ -518,6 +535,61 @@ namespace MphRead
             }
         }
 
+        private float InterpolateAnimation(IReadOnlyList<float> values, int start, int frame, int speed, int length)
+        {
+            if (length == 1)
+            {
+                return values[start];
+            }
+            if (speed == 1)
+            {
+                return values[start + frame];
+            }
+            int v7 = (frame - 1) >> (speed / 2) << (speed / 2);
+            if (frame >= v7)
+            {
+                return values[start + frame - v7 + (frame >> (speed / 2))];
+            }
+            int index1 = frame >> (speed / 2);
+            int index2 = frame >> (speed / 2) + 1;
+            float div = 1 << (speed / 2);
+            int t = frame & ((speed / 2) | 1);
+            if (t != 0)
+            {
+                return values[start + index1] * (1 - t / div) + values[start + index2] * (t / div);
+            }
+            return values[start + index1];
+        }
+        
+        private void AnimateTexcoords(Model model, Material material, int width, int height)
+        {
+            if (model.TexcoordAnimationGroups.Count > 0)
+            {
+                // todo: Get Model is currently overwriting things so the last group's information is always used
+                TexcoordAnimationGroup group = model.TexcoordAnimationGroups.Last();
+                TexcoordAnimation animation = group.Animations[material.TexcoordAnimationId];
+                float scaleS = InterpolateAnimation(group.Scales, animation.ScaleLutIndexS, group.CurrentFrame,
+                    animation.ScaleBlendS, animation.ScaleLutLengthS);
+                float scaleT = InterpolateAnimation(group.Scales, animation.ScaleLutIndexT, group.CurrentFrame,
+                    animation.ScaleBlendT, animation.ScaleLutLengthT);
+                float rotate = InterpolateAnimation(group.Rotations, animation.RotateLutIndexZ, group.CurrentFrame,
+                    animation.RotateBlendZ, animation.RotateLutLengthZ);
+                float translateS = InterpolateAnimation(group.Translations, animation.TranslateLutIndexS, group.CurrentFrame,
+                    animation.TranslateBlendS, animation.TranslateLutLengthS);
+                float translateT = InterpolateAnimation(group.Translations, animation.TranslateLutIndexT, group.CurrentFrame,
+                    animation.TranslateBlendT, animation.TranslateLutLengthT);
+                GL.MatrixMode(MatrixMode.Texture);
+                GL.Translate(translateS * width, translateT * height, 0);
+                if (rotate != 0)
+                {
+                    GL.Translate(width / 2, height / 2, 0);
+                    GL.Rotate(-rotate / MathF.PI * 180, 0, 0, 1);
+                    GL.Translate(-width / 2, -height / 2, 0);
+                }
+                GL.Scale(scaleS, scaleT, 1);
+            }
+        }
+
         private void RenderMesh(Model model, Mesh mesh, Material material)
         {
             GL.Color3(1f, 1f, 1f);
@@ -538,10 +610,17 @@ namespace MphRead
             }
             GL.MatrixMode(MatrixMode.Texture);
             GL.LoadIdentity();
-            // todo: texcoord animations
-            GL.Translate(material.TranslateS, material.TranslateT, 0.0f);
-            GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
-            GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+            if (textureId != UInt16.MaxValue && material.TexcoordAnimationId != -1)
+            {
+                GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+                AnimateTexcoords(model, material, width, height);
+            }
+            else
+            {
+                GL.Translate(material.TranslateS, material.TranslateT, 0.0f);
+                GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
+                GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+            }
             GL.Uniform1(_shaderLocations.UseTexture, GL.IsEnabled(EnableCap.Texture2D) ? 1 : 0);
             // todo: lighting
             if (_faceCulling)

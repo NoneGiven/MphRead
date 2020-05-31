@@ -163,6 +163,7 @@ namespace MphRead
                     {
                         if (group.Animations[i].Name == material.Name)
                         {
+                            // todo: currently overwriting things so the last group's information is always used
                             material.TexcoordAnimationId = i;
                         }
                     }
@@ -179,6 +180,7 @@ namespace MphRead
             public List<TextureAnimationGroup> TextureAnimationGroups { get; } = new List<TextureAnimationGroup>();
         }
 
+        // todo: parse the rest of the animation types
         private static AnimationResults LoadAnimation(string? path)
         {
             var results = new AnimationResults();

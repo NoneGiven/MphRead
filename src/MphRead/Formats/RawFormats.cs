@@ -100,8 +100,8 @@ namespace MphRead
         public readonly uint MaterialGroupOffset;
         public readonly uint TexcoordGroupOffset;
         public readonly uint TextureGroupOffset;
-        public readonly ushort Count; // todo: always 1?
-        public readonly ushort Field16; // todo: always 0?
+        public readonly ushort Count; // todo?: always 1?
+        public readonly ushort Field16; // todo?: always 0?
     }
 
     // size: ?

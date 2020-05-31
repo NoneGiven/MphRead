@@ -42,7 +42,6 @@ namespace MphRead
             FilterNodes(room, roomLayerMask);
             // todo?: scene min/max coordinates
             ComputeMatrices(room, index: 0);
-            // todo: load animations
             IReadOnlyList<Model> entities = LoadEntities(metadata);
             // todo?: area ID/portals
             room.Type = ModelType.Room;
@@ -194,7 +193,6 @@ namespace MphRead
         // todo: avoid loading things multiple times
         private static IReadOnlyList<Model> LoadJumpPad(JumpPadEntityData data)
         {
-            // todo: load animations
             var list = new List<Model>();
             string modelName = Metadata.JumpPads[(int)data.ModelId];
             Model model1 = Read.GetModelByName(modelName);
@@ -211,7 +209,6 @@ namespace MphRead
 
         private static Model LoadItem(ItemEntityData data)
         {
-            // todo: load animations
             (string name, float offset) = Metadata.Items[(int)data.ModelId];
             Model model = Read.GetModelByName(name);
             model.Position = new Vector3(

@@ -410,12 +410,12 @@ namespace MphRead
 
     public class TexcoordAnimationGroup
     {
-        public float Time { get; }
+        public double Time { get; set; }
         public int FrameCount { get; }
         public int CurrentFrame { get; set; }
         public int Count { get; }
         public IReadOnlyList<float> Scales { get; }
-        public IReadOnlyList<float> Rotation { get; }
+        public IReadOnlyList<float> Rotations { get; }
         public IReadOnlyList<float> Translations { get; }
         public IReadOnlyList<TexcoordAnimation> Animations { get; }
 
@@ -426,7 +426,7 @@ namespace MphRead
             CurrentFrame = raw.AnimationFrame;
             Count = (int)raw.AnimationCount;
             Scales = scales;
-            Rotation = rotations;
+            Rotations = rotations;
             Translations = translations;
             Animations = animations;
         }
