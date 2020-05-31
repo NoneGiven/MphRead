@@ -20,7 +20,7 @@ namespace MphRead
             }
             else
             {
-                renderer.AddRoom("UNIT2_RM1");
+                renderer.AddRoom("CRYSTALROOM");
                 renderer.AddModel("Crate01");
                 Nop();
             }
