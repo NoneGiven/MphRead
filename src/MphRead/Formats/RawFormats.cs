@@ -104,7 +104,7 @@ namespace MphRead
         public readonly ushort Field16; // todo?: always 0?
     }
 
-    // size: ?
+    // size: 140
     public readonly struct MaterialAnimationGroup
     {
         public readonly uint FrameCount;
@@ -145,7 +145,7 @@ namespace MphRead
         public readonly uint Field88;
     }
 
-    // size: ?
+    // size: 44
     public readonly struct TextureAnimationGroup
     {
         public readonly uint FrameCount;
@@ -176,7 +176,7 @@ namespace MphRead
         public readonly ushort Field1A;
     }
 
-    // size: ?
+    // size: 20
     public readonly struct NodeAnimationGroup
     {
         public readonly uint Data;
@@ -233,7 +233,7 @@ namespace MphRead
         public readonly ushort MaterialId;
     }
 
-    // size: ?
+    // size: 44
     public readonly struct TextureAnimation
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
@@ -246,7 +246,7 @@ namespace MphRead
         public readonly ushort Field2A;
     }
 
-    // size: ?
+    // size: 60
     public readonly struct RawTexcoordAnimation
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
@@ -270,7 +270,7 @@ namespace MphRead
         public readonly ushort Field3A;
     }
 
-    // size: ?
+    // size: 48
     public readonly struct NodeAnimation
     {
         public readonly byte Field0;
