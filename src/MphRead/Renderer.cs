@@ -196,7 +196,7 @@ namespace MphRead
             }
             else if (_cameraMode == CameraMode.Roam)
             {
-                Console.WriteLine(" - Use WASD to move");
+                Console.WriteLine(" - Use WASD, Space, and V to move");
             }
             Console.WriteLine(" - Hold left mouse button or use arrow keys to rotate");
             Console.WriteLine(" - Hold Shift to move the camera faster");
@@ -1095,10 +1095,11 @@ namespace MphRead
 
         private void OnKeyHeld()
         {
+            // sprint
             float step = KeyboardState.IsKeyDown(Key.ShiftLeft) || KeyboardState.IsKeyDown(Key.ShiftRight) ? 5 : 1;
             if (_cameraMode == CameraMode.Roam)
             {
-                if (KeyboardState.IsKeyDown(Key.W))
+                if (KeyboardState.IsKeyDown(Key.W)) // move forward
                 {
                     _cameraPosition = new Vector3(
                         _cameraPosition.X +
@@ -1111,7 +1112,7 @@ namespace MphRead
                             * MathF.Cos(MathHelper.DegreesToRadians(_angleY)) * 0.1f
                     );
                 }
-                else if (KeyboardState.IsKeyDown(Key.S))
+                else if (KeyboardState.IsKeyDown(Key.S)) // move backward
                 {
                     _cameraPosition = new Vector3(
                         _cameraPosition.X -
@@ -1124,7 +1125,15 @@ namespace MphRead
                             * MathF.Cos(MathHelper.DegreesToRadians(_angleY)) * 0.1f
                     );
                 }
-                if (KeyboardState.IsKeyDown(Key.A))
+                if (KeyboardState.IsKeyDown(Key.Space)) // move up
+                {
+                    _cameraPosition = new Vector3(_cameraPosition.X, _cameraPosition.Y - step * 0.1f, _cameraPosition.Z);
+                }
+                else if (KeyboardState.IsKeyDown(Key.V)) // move down
+                {
+                    _cameraPosition = new Vector3(_cameraPosition.X, _cameraPosition.Y + step * 0.1f, _cameraPosition.Z);
+                }
+                if (KeyboardState.IsKeyDown(Key.A)) // move left
                 {
                     float angleX = _angleX - 90;
                     if (angleX < 0)
@@ -1141,7 +1150,7 @@ namespace MphRead
                             * 0.1f
                     );
                 }
-                else if (KeyboardState.IsKeyDown(Key.D))
+                else if (KeyboardState.IsKeyDown(Key.D)) // move right
                 {
                     float angleX = _angleX + 90;
                     if (angleX > 360)
@@ -1160,22 +1169,22 @@ namespace MphRead
                 }
                 step = KeyboardState.IsKeyDown(Key.ShiftLeft) ? -3 : -1.5f;
             }
-            if (KeyboardState.IsKeyDown(Key.Up))
+            if (KeyboardState.IsKeyDown(Key.Up)) // rotate up
             {
                 _angleY += step;
                 _angleY = Math.Clamp(_angleY, -90.0f, 90.0f);
             }
-            else if (KeyboardState.IsKeyDown(Key.Down))
+            else if (KeyboardState.IsKeyDown(Key.Down)) // rotate down
             {
                 _angleY -= step;
                 _angleY = Math.Clamp(_angleY, -90.0f, 90.0f);
             }
-            if (KeyboardState.IsKeyDown(Key.Left))
+            if (KeyboardState.IsKeyDown(Key.Left)) // rotate left
             {
                 _angleX += step;
                 _angleX %= 360f;
             }
-            else if (KeyboardState.IsKeyDown(Key.Right))
+            else if (KeyboardState.IsKeyDown(Key.Right)) // rotate right
             {
                 _angleX -= step;
                 _angleX %= 360f;

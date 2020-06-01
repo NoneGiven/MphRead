@@ -4090,7 +4090,41 @@ namespace MphRead
                         },
                         texture: true)
                 },
-                // not part of the game's files, edited to allow choosing the unused recolors
+                // next two not part of the game's files, edited to allow choosing the unused recolors
+                {
+                    "GuardianR_lod0",
+                    new EntityMetadata("GuardianR_lod0",
+                        modelPath: @"_archives\Guardian\Guardian_lod0_Model.bin",
+                        animationPath: @"_archives\Guardian\Guardian_Anim.bin",
+                        collisionPath: null,
+                        new List<RecolorMetadata>()
+                        {
+                            new RecolorMetadata("pal_01",
+                                modelPath: @"models\GuardianR_pal_01_Model.bin",
+                                texturePath: @"models\Guardian_pal_01_Tex.bin",
+                                palettePath: @"models\Guardian_pal_01_Tex.bin"),
+                            new RecolorMetadata("pal_02",
+                                modelPath: @"models\GuardianR_pal_02_Model.bin",
+                                texturePath: @"models\Guardian_pal_02_Tex.bin",
+                                palettePath: @"models\Guardian_pal_02_Tex.bin"),
+                            new RecolorMetadata("pal_03",
+                                modelPath: @"models\GuardianR_pal_03_Model.bin",
+                                texturePath: @"models\Guardian_pal_03_Tex.bin",
+                                palettePath: @"models\Guardian_pal_03_Tex.bin"),
+                            new RecolorMetadata("pal_04",
+                                modelPath: @"models\GuardianR_pal_04_Model.bin",
+                                texturePath: @"models\Guardian_pal_04_Tex.bin",
+                                palettePath: @"models\Guardian_pal_04_Tex.bin"),
+                            new RecolorMetadata("pal_Team01",
+                                modelPath: @"models\GuardianR_pal_Team01_Model.bin",
+                                texturePath: @"models\GuardianR_pal_Team01_Tex.bin",
+                                palettePath: @"models\GuardianR_pal_Team01_Tex.bin"),
+                            new RecolorMetadata("pal_Team02",
+                                modelPath: @"models\GuardianR_pal_Team02_Model.bin",
+                                texturePath: @"models\GuardianR_pal_Team02_Tex.bin",
+                                palettePath: @"models\GuardianR_pal_Team02_Tex.bin")
+                        })
+                },
                 {
                     "GuardianR_lod1",
                     new EntityMetadata("GuardianR_lod1",
