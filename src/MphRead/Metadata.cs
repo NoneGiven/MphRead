@@ -3457,6 +3457,7 @@ namespace MphRead
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-44f, 42f, -5f))
                 },
+                // model, animation, collision files for these two test levels must be taken from First Hunt
                 {
                     "Level TestLevel",
                     new RoomMetadata(
@@ -3554,6 +3555,7 @@ namespace MphRead
             /* 22 */ ("pick_wpn_missile", 0.558837891f)
         };
 
+        // todo: e.g. lod1 in the model folder should have the animation files from the lod0 archive
         public static readonly IReadOnlyDictionary<string, EntityMetadata> EntityMetadata
             = new Dictionary<string, EntityMetadata>()
             {
@@ -4065,9 +4067,8 @@ namespace MphRead
                     "Guardian_Dead",
                     new EntityMetadata("Guardian_Dead", animation: false)
                 },
-                // Note: pal_02-04 are copies of 01, and
-                // pal_Team01-02 are broken if extracted with the main model's header info
-                // (uses palette 3 instead of 1, 7 instead of 0).
+                // Note: pal_02-04 are copies of 01 (with the same 3 unused textures/palettes),
+                // and pal_Team01-02 are broken if extracted with the main model's header info.
                 {
                     "Guardian_lod0",
                     new EntityMetadata("Guardian_lod0",
@@ -4089,14 +4090,75 @@ namespace MphRead
                         },
                         texture: true)
                 },
-                //{
-                //    "Guardian_pal_Team01",
-                //    new EntityMetadata("Guardian_pal_Team01", animation: false, texture: true)
-                //},
-                //{
-                //    "Guardian_pal_Team02",
-                //    new EntityMetadata("Guardian_pal_Team02", animation: false, texture: true)
-                //},
+                // next two not part of the game's files, edited to allow choosing the unused recolors
+                {
+                    "GuardianR_lod0",
+                    new EntityMetadata("GuardianR_lod0",
+                        modelPath: @"_archives\Guardian\Guardian_lod0_Model.bin",
+                        animationPath: @"_archives\Guardian\Guardian_Anim.bin",
+                        collisionPath: null,
+                        new List<RecolorMetadata>()
+                        {
+                            new RecolorMetadata("pal_01",
+                                modelPath: @"models\GuardianR_pal_01_Model.bin",
+                                texturePath: @"models\Guardian_pal_01_Tex.bin",
+                                palettePath: @"models\Guardian_pal_01_Tex.bin"),
+                            new RecolorMetadata("pal_02",
+                                modelPath: @"models\GuardianR_pal_02_Model.bin",
+                                texturePath: @"models\Guardian_pal_02_Tex.bin",
+                                palettePath: @"models\Guardian_pal_02_Tex.bin"),
+                            new RecolorMetadata("pal_03",
+                                modelPath: @"models\GuardianR_pal_03_Model.bin",
+                                texturePath: @"models\Guardian_pal_03_Tex.bin",
+                                palettePath: @"models\Guardian_pal_03_Tex.bin"),
+                            new RecolorMetadata("pal_04",
+                                modelPath: @"models\GuardianR_pal_04_Model.bin",
+                                texturePath: @"models\Guardian_pal_04_Tex.bin",
+                                palettePath: @"models\Guardian_pal_04_Tex.bin"),
+                            new RecolorMetadata("pal_Team01",
+                                modelPath: @"models\GuardianR_pal_Team01_Model.bin",
+                                texturePath: @"models\GuardianR_pal_Team01_Tex.bin",
+                                palettePath: @"models\GuardianR_pal_Team01_Tex.bin"),
+                            new RecolorMetadata("pal_Team02",
+                                modelPath: @"models\GuardianR_pal_Team02_Model.bin",
+                                texturePath: @"models\GuardianR_pal_Team02_Tex.bin",
+                                palettePath: @"models\GuardianR_pal_Team02_Tex.bin")
+                        })
+                },
+                {
+                    "GuardianR_lod1",
+                    new EntityMetadata("GuardianR_lod1",
+                        modelPath: @"models\Guardian_lod1_Model.bin",
+                        animationPath: @"_archives\Guardian\Guardian_Anim.bin",
+                        collisionPath: null,
+                        new List<RecolorMetadata>()
+                        {
+                            new RecolorMetadata("pal_01",
+                                modelPath: @"models\GuardianR_pal_01_Model.bin",
+                                texturePath: @"models\Guardian_pal_01_Tex.bin",
+                                palettePath: @"models\Guardian_pal_01_Tex.bin"),
+                            new RecolorMetadata("pal_02",
+                                modelPath: @"models\GuardianR_pal_02_Model.bin",
+                                texturePath: @"models\Guardian_pal_02_Tex.bin",
+                                palettePath: @"models\Guardian_pal_02_Tex.bin"),
+                            new RecolorMetadata("pal_03",
+                                modelPath: @"models\GuardianR_pal_03_Model.bin",
+                                texturePath: @"models\Guardian_pal_03_Tex.bin",
+                                palettePath: @"models\Guardian_pal_03_Tex.bin"),
+                            new RecolorMetadata("pal_04",
+                                modelPath: @"models\GuardianR_pal_04_Model.bin",
+                                texturePath: @"models\Guardian_pal_04_Tex.bin",
+                                palettePath: @"models\Guardian_pal_04_Tex.bin"),
+                            new RecolorMetadata("pal_Team01",
+                                modelPath: @"models\GuardianR_pal_Team01_Model.bin",
+                                texturePath: @"models\GuardianR_pal_Team01_Tex.bin",
+                                palettePath: @"models\GuardianR_pal_Team01_Tex.bin"),
+                            new RecolorMetadata("pal_Team02",
+                                modelPath: @"models\GuardianR_pal_Team02_Model.bin",
+                                texturePath: @"models\GuardianR_pal_Team02_Tex.bin",
+                                palettePath: @"models\GuardianR_pal_Team02_Tex.bin")
+                        })
+                },
                 {
                     "Guardian_Stasis",
                     new EntityMetadata("Guardian_Stasis")

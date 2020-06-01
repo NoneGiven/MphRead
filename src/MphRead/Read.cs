@@ -22,17 +22,16 @@ namespace MphRead
             {
                 throw new ProgramException("No entity with this name is known. Please provide metadata for a custom entity.");
             }
-            return GetModelByPath(entityMeta.ModelPath, defaultRecolor);
+            return GetModel(entityMeta, defaultRecolor);
         }
 
-        public static Model GetModelByPath(string path, int defaultRecolor = 0)
+        public static Model GetModelByPath(string path, bool externalTexture = false)
         {
-            EntityMetadata? entityMeta = Metadata.GetEntityByPath(path);
-            if (entityMeta == null)
+            var recolors = new List<RecolorMetadata>()
             {
-                throw new ProgramException("No entity at this path is known. Please provide metadata for a custom entity.");
-            }
-            return GetModel(entityMeta, defaultRecolor);
+                new RecolorMetadata("default", path, externalTexture ? path.Replace("_Model", "_Tex") : path)
+            };
+            return GetModel("model", path, null, recolors, 0);
         }
 
         public static Model GetRoomByName(string name)
@@ -93,7 +92,7 @@ namespace MphRead
         private static Model GetModel(string name, string modelPath, string? animationPath,
             IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor)
         {
-            if (defaultRecolor < 0 || defaultRecolor > recolorMeta.Count)
+            if (defaultRecolor < 0 || defaultRecolor > recolorMeta.Count - 1)
             {
                 throw new ProgramException("The specified recolor index is invalid for this entity.");
             }
@@ -114,8 +113,7 @@ namespace MphRead
             {
                 ReadOnlySpan<byte> modelBytes = initialBytes;
                 Header modelHeader = header;
-                // todo: this check is causing a double load (full path vs. relative)
-                if (meta.ModelPath != path)
+                if (Path.Combine(Paths.FileSystem, meta.ModelPath) != path)
                 {
                     modelBytes = ReadBytes(meta.ModelPath);
                     modelHeader = ReadStruct<Header>(modelBytes[0..Sizes.Header]);
