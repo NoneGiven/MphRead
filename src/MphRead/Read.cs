@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace MphRead
@@ -54,19 +55,21 @@ namespace MphRead
             return GetRoom(roomMeta);
         }
 
-        private static Model GetRoom(RoomMetadata roomMeta)
+        private static Model GetRoom(RoomMetadata meta)
         {
             var recolors = new List<RecolorMetadata>()
             {
-                new RecolorMetadata("default", roomMeta.ModelPath, roomMeta.TexturePath ?? roomMeta.ModelPath)
+                new RecolorMetadata("default", meta.ModelPath, meta.TexturePath ?? meta.ModelPath)
             };
-            return GetModel(roomMeta.Name, roomMeta.ModelPath, recolors, defaultRecolor: 0);
+            Model room = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, recolors, defaultRecolor: 0);
+            room.Animate = (meta.AnimationPath != null);
+            return room;
         }
 
-        private static Model GetModel(EntityMetadata entityMeta, int defaultRecolor)
+        private static Model GetModel(EntityMetadata meta, int defaultRecolor)
         {
-            Model model = GetModel(entityMeta.Name, entityMeta.ModelPath, entityMeta.Recolors, defaultRecolor);
-            model.Animate = entityMeta.Animate;
+            Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.Recolors, defaultRecolor);
+            model.Animate = (meta.AnimationPath != null);
             return model;
         }
 
@@ -77,7 +80,7 @@ namespace MphRead
             {
                 new RecolorMetadata("default", path)
             };
-            return GetModel(name, path, recolors, defaultRecolor: 0);
+            return GetModel(name, path, null, recolors, defaultRecolor: 0);
         }
 
         public static Header GetHeader(string path)
@@ -87,7 +90,8 @@ namespace MphRead
             return ReadStruct<Header>(bytes[0..Sizes.Header]);
         }
 
-        private static Model GetModel(string name, string modelPath, IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor)
+        private static Model GetModel(string name, string modelPath, string? animationPath,
+            IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor)
         {
             if (defaultRecolor < 0 || defaultRecolor > recolorMeta.Count)
             {
@@ -145,7 +149,102 @@ namespace MphRead
                 }
                 recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
             }
-            return new Model(name, header, nodes, meshes, materials, dlists, instructions, recolors, defaultRecolor);
+            AnimationResults animations = LoadAnimation(animationPath);
+            var model = new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+                animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
+                recolors, defaultRecolor);
+            foreach (TexcoordAnimationGroup group in model.TexcoordAnimationGroups)
+            {
+                group.CurrentFrame = 0;
+                foreach (Material material in model.Materials)
+                {
+                    material.TexcoordAnimationId = -1;
+                    for (int i = 0; i < group.Animations.Count; i++)
+                    {
+                        if (group.Animations[i].Name == material.Name)
+                        {
+                            // todo: currently overwriting things so the last group's information is always used
+                            material.TexcoordAnimationId = i;
+                        }
+                    }
+                }
+            }
+            return model;
+        }
+
+        private class AnimationResults
+        {
+            public List<NodeAnimationGroup> NodeAnimationGroups { get; } = new List<NodeAnimationGroup>();
+            public List<MaterialAnimationGroup> MaterialAnimationGroups { get; } = new List<MaterialAnimationGroup>();
+            public List<TexcoordAnimationGroup> TexcoordAnimationGroups { get; } = new List<TexcoordAnimationGroup>();
+            public List<TextureAnimationGroup> TextureAnimationGroups { get; } = new List<TextureAnimationGroup>();
+        }
+
+        // todo: parse the rest of the animation types
+        private static AnimationResults LoadAnimation(string? path)
+        {
+            var results = new AnimationResults();
+            if (path == null)
+            {
+                return results;
+            }
+            path = Path.Combine(Paths.FileSystem, path);
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
+            AnimationHeader header = ReadStruct<AnimationHeader>(bytes);
+            var nodeGroupOffsets = new List<uint>();
+            var materialGroupOffsets = new List<uint>();
+            var texcoordGroupOffsets = new List<uint>();
+            var textureGroupOffsets = new List<uint>();
+            for (int i = 0; i < header.Count; i++)
+            {
+                nodeGroupOffsets.Add(SpanReadUint(bytes, (int)header.NodeGroupOffset + i * sizeof(uint)));
+            }
+            for (int i = 0; i < header.Count; i++)
+            {
+                materialGroupOffsets.Add(SpanReadUint(bytes, (int)header.MaterialGroupOffset + i * sizeof(uint)));
+            }
+            for (int i = 0; i < header.Count; i++)
+            {
+                texcoordGroupOffsets.Add(SpanReadUint(bytes, (int)header.TexcoordGroupOffset + i * sizeof(uint)));
+            }
+            for (int i = 0; i < header.Count; i++)
+            {
+                textureGroupOffsets.Add(SpanReadUint(bytes, (int)header.TextureGroupOffset + i * sizeof(uint)));
+            }
+            foreach (uint offset in texcoordGroupOffsets)
+            {
+                if (offset == 0)
+                {
+                    continue;
+                }
+                int maxScale = 0;
+                int maxRotation = 0;
+                int maxTranslation = 0;
+                RawTexcoordAnimationGroup rawGroup = DoOffset<RawTexcoordAnimationGroup>(bytes, offset);
+                IReadOnlyList<RawTexcoordAnimation> rawAnimations
+                    = DoOffsets<RawTexcoordAnimation>(bytes, rawGroup.AnimationOffset, (int)rawGroup.AnimationCount);
+                var animations = new List<TexcoordAnimation>();
+                foreach (RawTexcoordAnimation rawAnimation in rawAnimations)
+                {
+                    var animation = new TexcoordAnimation(rawAnimation);
+                    maxScale = Math.Max(maxScale, animation.ScaleLutIndexS + animation.ScaleLutLengthS);
+                    maxScale = Math.Max(maxScale, animation.ScaleLutIndexT + animation.ScaleLutLengthT);
+                    maxRotation = Math.Max(maxRotation, animation.RotateLutIndexZ + animation.RotateLutLengthZ);
+                    maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexS + animation.TranslateLutLengthS);
+                    maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexT + animation.TranslateLutLengthT);
+                    animations.Add(animation);
+                }
+                var scales = DoOffsets<Fixed>(bytes, rawGroup.ScaleLutOffset, maxScale).Select(f => f.FloatValue).ToList();
+                var rotations = new List<float>();
+                foreach (ushort value in DoOffsets<ushort>(bytes, rawGroup.RotateLutOffset, maxRotation))
+                {
+                    int radians = (0x6487F * value + 0x80000) >> 20;
+                    rotations.Add(Fixed.ToFloat(radians));
+                }
+                var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, maxTranslation).Select(f => f.FloatValue).ToList();
+                results.TexcoordAnimationGroups.Add(new TexcoordAnimationGroup(rawGroup, scales, rotations, translations, animations));
+            }
+            return results;
         }
 
         private static ReadOnlySpan<byte> ReadBytes(string path)
@@ -344,6 +443,11 @@ namespace MphRead
             return result;
         }
 
+        private static uint SpanReadUint(ReadOnlySpan<byte> bytes, int offset)
+        {
+            return SpanReadUint(bytes, ref offset);
+        }
+
         private static ushort SpanReadUshort(ReadOnlySpan<byte> bytes, int offset)
         {
             return SpanReadUshort(bytes, ref offset);
@@ -364,6 +468,11 @@ namespace MphRead
                 path = path.Replace("_model.bin", "");
             }
             return Path.GetFileNameWithoutExtension(path);
+        }
+
+        private static T DoOffset<T>(ReadOnlySpan<byte> bytes, uint offset) where T : struct
+        {
+            return DoOffsets<T>(bytes, offset, 1).First();
         }
 
         private static IReadOnlyList<T> DoOffsets<T>(ReadOnlySpan<byte> bytes, uint offset, int count) where T : struct

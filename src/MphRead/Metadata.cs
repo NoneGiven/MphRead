@@ -3861,7 +3861,7 @@ namespace MphRead
                 },
                 {
                     "cylinderbase",
-                    new EntityMetadata("cylinderbase")
+                    new EntityMetadata("cylinderbase", animation: false)
                 },
                 {
                     "CylinderBossEye",

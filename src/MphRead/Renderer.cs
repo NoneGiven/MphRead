@@ -81,8 +81,15 @@ namespace MphRead
         private bool _wireframe = false;
         private bool _faceCulling = true;
         private bool _textureFiltering = true;
+        private bool _lighting = true;
 
         private static readonly Color4 _clearColor = new Color4(0, 0, 0, 1);
+        private static readonly float _frameTime = 1.0f / 30.0f;
+
+        private Vector4 _light1Vector = default;
+        private Vector4 _light1Color = default;
+        private Vector4 _light2Vector = default;
+        private Vector4 _light2Color = default;
 
         private int _shaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
@@ -99,10 +106,24 @@ namespace MphRead
                 throw new InvalidOperationException();
             }
             _roomLoaded = true;
-            (Model room, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask);
+            (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask);
             _models.Insert(0, room);
             _models.AddRange(entities);
             _roomScale = room.Header.ScaleBase.FloatValue * (1 << (int)room.Header.ScaleFactor);
+            _light1Vector = new Vector4(roomMeta.Light1Vector);
+            _light1Color = new Vector4(
+                roomMeta.Light1Color.Red / 255.0f,
+                roomMeta.Light1Color.Green / 255.0f,
+                roomMeta.Light1Color.Blue / 255.0f,
+                roomMeta.Light1Color.Alpha / 255.0f
+            );
+            _light2Vector = new Vector4(roomMeta.Light2Vector);
+            _light2Color = new Vector4(
+                roomMeta.Light2Color.Red / 255.0f,
+                roomMeta.Light2Color.Green / 255.0f,
+                roomMeta.Light2Color.Blue / 255.0f,
+                roomMeta.Light2Color.Alpha / 255.0f
+            );
         }
 
         public void AddModel(string name, int recolor)
@@ -175,6 +196,7 @@ namespace MphRead
             Console.WriteLine($" - Q toggles wireframe ({FormatOnOff(_wireframe)})");
             Console.WriteLine($" - B toggles face culling ({FormatOnOff(_faceCulling)})");
             Console.WriteLine($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})");
+            Console.WriteLine($" - L toggles lighting ({FormatOnOff(_lighting)})");
             Console.WriteLine($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
             Console.WriteLine(" - R resets the camera");
             Console.WriteLine(" - Ctrl+O then enter \"model_name [recolor]\" to load");
@@ -205,7 +227,7 @@ namespace MphRead
                 ushort width = texture.Width;
                 ushort height = texture.Height;
                 TextureFormat textureFormat = texture.Format;
-                bool decal = material.RenderMode == RenderMode.Decal;
+                bool decal = material.PolygonMode == PolygonMode.Decal;
                 bool onlyOpaque = true;
                 foreach (ColorRgba pixel in model.GetPixels(material.TextureId, material.PaletteId))
                 {
@@ -294,9 +316,8 @@ namespace MphRead
             OnKeyHeld();
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            float[] vp = new float[4];
-            GL.GetFloat(GetPName.Viewport, vp);
-            float aspect = (vp[2] - vp[0]) / (vp[3] - vp[1]);
+            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
+            float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
 
             GL.MatrixMode(MatrixMode.Projection);
             float fov = MathHelper.DegreesToRadians(80.0f);
@@ -379,12 +400,27 @@ namespace MphRead
             return -1;
         }
 
+        private void ProcessAnimations(Model model, double elapsedTime)
+        {
+            foreach (TexcoordAnimationGroup group in model.TexcoordAnimationGroups)
+            {
+                group.Time += elapsedTime;
+                int increment = (int)(group.Time / _frameTime);
+                if (increment != 0)
+                {
+                    group.CurrentFrame += increment;
+                    group.Time -= increment * _frameTime;
+                }
+                group.CurrentFrame %= group.FrameCount;
+            }
+        }
+
         private void RenderScene(double elapsedTime)
         {
-            // todo: process animations
             _models.Sort(CompareModels);
             foreach (Model model in _models)
             {
+                ProcessAnimations(model, elapsedTime);
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.PushMatrix();
                 float height = 0;
@@ -397,7 +433,6 @@ namespace MphRead
                 GL.Translate(model.Position.X, model.Position.Y + height, model.Position.Z);
                 if (model.Type == ModelType.Room)
                 {
-                    // todo: lights
                     GL.Scale(_roomScale, _roomScale, _roomScale);
                 }
                 GL.Rotate(model.Rotation.X, 1, 0, 0);
@@ -416,15 +451,18 @@ namespace MphRead
             }
         }
 
-        private void UpdateUniforms()
+        private void SetLights()
         {
-            // todo: set lights
+            GL.Uniform4(_shaderLocations.Light1Vector, _light1Vector);
+            GL.Uniform4(_shaderLocations.Light1Color, _light1Color);
+            GL.Uniform4(_shaderLocations.Light2Vector, _light2Vector);
+            GL.Uniform4(_shaderLocations.Light2Color, _light2Color);
         }
 
         private void RenderRoom(Model model)
         {
             GL.UseProgram(_shaderProgramId);
-            UpdateUniforms();
+            SetLights();
             // pass 1: opaque
             GL.DepthMask(true);
             foreach (Node node in model.Nodes)
@@ -466,7 +504,6 @@ namespace MphRead
         private void RenderModel(Model model)
         {
             GL.UseProgram(_shaderProgramId);
-            UpdateUniforms();
             // pass 1: opaque
             foreach (Node node in model.Nodes)
             {
@@ -489,13 +526,10 @@ namespace MphRead
         {
             if (node.MeshCount > 0 && node.Enabled)
             {
-                if (model.Animate)
-                {
-                    GL.MatrixMode(MatrixMode.Modelview);
-                    GL.PushMatrix();
-                    Matrix4 transform = node.Transform;
-                    GL.MultTransposeMatrix(ref transform);
-                }
+                GL.MatrixMode(MatrixMode.Modelview);
+                GL.PushMatrix();
+                Matrix4 transform = node.Transform;
+                GL.MultTransposeMatrix(ref transform);
                 int meshStart = node.MeshId / 2;
                 for (int i = 0; i < node.MeshCount; i++)
                 {
@@ -510,11 +544,63 @@ namespace MphRead
                     GL.Uniform1(_shaderLocations.IsBillboard, node.Type == 1 ? 1 : 0);
                     RenderMesh(model, mesh, material);
                 }
-                if (model.Animate)
+                GL.MatrixMode(MatrixMode.Modelview);
+                GL.PopMatrix();
+            }
+        }
+
+        private float InterpolateAnimation(IReadOnlyList<float> values, int start, int frame, int speed, int length)
+        {
+            if (length == 1)
+            {
+                return values[start];
+            }
+            if (speed == 1)
+            {
+                return values[start + frame];
+            }
+            int v7 = (frame - 1) >> (speed / 2) << (speed / 2);
+            if (frame >= v7)
+            {
+                return values[start + frame - v7 + (frame >> (speed / 2))];
+            }
+            int index1 = frame >> (speed / 2);
+            int index2 = frame >> (speed / 2) + 1;
+            float div = 1 << (speed / 2);
+            int t = frame & ((speed / 2) | 1);
+            if (t != 0)
+            {
+                return values[start + index1] * (1 - t / div) + values[start + index2] * (t / div);
+            }
+            return values[start + index1];
+        }
+
+        private void AnimateTexcoords(Model model, Material material, int width, int height)
+        {
+            if (model.TexcoordAnimationGroups.Count > 0)
+            {
+                // todo: Get Model is currently overwriting things so the last group's information is always used
+                TexcoordAnimationGroup group = model.TexcoordAnimationGroups.Last();
+                TexcoordAnimation animation = group.Animations[material.TexcoordAnimationId];
+                float scaleS = InterpolateAnimation(group.Scales, animation.ScaleLutIndexS, group.CurrentFrame,
+                    animation.ScaleBlendS, animation.ScaleLutLengthS);
+                float scaleT = InterpolateAnimation(group.Scales, animation.ScaleLutIndexT, group.CurrentFrame,
+                    animation.ScaleBlendT, animation.ScaleLutLengthT);
+                float rotate = InterpolateAnimation(group.Rotations, animation.RotateLutIndexZ, group.CurrentFrame,
+                    animation.RotateBlendZ, animation.RotateLutLengthZ);
+                float translateS = InterpolateAnimation(group.Translations, animation.TranslateLutIndexS, group.CurrentFrame,
+                    animation.TranslateBlendS, animation.TranslateLutLengthS);
+                float translateT = InterpolateAnimation(group.Translations, animation.TranslateLutIndexT, group.CurrentFrame,
+                    animation.TranslateBlendT, animation.TranslateLutLengthT);
+                GL.MatrixMode(MatrixMode.Texture);
+                GL.Translate(translateS * width, translateT * height, 0);
+                if (rotate != 0)
                 {
-                    GL.MatrixMode(MatrixMode.Modelview);
-                    GL.PopMatrix();
+                    GL.Translate(width / 2, height / 2, 0);
+                    GL.Rotate(-rotate / MathF.PI * 180, 0, 0, 1);
+                    GL.Translate(-width / 2, -height / 2, 0);
                 }
+                GL.Scale(scaleS, scaleT, 1);
             }
         }
 
@@ -538,12 +624,51 @@ namespace MphRead
             }
             GL.MatrixMode(MatrixMode.Texture);
             GL.LoadIdentity();
-            // todo: texcoord animations
-            GL.Translate(material.TranslateS, material.TranslateT, 0.0f);
-            GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
-            GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+            if (model.Animate && textureId != UInt16.MaxValue && material.TexcoordAnimationId != -1)
+            {
+                GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+                AnimateTexcoords(model, material, width, height);
+            }
+            else
+            {
+                GL.Translate(material.TranslateS, material.TranslateT, 0.0f);
+                GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
+                GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+            }
             GL.Uniform1(_shaderLocations.UseTexture, GL.IsEnabled(EnableCap.Texture2D) ? 1 : 0);
-            // todo: lighting
+            if (_lighting && material.Lighting != 0)
+            {
+                // todo: would be nice if the approaches for this and the room lights were the same
+                var ambient = new Vector4(
+                    material.Ambient.Red / 255.0f,
+                    material.Ambient.Green / 255.0f,
+                    material.Ambient.Blue / 255.0f,
+                    1.0f
+                );
+                var diffuse = new Vector4(
+                    material.Diffuse.Red / 255.0f,
+                    material.Diffuse.Green / 255.0f,
+                    material.Diffuse.Blue / 255.0f,
+                    1.0f
+                );
+                var specular = new Vector4(
+                    material.Specular.Red / 255.0f,
+                    material.Specular.Green / 255.0f,
+                    material.Specular.Blue / 255.0f,
+                    1.0f
+                );
+                GL.Enable(EnableCap.Lighting);
+                GL.Material(MaterialFace.Front, MaterialParameter.Ambient, ambient);
+                GL.Material(MaterialFace.Front, MaterialParameter.Diffuse, diffuse);
+                GL.Uniform4(_shaderLocations.Ambient, ambient);
+                GL.Uniform4(_shaderLocations.Diffuse, diffuse);
+                GL.Uniform4(_shaderLocations.Specular, specular);
+                GL.Uniform1(_shaderLocations.UseLight, 1);
+            }
+            else
+            {
+                GL.Uniform1(_shaderLocations.UseLight, 0);
+            }
             if (_faceCulling)
             {
                 GL.Enable(EnableCap.CullFace);
@@ -778,7 +903,10 @@ namespace MphRead
                     throw new ProgramException("Unknown opcode");
                 }
             }
-            // todo: turn off the lights
+            if (_lighting)
+            {
+                GL.Disable(EnableCap.Lighting);
+            }
         }
 
         protected override void OnResize(ResizeEventArgs e)
@@ -896,6 +1024,11 @@ namespace MphRead
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
                 }
+                PrintMenu();
+            }
+            else if (e.Key == Key.L)
+            {
+                _lighting = !_lighting;
                 PrintMenu();
             }
             else if (e.Key == Key.R)

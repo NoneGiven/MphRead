@@ -46,14 +46,22 @@ namespace MphRead
 
         public Vector3 Position { get; set; }
         public Vector3 Rotation { get; set; }
+
         public bool Animate { get; set; }
+        public int AnimationCount { get; set; }
+        public IReadOnlyList<NodeAnimationGroup> NodeAnimationGroups { get; }
+        public IReadOnlyList<MaterialAnimationGroup> MaterialAnimationGroups { get; }
+        public IReadOnlyList<TexcoordAnimationGroup> TexcoordAnimationGroups { get; }
+        public IReadOnlyList<TextureAnimationGroup> TextureAnimationGroups { get; }
 
         public IReadOnlyList<Recolor> Recolors { get; }
 
         public Model(string name, Header header, IReadOnlyList<RawNode> nodes, IReadOnlyList<Mesh> meshes,
             IReadOnlyList<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
-            IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions, IReadOnlyList<Recolor> recolors,
-            int defaultRecolor)
+            IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
+            IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
+            IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
+            IReadOnlyList<Recolor> recolors, int defaultRecolor)
         {
             ThrowIfInvalidEnums(materials);
             Name = name;
@@ -63,6 +71,10 @@ namespace MphRead
             Materials = materials.Select(m => new Material(m)).ToList();
             DisplayLists = dlists;
             RenderInstructionLists = renderInstructions;
+            NodeAnimationGroups = nodeGroups;
+            MaterialAnimationGroups = materialGroups;
+            TexcoordAnimationGroups = texcoordGroups;
+            TextureAnimationGroups = textureGroups;
             Recolors = recolors;
             CurrentRecolor = defaultRecolor;
         }
@@ -365,13 +377,19 @@ namespace MphRead
     public class Material
     {
         public string Name { get; }
+        public byte Lighting { get; } // todo: probably a bool
         public CullingMode Culling { get; }
         public byte Alpha { get; }
         public int PaletteId { get; }
         public int TextureId { get; }
         public RepeatMode XRepeat { get; }
         public RepeatMode YRepeat { get; }
+        public readonly ColorRgb Diffuse;
+        public readonly ColorRgb Ambient;
+        public readonly ColorRgb Specular;
+        public PolygonMode PolygonMode { get; set; }
         public RenderMode RenderMode { get; set; }
+        public int TexcoordAnimationId { get; set; }
         public float ScaleS { get; }
         public float ScaleT { get; }
         public float TranslateS { get; }
@@ -380,17 +398,87 @@ namespace MphRead
         public Material(RawMaterial raw)
         {
             Name = raw.Name;
+            Lighting = raw.Lighting;
             Culling = raw.Culling;
             Alpha = raw.Alpha;
             PaletteId = raw.PaletteId;
             TextureId = raw.TextureId;
             XRepeat = raw.XRepeat;
             YRepeat = raw.YRepeat;
+            Diffuse = raw.Diffuse;
+            Ambient = raw.Ambient;
+            Specular = raw.Specular;
+            PolygonMode = raw.PolygonMode;
             RenderMode = raw.RenderMode;
+            TexcoordAnimationId = raw.TexcoordAnimationId;
             ScaleS = raw.ScaleS.FloatValue;
             ScaleT = raw.ScaleT.FloatValue;
             TranslateS = raw.TranslateS.FloatValue;
             TranslateT = raw.TranslateT.FloatValue;
+        }
+    }
+
+    public class TexcoordAnimationGroup
+    {
+        public double Time { get; set; }
+        public int FrameCount { get; }
+        public int CurrentFrame { get; set; }
+        public int Count { get; }
+        public IReadOnlyList<float> Scales { get; }
+        public IReadOnlyList<float> Rotations { get; }
+        public IReadOnlyList<float> Translations { get; }
+        public IReadOnlyList<TexcoordAnimation> Animations { get; }
+
+        public TexcoordAnimationGroup(RawTexcoordAnimationGroup raw, IReadOnlyList<float> scales,
+            IReadOnlyList<float> rotations, IReadOnlyList<float> translations, IReadOnlyList<TexcoordAnimation> animations)
+        {
+            FrameCount = (int)raw.FrameCount;
+            CurrentFrame = raw.AnimationFrame;
+            Count = (int)raw.AnimationCount;
+            Scales = scales;
+            Rotations = rotations;
+            Translations = translations;
+            Animations = animations;
+        }
+    }
+
+    public class TexcoordAnimation
+    {
+        public string Name { get; }
+        public byte ScaleBlendS { get; }
+        public byte ScaleBlendT { get; }
+        public ushort ScaleLutLengthS { get; }
+        public ushort ScaleLutLengthT { get; }
+        public ushort ScaleLutIndexS { get; }
+        public ushort ScaleLutIndexT { get; }
+        public byte RotateBlendZ { get; }
+        public ushort RotateLutLengthZ { get; }
+        public ushort RotateLutIndexZ { get; }
+        public byte TranslateBlendS { get; }
+        public byte TranslateBlendT { get; }
+        public ushort TranslateLutLengthS { get; }
+        public ushort TranslateLutLengthT { get; }
+        public ushort TranslateLutIndexS { get; }
+        public ushort TranslateLutIndexT { get; }
+
+        public TexcoordAnimation(RawTexcoordAnimation raw)
+        {
+            Name = raw.Name;
+            ScaleBlendS = raw.ScaleBlendS;
+            ScaleBlendT = raw.ScaleBlendT;
+            ScaleLutLengthS = raw.ScaleLutLengthS;
+            ScaleLutLengthT = raw.ScaleLutLengthT;
+            ScaleLutIndexS = raw.ScaleLutIndexS;
+            ScaleLutIndexT = raw.ScaleLutIndexT;
+            RotateBlendZ = raw.RotateBlendZ;
+            RotateLutLengthZ = raw.RotateLutLengthZ;
+            RotateLutIndexZ = raw.RotateLutIndexZ;
+            TranslateBlendS = raw.TranslateBlendS;
+            TranslateBlendT = raw.TranslateBlendT;
+            TranslateLutLengthS = raw.TranslateLutLengthS;
+            TranslateLutLengthT = raw.TranslateLutLengthT;
+            TranslateLutIndexS = raw.TranslateLutIndexS;
+            TranslateLutIndexT = raw.TranslateLutIndexT;
         }
     }
 
