@@ -124,6 +124,7 @@ namespace MphRead
                 roomMeta.Light2Color.Blue / 255.0f,
                 roomMeta.Light2Color.Alpha / 255.0f
             );
+            _cameraMode = CameraMode.Roam;
         }
 
         public void AddModel(string name, int recolor)
