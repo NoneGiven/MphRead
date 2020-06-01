@@ -495,7 +495,10 @@ namespace MphRead
             NodeName = entry.NodeName;
             LayerMask = entry.LayerMask;
             Length = entry.Length;
-            // todo: once all of these are accounted for, throw if not defined
+            if (!Enum.IsDefined(typeof(EntityType), type))
+            {
+                throw new ProgramException($"Invalid entity type {type}");
+            }
             Type = type;
             SomeId = someId;
         }
@@ -512,19 +515,28 @@ namespace MphRead
         }
     }
 
+    // seems like 5 and 10 are unused
+    // -- not sure if/where 26 (EnergyBeam) is used
     public enum EntityType : ushort
     {
-        Platform = 0x0,
-        Object = 0x1,
-        AlimbicDoor = 0x3,
-        Item = 0x4,
-        Pickup = 0x6,
-        JumpPad = 0x9,
-        Teleporter = 0xE,
-        Artifact = 0x11,
-        CameraSeq = 0x12,
-        ForceField = 0x13,
-        EnergyBeam = 0x1A,
+        Platform = 0,
+        Object = 1,
+        Unknown2 = 2,
+        AlimbicDoor = 3,
+        Item = 4,
+        Pickup = 6,
+        Unknown7 = 7,
+        Unknown8 = 8,
+        JumpPad = 9,
+        Unknown11 = 11,
+        Unknown12 = 12,
+        Unknown13 = 13,
+        Teleporter = 14,
+        Unknown15 = 15,
+        Unknown16 = 16,
+        Artifact = 17,
+        CameraSeq = 18,
+        ForceField = 19
     }
 
     public enum NodeLayer

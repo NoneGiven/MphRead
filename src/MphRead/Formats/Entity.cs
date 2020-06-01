@@ -27,6 +27,69 @@ namespace MphRead
         public readonly ushort SomeId;
     }
 
+    // size: 588
+    public readonly struct ObjectEntityData
+    {
+
+    }
+
+    // size: 152
+    public readonly struct Unknown2EntityData
+    {
+
+    }
+
+    // size: 43
+    public readonly struct AlimbicDoorEntityData
+    {
+
+    }
+
+    // size: 104
+    public readonly struct PlatformEntityData
+    {
+
+    }
+
+    // size: 72
+    public readonly struct ItemEntityData
+    {
+        public readonly EntityDataHeader Header;
+        public readonly Vector3Fx Position;
+        public readonly uint FieldC;
+        public readonly uint Field10;
+        public readonly uint Field14;
+        public readonly uint Field18;
+        public readonly uint Field1C;
+        public readonly uint Field20;
+        public readonly uint ItemId;
+        public readonly uint ModelId;
+        public readonly uint Field2C;
+        public readonly uint Field30;
+        public readonly uint Field34;
+        public readonly uint Field38;
+        public readonly uint Field3C;
+        public readonly uint Field40;
+    }
+
+    // size: 512
+    public readonly struct PickupEntityData
+    {
+
+    }
+
+    // size: 160
+    public readonly struct Unknown7EntityData
+    {
+
+    }
+
+    // size: 152
+    public readonly struct Unknown8EntityData
+    {
+
+    }
+
     // size: 148
     public readonly struct JumpPadEntityData
     {
@@ -64,25 +127,58 @@ namespace MphRead
         public readonly uint Field8C;
     }
 
-    // size: 72
-    public readonly struct ItemEntityData
+    // size: 104
+    public readonly struct Unknown11EntityData
     {
-        public readonly EntityDataHeader Header;
-        public readonly Vector3Fx Position;
-        public readonly uint FieldC;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
-        public readonly uint ItemId;
-        public readonly uint ModelId;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly uint Field40;
+
+    }
+
+    // size: 41
+    public readonly struct Unknown12EntityData
+    {
+
+    }
+
+    // size: 108
+    public readonly struct Unknown13EntityData
+    {
+
+    }
+
+    // size: 92
+    public readonly struct TeleporterEntityData
+    {
+
+    }
+
+    // size: 104
+    public readonly struct Unknown15EntityData
+    {
+
+    }
+
+    // size: 136
+    public readonly struct Unknown16EntityData
+    {
+
+    }
+
+    // size: 70
+    public readonly struct ArtifactEntityData
+    {
+
+    }
+
+    // size: 64
+    public readonly struct CameraSeqEntityData
+    {
+
+    }
+
+    // size: 53
+    public readonly struct ForceFieldEntityData
+    {
+
     }
 
     // size: 32

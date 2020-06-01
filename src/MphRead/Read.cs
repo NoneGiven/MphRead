@@ -371,22 +371,19 @@ namespace MphRead
                     EntityDataHeader init = ReadStruct<EntityDataHeader>(bytes[start..end]);
                     var type = (EntityType)init.Type;
                     end = start + entry.Length;
-                    // todo: handle more entity types
                     if (type == EntityType.JumpPad)
                     {
-                        Debug.Assert(entry.Length == Sizes.JumpPadEntityData);
                         JumpPadEntityData data = ReadStruct<JumpPadEntityData>(bytes[start..end]);
                         entities.Add(new Entity<JumpPadEntityData>(entry, type, init.SomeId, data));
                     }
                     else if (type == EntityType.Item)
                     {
-                        Debug.Assert(entry.Length == Sizes.ItemEntityData);
                         ItemEntityData data = ReadStruct<ItemEntityData>(bytes[start..end]);
                         entities.Add(new Entity<ItemEntityData>(entry, type, init.SomeId, data));
                     }
                     else
                     {
-                        entities.Add(new Entity(entry, type, init.SomeId));
+                        throw new ProgramException($"Invalid entity type {type}");
                     }
                 }
             }

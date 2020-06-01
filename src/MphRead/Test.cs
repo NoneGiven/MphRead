@@ -121,20 +121,6 @@ namespace MphRead
             File.WriteAllLines("matches.txt", lines);
         }
 
-        public static void TestRenderModes()
-        {
-            foreach (Model model in GetAllModels())
-            {
-                foreach (Material material in model.Materials)
-                {
-                    if (material.Lighting != 0)
-                    {
-                        System.Diagnostics.Debugger.Break();
-                    }
-                }
-            }
-        }
-
         public static void ParseAllModels()
         {
             GetAllModels();
@@ -157,6 +143,13 @@ namespace MphRead
             }
         }
 
+        public static void TestAllRooms()
+        {
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+            }
+        }
+
 #pragma warning restore IDE0051 // Remove unused private members
 
         private static IEnumerable<Model> GetAllModels()
@@ -165,6 +158,14 @@ namespace MphRead
             {
                 yield return Read.GetModelByName(meta.Key);
             }
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                yield return Read.GetRoomByName(meta.Key);
+            }
+        }
+
+        private static IEnumerable<Model> GetAllRooms()
+        {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 yield return Read.GetRoomByName(meta.Key);
