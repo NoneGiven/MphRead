@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Mathematics;
@@ -126,7 +125,7 @@ namespace MphRead
                 roomMeta.Light2Color.Alpha / 255.0f
             );
         }
-        
+
         public void AddModel(string name, int recolor)
         {
             Model model = Read.GetModelByName(name, recolor);
@@ -459,7 +458,7 @@ namespace MphRead
             GL.Uniform4(_shaderLocations.Light2Vector, _light2Vector);
             GL.Uniform4(_shaderLocations.Light2Color, _light2Color);
         }
-        
+
         private void RenderRoom(Model model)
         {
             GL.UseProgram(_shaderProgramId);
@@ -669,7 +668,7 @@ namespace MphRead
             else
             {
                 GL.Uniform1(_shaderLocations.UseLight, 0);
-            } 
+            }
             if (_faceCulling)
             {
                 GL.Enable(EnableCap.CullFace);
