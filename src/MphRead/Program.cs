@@ -51,8 +51,8 @@ namespace MphRead
             }
             else
             {
-                //renderer.AddRoom("MP3 PROVING GROUND");
-                renderer.AddModel("Guardian_lod1");
+                renderer.AddRoom("MP3 PROVING GROUND");
+                renderer.AddModel("Crate01");
                 Nop();
             }
             renderer.Run();
@@ -85,7 +85,7 @@ namespace MphRead
             Console.WriteLine("At most one room may be specified. Any number of models may be specified.");
             Environment.Exit(1);
         }
-        
+
         private static void Nop() { }
     }
 

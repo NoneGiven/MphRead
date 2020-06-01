@@ -392,7 +392,7 @@ namespace MphRead
                 _cameraPosition = new Vector3(x, y, z);
             }
         }
-        
+
         private int CompareModels(Model one, Model two)
         {
             if (one.Type == ModelType.Room)
