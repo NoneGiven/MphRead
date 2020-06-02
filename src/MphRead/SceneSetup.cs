@@ -53,11 +53,15 @@ namespace MphRead
             foreach (Node node in model.Nodes)
             {
                 // todo: there's probably some node or mesh property that hides these things
-                if (node.Name.Contains("etagDoor"))
+                if (node.Name.StartsWith("etagDoor") || node.Name == "etagGorea")
                 {
                     node.Enabled = false;
                     continue;
                 }
+                if (node.Name.Contains("etag") && System.Diagnostics.Debugger.IsAttached)
+                {
+                    System.Diagnostics.Debugger.Break();
+                } 
                 if (!node.Name.StartsWith("_"))
                 {
                     continue;
@@ -282,6 +286,27 @@ namespace MphRead
             return model;
         }
 
+        private static Model LoadDoor(DoorEntityData data)
+        {
+            //string modelName = Metadata.Doors[(int)data.ModelId];
+            //Model model = Read.GetModelByName(modelName);
+            Model model = Read.GetModelByName("SecretSwitch");
+            model.Position = data.Position.ToFloatVector();
+            model.Rotation = GetUnitRotation(data.Rotation);
+            model.Type = ModelType.Generic;
+            ComputeMatrices(model, index: 0);
+            return model;
+        }
+
+        private static Model LoadItemPlaceholder(Vector3Fx position)
+        {
+            Model model = Read.GetModelByName("pick_wpn_missile");
+            model.Position = new Vector3(position.X.FloatValue, position.Y.FloatValue, position.Z.FloatValue);
+            model.Type = ModelType.Placeholder;
+            ComputeMatrices(model, index: 0);
+            return model;
+        }
+
         private static Vector3 GetUnitRotation(Vector3Fx rotation)
         {
             var start = new Vector3(0, 0, 1);
@@ -299,25 +324,6 @@ namespace MphRead
             cross.Normalize();
             float angle = MathHelper.RadiansToDegrees(Vector3.CalculateAngle(start, end));
             return new Vector3(cross.X * angle, cross.Y * angle, cross.Z * angle);
-        }
-
-        private static Model LoadDoor(DoorEntityData data)
-        {
-            Model model = Read.GetModelByName("AlimbicThinDoor");
-            model.Position = data.Position.ToFloatVector();
-            model.Rotation = GetUnitRotation(data.Rotation);
-            model.Type = ModelType.Generic;
-            ComputeMatrices(model, index: 0);
-            return model;
-        }
-
-        private static Model LoadItemPlaceholder(Vector3Fx position)
-        {
-            Model model = Read.GetModelByName("pick_wpn_missile");
-            model.Position = new Vector3(position.X.FloatValue, position.Y.FloatValue, position.Z.FloatValue);
-            model.Type = ModelType.Placeholder;
-            ComputeMatrices(model, index: 0);
-            return model;
         }
     }
 }

@@ -162,7 +162,7 @@ namespace MphRead
                             if (entity.Type == EntityType.Door)
                             {
                                 DoorEntityData data = ((Entity<DoorEntityData>)entity).Data;
-                                Console.WriteLine($"{data.MaybeModelId1} {data.MaybeModelId2}");
+                                Console.WriteLine($"{data.ModelId} {data.SomeId}");
                             }
                         }
                     }

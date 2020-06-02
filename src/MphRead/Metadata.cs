@@ -3516,6 +3516,14 @@ namespace MphRead
                 }
             };
 
+        public static readonly IReadOnlyList<string> Doors = new List<string>()
+        {
+            /* 0 */ "AlimbicDoor",
+            /* 1 */ "AlimbicMorphBallDoor",
+            /* 2 */ "AlimbicBossDoor",
+            /* 3 */ "AlimbicThinDoor",
+        };
+
         public static readonly IReadOnlyList<string> JumpPads = new List<string>()
         {
             /* 0 */ "JumpPad",
