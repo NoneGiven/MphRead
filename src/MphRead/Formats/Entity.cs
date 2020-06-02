@@ -247,8 +247,8 @@ namespace MphRead
         public readonly uint Field28;
         public readonly uint Field2C;
         public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly uint Field38;
+        public readonly uint MaybeModelId1; // Field34
+        public readonly uint MaybeModelId2; // Field38
         public readonly uint Field3C;
         public readonly uint Field40;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]

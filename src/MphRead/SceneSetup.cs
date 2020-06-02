@@ -303,7 +303,7 @@ namespace MphRead
 
         private static Model LoadDoor(DoorEntityData data)
         {
-            Model model = Read.GetModelByName("SecretSwitch", _random.Next(6));
+            Model model = Read.GetModelByName("AlimbicThinDoor");
             model.Position = data.Position.ToFloatVector();
             model.Rotation = GetUnitRotation(data.Rotation);
             model.Type = ModelType.Generic;

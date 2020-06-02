@@ -12,8 +12,9 @@ namespace MphRead
             using var renderer = new Renderer();
             if (args.Length == 0)
             {
+                Test.TestAllRooms();
                 renderer.AddRoom("UNIT2_RM2");
-                renderer.AddModel("Crate01");
+                //renderer.AddModel("AlimbicThinDoor");
                 Nop();
             }
             else
