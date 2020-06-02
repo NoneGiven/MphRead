@@ -10,7 +10,13 @@ namespace MphRead
         private static void Main(string[] args)
         {
             using var renderer = new Renderer();
-            if (args.Length > 0)
+            if (args.Length == 0)
+            {
+                renderer.AddRoom("UNIT1_RM4");
+                renderer.AddModel("Crate01");
+                Nop();
+            }
+            else
             {
                 bool foundRoom = false;
                 bool foundModel = false;
@@ -48,12 +54,6 @@ namespace MphRead
                 {
                     Exit();
                 }
-            }
-            else
-            {
-                renderer.AddRoom("MP3 PROVING GROUND");
-                renderer.AddModel("Crate01");
-                Nop();
             }
             renderer.Run();
         }

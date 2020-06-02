@@ -4,7 +4,8 @@ namespace MphRead
     {
         Generic,
         Room,
-        Item
+        Item,
+        Placeholder
     }
 
     public enum PolygonMode : uint

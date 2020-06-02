@@ -174,9 +174,22 @@ namespace MphRead
             IReadOnlyList<Entity> entities = Read.GetEntities(metadata.EntityPath, metadata.LayerId);
             foreach (Entity entity in entities)
             {
-                if (entity.Type == EntityType.JumpPad)
+                if (entity.Type == EntityType.Platform)
                 {
-                    models.AddRange(LoadJumpPad(((Entity<JumpPadEntityData>)entity).Data));
+                    models.Add(LoadItemPlaceholder(((Entity<PlatformEntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.Object)
+                {
+                    models.Add(LoadItemPlaceholder(((Entity<ObjectEntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.Unknown2)
+                {
+                    models.Add(LoadItemPlaceholder(((Entity<Unknown2EntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.Door)
+                {
+                    // todo: should be able to figure out the param for fat vs. thin door
+                    models.Add(LoadItemPlaceholder(((Entity<DoorEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Item)
                 {
@@ -184,7 +197,54 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Pickup)
                 {
-                    // todo?: pickups? delayed items?
+                    models.Add(LoadItemPlaceholder(((Entity<PickupEntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.Unknown7)
+                {
+                    models.Add(LoadItemPlaceholder(((Entity<Unknown7EntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.Unknown8)
+                {
+                    models.Add(LoadItemPlaceholder(((Entity<Unknown8EntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.JumpPad)
+                {
+                    models.AddRange(LoadJumpPad(((Entity<JumpPadEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.Unknown11)
+                {
+                    models.Add(LoadItemPlaceholder(((Entity<Unknown11EntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.Unknown12)
+                {
+                    models.Add(LoadItemPlaceholder(((Entity<Unknown12EntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.Unknown13)
+                {
+                    models.Add(LoadItemPlaceholder(((Entity<Unknown13EntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.Teleporter)
+                {
+                    models.Add(LoadItemPlaceholder(((Entity<TeleporterEntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.Unknown15)
+                {
+                    models.Add(LoadItemPlaceholder(((Entity<Unknown15EntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.Unknown16)
+                {
+                    models.Add(LoadItemPlaceholder(((Entity<Unknown16EntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.Artifact)
+                {
+                    models.Add(LoadItemPlaceholder(((Entity<ArtifactEntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.CameraSeq)
+                {
+                }
+                else if (entity.Type == EntityType.ForceField)
+                {
+                    models.Add(LoadItemPlaceholder(((Entity<ForceFieldEntityData>)entity).Data.Position));
                 }
             }
             return models;
@@ -218,6 +278,15 @@ namespace MphRead
             );
             model.Rotation = new Vector3(0, _random.Next(0x8000) / (float)0x7FFF * 360, 0);
             model.Type = ModelType.Item;
+            ComputeMatrices(model, index: 0);
+            return model;
+        }
+
+        private static Model LoadItemPlaceholder(Vector3Fx position, string? modelName = null)
+        {
+            Model model = Read.GetModelByName(modelName ?? "pick_wpn_missile");
+            model.Position = new Vector3(position.X.FloatValue, position.Y.FloatValue, position.Z.FloatValue);
+            model.Type = modelName == null ? ModelType.Placeholder : ModelType.Generic;
             ComputeMatrices(model, index: 0);
             return model;
         }

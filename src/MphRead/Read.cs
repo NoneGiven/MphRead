@@ -389,11 +389,11 @@ namespace MphRead
                         entities.Add(new Entity<Unknown2EntityData>(entry, type, init.SomeId,
                             ReadStruct<Unknown2EntityData>(bytes[start..end])));
                     }
-                    else if (type == EntityType.AlimbicDoor)
+                    else if (type == EntityType.Door)
                     {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<AlimbicDoorEntityData>());
-                        entities.Add(new Entity<AlimbicDoorEntityData>(entry, type, init.SomeId,
-                            ReadStruct<AlimbicDoorEntityData>(bytes[start..end])));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<DoorEntityData>());
+                        entities.Add(new Entity<DoorEntityData>(entry, type, init.SomeId,
+                            ReadStruct<DoorEntityData>(bytes[start..end])));
                     }
                     else if (type == EntityType.Item)
                     {

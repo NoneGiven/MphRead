@@ -522,7 +522,7 @@ namespace MphRead
         Platform = 0,
         Object = 1,
         Unknown2 = 2,
-        AlimbicDoor = 3,
+        Door = 3,
         Item = 4,
         Pickup = 6,
         Unknown7 = 7,
