@@ -82,6 +82,7 @@ namespace MphRead
         private bool _faceCulling = true;
         private bool _textureFiltering = true;
         private bool _lighting = true;
+        private bool _showInvisible = false;
 
         private static readonly Color4 _clearColor = new Color4(0, 0, 0, 1);
         private static readonly float _frameTime = 1.0f / 30.0f;
@@ -206,6 +207,7 @@ namespace MphRead
             Console.WriteLine($" - B toggles face culling ({FormatOnOff(_faceCulling)})");
             Console.WriteLine($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})");
             Console.WriteLine($" - L toggles lighting ({FormatOnOff(_lighting)})");
+            Console.WriteLine($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})");
             Console.WriteLine($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
             Console.WriteLine(" - R resets the camera");
             Console.WriteLine(" - Ctrl+O then enter \"model_name [recolor]\" to load");
@@ -440,6 +442,10 @@ namespace MphRead
             _models.Sort(CompareModels);
             foreach (Model model in _models)
             {
+                if (model.Type == ModelType.Placeholder && !_showInvisible)
+                {
+                    continue;
+                }
                 ProcessAnimations(model, elapsedTime);
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.PushMatrix();
@@ -1063,6 +1069,11 @@ namespace MphRead
             else if (e.Key == Key.L)
             {
                 _lighting = !_lighting;
+                PrintMenu();
+            }
+            else if (e.Key == Key.I)
+            {
+                _showInvisible = !_showInvisible;
                 PrintMenu();
             }
             else if (e.Key == Key.R)
