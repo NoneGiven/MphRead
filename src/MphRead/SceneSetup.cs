@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.ComTypes;
 using OpenToolkit.Mathematics;
 
 namespace MphRead
@@ -281,11 +282,20 @@ namespace MphRead
             return model;
         }
 
+        //   0,      1,     2,      3,    4,      5
+        // red, yellow, green, orange, blue, purple
+        private static int _i = -1;
+        private static readonly List<string> _col = new List<string>() { "red", "yellow", "green", "orange", "blue", "purple" };
+
         private static Model LoadDoor(DoorEntityData data)
         {
-            Model model = Read.GetModelByName("pick_wpn_missile");
+            if (++_i >= 6)
+            {
+                System.Diagnostics.Debugger.Break();
+            }
+            Model model = Read.GetModelByName("SecretSwitch", _i);
             model.Position = new Vector3(data.Position.X.FloatValue, data.Position.Y.FloatValue, data.Position.Z.FloatValue);
-            //float rotation = data.Field20.FloatValue;
+            float rotation = data.Field20.FloatValue;
             //if (rotation >= 1)
             //{
             //    rotation = (rotation - 1) * 180;
@@ -293,8 +303,9 @@ namespace MphRead
             //else
             //{
             //    rotation = rotation * 180 + 360;
-            //} 
+            //}
             //model.Rotation = new Vector3(0, rotation, 0);
+            Console.WriteLine($"door {_i} ({_col[_i]}): {rotation}");
             model.Type = ModelType.Generic;
             ComputeMatrices(model, index: 0);
             return model;

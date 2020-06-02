@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Mathematics;
 using OpenToolkit.Windowing.Common;
@@ -162,18 +164,18 @@ namespace MphRead
 
         private void InitShaders()
         {
-            int vtxS = GL.CreateShader(ShaderType.VertexShader);
-            GL.ShaderSource(vtxS, Shaders.VertexShader);
-            GL.CompileShader(vtxS);
-            int frgS = GL.CreateShader(ShaderType.FragmentShader);
-            GL.ShaderSource(frgS, Shaders.FragmentShader);
-            GL.CompileShader(frgS);
+            int vertexShader = GL.CreateShader(ShaderType.VertexShader);
+            GL.ShaderSource(vertexShader, Shaders.VertexShader);
+            GL.CompileShader(vertexShader);
+            int fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
+            GL.ShaderSource(fragmentShader, Shaders.FragmentShader);
+            GL.CompileShader(fragmentShader);
             _shaderProgramId = GL.CreateProgram();
-            GL.AttachShader(_shaderProgramId, vtxS);
-            GL.AttachShader(_shaderProgramId, frgS);
+            GL.AttachShader(_shaderProgramId, vertexShader);
+            GL.AttachShader(_shaderProgramId, fragmentShader);
             GL.LinkProgram(_shaderProgramId);
-            GL.DetachShader(_shaderProgramId, vtxS);
-            GL.DetachShader(_shaderProgramId, frgS);
+            GL.DetachShader(_shaderProgramId, vertexShader);
+            GL.DetachShader(_shaderProgramId, fragmentShader);
 
             _shaderLocations.IsBillboard = GL.GetUniformLocation(_shaderProgramId, "is_billboard");
             _shaderLocations.UseLight = GL.GetUniformLocation(_shaderProgramId, "use_light");
@@ -187,32 +189,39 @@ namespace MphRead
             _shaderLocations.Specular = GL.GetUniformLocation(_shaderProgramId, "specular");
         }
 
+        private static readonly SemaphoreSlim _consoleLock = new SemaphoreSlim(1, 1);
+
         private void PrintMenu()
         {
-            Console.Clear();
-            Console.WriteLine($"MphRead Version {Program.Version}");
-            if (_cameraMode == CameraMode.Pivot)
+            Task.Run(async () =>
             {
-                Console.WriteLine(" - Scroll mouse wheel to zoom");
-            }
-            else if (_cameraMode == CameraMode.Roam)
-            {
-                Console.WriteLine(" - Use WASD, Space, and V to move");
-            }
-            Console.WriteLine(" - Hold left mouse button or use arrow keys to rotate");
-            Console.WriteLine(" - Hold Shift to move the camera faster");
-            Console.WriteLine($" - T toggles texturing ({FormatOnOff(_showTextures)})");
-            Console.WriteLine($" - C toggles vertex colours ({FormatOnOff(_showColors)})");
-            Console.WriteLine($" - Q toggles wireframe ({FormatOnOff(_wireframe)})");
-            Console.WriteLine($" - B toggles face culling ({FormatOnOff(_faceCulling)})");
-            Console.WriteLine($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})");
-            Console.WriteLine($" - L toggles lighting ({FormatOnOff(_lighting)})");
-            Console.WriteLine($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})");
-            Console.WriteLine($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
-            Console.WriteLine(" - R resets the camera");
-            Console.WriteLine(" - Ctrl+O then enter \"model_name [recolor]\" to load");
-            Console.WriteLine(" - Esc closes the viewer");
-            Console.WriteLine();
+                await _consoleLock.WaitAsync();
+                Console.Clear();
+                Console.WriteLine($"MphRead Version {Program.Version}");
+                if (_cameraMode == CameraMode.Pivot)
+                {
+                    Console.WriteLine(" - Scroll mouse wheel to zoom");
+                }
+                else if (_cameraMode == CameraMode.Roam)
+                {
+                    Console.WriteLine(" - Use WASD, Space, and V to move");
+                }
+                Console.WriteLine(" - Hold left mouse button or use arrow keys to rotate");
+                Console.WriteLine(" - Hold Shift to move the camera faster");
+                Console.WriteLine($" - T toggles texturing ({FormatOnOff(_showTextures)})");
+                Console.WriteLine($" - C toggles vertex colours ({FormatOnOff(_showColors)})");
+                Console.WriteLine($" - Q toggles wireframe ({FormatOnOff(_wireframe)})");
+                Console.WriteLine($" - B toggles face culling ({FormatOnOff(_faceCulling)})");
+                Console.WriteLine($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})");
+                Console.WriteLine($" - L toggles lighting ({FormatOnOff(_lighting)})");
+                Console.WriteLine($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})");
+                Console.WriteLine($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
+                Console.WriteLine(" - R resets the camera");
+                Console.WriteLine(" - Ctrl+O then enter \"model_name [recolor]\" to load");
+                Console.WriteLine(" - Esc closes the viewer");
+                Console.WriteLine();
+                _consoleLock.Release();
+            });
         }
 
         private string FormatOnOff(bool setting)
