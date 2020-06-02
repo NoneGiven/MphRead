@@ -244,7 +244,7 @@ namespace MphRead
         public readonly uint Field14;
         public readonly uint Field18;
         public readonly uint Field1C;
-        public readonly Fixed Field20;
+        public readonly Fixed Field20; // computes rotation somehow?
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -253,14 +253,8 @@ namespace MphRead
         public readonly uint Field38;
         public readonly uint Field3C;
         public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
-        public readonly uint Field58;
-        public readonly uint Field5C;
-        public readonly uint Field60;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public readonly string Name;
     }
 
     // size: 72

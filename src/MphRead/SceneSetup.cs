@@ -283,9 +283,18 @@ namespace MphRead
 
         private static Model LoadDoor(DoorEntityData data)
         {
-            Model model = Read.GetModelByName("SecretSwitch");
+            Model model = Read.GetModelByName("pick_wpn_missile");
             model.Position = new Vector3(data.Position.X.FloatValue, data.Position.Y.FloatValue, data.Position.Z.FloatValue);
-            model.Rotation = new Vector3(0, data.Field20.FloatValue * 2.0f * MathF.PI, 0);
+            //float rotation = data.Field20.FloatValue;
+            //if (rotation >= 1)
+            //{
+            //    rotation = (rotation - 1) * 180;
+            //}
+            //else
+            //{
+            //    rotation = rotation * 180 + 360;
+            //} 
+            //model.Rotation = new Vector3(0, rotation, 0);
             model.Type = ModelType.Generic;
             ComputeMatrices(model, index: 0);
             return model;
