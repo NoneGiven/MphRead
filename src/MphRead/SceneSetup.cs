@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.ComTypes;
 using OpenToolkit.Mathematics;
 
 namespace MphRead
@@ -283,30 +282,30 @@ namespace MphRead
             return model;
         }
 
-        //   0,      1,     2,      3,    4,      5
-        // red, yellow, green, orange, blue, purple
-        private static int _i = -1;
-        private static readonly List<string> _col = new List<string>() { "red", "yellow", "green", "orange", "blue", "purple" };
+        private static Vector3 GetUnitRotation(Vector3Fx rotation)
+        {
+            var start = new Vector3(0, 0, 1);
+            Vector3 end = rotation.ToFloatVector();
+            if (start == end)
+            {
+                return start;
+            }
+            var cross = Vector3.Cross(start, end);
+            // if the vector is antiparallel to the default, just rotate 180 in Y
+            if (cross.Length == 0)
+            {
+                return new Vector3(0, -180, 0);
+            }
+            cross.Normalize();
+            float angle = MathHelper.RadiansToDegrees(Vector3.CalculateAngle(start, end));
+            return new Vector3(cross.X * angle, cross.Y * angle, cross.Z * angle);
+        }
 
         private static Model LoadDoor(DoorEntityData data)
         {
-            if (++_i >= 6)
-            {
-                System.Diagnostics.Debugger.Break();
-            }
-            Model model = Read.GetModelByName("SecretSwitch", _i);
-            model.Position = new Vector3(data.Position.X.FloatValue, data.Position.Y.FloatValue, data.Position.Z.FloatValue);
-            float rotation = data.Field20.FloatValue;
-            //if (rotation >= 1)
-            //{
-            //    rotation = (rotation - 1) * 180;
-            //}
-            //else
-            //{
-            //    rotation = rotation * 180 + 360;
-            //}
-            //model.Rotation = new Vector3(0, rotation, 0);
-            Console.WriteLine($"door {_i} ({_col[_i]}): {rotation}");
+            Model model = Read.GetModelByName("SecretSwitch", _random.Next(6));
+            model.Position = data.Position.ToFloatVector();
+            model.Rotation = GetUnitRotation(data.Rotation);
             model.Type = ModelType.Generic;
             ComputeMatrices(model, index: 0);
             return model;

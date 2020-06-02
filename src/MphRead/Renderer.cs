@@ -193,6 +193,7 @@ namespace MphRead
 
         private void PrintMenu()
         {
+            return;
             Task.Run(async () =>
             {
                 await _consoleLock.WaitAsync();

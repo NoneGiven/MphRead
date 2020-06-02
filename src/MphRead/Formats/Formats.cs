@@ -379,16 +379,16 @@ namespace MphRead
     public class Material
     {
         public string Name { get; }
-        public byte Lighting { get; } // todo: probably a bool
+        public byte Lighting { get; set; } // todo: probably a bool
         public CullingMode Culling { get; }
         public byte Alpha { get; }
         public int PaletteId { get; }
         public int TextureId { get; }
         public RepeatMode XRepeat { get; }
         public RepeatMode YRepeat { get; }
-        public readonly ColorRgb Diffuse;
-        public readonly ColorRgb Ambient;
-        public readonly ColorRgb Specular;
+        public ColorRgb Diffuse { get; }
+        public ColorRgb Ambient { get; set; } // temporary
+        public ColorRgb Specular { get; }
         public PolygonMode PolygonMode { get; set; }
         public RenderMode RenderMode { get; set; }
         public int TexcoordAnimationId { get; set; }

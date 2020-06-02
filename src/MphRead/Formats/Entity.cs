@@ -242,9 +242,7 @@ namespace MphRead
         public readonly uint Field0C;
         public readonly uint Field10;
         public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly Fixed Field20; // computes rotation somehow?
+        public readonly Vector3Fx Rotation;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
