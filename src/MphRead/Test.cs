@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 
 namespace MphRead
 {
@@ -147,6 +148,13 @@ namespace MphRead
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
+                if (meta.Value.EntityPath != null)
+                {
+                    for (int i = 0; i < 16; i++)
+                    {
+                        Read.GetEntities(meta.Value.EntityPath, i);
+                    }
+                }
             }
         }
 

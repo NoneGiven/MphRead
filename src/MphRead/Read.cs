@@ -371,15 +371,113 @@ namespace MphRead
                     EntityDataHeader init = ReadStruct<EntityDataHeader>(bytes[start..end]);
                     var type = (EntityType)init.Type;
                     end = start + entry.Length;
-                    if (type == EntityType.JumpPad)
+                    if (type == EntityType.Platform)
                     {
-                        JumpPadEntityData data = ReadStruct<JumpPadEntityData>(bytes[start..end]);
-                        entities.Add(new Entity<JumpPadEntityData>(entry, type, init.SomeId, data));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<PlatformEntityData>());
+                        entities.Add(new Entity<PlatformEntityData>(entry, type, init.SomeId,
+                            ReadStruct<PlatformEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Object)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<ObjectEntityData>());
+                        entities.Add(new Entity<ObjectEntityData>(entry, type, init.SomeId,
+                            ReadStruct<ObjectEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Unknown2)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown2EntityData>());
+                        entities.Add(new Entity<Unknown2EntityData>(entry, type, init.SomeId,
+                            ReadStruct<Unknown2EntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.AlimbicDoor)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<AlimbicDoorEntityData>());
+                        entities.Add(new Entity<AlimbicDoorEntityData>(entry, type, init.SomeId,
+                            ReadStruct<AlimbicDoorEntityData>(bytes[start..end])));
                     }
                     else if (type == EntityType.Item)
                     {
-                        ItemEntityData data = ReadStruct<ItemEntityData>(bytes[start..end]);
-                        entities.Add(new Entity<ItemEntityData>(entry, type, init.SomeId, data));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<ItemEntityData>());
+                        entities.Add(new Entity<ItemEntityData>(entry, type, init.SomeId,
+                            ReadStruct<ItemEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Pickup)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<PickupEntityData>());
+                        entities.Add(new Entity<PickupEntityData>(entry, type, init.SomeId,
+                            ReadStruct<PickupEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Unknown7)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown7EntityData>());
+                        entities.Add(new Entity<Unknown7EntityData>(entry, type, init.SomeId,
+                            ReadStruct<Unknown7EntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Unknown8)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown8EntityData>());
+                        entities.Add(new Entity<Unknown8EntityData>(entry, type, init.SomeId,
+                            ReadStruct<Unknown8EntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.JumpPad)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<JumpPadEntityData>());
+                        entities.Add(new Entity<JumpPadEntityData>(entry, type, init.SomeId,
+                            ReadStruct<JumpPadEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Unknown11)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown11EntityData>());
+                        entities.Add(new Entity<Unknown11EntityData>(entry, type, init.SomeId,
+                            ReadStruct<Unknown11EntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Unknown12)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown12EntityData>());
+                        entities.Add(new Entity<Unknown12EntityData>(entry, type, init.SomeId,
+                            ReadStruct<Unknown12EntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Unknown13)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown13EntityData>());
+                        entities.Add(new Entity<Unknown13EntityData>(entry, type, init.SomeId,
+                            ReadStruct<Unknown13EntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Teleporter)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<TeleporterEntityData>());
+                        entities.Add(new Entity<TeleporterEntityData>(entry, type, init.SomeId,
+                            ReadStruct<TeleporterEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Unknown15)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown15EntityData>());
+                        entities.Add(new Entity<Unknown15EntityData>(entry, type, init.SomeId,
+                            ReadStruct<Unknown15EntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Unknown16)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown16EntityData>());
+                        entities.Add(new Entity<Unknown16EntityData>(entry, type, init.SomeId,
+                            ReadStruct<Unknown16EntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Artifact)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<ArtifactEntityData>());
+                        entities.Add(new Entity<ArtifactEntityData>(entry, type, init.SomeId,
+                            ReadStruct<ArtifactEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.CameraSeq)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<CameraSeqEntityData>());
+                        entities.Add(new Entity<CameraSeqEntityData>(entry, type, init.SomeId,
+                            ReadStruct<CameraSeqEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.ForceField)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<ForceFieldEntityData>());
+                        entities.Add(new Entity<ForceFieldEntityData>(entry, type, init.SomeId,
+                            ReadStruct<ForceFieldEntityData>(bytes[start..end])));
                     }
                     else
                     {
