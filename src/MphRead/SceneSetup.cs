@@ -263,6 +263,7 @@ namespace MphRead
             model2.Position = new Vector3(model1.Position.X, model1.Position.Y + 0.2f, model1.Position.Z);
             model2.Rotation = new Vector3(-90, 0, 0);
             ComputeMatrices(model2, index: 0);
+            model2.ForceApplyTransform = true;
             list.Add(model2);
             return list;
         }

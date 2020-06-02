@@ -563,7 +563,7 @@ namespace MphRead
             {
                 // temporary -- applying transforms on models which have node animation breaks them,
                 // presumably because information needs to come from the animation which we aren't loading yet
-                if (model.NodeAnimationGroups.Count == 0)
+                if (model.NodeAnimationGroups.Count == 0 || model.ForceApplyTransform)
                 {
                     GL.MatrixMode(MatrixMode.Modelview);
                     GL.PushMatrix();
@@ -584,7 +584,7 @@ namespace MphRead
                     GL.Uniform1(_shaderLocations.IsBillboard, node.Type == 1 ? 1 : 0);
                     RenderMesh(model, mesh, material);
                 }
-                if (model.NodeAnimationGroups.Count == 0)
+                if (model.NodeAnimationGroups.Count == 0 || model.ForceApplyTransform)
                 {
                     GL.MatrixMode(MatrixMode.Modelview);
                     GL.PopMatrix();
