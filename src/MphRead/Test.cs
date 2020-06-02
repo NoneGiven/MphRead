@@ -149,11 +149,21 @@ namespace MphRead
             {
                 if (meta.Value.EntityPath != null)
                 {
+                    Console.WriteLine();
                     for (int i = 0; i < 16; i++)
                     {
-                        foreach (Entity entity in Read.GetEntities(meta.Value.EntityPath, i))
+                        IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, i);
+                        if (entities.Any(e => e.Type == EntityType.Door))
                         {
-
+                            Console.WriteLine($"{meta.Key} {i}");
+                        }
+                        foreach (Entity entity in entities)
+                        {
+                            if (entity.Type == EntityType.Door)
+                            {
+                                DoorEntityData data = ((Entity<DoorEntityData>)entity).Data;
+                                Console.WriteLine($"{data.MaybeModelId1} {data.MaybeModelId2}");
+                            }
                         }
                     }
                 }
