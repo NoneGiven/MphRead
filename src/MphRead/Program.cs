@@ -51,7 +51,6 @@ namespace MphRead
             }
             else
             {
-                Test.TestAllRooms();
                 renderer.AddRoom("MP3 PROVING GROUND");
                 renderer.AddModel("Crate01");
                 Nop();
