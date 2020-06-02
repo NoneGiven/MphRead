@@ -209,6 +209,22 @@ namespace MphRead
             {
                 textureGroupOffsets.Add(SpanReadUint(bytes, (int)header.TextureGroupOffset + i * sizeof(uint)));
             }
+            foreach (uint offset in nodeGroupOffsets)
+            {
+                if (offset == 0)
+                {
+                    continue;
+                }
+                results.NodeAnimationGroups.Add(DoOffset<NodeAnimationGroup>(bytes, offset));
+            }
+            foreach (uint offset in materialGroupOffsets)
+            {
+                if (offset == 0)
+                {
+                    continue;
+                }
+                results.MaterialAnimationGroups.Add(DoOffset<MaterialAnimationGroup>(bytes, offset));
+            }
             foreach (uint offset in texcoordGroupOffsets)
             {
                 if (offset == 0)
@@ -241,6 +257,14 @@ namespace MphRead
                 }
                 var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, maxTranslation).Select(f => f.FloatValue).ToList();
                 results.TexcoordAnimationGroups.Add(new TexcoordAnimationGroup(rawGroup, scales, rotations, translations, animations));
+            }
+            foreach (uint offset in textureGroupOffsets)
+            {
+                if (offset == 0)
+                {
+                    continue;
+                }
+                results.TextureAnimationGroups.Add(DoOffset<TextureAnimationGroup>(bytes, offset));
             }
             return results;
         }

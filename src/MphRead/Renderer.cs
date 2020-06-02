@@ -552,10 +552,15 @@ namespace MphRead
         {
             if (node.MeshCount > 0 && node.Enabled)
             {
-                GL.MatrixMode(MatrixMode.Modelview);
-                GL.PushMatrix();
-                Matrix4 transform = node.Transform;
-                GL.MultTransposeMatrix(ref transform);
+                // temporary -- applying transforms on models which have node animation breaks them,
+                // presumably because information needs to come from the animation which we aren't loading yet
+                if (model.NodeAnimationGroups.Count == 0)
+                {
+                    GL.MatrixMode(MatrixMode.Modelview);
+                    GL.PushMatrix();
+                    Matrix4 transform = node.Transform;
+                    GL.MultTransposeMatrix(ref transform);
+                }
                 int meshStart = node.MeshId / 2;
                 for (int i = 0; i < node.MeshCount; i++)
                 {
@@ -570,8 +575,11 @@ namespace MphRead
                     GL.Uniform1(_shaderLocations.IsBillboard, node.Type == 1 ? 1 : 0);
                     RenderMesh(model, mesh, material);
                 }
-                GL.MatrixMode(MatrixMode.Modelview);
-                GL.PopMatrix();
+                if (model.NodeAnimationGroups.Count == 0)
+                {
+                    GL.MatrixMode(MatrixMode.Modelview);
+                    GL.PopMatrix();
+                }
             }
         }
 
