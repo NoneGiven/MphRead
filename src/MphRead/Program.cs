@@ -13,7 +13,7 @@ namespace MphRead
             if (args.Length == 0)
             {
                 renderer.AddRoom("Gorea_Land");
-                //renderer.AddModel("Crate01");
+                renderer.AddModel("Crate01");
                 Nop();
             }
             else
