@@ -244,7 +244,7 @@ namespace MphRead
         public readonly uint Field14;
         public readonly uint Field18;
         public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Fixed Field20;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;

@@ -188,8 +188,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Door)
                 {
-                    // todo: should be able to figure out the param for fat vs. thin door
-                    models.Add(LoadItemPlaceholder(((Entity<DoorEntityData>)entity).Data.Position));
+                    models.Add(LoadDoor(((Entity<DoorEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.Item)
                 {
@@ -282,11 +281,21 @@ namespace MphRead
             return model;
         }
 
-        private static Model LoadItemPlaceholder(Vector3Fx position, string? modelName = null)
+        private static Model LoadDoor(DoorEntityData data)
         {
-            Model model = Read.GetModelByName(modelName ?? "pick_wpn_missile");
+            Model model = Read.GetModelByName("SecretSwitch");
+            model.Position = new Vector3(data.Position.X.FloatValue, data.Position.Y.FloatValue, data.Position.Z.FloatValue);
+            model.Rotation = new Vector3(0, data.Field20.FloatValue * 2.0f * MathF.PI, 0);
+            model.Type = ModelType.Generic;
+            ComputeMatrices(model, index: 0);
+            return model;
+        }
+
+        private static Model LoadItemPlaceholder(Vector3Fx position)
+        {
+            Model model = Read.GetModelByName("pick_wpn_missile");
             model.Position = new Vector3(position.X.FloatValue, position.Y.FloatValue, position.Z.FloatValue);
-            model.Type = modelName == null ? ModelType.Placeholder : ModelType.Generic;
+            model.Type = ModelType.Placeholder;
             ComputeMatrices(model, index: 0);
             return model;
         }

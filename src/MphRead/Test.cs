@@ -151,7 +151,7 @@ namespace MphRead
                 {
                     for (int i = 0; i < 16; i++)
                     {
-                        Read.GetEntities(meta.Value.EntityPath, i);
+                        IReadOnlyList<Entity>? entities = Read.GetEntities(meta.Value.EntityPath, i);
                     }
                 }
             }
