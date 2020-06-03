@@ -9,7 +9,7 @@ namespace MphRead
         PlayerSpawn = 2,
         Door = 3,
         Item = 4,
-        Unknown6 = 6, // not 
+        Spawner = 6,
         Unknown7 = 7,
         Unknown8 = 8,
         JumpPad = 9,
@@ -18,7 +18,7 @@ namespace MphRead
         Unknown13 = 13,
         Teleporter = 14,
         Unknown15 = 15,
-        Unknown16 = 16, // room visibility trigger?
+        Unknown16 = 16,
         Artifact = 17,
         CameraSeq = 18,
         ForceField = 19

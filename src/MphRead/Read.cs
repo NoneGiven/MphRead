@@ -425,11 +425,11 @@ namespace MphRead
                         entities.Add(new Entity<ItemEntityData>(entry, type, init.SomeId,
                             ReadStruct<ItemEntityData>(bytes[start..end])));
                     }
-                    else if (type == EntityType.Unknown6)
+                    else if (type == EntityType.Spawner)
                     {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown6EntityData>());
-                        entities.Add(new Entity<Unknown6EntityData>(entry, type, init.SomeId,
-                            ReadStruct<Unknown6EntityData>(bytes[start..end])));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<SpawnerEntityData>());
+                        entities.Add(new Entity<SpawnerEntityData>(entry, type, init.SomeId,
+                            ReadStruct<SpawnerEntityData>(bytes[start..end])));
                     }
                     else if (type == EntityType.Unknown7)
                     {

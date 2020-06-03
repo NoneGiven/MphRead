@@ -12,7 +12,7 @@ namespace MphRead
             using var renderer = new Renderer();
             if (args.Length == 0)
             {
-                renderer.AddRoom(28);
+                renderer.AddRoom(55);
                 //renderer.AddModel("Crate01");
                 Nop();
             }

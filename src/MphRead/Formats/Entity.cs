@@ -299,7 +299,7 @@ namespace MphRead
     }
 
     // size: 512
-    public readonly struct Unknown6EntityData
+    public readonly struct SpawnerEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;

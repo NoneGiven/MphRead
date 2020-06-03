@@ -194,9 +194,9 @@ namespace MphRead
                 {
                     models.Add(LoadItem(((Entity<ItemEntityData>)entity).Data));
                 }
-                else if (entity.Type == EntityType.Unknown6)
+                else if (entity.Type == EntityType.Spawner)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown6EntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<SpawnerEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Unknown7)
                 {
@@ -299,7 +299,7 @@ namespace MphRead
             { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) },
             { EntityType.Object, new ColorRgb(0x22, 0x8B, 0x22) },
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
-            { EntityType.Unknown6, new ColorRgb(0x00, 0x00, 0x8B) },
+            { EntityType.Spawner, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.Unknown7, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.Unknown8, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.CameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
@@ -320,6 +320,12 @@ namespace MphRead
                 {
                     material.OverrideColor = _colorOverrides[type];
                 }
+            }
+            if (System.Diagnostics.Debugger.IsAttached &&
+                (type == EntityType.Unknown12 || type == EntityType.Unknown13
+                || type == EntityType.Unknown15 || type == EntityType.CameraSeq))
+            {
+                System.Diagnostics.Debugger.Break();
             }
             model.Position = new Vector3(position.X.FloatValue, position.Y.FloatValue, position.Z.FloatValue);
             model.Type = ModelType.Placeholder;
