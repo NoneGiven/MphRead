@@ -53,14 +53,10 @@ namespace MphRead
             foreach (Node node in model.Nodes)
             {
                 // todo: there's probably some node or mesh property that hides these things
-                if (node.Name.StartsWith("etagDoor") || node.Name == "etagGorea")
+                if (node.Name.Contains("etag"))
                 {
                     node.Enabled = false;
                     continue;
-                }
-                if (node.Name.Contains("etag") && System.Diagnostics.Debugger.IsAttached)
-                {
-                    System.Diagnostics.Debugger.Break();
                 } 
                 if (!node.Name.StartsWith("_"))
                 {
@@ -180,15 +176,15 @@ namespace MphRead
             {
                 if (entity.Type == EntityType.Platform)
                 {
-                    models.Add(LoadItemPlaceholder(((Entity<PlatformEntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<PlatformEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Object)
                 {
-                    models.Add(LoadItemPlaceholder(((Entity<ObjectEntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<ObjectEntityData>)entity).Data.Position));
                 }
-                else if (entity.Type == EntityType.Unknown2)
+                else if (entity.Type == EntityType.PlayerSpawn)
                 {
-                    models.Add(LoadItemPlaceholder(((Entity<Unknown2EntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<PlayerSpawnEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Door)
                 {
@@ -198,56 +194,56 @@ namespace MphRead
                 {
                     models.Add(LoadItem(((Entity<ItemEntityData>)entity).Data));
                 }
-                else if (entity.Type == EntityType.Pickup)
+                else if (entity.Type == EntityType.Unknown6)
                 {
-                    models.Add(LoadItemPlaceholder(((Entity<PickupEntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown6EntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Unknown7)
                 {
-                    models.Add(LoadItemPlaceholder(((Entity<Unknown7EntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown7EntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Unknown8)
                 {
-                    models.Add(LoadItemPlaceholder(((Entity<Unknown8EntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown8EntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.JumpPad)
                 {
                     models.AddRange(LoadJumpPad(((Entity<JumpPadEntityData>)entity).Data));
                 }
-                else if (entity.Type == EntityType.Unknown11)
+                else if (entity.Type == EntityType.CameraPos)
                 {
-                    models.Add(LoadItemPlaceholder(((Entity<Unknown11EntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<SpectatorCamEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Unknown12)
                 {
-                    models.Add(LoadItemPlaceholder(((Entity<Unknown12EntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown12EntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Unknown13)
                 {
-                    models.Add(LoadItemPlaceholder(((Entity<Unknown13EntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown13EntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Teleporter)
                 {
-                    models.Add(LoadItemPlaceholder(((Entity<TeleporterEntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<TeleporterEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Unknown15)
                 {
-                    models.Add(LoadItemPlaceholder(((Entity<Unknown15EntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown15EntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Unknown16)
                 {
-                    models.Add(LoadItemPlaceholder(((Entity<Unknown16EntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown16EntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Artifact)
                 {
-                    models.Add(LoadItemPlaceholder(((Entity<ArtifactEntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<ArtifactEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.CameraSeq)
                 {
                 }
                 else if (entity.Type == EntityType.ForceField)
                 {
-                    models.Add(LoadItemPlaceholder(((Entity<ForceFieldEntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<ForceFieldEntityData>)entity).Data.Position));
                 }
             }
             return models;
@@ -298,9 +294,33 @@ namespace MphRead
             return model;
         }
 
-        private static Model LoadItemPlaceholder(Vector3Fx position)
+        private static readonly Dictionary<EntityType, ColorRgb> _colorOverrides = new Dictionary<EntityType, ColorRgb>()
         {
+            { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) },
+            { EntityType.Object, new ColorRgb(0x22, 0x8B, 0x22) },
+            { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
+            { EntityType.Unknown6, new ColorRgb(0x00, 0x00, 0x8B) },
+            { EntityType.Unknown7, new ColorRgb(0xFF, 0x8C, 0x00) },
+            { EntityType.Unknown8, new ColorRgb(0xFF, 0xFF, 0x00) },
+            { EntityType.CameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
+            { EntityType.Unknown12, new ColorRgb(0x00, 0xFF, 0xFF) },
+            { EntityType.Unknown13, new ColorRgb(0xFF, 0x00, 0xFF) },
+            { EntityType.Unknown15, new ColorRgb(0x1E, 0x90, 0xFF) },
+            { EntityType.Unknown16, new ColorRgb(0xFF, 0xDE, 0xAD) },
+            { EntityType.CameraSeq, new ColorRgb(0xFF, 0x69, 0xB4) }
+        };
+        
+        private static Model LoadEntityPlaceholder(EntityType type, Vector3Fx position)
+        {
+            Console.WriteLine($"- {type}");
             Model model = Read.GetModelByName("pick_wpn_missile");
+            if (_colorOverrides.ContainsKey(type))
+            {
+                foreach (Material material in model.Materials)
+                {
+                    material.OverrideColor = _colorOverrides[type];
+                }
+            }
             model.Position = new Vector3(position.X.FloatValue, position.Y.FloatValue, position.Z.FloatValue);
             model.Type = ModelType.Placeholder;
             ComputeMatrices(model, index: 0);

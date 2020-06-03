@@ -28,6 +28,11 @@ namespace MphRead
             _window = new RenderWindow(settings, native);
         }
 
+        public void AddRoom(int id, int layerMask = 0)
+        {
+            _window.AddRoom(id, layerMask);
+        }
+        
         public void AddRoom(string name, int layerMask = 0)
         {
             _window.AddRoom(name, layerMask);
@@ -100,6 +105,15 @@ namespace MphRead
         public RenderWindow(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
             : base(gameWindowSettings, nativeWindowSettings)
         {
+        }
+
+        public void AddRoom(int id, int layerMask)
+        {
+            RoomMetadata? meta = Metadata.GetRoomById(id);
+            if (meta != null)
+            {
+                AddRoom(meta.Name, layerMask);
+            }
         }
 
         public void AddRoom(string name, int layerMask)
@@ -252,9 +266,9 @@ namespace MphRead
                 bool onlyOpaque = true;
                 foreach (ColorRgba pixel in model.GetPixels(material.TextureId, material.PaletteId))
                 {
-                    uint red = pixel.Red;
-                    uint green = pixel.Green;
-                    uint blue = pixel.Blue;
+                    uint red = material.OverrideColor?.Red ?? pixel.Red;
+                    uint green = material.OverrideColor?.Green ?? pixel.Green;
+                    uint blue = material.OverrideColor?.Blue ?? pixel.Blue;
                     uint alpha = (uint)((decal ? 255 : pixel.Alpha) * material.Alpha / 31.0f);
                     pixels.Add((red << 0) | (green << 8) | (blue << 16) | (alpha << 24));
                     if (alpha < 255)
@@ -342,7 +356,7 @@ namespace MphRead
 
             GL.MatrixMode(MatrixMode.Projection);
             float fov = MathHelper.DegreesToRadians(80.0f);
-            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.02f, 100.0f);
+            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.02f, 10000.0f);
             GL.LoadMatrix(ref perspectiveMatrix);
 
             TransformCamera();

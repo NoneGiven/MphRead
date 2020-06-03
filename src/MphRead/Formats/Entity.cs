@@ -220,7 +220,7 @@ namespace MphRead
 
     // size: 43
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public readonly struct Unknown2EntityData
+    public readonly struct PlayerSpawnEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
@@ -299,7 +299,7 @@ namespace MphRead
     }
 
     // size: 512
-    public readonly struct PickupEntityData
+    public readonly struct Unknown6EntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
@@ -551,7 +551,7 @@ namespace MphRead
     }
 
     // size: 104
-    public readonly struct Unknown11EntityData
+    public readonly struct SpectatorCamEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;

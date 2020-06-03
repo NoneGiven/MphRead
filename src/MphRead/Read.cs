@@ -407,11 +407,11 @@ namespace MphRead
                         entities.Add(new Entity<ObjectEntityData>(entry, type, init.SomeId,
                             ReadStruct<ObjectEntityData>(bytes[start..end])));
                     }
-                    else if (type == EntityType.Unknown2)
+                    else if (type == EntityType.PlayerSpawn)
                     {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown2EntityData>());
-                        entities.Add(new Entity<Unknown2EntityData>(entry, type, init.SomeId,
-                            ReadStruct<Unknown2EntityData>(bytes[start..end])));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<PlayerSpawnEntityData>());
+                        entities.Add(new Entity<PlayerSpawnEntityData>(entry, type, init.SomeId,
+                            ReadStruct<PlayerSpawnEntityData>(bytes[start..end])));
                     }
                     else if (type == EntityType.Door)
                     {
@@ -425,11 +425,11 @@ namespace MphRead
                         entities.Add(new Entity<ItemEntityData>(entry, type, init.SomeId,
                             ReadStruct<ItemEntityData>(bytes[start..end])));
                     }
-                    else if (type == EntityType.Pickup)
+                    else if (type == EntityType.Unknown6)
                     {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<PickupEntityData>());
-                        entities.Add(new Entity<PickupEntityData>(entry, type, init.SomeId,
-                            ReadStruct<PickupEntityData>(bytes[start..end])));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown6EntityData>());
+                        entities.Add(new Entity<Unknown6EntityData>(entry, type, init.SomeId,
+                            ReadStruct<Unknown6EntityData>(bytes[start..end])));
                     }
                     else if (type == EntityType.Unknown7)
                     {
@@ -449,11 +449,11 @@ namespace MphRead
                         entities.Add(new Entity<JumpPadEntityData>(entry, type, init.SomeId,
                             ReadStruct<JumpPadEntityData>(bytes[start..end])));
                     }
-                    else if (type == EntityType.Unknown11)
+                    else if (type == EntityType.CameraPos)
                     {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown11EntityData>());
-                        entities.Add(new Entity<Unknown11EntityData>(entry, type, init.SomeId,
-                            ReadStruct<Unknown11EntityData>(bytes[start..end])));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<SpectatorCamEntityData>());
+                        entities.Add(new Entity<SpectatorCamEntityData>(entry, type, init.SomeId,
+                            ReadStruct<SpectatorCamEntityData>(bytes[start..end])));
                     }
                     else if (type == EntityType.Unknown12)
                     {

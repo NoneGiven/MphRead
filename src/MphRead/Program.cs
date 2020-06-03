@@ -12,8 +12,8 @@ namespace MphRead
             using var renderer = new Renderer();
             if (args.Length == 0)
             {
-                renderer.AddRoom("Gorea_Land");
-                renderer.AddModel("Crate01");
+                renderer.AddRoom(28);
+                //renderer.AddModel("Crate01");
                 Nop();
             }
             else

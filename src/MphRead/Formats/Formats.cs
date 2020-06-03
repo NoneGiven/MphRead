@@ -387,7 +387,7 @@ namespace MphRead
         public RepeatMode XRepeat { get; }
         public RepeatMode YRepeat { get; }
         public ColorRgb Diffuse { get; }
-        public ColorRgb Ambient { get; set; } // temporary
+        public ColorRgb Ambient { get; }
         public ColorRgb Specular { get; }
         public PolygonMode PolygonMode { get; set; }
         public RenderMode RenderMode { get; set; }
@@ -396,6 +396,9 @@ namespace MphRead
         public float ScaleT { get; }
         public float TranslateS { get; }
         public float TranslateT { get; }
+
+        // temporary
+        public ColorRgb? OverrideColor { get; set; }
 
         public Material(RawMaterial raw)
         {
@@ -515,30 +518,6 @@ namespace MphRead
         {
             Data = data;
         }
-    }
-
-    // seems like 5 and 10 are unused
-    // -- not sure if/where 26 (EnergyBeam) is used
-    public enum EntityType : ushort
-    {
-        Platform = 0,
-        Object = 1,
-        Unknown2 = 2,
-        Door = 3,
-        Item = 4,
-        Pickup = 6,
-        Unknown7 = 7,
-        Unknown8 = 8,
-        JumpPad = 9,
-        Unknown11 = 11,
-        Unknown12 = 12,
-        Unknown13 = 13,
-        Teleporter = 14,
-        Unknown15 = 15,
-        Unknown16 = 16,
-        Artifact = 17,
-        CameraSeq = 18,
-        ForceField = 19
     }
 
     public enum NodeLayer
