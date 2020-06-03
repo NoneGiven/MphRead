@@ -312,7 +312,6 @@ namespace MphRead
         
         private static Model LoadEntityPlaceholder(EntityType type, Vector3Fx position)
         {
-            Console.WriteLine($"- {type}");
             Model model = Read.GetModelByName("pick_wpn_missile");
             if (_colorOverrides.ContainsKey(type))
             {
