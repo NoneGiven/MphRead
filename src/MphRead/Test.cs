@@ -145,27 +145,42 @@ namespace MphRead
 
         public static void TestAllRooms()
         {
+            var matches = new Dictionary<uint, HashSet<uint>>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 if (meta.Value.EntityPath != null)
                 {
-                    Console.WriteLine();
+                    //Console.WriteLine();
                     for (int i = 0; i < 16; i++)
                     {
                         IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, i);
-                        if (entities.Any(e => e.Type == EntityType.Door))
-                        {
-                            Console.WriteLine($"{meta.Key} {i}");
-                        }
+                        //if (entities.Any(e => e.Type == EntityType.Door))
+                        //{
+                        //    Console.WriteLine($"{meta.Key} {i}");
+                        //}
                         foreach (Entity entity in entities)
                         {
                             if (entity.Type == EntityType.Door)
                             {
                                 DoorEntityData data = ((Entity<DoorEntityData>)entity).Data;
-                                Console.WriteLine($"{data.ModelId} {data.SomeId}");
+                                if (matches.ContainsKey(data.ModelId))
+                                {
+                                    matches[data.ModelId].Add(data.PaletteId);
+                                }
+                                else
+                                {
+                                    matches.Add(data.ModelId, new HashSet<uint>() { data.PaletteId });
+                                }
                             }
                         }
                     }
+                }
+            }
+            foreach (KeyValuePair<uint, HashSet<uint>> kvp in matches)
+            {
+                foreach (uint palette in kvp.Value)
+                {
+                    Console.WriteLine($"{kvp.Key} {palette}");
                 }
             }
         }

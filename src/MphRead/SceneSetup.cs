@@ -194,9 +194,9 @@ namespace MphRead
                 {
                     models.Add(LoadItem(((Entity<ItemEntityData>)entity).Data));
                 }
-                else if (entity.Type == EntityType.Spawner)
+                else if (entity.Type == EntityType.Enemy)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<SpawnerEntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<EnemyEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Unknown7)
                 {
@@ -212,7 +212,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.CameraPos)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<SpectatorCamEntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<CameraPosEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Unknown12)
                 {
@@ -282,6 +282,7 @@ namespace MphRead
             return model;
         }
 
+        // todo: load correct palette (not sure which file -- ID between 0 and 9)
         private static Model LoadDoor(DoorEntityData data)
         {
             //string modelName = Metadata.Doors[(int)data.ModelId];
@@ -299,7 +300,7 @@ namespace MphRead
             { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) },
             { EntityType.Object, new ColorRgb(0x22, 0x8B, 0x22) },
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
-            { EntityType.Spawner, new ColorRgb(0x00, 0x00, 0x8B) },
+            { EntityType.Enemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.Unknown7, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.Unknown8, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.CameraPos, new ColorRgb(0x00, 0xFF, 0x00) },

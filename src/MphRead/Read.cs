@@ -425,11 +425,11 @@ namespace MphRead
                         entities.Add(new Entity<ItemEntityData>(entry, type, init.SomeId,
                             ReadStruct<ItemEntityData>(bytes[start..end])));
                     }
-                    else if (type == EntityType.Spawner)
+                    else if (type == EntityType.Enemy)
                     {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<SpawnerEntityData>());
-                        entities.Add(new Entity<SpawnerEntityData>(entry, type, init.SomeId,
-                            ReadStruct<SpawnerEntityData>(bytes[start..end])));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<EnemyEntityData>());
+                        entities.Add(new Entity<EnemyEntityData>(entry, type, init.SomeId,
+                            ReadStruct<EnemyEntityData>(bytes[start..end])));
                     }
                     else if (type == EntityType.Unknown7)
                     {
@@ -451,9 +451,9 @@ namespace MphRead
                     }
                     else if (type == EntityType.CameraPos)
                     {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<SpectatorCamEntityData>());
-                        entities.Add(new Entity<SpectatorCamEntityData>(entry, type, init.SomeId,
-                            ReadStruct<SpectatorCamEntityData>(bytes[start..end])));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<CameraPosEntityData>());
+                        entities.Add(new Entity<CameraPosEntityData>(entry, type, init.SomeId,
+                            ReadStruct<CameraPosEntityData>(bytes[start..end])));
                     }
                     else if (type == EntityType.Unknown12)
                     {

@@ -9,7 +9,8 @@ namespace MphRead
         PlayerSpawn = 2,
         Door = 3,
         Item = 4,
-        Spawner = 6,
+        ItemInstance = 5,
+        Enemy = 6,
         Unknown7 = 7,
         Unknown8 = 8,
         JumpPad = 9,
@@ -21,7 +22,10 @@ namespace MphRead
         Unknown16 = 16,
         Artifact = 17,
         CameraSeq = 18,
-        ForceField = 19
+        ForceField = 19,
+        EnemyInstance = 23,
+        EnergyBeam = 26,
+        EntityListHead = 27
     }
 
     public enum ModelType

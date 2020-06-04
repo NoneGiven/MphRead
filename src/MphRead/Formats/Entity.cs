@@ -239,20 +239,20 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
+        public readonly Vector3Fx Vector2;
         public readonly Vector3Fx Rotation;
-        public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint SomeId;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
+        public readonly string NodeName;
+        public readonly uint PaletteId;
         public readonly uint ModelId;
         public readonly uint Field3C;
-        public readonly uint Field40;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-        public readonly string Name;
+        public readonly ushort TargetLayerId;
+        public readonly byte Field42;
+        public readonly byte Field43;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
+        public readonly string EntityFilename;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
+        public readonly string RoomName;
     }
 
     // size: 72
@@ -299,7 +299,7 @@ namespace MphRead
     }
 
     // size: 512
-    public readonly struct SpawnerEntityData
+    public readonly struct EnemyEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
@@ -551,7 +551,7 @@ namespace MphRead
     }
 
     // size: 104
-    public readonly struct SpectatorCamEntityData
+    public readonly struct CameraPosEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
