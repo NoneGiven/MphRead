@@ -18,6 +18,7 @@ namespace MphRead
         public IReadOnlyList<Mesh> Meshes { get; }
         public IReadOnlyList<Material> Materials { get; }
         public IReadOnlyList<DisplayList> DisplayLists { get; }
+        public IReadOnlyList<Matrix4> TextureMatrices { get; }
 
         // count and order match Dlists
         public IReadOnlyList<IReadOnlyList<RenderInstruction>> RenderInstructionLists { get; }
@@ -44,10 +45,76 @@ namespace MphRead
             }
         }
 
-        public Vector3 Position { get; set; }
-        public Vector3 Rotation { get; set; }
+        private Matrix4 _transform = Matrix4.Identity;
+        public Vector3 _scale = new Vector3(1, 1, 1);
+        public Vector3 _position = Vector3.Zero;
+        public Vector3 _rotation = Vector3.Zero;
+
+        public Matrix4 Transform
+        {
+            get
+            {
+                return _transform;
+            }
+            set
+            {
+                _position = new Vector3(value.M41, value.M42, value.M43);
+                _transform = value;
+            }
+        }
+
+        public Vector3 Position
+        {
+            get
+            {
+                return _position;
+            }
+            set
+            {
+                _transform.M41 = value.X;
+                _transform.M42 = value.Y;
+                _transform.M43 = value.Z;
+                _position = value;
+            }
+        }
+
+        public Vector3 Scale
+        {
+            get
+            {
+                return _scale;
+            }
+            set
+            {
+                Transform = SceneSetup.ComputeNodeTransforms(value, new Vector3(
+                    MathHelper.DegreesToRadians(Rotation.X),
+                    MathHelper.DegreesToRadians(Rotation.Y),
+                    MathHelper.DegreesToRadians(Rotation.Z)),
+                    Position);
+                _scale = value;
+            }
+        }
+
+        public Vector3 Rotation
+        {
+            get
+            {
+                return _rotation;
+            }
+            set
+            {
+                Transform = SceneSetup.ComputeNodeTransforms(Scale, new Vector3(
+                    MathHelper.DegreesToRadians(value.X),
+                    MathHelper.DegreesToRadians(value.Y),
+                    MathHelper.DegreesToRadians(value.Z)),
+                    Position);
+                _rotation = value;
+            }
+        }
 
         public bool Animate { get; set; }
+        // temporary -- see note where the transpose matrix is applied
+        public bool ForceApplyTransform { get; set; }
         public int AnimationCount { get; set; }
         public IReadOnlyList<NodeAnimationGroup> NodeAnimationGroups { get; }
         public IReadOnlyList<MaterialAnimationGroup> MaterialAnimationGroups { get; }
@@ -61,7 +128,7 @@ namespace MphRead
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
             IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
             IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
-            IReadOnlyList<Recolor> recolors, int defaultRecolor)
+            IReadOnlyList<Matrix44Fx> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor)
         {
             ThrowIfInvalidEnums(materials);
             Name = name;
@@ -75,6 +142,7 @@ namespace MphRead
             MaterialAnimationGroups = materialGroups;
             TexcoordAnimationGroups = texcoordGroups;
             TextureAnimationGroups = textureGroups;
+            TextureMatrices = textureMatrices.Select(m => m.ToFloatMatrix()).ToList();
             Recolors = recolors;
             CurrentRecolor = defaultRecolor;
         }
@@ -350,7 +418,7 @@ namespace MphRead
         public Vector3 Vector1 { get; }
         public Vector3 Vector2 { get; }
         public byte Type { get; }
-        public Matrix4 Transform { get; set; }
+        public Matrix4 Transform { get; set; } = Matrix4.Identity;
 
         public Node(RawNode raw)
         {
@@ -377,23 +445,28 @@ namespace MphRead
     public class Material
     {
         public string Name { get; }
-        public byte Lighting { get; } // todo: probably a bool
+        public byte Lighting { get; set; } // todo: probably a bool
         public CullingMode Culling { get; }
         public byte Alpha { get; }
         public int PaletteId { get; }
         public int TextureId { get; }
         public RepeatMode XRepeat { get; }
         public RepeatMode YRepeat { get; }
-        public readonly ColorRgb Diffuse;
-        public readonly ColorRgb Ambient;
-        public readonly ColorRgb Specular;
+        public ColorRgb Diffuse { get; }
+        public ColorRgb Ambient { get; }
+        public ColorRgb Specular { get; }
         public PolygonMode PolygonMode { get; set; }
         public RenderMode RenderMode { get; set; }
+        public TexgenMode TexgenMode { get; set; }
         public int TexcoordAnimationId { get; set; }
+        public int MatrixId { get; set; }
         public float ScaleS { get; }
         public float ScaleT { get; }
         public float TranslateS { get; }
         public float TranslateT { get; }
+
+        // temporary
+        public ColorRgb? OverrideColor { get; set; }
 
         public Material(RawMaterial raw)
         {
@@ -410,7 +483,9 @@ namespace MphRead
             Specular = raw.Specular;
             PolygonMode = raw.PolygonMode;
             RenderMode = raw.RenderMode;
+            TexgenMode = raw.TexcoordTransformMode;
             TexcoordAnimationId = raw.TexcoordAnimationId;
+            MatrixId = (int)raw.MatrixId;
             ScaleS = raw.ScaleS.FloatValue;
             ScaleT = raw.ScaleT.FloatValue;
             TranslateS = raw.TranslateS.FloatValue;
@@ -495,7 +570,10 @@ namespace MphRead
             NodeName = entry.NodeName;
             LayerMask = entry.LayerMask;
             Length = entry.Length;
-            // todo: once all of these are accounted for, throw if not defined
+            if (!Enum.IsDefined(typeof(EntityType), type))
+            {
+                throw new ProgramException($"Invalid entity type {type}");
+            }
             Type = type;
             SomeId = someId;
         }
@@ -510,21 +588,6 @@ namespace MphRead
         {
             Data = data;
         }
-    }
-
-    public enum EntityType : ushort
-    {
-        Platform = 0x0,
-        Object = 0x1,
-        AlimbicDoor = 0x3,
-        Item = 0x4,
-        Pickup = 0x6,
-        JumpPad = 0x9,
-        Teleporter = 0xE,
-        Artifact = 0x11,
-        CameraSeq = 0x12,
-        ForceField = 0x13,
-        EnergyBeam = 0x1A,
     }
 
     public enum NodeLayer

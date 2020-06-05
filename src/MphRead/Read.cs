@@ -108,6 +108,7 @@ namespace MphRead
                 instructions.Add(DoRenderInstructions(initialBytes, dlist));
             }
             IReadOnlyList<RawMaterial> materials = DoOffsets<RawMaterial>(initialBytes, header.MaterialOffset, header.MaterialCount);
+            IReadOnlyList<Matrix44Fx> textureMatrices = DoOffsets<Matrix44Fx>(initialBytes, header.TextureMatrixOffset, header.MatrixCount);
             var recolors = new List<Recolor>();
             foreach (RecolorMetadata meta in recolorMeta)
             {
@@ -150,7 +151,7 @@ namespace MphRead
             AnimationResults animations = LoadAnimation(animationPath);
             var model = new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                recolors, defaultRecolor);
+                textureMatrices, recolors, defaultRecolor);
             foreach (TexcoordAnimationGroup group in model.TexcoordAnimationGroups)
             {
                 group.CurrentFrame = 0;
@@ -209,6 +210,22 @@ namespace MphRead
             {
                 textureGroupOffsets.Add(SpanReadUint(bytes, (int)header.TextureGroupOffset + i * sizeof(uint)));
             }
+            foreach (uint offset in nodeGroupOffsets)
+            {
+                if (offset == 0)
+                {
+                    continue;
+                }
+                results.NodeAnimationGroups.Add(DoOffset<NodeAnimationGroup>(bytes, offset));
+            }
+            foreach (uint offset in materialGroupOffsets)
+            {
+                if (offset == 0)
+                {
+                    continue;
+                }
+                results.MaterialAnimationGroups.Add(DoOffset<MaterialAnimationGroup>(bytes, offset));
+            }
             foreach (uint offset in texcoordGroupOffsets)
             {
                 if (offset == 0)
@@ -241,6 +258,14 @@ namespace MphRead
                 }
                 var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, maxTranslation).Select(f => f.FloatValue).ToList();
                 results.TexcoordAnimationGroups.Add(new TexcoordAnimationGroup(rawGroup, scales, rotations, translations, animations));
+            }
+            foreach (uint offset in textureGroupOffsets)
+            {
+                if (offset == 0)
+                {
+                    continue;
+                }
+                results.TextureAnimationGroups.Add(DoOffset<TextureAnimationGroup>(bytes, offset));
             }
             return results;
         }
@@ -371,22 +396,117 @@ namespace MphRead
                     EntityDataHeader init = ReadStruct<EntityDataHeader>(bytes[start..end]);
                     var type = (EntityType)init.Type;
                     end = start + entry.Length;
-                    // todo: handle more entity types
-                    if (type == EntityType.JumpPad)
+                    if (type == EntityType.Platform)
                     {
-                        Debug.Assert(entry.Length == Sizes.JumpPadEntityData);
-                        JumpPadEntityData data = ReadStruct<JumpPadEntityData>(bytes[start..end]);
-                        entities.Add(new Entity<JumpPadEntityData>(entry, type, init.SomeId, data));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<PlatformEntityData>());
+                        entities.Add(new Entity<PlatformEntityData>(entry, type, init.SomeId,
+                            ReadStruct<PlatformEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Object)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<ObjectEntityData>());
+                        entities.Add(new Entity<ObjectEntityData>(entry, type, init.SomeId,
+                            ReadStruct<ObjectEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.PlayerSpawn)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<PlayerSpawnEntityData>());
+                        entities.Add(new Entity<PlayerSpawnEntityData>(entry, type, init.SomeId,
+                            ReadStruct<PlayerSpawnEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Door)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<DoorEntityData>());
+                        entities.Add(new Entity<DoorEntityData>(entry, type, init.SomeId,
+                            ReadStruct<DoorEntityData>(bytes[start..end])));
                     }
                     else if (type == EntityType.Item)
                     {
-                        Debug.Assert(entry.Length == Sizes.ItemEntityData);
-                        ItemEntityData data = ReadStruct<ItemEntityData>(bytes[start..end]);
-                        entities.Add(new Entity<ItemEntityData>(entry, type, init.SomeId, data));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<ItemEntityData>());
+                        entities.Add(new Entity<ItemEntityData>(entry, type, init.SomeId,
+                            ReadStruct<ItemEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Enemy)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<EnemyEntityData>());
+                        entities.Add(new Entity<EnemyEntityData>(entry, type, init.SomeId,
+                            ReadStruct<EnemyEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Unknown7)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown7EntityData>());
+                        entities.Add(new Entity<Unknown7EntityData>(entry, type, init.SomeId,
+                            ReadStruct<Unknown7EntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Unknown8)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown8EntityData>());
+                        entities.Add(new Entity<Unknown8EntityData>(entry, type, init.SomeId,
+                            ReadStruct<Unknown8EntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.JumpPad)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<JumpPadEntityData>());
+                        entities.Add(new Entity<JumpPadEntityData>(entry, type, init.SomeId,
+                            ReadStruct<JumpPadEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.CameraPos)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<CameraPosEntityData>());
+                        entities.Add(new Entity<CameraPosEntityData>(entry, type, init.SomeId,
+                            ReadStruct<CameraPosEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Unknown12)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown12EntityData>());
+                        entities.Add(new Entity<Unknown12EntityData>(entry, type, init.SomeId,
+                            ReadStruct<Unknown12EntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Unknown13)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown13EntityData>());
+                        entities.Add(new Entity<Unknown13EntityData>(entry, type, init.SomeId,
+                            ReadStruct<Unknown13EntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Teleporter)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<TeleporterEntityData>());
+                        entities.Add(new Entity<TeleporterEntityData>(entry, type, init.SomeId,
+                            ReadStruct<TeleporterEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Unknown15)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown15EntityData>());
+                        entities.Add(new Entity<Unknown15EntityData>(entry, type, init.SomeId,
+                            ReadStruct<Unknown15EntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Unknown16)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown16EntityData>());
+                        entities.Add(new Entity<Unknown16EntityData>(entry, type, init.SomeId,
+                            ReadStruct<Unknown16EntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.Artifact)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<ArtifactEntityData>());
+                        entities.Add(new Entity<ArtifactEntityData>(entry, type, init.SomeId,
+                            ReadStruct<ArtifactEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.CameraSeq)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<CameraSeqEntityData>());
+                        entities.Add(new Entity<CameraSeqEntityData>(entry, type, init.SomeId,
+                            ReadStruct<CameraSeqEntityData>(bytes[start..end])));
+                    }
+                    else if (type == EntityType.ForceField)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<ForceFieldEntityData>());
+                        entities.Add(new Entity<ForceFieldEntityData>(entry, type, init.SomeId,
+                            ReadStruct<ForceFieldEntityData>(bytes[start..end])));
                     }
                     else
                     {
-                        entities.Add(new Entity(entry, type, init.SomeId));
+                        throw new ProgramException($"Invalid entity type {type}");
                     }
                 }
             }
@@ -477,7 +597,7 @@ namespace MphRead
         {
             int ioffset = (int)offset;
             var results = new List<T>();
-            if (offset != 0x0)
+            if (offset != 0)
             {
                 int size = Marshal.SizeOf(typeof(T));
                 for (uint i = 0; i < count; i++, ioffset += size)

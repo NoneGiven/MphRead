@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Mathematics;
 using OpenToolkit.Windowing.Common;
@@ -24,6 +26,11 @@ namespace MphRead
             native.Profile = ContextProfile.Compatability;
             native.APIVersion = new Version(3, 2);
             _window = new RenderWindow(settings, native);
+        }
+
+        public void AddRoom(int id, int layerMask = 0)
+        {
+            _window.AddRoom(id, layerMask);
         }
 
         public void AddRoom(string name, int layerMask = 0)
@@ -59,6 +66,9 @@ namespace MphRead
         public int Diffuse { get; set; }
         public int Ambient { get; set; }
         public int Specular { get; set; }
+        public int UseFog { get; set; }
+        public int FogColor { get; set; }
+        public int FogOffset { get; set; }
     }
 
     public class RenderWindow : GameWindow
@@ -74,7 +84,6 @@ namespace MphRead
         private Vector3 _cameraPosition = new Vector3(0, 0, 0);
         private bool _leftMouse = false;
         public int _textureCount = 0;
-        public float _roomScale = 1;
 
         private bool _showTextures = true;
         private bool _showColors = true;
@@ -82,6 +91,7 @@ namespace MphRead
         private bool _faceCulling = true;
         private bool _textureFiltering = true;
         private bool _lighting = true;
+        private bool _showInvisible = false;
 
         private static readonly Color4 _clearColor = new Color4(0, 0, 0, 1);
         private static readonly float _frameTime = 1.0f / 30.0f;
@@ -90,6 +100,10 @@ namespace MphRead
         private Vector4 _light1Color = default;
         private Vector4 _light2Vector = default;
         private Vector4 _light2Color = default;
+        private bool _hasFog = false;
+        private bool _showFog = false;
+        private Vector4 _fogColor = default;
+        private int _fogOffset = default;
 
         private int _shaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
@@ -97,6 +111,15 @@ namespace MphRead
         public RenderWindow(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
             : base(gameWindowSettings, nativeWindowSettings)
         {
+        }
+
+        public void AddRoom(int id, int layerMask)
+        {
+            RoomMetadata? meta = Metadata.GetRoomById(id);
+            if (meta != null)
+            {
+                AddRoom(meta.Name, layerMask);
+            }
         }
 
         public void AddRoom(string name, int layerMask)
@@ -109,7 +132,8 @@ namespace MphRead
             (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask);
             _models.Insert(0, room);
             _models.AddRange(entities);
-            _roomScale = room.Header.ScaleBase.FloatValue * (1 << (int)room.Header.ScaleFactor);
+            float roomScale = room.Header.ScaleBase.FloatValue * (1 << (int)room.Header.ScaleFactor);
+            room.Scale = new Vector3(roomScale, roomScale, roomScale);
             _light1Vector = new Vector4(roomMeta.Light1Vector);
             _light1Color = new Vector4(
                 roomMeta.Light1Color.Red / 255.0f,
@@ -124,13 +148,21 @@ namespace MphRead
                 roomMeta.Light2Color.Blue / 255.0f,
                 roomMeta.Light2Color.Alpha / 255.0f
             );
+            _hasFog = roomMeta.FogEnabled != 0;
+            _fogColor = new Vector4(
+                ((roomMeta.FogColor) & 0x1F) / (float)0x1F,
+                (((roomMeta.FogColor) >> 5) & 0x1F) / (float)0x1F,
+                (((roomMeta.FogColor) >> 10) & 0x1F) / (float)0x1F,
+                1
+            );
+            _fogOffset = (int)roomMeta.FogOffset;
             _cameraMode = CameraMode.Roam;
         }
 
         public void AddModel(string name, int recolor)
         {
             Model model = Read.GetModelByName(name, recolor);
-            SceneSetup.ComputeMatrices(model, index: 0);
+            SceneSetup.ComputeNodeMatrices(model, index: 0);
             _models.Add(model);
         }
 
@@ -161,18 +193,18 @@ namespace MphRead
 
         private void InitShaders()
         {
-            int vtxS = GL.CreateShader(ShaderType.VertexShader);
-            GL.ShaderSource(vtxS, Shaders.VertexShader);
-            GL.CompileShader(vtxS);
-            int frgS = GL.CreateShader(ShaderType.FragmentShader);
-            GL.ShaderSource(frgS, Shaders.FragmentShader);
-            GL.CompileShader(frgS);
+            int vertexShader = GL.CreateShader(ShaderType.VertexShader);
+            GL.ShaderSource(vertexShader, Shaders.VertexShader);
+            GL.CompileShader(vertexShader);
+            int fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
+            GL.ShaderSource(fragmentShader, Shaders.FragmentShader);
+            GL.CompileShader(fragmentShader);
             _shaderProgramId = GL.CreateProgram();
-            GL.AttachShader(_shaderProgramId, vtxS);
-            GL.AttachShader(_shaderProgramId, frgS);
+            GL.AttachShader(_shaderProgramId, vertexShader);
+            GL.AttachShader(_shaderProgramId, fragmentShader);
             GL.LinkProgram(_shaderProgramId);
-            GL.DetachShader(_shaderProgramId, vtxS);
-            GL.DetachShader(_shaderProgramId, frgS);
+            GL.DetachShader(_shaderProgramId, vertexShader);
+            GL.DetachShader(_shaderProgramId, fragmentShader);
 
             _shaderLocations.IsBillboard = GL.GetUniformLocation(_shaderProgramId, "is_billboard");
             _shaderLocations.UseLight = GL.GetUniformLocation(_shaderProgramId, "use_light");
@@ -184,33 +216,46 @@ namespace MphRead
             _shaderLocations.Diffuse = GL.GetUniformLocation(_shaderProgramId, "diffuse");
             _shaderLocations.Ambient = GL.GetUniformLocation(_shaderProgramId, "ambient");
             _shaderLocations.Specular = GL.GetUniformLocation(_shaderProgramId, "specular");
+            _shaderLocations.UseFog = GL.GetUniformLocation(_shaderProgramId, "fog_enable");
+            _shaderLocations.FogColor = GL.GetUniformLocation(_shaderProgramId, "fog_color");
+            _shaderLocations.FogOffset = GL.GetUniformLocation(_shaderProgramId, "fog_offset");
         }
+
+        private static readonly SemaphoreSlim _consoleLock = new SemaphoreSlim(1, 1);
 
         private void PrintMenu()
         {
-            Console.Clear();
-            Console.WriteLine($"MphRead Version {Program.Version}");
-            if (_cameraMode == CameraMode.Pivot)
+            return;
+            Task.Run(async () =>
             {
-                Console.WriteLine(" - Scroll mouse wheel to zoom");
-            }
-            else if (_cameraMode == CameraMode.Roam)
-            {
-                Console.WriteLine(" - Use WASD, Space, and V to move");
-            }
-            Console.WriteLine(" - Hold left mouse button or use arrow keys to rotate");
-            Console.WriteLine(" - Hold Shift to move the camera faster");
-            Console.WriteLine($" - T toggles texturing ({FormatOnOff(_showTextures)})");
-            Console.WriteLine($" - C toggles vertex colours ({FormatOnOff(_showColors)})");
-            Console.WriteLine($" - Q toggles wireframe ({FormatOnOff(_wireframe)})");
-            Console.WriteLine($" - B toggles face culling ({FormatOnOff(_faceCulling)})");
-            Console.WriteLine($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})");
-            Console.WriteLine($" - L toggles lighting ({FormatOnOff(_lighting)})");
-            Console.WriteLine($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
-            Console.WriteLine(" - R resets the camera");
-            Console.WriteLine(" - Ctrl+O then enter \"model_name [recolor]\" to load");
-            Console.WriteLine(" - Esc closes the viewer");
-            Console.WriteLine();
+                await _consoleLock.WaitAsync();
+                Console.Clear();
+                Console.WriteLine($"MphRead Version {Program.Version}");
+                if (_cameraMode == CameraMode.Pivot)
+                {
+                    Console.WriteLine(" - Scroll mouse wheel to zoom");
+                }
+                else if (_cameraMode == CameraMode.Roam)
+                {
+                    Console.WriteLine(" - Use WASD, Space, and V to move");
+                }
+                Console.WriteLine(" - Hold left mouse button or use arrow keys to rotate");
+                Console.WriteLine(" - Hold Shift to move the camera faster");
+                Console.WriteLine($" - T toggles texturing ({FormatOnOff(_showTextures)})");
+                Console.WriteLine($" - C toggles vertex colours ({FormatOnOff(_showColors)})");
+                Console.WriteLine($" - Q toggles wireframe ({FormatOnOff(_wireframe)})");
+                Console.WriteLine($" - B toggles face culling ({FormatOnOff(_faceCulling)})");
+                Console.WriteLine($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})");
+                Console.WriteLine($" - L toggles lighting ({FormatOnOff(_lighting)})");
+                Console.WriteLine($" - G toggles fog ({FormatOnOff(_showFog)})");
+                Console.WriteLine($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})");
+                Console.WriteLine($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
+                Console.WriteLine(" - R resets the camera");
+                Console.WriteLine(" - Ctrl+O then enter \"model_name [recolor]\" to load");
+                Console.WriteLine(" - Esc closes the viewer");
+                Console.WriteLine();
+                _consoleLock.Release();
+            });
         }
 
         private string FormatOnOff(bool setting)
@@ -240,9 +285,9 @@ namespace MphRead
                 bool onlyOpaque = true;
                 foreach (ColorRgba pixel in model.GetPixels(material.TextureId, material.PaletteId))
                 {
-                    uint red = pixel.Red;
-                    uint green = pixel.Green;
-                    uint blue = pixel.Blue;
+                    uint red = material.OverrideColor?.Red ?? pixel.Red;
+                    uint green = material.OverrideColor?.Green ?? pixel.Green;
+                    uint blue = material.OverrideColor?.Blue ?? pixel.Blue;
                     uint alpha = (uint)((decal ? 255 : pixel.Alpha) * material.Alpha / 31.0f);
                     pixels.Add((red << 0) | (green << 8) | (blue << 16) | (alpha << 24));
                     if (alpha < 255)
@@ -330,7 +375,7 @@ namespace MphRead
 
             GL.MatrixMode(MatrixMode.Projection);
             float fov = MathHelper.DegreesToRadians(80.0f);
-            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.02f, 100.0f);
+            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.02f, 10000.0f);
             GL.LoadMatrix(ref perspectiveMatrix);
 
             TransformCamera();
@@ -440,24 +485,21 @@ namespace MphRead
             _models.Sort(CompareModels);
             foreach (Model model in _models)
             {
+                if (model.Type == ModelType.Placeholder && !_showInvisible)
+                {
+                    continue;
+                }
                 ProcessAnimations(model, elapsedTime);
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.PushMatrix();
-                float height = 0;
+                Matrix4 transform = model.Transform;
                 if (model.Type == ModelType.Item)
                 {
                     float rotation = (float)(model.Rotation.Y + elapsedTime * 360 * 0.35) % 360;
                     model.Rotation = new Vector3(model.Rotation.X, rotation, model.Rotation.Z);
-                    height = (MathF.Sin(model.Rotation.Y / 180 * MathF.PI) + 1) / 8f;
+                    transform.M42 += (MathF.Sin(model.Rotation.Y / 180 * MathF.PI) + 1) / 8f;
                 }
-                GL.Translate(model.Position.X, model.Position.Y + height, model.Position.Z);
-                if (model.Type == ModelType.Room)
-                {
-                    GL.Scale(_roomScale, _roomScale, _roomScale);
-                }
-                GL.Rotate(model.Rotation.X, 1, 0, 0);
-                GL.Rotate(model.Rotation.Y, 0, 1, 0);
-                GL.Rotate(model.Rotation.Z, 0, 0, 1);
+                GL.MultMatrix(ref transform);
                 if (model.Type == ModelType.Room)
                 {
                     RenderRoom(model);
@@ -471,18 +513,21 @@ namespace MphRead
             }
         }
 
-        private void SetLights()
+        private void UpdateUniforms()
         {
             GL.Uniform4(_shaderLocations.Light1Vector, _light1Vector);
             GL.Uniform4(_shaderLocations.Light1Color, _light1Color);
             GL.Uniform4(_shaderLocations.Light2Vector, _light2Vector);
             GL.Uniform4(_shaderLocations.Light2Color, _light2Color);
+            GL.Uniform1(_shaderLocations.UseFog, _hasFog && _showFog ? 1 : 0);
+            GL.Uniform4(_shaderLocations.FogColor, _fogColor);
+            GL.Uniform1(_shaderLocations.FogOffset, _fogOffset);
         }
 
         private void RenderRoom(Model model)
         {
             GL.UseProgram(_shaderProgramId);
-            SetLights();
+            UpdateUniforms();
             // pass 1: opaque
             GL.DepthMask(true);
             foreach (Node node in model.Nodes)
@@ -502,7 +547,7 @@ namespace MphRead
             // pass 3: translucent with alpha test
             GL.DepthMask(true);
             GL.Enable(EnableCap.AlphaTest);
-            GL.AlphaFunc(AlphaFunction.Gequal, 0.5f);
+            GL.AlphaFunc(AlphaFunction.Gequal, 0.25f);
             foreach (Node node in model.Nodes)
             {
                 RenderNode(model, node, RenderMode.AlphaTest);
@@ -525,20 +570,32 @@ namespace MphRead
         {
             GL.UseProgram(_shaderProgramId);
             // pass 1: opaque
+            GL.DepthMask(true);
             foreach (Node node in model.Nodes)
             {
                 RenderNode(model, node, RenderMode.Normal);
             }
-            // pass 2: translucent
-            GL.DepthMask(false);
+            // pass 2: opaque pixels on translucent surfaces
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.Enable(EnableCap.AlphaTest);
+            GL.AlphaFunc(AlphaFunction.Gequal, 0.95f);
+            foreach (Node node in model.Nodes)
+            {
+                RenderNode(model, node, RenderMode.Normal, invertFilter: true);
+            }
+            // pass 3: translucent
+            GL.AlphaFunc(AlphaFunction.Less, 0.95f);
+            //GL.Enable(EnableCap.Blend);
+            GL.DepthMask(false);
+            //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             foreach (Node node in model.Nodes)
             {
                 RenderNode(model, node, RenderMode.Normal, invertFilter: true);
             }
             GL.DepthMask(true);
             GL.Disable(EnableCap.Blend);
+            GL.Disable(EnableCap.AlphaTest);
             GL.UseProgram(0);
         }
 
@@ -546,10 +603,15 @@ namespace MphRead
         {
             if (node.MeshCount > 0 && node.Enabled)
             {
-                GL.MatrixMode(MatrixMode.Modelview);
-                GL.PushMatrix();
-                Matrix4 transform = node.Transform;
-                GL.MultTransposeMatrix(ref transform);
+                // temporary -- applying transforms on models which have node animation breaks them,
+                // presumably because information needs to come from the animation which we aren't loading yet
+                if (model.NodeAnimationGroups.Count == 0 || model.ForceApplyTransform)
+                {
+                    GL.MatrixMode(MatrixMode.Modelview);
+                    GL.PushMatrix();
+                    Matrix4 transform = node.Transform;
+                    GL.MultMatrix(ref transform);
+                }
                 int meshStart = node.MeshId / 2;
                 for (int i = 0; i < node.MeshCount; i++)
                 {
@@ -564,8 +626,11 @@ namespace MphRead
                     GL.Uniform1(_shaderLocations.IsBillboard, node.Type == 1 ? 1 : 0);
                     RenderMesh(model, mesh, material);
                 }
-                GL.MatrixMode(MatrixMode.Modelview);
-                GL.PopMatrix();
+                if (model.NodeAnimationGroups.Count == 0 || model.ForceApplyTransform)
+                {
+                    GL.MatrixMode(MatrixMode.Modelview);
+                    GL.PopMatrix();
+                }
             }
         }
 
@@ -649,14 +714,23 @@ namespace MphRead
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
                 AnimateTexcoords(model, material, width, height);
             }
-            else
+            else if (material.TexgenMode != TexgenMode.None && model.TextureMatrices.Count > 0)
+            {
+                Matrix4 matrix = model.TextureMatrices[material.MatrixId];
+                GL.LoadMatrix(ref matrix);
+            }
+            else if (material.TexgenMode != 0)
             {
                 GL.Translate(material.TranslateS, material.TranslateT, 0.0f);
                 GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
             }
+            else
+            {
+                GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+            }
             GL.Uniform1(_shaderLocations.UseTexture, GL.IsEnabled(EnableCap.Texture2D) ? 1 : 0);
-            if (_lighting && material.Lighting != 0)
+            if (false && _lighting && material.Lighting != 0)
             {
                 // todo: would be nice if the approaches for this and the room lights were the same
                 var ambient = new Vector4(
@@ -1063,6 +1137,16 @@ namespace MphRead
             else if (e.Key == Key.L)
             {
                 _lighting = !_lighting;
+                PrintMenu();
+            }
+            else if (e.Key == Key.G)
+            {
+                _showFog = !_showFog;
+                PrintMenu();
+            }
+            else if (e.Key == Key.I)
+            {
+                _showInvisible = !_showInvisible;
                 PrintMenu();
             }
             else if (e.Key == Key.R)

@@ -75,7 +75,7 @@ namespace MphRead
         public readonly RenderMode RenderMode;
         public readonly byte AnimationFlags;
         public readonly ushort Field5A;
-        public readonly uint TexcoordTransformMode;
+        public readonly TexgenMode TexcoordTransformMode;
         public readonly ushort TexcoordAnimationId;
         public readonly ushort Field62;
         public readonly uint MatrixId;
@@ -104,7 +104,7 @@ namespace MphRead
         public readonly ushort Field16; // todo?: always 0?
     }
 
-    // size: 140
+    // size: 20
     public readonly struct MaterialAnimationGroup
     {
         public readonly uint FrameCount;
@@ -113,36 +113,6 @@ namespace MphRead
         public readonly uint AnimationOffset;
         public readonly ushort AnimationFrame;
         public readonly ushort Field12;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
-        public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
-        public readonly uint Field58;
-        public readonly uint Field5C;
-        public readonly uint Field60;
-        public readonly uint Field64;
-        public readonly uint Field68;
-        public readonly uint Field6C;
-        public readonly uint Field70;
-        public readonly uint Field74;
-        public readonly uint Field78;
-        public readonly uint Field7C;
-        public readonly uint Field80;
-        public readonly uint Field84;
-        public readonly uint Field88;
     }
 
     // size: 44
@@ -360,8 +330,8 @@ namespace MphRead
         public readonly uint NodePosition;
         public readonly ushort MaterialCount;
         public readonly ushort NodeCount;
-        public readonly uint TextureMatrices;
-        public readonly uint NodeAnimation;
+        public readonly uint TextureMatrixOffset;
+        public readonly uint NodeAnimationOffset;
         public readonly uint TextureCoordinateAnimations;
         public readonly uint MaterialAnimations;
         public readonly uint TextureAnimations;

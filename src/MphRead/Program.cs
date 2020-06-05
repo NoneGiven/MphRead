@@ -5,12 +5,18 @@ namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 3, 0, 0);
+        public static Version Version { get; } = new Version(0, 4, 0, 0);
 
         private static void Main(string[] args)
         {
             using var renderer = new Renderer();
-            if (args.Length > 0)
+            if (args.Length == 0)
+            {
+                renderer.AddRoom("MP3 PROVING GROUND");
+                renderer.AddModel("Crate01");
+                Nop();
+            }
+            else
             {
                 bool foundRoom = false;
                 bool foundModel = false;
@@ -48,12 +54,6 @@ namespace MphRead
                 {
                     Exit();
                 }
-            }
-            else
-            {
-                renderer.AddRoom("MP3 PROVING GROUND");
-                renderer.AddModel("Crate01");
-                Nop();
             }
             renderer.Run();
         }

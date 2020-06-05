@@ -121,20 +121,6 @@ namespace MphRead
             File.WriteAllLines("matches.txt", lines);
         }
 
-        public static void TestRenderModes()
-        {
-            foreach (Model model in GetAllModels())
-            {
-                foreach (Material material in model.Materials)
-                {
-                    if (material.Lighting != 0)
-                    {
-                        System.Diagnostics.Debugger.Break();
-                    }
-                }
-            }
-        }
-
         public static void ParseAllModels()
         {
             GetAllModels();
@@ -157,6 +143,28 @@ namespace MphRead
             }
         }
 
+        public static void TestAllEntities()
+        {
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                if (meta.Value.EntityPath != null)
+                {
+                    for (int i = 0; i < 16; i++)
+                    {
+                        IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, i);
+                        foreach (Entity entity in entities)
+                        {
+                            if (entity.Type == EntityType.Object)
+                            {
+                                ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
+                            }
+                        }
+                    }
+                }
+            }
+            Nop();
+        }
+
 #pragma warning restore IDE0051 // Remove unused private members
 
         private static IEnumerable<Model> GetAllModels()
@@ -165,6 +173,14 @@ namespace MphRead
             {
                 yield return Read.GetModelByName(meta.Key);
             }
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                yield return Read.GetRoomByName(meta.Key);
+            }
+        }
+
+        private static IEnumerable<Model> GetAllRooms()
+        {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 yield return Read.GetRoomByName(meta.Key);

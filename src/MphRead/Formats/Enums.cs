@@ -1,10 +1,40 @@
 namespace MphRead
 {
+    // seems like 5 and 10 are unused
+    // -- not sure if/where 26 (EnergyBeam) is used
+    public enum EntityType : ushort
+    {
+        Platform = 0,
+        Object = 1,
+        PlayerSpawn = 2,
+        Door = 3,
+        Item = 4,
+        ItemInstance = 5,
+        Enemy = 6,
+        Unknown7 = 7,
+        Unknown8 = 8,
+        JumpPad = 9,
+        CameraPos = 11,
+        Unknown12 = 12,
+        Unknown13 = 13,
+        Teleporter = 14,
+        Unknown15 = 15,
+        Unknown16 = 16,
+        Artifact = 17,
+        CameraSeq = 18,
+        ForceField = 19,
+        EnemyInstance = 23,
+        EnergyBeam = 26,
+        EntityListHead = 27
+    }
+
     public enum ModelType
     {
         Generic,
         Room,
-        Item
+        Item,
+        Object,
+        Placeholder
     }
 
     public enum PolygonMode : uint
@@ -30,6 +60,14 @@ namespace MphRead
         Unknown3 = 3,
         Unknown4 = 4,
         AlphaTest = 5 // viewer only
+    }
+
+    public enum TexgenMode : uint
+    {
+        None = 0,
+        Texcoord = 1,
+        Normal = 2,
+        Vertex = 3
     }
 
     public enum CullingMode : byte
