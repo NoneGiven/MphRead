@@ -75,7 +75,7 @@ namespace MphRead
         public readonly RenderMode RenderMode;
         public readonly byte AnimationFlags;
         public readonly ushort Field5A;
-        public readonly uint TexcoordTransformMode;
+        public readonly TexgenMode TexcoordTransformMode;
         public readonly ushort TexcoordAnimationId;
         public readonly ushort Field62;
         public readonly uint MatrixId;

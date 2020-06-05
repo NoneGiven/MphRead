@@ -13,10 +13,14 @@ namespace MphRead
             if (args.Length == 0)
             {
                 //Header header = Read.GetHeader(@"models\AlimbicPalettes_pal_Model.bin");
-                //Model model = Read.GetModelByName("AlimbicDoor");
-                //renderer.AddRoom(37);
+                //Model model = Read.GetRoomByName("Gorea_Land");
+                //foreach (var node in model.Nodes)
+                //{
+                //    Console.WriteLine(node.Name);
+                //}
+                //renderer.AddRoom(34);
                 renderer.AddRoom("MP3 PROVING GROUND");
-                renderer.AddModel("Crate01");
+                renderer.AddModel("PickUp_EnergyExp");
                 Nop();
             }
             else

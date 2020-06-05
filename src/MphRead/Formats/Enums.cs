@@ -61,6 +61,14 @@ namespace MphRead
         AlphaTest = 5 // viewer only
     }
 
+    public enum TexgenMode : uint
+    {
+        None = 0,
+        Texcoord = 1,
+        Normal = 2,
+        Vertex = 3
+    }
+
     public enum CullingMode : byte
     {
         Neither = 0,

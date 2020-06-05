@@ -109,16 +109,7 @@ namespace MphRead
                 instructions.Add(DoRenderInstructions(initialBytes, dlist));
             }
             IReadOnlyList<RawMaterial> materials = DoOffsets<RawMaterial>(initialBytes, header.MaterialOffset, header.MaterialCount);
-            IReadOnlyList<Matrix44Fx> textureMatrices;
-            if (header.TextureMatrixOffset != 0)
-            {
-                int count = (int)materials.Select(m => m.MatrixId).Max();
-                textureMatrices = DoOffsets<Matrix44Fx>(initialBytes, header.TextureMatrixOffset, count);
-            }
-            else
-            {
-                textureMatrices = new List<Matrix44Fx>();
-            }
+            IReadOnlyList<Matrix44Fx> textureMatrices = DoOffsets<Matrix44Fx>(initialBytes, header.TextureMatrixOffset, header.MatrixCount);
             var recolors = new List<Recolor>();
             foreach (RecolorMetadata meta in recolorMeta)
             {
@@ -607,7 +598,7 @@ namespace MphRead
         {
             int ioffset = (int)offset;
             var results = new List<T>();
-            if (offset != 0x0)
+            if (offset != 0)
             {
                 int size = Marshal.SizeOf(typeof(T));
                 for (uint i = 0; i < count; i++, ioffset += size)

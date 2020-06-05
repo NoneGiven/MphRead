@@ -457,7 +457,7 @@ namespace MphRead
         public ColorRgb Specular { get; }
         public PolygonMode PolygonMode { get; set; }
         public RenderMode RenderMode { get; set; }
-        public int TexgenMode { get; set; }
+        public TexgenMode TexgenMode { get; set; }
         public int TexcoordAnimationId { get; set; }
         public int MatrixId { get; set; }
         public float ScaleS { get; }
@@ -483,7 +483,7 @@ namespace MphRead
             Specular = raw.Specular;
             PolygonMode = raw.PolygonMode;
             RenderMode = raw.RenderMode;
-            TexgenMode = (int)raw.TexcoordTransformMode;
+            TexgenMode = raw.TexcoordTransformMode;
             TexcoordAnimationId = raw.TexcoordAnimationId;
             MatrixId = (int)raw.MatrixId;
             ScaleS = raw.ScaleS.FloatValue;

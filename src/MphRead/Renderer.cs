@@ -538,7 +538,7 @@ namespace MphRead
             // pass 3: translucent with alpha test
             GL.DepthMask(true);
             GL.Enable(EnableCap.AlphaTest);
-            GL.AlphaFunc(AlphaFunction.Gequal, 0.5f);
+            GL.AlphaFunc(AlphaFunction.Gequal, 0.25f);
             foreach (Node node in model.Nodes)
             {
                 RenderNode(model, node, RenderMode.AlphaTest);
@@ -561,20 +561,32 @@ namespace MphRead
         {
             GL.UseProgram(_shaderProgramId);
             // pass 1: opaque
+            GL.DepthMask(true);
             foreach (Node node in model.Nodes)
             {
                 RenderNode(model, node, RenderMode.Normal);
             }
-            // pass 2: translucent
-            GL.DepthMask(false);
+            // pass 2: opaque pixels on translucent surfaces
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.Enable(EnableCap.AlphaTest);
+            GL.AlphaFunc(AlphaFunction.Gequal, 0.95f);
+            foreach (Node node in model.Nodes)
+            {
+                RenderNode(model, node, RenderMode.Normal, invertFilter: true);
+            }
+            // pass 3: translucent
+            GL.AlphaFunc(AlphaFunction.Less, 0.95f);
+            //GL.Enable(EnableCap.Blend);
+            GL.DepthMask(false);
+            //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             foreach (Node node in model.Nodes)
             {
                 RenderNode(model, node, RenderMode.Normal, invertFilter: true);
             }
             GL.DepthMask(true);
             GL.Disable(EnableCap.Blend);
+            GL.Disable(EnableCap.AlphaTest);
             GL.UseProgram(0);
         }
 
@@ -589,7 +601,7 @@ namespace MphRead
                     GL.MatrixMode(MatrixMode.Modelview);
                     GL.PushMatrix();
                     Matrix4 transform = node.Transform;
-                    GL.MultTransposeMatrix(ref transform);
+                    GL.MultMatrix(ref transform);
                 }
                 int meshStart = node.MeshId / 2;
                 for (int i = 0; i < node.MeshCount; i++)
@@ -693,14 +705,23 @@ namespace MphRead
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
                 AnimateTexcoords(model, material, width, height);
             }
-            else
+            else if (material.TexgenMode != TexgenMode.None && model.TextureMatrices.Count > 0)
+            {
+                Matrix4 matrix = model.TextureMatrices[material.MatrixId];
+                GL.LoadMatrix(ref matrix);
+            }
+            else if (material.TexgenMode != 0)
             {
                 GL.Translate(material.TranslateS, material.TranslateT, 0.0f);
                 GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
             }
+            else
+            {
+                GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+            }
             GL.Uniform1(_shaderLocations.UseTexture, GL.IsEnabled(EnableCap.Texture2D) ? 1 : 0);
-            if (_lighting && material.Lighting != 0)
+            if (false && _lighting && material.Lighting != 0)
             {
                 // todo: would be nice if the approaches for this and the room lights were the same
                 var ambient = new Vector4(
