@@ -44,8 +44,72 @@ namespace MphRead
             }
         }
 
-        public Vector3 Position { get; set; }
-        public Vector3 Rotation { get; set; }
+        private Matrix4 _transform = Matrix4.Identity;
+        public Vector3 _scale = new Vector3(1, 1, 1);
+        public Vector3 _position = Vector3.Zero;
+        public Vector3 _rotation = Vector3.Zero;
+
+        public Matrix4 Transform
+        {
+            get
+            {
+                return _transform;
+            }
+            set
+            {
+                _position = new Vector3(value.M41, value.M42, value.M43);
+                _transform = value;
+            }
+        }
+
+        public Vector3 Position
+        {
+            get
+            {
+                return _position;
+            }
+            set
+            {
+                _transform.M41 = value.X;
+                _transform.M42 = value.Y;
+                _transform.M43 = value.Z;
+                _position = value;
+            }
+        }
+
+        public Vector3 Scale
+        {
+            get
+            {
+                return _scale;
+            }
+            set
+            {
+                Transform = SceneSetup.ComputeNodeTransforms(value, new Vector3(
+                    MathHelper.DegreesToRadians(Rotation.X),
+                    MathHelper.DegreesToRadians(Rotation.Y),
+                    MathHelper.DegreesToRadians(Rotation.Z)),
+                    Position);
+                _scale = value;
+            }
+        }
+
+        public Vector3 Rotation
+        {
+            get
+            {
+                return _rotation;
+            }
+            set
+            {
+                Transform = SceneSetup.ComputeNodeTransforms(Scale, new Vector3(
+                    MathHelper.DegreesToRadians(value.X),
+                    MathHelper.DegreesToRadians(value.Y),
+                    MathHelper.DegreesToRadians(value.Z)),
+                    Position);
+                _rotation = value;
+            }
+        }
 
         public bool Animate { get; set; }
         // temporary -- see note where the transpose matrix is applied
@@ -352,7 +416,7 @@ namespace MphRead
         public Vector3 Vector1 { get; }
         public Vector3 Vector2 { get; }
         public byte Type { get; }
-        public Matrix4 Transform { get; set; }
+        public Matrix4 Transform { get; set; } = Matrix4.Identity;
 
         public Node(RawNode raw)
         {

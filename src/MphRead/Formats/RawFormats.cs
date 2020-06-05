@@ -330,8 +330,8 @@ namespace MphRead
         public readonly uint NodePosition;
         public readonly ushort MaterialCount;
         public readonly ushort NodeCount;
-        public readonly uint TextureMatrices;
-        public readonly uint NodeAnimation;
+        public readonly uint TextureMatrixOffset;
+        public readonly uint NodeAnimationOffset;
         public readonly uint TextureCoordinateAnimations;
         public readonly uint MaterialAnimations;
         public readonly uint TextureAnimations;

@@ -41,7 +41,7 @@ namespace MphRead
             }
             FilterNodes(room, roomLayerMask);
             // todo?: scene min/max coordinates
-            ComputeMatrices(room, index: 0);
+            ComputeNodeMatrices(room, index: 0);
             IReadOnlyList<Model> entities = LoadEntities(metadata);
             // todo?: area ID/portals
             room.Type = ModelType.Room;
@@ -97,17 +97,16 @@ namespace MphRead
             }
         }
 
-        public static void ComputeMatrices(Model model, int index)
+        public static void ComputeNodeMatrices(Model model, int index)
         {
             if (model.Nodes.Count == 0 || index == UInt16.MaxValue)
             {
                 return;
             }
-            Matrix4 transform = default;
             for (int i = index; i != UInt16.MaxValue;)
             {
                 Node node = model.Nodes[i];
-                ComputeTransforms(ref transform, node.Scale, node.Angle, node.Position);
+                Matrix4 transform = ComputeNodeTransforms(node.Scale, node.Angle, node.Position);
                 if (node.ParentIndex == UInt16.MaxValue)
                 {
                     node.Transform = transform;
@@ -118,14 +117,15 @@ namespace MphRead
                 }
                 if (node.ChildIndex != UInt16.MaxValue)
                 {
-                    ComputeMatrices(model, node.ChildIndex);
+                    ComputeNodeMatrices(model, node.ChildIndex);
                 }
                 // todo?: do whatever with NodePosition/NodeInitialPosition
                 i = node.NextIndex;
             }
         }
 
-        private static void ComputeTransforms(ref Matrix4 transform, Vector3 scale, Vector3 angle, Vector3 position)
+        // todo: rename/relocate
+        public static Matrix4 ComputeNodeTransforms(Vector3 scale, Vector3 angle, Vector3 position)
         {
             float sinAx = MathF.Sin(angle.X);
             float sinAy = MathF.Sin(angle.Y);
@@ -142,6 +142,8 @@ namespace MphRead
 
             float v17 = v19 * sinAy;
 
+            Matrix4 transform = default;
+
             transform.M11 = scale.X * cosAy * cosAz;
             transform.M12 = scale.X * cosAy * sinAz;
             transform.M13 = scale.X * -sinAy;
@@ -151,7 +153,7 @@ namespace MphRead
             transform.M23 = scale.Y * sinAx * cosAy;
 
             transform.M31 = scale.Z * (v18 * sinAy + sinAx * sinAz);
-            transform.M32 = scale.Z * ((v17 + (v19 * sinAy)) - (sinAx * cosAz));
+            transform.M32 = scale.Z * (v17 + (v19 * sinAy) - (sinAx * cosAz));
             transform.M33 = scale.Z * v20;
 
             transform.M41 = position.X;
@@ -162,6 +164,38 @@ namespace MphRead
             transform.M24 = 0;
             transform.M34 = 0;
             transform.M44 = 1;
+
+            return transform;
+        }
+
+        public static Matrix4 ComputeModelMatrices(Vector3 vector1, Vector3 vector2, Vector3 position)
+        {
+            Vector3 up = Vector3.Cross(vector2, vector1).Normalized();
+            var direction = Vector3.Cross(vector1, up);
+
+            Matrix4 transform = default;
+
+            transform.M11 = up.X;
+            transform.M12 = up.Y;
+            transform.M13 = up.Z;
+            transform.M14 = 0;
+
+            transform.M21 = direction.X;
+            transform.M22 = direction.Y;
+            transform.M23 = direction.Z;
+            transform.M24 = 0;
+
+            transform.M31 = vector1.X;
+            transform.M32 = vector1.Y;
+            transform.M33 = vector1.Z;
+            transform.M34 = 0;
+
+            transform.M41 = position.X;
+            transform.M42 = position.Y;
+            transform.M43 = position.Z;
+            transform.M44 = 1;
+
+            return transform;
         }
 
         private static IReadOnlyList<Model> LoadEntities(RoomMetadata metadata)
@@ -249,6 +283,31 @@ namespace MphRead
             return models;
         }
 
+        private static Vector3 Vector3ByMatrix4(Vector3 vector, Matrix4 matrix)
+        {
+            return new Vector3(
+                vector.X * matrix.M11 + vector.Y * matrix.M21 + vector.Z * matrix.M31,
+                vector.X * matrix.M12 + vector.Y * matrix.M22 + vector.Z * matrix.M32,
+                vector.X * matrix.M13 + vector.Y * matrix.M23 + vector.Z * matrix.M33
+            );
+        }
+        
+        private static void ComputeJumpPadBeamTransform(Model model, JumpPadEntityData data, Matrix4 parentTransform)
+        {
+            var up = new Vector3(0, 1, 0);
+            var right = new Vector3(1, 0, 0);
+            var beamVector = Vector3.Normalize(data.BeamVector.ToFloatVector());
+            beamVector = Vector3ByMatrix4(beamVector, parentTransform);
+            if (beamVector.X != 0 || beamVector.Z != 0)
+            {
+                model.Transform = ComputeModelMatrices(beamVector, up, model.Position);
+            }
+            else
+            {
+                model.Transform = ComputeModelMatrices(beamVector, right, model.Position);
+            }
+        }
+
         // todo: avoid loading things multiple times
         private static IReadOnlyList<Model> LoadJumpPad(JumpPadEntityData data)
         {
@@ -256,12 +315,12 @@ namespace MphRead
             string modelName = Metadata.JumpPads[(int)data.ModelId];
             Model model1 = Read.GetModelByName(modelName);
             model1.Position = data.Position.ToFloatVector();
-            ComputeMatrices(model1, index: 0);
+            model1.Transform = ComputeModelMatrices(data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector(), model1.Position);
             list.Add(model1);
             Model model2 = Read.GetModelByName("JumpPad_Beam");
-            model2.Position = new Vector3(model1.Position.X, model1.Position.Y + 0.2f, model1.Position.Z);
-            model2.Rotation = new Vector3(-90, 0, 0);
-            ComputeMatrices(model2, index: 0);
+            model2.Position = new Vector3(model1.Position.X, model1.Position.Y + 0.25f, model1.Position.Z);
+            ComputeJumpPadBeamTransform(model2, data, model1.Transform);
+            ComputeNodeMatrices(model2, index: 0);
             model2.ForceApplyTransform = true;
             list.Add(model2);
             return list;
@@ -278,7 +337,6 @@ namespace MphRead
             );
             model.Rotation = new Vector3(0, _random.Next(0x8000) / (float)0x7FFF * 360, 0);
             model.Type = ModelType.Item;
-            ComputeMatrices(model, index: 0);
             return model;
         }
 
@@ -291,7 +349,7 @@ namespace MphRead
             model.Position = data.Position.ToFloatVector();
             model.Rotation = GetUnitRotation(data.Rotation);
             model.Type = ModelType.Generic;
-            ComputeMatrices(model, index: 0);
+            ComputeNodeMatrices(model, index: 0);
             return model;
         }
 
@@ -329,7 +387,7 @@ namespace MphRead
             }
             model.Position = new Vector3(position.X.FloatValue, position.Y.FloatValue, position.Z.FloatValue);
             model.Type = ModelType.Placeholder;
-            ComputeMatrices(model, index: 0);
+            ComputeNodeMatrices(model, index: 0);
             return model;
         }
 

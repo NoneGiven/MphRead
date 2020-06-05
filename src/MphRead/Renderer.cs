@@ -32,7 +32,7 @@ namespace MphRead
         {
             _window.AddRoom(id, layerMask);
         }
-        
+
         public void AddRoom(string name, int layerMask = 0)
         {
             _window.AddRoom(name, layerMask);
@@ -66,6 +66,9 @@ namespace MphRead
         public int Diffuse { get; set; }
         public int Ambient { get; set; }
         public int Specular { get; set; }
+        public int UseFog { get; set; }
+        public int FogColor { get; set; }
+        public int FogOffset { get; set; }
     }
 
     public class RenderWindow : GameWindow
@@ -81,7 +84,6 @@ namespace MphRead
         private Vector3 _cameraPosition = new Vector3(0, 0, 0);
         private bool _leftMouse = false;
         public int _textureCount = 0;
-        public float _roomScale = 1;
 
         private bool _showTextures = true;
         private bool _showColors = true;
@@ -98,6 +100,10 @@ namespace MphRead
         private Vector4 _light1Color = default;
         private Vector4 _light2Vector = default;
         private Vector4 _light2Color = default;
+        private bool _hasFog = false; // sktodo
+        private bool _showFog = true;
+        private Vector4 _fogColor = default;
+        private int _fogOffset = default;
 
         private int _shaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
@@ -126,7 +132,8 @@ namespace MphRead
             (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask);
             _models.Insert(0, room);
             _models.AddRange(entities);
-            _roomScale = room.Header.ScaleBase.FloatValue * (1 << (int)room.Header.ScaleFactor);
+            float roomScale = room.Header.ScaleBase.FloatValue * (1 << (int)room.Header.ScaleFactor);
+            room.Scale = new Vector3(roomScale, roomScale, roomScale);
             _light1Vector = new Vector4(roomMeta.Light1Vector);
             _light1Color = new Vector4(
                 roomMeta.Light1Color.Red / 255.0f,
@@ -147,7 +154,7 @@ namespace MphRead
         public void AddModel(string name, int recolor)
         {
             Model model = Read.GetModelByName(name, recolor);
-            SceneSetup.ComputeMatrices(model, index: 0);
+            SceneSetup.ComputeNodeMatrices(model, index: 0);
             _models.Add(model);
         }
 
@@ -201,8 +208,11 @@ namespace MphRead
             _shaderLocations.Diffuse = GL.GetUniformLocation(_shaderProgramId, "diffuse");
             _shaderLocations.Ambient = GL.GetUniformLocation(_shaderProgramId, "ambient");
             _shaderLocations.Specular = GL.GetUniformLocation(_shaderProgramId, "specular");
+            _shaderLocations.UseFog = GL.GetUniformLocation(_shaderProgramId, "fog_enable");
+            _shaderLocations.FogColor = GL.GetUniformLocation(_shaderProgramId, "fog_color");
+            _shaderLocations.FogOffset = GL.GetUniformLocation(_shaderProgramId, "fog_offset");
         }
-
+        
         private static readonly SemaphoreSlim _consoleLock = new SemaphoreSlim(1, 1);
 
         private void PrintMenu()
@@ -473,21 +483,14 @@ namespace MphRead
                 ProcessAnimations(model, elapsedTime);
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.PushMatrix();
-                float height = 0;
+                Matrix4 transform = model.Transform;
                 if (model.Type == ModelType.Item)
                 {
                     float rotation = (float)(model.Rotation.Y + elapsedTime * 360 * 0.35) % 360;
                     model.Rotation = new Vector3(model.Rotation.X, rotation, model.Rotation.Z);
-                    height = (MathF.Sin(model.Rotation.Y / 180 * MathF.PI) + 1) / 8f;
+                    transform.M42 += (MathF.Sin(model.Rotation.Y / 180 * MathF.PI) + 1) / 8f;
                 }
-                GL.Translate(model.Position.X, model.Position.Y + height, model.Position.Z);
-                if (model.Type == ModelType.Room)
-                {
-                    GL.Scale(_roomScale, _roomScale, _roomScale);
-                }
-                GL.Rotate(model.Rotation.X, 1, 0, 0);
-                GL.Rotate(model.Rotation.Y, 0, 1, 0);
-                GL.Rotate(model.Rotation.Z, 0, 0, 1);
+                GL.MultMatrix(ref transform);
                 if (model.Type == ModelType.Room)
                 {
                     RenderRoom(model);
@@ -501,18 +504,21 @@ namespace MphRead
             }
         }
 
-        private void SetLights()
+        private void UpdateUniforms()
         {
             GL.Uniform4(_shaderLocations.Light1Vector, _light1Vector);
             GL.Uniform4(_shaderLocations.Light1Color, _light1Color);
             GL.Uniform4(_shaderLocations.Light2Vector, _light2Vector);
             GL.Uniform4(_shaderLocations.Light2Color, _light2Color);
+            GL.Uniform1(_shaderLocations.UseFog, _hasFog && _showFog ? 1 : 0);
+            GL.Uniform4(_shaderLocations.FogColor, _fogColor);
+            GL.Uniform1(_shaderLocations.FogOffset, _fogOffset);
         }
 
         private void RenderRoom(Model model)
         {
             GL.UseProgram(_shaderProgramId);
-            SetLights();
+            UpdateUniforms();
             // pass 1: opaque
             GL.DepthMask(true);
             foreach (Node node in model.Nodes)

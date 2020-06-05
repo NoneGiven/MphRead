@@ -12,10 +12,11 @@ namespace MphRead
             using var renderer = new Renderer();
             if (args.Length == 0)
             {
-                Header header = Read.GetHeader(@"models\AlimbicPalettes_pal_Model.bin");
-                Model model = Read.GetModelByName("AlimbicDoor");
-                renderer.AddRoom(55);
-                //renderer.AddModel("Crate01");
+                //Header header = Read.GetHeader(@"models\AlimbicPalettes_pal_Model.bin");
+                //Model model = Read.GetModelByName("AlimbicDoor");
+                //renderer.AddRoom(37);
+                renderer.AddRoom("MP3 PROVING GROUND");
+                renderer.AddModel("Crate01");
                 Nop();
             }
             else
