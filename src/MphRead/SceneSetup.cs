@@ -336,6 +336,7 @@ namespace MphRead
                 data.Position.Z.FloatValue
             );
             model.Rotation = new Vector3(0, _random.Next(0x8000) / (float)0x7FFF * 360, 0);
+            ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Item;
             return model;
         }
