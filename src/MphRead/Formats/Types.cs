@@ -28,6 +28,20 @@ namespace MphRead
         }
     }
 
+    // size: 16
+    public readonly struct Vector4Fx
+    {
+        public readonly Fixed X;
+        public readonly Fixed Y;
+        public readonly Fixed Z;
+        public readonly Fixed W;
+
+        public Vector4 ToFloatVector()
+        {
+            return new Vector4(X.FloatValue, Y.FloatValue, Z.FloatValue, W.FloatValue);
+        }
+    }
+
     // size: 48
     public readonly struct Matrix43Fx
     {
@@ -35,6 +49,20 @@ namespace MphRead
         public readonly Vector3Fx Two;
         public readonly Vector3Fx Three;
         public readonly Vector3Fx Four;
+    }
+    
+    // size: 64
+    public readonly struct Matrix44Fx
+    {
+        public readonly Vector4Fx One;
+        public readonly Vector4Fx Two;
+        public readonly Vector4Fx Three;
+        public readonly Vector4Fx Four;
+
+        public Matrix4 ToFloatMatrix()
+        {
+            return new Matrix4(One.ToFloatVector(), Two.ToFloatVector(), Three.ToFloatVector(), Four.ToFloatVector());
+        }
     }
 
     // size: 3

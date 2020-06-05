@@ -18,6 +18,7 @@ namespace MphRead
         public IReadOnlyList<Mesh> Meshes { get; }
         public IReadOnlyList<Material> Materials { get; }
         public IReadOnlyList<DisplayList> DisplayLists { get; }
+        public IReadOnlyList<Matrix4> TextureMatrices { get; }
 
         // count and order match Dlists
         public IReadOnlyList<IReadOnlyList<RenderInstruction>> RenderInstructionLists { get; }
@@ -127,7 +128,7 @@ namespace MphRead
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
             IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
             IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
-            IReadOnlyList<Recolor> recolors, int defaultRecolor)
+            IReadOnlyList<Matrix44Fx> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor)
         {
             ThrowIfInvalidEnums(materials);
             Name = name;
@@ -141,6 +142,7 @@ namespace MphRead
             MaterialAnimationGroups = materialGroups;
             TexcoordAnimationGroups = texcoordGroups;
             TextureAnimationGroups = textureGroups;
+            TextureMatrices = textureMatrices.Select(m => m.ToFloatMatrix()).ToList();
             Recolors = recolors;
             CurrentRecolor = defaultRecolor;
         }
@@ -455,7 +457,9 @@ namespace MphRead
         public ColorRgb Specular { get; }
         public PolygonMode PolygonMode { get; set; }
         public RenderMode RenderMode { get; set; }
+        public int TexgenMode { get; set; }
         public int TexcoordAnimationId { get; set; }
+        public int MatrixId { get; set; }
         public float ScaleS { get; }
         public float ScaleT { get; }
         public float TranslateS { get; }
@@ -479,7 +483,9 @@ namespace MphRead
             Specular = raw.Specular;
             PolygonMode = raw.PolygonMode;
             RenderMode = raw.RenderMode;
+            TexgenMode = (int)raw.TexcoordTransformMode;
             TexcoordAnimationId = raw.TexcoordAnimationId;
+            MatrixId = (int)raw.MatrixId;
             ScaleS = raw.ScaleS.FloatValue;
             ScaleT = raw.ScaleT.FloatValue;
             TranslateS = raw.TranslateS.FloatValue;

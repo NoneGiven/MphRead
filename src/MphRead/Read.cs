@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using OpenToolkit.Mathematics;
 
 namespace MphRead
 {
@@ -108,6 +109,16 @@ namespace MphRead
                 instructions.Add(DoRenderInstructions(initialBytes, dlist));
             }
             IReadOnlyList<RawMaterial> materials = DoOffsets<RawMaterial>(initialBytes, header.MaterialOffset, header.MaterialCount);
+            IReadOnlyList<Matrix44Fx> textureMatrices;
+            if (header.TextureMatrixOffset != 0)
+            {
+                int count = (int)materials.Select(m => m.MatrixId).Max();
+                textureMatrices = DoOffsets<Matrix44Fx>(initialBytes, header.TextureMatrixOffset, count);
+            }
+            else
+            {
+                textureMatrices = new List<Matrix44Fx>();
+            }
             var recolors = new List<Recolor>();
             foreach (RecolorMetadata meta in recolorMeta)
             {
@@ -150,7 +161,7 @@ namespace MphRead
             AnimationResults animations = LoadAnimation(animationPath);
             var model = new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                recolors, defaultRecolor);
+                textureMatrices, recolors, defaultRecolor);
             foreach (TexcoordAnimationGroup group in model.TexcoordAnimationGroups)
             {
                 group.CurrentFrame = 0;
