@@ -143,11 +143,8 @@ namespace MphRead
             }
         }
 
-        public static void TestAllRooms()
+        public static void TestAllEntities()
         {
-            var int88 = new HashSet<uint>();
-            var int8C = new HashSet<uint>();
-            var int90 = new HashSet<uint>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 if (meta.Value.EntityPath != null)
@@ -160,9 +157,6 @@ namespace MphRead
                             if (entity.Type == EntityType.Object)
                             {
                                 ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
-                                int88.Add(data.Field88);
-                                int8C.Add(data.Field8C);
-                                int90.Add(data.Field90);
                             }
                         }
                     }

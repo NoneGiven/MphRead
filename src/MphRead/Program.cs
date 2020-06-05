@@ -12,9 +12,7 @@ namespace MphRead
             using var renderer = new Renderer();
             if (args.Length == 0)
             {
-                Test.TestAllRooms();
-                renderer.AddRoom(27);
-                //renderer.AddRoom("MP3 PROVING GROUND");
+                renderer.AddRoom("MP3 PROVING GROUND");
                 renderer.AddModel("Crate01");
                 Nop();
             }
