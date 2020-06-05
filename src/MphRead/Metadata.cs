@@ -245,6 +245,33 @@ namespace MphRead
         }
     }
 
+    public class ObjectMetadata
+    {
+        public int SomeId { get; }
+        public string Name { get; }
+        public IReadOnlyList<int> AnimationIds { get; }
+        public int PaletteId { get; }
+
+        public ObjectMetadata(string name, int someId, int paletteId = 0, List<int>? animationIds = null)
+        {
+            Name = name;
+            SomeId = someId;
+            PaletteId = paletteId;
+            if (animationIds == null)
+            {
+                AnimationIds = new List<int>() { 0, 0, 0, 0 };
+            }
+            else if (animationIds.Count != 4)
+            {
+                throw new ArgumentException(nameof(animationIds));
+            }
+            else
+            {
+                AnimationIds = animationIds;
+            }
+        }
+    }
+
     public static class Metadata
     {
         public static EntityMetadata? GetEntityByName(string name)
@@ -3563,6 +3590,82 @@ namespace MphRead
             // unused
             /* 22 */ ("pick_wpn_missile", 0.558837891f)
         };
+
+        public static readonly List<ObjectMetadata> _objects = new List<ObjectMetadata>()
+        {
+            new ObjectMetadata("AlimbicGhost_01", 0),
+            new ObjectMetadata("AlimbicLightPole", 0),
+            new ObjectMetadata("AlimbicStationShieldControl", 0),
+            new ObjectMetadata("AlimbicComputerStationControl", 0),
+            new ObjectMetadata("AlimbicEnergySensor", 0),
+            new ObjectMetadata("SamusShip", 0),
+            new ObjectMetadata("Guardbot01_Dead", 0),
+            new ObjectMetadata("Guardbot02_Dead", 0),
+            new ObjectMetadata("Guardian_Dead", 0),
+            new ObjectMetadata("Psychobit_Dead", 0),
+            new ObjectMetadata("AlimbicLightPole02", 0),
+            new ObjectMetadata("AlimbicComputerStationControl02", 0),
+            new ObjectMetadata("Generic_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Generic_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Generic_Power", 0),
+            new ObjectMetadata("Generic_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Generic_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Alimbic_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Alimbic_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Alimbic_Power", 0),
+            new ObjectMetadata("Alimbic_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Alimbic_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Lava_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Lava_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Lava_Power", 0),
+            new ObjectMetadata("Lava_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Lava_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Ice_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Ice_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Ice_Power", 0),
+            new ObjectMetadata("Ice_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Ice_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Ruins_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Ruins_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Ruins_Power", 0),
+            new ObjectMetadata("Ruins_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("Ruins_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            new ObjectMetadata("PlantCarnivarous_Branched", 0),
+            new ObjectMetadata("PlantCarnivarous_Pod", 0),
+            new ObjectMetadata("PlantCarnivarous_PodLeaves", 0),
+            new ObjectMetadata("PlantCarnivarous_Vine", 0),
+            new ObjectMetadata("GhostSwitch", 0),
+            new ObjectMetadata("Switch", 1),
+            new ObjectMetadata("Guardian_Stasis", 0, animationIds: new List<int>() { 0xFF, 0, 0, 0 }),
+            new ObjectMetadata("AlimbicStatue_lod0", 0, animationIds: new List<int>() { 0xFF, 0, 0, 0 }),
+            new ObjectMetadata("AlimbicCapsule", 0),
+            new ObjectMetadata("SniperTarget", 1, animationIds: new List<int>() { 0, 2, 1, 0 }),
+            new ObjectMetadata("SecretSwitch", 0, 1, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            new ObjectMetadata("SecretSwitch", 0, 2, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            new ObjectMetadata("SecretSwitch", 0, 3, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            new ObjectMetadata("SecretSwitch", 0, 4, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            new ObjectMetadata("SecretSwitch", 0, 5, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            new ObjectMetadata("SecretSwitch", 0, 6, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            new ObjectMetadata("WallSwitch", 1, animationIds: new List<int>() { 2, 0, 1, 0 })
+        };
+
+        public static ObjectMetadata GetObjectById(int id)
+        {
+            if (id < 0 || id > _objects.Count)
+            {
+                throw new ArgumentException(nameof(id));
+            }
+            return _objects[id];
+        }
+
+        public static ObjectMetadata? GetObjectByName(string name)
+        {
+            if (_objects.Any(o => o.Name == name))
+            {
+                return _objects.First(o => o.Name == name);
+            }
+            return null;
+        }
 
         // todo: e.g. lod1 in the model folder should have the animation files from the lod0 archive
         public static readonly IReadOnlyDictionary<string, EntityMetadata> EntityMetadata

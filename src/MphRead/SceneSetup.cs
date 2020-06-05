@@ -57,7 +57,7 @@ namespace MphRead
                 {
                     node.Enabled = false;
                     continue;
-                } 
+                }
                 if (!node.Name.StartsWith("_"))
                 {
                     continue;
@@ -291,7 +291,7 @@ namespace MphRead
                 vector.X * matrix.M13 + vector.Y * matrix.M23 + vector.Z * matrix.M33
             );
         }
-        
+
         private static void ComputeJumpPadBeamTransform(Model model, JumpPadEntityData data, Matrix4 parentTransform)
         {
             var up = new Vector3(0, 1, 0);
@@ -369,7 +369,7 @@ namespace MphRead
             { EntityType.Unknown16, new ColorRgb(0xFF, 0xDE, 0xAD) },
             { EntityType.CameraSeq, new ColorRgb(0xFF, 0x69, 0xB4) }
         };
-        
+
         private static Model LoadEntityPlaceholder(EntityType type, Vector3Fx position)
         {
             Model model = Read.GetModelByName("pick_wpn_missile");

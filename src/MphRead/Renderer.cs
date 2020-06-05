@@ -220,7 +220,7 @@ namespace MphRead
             _shaderLocations.FogColor = GL.GetUniformLocation(_shaderProgramId, "fog_color");
             _shaderLocations.FogOffset = GL.GetUniformLocation(_shaderProgramId, "fog_offset");
         }
-        
+
         private static readonly SemaphoreSlim _consoleLock = new SemaphoreSlim(1, 1);
 
         private void PrintMenu()

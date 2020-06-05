@@ -50,7 +50,7 @@ namespace MphRead
         public readonly Vector3Fx Three;
         public readonly Vector3Fx Four;
     }
-    
+
     // size: 64
     public readonly struct Matrix44Fx
     {
