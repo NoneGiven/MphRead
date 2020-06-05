@@ -214,7 +214,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Object)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<ObjectEntityData>)entity).Data.Position));
+                    models.Add(LoadObject(((Entity<ObjectEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.PlayerSpawn)
                 {
@@ -324,6 +324,16 @@ namespace MphRead
             model2.ForceApplyTransform = true;
             list.Add(model2);
             return list;
+        }
+
+        private static Model LoadObject(ObjectEntityData data)
+        {
+            ObjectMetadata meta = Metadata.GetObjectById(22);
+            Model model = Read.GetModelByName(meta.Name, meta.RecolorId);
+            model.Position = data.Position.ToFloatVector();
+            ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Object;
+            return model;
         }
 
         private static Model LoadItem(ItemEntityData data)

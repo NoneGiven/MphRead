@@ -145,44 +145,30 @@ namespace MphRead
 
         public static void TestAllRooms()
         {
-            var matches = new Dictionary<uint, HashSet<uint>>();
+            var int88 = new HashSet<uint>();
+            var int8C = new HashSet<uint>();
+            var int90 = new HashSet<uint>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 if (meta.Value.EntityPath != null)
                 {
-                    //Console.WriteLine();
                     for (int i = 0; i < 16; i++)
                     {
                         IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, i);
-                        //if (entities.Any(e => e.Type == EntityType.Door))
-                        //{
-                        //    Console.WriteLine($"{meta.Key} {i}");
-                        //}
                         foreach (Entity entity in entities)
                         {
-                            if (entity.Type == EntityType.Door)
+                            if (entity.Type == EntityType.Object)
                             {
-                                DoorEntityData data = ((Entity<DoorEntityData>)entity).Data;
-                                if (matches.ContainsKey(data.ModelId))
-                                {
-                                    matches[data.ModelId].Add(data.PaletteId);
-                                }
-                                else
-                                {
-                                    matches.Add(data.ModelId, new HashSet<uint>() { data.PaletteId });
-                                }
+                                ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
+                                int88.Add(data.Field88);
+                                int8C.Add(data.Field8C);
+                                int90.Add(data.Field90);
                             }
                         }
                     }
                 }
             }
-            foreach (KeyValuePair<uint, HashSet<uint>> kvp in matches)
-            {
-                foreach (uint palette in kvp.Value)
-                {
-                    Console.WriteLine($"{kvp.Key} {palette}");
-                }
-            }
+            Nop();
         }
 
 #pragma warning restore IDE0051 // Remove unused private members

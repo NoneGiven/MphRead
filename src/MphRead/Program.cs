@@ -5,20 +5,15 @@ namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 3, 0, 0);
+        public static Version Version { get; } = new Version(0, 4, 0, 0);
 
         private static void Main(string[] args)
         {
             using var renderer = new Renderer();
             if (args.Length == 0)
             {
-                //Header header = Read.GetHeader(@"models\AlimbicPalettes_pal_Model.bin");
-                //Model model = Read.GetRoomByName("Gorea_Land");
-                //foreach (var node in model.Nodes)
-                //{
-                //    Console.WriteLine(node.Name);
-                //}
-                renderer.AddRoom(56);
+                Test.TestAllRooms();
+                renderer.AddRoom(27);
                 //renderer.AddRoom("MP3 PROVING GROUND");
                 renderer.AddModel("Crate01");
                 Nop();

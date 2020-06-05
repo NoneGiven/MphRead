@@ -33,6 +33,7 @@ namespace MphRead
         Generic,
         Room,
         Item,
+        Object,
         Placeholder
     }
 

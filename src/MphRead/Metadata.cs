@@ -250,13 +250,13 @@ namespace MphRead
         public int SomeId { get; }
         public string Name { get; }
         public IReadOnlyList<int> AnimationIds { get; }
-        public int PaletteId { get; }
+        public int RecolorId { get; }
 
         public ObjectMetadata(string name, int someId, int paletteId = 0, List<int>? animationIds = null)
         {
             Name = name;
             SomeId = someId;
-            PaletteId = paletteId;
+            RecolorId = paletteId;
             if (animationIds == null)
             {
                 AnimationIds = new List<int>() { 0, 0, 0, 0 };
