@@ -100,8 +100,8 @@ namespace MphRead
         private Vector4 _light1Color = default;
         private Vector4 _light2Vector = default;
         private Vector4 _light2Color = default;
-        private bool _hasFog = false; // sktodo
-        private bool _showFog = true;
+        private bool _hasFog = false;
+        private bool _showFog = false;
         private Vector4 _fogColor = default;
         private int _fogOffset = default;
 
@@ -148,6 +148,14 @@ namespace MphRead
                 roomMeta.Light2Color.Blue / 255.0f,
                 roomMeta.Light2Color.Alpha / 255.0f
             );
+            _hasFog = roomMeta.FogEnabled != 0;
+            _fogColor = new Vector4(
+                ((roomMeta.FogColor) & 0x1F) / (float)0x1F,
+                (((roomMeta.FogColor) >> 5) & 0x1F) / (float)0x1F,
+                (((roomMeta.FogColor) >> 10) & 0x1F) / (float)0x1F,
+                1
+            );
+            _fogOffset = (int)roomMeta.FogOffset;
             _cameraMode = CameraMode.Roam;
         }
 
@@ -239,6 +247,7 @@ namespace MphRead
                 Console.WriteLine($" - B toggles face culling ({FormatOnOff(_faceCulling)})");
                 Console.WriteLine($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})");
                 Console.WriteLine($" - L toggles lighting ({FormatOnOff(_lighting)})");
+                Console.WriteLine($" - G toggles fog ({FormatOnOff(_showFog)})");
                 Console.WriteLine($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})");
                 Console.WriteLine($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
                 Console.WriteLine(" - R resets the camera");
@@ -1128,6 +1137,11 @@ namespace MphRead
             else if (e.Key == Key.L)
             {
                 _lighting = !_lighting;
+                PrintMenu();
+            }
+            else if (e.Key == Key.G)
+            {
+                _showFog = !_showFog;
                 PrintMenu();
             }
             else if (e.Key == Key.I)

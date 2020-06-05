@@ -341,7 +341,7 @@ namespace MphRead
             return model;
         }
 
-        // todo: load correct palette (not sure which file -- ID between 0 and 9)
+        // todo: load correct palette from Alimbic texture share
         private static Model LoadDoor(DoorEntityData data)
         {
             //string modelName = Metadata.Doors[(int)data.ModelId];

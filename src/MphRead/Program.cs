@@ -18,9 +18,9 @@ namespace MphRead
                 //{
                 //    Console.WriteLine(node.Name);
                 //}
-                //renderer.AddRoom(34);
-                renderer.AddRoom("Gorea_b2");
-                renderer.AddModel("PickUp_EnergyExp");
+                renderer.AddRoom(56);
+                //renderer.AddRoom("MP3 PROVING GROUND");
+                renderer.AddModel("Crate01");
                 Nop();
             }
             else
