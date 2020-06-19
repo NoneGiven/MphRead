@@ -812,6 +812,7 @@ namespace MphRead
                     }
                     break;
                 case InstructionCode.COLOR:
+                case InstructionCode.DIF_AMB:
                     {
                         if (_showColors)
                         {
@@ -990,7 +991,6 @@ namespace MphRead
                     GL.End();
                     break;
                 case InstructionCode.MTX_RESTORE:
-                case InstructionCode.DIF_AMB:
                 case InstructionCode.NOP:
                     break;
                 default:

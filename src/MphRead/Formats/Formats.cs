@@ -187,20 +187,23 @@ namespace MphRead
 
         public void PrintRenderInstructions()
         {
-            int i = 0;
-            foreach (IReadOnlyList<RenderInstruction> list in RenderInstructionLists)
+            for (int i = 0; i < RenderInstructionLists.Count; i++)
             {
                 Console.WriteLine();
-                Console.WriteLine($"Dlist ID {i}:");
-                foreach (RenderInstruction instruction in list)
-                {
-                    Console.WriteLine($"{instruction.Code,-12}\t" +
-                        $"{String.Join(", ", instruction.Arguments)}".Trim());
-                }
-                i++;
+                PrintRenderInstructions(i);
             }
         }
 
+        public void PrintRenderInstructions(int dlistId)
+        {
+            Console.WriteLine($"Dlist ID {dlistId}:");
+            foreach (RenderInstruction instruction in RenderInstructionLists[dlistId])
+            {
+                Console.WriteLine($"{instruction.Code,-12}\t" +
+                    $"{String.Join(", ", instruction.Arguments)}".Trim());
+            }
+        }
+        
         private ColorRgba ColorOnBlackBackground(ColorRgba color)
         {
             float alpha = color.Alpha / 255f;

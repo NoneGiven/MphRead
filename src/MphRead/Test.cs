@@ -143,6 +143,23 @@ namespace MphRead
             }
         }
 
+        public static void TestDifAmb()
+        {
+            foreach (Model model in GetAllModels())
+            {
+                foreach (IReadOnlyList<RenderInstruction> list in model.RenderInstructionLists)
+                {
+                    foreach (RenderInstruction instruction in list)
+                    {
+                        if (instruction.Code == InstructionCode.DIF_AMB)
+                        {
+                            System.Diagnostics.Debugger.Break();
+                        }
+                    }
+                }
+            }
+        }
+
         public static void TestAllEntities()
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
