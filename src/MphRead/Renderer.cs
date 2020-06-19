@@ -730,7 +730,7 @@ namespace MphRead
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
             }
             GL.Uniform1(_shaderLocations.UseTexture, GL.IsEnabled(EnableCap.Texture2D) ? 1 : 0);
-            if (false && _lighting && material.Lighting != 0)
+            if (_lighting && material.Lighting != 0)
             {
                 // todo: would be nice if the approaches for this and the room lights were the same
                 var ambient = new Vector4(
