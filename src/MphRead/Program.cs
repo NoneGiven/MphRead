@@ -12,8 +12,6 @@ namespace MphRead
             using var renderer = new Renderer();
             if (args.Length == 0)
             {
-                Console.WriteLine(LzCompress.Decompress(@"D:\Cdrv\MPH\Data\_Temp\test.arc", @"D:\Cdrv\MPH\Data\_Temp\test2.arc"));
-                Console.WriteLine(Test.TestBytes(@"D:\Cdrv\MPH\Data\_Temp\UNC_Gorea_Land.arc", @"D:\Cdrv\MPH\Data\_Temp\test2.arc"));
                 renderer.AddRoom("MP3 PROVING GROUND");
                 renderer.AddModel("blastcap");
                 Nop();
