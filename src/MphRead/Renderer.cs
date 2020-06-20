@@ -795,7 +795,6 @@ namespace MphRead
             float vtxX = 0;
             float vtxY = 0;
             float vtxZ = 0;
-            var difAmb = new Vector3(1, 1, 1);
             // note: calling this every frame will have some overhead,
             // but baking it in on load would prevent e.g. vertex color toggle
             foreach (RenderInstruction instruction in list)
@@ -835,25 +834,17 @@ namespace MphRead
                     }
                     break;
                 case InstructionCode.DIF_AMB:
+                    // Actual usage of this is to prepare both the diffuse and ambient colors to be applied when NORMAL is called,
+                    // but with bit 15 acting as a flag to directly set the diffuse color as the vertex color immediately.
+                    // However, bit 15 and bits 16-30 (ambient color) are never used by MPH. Still, because of the way we're using
+                    // the shader program, the easiest hack to apply the diffuse color is to just set it as the vertex color.
+                    if (_lighting)
                     {
-                        uint arg = instruction.Arguments[0];
-                        uint dr = (arg >> 0) & 0x1F;
-                        uint dg = (arg >> 5) & 0x1F;
-                        uint db = (arg >> 10) & 0x1F;
-                        uint setColor = (arg >> 15) & 0x1;
-                        if (setColor != 0 && _showColors)
-                        {
-                            GL.Color3(dr / 31.0f, dg / 31.0f, db / 31.0f);
-                        }
-                        uint ar = (arg >> 16) & 0x1F;
-                        uint ag = (arg >> 21) & 0x1F;
-                        uint ab = (arg >> 26) & 0x1F;
-                        // MPH only ever uses bits 0-14 (diffuse), never the bit 15 flag or bits 16-30 (ambient)
-                        difAmb = new Vector3(
-                            dr / 31.0f,
-                            dg / 31.0f,
-                            db / 31.0f
-                        );
+                        uint rgb = instruction.Arguments[0];
+                        uint r = (rgb >> 0) & 0x1F;
+                        uint g = (rgb >> 5) & 0x1F;
+                        uint b = (rgb >> 10) & 0x1F;
+                        GL.Color3(r / 31.0f, g / 31.0f, b / 31.0f);
                     }
                     break;
                 case InstructionCode.NORMAL:
@@ -875,11 +866,6 @@ namespace MphRead
                             z = (int)(z | 0xFFFFFC00);
                         }
                         GL.Normal3(x / 512.0f, y / 512.0f, z / 512.0f);
-                        if (_lighting)
-                        {
-                            GL.Color3(difAmb.X, difAmb.Y, difAmb.Z);
-                            difAmb = new Vector3(1, 1, 1);
-                        }
                     }
                     break;
                 case InstructionCode.TEXCOORD:
