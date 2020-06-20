@@ -76,6 +76,7 @@ namespace MphRead
         private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
         private readonly Dictionary<Model, List<int>> _textureMap = new Dictionary<Model, List<int>>();
+        private readonly List<string> _logs = new List<string>();
 
         private CameraMode _cameraMode = CameraMode.Pivot;
         private float _angleX = 0.0f;
@@ -227,37 +228,49 @@ namespace MphRead
 
         private void PrintMenu()
         {
-            return;
             Task.Run(async () =>
             {
                 await _consoleLock.WaitAsync();
-                Console.Clear();
-                Console.WriteLine($"MphRead Version {Program.Version}");
-                if (_cameraMode == CameraMode.Pivot)
-                {
-                    Console.WriteLine(" - Scroll mouse wheel to zoom");
-                }
-                else if (_cameraMode == CameraMode.Roam)
-                {
-                    Console.WriteLine(" - Use WASD, Space, and V to move");
-                }
-                Console.WriteLine(" - Hold left mouse button or use arrow keys to rotate");
-                Console.WriteLine(" - Hold Shift to move the camera faster");
-                Console.WriteLine($" - T toggles texturing ({FormatOnOff(_showTextures)})");
-                Console.WriteLine($" - C toggles vertex colours ({FormatOnOff(_showColors)})");
-                Console.WriteLine($" - Q toggles wireframe ({FormatOnOff(_wireframe)})");
-                Console.WriteLine($" - B toggles face culling ({FormatOnOff(_faceCulling)})");
-                Console.WriteLine($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})");
-                Console.WriteLine($" - L toggles lighting ({FormatOnOff(_lighting)})");
-                Console.WriteLine($" - G toggles fog ({FormatOnOff(_showFog)})");
-                Console.WriteLine($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})");
-                Console.WriteLine($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
-                Console.WriteLine(" - R resets the camera");
-                Console.WriteLine(" - Ctrl+O then enter \"model_name [recolor]\" to load");
-                Console.WriteLine(" - Esc closes the viewer");
-                Console.WriteLine();
+                DoPrintMenu();
                 _consoleLock.Release();
             });
+        }
+
+        private void DoPrintMenu()
+        {
+            Console.Clear();
+            Console.WriteLine($"MphRead Version {Program.Version}");
+            if (_cameraMode == CameraMode.Pivot)
+            {
+                Console.WriteLine(" - Scroll mouse wheel to zoom");
+            }
+            else if (_cameraMode == CameraMode.Roam)
+            {
+                Console.WriteLine(" - Use WASD, Space, and V to move");
+            }
+            Console.WriteLine(" - Hold left mouse button or use arrow keys to rotate");
+            Console.WriteLine(" - Hold Shift to move the camera faster");
+            Console.WriteLine($" - T toggles texturing ({FormatOnOff(_showTextures)})");
+            Console.WriteLine($" - C toggles vertex colours ({FormatOnOff(_showColors)})");
+            Console.WriteLine($" - Q toggles wireframe ({FormatOnOff(_wireframe)})");
+            Console.WriteLine($" - B toggles face culling ({FormatOnOff(_faceCulling)})");
+            Console.WriteLine($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})");
+            Console.WriteLine($" - L toggles lighting ({FormatOnOff(_lighting)})");
+            Console.WriteLine($" - G toggles fog ({FormatOnOff(_showFog)})");
+            Console.WriteLine($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})");
+            Console.WriteLine($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
+            Console.WriteLine(" - R resets the camera");
+            Console.WriteLine(" - Ctrl+O then enter \"model_name [recolor]\" to load");
+            Console.WriteLine(" - Esc closes the viewer");
+            Console.WriteLine();
+            if (_logs.Count > 0)
+            {
+                foreach (string log in _logs)
+                {
+                    Console.WriteLine(log);
+                }
+                Console.WriteLine();
+            }
         }
 
         private string FormatOnOff(bool setting)
@@ -302,8 +315,7 @@ namespace MphRead
 
                 if (material.RenderMode == RenderMode.Unknown3 || material.RenderMode == RenderMode.Unknown4)
                 {
-                    // todo: logging (this will get overwritten by the menu)
-                    Console.WriteLine($"mat {material.Name} of model {model.Name} has render mode {material.RenderMode}");
+                    _logs.Add($"mat {material.Name} of model {model.Name} has render mode {material.RenderMode}");
                     material.RenderMode = RenderMode.Normal;
                 }
                 // - if material alpha is less than 31, and render mode is not Translucent, set to Translucent
@@ -1031,7 +1043,7 @@ namespace MphRead
 
         private void LoadModel()
         {
-            PrintMenu();
+            DoPrintMenu();
             Console.Write("Open model: ");
             string modelName = Console.ReadLine().Trim();
             if (modelName == "")
