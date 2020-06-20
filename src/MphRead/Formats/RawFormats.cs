@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace MphRead
 {
-    public static class Sizes
+    public static partial class Sizes
     {
         public static readonly int Header = Marshal.SizeOf(typeof(Header));
         public static readonly int EntityHeader = Marshal.SizeOf(typeof(EntityHeader));
