@@ -164,6 +164,8 @@ namespace MphRead
         {
             Model model = Read.GetModelByName(name, recolor);
             SceneSetup.ComputeNodeMatrices(model, index: 0);
+            model.Rotation = new Vector3(0, 0, 90);
+            model.Position = new Vector3(-8, 1, -18);
             _models.Add(model);
         }
 
@@ -795,7 +797,7 @@ namespace MphRead
             float vtxX = 0;
             float vtxY = 0;
             float vtxZ = 0;
-            var difAmb = new Vector3(1, 1, 1);
+            var difAmb = new Vector3(0, 0, 0);
             // note: calling this every frame will have some overhead,
             // but baking it in on load would prevent e.g. vertex color toggle
             foreach (RenderInstruction instruction in list)
@@ -878,7 +880,6 @@ namespace MphRead
                         if (_lighting)
                         {
                             GL.Color3(difAmb.X, difAmb.Y, difAmb.Z);
-                            difAmb = new Vector3(1, 1, 1);
                         }
                     }
                     break;
