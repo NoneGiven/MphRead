@@ -147,14 +147,23 @@ namespace MphRead
         {
             foreach (Model model in GetAllModels())
             {
+                bool f = false;
                 foreach (IReadOnlyList<RenderInstruction> list in model.RenderInstructionLists)
                 {
-                    foreach (RenderInstruction instruction in list)
+                    for (int i = 0; i < list.Count; i++)
                     {
+                        RenderInstruction instruction = list[i];
                         if (instruction.Code == InstructionCode.DIF_AMB)
                         {
-                            System.Diagnostics.Debugger.Break();
+                            Console.WriteLine(i);
+                            f = true;
+                            //System.Diagnostics.Debugger.Break();
                         }
+                    }
+                    if (f)
+                    {
+                        f = false;
+                        Console.WriteLine();
                     }
                 }
             }

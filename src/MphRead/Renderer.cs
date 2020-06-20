@@ -136,17 +136,17 @@ namespace MphRead
             room.Scale = new Vector3(roomScale, roomScale, roomScale);
             _light1Vector = new Vector4(roomMeta.Light1Vector);
             _light1Color = new Vector4(
-                roomMeta.Light1Color.Red / 255.0f,
-                roomMeta.Light1Color.Green / 255.0f,
-                roomMeta.Light1Color.Blue / 255.0f,
-                roomMeta.Light1Color.Alpha / 255.0f
+                roomMeta.Light1Color.Red / 31.0f,
+                roomMeta.Light1Color.Green / 31.0f,
+                roomMeta.Light1Color.Blue / 31.0f,
+                roomMeta.Light1Color.Alpha / 31.0f
             );
             _light2Vector = new Vector4(roomMeta.Light2Vector);
             _light2Color = new Vector4(
-                roomMeta.Light2Color.Red / 255.0f,
-                roomMeta.Light2Color.Green / 255.0f,
-                roomMeta.Light2Color.Blue / 255.0f,
-                roomMeta.Light2Color.Alpha / 255.0f
+                roomMeta.Light2Color.Red / 31.0f,
+                roomMeta.Light2Color.Green / 31.0f,
+                roomMeta.Light2Color.Blue / 31.0f,
+                roomMeta.Light2Color.Alpha / 31.0f
             );
             _hasFog = roomMeta.FogEnabled != 0;
             _fogColor = new Vector4(
@@ -163,6 +163,8 @@ namespace MphRead
         {
             Model model = Read.GetModelByName(name, recolor);
             SceneSetup.ComputeNodeMatrices(model, index: 0);
+            model.Rotation = new Vector3(0, 0, 90);
+            model.Position = new Vector3(0, 2, 0);
             _models.Add(model);
         }
 
@@ -734,21 +736,21 @@ namespace MphRead
             {
                 // todo: would be nice if the approaches for this and the room lights were the same
                 var ambient = new Vector4(
-                    material.Ambient.Red / 255.0f,
-                    material.Ambient.Green / 255.0f,
-                    material.Ambient.Blue / 255.0f,
+                    material.Ambient.Red / 31.0f,
+                    material.Ambient.Green / 31.0f,
+                    material.Ambient.Blue / 31.0f,
                     1.0f
                 );
                 var diffuse = new Vector4(
-                    material.Diffuse.Red / 255.0f,
-                    material.Diffuse.Green / 255.0f,
-                    material.Diffuse.Blue / 255.0f,
+                    material.Diffuse.Red / 31.0f,
+                    material.Diffuse.Green / 31.0f,
+                    material.Diffuse.Blue / 31.0f,
                     1.0f
                 );
                 var specular = new Vector4(
-                    material.Specular.Red / 255.0f,
-                    material.Specular.Green / 255.0f,
-                    material.Specular.Blue / 255.0f,
+                    material.Specular.Red / 31.0f,
+                    material.Specular.Green / 31.0f,
+                    material.Specular.Blue / 31.0f,
                     1.0f
                 );
                 GL.Enable(EnableCap.Lighting);
@@ -785,6 +787,7 @@ namespace MphRead
             float vtxZ = 0;
             // note: calling this every frame will have some overhead,
             // but baking it in on load would prevent e.g. vertex color toggle
+            var difAmb = new Vector3(1, 1, 1);
             foreach (RenderInstruction instruction in list)
             {
                 switch (instruction.Code)
@@ -812,16 +815,34 @@ namespace MphRead
                     }
                     break;
                 case InstructionCode.COLOR:
+                    if (_showColors)
+                    {
+                        uint rgb = instruction.Arguments[0];
+                        uint r = (rgb >> 0) & 0x1F;
+                        uint g = (rgb >> 5) & 0x1F;
+                        uint b = (rgb >> 10) & 0x1F;
+                        GL.Color3(r / 31.0f, g / 31.0f, b / 31.0f);
+                    }
+                    break;
                 case InstructionCode.DIF_AMB:
                     {
-                        if (_showColors)
+                        uint arg = instruction.Arguments[0];
+                        uint dr = (arg >> 0) & 0x1F;
+                        uint dg = (arg >> 5) & 0x1F;
+                        uint db = (arg >> 10) & 0x1F;
+                        uint setColor = (arg >> 15) & 0x1;
+                        if (setColor != 0 && _showColors)
                         {
-                            uint rgb = instruction.Arguments[0];
-                            uint r = (rgb >> 0) & 0x1F;
-                            uint g = (rgb >> 5) & 0x1F;
-                            uint b = (rgb >> 10) & 0x1F;
-                            GL.Color3(r / 31.0f, g / 31.0f, b / 31.0f);
+                            GL.Color3(dr / 31.0f, dg / 31.0f, db / 31.0f);
                         }
+                        uint ar = (arg >> 16) & 0x1F;
+                        uint ag = (arg >> 21) & 0x1F;
+                        uint ab = (arg >> 26) & 0x1F;
+                        difAmb = new Vector3(
+                            dr / 31.0f,
+                            dg / 31.0f,
+                            db / 31.0f
+                        );
                     }
                     break;
                 case InstructionCode.NORMAL:
@@ -843,6 +864,11 @@ namespace MphRead
                             z = (int)(z | 0xFFFFFC00);
                         }
                         GL.Normal3(x / 512.0f, y / 512.0f, z / 512.0f);
+                        if (_lighting)
+                        {
+                            GL.Color3(difAmb.X, difAmb.Y, difAmb.Z);
+                            difAmb = new Vector3(1, 1, 1);
+                        }
                     }
                     break;
                 case InstructionCode.TEXCOORD:
