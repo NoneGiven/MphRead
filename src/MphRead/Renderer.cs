@@ -164,8 +164,6 @@ namespace MphRead
         {
             Model model = Read.GetModelByName(name, recolor);
             SceneSetup.ComputeNodeMatrices(model, index: 0);
-            model.Rotation = new Vector3(0, 0, 90);
-            model.Position = new Vector3(-8, 1, -18);
             _models.Add(model);
         }
 
