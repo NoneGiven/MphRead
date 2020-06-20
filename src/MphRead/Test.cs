@@ -30,6 +30,13 @@ namespace MphRead
             Nop();
         }
 
+        public static bool TestBytes(string one, string two)
+        {
+            byte[] bone = File.ReadAllBytes(one);
+            byte[] btwo = File.ReadAllBytes(two);
+            return Enumerable.SequenceEqual(bone, btwo);
+        }
+
         public static void WriteAllModels()
         {
             string modelPath = Path.Combine(Paths.FileSystem, "models");

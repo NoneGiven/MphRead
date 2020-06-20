@@ -48,7 +48,7 @@ void main()
         vec4 diff2 = diffuse * light2col * fixed_diffuse2;
         vec4 amb2 = ambient * light2col;
         vec4 col2 = spec2 + diff2 + amb2;
-        color = gl_Color * col1 + col2;
+        color = gl_Color + col1 + col2;
     } else {
         color = gl_Color;
     }
