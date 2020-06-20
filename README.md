@@ -40,4 +40,6 @@ A significant portion of this project's code was based on the file format inform
 - **dsgraph** - The original MPH model viewer, on which all other projects are built.
 - **[Chemical's model format](https://gitlab.com/ch-mcl/metroid-prime-hunters-file-document/-/blob/master/Model/BinModel.md)** - Significant documentation of the model format.
 - **[McKay42's model viewer](https://github.com/McKay42/mph-model-viewer)** - Rendering information and COLLADA export method.
-- **[hackyourlife's model viewer](https://github.com/hackyourlife/mph-viewer)** - Advanced model format and rendering information.
+- **[McKay42's ARC extractor](https://github.com/McKay42/mph-arc-extractor)** - ARC file format information.
+- **[Barubary's dsdecmp](https://github.com/Barubary/dsdecmp)** - LZ10 compression routines.
+- **[hackyourlife's model viewer](https://github.com/hackyourlife/mph-viewer)** - Advanced model format and rendering information and much more.
