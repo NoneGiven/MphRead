@@ -12,7 +12,6 @@ namespace MphRead
             using var renderer = new Renderer();
             if (args.Length == 0)
             {
-                //Test.TestDifAmb();
                 renderer.AddRoom("Gorea_Land");
                 renderer.AddModel("blastcap");
                 Nop();

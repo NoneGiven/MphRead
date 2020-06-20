@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace MphRead
 {
-    public static partial class Read
+    public static class Read
     {
         // NOTE: When _Texture file exists, the main _Model file header will list a non-zero number of textures/palettes,
         // but the texture/palette offset will be 0 (because they're located at the start of the _Texture file).

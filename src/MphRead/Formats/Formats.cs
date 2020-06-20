@@ -203,7 +203,7 @@ namespace MphRead
                     $"{String.Join(", ", instruction.Arguments)}".Trim());
             }
         }
-        
+
         private ColorRgba ColorOnBlackBackground(ColorRgba color)
         {
             float alpha = color.Alpha / 255f;
