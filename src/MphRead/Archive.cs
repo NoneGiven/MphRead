@@ -103,7 +103,7 @@ namespace MphRead.Archive
             {
                 int start = (int)file.Offset;
                 int end = start + (int)file.TargetFileSize;
-                //File.WriteAllBytes(file.Filename, bytes[start..end].ToArray());
+                File.WriteAllBytes(file.Filename, bytes[start..end].ToArray());
             }
             Nop();
         }
