@@ -795,9 +795,9 @@ namespace MphRead
             float vtxX = 0;
             float vtxY = 0;
             float vtxZ = 0;
+            var difAmb = new Vector3(1, 1, 1);
             // note: calling this every frame will have some overhead,
             // but baking it in on load would prevent e.g. vertex color toggle
-            var difAmb = new Vector3(1, 1, 1);
             foreach (RenderInstruction instruction in list)
             {
                 switch (instruction.Code)
