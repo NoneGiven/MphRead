@@ -848,6 +848,7 @@ namespace MphRead
                         uint ar = (arg >> 16) & 0x1F;
                         uint ag = (arg >> 21) & 0x1F;
                         uint ab = (arg >> 26) & 0x1F;
+                        // MPH only ever uses bits 0-14 (diffuse), never the bit 15 flag or bits 16-30 (ambient)
                         difAmb = new Vector3(
                             dr / 31.0f,
                             dg / 31.0f,
