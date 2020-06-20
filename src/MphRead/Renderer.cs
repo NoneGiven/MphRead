@@ -76,6 +76,7 @@ namespace MphRead
         private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
         private readonly Dictionary<Model, List<int>> _textureMap = new Dictionary<Model, List<int>>();
+        private readonly List<string> _logs = new List<string>();
 
         private CameraMode _cameraMode = CameraMode.Pivot;
         private float _angleX = 0.0f;
@@ -136,17 +137,17 @@ namespace MphRead
             room.Scale = new Vector3(roomScale, roomScale, roomScale);
             _light1Vector = new Vector4(roomMeta.Light1Vector);
             _light1Color = new Vector4(
-                roomMeta.Light1Color.Red / 255.0f,
-                roomMeta.Light1Color.Green / 255.0f,
-                roomMeta.Light1Color.Blue / 255.0f,
-                roomMeta.Light1Color.Alpha / 255.0f
+                roomMeta.Light1Color.Red / 31.0f,
+                roomMeta.Light1Color.Green / 31.0f,
+                roomMeta.Light1Color.Blue / 31.0f,
+                roomMeta.Light1Color.Alpha / 31.0f
             );
             _light2Vector = new Vector4(roomMeta.Light2Vector);
             _light2Color = new Vector4(
-                roomMeta.Light2Color.Red / 255.0f,
-                roomMeta.Light2Color.Green / 255.0f,
-                roomMeta.Light2Color.Blue / 255.0f,
-                roomMeta.Light2Color.Alpha / 255.0f
+                roomMeta.Light2Color.Red / 31.0f,
+                roomMeta.Light2Color.Green / 31.0f,
+                roomMeta.Light2Color.Blue / 31.0f,
+                roomMeta.Light2Color.Alpha / 31.0f
             );
             _hasFog = roomMeta.FogEnabled != 0;
             _fogColor = new Vector4(
@@ -225,37 +226,49 @@ namespace MphRead
 
         private void PrintMenu()
         {
-            return;
             Task.Run(async () =>
             {
                 await _consoleLock.WaitAsync();
-                Console.Clear();
-                Console.WriteLine($"MphRead Version {Program.Version}");
-                if (_cameraMode == CameraMode.Pivot)
-                {
-                    Console.WriteLine(" - Scroll mouse wheel to zoom");
-                }
-                else if (_cameraMode == CameraMode.Roam)
-                {
-                    Console.WriteLine(" - Use WASD, Space, and V to move");
-                }
-                Console.WriteLine(" - Hold left mouse button or use arrow keys to rotate");
-                Console.WriteLine(" - Hold Shift to move the camera faster");
-                Console.WriteLine($" - T toggles texturing ({FormatOnOff(_showTextures)})");
-                Console.WriteLine($" - C toggles vertex colours ({FormatOnOff(_showColors)})");
-                Console.WriteLine($" - Q toggles wireframe ({FormatOnOff(_wireframe)})");
-                Console.WriteLine($" - B toggles face culling ({FormatOnOff(_faceCulling)})");
-                Console.WriteLine($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})");
-                Console.WriteLine($" - L toggles lighting ({FormatOnOff(_lighting)})");
-                Console.WriteLine($" - G toggles fog ({FormatOnOff(_showFog)})");
-                Console.WriteLine($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})");
-                Console.WriteLine($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
-                Console.WriteLine(" - R resets the camera");
-                Console.WriteLine(" - Ctrl+O then enter \"model_name [recolor]\" to load");
-                Console.WriteLine(" - Esc closes the viewer");
-                Console.WriteLine();
+                DoPrintMenu();
                 _consoleLock.Release();
             });
+        }
+
+        private void DoPrintMenu()
+        {
+            Console.Clear();
+            Console.WriteLine($"MphRead Version {Program.Version}");
+            if (_cameraMode == CameraMode.Pivot)
+            {
+                Console.WriteLine(" - Scroll mouse wheel to zoom");
+            }
+            else if (_cameraMode == CameraMode.Roam)
+            {
+                Console.WriteLine(" - Use WASD, Space, and V to move");
+            }
+            Console.WriteLine(" - Hold left mouse button or use arrow keys to rotate");
+            Console.WriteLine(" - Hold Shift to move the camera faster");
+            Console.WriteLine($" - T toggles texturing ({FormatOnOff(_showTextures)})");
+            Console.WriteLine($" - C toggles vertex colours ({FormatOnOff(_showColors)})");
+            Console.WriteLine($" - Q toggles wireframe ({FormatOnOff(_wireframe)})");
+            Console.WriteLine($" - B toggles face culling ({FormatOnOff(_faceCulling)})");
+            Console.WriteLine($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})");
+            Console.WriteLine($" - L toggles lighting ({FormatOnOff(_lighting)})");
+            Console.WriteLine($" - G toggles fog ({FormatOnOff(_showFog)})");
+            Console.WriteLine($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})");
+            Console.WriteLine($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
+            Console.WriteLine(" - R resets the camera");
+            Console.WriteLine(" - Ctrl+O then enter \"model_name [recolor]\" to load");
+            Console.WriteLine(" - Esc closes the viewer");
+            Console.WriteLine();
+            if (_logs.Count > 0)
+            {
+                foreach (string log in _logs)
+                {
+                    Console.WriteLine(log);
+                }
+                Console.WriteLine();
+            }
         }
 
         private string FormatOnOff(bool setting)
@@ -300,8 +313,7 @@ namespace MphRead
 
                 if (material.RenderMode == RenderMode.Unknown3 || material.RenderMode == RenderMode.Unknown4)
                 {
-                    // todo: logging (this will get overwritten by the menu)
-                    Console.WriteLine($"mat {material.Name} of model {model.Name} has render mode {material.RenderMode}");
+                    _logs.Add($"mat {material.Name} of model {model.Name} has render mode {material.RenderMode}");
                     material.RenderMode = RenderMode.Normal;
                 }
                 // - if material alpha is less than 31, and render mode is not Translucent, set to Translucent
@@ -730,25 +742,25 @@ namespace MphRead
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
             }
             GL.Uniform1(_shaderLocations.UseTexture, GL.IsEnabled(EnableCap.Texture2D) ? 1 : 0);
-            if (false && _lighting && material.Lighting != 0)
+            if (_lighting && material.Lighting != 0)
             {
                 // todo: would be nice if the approaches for this and the room lights were the same
                 var ambient = new Vector4(
-                    material.Ambient.Red / 255.0f,
-                    material.Ambient.Green / 255.0f,
-                    material.Ambient.Blue / 255.0f,
+                    material.Ambient.Red / 31.0f,
+                    material.Ambient.Green / 31.0f,
+                    material.Ambient.Blue / 31.0f,
                     1.0f
                 );
                 var diffuse = new Vector4(
-                    material.Diffuse.Red / 255.0f,
-                    material.Diffuse.Green / 255.0f,
-                    material.Diffuse.Blue / 255.0f,
+                    material.Diffuse.Red / 31.0f,
+                    material.Diffuse.Green / 31.0f,
+                    material.Diffuse.Blue / 31.0f,
                     1.0f
                 );
                 var specular = new Vector4(
-                    material.Specular.Red / 255.0f,
-                    material.Specular.Green / 255.0f,
-                    material.Specular.Blue / 255.0f,
+                    material.Specular.Red / 31.0f,
+                    material.Specular.Green / 31.0f,
+                    material.Specular.Blue / 31.0f,
                     1.0f
                 );
                 GL.Enable(EnableCap.Lighting);
@@ -783,6 +795,7 @@ namespace MphRead
             float vtxX = 0;
             float vtxY = 0;
             float vtxZ = 0;
+            var difAmb = new Vector3(1, 1, 1);
             // note: calling this every frame will have some overhead,
             // but baking it in on load would prevent e.g. vertex color toggle
             foreach (RenderInstruction instruction in list)
@@ -812,15 +825,35 @@ namespace MphRead
                     }
                     break;
                 case InstructionCode.COLOR:
+                    if (_showColors)
                     {
-                        if (_showColors)
+                        uint rgb = instruction.Arguments[0];
+                        uint r = (rgb >> 0) & 0x1F;
+                        uint g = (rgb >> 5) & 0x1F;
+                        uint b = (rgb >> 10) & 0x1F;
+                        GL.Color3(r / 31.0f, g / 31.0f, b / 31.0f);
+                    }
+                    break;
+                case InstructionCode.DIF_AMB:
+                    {
+                        uint arg = instruction.Arguments[0];
+                        uint dr = (arg >> 0) & 0x1F;
+                        uint dg = (arg >> 5) & 0x1F;
+                        uint db = (arg >> 10) & 0x1F;
+                        uint setColor = (arg >> 15) & 0x1;
+                        if (setColor != 0 && _showColors)
                         {
-                            uint rgb = instruction.Arguments[0];
-                            uint r = (rgb >> 0) & 0x1F;
-                            uint g = (rgb >> 5) & 0x1F;
-                            uint b = (rgb >> 10) & 0x1F;
-                            GL.Color3(r / 31.0f, g / 31.0f, b / 31.0f);
+                            GL.Color3(dr / 31.0f, dg / 31.0f, db / 31.0f);
                         }
+                        uint ar = (arg >> 16) & 0x1F;
+                        uint ag = (arg >> 21) & 0x1F;
+                        uint ab = (arg >> 26) & 0x1F;
+                        // MPH only ever uses bits 0-14 (diffuse), never the bit 15 flag or bits 16-30 (ambient)
+                        difAmb = new Vector3(
+                            dr / 31.0f,
+                            dg / 31.0f,
+                            db / 31.0f
+                        );
                     }
                     break;
                 case InstructionCode.NORMAL:
@@ -842,6 +875,11 @@ namespace MphRead
                             z = (int)(z | 0xFFFFFC00);
                         }
                         GL.Normal3(x / 512.0f, y / 512.0f, z / 512.0f);
+                        if (_lighting)
+                        {
+                            GL.Color3(difAmb.X, difAmb.Y, difAmb.Z);
+                            difAmb = new Vector3(1, 1, 1);
+                        }
                     }
                     break;
                 case InstructionCode.TEXCOORD:
@@ -990,7 +1028,6 @@ namespace MphRead
                     GL.End();
                     break;
                 case InstructionCode.MTX_RESTORE:
-                case InstructionCode.DIF_AMB:
                 case InstructionCode.NOP:
                     break;
                 default:
@@ -1005,7 +1042,7 @@ namespace MphRead
 
         private void LoadModel()
         {
-            PrintMenu();
+            DoPrintMenu();
             Console.Write("Open model: ");
             string modelName = Console.ReadLine().Trim();
             if (modelName == "")

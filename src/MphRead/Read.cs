@@ -588,12 +588,12 @@ namespace MphRead
             return Path.GetFileNameWithoutExtension(path);
         }
 
-        private static T DoOffset<T>(ReadOnlySpan<byte> bytes, uint offset) where T : struct
+        public static T DoOffset<T>(ReadOnlySpan<byte> bytes, uint offset) where T : struct
         {
             return DoOffsets<T>(bytes, offset, 1).First();
         }
 
-        private static IReadOnlyList<T> DoOffsets<T>(ReadOnlySpan<byte> bytes, uint offset, int count) where T : struct
+        public static IReadOnlyList<T> DoOffsets<T>(ReadOnlySpan<byte> bytes, uint offset, int count) where T : struct
         {
             int ioffset = (int)offset;
             var results = new List<T>();
@@ -608,7 +608,7 @@ namespace MphRead
             return results;
         }
 
-        private static T ReadStruct<T>(ReadOnlySpan<byte> bytes) where T : struct
+        public static T ReadStruct<T>(ReadOnlySpan<byte> bytes) where T : struct
         {
             var handle = GCHandle.Alloc(bytes.ToArray(), GCHandleType.Pinned);
             object? result = Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(T));
