@@ -167,8 +167,9 @@ namespace MphRead
             _models.Add(model);
         }
 
-        protected override void OnLoad()
+        protected override async void OnLoad()
         {
+            await Output.Begin();
             GL.ClearColor(_clearColor);
 
             GL.Enable(EnableCap.DepthTest);
@@ -229,38 +230,38 @@ namespace MphRead
             Task.Run(async () =>
             {
                 await _consoleLock.WaitAsync();
-                DoPrintMenu();
+                await DoPrintMenu(); // sktodo
                 _consoleLock.Release();
             });
         }
 
-        private void DoPrintMenu()
+        private async Task DoPrintMenu()
         {
-            Console.Clear();
-            Console.WriteLine($"MphRead Version {Program.Version}");
+            await Output.Clear();
             if (_cameraMode == CameraMode.Pivot)
             {
-                Console.WriteLine(" - Scroll mouse wheel to zoom");
+                await Output.Write(" - Scroll mouse wheel to zoom");
             }
             else if (_cameraMode == CameraMode.Roam)
             {
-                Console.WriteLine(" - Use WASD, Space, and V to move");
+                await Output.Write(" - Use WASD, Space, and V to move");
             }
-            Console.WriteLine(" - Hold left mouse button or use arrow keys to rotate");
-            Console.WriteLine(" - Hold Shift to move the camera faster");
-            Console.WriteLine($" - T toggles texturing ({FormatOnOff(_showTextures)})");
-            Console.WriteLine($" - C toggles vertex colours ({FormatOnOff(_showColors)})");
-            Console.WriteLine($" - Q toggles wireframe ({FormatOnOff(_wireframe)})");
-            Console.WriteLine($" - B toggles face culling ({FormatOnOff(_faceCulling)})");
-            Console.WriteLine($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})");
-            Console.WriteLine($" - L toggles lighting ({FormatOnOff(_lighting)})");
-            Console.WriteLine($" - G toggles fog ({FormatOnOff(_showFog)})");
-            Console.WriteLine($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})");
-            Console.WriteLine($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
-            Console.WriteLine(" - R resets the camera");
-            Console.WriteLine(" - Ctrl+O then enter \"model_name [recolor]\" to load");
-            Console.WriteLine(" - Esc closes the viewer");
-            Console.WriteLine();
+            await Output.Write(" - Hold left mouse button or use arrow keys to rotate");
+            await Output.Write(" - Hold Shift to move the camera faster");
+            await Output.Write($" - T toggles texturing ({FormatOnOff(_showTextures)})");
+            await Output.Write($" - C toggles vertex colours ({FormatOnOff(_showColors)})");
+            await Output.Write($" - Q toggles wireframe ({FormatOnOff(_wireframe)})");
+            await Output.Write($" - B toggles face culling ({FormatOnOff(_faceCulling)})");
+            await Output.Write($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})");
+            await Output.Write($" - L toggles lighting ({FormatOnOff(_lighting)})");
+            await Output.Write($" - G toggles fog ({FormatOnOff(_showFog)})");
+            await Output.Write($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})");
+            await Output.Write($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
+            await Output.Write(" - R resets the camera");
+            await Output.Write(" - Ctrl+O then enter \"model_name [recolor]\" to load");
+            await Output.Write(" - Esc closes the viewer");
+            await Output.Write();
+            // sktodo
             if (_logs.Count > 0)
             {
                 foreach (string log in _logs)
@@ -1028,37 +1029,39 @@ namespace MphRead
 
         private void LoadModel()
         {
-            DoPrintMenu();
-            Console.Write("Open model: ");
-            string modelName = Console.ReadLine().Trim();
-            if (modelName == "")
+            // DoPrintMenu(); // sktodo
+            Output.Read("").ContinueWith((task) =>
             {
-                PrintMenu();
-            }
-            else
-            {
-                int recolor = 0;
-                if (modelName.Count(c => c == ' ') == 1)
+                string modelName = task.Result.Trim();
+                if (modelName == "")
                 {
-                    string[] split = modelName.Split(' ');
-                    if (Int32.TryParse(split[1], out recolor))
+                    PrintMenu(); // sktodo, etc.
+                }
+                else
+                {
+                    int recolor = 0;
+                    if (modelName.Count(c => c == ' ') == 1)
                     {
-                        modelName = split[0];
+                        string[] split = modelName.Split(' ');
+                        if (Int32.TryParse(split[1], out recolor))
+                        {
+                            modelName = split[0];
+                        }
+                    }
+                    try
+                    {
+                        Model model = Read.GetModelByName(modelName, recolor);
+                        InitTextures(model);
+                        PrintMenu();
+                        _models.Add(model);
+                    }
+                    catch (ProgramException ex)
+                    {
+                        PrintMenu();
+                        Console.WriteLine(ex.Message); // sktodo
                     }
                 }
-                try
-                {
-                    Model model = Read.GetModelByName(modelName, recolor);
-                    InitTextures(model);
-                    PrintMenu();
-                    _models.Add(model);
-                }
-                catch (ProgramException ex)
-                {
-                    PrintMenu();
-                    Console.WriteLine(ex.Message);
-                }
-            }
+            });
         }
 
         protected override void OnResize(ResizeEventArgs e)
@@ -1106,7 +1109,7 @@ namespace MphRead
             base.OnMouseWheel(e);
         }
 
-        protected override void OnKeyDown(KeyboardKeyEventArgs e)
+        protected override async void OnKeyDown(KeyboardKeyEventArgs e)
         {
             if (e.Key == Key.T)
             {
@@ -1195,6 +1198,7 @@ namespace MphRead
             }
             else if (e.Key == Key.Escape)
             {
+                await Output.End();
                 Close();
             }
             base.OnKeyDown(e);
