@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
 namespace MphRead
@@ -13,7 +14,7 @@ namespace MphRead
             if (args.Length == 0)
             {
                 renderer.AddRoom("MP3 PROVING GROUND");
-                renderer.AddModel("blastcap");
+                renderer.AddModel("Crate01");
                 Nop();
             }
             else

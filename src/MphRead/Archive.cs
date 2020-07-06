@@ -64,8 +64,10 @@ namespace MphRead.Archive
         public static readonly int FileHeader = Marshal.SizeOf(typeof(FileHeader));
     }
 
-    public static class ArchiveRead
+    public static class Archiver
     {
+        private static readonly string _magicString = "SNDFILE";
+
         public static void Extract(string path)
         {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
@@ -75,7 +77,7 @@ namespace MphRead.Archive
             }
             ArchiveHeader header = Read.ReadStruct<ArchiveHeader>(bytes[0..ArchiveSizes.ArchiveHeader]);
             header = header.SwapBytes();
-            if (header.MagicString != "SNDFILE" || header.TotalSize != bytes.Length)
+            if (header.MagicString != _magicString || header.TotalSize != bytes.Length)
             {
                 ThrowRead();
             }
@@ -136,9 +138,9 @@ namespace MphRead.Archive
                 entries.Add(entry);
                 pointer += entry.PaddedFileSize;
             }
-            var header = new ArchiveHeader("SNDFILE", (uint)filePaths.Count(), pointer, "");
+            var header = new ArchiveHeader(_magicString, (uint)filePaths.Count(), pointer, "");
             using var writer = new BinaryWriter(File.Open(destinationPath, FileMode.Create));
-            writer.Write("SNDFILE\0".ToCharArray());
+            writer.Write($"{_magicString}\0".ToCharArray());
             writer.Write(header.FileCount.SwapBytes());
             writer.Write(header.TotalSize.SwapBytes());
             for (int i = 0; i < 16; i++)

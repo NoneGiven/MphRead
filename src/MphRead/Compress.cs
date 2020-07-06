@@ -3,7 +3,7 @@ using System.IO;
 
 namespace MphRead
 {
-    public static class LzCompress
+    public static class Lz
     {
         private static readonly byte _magicByte = 0x10;
 
