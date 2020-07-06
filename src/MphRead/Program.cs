@@ -9,7 +9,6 @@ namespace MphRead
 
         private static void Main(string[] args)
         {
-            Console.WriteLine($"MphRead Version {Version}");
             using var renderer = new Renderer();
             if (args.Length == 0)
             {

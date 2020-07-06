@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -40,6 +41,7 @@ namespace MphRead
 
         private static bool _initialized = false;
         private static readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
+        private static readonly SemaphoreSlim _batchLock = new SemaphoreSlim(1, 1);
         private static CancellationTokenSource _cts = null!;
         private static List<QueueItem> _items = null!;
         private static List<QueueInput> _input = null!;
@@ -58,30 +60,71 @@ namespace MphRead
             _lock.Release();
         }
 
-        public static async Task Write()
+        private static Guid? _batchGuid = null;
+
+        public static async Task<Guid> StartBatch()
         {
-            await Write("");
+            await _batchLock.WaitAsync();
+            _batchGuid = Guid.NewGuid();
+            return _batchGuid.Value;
         }
 
-        public static async Task Write(string message)
+        public static async Task EndBatch()
         {
             await _lock.WaitAsync();
+            _batchGuid = null;
+            _batchLock.Release();
+            _lock.Release();
+        }
+
+        public static async Task Write(Guid? guid = null)
+        {
+            await Write("", guid);
+        }
+        
+        public static async Task Write(string message, Guid? guid = null)
+        {
+            await _lock.WaitAsync();
+            if (guid != _batchGuid)
+            {
+                await _batchLock.WaitAsync();
+            }
             _items.Add(new QueueItem(Operation.Write, message));
+            if (guid != _batchGuid)
+            {
+                _batchLock.Release();
+            }
             _lock.Release();
         }
 
-        public static async Task Clear()
+        public static async Task Clear(Guid? guid = null)
         {
             await _lock.WaitAsync();
+            if (guid != _batchGuid)
+            {
+                await _batchLock.WaitAsync();
+            }
             _items.Add(new QueueItem(Operation.Clear, message: null));
+            if (guid != _batchGuid)
+            {
+                _batchLock.Release();
+            }
             _lock.Release();
         }
 
-        public static async Task<string> Read(string? message = null)
+        public static async Task<string> Read(string? message = null, Guid? guid = null)
         {
             await _lock.WaitAsync();
+            if (guid != _batchGuid)
+            {
+                await _batchLock.WaitAsync();
+            }
             _items.Add(new QueueItem(Operation.Read, message));
             int count = _input.Count;
+            if (guid != _batchGuid)
+            {
+                _batchLock.Release();
+            }
             _lock.Release();
             return await DoRead(count);
         }
@@ -94,6 +137,7 @@ namespace MphRead
                 if (_input.Count > 0 && _input[0].Count == count)
                 {
                     string input = _input[0].Message;
+                    _input.RemoveAt(0);
                     _lock.Release();
                     return input;
                 }
@@ -129,7 +173,7 @@ namespace MphRead
                     _items.RemoveAt(0);
                 }
                 _lock.Release();
-                Thread.Sleep(500);
+                await Task.Delay(100);
             }
         }
 
