@@ -76,6 +76,7 @@ namespace MphRead
         private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
         private readonly Dictionary<Model, List<int>> _textureMap = new Dictionary<Model, List<int>>();
+        private readonly int _unloadedTextures = 0;
         private readonly List<string> _logs = new List<string>();
 
         private CameraMode _cameraMode = CameraMode.Pivot;
@@ -718,7 +719,7 @@ namespace MphRead
                 Texture texture = model.Textures[textureId];
                 width = texture.Width;
                 height = texture.Height;
-                GL.BindTexture(TextureTarget.Texture2D, _textureMap[model][mesh.MaterialId]);
+                GL.BindTexture(TextureTarget.Texture2D, _textureMap[model][mesh.MaterialId] - _unloadedTextures);
             }
             GL.MatrixMode(MatrixMode.Texture);
             GL.LoadIdentity();
