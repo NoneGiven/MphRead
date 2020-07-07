@@ -749,10 +749,10 @@ namespace MphRead
                 uint red = mesh.OverrideColor.Value.Red;
                 uint green = mesh.OverrideColor.Value.Green;
                 uint blue = mesh.OverrideColor.Value.Blue;
-                uint alpha = (uint)(MathF.Round(mesh.OverrideColor.Value.Alpha / 255f * pixel.Alpha));
+                uint alpha = (uint)MathF.Round(mesh.OverrideColor.Value.Alpha / 255f * pixel.Alpha);
                 pixels.Add((red << 0) | (green << 8) | (blue << 16) | (alpha << 24));
             }
-            GL.BindTexture(TextureTarget.Texture2D, Int32.MaxValue);
+            GL.BindTexture(TextureTarget.Texture2D, 99999);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, texture.Width, texture.Height, 0,
                 PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
         }
