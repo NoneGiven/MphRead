@@ -10,7 +10,9 @@ namespace MphRead
 {
     public class Model
     {
+        public bool Visible { get; set; } = true;
         public ModelType Type { get; set; }
+        public EntityType EntityType { get; set; } // currently only used when ModelType is Placeholder
 
         public string Name { get; }
         public Header Header { get; }
@@ -126,7 +128,7 @@ namespace MphRead
         private static uint _nextSceneId = 0;
         public uint SceneId { get; } = _nextSceneId++;
 
-        public Model(string name, Header header, IReadOnlyList<RawNode> nodes, IReadOnlyList<Mesh> meshes,
+        public Model(string name, Header header, IReadOnlyList<RawNode> nodes, IReadOnlyList<RawMesh> meshes,
             IReadOnlyList<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
             IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
@@ -137,7 +139,7 @@ namespace MphRead
             Name = name;
             Header = header;
             Nodes = nodes.Select(n => new Node(n)).ToList();
-            Meshes = meshes;
+            Meshes = meshes.Select(m => new Mesh(m)).ToList();
             Materials = materials.Select(m => new Material(m)).ToList();
             DisplayLists = dlists;
             RenderInstructionLists = renderInstructions;
@@ -448,6 +450,22 @@ namespace MphRead
         }
     }
 
+    public class Mesh
+    {
+        public int MaterialId { get; }
+        public int DlistId { get; }
+
+        public bool Visible { get; set; } = true;
+        public Vector4? PlaceholderColor { get; set; }
+        public Vector4? OverrideColor { get; set; }
+
+        public Mesh(RawMesh raw)
+        {
+            MaterialId = raw.MaterialId;
+            DlistId = raw.DlistId;
+        }
+    }
+
     public class Material
     {
         public string Name { get; }
@@ -471,8 +489,10 @@ namespace MphRead
         public float TranslateS { get; }
         public float TranslateT { get; }
 
-        // temporary
-        public ColorRgb? OverrideColor { get; set; }
+        public RenderMode GetEffectiveRenderMode(Mesh mesh)
+        {
+            return mesh.OverrideColor == null ? RenderMode : RenderMode.Translucent;
+        }
 
         public Material(RawMaterial raw)
         {

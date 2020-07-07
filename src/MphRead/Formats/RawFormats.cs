@@ -35,7 +35,7 @@ namespace MphRead
     }
 
     // size: 4
-    public readonly struct Mesh
+    public readonly struct RawMesh
     {
         public readonly ushort MaterialId;
         public readonly ushort DlistId;

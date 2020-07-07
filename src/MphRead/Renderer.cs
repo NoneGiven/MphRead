@@ -69,16 +69,32 @@ namespace MphRead
         public int UseFog { get; set; }
         public int FogColor { get; set; }
         public int FogOffset { get; set; }
+        public int UseOverride { get; set; }
+        public int OverrideColor { get; set; }
     }
 
     public class RenderWindow : GameWindow
     {
+        private enum SelectionMode
+        {
+            None,
+            Model,
+            Mesh,
+            Node
+        }
+
         private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
+        private readonly Dictionary<uint, Model> _modelMap = new Dictionary<uint, Model>();
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
-        private readonly ConcurrentQueue<uint> _unloadQueue = new ConcurrentQueue<uint>();
+        private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
         private readonly Dictionary<Model, List<int>> _textureMap = new Dictionary<Model, List<int>>();
-        private readonly List<string> _logs = new List<string>();
+        private SelectionMode _selectionMode = SelectionMode.None;
+        private uint _selectedModelId = 0;
+        private int _selectedMeshId = 0;
+        private bool _showSelection = true;
+
+        private Model SelectedModel => _modelMap[_selectedModelId];
 
         private CameraMode _cameraMode = CameraMode.Pivot;
         private float _angleX = 0.0f;
@@ -111,6 +127,8 @@ namespace MphRead
         private int _shaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
 
+        private readonly List<string> _logs = new List<string>();
+
         public RenderWindow(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
             : base(gameWindowSettings, nativeWindowSettings)
         {
@@ -135,6 +153,11 @@ namespace MphRead
             (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask);
             _models.Insert(0, room);
             _models.AddRange(entities);
+            _modelMap.Add(room.SceneId, room);
+            foreach (Model entity in entities)
+            {
+                _modelMap.Add(entity.SceneId, entity);
+            }
             float roomScale = room.Header.ScaleBase.FloatValue * (1 << (int)room.Header.ScaleFactor);
             room.Scale = new Vector3(roomScale, roomScale, roomScale);
             _light1Vector = new Vector4(roomMeta.Light1Vector);
@@ -156,7 +179,7 @@ namespace MphRead
                 ((roomMeta.FogColor) & 0x1F) / (float)0x1F,
                 (((roomMeta.FogColor) >> 5) & 0x1F) / (float)0x1F,
                 (((roomMeta.FogColor) >> 10) & 0x1F) / (float)0x1F,
-                1
+                1.0f
             );
             _fogOffset = (int)roomMeta.FogOffset;
             _cameraMode = CameraMode.Roam;
@@ -167,6 +190,7 @@ namespace MphRead
             Model model = Read.GetModelByName(name, recolor);
             SceneSetup.ComputeNodeMatrices(model, index: 0);
             _models.Add(model);
+            _modelMap.Add(model.SceneId, model);
         }
 
         protected override async void OnLoad()
@@ -177,9 +201,9 @@ namespace MphRead
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Texture2D);
             GL.PolygonMode(MaterialFace.FrontAndBack,
-                    _wireframe
-                    ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
-                    : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
+                _wireframe
+                ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
+                : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
 
             GL.DepthFunc(DepthFunction.Lequal);
 
@@ -190,7 +214,7 @@ namespace MphRead
                 InitTextures(model);
             }
 
-            await PrintMenu();
+            await PrintOutput();
 
             base.OnLoad();
         }
@@ -223,46 +247,9 @@ namespace MphRead
             _shaderLocations.UseFog = GL.GetUniformLocation(_shaderProgramId, "fog_enable");
             _shaderLocations.FogColor = GL.GetUniformLocation(_shaderProgramId, "fog_color");
             _shaderLocations.FogOffset = GL.GetUniformLocation(_shaderProgramId, "fog_offset");
-        }
 
-        private async Task PrintMenu()
-        {
-            Guid guid = await Output.StartBatch();
-            await Output.Clear(guid);
-            await Output.Write($"MphRead Version {Program.Version}", guid);
-            if (_cameraMode == CameraMode.Pivot)
-            {
-                await Output.Write(" - Scroll mouse wheel to zoom", guid);
-            }
-            else if (_cameraMode == CameraMode.Roam)
-            {
-                await Output.Write(" - Use WASD, Space, and V to move", guid);
-            }
-            await Output.Write(" - Hold left mouse button or use arrow keys to rotate", guid);
-            await Output.Write(" - Hold Shift to move the camera faster", guid);
-            await Output.Write($" - T toggles texturing ({FormatOnOff(_showTextures)})", guid);
-            await Output.Write($" - C toggles vertex colours ({FormatOnOff(_showColors)})", guid);
-            await Output.Write($" - Q toggles wireframe ({FormatOnOff(_wireframe)})", guid);
-            await Output.Write($" - B toggles face culling ({FormatOnOff(_faceCulling)})", guid);
-            await Output.Write($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})", guid);
-            await Output.Write($" - L toggles lighting ({FormatOnOff(_lighting)})", guid);
-            await Output.Write($" - G toggles fog ({FormatOnOff(_showFog)})", guid);
-            await Output.Write($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})", guid);
-            await Output.Write($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})", guid);
-            await Output.Write(" - R resets the camera", guid);
-            await Output.Write(" - Ctrl+O then enter \"model_name [recolor]\" to load", guid);
-            await Output.Write(" - Ctrl+U then enter \"model_id\" to unload", guid);
-            await Output.Write(" - Esc closes the viewer", guid);
-            await Output.Write(guid);
-            if (_logs.Count > 0)
-            {
-                foreach (string log in _logs)
-                {
-                    await Output.Write(log, guid);
-                }
-                await Output.Write(guid);
-            }
-            await Output.EndBatch();
+            _shaderLocations.UseOverride = GL.GetUniformLocation(_shaderProgramId, "use_override");
+            _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
         }
 
         private string FormatOnOff(bool setting)
@@ -272,9 +259,9 @@ namespace MphRead
 
         private void InitTextures(Model model)
         {
-            _textureMap.Add(model, new List<int>());
-            int minParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMagFilter.Nearest;
-            int magParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMagFilter.Nearest;
+            _textureMap[model] = new List<int>();
+            int minParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMinFilter.Nearest;
+            int magParameter = _textureFiltering ? (int)TextureMagFilter.Linear : (int)TextureMagFilter.Nearest;
             foreach (Material material in model.Materials)
             {
                 if (material.TextureId == UInt16.MaxValue)
@@ -292,9 +279,9 @@ namespace MphRead
                 bool onlyOpaque = true;
                 foreach (ColorRgba pixel in model.GetPixels(material.TextureId, material.PaletteId))
                 {
-                    uint red = material.OverrideColor?.Red ?? pixel.Red;
-                    uint green = material.OverrideColor?.Green ?? pixel.Green;
-                    uint blue = material.OverrideColor?.Blue ?? pixel.Blue;
+                    uint red = pixel.Red;
+                    uint green = pixel.Green;
+                    uint blue = pixel.Blue;
                     uint alpha = (uint)((decal ? 255 : pixel.Alpha) * material.Alpha / 31.0f);
                     pixels.Add((red << 0) | (green << 8) | (blue << 16) | (alpha << 24));
                     if (alpha < 255)
@@ -331,69 +318,100 @@ namespace MphRead
                 {
                     material.RenderMode = RenderMode.AlphaTest;
                 }
-
-                GL.BindTexture(TextureTarget.Texture2D, _textureCount);
-                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
-                    PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
-                switch (material.XRepeat)
-                {
-                case RepeatMode.Clamp:
-                    GL.TexParameter(TextureTarget.Texture2D,
-                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-                    break;
-                case RepeatMode.Repeat:
-                    GL.TexParameter(TextureTarget.Texture2D,
-                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-                    break;
-                case RepeatMode.Mirror:
-                    GL.TexParameter(TextureTarget.Texture2D,
-                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.MirroredRepeat);
-                    break;
-                }
-                switch (material.YRepeat)
-                {
-                case RepeatMode.Clamp:
-                    GL.TexParameter(TextureTarget.Texture2D,
-                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-                    break;
-                case RepeatMode.Repeat:
-                    GL.TexParameter(TextureTarget.Texture2D,
-                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-                    break;
-                case RepeatMode.Mirror:
-                    GL.TexParameter(TextureTarget.Texture2D,
-                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat);
-                    break;
-                }
+                BindAndMakeTexture(material, _textureCount, width, height, minParameter, magParameter, pixels);
                 GL.BindTexture(TextureTarget.Texture2D, 0);
             }
         }
 
-        protected override void OnRenderFrame(FrameEventArgs args)
+        private void BindAndMakeTexture(Material material, int id, int width, int height, int minParameter, int magParameter, List<uint> pixels)
         {
-            while (_loadQueue.TryDequeue(out Model? model) && model != null)
+            GL.BindTexture(TextureTarget.Texture2D, id);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
+                PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+            switch (material.XRepeat)
+            {
+            case RepeatMode.Clamp:
+                GL.TexParameter(TextureTarget.Texture2D,
+                    TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+                break;
+            case RepeatMode.Repeat:
+                GL.TexParameter(TextureTarget.Texture2D,
+                    TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+                break;
+            case RepeatMode.Mirror:
+                GL.TexParameter(TextureTarget.Texture2D,
+                    TextureParameterName.TextureWrapS, (int)TextureWrapMode.MirroredRepeat);
+                break;
+            }
+            switch (material.YRepeat)
+            {
+            case RepeatMode.Clamp:
+                GL.TexParameter(TextureTarget.Texture2D,
+                    TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+                break;
+            case RepeatMode.Repeat:
+                GL.TexParameter(TextureTarget.Texture2D,
+                    TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+                break;
+            case RepeatMode.Mirror:
+                GL.TexParameter(TextureTarget.Texture2D,
+                    TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat);
+                break;
+            }
+        }
+
+        private async Task UpdateModelStates(float time)
+        {
+            while (_loadQueue.TryDequeue(out Model? model))
             {
                 InitTextures(model);
                 _models.Add(model);
+                _modelMap.Add(model.SceneId, model);
+                await PrintOutput();
             }
 
-            while (_unloadQueue.TryDequeue(out uint sceneId))
+            while (_unloadQueue.TryDequeue(out Model? model))
             {
-                if (_models.Any(m => m.SceneId == sceneId))
+                Deselect();
+                _selectedModelId = 0;
+                _selectedMeshId = 0;
+                _selectionMode = SelectionMode.None;
+                foreach (int index in _textureMap[model].Where(i => i != -1).Distinct())
                 {
-                    Model model = _models.First(m => m.SceneId == sceneId);
-                    foreach (int index in _textureMap[model].Where(i => i != -1).Distinct())
+                    GL.DeleteTexture(index);
+                }
+                _textureMap.Remove(model);
+                _models.Remove(model);
+                _modelMap.Remove(model.SceneId);
+                await PrintOutput();
+            }
+
+            // sktodo:
+            // - allow selecting nodes
+            if (_selectionMode != SelectionMode.None)
+            {
+                if (_selectionMode == SelectionMode.Mesh)
+                {
+                    UpdateSelected(SelectedModel.Meshes[_selectedMeshId], time);
+                }
+                else if (_selectionMode == SelectionMode.Model)
+                {
+                    foreach (Mesh mesh in SelectedModel.Meshes)
                     {
-                        GL.DeleteTexture(index);
+                        UpdateSelected(mesh, time);
                     }
-                    _textureMap.Remove(model);
-                    _models.Remove(model);
                 }
             }
+        }
 
+        protected override async void OnRenderFrame(FrameEventArgs args)
+        {
+            // extra non-rendering updates
+            await UpdateModelStates((float)args.Time);
             OnKeyHeld();
+
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
@@ -412,6 +430,54 @@ namespace MphRead
             base.OnRenderFrame(args);
         }
 
+        private void SetSelected(uint sceneId)
+        {
+            Deselect();
+            _selectedModelId = sceneId;
+            foreach (Mesh mesh in SelectedModel.Meshes)
+            {
+                mesh.OverrideColor = new Vector4(1f, 1f, 1f, 1f);
+            }
+        }
+
+        private void SetSelected(uint sceneId, int meshId)
+        {
+            Deselect();
+            _selectedModelId = sceneId;
+            _selectedMeshId = meshId;
+            SelectedModel.Meshes[meshId].OverrideColor = new Vector4(1f, 1f, 1f, 1f);
+        }
+
+        private bool _flashUp = false;
+
+        private void UpdateSelected(Mesh mesh, float time)
+        {
+            // todo: meshes can get out sync (e.g. Crate01)
+            Vector4 color = mesh.OverrideColor.GetValueOrDefault();
+            float value = color.X;
+            value -= time * 1.5f * (_flashUp ? -1 : 1);
+            if (value < 0)
+            {
+                value = 0;
+                _flashUp = true;
+            }
+            else if (value > 1)
+            {
+                value = 1;
+                _flashUp = false;
+            }
+            mesh.OverrideColor = new Vector4(value, value, value, color.W);
+        }
+
+        private void Deselect()
+        {
+            foreach (Mesh mesh in SelectedModel.Meshes)
+            {
+                mesh.OverrideColor = SelectedModel.Type == ModelType.Placeholder ? mesh.PlaceholderColor : null;
+            }
+            _flashUp = false;
+        }
+        
         private void ResetCamera()
         {
             _angleY = 0;
@@ -644,8 +710,12 @@ namespace MphRead
                     int meshId = meshStart + i;
                     Mesh mesh = model.Meshes[meshId];
                     Material material = model.Materials[mesh.MaterialId];
-                    if ((!invertFilter && material.RenderMode != modeFilter)
-                        || (invertFilter && material.RenderMode == modeFilter))
+                    RenderMode renderMode = _selectionMode == SelectionMode.None || !_showSelection
+                        ? material.RenderMode
+                        : material.GetEffectiveRenderMode(mesh);
+                    if ((!invertFilter && renderMode != modeFilter)
+                        || (invertFilter && renderMode == modeFilter)
+                        || (_selectionMode == SelectionMode.None && (!model.Visible || !mesh.Visible)))
                     {
                         continue;
                     }
@@ -718,6 +788,33 @@ namespace MphRead
         private void RenderMesh(Model model, Mesh mesh, Material material)
         {
             GL.Color3(1f, 1f, 1f);
+            DoTexture(model, mesh, material);
+            DoLighting(mesh, material);
+            if (_faceCulling)
+            {
+                GL.Enable(EnableCap.CullFace);
+                if (material.Culling == CullingMode.Neither)
+                {
+                    GL.Disable(EnableCap.CullFace);
+                }
+                else if (material.Culling == CullingMode.Back)
+                {
+                    GL.CullFace(CullFaceMode.Back);
+                }
+                else if (material.Culling == CullingMode.Front)
+                {
+                    GL.CullFace(CullFaceMode.Front);
+                }
+            }
+            DoDlist(model, mesh);
+            if (_lighting)
+            {
+                GL.Disable(EnableCap.Lighting);
+            }
+        }
+
+        private void DoTexture(Model model, Mesh mesh, Material material)
+        {
             ushort width = 1;
             ushort height = 1;
             int textureId = material.TextureId;
@@ -732,6 +829,21 @@ namespace MphRead
                 width = texture.Width;
                 height = texture.Height;
                 GL.BindTexture(TextureTarget.Texture2D, _textureMap[model][mesh.MaterialId]);
+            }
+            // _showSelection affects the placeholder colors too
+            if (mesh.OverrideColor != null && _showSelection)
+            {
+                GL.Uniform1(_shaderLocations.UseOverride, 1);
+                var overrideColor = new Vector4(
+                    mesh.OverrideColor.Value.X,
+                    mesh.OverrideColor.Value.Y,
+                    mesh.OverrideColor.Value.Z,
+                    mesh.OverrideColor.Value.W);
+                GL.Uniform4(_shaderLocations.OverrideColor, ref overrideColor);
+            }
+            else
+            {
+                GL.Uniform1(_shaderLocations.UseOverride, 0);
             }
             GL.MatrixMode(MatrixMode.Texture);
             GL.LoadIdentity();
@@ -756,7 +868,11 @@ namespace MphRead
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
             }
             GL.Uniform1(_shaderLocations.UseTexture, GL.IsEnabled(EnableCap.Texture2D) ? 1 : 0);
-            if (_lighting && material.Lighting != 0)
+        }
+
+        private void DoLighting(Mesh mesh, Material material)
+        {
+            if (_lighting && material.Lighting != 0 && (mesh.OverrideColor == null || !_showSelection))
             {
                 // todo: would be nice if the approaches for this and the room lights were the same
                 var ambient = new Vector4(
@@ -789,22 +905,10 @@ namespace MphRead
             {
                 GL.Uniform1(_shaderLocations.UseLight, 0);
             }
-            if (_faceCulling)
-            {
-                GL.Enable(EnableCap.CullFace);
-                if (material.Culling == CullingMode.Neither)
-                {
-                    GL.Disable(EnableCap.CullFace);
-                }
-                else if (material.Culling == CullingMode.Back)
-                {
-                    GL.CullFace(CullFaceMode.Back);
-                }
-                else if (material.Culling == CullingMode.Front)
-                {
-                    GL.CullFace(CullFaceMode.Front);
-                }
-            }
+        }
+
+        private void DoDlist(Model model, Mesh mesh)
+        {
             IReadOnlyList<RenderInstruction> list = model.RenderInstructionLists[mesh.DlistId];
             float vtxX = 0;
             float vtxY = 0;
@@ -838,7 +942,7 @@ namespace MphRead
                     }
                     break;
                 case InstructionCode.COLOR:
-                    if (_showColors)
+                    if (_showColors && (mesh.OverrideColor == null || !_showSelection))
                     {
                         uint rgb = instruction.Arguments[0];
                         uint r = (rgb >> 0) & 0x1F;
@@ -852,7 +956,7 @@ namespace MphRead
                     // but with bit 15 acting as a flag to directly set the diffuse color as the vertex color immediately.
                     // However, bit 15 and bits 16-30 (ambient color) are never used by MPH. Still, because of the way we're using
                     // the shader program, the easiest hack to apply the diffuse color is to just set it as the vertex color.
-                    if (_lighting)
+                    if (_lighting && (mesh.OverrideColor == null || !_showSelection))
                     {
                         uint rgb = instruction.Arguments[0];
                         uint r = (rgb >> 0) & 0x1F;
@@ -1034,31 +1138,27 @@ namespace MphRead
                     throw new ProgramException("Unknown opcode");
                 }
             }
-            if (_lighting)
-            {
-                GL.Disable(EnableCap.Lighting);
-            }
         }
 
         private async Task UnloadModel()
         {
-            await PrintMenu();
+            await PrintOutput();
             _ = Output.Read("Unload model: ").ContinueWith(async (task) =>
             {
-                await PrintMenu();
-                if (UInt32.TryParse(task.Result.Trim(), out uint sceneId))
+                await PrintOutput();
+                if (UInt32.TryParse(task.Result.Trim(), out uint sceneId) && _modelMap.ContainsKey(sceneId))
                 {
-                    _unloadQueue.Enqueue(sceneId);
+                    _unloadQueue.Enqueue(_modelMap[sceneId]);
                 }
             });
         }
 
         private async Task LoadModel()
         {
-            await PrintMenu();
+            await PrintOutput();
             _ = Output.Read("Open model: ").ContinueWith(async (task) =>
             {
-                await PrintMenu();
+                await PrintOutput();
                 string modelName = task.Result.Trim();
                 if (modelName != "")
                 {
@@ -1141,21 +1241,21 @@ namespace MphRead
                 {
                     GL.Disable(EnableCap.Texture2D);
                 }
-                await PrintMenu();
+                await PrintOutput();
             }
             else if (e.Key == Key.C)
             {
                 _showColors = !_showColors;
-                await PrintMenu();
+                await PrintOutput();
             }
             else if (e.Key == Key.Q)
             {
                 _wireframe = !_wireframe;
                 GL.PolygonMode(MaterialFace.FrontAndBack,
                     _wireframe
-                    ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
-                    : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
-                await PrintMenu();
+                        ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
+                        : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
+                await PrintOutput();
             }
             else if (e.Key == Key.B)
             {
@@ -1164,7 +1264,7 @@ namespace MphRead
                 {
                     GL.Disable(EnableCap.CullFace);
                 }
-                await PrintMenu();
+                await PrintOutput();
             }
             else if (e.Key == Key.F)
             {
@@ -1177,22 +1277,26 @@ namespace MphRead
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
                 }
-                await PrintMenu();
+                await PrintOutput();
             }
             else if (e.Key == Key.L)
             {
                 _lighting = !_lighting;
-                await PrintMenu();
+                await PrintOutput();
             }
             else if (e.Key == Key.G)
             {
                 _showFog = !_showFog;
-                await PrintMenu();
+                await PrintOutput();
+            }
+            else if (e.Key == Key.H)
+            {
+                _showSelection = !_showSelection;
             }
             else if (e.Key == Key.I)
             {
                 _showInvisible = !_showInvisible;
-                await PrintMenu();
+                await PrintOutput();
             }
             else if (e.Key == Key.R)
             {
@@ -1209,7 +1313,7 @@ namespace MphRead
                     _cameraMode = CameraMode.Pivot;
                 }
                 ResetCamera();
-                await PrintMenu();
+                await PrintOutput();
             }
             else if (e.Control && e.Key == Key.O)
             {
@@ -1218,6 +1322,146 @@ namespace MphRead
             else if (e.Control && e.Key == Key.U)
             {
                 await UnloadModel();
+            }
+            else if (e.Key == Key.M)
+            {
+                if (_models.Any(m => m.Meshes.Count > 0))
+                {
+                    Deselect();
+                    if (_selectionMode == SelectionMode.None)
+                    {
+                        _selectionMode = SelectionMode.Model;
+                        SetSelected(_selectedModelId);
+                    }
+                    else if (_selectionMode == SelectionMode.Model)
+                    {
+                        if (SelectedModel.Meshes.Count == 0)
+                        {
+                            _selectionMode = SelectionMode.None;
+                        }
+                        else
+                        {
+                            _selectionMode = SelectionMode.Mesh;
+                            SetSelected(_selectedModelId, _selectedMeshId);
+                        }
+                    }
+                    else
+                    {
+                        _selectionMode = SelectionMode.None;
+                    }
+                    await PrintOutput();
+                }
+            }
+            else if (e.Key == Key.Plus || e.Key == Key.KeypadPlus)
+            {
+                if (_modelMap.TryGetValue(_selectedModelId, out Model? model) && model.Meshes.Count > 0)
+                {
+                    if (_selectionMode == SelectionMode.Mesh)
+                    {
+                        int index = _selectedMeshId + 1;
+                        if (index > model.Meshes.Count - 1)
+                        {
+                            index = 0;
+                        }
+                        SetSelected(_selectedModelId, index);
+                    }
+                    else if (_selectionMode == SelectionMode.Model)
+                    {
+                        Model? nextModel = _models.Where(m => m.SceneId > model.SceneId &&
+                            (_showInvisible || m.Type != ModelType.Placeholder)).OrderBy(m => m.SceneId).FirstOrDefault();
+                        if (nextModel == null)
+                        {
+                            nextModel = _models.OrderBy(m => m.SceneId).First(m => m.Meshes.Count > 0);
+                        }
+                        if (nextModel == null)
+                        {
+                            nextModel = model;
+                        }
+                        _selectedMeshId = 0;
+                        SetSelected(nextModel.SceneId);
+                    }
+                    await PrintOutput();
+                }
+            }
+            else if (e.Key == Key.Minus || e.Key == Key.Minus)
+            {
+                if (_modelMap.TryGetValue(_selectedModelId, out Model? model) && model.Meshes.Count > 0)
+                {
+                    if (_selectionMode == SelectionMode.Mesh)
+                    {
+                        int index = _selectedMeshId - 1;
+                        if (index < 0)
+                        {
+                            index = model.Meshes.Count - 1;
+                        }
+                        SetSelected(_selectedModelId, index);
+                    }
+                    else if (_selectionMode == SelectionMode.Model)
+                    {
+                        Model? nextModel = _models.Where(m => m.SceneId < model.SceneId &&
+                            (_showInvisible || m.Type != ModelType.Placeholder)).OrderBy(m => m.SceneId).LastOrDefault();
+                        if (nextModel == null)
+                        {
+                            nextModel = _models.OrderBy(m => m.SceneId).Last(m => m.Meshes.Count > 0);
+                        }
+                        if (nextModel == null)
+                        {
+                            nextModel = model;
+                        }
+                        _selectedMeshId = 0;
+                        SetSelected(nextModel.SceneId);
+                    }
+                    await PrintOutput();
+                }
+            }
+            else if (e.Key == Key.Number0 || e.Key == Key.Keypad0)
+            {
+                if (_selectionMode == SelectionMode.Model)
+                {
+                    SelectedModel.Visible = !SelectedModel.Visible;
+                    await PrintOutput();
+                }
+                else if (_selectionMode == SelectionMode.Mesh)
+                {
+                    SelectedModel.Meshes[_selectedMeshId].Visible = !SelectedModel.Meshes[_selectedMeshId].Visible;
+                    await PrintOutput();
+                }
+            }
+            else if (e.Key == Key.Number1 || e.Key == Key.Keypad1)
+            {
+                if (_selectionMode == SelectionMode.Model)
+                {
+                    int recolor = SelectedModel.CurrentRecolor - 1;
+                    if (recolor < 0)
+                    {
+                        recolor = SelectedModel.Recolors.Count - 1;
+                    }
+                    SelectedModel.CurrentRecolor = recolor;
+                    foreach (int index in _textureMap[SelectedModel].Where(i => i != -1).Distinct())
+                    {
+                        GL.DeleteTexture(index);
+                    }
+                    InitTextures(SelectedModel);
+                    await PrintOutput();
+                }
+            }
+            else if (e.Key == Key.Number2 || e.Key == Key.Keypad2)
+            {
+                if (_selectionMode == SelectionMode.Model)
+                {
+                    int recolor = SelectedModel.CurrentRecolor + 1;
+                    if (recolor > SelectedModel.Recolors.Count - 1)
+                    {
+                        recolor = 0;
+                    }
+                    SelectedModel.CurrentRecolor = recolor;
+                    foreach (int index in _textureMap[SelectedModel].Where(i => i != -1).Distinct())
+                    {
+                        GL.DeleteTexture(index);
+                    }
+                    InitTextures(SelectedModel);
+                    await PrintOutput();
+                }
             }
             else if (e.Key == Key.Escape)
             {
@@ -1229,6 +1473,12 @@ namespace MphRead
 
         private void OnKeyHeld()
         {
+            if ((KeyboardState.IsKeyDown(Key.AltLeft) || KeyboardState.IsKeyDown(Key.AltRight))
+                && _selectionMode == SelectionMode.Model)
+            {
+                MoveModel();
+                return;
+            }
             // sprint
             float step = KeyboardState.IsKeyDown(Key.ShiftLeft) || KeyboardState.IsKeyDown(Key.ShiftRight) ? 5 : 1;
             if (_cameraMode == CameraMode.Roam)
@@ -1325,10 +1575,144 @@ namespace MphRead
             }
         }
 
+        private void MoveModel()
+        {
+            float step = 0.3f;
+            if (KeyboardState.IsKeyDown(Key.W)) // move Z-
+            {
+                SelectedModel.Position = SelectedModel.Position.WithZ(SelectedModel.Position.Z - step);
+            }
+            else if (KeyboardState.IsKeyDown(Key.S)) // move Z+
+            {
+                SelectedModel.Position = SelectedModel.Position.WithZ(SelectedModel.Position.Z + step);
+            }
+            if (KeyboardState.IsKeyDown(Key.Space)) // move Y+
+            {
+                SelectedModel.Position = SelectedModel.Position.WithY(SelectedModel.Position.Y + step);
+            }
+            else if (KeyboardState.IsKeyDown(Key.V)) // move Y-
+            {
+                SelectedModel.Position = SelectedModel.Position.WithY(SelectedModel.Position.Y - step);
+            }
+            if (KeyboardState.IsKeyDown(Key.A)) // move X-
+            {
+                SelectedModel.Position = SelectedModel.Position.WithX(SelectedModel.Position.X - step);
+            }
+            else if (KeyboardState.IsKeyDown(Key.D)) // move X+
+            {
+                SelectedModel.Position = SelectedModel.Position.WithX(SelectedModel.Position.X + step);
+            }
+        }
+
         private enum CameraMode
         {
             Pivot,
             Roam
+        }
+
+        private async Task PrintOutput()
+        {
+            Guid guid = await Output.StartBatch();
+            await Output.Clear(guid);
+            await Output.Write($"MphRead Version {Program.Version}", guid);
+            if (_selectionMode == SelectionMode.Model)
+            {
+                await PrintModelInfo(guid);
+            }
+            else if (_selectionMode == SelectionMode.Mesh)
+            {
+                await PrintMeshInfo(guid);
+            }
+            else
+            {
+                await PrintMenu(guid);
+            }
+            await Output.EndBatch();
+        }
+
+        private async Task PrintModelInfo(Guid guid)
+        {
+            Model model = SelectedModel;
+            await Output.Write(guid);
+            await Output.Write($"Model: {model.Name} [{model.SceneId}] {(model.Visible ? "On " : "Off")} - " +
+                $"Color {model.CurrentRecolor} / {model.Recolors.Count - 1}", guid);
+            await Output.Write($"{model.Type}{(model.Type == ModelType.Placeholder ? $" - {model.EntityType}" : "")}", guid);
+            // todo: pickup rotation shows up, but the floating height change does not, would be nice to be consistent
+            await Output.Write($"Position ({model.Position.X}, {model.Position.Y}, {model.Position.Z})", guid);
+            await Output.Write($"Rotation ({model.Rotation.X}, {model.Rotation.Y}, {model.Rotation.Z})", guid);
+            await Output.Write($"   Scale ({model.Scale.X}, {model.Scale.Y}, {model.Scale.Z})", guid);
+            await Output.Write($"Nodes {model.Nodes.Count}, Meshes {model.Meshes.Count}, Materials {model.Materials.Count}, " +
+                $"Textures {model.Textures.Count}, Palettes {model.Palettes.Count}", guid);
+            await Output.Write(guid);
+        }
+        
+        private async Task PrintMeshInfo(Guid guid)
+        {
+            await PrintModelInfo(guid);
+            for (int i = 0; i < SelectedModel.Nodes.Count; i++)
+            {
+                Node node = SelectedModel.Nodes[i];
+                if (node.MeshId / 2 <= _selectedMeshId && node.MeshId / 2 + node.MeshCount >= _selectedMeshId)
+                {
+                    await Output.Write($"Node: {node.Name} [{i}] {(node.Enabled ? "On ": "Off")} - Meshes {node.MeshCount}", guid);
+                    await Output.Write($"{node.Type}", guid);
+                    await Output.Write($"Position ({node.Position.X}, {node.Position.Y}, {node.Position.Z})", guid);
+                    await Output.Write($"Rotation ({node.Angle.X}, {node.Angle.Y}, {node.Angle.Z})", guid);
+                    await Output.Write($"   Scale ({node.Scale.X}, {node.Scale.Y}, {node.Scale.Z})", guid);
+                    await Output.Write($"   ??? 1 ({node.Vector1.X}, {node.Vector1.Y}, {node.Vector1.Z})", guid);
+                    await Output.Write($"   ??? 2 ({node.Vector2.X}, {node.Vector2.Y}, {node.Vector2.Z})", guid);
+                    await Output.Write(guid);
+                    break;
+                }
+            }
+            Mesh mesh = SelectedModel.Meshes[_selectedMeshId];
+            await Output.Write($"Mesh: {_selectedMeshId} {(mesh.Visible ? "On " : "Off")}", guid);
+            await Output.Write($"Material ID {mesh.MaterialId}, DList ID {mesh.DlistId}", guid);
+            await Output.Write(guid);
+            Material material = SelectedModel.Materials[mesh.MaterialId];
+            await Output.Write($"Material: {material.Name} [{material.RenderMode}, {material.PolygonMode}]", guid);
+            await Output.Write($"Lighting {material.Lighting}, Alpha {material.Alpha}", guid);
+            await Output.Write($"Texture ID {material.TextureId}, Palette ID {material.PaletteId}", guid);
+            await Output.Write($" Diffuse ({material.Diffuse.Red}, {material.Diffuse.Green}, {material.Diffuse.Blue})", guid);
+            await Output.Write($" Ambient ({material.Ambient.Red}, {material.Ambient.Green}, {material.Ambient.Blue})", guid);
+            await Output.Write($"Specular ({material.Specular.Red}, {material.Specular.Green}, {material.Specular.Blue})", guid);
+            await Output.Write(guid);
+        }
+
+        private async Task PrintMenu(Guid guid)
+        {
+            if (_cameraMode == CameraMode.Pivot)
+            {
+                await Output.Write(" - Scroll mouse wheel to zoom", guid);
+            }
+            else if (_cameraMode == CameraMode.Roam)
+            {
+                await Output.Write(" - Use WASD, Space, and V to move", guid);
+            }
+            await Output.Write(" - Hold left mouse button or use arrow keys to rotate", guid);
+            await Output.Write(" - Hold Shift to move the camera faster", guid);
+            await Output.Write($" - T toggles texturing ({FormatOnOff(_showTextures)})", guid);
+            await Output.Write($" - C toggles vertex colours ({FormatOnOff(_showColors)})", guid);
+            await Output.Write($" - Q toggles wireframe ({FormatOnOff(_wireframe)})", guid);
+            await Output.Write($" - B toggles face culling ({FormatOnOff(_faceCulling)})", guid);
+            await Output.Write($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})", guid);
+            await Output.Write($" - L toggles lighting ({FormatOnOff(_lighting)})", guid);
+            await Output.Write($" - G toggles fog ({FormatOnOff(_showFog)})", guid);
+            await Output.Write($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})", guid);
+            await Output.Write($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})", guid);
+            await Output.Write(" - R resets the camera", guid);
+            await Output.Write(" - Ctrl+O then enter \"model_name [recolor]\" to load", guid);
+            await Output.Write(" - Ctrl+U then enter \"model_id\" to unload", guid);
+            await Output.Write(" - Esc closes the viewer", guid);
+            await Output.Write(guid);
+            if (_logs.Count > 0)
+            {
+                foreach (string log in _logs)
+                {
+                    await Output.Write(log, guid);
+                }
+                await Output.Write(guid);
+            }
         }
     }
 }

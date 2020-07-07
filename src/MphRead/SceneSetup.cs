@@ -401,9 +401,9 @@ namespace MphRead
             Model model = Read.GetModelByName("pick_wpn_missile");
             if (_colorOverrides.ContainsKey(type))
             {
-                foreach (Material material in model.Materials)
+                foreach (Mesh mesh in model.Meshes)
                 {
-                    material.OverrideColor = _colorOverrides[type];
+                    mesh.OverrideColor = mesh.PlaceholderColor = _colorOverrides[type].AsVector4();
                 }
             }
             if (System.Diagnostics.Debugger.IsAttached &&
@@ -413,6 +413,7 @@ namespace MphRead
                 System.Diagnostics.Debugger.Break();
             }
             model.Position = new Vector3(position.X.FloatValue, position.Y.FloatValue, position.Z.FloatValue);
+            model.EntityType = type;
             model.Type = ModelType.Placeholder;
             ComputeNodeMatrices(model, index: 0);
             return model;
