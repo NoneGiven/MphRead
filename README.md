@@ -17,8 +17,11 @@ The renderer is a work in progress. A much more impressive C implementation with
 
 ## Usage
 
-- Create a `paths.txt` file in `src/MphRead`. The first line should contain a full path to the directory which contains your MPH files. This directory must follow the structure of the MPH file system, with the root being equivalent to the `root` directory of the ROM. There must also be an `_archives` folder in the root which contains one folder for each archive, with the extracted files for that archive inside.
-- Run `MphRead.exe` with the model name and (optional) recolor index as arguments, e.g. `MphRead.exe Trace_lod1 3`.
+- Create a `paths.txt` file in the same location as the `/MphRead` binary. The first line should contain a full path to the directory which contains your MPH files. This directory must follow the structure of the MPH file system, with the root being equivalent to the `root` directory of the ROM. There must also be an `_archives` folder in the root which contains one folder for each archive, with the extracted files for that archive inside.
+- Run `MphRead` with the following options:
+- `-room <room_name> [layer_mask]`
+- `-model <model_name> [recolor_index]`
+- The layer mask and recolor index are optional. At most one room may be specified, while any number of models may be specified.
 
 ## Building
 
