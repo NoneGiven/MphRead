@@ -79,15 +79,20 @@ namespace MphRead
             Blue = blue;
         }
 
-        public ColorRgba AsRgba()
+        public Vector4 AsVector4()
         {
-            return new ColorRgba(Red, Green, Blue, 255);
+            return new Vector4(Red, Green, Blue, 1f);
         }
     }
 
     // size: 4
     public readonly struct ColorRgba
     {
+        public readonly byte Red;
+        public readonly byte Green;
+        public readonly byte Blue;
+        public readonly byte Alpha;
+
         public ColorRgba(byte red, byte green, byte blue, byte alpha)
         {
             Red = red;
@@ -96,9 +101,9 @@ namespace MphRead
             Alpha = alpha;
         }
 
-        public readonly byte Red;
-        public readonly byte Green;
-        public readonly byte Blue;
-        public readonly byte Alpha;
+        public ColorRgba WithAlpha(byte alpha)
+        {
+            return new ColorRgba(Red, Green, Blue, alpha);
+        }
     }
 }

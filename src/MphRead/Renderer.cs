@@ -158,7 +158,7 @@ namespace MphRead
                 ((roomMeta.FogColor) & 0x1F) / (float)0x1F,
                 (((roomMeta.FogColor) >> 5) & 0x1F) / (float)0x1F,
                 (((roomMeta.FogColor) >> 10) & 0x1F) / (float)0x1F,
-                1
+                1.0f
             );
             _fogOffset = (int)roomMeta.FogOffset;
             _cameraMode = CameraMode.Roam;
@@ -179,9 +179,9 @@ namespace MphRead
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Texture2D);
             GL.PolygonMode(MaterialFace.FrontAndBack,
-                    _wireframe
-                    ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
-                    : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
+                _wireframe
+                ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
+                : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
 
             GL.DepthFunc(DepthFunction.Lequal);
 
@@ -193,16 +193,6 @@ namespace MphRead
             }
 
             await PrintMenu();
-
-            // sktodo: remove this
-            foreach (Material material in _models[25].Materials)
-            {
-                material.OverrideColor = true;
-            }
-            foreach (Mesh mesh in _models[25].Meshes)
-            {
-                mesh.OverrideColor = new ColorRgba(255, 255, 255, 128);
-            }
 
             base.OnLoad();
         }
@@ -406,6 +396,34 @@ namespace MphRead
                 }
                 _textureMap.Remove(model);
                 _models.Remove(model);
+            }
+
+            // sktodo
+            int selectedModel = 25;
+            foreach (Material material in _models[selectedModel].Materials)
+            {
+                material.OverrideColor = true;
+            }
+            foreach (Mesh mesh in _models[selectedModel].Meshes)
+            {
+                if (mesh.OverrideColor == null)
+                {
+                    mesh.OverrideColor = new Vector4(1f, 1f, 1f, 1f);
+                }
+                else
+                {
+                    float alpha = mesh.OverrideColor.Value.W;
+                    alpha -= (float)args.Time * 2f;
+                    if (alpha < 0)
+                    {
+                        alpha += 1;
+                    }
+                    mesh.OverrideColor = new Vector4(
+                        mesh.OverrideColor.Value.X,
+                        mesh.OverrideColor.Value.Y,
+                        mesh.OverrideColor.Value.Z,
+                        alpha);
+                }
             }
 
             OnKeyHeld();
@@ -779,10 +797,10 @@ namespace MphRead
             {
                 GL.Uniform1(_shaderLocations.UseOverride, 1);
                 var overrideColor = new Vector4(
-                    mesh.OverrideColor.Value.Red / 255f,
-                    mesh.OverrideColor.Value.Green / 255f,
-                    mesh.OverrideColor.Value.Blue / 255f,
-                    mesh.OverrideColor.Value.Alpha / 255f);
+                    mesh.OverrideColor.Value.X,
+                    mesh.OverrideColor.Value.Y,
+                    mesh.OverrideColor.Value.Z,
+                    mesh.OverrideColor.Value.W);
                 GL.Uniform4(_shaderLocations.OverrideColor, ref overrideColor);
             }
             else
