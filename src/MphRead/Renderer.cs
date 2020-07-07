@@ -92,6 +92,7 @@ namespace MphRead
         private SelectionMode _selectionMode = SelectionMode.None;
         private uint _selectedModelId = 0;
         private int _selectedMeshId = 0;
+        private bool _showSelection = true;
 
         private Model SelectedModel => _modelMap[_selectedModelId];
 
@@ -387,8 +388,6 @@ namespace MphRead
 
             // sktodo:
             // - allow selecting nodes
-            // - H to toggle flashing
-
             if (_selectionMode != SelectionMode.None)
             {
                 if (_selectionMode == SelectionMode.Mesh)
@@ -709,7 +708,9 @@ namespace MphRead
                     int meshId = meshStart + i;
                     Mesh mesh = model.Meshes[meshId];
                     Material material = model.Materials[mesh.MaterialId];
-                    RenderMode renderMode = _selectionMode == SelectionMode.None ? material.RenderMode : material.GetEffectiveRenderMode(mesh);
+                    RenderMode renderMode = _selectionMode == SelectionMode.None
+                        ? material.RenderMode
+                        : material.GetEffectiveRenderMode(mesh);
                     if ((!invertFilter && renderMode != modeFilter)
                         || (invertFilter && renderMode == modeFilter)
                         || (_selectionMode == SelectionMode.None && (!model.Visible || !mesh.Visible)))
@@ -827,7 +828,8 @@ namespace MphRead
                 height = texture.Height;
                 GL.BindTexture(TextureTarget.Texture2D, _textureMap[model][mesh.MaterialId]);
             }
-            if (mesh.OverrideColor != null)
+            // this affects the placeholders too
+            if (mesh.OverrideColor != null && _showSelection)
             {
                 GL.Uniform1(_shaderLocations.UseOverride, 1);
                 var overrideColor = new Vector4(
@@ -1285,6 +1287,10 @@ namespace MphRead
                 _showFog = !_showFog;
                 await PrintOutput();
             }
+            else if (e.Key == Key.H)
+            {
+                _showSelection = !_showSelection;
+            }
             else if (e.Key == Key.I)
             {
                 _showInvisible = !_showInvisible;
@@ -1465,6 +1471,12 @@ namespace MphRead
 
         private void OnKeyHeld()
         {
+            if ((KeyboardState.IsKeyDown(Key.AltLeft) || KeyboardState.IsKeyDown(Key.AltRight))
+                && _selectionMode == SelectionMode.Model)
+            {
+                MoveModel();
+                return;
+            }
             // sprint
             float step = KeyboardState.IsKeyDown(Key.ShiftLeft) || KeyboardState.IsKeyDown(Key.ShiftRight) ? 5 : 1;
             if (_cameraMode == CameraMode.Roam)
@@ -1558,6 +1570,35 @@ namespace MphRead
             {
                 _angleX -= step;
                 _angleX %= 360f;
+            }
+        }
+
+        private void MoveModel()
+        {
+            float step = 0.3f;
+            if (KeyboardState.IsKeyDown(Key.W)) // move Z-
+            {
+                SelectedModel.Position = SelectedModel.Position.WithZ(SelectedModel.Position.Z - step);
+            }
+            else if (KeyboardState.IsKeyDown(Key.S)) // move Z+
+            {
+                SelectedModel.Position = SelectedModel.Position.WithZ(SelectedModel.Position.Z + step);
+            }
+            if (KeyboardState.IsKeyDown(Key.Space)) // move Y+
+            {
+                SelectedModel.Position = SelectedModel.Position.WithY(SelectedModel.Position.Y + step);
+            }
+            else if (KeyboardState.IsKeyDown(Key.V)) // move Y-
+            {
+                SelectedModel.Position = SelectedModel.Position.WithY(SelectedModel.Position.Y - step);
+            }
+            if (KeyboardState.IsKeyDown(Key.A)) // move X-
+            {
+                SelectedModel.Position = SelectedModel.Position.WithX(SelectedModel.Position.X - step);
+            }
+            else if (KeyboardState.IsKeyDown(Key.D)) // move X+
+            {
+                SelectedModel.Position = SelectedModel.Position.WithX(SelectedModel.Position.X + step);
             }
         }
 
