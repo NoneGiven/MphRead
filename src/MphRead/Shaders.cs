@@ -68,6 +68,8 @@ uniform sampler2D tex;
 varying vec2 texcoord;
 varying vec4 color;
 varying float depth;
+uniform bool use_override;
+uniform vec4 override_color;
 
 void main()
 {
@@ -75,8 +77,14 @@ void main()
     if(use_texture) {
         vec4 texcolor = texture2D(tex, texcoord);
         col = color * texcolor;
+        if(use_override) {
+            col.r = override_color.r;
+            col.g = override_color.g;
+            col.b = override_color.b;
+            col.a *= override_color.a;
+        }
     } else  {
-        col = color;
+        col = use_override ? override_color : color;
     }
     if(fog_enable) {
         float density = depth - (1 - float(fog_offset) / 65536.0);

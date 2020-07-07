@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using OpenToolkit.Graphics.OpenGL;
@@ -70,6 +69,8 @@ namespace MphRead
         public int UseFog { get; set; }
         public int FogColor { get; set; }
         public int FogOffset { get; set; }
+        public int UseOverride { get; set; }
+        public int OverrideColor { get; set; }
     }
 
     public class RenderWindow : GameWindow
@@ -193,6 +194,16 @@ namespace MphRead
 
             await PrintMenu();
 
+            // sktodo: remove this
+            foreach (Material material in _models[25].Materials)
+            {
+                material.OverrideColor = true;
+            }
+            foreach (Mesh mesh in _models[25].Meshes)
+            {
+                mesh.OverrideColor = new ColorRgba(255, 255, 255, 128);
+            }
+
             base.OnLoad();
         }
 
@@ -224,6 +235,9 @@ namespace MphRead
             _shaderLocations.UseFog = GL.GetUniformLocation(_shaderProgramId, "fog_enable");
             _shaderLocations.FogColor = GL.GetUniformLocation(_shaderProgramId, "fog_color");
             _shaderLocations.FogOffset = GL.GetUniformLocation(_shaderProgramId, "fog_offset");
+
+            _shaderLocations.UseOverride = GL.GetUniformLocation(_shaderProgramId, "use_override");
+            _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
         }
 
         private async Task PrintMenu()
@@ -584,7 +598,7 @@ namespace MphRead
             GL.DepthMask(false);
             foreach (Node node in model.Nodes)
             {
-                RenderNode(model, node, RenderMode.Translucent, doOverrides: true);
+                RenderNode(model, node, RenderMode.Translucent);
             }
             GL.PolygonOffset(0, 0);
             GL.Disable(EnableCap.PolygonOffsetFill);
@@ -618,7 +632,7 @@ namespace MphRead
             //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             foreach (Node node in model.Nodes)
             {
-                RenderNode(model, node, RenderMode.Normal, invertFilter: true, doOverrides: true);
+                RenderNode(model, node, RenderMode.Normal, invertFilter: true);
             }
             GL.DepthMask(true);
             GL.Disable(EnableCap.Blend);
@@ -626,7 +640,7 @@ namespace MphRead
             GL.UseProgram(0);
         }
 
-        private void RenderNode(Model model, Node node, RenderMode modeFilter, bool invertFilter = false, bool doOverrides = false)
+        private void RenderNode(Model model, Node node, RenderMode modeFilter, bool invertFilter = false)
         {
             if (node.MeshCount > 0 && node.Enabled)
             {
@@ -645,9 +659,8 @@ namespace MphRead
                     int meshId = meshStart + i;
                     Mesh mesh = model.Meshes[meshId];
                     Material material = model.Materials[mesh.MaterialId];
-                    if ((!invertFilter && material.RenderMode != modeFilter)
-                        || (invertFilter && material.RenderMode == modeFilter)
-                        || (!doOverrides && mesh.OverrideColor?.Alpha < 255))
+                    if ((!invertFilter && material.EffectiveRenderMode != modeFilter)
+                        || (invertFilter && material.EffectiveRenderMode == modeFilter))
                     {
                         continue;
                     }
@@ -745,28 +758,12 @@ namespace MphRead
             }
         }
 
-        private void DoOverrideColor(Model model, Mesh mesh, Material material, Texture texture)
-        {
-            Debug.Assert(mesh.OverrideColor.HasValue);
-            var pixels = new List<uint>();
-            foreach (ColorRgba pixel in model.GetPixels(material.TextureId, material.PaletteId))
-            {
-                uint red = mesh.OverrideColor.Value.Red;
-                uint green = mesh.OverrideColor.Value.Green;
-                uint blue = mesh.OverrideColor.Value.Blue;
-                uint alpha = (uint)MathF.Round(mesh.OverrideColor.Value.Alpha / 255f * pixel.Alpha);
-                pixels.Add((red << 0) | (green << 8) | (blue << 16) | (alpha << 24));
-            }
-            BindAndMakeTexture(material, Int32.MaxValue, texture.Width, texture.Height,
-                (int)TextureMinFilter.Nearest, (int)TextureMagFilter.Nearest, pixels);
-        }
-
         private void DoTexture(Model model, Mesh mesh, Material material)
         {
             ushort width = 1;
             ushort height = 1;
             int textureId = material.TextureId;
-            if (textureId == UInt16.MaxValue && mesh.OverrideColor == null)
+            if (textureId == UInt16.MaxValue)
             {
                 GL.Disable(EnableCap.Texture2D);
             }
@@ -776,14 +773,21 @@ namespace MphRead
                 Texture texture = model.Textures[textureId];
                 width = texture.Width;
                 height = texture.Height;
-                if (mesh.OverrideColor == null)
-                {
-                    GL.BindTexture(TextureTarget.Texture2D, _textureMap[model][mesh.MaterialId]);
-                }
-                else
-                {
-                    DoOverrideColor(model, mesh, material, texture);
-                }
+                GL.BindTexture(TextureTarget.Texture2D, _textureMap[model][mesh.MaterialId]);
+            }
+            if (mesh.OverrideColor != null)
+            {
+                GL.Uniform1(_shaderLocations.UseOverride, 1);
+                var overrideColor = new Vector4(
+                    mesh.OverrideColor.Value.Red / 255f,
+                    mesh.OverrideColor.Value.Green / 255f,
+                    mesh.OverrideColor.Value.Blue / 255f,
+                    mesh.OverrideColor.Value.Alpha / 255f);
+                GL.Uniform4(_shaderLocations.OverrideColor, ref overrideColor);
+            }
+            else
+            {
+                GL.Uniform1(_shaderLocations.UseOverride, 0);
             }
             GL.MatrixMode(MatrixMode.Texture);
             GL.LoadIdentity();
