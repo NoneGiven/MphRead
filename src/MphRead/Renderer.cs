@@ -76,7 +76,7 @@ namespace MphRead
         private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
-        private readonly ConcurrentQueue<int> _unloadQueue = new ConcurrentQueue<int>();
+        private readonly ConcurrentQueue<uint> _unloadQueue = new ConcurrentQueue<uint>();
         private readonly Dictionary<Model, List<int>> _textureMap = new Dictionary<Model, List<int>>();
         private readonly List<string> _logs = new List<string>();
 
@@ -379,16 +379,18 @@ namespace MphRead
                 _models.Add(model);
             }
 
-            while (_unloadQueue.TryDequeue(out int id))
+            while (_unloadQueue.TryDequeue(out uint sceneId))
             {
-                // sktodo: id is currently just the index in the list, but we should use a generated, auto-incremented value
-                Model model = _models[id];
-                foreach (int index in _textureMap[model].Where(i => i != -1).Distinct())
+                if (_models.Any(m => m.SceneId == sceneId))
                 {
-                    GL.DeleteTexture(index);
+                    Model model = _models.First(m => m.SceneId == sceneId);
+                    foreach (int index in _textureMap[model].Where(i => i != -1).Distinct())
+                    {
+                        GL.DeleteTexture(index);
+                    }
+                    _textureMap.Remove(model);
+                    _models.Remove(model);
                 }
-                _textureMap.Remove(model);
-                _models.Remove(model);
             }
 
             OnKeyHeld();
@@ -1044,9 +1046,9 @@ namespace MphRead
             _ = Output.Read("Unload model: ").ContinueWith(async (task) =>
             {
                 await PrintMenu();
-                if (Int32.TryParse(task.Result.Trim(), out int id))
+                if (UInt32.TryParse(task.Result.Trim(), out uint sceneId))
                 {
-                    _unloadQueue.Enqueue(id);
+                    _unloadQueue.Enqueue(sceneId);
                 }
             });
         }
