@@ -413,6 +413,7 @@ namespace MphRead
                 System.Diagnostics.Debugger.Break();
             }
             model.Position = new Vector3(position.X.FloatValue, position.Y.FloatValue, position.Z.FloatValue);
+            model.EntityType = type;
             model.Type = ModelType.Placeholder;
             ComputeNodeMatrices(model, index: 0);
             return model;

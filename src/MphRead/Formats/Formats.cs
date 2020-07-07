@@ -11,6 +11,7 @@ namespace MphRead
     public class Model
     {
         public ModelType Type { get; set; }
+        public EntityType EntityType { get; set; } // currently only used when ModelType is Placeholder
 
         public string Name { get; }
         public Header Header { get; }

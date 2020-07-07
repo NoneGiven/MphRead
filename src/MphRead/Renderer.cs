@@ -386,9 +386,10 @@ namespace MphRead
             }
 
             // sktodo:
-            // - show list of stuff, give options for "next" or "next (skip disabled)", etc.
-            // - print info, allow manipulating object
+            // - print info
+            // - allow manipulating object
             // - allow selecting nodes
+            // - H to toggle flashing
 
             if (_selectionMode != SelectionMode.None)
             {
@@ -452,6 +453,7 @@ namespace MphRead
 
         private void UpdateSelected(Mesh mesh, float time)
         {
+            // todo: meshes can get out sync (e.g. Crate01)
             Vector4 color = mesh.OverrideColor.GetValueOrDefault();
             float value = color.X;
             value -= time * 1.5f * (_flashUp ? -1 : 1);
@@ -1340,6 +1342,7 @@ namespace MphRead
                     {
                         _selectionMode = SelectionMode.None;
                     }
+                    await PrintOutput();
                 }
             }
             else if (e.Key == Key.Plus || e.Key == Key.KeypadPlus)
@@ -1370,6 +1373,7 @@ namespace MphRead
                         _selectedMeshId = 0;
                         SetSelected(nextModel.SceneId);
                     }
+                    await PrintOutput();
                 }
             }
             else if (e.Key == Key.Minus || e.Key == Key.Minus)
@@ -1400,6 +1404,7 @@ namespace MphRead
                         _selectedMeshId = 0;
                         SetSelected(nextModel.SceneId);
                     }
+                    await PrintOutput();
                 }
             }
             else if (e.Key == Key.Escape)
@@ -1521,11 +1526,11 @@ namespace MphRead
             await Output.Write($"MphRead Version {Program.Version}", guid);
             if (_selectionMode == SelectionMode.Model)
             {
-
+                await PrintModelInfo(guid);
             }
             else if (_selectionMode == SelectionMode.Model)
             {
-
+                await PrintMeshInfo(guid);
             }
             else
             {
@@ -1536,10 +1541,26 @@ namespace MphRead
 
         private async Task PrintModelInfo(Guid guid)
         {
+            Model model = SelectedModel;
+            await Output.Write(guid);
+            await Output.Write($"Model: {model.Name} [{model.SceneId}] Color {model.CurrentRecolor} / {model.Recolors.Count - 1}", guid);
+            await Output.Write($"{model.Type}{(model.Type == ModelType.Placeholder ? $" - {model.EntityType}" : "")}", guid);
+            // todo: pickup rotation shows up, but the floating height change does not, would be nice to be consistent
+            await Output.Write($"Position ({model.Position.X}, {model.Position.Y}, {model.Position.Z})", guid);
+            await Output.Write($"Rotation ({model.Rotation.X}, {model.Rotation.Y}, {model.Rotation.Z})", guid);
+            await Output.Write($"   Scale ({model.Scale.X}, {model.Scale.Y}, {model.Scale.Z})", guid);
+            await Output.Write($"Nodes {model.Nodes.Count}, Meshes {model.Meshes.Count}, Materials {model.Materials.Count}," +
+                $" Textures {model.Textures.Count}, Palettes {model.Palettes.Count}", guid);
+            await Output.Write(guid);
         }
-
+        
         private async Task PrintMeshInfo(Guid guid)
         {
+            await PrintModelInfo(guid);
+            Mesh mesh = SelectedModel.Meshes[_selectedMeshId];
+            await Output.Write($"Mesh: {_selectedMeshId}", guid);
+            await Output.Write($"", guid);
+            await Output.Write(guid);
         }
 
         private async Task PrintMenu(Guid guid)
