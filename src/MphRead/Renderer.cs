@@ -362,13 +362,14 @@ namespace MphRead
             }
         }
 
-        private void UpdateModelStates(float time)
+        private async Task UpdateModelStates(float time)
         {
             while (_loadQueue.TryDequeue(out Model? model))
             {
                 InitTextures(model);
                 _models.Add(model);
                 _modelMap.Add(model.SceneId, model);
+                await PrintOutput();
             }
 
             while (_unloadQueue.TryDequeue(out Model? model))
@@ -384,6 +385,7 @@ namespace MphRead
                 _textureMap.Remove(model);
                 _models.Remove(model);
                 _modelMap.Remove(model.SceneId);
+                await PrintOutput();
             }
 
             // sktodo:
@@ -404,10 +406,10 @@ namespace MphRead
             }
         }
 
-        protected override void OnRenderFrame(FrameEventArgs args)
+        protected override async void OnRenderFrame(FrameEventArgs args)
         {
             // extra non-rendering updates
-            UpdateModelStates((float)args.Time);
+            await UpdateModelStates((float)args.Time);
             OnKeyHeld();
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
