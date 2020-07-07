@@ -258,7 +258,7 @@ namespace MphRead
 
         private void InitTextures(Model model)
         {
-            _textureMap.Add(model, new List<int>());
+            _textureMap[model] = new List<int>();
             int minParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMinFilter.Nearest;
             int magParameter = _textureFiltering ? (int)TextureMagFilter.Linear : (int)TextureMagFilter.Nearest;
             foreach (Material material in model.Materials)
@@ -386,8 +386,6 @@ namespace MphRead
             }
 
             // sktodo:
-            // - print info
-            // - allow manipulating object
             // - allow selecting nodes
             // - H to toggle flashing
 
@@ -713,7 +711,8 @@ namespace MphRead
                     Material material = model.Materials[mesh.MaterialId];
                     RenderMode renderMode = _selectionMode == SelectionMode.None ? material.RenderMode : material.GetEffectiveRenderMode(mesh);
                     if ((!invertFilter && renderMode != modeFilter)
-                        || (invertFilter && renderMode == modeFilter))
+                        || (invertFilter && renderMode == modeFilter)
+                        || (_selectionMode == SelectionMode.None && (!model.Visible || !mesh.Visible)))
                     {
                         continue;
                     }
@@ -1407,6 +1406,55 @@ namespace MphRead
                     await PrintOutput();
                 }
             }
+            else if (e.Key == Key.Number0 || e.Key == Key.Keypad0)
+            {
+                if (_selectionMode == SelectionMode.Model)
+                {
+                    SelectedModel.Visible = !SelectedModel.Visible;
+                    await PrintOutput();
+                }
+                else if (_selectionMode == SelectionMode.Mesh)
+                {
+                    SelectedModel.Meshes[_selectedMeshId].Visible = !SelectedModel.Meshes[_selectedMeshId].Visible;
+                    await PrintOutput();
+                }
+            }
+            else if (e.Key == Key.Number1 || e.Key == Key.Keypad1)
+            {
+                if (_selectionMode == SelectionMode.Model)
+                {
+                    int recolor = SelectedModel.CurrentRecolor - 1;
+                    if (recolor < 0)
+                    {
+                        recolor = SelectedModel.Recolors.Count - 1;
+                    }
+                    SelectedModel.CurrentRecolor = recolor;
+                    foreach (int index in _textureMap[SelectedModel].Where(i => i != -1).Distinct())
+                    {
+                        GL.DeleteTexture(index);
+                    }
+                    InitTextures(SelectedModel);
+                    await PrintOutput();
+                }
+            }
+            else if (e.Key == Key.Number2 || e.Key == Key.Keypad2)
+            {
+                if (_selectionMode == SelectionMode.Model)
+                {
+                    int recolor = SelectedModel.CurrentRecolor + 1;
+                    if (recolor > SelectedModel.Recolors.Count - 1)
+                    {
+                        recolor = 0;
+                    }
+                    SelectedModel.CurrentRecolor = recolor;
+                    foreach (int index in _textureMap[SelectedModel].Where(i => i != -1).Distinct())
+                    {
+                        GL.DeleteTexture(index);
+                    }
+                    InitTextures(SelectedModel);
+                    await PrintOutput();
+                }
+            }
             else if (e.Key == Key.Escape)
             {
                 await Output.End();
@@ -1528,7 +1576,7 @@ namespace MphRead
             {
                 await PrintModelInfo(guid);
             }
-            else if (_selectionMode == SelectionMode.Model)
+            else if (_selectionMode == SelectionMode.Mesh)
             {
                 await PrintMeshInfo(guid);
             }
@@ -1543,23 +1591,49 @@ namespace MphRead
         {
             Model model = SelectedModel;
             await Output.Write(guid);
-            await Output.Write($"Model: {model.Name} [{model.SceneId}] Color {model.CurrentRecolor} / {model.Recolors.Count - 1}", guid);
+            await Output.Write($"Model: {model.Name} [{model.SceneId}] {(model.Visible ? "On " : "Off")} - " +
+                $"Color {model.CurrentRecolor} / {model.Recolors.Count - 1}", guid);
             await Output.Write($"{model.Type}{(model.Type == ModelType.Placeholder ? $" - {model.EntityType}" : "")}", guid);
             // todo: pickup rotation shows up, but the floating height change does not, would be nice to be consistent
             await Output.Write($"Position ({model.Position.X}, {model.Position.Y}, {model.Position.Z})", guid);
             await Output.Write($"Rotation ({model.Rotation.X}, {model.Rotation.Y}, {model.Rotation.Z})", guid);
             await Output.Write($"   Scale ({model.Scale.X}, {model.Scale.Y}, {model.Scale.Z})", guid);
-            await Output.Write($"Nodes {model.Nodes.Count}, Meshes {model.Meshes.Count}, Materials {model.Materials.Count}," +
-                $" Textures {model.Textures.Count}, Palettes {model.Palettes.Count}", guid);
+            await Output.Write($"Nodes {model.Nodes.Count}, Meshes {model.Meshes.Count}, Materials {model.Materials.Count}, " +
+                $"Textures {model.Textures.Count}, Palettes {model.Palettes.Count}", guid);
             await Output.Write(guid);
         }
         
         private async Task PrintMeshInfo(Guid guid)
         {
             await PrintModelInfo(guid);
+            for (int i = 0; i < SelectedModel.Nodes.Count; i++)
+            {
+                Node node = SelectedModel.Nodes[i];
+                if (node.MeshId / 2 <= _selectedMeshId && node.MeshId / 2 + node.MeshCount >= _selectedMeshId)
+                {
+                    await Output.Write($"Node: {node.Name} [{i}] {(node.Enabled ? "On ": "Off")} - Meshes {node.MeshCount}", guid);
+                    await Output.Write($"{node.Type}", guid);
+                    await Output.Write($"Position ({node.Position.X}, {node.Position.Y}, {node.Position.Z})", guid);
+                    await Output.Write($"Rotation ({node.Angle.X}, {node.Angle.Y}, {node.Angle.Z})", guid);
+                    await Output.Write($"   Scale ({node.Scale.X}, {node.Scale.Y}, {node.Scale.Z})", guid);
+                    await Output.Write($"   ??? 1 ({node.Vector1.X}, {node.Vector1.Y}, {node.Vector1.Z})", guid);
+                    await Output.Write($"   ??? 2 ({node.Vector2.X}, {node.Vector2.Y}, {node.Vector2.Z})", guid);
+                    await Output.Write($"", guid);
+                    await Output.Write(guid);
+                    break;
+                }
+            }
             Mesh mesh = SelectedModel.Meshes[_selectedMeshId];
-            await Output.Write($"Mesh: {_selectedMeshId}", guid);
+            await Output.Write($"Mesh: {_selectedMeshId} {(mesh.Visible ? "On " : "Off")}", guid);
+            await Output.Write($"Material ID {mesh.MaterialId}, DList ID {mesh.DlistId}", guid);
             await Output.Write($"", guid);
+            Material material = SelectedModel.Materials[mesh.MaterialId];
+            await Output.Write($"Material: {material.Name} [{material.RenderMode}, {material.PolygonMode}]", guid);
+            await Output.Write($"Lighting {material.Lighting}, Alpha {material.Alpha}", guid);
+            await Output.Write($"Texture ID {material.TextureId}, Palette ID {material.PaletteId}", guid);
+            await Output.Write($" Diffuse ({material.Diffuse.Red}, {material.Diffuse.Green}, {material.Diffuse.Blue})", guid);
+            await Output.Write($" Ambient ({material.Ambient.Red}, {material.Ambient.Green}, {material.Ambient.Blue})", guid);
+            await Output.Write($"Specular ({material.Specular.Red}, {material.Specular.Green}, {material.Specular.Blue})", guid);
             await Output.Write(guid);
         }
 

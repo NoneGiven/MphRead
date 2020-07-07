@@ -10,6 +10,7 @@ namespace MphRead
 {
     public class Model
     {
+        public bool Visible { get; set; } = true;
         public ModelType Type { get; set; }
         public EntityType EntityType { get; set; } // currently only used when ModelType is Placeholder
 
@@ -454,6 +455,7 @@ namespace MphRead
         public int MaterialId { get; }
         public int DlistId { get; }
 
+        public bool Visible { get; set; } = true;
         public Vector4? PlaceholderColor { get; set; }
         public Vector4? OverrideColor { get; set; }
 
