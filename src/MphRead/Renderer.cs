@@ -584,7 +584,7 @@ namespace MphRead
             GL.DepthMask(false);
             foreach (Node node in model.Nodes)
             {
-                RenderNode(model, node, RenderMode.Translucent);
+                RenderNode(model, node, RenderMode.Translucent, doOverrides: true);
             }
             GL.PolygonOffset(0, 0);
             GL.Disable(EnableCap.PolygonOffsetFill);
@@ -618,7 +618,7 @@ namespace MphRead
             //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             foreach (Node node in model.Nodes)
             {
-                RenderNode(model, node, RenderMode.Normal, invertFilter: true);
+                RenderNode(model, node, RenderMode.Normal, invertFilter: true, doOverrides: true);
             }
             GL.DepthMask(true);
             GL.Disable(EnableCap.Blend);
@@ -626,7 +626,7 @@ namespace MphRead
             GL.UseProgram(0);
         }
 
-        private void RenderNode(Model model, Node node, RenderMode modeFilter, bool invertFilter = false)
+        private void RenderNode(Model model, Node node, RenderMode modeFilter, bool invertFilter = false, bool doOverrides = false)
         {
             if (node.MeshCount > 0 && node.Enabled)
             {
@@ -646,7 +646,8 @@ namespace MphRead
                     Mesh mesh = model.Meshes[meshId];
                     Material material = model.Materials[mesh.MaterialId];
                     if ((!invertFilter && material.RenderMode != modeFilter)
-                        || (invertFilter && material.RenderMode == modeFilter))
+                        || (invertFilter && material.RenderMode == modeFilter)
+                        || (!doOverrides && mesh.OverrideColor?.Alpha < 255))
                     {
                         continue;
                     }
