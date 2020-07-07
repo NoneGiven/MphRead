@@ -403,7 +403,7 @@ namespace MphRead
             {
                 foreach (Mesh mesh in model.Meshes)
                 {
-                    mesh.OverrideColor = _colorOverrides[type].AsVector4();
+                    mesh.OverrideColor = mesh.PlaceholderColor = _colorOverrides[type].AsVector4();
                 }
             }
             if (System.Diagnostics.Debugger.IsAttached &&

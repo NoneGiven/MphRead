@@ -453,6 +453,7 @@ namespace MphRead
         public int MaterialId { get; }
         public int DlistId { get; }
 
+        public Vector4? PlaceholderColor { get; set; }
         public Vector4? OverrideColor { get; set; }
 
         public Mesh(RawMesh raw)

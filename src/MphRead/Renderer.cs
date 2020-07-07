@@ -411,13 +411,10 @@ namespace MphRead
             }
 
             // sktodo:
-            // --> "selection mode": should change menu, show list of stuff, give options for "next" or "next (skip disabled)", etc.
-            // - allow selecting nodes
+            // - show list of stuff, give options for "next" or "next (skip disabled)", etc.
             // - handle not having models, or models with zero meshes
-            // - skip disabled nodes and placeholder models
-            // - "deselect" should just be a toggle for the flashing display
             // - print info, allow manipulating object
-            // - don't flash the entire room
+            // - allow selecting nodes
 
             if (_selectionMode != SelectionMode.None)
             {
@@ -499,7 +496,7 @@ namespace MphRead
             Model model = _models.First(m => m.SceneId == _selectedModel);
             foreach (Mesh mesh in model.Meshes)
             {
-                mesh.OverrideColor = null;
+                mesh.OverrideColor = model.Type == ModelType.Placeholder ? mesh.PlaceholderColor : null;
             }
             _flashUp = false;
         }
@@ -1376,7 +1373,7 @@ namespace MphRead
                 else if (_selectionMode == SelectionMode.Model)
                 {
                     Model? nextModel = _models.Where(m => m.SceneId > model.SceneId &&
-                        m.Type != ModelType.Placeholder).OrderBy(m => m.SceneId).FirstOrDefault();
+                        (_showInvisible || m.Type != ModelType.Placeholder)).OrderBy(m => m.SceneId).FirstOrDefault();
                     _selectedMesh = 0;
                     SetSelected(nextModel?.SceneId ?? _models.First().SceneId);
                 }
@@ -1396,7 +1393,7 @@ namespace MphRead
                 else if (_selectionMode == SelectionMode.Model)
                 {
                     Model? nextModel = _models.Where(m => m.SceneId < model.SceneId &&
-                        m.Type != ModelType.Placeholder).OrderBy(m => m.SceneId).LastOrDefault();
+                        (_showInvisible || m.Type != ModelType.Placeholder)).OrderBy(m => m.SceneId).LastOrDefault();
                     _selectedMesh = 0;
                     SetSelected(nextModel?.SceneId ?? _models.Last().SceneId);
                 }

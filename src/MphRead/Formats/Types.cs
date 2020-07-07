@@ -81,7 +81,7 @@ namespace MphRead
 
         public Vector4 AsVector4()
         {
-            return new Vector4(Red, Green, Blue, 1f);
+            return new Vector4(Red / 255f, Green / 255f, Blue / 255f, 1f);
         }
     }
 
