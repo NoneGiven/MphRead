@@ -1253,8 +1253,8 @@ namespace MphRead
                 _wireframe = !_wireframe;
                 GL.PolygonMode(MaterialFace.FrontAndBack,
                     _wireframe
-                    ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
-                    : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
+                        ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
+                        : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
                 await PrintOutput();
             }
             else if (e.Key == Key.B)
