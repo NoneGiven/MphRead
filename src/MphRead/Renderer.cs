@@ -808,7 +808,7 @@ namespace MphRead
 
         private void DoLighting(Mesh mesh, Material material)
         {
-            if (_lighting && material.Lighting != 0 && mesh.OverrideColor != null)
+            if (_lighting && material.Lighting != 0 && mesh.OverrideColor == null)
             {
                 // todo: would be nice if the approaches for this and the room lights were the same
                 var ambient = new Vector4(
