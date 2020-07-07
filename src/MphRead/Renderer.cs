@@ -85,12 +85,15 @@ namespace MphRead
 
         private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
+        private readonly Dictionary<uint, Model> _modelMap = new Dictionary<uint, Model>();
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
         private readonly Dictionary<Model, List<int>> _textureMap = new Dictionary<Model, List<int>>();
         private SelectionMode _selectionMode = SelectionMode.None;
-        private uint _selectedModel = 0;
-        private int _selectedMesh = 0;
+        private uint _selectedModelId = 0;
+        private int _selectedMeshId = 0;
+
+        private Model SelectedModel => _modelMap[_selectedModelId];
 
         private CameraMode _cameraMode = CameraMode.Pivot;
         private float _angleX = 0.0f;
@@ -149,6 +152,11 @@ namespace MphRead
             (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask);
             _models.Insert(0, room);
             _models.AddRange(entities);
+            _modelMap.Add(room.SceneId, room);
+            foreach (Model entity in entities)
+            {
+                _modelMap.Add(entity.SceneId, entity);
+            }
             float roomScale = room.Header.ScaleBase.FloatValue * (1 << (int)room.Header.ScaleFactor);
             room.Scale = new Vector3(roomScale, roomScale, roomScale);
             _light1Vector = new Vector4(roomMeta.Light1Vector);
@@ -181,6 +189,7 @@ namespace MphRead
             Model model = Read.GetModelByName(name, recolor);
             SceneSetup.ComputeNodeMatrices(model, index: 0);
             _models.Add(model);
+            _modelMap.Add(model.SceneId, model);
         }
 
         protected override async void OnLoad()
@@ -204,7 +213,7 @@ namespace MphRead
                 InitTextures(model);
             }
 
-            await PrintMenu();
+            await PrintOutput();
 
             base.OnLoad();
         }
@@ -240,46 +249,6 @@ namespace MphRead
 
             _shaderLocations.UseOverride = GL.GetUniformLocation(_shaderProgramId, "use_override");
             _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
-        }
-
-        private async Task PrintMenu()
-        {
-            Guid guid = await Output.StartBatch();
-            await Output.Clear(guid);
-            await Output.Write($"MphRead Version {Program.Version}", guid);
-            if (_cameraMode == CameraMode.Pivot)
-            {
-                await Output.Write(" - Scroll mouse wheel to zoom", guid);
-            }
-            else if (_cameraMode == CameraMode.Roam)
-            {
-                await Output.Write(" - Use WASD, Space, and V to move", guid);
-            }
-            await Output.Write(" - Hold left mouse button or use arrow keys to rotate", guid);
-            await Output.Write(" - Hold Shift to move the camera faster", guid);
-            await Output.Write($" - T toggles texturing ({FormatOnOff(_showTextures)})", guid);
-            await Output.Write($" - C toggles vertex colours ({FormatOnOff(_showColors)})", guid);
-            await Output.Write($" - Q toggles wireframe ({FormatOnOff(_wireframe)})", guid);
-            await Output.Write($" - B toggles face culling ({FormatOnOff(_faceCulling)})", guid);
-            await Output.Write($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})", guid);
-            await Output.Write($" - L toggles lighting ({FormatOnOff(_lighting)})", guid);
-            await Output.Write($" - G toggles fog ({FormatOnOff(_showFog)})", guid);
-            await Output.Write($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})", guid);
-            await Output.Write($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})", guid);
-            await Output.Write(" - R resets the camera", guid);
-            await Output.Write(" - Ctrl+O then enter \"model_name [recolor]\" to load", guid);
-            await Output.Write(" - Ctrl+U then enter \"model_id\" to unload", guid);
-            await Output.Write(" - Esc closes the viewer", guid);
-            await Output.Write(guid);
-            if (_logs.Count > 0)
-            {
-                foreach (string log in _logs)
-                {
-                    await Output.Write(log, guid);
-                }
-                await Output.Write(guid);
-            }
-            await Output.EndBatch();
         }
 
         private string FormatOnOff(bool setting)
@@ -398,13 +367,14 @@ namespace MphRead
             {
                 InitTextures(model);
                 _models.Add(model);
+                _modelMap.Add(model.SceneId, model);
             }
 
             while (_unloadQueue.TryDequeue(out Model? model))
             {
                 Deselect();
-                _selectedModel = 0;
-                _selectedMesh = 0;
+                _selectedModelId = 0;
+                _selectedMeshId = 0;
                 _selectionMode = SelectionMode.None;
                 foreach (int index in _textureMap[model].Where(i => i != -1).Distinct())
                 {
@@ -412,6 +382,7 @@ namespace MphRead
                 }
                 _textureMap.Remove(model);
                 _models.Remove(model);
+                _modelMap.Remove(model.SceneId);
             }
 
             // sktodo:
@@ -421,14 +392,13 @@ namespace MphRead
 
             if (_selectionMode != SelectionMode.None)
             {
-                Model model = _models.First(m => m.SceneId == _selectedModel);
                 if (_selectionMode == SelectionMode.Mesh)
                 {
-                    UpdateSelected(model.Meshes[_selectedMesh], time);
+                    UpdateSelected(SelectedModel.Meshes[_selectedMeshId], time);
                 }
                 else if (_selectionMode == SelectionMode.Model)
                 {
-                    foreach (Mesh mesh in model.Meshes)
+                    foreach (Mesh mesh in SelectedModel.Meshes)
                     {
                         UpdateSelected(mesh, time);
                     }
@@ -463,9 +433,8 @@ namespace MphRead
         private void SetSelected(uint sceneId)
         {
             Deselect();
-            _selectedModel = sceneId;
-            Model model = _models.First(m => m.SceneId == _selectedModel);
-            foreach (Mesh mesh in model.Meshes)
+            _selectedModelId = sceneId;
+            foreach (Mesh mesh in SelectedModel.Meshes)
             {
                 mesh.OverrideColor = new Vector4(1f, 1f, 1f, 1f);
             }
@@ -474,10 +443,9 @@ namespace MphRead
         private void SetSelected(uint sceneId, int meshId)
         {
             Deselect();
-            _selectedModel = sceneId;
-            _selectedMesh = meshId;
-            Model model = _models.First(m => m.SceneId == _selectedModel);
-            model.Meshes[meshId].OverrideColor = new Vector4(1f, 1f, 1f, 1f);
+            _selectedModelId = sceneId;
+            _selectedMeshId = meshId;
+            SelectedModel.Meshes[meshId].OverrideColor = new Vector4(1f, 1f, 1f, 1f);
         }
 
         private bool _flashUp = false;
@@ -502,10 +470,9 @@ namespace MphRead
 
         private void Deselect()
         {
-            Model model = _models.First(m => m.SceneId == _selectedModel);
-            foreach (Mesh mesh in model.Meshes)
+            foreach (Mesh mesh in SelectedModel.Meshes)
             {
-                mesh.OverrideColor = model.Type == ModelType.Placeholder ? mesh.PlaceholderColor : null;
+                mesh.OverrideColor = SelectedModel.Type == ModelType.Placeholder ? mesh.PlaceholderColor : null;
             }
             _flashUp = false;
         }
@@ -1170,23 +1137,23 @@ namespace MphRead
 
         private async Task UnloadModel()
         {
-            await PrintMenu();
+            await PrintOutput();
             _ = Output.Read("Unload model: ").ContinueWith(async (task) =>
             {
-                await PrintMenu();
-                if (UInt32.TryParse(task.Result.Trim(), out uint sceneId) && _models.Any(m => m.SceneId == sceneId))
+                await PrintOutput();
+                if (UInt32.TryParse(task.Result.Trim(), out uint sceneId) && _modelMap.ContainsKey(sceneId))
                 {
-                    _unloadQueue.Enqueue(_models.First(m => m.SceneId == sceneId));
+                    _unloadQueue.Enqueue(_modelMap[sceneId]);
                 }
             });
         }
 
         private async Task LoadModel()
         {
-            await PrintMenu();
+            await PrintOutput();
             _ = Output.Read("Open model: ").ContinueWith(async (task) =>
             {
-                await PrintMenu();
+                await PrintOutput();
                 string modelName = task.Result.Trim();
                 if (modelName != "")
                 {
@@ -1269,12 +1236,12 @@ namespace MphRead
                 {
                     GL.Disable(EnableCap.Texture2D);
                 }
-                await PrintMenu();
+                await PrintOutput();
             }
             else if (e.Key == Key.C)
             {
                 _showColors = !_showColors;
-                await PrintMenu();
+                await PrintOutput();
             }
             else if (e.Key == Key.Q)
             {
@@ -1283,7 +1250,7 @@ namespace MphRead
                     _wireframe
                     ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
                     : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
-                await PrintMenu();
+                await PrintOutput();
             }
             else if (e.Key == Key.B)
             {
@@ -1292,7 +1259,7 @@ namespace MphRead
                 {
                     GL.Disable(EnableCap.CullFace);
                 }
-                await PrintMenu();
+                await PrintOutput();
             }
             else if (e.Key == Key.F)
             {
@@ -1305,22 +1272,22 @@ namespace MphRead
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
                 }
-                await PrintMenu();
+                await PrintOutput();
             }
             else if (e.Key == Key.L)
             {
                 _lighting = !_lighting;
-                await PrintMenu();
+                await PrintOutput();
             }
             else if (e.Key == Key.G)
             {
                 _showFog = !_showFog;
-                await PrintMenu();
+                await PrintOutput();
             }
             else if (e.Key == Key.I)
             {
                 _showInvisible = !_showInvisible;
-                await PrintMenu();
+                await PrintOutput();
             }
             else if (e.Key == Key.R)
             {
@@ -1337,7 +1304,7 @@ namespace MphRead
                     _cameraMode = CameraMode.Pivot;
                 }
                 ResetCamera();
-                await PrintMenu();
+                await PrintOutput();
             }
             else if (e.Control && e.Key == Key.O)
             {
@@ -1355,19 +1322,18 @@ namespace MphRead
                     if (_selectionMode == SelectionMode.None)
                     {
                         _selectionMode = SelectionMode.Model;
-                        SetSelected(_selectedModel);
+                        SetSelected(_selectedModelId);
                     }
                     else if (_selectionMode == SelectionMode.Model)
                     {
-                        Model model = _models.First(m => m.SceneId == _selectedModel);
-                        if (model.Meshes.Count == 0)
+                        if (SelectedModel.Meshes.Count == 0)
                         {
                             _selectionMode = SelectionMode.None;
                         }
                         else
                         {
                             _selectionMode = SelectionMode.Mesh;
-                            SetSelected(_selectedModel, _selectedMesh);
+                            SetSelected(_selectedModelId, _selectedMeshId);
                         }
                     }
                     else
@@ -1378,47 +1344,61 @@ namespace MphRead
             }
             else if (e.Key == Key.Plus || e.Key == Key.KeypadPlus)
             {
-                Model? model = _models.FirstOrDefault(m => m.SceneId == _selectedModel);
-                if (model != null && model.Meshes.Count > 0)
+                if (_modelMap.TryGetValue(_selectedModelId, out Model? model) && model.Meshes.Count > 0)
                 {
                     if (_selectionMode == SelectionMode.Mesh)
                     {
-                        int index = _selectedMesh + 1;
+                        int index = _selectedMeshId + 1;
                         if (index > model.Meshes.Count - 1)
                         {
                             index = 0;
                         }
-                        SetSelected(_selectedModel, index);
+                        SetSelected(_selectedModelId, index);
                     }
                     else if (_selectionMode == SelectionMode.Model)
                     {
                         Model? nextModel = _models.Where(m => m.SceneId > model.SceneId &&
                             (_showInvisible || m.Type != ModelType.Placeholder)).OrderBy(m => m.SceneId).FirstOrDefault();
-                        _selectedMesh = 0;
-                        SetSelected(nextModel?.SceneId ?? _models.First().SceneId);
+                        if (nextModel == null)
+                        {
+                            nextModel = _models.OrderBy(m => m.SceneId).First(m => m.Meshes.Count > 0);
+                        }
+                        if (nextModel == null)
+                        {
+                            nextModel = model;
+                        }
+                        _selectedMeshId = 0;
+                        SetSelected(nextModel.SceneId);
                     }
                 }
             }
             else if (e.Key == Key.Minus || e.Key == Key.Minus)
             {
-                Model? model = _models.FirstOrDefault(m => m.SceneId == _selectedModel);
-                if (model != null && model.Meshes.Count > 0)
+                if (_modelMap.TryGetValue(_selectedModelId, out Model? model) && model.Meshes.Count > 0)
                 {
                     if (_selectionMode == SelectionMode.Mesh)
                     {
-                        int index = _selectedMesh - 1;
+                        int index = _selectedMeshId - 1;
                         if (index < 0)
                         {
                             index = model.Meshes.Count - 1;
                         }
-                        SetSelected(_selectedModel, index);
+                        SetSelected(_selectedModelId, index);
                     }
                     else if (_selectionMode == SelectionMode.Model)
                     {
                         Model? nextModel = _models.Where(m => m.SceneId < model.SceneId &&
                             (_showInvisible || m.Type != ModelType.Placeholder)).OrderBy(m => m.SceneId).LastOrDefault();
-                        _selectedMesh = 0;
-                        SetSelected(nextModel?.SceneId ?? _models.Last().SceneId);
+                        if (nextModel == null)
+                        {
+                            nextModel = _models.OrderBy(m => m.SceneId).Last(m => m.Meshes.Count > 0);
+                        }
+                        if (nextModel == null)
+                        {
+                            nextModel = model;
+                        }
+                        _selectedMeshId = 0;
+                        SetSelected(nextModel.SceneId);
                     }
                 }
             }
@@ -1532,6 +1512,70 @@ namespace MphRead
         {
             Pivot,
             Roam
+        }
+
+        private async Task PrintOutput()
+        {
+            Guid guid = await Output.StartBatch();
+            await Output.Clear(guid);
+            await Output.Write($"MphRead Version {Program.Version}", guid);
+            if (_selectionMode == SelectionMode.Model)
+            {
+
+            }
+            else if (_selectionMode == SelectionMode.Model)
+            {
+
+            }
+            else
+            {
+                await PrintMenu(guid);
+            }
+            await Output.EndBatch();
+        }
+
+        private async Task PrintModelInfo(Guid guid)
+        {
+        }
+
+        private async Task PrintMeshInfo(Guid guid)
+        {
+        }
+
+        private async Task PrintMenu(Guid guid)
+        {
+            if (_cameraMode == CameraMode.Pivot)
+            {
+                await Output.Write(" - Scroll mouse wheel to zoom", guid);
+            }
+            else if (_cameraMode == CameraMode.Roam)
+            {
+                await Output.Write(" - Use WASD, Space, and V to move", guid);
+            }
+            await Output.Write(" - Hold left mouse button or use arrow keys to rotate", guid);
+            await Output.Write(" - Hold Shift to move the camera faster", guid);
+            await Output.Write($" - T toggles texturing ({FormatOnOff(_showTextures)})", guid);
+            await Output.Write($" - C toggles vertex colours ({FormatOnOff(_showColors)})", guid);
+            await Output.Write($" - Q toggles wireframe ({FormatOnOff(_wireframe)})", guid);
+            await Output.Write($" - B toggles face culling ({FormatOnOff(_faceCulling)})", guid);
+            await Output.Write($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})", guid);
+            await Output.Write($" - L toggles lighting ({FormatOnOff(_lighting)})", guid);
+            await Output.Write($" - G toggles fog ({FormatOnOff(_showFog)})", guid);
+            await Output.Write($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})", guid);
+            await Output.Write($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})", guid);
+            await Output.Write(" - R resets the camera", guid);
+            await Output.Write(" - Ctrl+O then enter \"model_name [recolor]\" to load", guid);
+            await Output.Write(" - Ctrl+U then enter \"model_id\" to unload", guid);
+            await Output.Write(" - Esc closes the viewer", guid);
+            await Output.Write(guid);
+            if (_logs.Count > 0)
+            {
+                foreach (string log in _logs)
+                {
+                    await Output.Write(log, guid);
+                }
+                await Output.Write(guid);
+            }
         }
     }
 }
