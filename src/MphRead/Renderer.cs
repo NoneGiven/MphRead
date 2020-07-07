@@ -401,17 +401,23 @@ namespace MphRead
                 _models.Remove(model);
             }
 
-            // sktodo: allow selecting nodes
-            if (_selectedModel != null)
+            // sktodo:
+            // - allow selecting nodes
+            // - handle not having models, or models with zero meshes
+            // - skip disabled nodes and placeholder models
+            // - "deselect" should just be a toggle for the flashing display
+            // - print info, allow manipulating object
+            // - don't flash the entire room
+            if (_selectedMesh != null)
+            {
+                UpdateSelected(_selectedMesh, (float)args.Time);
+            }
+            else if (_selectedModel != null)
             {
                 foreach (Mesh mesh in _selectedModel.Meshes)
                 {
                     UpdateSelected(mesh, (float)args.Time);
                 }
-            }
-            else if (_selectedMesh != null)
-            {
-                UpdateSelected(_selectedMesh, (float)args.Time);
             }
 
             OnKeyHeld();
@@ -437,15 +443,17 @@ namespace MphRead
         {
             Deselect();
             _selectedModel = model;
+            _selectedMesh = null;
             foreach (Mesh mesh in model.Meshes)
             {
                 mesh.OverrideColor = new Vector4(1f, 1f, 1f, 1f);
             }
         }
 
-        private void SetSelected(Mesh mesh)
+        private void SetSelected(Model model, Mesh mesh)
         {
             Deselect();
+            _selectedModel = model;
             _selectedMesh = mesh;
             mesh.OverrideColor = new Vector4(1f, 1f, 1f, 1f);
         }
@@ -453,13 +461,13 @@ namespace MphRead
         private void UpdateSelected(Mesh mesh, float time)
         {
             Vector4 color = mesh.OverrideColor.GetValueOrDefault();
-            float alpha = color.W;
-            alpha -= time * 1.5f;
-            if (alpha < 0)
+            float value = color.X;
+            value -= time * 1.5f;
+            if (value < 0)
             {
-                alpha += 1;
+                value += 1;
             }
-            mesh.OverrideColor = new Vector4(color.X, color.Y, color.Z, alpha);
+            mesh.OverrideColor = new Vector4(value, value, value, color.W);
         }
 
         private void Deselect()
@@ -471,10 +479,6 @@ namespace MphRead
                     mesh.OverrideColor = null;
                 }
                 _selectedModel = null;
-            }
-            if (_selectedMesh != null)
-            {
-                _selectedMesh.OverrideColor = null;
                 _selectedMesh = null;
             }
         }
@@ -1282,15 +1286,6 @@ namespace MphRead
             }
             else if (e.Key == Key.G)
             {
-                // sktodo: implement this properly
-                if (_selectedModel == null)
-                {
-                    SetSelected(_models[25]);
-                }
-                else
-                {
-                    Deselect();
-                }
                 _showFog = !_showFog;
                 await PrintMenu();
             }
@@ -1323,6 +1318,72 @@ namespace MphRead
             else if (e.Control && e.Key == Key.U)
             {
                 await UnloadModel();
+            }
+            else if (e.Key == Key.M)
+            {
+                if (e.Control)
+                {
+                    Deselect();
+                }
+                else if (e.Shift)
+                {
+                    if (_selectedMesh == null && _selectedModel != null)
+                    {
+                        Model? model = _selectedModel;
+                        Deselect();
+                        SetSelected(model, model.Meshes[0]);
+                    }
+                }
+                else
+                {
+                    if (_selectedModel == null)
+                    {
+                        Deselect();
+                        SetSelected(_models[0]);
+                    }
+                }
+            }
+            else if (e.Key == Key.Plus || e.Key == Key.KeypadPlus)
+            {
+                if (_selectedMesh != null)
+                {
+                    if (_selectedModel != null)
+                    {
+                        int index = _selectedModel.Meshes.IndexOf(m => m == _selectedMesh) + 1;
+                        if (index > _selectedModel.Meshes.Count - 1)
+                        {
+                            index = 0;
+                        }
+                        SetSelected(_selectedModel, _selectedModel.Meshes[index]);
+                    }
+                }
+                else if (_selectedModel != null)
+                {
+                    Model? nextModel = _models.Where(m => m.SceneId > _selectedModel.SceneId &&
+                        (_showInvisible || m.Type != ModelType.Placeholder)).OrderBy(m => m.SceneId).FirstOrDefault();
+                    SetSelected(nextModel ?? _models.First());
+                }
+            }
+            else if (e.Key == Key.Minus || e.Key == Key.Minus)
+            {
+                if (_selectedMesh != null)
+                {
+                    if (_selectedModel != null)
+                    {
+                        int index = _selectedModel.Meshes.IndexOf(m => m == _selectedMesh) - 1;
+                        if (index < 0)
+                        {
+                            index = _selectedModel.Meshes.Count - 1;
+                        }
+                        SetSelected(_selectedModel, _selectedModel.Meshes[index]);
+                    }
+                }
+                else if (_selectedModel != null)
+                {
+                    Model? nextModel = _models.Where(m => m.SceneId < _selectedModel.SceneId &&
+                        (_showInvisible || m.Type != ModelType.Placeholder)).OrderBy(m => m.SceneId).LastOrDefault();
+                    SetSelected(nextModel ?? _models.Last());
+                }
             }
             else if (e.Key == Key.Escape)
             {
