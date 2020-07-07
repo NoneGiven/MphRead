@@ -392,7 +392,7 @@ namespace MphRead
             }
         }
 
-        protected override void OnRenderFrame(FrameEventArgs args)
+        private void UpdateModelStates(float time)
         {
             while (_loadQueue.TryDequeue(out Model? model))
             {
@@ -424,18 +424,24 @@ namespace MphRead
                 Model model = _models.First(m => m.SceneId == _selectedModel);
                 if (_selectionMode == SelectionMode.Mesh)
                 {
-                    UpdateSelected(model.Meshes[_selectedMesh], (float)args.Time);
+                    UpdateSelected(model.Meshes[_selectedMesh], time);
                 }
                 else if (_selectionMode == SelectionMode.Model)
                 {
                     foreach (Mesh mesh in model.Meshes)
                     {
-                        UpdateSelected(mesh, (float)args.Time);
+                        UpdateSelected(mesh, time);
                     }
                 }
             }
+        }
 
+        protected override void OnRenderFrame(FrameEventArgs args)
+        {
+            // extra non-rendering updates
+            UpdateModelStates((float)args.Time);
             OnKeyHeld();
+
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
