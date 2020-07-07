@@ -402,7 +402,7 @@ namespace MphRead
             int selectedModel = 25;
             foreach (Material material in _models[selectedModel].Materials)
             {
-                material.OverrideColor = true;
+                material.HasOverrideColor = true;
             }
             foreach (Mesh mesh in _models[selectedModel].Meshes)
             {
@@ -413,7 +413,7 @@ namespace MphRead
                 else
                 {
                     float alpha = mesh.OverrideColor.Value.W;
-                    alpha -= (float)args.Time * 2f;
+                    alpha -= (float)args.Time * 1.5f;
                     if (alpha < 0)
                     {
                         alpha += 1;
