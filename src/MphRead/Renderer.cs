@@ -1659,7 +1659,6 @@ namespace MphRead
                     await Output.Write($"   Scale ({node.Scale.X}, {node.Scale.Y}, {node.Scale.Z})", guid);
                     await Output.Write($"   ??? 1 ({node.Vector1.X}, {node.Vector1.Y}, {node.Vector1.Z})", guid);
                     await Output.Write($"   ??? 2 ({node.Vector2.X}, {node.Vector2.Y}, {node.Vector2.Z})", guid);
-                    await Output.Write($"", guid);
                     await Output.Write(guid);
                     break;
                 }
