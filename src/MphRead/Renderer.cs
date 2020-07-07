@@ -76,7 +76,7 @@ namespace MphRead
         private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
-        private readonly ConcurrentQueue<uint> _unloadQueue = new ConcurrentQueue<uint>();
+        private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
         private readonly Dictionary<Model, List<int>> _textureMap = new Dictionary<Model, List<int>>();
         private readonly List<string> _logs = new List<string>();
 
@@ -373,24 +373,20 @@ namespace MphRead
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            while (_loadQueue.TryDequeue(out Model? model) && model != null)
+            while (_loadQueue.TryDequeue(out Model? model))
             {
                 InitTextures(model);
                 _models.Add(model);
             }
 
-            while (_unloadQueue.TryDequeue(out uint sceneId))
+            while (_unloadQueue.TryDequeue(out Model? model))
             {
-                if (_models.Any(m => m.SceneId == sceneId))
+                foreach (int index in _textureMap[model].Where(i => i != -1).Distinct())
                 {
-                    Model model = _models.First(m => m.SceneId == sceneId);
-                    foreach (int index in _textureMap[model].Where(i => i != -1).Distinct())
-                    {
-                        GL.DeleteTexture(index);
-                    }
-                    _textureMap.Remove(model);
-                    _models.Remove(model);
+                    GL.DeleteTexture(index);
                 }
+                _textureMap.Remove(model);
+                _models.Remove(model);
             }
 
             OnKeyHeld();
@@ -1046,9 +1042,9 @@ namespace MphRead
             _ = Output.Read("Unload model: ").ContinueWith(async (task) =>
             {
                 await PrintMenu();
-                if (UInt32.TryParse(task.Result.Trim(), out uint sceneId))
+                if (UInt32.TryParse(task.Result.Trim(), out uint sceneId) && _models.Any(m => m.SceneId == sceneId))
                 {
-                    _unloadQueue.Enqueue(sceneId);
+                    _unloadQueue.Enqueue(_models.First(m => m.SceneId == sceneId));
                 }
             });
         }
