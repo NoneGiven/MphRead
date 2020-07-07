@@ -75,9 +75,9 @@ namespace MphRead
     {
         private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
-        private readonly ConcurrentQueue<Model> _modelQueue = new ConcurrentQueue<Model>();
+        private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
+        private readonly ConcurrentQueue<int> _unloadQueue = new ConcurrentQueue<int>();
         private readonly Dictionary<Model, List<int>> _textureMap = new Dictionary<Model, List<int>>();
-        private readonly int _unloadedTextures = 0;
         private readonly List<string> _logs = new List<string>();
 
         private CameraMode _cameraMode = CameraMode.Pivot;
@@ -251,6 +251,7 @@ namespace MphRead
             await Output.Write($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})", guid);
             await Output.Write(" - R resets the camera", guid);
             await Output.Write(" - Ctrl+O then enter \"model_name [recolor]\" to load", guid);
+            await Output.Write(" - Ctrl+U then enter \"model_id\" to unload", guid);
             await Output.Write(" - Esc closes the viewer", guid);
             await Output.Write(guid);
             if (_logs.Count > 0)
@@ -370,15 +371,26 @@ namespace MphRead
             }
         }
 
-        protected override async void OnRenderFrame(FrameEventArgs args)
+        protected override void OnRenderFrame(FrameEventArgs args)
         {
-            while (_modelQueue.TryDequeue(out Model? model) && model != null)
+            while (_loadQueue.TryDequeue(out Model? model) && model != null)
             {
                 InitTextures(model);
-                await PrintMenu();
                 _models.Add(model);
             }
-            
+
+            while (_unloadQueue.TryDequeue(out int id))
+            {
+                // sktodo: id is currently just the index in the list, but we should use a generated, auto-incremented value
+                Model model = _models[id];
+                foreach (int index in _textureMap[model].Where(i => i != -1).Distinct())
+                {
+                    GL.DeleteTexture(index);
+                }
+                _textureMap.Remove(model);
+                _models.Remove(model);
+            }
+
             OnKeyHeld();
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
@@ -717,7 +729,7 @@ namespace MphRead
                 Texture texture = model.Textures[textureId];
                 width = texture.Width;
                 height = texture.Height;
-                GL.BindTexture(TextureTarget.Texture2D, _textureMap[model][mesh.MaterialId] - _unloadedTextures);
+                GL.BindTexture(TextureTarget.Texture2D, _textureMap[model][mesh.MaterialId]);
             }
             GL.MatrixMode(MatrixMode.Texture);
             GL.LoadIdentity();
@@ -1026,17 +1038,27 @@ namespace MphRead
             }
         }
 
+        private async Task UnloadModel()
+        {
+            await PrintMenu();
+            _ = Output.Read("Unload model: ").ContinueWith(async (task) =>
+            {
+                await PrintMenu();
+                if (Int32.TryParse(task.Result.Trim(), out int id))
+                {
+                    _unloadQueue.Enqueue(id);
+                }
+            });
+        }
+
         private async Task LoadModel()
         {
             await PrintMenu();
             _ = Output.Read("Open model: ").ContinueWith(async (task) =>
             {
+                await PrintMenu();
                 string modelName = task.Result.Trim();
-                if (modelName == "")
-                {
-                    await PrintMenu();
-                }
-                else
+                if (modelName != "")
                 {
                     int recolor = 0;
                     if (modelName.Count(c => c == ' ') == 1)
@@ -1049,11 +1071,10 @@ namespace MphRead
                     }
                     try
                     {
-                        _modelQueue.Enqueue(Read.GetModelByName(modelName, recolor));
+                        _loadQueue.Enqueue(Read.GetModelByName(modelName, recolor));
                     }
                     catch (ProgramException ex)
                     {
-                        await PrintMenu();
                         Console.WriteLine(ex.Message);
                     }
                 }
@@ -1191,6 +1212,10 @@ namespace MphRead
             else if (e.Control && e.Key == Key.O)
             {
                 await LoadModel();
+            }
+            else if (e.Control && e.Key == Key.U)
+            {
+                await UnloadModel();
             }
             else if (e.Key == Key.Escape)
             {
