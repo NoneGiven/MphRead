@@ -75,13 +75,22 @@ namespace MphRead
 
     public class RenderWindow : GameWindow
     {
+        private enum SelectionMode
+        {
+            None,
+            Model,
+            Mesh,
+            Node
+        }
+
         private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
         private readonly Dictionary<Model, List<int>> _textureMap = new Dictionary<Model, List<int>>();
-        private Model? _selectedModel = null;
-        private Mesh? _selectedMesh = null;
+        private SelectionMode _selectionMode = SelectionMode.None;
+        private uint _selectedModel = 0;
+        private int _selectedMesh = 0;
 
         private CameraMode _cameraMode = CameraMode.Pivot;
         private float _angleX = 0.0f;
@@ -402,21 +411,27 @@ namespace MphRead
             }
 
             // sktodo:
+            // --> "selection mode": should change menu, show list of stuff, give options for "next" or "next (skip disabled)", etc.
             // - allow selecting nodes
             // - handle not having models, or models with zero meshes
             // - skip disabled nodes and placeholder models
             // - "deselect" should just be a toggle for the flashing display
             // - print info, allow manipulating object
             // - don't flash the entire room
-            if (_selectedMesh != null)
+
+            if (_selectionMode != SelectionMode.None)
             {
-                UpdateSelected(_selectedMesh, (float)args.Time);
-            }
-            else if (_selectedModel != null)
-            {
-                foreach (Mesh mesh in _selectedModel.Meshes)
+                Model model = _models.First(m => m.SceneId == _selectedModel);
+                if (_selectionMode == SelectionMode.Mesh)
                 {
-                    UpdateSelected(mesh, (float)args.Time);
+                    UpdateSelected(model.Meshes[_selectedMesh], (float)args.Time);
+                }
+                else if (_selectionMode == SelectionMode.Model)
+                {
+                    foreach (Mesh mesh in model.Meshes)
+                    {
+                        UpdateSelected(mesh, (float)args.Time);
+                    }
                 }
             }
 
@@ -439,50 +454,56 @@ namespace MphRead
             base.OnRenderFrame(args);
         }
 
-        private void SetSelected(Model model)
+        private void SetSelected(uint sceneId)
         {
             Deselect();
-            _selectedModel = model;
-            _selectedMesh = null;
+            _selectedModel = sceneId;
+            Model model = _models.First(m => m.SceneId == _selectedModel);
             foreach (Mesh mesh in model.Meshes)
             {
                 mesh.OverrideColor = new Vector4(1f, 1f, 1f, 1f);
             }
         }
 
-        private void SetSelected(Model model, Mesh mesh)
+        private void SetSelected(uint sceneId, int meshId)
         {
             Deselect();
-            _selectedModel = model;
-            _selectedMesh = mesh;
-            mesh.OverrideColor = new Vector4(1f, 1f, 1f, 1f);
+            _selectedModel = sceneId;
+            _selectedMesh = meshId;
+            Model model = _models.First(m => m.SceneId == _selectedModel);
+            model.Meshes[meshId].OverrideColor = new Vector4(1f, 1f, 1f, 1f);
         }
+
+        private bool _flashUp = false;
 
         private void UpdateSelected(Mesh mesh, float time)
         {
             Vector4 color = mesh.OverrideColor.GetValueOrDefault();
             float value = color.X;
-            value -= time * 1.5f;
+            value -= time * 1.5f * (_flashUp ? -1 : 1);
             if (value < 0)
             {
-                value += 1;
+                value = 0;
+                _flashUp = true;
+            }
+            else if (value > 1)
+            {
+                value = 1;
+                _flashUp = false;
             }
             mesh.OverrideColor = new Vector4(value, value, value, color.W);
         }
 
         private void Deselect()
         {
-            if (_selectedModel != null)
+            Model model = _models.First(m => m.SceneId == _selectedModel);
+            foreach (Mesh mesh in model.Meshes)
             {
-                foreach (Mesh mesh in _selectedModel.Meshes)
-                {
-                    mesh.OverrideColor = null;
-                }
-                _selectedModel = null;
-                _selectedMesh = null;
+                mesh.OverrideColor = null;
             }
+            _flashUp = false;
         }
-
+        
         private void ResetCamera()
         {
             _angleY = 0;
@@ -715,8 +736,9 @@ namespace MphRead
                     int meshId = meshStart + i;
                     Mesh mesh = model.Meshes[meshId];
                     Material material = model.Materials[mesh.MaterialId];
-                    if ((!invertFilter && material.GetEffectiveRenderMode(mesh) != modeFilter)
-                        || (invertFilter && material.GetEffectiveRenderMode(mesh) == modeFilter))
+                    RenderMode renderMode = _selectionMode == SelectionMode.None ? material.RenderMode : material.GetEffectiveRenderMode(mesh);
+                    if ((!invertFilter && renderMode != modeFilter)
+                        || (invertFilter && renderMode == modeFilter))
                     {
                         continue;
                     }
@@ -1321,68 +1343,62 @@ namespace MphRead
             }
             else if (e.Key == Key.M)
             {
-                if (e.Control)
+                if (_selectionMode == SelectionMode.None)
                 {
+                    _selectionMode = SelectionMode.Model;
                     Deselect();
+                    SetSelected(_selectedModel);
                 }
-                else if (e.Shift)
+                else if (_selectionMode == SelectionMode.Model)
                 {
-                    if (_selectedMesh == null && _selectedModel != null)
-                    {
-                        Model? model = _selectedModel;
-                        Deselect();
-                        SetSelected(model, model.Meshes[0]);
-                    }
+                    _selectionMode = SelectionMode.Mesh;
+                    Deselect();
+                    SetSelected(_selectedModel, _selectedMesh);
                 }
                 else
                 {
-                    if (_selectedModel == null)
-                    {
-                        Deselect();
-                        SetSelected(_models[0]);
-                    }
+                    _selectionMode = SelectionMode.None;
+                    Deselect();
                 }
             }
             else if (e.Key == Key.Plus || e.Key == Key.KeypadPlus)
             {
-                if (_selectedMesh != null)
+                Model model = _models.First(m => m.SceneId == _selectedModel);
+                if (_selectionMode == SelectionMode.Mesh)
                 {
-                    if (_selectedModel != null)
+                    int index = _selectedMesh + 1;
+                    if (index > model.Meshes.Count - 1)
                     {
-                        int index = _selectedModel.Meshes.IndexOf(m => m == _selectedMesh) + 1;
-                        if (index > _selectedModel.Meshes.Count - 1)
-                        {
-                            index = 0;
-                        }
-                        SetSelected(_selectedModel, _selectedModel.Meshes[index]);
+                        index = 0;
                     }
+                    SetSelected(_selectedModel, index);
                 }
-                else if (_selectedModel != null)
+                else if (_selectionMode == SelectionMode.Model)
                 {
-                    Model? nextModel = _models.Where(m => m.SceneId > _selectedModel.SceneId &&
-                        (_showInvisible || m.Type != ModelType.Placeholder)).OrderBy(m => m.SceneId).FirstOrDefault();
-                    SetSelected(nextModel ?? _models.First());
+                    Model? nextModel = _models.Where(m => m.SceneId > model.SceneId &&
+                        m.Type != ModelType.Placeholder).OrderBy(m => m.SceneId).FirstOrDefault();
+                    _selectedMesh = 0;
+                    SetSelected(nextModel?.SceneId ?? _models.First().SceneId);
                 }
             }
             else if (e.Key == Key.Minus || e.Key == Key.Minus)
             {
-                if (_selectedMesh != null)
+                Model model = _models.First(m => m.SceneId == _selectedModel);
+                if (_selectionMode == SelectionMode.Mesh)
                 {
-                    if (_selectedModel != null)
+                    int index = _selectedMesh - 1;
+                    if (index < 0)
                     {
-                        int index = _selectedModel.Meshes.IndexOf(m => m == _selectedMesh) - 1;
-                        if (index < 0)
-                        {
-                            index = _selectedModel.Meshes.Count - 1;
-                        }
-                        SetSelected(_selectedModel, _selectedModel.Meshes[index]);
+                        index = model.Meshes.Count - 1;
                     }
+                    SetSelected(_selectedModel, index);
                 }
-                else if (_selectedModel != null)
+                else if (_selectionMode == SelectionMode.Model)
                 {
-                    Model? nextModel = _models.Where(m => m.SceneId < _selectedModel.SceneId &&
-                        (_showInvisible || m.Type != ModelType.Placeholder)).OrderBy(m => m.SceneId).LastOrDefault();
-                    SetSelected(nextModel ?? _models.Last());
+                    Model? nextModel = _models.Where(m => m.SceneId < model.SceneId &&
+                        m.Type != ModelType.Placeholder).OrderBy(m => m.SceneId).LastOrDefault();
+                    _selectedMesh = 0;
+                    SetSelected(nextModel?.SceneId ?? _models.Last().SceneId);
                 }
             }
             else if (e.Key == Key.Escape)
