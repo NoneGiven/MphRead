@@ -123,6 +123,9 @@ namespace MphRead
 
         public IReadOnlyList<Recolor> Recolors { get; }
 
+        private static uint _nextSceneId = 0;
+        public uint SceneId { get; } = _nextSceneId++;
+
         public Model(string name, Header header, IReadOnlyList<RawNode> nodes, IReadOnlyList<Mesh> meshes,
             IReadOnlyList<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
