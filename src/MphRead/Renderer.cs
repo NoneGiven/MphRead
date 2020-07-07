@@ -274,8 +274,8 @@ namespace MphRead
         private void InitTextures(Model model)
         {
             _textureMap.Add(model, new List<int>());
-            int minParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMagFilter.Nearest;
-            int magParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMagFilter.Nearest;
+            int minParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMinFilter.Nearest;
+            int magParameter = _textureFiltering ? (int)TextureMagFilter.Linear : (int)TextureMagFilter.Nearest;
             foreach (Material material in model.Materials)
             {
                 if (material.TextureId == UInt16.MaxValue)
@@ -332,43 +332,47 @@ namespace MphRead
                 {
                     material.RenderMode = RenderMode.AlphaTest;
                 }
-
-                GL.BindTexture(TextureTarget.Texture2D, _textureCount);
-                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
-                    PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
-                switch (material.XRepeat)
-                {
-                case RepeatMode.Clamp:
-                    GL.TexParameter(TextureTarget.Texture2D,
-                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-                    break;
-                case RepeatMode.Repeat:
-                    GL.TexParameter(TextureTarget.Texture2D,
-                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-                    break;
-                case RepeatMode.Mirror:
-                    GL.TexParameter(TextureTarget.Texture2D,
-                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.MirroredRepeat);
-                    break;
-                }
-                switch (material.YRepeat)
-                {
-                case RepeatMode.Clamp:
-                    GL.TexParameter(TextureTarget.Texture2D,
-                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-                    break;
-                case RepeatMode.Repeat:
-                    GL.TexParameter(TextureTarget.Texture2D,
-                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-                    break;
-                case RepeatMode.Mirror:
-                    GL.TexParameter(TextureTarget.Texture2D,
-                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat);
-                    break;
-                }
+                BindAndMakeTexture(material, _textureCount, width, height, minParameter, magParameter, pixels);
                 GL.BindTexture(TextureTarget.Texture2D, 0);
+            }
+        }
+
+        private void BindAndMakeTexture(Material material, int id, int width, int height, int minParameter, int magParameter, List<uint> pixels)
+        {
+            GL.BindTexture(TextureTarget.Texture2D, id);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
+                PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+            switch (material.XRepeat)
+            {
+            case RepeatMode.Clamp:
+                GL.TexParameter(TextureTarget.Texture2D,
+                    TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+                break;
+            case RepeatMode.Repeat:
+                GL.TexParameter(TextureTarget.Texture2D,
+                    TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+                break;
+            case RepeatMode.Mirror:
+                GL.TexParameter(TextureTarget.Texture2D,
+                    TextureParameterName.TextureWrapS, (int)TextureWrapMode.MirroredRepeat);
+                break;
+            }
+            switch (material.YRepeat)
+            {
+            case RepeatMode.Clamp:
+                GL.TexParameter(TextureTarget.Texture2D,
+                    TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+                break;
+            case RepeatMode.Repeat:
+                GL.TexParameter(TextureTarget.Texture2D,
+                    TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+                break;
+            case RepeatMode.Mirror:
+                GL.TexParameter(TextureTarget.Texture2D,
+                    TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat);
+                break;
             }
         }
 
@@ -752,9 +756,8 @@ namespace MphRead
                 uint alpha = (uint)MathF.Round(mesh.OverrideColor.Value.Alpha / 255f * pixel.Alpha);
                 pixels.Add((red << 0) | (green << 8) | (blue << 16) | (alpha << 24));
             }
-            GL.BindTexture(TextureTarget.Texture2D, Int32.MaxValue);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, texture.Width, texture.Height, 0,
-                PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
+            BindAndMakeTexture(material, Int32.MaxValue, texture.Width, texture.Height,
+                (int)TextureMinFilter.Nearest, (int)TextureMagFilter.Nearest, pixels);
         }
 
         private void DoTexture(Model model, Mesh mesh, Material material)
