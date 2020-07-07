@@ -100,7 +100,7 @@ namespace MphRead
             ReadOnlySpan<byte> initialBytes = ReadBytes(path);
             Header header = ReadStruct<Header>(initialBytes[0..Sizes.Header]);
             IReadOnlyList<RawNode> nodes = DoOffsets<RawNode>(initialBytes, header.NodeOffset, header.NodeCount);
-            IReadOnlyList<Mesh> meshes = DoOffsets<Mesh>(initialBytes, header.MeshOffset, header.MeshCount);
+            IReadOnlyList<RawMesh> meshes = DoOffsets<RawMesh>(initialBytes, header.MeshOffset, header.MeshCount);
             IReadOnlyList<DisplayList> dlists = DoOffsets<DisplayList>(initialBytes, header.DlistOffset, header.MeshCount);
             var instructions = new List<IReadOnlyList<RenderInstruction>>();
             foreach (DisplayList dlist in dlists)

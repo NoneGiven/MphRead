@@ -401,9 +401,9 @@ namespace MphRead
             Model model = Read.GetModelByName("pick_wpn_missile");
             if (_colorOverrides.ContainsKey(type))
             {
-                foreach (Material material in model.Materials)
+                foreach (Mesh mesh in model.Meshes)
                 {
-                    material.OverrideColor = _colorOverrides[type];
+                    mesh.OverrideColor = _colorOverrides[type].AsRgba();
                 }
             }
             if (System.Diagnostics.Debugger.IsAttached &&

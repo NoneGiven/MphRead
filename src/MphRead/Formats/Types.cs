@@ -78,6 +78,11 @@ namespace MphRead
             Green = green;
             Blue = blue;
         }
+
+        public ColorRgba AsRgba()
+        {
+            return new ColorRgba(Red, Green, Blue, 255);
+        }
     }
 
     // size: 4

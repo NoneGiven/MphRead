@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using OpenToolkit.Graphics.OpenGL;
@@ -292,9 +293,9 @@ namespace MphRead
                 bool onlyOpaque = true;
                 foreach (ColorRgba pixel in model.GetPixels(material.TextureId, material.PaletteId))
                 {
-                    uint red = material.OverrideColor?.Red ?? pixel.Red;
-                    uint green = material.OverrideColor?.Green ?? pixel.Green;
-                    uint blue = material.OverrideColor?.Blue ?? pixel.Blue;
+                    uint red = pixel.Red;
+                    uint green = pixel.Green;
+                    uint blue = pixel.Blue;
                     uint alpha = (uint)((decal ? 255 : pixel.Alpha) * material.Alpha / 31.0f);
                     pixels.Add((red << 0) | (green << 8) | (blue << 16) | (alpha << 24));
                     if (alpha < 255)
@@ -714,10 +715,54 @@ namespace MphRead
         private void RenderMesh(Model model, Mesh mesh, Material material)
         {
             GL.Color3(1f, 1f, 1f);
+            DoTexture(model, mesh, material);
+            DoLighting(mesh, material);
+            if (_faceCulling)
+            {
+                GL.Enable(EnableCap.CullFace);
+                if (material.Culling == CullingMode.Neither)
+                {
+                    GL.Disable(EnableCap.CullFace);
+                }
+                else if (material.Culling == CullingMode.Back)
+                {
+                    GL.CullFace(CullFaceMode.Back);
+                }
+                else if (material.Culling == CullingMode.Front)
+                {
+                    GL.CullFace(CullFaceMode.Front);
+                }
+            }
+            DoDlist(model, mesh);
+            if (_lighting)
+            {
+                GL.Disable(EnableCap.Lighting);
+            }
+        }
+
+        private void DoOverrideColor(Model model, Mesh mesh, Material material, Texture texture)
+        {
+            Debug.Assert(mesh.OverrideColor.HasValue);
+            var pixels = new List<uint>();
+            foreach (ColorRgba pixel in model.GetPixels(material.TextureId, material.PaletteId))
+            {
+                uint red = mesh.OverrideColor.Value.Red;
+                uint green = mesh.OverrideColor.Value.Green;
+                uint blue = mesh.OverrideColor.Value.Blue;
+                uint alpha = (uint)(MathF.Round(mesh.OverrideColor.Value.Alpha / 255f * pixel.Alpha));
+                pixels.Add((red << 0) | (green << 8) | (blue << 16) | (alpha << 24));
+            }
+            GL.BindTexture(TextureTarget.Texture2D, Int32.MaxValue);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, texture.Width, texture.Height, 0,
+                PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
+        }
+
+        private void DoTexture(Model model, Mesh mesh, Material material)
+        {
             ushort width = 1;
             ushort height = 1;
             int textureId = material.TextureId;
-            if (textureId == UInt16.MaxValue)
+            if (textureId == UInt16.MaxValue && mesh.OverrideColor == null)
             {
                 GL.Disable(EnableCap.Texture2D);
             }
@@ -727,7 +772,14 @@ namespace MphRead
                 Texture texture = model.Textures[textureId];
                 width = texture.Width;
                 height = texture.Height;
-                GL.BindTexture(TextureTarget.Texture2D, _textureMap[model][mesh.MaterialId]);
+                if (mesh.OverrideColor == null)
+                {
+                    GL.BindTexture(TextureTarget.Texture2D, _textureMap[model][mesh.MaterialId]);
+                }
+                else
+                {
+                    DoOverrideColor(model, mesh, material, texture);
+                }
             }
             GL.MatrixMode(MatrixMode.Texture);
             GL.LoadIdentity();
@@ -752,7 +804,11 @@ namespace MphRead
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
             }
             GL.Uniform1(_shaderLocations.UseTexture, GL.IsEnabled(EnableCap.Texture2D) ? 1 : 0);
-            if (_lighting && material.Lighting != 0)
+        }
+
+        private void DoLighting(Mesh mesh, Material material)
+        {
+            if (_lighting && material.Lighting != 0 && mesh.OverrideColor != null)
             {
                 // todo: would be nice if the approaches for this and the room lights were the same
                 var ambient = new Vector4(
@@ -785,22 +841,10 @@ namespace MphRead
             {
                 GL.Uniform1(_shaderLocations.UseLight, 0);
             }
-            if (_faceCulling)
-            {
-                GL.Enable(EnableCap.CullFace);
-                if (material.Culling == CullingMode.Neither)
-                {
-                    GL.Disable(EnableCap.CullFace);
-                }
-                else if (material.Culling == CullingMode.Back)
-                {
-                    GL.CullFace(CullFaceMode.Back);
-                }
-                else if (material.Culling == CullingMode.Front)
-                {
-                    GL.CullFace(CullFaceMode.Front);
-                }
-            }
+        }
+
+        private void DoDlist(Model model, Mesh mesh)
+        {
             IReadOnlyList<RenderInstruction> list = model.RenderInstructionLists[mesh.DlistId];
             float vtxX = 0;
             float vtxY = 0;
@@ -834,7 +878,7 @@ namespace MphRead
                     }
                     break;
                 case InstructionCode.COLOR:
-                    if (_showColors)
+                    if (_showColors && mesh.OverrideColor == null)
                     {
                         uint rgb = instruction.Arguments[0];
                         uint r = (rgb >> 0) & 0x1F;
@@ -848,7 +892,7 @@ namespace MphRead
                     // but with bit 15 acting as a flag to directly set the diffuse color as the vertex color immediately.
                     // However, bit 15 and bits 16-30 (ambient color) are never used by MPH. Still, because of the way we're using
                     // the shader program, the easiest hack to apply the diffuse color is to just set it as the vertex color.
-                    if (_lighting)
+                    if (_lighting && mesh.OverrideColor == null)
                     {
                         uint rgb = instruction.Arguments[0];
                         uint r = (rgb >> 0) & 0x1F;
@@ -1029,10 +1073,6 @@ namespace MphRead
                 default:
                     throw new ProgramException("Unknown opcode");
                 }
-            }
-            if (_lighting)
-            {
-                GL.Disable(EnableCap.Lighting);
             }
         }
 
