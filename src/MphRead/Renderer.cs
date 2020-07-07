@@ -708,7 +708,7 @@ namespace MphRead
                     int meshId = meshStart + i;
                     Mesh mesh = model.Meshes[meshId];
                     Material material = model.Materials[mesh.MaterialId];
-                    RenderMode renderMode = _selectionMode == SelectionMode.None
+                    RenderMode renderMode = _selectionMode == SelectionMode.None || !_showSelection
                         ? material.RenderMode
                         : material.GetEffectiveRenderMode(mesh);
                     if ((!invertFilter && renderMode != modeFilter)
@@ -828,7 +828,7 @@ namespace MphRead
                 height = texture.Height;
                 GL.BindTexture(TextureTarget.Texture2D, _textureMap[model][mesh.MaterialId]);
             }
-            // this affects the placeholders too
+            // _showSelection affects the placeholder colors too
             if (mesh.OverrideColor != null && _showSelection)
             {
                 GL.Uniform1(_shaderLocations.UseOverride, 1);
@@ -870,7 +870,7 @@ namespace MphRead
 
         private void DoLighting(Mesh mesh, Material material)
         {
-            if (_lighting && material.Lighting != 0 && mesh.OverrideColor == null)
+            if (_lighting && material.Lighting != 0 && (mesh.OverrideColor == null || !_showSelection))
             {
                 // todo: would be nice if the approaches for this and the room lights were the same
                 var ambient = new Vector4(
@@ -940,7 +940,7 @@ namespace MphRead
                     }
                     break;
                 case InstructionCode.COLOR:
-                    if (_showColors && mesh.OverrideColor == null)
+                    if (_showColors && (mesh.OverrideColor == null || !_showSelection))
                     {
                         uint rgb = instruction.Arguments[0];
                         uint r = (rgb >> 0) & 0x1F;
@@ -954,7 +954,7 @@ namespace MphRead
                     // but with bit 15 acting as a flag to directly set the diffuse color as the vertex color immediately.
                     // However, bit 15 and bits 16-30 (ambient color) are never used by MPH. Still, because of the way we're using
                     // the shader program, the easiest hack to apply the diffuse color is to just set it as the vertex color.
-                    if (_lighting && mesh.OverrideColor == null)
+                    if (_lighting && (mesh.OverrideColor == null || !_showSelection))
                     {
                         uint rgb = instruction.Arguments[0];
                         uint r = (rgb >> 0) & 0x1F;
@@ -1666,7 +1666,7 @@ namespace MphRead
             Mesh mesh = SelectedModel.Meshes[_selectedMeshId];
             await Output.Write($"Mesh: {_selectedMeshId} {(mesh.Visible ? "On " : "Off")}", guid);
             await Output.Write($"Material ID {mesh.MaterialId}, DList ID {mesh.DlistId}", guid);
-            await Output.Write($"", guid);
+            await Output.Write(guid);
             Material material = SelectedModel.Materials[mesh.MaterialId];
             await Output.Write($"Material: {material.Name} [{material.RenderMode}, {material.PolygonMode}]", guid);
             await Output.Write($"Lighting {material.Lighting}, Alpha {material.Alpha}", guid);
