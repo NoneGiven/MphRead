@@ -485,13 +485,9 @@ namespace MphRead
         public float TranslateS { get; }
         public float TranslateT { get; }
 
-        public bool HasOverrideColor { get; set; }
-        public RenderMode EffectiveRenderMode
+        public RenderMode GetEffectiveRenderMode(Mesh mesh)
         {
-            get
-            {
-                return HasOverrideColor ? RenderMode.Translucent : RenderMode;
-            }
+            return mesh.OverrideColor == null ? RenderMode : RenderMode.Translucent;
         }
 
         public Material(RawMaterial raw)

@@ -80,7 +80,8 @@ namespace MphRead
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
         private readonly Dictionary<Model, List<int>> _textureMap = new Dictionary<Model, List<int>>();
-        private readonly List<string> _logs = new List<string>();
+        private Model? _selectedModel = null;
+        private Mesh? _selectedMesh = null;
 
         private CameraMode _cameraMode = CameraMode.Pivot;
         private float _angleX = 0.0f;
@@ -112,6 +113,8 @@ namespace MphRead
 
         private int _shaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
+
+        private readonly List<string> _logs = new List<string>();
 
         public RenderWindow(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
             : base(gameWindowSettings, nativeWindowSettings)
@@ -398,32 +401,17 @@ namespace MphRead
                 _models.Remove(model);
             }
 
-            // sktodo
-            int selectedModel = 25;
-            foreach (Material material in _models[selectedModel].Materials)
+            // sktodo: allow selecting nodes
+            if (_selectedModel != null)
             {
-                material.HasOverrideColor = true;
+                foreach (Mesh mesh in _selectedModel.Meshes)
+                {
+                    UpdateSelected(mesh, (float)args.Time);
+                }
             }
-            foreach (Mesh mesh in _models[selectedModel].Meshes)
+            else if (_selectedMesh != null)
             {
-                if (mesh.OverrideColor == null)
-                {
-                    mesh.OverrideColor = new Vector4(1f, 1f, 1f, 1f);
-                }
-                else
-                {
-                    float alpha = mesh.OverrideColor.Value.W;
-                    alpha -= (float)args.Time * 1.5f;
-                    if (alpha < 0)
-                    {
-                        alpha += 1;
-                    }
-                    mesh.OverrideColor = new Vector4(
-                        mesh.OverrideColor.Value.X,
-                        mesh.OverrideColor.Value.Y,
-                        mesh.OverrideColor.Value.Z,
-                        alpha);
-                }
+                UpdateSelected(_selectedMesh, (float)args.Time);
             }
 
             OnKeyHeld();
@@ -443,6 +431,52 @@ namespace MphRead
             RenderScene(args.Time);
             SwapBuffers();
             base.OnRenderFrame(args);
+        }
+
+        private void SetSelected(Model model)
+        {
+            Deselect();
+            _selectedModel = model;
+            foreach (Mesh mesh in model.Meshes)
+            {
+                mesh.OverrideColor = new Vector4(1f, 1f, 1f, 1f);
+            }
+        }
+
+        private void SetSelected(Mesh mesh)
+        {
+            Deselect();
+            _selectedMesh = mesh;
+            mesh.OverrideColor = new Vector4(1f, 1f, 1f, 1f);
+        }
+
+        private void UpdateSelected(Mesh mesh, float time)
+        {
+            Vector4 color = mesh.OverrideColor.GetValueOrDefault();
+            float alpha = color.W;
+            alpha -= time * 1.5f;
+            if (alpha < 0)
+            {
+                alpha += 1;
+            }
+            mesh.OverrideColor = new Vector4(color.X, color.Y, color.Z, alpha);
+        }
+
+        private void Deselect()
+        {
+            if (_selectedModel != null)
+            {
+                foreach (Mesh mesh in _selectedModel.Meshes)
+                {
+                    mesh.OverrideColor = null;
+                }
+                _selectedModel = null;
+            }
+            if (_selectedMesh != null)
+            {
+                _selectedMesh.OverrideColor = null;
+                _selectedMesh = null;
+            }
         }
 
         private void ResetCamera()
@@ -677,8 +711,8 @@ namespace MphRead
                     int meshId = meshStart + i;
                     Mesh mesh = model.Meshes[meshId];
                     Material material = model.Materials[mesh.MaterialId];
-                    if ((!invertFilter && material.EffectiveRenderMode != modeFilter)
-                        || (invertFilter && material.EffectiveRenderMode == modeFilter))
+                    if ((!invertFilter && material.GetEffectiveRenderMode(mesh) != modeFilter)
+                        || (invertFilter && material.GetEffectiveRenderMode(mesh) == modeFilter))
                     {
                         continue;
                     }
@@ -1248,6 +1282,15 @@ namespace MphRead
             }
             else if (e.Key == Key.G)
             {
+                // sktodo: implement this properly
+                if (_selectedModel == null)
+                {
+                    SetSelected(_models[25]);
+                }
+                else
+                {
+                    Deselect();
+                }
                 _showFog = !_showFog;
                 await PrintMenu();
             }
