@@ -697,9 +697,10 @@ namespace MphRead
         {
             if (node.MeshCount > 0 && node.Enabled)
             {
-                // temporary -- applying transforms on models which have node animation breaks them,
+                // ForceApplyTransform is temporary -- applying transforms on models which have node animation breaks them,
                 // presumably because information needs to come from the animation which we aren't loading yet
-                if (model.NodeAnimationGroups.Count == 0 || model.ForceApplyTransform)
+                // also -- node transforms applied to room meshes only seem to break things (positions are wrong)
+                if (model.Type != ModelType.Room && (model.NodeAnimationGroups.Count == 0 || model.ForceApplyTransform))
                 {
                     GL.MatrixMode(MatrixMode.Modelview);
                     GL.PushMatrix();

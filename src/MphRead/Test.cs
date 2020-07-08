@@ -150,6 +150,43 @@ namespace MphRead
             }
         }
 
+        public static void TestAllNodes()
+        {
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                Model room = Read.GetRoomByName(meta.Key);
+                Console.WriteLine(meta.Key);
+                for (int i = 0; i < room.Nodes.Count; i++)
+                {
+                    Node node = room.Nodes[i];
+                    if (node.Name.ToLower().Contains("etag"))
+                    {
+                        continue;
+                    }
+                    if (node.Position.X != 0 || node.Position.Y != 0 || node.Position.Z != 0)
+                    {
+                        Console.Write($"{node.Name} [{i}] - ");
+                        var ids = new List<int>();
+                        int meshStart = node.MeshId / 2;
+                        for (int j = 0; j < node.MeshCount; j++)
+                        {
+                            ids.Add(meshStart + j);
+                        }
+                        if (ids.Count == 0)
+                        {
+                            Console.WriteLine("none");
+                        }
+                        else
+                        {
+                            Console.WriteLine(String.Join(", ", ids));
+                        }
+                    }
+                }
+                Console.WriteLine();
+            }
+            Nop();
+        }
+
         public static void TestAllEntities()
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
