@@ -421,7 +421,7 @@ namespace MphRead
 
             GL.MatrixMode(MatrixMode.Projection);
             float fov = MathHelper.DegreesToRadians(80.0f);
-            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.02f, 10000.0f);
+            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.001f, 10000.0f);
             GL.LoadMatrix(ref perspectiveMatrix);
 
             TransformCamera();
@@ -1656,7 +1656,7 @@ namespace MphRead
             for (int i = 0; i < SelectedModel.Nodes.Count; i++)
             {
                 Node node = SelectedModel.Nodes[i];
-                if (node.MeshId / 2 <= _selectedMeshId && node.MeshId / 2 + node.MeshCount >= _selectedMeshId)
+                if (node.MeshId / 2 <= _selectedMeshId && node.MeshId / 2 + node.MeshCount - 1 >= _selectedMeshId)
                 {
                     await Output.Write($"Node: {node.Name} [{i}] {(node.Enabled ? "On ": "Off")} - Meshes {node.MeshCount}", guid);
                     await Output.Write($"{node.Type}", guid);
@@ -1670,11 +1670,11 @@ namespace MphRead
                 }
             }
             Mesh mesh = SelectedModel.Meshes[_selectedMeshId];
-            await Output.Write($"Mesh: {_selectedMeshId} {(mesh.Visible ? "On " : "Off")}", guid);
+            await Output.Write($"Mesh: [{_selectedMeshId}] {(mesh.Visible ? "On " : "Off")}", guid);
             await Output.Write($"Material ID {mesh.MaterialId}, DList ID {mesh.DlistId}", guid);
             await Output.Write(guid);
             Material material = SelectedModel.Materials[mesh.MaterialId];
-            await Output.Write($"Material: {material.Name} - {material.RenderMode}, {material.PolygonMode}", guid);
+            await Output.Write($"Material: {material.Name} [{mesh.MaterialId}] - {material.RenderMode}, {material.PolygonMode}", guid);
             await Output.Write($"Lighting {material.Lighting}, Alpha {material.Alpha}", guid);
             await Output.Write($"Texture ID {material.TextureId}, Palette ID {material.PaletteId}", guid);
             await Output.Write($" Diffuse ({material.Diffuse.Red}, {material.Diffuse.Green}, {material.Diffuse.Blue})", guid);
