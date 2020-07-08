@@ -390,7 +390,7 @@ namespace MphRead
             }
 
             // sktodo:
-            // option to iterate between room nodes only
+            // - option to iterate between room nodes only
             // - make a "go to/look at" function for the selected model/mesh
             if (_selectionMode != SelectionMode.None)
             {
@@ -1821,23 +1821,36 @@ namespace MphRead
             await Output.Write(guid);
         }
 
+        private string FormatNode(Model model, int otherId)
+        {
+            if (otherId == UInt16.MaxValue)
+            {
+                return "None";
+            }
+            Node other = model.Nodes[otherId];
+            return $"{otherId} {(other.Enabled ? "On" : "Off")}";
+        }
+
         private async Task PrintNodeInfo(Guid guid)
         {
             await PrintModelInfo(guid);
             Node node = SelectedModel.Nodes[_selectedNodeId];
-            string meshString = $" - Meshes {node.MeshCount}";
+            string mesh = $" - Meshes {node.MeshCount}";
             IEnumerable<int> meshIds = node.GetMeshIds().OrderBy(m => m);
             if (meshIds.Count() == 1)
             {
-                meshString += $" ({meshIds.First()})";
+                mesh += $" ({meshIds.First()})";
             }
             else if (meshIds.Count() > 1)
             {
-                meshString += $" ({meshIds.First()} - {meshIds.Last()})";
+                mesh += $" ({meshIds.First()} - {meshIds.Last()})";
             }
-            await Output.Write($"Node: {node.Name} [{_selectedNodeId}] {(node.Enabled ? "On " : "Off")}{meshString}", guid);
             string billboard = node.Billboard ? " - Billboard" : "";
-            await Output.Write($"Parent {node.ParentIndex}, Child {node.ChildIndex}, Next {node.NextIndex}{billboard}", guid);
+            await Output.Write($"Node: {node.Name} [{_selectedNodeId}] {(node.Enabled ? "On " : "Off")}{mesh}{billboard}", guid);
+            string parent = $"Parent {FormatNode(SelectedModel, node.ParentIndex)}";
+            string child = $"Child {FormatNode(SelectedModel, node.ChildIndex)}";
+            string next = $"Next {FormatNode(SelectedModel, node.NextIndex)}";
+            await Output.Write($"{parent}, {child}, {next}", guid);
             await Output.Write($"Position ({node.Position.X}, {node.Position.Y}, {node.Position.Z})", guid);
             await Output.Write($"Rotation ({node.Angle.X}, {node.Angle.Y}, {node.Angle.Z})", guid);
             await Output.Write($"   Scale ({node.Scale.X}, {node.Scale.Y}, {node.Scale.Z})", guid);
