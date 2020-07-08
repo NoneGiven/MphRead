@@ -170,6 +170,21 @@ namespace MphRead
             }
         }
 
+        public bool NodeParentsEnabled(Node node)
+        {
+            int parentIndex = node.ParentIndex;
+            while (parentIndex != UInt16.MaxValue)
+            {
+                Node parent = Nodes[parentIndex];
+                if (!parent.Enabled)
+                {
+                    return false;
+                }
+                parentIndex = parent.ParentIndex;
+            }
+            return true;
+        }
+
         public void PrintImages(int recolor = 0)
         {
             if (recolor >= 0 && recolor < Recolors.Count)

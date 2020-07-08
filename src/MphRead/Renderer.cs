@@ -713,7 +713,7 @@ namespace MphRead
 
         private void RenderNode(Model model, Node node, RenderMode modeFilter, bool invertFilter = false)
         {
-            if (node.MeshCount > 0 && node.Enabled)
+            if (node.MeshCount > 0 && node.Enabled && model.NodeParentsEnabled(node))
             {
                 // temporary -- applying transforms on models which have node animation breaks them,
                 // presumably because information needs to come from the animation which we aren't loading yet
@@ -1821,18 +1821,16 @@ namespace MphRead
             await Output.Write(guid);
         }
 
-        private string FormatNode(Model model, int otherId)
-        {
-            if (otherId == UInt16.MaxValue)
-            {
-                return "None";
-            }
-            Node other = model.Nodes[otherId];
-            return $"{otherId} {(other.Enabled ? "On" : "Off")}";
-        }
-
         private async Task PrintNodeInfo(Guid guid)
         {
+            static string FormatNode(int otherId)
+            {
+                if (otherId == UInt16.MaxValue)
+                {
+                    return "None";
+                }
+                return otherId.ToString();
+            }
             await PrintModelInfo(guid);
             Node node = SelectedModel.Nodes[_selectedNodeId];
             string mesh = $" - Meshes {node.MeshCount}";
@@ -1845,12 +1843,11 @@ namespace MphRead
             {
                 mesh += $" ({meshIds.First()} - {meshIds.Last()})";
             }
+            string enabled = node.Enabled ? (SelectedModel.NodeParentsEnabled(node) ? "On " : "On*") : "Off";
             string billboard = node.Billboard ? " - Billboard" : "";
-            await Output.Write($"Node: {node.Name} [{_selectedNodeId}] {(node.Enabled ? "On " : "Off")}{mesh}{billboard}", guid);
-            string parent = $"Parent {FormatNode(SelectedModel, node.ParentIndex)}";
-            string child = $"Child {FormatNode(SelectedModel, node.ChildIndex)}";
-            string next = $"Next {FormatNode(SelectedModel, node.NextIndex)}";
-            await Output.Write($"{parent}, {child}, {next}", guid);
+            await Output.Write($"Node: {node.Name} [{_selectedNodeId}] {enabled}{mesh}{billboard}", guid);
+            await Output.Write($"Parent {FormatNode(node.ParentIndex)}, " +
+                $"Child {FormatNode(node.ChildIndex)}, Next {FormatNode(node.NextIndex)}", guid);
             await Output.Write($"Position ({node.Position.X}, {node.Position.Y}, {node.Position.Z})", guid);
             await Output.Write($"Rotation ({node.Angle.X}, {node.Angle.Y}, {node.Angle.Z})", guid);
             await Output.Write($"   Scale ({node.Scale.X}, {node.Scale.Y}, {node.Scale.Z})", guid);
