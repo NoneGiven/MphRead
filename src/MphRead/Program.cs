@@ -12,9 +12,8 @@ namespace MphRead
             using var renderer = new Renderer();
             if (args.Length == 0)
             {
-                //renderer.AddRoom("UNIT1_RM3");
-                renderer.AddRoom("MP12 SIC TRANSIT");
-                //renderer.AddModel("Crate01");
+                renderer.AddRoom("MP3 PROVING GROUND");
+                renderer.AddModel("Crate01");
                 Nop();
             }
             else
