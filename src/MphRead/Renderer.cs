@@ -1659,7 +1659,7 @@ namespace MphRead
                 if (node.MeshId / 2 <= _selectedMeshId && node.MeshId / 2 + node.MeshCount - 1 >= _selectedMeshId)
                 {
                     await Output.Write($"Node: {node.Name} [{i}] {(node.Enabled ? "On ": "Off")} - Meshes {node.MeshCount}", guid);
-                    await Output.Write($"{node.Type}", guid);
+                    await Output.Write($"{node.Type} - Parent {node.ParentIndex}, Child {node.ChildIndex}, Next {node.NextIndex}", guid);
                     await Output.Write($"Position ({node.Position.X}, {node.Position.Y}, {node.Position.Z})", guid);
                     await Output.Write($"Rotation ({node.Angle.X}, {node.Angle.Y}, {node.Angle.Z})", guid);
                     await Output.Write($"   Scale ({node.Scale.X}, {node.Scale.Y}, {node.Scale.Z})", guid);
