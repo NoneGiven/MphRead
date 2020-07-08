@@ -79,8 +79,8 @@ namespace MphRead
         {
             None,
             Model,
-            Mesh,
-            Node
+            Node,
+            Mesh
         }
 
         private bool _roomLoaded = false;
@@ -92,6 +92,7 @@ namespace MphRead
         private SelectionMode _selectionMode = SelectionMode.None;
         private uint _selectedModelId = 0;
         private int _selectedMeshId = 0;
+        private int _selectedNodeId = 0;
         private bool _showSelection = true;
 
         private Model SelectedModel => _modelMap[_selectedModelId];
@@ -398,6 +399,13 @@ namespace MphRead
                 {
                     UpdateSelected(SelectedModel.Meshes[_selectedMeshId], time);
                 }
+                else if (_selectionMode == SelectionMode.Node)
+                {
+                    foreach (Mesh mesh in SelectedModel.GetNodeMeshes(_selectedNodeId))
+                    {
+                        UpdateSelected(mesh, time);
+                    }
+                }
                 else if (_selectionMode == SelectionMode.Model)
                 {
                     foreach (Mesh mesh in SelectedModel.Meshes)
@@ -432,7 +440,7 @@ namespace MphRead
             base.OnRenderFrame(args);
         }
 
-        private void SetSelected(uint sceneId)
+        private void SetSelectedModel(uint sceneId)
         {
             Deselect();
             _selectedModelId = sceneId;
@@ -442,7 +450,18 @@ namespace MphRead
             }
         }
 
-        private void SetSelected(uint sceneId, int meshId)
+        private void SetSelectedNode(uint sceneId, int nodeId)
+        {
+            Deselect();
+            _selectedModelId = sceneId;
+            _selectedNodeId = nodeId;
+            foreach (Mesh mesh in SelectedModel.GetNodeMeshes(_selectedNodeId))
+            {
+                mesh.OverrideColor = new Vector4(1f, 1f, 1f, 1f);
+            }
+        }
+
+        private void SetSelectedMesh(uint sceneId, int meshId)
         {
             Deselect();
             _selectedModelId = sceneId;
@@ -711,11 +730,8 @@ namespace MphRead
                     }
                     GL.MultMatrix(ref transform);
                 }
-                int meshStart = node.MeshId / 2;
-                for (int i = 0; i < node.MeshCount; i++)
+                foreach (Mesh mesh in model.GetNodeMeshes(node))
                 {
-                    int meshId = meshStart + i;
-                    Mesh mesh = model.Meshes[meshId];
                     Material material = model.Materials[mesh.MaterialId];
                     RenderMode renderMode = _selectionMode == SelectionMode.None || !_showSelection
                         ? material.RenderMode
@@ -1308,6 +1324,7 @@ namespace MphRead
             else if (e.Key == Key.R)
             {
                 ResetCamera();
+                await PrintOutput();
             }
             else if (e.Key == Key.P)
             {
@@ -1338,18 +1355,23 @@ namespace MphRead
                     if (_selectionMode == SelectionMode.None)
                     {
                         _selectionMode = SelectionMode.Model;
-                        SetSelected(_selectedModelId);
+                        SetSelectedModel(_selectedModelId);
                     }
                     else if (_selectionMode == SelectionMode.Model)
                     {
-                        if (SelectedModel.Meshes.Count == 0)
+                        _selectionMode = SelectionMode.Node;
+                        SetSelectedNode(_selectedModelId, _selectedNodeId);
+                    }
+                    else if (_selectionMode == SelectionMode.Node)
+                    {
+                        if (!SelectedModel.GetNodeMeshes(_selectedNodeId).Any())
                         {
                             _selectionMode = SelectionMode.None;
                         }
                         else
                         {
                             _selectionMode = SelectionMode.Mesh;
-                            SetSelected(_selectedModelId, _selectedMeshId);
+                            SetSelectedMesh(_selectedModelId, _selectedMeshId);
                         }
                     }
                     else
@@ -1365,12 +1387,40 @@ namespace MphRead
                 {
                     if (_selectionMode == SelectionMode.Mesh)
                     {
-                        int index = _selectedMeshId + 1;
-                        if (index > model.Meshes.Count - 1)
+                        int meshIndex = _selectedMeshId + 1;
+                        if (meshIndex > model.Meshes.Count - 1)
                         {
-                            index = 0;
+                            meshIndex = 0;
                         }
-                        SetSelected(_selectedModelId, index);
+                        if (!SelectedModel.Nodes[_selectedNodeId].GetMeshIds().Contains(meshIndex))
+                        {
+                            for (int i = 0; i < SelectedModel.Nodes.Count; i++)
+                            {
+                                if (SelectedModel.Nodes[i].GetMeshIds().Contains(meshIndex))
+                                {
+                                    SetSelectedNode(_selectedModelId, i);
+                                }
+                            }
+                        }
+                        SetSelectedMesh(_selectedModelId, meshIndex);
+                    }
+                    else if (_selectionMode == SelectionMode.Node)
+                    {
+                        // todo: might be nice if this followed the node hierarchy
+                        int nodeIndex = _selectedNodeId + 1;
+                        if (nodeIndex > model.Nodes.Count - 1)
+                        {
+                            nodeIndex = 0;
+                        }
+                        if (SelectedModel.Nodes[nodeIndex].MeshCount > 0)
+                        {
+                            _selectedMeshId = SelectedModel.Nodes[nodeIndex].GetMeshIds().First();
+                        }
+                        else
+                        {
+                            _selectedMeshId = 0;
+                        }
+                        SetSelectedNode(_selectedModelId, nodeIndex);
                     }
                     else if (_selectionMode == SelectionMode.Model)
                     {
@@ -1380,12 +1430,9 @@ namespace MphRead
                         {
                             nextModel = _models.OrderBy(m => m.SceneId).First(m => m.Meshes.Count > 0);
                         }
-                        if (nextModel == null)
-                        {
-                            nextModel = model;
-                        }
                         _selectedMeshId = 0;
-                        SetSelected(nextModel.SceneId);
+                        _selectedNodeId = 0;
+                        SetSelectedModel(nextModel.SceneId);
                     }
                     await PrintOutput();
                 }
@@ -1396,12 +1443,39 @@ namespace MphRead
                 {
                     if (_selectionMode == SelectionMode.Mesh)
                     {
-                        int index = _selectedMeshId - 1;
-                        if (index < 0)
+                        int meshIndex = _selectedMeshId - 1;
+                        if (meshIndex < 0)
                         {
-                            index = model.Meshes.Count - 1;
+                            meshIndex = model.Meshes.Count - 1;
                         }
-                        SetSelected(_selectedModelId, index);
+                        if (!SelectedModel.Nodes[_selectedNodeId].GetMeshIds().Contains(meshIndex))
+                        {
+                            for (int i = 0; i < SelectedModel.Nodes.Count; i++)
+                            {
+                                if (SelectedModel.Nodes[i].GetMeshIds().Contains(meshIndex))
+                                {
+                                    SetSelectedNode(_selectedModelId, i);
+                                }
+                            }
+                        }
+                        SetSelectedMesh(_selectedModelId, meshIndex);
+                    }
+                    else if (_selectionMode == SelectionMode.Node)
+                    {
+                        int nodeIndex = _selectedNodeId - 1;
+                        if (nodeIndex < 0)
+                        {
+                            nodeIndex = model.Nodes.Count - 1;
+                        }
+                        if (SelectedModel.Nodes[nodeIndex].MeshCount > 0)
+                        {
+                            _selectedMeshId = SelectedModel.Nodes[nodeIndex].GetMeshIds().First();
+                        }
+                        else
+                        {
+                            _selectedMeshId = 0;
+                        }
+                        SetSelectedNode(_selectedModelId, nodeIndex);
                     }
                     else if (_selectionMode == SelectionMode.Model)
                     {
@@ -1416,7 +1490,7 @@ namespace MphRead
                             nextModel = model;
                         }
                         _selectedMeshId = 0;
-                        SetSelected(nextModel.SceneId);
+                        SetSelectedModel(nextModel.SceneId);
                     }
                     await PrintOutput();
                 }
@@ -1426,6 +1500,11 @@ namespace MphRead
                 if (_selectionMode == SelectionMode.Model)
                 {
                     SelectedModel.Visible = !SelectedModel.Visible;
+                    await PrintOutput();
+                }
+                else if (_selectionMode == SelectionMode.Node)
+                {
+                    SelectedModel.Nodes[_selectedNodeId].Enabled = !SelectedModel.Nodes[_selectedNodeId].Enabled;
                     await PrintOutput();
                 }
                 else if (_selectionMode == SelectionMode.Mesh)
@@ -1626,6 +1705,10 @@ namespace MphRead
             {
                 await PrintModelInfo(guid);
             }
+            else if (_selectionMode == SelectionMode.Node)
+            {
+                await PrintNodeInfo(guid);
+            }
             else if (_selectionMode == SelectionMode.Mesh)
             {
                 await PrintMeshInfo(guid);
@@ -1654,26 +1737,34 @@ namespace MphRead
                 $"Textures {model.Textures.Count}, Palettes {model.Palettes.Count}", guid);
             await Output.Write(guid);
         }
-        
-        private async Task PrintMeshInfo(Guid guid)
+
+        private async Task PrintNodeInfo(Guid guid)
         {
             await PrintModelInfo(guid);
-            for (int i = 0; i < SelectedModel.Nodes.Count; i++)
+            Node node = SelectedModel.Nodes[_selectedNodeId];
+            string meshString = $" - Meshes {node.MeshCount}";
+            IEnumerable<int> meshIds = node.GetMeshIds().OrderBy(m => m);
+            if (meshIds.Count() == 1)
             {
-                Node node = SelectedModel.Nodes[i];
-                if (node.MeshId / 2 <= _selectedMeshId && node.MeshId / 2 + node.MeshCount - 1 >= _selectedMeshId)
-                {
-                    await Output.Write($"Node: {node.Name} [{i}] {(node.Enabled ? "On ": "Off")} - Meshes {node.MeshCount}", guid);
-                    await Output.Write($"{node.Type} - Parent {node.ParentIndex}, Child {node.ChildIndex}, Next {node.NextIndex}", guid);
-                    await Output.Write($"Position ({node.Position.X}, {node.Position.Y}, {node.Position.Z})", guid);
-                    await Output.Write($"Rotation ({node.Angle.X}, {node.Angle.Y}, {node.Angle.Z})", guid);
-                    await Output.Write($"   Scale ({node.Scale.X}, {node.Scale.Y}, {node.Scale.Z})", guid);
-                    await Output.Write($"   ??? 1 ({node.Vector1.X}, {node.Vector1.Y}, {node.Vector1.Z})", guid);
-                    await Output.Write($"   ??? 2 ({node.Vector2.X}, {node.Vector2.Y}, {node.Vector2.Z})", guid);
-                    await Output.Write(guid);
-                    break;
-                }
+                meshString += $" ({meshIds.First()})";
             }
+            else if (meshIds.Count() > 1)
+            {
+                meshString += $" ({meshIds.First()} - {meshIds.Last()})";
+            }
+            await Output.Write($"Node: {node.Name} [{_selectedNodeId}] {(node.Enabled ? "On " : "Off")}{meshString}", guid);
+            await Output.Write($"{node.Type} - Parent {node.ParentIndex}, Child {node.ChildIndex}, Next {node.NextIndex}", guid);
+            await Output.Write($"Position ({node.Position.X}, {node.Position.Y}, {node.Position.Z})", guid);
+            await Output.Write($"Rotation ({node.Angle.X}, {node.Angle.Y}, {node.Angle.Z})", guid);
+            await Output.Write($"   Scale ({node.Scale.X}, {node.Scale.Y}, {node.Scale.Z})", guid);
+            await Output.Write($"   ??? 1 ({node.Vector1.X}, {node.Vector1.Y}, {node.Vector1.Z})", guid);
+            await Output.Write($"   ??? 2 ({node.Vector2.X}, {node.Vector2.Y}, {node.Vector2.Z})", guid);
+            await Output.Write(guid);
+        }
+
+        private async Task PrintMeshInfo(Guid guid)
+        {
+            await PrintNodeInfo(guid);
             Mesh mesh = SelectedModel.Meshes[_selectedMeshId];
             await Output.Write($"Mesh: [{_selectedMeshId}] {(mesh.Visible ? "On " : "Off")}", guid);
             await Output.Write($"Material ID {mesh.MaterialId}, DList ID {mesh.DlistId}", guid);

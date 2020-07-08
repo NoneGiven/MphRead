@@ -157,6 +157,19 @@ namespace MphRead
             return Recolors[CurrentRecolor].GetPixels(textureId, paletteId);
         }
 
+        public IEnumerable<Mesh> GetNodeMeshes(int nodeId)
+        {
+            return GetNodeMeshes(Nodes[nodeId]);
+        }
+
+        public IEnumerable<Mesh> GetNodeMeshes(Node node)
+        {
+            foreach (int meshId in node.GetMeshIds())
+            {
+                yield return Meshes[meshId];
+            }
+        }
+
         public void PrintImages(int recolor = 0)
         {
             if (recolor >= 0 && recolor < Recolors.Count)
@@ -428,6 +441,15 @@ namespace MphRead
         public byte Type { get; }
         public Matrix4 Transform { get; set; } = Matrix4.Identity;
 
+        public IEnumerable<int> GetMeshIds()
+        {
+            int start = MeshId / 2;
+            for (int i = 0; i < MeshCount; i++)
+            {
+                yield return start + i;
+            }
+        }
+        
         public Node(RawNode raw)
         {
             Name = raw.Name;

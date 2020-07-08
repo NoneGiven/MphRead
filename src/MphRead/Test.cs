@@ -166,13 +166,8 @@ namespace MphRead
                     if (node.Position.X != 0 || node.Position.Y != 0 || node.Position.Z != 0)
                     {
                         Console.Write($"{node.Name} [{i}] - ");
-                        var ids = new List<int>();
-                        int meshStart = node.MeshId / 2;
-                        for (int j = 0; j < node.MeshCount; j++)
-                        {
-                            ids.Add(meshStart + j);
-                        }
-                        if (ids.Count == 0)
+                        IEnumerable<int> ids = node.GetMeshIds();
+                        if (ids.Count() == 0)
                         {
                             Console.WriteLine("none");
                         }
