@@ -390,6 +390,8 @@ namespace MphRead
 
             // sktodo:
             // - allow selecting nodes
+            // - allow entering scene ID/mesh ID to select
+            // - make a "go to/look at" function for the selected model/mesh
             if (_selectionMode != SelectionMode.None)
             {
                 if (_selectionMode == SelectionMode.Mesh)
@@ -1670,7 +1672,7 @@ namespace MphRead
             await Output.Write($"Material ID {mesh.MaterialId}, DList ID {mesh.DlistId}", guid);
             await Output.Write(guid);
             Material material = SelectedModel.Materials[mesh.MaterialId];
-            await Output.Write($"Material: {material.Name} [{material.RenderMode}, {material.PolygonMode}]", guid);
+            await Output.Write($"Material: {material.Name} - {material.RenderMode}, {material.PolygonMode}", guid);
             await Output.Write($"Lighting {material.Lighting}, Alpha {material.Alpha}", guid);
             await Output.Write($"Texture ID {material.TextureId}, Palette ID {material.PaletteId}", guid);
             await Output.Write($" Diffuse ({material.Diffuse.Red}, {material.Diffuse.Green}, {material.Diffuse.Blue})", guid);
