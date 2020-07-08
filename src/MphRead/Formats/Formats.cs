@@ -438,7 +438,7 @@ namespace MphRead
         public Vector3 Position { get; set; }
         public Vector3 Vector1 { get; }
         public Vector3 Vector2 { get; }
-        public byte Type { get; }
+        public bool Billboard { get; }
         public Matrix4 Transform { get; set; } = Matrix4.Identity;
 
         public IEnumerable<int> GetMeshIds()
@@ -468,7 +468,7 @@ namespace MphRead
             Position = raw.Position.ToFloatVector();
             Vector1 = raw.Vector1.ToFloatVector();
             Vector2 = raw.Vector2.ToFloatVector();
-            Type = raw.Type;
+            Billboard = raw.Billboard != 0;
         }
     }
 

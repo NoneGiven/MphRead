@@ -159,23 +159,6 @@ namespace MphRead
                 for (int i = 0; i < room.Nodes.Count; i++)
                 {
                     Node node = room.Nodes[i];
-                    if (node.Name.ToLower().Contains("etag"))
-                    {
-                        continue;
-                    }
-                    if (node.Position.X != 0 || node.Position.Y != 0 || node.Position.Z != 0)
-                    {
-                        Console.Write($"{node.Name} [{i}] - ");
-                        IEnumerable<int> ids = node.GetMeshIds();
-                        if (ids.Count() == 0)
-                        {
-                            Console.WriteLine("none");
-                        }
-                        else
-                        {
-                            Console.WriteLine(String.Join(", ", ids));
-                        }
-                    }
                 }
                 Console.WriteLine();
             }
