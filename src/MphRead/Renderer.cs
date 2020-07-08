@@ -707,7 +707,7 @@ namespace MphRead
                     // node transforms applied to room meshes only seem to break things (positions are wrong)
                     if (model.Type == ModelType.Room)
                     {
-                        transform = transform.ClearTranslation();
+                        transform = Matrix4.Identity;
                     }
                     GL.MultMatrix(ref transform);
                 }
