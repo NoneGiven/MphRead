@@ -1825,7 +1825,16 @@ namespace MphRead
             await Output.Write(guid);
             await Output.Write($"Model: {model.Name} [{model.SceneId}] {(model.Visible ? "On " : "Off")} - " +
                 $"Color {model.CurrentRecolor} / {model.Recolors.Count - 1}", guid);
-            await Output.Write($"{model.Type}{(model.Type == ModelType.Placeholder ? $" - {model.EntityType}" : "")}", guid);
+            string type = $"{model.Type}";
+            if (model.Type == ModelType.Room)
+            {
+                type += $" ({model.Nodes.Count(n => n.IsRoomNode)})";
+            }
+            else if (model.Type == ModelType.Placeholder)
+            {
+                type += $" - {model.EntityType}";
+            }
+            await Output.Write(type, guid);
             // todo: pickup rotation shows up, but the floating height change does not, would be nice to be consistent
             await Output.Write($"Position ({model.Position.X}, {model.Position.Y}, {model.Position.Z})", guid);
             await Output.Write($"Rotation ({model.Rotation.X}, {model.Rotation.Y}, {model.Rotation.Z})", guid);
