@@ -390,7 +390,6 @@ namespace MphRead
             }
 
             // sktodo:
-            // - option to iterate between room nodes only
             // - make a "go to/look at" function for the selected model/mesh
             if (_selectionMode != SelectionMode.None)
             {
