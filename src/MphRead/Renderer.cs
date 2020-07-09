@@ -389,8 +389,6 @@ namespace MphRead
                 await PrintOutput();
             }
 
-            // sktodo:
-            // - make a "go to/look at" function for the selected model/mesh
             if (_selectionMode != SelectionMode.None)
             {
                 if (_selectionMode == SelectionMode.Mesh)
@@ -496,7 +494,7 @@ namespace MphRead
             }
             _flashUp = false;
         }
-        
+
         private void ResetCamera()
         {
             _angleY = 0;
@@ -505,6 +503,41 @@ namespace MphRead
             if (_cameraMode == CameraMode.Roam)
             {
                 _cameraPosition = new Vector3(0, 0, 0);
+            }
+        }
+
+        private bool FloatEqual(float one, float two)
+        {
+            return MathF.Abs(one - two) < 0.001f;
+        }
+
+        private void LookAt(Vector3 target, bool goTo)
+        {
+            if (_cameraMode == CameraMode.Roam)
+            {
+                if (goTo)
+                {
+                    _cameraPosition = target.WithZ(target.Z - 5);
+                }
+                Vector3 position = -1 * _cameraPosition;
+                Vector3 unit = FloatEqual(position.Z, target.Z) && FloatEqual(position.X, target.X)
+                    ? Vector3.UnitZ
+                    : Vector3.UnitY;
+                Matrix4.LookAt(position, target, unit).ExtractRotation().ToEulerAngles(out Vector3 angles);
+                _angleY = MathHelper.RadiansToDegrees(angles.X + angles.Z);
+                if (_angleY < -90)
+                {
+                    _angleY += 360;
+                }
+                else if (_angleY > 90)
+                {
+                    _angleY -= 360;
+                }
+                _angleX = MathHelper.RadiansToDegrees(angles.Y);
+                if (FloatEqual(MathF.Abs(angles.Z), MathF.PI))
+                {
+                    _angleX = 180 - _angleX;
+                }
             }
         }
 
