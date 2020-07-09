@@ -518,7 +518,7 @@ namespace MphRead
             {
                 if (!skipGoTo)
                 {
-                    _cameraPosition = target.WithZ(target.Z - 5);
+                    _cameraPosition = -1 * target.WithZ(target.Z + 5);
                 }
                 Vector3 position = -1 * _cameraPosition;
                 Vector3 unit = FloatEqual(position.Z, target.Z) && FloatEqual(position.X, target.X)
@@ -1892,13 +1892,13 @@ namespace MphRead
 
         private async Task PrintNodeInfo(Guid guid)
         {
-            static string FormatNode(int otherId)
+            string FormatNode(int otherId)
             {
                 if (otherId == UInt16.MaxValue)
                 {
                     return "None";
                 }
-                return otherId.ToString();
+                return $"{SelectedModel.Nodes[otherId].Name} [{otherId}]";
             }
             await PrintModelInfo(guid);
             Node node = SelectedModel.Nodes[_selectedNodeId];
@@ -1915,13 +1915,14 @@ namespace MphRead
             string enabled = node.Enabled ? (SelectedModel.NodeParentsEnabled(node) ? "On " : "On*") : "Off";
             string billboard = node.Billboard ? " - Billboard" : "";
             await Output.Write($"Node: {node.Name} [{_selectedNodeId}] {enabled}{mesh}{billboard}", guid);
-            await Output.Write($"Parent {FormatNode(node.ParentIndex)}, " +
-                $"Child {FormatNode(node.ChildIndex)}, Next {FormatNode(node.NextIndex)}", guid);
+            await Output.Write($"Parent {FormatNode(node.ParentIndex)}", guid);
+            await Output.Write($" Child {FormatNode(node.ChildIndex)}", guid);
+            await Output.Write($"  Next {FormatNode(node.NextIndex)}", guid);
             await Output.Write($"Position ({node.Position.X}, {node.Position.Y}, {node.Position.Z})", guid);
             await Output.Write($"Rotation ({node.Angle.X}, {node.Angle.Y}, {node.Angle.Z})", guid);
             await Output.Write($"   Scale ({node.Scale.X}, {node.Scale.Y}, {node.Scale.Z})", guid);
-            await Output.Write($"   ??? 1 ({node.Vector1.X}, {node.Vector1.Y}, {node.Vector1.Z})", guid);
-            await Output.Write($"   ??? 2 ({node.Vector2.X}, {node.Vector2.Y}, {node.Vector2.Z})", guid);
+            //await Output.Write($"   ??? 1 ({node.Vector1.X}, {node.Vector1.Y}, {node.Vector1.Z})", guid);
+            //await Output.Write($"   ??? 2 ({node.Vector2.X}, {node.Vector2.Y}, {node.Vector2.Z})", guid);
             await Output.Write(guid);
         }
 
@@ -1936,9 +1937,9 @@ namespace MphRead
             await Output.Write($"Material: {material.Name} [{mesh.MaterialId}] - {material.RenderMode}, {material.PolygonMode}", guid);
             await Output.Write($"Lighting {material.Lighting}, Alpha {material.Alpha}", guid);
             await Output.Write($"Texture ID {material.TextureId}, Palette ID {material.PaletteId}", guid);
-            await Output.Write($" Diffuse ({material.Diffuse.Red}, {material.Diffuse.Green}, {material.Diffuse.Blue})", guid);
-            await Output.Write($" Ambient ({material.Ambient.Red}, {material.Ambient.Green}, {material.Ambient.Blue})", guid);
-            await Output.Write($"Specular ({material.Specular.Red}, {material.Specular.Green}, {material.Specular.Blue})", guid);
+            await Output.Write($"Diffuse ({material.Diffuse.Red}, {material.Diffuse.Green}, {material.Diffuse.Blue})" +
+                $" Ambient ({material.Ambient.Red}, {material.Ambient.Green}, {material.Ambient.Blue})" +
+                $"Specular({ material.Specular.Red}, { material.Specular.Green}, { material.Specular.Blue})", guid);
             await Output.Write(guid);
         }
 
