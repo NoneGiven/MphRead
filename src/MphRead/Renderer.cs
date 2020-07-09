@@ -1867,7 +1867,7 @@ namespace MphRead
         {
             Model model = SelectedModel;
             await Output.Write(guid);
-            await Output.Write($"Camera ({_cameraPosition.X}, {_cameraPosition.Y}, {_cameraPosition.Z})", guid);
+            await Output.Write($"Camera ({_cameraPosition.X * -1}, {_cameraPosition.Y * -1}, {_cameraPosition.Z * -1})", guid);
             await Output.Write(guid);
             await Output.Write($"Model: {model.Name} [{model.SceneId}] {(model.Visible ? "On " : "Off")} - " +
                 $"Color {model.CurrentRecolor} / {model.Recolors.Count - 1}", guid);
