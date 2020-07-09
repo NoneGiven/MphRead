@@ -185,6 +185,38 @@ namespace MphRead
             return true;
         }
 
+        public int GetNextRoomNodeId(int nodeId)
+        {
+            for (int i = nodeId + 1; i != nodeId; i++)
+            {
+                if (i > Nodes.Count - 1)
+                {
+                    i = 0;
+                }
+                if (Nodes[i].IsRoomNode)
+                {
+                    return i;
+                }
+            }
+            return nodeId;
+        }
+
+        public int GetPreviousRoomNodeId(int nodeId)
+        {
+            for (int i = nodeId - 1; i != nodeId; i--)
+            {
+                if (i < 0)
+                {
+                    i = Nodes.Count - 1;
+                }
+                if (Nodes[i].IsRoomNode)
+                {
+                    return i;
+                }
+            }
+            return nodeId;
+        }
+
         public void PrintImages(int recolor = 0)
         {
             if (recolor >= 0 && recolor < Recolors.Count)
@@ -464,7 +496,9 @@ namespace MphRead
                 yield return start + i;
             }
         }
-        
+
+        public bool IsRoomNode { get; private set; }
+
         public Node(RawNode raw)
         {
             Name = raw.Name;
@@ -484,6 +518,7 @@ namespace MphRead
             Vector1 = raw.Vector1.ToFloatVector();
             Vector2 = raw.Vector2.ToFloatVector();
             Billboard = raw.Billboard != 0;
+            IsRoomNode = Name.StartsWith("rm");
         }
     }
 

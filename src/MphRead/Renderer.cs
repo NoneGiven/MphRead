@@ -1489,15 +1489,22 @@ namespace MphRead
                     }
                     else if (_selectionMode == SelectionMode.Node)
                     {
-                        // todo: might be nice if this followed the node hierarchy
-                        int nodeIndex = _selectedNodeId + 1;
-                        if (nodeIndex > model.Nodes.Count - 1)
+                        int nodeIndex;
+                        if (e.Shift)
                         {
-                            nodeIndex = 0;
+                            nodeIndex = model.GetNextRoomNodeId(_selectedNodeId);
                         }
-                        if (SelectedModel.Nodes[nodeIndex].MeshCount > 0)
+                        else
                         {
-                            _selectedMeshId = SelectedModel.Nodes[nodeIndex].GetMeshIds().First();
+                            nodeIndex = _selectedNodeId + 1;
+                            if (nodeIndex > model.Nodes.Count - 1)
+                            {
+                                nodeIndex = 0;
+                            }
+                        }
+                        if (model.Nodes[nodeIndex].MeshCount > 0)
+                        {
+                            _selectedMeshId = model.Nodes[nodeIndex].GetMeshIds().First();
                         }
                         else
                         {
@@ -1545,14 +1552,22 @@ namespace MphRead
                     }
                     else if (_selectionMode == SelectionMode.Node)
                     {
-                        int nodeIndex = _selectedNodeId - 1;
-                        if (nodeIndex < 0)
+                        int nodeIndex;
+                        if (e.Shift)
                         {
-                            nodeIndex = model.Nodes.Count - 1;
+                            nodeIndex = model.GetPreviousRoomNodeId(_selectedNodeId);
                         }
-                        if (SelectedModel.Nodes[nodeIndex].MeshCount > 0)
+                        else
                         {
-                            _selectedMeshId = SelectedModel.Nodes[nodeIndex].GetMeshIds().First();
+                            nodeIndex = _selectedNodeId - 1;
+                            if (nodeIndex < 0)
+                            {
+                                nodeIndex = model.Nodes.Count - 1;
+                            }
+                        }
+                        if (model.Nodes[nodeIndex].MeshCount > 0)
+                        {
+                            _selectedMeshId = model.Nodes[nodeIndex].GetMeshIds().First();
                         }
                         else
                         {
