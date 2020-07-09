@@ -98,8 +98,8 @@ namespace MphRead
         private Model SelectedModel => _modelMap[_selectedModelId];
 
         private CameraMode _cameraMode = CameraMode.Pivot;
-        private float _angleX = 0.0f;
         private float _angleY = 0.0f;
+        private float _angleX = 0.0f;
         private float _distance = 5.0f;
         private Vector3 _cameraPosition = new Vector3(0, 0, 0);
         private bool _leftMouse = false;
@@ -497,8 +497,8 @@ namespace MphRead
 
         private void ResetCamera()
         {
-            _angleY = 0;
             _angleX = 0;
+            _angleY = 0;
             _distance = 5.0f;
             if (_cameraMode == CameraMode.Roam)
             {
@@ -524,19 +524,19 @@ namespace MphRead
                     ? Vector3.UnitZ
                     : Vector3.UnitY;
                 Matrix4.LookAt(position, target, unit).ExtractRotation().ToEulerAngles(out Vector3 angles);
-                _angleY = MathHelper.RadiansToDegrees(angles.X + angles.Z);
-                if (_angleY < -90)
+                _angleX = MathHelper.RadiansToDegrees(angles.X + angles.Z);
+                if (_angleX < -90)
                 {
-                    _angleY += 360;
+                    _angleX += 360;
                 }
-                else if (_angleY > 90)
+                else if (_angleX > 90)
                 {
-                    _angleY -= 360;
+                    _angleX -= 360;
                 }
-                _angleX = MathHelper.RadiansToDegrees(angles.Y);
+                _angleY = MathHelper.RadiansToDegrees(angles.Y);
                 if (FloatEqual(MathF.Abs(angles.Z), MathF.PI))
                 {
-                    _angleX = 180 - _angleX;
+                    _angleY = 180 - _angleY;
                 }
             }
         }
@@ -548,13 +548,13 @@ namespace MphRead
             if (_cameraMode == CameraMode.Pivot)
             {
                 GL.Translate(0, 0, _distance * -1);
-                GL.Rotate(_angleY, 1, 0, 0);
-                GL.Rotate(_angleX, 0, 1, 0);
+                GL.Rotate(_angleX, 1, 0, 0);
+                GL.Rotate(_angleY, 0, 1, 0);
             }
             else if (_cameraMode == CameraMode.Roam)
             {
-                GL.Rotate(_angleY, 1, 0, 0);
-                GL.Rotate(_angleX, 0, 1, 0);
+                GL.Rotate(_angleX, 1, 0, 0);
+                GL.Rotate(_angleY, 0, 1, 0);
                 GL.Translate(_cameraPosition.X, _cameraPosition.Y, _cameraPosition.Z);
             }
         }
@@ -563,12 +563,12 @@ namespace MphRead
         {
             if (_cameraMode == CameraMode.Pivot)
             {
-                float angleX = _angleX + 90;
+                float angleX = _angleY + 90;
                 if (angleX > 360)
                 {
                     angleX -= 360;
                 }
-                float angleY = _angleY + 90;
+                float angleY = _angleX + 90;
                 if (angleY > 360)
                 {
                     angleY -= 360;
@@ -1331,10 +1331,10 @@ namespace MphRead
         {
             if (_leftMouse)
             {
-                _angleY -= e.DeltaY / 1.5f;
-                _angleY = Math.Clamp(_angleY, -90.0f, 90.0f);
-                _angleX -= e.DeltaX / 1.5f;
-                _angleX %= 360f;
+                _angleX -= e.DeltaY / 1.5f;
+                _angleX = Math.Clamp(_angleX, -90.0f, 90.0f);
+                _angleY -= e.DeltaX / 1.5f;
+                _angleY %= 360f;
             }
             base.OnMouseMove(e);
         }
@@ -1703,26 +1703,26 @@ namespace MphRead
                 {
                     _cameraPosition = new Vector3(
                         _cameraPosition.X +
-                            step * MathF.Sin(MathHelper.DegreesToRadians(-1 * _angleX))
-                            * MathF.Cos(MathHelper.DegreesToRadians(_angleY)) * 0.1f,
+                            step * MathF.Sin(MathHelper.DegreesToRadians(-1 * _angleY))
+                            * MathF.Cos(MathHelper.DegreesToRadians(_angleX)) * 0.1f,
                         _cameraPosition.Y +
-                            step * MathF.Sin(MathHelper.DegreesToRadians(_angleY)) * 0.1f,
+                            step * MathF.Sin(MathHelper.DegreesToRadians(_angleX)) * 0.1f,
                         _cameraPosition.Z +
-                            step * MathF.Cos(MathHelper.DegreesToRadians(_angleX))
-                            * MathF.Cos(MathHelper.DegreesToRadians(_angleY)) * 0.1f
+                            step * MathF.Cos(MathHelper.DegreesToRadians(_angleY))
+                            * MathF.Cos(MathHelper.DegreesToRadians(_angleX)) * 0.1f
                     );
                 }
                 else if (KeyboardState.IsKeyDown(Key.S)) // move backward
                 {
                     _cameraPosition = new Vector3(
                         _cameraPosition.X -
-                            step * MathF.Sin(MathHelper.DegreesToRadians(-1 * _angleX))
-                            * MathF.Cos(MathHelper.DegreesToRadians(_angleY)) * 0.1f,
+                            step * MathF.Sin(MathHelper.DegreesToRadians(-1 * _angleY))
+                            * MathF.Cos(MathHelper.DegreesToRadians(_angleX)) * 0.1f,
                         _cameraPosition.Y -
-                            step * MathF.Sin(MathHelper.DegreesToRadians(_angleY)) * 0.1f,
+                            step * MathF.Sin(MathHelper.DegreesToRadians(_angleX)) * 0.1f,
                         _cameraPosition.Z -
-                            step * MathF.Cos(MathHelper.DegreesToRadians(_angleX))
-                            * MathF.Cos(MathHelper.DegreesToRadians(_angleY)) * 0.1f
+                            step * MathF.Cos(MathHelper.DegreesToRadians(_angleY))
+                            * MathF.Cos(MathHelper.DegreesToRadians(_angleX)) * 0.1f
                     );
                 }
                 if (KeyboardState.IsKeyDown(Key.Space)) // move up
@@ -1735,7 +1735,7 @@ namespace MphRead
                 }
                 if (KeyboardState.IsKeyDown(Key.A)) // move left
                 {
-                    float angleX = _angleX - 90;
+                    float angleX = _angleY - 90;
                     if (angleX < 0)
                     {
                         angleX += 360;
@@ -1752,7 +1752,7 @@ namespace MphRead
                 }
                 else if (KeyboardState.IsKeyDown(Key.D)) // move right
                 {
-                    float angleX = _angleX + 90;
+                    float angleX = _angleY + 90;
                     if (angleX > 360)
                     {
                         angleX -= 360;
@@ -1771,23 +1771,23 @@ namespace MphRead
             }
             if (KeyboardState.IsKeyDown(Key.Up)) // rotate up
             {
-                _angleY += step;
-                _angleY = Math.Clamp(_angleY, -90.0f, 90.0f);
+                _angleX += step;
+                _angleX = Math.Clamp(_angleX, -90.0f, 90.0f);
             }
             else if (KeyboardState.IsKeyDown(Key.Down)) // rotate down
             {
-                _angleY -= step;
-                _angleY = Math.Clamp(_angleY, -90.0f, 90.0f);
+                _angleX -= step;
+                _angleX = Math.Clamp(_angleX, -90.0f, 90.0f);
             }
             if (KeyboardState.IsKeyDown(Key.Left)) // rotate left
             {
-                _angleX += step;
-                _angleX %= 360f;
+                _angleY += step;
+                _angleY %= 360f;
             }
             else if (KeyboardState.IsKeyDown(Key.Right)) // rotate right
             {
-                _angleX -= step;
-                _angleX %= 360f;
+                _angleY -= step;
+                _angleY %= 360f;
             }
         }
 
