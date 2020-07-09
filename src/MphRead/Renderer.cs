@@ -101,6 +101,7 @@ namespace MphRead
         private float _angleY = 0.0f;
         private float _angleX = 0.0f;
         private float _distance = 5.0f;
+        // todo: somehow the axes are reversed from the model coordinates
         private Vector3 _cameraPosition = new Vector3(0, 0, 0);
         private bool _leftMouse = false;
         public int _textureCount = 0;
@@ -511,11 +512,11 @@ namespace MphRead
             return MathF.Abs(one - two) < 0.001f;
         }
 
-        private void LookAt(Vector3 target, bool goTo)
+        private void LookAt(Vector3 target, bool skipGoTo)
         {
             if (_cameraMode == CameraMode.Roam)
             {
-                if (goTo)
+                if (!skipGoTo)
                 {
                     _cameraPosition = target.WithZ(target.Z - 5);
                 }
@@ -1623,6 +1624,18 @@ namespace MphRead
                         SetSelectedModel(nextModel.SceneId);
                     }
                     await PrintOutput();
+                }
+            }
+            else if (e.Key == Key.X)
+            {
+                if (_selectionMode == SelectionMode.Model)
+                {
+                    LookAt(SelectedModel.Position, e.Control);
+                }
+                else if (_selectionMode == SelectionMode.Node || _selectionMode == SelectionMode.Mesh)
+                {
+                    // todo: could keep track of vertex positions during rendering and use them here to locate the mesh
+                    LookAt(SelectedModel.Nodes[_selectedNodeId].Position, e.Control);
                 }
             }
             else if (e.Key == Key.Number0 || e.Key == Key.Keypad0)
