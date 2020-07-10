@@ -29,7 +29,7 @@ namespace MphRead
             return MathF.Round(input, 6, MidpointRounding.AwayFromZero).ToString("F6");
         }
 
-        public static void ExportModel(Model model, bool flattenMeshes, int recolor = 0)
+        public static void ExportModel(Model model, bool transformRoom = false, int recolor = 0)
         {
             var sb = new StringBuilder();
 
@@ -436,11 +436,7 @@ namespace MphRead
             // scene
             sb.Append("\n\t<library_visual_scenes>");
             sb.Append("\n\t\t<visual_scene id=\"Scene\" name=\"Scene\">\n");
-            if (flattenMeshes)
-            {
-                ExportDummyNode(model, sb, 3);
-            }
-            ExportNodes(model, UInt16.MaxValue, sb, 3, flattenMeshes);
+            ExportNodes(model, UInt16.MaxValue, sb, 3, transformRoom);
             sb.Append("\t\t</visual_scene>");
             sb.Append("\n\t</library_visual_scenes>");
 
@@ -449,20 +445,10 @@ namespace MphRead
 
             string exportPath = Path.Combine(Paths.Export, model.Name);
             Directory.CreateDirectory(exportPath);
-            string suffix = flattenMeshes ? "_flat" : "";
-            File.WriteAllText(Path.Combine(exportPath, $"{model.Name}{suffix}.dae"), sb.ToString());
+            File.WriteAllText(Path.Combine(exportPath, $"{model.Name}.dae"), sb.ToString());
         }
 
-        private static void ExportDummyNode(Model model, StringBuilder sb, int indent)
-        {
-            sb.Append('\t', indent);
-            sb.Append($"<node id=\"_export_dummy\" type=\"NODE\">\n");
-            ExportAllMeshes(model, sb, indent + 1);
-            sb.Append('\t', indent);
-            sb.Append($"</node>\n");
-        }
-
-        private static void ExportNodes(Model model, int parentId, StringBuilder sb, int indent, bool flattenMeshes)
+        private static void ExportNodes(Model model, int parentId, StringBuilder sb, int indent, bool transformRoom)
         {
             for (int i = 0; i < model.Nodes.Count; i++)
             {
@@ -480,14 +466,18 @@ namespace MphRead
                     sb.Append('\t', indent + 1);
                     sb.Append($"<scale>{FloatFormat(node.Scale)}</scale>\n");
                     sb.Append('\t', indent + 1);
-                    sb.Append($"<translate>{FloatFormat(node.Position)}</translate>\n");
-                    if (!flattenMeshes)
+                    if (model.Type != ModelType.Room || transformRoom)
                     {
-                        ExportNodeMeshes(model, i, sb, indent + 1);
+                        sb.Append($"<translate>{FloatFormat(node.Position)}</translate>\n");
                     }
+                    else
+                    {
+                        sb.Append($"<translate>0.0 0.0 0.0</translate>\n");
+                    }
+                    ExportNodeMeshes(model, i, sb, indent + 1);
                     if (node.ChildIndex != UInt16.MaxValue)
                     {
-                        ExportNodes(model, i, sb, indent + 1, flattenMeshes);
+                        ExportNodes(model, i, sb, indent + 1, transformRoom);
                     }
                     sb.Append('\t', indent);
                     sb.Append($"</node>\n");
@@ -495,14 +485,6 @@ namespace MphRead
             }
         }
 
-        private static void ExportAllMeshes(Model model, StringBuilder sb, int indent)
-        {
-            for (int i = 0; i < model.Meshes.Count; i++)
-            {
-                ExportMesh(model, i, sb, indent);
-            }
-        }
-        
         private static void ExportNodeMeshes(Model model, int nodeId, StringBuilder sb, int indent)
         {
             foreach (int meshId in model.Nodes[nodeId].GetMeshIds())
