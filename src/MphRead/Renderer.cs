@@ -770,7 +770,7 @@ namespace MphRead
                         : material.GetEffectiveRenderMode(mesh);
                     if ((!invertFilter && renderMode != modeFilter)
                         || (invertFilter && renderMode == modeFilter)
-                        || (_selectionMode == SelectionMode.None && (!model.Visible || !mesh.Visible)))
+                        || !model.Visible || !mesh.Visible)
                     {
                         continue;
                     }
