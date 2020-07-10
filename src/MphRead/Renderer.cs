@@ -907,16 +907,19 @@ namespace MphRead
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
                 AnimateTexcoords(model, material, width, height);
             }
-            else if (material.TexgenMode != TexgenMode.None && model.TextureMatrices.Count > 0)
+            else if (material.TexgenMode != TexgenMode.None)
             {
-                Matrix4 matrix = model.TextureMatrices[material.MatrixId];
-                GL.LoadMatrix(ref matrix);
-            }
-            else if (material.TexgenMode != 0)
-            {
-                GL.Translate(material.TranslateS, material.TranslateT, 0.0f);
-                GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
-                GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+                if (model.TextureMatrices.Count > 0)
+                {
+                    Matrix4 matrix = model.TextureMatrices[material.MatrixId];
+                    GL.LoadMatrix(ref matrix);
+                }
+                else
+                {
+                    GL.Translate(material.TranslateS, material.TranslateT, 0.0f);
+                    GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
+                    GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+                }
             }
             else
             {
