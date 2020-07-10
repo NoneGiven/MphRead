@@ -262,12 +262,24 @@ namespace MphRead
                     // compensate for glScalef(1.0f / tex->texture->getWidth()) of texture space which is applied during rendering
                     if (material.TextureId != UInt16.MaxValue)
                     {
+                        float factorS = 1;
+                        float factorT = 1;
+                        // todo: handle material translation (find an example where it's nonzero)
+                        // todo: handle texture matrices?
+                        if (material.TexgenMode != TexgenMode.None && model.TextureMatrices.Count == 0)
+                        {
+                            factorS = material.ScaleS;
+                            factorT = material.ScaleT;
+                        }
+                        var newUv = new Vector2(
+                            vert.Uv.X * factorS * (1.0f / tex.Width),
+                            vert.Uv.Y * factorT * (1.0f / tex.Height));
                         var newVert = new Vertex()
                         {
                             Position = vert.Position,
                             Color = vert.Color,
                             Normal = vert.Normal,
-                            Uv = new Vector2(vert.Uv.X * (1.0f / tex.Width), vert.Uv.Y * (1.0f / tex.Height))
+                            Uv = newUv
                         };
                         string texCoord = $"{FloatFormat(newVert.Uv.X)} {FloatFormat(1 - newVert.Uv.Y)} ";
                         sb.Append(texCoord);
