@@ -269,7 +269,7 @@ namespace MphRead
                             Normal = vert.Normal,
                             Uv = new Vector2(vert.Uv.X * (1.0f / tex.Width), vert.Uv.Y * (1.0f / tex.Height))
                         };
-                        string texCoord = $"{FloatFormat(newVert.Uv.X)} {FloatFormat(newVert.Uv.Y)} ";
+                        string texCoord = $"{FloatFormat(newVert.Uv.X)} {FloatFormat(1 - newVert.Uv.Y)} ";
                         sb.Append(texCoord);
                         meshVerts.RemoveAt(i);
                         meshVerts.Insert(i, newVert);
