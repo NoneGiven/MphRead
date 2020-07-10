@@ -469,11 +469,11 @@ namespace MphRead
                     sb.Append('\t', indent);
                     sb.Append($"<node id=\"{node.Name}\" type=\"NODE\">\n");
                     sb.Append('\t', indent + 1);
-                    sb.Append($"<rotate>1.0 0.0 0.0 {FloatFormat(node.Angle.X)}</rotate>\n");
+                    sb.Append($"<rotate>1.0 0.0 0.0 {FloatFormat(MathHelper.RadiansToDegrees(node.Angle.X))}</rotate>\n");
                     sb.Append('\t', indent + 1);
-                    sb.Append($"<rotate>0.0 1.0 0.0 {FloatFormat(node.Angle.Y)}</rotate>\n");
+                    sb.Append($"<rotate>0.0 1.0 0.0 {FloatFormat(MathHelper.RadiansToDegrees(node.Angle.Y))}</rotate>\n");
                     sb.Append('\t', indent + 1);
-                    sb.Append($"<rotate>0.0 0.0 1.0 {FloatFormat(node.Angle.Z)}</rotate>\n");
+                    sb.Append($"<rotate>0.0 0.0 1.0 {FloatFormat(MathHelper.RadiansToDegrees(node.Angle.Z))}</rotate>\n");
                     sb.Append('\t', indent + 1);
                     sb.Append($"<scale>{FloatFormat(node.Scale)}</scale>\n");
                     sb.Append('\t', indent + 1);
