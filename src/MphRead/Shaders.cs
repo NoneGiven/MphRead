@@ -83,7 +83,7 @@ void main()
             col.b = override_color.b;
             col.a *= override_color.a;
         }
-    } else  {
+    } else {
         col = use_override ? override_color : color;
     }
     if(fog_enable) {
