@@ -29,7 +29,7 @@ namespace MphRead
             return MathF.Round(input, 6, MidpointRounding.AwayFromZero).ToString("F6");
         }
 
-        public static void ExportModel(Model model, bool flat, int recolor = 0)
+        public static void ExportModel(Model model, bool flattenMeshes, int recolor = 0)
         {
             var sb = new StringBuilder();
 
@@ -433,7 +433,11 @@ namespace MphRead
             // scene
             sb.Append("\n\t<library_visual_scenes>");
             sb.Append("\n\t\t<visual_scene id=\"Scene\" name=\"Scene\">\n");
-            ExportNodes(model, UInt16.MaxValue, sb, 3, flat);
+            if (flattenMeshes)
+            {
+                ExportDummyNode(model, sb, 3);
+            }
+            ExportNodes(model, UInt16.MaxValue, sb, 3, flattenMeshes);
             sb.Append("\t\t</visual_scene>");
             sb.Append("\n\t</library_visual_scenes>");
 
@@ -442,11 +446,21 @@ namespace MphRead
 
             string exportPath = Path.Combine(Paths.Export, model.Name);
             Directory.CreateDirectory(exportPath);
-            string suffix = flat ? "_flat" : "";
+            string suffix = flattenMeshes ? "_flat" : "";
             File.WriteAllText(Path.Combine(exportPath, $"{model.Name}{suffix}.dae"), sb.ToString());
         }
 
-        private static void ExportNodes(Model model, int parentId, StringBuilder sb, int indent, bool flat)
+        private static void ExportDummyNode(Model model, StringBuilder sb, int indent)
+        {
+            sb.Append('\t', indent);
+            sb.Append($"<node id=\"_export_dummy\" type=\"NODE\">\n");
+            sb.Append('\t', indent + 1);
+            ExportAllMeshes(model, sb, indent);
+            sb.Append('\t', indent);
+            sb.Append($"</node>\n");
+        }
+
+        private static void ExportNodes(Model model, int parentId, StringBuilder sb, int indent, bool flattenMeshes)
         {
             for (int i = 0; i < model.Nodes.Count; i++)
             {
@@ -457,10 +471,13 @@ namespace MphRead
                     sb.Append($"<node id=\"{node.Name}\" type=\"NODE\">\n");
                     sb.Append('\t', indent + 1);
                     sb.Append($"<translate>{FloatFormat(node.Position)}</translate>\n");
-                    ExportMeshes(model, i, sb, indent + 1, flat);
+                    if (!flattenMeshes)
+                    {
+                        ExportNodeMeshes(model, i, sb, indent + 1);
+                    }
                     if (node.ChildIndex != UInt16.MaxValue)
                     {
-                        ExportNodes(model, i, sb, indent + 1, flat);
+                        ExportNodes(model, i, sb, indent + 1, flattenMeshes);
                     }
                     sb.Append('\t', indent);
                     sb.Append($"</node>\n");
@@ -468,45 +485,45 @@ namespace MphRead
             }
         }
 
-        private static void ExportMeshes(Model model, int nodeId, StringBuilder sb, int indent, bool flat)
+        private static void ExportAllMeshes(Model model, StringBuilder sb, int indent)
         {
-            var meshIds = new List<int>();
-            // flat means export everything in the first node (usually world_root) to avoid position issues with room nodes
-            if (!flat)
+            for (int i = 0; i < model.Meshes.Count; i++)
             {
-                meshIds.AddRange(model.Nodes[nodeId].GetMeshIds());
+                ExportMesh(model, i, sb, indent);
             }
-            else if (nodeId == 0)
+        }
+        
+        private static void ExportNodeMeshes(Model model, int nodeId, StringBuilder sb, int indent)
+        {
+            foreach (int meshId in model.Nodes[nodeId].GetMeshIds())
             {
-                for (int i = 0; i < model.Meshes.Count; i++)
-                {
-                    meshIds.Add(i);
-                }
+                ExportMesh(model, meshId, sb, indent);
             }
-            foreach (int meshId in meshIds)
-            {
-                Mesh mesh = model.Meshes[meshId];
-                Material material = model.Materials[mesh.MaterialId];
-                string textureName = String.IsNullOrEmpty(material.Name) ? "null" : material.Name;
-                sb.Append('\t', indent);
-                sb.Append($"<instance_geometry url=\"#geometry{meshId + 1}\">\n");
-                sb.Append('\t', indent + 1);
-                sb.Append("<bind_material>\n");
-                sb.Append('\t', indent + 2);
-                sb.Append("<technique_common>\n");
-                sb.Append('\t', indent + 3);
-                sb.Append($"<instance_material symbol=\"{textureName}-material\" target=\"#{textureName}-material\">\n");
-                sb.Append('\t', indent + 4);
-                sb.Append("<bind_vertex_input semantic=\"UVMap\" input_semantic=\"TEXCOORD\" input_set=\"0\" />\n");
-                sb.Append('\t', indent + 3);
-                sb.Append("</instance_material>\n");
-                sb.Append('\t', indent + 2);
-                sb.Append("</technique_common>\n");
-                sb.Append('\t', indent + 1);
-                sb.Append("</bind_material>\n");
-                sb.Append('\t', indent);
-                sb.Append("</instance_geometry>\n");
-            }
+        }
+
+        private static void ExportMesh(Model model, int meshId, StringBuilder sb, int indent)
+        {
+            Mesh mesh = model.Meshes[meshId];
+            Material material = model.Materials[mesh.MaterialId];
+            string textureName = String.IsNullOrEmpty(material.Name) ? "null" : material.Name;
+            sb.Append('\t', indent);
+            sb.Append($"<instance_geometry url=\"#geometry{meshId + 1}\">\n");
+            sb.Append('\t', indent + 1);
+            sb.Append("<bind_material>\n");
+            sb.Append('\t', indent + 2);
+            sb.Append("<technique_common>\n");
+            sb.Append('\t', indent + 3);
+            sb.Append($"<instance_material symbol=\"{textureName}-material\" target=\"#{textureName}-material\">\n");
+            sb.Append('\t', indent + 4);
+            sb.Append("<bind_vertex_input semantic=\"UVMap\" input_semantic=\"TEXCOORD\" input_set=\"0\" />\n");
+            sb.Append('\t', indent + 3);
+            sb.Append("</instance_material>\n");
+            sb.Append('\t', indent + 2);
+            sb.Append("</technique_common>\n");
+            sb.Append('\t', indent + 1);
+            sb.Append("</bind_material>\n");
+            sb.Append('\t', indent);
+            sb.Append("</instance_geometry>\n");
         }
 
         private static void ExportDlist(Model model, int dlistId, List<Vertex> meshVerts, List<Vertex> tempMeshVerts)
