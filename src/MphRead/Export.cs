@@ -454,8 +454,7 @@ namespace MphRead
         {
             sb.Append('\t', indent);
             sb.Append($"<node id=\"_export_dummy\" type=\"NODE\">\n");
-            sb.Append('\t', indent + 1);
-            ExportAllMeshes(model, sb, indent);
+            ExportAllMeshes(model, sb, indent + 1);
             sb.Append('\t', indent);
             sb.Append($"</node>\n");
         }
