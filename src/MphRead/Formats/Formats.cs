@@ -60,6 +60,7 @@ namespace MphRead
             }
             set
             {
+                // todo: set scale and rotation when this is set
                 _position = new Vector3(value.M41, value.M42, value.M43);
                 _transform = value;
             }
@@ -150,6 +151,8 @@ namespace MphRead
             TextureMatrices = textureMatrices.Select(m => m.ToFloatMatrix()).ToList();
             Recolors = recolors;
             CurrentRecolor = defaultRecolor;
+            float scale = Header.ScaleBase.FloatValue * (1 << (int)Header.ScaleFactor);
+            Scale = new Vector3(scale, scale, scale);
         }
 
         public IEnumerable<ColorRgba> GetPixels(int textureId, int paletteId)

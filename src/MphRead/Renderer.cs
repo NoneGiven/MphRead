@@ -160,8 +160,6 @@ namespace MphRead
             {
                 _modelMap.Add(entity.SceneId, entity);
             }
-            float roomScale = room.Header.ScaleBase.FloatValue * (1 << (int)room.Header.ScaleFactor);
-            room.Scale = new Vector3(roomScale, roomScale, roomScale);
             _light1Vector = new Vector4(roomMeta.Light1Vector);
             _light1Color = new Vector4(
                 roomMeta.Light1Color.Red / 31.0f,
