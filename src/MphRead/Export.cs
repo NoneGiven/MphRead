@@ -178,7 +178,10 @@ namespace MphRead
                     var normal = Vector3.Cross(
                         meshVerts[i + 1].Position - meshVerts[i].Position,
                         meshVerts[i + 2].Position - meshVerts[i].Position);
-                    normal.Normalize();
+                    if (normal != Vector3.Zero)
+                    {
+                        normal.Normalize();
+                    }
                     string vertNormal = $"{FloatFormat(normal.X)} {FloatFormat(normal.Y)} {FloatFormat(normal.Z)} ";
                     sb.Append(vertNormal);
                     sb.Append(vertNormal);
