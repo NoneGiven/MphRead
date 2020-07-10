@@ -669,6 +669,8 @@ namespace MphRead
 
         private void RenderRoom(Model model)
         {
+            // todo: should use room nodes only as roots;
+            // need to handle other things (like force fields) separately
             GL.UseProgram(_shaderProgramId);
             UpdateUniforms();
             // pass 1: opaque
