@@ -1918,6 +1918,7 @@ namespace MphRead
             await Output.Write($"Parent {FormatNode(node.ParentIndex)}", guid);
             await Output.Write($" Child {FormatNode(node.ChildIndex)}", guid);
             await Output.Write($"  Next {FormatNode(node.NextIndex)}", guid);
+            // todo: position might need to be relative to parents?
             await Output.Write($"Position ({node.Position.X}, {node.Position.Y}, {node.Position.Z})", guid);
             await Output.Write($"Rotation ({node.Angle.X}, {node.Angle.Y}, {node.Angle.Z})", guid);
             await Output.Write($"   Scale ({node.Scale.X}, {node.Scale.Y}, {node.Scale.Z})", guid);

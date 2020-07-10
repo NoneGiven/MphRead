@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using OpenToolkit.Mathematics;
 
@@ -16,6 +17,11 @@ namespace MphRead
 
     public static class Export
     {
+        private static string FloatFormat(Vector3 vector)
+        {
+            return $"{FloatFormat(vector.X)} {FloatFormat(vector.Y)} {FloatFormat(vector.Z)}";
+        }
+
         private static string FloatFormat(float input)
         {
             // this is slightly more accurate than the %f format specifier used in MetroidModelViewer
@@ -23,7 +29,7 @@ namespace MphRead
             return MathF.Round(input, 6, MidpointRounding.AwayFromZero).ToString("F6");
         }
 
-        public static void ExportModel(Model model, int recolor = 0)
+        public static void ExportModel(Model model, bool flat, int recolor = 0)
         {
             var sb = new StringBuilder();
 
@@ -34,7 +40,7 @@ namespace MphRead
             // assets
             sb.Append("\n\t<asset>");
             sb.Append("\n\t\t<up_axis>Y_UP</up_axis>");
-            sb.Append("<unit name=\"meter\" meter=\"1\"/>");
+            sb.Append("<unit name=\"meter\" meter=\"1\" />");
             sb.Append("\n\t</asset>");
 
             // images
@@ -77,7 +83,7 @@ namespace MphRead
                 sb.Append(materialTag);
                 string instanceEffectTag = "\n\t\t\t<instance_effect url=\"#";
                 instanceEffectTag += textureName;
-                instanceEffectTag += "-effect\"/>";
+                instanceEffectTag += "-effect\" />";
                 sb.Append(instanceEffectTag);
                 sb.Append("\n\t\t</material>");
             }
@@ -145,9 +151,9 @@ namespace MphRead
                 accessorTag += numVertices.ToString();
                 accessorTag += "\" stride=\"3\">";
                 sb.Append(accessorTag);
-                sb.Append("\n\t\t\t\t\t\t\t<param name=\"X\" type=\"float\"/>");
-                sb.Append("\n\t\t\t\t\t\t\t<param name=\"Y\" type=\"float\"/>");
-                sb.Append("\n\t\t\t\t\t\t\t<param name=\"Z\" type=\"float\"/>");
+                sb.Append("\n\t\t\t\t\t\t\t<param name=\"X\" type=\"float\" />");
+                sb.Append("\n\t\t\t\t\t\t\t<param name=\"Y\" type=\"float\" />");
+                sb.Append("\n\t\t\t\t\t\t\t<param name=\"Z\" type=\"float\" />");
                 sb.Append("\n\t\t\t\t\t\t</accessor>");
                 sb.Append("\n\t\t\t\t\t</technique_common>");
                 sb.Append("\n\t\t\t\t</source>");
@@ -188,9 +194,9 @@ namespace MphRead
                 accessorTag += numVertices.ToString();
                 accessorTag += "\" stride=\"3\">";
                 sb.Append(accessorTag);
-                sb.Append("\n\t\t\t\t\t\t\t<param name=\"X\" type=\"float\"/>");
-                sb.Append("\n\t\t\t\t\t\t\t<param name=\"Y\" type=\"float\"/>");
-                sb.Append("\n\t\t\t\t\t\t\t<param name=\"Z\" type=\"float\"/>");
+                sb.Append("\n\t\t\t\t\t\t\t<param name=\"X\" type=\"float\" />");
+                sb.Append("\n\t\t\t\t\t\t\t<param name=\"Y\" type=\"float\" />");
+                sb.Append("\n\t\t\t\t\t\t\t<param name=\"Z\" type=\"float\" />");
                 sb.Append("\n\t\t\t\t\t\t</accessor>");
                 sb.Append("\n\t\t\t\t\t</technique_common>");
                 sb.Append("\n\t\t\t\t</source>");
@@ -225,9 +231,9 @@ namespace MphRead
                 accessorTag += numVertices.ToString();
                 accessorTag += "\" stride=\"3\">";
                 sb.Append(accessorTag);
-                sb.Append("\n\t\t\t\t\t\t\t<param name=\"R\" type=\"float\"/>");
-                sb.Append("\n\t\t\t\t\t\t\t<param name=\"G\" type=\"float\"/>");
-                sb.Append("\n\t\t\t\t\t\t\t<param name=\"B\" type=\"float\"/>");
+                sb.Append("\n\t\t\t\t\t\t\t<param name=\"R\" type=\"float\" />");
+                sb.Append("\n\t\t\t\t\t\t\t<param name=\"G\" type=\"float\" />");
+                sb.Append("\n\t\t\t\t\t\t\t<param name=\"B\" type=\"float\" />");
                 sb.Append("\n\t\t\t\t\t\t</accessor>");
                 sb.Append("\n\t\t\t\t\t</technique_common>");
                 sb.Append("\n\t\t\t\t</source>");
@@ -276,8 +282,8 @@ namespace MphRead
                 accessorTag += numVertices.ToString();
                 accessorTag += "\" stride=\"2\">";
                 sb.Append(accessorTag);
-                sb.Append("\n\t\t\t\t\t\t\t<param name=\"S\" type=\"float\"/>");
-                sb.Append("\n\t\t\t\t\t\t\t<param name=\"T\" type=\"float\"/>");
+                sb.Append("\n\t\t\t\t\t\t\t<param name=\"S\" type=\"float\" />");
+                sb.Append("\n\t\t\t\t\t\t\t<param name=\"T\" type=\"float\" />");
                 sb.Append("\n\t\t\t\t\t\t</accessor>");
                 sb.Append("\n\t\t\t\t\t</technique_common>");
                 sb.Append("\n\t\t\t\t</source>");
@@ -289,7 +295,7 @@ namespace MphRead
                 sb.Append(verticesTag);
                 string inputTag = "\n\t\t\t\t\t<input semantic=\"POSITION\" source=\"#";
                 inputTag += geometryID;
-                inputTag += "-positions\"/>";
+                inputTag += "-positions\" />";
                 sb.Append(inputTag);
                 sb.Append("\n\t\t\t\t</vertices>");
 
@@ -303,25 +309,25 @@ namespace MphRead
                 // vertex
                 string vertexTag = "\n\t\t\t\t\t<input semantic=\"VERTEX\" source=\"#";
                 vertexTag += geometryID;
-                vertexTag += "-vertices\" offset=\"0\"/>";
+                vertexTag += "-vertices\" offset=\"0\" />";
                 sb.Append(vertexTag);
 
                 // normal
                 string normalTag = "\n\t\t\t\t\t<input semantic=\"NORMAL\" source=\"#";
                 normalTag += geometryID;
-                normalTag += "-normals\" offset=\"1\"/>";
+                normalTag += "-normals\" offset=\"1\" />";
                 sb.Append(normalTag);
 
                 // texcoord
                 string texcoordTag = "\n\t\t\t\t\t<input semantic=\"TEXCOORD\" source=\"#";
                 texcoordTag += geometryID;
-                texcoordTag += "-texcoords\" offset=\"2\" set=\"1\"/>";
+                texcoordTag += "-texcoords\" offset=\"2\" set=\"1\" />";
                 sb.Append(texcoordTag);
 
                 // vertex color
                 string vertexcolorTag = "\n\t\t\t\t\t<input semantic=\"COLOR\" source=\"#";
                 vertexcolorTag += geometryID;
-                vertexcolorTag += "-colors\" offset=\"3\" set=\"0\"/>";
+                vertexcolorTag += "-colors\" offset=\"3\" set=\"0\" />";
                 sb.Append(vertexcolorTag);
 
                 sb.Append("\n\t\t\t\t\t<p>");
@@ -399,7 +405,7 @@ namespace MphRead
                 sb.Append("\n\t\t\t\t\t\t<diffuse>");
                 string diffuseTag = "\n\t\t\t\t\t\t\t<texture texture=\"";
                 diffuseTag += textureName;
-                diffuseTag += "-sampler\" texcoord=\"UVMap\"/>";
+                diffuseTag += "-sampler\" texcoord=\"UVMap\" />";
                 sb.Append(diffuseTag);
                 sb.Append("\n\t\t\t\t\t\t</diffuse>");
 
@@ -426,44 +432,9 @@ namespace MphRead
 
             // scene
             sb.Append("\n\t<library_visual_scenes>");
-            sb.Append("\n\t\t<visual_scene id=\"Scene\" name=\"Scene\">");
-
-            meshCounter = 0;
-            // go through every mesh
-            foreach (Mesh mesh in model.Meshes)
-            {
-                meshCounter++;
-
-                Material material = model.Materials[mesh.MaterialId];
-
-                string textureName = String.IsNullOrEmpty(material.Name) ? "null" : material.Name;
-
-                // node
-                string nodeTag = $"\n\t\t\t<node id=\"mesh{meshCounter}\" type=\"NODE\">";
-                sb.Append(nodeTag);
-                // instance geometry
-                string instancegeometryTag = $"\n\t\t\t\t<instance_geometry url=\"#geometry{meshCounter}\">";
-                sb.Append(instancegeometryTag);
-                // bind material
-                sb.Append("\n\t\t\t\t\t<bind_material>");
-                // technique common
-                sb.Append("\n\t\t\t\t\t\t<technique_common>");
-                // instance material
-                string instancematerialTag = "\n\t\t\t\t\t\t\t<instance_material symbol=\"";
-                instancematerialTag += textureName;
-                instancematerialTag += "-material\" target=\"#";
-                instancematerialTag += textureName;
-                instancematerialTag += "-material\">";
-                sb.Append(instancematerialTag);
-                // bind vertex input
-                sb.Append("\n\t\t\t\t\t\t\t\t<bind_vertex_input semantic=\"UVMap\" input_semantic=\"TEXCOORD\" input_set=\"0\"/>");
-                sb.Append("\n\t\t\t\t\t\t\t</instance_material>");
-                sb.Append("\n\t\t\t\t\t\t</technique_common>");
-                sb.Append("\n\t\t\t\t\t</bind_material>");
-                sb.Append("\n\t\t\t\t</instance_geometry>");
-                sb.Append("\n\t\t\t</node>");
-            }
-            sb.Append("\n\t\t</visual_scene>");
+            sb.Append("\n\t\t<visual_scene id=\"Scene\" name=\"Scene\">\n");
+            ExportNodes(model, UInt16.MaxValue, sb, 3, flat);
+            sb.Append("\t\t</visual_scene>");
             sb.Append("\n\t</library_visual_scenes>");
 
             // end
@@ -471,7 +442,71 @@ namespace MphRead
 
             string exportPath = Path.Combine(Paths.Export, model.Name);
             Directory.CreateDirectory(exportPath);
-            File.WriteAllText(Path.Combine(exportPath, $"{model.Name}.dae"), sb.ToString());
+            string suffix = flat ? "_flat" : "";
+            File.WriteAllText(Path.Combine(exportPath, $"{model.Name}{suffix}.dae"), sb.ToString());
+        }
+
+        private static void ExportNodes(Model model, int parentId, StringBuilder sb, int indent, bool flat)
+        {
+            for (int i = 0; i < model.Nodes.Count; i++)
+            {
+                Node node = model.Nodes[i];
+                if (node.ParentIndex == parentId)
+                {
+                    sb.Append('\t', indent);
+                    sb.Append($"<node id=\"{node.Name}\" type=\"NODE\">\n");
+                    sb.Append('\t', indent + 1);
+                    sb.Append($"<translate>{FloatFormat(node.Position)}</translate>\n");
+                    ExportMeshes(model, i, sb, indent + 1, flat);
+                    if (node.ChildIndex != UInt16.MaxValue)
+                    {
+                        ExportNodes(model, i, sb, indent + 1, flat);
+                    }
+                    sb.Append('\t', indent);
+                    sb.Append($"</node>\n");
+                }
+            }
+        }
+
+        private static void ExportMeshes(Model model, int nodeId, StringBuilder sb, int indent, bool flat)
+        {
+            var meshIds = new List<int>();
+            // flat means export everything in the first node (usually world_root) to avoid position issues with room nodes
+            if (!flat)
+            {
+                meshIds.AddRange(model.Nodes[nodeId].GetMeshIds());
+            }
+            else if (nodeId == 0)
+            {
+                for (int i = 0; i < model.Meshes.Count; i++)
+                {
+                    meshIds.Add(i);
+                }
+            }
+            foreach (int meshId in meshIds)
+            {
+                Mesh mesh = model.Meshes[meshId];
+                Material material = model.Materials[mesh.MaterialId];
+                string textureName = String.IsNullOrEmpty(material.Name) ? "null" : material.Name;
+                sb.Append('\t', indent);
+                sb.Append($"<instance_geometry url=\"#geometry{meshId + 1}\">\n");
+                sb.Append('\t', indent + 1);
+                sb.Append("<bind_material>\n");
+                sb.Append('\t', indent + 2);
+                sb.Append("<technique_common>\n");
+                sb.Append('\t', indent + 3);
+                sb.Append($"<instance_material symbol=\"{textureName}-material\" target=\"#{textureName}-material\">\n");
+                sb.Append('\t', indent + 4);
+                sb.Append("<bind_vertex_input semantic=\"UVMap\" input_semantic=\"TEXCOORD\" input_set=\"0\" />\n");
+                sb.Append('\t', indent + 3);
+                sb.Append("</instance_material>\n");
+                sb.Append('\t', indent + 2);
+                sb.Append("</technique_common>\n");
+                sb.Append('\t', indent + 1);
+                sb.Append("</bind_material>\n");
+                sb.Append('\t', indent);
+                sb.Append("</instance_geometry>\n");
+            }
         }
 
         private static void ExportDlist(Model model, int dlistId, List<Vertex> meshVerts, List<Vertex> tempMeshVerts)
@@ -483,6 +518,7 @@ namespace MphRead
             int curMeshType = 0;
             bool curMeshActive = false;
             IReadOnlyList<RenderInstruction> list = model.RenderInstructionLists[dlistId];
+            // todo: DIF_AMB, at least
             foreach (RenderInstruction instruction in list)
             {
                 switch (instruction.Code)
