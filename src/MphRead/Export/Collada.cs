@@ -30,15 +30,15 @@ namespace MphRead.Export
 
         public static void ExportModel(string modelName, bool transformRoom = false, int recolor = 0)
         {
-            Export(Read.GetModelByName(modelName), transformRoom, recolor);
+            ExportModel(Read.GetModelByName(modelName), transformRoom, recolor);
         }
 
         public static void ExportRoom(string roomName, bool transformRoom = false, int recolor = 0)
         {
-            Export(Read.GetRoomByName(roomName), transformRoom, recolor);
+            ExportModel(Read.GetRoomByName(roomName), transformRoom, recolor);
         }
 
-        private static void Export(Model model, bool transformRoom, int recolor)
+        public static void ExportModel(Model model, bool transformRoom = false, int recolor = 0)
         {
             var sb = new StringBuilder();
 

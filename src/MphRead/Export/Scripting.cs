@@ -20,6 +20,12 @@ namespace MphRead.Export
                 if (material.TextureId != UInt16.MaxValue)
                 {
                     sb.AppendLine($"set_texture_alpha('{material.Name}_mat', {material.Alpha})");
+                    bool mirrorX = material.XRepeat == RepeatMode.Mirror;
+                    bool mirrorY = material.YRepeat == RepeatMode.Mirror;
+                    if (mirrorX || mirrorY)
+                    {
+                        sb.AppendLine($"set_mirror('{material.Name}_mat', {(mirrorX ? "True" : "False")}, {(mirrorY ? "True" : "False")})");
+                    }
                 }
                 else if (material.Alpha < 31)
                 {
