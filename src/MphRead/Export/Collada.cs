@@ -1,31 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Text;
-using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Mathematics;
 
-namespace MphRead
+namespace MphRead.Export
 {
-    public static class Screenshot
-    {
-        public static void Capture(int width, int height)
-        {
-            using var bitmap = new Bitmap(width, height);
-            var rectangle = new Rectangle(0, 0, width, height);
-            BitmapData data = bitmap.LockBits(rectangle, ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-            GL.ReadPixels(0, 0, width, height, OpenToolkit.Graphics.OpenGL.PixelFormat.Bgr, PixelType.UnsignedByte, data.Scan0);
-            bitmap.UnlockBits(data);
-            bitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
-            string path = Path.Combine(Paths.Export, "_screenshots");
-            Directory.CreateDirectory(path);
-            bitmap.Save(Path.Combine(path, $"{DateTimeOffset.Now.ToUnixTimeMilliseconds()}.png"));
-        }
-    }
-
-    public static class Export
+    public static class Collada
     {
         private struct Vertex
         {

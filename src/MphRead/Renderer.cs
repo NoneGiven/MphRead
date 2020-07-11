@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MphRead.Export;
 using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Mathematics;
 using OpenToolkit.Windowing.Common;
@@ -1356,7 +1357,7 @@ namespace MphRead
         {
             if (e.Key == Key.Number5)
             {
-                Screenshot.Capture(Size.X, Size.Y);
+                Images.Screenshot(Size.X, Size.Y);
             }
             else if (e.Key == Key.T)
             {
