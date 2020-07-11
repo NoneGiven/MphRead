@@ -1354,7 +1354,11 @@ namespace MphRead
 
         protected override async void OnKeyDown(KeyboardKeyEventArgs e)
         {
-            if (e.Key == Key.T)
+            if (e.Key == Key.Number5)
+            {
+                Screenshot.Capture(Size.X, Size.Y);
+            }
+            else if (e.Key == Key.T)
             {
                 _showTextures = !_showTextures;
                 if (_showTextures)

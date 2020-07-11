@@ -1,22 +1,40 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
 using System.Text;
+using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Mathematics;
 
 namespace MphRead
 {
-    public struct Vertex
+    public static class Screenshot
     {
-        public Vector3 Position { get; set; }
-        public Vector3 Normal { get; set; }
-        public Vector3 Color { get; set; }
-        public Vector2 Uv { get; set; }
+        public static void Capture(int width, int height)
+        {
+            using var bitmap = new Bitmap(width, height);
+            var rectangle = new Rectangle(0, 0, width, height);
+            BitmapData data = bitmap.LockBits(rectangle, ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            GL.ReadPixels(0, 0, width, height, OpenToolkit.Graphics.OpenGL.PixelFormat.Bgr, PixelType.UnsignedByte, data.Scan0);
+            bitmap.UnlockBits(data);
+            bitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
+            string path = Path.Combine(Paths.Export, "_screenshots");
+            Directory.CreateDirectory(path);
+            bitmap.Save(Path.Combine(path, $"{DateTimeOffset.Now.ToUnixTimeMilliseconds()}.png"));
+        }
     }
 
     public static class Export
     {
+        private struct Vertex
+        {
+            public Vector3 Position { get; set; }
+            public Vector3 Normal { get; set; }
+            public Vector3 Color { get; set; }
+            public Vector2 Uv { get; set; }
+        }
+
         private static string FloatFormat(Vector3 vector)
         {
             return $"{FloatFormat(vector.X)} {FloatFormat(vector.Y)} {FloatFormat(vector.Z)}";
