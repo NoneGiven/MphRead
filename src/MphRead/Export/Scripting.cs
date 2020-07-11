@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -12,6 +13,7 @@ namespace MphRead.Export
             var sb = new StringBuilder();
             sb.AppendLine("import mph_common");
             sb.AppendLine("set_common()");
+            var invertMeshIds = new HashSet<int>();
             for (int i = 0; i < model.Materials.Count; i++)
             {
                 Material material = model.Materials[i];
@@ -33,15 +35,32 @@ namespace MphRead.Export
                             Mesh mesh = model.Meshes[j];
                             if (mesh.MaterialId == i)
                             {
-                                sb.AppendLine($"invert_normals('geom{j + 1}_obj')");
+                                invertMeshIds.Add(j);
                             }
                         }
                     }
                 }
             }
-            foreach (Node node in model.Nodes.Where(n => n.Billboard))
+            foreach (Node node in model.Nodes)
             {
-                sb.AppendLine($"set_billboard('{node.Name}')");
+                if (node.Billboard)
+                {
+                    sb.AppendLine($"set_billboard('{node.Name}')");
+                }
+                foreach (int meshId in node.GetMeshIds())
+                {
+                    if (invertMeshIds.Contains(meshId))
+                    {
+                        if (node.MeshCount == 1)
+                        {
+                            sb.AppendLine($"invert_normals('{node.Name}')");
+                        }
+                        else
+                        {
+                            sb.AppendLine($"invert_normals('geom{meshId + 1}_obj')");
+                        }
+                    }
+                }
             }
             return sb.ToString();
         }
