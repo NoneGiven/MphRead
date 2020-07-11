@@ -559,7 +559,7 @@ namespace MphRead.Export
             float[] vtx_state = { 0.0f, 0.0f, 0.0f };
             float[] nrm_state = { 0.0f, 0.0f, 0.0f };
             float[] uv_state = { 0.0f, 0.0f };
-            float[] col_state = { 0.0f, 0.0f, 0.0f };
+            float[] col_state = { 1.0f, 1.0f, 1.0f };
             int curMeshType = 0;
             bool curMeshActive = false;
             IReadOnlyList<RenderInstruction> list = model.RenderInstructionLists[dlistId];
