@@ -38,7 +38,7 @@ namespace MphRead.Export
             Export(Read.GetRoomByName(roomName), transformRoom, recolor);
         }
 
-        public static void Export(Model model, bool transformRoom = false, int recolor = 0)
+        private static void Export(Model model, bool transformRoom, int recolor)
         {
             var sb = new StringBuilder();
 
@@ -283,6 +283,14 @@ namespace MphRead.Export
                         var newUv = new Vector2(
                             vert.Uv.X * factorS * (1.0f / tex.Width),
                             vert.Uv.Y * factorT * (1.0f / tex.Height));
+                        if (material.XRepeat == RepeatMode.Clamp)
+                        {
+                            newUv = new Vector2(MathHelper.Clamp(newUv.X, 0f, 1f), newUv.Y);
+                        }
+                        if (material.YRepeat == RepeatMode.Clamp)
+                        {
+                            newUv = new Vector2(newUv.X, MathHelper.Clamp(newUv.Y, 0f, 1f));
+                        }
                         var newVert = new Vertex()
                         {
                             Position = vert.Position,
