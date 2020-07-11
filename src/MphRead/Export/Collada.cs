@@ -28,7 +28,17 @@ namespace MphRead.Export
             return MathF.Round(input, 6, MidpointRounding.AwayFromZero).ToString("F6");
         }
 
-        public static void ExportModel(Model model, bool transformRoom = false, int recolor = 0)
+        public static void ExportModel(string modelName, bool transformRoom = false, int recolor = 0)
+        {
+            Export(Read.GetModelByName(modelName), transformRoom, recolor);
+        }
+
+        public static void ExportRoom(string roomName, bool transformRoom = false, int recolor = 0)
+        {
+            Export(Read.GetRoomByName(roomName), transformRoom, recolor);
+        }
+
+        public static void Export(Model model, bool transformRoom = false, int recolor = 0)
         {
             var sb = new StringBuilder();
 
@@ -474,8 +484,13 @@ namespace MphRead.Export
                     sb.Append($"<rotate>0.0 1.0 0.0 {FloatFormat(MathHelper.RadiansToDegrees(node.Angle.Y))}</rotate>\n");
                     sb.Append('\t', indent + 1);
                     sb.Append($"<rotate>0.0 0.0 1.0 {FloatFormat(MathHelper.RadiansToDegrees(node.Angle.Z))}</rotate>\n");
+                    Vector3 scale = node.Scale;
+                    if (i == 0)
+                    {
+                        scale *= model.Scale;
+                    }
                     sb.Append('\t', indent + 1);
-                    sb.Append($"<scale>{FloatFormat(node.Scale)}</scale>\n");
+                    sb.Append($"<scale>{FloatFormat(scale)}</scale>\n");
                     sb.Append('\t', indent + 1);
                     if (model.Type != ModelType.Room || transformRoom)
                     {
@@ -485,7 +500,7 @@ namespace MphRead.Export
                     {
                         sb.Append($"<translate>0.0 0.0 0.0</translate>\n");
                     }
-                    ExportNodeMeshes(model, i, sb, indent + 1);
+                    ExportNodeMeshes(model, i, node.MeshCount == 1, sb, indent + 1);
                     if (node.ChildIndex != UInt16.MaxValue)
                     {
                         ExportNodes(model, i, sb, indent + 1, transformRoom);
@@ -496,11 +511,21 @@ namespace MphRead.Export
             }
         }
 
-        private static void ExportNodeMeshes(Model model, int nodeId, StringBuilder sb, int indent)
+        private static void ExportNodeMeshes(Model model, int nodeId, bool single, StringBuilder sb, int indent)
         {
             foreach (int meshId in model.Nodes[nodeId].GetMeshIds())
             {
-                ExportMesh(model, meshId, sb, indent);
+                if (!single)
+                {
+                    sb.Append('\t', indent);
+                    sb.Append($"<node id=\"geom{meshId + 1}_obj\" type=\"NODE\">\n");
+                }
+                ExportMesh(model, meshId, sb, indent + (single ? 1 : 0));
+                if (!single)
+                {
+                    sb.Append('\t', indent);
+                    sb.Append($"</node>\n");
+                }
             }
         }
 

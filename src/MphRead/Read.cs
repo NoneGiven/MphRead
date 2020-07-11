@@ -62,6 +62,7 @@ namespace MphRead
             };
             Model room = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, recolors, defaultRecolor: 0);
             room.Animate = (meta.AnimationPath != null);
+            room.Type = ModelType.Room;
             return room;
         }
 
