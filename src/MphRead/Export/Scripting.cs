@@ -8,7 +8,6 @@ namespace MphRead.Export
 {
     public class Scripting
     {
-        // todo: auto-import + script running
         public static string GenerateScript(Model model)
         {
             var sb = new StringBuilder();
