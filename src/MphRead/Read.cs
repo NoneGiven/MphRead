@@ -628,25 +628,38 @@ namespace MphRead
         {
             string input = Path.Combine(Paths.FileSystem, "archives", $"{name}.arc");
             string output = Path.Combine(Paths.FileSystem, "_archives", name);
-            Directory.CreateDirectory(output);
-            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(input));
-            if (Encoding.ASCII.GetString(bytes[0..8]) == Archiver.MagicString)
+            try
             {
-                Archiver.Extract(input, output);
-            }
-            else if (bytes[0] == Lz.MagicByte)
-            {
-                string temp = Path.Combine(Paths.Export, "__temp");
-                try
+                int filesWritten = 0;
+                Directory.CreateDirectory(output);
+                Console.WriteLine("Reading file...");
+                var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(input));
+                if (Encoding.ASCII.GetString(bytes[0..8]) == Archiver.MagicString)
                 {
+                    Console.WriteLine("Extracting archive...");
+                    filesWritten = Archiver.Extract(input, output);
+                }
+                else if (bytes[0] == Lz.MagicByte)
+                {
+                    string temp = Path.Combine(Paths.Export, "__temp");
+                    try
+                    {
+                        Directory.Delete(temp, recursive: true);
+                    }
+                    catch { }
+                    Directory.CreateDirectory(temp);
+                    string destination = Path.Combine(temp, $"{name}.arc");
+                    Console.WriteLine("Decompressing...");
+                    Lz.Decompress(input, destination);
+                    Console.WriteLine("Extracting archive...");
+                    filesWritten = Archiver.Extract(destination, output);
                     Directory.Delete(temp, recursive: true);
                 }
-                catch { }
-                Directory.CreateDirectory(temp);
-                string destination = Path.Combine(temp, $"{name}.arc");
-                Lz.Decompress(input, destination);
-                Archiver.Extract(destination, output);
-                Directory.Delete(temp, recursive: true);
+                Console.WriteLine($"Extracted {filesWritten} file{(filesWritten == 1 ? "" : "s")} to {output}.");
+            }
+            catch
+            {
+                Console.WriteLine($"Failed to extract archive. Verify an archive exists at {input}.");
             }
         }
 
@@ -660,10 +673,25 @@ namespace MphRead
             }
             catch
             {
-                model = GetRoomByName(name);
+                try
+                {
+                    model = GetRoomByName(name);
+                }
+                catch
+                {
+                    Console.WriteLine($"No model or room with the name {name} could be found.");
+                    return;
+                }
             }
-            Images.ExportImages(model);
-            Collada.ExportModel(model);
+            try
+            {
+                Images.ExportImages(model);
+                Collada.ExportModel(model);
+            }
+            catch
+            {
+                Console.WriteLine("Failed to export model. Verify your export path is accessible.");
+            }
         }
     }
 }

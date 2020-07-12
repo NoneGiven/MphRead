@@ -68,7 +68,7 @@ namespace MphRead.Archive
     {
         public static string MagicString { get; } = "SNDFILE";
 
-        public static void Extract(string path, string? destination = null)
+        public static int Extract(string path, string? destination = null)
         {
             if (destination == null)
             {
@@ -105,14 +105,16 @@ namespace MphRead.Archive
             {
                 ThrowRead();
             }
+            int filesWritten = 0;
             foreach (FileHeader file in files)
             {
                 int start = (int)file.Offset;
                 int end = start + (int)file.TargetFileSize;
                 string output = Path.Combine(destination!, file.Filename);
                 File.WriteAllBytes(output, bytes[start..end].ToArray());
+                filesWritten++;
             }
-            Nop();
+            return filesWritten;
         }
 
         public static void Archive(string destinationPath, IEnumerable<string> filePaths)
