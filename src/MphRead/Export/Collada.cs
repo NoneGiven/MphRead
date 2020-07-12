@@ -28,18 +28,30 @@ namespace MphRead.Export
             return MathF.Round(input, 6, MidpointRounding.AwayFromZero).ToString("F6");
         }
 
-        public static void ExportModel(string modelName, bool transformRoom = false, int recolor = 0)
+        public static void ExportModel(string modelName)
         {
-            ExportModel(Read.GetModelByName(modelName), transformRoom, recolor);
+            ExportModel(Read.GetModelByName(modelName), transformRoom: false);
         }
 
-        public static void ExportRoom(string roomName, bool transformRoom = false, int recolor = 0)
+        public static void ExportRoom(string roomName, bool transformRoom = false)
         {
-            ExportModel(Read.GetRoomByName(roomName), transformRoom, recolor);
+            ExportModel(Read.GetRoomByName(roomName), transformRoom);
         }
 
-        public static void ExportModel(Model model, bool transformRoom = false, int recolor = 0)
+        public static void ExportModel(Model model, bool transformRoom = false)
         {
+            string exportPath = Path.Combine(Paths.Export, model.Name);
+            Directory.CreateDirectory(exportPath);
+            for (int i = 0; i < model.Recolors.Count; i++)
+            {
+                ExportRecolor(model, transformRoom, i);
+            }
+            File.WriteAllText(Path.Combine(exportPath, $"import_{model.Name}.py"), Scripting.GenerateScript(model));
+        }
+
+        private static void ExportRecolor(Model model, bool transformRoom, int recolorIndex)
+        {
+            Recolor recolor = model.Recolors[recolorIndex];
             var sb = new StringBuilder();
 
             // collada header
@@ -72,7 +84,7 @@ namespace MphRead.Export
                 imageTag += "\">";
                 sb.Append(imageTag);
                 string initTag = "\n\t\t\t<init_from>";
-                initTag += $"{material.TextureId}-{material.PaletteId}.png";
+                initTag += $@"{recolor.Name}\{material.TextureId}-{material.PaletteId}.png";
                 initTag += "</init_from>";
                 sb.Append(initTag);
                 sb.Append("\n\t\t</image>");
@@ -119,7 +131,7 @@ namespace MphRead.Export
                 Texture tex = default;
                 if (material.TextureId != UInt16.MaxValue)
                 {
-                    tex = model.Recolors[recolor].Textures[material.TextureId];
+                    tex = recolor.Textures[material.TextureId];
                 }
 
                 ExportDlist(model, mesh.DlistId, tempMeshVerts, meshVerts);
@@ -473,9 +485,7 @@ namespace MphRead.Export
             sb.Append("\n</COLLADA>");
 
             string exportPath = Path.Combine(Paths.Export, model.Name);
-            Directory.CreateDirectory(exportPath);
-            File.WriteAllText(Path.Combine(exportPath, $"{model.Name}.dae"), sb.ToString());
-            File.WriteAllText(Path.Combine(exportPath, $"import_{model.Name}.py"), Scripting.GenerateScript(model));
+            File.WriteAllText(Path.Combine(exportPath, $"{model.Name}_{recolor.Name}.dae"), sb.ToString());
         }
 
         private static void ExportNodes(Model model, int parentId, StringBuilder sb, int indent, bool transformRoom)

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace MphRead.Export
@@ -14,11 +16,19 @@ namespace MphRead.Export
             {
                 sb!.Append(' ', 4);
             }
+            sb.AppendLine("import bpy");
             sb.AppendLine("from mph_common import *");
             sb.AppendLine();
-            sb.AppendLine("if __name__ == '__main__':");
+            sb.AppendLine("def import_dae(recolor):");
             AppendIndent();
             sb.AppendLine("cleanup()");
+            AppendIndent();
+            string daePath = Path.Combine(Paths.Export, model.Name, $"{model.Name}_{{recolor}}.dae");
+            sb.AppendLine("bpy.ops.wm.collada_import(filepath =");
+            AppendIndent();
+            AppendIndent();
+            sb.AppendLine($"f'{daePath}')");
+            AppendIndent();
             sb.AppendLine("set_common()");
             var invertMeshIds = new HashSet<int>();
             for (int i = 0; i < model.Materials.Count; i++)
@@ -81,6 +91,11 @@ namespace MphRead.Export
                     }
                 }
             }
+            sb.AppendLine();
+            sb.AppendLine("if __name__ == '__main__':");
+            AppendIndent();
+            sb.AppendLine($"import_dae('{model.Recolors.First().Name}')" +
+                $" # recolors: {String.Join(", ", model.Recolors.Select(r => r.Name))}");
             return sb.ToString();
         }
     }
