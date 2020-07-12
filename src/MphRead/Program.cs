@@ -16,8 +16,18 @@ namespace MphRead
                 renderer.AddModel("Crate01");
                 Nop();
             }
-            else
+            else if (args.Length > 1)
             {
+                if (args[0] == "-export" || args[0] == "-e")
+                {
+                    Read.ReadAndExport(args[1]);
+                    return;
+                }
+                if (args[0] == "-extract" || args[0] == "-x")
+                {
+                    Read.ExtractArchive(args[1]);
+                    return;
+                }
                 bool foundRoom = false;
                 bool foundModel = false;
                 for (int i = 0; i < args.Length; i++)
@@ -83,6 +93,12 @@ namespace MphRead
             Console.WriteLine("    -room <room_name> [layer_mask]");
             Console.WriteLine("    -model <model_name> [recolor_index]");
             Console.WriteLine("At most one room may be specified. Any number of models may be specified.");
+            Console.WriteLine("- or -");
+            Console.WriteLine("    -extract <archive_path>");
+            Console.WriteLine("If the target archive is LZ10-compressed, it will be decompressed.");
+            Console.WriteLine("- or -");
+            Console.WriteLine("    -export <target_name>");
+            Console.WriteLine("The export target may be a model or room name.");
             Environment.Exit(1);
         }
 

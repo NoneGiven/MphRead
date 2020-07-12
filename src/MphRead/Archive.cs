@@ -66,10 +66,14 @@ namespace MphRead.Archive
 
     public static class Archiver
     {
-        private static readonly string _magicString = "SNDFILE";
+        public static string MagicString { get; } = "SNDFILE";
 
-        public static void Extract(string path)
+        public static void Extract(string path, string? destination = null)
         {
+            if (destination == null)
+            {
+                destination = Path.GetDirectoryName(path);
+            }
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             if (bytes.Length < ArchiveSizes.ArchiveHeader)
             {
@@ -77,7 +81,7 @@ namespace MphRead.Archive
             }
             ArchiveHeader header = Read.ReadStruct<ArchiveHeader>(bytes[0..ArchiveSizes.ArchiveHeader]);
             header = header.SwapBytes();
-            if (header.MagicString != _magicString || header.TotalSize != bytes.Length)
+            if (header.MagicString != MagicString || header.TotalSize != bytes.Length)
             {
                 ThrowRead();
             }
@@ -105,7 +109,8 @@ namespace MphRead.Archive
             {
                 int start = (int)file.Offset;
                 int end = start + (int)file.TargetFileSize;
-                File.WriteAllBytes(file.Filename, bytes[start..end].ToArray());
+                string output = Path.Combine(destination!, file.Filename);
+                File.WriteAllBytes(output, bytes[start..end].ToArray());
             }
             Nop();
         }
@@ -138,9 +143,9 @@ namespace MphRead.Archive
                 entries.Add(entry);
                 pointer += entry.PaddedFileSize;
             }
-            var header = new ArchiveHeader(_magicString, (uint)filePaths.Count(), pointer, "");
+            var header = new ArchiveHeader(MagicString, (uint)filePaths.Count(), pointer, "");
             using var writer = new BinaryWriter(File.Open(destinationPath, FileMode.Create));
-            writer.Write($"{_magicString}\0".ToCharArray());
+            writer.Write($"{MagicString}\0".ToCharArray());
             writer.Write(header.FileCount.SwapBytes());
             writer.Write(header.TotalSize.SwapBytes());
             for (int i = 0; i < 16; i++)

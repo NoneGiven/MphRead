@@ -61,7 +61,7 @@ namespace MphRead.Export
             // assets
             sb.Append("\n\t<asset>");
             sb.Append("\n\t\t<up_axis>Y_UP</up_axis>");
-            sb.Append("<unit name=\"meter\" meter=\"1\" />");
+            sb.Append("\n\t\t<unit name=\"meter\" meter=\"1\" />");
             sb.Append("\n\t</asset>");
 
             // images

@@ -27,7 +27,6 @@ namespace MphRead.Export
         public static void ExportImages(Model model)
         {
             string exportPath = Path.Combine(Paths.Export, model.Name);
-            Directory.CreateDirectory(exportPath);
             foreach (Recolor recolor in model.Recolors)
             {
                 string colorPath = Path.Combine(exportPath, recolor.Name);
@@ -81,12 +80,9 @@ namespace MphRead.Export
         public static void ExportPalettes(Model model)
         {
             string exportPath = Path.Combine(Paths.Export, model.Name);
-            Directory.CreateDirectory(exportPath);
             foreach (Recolor recolor in model.Recolors)
             {
-                string colorPath = Path.Combine(exportPath, recolor.Name);
-                Directory.CreateDirectory(colorPath);
-                string palettePath = Path.Combine(colorPath, "palettes");
+                string palettePath = Path.Combine(exportPath, recolor.Name, "palettes");
                 Directory.CreateDirectory(palettePath);
                 for (int p = 0; p < recolor.Palettes.Count; p++)
                 {

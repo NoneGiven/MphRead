@@ -4,6 +4,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
+using MphRead.Archive;
+using MphRead.Export;
 
 namespace MphRead
 {
@@ -17,7 +20,7 @@ namespace MphRead
 
         public static Model GetModelByName(string name, int defaultRecolor = 0)
         {
-            EntityMetadata? entityMeta = Metadata.GetEntityByName(name);
+            ModelMetadata? entityMeta = Metadata.GetEntityByName(name);
             if (entityMeta == null)
             {
                 throw new ProgramException("No entity with this name is known. Please provide metadata for a custom entity.");
@@ -66,7 +69,7 @@ namespace MphRead
             return room;
         }
 
-        private static Model GetModel(EntityMetadata meta, int defaultRecolor)
+        private static Model GetModel(ModelMetadata meta, int defaultRecolor)
         {
             Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.Recolors, defaultRecolor);
             model.Animate = (meta.AnimationPath != null);
@@ -619,6 +622,48 @@ namespace MphRead
                 throw new ProgramException($"Failed to read {typeof(T)} struct.");
             }
             return (T)result;
+        }
+
+        public static void ExtractArchive(string name)
+        {
+            string input = Path.Combine(Paths.FileSystem, "archives", $"{name}.arc");
+            string output = Path.Combine(Paths.FileSystem, "_archives", name);
+            Directory.CreateDirectory(output);
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(input));
+            if (Encoding.ASCII.GetString(bytes[0..8]) == Archiver.MagicString)
+            {
+                Archiver.Extract(input, output);
+            }
+            else if (bytes[0] == Lz.MagicByte)
+            {
+                string temp = Path.Combine(Paths.Export, "__temp");
+                try
+                {
+                    Directory.Delete(temp, recursive: true);
+                }
+                catch { }
+                Directory.CreateDirectory(temp);
+                string destination = Path.Combine(temp, $"{name}.arc");
+                Lz.Decompress(input, destination);
+                Archiver.Extract(destination, output);
+                Directory.Delete(temp, recursive: true);
+            }
+        }
+
+        public static void ReadAndExport(string name)
+        {
+            // todo: need non-throwing versions of these
+            Model model;
+            try
+            {
+                model = GetModelByName(name);
+            }
+            catch
+            {
+                model = GetRoomByName(name);
+            }
+            Images.ExportImages(model);
+            Collada.ExportModel(model);
         }
     }
 }
