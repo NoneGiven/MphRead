@@ -539,7 +539,7 @@ namespace MphRead.Export
                     sb.Append('\t', indent);
                     sb.Append($"<node id=\"geom{meshId + 1}_obj\" type=\"NODE\">\n");
                 }
-                ExportMesh(model, meshId, sb, indent + (single ? 1 : 0));
+                ExportMesh(model, meshId, sb, indent + (single ? 0 : 1));
                 if (!single)
                 {
                     sb.Append('\t', indent);
