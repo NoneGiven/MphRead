@@ -475,6 +475,7 @@ namespace MphRead.Export
             string exportPath = Path.Combine(Paths.Export, model.Name);
             Directory.CreateDirectory(exportPath);
             File.WriteAllText(Path.Combine(exportPath, $"{model.Name}.dae"), sb.ToString());
+            File.WriteAllText(Path.Combine(exportPath, $"import_{model.Name}.py"), Scripting.GenerateScript(model));
         }
 
         private static void ExportNodes(Model model, int parentId, StringBuilder sb, int indent, bool transformRoom)

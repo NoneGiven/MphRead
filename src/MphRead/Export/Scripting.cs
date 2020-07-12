@@ -17,7 +17,6 @@ namespace MphRead.Export
             sb.AppendLine("from mph_common import *");
             sb.AppendLine();
             sb.AppendLine("if __name__ == '__main__':");
-            sb.AppendLine();
             AppendIndent();
             sb.AppendLine("set_common()");
             var invertMeshIds = new HashSet<int>();
