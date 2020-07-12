@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MphRead.Export;
 using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Mathematics;
 using OpenToolkit.Windowing.Common;
@@ -79,8 +80,8 @@ namespace MphRead
         {
             None,
             Model,
-            Mesh,
-            Node
+            Node,
+            Mesh
         }
 
         private bool _roomLoaded = false;
@@ -92,14 +93,16 @@ namespace MphRead
         private SelectionMode _selectionMode = SelectionMode.None;
         private uint _selectedModelId = 0;
         private int _selectedMeshId = 0;
+        private int _selectedNodeId = 0;
         private bool _showSelection = true;
 
         private Model SelectedModel => _modelMap[_selectedModelId];
 
         private CameraMode _cameraMode = CameraMode.Pivot;
-        private float _angleX = 0.0f;
         private float _angleY = 0.0f;
+        private float _angleX = 0.0f;
         private float _distance = 5.0f;
+        // todo: somehow the axes are reversed from the model coordinates
         private Vector3 _cameraPosition = new Vector3(0, 0, 0);
         private bool _leftMouse = false;
         public int _textureCount = 0;
@@ -158,8 +161,6 @@ namespace MphRead
             {
                 _modelMap.Add(entity.SceneId, entity);
             }
-            float roomScale = room.Header.ScaleBase.FloatValue * (1 << (int)room.Header.ScaleFactor);
-            room.Scale = new Vector3(roomScale, roomScale, roomScale);
             _light1Vector = new Vector4(roomMeta.Light1Vector);
             _light1Color = new Vector4(
                 roomMeta.Light1Color.Red / 31.0f,
@@ -388,13 +389,18 @@ namespace MphRead
                 await PrintOutput();
             }
 
-            // sktodo:
-            // - allow selecting nodes
             if (_selectionMode != SelectionMode.None)
             {
                 if (_selectionMode == SelectionMode.Mesh)
                 {
                     UpdateSelected(SelectedModel.Meshes[_selectedMeshId], time);
+                }
+                else if (_selectionMode == SelectionMode.Node)
+                {
+                    foreach (Mesh mesh in SelectedModel.GetNodeMeshes(_selectedNodeId))
+                    {
+                        UpdateSelected(mesh, time);
+                    }
                 }
                 else if (_selectionMode == SelectionMode.Model)
                 {
@@ -419,7 +425,7 @@ namespace MphRead
 
             GL.MatrixMode(MatrixMode.Projection);
             float fov = MathHelper.DegreesToRadians(80.0f);
-            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.02f, 10000.0f);
+            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.001f, 10000.0f);
             GL.LoadMatrix(ref perspectiveMatrix);
 
             TransformCamera();
@@ -430,7 +436,7 @@ namespace MphRead
             base.OnRenderFrame(args);
         }
 
-        private void SetSelected(uint sceneId)
+        private void SetSelectedModel(uint sceneId)
         {
             Deselect();
             _selectedModelId = sceneId;
@@ -440,7 +446,18 @@ namespace MphRead
             }
         }
 
-        private void SetSelected(uint sceneId, int meshId)
+        private void SetSelectedNode(uint sceneId, int nodeId)
+        {
+            Deselect();
+            _selectedModelId = sceneId;
+            _selectedNodeId = nodeId;
+            foreach (Mesh mesh in SelectedModel.GetNodeMeshes(_selectedNodeId))
+            {
+                mesh.OverrideColor = new Vector4(1f, 1f, 1f, 1f);
+            }
+        }
+
+        private void SetSelectedMesh(uint sceneId, int meshId)
         {
             Deselect();
             _selectedModelId = sceneId;
@@ -452,7 +469,8 @@ namespace MphRead
 
         private void UpdateSelected(Mesh mesh, float time)
         {
-            // todo: meshes can get out sync (e.g. Crate01)
+            // todo: meshes can get out sync due to existing alpha values
+            // --> also tends to break when tabbing out/resizing/etc.
             Vector4 color = mesh.OverrideColor.GetValueOrDefault();
             float value = color.X;
             value -= time * 1.5f * (_flashUp ? -1 : 1);
@@ -477,15 +495,50 @@ namespace MphRead
             }
             _flashUp = false;
         }
-        
+
         private void ResetCamera()
         {
-            _angleY = 0;
             _angleX = 0;
+            _angleY = 0;
             _distance = 5.0f;
             if (_cameraMode == CameraMode.Roam)
             {
                 _cameraPosition = new Vector3(0, 0, 0);
+            }
+        }
+
+        private bool FloatEqual(float one, float two)
+        {
+            return MathF.Abs(one - two) < 0.001f;
+        }
+
+        private void LookAt(Vector3 target, bool skipGoTo)
+        {
+            if (_cameraMode == CameraMode.Roam)
+            {
+                if (!skipGoTo)
+                {
+                    _cameraPosition = -1 * target.WithZ(target.Z + 5);
+                }
+                Vector3 position = -1 * _cameraPosition;
+                Vector3 unit = FloatEqual(position.Z, target.Z) && FloatEqual(position.X, target.X)
+                    ? Vector3.UnitZ
+                    : Vector3.UnitY;
+                Matrix4.LookAt(position, target, unit).ExtractRotation().ToEulerAngles(out Vector3 angles);
+                _angleX = MathHelper.RadiansToDegrees(angles.X + angles.Z);
+                if (_angleX < -90)
+                {
+                    _angleX += 360;
+                }
+                else if (_angleX > 90)
+                {
+                    _angleX -= 360;
+                }
+                _angleY = MathHelper.RadiansToDegrees(angles.Y);
+                if (FloatEqual(MathF.Abs(angles.Z), MathF.PI))
+                {
+                    _angleY = 180 - _angleY;
+                }
             }
         }
 
@@ -496,13 +549,13 @@ namespace MphRead
             if (_cameraMode == CameraMode.Pivot)
             {
                 GL.Translate(0, 0, _distance * -1);
-                GL.Rotate(_angleY, 1, 0, 0);
-                GL.Rotate(_angleX, 0, 1, 0);
+                GL.Rotate(_angleX, 1, 0, 0);
+                GL.Rotate(_angleY, 0, 1, 0);
             }
             else if (_cameraMode == CameraMode.Roam)
             {
-                GL.Rotate(_angleY, 1, 0, 0);
-                GL.Rotate(_angleX, 0, 1, 0);
+                GL.Rotate(_angleX, 1, 0, 0);
+                GL.Rotate(_angleY, 0, 1, 0);
                 GL.Translate(_cameraPosition.X, _cameraPosition.Y, _cameraPosition.Z);
             }
         }
@@ -511,12 +564,12 @@ namespace MphRead
         {
             if (_cameraMode == CameraMode.Pivot)
             {
-                float angleX = _angleX + 90;
+                float angleX = _angleY + 90;
                 if (angleX > 360)
                 {
                     angleX -= 360;
                 }
-                float angleY = _angleY + 90;
+                float angleY = _angleX + 90;
                 if (angleY > 360)
                 {
                     angleY -= 360;
@@ -618,6 +671,7 @@ namespace MphRead
 
         private void RenderRoom(Model model)
         {
+            // todo: should use room nodes only as roots; need to handle things like force fields separately
             GL.UseProgram(_shaderProgramId);
             UpdateUniforms();
             // pass 1: opaque
@@ -693,7 +747,7 @@ namespace MphRead
 
         private void RenderNode(Model model, Node node, RenderMode modeFilter, bool invertFilter = false)
         {
-            if (node.MeshCount > 0 && node.Enabled)
+            if (node.MeshCount > 0 && node.Enabled && model.NodeParentsEnabled(node))
             {
                 // temporary -- applying transforms on models which have node animation breaks them,
                 // presumably because information needs to come from the animation which we aren't loading yet
@@ -702,24 +756,26 @@ namespace MphRead
                     GL.MatrixMode(MatrixMode.Modelview);
                     GL.PushMatrix();
                     Matrix4 transform = node.Transform;
+                    // node transforms applied to room meshes only seem to break things (positions are wrong)
+                    if (model.Type == ModelType.Room)
+                    {
+                        transform = Matrix4.Identity;
+                    }
                     GL.MultMatrix(ref transform);
                 }
-                int meshStart = node.MeshId / 2;
-                for (int i = 0; i < node.MeshCount; i++)
+                foreach (Mesh mesh in model.GetNodeMeshes(node))
                 {
-                    int meshId = meshStart + i;
-                    Mesh mesh = model.Meshes[meshId];
                     Material material = model.Materials[mesh.MaterialId];
                     RenderMode renderMode = _selectionMode == SelectionMode.None || !_showSelection
                         ? material.RenderMode
                         : material.GetEffectiveRenderMode(mesh);
                     if ((!invertFilter && renderMode != modeFilter)
                         || (invertFilter && renderMode == modeFilter)
-                        || (_selectionMode == SelectionMode.None && (!model.Visible || !mesh.Visible)))
+                        || !model.Visible || !mesh.Visible)
                     {
                         continue;
                     }
-                    GL.Uniform1(_shaderLocations.IsBillboard, node.Type == 1 ? 1 : 0);
+                    GL.Uniform1(_shaderLocations.IsBillboard, node.Billboard ? 1 : 0);
                     RenderMesh(model, mesh, material);
                 }
                 if (model.NodeAnimationGroups.Count == 0 || model.ForceApplyTransform)
@@ -760,7 +816,7 @@ namespace MphRead
         {
             if (model.TexcoordAnimationGroups.Count > 0)
             {
-                // todo: Get Model is currently overwriting things so the last group's information is always used
+                // todo: GetModel is currently overwriting things so the last group's information is always used
                 TexcoordAnimationGroup group = model.TexcoordAnimationGroups.Last();
                 TexcoordAnimation animation = group.Animations[material.TexcoordAnimationId];
                 float scaleS = InterpolateAnimation(group.Scales, animation.ScaleLutIndexS, group.CurrentFrame,
@@ -852,16 +908,19 @@ namespace MphRead
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
                 AnimateTexcoords(model, material, width, height);
             }
-            else if (material.TexgenMode != TexgenMode.None && model.TextureMatrices.Count > 0)
+            else if (material.TexgenMode != TexgenMode.None)
             {
-                Matrix4 matrix = model.TextureMatrices[material.MatrixId];
-                GL.LoadMatrix(ref matrix);
-            }
-            else if (material.TexgenMode != 0)
-            {
-                GL.Translate(material.TranslateS, material.TranslateT, 0.0f);
-                GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
-                GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+                if (model.TextureMatrices.Count > 0)
+                {
+                    Matrix4 matrix = model.TextureMatrices[material.MatrixId];
+                    GL.LoadMatrix(ref matrix);
+                }
+                else
+                {
+                    GL.Translate(material.TranslateS, material.TranslateT, 0.0f);
+                    GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
+                    GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+                }
             }
             else
             {
@@ -1183,6 +1242,72 @@ namespace MphRead
             });
         }
 
+        private async Task InputSelectModel()
+        {
+            await PrintOutput();
+            _ = Output.Read("Enter model's scene ID: ").ContinueWith(async (task) =>
+            {
+                await PrintOutput();
+                if (_selectionMode == SelectionMode.Model)
+                {
+                    string value = task.Result.Trim();
+                    if (UInt32.TryParse(value, out uint sceneId) && _modelMap.ContainsKey(sceneId))
+                    {
+                        SetSelectedModel(sceneId);
+                        await PrintOutput();
+                    }
+                }
+            });
+        }
+
+        private async Task InputSelectNode()
+        {
+            await PrintOutput();
+            _ = Output.Read("Enter node ID: ").ContinueWith(async (task) =>
+            {
+                await PrintOutput();
+                if (_selectionMode == SelectionMode.Node)
+                {
+                    string value = task.Result.Trim();
+                    if (Int32.TryParse(value, out int nodeId) && nodeId >= 0 && nodeId < SelectedModel.Nodes.Count)
+                    {
+                        Node node = SelectedModel.Nodes[nodeId];
+                        if (node.MeshCount > 0)
+                        {
+                            _selectedMeshId = node.GetMeshIds().First();
+                            SetSelectedNode(_selectedModelId, nodeId);
+                            await PrintOutput();
+                        }
+                    }
+                }
+            });
+        }
+
+        private async Task InputSelectMesh()
+        {
+            await PrintOutput();
+            _ = Output.Read("Enter mesh ID: ").ContinueWith(async (task) =>
+            {
+                await PrintOutput();
+                if (_selectionMode == SelectionMode.Mesh)
+                {
+                    string value = task.Result.Trim();
+                    if (Int32.TryParse(value, out int meshId) && meshId >= 0 && meshId < SelectedModel.Meshes.Count)
+                    {
+                        for (int i = 0; i < SelectedModel.Nodes.Count; i++)
+                        {
+                            if (SelectedModel.Nodes[i].GetMeshIds().Contains(meshId))
+                            {
+                                SetSelectedNode(_selectedModelId, i);
+                            }
+                        }
+                        SetSelectedMesh(_selectedModelId, meshId);
+                        await PrintOutput();
+                    }
+                }
+            });
+        }
+
         protected override void OnResize(ResizeEventArgs e)
         {
             GL.Viewport(0, 0, Size.X, Size.Y);
@@ -1211,10 +1336,10 @@ namespace MphRead
         {
             if (_leftMouse)
             {
-                _angleY -= e.DeltaY / 1.5f;
-                _angleY = Math.Clamp(_angleY, -90.0f, 90.0f);
-                _angleX -= e.DeltaX / 1.5f;
-                _angleX %= 360f;
+                _angleX -= e.DeltaY / 1.5f;
+                _angleX = Math.Clamp(_angleX, -90.0f, 90.0f);
+                _angleY -= e.DeltaX / 1.5f;
+                _angleY %= 360f;
             }
             base.OnMouseMove(e);
         }
@@ -1230,7 +1355,11 @@ namespace MphRead
 
         protected override async void OnKeyDown(KeyboardKeyEventArgs e)
         {
-            if (e.Key == Key.T)
+            if (e.Key == Key.Number5)
+            {
+                Images.Screenshot(Size.X, Size.Y);
+            }
+            else if (e.Key == Key.T)
             {
                 _showTextures = !_showTextures;
                 if (_showTextures)
@@ -1301,6 +1430,7 @@ namespace MphRead
             else if (e.Key == Key.R)
             {
                 ResetCamera();
+                await PrintOutput();
             }
             else if (e.Key == Key.P)
             {
@@ -1327,29 +1457,52 @@ namespace MphRead
             {
                 if (_models.Any(m => m.Meshes.Count > 0))
                 {
-                    Deselect();
-                    if (_selectionMode == SelectionMode.None)
+                    if (e.Control)
                     {
-                        _selectionMode = SelectionMode.Model;
-                        SetSelected(_selectedModelId);
-                    }
-                    else if (_selectionMode == SelectionMode.Model)
-                    {
-                        if (SelectedModel.Meshes.Count == 0)
+                        if (_selectionMode == SelectionMode.Model)
                         {
-                            _selectionMode = SelectionMode.None;
+                            await InputSelectModel();
                         }
-                        else
+                        else if (_selectionMode == SelectionMode.Node)
                         {
-                            _selectionMode = SelectionMode.Mesh;
-                            SetSelected(_selectedModelId, _selectedMeshId);
+                            await InputSelectNode();
+                        }
+                        else if (_selectionMode == SelectionMode.Mesh)
+                        {
+                            await InputSelectMesh();
                         }
                     }
                     else
                     {
-                        _selectionMode = SelectionMode.None;
+                        Deselect();
+                        if (_selectionMode == SelectionMode.None)
+                        {
+                            _selectionMode = SelectionMode.Model;
+                            SetSelectedModel(_selectedModelId);
+                        }
+                        else if (_selectionMode == SelectionMode.Model)
+                        {
+                            _selectionMode = SelectionMode.Node;
+                            SetSelectedNode(_selectedModelId, _selectedNodeId);
+                        }
+                        else if (_selectionMode == SelectionMode.Node)
+                        {
+                            if (!SelectedModel.GetNodeMeshes(_selectedNodeId).Any())
+                            {
+                                _selectionMode = SelectionMode.None;
+                            }
+                            else
+                            {
+                                _selectionMode = SelectionMode.Mesh;
+                                SetSelectedMesh(_selectedModelId, _selectedMeshId);
+                            }
+                        }
+                        else
+                        {
+                            _selectionMode = SelectionMode.None;
+                        }
+                        await PrintOutput();
                     }
-                    await PrintOutput();
                 }
             }
             else if (e.Key == Key.Plus || e.Key == Key.KeypadPlus)
@@ -1358,12 +1511,47 @@ namespace MphRead
                 {
                     if (_selectionMode == SelectionMode.Mesh)
                     {
-                        int index = _selectedMeshId + 1;
-                        if (index > model.Meshes.Count - 1)
+                        int meshIndex = _selectedMeshId + 1;
+                        if (meshIndex > model.Meshes.Count - 1)
                         {
-                            index = 0;
+                            meshIndex = 0;
                         }
-                        SetSelected(_selectedModelId, index);
+                        if (!SelectedModel.Nodes[_selectedNodeId].GetMeshIds().Contains(meshIndex))
+                        {
+                            for (int i = 0; i < SelectedModel.Nodes.Count; i++)
+                            {
+                                if (SelectedModel.Nodes[i].GetMeshIds().Contains(meshIndex))
+                                {
+                                    SetSelectedNode(_selectedModelId, i);
+                                }
+                            }
+                        }
+                        SetSelectedMesh(_selectedModelId, meshIndex);
+                    }
+                    else if (_selectionMode == SelectionMode.Node)
+                    {
+                        int nodeIndex;
+                        if (e.Shift)
+                        {
+                            nodeIndex = model.GetNextRoomNodeId(_selectedNodeId);
+                        }
+                        else
+                        {
+                            nodeIndex = _selectedNodeId + 1;
+                            if (nodeIndex > model.Nodes.Count - 1)
+                            {
+                                nodeIndex = 0;
+                            }
+                        }
+                        if (model.Nodes[nodeIndex].MeshCount > 0)
+                        {
+                            _selectedMeshId = model.Nodes[nodeIndex].GetMeshIds().First();
+                        }
+                        else
+                        {
+                            _selectedMeshId = 0;
+                        }
+                        SetSelectedNode(_selectedModelId, nodeIndex);
                     }
                     else if (_selectionMode == SelectionMode.Model)
                     {
@@ -1373,12 +1561,9 @@ namespace MphRead
                         {
                             nextModel = _models.OrderBy(m => m.SceneId).First(m => m.Meshes.Count > 0);
                         }
-                        if (nextModel == null)
-                        {
-                            nextModel = model;
-                        }
                         _selectedMeshId = 0;
-                        SetSelected(nextModel.SceneId);
+                        _selectedNodeId = 0;
+                        SetSelectedModel(nextModel.SceneId);
                     }
                     await PrintOutput();
                 }
@@ -1389,12 +1574,47 @@ namespace MphRead
                 {
                     if (_selectionMode == SelectionMode.Mesh)
                     {
-                        int index = _selectedMeshId - 1;
-                        if (index < 0)
+                        int meshIndex = _selectedMeshId - 1;
+                        if (meshIndex < 0)
                         {
-                            index = model.Meshes.Count - 1;
+                            meshIndex = model.Meshes.Count - 1;
                         }
-                        SetSelected(_selectedModelId, index);
+                        if (!SelectedModel.Nodes[_selectedNodeId].GetMeshIds().Contains(meshIndex))
+                        {
+                            for (int i = 0; i < SelectedModel.Nodes.Count; i++)
+                            {
+                                if (SelectedModel.Nodes[i].GetMeshIds().Contains(meshIndex))
+                                {
+                                    SetSelectedNode(_selectedModelId, i);
+                                }
+                            }
+                        }
+                        SetSelectedMesh(_selectedModelId, meshIndex);
+                    }
+                    else if (_selectionMode == SelectionMode.Node)
+                    {
+                        int nodeIndex;
+                        if (e.Shift)
+                        {
+                            nodeIndex = model.GetPreviousRoomNodeId(_selectedNodeId);
+                        }
+                        else
+                        {
+                            nodeIndex = _selectedNodeId - 1;
+                            if (nodeIndex < 0)
+                            {
+                                nodeIndex = model.Nodes.Count - 1;
+                            }
+                        }
+                        if (model.Nodes[nodeIndex].MeshCount > 0)
+                        {
+                            _selectedMeshId = model.Nodes[nodeIndex].GetMeshIds().First();
+                        }
+                        else
+                        {
+                            _selectedMeshId = 0;
+                        }
+                        SetSelectedNode(_selectedModelId, nodeIndex);
                     }
                     else if (_selectionMode == SelectionMode.Model)
                     {
@@ -1409,9 +1629,21 @@ namespace MphRead
                             nextModel = model;
                         }
                         _selectedMeshId = 0;
-                        SetSelected(nextModel.SceneId);
+                        SetSelectedModel(nextModel.SceneId);
                     }
                     await PrintOutput();
+                }
+            }
+            else if (e.Key == Key.X)
+            {
+                if (_selectionMode == SelectionMode.Model)
+                {
+                    LookAt(SelectedModel.Position, e.Control);
+                }
+                else if (_selectionMode == SelectionMode.Node || _selectionMode == SelectionMode.Mesh)
+                {
+                    // todo: could keep track of vertex positions during rendering and use them here to locate the mesh
+                    LookAt(SelectedModel.Nodes[_selectedNodeId].Position, e.Control);
                 }
             }
             else if (e.Key == Key.Number0 || e.Key == Key.Keypad0)
@@ -1419,6 +1651,11 @@ namespace MphRead
                 if (_selectionMode == SelectionMode.Model)
                 {
                     SelectedModel.Visible = !SelectedModel.Visible;
+                    await PrintOutput();
+                }
+                else if (_selectionMode == SelectionMode.Node)
+                {
+                    SelectedModel.Nodes[_selectedNodeId].Enabled = !SelectedModel.Nodes[_selectedNodeId].Enabled;
                     await PrintOutput();
                 }
                 else if (_selectionMode == SelectionMode.Mesh)
@@ -1487,26 +1724,26 @@ namespace MphRead
                 {
                     _cameraPosition = new Vector3(
                         _cameraPosition.X +
-                            step * MathF.Sin(MathHelper.DegreesToRadians(-1 * _angleX))
-                            * MathF.Cos(MathHelper.DegreesToRadians(_angleY)) * 0.1f,
+                            step * MathF.Sin(MathHelper.DegreesToRadians(-1 * _angleY))
+                            * MathF.Cos(MathHelper.DegreesToRadians(_angleX)) * 0.1f,
                         _cameraPosition.Y +
-                            step * MathF.Sin(MathHelper.DegreesToRadians(_angleY)) * 0.1f,
+                            step * MathF.Sin(MathHelper.DegreesToRadians(_angleX)) * 0.1f,
                         _cameraPosition.Z +
-                            step * MathF.Cos(MathHelper.DegreesToRadians(_angleX))
-                            * MathF.Cos(MathHelper.DegreesToRadians(_angleY)) * 0.1f
+                            step * MathF.Cos(MathHelper.DegreesToRadians(_angleY))
+                            * MathF.Cos(MathHelper.DegreesToRadians(_angleX)) * 0.1f
                     );
                 }
                 else if (KeyboardState.IsKeyDown(Key.S)) // move backward
                 {
                     _cameraPosition = new Vector3(
                         _cameraPosition.X -
-                            step * MathF.Sin(MathHelper.DegreesToRadians(-1 * _angleX))
-                            * MathF.Cos(MathHelper.DegreesToRadians(_angleY)) * 0.1f,
+                            step * MathF.Sin(MathHelper.DegreesToRadians(-1 * _angleY))
+                            * MathF.Cos(MathHelper.DegreesToRadians(_angleX)) * 0.1f,
                         _cameraPosition.Y -
-                            step * MathF.Sin(MathHelper.DegreesToRadians(_angleY)) * 0.1f,
+                            step * MathF.Sin(MathHelper.DegreesToRadians(_angleX)) * 0.1f,
                         _cameraPosition.Z -
-                            step * MathF.Cos(MathHelper.DegreesToRadians(_angleX))
-                            * MathF.Cos(MathHelper.DegreesToRadians(_angleY)) * 0.1f
+                            step * MathF.Cos(MathHelper.DegreesToRadians(_angleY))
+                            * MathF.Cos(MathHelper.DegreesToRadians(_angleX)) * 0.1f
                     );
                 }
                 if (KeyboardState.IsKeyDown(Key.Space)) // move up
@@ -1519,7 +1756,7 @@ namespace MphRead
                 }
                 if (KeyboardState.IsKeyDown(Key.A)) // move left
                 {
-                    float angleX = _angleX - 90;
+                    float angleX = _angleY - 90;
                     if (angleX < 0)
                     {
                         angleX += 360;
@@ -1536,7 +1773,7 @@ namespace MphRead
                 }
                 else if (KeyboardState.IsKeyDown(Key.D)) // move right
                 {
-                    float angleX = _angleX + 90;
+                    float angleX = _angleY + 90;
                     if (angleX > 360)
                     {
                         angleX -= 360;
@@ -1555,23 +1792,23 @@ namespace MphRead
             }
             if (KeyboardState.IsKeyDown(Key.Up)) // rotate up
             {
-                _angleY += step;
-                _angleY = Math.Clamp(_angleY, -90.0f, 90.0f);
+                _angleX += step;
+                _angleX = Math.Clamp(_angleX, -90.0f, 90.0f);
             }
             else if (KeyboardState.IsKeyDown(Key.Down)) // rotate down
             {
-                _angleY -= step;
-                _angleY = Math.Clamp(_angleY, -90.0f, 90.0f);
+                _angleX -= step;
+                _angleX = Math.Clamp(_angleX, -90.0f, 90.0f);
             }
             if (KeyboardState.IsKeyDown(Key.Left)) // rotate left
             {
-                _angleX += step;
-                _angleX %= 360f;
+                _angleY += step;
+                _angleY %= 360f;
             }
             else if (KeyboardState.IsKeyDown(Key.Right)) // rotate right
             {
-                _angleX -= step;
-                _angleX %= 360f;
+                _angleY -= step;
+                _angleY %= 360f;
             }
         }
 
@@ -1619,6 +1856,10 @@ namespace MphRead
             {
                 await PrintModelInfo(guid);
             }
+            else if (_selectionMode == SelectionMode.Node)
+            {
+                await PrintNodeInfo(guid);
+            }
             else if (_selectionMode == SelectionMode.Mesh)
             {
                 await PrintMeshInfo(guid);
@@ -1634,9 +1875,20 @@ namespace MphRead
         {
             Model model = SelectedModel;
             await Output.Write(guid);
+            await Output.Write($"Camera ({_cameraPosition.X * -1}, {_cameraPosition.Y * -1}, {_cameraPosition.Z * -1})", guid);
+            await Output.Write(guid);
             await Output.Write($"Model: {model.Name} [{model.SceneId}] {(model.Visible ? "On " : "Off")} - " +
                 $"Color {model.CurrentRecolor} / {model.Recolors.Count - 1}", guid);
-            await Output.Write($"{model.Type}{(model.Type == ModelType.Placeholder ? $" - {model.EntityType}" : "")}", guid);
+            string type = $"{model.Type}";
+            if (model.Type == ModelType.Room)
+            {
+                type += $" ({model.Nodes.Count(n => n.IsRoomNode)})";
+            }
+            else if (model.Type == ModelType.Placeholder)
+            {
+                type += $" - {model.EntityType}";
+            }
+            await Output.Write(type, guid);
             // todo: pickup rotation shows up, but the floating height change does not, would be nice to be consistent
             await Output.Write($"Position ({model.Position.X}, {model.Position.Y}, {model.Position.Z})", guid);
             await Output.Write($"Rotation ({model.Rotation.X}, {model.Rotation.Y}, {model.Rotation.Z})", guid);
@@ -1645,37 +1897,57 @@ namespace MphRead
                 $"Textures {model.Textures.Count}, Palettes {model.Palettes.Count}", guid);
             await Output.Write(guid);
         }
-        
+
+        private async Task PrintNodeInfo(Guid guid)
+        {
+            string FormatNode(int otherId)
+            {
+                if (otherId == UInt16.MaxValue)
+                {
+                    return "None";
+                }
+                return $"{SelectedModel.Nodes[otherId].Name} [{otherId}]";
+            }
+            await PrintModelInfo(guid);
+            Node node = SelectedModel.Nodes[_selectedNodeId];
+            string mesh = $" - Meshes {node.MeshCount}";
+            IEnumerable<int> meshIds = node.GetMeshIds().OrderBy(m => m);
+            if (meshIds.Count() == 1)
+            {
+                mesh += $" ({meshIds.First()})";
+            }
+            else if (meshIds.Count() > 1)
+            {
+                mesh += $" ({meshIds.First()} - {meshIds.Last()})";
+            }
+            string enabled = node.Enabled ? (SelectedModel.NodeParentsEnabled(node) ? "On " : "On*") : "Off";
+            string billboard = node.Billboard ? " - Billboard" : "";
+            await Output.Write($"Node: {node.Name} [{_selectedNodeId}] {enabled}{mesh}{billboard}", guid);
+            await Output.Write($"Parent {FormatNode(node.ParentIndex)}", guid);
+            await Output.Write($" Child {FormatNode(node.ChildIndex)}", guid);
+            await Output.Write($"  Next {FormatNode(node.NextIndex)}", guid);
+            await Output.Write($"Position ({node.Position.X}, {node.Position.Y}, {node.Position.Z})", guid);
+            await Output.Write($"Rotation ({node.Angle.X}, {node.Angle.Y}, {node.Angle.Z})", guid);
+            await Output.Write($"   Scale ({node.Scale.X}, {node.Scale.Y}, {node.Scale.Z})", guid);
+            //await Output.Write($"   ??? 1 ({node.Vector1.X}, {node.Vector1.Y}, {node.Vector1.Z})", guid);
+            //await Output.Write($"   ??? 2 ({node.Vector2.X}, {node.Vector2.Y}, {node.Vector2.Z})", guid);
+            await Output.Write(guid);
+        }
+
         private async Task PrintMeshInfo(Guid guid)
         {
-            await PrintModelInfo(guid);
-            for (int i = 0; i < SelectedModel.Nodes.Count; i++)
-            {
-                Node node = SelectedModel.Nodes[i];
-                if (node.MeshId / 2 <= _selectedMeshId && node.MeshId / 2 + node.MeshCount >= _selectedMeshId)
-                {
-                    await Output.Write($"Node: {node.Name} [{i}] {(node.Enabled ? "On ": "Off")} - Meshes {node.MeshCount}", guid);
-                    await Output.Write($"{node.Type}", guid);
-                    await Output.Write($"Position ({node.Position.X}, {node.Position.Y}, {node.Position.Z})", guid);
-                    await Output.Write($"Rotation ({node.Angle.X}, {node.Angle.Y}, {node.Angle.Z})", guid);
-                    await Output.Write($"   Scale ({node.Scale.X}, {node.Scale.Y}, {node.Scale.Z})", guid);
-                    await Output.Write($"   ??? 1 ({node.Vector1.X}, {node.Vector1.Y}, {node.Vector1.Z})", guid);
-                    await Output.Write($"   ??? 2 ({node.Vector2.X}, {node.Vector2.Y}, {node.Vector2.Z})", guid);
-                    await Output.Write(guid);
-                    break;
-                }
-            }
+            await PrintNodeInfo(guid);
             Mesh mesh = SelectedModel.Meshes[_selectedMeshId];
-            await Output.Write($"Mesh: {_selectedMeshId} {(mesh.Visible ? "On " : "Off")}", guid);
-            await Output.Write($"Material ID {mesh.MaterialId}, DList ID {mesh.DlistId}", guid);
+            await Output.Write($"Mesh: [{_selectedMeshId}] {(mesh.Visible ? "On " : "Off")} - " +
+                $"Material ID {mesh.MaterialId}, DList ID {mesh.DlistId}", guid);
             await Output.Write(guid);
             Material material = SelectedModel.Materials[mesh.MaterialId];
-            await Output.Write($"Material: {material.Name} [{material.RenderMode}, {material.PolygonMode}]", guid);
+            await Output.Write($"Material: {material.Name} [{mesh.MaterialId}] - {material.RenderMode}, {material.PolygonMode}", guid);
             await Output.Write($"Lighting {material.Lighting}, Alpha {material.Alpha}", guid);
             await Output.Write($"Texture ID {material.TextureId}, Palette ID {material.PaletteId}", guid);
-            await Output.Write($" Diffuse ({material.Diffuse.Red}, {material.Diffuse.Green}, {material.Diffuse.Blue})", guid);
-            await Output.Write($" Ambient ({material.Ambient.Red}, {material.Ambient.Green}, {material.Ambient.Blue})", guid);
-            await Output.Write($"Specular ({material.Specular.Red}, {material.Specular.Green}, {material.Specular.Blue})", guid);
+            await Output.Write($"Diffuse ({material.Diffuse.Red}, {material.Diffuse.Green}, {material.Diffuse.Blue})" +
+                $" Ambient ({material.Ambient.Red}, {material.Ambient.Green}, {material.Ambient.Blue})" +
+                $" Specular({ material.Specular.Red}, { material.Specular.Green}, { material.Specular.Blue})", guid);
             await Output.Write(guid);
         }
 

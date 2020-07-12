@@ -80,7 +80,7 @@ namespace MphRead
         {
             await Write("", guid);
         }
-        
+
         public static async Task Write(string message, Guid? guid = null)
         {
             await _lock.WaitAsync();

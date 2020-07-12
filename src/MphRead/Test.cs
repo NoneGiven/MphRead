@@ -150,6 +150,21 @@ namespace MphRead
             }
         }
 
+        public static void TestAllNodes()
+        {
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                Model room = Read.GetRoomByName(meta.Key);
+                Console.WriteLine(meta.Key);
+                for (int i = 0; i < room.Nodes.Count; i++)
+                {
+                    Node node = room.Nodes[i];
+                }
+                Console.WriteLine();
+            }
+            Nop();
+        }
+
         public static void TestAllEntities()
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
@@ -176,7 +191,7 @@ namespace MphRead
 
         private static IEnumerable<Model> GetAllModels()
         {
-            foreach (KeyValuePair<string, EntityMetadata> meta in Metadata.EntityMetadata)
+            foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.EntityMetadata)
             {
                 yield return Read.GetModelByName(meta.Key);
             }

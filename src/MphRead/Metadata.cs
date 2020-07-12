@@ -71,7 +71,7 @@ namespace MphRead
         Model
     }
 
-    public class EntityMetadata
+    public class ModelMetadata
     {
         public string Name { get; }
         public string ModelPath { get; }
@@ -80,7 +80,7 @@ namespace MphRead
         public IReadOnlyList<RecolorMetadata> Recolors { get; }
         public bool Animate { get; }
 
-        public EntityMetadata(string name, string modelPath, string? animationPath, string? collisionPath,
+        public ModelMetadata(string name, string modelPath, string? animationPath, string? collisionPath,
             IReadOnlyList<RecolorMetadata> recolors)
         {
             Name = name;
@@ -90,7 +90,7 @@ namespace MphRead
             Recolors = recolors;
         }
 
-        public EntityMetadata(string name, string? animationPath, string? texturePath = null)
+        public ModelMetadata(string name, string? animationPath, string? texturePath = null)
         {
             Name = name;
             ModelPath = $@"models\{name}_Model.bin";
@@ -101,7 +101,7 @@ namespace MphRead
             };
         }
 
-        public EntityMetadata(string name, string remove, bool animation = true,
+        public ModelMetadata(string name, string remove, bool animation = true,
             string? animationPath = null, bool collision = false)
         {
             Name = name;
@@ -121,7 +121,7 @@ namespace MphRead
             };
         }
 
-        public EntityMetadata(string name, IEnumerable<string> recolors, string? remove = null,
+        public ModelMetadata(string name, IEnumerable<string> recolors, string? remove = null,
             bool animation = false, string? animationPath = null, bool texture = false,
             MdlSuffix mdlSuffix = MdlSuffix.None, string? archive = null, string? recolorName = null)
         {
@@ -172,7 +172,7 @@ namespace MphRead
             Recolors = recolorList;
         }
 
-        public EntityMetadata(string name, bool animation = true, bool collision = false,
+        public ModelMetadata(string name, bool animation = true, bool collision = false,
             bool texture = false, string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None,
             string? archive = null, string? addToAnim = null, bool animate = false)
         {
@@ -274,18 +274,18 @@ namespace MphRead
 
     public static class Metadata
     {
-        public static EntityMetadata? GetEntityByName(string name)
+        public static ModelMetadata? GetEntityByName(string name)
         {
-            if (EntityMetadata.TryGetValue(name, out EntityMetadata? metadata))
+            if (EntityMetadata.TryGetValue(name, out ModelMetadata? metadata))
             {
                 return metadata;
             }
             return null;
         }
 
-        public static EntityMetadata? GetEntityByPath(string path)
+        public static ModelMetadata? GetEntityByPath(string path)
         {
-            KeyValuePair<string, EntityMetadata> result = EntityMetadata.FirstOrDefault(r => r.Value.ModelPath == path);
+            KeyValuePair<string, ModelMetadata> result = EntityMetadata.FirstOrDefault(r => r.Value.ModelPath == path);
             if (result.Key == null)
             {
                 return null;
@@ -3668,117 +3668,117 @@ namespace MphRead
         }
 
         // todo: e.g. lod1 in the model folder should have the animation files from the lod0 archive
-        public static readonly IReadOnlyDictionary<string, EntityMetadata> EntityMetadata
-            = new Dictionary<string, EntityMetadata>()
+        public static readonly IReadOnlyDictionary<string, ModelMetadata> EntityMetadata
+            = new Dictionary<string, ModelMetadata>()
             {
                 {
                     "AlimbicBossDoorLock",
-                    new EntityMetadata("AlimbicBossDoorLock",
+                    new ModelMetadata("AlimbicBossDoorLock",
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
                 },
                 {
                     "AlimbicBossDoor",
-                    new EntityMetadata("AlimbicBossDoor")
+                    new ModelMetadata("AlimbicBossDoor")
                 },
                 {
                     "AlimbicCapsule",
-                    new EntityMetadata("AlimbicCapsule", collision: true)
+                    new ModelMetadata("AlimbicCapsule", collision: true)
                 },
                 {
                     "AlimbicComputerStationControl",
-                    new EntityMetadata("AlimbicComputerStationControl")
+                    new ModelMetadata("AlimbicComputerStationControl")
                 },
                 {
                     "AlimbicComputerStationControl02",
-                    new EntityMetadata("AlimbicComputerStationControl02")
+                    new ModelMetadata("AlimbicComputerStationControl02")
                 },
                 {
                     "AlimbicDoorLock",
-                    new EntityMetadata("AlimbicDoorLock",
+                    new ModelMetadata("AlimbicDoorLock",
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
                 },
                 {
                     "AlimbicDoor",
-                    new EntityMetadata("AlimbicDoor")
+                    new ModelMetadata("AlimbicDoor")
                 },
                 {
                     "AlimbicEnergySensor",
-                    new EntityMetadata("AlimbicEnergySensor")
+                    new ModelMetadata("AlimbicEnergySensor")
                 },
                 {
                     "AlimbicGhost_01",
-                    new EntityMetadata("AlimbicGhost_01")
+                    new ModelMetadata("AlimbicGhost_01")
                 },
                 {
                     "AlimbicLightPole",
-                    new EntityMetadata("AlimbicLightPole", collision: true)
+                    new ModelMetadata("AlimbicLightPole", collision: true)
                 },
                 {
                     "AlimbicLightPole02",
-                    new EntityMetadata("AlimbicLightPole02", collision: true)
+                    new ModelMetadata("AlimbicLightPole02", collision: true)
                 },
                 {
                     "AlimbicMorphBallDoor",
-                    new EntityMetadata("AlimbicMorphBallDoor",
+                    new ModelMetadata("AlimbicMorphBallDoor",
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
                 },
                 {
                     "AlimbicMorphBallDoorLock",
-                    new EntityMetadata("AlimbicMorphBallDoorLock",
+                    new ModelMetadata("AlimbicMorphBallDoorLock",
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
                 },
                 {
                     "AlimbicStationShieldControl",
-                    new EntityMetadata("AlimbicStationShieldControl")
+                    new ModelMetadata("AlimbicStationShieldControl")
                 },
                 {
                     "AlimbicStatue_lod0",
-                    new EntityMetadata("AlimbicStatue_lod0", remove: "_lod0", collision: true)
+                    new ModelMetadata("AlimbicStatue_lod0", remove: "_lod0", collision: true)
                 },
                 {
                     "AlimbicThinDoor",
-                    new EntityMetadata("AlimbicThinDoor")
+                    new ModelMetadata("AlimbicThinDoor")
                 },
                 {
                     "Alimbic_Console",
-                    new EntityMetadata("Alimbic_Console",
+                    new ModelMetadata("Alimbic_Console",
                         share: @"models\AlimbicEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Alimbic_Monitor",
-                    new EntityMetadata("Alimbic_Monitor",
+                    new ModelMetadata("Alimbic_Monitor",
                         share: @"models\AlimbicEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Alimbic_Power",
-                    new EntityMetadata("Alimbic_Power",
+                    new ModelMetadata("Alimbic_Power",
                         share: @"models\AlimbicEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Alimbic_Scanner",
-                    new EntityMetadata("Alimbic_Scanner",
+                    new ModelMetadata("Alimbic_Scanner",
                         share: @"models\AlimbicEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Alimbic_Switch",
-                    new EntityMetadata("Alimbic_Switch",
+                    new ModelMetadata("Alimbic_Switch",
                         share: @"models\AlimbicEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Alimbic_Turret",
-                    new EntityMetadata("Alimbic_Turret",
+                    new ModelMetadata("Alimbic_Turret",
                         recolors: new List<string>()
                         {
                             "img_00",
@@ -3790,7 +3790,7 @@ namespace MphRead
                 },
                 {
                     "alt_ice",
-                    new EntityMetadata("alt_ice",
+                    new ModelMetadata("alt_ice",
                         modelPath: @"_archives\common\alt_ice_mdl_Model.bin",
                         animationPath: null,
                         collisionPath: null,
@@ -3804,99 +3804,99 @@ namespace MphRead
                 },
                 {
                     "arcWelder1",
-                    new EntityMetadata("arcWelder1", animation: false)
+                    new ModelMetadata("arcWelder1", animation: false)
                 },
                 {
                     "arcWelder2",
-                    new EntityMetadata("arcWelder2", animation: false)
+                    new ModelMetadata("arcWelder2", animation: false)
                 },
                 {
                     "arcWelder3",
-                    new EntityMetadata("arcWelder3", animation: false)
+                    new ModelMetadata("arcWelder3", animation: false)
                 },
                 {
                     "arcWelder4",
-                    new EntityMetadata("arcWelder4", animation: false)
+                    new ModelMetadata("arcWelder4", animation: false)
                 },
                 {
                     "arcWelder5",
-                    new EntityMetadata("arcWelder5", animation: false)
+                    new ModelMetadata("arcWelder5", animation: false)
                 },
                 {
                     "ArtifactBase",
-                    new EntityMetadata("ArtifactBase")
+                    new ModelMetadata("ArtifactBase")
                 },
                 {
                     "Artifact_Key",
-                    new EntityMetadata("Artifact_Key", animate: true)
+                    new ModelMetadata("Artifact_Key", animate: true)
                 },
                 {
                     "Artifact01",
-                    new EntityMetadata("Artifact01",
+                    new ModelMetadata("Artifact01",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
                         animation: false,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact02",
-                    new EntityMetadata("Artifact02",
+                    new ModelMetadata("Artifact02",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
                         animation: false,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact03",
-                    new EntityMetadata("Artifact03",
+                    new ModelMetadata("Artifact03",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
                         animation: false,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact04",
-                    new EntityMetadata("Artifact04",
+                    new ModelMetadata("Artifact04",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
                         animation: false,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact05",
-                    new EntityMetadata("Artifact05",
+                    new ModelMetadata("Artifact05",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
                         animation: false,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact06",
-                    new EntityMetadata("Artifact06",
+                    new ModelMetadata("Artifact06",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
                         animation: false,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact07",
-                    new EntityMetadata("Artifact07",
+                    new ModelMetadata("Artifact07",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
                         animation: false,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact08",
-                    new EntityMetadata("Artifact08",
+                    new ModelMetadata("Artifact08",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
                         animation: false,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "balljump",
-                    new EntityMetadata("balljump", animation: false)
+                    new ModelMetadata("balljump", animation: false)
                 },
                 {
                     "balljump_ray",
-                    new EntityMetadata("balljump_ray")
+                    new ModelMetadata("balljump_ray")
                 },
                 {
                     "BarbedWarWasp",
-                    new EntityMetadata("BarbedWarWasp",
+                    new ModelMetadata("BarbedWarWasp",
                         recolors: new List<string>()
                         {
                             "img_00",
@@ -3907,133 +3907,133 @@ namespace MphRead
                 },
                 {
                     "BigEyeBall",
-                    new EntityMetadata("BigEyeBall")
+                    new ModelMetadata("BigEyeBall")
                 },
                 {
                     "BigEyeNest",
-                    new EntityMetadata("BigEyeNest")
+                    new ModelMetadata("BigEyeNest")
                 },
                 {
                     "BigEyeShield",
-                    new EntityMetadata("BigEyeShield")
+                    new ModelMetadata("BigEyeShield")
                 },
                 {
                     "BigEyeSynapse_01",
-                    new EntityMetadata("BigEyeSynapse_01", animationPath: @"models\BigEyeSynapse_Anim.bin")
+                    new ModelMetadata("BigEyeSynapse_01", animationPath: @"models\BigEyeSynapse_Anim.bin")
                 },
                 {
                     "BigEyeSynapse_02",
-                    new EntityMetadata("BigEyeSynapse_02", animationPath: @"models\BigEyeSynapse_Anim.bin")
+                    new ModelMetadata("BigEyeSynapse_02", animationPath: @"models\BigEyeSynapse_Anim.bin")
                 },
                 {
                     "BigEyeSynapse_03",
-                    new EntityMetadata("BigEyeSynapse_03", animationPath: @"models\BigEyeSynapse_Anim.bin")
+                    new ModelMetadata("BigEyeSynapse_03", animationPath: @"models\BigEyeSynapse_Anim.bin")
                 },
                 {
                     "BigEyeSynapse_04",
-                    new EntityMetadata("BigEyeSynapse_04", animationPath: @"models\BigEyeSynapse_Anim.bin")
+                    new ModelMetadata("BigEyeSynapse_04", animationPath: @"models\BigEyeSynapse_Anim.bin")
                 },
                 {
                     "BigEyeTurret",
-                    new EntityMetadata("BigEyeTurret")
+                    new ModelMetadata("BigEyeTurret")
                 },
                 {
                     "blastcap",
-                    new EntityMetadata("blastcap")
+                    new ModelMetadata("blastcap")
                 },
                 {
                     "brain_unit3_c2",
-                    new EntityMetadata("brain_unit3_c2", animation: false)
+                    new ModelMetadata("brain_unit3_c2", animation: false)
                 },
                 {
                     "Chomtroid",
-                    new EntityMetadata("Chomtroid", animation: false)
+                    new ModelMetadata("Chomtroid", animation: false)
                 },
                 {
                     "Crate01",
-                    new EntityMetadata("Crate01", collision: true)
+                    new ModelMetadata("Crate01", collision: true)
                 },
                 {
                     "cylBossLaserBurn",
-                    new EntityMetadata("cylBossLaserBurn")
+                    new ModelMetadata("cylBossLaserBurn")
                 },
                 {
                     "cylBossLaserColl",
-                    new EntityMetadata("cylBossLaserColl")
+                    new ModelMetadata("cylBossLaserColl")
                 },
                 {
                     "cylBossLaserG",
-                    new EntityMetadata("cylBossLaserG")
+                    new ModelMetadata("cylBossLaserG")
                 },
                 {
                     "cylBossLaserY",
-                    new EntityMetadata("cylBossLaserY")
+                    new ModelMetadata("cylBossLaserY")
                 },
                 {
                     "cylBossLaser",
-                    new EntityMetadata("cylBossLaser")
+                    new ModelMetadata("cylBossLaser")
                 },
                 {
                     "cylinderbase",
-                    new EntityMetadata("cylinderbase", animation: false)
+                    new ModelMetadata("cylinderbase", animation: false)
                 },
                 {
                     "CylinderBossEye",
-                    new EntityMetadata("CylinderBossEye")
+                    new ModelMetadata("CylinderBossEye")
                 },
                 {
                     "CylinderBoss",
-                    new EntityMetadata("CylinderBoss")
+                    new ModelMetadata("CylinderBoss")
                 },
                 {
                     "deathParticle",
-                    new EntityMetadata("deathParticle", animation: false, texture: true, archive: "effectsBase")
+                    new ModelMetadata("deathParticle", animation: false, texture: true, archive: "effectsBase")
                 },
                 {
                     "deepspace",
-                    new EntityMetadata("deepspace", archive: "shipSpace")
+                    new ModelMetadata("deepspace", archive: "shipSpace")
                 },
                 {
                     "Door_Unit4_RM1",
-                    new EntityMetadata("Door_Unit4_RM1", animation: false, collision: true)
+                    new ModelMetadata("Door_Unit4_RM1", animation: false, collision: true)
                 },
                 {
                     "DripStank_lod0",
-                    new EntityMetadata("DripStank_lod0", remove: "_lod0")
+                    new ModelMetadata("DripStank_lod0", remove: "_lod0")
                 },
                 {
                     "ElectroField1",
-                    new EntityMetadata("ElectroField1", collision: true)
+                    new ModelMetadata("ElectroField1", collision: true)
                 },
                 {
                     "Elevator",
-                    new EntityMetadata("Elevator", animation: false, collision: true)
+                    new ModelMetadata("Elevator", animation: false, collision: true)
                 },
                 {
                     "EnemySpawner",
-                    new EntityMetadata("EnemySpawner",
+                    new ModelMetadata("EnemySpawner",
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
                 },
                 {
                     "energyBeam",
-                    new EntityMetadata("energyBeam")
+                    new ModelMetadata("energyBeam")
                 },
                 {
                     "filter",
-                    new EntityMetadata("filter", animation: false, archive: "common")
+                    new ModelMetadata("filter", animation: false, archive: "common")
                 },
                 {
                     "flagbase_bounty",
-                    new EntityMetadata("flagbase_bounty")
+                    new ModelMetadata("flagbase_bounty")
                 },
                 {
                     "flagbase_cap",
-                    new EntityMetadata("flagbase_cap")
+                    new ModelMetadata("flagbase_cap")
                 },
                 {
                     "flagbase_ctf",
-                    new EntityMetadata("flagbase_ctf",
+                    new ModelMetadata("flagbase_ctf",
                         recolors: new List<string>()
                         {
                             "green_img",
@@ -4044,120 +4044,120 @@ namespace MphRead
                 },
                 {
                     "ForceField",
-                    new EntityMetadata("ForceField")
+                    new ModelMetadata("ForceField")
                 },
                 {
                     "ForceFieldLock",
-                    new EntityMetadata("ForceFieldLock",
+                    new ModelMetadata("ForceFieldLock",
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
                 },
                 {
                     "furlEffect",
-                    new EntityMetadata("furlEffect")
+                    new ModelMetadata("furlEffect")
                 },
                 {
                     "geemer",
-                    new EntityMetadata("geemer")
+                    new ModelMetadata("geemer")
                 },
                 {
                     "Generic_Console",
-                    new EntityMetadata("Generic_Console",
+                    new ModelMetadata("Generic_Console",
                         share: @"models\GenericEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Generic_Monitor",
-                    new EntityMetadata("Generic_Monitor",
+                    new ModelMetadata("Generic_Monitor",
                         share: @"models\GenericEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Generic_Power",
-                    new EntityMetadata("Generic_Power",
+                    new ModelMetadata("Generic_Power",
                         share: @"models\GenericEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Generic_Scanner",
-                    new EntityMetadata("Generic_Scanner",
+                    new ModelMetadata("Generic_Scanner",
                         share: @"models\GenericEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Generic_Switch",
-                    new EntityMetadata("Generic_Switch",
+                    new ModelMetadata("Generic_Switch",
                         share: @"models\GenericEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "geo1",
-                    new EntityMetadata("geo1", animation: false, texture: true, archive: "effectsBase")
+                    new ModelMetadata("geo1", animation: false, texture: true, archive: "effectsBase")
                 },
                 {
                     "GhostSwitch",
-                    new EntityMetadata("GhostSwitch",
+                    new ModelMetadata("GhostSwitch",
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
                 },
                 {
                     "Gorea1A_lod0",
-                    new EntityMetadata("Gorea1A_lod0", remove: "_lod0")
+                    new ModelMetadata("Gorea1A_lod0", remove: "_lod0")
                 },
                 {
                     "Gorea1B_lod0",
-                    new EntityMetadata("Gorea1B_lod0", remove: "_lod0")
+                    new ModelMetadata("Gorea1B_lod0", remove: "_lod0")
                 },
                 {
                     "Gorea2_lod0",
-                    new EntityMetadata("Gorea2_lod0", remove: "_lod0")
+                    new ModelMetadata("Gorea2_lod0", remove: "_lod0")
                 },
                 {
                     "goreaArmRegen",
-                    new EntityMetadata("goreaArmRegen")
+                    new ModelMetadata("goreaArmRegen")
                 },
                 {
                     "goreaGeo",
-                    new EntityMetadata("goreaGeo", animation: false, texture: true)
+                    new ModelMetadata("goreaGeo", animation: false, texture: true)
                 },
                 {
                     "goreaGrappleBeam",
-                    new EntityMetadata("goreaGrappleBeam")
+                    new ModelMetadata("goreaGrappleBeam")
                 },
                 {
                     "goreaLaserColl",
-                    new EntityMetadata("goreaLaserColl")
+                    new ModelMetadata("goreaLaserColl")
                 },
                 {
                     "goreaLaser",
-                    new EntityMetadata("goreaLaser")
+                    new ModelMetadata("goreaLaser")
                 },
                 {
                     "goreaMeteor",
-                    new EntityMetadata("goreaMeteor")
+                    new ModelMetadata("goreaMeteor")
                 },
                 {
                     "goreaMindTrick",
-                    new EntityMetadata("goreaMindTrick")
+                    new ModelMetadata("goreaMindTrick")
                 },
                 {
                     "gorea_gun",
-                    new EntityMetadata("gorea_gun")
+                    new ModelMetadata("gorea_gun")
                 },
                 {
                     "Guardbot01_Dead",
-                    new EntityMetadata("Guardbot01_Dead", animation: false)
+                    new ModelMetadata("Guardbot01_Dead", animation: false)
                 },
                 {
                     "Guardbot02_Dead",
-                    new EntityMetadata("Guardbot02_Dead", animation: false)
+                    new ModelMetadata("Guardbot02_Dead", animation: false)
                 },
                 {
                     "GuardBot1",
-                    new EntityMetadata("GuardBot1",
+                    new ModelMetadata("GuardBot1",
                         recolors: new List<string>()
                         {
                             "img_00",
@@ -4171,19 +4171,19 @@ namespace MphRead
                 },
                 {
                     "GuardBot2_lod0",
-                    new EntityMetadata("GuardBot2_lod0",
+                    new ModelMetadata("GuardBot2_lod0",
                         remove: "_lod0",
                         animationPath: @"models\GuardBot02_Anim.bin")
                 },
                 {
                     "Guardian_Dead",
-                    new EntityMetadata("Guardian_Dead", animation: false)
+                    new ModelMetadata("Guardian_Dead", animation: false)
                 },
                 // Note: pal_02-04 are copies of 01 (with the same 3 unused textures/palettes),
                 // and pal_Team01-02 are broken if extracted with the main model's header info.
                 {
                     "Guardian_lod0",
-                    new EntityMetadata("Guardian_lod0",
+                    new ModelMetadata("Guardian_lod0",
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
@@ -4194,7 +4194,7 @@ namespace MphRead
                 },
                 {
                     "Guardian_lod1",
-                    new EntityMetadata("Guardian_lod1",
+                    new ModelMetadata("Guardian_lod1",
                         remove: "_lod1",
                         recolors: new List<string>()
                         {
@@ -4205,7 +4205,7 @@ namespace MphRead
                 // next two not part of the game's files, edited to allow choosing the unused recolors
                 {
                     "GuardianR_lod0",
-                    new EntityMetadata("GuardianR_lod0",
+                    new ModelMetadata("GuardianR_lod0",
                         modelPath: @"_archives\Guardian\Guardian_lod0_Model.bin",
                         animationPath: @"_archives\Guardian\Guardian_Anim.bin",
                         collisionPath: null,
@@ -4239,7 +4239,7 @@ namespace MphRead
                 },
                 {
                     "GuardianR_lod1",
-                    new EntityMetadata("GuardianR_lod1",
+                    new ModelMetadata("GuardianR_lod1",
                         modelPath: @"models\Guardian_lod1_Model.bin",
                         animationPath: @"_archives\Guardian\Guardian_Anim.bin",
                         collisionPath: null,
@@ -4273,88 +4273,88 @@ namespace MphRead
                 },
                 {
                     "Guardian_Stasis",
-                    new EntityMetadata("Guardian_Stasis")
+                    new ModelMetadata("Guardian_Stasis")
                 },
                 {
                     "gunSmoke",
-                    new EntityMetadata("gunSmoke", archive: "common")
+                    new ModelMetadata("gunSmoke", archive: "common")
                 },
                 {
                     "Ice_Console",
-                    new EntityMetadata("Ice_Console",
+                    new ModelMetadata("Ice_Console",
                         share: @"models\IceEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Ice_Monitor",
-                    new EntityMetadata("Ice_Monitor",
+                    new ModelMetadata("Ice_Monitor",
                         share: @"models\IceEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Ice_Power",
-                    new EntityMetadata("Ice_Power",
+                    new ModelMetadata("Ice_Power",
                         share: @"models\IceEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Ice_Scanner",
-                    new EntityMetadata("Ice_Scanner",
+                    new ModelMetadata("Ice_Scanner",
                         share: @"models\IceEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Ice_Switch",
-                    new EntityMetadata("Ice_Switch",
+                    new ModelMetadata("Ice_Switch",
                         share: @"models\IceEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "iceShard",
-                    new EntityMetadata("iceShard", animation: false, archive: "common")
+                    new ModelMetadata("iceShard", animation: false, archive: "common")
                 },
                 {
                     "iceWave",
-                    new EntityMetadata("iceWave", archive: "common")
+                    new ModelMetadata("iceWave", archive: "common")
                 },
                 {
                     "items_base",
-                    new EntityMetadata("items_base", animation: false, archive: "common")
+                    new ModelMetadata("items_base", animation: false, archive: "common")
                 },
                 {
                     "JumpPad_Alimbic",
-                    new EntityMetadata("JumpPad_Alimbic")
+                    new ModelMetadata("JumpPad_Alimbic")
                 },
                 {
                     "JumpPad_Beam",
-                    new EntityMetadata("JumpPad_Beam")
+                    new ModelMetadata("JumpPad_Beam")
                 },
                 {
                     "JumpPad_IceStation",
-                    new EntityMetadata("JumpPad_IceStation")
+                    new ModelMetadata("JumpPad_IceStation")
                 },
                 {
                     "JumpPad_Ice",
-                    new EntityMetadata("JumpPad_Ice")
+                    new ModelMetadata("JumpPad_Ice")
                 },
                 {
                     "JumpPad_Lava",
-                    new EntityMetadata("JumpPad_Lava")
+                    new ModelMetadata("JumpPad_Lava")
                 },
                 {
                     "JumpPad",
-                    new EntityMetadata("JumpPad")
+                    new ModelMetadata("JumpPad")
                 },
                 {
                     "JumpPad_Station",
-                    new EntityMetadata("JumpPad_Station")
+                    new ModelMetadata("JumpPad_Station")
                 },
                 {
                     "Kanden_lod0",
-                    new EntityMetadata("Kanden_lod0",
+                    new ModelMetadata("Kanden_lod0",
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
@@ -4370,7 +4370,7 @@ namespace MphRead
                 },
                 {
                     "Kanden_lod1",
-                    new EntityMetadata("Kanden_lod1",
+                    new ModelMetadata("Kanden_lod1",
                         remove: "_lod1",
                         recolors: new List<string>()
                         {
@@ -4385,7 +4385,7 @@ namespace MphRead
                 },
                 {
                     "KandenAlt_lod0",
-                    new EntityMetadata("KandenAlt_lod0",
+                    new ModelMetadata("KandenAlt_lod0",
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
@@ -4402,7 +4402,7 @@ namespace MphRead
                 },
                 {
                     "KandenAlt_TailBomb",
-                    new EntityMetadata("KandenAlt_TailBomb",
+                    new ModelMetadata("KandenAlt_TailBomb",
                         recolors: new List<string>()
                         {
                             "pal_01",
@@ -4419,7 +4419,7 @@ namespace MphRead
                 },
                 {
                     "KandenGun",
-                    new EntityMetadata("KandenGun",
+                    new ModelMetadata("KandenGun",
                         recolors: new List<string>()
                         {
                             "img_01",
@@ -4434,15 +4434,15 @@ namespace MphRead
                 },
                 {
                     "koth_data_flow",
-                    new EntityMetadata("koth_data_flow", animation: false)
+                    new ModelMetadata("koth_data_flow", animation: false)
                 },
                 {
                     "koth_terminal",
-                    new EntityMetadata("koth_terminal", animation: false)
+                    new ModelMetadata("koth_terminal", animation: false)
                 },
                 {
                     "LavaDemon",
-                    new EntityMetadata("LavaDemon",
+                    new ModelMetadata("LavaDemon",
                         recolors: new List<string>()
                         {
                             "img_00",
@@ -4453,14 +4453,14 @@ namespace MphRead
                 },
                 {
                     "Lava_Console",
-                    new EntityMetadata("Lava_Console",
+                    new ModelMetadata("Lava_Console",
                         share: @"models\LavaEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Lava_Monitor",
-                    new EntityMetadata("Lava_Monitor",
+                    new ModelMetadata("Lava_Monitor",
                         share: @"models\LavaEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
@@ -4471,34 +4471,34 @@ namespace MphRead
                 // for now, referencing RuinsEquipTextureShare here to get it to render
                 {
                     "Lava_Power",
-                    new EntityMetadata("Lava_Power",
+                    new ModelMetadata("Lava_Power",
                         share: @"models\RuinsEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Lava_Scanner",
-                    new EntityMetadata("Lava_Scanner",
+                    new ModelMetadata("Lava_Scanner",
                         share: @"models\LavaEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Lava_Switch",
-                    new EntityMetadata("Lava_Switch",
+                    new ModelMetadata("Lava_Switch",
                         share: @"models\LavaEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "lines",
-                    new EntityMetadata("lines", addToAnim: "_Idle", archive: "frontend2d")
+                    new ModelMetadata("lines", addToAnim: "_Idle", archive: "frontend2d")
                 },
                 {
                     "MoverTest",
-                    new EntityMetadata("MoverTest")
+                    new ModelMetadata("MoverTest")
                 },
                 {
                     "Nox_lod0",
-                    new EntityMetadata("Nox_lod0",
+                    new ModelMetadata("Nox_lod0",
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
@@ -4514,7 +4514,7 @@ namespace MphRead
                 },
                 {
                     "Nox_lod1",
-                    new EntityMetadata("Nox_lod1",
+                    new ModelMetadata("Nox_lod1",
                         remove: "_lod1",
                         recolors: new List<string>()
                         {
@@ -4529,7 +4529,7 @@ namespace MphRead
                 },
                 {
                     "NoxAlt_lod0",
-                    new EntityMetadata("NoxAlt_lod0",
+                    new ModelMetadata("NoxAlt_lod0",
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
@@ -4546,7 +4546,7 @@ namespace MphRead
                 },
                 {
                     "NoxGun",
-                    new EntityMetadata("NoxGun",
+                    new ModelMetadata("NoxGun",
                         recolors: new List<string>()
                         {
                             "img_01",
@@ -4561,7 +4561,7 @@ namespace MphRead
                 },
                 {
                     "nox_ice",
-                    new EntityMetadata("nox_ice",
+                    new ModelMetadata("nox_ice",
                         modelPath: @"_archives\common\nox_ice_mdl_Model.bin",
                         animationPath: null,
                         collisionPath: null,
@@ -4575,11 +4575,11 @@ namespace MphRead
                 },
                 {
                     "octolith_bounty_img",
-                    new EntityMetadata("octolith_bounty_img", animation: false)
+                    new ModelMetadata("octolith_bounty_img", animation: false)
                 },
                 {
                     "octolith_ctf",
-                    new EntityMetadata("octolith_ctf",
+                    new ModelMetadata("octolith_ctf",
                         recolors: new List<string>()
                         {
                             "green_img",
@@ -4590,147 +4590,147 @@ namespace MphRead
                 },
                 {
                     "Octolith",
-                    new EntityMetadata("Octolith")
+                    new ModelMetadata("Octolith")
                 },
                 {
                     "octolith_simple",
-                    new EntityMetadata("octolith_simple", animation: false)
+                    new ModelMetadata("octolith_simple", animation: false)
                 },
                 {
                     "particles",
-                    new EntityMetadata("particles", animation: false, texture: true, archive: "effectsBase")
+                    new ModelMetadata("particles", animation: false, texture: true, archive: "effectsBase")
                 },
                 {
                     "particles2",
-                    new EntityMetadata("particles2", animation: false, texture: true, archive: "effectsBase")
+                    new ModelMetadata("particles2", animation: false, texture: true, archive: "effectsBase")
                 },
                 {
                     "PickUp_AmmoExp",
-                    new EntityMetadata("PickUp_AmmoExp", animation: false)
+                    new ModelMetadata("PickUp_AmmoExp", animation: false)
                 },
                 {
                     "PickUp_EnergyExp",
-                    new EntityMetadata("PickUp_EnergyExp", animate: true)
+                    new ModelMetadata("PickUp_EnergyExp", animate: true)
                 },
                 {
                     "PickUp_MissileExp",
-                    new EntityMetadata("PickUp_MissileExp", animate: true)
+                    new ModelMetadata("PickUp_MissileExp", animate: true)
                 },
                 {
                     "pick_ammo_green",
-                    new EntityMetadata("pick_ammo_green", animation: false)
+                    new ModelMetadata("pick_ammo_green", animation: false)
                 },
                 {
                     "pick_ammo_orange",
-                    new EntityMetadata("pick_ammo_orange", animation: false)
+                    new ModelMetadata("pick_ammo_orange", animation: false)
                 },
                 {
                     "pick_dblDamage",
-                    new EntityMetadata("pick_dblDamage", animation: false)
+                    new ModelMetadata("pick_dblDamage", animation: false)
                 },
                 {
                     "pick_deathball",
-                    new EntityMetadata("pick_deathball", animation: false)
+                    new ModelMetadata("pick_deathball", animation: false)
                 },
                 {
                     "pick_health_A",
-                    new EntityMetadata("pick_health_A", animation: false)
+                    new ModelMetadata("pick_health_A", animation: false)
                 },
                 {
                     "pick_health_B",
-                    new EntityMetadata("pick_health_B", animation: false)
+                    new ModelMetadata("pick_health_B", animation: false)
                 },
                 {
                     "pick_health_C",
-                    new EntityMetadata("pick_health_C", animation: false)
+                    new ModelMetadata("pick_health_C", animation: false)
                 },
                 {
                     "pick_invis",
-                    new EntityMetadata("pick_invis", animation: false)
+                    new ModelMetadata("pick_invis", animation: false)
                 },
                 {
                     "pick_wpn_all",
-                    new EntityMetadata("pick_wpn_all", animation: false)
+                    new ModelMetadata("pick_wpn_all", animation: false)
                 },
                 {
                     "pick_wpn_electro",
-                    new EntityMetadata("pick_wpn_electro", animation: false)
+                    new ModelMetadata("pick_wpn_electro", animation: false)
                 },
                 {
                     "pick_wpn_ghostbuster",
-                    new EntityMetadata("pick_wpn_ghostbuster", animation: false)
+                    new ModelMetadata("pick_wpn_ghostbuster", animation: false)
                 },
                 {
                     "pick_wpn_gorea",
-                    new EntityMetadata("pick_wpn_gorea", animation: false)
+                    new ModelMetadata("pick_wpn_gorea", animation: false)
                 },
                 {
                     "pick_wpn_jackhammer",
-                    new EntityMetadata("pick_wpn_jackhammer", animation: false)
+                    new ModelMetadata("pick_wpn_jackhammer", animation: false)
                 },
                 {
                     "pick_wpn_missile",
-                    new EntityMetadata("pick_wpn_missile", animation: false)
+                    new ModelMetadata("pick_wpn_missile", animation: false)
                 },
                 {
                     "pick_wpn_mortar",
-                    new EntityMetadata("pick_wpn_mortar", animation: false)
+                    new ModelMetadata("pick_wpn_mortar", animation: false)
                 },
                 {
                     "pick_wpn_shotgun",
-                    new EntityMetadata("pick_wpn_shotgun", animation: false)
+                    new ModelMetadata("pick_wpn_shotgun", animation: false)
                 },
                 {
                     "pick_wpn_snipergun",
-                    new EntityMetadata("pick_wpn_snipergun", animation: false)
+                    new ModelMetadata("pick_wpn_snipergun", animation: false)
                 },
                 {
                     "pillar",
-                    new EntityMetadata("pillar", animation: false, collision: true)
+                    new ModelMetadata("pillar", animation: false, collision: true)
                 },
                 {
                     "pistonmp7",
-                    new EntityMetadata("pistonmp7", animation: false, collision: true)
+                    new ModelMetadata("pistonmp7", animation: false, collision: true)
                 },
                 {
                     "piston_gorealand",
-                    new EntityMetadata("piston_gorealand", animation: false, collision: true)
+                    new ModelMetadata("piston_gorealand", animation: false, collision: true)
                 },
                 {
                     "PlantCarnivarous_Branched",
-                    new EntityMetadata("PlantCarnivarous_Branched")
+                    new ModelMetadata("PlantCarnivarous_Branched")
                 },
                 {
                     "PlantCarnivarous_PodLeaves",
-                    new EntityMetadata("PlantCarnivarous_PodLeaves")
+                    new ModelMetadata("PlantCarnivarous_PodLeaves")
                 },
                 {
                     "PlantCarnivarous_Pod",
-                    new EntityMetadata("PlantCarnivarous_Pod")
+                    new ModelMetadata("PlantCarnivarous_Pod")
                 },
                 {
                     "PlantCarnivarous_Vine",
-                    new EntityMetadata("PlantCarnivarous_Vine")
+                    new ModelMetadata("PlantCarnivarous_Vine")
                 },
                 {
                     "platform",
-                    new EntityMetadata("platform", animation: false, collision: true)
+                    new ModelMetadata("platform", animation: false, collision: true)
                 },
                 {
                     "Platform_Unit4_C1",
-                    new EntityMetadata("Platform_Unit4_C1", animation: false, collision: true)
+                    new ModelMetadata("Platform_Unit4_C1", animation: false, collision: true)
                 },
                 {
                     "PowerBomb",
-                    new EntityMetadata("PowerBomb")
+                    new ModelMetadata("PowerBomb")
                 },
                 {
                     "Psychobit_Dead",
-                    new EntityMetadata("Psychobit_Dead", animation: false)
+                    new ModelMetadata("Psychobit_Dead", animation: false)
                 },
                 {
                     "PsychoBit",
-                    new EntityMetadata("PsychoBit",
+                    new ModelMetadata("PsychoBit",
                         recolors: new List<string>()
                         {
                             "img_00",
@@ -4744,48 +4744,48 @@ namespace MphRead
                 },
                 {
                     "quads",
-                    new EntityMetadata("quads", animation: false)
+                    new ModelMetadata("quads", animation: false)
                 },
                 {
                     "Ruins_Console",
-                    new EntityMetadata("Ruins_Console",
+                    new ModelMetadata("Ruins_Console",
                         share: @"models\RuinsEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Ruins_Monitor",
-                    new EntityMetadata("Ruins_Monitor",
+                    new ModelMetadata("Ruins_Monitor",
                         share: @"models\RuinsEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Ruins_Power",
-                    new EntityMetadata("Ruins_Power",
+                    new ModelMetadata("Ruins_Power",
                         share: @"models\RuinsEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Ruins_Scanner",
-                    new EntityMetadata("Ruins_Scanner",
+                    new ModelMetadata("Ruins_Scanner",
                         share: @"models\RuinsEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Ruins_Switch",
-                    new EntityMetadata("Ruins_Switch",
+                    new ModelMetadata("Ruins_Switch",
                         share: @"models\RuinsEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "SamusShip",
-                    new EntityMetadata("SamusShip", collision: true)
+                    new ModelMetadata("SamusShip", collision: true)
                 },
                 {
                     "Samus_lod0",
-                    new EntityMetadata("Samus_lod0",
+                    new ModelMetadata("Samus_lod0",
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
@@ -4801,7 +4801,7 @@ namespace MphRead
                 },
                 {
                     "Samus_lod1",
-                    new EntityMetadata("Samus_lod1",
+                    new ModelMetadata("Samus_lod1",
                         remove: "_lod1",
                         recolors: new List<string>()
                         {
@@ -4816,7 +4816,7 @@ namespace MphRead
                 },
                 {
                     "SamusAlt_lod0",
-                    new EntityMetadata("SamusAlt_lod0",
+                    new ModelMetadata("SamusAlt_lod0",
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
@@ -4834,7 +4834,7 @@ namespace MphRead
                 },
                 {
                     "SamusGun",
-                    new EntityMetadata("SamusGun",
+                    new ModelMetadata("SamusGun",
                         recolors: new List<string>()
                         {
                             "img_01",
@@ -4849,7 +4849,7 @@ namespace MphRead
                 },
                 {
                     "samus_ice",
-                    new EntityMetadata("samus_ice",
+                    new ModelMetadata("samus_ice",
                         modelPath: @"_archives\common\samus_ice_mdl_Model.bin",
                         animationPath: null,
                         collisionPath: null,
@@ -4863,7 +4863,7 @@ namespace MphRead
                 },
                 {
                     "SecretSwitch",
-                    new EntityMetadata("SecretSwitch",
+                    new ModelMetadata("SecretSwitch",
                         modelPath: @"models\SecretSwitch_Model.bin",
                         animationPath: @"models\SecretSwitch_Anim.bin",
                         collisionPath: @"models\SecretSwitch_Collision.bin",
@@ -4908,31 +4908,31 @@ namespace MphRead
                 },
                 {
                     "shriekbat",
-                    new EntityMetadata("shriekbat")
+                    new ModelMetadata("shriekbat")
                 },
                 {
                     "slots",
-                    new EntityMetadata("slots", addToAnim: "_Idle", archive: "frontend2d")
+                    new ModelMetadata("slots", addToAnim: "_Idle", archive: "frontend2d")
                 },
                 {
                     "smasher",
-                    new EntityMetadata("smasher", animation: false, collision: true)
+                    new ModelMetadata("smasher", animation: false, collision: true)
                 },
                 {
                     "sniperBeam",
-                    new EntityMetadata("sniperBeam", archive: "common")
+                    new ModelMetadata("sniperBeam", archive: "common")
                 },
                 {
                     "SniperTarget",
-                    new EntityMetadata("SniperTarget")
+                    new ModelMetadata("SniperTarget")
                 },
                 {
                     "SphinkTick_lod0",
-                    new EntityMetadata("SphinkTick_lod0", remove: "_lod0")
+                    new ModelMetadata("SphinkTick_lod0", remove: "_lod0")
                 },
                 {
                     "Spire_lod0",
-                    new EntityMetadata("Spire_lod0",
+                    new ModelMetadata("Spire_lod0",
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
@@ -4948,7 +4948,7 @@ namespace MphRead
                 },
                 {
                     "Spire_lod1",
-                    new EntityMetadata("Spire_lod1",
+                    new ModelMetadata("Spire_lod1",
                         remove: "_lod1",
                         recolors: new List<string>()
                         {
@@ -4963,7 +4963,7 @@ namespace MphRead
                 },
                 {
                     "SpireAlt_lod0",
-                    new EntityMetadata("SpireAlt_lod0",
+                    new ModelMetadata("SpireAlt_lod0",
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
@@ -4980,7 +4980,7 @@ namespace MphRead
                 },
                 {
                     "SpireGun",
-                    new EntityMetadata("SpireGun",
+                    new ModelMetadata("SpireGun",
                         recolors: new List<string>()
                         {
                             "img_01",
@@ -4995,18 +4995,18 @@ namespace MphRead
                 },
                 {
                     "splashRing",
-                    new EntityMetadata("splashRing")
+                    new ModelMetadata("splashRing")
                 },
                 {
                     "Switch",
-                    new EntityMetadata("Switch",
+                    new ModelMetadata("Switch",
                         animation: false,
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Sylux_lod0",
-                    new EntityMetadata("Sylux_lod0",
+                    new ModelMetadata("Sylux_lod0",
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
@@ -5022,7 +5022,7 @@ namespace MphRead
                 },
                 {
                     "Sylux_lod1",
-                    new EntityMetadata("Sylux_lod1",
+                    new ModelMetadata("Sylux_lod1",
                         remove: "_lod1",
                         recolors: new List<string>()
                         {
@@ -5037,7 +5037,7 @@ namespace MphRead
                 },
                 {
                     "SyluxAlt_lod0",
-                    new EntityMetadata("SyluxAlt_lod0",
+                    new ModelMetadata("SyluxAlt_lod0",
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
@@ -5054,7 +5054,7 @@ namespace MphRead
                 },
                 {
                     "SyluxGun",
-                    new EntityMetadata("SyluxGun",
+                    new ModelMetadata("SyluxGun",
                         recolors: new List<string>()
                         {
                             "img_01",
@@ -5069,11 +5069,11 @@ namespace MphRead
                 },
                 {
                     "TearParticle",
-                    new EntityMetadata("TearParticle", animation: false, texture: true)
+                    new ModelMetadata("TearParticle", animation: false, texture: true)
                 },
                 {
                     "Teleporter",
-                    new EntityMetadata("Teleporter",
+                    new ModelMetadata("Teleporter",
                         modelPath: @"models\Teleporter_mdl_Model.bin",
                         animationPath: @"models\Teleporter_mdl_Anim.bin",
                         collisionPath: null,
@@ -5128,7 +5128,7 @@ namespace MphRead
                 },
                 {
                     "TeleporterSmall",
-                    new EntityMetadata("TeleporterSmall",
+                    new ModelMetadata("TeleporterSmall",
                         modelPath: @"models\TeleporterSmall_mdl_Model.bin",
                         animationPath: @"models\TeleporterSmall_mdl_Anim.bin",
                         collisionPath: null,
@@ -5183,21 +5183,21 @@ namespace MphRead
                 },
                 {
                     "TeleporterMP",
-                    new EntityMetadata("TeleporterMP")
+                    new ModelMetadata("TeleporterMP")
                 },
                 {
                     "Temroid_lod0",
-                    new EntityMetadata("Temroid_lod0", remove: "_lod0", animation: false)
+                    new ModelMetadata("Temroid_lod0", remove: "_lod0", animation: false)
                 },
                 {
                     "ThinDoorLock",
-                    new EntityMetadata("ThinDoorLock",
+                    new ModelMetadata("ThinDoorLock",
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
                 },
                 {
                     "Trace_lod0",
-                    new EntityMetadata("Trace_lod0",
+                    new ModelMetadata("Trace_lod0",
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
@@ -5213,7 +5213,7 @@ namespace MphRead
                 },
                 {
                     "Trace_lod1",
-                    new EntityMetadata("Trace_lod1",
+                    new ModelMetadata("Trace_lod1",
                         remove: "_lod1",
                         recolors: new List<string>()
                         {
@@ -5228,7 +5228,7 @@ namespace MphRead
                 },
                 {
                     "TraceAlt_lod0",
-                    new EntityMetadata("TraceAlt_lod0",
+                    new ModelMetadata("TraceAlt_lod0",
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
@@ -5245,7 +5245,7 @@ namespace MphRead
                 },
                 {
                     "TraceGun",
-                    new EntityMetadata("TraceGun",
+                    new ModelMetadata("TraceGun",
                         recolors: new List<string>()
                         {
                             "img_01",
@@ -5260,127 +5260,127 @@ namespace MphRead
                 },
                 {
                     "trail",
-                    new EntityMetadata("trail", animation: false, archive: "common")
+                    new ModelMetadata("trail", animation: false, archive: "common")
                 },
                 {
                     "unit1_land_plat1",
-                    new EntityMetadata("unit1_land_plat1", animation: false, collision: true)
+                    new ModelMetadata("unit1_land_plat1", animation: false, collision: true)
                 },
                 {
                     "unit1_land_plat2",
-                    new EntityMetadata("unit1_land_plat2", animation: false, collision: true)
+                    new ModelMetadata("unit1_land_plat2", animation: false, collision: true)
                 },
                 {
                     "unit1_land_plat3",
-                    new EntityMetadata("unit1_land_plat3", animation: false, collision: true)
+                    new ModelMetadata("unit1_land_plat3", animation: false, collision: true)
                 },
                 {
                     "unit1_land_plat4",
-                    new EntityMetadata("unit1_land_plat4", animation: false, collision: true)
+                    new ModelMetadata("unit1_land_plat4", animation: false, collision: true)
                 },
                 {
                     "unit1_land_plat5",
-                    new EntityMetadata("unit1_land_plat5", animation: false, collision: true)
+                    new ModelMetadata("unit1_land_plat5", animation: false, collision: true)
                 },
                 {
                     "unit1_mover1",
-                    new EntityMetadata("unit1_mover1", collision: true)
+                    new ModelMetadata("unit1_mover1", collision: true)
                 },
                 {
                     "unit1_mover2",
-                    new EntityMetadata("unit1_mover2", animation: false, collision: true)
+                    new ModelMetadata("unit1_mover2", animation: false, collision: true)
                 },
                 {
                     "unit2_c1_mover",
-                    new EntityMetadata("unit2_c1_mover", animation: false, collision: true)
+                    new ModelMetadata("unit2_c1_mover", animation: false, collision: true)
                 },
                 {
                     "unit2_c4_plat",
-                    new EntityMetadata("unit2_c4_plat", animation: false, collision: true)
+                    new ModelMetadata("unit2_c4_plat", animation: false, collision: true)
                 },
                 {
                     "unit2_land_elev",
-                    new EntityMetadata("unit2_land_elev", animation: false, collision: true)
+                    new ModelMetadata("unit2_land_elev", animation: false, collision: true)
                 },
                 {
                     "unit2_mover1",
-                    new EntityMetadata("unit2_mover1", animation: false, collision: true)
+                    new ModelMetadata("unit2_mover1", animation: false, collision: true)
                 },
                 {
                     "unit3_brain",
-                    new EntityMetadata("unit3_brain", collision: true)
+                    new ModelMetadata("unit3_brain", collision: true)
                 },
                 {
                     "unit3_jar",
-                    new EntityMetadata("unit3_jar")
+                    new ModelMetadata("unit3_jar")
                 },
                 {
                     "unit3_jartop",
-                    new EntityMetadata("unit3_jartop")
+                    new ModelMetadata("unit3_jartop")
                 },
                 {
                     "unit3_mover1",
-                    new EntityMetadata("unit3_mover1", animation: false, collision: true)
+                    new ModelMetadata("unit3_mover1", animation: false, collision: true)
                 },
                 {
                     "unit3_mover2",
-                    new EntityMetadata("unit3_mover2", collision: true)
+                    new ModelMetadata("unit3_mover2", collision: true)
                 },
                 {
                     "unit3_pipe1",
-                    new EntityMetadata("unit3_pipe1", collision: true)
+                    new ModelMetadata("unit3_pipe1", collision: true)
                 },
                 {
                     "unit3_pipe2",
-                    new EntityMetadata("unit3_pipe2", collision: true)
+                    new ModelMetadata("unit3_pipe2", collision: true)
                 },
                 {
                     "Unit3_platform1",
-                    new EntityMetadata("Unit3_platform1", collision: true)
+                    new ModelMetadata("Unit3_platform1", collision: true)
                 },
                 {
                     "unit3_platform",
-                    new EntityMetadata("unit3_platform", animation: false, collision: true)
+                    new ModelMetadata("unit3_platform", animation: false, collision: true)
                 },
                 {
                     "unit3_platform2",
-                    new EntityMetadata("unit3_platform2", animation: false, collision: true)
+                    new ModelMetadata("unit3_platform2", animation: false, collision: true)
                 },
                 {
                     "unit4_mover2",
-                    new EntityMetadata("unit4_mover2", collision: true)
+                    new ModelMetadata("unit4_mover2", collision: true)
                 },
                 {
                     "unit4_mover3",
-                    new EntityMetadata("unit4_mover3", animation: false, collision: true)
+                    new ModelMetadata("unit4_mover3", animation: false, collision: true)
                 },
                 {
                     "unit4_mover4",
-                    new EntityMetadata("unit4_mover4", animation: false, collision: true)
+                    new ModelMetadata("unit4_mover4", animation: false, collision: true)
                 },
                 {
                     "unit4_platform1",
-                    new EntityMetadata("unit4_platform1", animation: false, collision: true)
+                    new ModelMetadata("unit4_platform1", animation: false, collision: true)
                 },
                 {
                     "unit4_tp1_artifact_wo",
-                    new EntityMetadata("unit4_tp1_artifact_wo", animation: false, collision: true)
+                    new ModelMetadata("unit4_tp1_artifact_wo", animation: false, collision: true)
                 },
                 {
                     "unit4_tp2_artifact_wo",
-                    new EntityMetadata("unit4_tp2_artifact_wo", animation: false, collision: true)
+                    new ModelMetadata("unit4_tp2_artifact_wo", animation: false, collision: true)
                 },
                 {
                     "WallSwitch",
-                    new EntityMetadata("WallSwitch")
+                    new ModelMetadata("WallSwitch")
                 },
                 {
                     "warwasp_lod0",
-                    new EntityMetadata("warwasp_lod0", remove: "_lod0")
+                    new ModelMetadata("warwasp_lod0", remove: "_lod0")
                 },
                 {
                     "Weavel_lod0",
-                    new EntityMetadata("Weavel_lod0",
+                    new ModelMetadata("Weavel_lod0",
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
@@ -5396,7 +5396,7 @@ namespace MphRead
                 },
                 {
                     "Weavel_lod1",
-                    new EntityMetadata("Weavel_lod1",
+                    new ModelMetadata("Weavel_lod1",
                         remove: "_lod1",
                         recolors: new List<string>()
                         {
@@ -5411,7 +5411,7 @@ namespace MphRead
                 },
                 {
                     "WeavelAlt_lod0",
-                    new EntityMetadata("WeavelAlt_lod0",
+                    new ModelMetadata("WeavelAlt_lod0",
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
@@ -5428,7 +5428,7 @@ namespace MphRead
                 },
                 {
                     "WeavelAlt_Turret_lod0",
-                    new EntityMetadata("WeavelAlt_Turret_lod0",
+                    new ModelMetadata("WeavelAlt_Turret_lod0",
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
@@ -5445,7 +5445,7 @@ namespace MphRead
                 },
                 {
                     "WeavelGun",
-                    new EntityMetadata("WeavelGun",
+                    new ModelMetadata("WeavelGun",
                         recolors: new List<string>()
                         {
                             "img_01",
@@ -5460,21 +5460,21 @@ namespace MphRead
                 },
                 {
                     "zoomer",
-                    new EntityMetadata("zoomer")
+                    new ModelMetadata("zoomer")
                 },
                 // 2D images only, no mesh/dlist, probably just swapped in for other textures on models
                 {
                     "doubleDamage_img",
-                    new EntityMetadata("doubleDamage_img", animation: false, archive: "common")
+                    new ModelMetadata("doubleDamage_img", animation: false, archive: "common")
                 },
                 // todo?: seemingly 2D images only, no polygons render even though they have a mesh/dlist
                 {
                     "arcWelder",
-                    new EntityMetadata("arcWelder", animation: false, archive: "common")
+                    new ModelMetadata("arcWelder", animation: false, archive: "common")
                 },
                 {
                     "electroTrail",
-                    new EntityMetadata("electroTrail", animation: false, archive: "common")
+                    new ModelMetadata("electroTrail", animation: false, archive: "common")
                 }
             };
     }

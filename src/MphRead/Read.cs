@@ -4,6 +4,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
+using MphRead.Archive;
+using MphRead.Export;
 
 namespace MphRead
 {
@@ -17,7 +20,7 @@ namespace MphRead
 
         public static Model GetModelByName(string name, int defaultRecolor = 0)
         {
-            EntityMetadata? entityMeta = Metadata.GetEntityByName(name);
+            ModelMetadata? entityMeta = Metadata.GetEntityByName(name);
             if (entityMeta == null)
             {
                 throw new ProgramException("No entity with this name is known. Please provide metadata for a custom entity.");
@@ -62,10 +65,11 @@ namespace MphRead
             };
             Model room = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, recolors, defaultRecolor: 0);
             room.Animate = (meta.AnimationPath != null);
+            room.Type = ModelType.Room;
             return room;
         }
 
-        private static Model GetModel(EntityMetadata meta, int defaultRecolor)
+        private static Model GetModel(ModelMetadata meta, int defaultRecolor)
         {
             Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.Recolors, defaultRecolor);
             model.Animate = (meta.AnimationPath != null);
@@ -618,6 +622,77 @@ namespace MphRead
                 throw new ProgramException($"Failed to read {typeof(T)} struct.");
             }
             return (T)result;
+        }
+
+        public static void ExtractArchive(string name)
+        {
+            string input = Path.Combine(Paths.FileSystem, "archives", $"{name}.arc");
+            string output = Path.Combine(Paths.FileSystem, "_archives", name);
+            try
+            {
+                int filesWritten = 0;
+                Directory.CreateDirectory(output);
+                Console.WriteLine("Reading file...");
+                var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(input));
+                if (Encoding.ASCII.GetString(bytes[0..8]) == Archiver.MagicString)
+                {
+                    Console.WriteLine("Extracting archive...");
+                    filesWritten = Archiver.Extract(input, output);
+                }
+                else if (bytes[0] == Lz.MagicByte)
+                {
+                    string temp = Path.Combine(Paths.Export, "__temp");
+                    try
+                    {
+                        Directory.Delete(temp, recursive: true);
+                    }
+                    catch { }
+                    Directory.CreateDirectory(temp);
+                    string destination = Path.Combine(temp, $"{name}.arc");
+                    Console.WriteLine("Decompressing...");
+                    Lz.Decompress(input, destination);
+                    Console.WriteLine("Extracting archive...");
+                    filesWritten = Archiver.Extract(destination, output);
+                    Directory.Delete(temp, recursive: true);
+                }
+                Console.WriteLine($"Extracted {filesWritten} file{(filesWritten == 1 ? "" : "s")} to {output}.");
+            }
+            catch
+            {
+                Console.WriteLine($"Failed to extract archive. Verify an archive exists at {input}.");
+            }
+        }
+
+        public static void ReadAndExport(string name)
+        {
+            // todo: need non-throwing versions of these
+            Model model;
+            try
+            {
+                model = GetModelByName(name);
+            }
+            catch
+            {
+                try
+                {
+                    model = GetRoomByName(name);
+                }
+                catch
+                {
+                    Console.WriteLine($"No model or room with the name {name} could be found.");
+                    return;
+                }
+            }
+            try
+            {
+                Images.ExportImages(model);
+                Collada.ExportModel(model);
+                Console.WriteLine("Exported successfully.");
+            }
+            catch
+            {
+                Console.WriteLine("Failed to export model. Verify your export path is accessible.");
+            }
         }
     }
 }

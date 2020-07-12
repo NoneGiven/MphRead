@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using OpenToolkit.Mathematics;
@@ -60,6 +59,7 @@ namespace MphRead
             }
             set
             {
+                // todo: set scale and rotation when this is set
                 _position = new Vector3(value.M41, value.M42, value.M43);
                 _transform = value;
             }
@@ -150,11 +150,73 @@ namespace MphRead
             TextureMatrices = textureMatrices.Select(m => m.ToFloatMatrix()).ToList();
             Recolors = recolors;
             CurrentRecolor = defaultRecolor;
+            float scale = Header.ScaleBase.FloatValue * (1 << (int)Header.ScaleFactor);
+            Scale = new Vector3(scale, scale, scale);
         }
 
         public IEnumerable<ColorRgba> GetPixels(int textureId, int paletteId)
         {
             return Recolors[CurrentRecolor].GetPixels(textureId, paletteId);
+        }
+
+        public IEnumerable<Mesh> GetNodeMeshes(int nodeId)
+        {
+            return GetNodeMeshes(Nodes[nodeId]);
+        }
+
+        public IEnumerable<Mesh> GetNodeMeshes(Node node)
+        {
+            foreach (int meshId in node.GetMeshIds())
+            {
+                yield return Meshes[meshId];
+            }
+        }
+
+        public bool NodeParentsEnabled(Node node)
+        {
+            int parentIndex = node.ParentIndex;
+            while (parentIndex != UInt16.MaxValue)
+            {
+                Node parent = Nodes[parentIndex];
+                if (!parent.Enabled)
+                {
+                    return false;
+                }
+                parentIndex = parent.ParentIndex;
+            }
+            return true;
+        }
+
+        public int GetNextRoomNodeId(int nodeId)
+        {
+            for (int i = nodeId + 1; i != nodeId; i++)
+            {
+                if (i > Nodes.Count - 1)
+                {
+                    i = 0;
+                }
+                if (Nodes[i].IsRoomNode)
+                {
+                    return i;
+                }
+            }
+            return nodeId;
+        }
+
+        public int GetPreviousRoomNodeId(int nodeId)
+        {
+            for (int i = nodeId - 1; i != nodeId; i--)
+            {
+                if (i < 0)
+                {
+                    i = Nodes.Count - 1;
+                }
+                if (Nodes[i].IsRoomNode)
+                {
+                    return i;
+                }
+            }
+            return nodeId;
         }
 
         public void PrintImages(int recolor = 0)
@@ -213,92 +275,6 @@ namespace MphRead
         {
             float alpha = color.Alpha / 255f;
             return new ColorRgba((byte)(color.Red * alpha), (byte)(color.Green * alpha), (byte)(color.Blue * alpha), 255);
-        }
-
-        public void ExportImages()
-        {
-            string exportPath = Path.Combine(Paths.Export, Name);
-            Directory.CreateDirectory(exportPath);
-            foreach (Recolor recolor in Recolors)
-            {
-                string colorPath = Path.Combine(exportPath, recolor.Name);
-                Directory.CreateDirectory(colorPath);
-                var usedTextures = new HashSet<int>();
-                foreach (Material material in Materials.OrderBy(m => m.TextureId).ThenBy(m => m.PaletteId))
-                {
-                    if (material.TextureId == UInt16.MaxValue)
-                    {
-                        continue;
-                    }
-                    Texture texture = recolor.Textures[material.TextureId];
-                    IReadOnlyList<ColorRgba> pixels = recolor.GetPixels(material.TextureId, material.PaletteId);
-                    if (texture.Width == 0 || texture.Height == 0 || pixels.Count == 0)
-                    {
-                        continue;
-                    }
-                    Debug.Assert(texture.Width * texture.Height == pixels.Count);
-                    usedTextures.Add(material.TextureId);
-                    string filename = $"{material.TextureId}-{material.PaletteId}";
-                    SaveTexture(colorPath, filename, texture.Width, texture.Height, pixels);
-                }
-                if (usedTextures.Count != recolor.Textures.Count)
-                {
-                    string unusedPath = Path.Combine(colorPath, "unused");
-                    Directory.CreateDirectory(unusedPath);
-                    for (int t = 0; t < recolor.Textures.Count; t++)
-                    {
-                        if (usedTextures.Contains(t))
-                        {
-                            continue;
-                        }
-                        Texture texture = recolor.Textures[t];
-                        for (int p = 0; p < Palettes.Count; p++)
-                        {
-                            IReadOnlyList<TextureData> textureData = recolor.TextureData[t];
-                            IReadOnlyList<PaletteData> palette = recolor.PaletteData[p];
-                            if (textureData.Any(t => t.Data >= palette.Count))
-                            {
-                                continue;
-                            }
-                            IReadOnlyList<ColorRgba> pixels = recolor.GetPixels(t, p);
-                            string filename = $"{t}-{p}";
-                            SaveTexture(unusedPath, filename, texture.Width, texture.Height, pixels);
-                        }
-                    }
-                }
-            }
-        }
-
-        public void ExportPalettes()
-        {
-            string exportPath = Path.Combine(Paths.Export, Name);
-            Directory.CreateDirectory(exportPath);
-            foreach (Recolor recolor in Recolors)
-            {
-                string colorPath = Path.Combine(exportPath, recolor.Name);
-                Directory.CreateDirectory(colorPath);
-                string palettePath = Path.Combine(colorPath, "palettes");
-                Directory.CreateDirectory(palettePath);
-                for (int p = 0; p < recolor.Palettes.Count; p++)
-                {
-                    IReadOnlyList<ColorRgba> pixels = recolor.GetPalettePixels(p);
-                    string filename = $"p{p}";
-                    SaveTexture(palettePath, filename, 16, 16, pixels);
-                }
-            }
-        }
-
-        private void SaveTexture(string directory, string filename, ushort width, ushort height, IReadOnlyList<ColorRgba> pixels)
-        {
-            string imagePath = Path.Combine(directory, $"{filename}.png");
-            var bitmap = new Bitmap(width, height);
-            for (int p = 0; p < pixels.Count; p++)
-            {
-                ColorRgba pixel = pixels[p];
-                bitmap.SetPixel(p % width, p / width,
-                    Color.FromArgb(pixel.Alpha, pixel.Red, pixel.Green, pixel.Blue));
-            }
-            bitmap.Save(imagePath);
         }
 
         private static void ThrowIfInvalidEnums(IEnumerable<RawMaterial> materials)
@@ -425,8 +401,19 @@ namespace MphRead
         public Vector3 Position { get; set; }
         public Vector3 Vector1 { get; }
         public Vector3 Vector2 { get; }
-        public byte Type { get; }
+        public bool Billboard { get; }
         public Matrix4 Transform { get; set; } = Matrix4.Identity;
+
+        public IEnumerable<int> GetMeshIds()
+        {
+            int start = MeshId / 2;
+            for (int i = 0; i < MeshCount; i++)
+            {
+                yield return start + i;
+            }
+        }
+
+        public bool IsRoomNode { get; private set; }
 
         public Node(RawNode raw)
         {
@@ -446,7 +433,8 @@ namespace MphRead
             Position = raw.Position.ToFloatVector();
             Vector1 = raw.Vector1.ToFloatVector();
             Vector2 = raw.Vector2.ToFloatVector();
-            Type = raw.Type;
+            Billboard = raw.Billboard != 0;
+            IsRoomNode = Name.StartsWith("rm");
         }
     }
 

@@ -5,11 +5,11 @@ namespace MphRead
 {
     public static class Lz
     {
-        private static readonly byte _magicByte = 0x10;
+        public static byte MagicByte { get; } = 0x10;
 
         public static long Decompress(string input, string output)
         {
-            using FileStream inStream = File.Open(input, FileMode.Open);
+            using FileStream inStream = File.Open(input, FileMode.Open, FileAccess.Read, FileShare.Read);
             using FileStream outStream = File.Open(output, FileMode.Create);
             return Decompress(inStream, inStream.Length, outStream);
         }
@@ -19,7 +19,7 @@ namespace MphRead
             long readBytes = 0;
 
             byte type = (byte)instream.ReadByte();
-            if (type != _magicByte)
+            if (type != MagicByte)
             {
                 throw new InvalidDataException("The provided stream is not a valid LZ-0x10 "
                     + "compressed stream (invalid type 0x" + type.ToString("X") + ")");
@@ -185,7 +185,7 @@ namespace MphRead
             }
 
             // write the compression header first
-            outstream.WriteByte(_magicByte);
+            outstream.WriteByte(MagicByte);
             outstream.WriteByte((byte)(inLength & 0xFF));
             outstream.WriteByte((byte)((inLength >> 8) & 0xFF));
             outstream.WriteByte((byte)((inLength >> 16) & 0xFF));
