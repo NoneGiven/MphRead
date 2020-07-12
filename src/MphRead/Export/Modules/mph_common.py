@@ -1,10 +1,16 @@
 import bpy
 
-def get_node(name):
-    return bpy.data.objects[name]
+def get_object(name):
+    try:
+        return bpy.data.objects[name]
+    except:
+        return None
 
 def get_material(name):
+    try:
         return bpy.data.materials[name]
+    except:
+        return None
 
 def get_materials():
     for item in bpy.data.materials:
@@ -49,9 +55,18 @@ bpy.types.Material.get_bsdf_input = material_get_bsdf_input;
 bpy.types.Material.link_nodes = material_link_nodes;
 bpy.types.Material.add_node = material_add_node;
 
+def cleanup():
+    removed = get_material('Dots Stroke')
+    if (removed):
+        bpy.data.materials.remove(removed)
+    removed = get_material('Material')
+    if (removed):
+        bpy.data.materials.remove(removed)
+    removed = get_object('Cube')
+    if (removed):
+        bpy.data.objects.remove(removed)
+
 def set_common():
-    bpy.data.materials.remove(get_material('Dots Stroke'))
-    bpy.data.materials.remove(get_material('Material'))
     for material in get_materials():
         material.get_bsdf_input('Specular').default_value = 0
         material.shadow_method = 'NONE'
@@ -112,12 +127,12 @@ def set_texture_alpha(name, alpha):
         )
         
 def set_billboard(name):
-    node = get_node(name)
-    constraint = node.constraints.new('LOCKED_TRACK')
+    obj = get_object(name)
+    constraint = obj.constraints.new('LOCKED_TRACK')
     constraint.target = bpy.data.objects['Camera']
     constraint.track_axis = 'TRACK_Z'
     constraint.lock_axis = 'LOCK_Y'
-    constraint = node.constraints.new('LOCKED_TRACK')
+    constraint = obj.constraints.new('LOCKED_TRACK')
     constraint.target = bpy.data.objects['Camera']
     constraint.track_axis = 'TRACK_Z'
     constraint.lock_axis = 'LOCK_X'
@@ -133,8 +148,7 @@ def invert_normals(name):
     bpy.context.active_object.select_set(False)
     for obj in bpy.context.selected_objects:
         bpy.context.view_layer.objects.active = None
-    node = get_node(name)
-    bpy.context.view_layer.objects.active = node
+    bpy.context.view_layer.objects.active = get_object(name)
     bpy.ops.object.mode_set(mode = 'EDIT')
     bpy.ops.mesh.select_all(action = 'SELECT')
     bpy.ops.mesh.flip_normals()
