@@ -8,7 +8,8 @@ The renderer is a work in progress. A much more impressive C implementation with
 - Parses model file metadata to CLR types
 - Reads image data and OpenGL display list instructions
 - Exports images to PNG and models to COLLADA
-- Renders models
+- Generates Python scripts to import model metadata to Blender
+- Renders models, and allows inspecting and manipulating them
 
 ## Planned
 - Parse animation and collision files
@@ -17,11 +18,33 @@ The renderer is a work in progress. A much more impressive C implementation with
 
 ## Usage
 
-- Create a `paths.txt` file in the same location as the `/MphRead` binary. The first line should contain a full path to the directory which contains your MPH files. This directory must follow the structure of the MPH file system, with the root being equivalent to the `root` directory of the ROM. There must also be an `_archives` folder in the root which contains one folder for each archive, with the extracted files for that archive inside.
-- Run `MphRead` with the following options:
-- `-room <room_name> [layer_mask]`
-- `-model <model_name> [recolor_index]`
-- The layer mask and recolor index are optional. At most one room may be specified, while any number of models may be specified.
+Ensure there is a `paths.txt` file in the same location as the `/MphRead` binary.
+- The first line of the file must be the path to the directory which contains your MPH files.
+  - This directory must follow the structure of the MPH file system, with the root being equivalent to the `root` directory of the ROM.
+  - For the viewer to work, there must also be an `_archives` folder in the root which contains one folder for each archive, with the extracted files for that archive inside. This is not necessary for the exporter.
+- The second line of the file should be the path where you want your exported files to be placed.
+
+```
+MphRead usage:
+
+    -room <room_name> [layer_mask]
+    -model <model_name> [recolor_index]
+
+The layer mask and recolor index are optional.
+At most one room may be specified, while any number of models may be specified.
+
+- or -
+
+    -extract <archive_path>
+
+If the target archive is LZ10-compressed, it will be decompressed.
+
+- or -
+
+    -export <target_name>
+
+The export target may be a model or room name.
+```
 
 ## Building
 
