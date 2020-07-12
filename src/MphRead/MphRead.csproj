@@ -15,6 +15,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Export\Modules\__pycache__\**" />
+    <EmbeddedResource Remove="Export\Modules\__pycache__\**" />
+    <None Remove="Export\Modules\__pycache__\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="OpenTK" Version="4.0.0-pre9.1" />
     <PackageReference Include="System.Drawing.Common" Version="4.7.0" />
   </ItemGroup>
