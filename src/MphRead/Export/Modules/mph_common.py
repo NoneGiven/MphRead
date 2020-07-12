@@ -98,17 +98,18 @@ def set_vertex_colors(material):
             'Principled BSDF', 'Base Color'
         )
     
-def set_material_alpha(name, alpha):
+def set_material_alpha(name, materialAlpha):
     material = get_material(name)
     material.blend_method = 'BLEND'
     material.show_transparent_back = False
-    material.get_bsdf_input('Alpha').default_value = alpha / 31
+    material.get_bsdf_input('Alpha').default_value = materialAlpha / 31
     
-def set_texture_alpha(name, alpha):
+def set_texture_alpha(name, materialAlpha, textureAlpha):
     material = get_material(name)
-    material.blend_method = 'BLEND'
-    material.show_transparent_back = False
-    if (alpha == 31):
+    if (materialAlpha < 31 or textureAlpha):
+        material.blend_method = 'BLEND'
+        material.show_transparent_back = False
+    if (materialAlpha == 31):
         material.link_nodes(
             'Image Texture', 'Alpha',
             'Principled BSDF', 'Alpha'
@@ -116,7 +117,7 @@ def set_texture_alpha(name, alpha):
     else:
         math = material.add_node('ShaderNodeMath')
         math.operation = 'MULTIPLY'
-        math.inputs[1].default_value = alpha / 31
+        math.inputs[1].default_value = materialAlpha / 31
         material.link_nodes(
             'Image Texture', 'Alpha',
             'Math', 0

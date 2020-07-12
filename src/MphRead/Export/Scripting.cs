@@ -37,7 +37,10 @@ namespace MphRead.Export
                 if (material.TextureId != UInt16.MaxValue)
                 {
                     AppendIndent();
-                    sb.AppendLine($"set_texture_alpha('{material.Name}_mat', {material.Alpha})");
+                    // this assumes this is the same between all recolors, which is the case in MPH
+                    bool alphaPixels = model.Recolors.First()
+                        .GetPixels(material.TextureId, material.PaletteId).Any(p => p.Alpha < 255);
+                    sb.AppendLine($"set_texture_alpha('{material.Name}_mat', {material.Alpha}, {(alphaPixels ? "True" : "False")})");
                     bool mirrorX = material.XRepeat == RepeatMode.Mirror;
                     bool mirrorY = material.YRepeat == RepeatMode.Mirror;
                     if (mirrorX || mirrorY)
@@ -94,8 +97,9 @@ namespace MphRead.Export
             sb.AppendLine();
             sb.AppendLine("if __name__ == '__main__':");
             AppendIndent();
-            sb.AppendLine($"import_dae('{model.Recolors.First().Name}')" +
-                $" # recolors: {String.Join(", ", model.Recolors.Select(r => r.Name))}");
+            sb.AppendLine($"# recolors: {String.Join(", ", model.Recolors.Select(r => r.Name))}");
+            AppendIndent();
+            sb.AppendLine($"import_dae('{model.Recolors.First().Name}')");
             return sb.ToString();
         }
     }
