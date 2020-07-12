@@ -308,7 +308,7 @@ namespace MphRead
             }
         }
 
-        // todo: avoid loading things multiple times
+        // todo: avoid loading the same entity multiple times
         private static IReadOnlyList<Model> LoadJumpPad(JumpPadEntityData data)
         {
             var list = new List<Model>();

@@ -469,7 +469,8 @@ namespace MphRead
 
         private void UpdateSelected(Mesh mesh, float time)
         {
-            // todo: meshes can get out sync (e.g. Crate01)
+            // todo: meshes can get out sync due to existing alpha values
+            // --> also tends to break when tabbing out/resizing/etc.
             Vector4 color = mesh.OverrideColor.GetValueOrDefault();
             float value = color.X;
             value -= time * 1.5f * (_flashUp ? -1 : 1);
@@ -670,8 +671,7 @@ namespace MphRead
 
         private void RenderRoom(Model model)
         {
-            // todo: should use room nodes only as roots;
-            // need to handle other things (like force fields) separately
+            // todo: should use room nodes only as roots; need to handle things like force fields separately
             GL.UseProgram(_shaderProgramId);
             UpdateUniforms();
             // pass 1: opaque
@@ -816,7 +816,7 @@ namespace MphRead
         {
             if (model.TexcoordAnimationGroups.Count > 0)
             {
-                // todo: Get Model is currently overwriting things so the last group's information is always used
+                // todo: GetModel is currently overwriting things so the last group's information is always used
                 TexcoordAnimationGroup group = model.TexcoordAnimationGroups.Last();
                 TexcoordAnimation animation = group.Animations[material.TexcoordAnimationId];
                 float scaleS = InterpolateAnimation(group.Scales, animation.ScaleLutIndexS, group.CurrentFrame,
@@ -1926,7 +1926,6 @@ namespace MphRead
             await Output.Write($"Parent {FormatNode(node.ParentIndex)}", guid);
             await Output.Write($" Child {FormatNode(node.ChildIndex)}", guid);
             await Output.Write($"  Next {FormatNode(node.NextIndex)}", guid);
-            // todo: position might need to be relative to parents?
             await Output.Write($"Position ({node.Position.X}, {node.Position.Y}, {node.Position.Z})", guid);
             await Output.Write($"Rotation ({node.Angle.X}, {node.Angle.Y}, {node.Angle.Z})", guid);
             await Output.Write($"   Scale ({node.Scale.X}, {node.Scale.Y}, {node.Scale.Z})", guid);
