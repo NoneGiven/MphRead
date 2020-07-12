@@ -9,14 +9,7 @@ namespace MphRead
 
         private static void Main(string[] args)
         {
-            using var renderer = new Renderer();
-            if (args.Length == 0)
-            {
-                renderer.AddRoom("MP3 PROVING GROUND");
-                renderer.AddModel("Crate01");
-                Nop();
-            }
-            else if (args.Length > 1)
+            if (args.Length > 1)
             {
                 if (args[0] == "-export" || args[0] == "-e")
                 {
@@ -28,6 +21,16 @@ namespace MphRead
                     Read.ExtractArchive(args[1]);
                     return;
                 }
+            }
+            using var renderer = new Renderer();
+            if (args.Length == 0)
+            {
+                renderer.AddRoom("MP3 PROVING GROUND");
+                renderer.AddModel("Crate01");
+                Nop();
+            }
+            else if (args.Length > 1)
+            {
                 bool foundRoom = false;
                 bool foundModel = false;
                 for (int i = 0; i < args.Length; i++)

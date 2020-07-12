@@ -687,6 +687,7 @@ namespace MphRead
             {
                 Images.ExportImages(model);
                 Collada.ExportModel(model);
+                Console.WriteLine("Exported successfully.");
             }
             catch
             {
