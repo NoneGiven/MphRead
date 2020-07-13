@@ -154,6 +154,10 @@ namespace MphRead
             }
             _roomLoaded = true;
             (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask);
+            if (roomMeta.InGameName != null)
+            {
+                Title = roomMeta.InGameName;
+            }
             _models.Insert(0, room);
             _models.AddRange(entities);
             _modelMap.Add(room.SceneId, room);
