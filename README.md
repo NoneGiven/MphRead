@@ -18,7 +18,7 @@ The renderer is a work in progress. A much more impressive C implementation with
 
 ## Usage
 
-Ensure there is a `paths.txt` file in the same location as the `/MphRead` binary.
+Ensure there is a `paths.txt` file in the same location as the `MphRead` binary.
 - The first line of the file must be the path to the directory which contains your MPH files.
   - This directory must follow the structure of the MPH file system, with the root being equivalent to the `root` directory of the ROM.
   - For the viewer to work, there must also be an `_archives` folder in the root which contains one folder for each archive, with the extracted files for that archive inside. This is not necessary for the exporter.
@@ -45,6 +45,8 @@ If the target archive is LZ10-compressed, it will be decompressed.
 
 The export target may be a model or room name.
 ```
+
+See [this page](https://github.com/NoneGiven/MphRead/wiki) for a list of room and model names.
 
 ## Building
 
