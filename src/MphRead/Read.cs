@@ -18,9 +18,17 @@ namespace MphRead
         // of textures/palettes will be zero as well. To get the real information, the _Model file for the recolor must
         // be used in addition to the main header. And after doing that, you might then still be dealing with a _Texture file.
 
-        public static Model GetModelByName(string name, int defaultRecolor = 0)
+        public static Model GetModelByName(string name, int defaultRecolor = 0, bool firstHunt = false)
         {
-            ModelMetadata? entityMeta = Metadata.GetEntityByName(name);
+            ModelMetadata? entityMeta;
+            if (firstHunt)
+            {
+                entityMeta = Metadata.GetFirstHuntEntityByName(name);
+            }
+            else
+            {
+                entityMeta = Metadata.GetEntityByName(name);
+            }
             if (entityMeta == null)
             {
                 throw new ProgramException("No entity with this name is known. Please provide metadata for a custom entity.");

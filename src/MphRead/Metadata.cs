@@ -102,18 +102,19 @@ namespace MphRead
         }
 
         public ModelMetadata(string name, string remove, bool animation = true,
-            string? animationPath = null, bool collision = false)
+            string? animationPath = null, bool collision = false, bool firstHunt = false)
         {
             Name = name;
-            ModelPath = $@"models\{name}_Model.bin";
+            string directory = firstHunt ? @"models\_fh" : "models";
+            ModelPath = $@"{directory}\{name}_Model.bin";
             string removed = name.Replace(remove, "");
             if (animation)
             {
-                AnimationPath = animationPath ?? $@"models\{removed}_Anim.bin";
+                AnimationPath = animationPath ?? $@"{directory}\{removed}_Anim.bin";
             }
             if (collision)
             {
-                CollisionPath = $@"models\{removed}_Collision.bin";
+                CollisionPath = $@"{directory}\{removed}_Collision.bin";
             }
             Recolors = new List<RecolorMetadata>()
             {
@@ -174,10 +175,22 @@ namespace MphRead
 
         public ModelMetadata(string name, bool animation = true, bool collision = false,
             bool texture = false, string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None,
-            string? archive = null, string? addToAnim = null, bool animate = false)
+            string? archive = null, string? addToAnim = null, bool animate = false, bool firstHunt = false)
         {
             Name = name;
-            string path = archive == null ? "models" : $@"_archives\{archive}";
+            string path;
+            if (archive != null)
+            {
+                path = $@"_archives\{archive}";
+            }
+            else if (firstHunt)
+            {
+                path = @"models\_fh";
+            }
+            else
+            {
+                path = "models";
+            } 
             string suffix = "";
             if (mdlSuffix != MdlSuffix.None)
             {
@@ -277,6 +290,15 @@ namespace MphRead
         public static ModelMetadata? GetEntityByName(string name)
         {
             if (ModelMetadata.TryGetValue(name, out ModelMetadata? metadata))
+            {
+                return metadata;
+            }
+            return null;
+        }
+
+        public static ModelMetadata? GetFirstHuntEntityByName(string name)
+        {
+            if (FirstHuntModels.TryGetValue(name, out ModelMetadata? metadata))
             {
                 return metadata;
             }
@@ -459,8 +481,18 @@ namespace MphRead
                 /* 125 */ "biodefense chamber 08",
                 /* 126 */ "biodefense chamber 04",
                 /* 127 */ "biodefense chamber 07",
+                // First Hunt
+                /* 128 */ "FH_MP1",
+                /* 129 */ "FH_SURVIVOR",
+                /* 130 */ "FH_MP2",
+                /* 131 */ "FH_MP3",
+                /* 132 */ "FH_MP5",
+                /* 133 */ "FH_TEST",
+                /* 134 */ "FH_REGULATOR",
+                /* 135 */ "FH_MORPHBALL",
+                /* 136 */ "FH_E3"
             };
-
+        
         // todo: determine unused node and entity files and how they relate to the unused model/anim/collisions:
         // unit1_b2, unit2_b2, unit3_b1, unit3_b2, unit4_b1, unit4_b2
         public static readonly IReadOnlyDictionary<string, RoomMetadata> RoomMetadata
@@ -3746,17 +3778,17 @@ namespace MphRead
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
-                    "FH_MP2",
+                    "FH_SURVIVOR",
                     new RoomMetadata(
-                        "FH_MP2",
-                        "Assault Cradle",
+                        "FH_SURVIVOR",
+                        "Survivor",
                         @"_fh\mp2",
                         "mp2_Model.bin",
                         "mp2_Anim.bin",
                         "mp2_Collision.bin",
                         null,
-                        @"_fh\mp2_Ent.bin",
-                        @"_fh\mp2_Node.bin",
+                        @"_fh\survivor_Ent.bin",
+                        @"_fh\survivor_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
                         TimeLimit(2, 0, 0),
@@ -3774,17 +3806,17 @@ namespace MphRead
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
-                    "FH_SURVIVOR",
+                    "FH_MP2",
                     new RoomMetadata(
-                        "FH_SURVIVOR",
-                        "Survivor",
+                        "FH_MP2",
+                        "Assault Cradle",
                         @"_fh\mp2",
                         "mp2_Model.bin",
                         "mp2_Anim.bin",
                         "mp2_Collision.bin",
                         null,
-                        @"_fh\survivor_Ent.bin",
-                        @"_fh\survivor_Node.bin",
+                        @"_fh\mp2_Ent.bin",
+                        @"_fh\mp2_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
                         TimeLimit(2, 0, 0),
@@ -3914,9 +3946,9 @@ namespace MphRead
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
-                    "FH_MORPH",
+                    "FH_MORPHBALL",
                     new RoomMetadata(
-                        "FH_MORPH",
+                        "FH_MORPHBALL",
                         "Morph Ball",
                         @"_fh\e3Level",
                         "e3Level_Model.bin",
@@ -5902,6 +5934,259 @@ namespace MphRead
                 {
                     "electroTrail",
                     new ModelMetadata("electroTrail", animation: false, archive: "common")
+                }
+            };
+
+        public static readonly IReadOnlyDictionary<string, ModelMetadata> FirstHuntModels
+            = new Dictionary<string, ModelMetadata>()
+            {
+                {
+                    "ballDeath",
+                    new ModelMetadata("ballDeath", firstHunt: true)
+                },
+                {
+                    "balljump",
+                    new ModelMetadata("balljump", animation: false, firstHunt: true)
+                },
+                {
+                    "balljump_ray",
+                    new ModelMetadata("balljump_ray", firstHunt: true)
+                },
+                {
+                    "bomb",
+                    new ModelMetadata("bomb", firstHunt: true)
+                },
+                {
+                    "bombLite",
+                    new ModelMetadata("bombLite", firstHunt: true)
+                },
+                {
+                    "bombStart",
+                    new ModelMetadata("bombStart", firstHunt: true)
+                },
+                {
+                    "bombStartLite",
+                    new ModelMetadata("bombStartLite", firstHunt: true)
+                },
+                {
+                    "bombStartLiter",
+                    new ModelMetadata("bombStartLiter", firstHunt: true)
+                },
+                {
+                    "dashEffect",
+                    new ModelMetadata("dashEffect", firstHunt: true)
+                },
+                {
+                    "door",
+                    new ModelMetadata("door", firstHunt: true)
+                },
+                {
+                    "door2",
+                    new ModelMetadata("door2", firstHunt: true)
+                },
+                {
+                    "door2_holo",
+                    new ModelMetadata("door2_holo", firstHunt: true)
+                },
+                {
+                    "effWaspDeath",
+                    new ModelMetadata("effWaspDeath", firstHunt: true)
+                },
+                {
+                    "furlEffect",
+                    new ModelMetadata("furlEffect", firstHunt: true)
+                },
+                {
+                    "fuzzball",
+                    new ModelMetadata("fuzzball", animation: false, firstHunt: true)
+                },
+                {
+                    "genericmover",
+                    new ModelMetadata("genericmover", collision: true, firstHunt: true)
+                },
+                {
+                    "gun_idle",
+                    new ModelMetadata("gun_idle", remove: "_idle", firstHunt: true)
+                },
+                {
+                    "gunEffElectroCharge",
+                    new ModelMetadata("gunEffElectroCharge", firstHunt: true)
+                },
+                {
+                    "gunEffMissileCharge",
+                    new ModelMetadata("gunEffMissileCharge", firstHunt: true)
+                },
+                {
+                    "gunLobFlash",
+                    new ModelMetadata("gunLobFlash", firstHunt: true)
+                },
+                {
+                    "gunMuzzleFlash",
+                    new ModelMetadata("gunMuzzleFlash", firstHunt: true)
+                },
+                {
+                    "gunSmoke",
+                    new ModelMetadata("gunSmoke", firstHunt: true)
+                },
+                {
+                    "jumpad_ray",
+                    new ModelMetadata("jumpad_ray", animation: false, firstHunt: true)
+                },
+                {
+                    "jumppad_base",
+                    new ModelMetadata("jumppad_base", animation: false, firstHunt: true)
+                },
+                {
+                    "jumppad_ray",
+                    new ModelMetadata("jumppad_ray", firstHunt: true)
+                },
+                {
+                    "lightningCol",
+                    new ModelMetadata("lightningCol", firstHunt: true)
+                },
+                {
+                    "lightningColLite",
+                    new ModelMetadata("lightningColLite", firstHunt: true)
+                },
+                {
+                    "lightningColLiter",
+                    new ModelMetadata("lightningColLiter", firstHunt: true)
+                },
+                {
+                    "lightningColLiterER",
+                    new ModelMetadata("lightningColLiterER", firstHunt: true)
+                },
+                {
+                    "lightningLob",
+                    new ModelMetadata("lightningLob", firstHunt: true)
+                },
+                {
+                    "Metroid_Lo",
+                    new ModelMetadata("Metroid_Lo", remove: "_Lo", firstHunt: true)
+                },
+                {
+                    "metroid",
+                    new ModelMetadata("metroid", firstHunt: true)
+                },
+                {
+                    "missileCollide",
+                    new ModelMetadata("missileCollide", firstHunt: true)
+                },
+                {
+                    "missileColLite",
+                    new ModelMetadata("missileColLite", firstHunt: true)
+                },
+                {
+                    "missileColLiter",
+                    new ModelMetadata("missileColLiter", firstHunt: true)
+                },
+                {
+                    "missileColLiterER",
+                    new ModelMetadata("missileColLiterER", firstHunt: true)
+                },
+                {
+                    "Mochtroid_Lo",
+                    new ModelMetadata("Mochtroid_Lo", remove: "_Lo", firstHunt: true)
+                },
+                {
+                    "Mochtroid",
+                    new ModelMetadata("Mochtroid", firstHunt: true)
+                },
+                {
+                    "morphBall_Blue",
+                    new ModelMetadata("morphBall_Blue", animation: false, firstHunt: true)
+                },
+                {
+                    "morphBall_Green",
+                    new ModelMetadata("morphBall_Green", animation: false, firstHunt: true)
+                },
+                {
+                    "morphBall",
+                    new ModelMetadata("morphBall", animation: false, firstHunt: true)
+                },
+                {
+                    "morphBall_White",
+                    new ModelMetadata("morphBall_White", animation: false, firstHunt: true)
+                },
+                {
+                    "pb_charged",
+                    new ModelMetadata("pb_charged", firstHunt: true)
+                },
+                {
+                    "pb_normal",
+                    new ModelMetadata("pb_normal", firstHunt: true)
+                },
+                {
+                    "pick_ammo_A",
+                    new ModelMetadata("pick_ammo_A", animation: false, firstHunt: true) // sktodo: animate = true for pickups?
+                },
+                {
+                    "pick_ammo_B",
+                    new ModelMetadata("pick_ammo_B", animation: false, firstHunt: true)
+                },
+                {
+                    "pick_dblDamage",
+                    new ModelMetadata("pick_dblDamage", animation: false, firstHunt: true)
+                },
+                {
+                    "pick_health_A",
+                    new ModelMetadata("pick_health_A", animation: false, firstHunt: true)
+                },
+                {
+                    "pick_health_B",
+                    new ModelMetadata("pick_health_B", animation: false, firstHunt: true)
+                },
+                {
+                    "pick_morphball",
+                    new ModelMetadata("pick_morphball", animation: false, firstHunt: true)
+                },
+                {
+                    "pick_wpn_electro",
+                    new ModelMetadata("pick_wpn_electro", animation: false, firstHunt: true)
+                },
+                {
+                    "pick_wpn_missile",
+                    new ModelMetadata("pick_wpn_missile", animation: false, firstHunt: true)
+                },
+                {
+                    "platform",
+                    new ModelMetadata("platform", animation: false, collision: true, firstHunt: true)
+                },
+                {
+                    "samus_hi_blue",
+                    new ModelMetadata("samus_hi_blue", remove: "_hi_blue", firstHunt: true)
+                },
+                {
+                    "samus_hi_green",
+                    new ModelMetadata("samus_hi_green", remove: "_hi_green", firstHunt: true)
+                },
+                {
+                    "samus_hi_white",
+                    new ModelMetadata("samus_hi_white", remove: "_hi_white", firstHunt: true)
+                },
+                {
+                    "samus_hi_yellow",
+                    new ModelMetadata("samus_hi_yellow", remove: "_hi_yellow", firstHunt: true)
+                },
+                {
+                    "samus_low_yellow",
+                    new ModelMetadata("samus_low_yellow", remove: "_low_yellow", firstHunt: true)
+                },
+                {
+                    "spawnEffect",
+                    new ModelMetadata("spawnEffect", firstHunt: true)
+                },
+                {
+                    "trail",
+                    new ModelMetadata("trail", animation: false, firstHunt: true)
+                },
+                {
+                    "warWasp",
+                    new ModelMetadata("warWasp", firstHunt: true)
+                },
+                {
+                    "zoomer",
+                    new ModelMetadata("zoomer", firstHunt: true)
                 }
             };
     }

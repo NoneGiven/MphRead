@@ -39,9 +39,9 @@ namespace MphRead
             _window.AddRoom(name, layerMask);
         }
 
-        public void AddModel(string name, int recolor = 0)
+        public void AddModel(string name, int recolor = 0, bool firstHunt = false)
         {
-            _window.AddModel(name, recolor);
+            _window.AddModel(name, recolor, firstHunt);
         }
 
         public void Run()
@@ -190,9 +190,9 @@ namespace MphRead
             _cameraMode = CameraMode.Roam;
         }
 
-        public void AddModel(string name, int recolor)
+        public void AddModel(string name, int recolor, bool firstHunt)
         {
-            Model model = Read.GetModelByName(name, recolor);
+            Model model = Read.GetModelByName(name, recolor, firstHunt);
             SceneSetup.ComputeNodeMatrices(model, index: 0);
             _models.Add(model);
             _modelMap.Add(model.SceneId, model);
