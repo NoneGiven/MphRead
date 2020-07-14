@@ -191,7 +191,7 @@ namespace MphRead
 
         private static IEnumerable<Model> GetAllModels()
         {
-            foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.EntityMetadata)
+            foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.ModelMetadata)
             {
                 yield return Read.GetModelByName(meta.Key);
             }

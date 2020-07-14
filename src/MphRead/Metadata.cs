@@ -276,7 +276,7 @@ namespace MphRead
     {
         public static ModelMetadata? GetEntityByName(string name)
         {
-            if (EntityMetadata.TryGetValue(name, out ModelMetadata? metadata))
+            if (ModelMetadata.TryGetValue(name, out ModelMetadata? metadata))
             {
                 return metadata;
             }
@@ -285,7 +285,7 @@ namespace MphRead
 
         public static ModelMetadata? GetEntityByPath(string path)
         {
-            KeyValuePair<string, ModelMetadata> result = EntityMetadata.FirstOrDefault(r => r.Value.ModelPath == path);
+            KeyValuePair<string, ModelMetadata> result = ModelMetadata.FirstOrDefault(r => r.Value.ModelPath == path);
             if (result.Key == null)
             {
                 return null;
@@ -3842,7 +3842,7 @@ namespace MphRead
         }
 
         // todo: e.g. lod1 in the model folder should have the animation files from the lod0 archive
-        public static readonly IReadOnlyDictionary<string, ModelMetadata> EntityMetadata
+        public static readonly IReadOnlyDictionary<string, ModelMetadata> ModelMetadata
             = new Dictionary<string, ModelMetadata>()
             {
                 {
