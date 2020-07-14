@@ -838,7 +838,7 @@ namespace MphRead
                 if (rotate != 0)
                 {
                     GL.Translate(width / 2, height / 2, 0);
-                    GL.Rotate(-rotate / MathF.PI * 180, 0, 0, 1);
+                    GL.Rotate(rotate / MathF.PI * 180, 0, 0, 1);
                     GL.Translate(-width / 2, -height / 2, 0);
                 }
                 GL.Scale(scaleS, scaleT, 1);
