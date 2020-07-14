@@ -614,21 +614,6 @@ namespace MphRead
             return -1;
         }
 
-        private void ProcessAnimations(Model model, double elapsedTime)
-        {
-            foreach (TexcoordAnimationGroup group in model.TexcoordAnimationGroups)
-            {
-                group.Time += elapsedTime;
-                int increment = (int)(group.Time / _frameTime);
-                if (increment != 0)
-                {
-                    group.CurrentFrame += increment;
-                    group.Time -= increment * _frameTime;
-                }
-                group.CurrentFrame %= group.FrameCount;
-            }
-        }
-
         private void RenderScene(double elapsedTime)
         {
             _models.Sort(CompareModels);
@@ -787,6 +772,21 @@ namespace MphRead
                     GL.MatrixMode(MatrixMode.Modelview);
                     GL.PopMatrix();
                 }
+            }
+        }
+
+        private void ProcessAnimations(Model model, double elapsedTime)
+        {
+            foreach (TexcoordAnimationGroup group in model.TexcoordAnimationGroups)
+            {
+                group.Time += elapsedTime;
+                int increment = (int)(group.Time / _frameTime);
+                if (increment != 0)
+                {
+                    group.CurrentFrame += increment;
+                    group.Time -= increment * _frameTime;
+                }
+                group.CurrentFrame %= group.FrameCount;
             }
         }
 
