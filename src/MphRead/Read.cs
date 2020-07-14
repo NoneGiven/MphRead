@@ -383,6 +383,11 @@ namespace MphRead
             path = Path.Combine(Paths.FileSystem, path);
             ReadOnlySpan<byte> bytes = ReadBytes(path);
             EntityHeader header = ReadStruct<EntityHeader>(bytes[0..Sizes.EntityHeader]);
+            // todo: parse First Hunt entity files
+            if (header.Version == 1)
+            {
+                return new List<Entity>();
+            } 
             if (header.Version != 2)
             {
                 throw new ProgramException($"Unexpected entity header version {header.Version}.");
