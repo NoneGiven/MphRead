@@ -257,7 +257,7 @@ namespace MphRead
                 var rotations = new List<float>();
                 foreach (ushort value in DoOffsets<ushort>(bytes, rawGroup.RotateLutOffset, maxRotation))
                 {
-                    int radians = (0x6487F * value + 0x80000) >> 20;
+                    long radians = (0x6487FL * value + 0x80000) >> 20;
                     rotations.Add(Fixed.ToFloat(radians));
                 }
                 var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, maxTranslation).Select(f => f.FloatValue).ToList();
