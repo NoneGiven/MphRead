@@ -388,6 +388,8 @@ namespace MphRead
 
         public static IReadOnlyList<Entity> GetEntities(string path, int layerId)
         {
+            // todo: figure out room info layer ID
+            layerId = 1;
             path = Path.Combine(Paths.FileSystem, path);
             ReadOnlySpan<byte> bytes = ReadBytes(path);
             EntityHeader header = ReadStruct<EntityHeader>(bytes[0..Sizes.EntityHeader]);
