@@ -14,7 +14,7 @@ namespace MphRead
         Unknown7 = 7,
         Unknown8 = 8,
         JumpPad = 9,
-        Unknown10 = 10, // FH only
+        PointModule = 10, // FH only
         CameraPos = 11,
         Unknown12 = 12,
         Unknown13 = 13,

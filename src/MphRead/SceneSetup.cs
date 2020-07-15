@@ -250,6 +250,10 @@ namespace MphRead
                 {
                     models.AddRange(LoadJumpPad(((Entity<JumpPadEntityData>)entity).Data));
                 }
+                else if (entity.Type == EntityType.PointModule)
+                {
+                    models.Add(LoadPointModule(((Entity<PointModuleEntityData>)entity).Data));
+                }
                 else if (entity.Type == EntityType.CameraPos)
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<CameraPosEntityData>)entity).Data.Position));
@@ -370,6 +374,16 @@ namespace MphRead
             model.Rotation = new Vector3(0, _random.Next(0x8000) / (float)0x7FFF * 360, 0);
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Item;
+            return model;
+        }
+
+        private static Model LoadPointModule(PointModuleEntityData data)
+        {
+            // todo: not all of these are visible at once
+            Model model = Read.GetModelByName("pick_morphball", firstHunt: true);
+            model.Position = data.Position.ToFloatVector();
+            ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Generic;
             return model;
         }
 

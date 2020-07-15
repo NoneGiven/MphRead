@@ -552,7 +552,7 @@ namespace MphRead
 
     // size: 45
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public readonly struct Unknown10EntityData
+    public readonly struct PointModuleEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;

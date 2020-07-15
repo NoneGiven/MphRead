@@ -469,11 +469,11 @@ namespace MphRead
                         entities.Add(new Entity<JumpPadEntityData>(entry, type, init.SomeId,
                             ReadStruct<JumpPadEntityData>(bytes[start..end])));
                     }
-                    else if (type == EntityType.Unknown10)
+                    else if (type == EntityType.PointModule)
                     {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown10EntityData>());
-                        entities.Add(new Entity<Unknown10EntityData>(entry, type, init.SomeId,
-                            ReadStruct<Unknown10EntityData>(bytes[start..end])));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<PointModuleEntityData>());
+                        entities.Add(new Entity<PointModuleEntityData>(entry, type, init.SomeId,
+                            ReadStruct<PointModuleEntityData>(bytes[start..end])));
                     }
                     else if (type == EntityType.CameraPos)
                     {
