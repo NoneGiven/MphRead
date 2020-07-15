@@ -189,36 +189,44 @@ namespace MphRead
 
         public int GetNextRoomNodeId(int nodeId)
         {
-            for (int i = nodeId + 1; i != nodeId; i++)
+            int i = nodeId + 1;
+            while (true)
             {
                 if (i > Nodes.Count - 1)
                 {
-                    if (nodeId == 0)
-                    {
-                        break;
-                    }
                     i = 0;
+                }
+                if (i == nodeId)
+                {
+                    break;
                 }
                 if (Nodes[i].IsRoomNode)
                 {
                     return i;
                 }
+                i++;
             }
             return nodeId;
         }
 
         public int GetPreviousRoomNodeId(int nodeId)
         {
-            for (int i = nodeId - 1; i != nodeId; i--)
+            int i = nodeId - 1;
+            while (true)
             {
                 if (i < 0)
                 {
                     i = Nodes.Count - 1;
                 }
+                if (i == nodeId)
+                {
+                    break;
+                }
                 if (Nodes[i].IsRoomNode)
                 {
                     return i;
                 }
+                i--;
             }
             return nodeId;
         }
