@@ -550,6 +550,22 @@ namespace MphRead
         public readonly uint Field8C;
     }
 
+    // size: 45
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public readonly struct Unknown10EntityData
+    {
+        public readonly EntityDataHeader Header;
+        public readonly Vector3Fx Position;
+        public readonly uint Field0C;
+        public readonly uint Field10;
+        public readonly uint Field14;
+        public readonly uint Field18;
+        public readonly uint Field1C;
+        public readonly uint Field20;
+        public readonly uint Field24;
+        public readonly byte Field28;
+    }
+
     // size: 104
     public readonly struct CameraPosEntityData
     {

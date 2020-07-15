@@ -492,7 +492,10 @@ namespace MphRead
                 /* 135 */ "FH_MORPHBALL",
                 /* 136 */ "FH_E3"
             };
-        
+
+        // unused: unit3_rm5_Ent.bin
+        // unused: bigeyeroom_Ent.bin, cylinderroom_Ent.bin, Cylinder_C1_Ent.bin
+        // unused: morphBall_Ent.bin, regulator_Ent.bin, survivor_Ent.bin
         public static readonly IReadOnlyDictionary<string, RoomMetadata> RoomMetadata
             = new Dictionary<string, RoomMetadata>()
             {
@@ -618,7 +621,7 @@ namespace MphRead
                         "unit2_CX_Anim.bin",
                         "unit2_CX_Collision.bin",
                         null,
-                        null,
+                        null, // unused: unit2_CX_Ent.bin
                         null,
                         null,
                         TimeLimit(20, 0, 0),
@@ -646,7 +649,7 @@ namespace MphRead
                         "unit2_CZ_Anim.bin",
                         "unit2_CZ_Collision.bin",
                         null,
-                        null,
+                        null, // unused: unit2_CZ_Ent.bin
                         null,
                         null,
                         TimeLimit(20, 0, 0),
@@ -674,7 +677,7 @@ namespace MphRead
                         "unit3_CX_Anim.bin",
                         "unit3_CX_Collision.bin",
                         null,
-                        null,
+                        null, // unused: unit3_CX_Ent.bin
                         null,
                         null,
                         TimeLimit(20, 0, 0),
@@ -702,7 +705,7 @@ namespace MphRead
                         "unit3_CZ_Anim.bin",
                         "unit3_CZ_Collision.bin",
                         null,
-                        null,
+                        null, // unused: unit3_CZ_Ent.bin
                         null,
                         null,
                         TimeLimit(20, 0, 0),
