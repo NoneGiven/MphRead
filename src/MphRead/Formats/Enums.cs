@@ -82,9 +82,9 @@ namespace MphRead
         Palette2Bit = 0, // RGB4
         Palette4Bit = 1, // RGB16
         Palette8Bit = 2, // RGB256
-        DirectRgb = 3,   // RGB -- not entirely sure if this is RGB or RGBA; the alpha bit is always 1 for format 5
+        DirectRgba = 3,  // RGBA
         PaletteA5I3 = 4, // A5I3 
-        DirectRgba = 5,  // RGBA
+        DirectRgb = 5,   // RGB
         PaletteA3I5 = 6  // A3I5
     }
 }
