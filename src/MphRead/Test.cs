@@ -139,7 +139,8 @@ namespace MphRead
             {
                 foreach (Texture texture in model.Textures)
                 {
-                    if (texture.Format == TextureFormat.DirectRgb)
+                    if (texture.Opaque != 0 && texture.Format != TextureFormat.Palette4Bit
+                         && texture.Format != TextureFormat.Palette8Bit && texture.Format != TextureFormat.Palette2Bit)
                     {
                         System.Diagnostics.Debugger.Break();
                     }

@@ -199,6 +199,10 @@ namespace MphRead
                 {
                     return i;
                 }
+                if (i == nodeId)
+                {
+                    break;
+                }
             }
             return nodeId;
         }
