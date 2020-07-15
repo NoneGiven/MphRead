@@ -137,14 +137,15 @@ namespace MphRead
         {
             foreach (Model model in GetAllModels())
             {
-                foreach (Recolor recolor in model.Recolors)
+                foreach (Texture texture in model.Textures)
                 {
-                    foreach (Material material in model.Materials)
+                    if (texture.Format == TextureFormat.DirectRgb)
                     {
-                        if (material.TextureId != UInt16.MaxValue)
-                        {
-                            recolor.GetPixels(material.TextureId, material.PaletteId);
-                        }
+                        System.Diagnostics.Debugger.Break();
+                    }
+                    if (texture.Format == TextureFormat.DirectRgba)
+                    {
+                        System.Diagnostics.Debugger.Break();
                     }
                 }
             }
@@ -194,6 +195,10 @@ namespace MphRead
             foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.ModelMetadata)
             {
                 yield return Read.GetModelByName(meta.Key);
+            }
+            foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.FirstHuntModels)
+            {
+                yield return Read.GetModelByName(meta.Key, firstHunt: true);
             }
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
