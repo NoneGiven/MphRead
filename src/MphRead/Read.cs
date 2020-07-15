@@ -305,12 +305,12 @@ namespace MphRead
                 throw new ProgramException($"Pixel count {pixelCount} is not divisible by {entriesPerByte}.");
             }
             pixelCount /= entriesPerByte;
-            if (texture.Format == TextureFormat.DirectRgb || texture.Format == TextureFormat.DirectRgba)
+            if (texture.Format == TextureFormat.DirectRgb)
             {
                 for (int pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++)
                 {
                     ushort color = SpanReadUshort(textureBytes, (int)(texture.ImageOffset + pixelIndex * 2));
-                    byte alpha = texture.Format == TextureFormat.DirectRgb ? (byte)255 : AlphaFromShort(color);
+                    byte alpha = AlphaFromShort(color);
                     data.Add(new TextureData(color, alpha));
                 }
             }
@@ -380,7 +380,7 @@ namespace MphRead
             return new ColorRgba(red, green, blue, alpha);
         }
 
-        private static byte AlphaFromShort(ushort value) => (value & 0x8000) == 0 ? (byte)255 : (byte)0;
+        private static byte AlphaFromShort(ushort value) => (value & 0x8000) == 0 ? (byte)0 : (byte)255;
 
         private static byte AlphaFromA5I3(byte value) => (byte)((value >> 3) / 31.0f * 255.0f);
 

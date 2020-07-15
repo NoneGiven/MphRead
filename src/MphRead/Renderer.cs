@@ -320,7 +320,7 @@ namespace MphRead
                     material.RenderMode = RenderMode.AlphaTest;
                 }
                 if (material.RenderMode == RenderMode.Translucent && material.Alpha == 31
-                    && (textureFormat == TextureFormat.DirectRgb || textureFormat == TextureFormat.DirectRgba))
+                    && textureFormat == TextureFormat.DirectRgb)
                 {
                     material.RenderMode = RenderMode.AlphaTest;
                 }

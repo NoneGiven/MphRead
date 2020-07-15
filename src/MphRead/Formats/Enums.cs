@@ -82,7 +82,6 @@ namespace MphRead
         Palette2Bit = 0, // RGB4
         Palette4Bit = 1, // RGB16
         Palette8Bit = 2, // RGB256
-        DirectRgba = 3,  // RGBA - unused
         PaletteA5I3 = 4, // A5I3 
         DirectRgb = 5,   // RGB
         PaletteA3I5 = 6  // A3I5

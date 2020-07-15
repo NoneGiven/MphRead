@@ -326,7 +326,7 @@ namespace MphRead
             }
             var pixels = new List<ColorRgba>();
             TextureFormat textureFormat = Textures[textureId].Format;
-            if (textureFormat == TextureFormat.DirectRgb || textureFormat == TextureFormat.DirectRgba)
+            if (textureFormat == TextureFormat.DirectRgb)
             {
                 for (int i = 0; i < TextureData[textureId].Count; i++)
                 {

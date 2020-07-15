@@ -143,10 +143,6 @@ namespace MphRead
                     {
                         System.Diagnostics.Debugger.Break();
                     }
-                    if (texture.Format == TextureFormat.DirectRgba)
-                    {
-                        System.Diagnostics.Debugger.Break();
-                    }
                 }
             }
         }
