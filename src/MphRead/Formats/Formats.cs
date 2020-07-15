@@ -193,15 +193,15 @@ namespace MphRead
             {
                 if (i > Nodes.Count - 1)
                 {
+                    if (nodeId == 0)
+                    {
+                        break;
+                    }
                     i = 0;
                 }
                 if (Nodes[i].IsRoomNode)
                 {
                     return i;
-                }
-                if (i == nodeId)
-                {
-                    break;
                 }
             }
             return nodeId;
