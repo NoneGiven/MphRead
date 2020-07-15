@@ -106,7 +106,13 @@ namespace MphRead
             for (int i = index; i != UInt16.MaxValue;)
             {
                 Node node = model.Nodes[i];
-                Matrix4 transform = ComputeNodeTransforms(node.Scale, node.Angle, node.Position);
+                // the scale division isn't done by the game, which is why transforms on room nodes don't work,
+                // which is probably why they're disabled. they can be reenabled with a switch in the viewer
+                var position = new Vector3(
+                    node.Position.X / model.Scale.X,
+                    node.Position.Y / model.Scale.Y,
+                    node.Position.Z / model.Scale.Z);
+                Matrix4 transform = ComputeNodeTransforms(node.Scale, node.Angle, position);
                 if (node.ParentIndex == UInt16.MaxValue)
                 {
                     node.Transform = transform;

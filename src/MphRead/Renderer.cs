@@ -114,6 +114,7 @@ namespace MphRead
         private bool _textureFiltering = true;
         private bool _lighting = true;
         private bool _showInvisible = false;
+        private bool _transformRoomNodes = false; // undocumented
 
         private static readonly Color4 _clearColor = new Color4(0, 0, 0, 1);
         private static readonly float _frameTime = 1.0f / 30.0f;
@@ -746,7 +747,7 @@ namespace MphRead
                     GL.PushMatrix();
                     Matrix4 transform = node.Transform;
                     // node transforms applied to room meshes only seem to break things (positions are wrong)
-                    if (model.Type == ModelType.Room)
+                    if (model.Type == ModelType.Room && !_transformRoomNodes)
                     {
                         transform = Matrix4.Identity;
                     }
@@ -1420,6 +1421,11 @@ namespace MphRead
             else if (e.Key == Key.G)
             {
                 _showFog = !_showFog;
+                await PrintOutput();
+            }
+            else if (e.Key == Key.N)
+            {
+                _transformRoomNodes = !_transformRoomNodes;
                 await PrintOutput();
             }
             else if (e.Key == Key.H)
