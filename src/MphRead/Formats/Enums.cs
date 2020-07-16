@@ -27,8 +27,13 @@ namespace MphRead
         EntityListHead = 27,
         // First Hunt
         FhPlayerSpawn = 101,
+        FhUnknown3 = 103,
+        FhUnknown4 = 104,
         FhEnemy = 106,
+        FhUnknown9 = 109,
         FhUnknown10 = 110,
+        FhUnknown11 = 111,
+        FhUnknown12 = 112,
         FhPointModule = 113
     }
 
