@@ -115,8 +115,6 @@ namespace MphRead
         }
 
         public bool Animate { get; set; }
-        // temporary -- see note where the transpose matrix is applied
-        public bool ForceApplyTransform { get; set; }
         public int AnimationCount { get; set; }
         public IReadOnlyList<NodeAnimationGroup> NodeAnimationGroups { get; }
         public IReadOnlyList<MaterialAnimationGroup> MaterialAnimationGroups { get; }

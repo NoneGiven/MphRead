@@ -372,7 +372,6 @@ namespace MphRead
             model2.Position = new Vector3(model1.Position.X, model1.Position.Y + 0.25f, model1.Position.Z);
             ComputeJumpPadBeamTransform(model2, data, model1.Transform);
             ComputeNodeMatrices(model2, index: 0);
-            model2.ForceApplyTransform = true;
             list.Add(model2);
             return list;
         }
@@ -467,7 +466,6 @@ namespace MphRead
             model.Rotation = GetUnitRotation(data.Rotation);
             model.Type = ModelType.Generic;
             ComputeNodeMatrices(model, index: 0);
-            model.ForceApplyTransform = true;
             return model;
         }
 
@@ -479,7 +477,6 @@ namespace MphRead
             model.Rotation = GetUnitRotation(data.Rotation);
             model.Type = ModelType.Generic;
             ComputeNodeMatrices(model, index: 0);
-            model.ForceApplyTransform = true;
             return model;
         }
 

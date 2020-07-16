@@ -739,20 +739,14 @@ namespace MphRead
         {
             if (node.MeshCount > 0 && node.Enabled && model.NodeParentsEnabled(node))
             {
-                // temporary -- applying transforms on models which have node animation breaks them,
-                // presumably because information needs to come from the animation which we aren't loading yet
-                if (model.NodeAnimationGroups.Count == 0 || model.ForceApplyTransform)
+                GL.MatrixMode(MatrixMode.Modelview);
+                GL.PushMatrix();
+                Matrix4 transform = node.Transform;
+                if (model.Type == ModelType.Room && !_transformRoomNodes)
                 {
-                    GL.MatrixMode(MatrixMode.Modelview);
-                    GL.PushMatrix();
-                    Matrix4 transform = node.Transform;
-                    // node transforms applied to room meshes only seem to break things (positions are wrong)
-                    if (model.Type == ModelType.Room && !_transformRoomNodes)
-                    {
-                        transform = Matrix4.Identity;
-                    }
-                    GL.MultMatrix(ref transform);
+                    transform = Matrix4.Identity;
                 }
+                GL.MultMatrix(ref transform);
                 foreach (Mesh mesh in model.GetNodeMeshes(node))
                 {
                     Material material = model.Materials[mesh.MaterialId];
@@ -768,11 +762,8 @@ namespace MphRead
                     GL.Uniform1(_shaderLocations.IsBillboard, node.Billboard ? 1 : 0);
                     RenderMesh(model, mesh, material);
                 }
-                if (model.NodeAnimationGroups.Count == 0 || model.ForceApplyTransform)
-                {
-                    GL.MatrixMode(MatrixMode.Modelview);
-                    GL.PopMatrix();
-                }
+                GL.MatrixMode(MatrixMode.Modelview);
+                GL.PopMatrix();
             }
         }
 
