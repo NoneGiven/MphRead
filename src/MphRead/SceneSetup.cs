@@ -218,6 +218,10 @@ namespace MphRead
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<PlatformEntityData>)entity).Data.Position));
                 }
+                else if (entity.Type == EntityType.FhPlatform)
+                {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhPlatformEntityData>)entity).Data.Position));
+                }
                 else if (entity.Type == EntityType.Object)
                 {
                     //models.Add(LoadObject(((Entity<ObjectEntityData>)entity).Data));
@@ -234,9 +238,17 @@ namespace MphRead
                 {
                     models.Add(LoadDoor(((Entity<DoorEntityData>)entity).Data));
                 }
+                else if (entity.Type == EntityType.FhDoor)
+                {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhDoorEntityData>)entity).Data.Position));
+                }
                 else if (entity.Type == EntityType.Item)
                 {
                     models.Add(LoadItem(((Entity<ItemEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.FhItem)
+                {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhItemEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Enemy)
                 {
@@ -250,13 +262,25 @@ namespace MphRead
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown7EntityData>)entity).Data.Position));
                 }
+                else if (entity.Type == EntityType.FhUnknown9)
+                {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhUnknown9EntityData>)entity).Data.Position));
+                }
                 else if (entity.Type == EntityType.Unknown8)
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown8EntityData>)entity).Data.Position));
                 }
+                else if (entity.Type == EntityType.FhUnknown10)
+                {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhUnknown10EntityData>)entity).Data.Position));
+                }
                 else if (entity.Type == EntityType.JumpPad)
                 {
                     models.AddRange(LoadJumpPad(((Entity<JumpPadEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.FhJumpPad)
+                {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhJumpPadEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.PointModule)
                 {
@@ -269,6 +293,10 @@ namespace MphRead
                 else if (entity.Type == EntityType.CameraPos)
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<CameraPosEntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.FhCameraPos)
+                {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhCameraPosEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Unknown12)
                 {
@@ -296,14 +324,11 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.CameraSeq)
                 {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<CameraSeqEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.ForceField)
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<ForceFieldEntityData>)entity).Data.Position));
-                }
-                else if (entity.Type == EntityType.FhUnknown10)
-                {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhUnknown10EntityData>)entity).Data.Position));
                 }
             }
             return models;
@@ -429,15 +454,18 @@ namespace MphRead
         private static readonly Dictionary<EntityType, ColorRgb> _colorOverrides = new Dictionary<EntityType, ColorRgb>()
         {
             { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) },
+            { EntityType.FhPlatform, new ColorRgb(0x2F, 0x4F, 0x4F) },
             { EntityType.Object, new ColorRgb(0x22, 0x8B, 0x22) },
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.FhPlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.Enemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.FhEnemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.Unknown7, new ColorRgb(0xFF, 0x8C, 0x00) },
+            { EntityType.FhUnknown9, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.Unknown8, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.FhUnknown10, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.CameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
+            { EntityType.FhCameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
             { EntityType.Unknown12, new ColorRgb(0x00, 0xFF, 0xFF) },
             { EntityType.Unknown13, new ColorRgb(0xFF, 0x00, 0xFF) },
             { EntityType.Unknown15, new ColorRgb(0x1E, 0x90, 0xFF) },

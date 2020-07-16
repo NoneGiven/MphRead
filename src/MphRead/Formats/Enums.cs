@@ -27,14 +27,15 @@ namespace MphRead
         EntityListHead = 27,
         // First Hunt
         FhPlayerSpawn = 101,
-        FhUnknown3 = 103,
-        FhUnknown4 = 104,
+        FhDoor = 103,
+        FhItem = 104,
         FhEnemy = 106,
-        FhUnknown9 = 109,
-        FhUnknown10 = 110,
-        FhUnknown11 = 111,
-        FhUnknown12 = 112,
-        FhPointModule = 113
+        FhUnknown9 = 109, // Unknown7
+        FhUnknown10 = 110, // Unknown8
+        FhPlatform = 111,
+        FhJumpPad = 112,
+        FhPointModule = 113,
+        FhCameraPos = 114
     }
 
     public enum ModelType

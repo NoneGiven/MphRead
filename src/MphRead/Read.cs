@@ -573,11 +573,29 @@ namespace MphRead
                     entities.Add(new Entity<FhPlayerSpawnEntityData>(entry, type, init.SomeId,
                         ReadStruct<FhPlayerSpawnEntityData>(bytes[start..end])));
                 }
+                else if (type == EntityType.FhDoor)
+                {
+                    end = start + Marshal.SizeOf<FhDoorEntityData>();
+                    entities.Add(new Entity<FhDoorEntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhDoorEntityData>(bytes[start..end])));
+                }
+                else if (type == EntityType.FhItem)
+                {
+                    end = start + Marshal.SizeOf<FhItemEntityData>();
+                    entities.Add(new Entity<FhItemEntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhItemEntityData>(bytes[start..end])));
+                }
                 else if (type == EntityType.FhEnemy)
                 {
                     end = start + Marshal.SizeOf<FhEnemyEntityData>();
                     entities.Add(new Entity<FhEnemyEntityData>(entry, type, init.SomeId,
                         ReadStruct<FhEnemyEntityData>(bytes[start..end])));
+                }
+                else if (type == EntityType.FhUnknown9)
+                {
+                    end = start + Marshal.SizeOf<FhUnknown9EntityData>();
+                    entities.Add(new Entity<FhUnknown9EntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhUnknown9EntityData>(bytes[start..end])));
                 }
                 else if (type == EntityType.FhUnknown10)
                 {
@@ -585,11 +603,29 @@ namespace MphRead
                     entities.Add(new Entity<FhUnknown10EntityData>(entry, type, init.SomeId,
                         ReadStruct<FhUnknown10EntityData>(bytes[start..end])));
                 }
+                else if (type == EntityType.FhPlatform)
+                {
+                    end = start + Marshal.SizeOf<FhPlatformEntityData>();
+                    entities.Add(new Entity<FhPlatformEntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhPlatformEntityData>(bytes[start..end])));
+                }
+                else if (type == EntityType.FhJumpPad)
+                {
+                    end = start + Marshal.SizeOf<FhJumpPadEntityData>();
+                    entities.Add(new Entity<FhJumpPadEntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhJumpPadEntityData>(bytes[start..end])));
+                }
                 else if (type == EntityType.FhPointModule)
                 {
                     end = start + Marshal.SizeOf<FhPointModuleEntityData>();
                     entities.Add(new Entity<FhPointModuleEntityData>(entry, type, init.SomeId,
                         ReadStruct<FhPointModuleEntityData>(bytes[start..end])));
+                }
+                else if (type == EntityType.FhCameraPos)
+                {
+                    end = start + Marshal.SizeOf<FhCameraPosEntityData>();
+                    entities.Add(new Entity<FhCameraPosEntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhCameraPosEntityData>(bytes[start..end])));
                 }
                 else
                 {
@@ -597,6 +633,17 @@ namespace MphRead
                 }
                 entries.Add(entry);
             }
+
+            foreach (EntityType type in entities.Select(e => e.Type).Distinct())
+            {
+                int count = entities.Count(e => e.Type == type);
+                Console.WriteLine($"{count}x {type}");
+            }
+            foreach (var entity in entities)
+            {
+                Console.WriteLine(entity.Type);
+            }
+
             int j = 0;
             var ordered = entries.OrderBy(e => e.DataOffset).ToList();
             foreach (FhEntityEntry entry in ordered)
