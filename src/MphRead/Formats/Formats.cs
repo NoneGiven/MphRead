@@ -62,8 +62,9 @@ namespace MphRead
             }
             set
             {
-                // todo: set scale and rotation when this is set
-                _position = new Vector3(value.M41, value.M42, value.M43);
+                _position = value.ExtractTranslation();
+                value.ExtractRotation().ToEulerAngles(out _rotation);
+                _scale = value.ExtractScale();
                 _transform = value;
             }
         }
@@ -91,7 +92,7 @@ namespace MphRead
             }
             set
             {
-                Transform = SceneSetup.ComputeNodeTransforms(value, new Vector3(
+                _transform = SceneSetup.ComputeNodeTransforms(value, new Vector3(
                     MathHelper.DegreesToRadians(Rotation.X),
                     MathHelper.DegreesToRadians(Rotation.Y),
                     MathHelper.DegreesToRadians(Rotation.Z)),
@@ -108,7 +109,7 @@ namespace MphRead
             }
             set
             {
-                Transform = SceneSetup.ComputeNodeTransforms(Scale, new Vector3(
+                _transform = SceneSetup.ComputeNodeTransforms(Scale, new Vector3(
                     MathHelper.DegreesToRadians(value.X),
                     MathHelper.DegreesToRadians(value.Y),
                     MathHelper.DegreesToRadians(value.Z)),
