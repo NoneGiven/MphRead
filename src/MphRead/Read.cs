@@ -566,7 +566,7 @@ namespace MphRead
                 end = start + Sizes.EntityDataHeader;
                 EntityDataHeader init = ReadStruct<EntityDataHeader>(bytes[start..end]);
                 var type = (EntityType)(init.Type + 100);
-                // todo: could assert that none of the end offsets exceed any other entry's start offset
+                // sktodo: could assert that none of the end offsets exceed any other entry's start offset
                 if (type == EntityType.FhPlayerSpawn)
                 {
                     end = start + Marshal.SizeOf<FhPlayerSpawnEntityData>();

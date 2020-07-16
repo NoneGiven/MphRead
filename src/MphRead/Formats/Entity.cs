@@ -403,7 +403,8 @@ namespace MphRead
         }
     }
 
-    // size: 52
+    // size: 50
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public readonly struct FhItemEntityData
     {
         public readonly EntityDataHeader Header;
@@ -416,7 +417,7 @@ namespace MphRead
         public readonly uint Field20;
         public readonly uint Field24;
         public readonly uint Field28;
-        public readonly uint Field2C;
+        public readonly ushort Field2C;
     }
 
     // size: 512
@@ -967,7 +968,9 @@ namespace MphRead
         public readonly byte Field28;
     }
 
-    // size: 48
+    // todo: might be interchangeable with the MPH version
+    // size: 45
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public readonly struct FhPointModuleEntityData
     {
         public readonly EntityDataHeader Header;
@@ -979,7 +982,7 @@ namespace MphRead
         public readonly uint Field1C;
         public readonly uint Field20;
         public readonly uint Field24;
-        public readonly uint Field28;
+        public readonly byte Field28;
     }
 
     // size: 104
