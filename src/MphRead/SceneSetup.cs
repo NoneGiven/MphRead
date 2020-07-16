@@ -427,13 +427,13 @@ namespace MphRead
             return model;
         }
 
-        // todo: load the right item
+        // todo: load the right item -- also, do these have height offsets?
         private static Model LoadItem(FhItemEntityData data)
         {
             Model model = Read.GetModelByName("pick_health_B", firstHunt: true);
             model.Position = data.Position.ToFloatVector();
             ComputeNodeMatrices(model, index: 0);
-            model.Type = ModelType.Generic; // sktodo: floating, rotating?
+            model.Type = ModelType.Item;
             return model;
         }
 
