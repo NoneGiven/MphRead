@@ -70,6 +70,7 @@ namespace MphRead
         public int UseFog { get; set; }
         public int FogColor { get; set; }
         public int FogOffset { get; set; }
+        public int AlphaScale { get; set; }
         public int UseOverride { get; set; }
         public int OverrideColor { get; set; }
     }
@@ -253,6 +254,7 @@ namespace MphRead
             _shaderLocations.UseFog = GL.GetUniformLocation(_shaderProgramId, "fog_enable");
             _shaderLocations.FogColor = GL.GetUniformLocation(_shaderProgramId, "fog_color");
             _shaderLocations.FogOffset = GL.GetUniformLocation(_shaderProgramId, "fog_offset");
+            _shaderLocations.AlphaScale = GL.GetUniformLocation(_shaderProgramId, "alpha_scale");
 
             _shaderLocations.UseOverride = GL.GetUniformLocation(_shaderProgramId, "use_override");
             _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
@@ -673,6 +675,7 @@ namespace MphRead
             GL.Uniform1(_shaderLocations.UseFog, _hasFog && _showFog ? 1 : 0);
             GL.Uniform4(_shaderLocations.FogColor, _fogColor);
             GL.Uniform1(_shaderLocations.FogOffset, _fogOffset);
+            GL.Uniform1(_shaderLocations.AlphaScale, 1.0f);
         }
 
         private void RenderRoom(Model model)
