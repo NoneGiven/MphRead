@@ -899,7 +899,7 @@ namespace MphRead
             }
             GL.MatrixMode(MatrixMode.Texture);
             GL.LoadIdentity();
-            if (model.Animate && textureId != UInt16.MaxValue && material.TexcoordAnimationId != -1)
+            if (model.TexcoordAnimationGroups.Count > 0 && textureId != UInt16.MaxValue && material.TexcoordAnimationId != -1)
             {
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
                 AnimateTexcoords(model, material, width, height);

@@ -72,7 +72,6 @@ namespace MphRead
                 new RecolorMetadata("default", meta.ModelPath, meta.TexturePath ?? meta.ModelPath)
             };
             Model room = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, recolors, defaultRecolor: 0);
-            room.Animate = (meta.AnimationPath != null);
             room.Type = ModelType.Room;
             return room;
         }
@@ -80,7 +79,6 @@ namespace MphRead
         private static Model GetModel(ModelMetadata meta, int defaultRecolor)
         {
             Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.Recolors, defaultRecolor);
-            model.Animate = (meta.AnimationPath != null);
             return model;
         }
 
@@ -535,22 +533,11 @@ namespace MphRead
                     }
                 }
             }
-            // sktodo: cleanup
-            //foreach (EntityType type in entities.Select(e => e.Type).Distinct())
-            //{
-            //    int count = entities.Count(e => e.Type == type);
-            //    Console.WriteLine($"{count}x {type}");
-            //}
-            //foreach (var entity in entities)
-            //{
-            //    Console.WriteLine(entity.Type);
-            //}
             return entities;
         }
 
         private static IReadOnlyList<Entity> GetFirstHuntEntities(ReadOnlySpan<byte> bytes)
         {
-            var entries = new List<FhEntityEntry>(); // sktodo: clean this up
             var entities = new List<Entity>();
             for (int i = 0; ; i++)
             {
@@ -561,12 +548,11 @@ namespace MphRead
                 {
                     break;
                 }
-
                 start = (int)entry.DataOffset;
                 end = start + Sizes.EntityDataHeader;
                 EntityDataHeader init = ReadStruct<EntityDataHeader>(bytes[start..end]);
                 var type = (EntityType)(init.Type + 100);
-                // sktodo: could assert that none of the end offsets exceed any other entry's start offset
+                // todo: could assert that none of the end offsets exceed any other entry's start offset
                 if (type == EntityType.FhPlayerSpawn)
                 {
                     end = start + Marshal.SizeOf<FhPlayerSpawnEntityData>();
@@ -631,43 +617,7 @@ namespace MphRead
                 {
                     throw new ProgramException($"Invalid entity type {type}");
                 }
-                entries.Add(entry);
             }
-
-            //foreach (EntityType type in entities.Select(e => e.Type).Distinct())
-            //{
-            //    int count = entities.Count(e => e.Type == type);
-            //    Console.WriteLine($"{count}x {type}");
-            //}
-            //foreach (var entity in entities)
-            //{
-            //    Console.WriteLine(entity.Type);
-            //}
-
-            //int j = 0;
-            //var ordered = entries.OrderBy(e => e.DataOffset).ToList();
-            //foreach (FhEntityEntry entry in ordered)
-            //{
-            //    int start = (int)entry.DataOffset;
-            //    int end;
-            //    if (j < entries.Count - 1)
-            //    {
-            //        end = (int)ordered[j + 1].DataOffset;
-            //    }
-            //    else
-            //    {
-            //        end = bytes.Length;
-            //    }
-            //    EntityDataHeader data = ReadStruct<EntityDataHeader>(bytes[start..(start + Sizes.EntityDataHeader)]);
-            //    Console.WriteLine($"0x{start:X2} - 0x{end - 1:X2}, type {data.Type}, length {end - start}");
-            //    foreach (var b in bytes[start..end])
-            //    {
-            //        Console.Write($"{b:X2} ");
-            //    }
-            //    Console.WriteLine();
-            //    Console.WriteLine();
-            //    j++;
-            //}
             return entities;
         }
 
@@ -846,6 +796,20 @@ namespace MphRead
             catch
             {
                 Console.WriteLine("Failed to export model. Verify your export path is accessible.");
+            }
+        }
+
+        private static void DumpEntityList(IEnumerable<Entity> entities)
+        {
+            foreach (EntityType type in entities.Select(e => e.Type).Distinct())
+            {
+                int count = entities.Count(e => e.Type == type);
+                Console.WriteLine($"{count}x {type}");
+            }
+            Console.WriteLine();
+            foreach (Entity entity in entities)
+            {
+                Console.WriteLine(entity.Type);
             }
         }
     }

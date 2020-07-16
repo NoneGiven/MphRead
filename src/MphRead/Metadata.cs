@@ -78,7 +78,6 @@ namespace MphRead
         public string? AnimationPath { get; }
         public string? CollisionPath { get; }
         public IReadOnlyList<RecolorMetadata> Recolors { get; }
-        public bool Animate { get; }
 
         public ModelMetadata(string name, string modelPath, string? animationPath, string? collisionPath,
             IReadOnlyList<RecolorMetadata> recolors)
@@ -175,7 +174,7 @@ namespace MphRead
 
         public ModelMetadata(string name, bool animation = true, bool collision = false,
             bool texture = false, string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None,
-            string? archive = null, string? addToAnim = null, bool animate = false, bool firstHunt = false)
+            string? archive = null, string? addToAnim = null, bool firstHunt = false)
         {
             Name = name;
             string path;
@@ -219,7 +218,6 @@ namespace MphRead
             {
                 new RecolorMetadata("default", recolorModel, texture ? $@"models\{name}{suffix}_Tex.bin" : recolorModel)
             };
-            Animate = animate;
         }
     }
 
@@ -4287,7 +4285,7 @@ namespace MphRead
                 },
                 {
                     "Artifact_Key",
-                    new ModelMetadata("Artifact_Key", animate: true)
+                    new ModelMetadata("Artifact_Key")
                 },
                 {
                     "Artifact01",
@@ -5069,11 +5067,11 @@ namespace MphRead
                 },
                 {
                     "PickUp_EnergyExp",
-                    new ModelMetadata("PickUp_EnergyExp", animate: true)
+                    new ModelMetadata("PickUp_EnergyExp")
                 },
                 {
                     "PickUp_MissileExp",
-                    new ModelMetadata("PickUp_MissileExp", animate: true)
+                    new ModelMetadata("PickUp_MissileExp")
                 },
                 {
                     "pick_ammo_green",
@@ -6118,7 +6116,7 @@ namespace MphRead
                 },
                 {
                     "pick_ammo_A",
-                    new ModelMetadata("pick_ammo_A", animation: false, firstHunt: true) // sktodo: animate = true for pickups?
+                    new ModelMetadata("pick_ammo_A", animation: false, firstHunt: true)
                 },
                 {
                     "pick_ammo_B",

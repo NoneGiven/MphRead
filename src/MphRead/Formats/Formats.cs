@@ -114,7 +114,6 @@ namespace MphRead
             }
         }
 
-        public bool Animate { get; set; }
         public int AnimationCount { get; set; }
         public IReadOnlyList<NodeAnimationGroup> NodeAnimationGroups { get; }
         public IReadOnlyList<MaterialAnimationGroup> MaterialAnimationGroups { get; }
