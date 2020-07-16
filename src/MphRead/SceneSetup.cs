@@ -240,7 +240,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.FhDoor)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhDoorEntityData>)entity).Data.Position));
+                    models.Add(LoadDoor(((Entity<FhDoorEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.Item)
                 {
@@ -248,7 +248,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.FhItem)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhItemEntityData>)entity).Data.Position));
+                    models.Add(LoadItem(((Entity<FhItemEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.Enemy)
                 {
@@ -280,7 +280,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.FhJumpPad)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhJumpPadEntityData>)entity).Data.Position));
+                    models.Add(LoadJumpPad(((Entity<FhJumpPadEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.PointModule)
                 {
@@ -377,6 +377,16 @@ namespace MphRead
             return list;
         }
 
+        // todo: load the right jump pad models
+        private static Model LoadJumpPad(FhJumpPadEntityData data)
+        {
+            Model model = Read.GetModelByName("jumppad_base", firstHunt: true);
+            model.Position = data.Position.ToFloatVector();
+            ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Generic;
+            return model;
+        }
+
         private static Model LoadObject(ObjectEntityData data)
         {
             int modelId = 22;
@@ -418,6 +428,16 @@ namespace MphRead
             return model;
         }
 
+        // todo: load the right item
+        private static Model LoadItem(FhItemEntityData data)
+        {
+            Model model = Read.GetModelByName("pick_health_B", firstHunt: true);
+            model.Position = data.Position.ToFloatVector();
+            ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Generic; // sktodo: floating, rotating?
+            return model;
+        }
+
         private static Model LoadPointModule(PointModuleEntityData data)
         {
             return LoadPointModule(data.Position.ToFloatVector());
@@ -441,13 +461,25 @@ namespace MphRead
         // todo: load correct palette from Alimbic texture share
         private static Model LoadDoor(DoorEntityData data)
         {
-            //string modelName = Metadata.Doors[(int)data.ModelId];
-            //Model model = Read.GetModelByName(modelName);
-            Model model = Read.GetModelByName("SecretSwitch");
+            string modelName = Metadata.Doors[(int)data.ModelId];
+            Model model = Read.GetModelByName(modelName);
             model.Position = data.Position.ToFloatVector();
             model.Rotation = GetUnitRotation(data.Rotation);
             model.Type = ModelType.Generic;
             ComputeNodeMatrices(model, index: 0);
+            model.ForceApplyTransform = true;
+            return model;
+        }
+
+        // todo: load the right door, etc.
+        private static Model LoadDoor(FhDoorEntityData data)
+        {
+            Model model = Read.GetModelByName("door", firstHunt: true);
+            model.Position = data.Position.ToFloatVector();
+            model.Rotation = GetUnitRotation(data.Rotation);
+            model.Type = ModelType.Generic;
+            ComputeNodeMatrices(model, index: 0);
+            model.ForceApplyTransform = true;
             return model;
         }
 
@@ -484,8 +516,7 @@ namespace MphRead
                 }
             }
             if (System.Diagnostics.Debugger.IsAttached &&
-                (type == EntityType.Unknown12 || type == EntityType.Unknown13
-                || type == EntityType.Unknown15 || type == EntityType.CameraSeq))
+                (type == EntityType.Unknown12 || type == EntityType.Unknown13 || type == EntityType.Unknown15))
             {
                 System.Diagnostics.Debugger.Break();
             }

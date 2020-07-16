@@ -536,15 +536,15 @@ namespace MphRead
                 }
             }
             // sktodo: cleanup
-            foreach (EntityType type in entities.Select(e => e.Type).Distinct())
-            {
-                int count = entities.Count(e => e.Type == type);
-                Console.WriteLine($"{count}x {type}");
-            }
-            foreach (var entity in entities)
-            {
-                Console.WriteLine(entity.Type);
-            }
+            //foreach (EntityType type in entities.Select(e => e.Type).Distinct())
+            //{
+            //    int count = entities.Count(e => e.Type == type);
+            //    Console.WriteLine($"{count}x {type}");
+            //}
+            //foreach (var entity in entities)
+            //{
+            //    Console.WriteLine(entity.Type);
+            //}
             return entities;
         }
 
@@ -634,40 +634,40 @@ namespace MphRead
                 entries.Add(entry);
             }
 
-            foreach (EntityType type in entities.Select(e => e.Type).Distinct())
-            {
-                int count = entities.Count(e => e.Type == type);
-                Console.WriteLine($"{count}x {type}");
-            }
-            foreach (var entity in entities)
-            {
-                Console.WriteLine(entity.Type);
-            }
+            //foreach (EntityType type in entities.Select(e => e.Type).Distinct())
+            //{
+            //    int count = entities.Count(e => e.Type == type);
+            //    Console.WriteLine($"{count}x {type}");
+            //}
+            //foreach (var entity in entities)
+            //{
+            //    Console.WriteLine(entity.Type);
+            //}
 
-            int j = 0;
-            var ordered = entries.OrderBy(e => e.DataOffset).ToList();
-            foreach (FhEntityEntry entry in ordered)
-            {
-                int start = (int)entry.DataOffset;
-                int end;
-                if (j < entries.Count - 1)
-                {
-                    end = (int)ordered[j + 1].DataOffset;
-                }
-                else
-                {
-                    end = bytes.Length;
-                }
-                EntityDataHeader data = ReadStruct<EntityDataHeader>(bytes[start..(start + Sizes.EntityDataHeader)]);
-                Console.WriteLine($"0x{start:X2} - 0x{end - 1:X2}, type {data.Type}, length {end - start}");
-                foreach (var b in bytes[start..end])
-                {
-                    Console.Write($"{b:X2} ");
-                }
-                Console.WriteLine();
-                Console.WriteLine();
-                j++;
-            }
+            //int j = 0;
+            //var ordered = entries.OrderBy(e => e.DataOffset).ToList();
+            //foreach (FhEntityEntry entry in ordered)
+            //{
+            //    int start = (int)entry.DataOffset;
+            //    int end;
+            //    if (j < entries.Count - 1)
+            //    {
+            //        end = (int)ordered[j + 1].DataOffset;
+            //    }
+            //    else
+            //    {
+            //        end = bytes.Length;
+            //    }
+            //    EntityDataHeader data = ReadStruct<EntityDataHeader>(bytes[start..(start + Sizes.EntityDataHeader)]);
+            //    Console.WriteLine($"0x{start:X2} - 0x{end - 1:X2}, type {data.Type}, length {end - start}");
+            //    foreach (var b in bytes[start..end])
+            //    {
+            //        Console.Write($"{b:X2} ");
+            //    }
+            //    Console.WriteLine();
+            //    Console.WriteLine();
+            //    j++;
+            //}
             return entities;
         }
 
