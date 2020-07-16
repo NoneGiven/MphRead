@@ -189,7 +189,7 @@ namespace MphRead
             else
             {
                 path = "models";
-            } 
+            }
             string suffix = "";
             if (mdlSuffix != MdlSuffix.None)
             {
@@ -4046,6 +4046,19 @@ namespace MphRead
             /* 21 */ ("pick_wpn_all", 0.444580078f),
             // unused
             /* 22 */ ("pick_wpn_missile", 0.558837891f)
+        };
+
+        public static readonly IReadOnlyList<string> FhItems
+            = new List<string>()
+        {
+            /* 0 */ "pick_ammo_A",
+            /* 1 */ "pick_ammo_B",
+            /* 2 */ "pick_health_A",
+            /* 3 */ "pick_health_B",
+            /* 4 */ "pick_morphball",
+            /* 5 */ "pick_morphball", // unused
+            /* 6 */ "pick_wpn_electro",
+            /* 7 */ "pick_wpn_missile"
         };
 
         public static readonly List<ObjectMetadata> _objects = new List<ObjectMetadata>()
