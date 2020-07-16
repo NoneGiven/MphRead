@@ -18,9 +18,17 @@ namespace MphRead
         // of textures/palettes will be zero as well. To get the real information, the _Model file for the recolor must
         // be used in addition to the main header. And after doing that, you might then still be dealing with a _Texture file.
 
-        public static Model GetModelByName(string name, int defaultRecolor = 0)
+        public static Model GetModelByName(string name, int defaultRecolor = 0, bool firstHunt = false)
         {
-            ModelMetadata? entityMeta = Metadata.GetEntityByName(name);
+            ModelMetadata? entityMeta;
+            if (firstHunt)
+            {
+                entityMeta = Metadata.GetFirstHuntEntityByName(name);
+            }
+            else
+            {
+                entityMeta = Metadata.GetEntityByName(name);
+            }
             if (entityMeta == null)
             {
                 throw new ProgramException("No entity with this name is known. Please provide metadata for a custom entity.");
@@ -64,7 +72,6 @@ namespace MphRead
                 new RecolorMetadata("default", meta.ModelPath, meta.TexturePath ?? meta.ModelPath)
             };
             Model room = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, recolors, defaultRecolor: 0);
-            room.Animate = (meta.AnimationPath != null);
             room.Type = ModelType.Room;
             return room;
         }
@@ -72,7 +79,6 @@ namespace MphRead
         private static Model GetModel(ModelMetadata meta, int defaultRecolor)
         {
             Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.Recolors, defaultRecolor);
-            model.Animate = (meta.AnimationPath != null);
             return model;
         }
 
@@ -257,7 +263,7 @@ namespace MphRead
                 var rotations = new List<float>();
                 foreach (ushort value in DoOffsets<ushort>(bytes, rawGroup.RotateLutOffset, maxRotation))
                 {
-                    int radians = (0x6487F * value + 0x80000) >> 20;
+                    long radians = (0x6487FL * value + 0x80000) >> 20;
                     rotations.Add(Fixed.ToFloat(radians));
                 }
                 var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, maxTranslation).Select(f => f.FloatValue).ToList();
@@ -297,12 +303,12 @@ namespace MphRead
                 throw new ProgramException($"Pixel count {pixelCount} is not divisible by {entriesPerByte}.");
             }
             pixelCount /= entriesPerByte;
-            if (texture.Format == TextureFormat.DirectRgb || texture.Format == TextureFormat.DirectRgba)
+            if (texture.Format == TextureFormat.DirectRgb)
             {
                 for (int pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++)
                 {
                     ushort color = SpanReadUshort(textureBytes, (int)(texture.ImageOffset + pixelIndex * 2));
-                    byte alpha = texture.Format == TextureFormat.DirectRgb ? (byte)255 : AlphaFromShort(color);
+                    byte alpha = AlphaFromShort(color);
                     data.Add(new TextureData(color, alpha));
                 }
             }
@@ -372,7 +378,7 @@ namespace MphRead
             return new ColorRgba(red, green, blue, alpha);
         }
 
-        private static byte AlphaFromShort(ushort value) => (value & 0x8000) == 0 ? (byte)255 : (byte)0;
+        private static byte AlphaFromShort(ushort value) => (value & 0x8000) == 0 ? (byte)0 : (byte)255;
 
         private static byte AlphaFromA5I3(byte value) => (byte)((value >> 3) / 31.0f * 255.0f);
 
@@ -382,12 +388,19 @@ namespace MphRead
         {
             path = Path.Combine(Paths.FileSystem, path);
             ReadOnlySpan<byte> bytes = ReadBytes(path);
-            EntityHeader header = ReadStruct<EntityHeader>(bytes[0..Sizes.EntityHeader]);
-            if (header.Version != 2)
+            uint version = BitConverter.ToUInt32(bytes[0..4]);
+            if (version == 1)
             {
-                throw new ProgramException($"Unexpected entity header version {header.Version}.");
+                return GetFirstHuntEntities(bytes);
             }
+            else if (version != 2)
+            {
+                throw new ProgramException($"Unexpected entity header version {version}.");
+            }
+            // todo: figure out room info layer ID
+            layerId = 1;
             var entities = new List<Entity>();
+            EntityHeader header = ReadStruct<EntityHeader>(bytes[0..Sizes.EntityHeader]);
             for (int i = 0; entities.Count < header.Lengths[layerId]; i++)
             {
                 int start = Sizes.EntityHeader + Sizes.EntityEntry * i;
@@ -454,6 +467,12 @@ namespace MphRead
                         entities.Add(new Entity<JumpPadEntityData>(entry, type, init.SomeId,
                             ReadStruct<JumpPadEntityData>(bytes[start..end])));
                     }
+                    else if (type == EntityType.PointModule)
+                    {
+                        Debug.Assert(entry.Length == Marshal.SizeOf<PointModuleEntityData>());
+                        entities.Add(new Entity<PointModuleEntityData>(entry, type, init.SomeId,
+                            ReadStruct<PointModuleEntityData>(bytes[start..end])));
+                    }
                     else if (type == EntityType.CameraPos)
                     {
                         Debug.Assert(entry.Length == Marshal.SizeOf<CameraPosEntityData>());
@@ -512,6 +531,91 @@ namespace MphRead
                     {
                         throw new ProgramException($"Invalid entity type {type}");
                     }
+                }
+            }
+            return entities;
+        }
+
+        private static IReadOnlyList<Entity> GetFirstHuntEntities(ReadOnlySpan<byte> bytes)
+        {
+            var entities = new List<Entity>();
+            for (int i = 0; ; i++)
+            {
+                int start = 4 + Sizes.FhEntityEntry * i;
+                int end = start + Sizes.FhEntityEntry;
+                FhEntityEntry entry = ReadStruct<FhEntityEntry>(bytes[start..end]);
+                if (entry.DataOffset == 0)
+                {
+                    break;
+                }
+                start = (int)entry.DataOffset;
+                end = start + Sizes.EntityDataHeader;
+                EntityDataHeader init = ReadStruct<EntityDataHeader>(bytes[start..end]);
+                var type = (EntityType)(init.Type + 100);
+                // todo: could assert that none of the end offsets exceed any other entry's start offset
+                if (type == EntityType.FhPlayerSpawn)
+                {
+                    end = start + Marshal.SizeOf<FhPlayerSpawnEntityData>();
+                    entities.Add(new Entity<FhPlayerSpawnEntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhPlayerSpawnEntityData>(bytes[start..end])));
+                }
+                else if (type == EntityType.FhDoor)
+                {
+                    end = start + Marshal.SizeOf<FhDoorEntityData>();
+                    entities.Add(new Entity<FhDoorEntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhDoorEntityData>(bytes[start..end])));
+                }
+                else if (type == EntityType.FhItem)
+                {
+                    end = start + Marshal.SizeOf<FhItemEntityData>();
+                    entities.Add(new Entity<FhItemEntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhItemEntityData>(bytes[start..end])));
+                }
+                else if (type == EntityType.FhEnemy)
+                {
+                    end = start + Marshal.SizeOf<FhEnemyEntityData>();
+                    entities.Add(new Entity<FhEnemyEntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhEnemyEntityData>(bytes[start..end])));
+                }
+                else if (type == EntityType.FhUnknown9)
+                {
+                    end = start + Marshal.SizeOf<FhUnknown9EntityData>();
+                    entities.Add(new Entity<FhUnknown9EntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhUnknown9EntityData>(bytes[start..end])));
+                }
+                else if (type == EntityType.FhUnknown10)
+                {
+                    end = start + Marshal.SizeOf<FhUnknown10EntityData>();
+                    entities.Add(new Entity<FhUnknown10EntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhUnknown10EntityData>(bytes[start..end])));
+                }
+                else if (type == EntityType.FhPlatform)
+                {
+                    end = start + Marshal.SizeOf<FhPlatformEntityData>();
+                    entities.Add(new Entity<FhPlatformEntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhPlatformEntityData>(bytes[start..end])));
+                }
+                else if (type == EntityType.FhJumpPad)
+                {
+                    end = start + Marshal.SizeOf<FhJumpPadEntityData>();
+                    entities.Add(new Entity<FhJumpPadEntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhJumpPadEntityData>(bytes[start..end])));
+                }
+                else if (type == EntityType.FhPointModule)
+                {
+                    end = start + Marshal.SizeOf<FhPointModuleEntityData>();
+                    entities.Add(new Entity<FhPointModuleEntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhPointModuleEntityData>(bytes[start..end])));
+                }
+                else if (type == EntityType.FhCameraPos)
+                {
+                    end = start + Marshal.SizeOf<FhCameraPosEntityData>();
+                    entities.Add(new Entity<FhCameraPosEntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhCameraPosEntityData>(bytes[start..end])));
+                }
+                else
+                {
+                    throw new ProgramException($"Invalid entity type {type}");
                 }
             }
             return entities;
@@ -692,6 +796,20 @@ namespace MphRead
             catch
             {
                 Console.WriteLine("Failed to export model. Verify your export path is accessible.");
+            }
+        }
+
+        private static void DumpEntityList(IEnumerable<Entity> entities)
+        {
+            foreach (EntityType type in entities.Select(e => e.Type).Distinct())
+            {
+                int count = entities.Count(e => e.Type == type);
+                Console.WriteLine($"{count}x {type}");
+            }
+            Console.WriteLine();
+            foreach (Entity entity in entities)
+            {
+                Console.WriteLine(entity.Type);
             }
         }
     }

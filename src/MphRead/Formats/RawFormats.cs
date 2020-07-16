@@ -7,6 +7,7 @@ namespace MphRead
         public static readonly int Header = Marshal.SizeOf(typeof(Header));
         public static readonly int EntityHeader = Marshal.SizeOf(typeof(EntityHeader));
         public static readonly int EntityEntry = Marshal.SizeOf(typeof(EntityEntry));
+        public static readonly int FhEntityEntry = Marshal.SizeOf(typeof(FhEntityEntry));
         public static readonly int EntityDataHeader = Marshal.SizeOf(typeof(EntityDataHeader));
         public static readonly int JumpPadEntityData = Marshal.SizeOf(typeof(JumpPadEntityData));
         public static readonly int ItemEntityData = Marshal.SizeOf(typeof(ItemEntityData));

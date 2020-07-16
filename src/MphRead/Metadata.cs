@@ -8,7 +8,7 @@ namespace MphRead
     public class RoomMetadata
     {
         public string Name { get; }
-        public string InGameName { get; }
+        public string? InGameName { get; }
         public string ModelPath { get; }
         public string AnimationPath { get; }
         public string CollisionPath { get; }
@@ -31,7 +31,7 @@ namespace MphRead
         public Vector3 Light2Vector { get; }
         public Vector3 RoomSize { get; }
 
-        public RoomMetadata(string name, string inGameName, string pathName, string modelPath,
+        public RoomMetadata(string name, string? inGameName, string pathName, string modelPath,
             string animationPath, string collisionPath, string? texturePath, string? entityPath, string? nodePath,
             string? roomNodeName, uint battleTimeLimit, uint timeLimit, short pointLimit, short layerId, ushort fogEnabled,
             ushort fog, ushort fogColor, uint fogSlope, uint fogOffset, ColorRgba light1Color,
@@ -78,7 +78,6 @@ namespace MphRead
         public string? AnimationPath { get; }
         public string? CollisionPath { get; }
         public IReadOnlyList<RecolorMetadata> Recolors { get; }
-        public bool Animate { get; }
 
         public ModelMetadata(string name, string modelPath, string? animationPath, string? collisionPath,
             IReadOnlyList<RecolorMetadata> recolors)
@@ -102,18 +101,19 @@ namespace MphRead
         }
 
         public ModelMetadata(string name, string remove, bool animation = true,
-            string? animationPath = null, bool collision = false)
+            string? animationPath = null, bool collision = false, bool firstHunt = false)
         {
             Name = name;
-            ModelPath = $@"models\{name}_Model.bin";
+            string directory = firstHunt ? @"models\_fh" : "models";
+            ModelPath = $@"{directory}\{name}_Model.bin";
             string removed = name.Replace(remove, "");
             if (animation)
             {
-                AnimationPath = animationPath ?? $@"models\{removed}_Anim.bin";
+                AnimationPath = animationPath ?? $@"{directory}\{removed}_Anim.bin";
             }
             if (collision)
             {
-                CollisionPath = $@"models\{removed}_Collision.bin";
+                CollisionPath = $@"{directory}\{removed}_Collision.bin";
             }
             Recolors = new List<RecolorMetadata>()
             {
@@ -174,10 +174,22 @@ namespace MphRead
 
         public ModelMetadata(string name, bool animation = true, bool collision = false,
             bool texture = false, string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None,
-            string? archive = null, string? addToAnim = null, bool animate = false)
+            string? archive = null, string? addToAnim = null, bool firstHunt = false)
         {
             Name = name;
-            string path = archive == null ? "models" : $@"_archives\{archive}";
+            string path;
+            if (archive != null)
+            {
+                path = $@"_archives\{archive}";
+            }
+            else if (firstHunt)
+            {
+                path = @"models\_fh";
+            }
+            else
+            {
+                path = "models";
+            }
             string suffix = "";
             if (mdlSuffix != MdlSuffix.None)
             {
@@ -206,7 +218,6 @@ namespace MphRead
             {
                 new RecolorMetadata("default", recolorModel, texture ? $@"models\{name}{suffix}_Tex.bin" : recolorModel)
             };
-            Animate = animate;
         }
     }
 
@@ -276,7 +287,16 @@ namespace MphRead
     {
         public static ModelMetadata? GetEntityByName(string name)
         {
-            if (EntityMetadata.TryGetValue(name, out ModelMetadata? metadata))
+            if (ModelMetadata.TryGetValue(name, out ModelMetadata? metadata))
+            {
+                return metadata;
+            }
+            return null;
+        }
+
+        public static ModelMetadata? GetFirstHuntEntityByName(string name)
+        {
+            if (FirstHuntModels.TryGetValue(name, out ModelMetadata? metadata))
             {
                 return metadata;
             }
@@ -285,7 +305,7 @@ namespace MphRead
 
         public static ModelMetadata? GetEntityByPath(string path)
         {
-            KeyValuePair<string, ModelMetadata> result = EntityMetadata.FirstOrDefault(r => r.Value.ModelPath == path);
+            KeyValuePair<string, ModelMetadata> result = ModelMetadata.FirstOrDefault(r => r.Value.ModelPath == path);
             if (result.Key == null)
             {
                 return null;
@@ -329,134 +349,150 @@ namespace MphRead
         private static readonly IReadOnlyList<string> _roomIds
             = new List<string>()
             {
-                "UNIT1_CX",
-                "UNIT1_CX",
-                "UNIT1_CZ",
-                "UNIT1_CZ",
-                "UNIT1_MORPH_CX",
-                "UNIT1_MORPH_CX",
-                "UNIT1_MORPH_CZ",
-                "UNIT1_MORPH_CZ",
-                "UNIT2_CX",
-                "UNIT2_CX",
-                "UNIT2_CZ",
-                "UNIT2_CZ",
-                "UNIT3_CX",
-                "UNIT3_CX",
-                "UNIT3_CZ",
-                "UNIT3_CZ",
-                "UNIT4_CX",
-                "UNIT4_CX",
-                "UNIT4_CZ",
-                "UNIT4_CZ",
-                "CYLINDER_C1",
-                "BIGEYE_C1",
-                "UNIT1_RM1_CX",
-                "UNIT1_RM1_CX",
-                "GOREA_C1",
-                "UNIT3_MORPH_CZ",
-                "UNIT3_MORPH_CZ",
-                "UNIT1_LAND",
-                "UNIT1_C0",
-                "UNIT1_RM1",
-                "UNIT1_C4",
-                "UNIT1_RM6",
-                "CRYSTALROOM",
-                "UNIT1_RM4",
-                "UNIT1_TP1",
-                "UNIT1_B1",
-                "UNIT1_C1",
-                "UNIT1_C2",
-                "UNIT1_C5",
-                "UNIT1_RM2",
-                "UNIT1_RM3",
-                "UNIT1_RM5",
-                "UNIT1_C3",
-                "UNIT1_TP2",
-                "UNIT1_B2",
-                "UNIT2_LAND",
-                "UNIT2_C0",
-                "UNIT2_C1",
-                "UNIT2_RM1",
-                "UNIT2_C2",
-                "UNIT2_RM2",
-                "UNIT2_C3",
-                "UNIT2_RM3",
-                "UNIT2_C4",
-                "UNIT2_TP1",
-                "UNIT2_B1",
-                "UNIT2_C6",
-                "UNIT2_C7",
-                "UNIT2_RM4",
-                "UNIT2_RM5",
-                "UNIT2_RM6",
-                "UNIT2_RM7",
-                "UNIT2_RM8",
-                "UNIT2_TP2",
-                "UNIT2_B2",
-                "UNIT3_LAND",
-                "UNIT3_C0",
-                "UNIT3_C2",
-                "UNIT3_RM1",
-                "UNIT3_RM4",
-                "UNIT3_TP1",
-                "UNIT3_B1",
-                "UNIT3_C1",
-                "UNIT3_RM2",
-                "UNIT3_RM3",
-                "UNIT3_TP2",
-                "UNIT3_B2",
-                "UNIT4_LAND",
-                "UNIT4_RM1",
-                "UNIT4_RM3",
-                "UNIT4_C0",
-                "UNIT4_TP1",
-                "UNIT4_B1",
-                "UNIT4_C1",
-                "UNIT4_RM2",
-                "UNIT4_RM4",
-                "UNIT4_RM5",
-                "UNIT4_TP2",
-                "UNIT4_B2",
-                "Gorea_Land",
-                "Gorea_Peek",
-                "Gorea_b1",
-                "Gorea_b2",
-                "MP1 SANCTORUS",
-                "MP2 HARVESTER",
-                "MP3 PROVING GROUND",
-                "MP4 HIGHGROUND - EXPANDED",
-                "MP4 HIGHGROUND",
-                "MP5 FUEL SLUICE",
-                "MP6 HEADSHOT",
-                "MP7 PROCESSOR CORE",
-                "MP8 FIRE CONTROL",
-                "MP9 CRYOCHASM",
-                "MP10 OVERLOAD",
-                "MP11 BREAKTHROUGH",
-                "MP12 SIC TRANSIT",
-                "MP13 ACCELERATOR",
-                "MP14 OUTER REACH",
-                "CTF1 FAULT LINE - EXPANDED",
-                "CTF1_FAULT LINE",
-                "AD1 TRANSFER LOCK BT",
-                "AD1 TRANSFER LOCK DM",
-                "AD2 MAGMA VENTS",
-                "AD2 ALINOS PERCH",
-                "UNIT1 ALINOS LANDFALL",
-                "UNIT2 LANDING BAY",
-                "UNIT 3 VESPER STARPORT",
-                "UNIT 4 ARCTERRA BASE",
-                "Gorea Prison",
-                "E3 FIRST HUNT",
-                "Level TestLevel",
-                "Level AbeTest"
+                /*   0 */ "UNIT1_CX",
+                /*   1 */ "UNIT1_CX",
+                /*   2 */ "UNIT1_CZ",
+                /*   3 */ "UNIT1_CZ",
+                /*   4 */ "UNIT1_MORPH_CX",
+                /*   5 */ "UNIT1_MORPH_CX",
+                /*   6 */ "UNIT1_MORPH_CZ",
+                /*   7 */ "UNIT1_MORPH_CZ",
+                /*   8 */ "UNIT2_CX",
+                /*   9 */ "UNIT2_CX",
+                /*  10 */ "UNIT2_CZ",
+                /*  11 */ "UNIT2_CZ",
+                /*  12 */ "UNIT3_CX",
+                /*  13 */ "UNIT3_CX",
+                /*  14 */ "UNIT3_CZ",
+                /*  15 */ "UNIT3_CZ",
+                /*  16 */ "UNIT4_CX",
+                /*  17 */ "UNIT4_CX",
+                /*  18 */ "UNIT4_CZ",
+                /*  19 */ "UNIT4_CZ",
+                /*  20 */ "CYLINDER_C1",
+                /*  21 */ "BIGEYE_C1",
+                /*  22 */ "UNIT1_RM1_CX",
+                /*  23 */ "UNIT1_RM1_CX",
+                /*  24 */ "GOREA_C1",
+                /*  25 */ "UNIT3_MORPH_CZ",
+                /*  26 */ "UNIT3_MORPH_CZ",
+                /*  27 */ "UNIT1_LAND",
+                /*  28 */ "UNIT1_C0",
+                /*  29 */ "UNIT1_RM1",
+                /*  30 */ "UNIT1_C4",
+                /*  31 */ "UNIT1_RM6",
+                /*  32 */ "CRYSTALROOM",
+                /*  33 */ "UNIT1_RM4",
+                /*  34 */ "UNIT1_TP1",
+                /*  35 */ "UNIT1_B1",
+                /*  36 */ "UNIT1_C1",
+                /*  37 */ "UNIT1_C2",
+                /*  38 */ "UNIT1_C5",
+                /*  39 */ "UNIT1_RM2",
+                /*  40 */ "UNIT1_RM3",
+                /*  41 */ "UNIT1_RM5",
+                /*  42 */ "UNIT1_C3",
+                /*  43 */ "UNIT1_TP2",
+                /*  44 */ "UNIT1_B2",
+                /*  45 */ "UNIT2_LAND",
+                /*  46 */ "UNIT2_C0",
+                /*  47 */ "UNIT2_C1",
+                /*  48 */ "UNIT2_RM1",
+                /*  49 */ "UNIT2_C2",
+                /*  50 */ "UNIT2_RM2",
+                /*  51 */ "UNIT2_C3",
+                /*  52 */ "UNIT2_RM3",
+                /*  53 */ "UNIT2_C4",
+                /*  54 */ "UNIT2_TP1",
+                /*  55 */ "UNIT2_B1",
+                /*  56 */ "UNIT2_C6",
+                /*  57 */ "UNIT2_C7",
+                /*  58 */ "UNIT2_RM4",
+                /*  59 */ "UNIT2_RM5",
+                /*  60 */ "UNIT2_RM6",
+                /*  61 */ "UNIT2_RM7",
+                /*  62 */ "UNIT2_RM8",
+                /*  63 */ "UNIT2_TP2",
+                /*  64 */ "UNIT2_B2",
+                /*  65 */ "UNIT3_LAND",
+                /*  66 */ "UNIT3_C0",
+                /*  67 */ "UNIT3_C2",
+                /*  68 */ "UNIT3_RM1",
+                /*  69 */ "UNIT3_RM4",
+                /*  70 */ "UNIT3_TP1",
+                /*  71 */ "UNIT3_B1",
+                /*  72 */ "UNIT3_C1",
+                /*  73 */ "UNIT3_RM2",
+                /*  74 */ "UNIT3_RM3",
+                /*  75 */ "UNIT3_TP2",
+                /*  76 */ "UNIT3_B2",
+                /*  77 */ "UNIT4_LAND",
+                /*  78 */ "UNIT4_RM1",
+                /*  79 */ "UNIT4_RM3",
+                /*  80 */ "UNIT4_C0",
+                /*  81 */ "UNIT4_TP1",
+                /*  82 */ "UNIT4_B1",
+                /*  83 */ "UNIT4_C1",
+                /*  84 */ "UNIT4_RM2",
+                /*  85 */ "UNIT4_RM4",
+                /*  86 */ "UNIT4_RM5",
+                /*  87 */ "UNIT4_TP2",
+                /*  88 */ "UNIT4_B2",
+                /*  89 */ "Gorea_Land",
+                /*  90 */ "Gorea_Peek",
+                /*  91 */ "Gorea_b1",
+                /*  92 */ "Gorea_b2",
+                /*  93 */ "MP1 SANCTORUS",
+                /*  94 */ "MP2 HARVESTER",
+                /*  95 */ "MP3 PROVING GROUND",
+                /*  96 */ "MP4 HIGHGROUND - EXPANDED",
+                /*  97 */ "MP4 HIGHGROUND",
+                /*  98 */ "MP5 FUEL SLUICE",
+                /*  99 */ "MP6 HEADSHOT",
+                /* 100 */ "MP7 PROCESSOR CORE",
+                /* 101 */ "MP8 FIRE CONTROL",
+                /* 102 */ "MP9 CRYOCHASM",
+                /* 103 */ "MP10 OVERLOAD",
+                /* 104 */ "MP11 BREAKTHROUGH",
+                /* 105 */ "MP12 SIC TRANSIT",
+                /* 106 */ "MP13 ACCELERATOR",
+                /* 107 */ "MP14 OUTER REACH",
+                /* 108 */ "CTF1 FAULT LINE - EXPANDED",
+                /* 109 */ "CTF1_FAULT LINE",
+                /* 110 */ "AD1 TRANSFER LOCK BT",
+                /* 111 */ "AD1 TRANSFER LOCK DM",
+                /* 112 */ "AD2 MAGMA VENTS",
+                /* 113 */ "AD2 ALINOS PERCH",
+                /* 114 */ "UNIT1 ALINOS LANDFALL",
+                /* 115 */ "UNIT2 LANDING BAY",
+                /* 116 */ "UNIT 3 VESPER STARPORT",
+                /* 117 */ "UNIT 4 ARCTERRA BASE",
+                /* 118 */ "Gorea Prison",
+                /* 119 */ "E3 FIRST HUNT",
+                // unused
+                /* 120 */ "Level TestLevel",
+                /* 121 */ "Level AbeTest",
+                // unreferenced
+                /* 122 */ "biodefense chamber 06",
+                /* 123 */ "biodefense chamber 05",
+                /* 124 */ "biodefense chamber 03",
+                /* 125 */ "biodefense chamber 08",
+                /* 126 */ "biodefense chamber 04",
+                /* 127 */ "biodefense chamber 07",
+                // First Hunt
+                /* 128 */ "FH_MP1",
+                /* 129 */ "FH_SURVIVOR",
+                /* 130 */ "FH_MP2",
+                /* 131 */ "FH_MP3",
+                /* 132 */ "FH_MP5",
+                /* 133 */ "FH_TEST",
+                /* 134 */ "FH_REGULATOR",
+                /* 135 */ "FH_MORPHBALL",
+                /* 136 */ "FH_E3"
             };
 
-        // todo: unused files unit1_b2, unit2_b2, unit3_b1, unit3_b2, unit4_b1, unit4_b2
-        // per mph-viewer metadata, these use cylinderroom/bigeyeroom files instead
-        // --> are they actually used in-game with those other files, or are the rooms unused altogether?
-        // if the former, we should add extra indices for loading the unused files. if the latter, just replace the strings.
+        // unused: unit3_rm5_Ent.bin
+        // unused: bigeyeroom_Ent.bin, cylinderroom_Ent.bin, Cylinder_C1_Ent.bin
         public static readonly IReadOnlyDictionary<string, RoomMetadata> RoomMetadata
             = new Dictionary<string, RoomMetadata>()
             {
@@ -464,8 +500,7 @@ namespace MphRead
                     "UNIT1_CX",
                     new RoomMetadata(
                         "UNIT1_CX",
-                        // todo: all in-game names
-                        "inGameName",
+                        null,
                         "unit1_CX",
                         "unit1_CX_Model.bin",
                         "unit1_CX_Anim.bin",
@@ -493,7 +528,7 @@ namespace MphRead
                     "UNIT1_CZ",
                     new RoomMetadata(
                         "UNIT1_CZ",
-                        "inGameName",
+                        null,
                         "unit1_CZ",
                         "unit1_CZ_Model.bin",
                         "unit1_CZ_Anim.bin",
@@ -521,7 +556,7 @@ namespace MphRead
                     "UNIT1_MORPH_CX",
                     new RoomMetadata(
                         "UNIT1_MORPH_CX",
-                        "inGameName",
+                        null,
                         "unit1_morph_CX",
                         "unit1_morph_CX_Model.bin",
                         "unit1_morph_CX_Anim.bin",
@@ -549,7 +584,7 @@ namespace MphRead
                     "UNIT1_MORPH_CZ",
                     new RoomMetadata(
                         "UNIT1_MORPH_CZ",
-                        "inGameName",
+                        null,
                         "unit1_morph_CZ",
                         "unit1_morph_CZ_Model.bin",
                         "unit1_morph_CZ_Anim.bin",
@@ -577,13 +612,13 @@ namespace MphRead
                     "UNIT2_CX",
                     new RoomMetadata(
                         "UNIT2_CX",
-                        "inGameName",
+                        null,
                         "unit2_CX",
                         "unit2_CX_Model.bin",
                         "unit2_CX_Anim.bin",
                         "unit2_CX_Collision.bin",
                         null,
-                        null,
+                        null, // unused: unit2_CX_Ent.bin
                         null,
                         null,
                         TimeLimit(20, 0, 0),
@@ -605,13 +640,13 @@ namespace MphRead
                     "UNIT2_CZ",
                     new RoomMetadata(
                         "UNIT2_CZ",
-                        "inGameName",
+                        null,
                         "unit2_CZ",
                         "unit2_CZ_Model.bin",
                         "unit2_CZ_Anim.bin",
                         "unit2_CZ_Collision.bin",
                         null,
-                        null,
+                        null, // unused: unit2_CZ_Ent.bin
                         null,
                         null,
                         TimeLimit(20, 0, 0),
@@ -633,13 +668,13 @@ namespace MphRead
                     "UNIT3_CX",
                     new RoomMetadata(
                         "UNIT3_CX",
-                        "inGameName",
+                        null,
                         "unit3_CX",
                         "unit3_CX_Model.bin",
                         "unit3_CX_Anim.bin",
                         "unit3_CX_Collision.bin",
                         null,
-                        null,
+                        null, // unused: unit3_CX_Ent.bin
                         null,
                         null,
                         TimeLimit(20, 0, 0),
@@ -661,13 +696,13 @@ namespace MphRead
                     "UNIT3_CZ",
                     new RoomMetadata(
                         "UNIT3_CZ",
-                        "inGameName",
+                        null,
                         "unit3_CZ",
                         "unit3_CZ_Model.bin",
                         "unit3_CZ_Anim.bin",
                         "unit3_CZ_Collision.bin",
                         null,
-                        null,
+                        null, // unused: unit3_CZ_Ent.bin
                         null,
                         null,
                         TimeLimit(20, 0, 0),
@@ -689,7 +724,7 @@ namespace MphRead
                     "UNIT4_CX",
                     new RoomMetadata(
                         "UNIT4_CX",
-                        "inGameName",
+                        null,
                         "unit4_CX",
                         "unit4_CX_Model.bin",
                         "unit4_CX_Anim.bin",
@@ -717,7 +752,7 @@ namespace MphRead
                     "UNIT4_CZ",
                     new RoomMetadata(
                         "UNIT4_CZ",
-                        "inGameName",
+                        null,
                         "unit4_CZ",
                         "unit4_CZ_Model.bin",
                         "unit4_CZ_Anim.bin",
@@ -745,7 +780,7 @@ namespace MphRead
                     "CYLINDER_C1",
                     new RoomMetadata(
                         "CYLINDER_C1",
-                        "inGameName",
+                        null,
                         "Cylinder_C1_CZ",
                         "Cylinder_C1_model.bin",
                         "Cylinder_C1_anim.bin",
@@ -773,7 +808,7 @@ namespace MphRead
                     "BIGEYE_C1",
                     new RoomMetadata(
                         "BIGEYE_C1",
-                        "inGameName",
+                        null,
                         "BigEye_C1_CZ",
                         "bigeye_c1_model.bin",
                         "bigeye_c1_anim.bin",
@@ -801,7 +836,7 @@ namespace MphRead
                     "UNIT1_RM1_CX",
                     new RoomMetadata(
                         "UNIT1_RM1_CX",
-                        "inGameName",
+                        null,
                         "UNIT1_RM1_CX",
                         "UNIT1_RM1_CX_Model.bin",
                         "UNIT1_RM1_CX_Anim.bin",
@@ -829,7 +864,7 @@ namespace MphRead
                     "GOREA_C1",
                     new RoomMetadata(
                         "GOREA_C1",
-                        "inGameName",
+                        null,
                         "Gorea_C1_CZ",
                         "Gorea_c1_Model.bin",
                         "Gorea_c1_Anim.bin",
@@ -857,7 +892,7 @@ namespace MphRead
                     "UNIT3_MORPH_CZ",
                     new RoomMetadata(
                         "UNIT3_MORPH_CZ",
-                        "inGameName",
+                        null,
                         "unit3_morph_CZ",
                         "unit3_morph_CZ_Model.bin",
                         "unit3_morph_CZ_Anim.bin",
@@ -885,13 +920,13 @@ namespace MphRead
                     "UNIT1_LAND",
                     new RoomMetadata(
                         "UNIT1_LAND",
-                        "inGameName",
+                        "Alinos Gateway",
                         "unit1_Land",
                         "unit1_Land_Model.bin",
                         "unit1_Land_Anim.bin",
                         "unit1_Land_Collision.bin",
                         "unit1_Land_Tex.bin",
-                        "unit1_Land_Ent.bin",
+                        "Unit1_Land_Ent.bin",
                         "unit1_Land_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -913,13 +948,13 @@ namespace MphRead
                     "UNIT1_C0",
                     new RoomMetadata(
                         "UNIT1_C0",
-                        "inGameName",
+                        "Echo Hall",
                         "unit1_C0",
                         "unit1_C0_Model.bin",
                         "unit1_C0_Anim.bin",
                         "unit1_C0_Collision.bin",
                         "unit1_c0_Tex.bin",
-                        "unit1_C0_Ent.bin",
+                        "Unit1_C0_Ent.bin",
                         "unit1_C0_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -941,7 +976,7 @@ namespace MphRead
                     "UNIT1_RM1",
                     new RoomMetadata(
                         "UNIT1_RM1",
-                        "inGameName",
+                        "High Ground",
                         "unit1_RM1",
                         "unit1_RM1_Model.bin",
                         "unit1_RM1_Anim.bin",
@@ -969,13 +1004,13 @@ namespace MphRead
                     "UNIT1_C4",
                     new RoomMetadata(
                         "UNIT1_C4",
-                        "inGameName",
+                        "Magma Drop",
                         "unit1_C4",
                         "unit1_C4_Model.bin",
                         "unit1_C4_Anim.bin",
                         "unit1_C4_Collision.bin",
                         "unit1_c4_Tex.bin",
-                        "unit1_C4_Ent.bin",
+                        "Unit1_C4_Ent.bin",
                         "unit1_C4_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -997,7 +1032,7 @@ namespace MphRead
                     "UNIT1_RM6",
                     new RoomMetadata(
                         "UNIT1_RM6",
-                        "inGameName",
+                        "Elder Passage",
                         "unit1_RM6",
                         "unit1_RM6_Model.bin",
                         "unit1_RM6_Anim.bin",
@@ -1025,7 +1060,7 @@ namespace MphRead
                     "CRYSTALROOM",
                     new RoomMetadata(
                         "CRYSTALROOM",
-                        "inGameName",
+                        "Alimbic Cannon Control Room",
                         "crystalroom",
                         "crystalroom_Model.bin",
                         "crystalroom_anim.bin",
@@ -1053,13 +1088,13 @@ namespace MphRead
                     "UNIT1_RM4",
                     new RoomMetadata(
                         "UNIT1_RM4",
-                        "inGameName",
+                        "Combat Hall",
                         "mp3",
                         "mp3_Model.bin",
                         "mp3_Anim.bin",
                         "mp3_Collision.bin",
                         "mp3_Tex.bin",
-                        "unit1_RM4_Ent.bin",
+                        "unit1_rm4_Ent.bin",
                         "unit1_RM4_Node.bin",
                         null,
                         TimeLimit(6, 0, 0),
@@ -1081,7 +1116,7 @@ namespace MphRead
                     "UNIT1_TP1",
                     new RoomMetadata(
                         "UNIT1_TP1",
-                        "inGameName",
+                        null,
                         "TeleportRoom",
                         "TeleportRoom_Model.bin",
                         "TeleportRoom_Anim.bin",
@@ -1109,13 +1144,13 @@ namespace MphRead
                     "UNIT1_B1",
                     new RoomMetadata(
                         "UNIT1_B1",
-                        "inGameName",
+                        null,
                         "bigeyeroom",
                         "bigeyeroom_Model.bin",
                         "bigeyeroom_Anim.bin",
                         "bigeyeroom_Collision.bin",
                         "bigeyeroom_Tex.bin",
-                        "unit1_b1_Ent.bin",
+                        "Unit1_b1_Ent.bin",
                         "unit2_b2_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -1137,13 +1172,13 @@ namespace MphRead
                     "UNIT1_C1",
                     new RoomMetadata(
                         "UNIT1_C1",
-                        "inGameName",
+                        "Alimbic Gardens",
                         "unit1_C1",
                         "unit1_C1_Model.bin",
                         "unit1_C1_Anim.bin",
                         "unit1_C1_Collision.bin",
                         "unit1_c1_Tex.bin",
-                        "unit1_C1_Ent.bin",
+                        "Unit1_C1_Ent.bin",
                         "unit1_C1_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -1165,13 +1200,13 @@ namespace MphRead
                     "UNIT1_C2",
                     new RoomMetadata(
                         "UNIT1_C2",
-                        "inGameName",
+                        "Thermal Vast",
                         "unit1_C2",
                         "unit1_C2_Model.bin",
                         "unit1_C2_Anim.bin",
                         "unit1_C2_Collision.bin",
                         "unit1_c2_Tex.bin",
-                        "unit1_C2_Ent.bin",
+                        "Unit1_C2_Ent.bin",
                         "unit1_C2_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -1193,13 +1228,13 @@ namespace MphRead
                     "UNIT1_C5",
                     new RoomMetadata(
                         "UNIT1_C5",
-                        "inGameName",
+                        "Piston Cave",
                         "unit1_C5",
                         "unit1_C5_Model.bin",
                         "unit1_C5_Anim.bin",
                         "unit1_C5_Collision.bin",
                         "unit1_c5_Tex.bin",
-                        "unit1_C5_Ent.bin",
+                        "Unit1_C5_Ent.bin",
                         "unit1_RM5_Node.bin",
                         null,
                         TimeLimit(6, 0, 0),
@@ -1221,13 +1256,13 @@ namespace MphRead
                     "UNIT1_RM2",
                     new RoomMetadata(
                         "UNIT1_RM2",
-                        "inGameName",
+                        "Alinos Perch",
                         "unit1_rm2",
                         "unit1_rm2_Model.bin",
                         "unit1_rm2_Anim.bin",
                         "unit1_rm2_Collision.bin",
                         "unit1_RM2_Tex.bin",
-                        "unit1_RM2_Ent.bin",
+                        "unit1_RM2_ent.bin",
                         "unit1_RM2_Node.bin",
                         null,
                         TimeLimit(6, 0, 0),
@@ -1249,13 +1284,13 @@ namespace MphRead
                     "UNIT1_RM3",
                     new RoomMetadata(
                         "UNIT1_RM3",
-                        "inGameName",
+                        "Council Chamber",
                         "unit1_rm3",
                         "unit1_rm3_Model.bin",
                         "unit1_rm3_Anim.bin",
                         "unit1_rm3_Collision.bin",
                         "unit1_RM3_Tex.bin",
-                        "unit1_RM3_Ent.bin",
+                        "unit1_rm3_Ent.bin",
                         "unit1_RM3_Node.bin",
                         null,
                         TimeLimit(6, 0, 0),
@@ -1277,13 +1312,13 @@ namespace MphRead
                     "UNIT1_RM5",
                     new RoomMetadata(
                         "UNIT1_RM5",
-                        "inGameName",
+                        "Processor Core",
                         "mp7",
                         "mp7_Model.bin",
                         "mp7_Anim.bin",
                         "mp7_Collision.bin",
                         "mp7_Tex.bin",
-                        "unit1_RM5_Ent.bin",
+                        "unit1_rm5_Ent.bin",
                         "unit1_RM5_Node.bin",
                         null,
                         TimeLimit(6, 0, 0),
@@ -1305,13 +1340,13 @@ namespace MphRead
                     "UNIT1_C3",
                     new RoomMetadata(
                         "UNIT1_C3",
-                        "inGameName",
+                        "Crash Site",
                         "unit1_C3",
                         "unit1_C3_Model.bin",
                         "unit1_C3_Anim.bin",
                         "unit1_C3_Collision.bin",
                         "unit1_c3_Tex.bin",
-                        "unit1_C3_Ent.bin",
+                        "Unit1_C3_Ent.bin",
                         "unit1_C3_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -1333,7 +1368,7 @@ namespace MphRead
                     "UNIT1_TP2",
                     new RoomMetadata(
                         "UNIT1_TP2",
-                        "inGameName",
+                        null,
                         "TeleportRoom",
                         "TeleportRoom_Model.bin",
                         "TeleportRoom_Anim.bin",
@@ -1361,13 +1396,13 @@ namespace MphRead
                     "UNIT1_B2",
                     new RoomMetadata(
                         "UNIT1_B2",
-                        "inGameName",
+                        null,
                         "cylinderroom",
                         "cylinderroom_Model.bin",
                         "cylinderroom_Anim.bin",
                         "cylinderroom_Collision.bin",
                         "cylinderroom_Tex.bin",
-                        "unit1_b2_Ent.bin",
+                        "Unit1_b2_Ent.bin",
                         "unit2_b1_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -1389,7 +1424,7 @@ namespace MphRead
                     "UNIT2_LAND",
                     new RoomMetadata(
                         "UNIT2_LAND",
-                        "inGameName",
+                        "Celestial Gateway",
                         "unit2_Land",
                         "unit2_Land_Model.bin",
                         "unit2_Land_Anim.bin",
@@ -1417,7 +1452,7 @@ namespace MphRead
                     "UNIT2_C0",
                     new RoomMetadata(
                         "UNIT2_C0",
-                        "inGameName",
+                        "Helm Room",
                         "unit2_C0",
                         "unit2_C0_Model.bin",
                         "unit2_C0_Anim.bin",
@@ -1445,7 +1480,7 @@ namespace MphRead
                     "UNIT2_C1",
                     new RoomMetadata(
                         "UNIT2_C1",
-                        "inGameName",
+                        "Meditation Room",
                         "unit2_C1",
                         "unit2_C1_Model.bin",
                         "unit2_C1_Anim.bin",
@@ -1473,7 +1508,7 @@ namespace MphRead
                     "UNIT2_RM1",
                     new RoomMetadata(
                         "UNIT2_RM1",
-                        "inGameName",
+                        "Data Shrine 01",
                         "mp1",
                         "mp1_Model.bin",
                         "mp1_Anim.bin",
@@ -1501,7 +1536,7 @@ namespace MphRead
                     "UNIT2_C2",
                     new RoomMetadata(
                         "UNIT2_C2",
-                        "inGameName",
+                        "Fan Room Alpha",
                         "unit2_C2",
                         "unit2_C2_Model.bin",
                         "unit2_C2_Anim.bin",
@@ -1529,7 +1564,7 @@ namespace MphRead
                     "UNIT2_RM2",
                     new RoomMetadata(
                         "UNIT2_RM2",
-                        "inGameName",
+                        "Data Shrine 02",
                         "mp1",
                         "mp1_Model.bin",
                         "mp1_Anim.bin",
@@ -1557,7 +1592,7 @@ namespace MphRead
                     "UNIT2_C3",
                     new RoomMetadata(
                         "UNIT2_C3",
-                        "inGameName",
+                        "Fan Room Beta",
                         "unit2_C3",
                         "unit2_C3_Model.bin",
                         "unit2_C3_Anim.bin",
@@ -1585,7 +1620,7 @@ namespace MphRead
                     "UNIT2_RM3",
                     new RoomMetadata(
                         "UNIT2_RM3",
-                        "inGameName",
+                        "Data Shrine 03",
                         "unit2_RM3",
                         "unit2_RM3_Model.bin",
                         "unit2_RM3_Anim.bin",
@@ -1613,7 +1648,7 @@ namespace MphRead
                     "UNIT2_C4",
                     new RoomMetadata(
                         "UNIT2_C4",
-                        "inGameName",
+                        "Synergy Core",
                         "unit2_C4",
                         "unit2_C4_Model.bin",
                         "unit2_C4_Anim.bin",
@@ -1641,7 +1676,7 @@ namespace MphRead
                     "UNIT2_TP1",
                     new RoomMetadata(
                         "UNIT2_TP1",
-                        "inGameName",
+                        null,
                         "TeleportRoom",
                         "TeleportRoom_Model.bin",
                         "TeleportRoom_Anim.bin",
@@ -1669,13 +1704,13 @@ namespace MphRead
                     "UNIT2_B1",
                     new RoomMetadata(
                         "UNIT2_B1",
-                        "inGameName",
+                        null,
                         "cylinderroom",
                         "cylinderroom_Model.bin",
                         "cylinderroom_Anim.bin",
                         "cylinderroom_Collision.bin",
                         "cylinderroom_Tex.bin",
-                        "unit2_b1_Ent.bin",
+                        "Unit2_b1_Ent.bin",
                         "unit2_b1_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -1697,13 +1732,13 @@ namespace MphRead
                     "UNIT2_C6",
                     new RoomMetadata(
                         "UNIT2_C6",
-                        "inGameName",
+                        "Tetra Vista",
                         "unit2_C6",
                         "unit2_C6_Model.bin",
                         "unit2_C6_Anim.bin",
                         "unit2_C6_Collision.bin",
                         "unit2_c6_Tex.bin",
-                        "unit2_C6_Ent.bin",
+                        "Unit2_C6_Ent.bin",
                         "unit2_C6_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -1725,13 +1760,13 @@ namespace MphRead
                     "UNIT2_C7",
                     new RoomMetadata(
                         "UNIT2_C7",
-                        "inGameName",
+                        "New Arrival Registration",
                         "unit2_C7",
                         "unit2_C7_Model.bin",
                         "unit2_C7_Anim.bin",
                         "unit2_C7_Collision.bin",
                         "unit2_c7_Tex.bin",
-                        "unit2_C7_Ent.bin",
+                        "Unit2_C7_Ent.bin",
                         "unit2_C7_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -1753,13 +1788,13 @@ namespace MphRead
                     "UNIT2_RM4",
                     new RoomMetadata(
                         "UNIT2_RM4",
-                        "inGameName",
+                        "Transfer Lock",
                         "unit2_RM4",
                         "unit2_RM4_Model.bin",
                         "unit2_RM4_Anim.bin",
                         "unit2_RM4_Collision.bin",
                         "unit2_RM4_Tex.bin",
-                        "unit2_RM4_Ent.bin",
+                        "Unit2_RM4_Ent.bin",
                         "unit2_RM4_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
@@ -1781,13 +1816,13 @@ namespace MphRead
                     "UNIT2_RM5",
                     new RoomMetadata(
                         "UNIT2_RM5",
-                        "inGameName",
+                        "Incubation Vault 01",
                         "mp10",
                         "mp10_Model.bin",
                         "mp10_Anim.bin",
                         "mp10_Collision.bin",
                         "mp10_Tex.bin",
-                        "unit2_RM5_Ent.bin",
+                        "Unit2_RM5_Ent.bin",
                         "unit2_RM5_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
@@ -1809,13 +1844,13 @@ namespace MphRead
                     "UNIT2_RM6",
                     new RoomMetadata(
                         "UNIT2_RM6",
-                        "inGameName",
+                        "Incubation Vault 02",
                         "mp10",
                         "mp10_Model.bin",
                         "mp10_Anim.bin",
                         "mp10_Collision.bin",
                         "mp10_Tex.bin",
-                        "unit2_RM6_Ent.bin",
+                        "Unit2_RM6_Ent.bin",
                         "unit2_RM6_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
@@ -1837,13 +1872,13 @@ namespace MphRead
                     "UNIT2_RM7",
                     new RoomMetadata(
                         "UNIT2_RM7",
-                        "inGameName",
+                        "Incubation Vault 03",
                         "mp10",
                         "mp10_Model.bin",
                         "mp10_Anim.bin",
                         "mp10_Collision.bin",
                         "mp10_Tex.bin",
-                        "unit2_RM7_Ent.bin",
+                        "Unit2_RM7_Ent.bin",
                         "unit2_RM7_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
@@ -1865,7 +1900,7 @@ namespace MphRead
                     "UNIT2_RM8",
                     new RoomMetadata(
                         "UNIT2_RM8",
-                        "inGameName",
+                        "Docking Bay",
                         "unit2_RM8",
                         "unit2_RM8_Model.bin",
                         "unit2_RM8_Anim.bin",
@@ -1893,7 +1928,7 @@ namespace MphRead
                     "UNIT2_TP2",
                     new RoomMetadata(
                         "UNIT2_TP2",
-                        "inGameName",
+                        null,
                         "TeleportRoom",
                         "TeleportRoom_Model.bin",
                         "TeleportRoom_Anim.bin",
@@ -1921,13 +1956,13 @@ namespace MphRead
                     "UNIT2_B2",
                     new RoomMetadata(
                         "UNIT2_B2",
-                        "inGameName",
+                        null,
                         "bigeyeroom",
                         "bigeyeroom_Model.bin",
                         "bigeyeroom_Anim.bin",
                         "bigeyeroom_Collision.bin",
                         "bigeyeroom_Tex.bin",
-                        "unit2_b2_Ent.bin",
+                        "Unit2_b2_Ent.bin",
                         "unit2_b2_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -1949,7 +1984,7 @@ namespace MphRead
                     "UNIT3_LAND",
                     new RoomMetadata(
                         "UNIT3_LAND",
-                        "inGameName",
+                        "VDO Gateway",
                         "unit3_Land",
                         "unit3_Land_Model.bin",
                         "unit3_Land_Anim.bin",
@@ -1977,7 +2012,7 @@ namespace MphRead
                     "UNIT3_C0",
                     new RoomMetadata(
                         "UNIT3_C0",
-                        "inGameName",
+                        "Bioweaponry Lab",
                         "unit3_C0",
                         "unit3_C0_Model.bin",
                         "unit3_C0_Anim.bin",
@@ -2005,13 +2040,13 @@ namespace MphRead
                     "UNIT3_C2",
                     new RoomMetadata(
                         "UNIT3_C2",
-                        "inGameName",
+                        "Cortex CPU",
                         "unit3_c2",
                         "unit3_c2_Model.bin",
                         "unit3_c2_Anim.bin",
                         "unit3_c2_Collision.bin",
                         "unit3_c2_Tex.bin",
-                        "unit3_c2_Ent.bin",
+                        "Unit3_C2_Ent.bin",
                         "unit3_c2_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
@@ -2033,13 +2068,13 @@ namespace MphRead
                     "UNIT3_RM1",
                     new RoomMetadata(
                         "UNIT3_RM1",
-                        "inGameName",
+                        "Weapons Complex",
                         "unit3_rm1",
                         "unit3_rm1_Model.bin",
                         "unit3_rm1_Anim.bin",
                         "unit3_rm1_Collision.bin",
                         "unit3_rm1_Tex.bin",
-                        "unit3_RM1_Ent.bin",
+                        "Unit3_RM1_Ent.bin",
                         "unit3_RM1_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
@@ -2061,13 +2096,13 @@ namespace MphRead
                     "UNIT3_RM4",
                     new RoomMetadata(
                         "UNIT3_RM4",
-                        "inGameName",
+                        "Compression Chamber",
                         "mp5",
                         "mp5_Model.bin",
                         "mp5_Anim.bin",
                         "mp5_Collision.bin",
                         "mp5_Tex.bin",
-                        "unit3_RM4_Ent.bin",
+                        "unit3_rm4_Ent.bin",
                         "unit3_RM4_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
@@ -2089,7 +2124,7 @@ namespace MphRead
                     "UNIT3_TP1",
                     new RoomMetadata(
                         "UNIT3_TP1",
-                        "inGameName",
+                        null,
                         "TeleportRoom",
                         "TeleportRoom_Model.bin",
                         "TeleportRoom_Anim.bin",
@@ -2117,13 +2152,13 @@ namespace MphRead
                     "UNIT3_B1",
                     new RoomMetadata(
                         "UNIT3_B1",
-                        "inGameName",
+                        null,
                         "cylinderroom",
                         "cylinderroom_Model.bin",
                         "cylinderroom_Anim.bin",
                         "cylinderroom_Collision.bin",
                         "cylinderroom_Tex.bin",
-                        "unit3_b1_Ent.bin",
+                        "Unit3_b1_Ent.bin",
                         "unit2_b1_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -2145,7 +2180,7 @@ namespace MphRead
                     "UNIT3_C1",
                     new RoomMetadata(
                         "UNIT3_C1",
-                        "inGameName",
+                        "Ascension",
                         "unit3_C1",
                         "unit3_C1_Model.bin",
                         "unit3_C1_Anim.bin",
@@ -2173,13 +2208,13 @@ namespace MphRead
                     "UNIT3_RM2",
                     new RoomMetadata(
                         "UNIT3_RM2",
-                        "inGameName",
+                        "Fuel Stack",
                         "unit3_rm2",
                         "unit3_rm2_Model.bin",
                         "unit3_rm2_Anim.bin",
                         "unit3_rm2_Collision.bin",
                         "unit3_rm2_Tex.bin",
-                        "unit3_RM2_Ent.bin",
+                        "Unit3_RM2_Ent.bin",
                         "unit3_RM2_Node.bin",
                         null,
                         TimeLimit(8, 0, 0),
@@ -2201,13 +2236,13 @@ namespace MphRead
                     "UNIT3_RM3",
                     new RoomMetadata(
                         "UNIT3_RM3",
-                        "inGameName",
+                        "Stasis Bunker",
                         "e3Level",
                         "e3Level_Model.bin",
                         "e3Level_Anim.bin",
                         "e3Level_Collision.bin",
                         "e3Level_Tex.bin",
-                        "unit3_RM3_Ent.bin",
+                        "Unit3_RM3_Ent.bin",
                         "unit3_RM3_Node.bin",
                         null,
                         TimeLimit(8, 0, 0),
@@ -2229,7 +2264,7 @@ namespace MphRead
                     "UNIT3_TP2",
                     new RoomMetadata(
                         "UNIT3_TP2",
-                        "inGameName",
+                        null,
                         "TeleportRoom",
                         "TeleportRoom_Model.bin",
                         "TeleportRoom_Anim.bin",
@@ -2257,13 +2292,13 @@ namespace MphRead
                     "UNIT3_B2",
                     new RoomMetadata(
                         "UNIT3_B2",
-                        "inGameName",
+                        null,
                         "bigeyeroom",
                         "bigeyeroom_Model.bin",
                         "bigeyeroom_Anim.bin",
                         "bigeyeroom_Collision.bin",
                         "bigeyeroom_Tex.bin",
-                        "unit3_b2_Ent.bin",
+                        "Unit3_b2_Ent.bin",
                         "unit2_b2_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -2285,7 +2320,7 @@ namespace MphRead
                     "UNIT4_LAND",
                     new RoomMetadata(
                         "UNIT4_LAND",
-                        "inGameName",
+                        "Arcterra Gateway",
                         "unit4_Land",
                         "unit4_Land_Model.bin",
                         "unit4_Land_Anim.bin",
@@ -2313,13 +2348,13 @@ namespace MphRead
                     "UNIT4_RM1",
                     new RoomMetadata(
                         "UNIT4_RM1",
-                        "inGameName",
+                        "Ice Hive",
                         "unit4_RM1",
                         "unit4_RM1_Model.bin",
                         "unit4_RM1_Anim.bin",
                         "unit4_RM1_Collision.bin",
                         "unit4_RM1_Tex.bin",
-                        "unit4_RM1_Ent.bin",
+                        "Unit4_RM1_Ent.bin",
                         "unit4_RM1_Node.bin",
                         null,
                         TimeLimit(6, 0, 0),
@@ -2341,13 +2376,13 @@ namespace MphRead
                     "UNIT4_RM3",
                     new RoomMetadata(
                         "UNIT4_RM3",
-                        "inGameName",
+                        "Sic Transit",
                         "mp12",
                         "mp12_Model.bin",
                         "mp12_Anim.bin",
                         "mp12_Collision.bin",
                         "mp12_Tex.bin",
-                        "unit4_RM3_Ent.bin",
+                        "unit4_rm3_Ent.bin",
                         "unit4_RM3_Node.bin",
                         null,
                         TimeLimit(6, 0, 0),
@@ -2369,7 +2404,7 @@ namespace MphRead
                     "UNIT4_C0",
                     new RoomMetadata(
                         "UNIT4_C0",
-                        "inGameName",
+                        "Frost Labyrinth",
                         "unit4_C0",
                         "unit4_C0_Model.bin",
                         "unit4_C0_Anim.bin",
@@ -2397,7 +2432,7 @@ namespace MphRead
                     "UNIT4_TP1",
                     new RoomMetadata(
                         "UNIT4_TP1",
-                        "inGameName",
+                        null,
                         "TeleportRoom",
                         "TeleportRoom_Model.bin",
                         "TeleportRoom_Anim.bin",
@@ -2425,7 +2460,7 @@ namespace MphRead
                     "UNIT4_B1",
                     new RoomMetadata(
                         "UNIT4_B1",
-                        "inGameName",
+                        null,
                         "bigeyeroom",
                         "bigeyeroom_Model.bin",
                         "bigeyeroom_Anim.bin",
@@ -2453,13 +2488,13 @@ namespace MphRead
                     "UNIT4_C1",
                     new RoomMetadata(
                         "UNIT4_C1",
-                        "inGameName",
+                        "Drip Moat",
                         "unit4_c1",
                         "unit4_c1_Model.bin",
                         "unit4_c1_Anim.bin",
                         "unit4_c1_Collision.bin",
                         "unit4_c1_Tex.bin",
-                        "unit4_c1_Ent.bin",
+                        "unit4_C1_Ent.bin",
                         "unit4_c1_Node.bin",
                         null,
                         TimeLimit(5, 0, 0),
@@ -2481,13 +2516,13 @@ namespace MphRead
                     "UNIT4_RM2",
                     new RoomMetadata(
                         "UNIT4_RM2",
-                        "inGameName",
+                        "Subterranean",
                         "unit4_rm2",
                         "unit4_rm2_Model.bin",
                         "unit4_rm2_Anim.bin",
                         "unit4_rm2_Collision.bin",
                         "unit4_rm2_Tex.bin",
-                        "unit4_RM2_Ent.bin",
+                        "Unit4_RM2_Ent.bin",
                         "unit4_RM2_Node.bin",
                         null,
                         TimeLimit(5, 0, 0),
@@ -2509,13 +2544,13 @@ namespace MphRead
                     "UNIT4_RM4",
                     new RoomMetadata(
                         "UNIT4_RM4",
-                        "inGameName",
+                        "Sanctorus",
                         "mp11",
                         "mp11_Model.bin",
                         "mp11_Anim.bin",
                         "mp11_Collision.bin",
                         "mp11_Tex.bin",
-                        "unit4_RM4_Ent.bin",
+                        "unit4_rm4_Ent.bin",
                         "unit4_RM4_Node.bin",
                         null,
                         TimeLimit(6, 0, 0),
@@ -2537,13 +2572,13 @@ namespace MphRead
                     "UNIT4_RM5",
                     new RoomMetadata(
                         "UNIT4_RM5",
-                        "inGameName",
+                        "Fault Line",
                         "unit4_rm5",
                         "unit4_rm5_Model.bin",
                         "unit4_rm5_Anim.bin",
                         "unit4_rm5_Collision.bin",
                         "unit4_rm5_Tex.bin",
-                        "unit4_RM5_Ent.bin",
+                        "Unit4_RM5_Ent.bin",
                         "unit4_RM5_Node.bin",
                         null,
                         TimeLimit(5, 0, 0),
@@ -2565,7 +2600,7 @@ namespace MphRead
                     "UNIT4_TP2",
                     new RoomMetadata(
                         "UNIT4_TP2",
-                        "inGameName",
+                        null,
                         "TeleportRoom",
                         "TeleportRoom_Model.bin",
                         "TeleportRoom_Anim.bin",
@@ -2593,7 +2628,7 @@ namespace MphRead
                     "UNIT4_B2",
                     new RoomMetadata(
                         "UNIT4_B2",
-                        "inGameName",
+                        null,
                         "cylinderroom",
                         "cylinderroom_Model.bin",
                         "cylinderroom_Anim.bin",
@@ -2621,7 +2656,7 @@ namespace MphRead
                     "Gorea_Land",
                     new RoomMetadata(
                         "Gorea_Land",
-                        "inGameName",
+                        null,
                         "Gorea_Land",
                         "Gorea_Land_Model.bin",
                         "Gorea_Land_Anim.bin",
@@ -2649,7 +2684,7 @@ namespace MphRead
                     "Gorea_Peek",
                     new RoomMetadata(
                         "Gorea_Peek",
-                        "inGameName",
+                        null,
                         "Gorea_b2",
                         "Gorea_b2_Model.bin",
                         "Gorea_b2_Anim.bin",
@@ -2677,7 +2712,7 @@ namespace MphRead
                     "Gorea_b1",
                     new RoomMetadata(
                         "Gorea_b1",
-                        "inGameName",
+                        null,
                         "Gorea_b1",
                         "Gorea_b1_Model.bin",
                         "Gorea_b1_Anim.bin",
@@ -2705,13 +2740,13 @@ namespace MphRead
                     "Gorea_b2",
                     new RoomMetadata(
                         "Gorea_b2",
-                        "inGameName",
+                        null,
                         "Gorea_b2",
                         "Gorea_b2_Model.bin",
                         "Gorea_b2_Anim.bin",
                         "Gorea_b2_Collision.bin",
                         "Gorea_b2_Tex.bin",
-                        "Gorea_b2_Ent.bin",
+                        "gorea_b2_Ent.bin",
                         "Gorea_b2_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -2733,7 +2768,7 @@ namespace MphRead
                     "MP1 SANCTORUS",
                     new RoomMetadata(
                         "MP1 SANCTORUS",
-                        "inGameName",
+                        "Data Shrine",
                         "mp1",
                         "mp1_Model.bin",
                         "mp1_Anim.bin",
@@ -2761,7 +2796,7 @@ namespace MphRead
                     "MP2 HARVESTER",
                     new RoomMetadata(
                         "MP2 HARVESTER",
-                        "inGameName",
+                        "Harvester",
                         "mp2",
                         "mp2_Model.bin",
                         "mp2_Anim.bin",
@@ -2789,7 +2824,7 @@ namespace MphRead
                     "MP3 PROVING GROUND",
                     new RoomMetadata(
                         "MP3 PROVING GROUND",
-                        "inGameName",
+                        "Combat Hall",
                         "mp3",
                         "mp3_Model.bin",
                         "mp3_Anim.bin",
@@ -2817,7 +2852,7 @@ namespace MphRead
                     "MP4 HIGHGROUND - EXPANDED",
                     new RoomMetadata(
                         "MP4 HIGHGROUND - EXPANDED",
-                        "inGameName",
+                        "Elder Passage",
                         "mp4",
                         "mp4_Model.bin",
                         "mp4_Anim.bin",
@@ -2845,7 +2880,7 @@ namespace MphRead
                     "MP4 HIGHGROUND",
                     new RoomMetadata(
                         "MP4 HIGHGROUND",
-                        "inGameName",
+                        "High Ground",
                         "unit1_rm1",
                         "unit1_rm1_Model.bin",
                         "unit1_rm1_Anim.bin",
@@ -2873,7 +2908,7 @@ namespace MphRead
                     "MP5 FUEL SLUICE",
                     new RoomMetadata(
                         "MP5 FUEL SLUICE",
-                        "inGameName",
+                        "Compression Chamber",
                         "mp5",
                         "mp5_Model.bin",
                         "mp5_Anim.bin",
@@ -2901,7 +2936,7 @@ namespace MphRead
                     "MP6 HEADSHOT",
                     new RoomMetadata(
                         "MP6 HEADSHOT",
-                        "inGameName",
+                        "Head Shot",
                         "mp6",
                         "mp6_Model.bin",
                         "mp6_Anim.bin",
@@ -2929,7 +2964,7 @@ namespace MphRead
                     "MP7 PROCESSOR CORE",
                     new RoomMetadata(
                         "MP7 PROCESSOR CORE",
-                        "inGameName",
+                        "Processor Core",
                         "mp7",
                         "mp7_Model.bin",
                         "mp7_Anim.bin",
@@ -2957,7 +2992,7 @@ namespace MphRead
                     "MP8 FIRE CONTROL",
                     new RoomMetadata(
                         "MP8 FIRE CONTROL",
-                        "inGameName",
+                        "Weapons Complex",
                         "mp8",
                         "mp8_Model.bin",
                         "mp8_Anim.bin",
@@ -2985,7 +3020,7 @@ namespace MphRead
                     "MP9 CRYOCHASM",
                     new RoomMetadata(
                         "MP9 CRYOCHASM",
-                        "inGameName",
+                        "Ice Hive",
                         "mp9",
                         "mp9_Model.bin",
                         "mp9_Anim.bin",
@@ -3013,7 +3048,7 @@ namespace MphRead
                     "MP10 OVERLOAD",
                     new RoomMetadata(
                         "MP10 OVERLOAD",
-                        "inGameName",
+                        "Incubation Vault",
                         "mp10",
                         "mp10_Model.bin",
                         "mp10_Anim.bin",
@@ -3041,7 +3076,7 @@ namespace MphRead
                     "MP11 BREAKTHROUGH",
                     new RoomMetadata(
                         "MP11 BREAKTHROUGH",
-                        "inGameName",
+                        "Sanctorus",
                         "mp11",
                         "mp11_Model.bin",
                         "mp11_Anim.bin",
@@ -3069,7 +3104,7 @@ namespace MphRead
                     "MP12 SIC TRANSIT",
                     new RoomMetadata(
                         "MP12 SIC TRANSIT",
-                        "inGameName",
+                        "Sic Transit",
                         "mp12",
                         "mp12_Model.bin",
                         "mp12_Anim.bin",
@@ -3097,7 +3132,7 @@ namespace MphRead
                     "MP13 ACCELERATOR",
                     new RoomMetadata(
                         "MP13 ACCELERATOR",
-                        "inGameName",
+                        "Fuel Stack",
                         "mp13",
                         "mp13_Model.bin",
                         "mp13_Anim.bin",
@@ -3125,7 +3160,7 @@ namespace MphRead
                     "MP14 OUTER REACH",
                     new RoomMetadata(
                         "MP14 OUTER REACH",
-                        "inGameName",
+                        "Outer Reach",
                         "mp14",
                         "mp14_Model.bin",
                         "mp14_Anim.bin",
@@ -3153,7 +3188,7 @@ namespace MphRead
                     "CTF1 FAULT LINE - EXPANDED",
                     new RoomMetadata(
                         "CTF1 FAULT LINE - EXPANDED",
-                        "inGameName",
+                        "Fault Line",
                         "ctf1",
                         "ctf1_Model.bin",
                         "ctf1_Anim.bin",
@@ -3181,7 +3216,7 @@ namespace MphRead
                     "CTF1_FAULT LINE",
                     new RoomMetadata(
                         "CTF1_FAULT LINE",
-                        "inGameName",
+                        "Subterranean",
                         "unit4_rm5",
                         "unit4_rm5_Model.bin",
                         "unit4_rm5_Anim.bin",
@@ -3209,7 +3244,7 @@ namespace MphRead
                     "AD1 TRANSFER LOCK BT",
                     new RoomMetadata(
                         "AD1 TRANSFER LOCK BT",
-                        "inGameName",
+                        "Transfer Lock",
                         "ad1",
                         "ad1_Model.bin",
                         "ad1_Anim.bin",
@@ -3237,7 +3272,7 @@ namespace MphRead
                     "AD1 TRANSFER LOCK DM",
                     new RoomMetadata(
                         "AD1 TRANSFER LOCK DM",
-                        "inGameName",
+                        "Transfer Lock",
                         "unit2_rm4",
                         "unit2_rm4_Model.bin",
                         "unit2_rm4_Anim.bin",
@@ -3265,7 +3300,7 @@ namespace MphRead
                     "AD2 MAGMA VENTS",
                     new RoomMetadata(
                         "AD2 MAGMA VENTS",
-                        "inGameName",
+                        "Council Chamber",
                         "ad2",
                         "ad2_Model.bin",
                         "ad2_Anim.bin",
@@ -3293,7 +3328,7 @@ namespace MphRead
                     "AD2 ALINOS PERCH",
                     new RoomMetadata(
                         "AD2 ALINOS PERCH",
-                        "inGameName",
+                        "Alinos Perch",
                         "unit1_rm2",
                         "unit1_rm2_Model.bin",
                         "unit1_rm2_Anim.bin",
@@ -3321,13 +3356,13 @@ namespace MphRead
                     "UNIT1 ALINOS LANDFALL",
                     new RoomMetadata(
                         "UNIT1 ALINOS LANDFALL",
-                        "inGameName",
+                        "Alinos Gateway",
                         "unit1_Land",
                         "unit1_Land_Model.bin",
                         "unit1_Land_Anim.bin",
                         "unit1_Land_Collision.bin",
                         "unit1_Land_Tex.bin",
-                        "unit1_Land_dm1_Ent.bin",
+                        "Unit1_Land_dm1_Ent.bin",
                         "unit1_Land_dm1_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -3349,13 +3384,13 @@ namespace MphRead
                     "UNIT2 LANDING BAY",
                     new RoomMetadata(
                         "UNIT2 LANDING BAY",
-                        "inGameName",
+                        "Celestial Gateway",
                         "unit2_Land",
                         "unit2_Land_Model.bin",
                         "unit2_Land_Anim.bin",
                         "unit2_Land_Collision.bin",
                         "unit2_Land_Tex.bin",
-                        "unit2_Land_dm1_Ent.bin",
+                        "unit2_land_dm1_Ent.bin",
                         "unit2_Land_dm1_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -3377,7 +3412,7 @@ namespace MphRead
                     "UNIT 3 VESPER STARPORT",
                     new RoomMetadata(
                         "UNIT 3 VESPER STARPORT",
-                        "inGameName",
+                        "VDO Gateway",
                         "unit3_Land",
                         "unit3_Land_Model.bin",
                         "unit3_Land_Anim.bin",
@@ -3405,13 +3440,13 @@ namespace MphRead
                     "UNIT 4 ARCTERRA BASE",
                     new RoomMetadata(
                         "UNIT 4 ARCTERRA BASE",
-                        "inGameName",
+                        "Arcterra Gateway",
                         "unit4_land",
                         "unit4_land_Model.bin",
                         "unit4_land_Anim.bin",
                         "unit4_land_Collision.bin",
                         "unit4_land_Tex.bin",
-                        "unit4_land_dm1_Ent.bin",
+                        "unit4_Land_dm1_Ent.bin",
                         "unit4_land_dm1_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -3433,13 +3468,13 @@ namespace MphRead
                     "Gorea Prison",
                     new RoomMetadata(
                         "Gorea Prison",
-                        "inGameName",
+                        "Oubliette",
                         "Gorea_b2",
                         "Gorea_b2_Model.bin",
                         "Gorea_b2_Anim.bin",
                         "Gorea_b2_Collision.bin",
                         "Gorea_b2_Tex.bin",
-                        "Gorea_b2_dm_Ent.bin",
+                        "gorea_b2_dm_Ent.bin",
                         "Gorea_b2_dm_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -3461,7 +3496,7 @@ namespace MphRead
                     "E3 FIRST HUNT",
                     new RoomMetadata(
                         "E3 FIRST HUNT",
-                        "inGameName",
+                        "Stasis Bunker",
                         "e3Level",
                         "e3Level_Model.bin",
                         "e3Level_Anim.bin",
@@ -3490,13 +3525,13 @@ namespace MphRead
                     "Level TestLevel",
                     new RoomMetadata(
                         "Level TestLevel",
-                        "inGameName",
+                        "Test Level",
                         "testLevel",
                         "testLevel_Model.bin",
                         "testLevel_Anim.bin",
                         "testLevel_Collision.bin",
                         null,
-                        "testLevel_Ent.bin",
+                        "testlevel_Ent.bin",
                         "testLevel_Node.bin",
                         null,
                         TimeLimit(20, 0, 0),
@@ -3518,7 +3553,7 @@ namespace MphRead
                     "Level AbeTest",
                     new RoomMetadata(
                         "Level AbeTest",
-                        "inGameName",
+                        "Abe Test Level",
                         "testLevel",
                         "testLevel_Model.bin",
                         "testLevel_Anim.bin",
@@ -3540,6 +3575,428 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgba(10, 10, 31, 0),
                         new Vector3(0f, 0.999756f, -0.099854f),
+                        new Vector3(-300f, 300f, -300f))
+                },
+                // these levels are unused/unreferenced in the game, so some values are guesses
+                {
+                    "biodefense chamber 06",
+                    new RoomMetadata(
+                        "biodefense chamber 06",
+                        "Early Processor Core",
+                        "unit1_b2",
+                        "unit1_b2_Model.bin",
+                        "unit1_b2_Anim.bin",
+                        "unit1_b2_Collision.bin",
+                        null,
+                        null, // Unit1_b2_Ent is used in Cretaphid boss room
+                        "unit1_b2_node.bin", // todo?
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        0,
+                        0x0,
+                        0,
+                        0,
+                        0,
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new Vector3(-300f, 300f, -300f))
+                },
+                {
+                    "biodefense chamber 05",
+                    new RoomMetadata(
+                        "biodefense chamber 05",
+                        "Early Stasis Bunker",
+                        "unit2_b2",
+                        "unit2_b2_Model.bin",
+                        "unit2_b2_Anim.bin",
+                        "unit2_b2_Collision.bin",
+                        null,
+                        null, // Unit2_b2_Ent is used in Slench boss room
+                        null, // unit2_b2_node is used in Slench boos room
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        0,
+                        0x0,
+                        0,
+                        0,
+                        0,
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new Vector3(-300f, 300f, -300f))
+                },
+                {
+                    "biodefense chamber 03",
+                    new RoomMetadata(
+                        "biodefense chamber 03",
+                        "Early Head Shot",
+                        "unit3_b1",
+                        "unit3_b1_Model.bin",
+                        "unit3_b1_Anim.bin",
+                        "unit3_b1_Collision.bin",
+                        null,
+                        null, // Unit3_b1_Ent is used in Cretaphid boss room
+                        "unit3_b1_node.bin", // todo?
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        0,
+                        0x0,
+                        0,
+                        0,
+                        0,
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new Vector3(-300f, 300f, -300f))
+                },
+                {
+                    "biodefense chamber 08",
+                    new RoomMetadata(
+                        "biodefense chamber 08",
+                        "Early Fuel Stack",
+                        "unit3_b2",
+                        "unit3_b2_Model.bin",
+                        "unit3_b2_Anim.bin",
+                        "unit3_b2_Collision.bin",
+                        null,
+                        null, // Unit3_b2_Ent is used in Slench boss room
+                        "unit3_b2_node.bin", // todo?
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        0,
+                        0x0,
+                        0,
+                        0,
+                        0,
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new Vector3(-300f, 300f, -300f))
+                },
+                {
+                    "biodefense chamber 04",
+                    new RoomMetadata(
+                        "biodefense chamber 04",
+                        "Early Sanctorus",
+                        "unit4_b1",
+                        "unit4_b1_Model.bin",
+                        "unit4_b1_Anim.bin",
+                        "unit4_b1_Collision.bin",
+                        null,
+                        null, // unit4_b1_Ent is used in Slench boss room
+                        "unit4_b1_Node.bin", // todo: ?
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        0,
+                        0x0,
+                        0,
+                        0,
+                        0,
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new Vector3(-300f, 300f, -300f))
+                },
+                {
+                    "biodefense chamber 07",
+                    new RoomMetadata(
+                        "biodefense chamber 07",
+                        "Early Sic Transit",
+                        "unit4_b2",
+                        "unit4_b2_Model.bin",
+                        "unit4_b2_Anim.bin",
+                        "unit4_b2_Collision.bin",
+                        null,
+                        null, // unit4_b2_Ent is used in Cretaphid boss room
+                        "unit4_b2_Node.bin", // todo: ?
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        0,
+                        0x0,
+                        0,
+                        0,
+                        0,
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new Vector3(-300f, 300f, -300f))
+                },
+                // First Hunt
+                {
+                    "FH_MP1",
+                    new RoomMetadata(
+                        "FH_MP1",
+                        "Trooper Module",
+                        @"_fh\mp1",
+                        "mp1_Model.bin",
+                        "mp1_Anim.bin",
+                        "mp1_Collision.bin",
+                        null,
+                        @"_fh\mp1_Ent.bin",
+                        @"_fh\mp1_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        0,
+                        0x0,
+                        0,
+                        0,
+                        0,
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new Vector3(-300f, 300f, -300f))
+                },
+                {
+                    "FH_SURVIVOR",
+                    new RoomMetadata(
+                        "FH_SURVIVOR",
+                        "Survivor",
+                        @"_fh\mp2",
+                        "mp2_Model.bin",
+                        "mp2_Anim.bin",
+                        "mp2_Collision.bin",
+                        null,
+                        @"_fh\survivor_Ent.bin", // survivor_Ent.bin
+                        @"_fh\survivor_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        0,
+                        0x0,
+                        0,
+                        0,
+                        0,
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new Vector3(-300f, 300f, -300f))
+                },
+                {
+                    "FH_MP2",
+                    new RoomMetadata(
+                        "FH_MP2",
+                        "Assault Cradle",
+                        @"_fh\mp2",
+                        "mp2_Model.bin",
+                        "mp2_Anim.bin",
+                        "mp2_Collision.bin",
+                        null,
+                        @"_fh\mp2_Ent.bin",
+                        @"_fh\mp2_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        0,
+                        0x0,
+                        0,
+                        0,
+                        0,
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new Vector3(-300f, 300f, -300f))
+                },
+                {
+                    "FH_MP3",
+                    new RoomMetadata(
+                        "FH_MP3",
+                        "Ancient Vestige",
+                        @"_fh\mp3",
+                        "mp3_Model.bin",
+                        "mp3_Anim.bin",
+                        "mp3_Collision.bin",
+                        null,
+                        @"_fh\mp3_Ent.bin",
+                        @"_fh\mp3_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        0,
+                        0x0,
+                        0,
+                        0,
+                        0,
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new Vector3(-300f, 300f, -300f))
+                },
+                {
+                    "FH_MP5",
+                    new RoomMetadata(
+                        "FH_MP5",
+                        "Early Head Shot (First Hunt)",
+                        @"_fh\mp5",
+                        "mp5_Model.bin",
+                        "mp5_Anim.bin",
+                        "mp5_Collision.bin",
+                        null,
+                        @"_fh\mp5_Ent.bin",
+                        @"_fh\mp5_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        0,
+                        0x0,
+                        0,
+                        0,
+                        0,
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new Vector3(-300f, 300f, -300f))
+                },
+                {
+                    "FH_TEST",
+                    new RoomMetadata(
+                        "FH_TEST",
+                        "Test Level (First Hunt)",
+                        @"_fh\testLevel",
+                        "testLevel_Model.bin",
+                        "testlevel_Anim.bin",
+                        "testlevel_Collision.bin",
+                        null,
+                        @"_fh\testlevel_Ent.bin",
+                        @"_fh\testLevel_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        0,
+                        0x0,
+                        0,
+                        0,
+                        0,
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new Vector3(-300f, 300f, -300f))
+                },
+                {
+                    "FH_REGULATOR",
+                    new RoomMetadata(
+                        "FH_REGULATOR",
+                        "Regulator",
+                        @"_fh\blueRoom",
+                        "blueRoom_Model.bin",
+                        "blueRoom_Anim.bin",
+                        "blueRoom_Collision.bin",
+                        null,
+                        @"_fh\regulator_Ent.bin", // regulator_Ent.bin
+                        @"_fh\regulator_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        0,
+                        0x0,
+                        0,
+                        0,
+                        0,
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new Vector3(-300f, 300f, -300f))
+                },
+                {
+                    "FH_MORPHBALL",
+                    new RoomMetadata(
+                        "FH_MORPHBALL",
+                        "Morph Ball",
+                        @"_fh\e3Level",
+                        "e3Level_Model.bin",
+                        "e3Level_Anim.bin",
+                        "e3Level_Collision.bin",
+                        null,
+                        @"_fh\morphBall_Ent.bin", // morphBall_Ent.bin
+                        @"_fh\morphBall_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        0,
+                        0x0,
+                        0,
+                        0,
+                        0,
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new Vector3(-300f, 300f, -300f))
+                },
+                {
+                    "FH_E3",
+                    new RoomMetadata(
+                        "FH_E3",
+                        "Stasis Bunker (First Hunt)",
+                        @"_fh\e3Level",
+                        "e3Level_Model.bin",
+                        "e3Level_Anim.bin",
+                        "e3Level_Collision.bin",
+                        null,
+                        @"_fh\e3Level_Ent.bin",
+                        @"_fh\e3Level_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        0,
+                        0x0,
+                        0,
+                        0,
+                        0,
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
+                        new ColorRgba(31, 31, 31, 0),
+                        new Vector3(1f, 1f, 1f),
                         new Vector3(-300f, 300f, -300f))
                 }
             };
@@ -3589,6 +4046,19 @@ namespace MphRead
             /* 21 */ ("pick_wpn_all", 0.444580078f),
             // unused
             /* 22 */ ("pick_wpn_missile", 0.558837891f)
+        };
+
+        public static readonly IReadOnlyList<string> FhItems
+            = new List<string>()
+        {
+            /* 0 */ "pick_ammo_A",
+            /* 1 */ "pick_ammo_B",
+            /* 2 */ "pick_health_A",
+            /* 3 */ "pick_health_B",
+            /* 4 */ "pick_dblDamage",
+            /* 5 */ "pick_morphball", // unused
+            /* 6 */ "pick_wpn_electro",
+            /* 7 */ "pick_wpn_missile"
         };
 
         public static readonly List<ObjectMetadata> _objects = new List<ObjectMetadata>()
@@ -3668,7 +4138,7 @@ namespace MphRead
         }
 
         // todo: e.g. lod1 in the model folder should have the animation files from the lod0 archive
-        public static readonly IReadOnlyDictionary<string, ModelMetadata> EntityMetadata
+        public static readonly IReadOnlyDictionary<string, ModelMetadata> ModelMetadata
             = new Dictionary<string, ModelMetadata>()
             {
                 {
@@ -3828,7 +4298,7 @@ namespace MphRead
                 },
                 {
                     "Artifact_Key",
-                    new ModelMetadata("Artifact_Key", animate: true)
+                    new ModelMetadata("Artifact_Key")
                 },
                 {
                     "Artifact01",
@@ -4610,11 +5080,11 @@ namespace MphRead
                 },
                 {
                     "PickUp_EnergyExp",
-                    new ModelMetadata("PickUp_EnergyExp", animate: true)
+                    new ModelMetadata("PickUp_EnergyExp")
                 },
                 {
                     "PickUp_MissileExp",
-                    new ModelMetadata("PickUp_MissileExp", animate: true)
+                    new ModelMetadata("PickUp_MissileExp")
                 },
                 {
                     "pick_ammo_green",
@@ -5475,6 +5945,261 @@ namespace MphRead
                 {
                     "electroTrail",
                     new ModelMetadata("electroTrail", animation: false, archive: "common")
+                }
+            };
+
+        public static readonly IReadOnlyDictionary<string, ModelMetadata> FirstHuntModels
+            = new Dictionary<string, ModelMetadata>()
+            {
+                {
+                    "ballDeath",
+                    new ModelMetadata("ballDeath", firstHunt: true)
+                },
+                {
+                    "balljump",
+                    new ModelMetadata("balljump", animation: false, firstHunt: true)
+                },
+                {
+                    "balljump_ray",
+                    new ModelMetadata("balljump_ray", firstHunt: true)
+                },
+                {
+                    "bomb",
+                    new ModelMetadata("bomb", firstHunt: true)
+                },
+                {
+                    "bombLite",
+                    new ModelMetadata("bombLite", firstHunt: true)
+                },
+                {
+                    "bombStart",
+                    new ModelMetadata("bombStart", firstHunt: true)
+                },
+                {
+                    "bombStartLite",
+                    new ModelMetadata("bombStartLite", firstHunt: true)
+                },
+                {
+                    "bombStartLiter",
+                    new ModelMetadata("bombStartLiter", firstHunt: true)
+                },
+                {
+                    "dashEffect",
+                    new ModelMetadata("dashEffect", firstHunt: true)
+                },
+                {
+                    "door",
+                    new ModelMetadata("door", firstHunt: true)
+                },
+                {
+                    "door2",
+                    new ModelMetadata("door2", firstHunt: true)
+                },
+                {
+                    "door2_holo",
+                    new ModelMetadata("door2_holo", firstHunt: true)
+                },
+                {
+                    "effWaspDeath",
+                    new ModelMetadata("effWaspDeath", firstHunt: true)
+                },
+                {
+                    "furlEffect",
+                    new ModelMetadata("furlEffect", firstHunt: true)
+                },
+                {
+                    "fuzzball",
+                    new ModelMetadata("fuzzball", animation: false, firstHunt: true)
+                },
+                {
+                    "genericmover",
+                    new ModelMetadata("genericmover", collision: true, firstHunt: true)
+                },
+                {
+                    "gun_idle",
+                    new ModelMetadata("gun_idle", remove: "_idle", firstHunt: true)
+                },
+                {
+                    "gunEffElectroCharge",
+                    new ModelMetadata("gunEffElectroCharge", firstHunt: true)
+                },
+                {
+                    "gunEffMissileCharge",
+                    new ModelMetadata("gunEffMissileCharge", firstHunt: true)
+                },
+                {
+                    "gunLobFlash",
+                    new ModelMetadata("gunLobFlash", firstHunt: true)
+                },
+                {
+                    "gunMuzzleFlash",
+                    new ModelMetadata("gunMuzzleFlash", firstHunt: true)
+                },
+                {
+                    "gunSmoke",
+                    new ModelMetadata("gunSmoke", firstHunt: true)
+                },
+                {
+                    // unused
+                    "jumpad_ray",
+                    new ModelMetadata("jumpad_ray", animation: false, firstHunt: true)
+                },
+                {
+                    "jumppad_base",
+                    new ModelMetadata("jumppad_base", animation: false, firstHunt: true)
+                },
+                {
+                    // this has an animation file (unlike jumpad_ray), but it is not used
+                    "jumppad_ray",
+                    new ModelMetadata("jumppad_ray", animation: false, firstHunt: true)
+                },
+                {
+                    "lightningCol",
+                    new ModelMetadata("lightningCol", firstHunt: true)
+                },
+                {
+                    "lightningColLite",
+                    new ModelMetadata("lightningColLite", firstHunt: true)
+                },
+                {
+                    "lightningColLiter",
+                    new ModelMetadata("lightningColLiter", firstHunt: true)
+                },
+                {
+                    "lightningColLiterER",
+                    new ModelMetadata("lightningColLiterER", firstHunt: true)
+                },
+                {
+                    "lightningLob",
+                    new ModelMetadata("lightningLob", firstHunt: true)
+                },
+                {
+                    "Metroid_Lo",
+                    new ModelMetadata("Metroid_Lo", remove: "_Lo", firstHunt: true)
+                },
+                {
+                    "metroid",
+                    new ModelMetadata("metroid", firstHunt: true)
+                },
+                {
+                    "missileCollide",
+                    new ModelMetadata("missileCollide", firstHunt: true)
+                },
+                {
+                    "missileColLite",
+                    new ModelMetadata("missileColLite", firstHunt: true)
+                },
+                {
+                    "missileColLiter",
+                    new ModelMetadata("missileColLiter", firstHunt: true)
+                },
+                {
+                    "missileColLiterER",
+                    new ModelMetadata("missileColLiterER", firstHunt: true)
+                },
+                {
+                    "Mochtroid_Lo",
+                    new ModelMetadata("Mochtroid_Lo", remove: "_Lo", firstHunt: true)
+                },
+                {
+                    "Mochtroid",
+                    new ModelMetadata("Mochtroid", firstHunt: true)
+                },
+                {
+                    "morphBall_Blue",
+                    new ModelMetadata("morphBall_Blue", animation: false, firstHunt: true)
+                },
+                {
+                    "morphBall_Green",
+                    new ModelMetadata("morphBall_Green", animation: false, firstHunt: true)
+                },
+                {
+                    "morphBall",
+                    new ModelMetadata("morphBall", animation: false, firstHunt: true)
+                },
+                {
+                    "morphBall_White",
+                    new ModelMetadata("morphBall_White", animation: false, firstHunt: true)
+                },
+                {
+                    "pb_charged",
+                    new ModelMetadata("pb_charged", firstHunt: true)
+                },
+                {
+                    "pb_normal",
+                    new ModelMetadata("pb_normal", firstHunt: true)
+                },
+                {
+                    "pick_ammo_A",
+                    new ModelMetadata("pick_ammo_A", animation: false, firstHunt: true)
+                },
+                {
+                    "pick_ammo_B",
+                    new ModelMetadata("pick_ammo_B", animation: false, firstHunt: true)
+                },
+                {
+                    "pick_dblDamage",
+                    new ModelMetadata("pick_dblDamage", animation: false, firstHunt: true)
+                },
+                {
+                    "pick_health_A",
+                    new ModelMetadata("pick_health_A", animation: false, firstHunt: true)
+                },
+                {
+                    "pick_health_B",
+                    new ModelMetadata("pick_health_B", animation: false, firstHunt: true)
+                },
+                {
+                    "pick_morphball",
+                    new ModelMetadata("pick_morphball", animation: false, firstHunt: true)
+                },
+                {
+                    "pick_wpn_electro",
+                    new ModelMetadata("pick_wpn_electro", animation: false, firstHunt: true)
+                },
+                {
+                    "pick_wpn_missile",
+                    new ModelMetadata("pick_wpn_missile", animation: false, firstHunt: true)
+                },
+                {
+                    "platform",
+                    new ModelMetadata("platform", animation: false, collision: true, firstHunt: true)
+                },
+                {
+                    "samus_hi_blue",
+                    new ModelMetadata("samus_hi_blue", remove: "_hi_blue", firstHunt: true)
+                },
+                {
+                    "samus_hi_green",
+                    new ModelMetadata("samus_hi_green", remove: "_hi_green", firstHunt: true)
+                },
+                {
+                    "samus_hi_white",
+                    new ModelMetadata("samus_hi_white", remove: "_hi_white", firstHunt: true)
+                },
+                {
+                    "samus_hi_yellow",
+                    new ModelMetadata("samus_hi_yellow", remove: "_hi_yellow", firstHunt: true)
+                },
+                {
+                    "samus_low_yellow",
+                    new ModelMetadata("samus_low_yellow", remove: "_low_yellow", firstHunt: true)
+                },
+                {
+                    "spawnEffect",
+                    new ModelMetadata("spawnEffect", firstHunt: true)
+                },
+                {
+                    "trail",
+                    new ModelMetadata("trail", animation: false, firstHunt: true)
+                },
+                {
+                    "warWasp",
+                    new ModelMetadata("warWasp", firstHunt: true)
+                },
+                {
+                    "zoomer",
+                    new ModelMetadata("zoomer", firstHunt: true)
                 }
             };
     }

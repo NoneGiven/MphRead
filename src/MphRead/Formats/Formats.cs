@@ -59,8 +59,14 @@ namespace MphRead
             }
             set
             {
-                // todo: set scale and rotation when this is set
-                _position = new Vector3(value.M41, value.M42, value.M43);
+                _position = value.ExtractTranslation();
+                _scale = value.ExtractScale();
+                value.ExtractRotation().ToEulerAngles(out Vector3 rotation);
+                _rotation = new Vector3(
+                    MathHelper.RadiansToDegrees(rotation.X),
+                    MathHelper.RadiansToDegrees(rotation.Y),
+                    MathHelper.RadiansToDegrees(rotation.Z)
+                );
                 _transform = value;
             }
         }
@@ -88,7 +94,7 @@ namespace MphRead
             }
             set
             {
-                Transform = SceneSetup.ComputeNodeTransforms(value, new Vector3(
+                _transform = SceneSetup.ComputeNodeTransforms(value, new Vector3(
                     MathHelper.DegreesToRadians(Rotation.X),
                     MathHelper.DegreesToRadians(Rotation.Y),
                     MathHelper.DegreesToRadians(Rotation.Z)),
@@ -105,7 +111,7 @@ namespace MphRead
             }
             set
             {
-                Transform = SceneSetup.ComputeNodeTransforms(Scale, new Vector3(
+                _transform = SceneSetup.ComputeNodeTransforms(Scale, new Vector3(
                     MathHelper.DegreesToRadians(value.X),
                     MathHelper.DegreesToRadians(value.Y),
                     MathHelper.DegreesToRadians(value.Z)),
@@ -114,9 +120,14 @@ namespace MphRead
             }
         }
 
-        public bool Animate { get; set; }
-        // temporary -- see note where the transpose matrix is applied
-        public bool ForceApplyTransform { get; set; }
+        // used to rotate items (and FH jump pad beams) about the Y axis,
+        // after all their other transforms are done
+        public bool Rotating { get; set; }
+        public bool Floating { get; set; }
+        public float Spin { get; set; }
+        // refers to the untransformed model's axis
+        public Vector3 SpinAxis { get; set; } = Vector3.UnitY;
+
         public int AnimationCount { get; set; }
         public IReadOnlyList<NodeAnimationGroup> NodeAnimationGroups { get; }
         public IReadOnlyList<MaterialAnimationGroup> MaterialAnimationGroups { get; }
@@ -189,32 +200,44 @@ namespace MphRead
 
         public int GetNextRoomNodeId(int nodeId)
         {
-            for (int i = nodeId + 1; i != nodeId; i++)
+            int i = nodeId + 1;
+            while (true)
             {
                 if (i > Nodes.Count - 1)
                 {
                     i = 0;
                 }
+                if (i == nodeId)
+                {
+                    break;
+                }
                 if (Nodes[i].IsRoomNode)
                 {
                     return i;
                 }
+                i++;
             }
             return nodeId;
         }
 
         public int GetPreviousRoomNodeId(int nodeId)
         {
-            for (int i = nodeId - 1; i != nodeId; i--)
+            int i = nodeId - 1;
+            while (true)
             {
                 if (i < 0)
                 {
                     i = Nodes.Count - 1;
                 }
+                if (i == nodeId)
+                {
+                    break;
+                }
                 if (Nodes[i].IsRoomNode)
                 {
                     return i;
                 }
+                i--;
             }
             return nodeId;
         }
@@ -326,7 +349,7 @@ namespace MphRead
             }
             var pixels = new List<ColorRgba>();
             TextureFormat textureFormat = Textures[textureId].Format;
-            if (textureFormat == TextureFormat.DirectRgb || textureFormat == TextureFormat.DirectRgba)
+            if (textureFormat == TextureFormat.DirectRgb)
             {
                 for (int i = 0; i < TextureData[textureId].Count; i++)
                 {
@@ -591,6 +614,17 @@ namespace MphRead
             Type = type;
             SomeId = someId;
         }
+
+        public Entity(FhEntityEntry entry, EntityType type, ushort someId)
+        {
+            NodeName = entry.NodeName;
+            if (!Enum.IsDefined(typeof(EntityType), type))
+            {
+                throw new ProgramException($"Invalid entity type {type}");
+            }
+            Type = type;
+            SomeId = someId;
+        }
     }
 
     public class Entity<T> : Entity where T : struct
@@ -598,6 +632,12 @@ namespace MphRead
         public T Data { get; }
 
         public Entity(EntityEntry entry, EntityType type, ushort someId, T data)
+            : base(entry, type, someId)
+        {
+            Data = data;
+        }
+
+        public Entity(FhEntityEntry entry, EntityType type, ushort someId, T data)
             : base(entry, type, someId)
         {
             Data = data;

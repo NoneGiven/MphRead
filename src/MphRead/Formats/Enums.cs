@@ -1,7 +1,5 @@
 namespace MphRead
 {
-    // seems like 5 and 10 are unused
-    // -- not sure if/where 26 (EnergyBeam) is used
     public enum EntityType : ushort
     {
         Platform = 0,
@@ -14,6 +12,7 @@ namespace MphRead
         Unknown7 = 7,
         Unknown8 = 8,
         JumpPad = 9,
+        PointModule = 10, // FH leftovers only
         CameraPos = 11,
         Unknown12 = 12,
         Unknown13 = 13,
@@ -25,7 +24,18 @@ namespace MphRead
         ForceField = 19,
         EnemyInstance = 23,
         EnergyBeam = 26,
-        EntityListHead = 27
+        EntityListHead = 27,
+        // First Hunt
+        FhPlayerSpawn = 101,
+        FhDoor = 103,
+        FhItem = 104,
+        FhEnemy = 106,
+        FhUnknown9 = 109, // Unknown7
+        FhUnknown10 = 110, // Unknown8
+        FhPlatform = 111,
+        FhJumpPad = 112,
+        FhPointModule = 113,
+        FhCameraPos = 114
     }
 
     public enum ModelType
@@ -34,7 +44,9 @@ namespace MphRead
         Room,
         Item,
         Object,
-        Placeholder
+        Placeholder,
+        JumpPad,
+        JumpPadBeam
     }
 
     public enum PolygonMode : uint
@@ -82,9 +94,8 @@ namespace MphRead
         Palette2Bit = 0, // RGB4
         Palette4Bit = 1, // RGB16
         Palette8Bit = 2, // RGB256
-        DirectRgb = 3,   // RGB -- not entirely sure if this is RGB or RGBA; the alpha bit is always 1 for format 5
         PaletteA5I3 = 4, // A5I3 
-        DirectRgba = 5,  // RGBA
+        DirectRgb = 5,   // RGB
         PaletteA3I5 = 6  // A3I5
     }
 }

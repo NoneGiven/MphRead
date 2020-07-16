@@ -106,7 +106,13 @@ namespace MphRead
             for (int i = index; i != UInt16.MaxValue;)
             {
                 Node node = model.Nodes[i];
-                Matrix4 transform = ComputeNodeTransforms(node.Scale, node.Angle, node.Position);
+                // the scale division isn't done by the game, which is why transforms on room nodes don't work,
+                // which is probably why they're disabled. they can be reenabled with a switch in the viewer
+                var position = new Vector3(
+                    node.Position.X / model.Scale.X,
+                    node.Position.Y / model.Scale.Y,
+                    node.Position.Z / model.Scale.Z);
+                Matrix4 transform = ComputeNodeTransforms(node.Scale, node.Angle, position);
                 if (node.ParentIndex == UInt16.MaxValue)
                 {
                     node.Transform = transform;
@@ -212,6 +218,10 @@ namespace MphRead
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<PlatformEntityData>)entity).Data.Position));
                 }
+                else if (entity.Type == EntityType.FhPlatform)
+                {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhPlatformEntityData>)entity).Data.Position));
+                }
                 else if (entity.Type == EntityType.Object)
                 {
                     //models.Add(LoadObject(((Entity<ObjectEntityData>)entity).Data));
@@ -220,33 +230,73 @@ namespace MphRead
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<PlayerSpawnEntityData>)entity).Data.Position));
                 }
+                else if (entity.Type == EntityType.FhPlayerSpawn)
+                {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhPlayerSpawnEntityData>)entity).Data.Position));
+                }
                 else if (entity.Type == EntityType.Door)
                 {
                     models.Add(LoadDoor(((Entity<DoorEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.FhDoor)
+                {
+                    models.Add(LoadDoor(((Entity<FhDoorEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.Item)
                 {
                     models.Add(LoadItem(((Entity<ItemEntityData>)entity).Data));
                 }
+                else if (entity.Type == EntityType.FhItem)
+                {
+                    models.Add(LoadItem(((Entity<FhItemEntityData>)entity).Data));
+                }
                 else if (entity.Type == EntityType.Enemy)
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<EnemyEntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.FhEnemy)
+                {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhEnemyEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Unknown7)
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown7EntityData>)entity).Data.Position));
                 }
+                else if (entity.Type == EntityType.FhUnknown9)
+                {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhUnknown9EntityData>)entity).Data.Position));
+                }
                 else if (entity.Type == EntityType.Unknown8)
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown8EntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.FhUnknown10)
+                {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhUnknown10EntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.JumpPad)
                 {
                     models.AddRange(LoadJumpPad(((Entity<JumpPadEntityData>)entity).Data));
                 }
+                else if (entity.Type == EntityType.FhJumpPad)
+                {
+                    models.AddRange(LoadJumpPad(((Entity<FhJumpPadEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.PointModule)
+                {
+                    models.Add(LoadPointModule(((Entity<PointModuleEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.FhPointModule)
+                {
+                    models.Add(LoadPointModule(((Entity<FhPointModuleEntityData>)entity).Data));
+                }
                 else if (entity.Type == EntityType.CameraPos)
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<CameraPosEntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.FhCameraPos)
+                {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhCameraPosEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Unknown12)
                 {
@@ -274,6 +324,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.CameraSeq)
                 {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<CameraSeqEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.ForceField)
                 {
@@ -292,19 +343,19 @@ namespace MphRead
             );
         }
 
-        private static void ComputeJumpPadBeamTransform(Model model, JumpPadEntityData data, Matrix4 parentTransform)
+        private static void ComputeJumpPadBeamTransform(Model model, Vector3Fx beamVector, Matrix4 parentTransform)
         {
             var up = new Vector3(0, 1, 0);
             var right = new Vector3(1, 0, 0);
-            var beamVector = Vector3.Normalize(data.BeamVector.ToFloatVector());
-            beamVector = Vector3ByMatrix4(beamVector, parentTransform);
-            if (beamVector.X != 0 || beamVector.Z != 0)
+            var vector = Vector3.Normalize(beamVector.ToFloatVector());
+            vector = Vector3ByMatrix4(vector, parentTransform);
+            if (vector.X != 0 || vector.Z != 0)
             {
-                model.Transform = ComputeModelMatrices(beamVector, up, model.Position);
+                model.Transform = ComputeModelMatrices(vector, up, model.Position);
             }
             else
             {
-                model.Transform = ComputeModelMatrices(beamVector, right, model.Position);
+                model.Transform = ComputeModelMatrices(vector, right, model.Position);
             }
         }
 
@@ -316,12 +367,37 @@ namespace MphRead
             Model model1 = Read.GetModelByName(modelName);
             model1.Position = data.Position.ToFloatVector();
             model1.Transform = ComputeModelMatrices(data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector(), model1.Position);
+            model1.Type = ModelType.JumpPad;
             list.Add(model1);
             Model model2 = Read.GetModelByName("JumpPad_Beam");
             model2.Position = new Vector3(model1.Position.X, model1.Position.Y + 0.25f, model1.Position.Z);
-            ComputeJumpPadBeamTransform(model2, data, model1.Transform);
+            ComputeJumpPadBeamTransform(model2, data.BeamVector, model1.Transform);
             ComputeNodeMatrices(model2, index: 0);
-            model2.ForceApplyTransform = true;
+            model2.Type = ModelType.JumpPadBeam;
+            list.Add(model2);
+            return list;
+        }
+
+        private static IReadOnlyList<Model> LoadJumpPad(FhJumpPadEntityData data)
+        {
+            var list = new List<Model>();
+            string name = data.ModelId == 1 ? "balljump" : "jumppad_base";
+            Model model1 = Read.GetModelByName(name, firstHunt: true);
+            model1.Position = data.Position.ToFloatVector();
+            model1.Transform = ComputeModelMatrices(data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector(), model1.Position);
+            model1.Type = ModelType.JumpPad;
+            list.Add(model1);
+            name = data.ModelId == 1 ? "balljump_ray" : "jumppad_ray";
+            Model model2 = Read.GetModelByName(name, firstHunt: true);
+            model2.Position = new Vector3(model1.Position.X, model1.Position.Y + 0.25f, model1.Position.Z);
+            ComputeJumpPadBeamTransform(model2, data.BeamVector, Matrix4.Identity);
+            ComputeNodeMatrices(model2, index: 0);
+            model2.Type = ModelType.JumpPadBeam;
+            if (data.ModelId == 0)
+            {
+                model2.Rotating = true;
+                model2.SpinAxis = Vector3.UnitZ;
+            }
             list.Add(model2);
             return list;
         }
@@ -361,18 +437,64 @@ namespace MphRead
                 data.Position.Y.FloatValue + offset,
                 data.Position.Z.FloatValue
             );
-            model.Rotation = new Vector3(0, _random.Next(0x8000) / (float)0x7FFF * 360, 0);
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Item;
+            model.Rotating = true;
+            model.Floating = true;
+            model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
+            return model;
+        }
+
+        // todo: do these have height offsets?
+        private static Model LoadItem(FhItemEntityData data)
+        {
+            string name = Metadata.FhItems[(int)data.ModelId];
+            Model model = Read.GetModelByName(name, firstHunt: true);
+            model.Position = data.Position.ToFloatVector();
+            ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Item;
+            model.Rotating = true;
+            model.Floating = true;
+            model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
+            return model;
+        }
+
+        private static Model LoadPointModule(PointModuleEntityData data)
+        {
+            return LoadPointModule(data.Position.ToFloatVector());
+        }
+
+        private static Model LoadPointModule(FhPointModuleEntityData data)
+        {
+            return LoadPointModule(data.Position.ToFloatVector());
+        }
+
+        private static Model LoadPointModule(Vector3 position)
+        {
+            // todo: not all of these are visible at once -- some may not be visible ever?
+            Model model = Read.GetModelByName("pick_morphball", firstHunt: true);
+            model.Position = position;
+            ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Generic;
             return model;
         }
 
         // todo: load correct palette from Alimbic texture share
         private static Model LoadDoor(DoorEntityData data)
         {
-            //string modelName = Metadata.Doors[(int)data.ModelId];
-            //Model model = Read.GetModelByName(modelName);
-            Model model = Read.GetModelByName("SecretSwitch");
+            string modelName = Metadata.Doors[(int)data.ModelId];
+            Model model = Read.GetModelByName(modelName);
+            model.Position = data.Position.ToFloatVector();
+            model.Rotation = GetUnitRotation(data.Rotation);
+            model.Type = ModelType.Generic;
+            ComputeNodeMatrices(model, index: 0);
+            return model;
+        }
+
+        // todo: load the right door, etc.
+        private static Model LoadDoor(FhDoorEntityData data)
+        {
+            Model model = Read.GetModelByName("door", firstHunt: true);
             model.Position = data.Position.ToFloatVector();
             model.Rotation = GetUnitRotation(data.Rotation);
             model.Type = ModelType.Generic;
@@ -383,12 +505,18 @@ namespace MphRead
         private static readonly Dictionary<EntityType, ColorRgb> _colorOverrides = new Dictionary<EntityType, ColorRgb>()
         {
             { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) },
+            { EntityType.FhPlatform, new ColorRgb(0x2F, 0x4F, 0x4F) },
             { EntityType.Object, new ColorRgb(0x22, 0x8B, 0x22) },
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
+            { EntityType.FhPlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.Enemy, new ColorRgb(0x00, 0x00, 0x8B) },
+            { EntityType.FhEnemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.Unknown7, new ColorRgb(0xFF, 0x8C, 0x00) },
+            { EntityType.FhUnknown9, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.Unknown8, new ColorRgb(0xFF, 0xFF, 0x00) },
+            { EntityType.FhUnknown10, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.CameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
+            { EntityType.FhCameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
             { EntityType.Unknown12, new ColorRgb(0x00, 0xFF, 0xFF) },
             { EntityType.Unknown13, new ColorRgb(0xFF, 0x00, 0xFF) },
             { EntityType.Unknown15, new ColorRgb(0x1E, 0x90, 0xFF) },
@@ -407,8 +535,7 @@ namespace MphRead
                 }
             }
             if (System.Diagnostics.Debugger.IsAttached &&
-                (type == EntityType.Unknown12 || type == EntityType.Unknown13
-                || type == EntityType.Unknown15 || type == EntityType.CameraSeq))
+                (type == EntityType.Unknown12 || type == EntityType.Unknown13 || type == EntityType.Unknown15))
             {
                 System.Diagnostics.Debugger.Break();
             }

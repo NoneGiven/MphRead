@@ -9,6 +9,11 @@ namespace MphRead
 
         public float FloatValue => ToFloat(Value);
 
+        public static float ToFloat(long value)
+        {
+            return value / (float)(1 << 12);
+        }
+
         public static float ToFloat(int value)
         {
             return value / (float)(1 << 12);

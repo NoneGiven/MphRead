@@ -39,9 +39,9 @@ namespace MphRead
             _window.AddRoom(name, layerMask);
         }
 
-        public void AddModel(string name, int recolor = 0)
+        public void AddModel(string name, int recolor = 0, bool firstHunt = false)
         {
-            _window.AddModel(name, recolor);
+            _window.AddModel(name, recolor, firstHunt);
         }
 
         public void Run()
@@ -111,9 +111,10 @@ namespace MphRead
         private bool _showColors = true;
         private bool _wireframe = false;
         private bool _faceCulling = true;
-        private bool _textureFiltering = true;
+        private bool _textureFiltering = false;
         private bool _lighting = true;
         private bool _showInvisible = false;
+        private bool _transformRoomNodes = false; // undocumented
 
         private static readonly Color4 _clearColor = new Color4(0, 0, 0, 1);
         private static readonly float _frameTime = 1.0f / 30.0f;
@@ -154,6 +155,10 @@ namespace MphRead
             }
             _roomLoaded = true;
             (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask);
+            if (roomMeta.InGameName != null)
+            {
+                Title = roomMeta.InGameName;
+            }
             _models.Insert(0, room);
             _models.AddRange(entities);
             _modelMap.Add(room.SceneId, room);
@@ -186,9 +191,9 @@ namespace MphRead
             _cameraMode = CameraMode.Roam;
         }
 
-        public void AddModel(string name, int recolor)
+        public void AddModel(string name, int recolor, bool firstHunt)
         {
-            Model model = Read.GetModelByName(name, recolor);
+            Model model = Read.GetModelByName(name, recolor, firstHunt);
             SceneSetup.ComputeNodeMatrices(model, index: 0);
             _models.Add(model);
             _modelMap.Add(model.SceneId, model);
@@ -315,7 +320,7 @@ namespace MphRead
                     material.RenderMode = RenderMode.AlphaTest;
                 }
                 if (material.RenderMode == RenderMode.Translucent && material.Alpha == 31
-                    && (textureFormat == TextureFormat.DirectRgb || textureFormat == TextureFormat.DirectRgba))
+                    && textureFormat == TextureFormat.DirectRgb)
                 {
                     material.RenderMode = RenderMode.AlphaTest;
                 }
@@ -593,7 +598,15 @@ namespace MphRead
                 }
                 return 0;
             }
-            else if (two.Type == ModelType.Room)
+            if (two.Type == ModelType.Room)
+            {
+                return 1;
+            }
+            if (one.Type == ModelType.JumpPad && two.Type == ModelType.JumpPadBeam)
+            {
+                return -1;
+            }
+            if (one.Type == ModelType.JumpPadBeam && two.Type == ModelType.JumpPad)
             {
                 return 1;
             }
@@ -610,21 +623,6 @@ namespace MphRead
             return -1;
         }
 
-        private void ProcessAnimations(Model model, double elapsedTime)
-        {
-            foreach (TexcoordAnimationGroup group in model.TexcoordAnimationGroups)
-            {
-                group.Time += elapsedTime;
-                int increment = (int)(group.Time / _frameTime);
-                if (increment != 0)
-                {
-                    group.CurrentFrame += increment;
-                    group.Time -= increment * _frameTime;
-                }
-                group.CurrentFrame %= group.FrameCount;
-            }
-        }
-
         private void RenderScene(double elapsedTime)
         {
             _models.Sort(CompareModels);
@@ -638,13 +636,21 @@ namespace MphRead
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.PushMatrix();
                 Matrix4 transform = model.Transform;
-                if (model.Type == ModelType.Item)
-                {
-                    float rotation = (float)(model.Rotation.Y + elapsedTime * 360 * 0.35) % 360;
-                    model.Rotation = new Vector3(model.Rotation.X, rotation, model.Rotation.Z);
-                    transform.M42 += (MathF.Sin(model.Rotation.Y / 180 * MathF.PI) + 1) / 8f;
-                }
                 GL.MultMatrix(ref transform);
+                if (model.Rotating)
+                {
+                    model.Spin = (float)(model.Spin + elapsedTime * 360 * 0.35) % 360;
+                    transform = SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
+                        MathHelper.DegreesToRadians(model.SpinAxis.X * model.Spin),
+                        MathHelper.DegreesToRadians(model.SpinAxis.Y * model.Spin),
+                        MathHelper.DegreesToRadians(model.SpinAxis.Z * model.Spin)),
+                        Vector3.Zero);
+                    if (model.Floating)
+                    {
+                        transform.M42 += (MathF.Sin(model.Spin / 180 * MathF.PI) + 1) / 8f;
+                    }
+                    GL.MultMatrix(ref transform);
+                }
                 if (model.Type == ModelType.Room)
                 {
                     RenderRoom(model);
@@ -749,20 +755,14 @@ namespace MphRead
         {
             if (node.MeshCount > 0 && node.Enabled && model.NodeParentsEnabled(node))
             {
-                // temporary -- applying transforms on models which have node animation breaks them,
-                // presumably because information needs to come from the animation which we aren't loading yet
-                if (model.NodeAnimationGroups.Count == 0 || model.ForceApplyTransform)
+                GL.MatrixMode(MatrixMode.Modelview);
+                GL.PushMatrix();
+                Matrix4 transform = node.Transform;
+                if (model.Type == ModelType.Room && !_transformRoomNodes)
                 {
-                    GL.MatrixMode(MatrixMode.Modelview);
-                    GL.PushMatrix();
-                    Matrix4 transform = node.Transform;
-                    // node transforms applied to room meshes only seem to break things (positions are wrong)
-                    if (model.Type == ModelType.Room)
-                    {
-                        transform = Matrix4.Identity;
-                    }
-                    GL.MultMatrix(ref transform);
+                    transform = Matrix4.Identity;
                 }
+                GL.MultMatrix(ref transform);
                 foreach (Mesh mesh in model.GetNodeMeshes(node))
                 {
                     Material material = model.Materials[mesh.MaterialId];
@@ -778,11 +778,23 @@ namespace MphRead
                     GL.Uniform1(_shaderLocations.IsBillboard, node.Billboard ? 1 : 0);
                     RenderMesh(model, mesh, material);
                 }
-                if (model.NodeAnimationGroups.Count == 0 || model.ForceApplyTransform)
+                GL.MatrixMode(MatrixMode.Modelview);
+                GL.PopMatrix();
+            }
+        }
+
+        private void ProcessAnimations(Model model, double elapsedTime)
+        {
+            foreach (TexcoordAnimationGroup group in model.TexcoordAnimationGroups)
+            {
+                group.Time += elapsedTime;
+                int increment = (int)(group.Time / _frameTime);
+                if (increment != 0)
                 {
-                    GL.MatrixMode(MatrixMode.Modelview);
-                    GL.PopMatrix();
+                    group.CurrentFrame += increment;
+                    group.Time -= increment * _frameTime;
                 }
+                group.CurrentFrame %= group.FrameCount;
             }
         }
 
@@ -834,7 +846,7 @@ namespace MphRead
                 if (rotate != 0)
                 {
                     GL.Translate(width / 2, height / 2, 0);
-                    GL.Rotate(-rotate / MathF.PI * 180, 0, 0, 1);
+                    GL.Rotate(MathHelper.RadiansToDegrees(rotate), 0, 0, 1);
                     GL.Translate(-width / 2, -height / 2, 0);
                 }
                 GL.Scale(scaleS, scaleT, 1);
@@ -903,7 +915,7 @@ namespace MphRead
             }
             GL.MatrixMode(MatrixMode.Texture);
             GL.LoadIdentity();
-            if (model.Animate && textureId != UInt16.MaxValue && material.TexcoordAnimationId != -1)
+            if (model.TexcoordAnimationGroups.Count > 0 && textureId != UInt16.MaxValue && material.TexcoordAnimationId != -1)
             {
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
                 AnimateTexcoords(model, material, width, height);
@@ -1416,6 +1428,11 @@ namespace MphRead
             else if (e.Key == Key.G)
             {
                 _showFog = !_showFog;
+                await PrintOutput();
+            }
+            else if (e.Key == Key.N)
+            {
+                _transformRoomNodes = !_transformRoomNodes;
                 await PrintOutput();
             }
             else if (e.Key == Key.H)
