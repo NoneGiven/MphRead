@@ -636,16 +636,14 @@ namespace MphRead
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.PushMatrix();
                 Matrix4 transform = model.Transform;
-                if (model.Type == ModelType.Item)
+                if (model.Rotating)
                 {
                     float rotation = (float)(model.Rotation.Y + elapsedTime * 360 * 0.35) % 360;
                     model.Rotation = new Vector3(model.Rotation.X, rotation, model.Rotation.Z);
-                    transform.M42 += (MathF.Sin(model.Rotation.Y / 180 * MathF.PI) + 1) / 8f;
                 }
-                else if (model.Type == ModelType.JumpPadBeam && model.Name == "jumppad_ray")
+                if (model.Floating)
                 {
-                    float rotation = (float)(model.Rotation.Y + elapsedTime * 360 * 0.35) % 360;
-                    model.Rotation = new Vector3(model.Rotation.X, rotation, model.Rotation.Z);
+                    transform.M42 += (MathF.Sin(model.Rotation.Y / 180 * MathF.PI) + 1) / 8f;
                 }
                 GL.MultMatrix(ref transform);
                 if (model.Type == ModelType.Room)

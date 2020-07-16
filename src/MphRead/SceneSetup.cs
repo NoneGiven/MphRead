@@ -393,6 +393,10 @@ namespace MphRead
             ComputeJumpPadBeamTransform(model2, data.BeamVector, Matrix4.Identity);
             ComputeNodeMatrices(model2, index: 0);
             model2.Type = ModelType.JumpPadBeam;
+            if (data.ModelId == 0)
+            {
+                model2.Rotating = true;
+            }
             list.Add(model2);
             return list;
         }
@@ -435,6 +439,8 @@ namespace MphRead
             model.Rotation = new Vector3(0, _random.Next(0x8000) / (float)0x7FFF * 360, 0);
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Item;
+            model.Rotating = true;
+            model.Floating = true;
             return model;
         }
 
@@ -447,6 +453,8 @@ namespace MphRead
             model.Rotation = new Vector3(0, _random.Next(0x8000) / (float)0x7FFF * 360, 0);
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Item;
+            model.Rotating = true;
+            model.Floating = true;
             return model;
         }
 

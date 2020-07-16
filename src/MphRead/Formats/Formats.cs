@@ -46,6 +46,9 @@ namespace MphRead
             }
         }
 
+        public bool Rotating { get; set; }
+        public bool Floating { get; set; }
+
         private Matrix4 _transform = Matrix4.Identity;
         public Vector3 _scale = new Vector3(1, 1, 1);
         public Vector3 _position = Vector3.Zero;
