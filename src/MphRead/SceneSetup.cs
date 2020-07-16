@@ -396,6 +396,7 @@ namespace MphRead
             if (data.ModelId == 0)
             {
                 model2.Rotating = true;
+                model2.SpinAxis = Vector3.UnitZ;
             }
             list.Add(model2);
             return list;
@@ -436,11 +437,11 @@ namespace MphRead
                 data.Position.Y.FloatValue + offset,
                 data.Position.Z.FloatValue
             );
-            model.Rotation = new Vector3(0, _random.Next(0x8000) / (float)0x7FFF * 360, 0);
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Item;
             model.Rotating = true;
             model.Floating = true;
+            model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
             return model;
         }
 
@@ -450,11 +451,11 @@ namespace MphRead
             string name = Metadata.FhItems[(int)data.ModelId];
             Model model = Read.GetModelByName(name, firstHunt: true);
             model.Position = data.Position.ToFloatVector();
-            model.Rotation = new Vector3(0, _random.Next(0x8000) / (float)0x7FFF * 360, 0);
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Item;
             model.Rotating = true;
             model.Floating = true;
+            model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
             return model;
         }
 

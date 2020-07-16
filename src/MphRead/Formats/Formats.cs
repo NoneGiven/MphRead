@@ -46,9 +46,6 @@ namespace MphRead
             }
         }
 
-        public bool Rotating { get; set; }
-        public bool Floating { get; set; }
-
         private Matrix4 _transform = Matrix4.Identity;
         public Vector3 _scale = new Vector3(1, 1, 1);
         public Vector3 _position = Vector3.Zero;
@@ -63,8 +60,13 @@ namespace MphRead
             set
             {
                 _position = value.ExtractTranslation();
-                value.ExtractRotation().ToEulerAngles(out _rotation);
                 _scale = value.ExtractScale();
+                value.ExtractRotation().ToEulerAngles(out Vector3 rotation);
+                _rotation = new Vector3(
+                    MathHelper.RadiansToDegrees(rotation.X),
+                    MathHelper.RadiansToDegrees(rotation.Y),
+                    MathHelper.RadiansToDegrees(rotation.Z)
+                );
                 _transform = value;
             }
         }
@@ -118,9 +120,13 @@ namespace MphRead
             }
         }
 
-        // todo: this could be implemented better -- needed for FH jump pad beams
-        // (so we can update the rotation on the fly while retaining the beam vector)
-        public Vector3? InitialVector { get; set; }
+        // used to rotate items (and FH jump pad beams) about the Y axis,
+        // after all their other transforms are done
+        public bool Rotating { get; set; }
+        public bool Floating { get; set; }
+        public float Spin { get; set; }
+        // refers to the untransformed model's axis
+        public Vector3 SpinAxis { get; set; } = Vector3.UnitY;
 
         public int AnimationCount { get; set; }
         public IReadOnlyList<NodeAnimationGroup> NodeAnimationGroups { get; }

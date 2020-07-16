@@ -636,16 +636,21 @@ namespace MphRead
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.PushMatrix();
                 Matrix4 transform = model.Transform;
+                GL.MultMatrix(ref transform);
                 if (model.Rotating)
                 {
-                    float rotation = (float)(model.Rotation.Y + elapsedTime * 360 * 0.35) % 360;
-                    model.Rotation = new Vector3(model.Rotation.X, rotation, model.Rotation.Z);
+                    model.Spin = (float)(model.Spin + elapsedTime * 360 * 0.35) % 360;
+                    transform = SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
+                        MathHelper.DegreesToRadians(model.SpinAxis.X * model.Spin),
+                        MathHelper.DegreesToRadians(model.SpinAxis.Y * model.Spin),
+                        MathHelper.DegreesToRadians(model.SpinAxis.Z * model.Spin)),
+                        Vector3.Zero);
+                    if (model.Floating)
+                    {
+                        transform.M42 += (MathF.Sin(model.Spin / 180 * MathF.PI) + 1) / 8f;
+                    }
+                    GL.MultMatrix(ref transform);
                 }
-                if (model.Floating)
-                {
-                    transform.M42 += (MathF.Sin(model.Rotation.Y / 180 * MathF.PI) + 1) / 8f;
-                }
-                GL.MultMatrix(ref transform);
                 if (model.Type == ModelType.Room)
                 {
                     RenderRoom(model);
