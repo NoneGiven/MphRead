@@ -603,6 +603,17 @@ namespace MphRead
             Type = type;
             SomeId = someId;
         }
+
+        public Entity(FhEntityEntry entry, EntityType type, ushort someId)
+        {
+            NodeName = entry.NodeName;
+            if (!Enum.IsDefined(typeof(EntityType), type))
+            {
+                throw new ProgramException($"Invalid entity type {type}");
+            }
+            Type = type;
+            SomeId = someId;
+        }
     }
 
     public class Entity<T> : Entity where T : struct
@@ -610,6 +621,12 @@ namespace MphRead
         public T Data { get; }
 
         public Entity(EntityEntry entry, EntityType type, ushort someId, T data)
+            : base(entry, type, someId)
+        {
+            Data = data;
+        }
+
+        public Entity(FhEntityEntry entry, EntityType type, ushort someId, T data)
             : base(entry, type, someId)
         {
             Data = data;

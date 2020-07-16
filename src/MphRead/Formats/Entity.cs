@@ -7,6 +7,7 @@ namespace MphRead
     public readonly struct EntityHeader
     {
         public readonly uint Version;
+        // putting lengths on a separate struct so we can index e.g. header.Lengths[0]
         public readonly EntityLengthArray Lengths;
     }
 
@@ -14,9 +15,17 @@ namespace MphRead
     public readonly struct EntityEntry
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string NodeName;
+        public readonly string NodeName; // todo: probably used for partial room visibility
         public readonly short LayerMask;
         public readonly ushort Length;
+        public readonly uint DataOffset;
+    }
+
+    // size: 20
+    public readonly struct FhEntityEntry
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
+        public readonly string NodeName; // todo: same as above
         public readonly uint DataOffset;
     }
 
@@ -234,6 +243,21 @@ namespace MphRead
         public readonly byte Field26;
     }
 
+    // size: 44
+    public readonly struct FhPlayerSpawnEntityData
+    {
+        public readonly EntityDataHeader Header;
+        public readonly Vector3Fx Position;
+        public readonly uint Field0C;
+        public readonly uint Field10;
+        public readonly uint Field14;
+        public readonly uint Field18;
+        public readonly uint Field1C;
+        public readonly uint Field20;
+        public readonly ushort Field24;
+        public readonly ushort Field26;
+    }
+
     // size: 104
     public readonly struct DoorEntityData
     {
@@ -429,6 +453,76 @@ namespace MphRead
         public readonly uint Field1F8;
     }
 
+    // size: 268
+    public readonly struct FhEnemyEntityData
+    {
+        public readonly EntityDataHeader Header;
+        public readonly Vector3Fx Position;
+        public readonly uint Field0C;
+        public readonly uint Field10;
+        public readonly uint Field14;
+        public readonly uint Field18;
+        public readonly uint Field1C;
+        public readonly uint Field20;
+        public readonly uint Field24;
+        public readonly uint Field28;
+        public readonly uint Field2C;
+        public readonly uint Field30;
+        public readonly uint Field34;
+        public readonly uint Field38;
+        public readonly uint Field3C;
+        public readonly uint Field40;
+        public readonly uint Field44;
+        public readonly uint Field48;
+        public readonly uint Field4C;
+        public readonly uint Field50;
+        public readonly uint Field54;
+        public readonly uint Field58;
+        public readonly uint Field5C;
+        public readonly uint Field60;
+        public readonly uint Field64;
+        public readonly uint Field68;
+        public readonly uint Field6C;
+        public readonly uint Field70;
+        public readonly uint Field74;
+        public readonly uint Field78;
+        public readonly uint Field7C;
+        public readonly uint Field80;
+        public readonly uint Field84;
+        public readonly uint Field88;
+        public readonly uint Field8C;
+        public readonly uint Field90;
+        public readonly uint Field94;
+        public readonly uint Field98;
+        public readonly uint Field9C;
+        public readonly uint FieldA0;
+        public readonly uint FieldA4;
+        public readonly uint FieldA8;
+        public readonly uint FieldAC;
+        public readonly uint FieldB0;
+        public readonly uint FieldB4;
+        public readonly uint FieldB8;
+        public readonly uint FieldBC;
+        public readonly uint FieldC0;
+        public readonly uint FieldC4;
+        public readonly uint FieldC8;
+        public readonly uint FieldCC;
+        public readonly uint FieldD0;
+        public readonly uint FieldD4;
+        public readonly uint FieldD8;
+        public readonly uint FieldDC;
+        public readonly uint FieldE0;
+        public readonly uint FieldE4;
+        public readonly uint FieldE8;
+        public readonly uint FieldEC;
+        public readonly uint FieldF0;
+        public readonly uint FieldF4;
+        public readonly uint FieldF8;
+        public readonly uint FieldFC;
+        public readonly uint Field100;
+        public readonly uint Field104;
+    }
+
     // size: 160
     public readonly struct Unknown7EntityData
     {
@@ -564,6 +658,21 @@ namespace MphRead
         public readonly uint Field20;
         public readonly uint Field24;
         public readonly byte Field28;
+    }
+
+    // size: 48
+    public readonly struct FhPointModuleEntityData
+    {
+        public readonly EntityDataHeader Header;
+        public readonly Vector3Fx Position;
+        public readonly uint Field0C;
+        public readonly uint Field10;
+        public readonly uint Field14;
+        public readonly uint Field18;
+        public readonly uint Field1C;
+        public readonly uint Field20;
+        public readonly uint Field24;
+        public readonly uint Field28;
     }
 
     // size: 104
@@ -789,6 +898,74 @@ namespace MphRead
         public readonly uint Field28;
         public readonly uint Field2C;
         public readonly byte Field30;
+    }
+
+    // size: 260
+    public readonly struct FhUnknown10EntityData
+    {
+        public readonly EntityDataHeader Header;
+        public readonly Vector3Fx Position;
+        public readonly uint Field0C;
+        public readonly uint Field10;
+        public readonly uint Field14;
+        public readonly uint Field18;
+        public readonly uint Field1C;
+        public readonly uint Field20;
+        public readonly uint Field24;
+        public readonly uint Field28;
+        public readonly uint Field2C;
+        public readonly uint Field30;
+        public readonly uint Field34;
+        public readonly uint Field38;
+        public readonly uint Field3C;
+        public readonly uint Field40;
+        public readonly uint Field44;
+        public readonly uint Field48;
+        public readonly uint Field4C;
+        public readonly uint Field50;
+        public readonly uint Field54;
+        public readonly uint Field58;
+        public readonly uint Field5C;
+        public readonly uint Field60;
+        public readonly uint Field64;
+        public readonly uint Field68;
+        public readonly uint Field6C;
+        public readonly uint Field70;
+        public readonly uint Field74;
+        public readonly uint Field78;
+        public readonly uint Field7C;
+        public readonly uint Field80;
+        public readonly uint Field84;
+        public readonly uint Field88;
+        public readonly uint Field8C;
+        public readonly uint Field90;
+        public readonly uint Field94;
+        public readonly uint Field98;
+        public readonly uint Field9C;
+        public readonly uint FieldA0;
+        public readonly uint FieldA4;
+        public readonly uint FieldA8;
+        public readonly uint FieldAC;
+        public readonly uint FieldB0;
+        public readonly uint FieldB4;
+        public readonly uint FieldB8;
+        public readonly uint FieldBC;
+        public readonly uint FieldC0;
+        public readonly uint FieldC4;
+        public readonly uint FieldC8;
+        public readonly uint FieldCC;
+        public readonly uint FieldD0;
+        public readonly uint FieldD4;
+        public readonly uint FieldD8;
+        public readonly uint FieldDC;
+        public readonly uint FieldE0;
+        public readonly uint FieldE4;
+        public readonly uint FieldE8;
+        public readonly uint FieldEC;
+        public readonly uint FieldF0;
+        public readonly uint FieldF4;
+        public readonly uint FieldF8;
+        public readonly uint FieldFC;
     }
 
     // size: 32

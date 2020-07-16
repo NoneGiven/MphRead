@@ -388,21 +388,21 @@ namespace MphRead
 
         public static IReadOnlyList<Entity> GetEntities(string path, int layerId)
         {
-            // todo: figure out room info layer ID
-            layerId = 1;
             path = Path.Combine(Paths.FileSystem, path);
             ReadOnlySpan<byte> bytes = ReadBytes(path);
-            EntityHeader header = ReadStruct<EntityHeader>(bytes[0..Sizes.EntityHeader]);
-            // todo: parse First Hunt entity files
-            if (header.Version == 1)
+            uint version = BitConverter.ToUInt32(bytes[0..4]);
+            if (version == 1)
             {
-                return new List<Entity>();
-            } 
-            if (header.Version != 2)
-            {
-                throw new ProgramException($"Unexpected entity header version {header.Version}.");
+                return GetFirstHuntEntities(bytes);
             }
+            else if (version != 2)
+            {
+                throw new ProgramException($"Unexpected entity header version {version}.");
+            }
+            // todo: figure out room info layer ID
+            layerId = 1;
             var entities = new List<Entity>();
+            EntityHeader header = ReadStruct<EntityHeader>(bytes[0..Sizes.EntityHeader]);
             for (int i = 0; entities.Count < header.Lengths[layerId]; i++)
             {
                 int start = Sizes.EntityHeader + Sizes.EntityEntry * i;
@@ -535,6 +535,82 @@ namespace MphRead
                     }
                 }
             }
+            return entities;
+        }
+
+        private static IReadOnlyList<Entity> GetFirstHuntEntities(ReadOnlySpan<byte> bytes)
+        {
+            var entries = new List<FhEntityEntry>(); // sktodo: clean this up
+            var entities = new List<Entity>();
+            for (int i = 0; ; i++)
+            {
+                int start = 4 + Sizes.FhEntityEntry * i;
+                int end = start + Sizes.FhEntityEntry;
+                FhEntityEntry entry = ReadStruct<FhEntityEntry>(bytes[start..end]);
+                if (entry.DataOffset == 0)
+                {
+                    break;
+                }
+
+                start = (int)entry.DataOffset;
+                end = start + Sizes.EntityDataHeader;
+                EntityDataHeader init = ReadStruct<EntityDataHeader>(bytes[start..end]);
+                var type = (EntityType)(init.Type + 100);
+                // todo: could assert that none of the end offsets exceed any other entry's start offset
+                if (type == EntityType.FhPlayerSpawn)
+                {
+                    end = start + Marshal.SizeOf<FhPlayerSpawnEntityData>();
+                    entities.Add(new Entity<FhPlayerSpawnEntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhPlayerSpawnEntityData>(bytes[start..end])));
+                }
+                else if (type == EntityType.FhEnemy)
+                {
+                    end = start + Marshal.SizeOf<FhEnemyEntityData>();
+                    entities.Add(new Entity<FhEnemyEntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhEnemyEntityData>(bytes[start..end])));
+                }
+                else if (type == EntityType.FhUnknown10)
+                {
+                    end = start + Marshal.SizeOf<FhUnknown10EntityData>();
+                    entities.Add(new Entity<FhUnknown10EntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhUnknown10EntityData>(bytes[start..end])));
+                }
+                else if (type == EntityType.FhPointModule)
+                {
+                    end = start + Marshal.SizeOf<FhPointModuleEntityData>();
+                    entities.Add(new Entity<FhPointModuleEntityData>(entry, type, init.SomeId,
+                        ReadStruct<FhPointModuleEntityData>(bytes[start..end])));
+                }
+                else
+                {
+                    throw new ProgramException($"Invalid entity type {type}");
+                }
+                entries.Add(entry);
+            }
+            //int j = 0;
+            //var ordered = entries.OrderBy(e => e.DataOffset).ToList();
+            //foreach (FhEntityEntry entry in ordered)
+            //{
+            //    int start = (int)entry.DataOffset;
+            //    int end;
+            //    if (j < entries.Count - 1)
+            //    {
+            //        end = (int)ordered[j + 1].DataOffset;
+            //    }
+            //    else
+            //    {
+            //        end = bytes.Length;
+            //    }
+            //    EntityDataHeader data = ReadStruct<EntityDataHeader>(bytes[start..(start + Sizes.EntityDataHeader)]);
+            //    Console.WriteLine($"0x{start:X2} - 0x{end - 1:X2}, type {data.Type}, length {end - start}");
+            //    foreach (var b in bytes[start..end])
+            //    {
+            //        Console.Write($"{b:X2} ");
+            //    }
+            //    Console.WriteLine();
+            //    Console.WriteLine();
+            //    j++;
+            //}
             return entities;
         }
 

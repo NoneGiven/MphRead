@@ -1,7 +1,5 @@
 namespace MphRead
 {
-    // seems like 5 and 10 are unused
-    // -- not sure if/where 26 (EnergyBeam) is used
     public enum EntityType : ushort
     {
         Platform = 0,
@@ -14,7 +12,7 @@ namespace MphRead
         Unknown7 = 7,
         Unknown8 = 8,
         JumpPad = 9,
-        PointModule = 10, // FH only
+        PointModule = 10, // FH leftovers only
         CameraPos = 11,
         Unknown12 = 12,
         Unknown13 = 13,
@@ -26,7 +24,12 @@ namespace MphRead
         ForceField = 19,
         EnemyInstance = 23,
         EnergyBeam = 26,
-        EntityListHead = 27
+        EntityListHead = 27,
+        // First Hunt
+        FhPlayerSpawn = 101,
+        FhEnemy = 106,
+        FhUnknown10 = 110,
+        FhPointModule = 113
     }
 
     public enum ModelType

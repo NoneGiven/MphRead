@@ -226,6 +226,10 @@ namespace MphRead
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<PlayerSpawnEntityData>)entity).Data.Position));
                 }
+                else if (entity.Type == EntityType.FhPlayerSpawn)
+                {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhPlayerSpawnEntityData>)entity).Data.Position));
+                }
                 else if (entity.Type == EntityType.Door)
                 {
                     models.Add(LoadDoor(((Entity<DoorEntityData>)entity).Data));
@@ -237,6 +241,10 @@ namespace MphRead
                 else if (entity.Type == EntityType.Enemy)
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<EnemyEntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.FhEnemy)
+                {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhEnemyEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Unknown7)
                 {
@@ -253,6 +261,10 @@ namespace MphRead
                 else if (entity.Type == EntityType.PointModule)
                 {
                     models.Add(LoadPointModule(((Entity<PointModuleEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.FhPointModule)
+                {
+                    models.Add(LoadPointModule(((Entity<FhPointModuleEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.CameraPos)
                 {
@@ -288,6 +300,10 @@ namespace MphRead
                 else if (entity.Type == EntityType.ForceField)
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<ForceFieldEntityData>)entity).Data.Position));
+                }
+                else if (entity.Type == EntityType.FhUnknown10)
+                {
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhUnknown10EntityData>)entity).Data.Position));
                 }
             }
             return models;
@@ -379,9 +395,19 @@ namespace MphRead
 
         private static Model LoadPointModule(PointModuleEntityData data)
         {
-            // todo: not all of these are visible at once
+            return LoadPointModule(data.Position.ToFloatVector());
+        }
+
+        private static Model LoadPointModule(FhPointModuleEntityData data)
+        {
+            return LoadPointModule(data.Position.ToFloatVector());
+        }
+
+        private static Model LoadPointModule(Vector3 position)
+        {
+            // todo: not all of these are visible at once -- some may not be visible ever?
             Model model = Read.GetModelByName("pick_morphball", firstHunt: true);
-            model.Position = data.Position.ToFloatVector();
+            model.Position = position;
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             return model;
@@ -405,9 +431,12 @@ namespace MphRead
             { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) },
             { EntityType.Object, new ColorRgb(0x22, 0x8B, 0x22) },
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
+            { EntityType.FhPlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.Enemy, new ColorRgb(0x00, 0x00, 0x8B) },
+            { EntityType.FhEnemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.Unknown7, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.Unknown8, new ColorRgb(0xFF, 0xFF, 0x00) },
+            { EntityType.FhUnknown10, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.CameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
             { EntityType.Unknown12, new ColorRgb(0x00, 0xFF, 0xFF) },
             { EntityType.Unknown13, new ColorRgb(0xFF, 0x00, 0xFF) },
