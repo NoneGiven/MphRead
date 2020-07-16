@@ -814,7 +814,7 @@ namespace MphRead
                 return values[start + frame - v7 + (frame >> (speed / 2))];
             }
             int index1 = frame >> (speed / 2);
-            int index2 = frame >> (speed / 2) + 1;
+            int index2 = (frame >> (speed / 2)) + 1;
             float div = 1 << (speed / 2);
             int t = frame & ((speed / 2) | 1);
             if (t != 0)
