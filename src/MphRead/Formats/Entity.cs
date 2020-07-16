@@ -882,12 +882,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx BaseVector1;
+        public readonly Vector3Fx BaseVector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -938,10 +934,8 @@ namespace MphRead
         public readonly uint FieldE0;
         public readonly uint FieldE4;
         public readonly uint FieldE8;
-        public readonly uint FieldEC;
-        public readonly uint FieldF0;
-        public readonly uint FieldF4;
-        public readonly uint FieldF8;
+        public readonly Vector3Fx BeamVector;
+        public readonly Fixed Speed;
         public readonly uint FieldFC;
         public readonly uint ModelId;
         public readonly uint BeamType;

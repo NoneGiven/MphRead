@@ -114,6 +114,10 @@ namespace MphRead
             }
         }
 
+        // todo: this could be implemented better -- needed for FH jump pad beams
+        // (so we can update the rotation on the fly while retaining the beam vector)
+        public Vector3? InitialVector { get; set; }
+
         public int AnimationCount { get; set; }
         public IReadOnlyList<NodeAnimationGroup> NodeAnimationGroups { get; }
         public IReadOnlyList<MaterialAnimationGroup> MaterialAnimationGroups { get; }

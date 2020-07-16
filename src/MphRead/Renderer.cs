@@ -598,7 +598,15 @@ namespace MphRead
                 }
                 return 0;
             }
-            else if (two.Type == ModelType.Room)
+            if (two.Type == ModelType.Room)
+            {
+                return 1;
+            }
+            if (one.Type == ModelType.JumpPad && two.Type == ModelType.JumpPadBeam)
+            {
+                return -1;
+            }
+            if (one.Type == ModelType.JumpPadBeam && two.Type == ModelType.JumpPad)
             {
                 return 1;
             }
@@ -633,6 +641,11 @@ namespace MphRead
                     float rotation = (float)(model.Rotation.Y + elapsedTime * 360 * 0.35) % 360;
                     model.Rotation = new Vector3(model.Rotation.X, rotation, model.Rotation.Z);
                     transform.M42 += (MathF.Sin(model.Rotation.Y / 180 * MathF.PI) + 1) / 8f;
+                }
+                else if (model.Type == ModelType.JumpPadBeam && model.Name == "jumppad_ray")
+                {
+                    float rotation = (float)(model.Rotation.Y + elapsedTime * 360 * 0.35) % 360;
+                    model.Rotation = new Vector3(model.Rotation.X, rotation, model.Rotation.Z);
                 }
                 GL.MultMatrix(ref transform);
                 if (model.Type == ModelType.Room)

@@ -44,7 +44,9 @@ namespace MphRead
         Room,
         Item,
         Object,
-        Placeholder
+        Placeholder,
+        JumpPad,
+        JumpPadBeam
     }
 
     public enum PolygonMode : uint

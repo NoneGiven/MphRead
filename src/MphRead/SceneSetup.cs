@@ -367,11 +367,13 @@ namespace MphRead
             Model model1 = Read.GetModelByName(modelName);
             model1.Position = data.Position.ToFloatVector();
             model1.Transform = ComputeModelMatrices(data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector(), model1.Position);
+            model1.Type = ModelType.JumpPad;
             list.Add(model1);
             Model model2 = Read.GetModelByName("JumpPad_Beam");
             model2.Position = new Vector3(model1.Position.X, model1.Position.Y + 0.25f, model1.Position.Z);
             ComputeJumpPadBeamTransform(model2, data.BeamVector, model1.Transform);
             ComputeNodeMatrices(model2, index: 0);
+            model2.Type = ModelType.JumpPadBeam;
             list.Add(model2);
             return list;
         }
@@ -382,13 +384,15 @@ namespace MphRead
             string name = data.ModelId == 1 ? "balljump" : "jumppad_base";
             Model model1 = Read.GetModelByName(name, firstHunt: true);
             model1.Position = data.Position.ToFloatVector();
-            //model1.Transform = ComputeModelMatrices(data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector(), model1.Position);
+            model1.Transform = ComputeModelMatrices(data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector(), model1.Position);
+            model1.Type = ModelType.JumpPad;
             list.Add(model1);
-            name = data.ModelId == 1 ? "balljump_ray" : "jumpad_ray";
+            name = data.ModelId == 1 ? "balljump_ray" : "jumppad_ray";
             Model model2 = Read.GetModelByName(name, firstHunt: true);
             model2.Position = new Vector3(model1.Position.X, model1.Position.Y + 0.25f, model1.Position.Z);
-            //ComputeJumpPadBeamTransform(model2, data.BeamVector, model1.Transform);
+            ComputeJumpPadBeamTransform(model2, data.BeamVector, Matrix4.Identity);
             ComputeNodeMatrices(model2, index: 0);
+            model2.Type = ModelType.JumpPadBeam;
             list.Add(model2);
             return list;
         }
