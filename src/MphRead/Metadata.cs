@@ -4055,7 +4055,7 @@ namespace MphRead
             /* 1 */ "pick_ammo_B",
             /* 2 */ "pick_health_A",
             /* 3 */ "pick_health_B",
-            /* 4 */ "pick_morphball",
+            /* 4 */ "pick_dblDamage",
             /* 5 */ "pick_morphball", // unused
             /* 6 */ "pick_wpn_electro",
             /* 7 */ "pick_wpn_missile"

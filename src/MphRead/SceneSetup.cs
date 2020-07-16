@@ -280,7 +280,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.FhJumpPad)
                 {
-                    models.Add(LoadJumpPad(((Entity<FhJumpPadEntityData>)entity).Data));
+                    models.AddRange(LoadJumpPad(((Entity<FhJumpPadEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.PointModule)
                 {
@@ -343,19 +343,19 @@ namespace MphRead
             );
         }
 
-        private static void ComputeJumpPadBeamTransform(Model model, JumpPadEntityData data, Matrix4 parentTransform)
+        private static void ComputeJumpPadBeamTransform(Model model, Vector3Fx beamVector, Matrix4 parentTransform)
         {
             var up = new Vector3(0, 1, 0);
             var right = new Vector3(1, 0, 0);
-            var beamVector = Vector3.Normalize(data.BeamVector.ToFloatVector());
-            beamVector = Vector3ByMatrix4(beamVector, parentTransform);
-            if (beamVector.X != 0 || beamVector.Z != 0)
+            var vector = Vector3.Normalize(beamVector.ToFloatVector());
+            vector = Vector3ByMatrix4(vector, parentTransform);
+            if (vector.X != 0 || vector.Z != 0)
             {
-                model.Transform = ComputeModelMatrices(beamVector, up, model.Position);
+                model.Transform = ComputeModelMatrices(vector, up, model.Position);
             }
             else
             {
-                model.Transform = ComputeModelMatrices(beamVector, right, model.Position);
+                model.Transform = ComputeModelMatrices(vector, right, model.Position);
             }
         }
 
@@ -370,20 +370,27 @@ namespace MphRead
             list.Add(model1);
             Model model2 = Read.GetModelByName("JumpPad_Beam");
             model2.Position = new Vector3(model1.Position.X, model1.Position.Y + 0.25f, model1.Position.Z);
-            ComputeJumpPadBeamTransform(model2, data, model1.Transform);
+            ComputeJumpPadBeamTransform(model2, data.BeamVector, model1.Transform);
             ComputeNodeMatrices(model2, index: 0);
             list.Add(model2);
             return list;
         }
 
-        // todo: load the right jump pad models
-        private static Model LoadJumpPad(FhJumpPadEntityData data)
+        private static IReadOnlyList<Model> LoadJumpPad(FhJumpPadEntityData data)
         {
-            Model model = Read.GetModelByName("jumppad_base", firstHunt: true);
-            model.Position = data.Position.ToFloatVector();
-            ComputeNodeMatrices(model, index: 0);
-            model.Type = ModelType.Generic;
-            return model;
+            var list = new List<Model>();
+            string name = data.ModelId == 1 ? "balljump" : "jumppad_base";
+            Model model1 = Read.GetModelByName(name, firstHunt: true);
+            model1.Position = data.Position.ToFloatVector();
+            //model1.Transform = ComputeModelMatrices(data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector(), model1.Position);
+            list.Add(model1);
+            name = data.ModelId == 1 ? "balljump_ray" : "jumpad_ray";
+            Model model2 = Read.GetModelByName(name, firstHunt: true);
+            model2.Position = new Vector3(model1.Position.X, model1.Position.Y + 0.25f, model1.Position.Z);
+            //ComputeJumpPadBeamTransform(model2, data.BeamVector, model1.Transform);
+            ComputeNodeMatrices(model2, index: 0);
+            list.Add(model2);
+            return list;
         }
 
         private static Model LoadObject(ObjectEntityData data)

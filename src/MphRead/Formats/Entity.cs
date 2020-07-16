@@ -943,8 +943,8 @@ namespace MphRead
         public readonly uint FieldF4;
         public readonly uint FieldF8;
         public readonly uint FieldFC;
-        public readonly uint Field100;
-        public readonly uint Field104;
+        public readonly uint ModelId;
+        public readonly uint BeamType;
         public readonly uint Field108;
     }
 
