@@ -111,7 +111,7 @@ namespace MphRead
         private bool _showColors = true;
         private bool _wireframe = false;
         private bool _faceCulling = true;
-        private bool _textureFiltering = true;
+        private bool _textureFiltering = false;
         private bool _lighting = true;
         private bool _showInvisible = false;
         private bool _transformRoomNodes = false; // undocumented
