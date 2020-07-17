@@ -225,7 +225,7 @@ namespace MphRead
                 else if (entity.Type == EntityType.Object)
                 {
                     ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
-                    // todo: handle "-1" objects
+                    // todo: handle "-1" objects (scan points?)
                     if (data.ModelId == UInt32.MaxValue)
                     {
                         models.Add(LoadEntityPlaceholder(entity.Type, data.Position));

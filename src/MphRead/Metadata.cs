@@ -4061,7 +4061,7 @@ namespace MphRead
             /* 7 */ "pick_wpn_missile"
         };
 
-        private static readonly List<ObjectMetadata> _objects = new List<ObjectMetadata>()
+        private static readonly IReadOnlyList<ObjectMetadata> _objects = new List<ObjectMetadata>()
         {
             /*  0 */ new ObjectMetadata("AlimbicGhost_01", 0),
             /*  1 */ new ObjectMetadata("AlimbicLightPole", 0),
@@ -4119,6 +4119,55 @@ namespace MphRead
             /* 53 */ new ObjectMetadata("WallSwitch", 1, animationIds: new List<int>() { 2, 0, 1, 0 })
         };
 
+        private static readonly IReadOnlyList<string> _platforms = new List<string>()
+        {
+            /*  0 */ "pick_wpn_missile",
+            /*  1 */ "pick_wpn_missile",
+            /*  2 */ "pick_wpn_missile",
+            /*  3 */ "pick_wpn_missile",
+            /*  4 */ "smasher",
+            /*  5 */ "pick_wpn_missile",
+            /*  6 */ "pick_wpn_missile",
+            /*  7 */ "pick_wpn_missile",
+            /*  8 */ "pick_wpn_missile",
+            /*  9 */ "pistonmp7",
+            /* 10 */ "pick_wpn_missile",
+            /* 11 */ "pick_wpn_missile",
+            /* 12 */ "pick_wpn_missile",
+            /* 13 */ "pick_wpn_missile",
+            /* 14 */ "pick_wpn_missile",
+            /* 15 */ "pick_wpn_missile",
+            /* 16 */ "pick_wpn_missile",
+            /* 17 */ "pick_wpn_missile",
+            /* 18 */ "pick_wpn_missile",
+            /* 19 */ "pick_wpn_missile",
+            /* 20 */ "pick_wpn_missile",
+            /* 21 */ "SyluxShip",
+            /* 22 */ "pick_wpn_missile",
+            /* 23 */ "SamusShip",
+            /* 24 */ "pick_wpn_missile",
+            /* 25 */ "pick_wpn_missile",
+            /* 26 */ "pick_wpn_missile",
+            /* 27 */ "pick_wpn_missile",
+            /* 28 */ "pick_wpn_missile",
+            /* 29 */ "pick_wpn_missile",
+            /* 30 */ "unit2_land_elev",
+            /* 31 */ "pick_wpn_missile",
+            /* 32 */ "Crate01",
+            /* 33 */ "pick_wpn_missile",
+            /* 34 */ "pick_wpn_missile",
+            /* 35 */ "pick_wpn_missile",
+            /* 36 */ "pick_wpn_missile",
+            /* 37 */ "pick_wpn_missile",
+            /* 38 */ "pick_wpn_missile",
+            /* 39 */ "unit2_c1_mover",
+            /* 40 */ "pick_wpn_missile",
+            /* 41 */ "piston_gorealand",
+            /* 42 */ "pick_wpn_missile",
+            /* 43 */ "pick_wpn_missile",
+            /* 44 */ "SamusShip" // sktodo: how/why is this different from 23?
+        };
+
         public static ObjectMetadata GetObjectById(int id)
         {
             if (id < 0 || id > _objects.Count)
@@ -4126,15 +4175,6 @@ namespace MphRead
                 throw new ArgumentException(nameof(id));
             }
             return _objects[id];
-        }
-
-        public static ObjectMetadata? GetObjectByName(string name)
-        {
-            if (_objects.Any(o => o.Name == name))
-            {
-                return _objects.First(o => o.Name == name);
-            }
-            return null;
         }
 
         // todo: e.g. lod1 in the model folder should have the animation files from the lod0 archive
