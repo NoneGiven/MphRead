@@ -494,9 +494,9 @@ namespace MphRead
             string modelName = Metadata.Doors[(int)data.ModelId];
             Model model = Read.GetModelByName(modelName);
             model.Position = data.Position.ToFloatVector();
-            model.Rotation = GetUnitRotation(data.Rotation);
-            model.Type = ModelType.Generic;
+            model.Transform = ComputeModelMatrices(data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector(), model.Position);
             ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Generic;
             return model;
         }
 
@@ -505,9 +505,9 @@ namespace MphRead
         {
             Model model = Read.GetModelByName("door", firstHunt: true);
             model.Position = data.Position.ToFloatVector();
-            model.Rotation = GetUnitRotation(data.Rotation);
-            model.Type = ModelType.Generic;
+            model.Transform = ComputeModelMatrices(data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector(), model.Position);
             ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Generic;
             return model;
         }
 
@@ -553,25 +553,6 @@ namespace MphRead
             model.Type = ModelType.Placeholder;
             ComputeNodeMatrices(model, index: 0);
             return model;
-        }
-
-        private static Vector3 GetUnitRotation(Vector3Fx rotation)
-        {
-            var start = new Vector3(0, 0, 1);
-            Vector3 end = rotation.ToFloatVector();
-            if (start == end)
-            {
-                return start;
-            }
-            var cross = Vector3.Cross(start, end);
-            // if the vector is antiparallel to the default, just rotate 180 in Y
-            if (cross.Length == 0)
-            {
-                return new Vector3(0, -180, 0);
-            }
-            cross.Normalize();
-            float angle = MathHelper.RadiansToDegrees(Vector3.CalculateAngle(start, end));
-            return new Vector3(cross.X * angle, cross.Y * angle, cross.Z * angle);
         }
     }
 }
