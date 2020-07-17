@@ -830,7 +830,13 @@ namespace MphRead
             int v7 = (frame - 1) >> (speed / 2) << (speed / 2);
             if (frame >= v7)
             {
-                return values[start + frame - v7 + (frame >> (speed / 2))];
+                int index = start + frame - v7 + (frame >> (speed / 2));
+                // todo: fix texcoord out of bounds index issue
+                if (index > values.Count - 1)
+                {
+                    return 0;
+                }
+                return values[index];
             }
             int index1 = frame >> (speed / 2);
             int index2 = (frame >> (speed / 2)) + 1;
