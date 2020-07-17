@@ -20,8 +20,7 @@ namespace MphRead
         public IReadOnlyList<Mesh> Meshes { get; }
         public IReadOnlyList<Material> Materials { get; }
         public IReadOnlyList<DisplayList> DisplayLists { get; }
-        private readonly List<Matrix4> _textureMatrices;
-        public IReadOnlyList<Matrix4> TextureMatrices => _textureMatrices;
+        public IReadOnlyList<Matrix4> TextureMatrices { get; }
 
         // count and order match Dlists
         public IReadOnlyList<IReadOnlyList<RenderInstruction>> RenderInstructionLists { get; }
@@ -160,7 +159,7 @@ namespace MphRead
             MaterialAnimationGroups = materialGroups;
             TexcoordAnimationGroups = texcoordGroups;
             TextureAnimationGroups = textureGroups;
-            _textureMatrices = textureMatrices.Select(m => m.ToFloatMatrix()).ToList();
+            TextureMatrices = textureMatrices.Select(m => m.ToFloatMatrix()).ToList();
             Recolors = recolors;
             CurrentRecolor = defaultRecolor;
             float scale = Header.ScaleBase.FloatValue * (1 << (int)Header.ScaleFactor);
@@ -183,11 +182,6 @@ namespace MphRead
             {
                 yield return Meshes[meshId];
             }
-        }
-
-        public void AddTextureMatrix(Matrix4 matrix)
-        {
-            _textureMatrices.Add(matrix);
         }
 
         public bool NodeParentsEnabled(Node node)
