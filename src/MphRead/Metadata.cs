@@ -4061,7 +4061,7 @@ namespace MphRead
             /* 7 */ "pick_wpn_missile"
         };
 
-        public static readonly List<ObjectMetadata> _objects = new List<ObjectMetadata>()
+        private static readonly List<ObjectMetadata> _objects = new List<ObjectMetadata>()
         {
             new ObjectMetadata("AlimbicGhost_01", 0),
             new ObjectMetadata("AlimbicLightPole", 0),

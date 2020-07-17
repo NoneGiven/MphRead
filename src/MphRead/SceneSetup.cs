@@ -224,7 +224,16 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Object)
                 {
-                    //models.Add(LoadObject(((Entity<ObjectEntityData>)entity).Data));
+                    ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
+                    // todo: handle "-1" objects
+                    if (data.ModelId == UInt32.MaxValue)
+                    {
+                        models.Add(LoadEntityPlaceholder(entity.Type, data.Position));
+                    }
+                    else
+                    {
+                        models.Add(LoadObject(data));
+                    }
                 }
                 else if (entity.Type == EntityType.PlayerSpawn)
                 {
@@ -404,8 +413,7 @@ namespace MphRead
 
         private static Model LoadObject(ObjectEntityData data)
         {
-            int modelId = 22;
-            ObjectMetadata meta = Metadata.GetObjectById(modelId);
+            ObjectMetadata meta = Metadata.GetObjectById((int)data.ModelId);
             Model model = Read.GetModelByName(meta.Name, meta.RecolorId);
             model.Position = data.Position.ToFloatVector();
             ComputeNodeMatrices(model, index: 0);
