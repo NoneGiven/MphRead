@@ -1985,7 +1985,8 @@ namespace MphRead
             await Output.Write(guid);
             Material material = SelectedModel.Materials[mesh.MaterialId];
             await Output.Write($"Material: {material.Name} [{mesh.MaterialId}] - {material.RenderMode}, {material.PolygonMode}", guid);
-            await Output.Write($"Lighting {material.Lighting}, Alpha {material.Alpha}", guid);
+            await Output.Write($"Lighting {material.Lighting}, Alpha {material.Alpha}, " +
+                $"XRepeat {material.XRepeat}, YRepeat, {material.YRepeat}", guid);
             await Output.Write($"Texture ID {material.TextureId}, Palette ID {material.PaletteId}", guid);
             await Output.Write($"Diffuse ({material.Diffuse.Red}, {material.Diffuse.Green}, {material.Diffuse.Blue})" +
                 $" Ambient ({material.Ambient.Red}, {material.Ambient.Green}, {material.Ambient.Blue})" +
