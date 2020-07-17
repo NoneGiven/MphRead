@@ -702,7 +702,7 @@ namespace MphRead
             // pass 3: translucent with alpha test
             GL.DepthMask(true);
             GL.Enable(EnableCap.AlphaTest);
-            GL.AlphaFunc(AlphaFunction.Gequal, 0.25f);
+            GL.AlphaFunc(AlphaFunction.Gequal, 0.01f);
             foreach (Node node in model.Nodes)
             {
                 RenderNode(model, node, RenderMode.AlphaTest);
@@ -726,27 +726,41 @@ namespace MphRead
             GL.UseProgram(_shaderProgramId);
             // pass 1: opaque
             GL.DepthMask(true);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             foreach (Node node in model.Nodes)
             {
                 RenderNode(model, node, RenderMode.Normal);
             }
             // pass 2: opaque pixels on translucent surfaces
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Enable(EnableCap.AlphaTest);
-            GL.AlphaFunc(AlphaFunction.Gequal, 0.95f);
+            GL.AlphaFunc(AlphaFunction.Gequal, 0.999f);
             foreach (Node node in model.Nodes)
             {
-                RenderNode(model, node, RenderMode.Normal, invertFilter: true);
+                RenderNode(model, node, RenderMode.Decal);
+            }
+            foreach (Node node in model.Nodes)
+            {
+                RenderNode(model, node, RenderMode.Translucent);
+            }
+            foreach (Node node in model.Nodes)
+            {
+                RenderNode(model, node, RenderMode.AlphaTest);
             }
             // pass 3: translucent
-            GL.AlphaFunc(AlphaFunction.Less, 0.95f);
-            //GL.Enable(EnableCap.Blend);
+            GL.AlphaFunc(AlphaFunction.Less, 0.999f);
             GL.DepthMask(false);
-            //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             foreach (Node node in model.Nodes)
             {
-                RenderNode(model, node, RenderMode.Normal, invertFilter: true);
+                RenderNode(model, node, RenderMode.Decal);
+            }
+            foreach (Node node in model.Nodes)
+            {
+                RenderNode(model, node, RenderMode.Translucent);
+            }
+            foreach (Node node in model.Nodes)
+            {
+                RenderNode(model, node, RenderMode.AlphaTest);
             }
             GL.DepthMask(true);
             GL.Disable(EnableCap.Blend);
