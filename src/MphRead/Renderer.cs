@@ -114,6 +114,7 @@ namespace MphRead
         private bool _faceCulling = true;
         private bool _textureFiltering = false;
         private bool _lighting = true;
+        private bool _scanVisor = false;
         private bool _showInvisible = false;
         private bool _transformRoomNodes = false; // undocumented
 
@@ -630,7 +631,7 @@ namespace MphRead
             _models.Sort(CompareModels);
             foreach (Model model in _models)
             {
-                if (model.Type == ModelType.Placeholder && !_showInvisible)
+                if ((model.Type == ModelType.Placeholder && !_showInvisible) || (model.ScanVisorOnly && !_scanVisor))
                 {
                     continue;
                 }
@@ -1461,6 +1462,11 @@ namespace MphRead
                 _showInvisible = !_showInvisible;
                 await PrintOutput();
             }
+            else if (e.Key == Key.E)
+            {
+                _scanVisor = !_scanVisor;
+                await PrintOutput();
+            }
             else if (e.Key == Key.R)
             {
                 ResetCamera();
@@ -1590,7 +1596,8 @@ namespace MphRead
                     else if (_selectionMode == SelectionMode.Model)
                     {
                         Model? nextModel = _models.Where(m => m.SceneId > model.SceneId &&
-                            (_showInvisible || m.Type != ModelType.Placeholder)).OrderBy(m => m.SceneId).FirstOrDefault();
+                            (_showInvisible || m.Type != ModelType.Placeholder) &&
+                            (_scanVisor || !m.ScanVisorOnly)).OrderBy(m => m.SceneId).FirstOrDefault();
                         if (nextModel == null)
                         {
                             nextModel = _models.OrderBy(m => m.SceneId).First(m => m.Meshes.Count > 0);
@@ -1653,7 +1660,8 @@ namespace MphRead
                     else if (_selectionMode == SelectionMode.Model)
                     {
                         Model? nextModel = _models.Where(m => m.SceneId < model.SceneId &&
-                            (_showInvisible || m.Type != ModelType.Placeholder)).OrderBy(m => m.SceneId).LastOrDefault();
+                            (_showInvisible || m.Type != ModelType.Placeholder) &&
+                            (_scanVisor || !m.ScanVisorOnly)).OrderBy(m => m.SceneId).LastOrDefault();
                         if (nextModel == null)
                         {
                             nextModel = _models.OrderBy(m => m.SceneId).Last(m => m.Meshes.Count > 0);
@@ -2004,6 +2012,7 @@ namespace MphRead
             await Output.Write($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})", guid);
             await Output.Write($" - L toggles lighting ({FormatOnOff(_lighting)})", guid);
             await Output.Write($" - G toggles fog ({FormatOnOff(_showFog)})", guid);
+            await Output.Write($" - E toggles Scan Visor ({FormatOnOff(_scanVisor)})", guid);
             await Output.Write($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})", guid);
             await Output.Write($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})", guid);
             await Output.Write(" - R resets the camera", guid);

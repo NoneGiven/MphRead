@@ -420,7 +420,11 @@ namespace MphRead
             model.Transform = ComputeModelMatrices(data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector(), model.Position);
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Object;
-            if (modelId == 45)
+            if (modelId == 0)
+            {
+                model.ScanVisorOnly = true;
+            }
+            else if (modelId == 45)
             {
                 var matrix = new Matrix4();
                 matrix.M11 = 0;

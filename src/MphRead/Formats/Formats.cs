@@ -10,6 +10,7 @@ namespace MphRead
     public class Model
     {
         public bool Visible { get; set; } = true;
+        public bool ScanVisorOnly { get; set; }
         public ModelType Type { get; set; }
         public EntityType EntityType { get; set; } // currently only used when ModelType is Placeholder
 
