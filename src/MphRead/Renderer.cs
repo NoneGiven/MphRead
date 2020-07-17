@@ -676,7 +676,6 @@ namespace MphRead
             GL.Uniform1(_shaderLocations.UseFog, _hasFog && _showFog ? 1 : 0);
             GL.Uniform4(_shaderLocations.FogColor, _fogColor);
             GL.Uniform1(_shaderLocations.FogOffset, _fogOffset);
-            GL.Uniform1(_shaderLocations.AlphaScale, 1.0f);
         }
 
         private void RenderRoom(Model model)
@@ -684,6 +683,7 @@ namespace MphRead
             // todo: should use room nodes only as roots; need to handle things like force fields separately
             GL.UseProgram(_shaderProgramId);
             UpdateUniforms();
+            GL.Uniform1(_shaderLocations.AlphaScale, 1.0f);
             // pass 1: opaque
             GL.DepthMask(true);
             foreach (Node node in model.Nodes)
@@ -725,6 +725,7 @@ namespace MphRead
         private void RenderModel(Model model)
         {
             GL.UseProgram(_shaderProgramId);
+            GL.Uniform1(_shaderLocations.AlphaScale, 1.0f);
             // pass 1: opaque
             GL.DepthMask(true);
             GL.Enable(EnableCap.Blend);
