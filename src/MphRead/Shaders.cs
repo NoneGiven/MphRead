@@ -17,6 +17,7 @@ uniform vec4 diffuse;
 uniform vec4 ambient;
 uniform vec4 specular;
 uniform vec4 fog_color;
+uniform float far_plane;
 
 varying vec2 texcoord;
 varying vec4 color;
@@ -53,7 +54,7 @@ void main()
         color = gl_Color;
     }
     texcoord = vec2(gl_TextureMatrix[0] * gl_MultiTexCoord0);
-    depth = clamp(length(gl_Position) / 256.0, 0, 1);
+    depth = clamp(gl_Position.z / gl_DepthRange.far * 8.0, 0, 1);
 }
 ";
 
@@ -64,10 +65,11 @@ uniform bool fog_enable;
 uniform vec4 fog_color;
 uniform vec4 ambient;
 uniform int fog_offset;
+uniform float alpha_scale;
 uniform sampler2D tex;
 varying vec2 texcoord;
 varying vec4 color;
-varying float depth;
+//varying float depth;
 uniform bool use_override;
 uniform vec4 override_color;
 
@@ -87,14 +89,17 @@ void main()
         col = use_override ? override_color : color;
     }
     if(fog_enable) {
+        float ndcDepth = (2.0 * gl_FragCoord.z - gl_DepthRange.near - gl_DepthRange.far) / (gl_DepthRange.far - gl_DepthRange.near);
+		float clipDepth = ndcDepth / gl_FragCoord.w;
+		float depth = clamp(clipDepth / 128.0, 0, 1);
         float density = depth - (1 - float(fog_offset) / 65536.0);
         if(density < 0)
             density = 0;
-        gl_FragColor = vec4((col * (1 - density) + fog_color * density).xyz, col.a);
+        gl_FragColor = vec4((col * (1 - density) + fog_color * density).xyz, col.a * alpha_scale);
         // float i = density;
         // gl_FragColor = vec4(i, i, i, 1);
     } else {
-        gl_FragColor = col;
+        gl_FragColor = col * vec4(1, 1, 1, alpha_scale);
     }
 }
 ";

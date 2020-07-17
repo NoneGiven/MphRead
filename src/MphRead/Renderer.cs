@@ -70,6 +70,7 @@ namespace MphRead
         public int UseFog { get; set; }
         public int FogColor { get; set; }
         public int FogOffset { get; set; }
+        public int AlphaScale { get; set; }
         public int UseOverride { get; set; }
         public int OverrideColor { get; set; }
     }
@@ -112,7 +113,8 @@ namespace MphRead
         private bool _wireframe = false;
         private bool _faceCulling = true;
         private bool _textureFiltering = false;
-        private bool _lighting = true;
+        private bool _lighting = false;
+        private bool _scanVisor = false;
         private bool _showInvisible = false;
         private bool _transformRoomNodes = false; // undocumented
 
@@ -253,6 +255,7 @@ namespace MphRead
             _shaderLocations.UseFog = GL.GetUniformLocation(_shaderProgramId, "fog_enable");
             _shaderLocations.FogColor = GL.GetUniformLocation(_shaderProgramId, "fog_color");
             _shaderLocations.FogOffset = GL.GetUniformLocation(_shaderProgramId, "fog_offset");
+            _shaderLocations.AlphaScale = GL.GetUniformLocation(_shaderProgramId, "alpha_scale");
 
             _shaderLocations.UseOverride = GL.GetUniformLocation(_shaderProgramId, "use_override");
             _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
@@ -628,7 +631,7 @@ namespace MphRead
             _models.Sort(CompareModels);
             foreach (Model model in _models)
             {
-                if (model.Type == ModelType.Placeholder && !_showInvisible)
+                if ((model.Type == ModelType.Placeholder && !_showInvisible) || (model.ScanVisorOnly && !_scanVisor))
                 {
                     continue;
                 }
@@ -680,6 +683,7 @@ namespace MphRead
             // todo: should use room nodes only as roots; need to handle things like force fields separately
             GL.UseProgram(_shaderProgramId);
             UpdateUniforms();
+            GL.Uniform1(_shaderLocations.AlphaScale, 1.0f);
             // pass 1: opaque
             GL.DepthMask(true);
             foreach (Node node in model.Nodes)
@@ -699,7 +703,7 @@ namespace MphRead
             // pass 3: translucent with alpha test
             GL.DepthMask(true);
             GL.Enable(EnableCap.AlphaTest);
-            GL.AlphaFunc(AlphaFunction.Gequal, 0.25f);
+            GL.AlphaFunc(AlphaFunction.Gequal, 0.01f);
             foreach (Node node in model.Nodes)
             {
                 RenderNode(model, node, RenderMode.AlphaTest);
@@ -721,29 +725,44 @@ namespace MphRead
         private void RenderModel(Model model)
         {
             GL.UseProgram(_shaderProgramId);
+            GL.Uniform1(_shaderLocations.AlphaScale, 1.0f);
             // pass 1: opaque
             GL.DepthMask(true);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             foreach (Node node in model.Nodes)
             {
                 RenderNode(model, node, RenderMode.Normal);
             }
             // pass 2: opaque pixels on translucent surfaces
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Enable(EnableCap.AlphaTest);
-            GL.AlphaFunc(AlphaFunction.Gequal, 0.95f);
+            GL.AlphaFunc(AlphaFunction.Gequal, 0.999f);
             foreach (Node node in model.Nodes)
             {
-                RenderNode(model, node, RenderMode.Normal, invertFilter: true);
+                RenderNode(model, node, RenderMode.Decal);
+            }
+            foreach (Node node in model.Nodes)
+            {
+                RenderNode(model, node, RenderMode.Translucent);
+            }
+            foreach (Node node in model.Nodes)
+            {
+                RenderNode(model, node, RenderMode.AlphaTest);
             }
             // pass 3: translucent
-            GL.AlphaFunc(AlphaFunction.Less, 0.95f);
-            //GL.Enable(EnableCap.Blend);
+            GL.AlphaFunc(AlphaFunction.Less, 0.999f);
             GL.DepthMask(false);
-            //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             foreach (Node node in model.Nodes)
             {
-                RenderNode(model, node, RenderMode.Normal, invertFilter: true);
+                RenderNode(model, node, RenderMode.Decal);
+            }
+            foreach (Node node in model.Nodes)
+            {
+                RenderNode(model, node, RenderMode.Translucent);
+            }
+            foreach (Node node in model.Nodes)
+            {
+                RenderNode(model, node, RenderMode.AlphaTest);
             }
             GL.DepthMask(true);
             GL.Disable(EnableCap.Blend);
@@ -811,10 +830,16 @@ namespace MphRead
             int v7 = (frame - 1) >> (speed / 2) << (speed / 2);
             if (frame >= v7)
             {
-                return values[start + frame - v7 + (frame >> (speed / 2))];
+                int index = start + frame - v7 + (frame >> (speed / 2));
+                // todo: fix texcoord out of bounds index issue
+                if (index > values.Count - 1)
+                {
+                    return 0;
+                }
+                return values[index];
             }
             int index1 = frame >> (speed / 2);
-            int index2 = frame >> (speed / 2) + 1;
+            int index2 = (frame >> (speed / 2)) + 1;
             float div = 1 << (speed / 2);
             int t = frame & ((speed / 2) | 1);
             if (t != 0)
@@ -1444,6 +1469,11 @@ namespace MphRead
                 _showInvisible = !_showInvisible;
                 await PrintOutput();
             }
+            else if (e.Key == Key.E)
+            {
+                _scanVisor = !_scanVisor;
+                await PrintOutput();
+            }
             else if (e.Key == Key.R)
             {
                 ResetCamera();
@@ -1573,7 +1603,8 @@ namespace MphRead
                     else if (_selectionMode == SelectionMode.Model)
                     {
                         Model? nextModel = _models.Where(m => m.SceneId > model.SceneId &&
-                            (_showInvisible || m.Type != ModelType.Placeholder)).OrderBy(m => m.SceneId).FirstOrDefault();
+                            (_showInvisible || m.Type != ModelType.Placeholder) &&
+                            (_scanVisor || !m.ScanVisorOnly)).OrderBy(m => m.SceneId).FirstOrDefault();
                         if (nextModel == null)
                         {
                             nextModel = _models.OrderBy(m => m.SceneId).First(m => m.Meshes.Count > 0);
@@ -1636,7 +1667,8 @@ namespace MphRead
                     else if (_selectionMode == SelectionMode.Model)
                     {
                         Model? nextModel = _models.Where(m => m.SceneId < model.SceneId &&
-                            (_showInvisible || m.Type != ModelType.Placeholder)).OrderBy(m => m.SceneId).LastOrDefault();
+                            (_showInvisible || m.Type != ModelType.Placeholder) &&
+                            (_scanVisor || !m.ScanVisorOnly)).OrderBy(m => m.SceneId).LastOrDefault();
                         if (nextModel == null)
                         {
                             nextModel = _models.OrderBy(m => m.SceneId).Last(m => m.Meshes.Count > 0);
@@ -1960,7 +1992,8 @@ namespace MphRead
             await Output.Write(guid);
             Material material = SelectedModel.Materials[mesh.MaterialId];
             await Output.Write($"Material: {material.Name} [{mesh.MaterialId}] - {material.RenderMode}, {material.PolygonMode}", guid);
-            await Output.Write($"Lighting {material.Lighting}, Alpha {material.Alpha}", guid);
+            await Output.Write($"Lighting {material.Lighting}, Alpha {material.Alpha}, " +
+                $"XRepeat {material.XRepeat}, YRepeat {material.YRepeat}", guid);
             await Output.Write($"Texture ID {material.TextureId}, Palette ID {material.PaletteId}", guid);
             await Output.Write($"Diffuse ({material.Diffuse.Red}, {material.Diffuse.Green}, {material.Diffuse.Blue})" +
                 $" Ambient ({material.Ambient.Red}, {material.Ambient.Green}, {material.Ambient.Blue})" +
@@ -1987,6 +2020,7 @@ namespace MphRead
             await Output.Write($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})", guid);
             await Output.Write($" - L toggles lighting ({FormatOnOff(_lighting)})", guid);
             await Output.Write($" - G toggles fog ({FormatOnOff(_showFog)})", guid);
+            await Output.Write($" - E toggles Scan Visor ({FormatOnOff(_scanVisor)})", guid);
             await Output.Write($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})", guid);
             await Output.Write($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})", guid);
             await Output.Write(" - R resets the camera", guid);

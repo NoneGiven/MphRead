@@ -224,7 +224,16 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Object)
                 {
-                    //models.Add(LoadObject(((Entity<ObjectEntityData>)entity).Data));
+                    ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
+                    // todo: handle "-1" objects
+                    if (data.ModelId == UInt32.MaxValue)
+                    {
+                        models.Add(LoadEntityPlaceholder(entity.Type, data.Position));
+                    }
+                    else
+                    {
+                        models.Add(LoadObject(data));
+                    }
                 }
                 else if (entity.Type == EntityType.PlayerSpawn)
                 {
@@ -404,27 +413,17 @@ namespace MphRead
 
         private static Model LoadObject(ObjectEntityData data)
         {
-            int modelId = 22;
+            int modelId = (int)data.ModelId;
             ObjectMetadata meta = Metadata.GetObjectById(modelId);
             Model model = Read.GetModelByName(meta.Name, meta.RecolorId);
             model.Position = data.Position.ToFloatVector();
+            model.Transform = ComputeModelMatrices(data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector(), model.Position);
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Object;
-            //if (modelId == 45)
-            //{
-            //    model.TextureMatrices[0].M11 = 0;
-            //    model.TextureMatrices[0].M12 = 0;
-            //    model.TextureMatrices[0].M13 = 0;
-            //    model.TextureMatrices[0].M21 = -2048;
-            //    model.TextureMatrices[0].M22 = 0;
-            //    model.TextureMatrices[0].M23 = 0;
-            //    model.TextureMatrices[0].M31 = 410;
-            //    model.TextureMatrices[0].M32 = -38910;
-            //    model.TextureMatrices[0].M33 = 0;
-            //    model.TextureMatrices[0].M41 = 0;
-            //    model.TextureMatrices[0].M42 = 0;
-            //    model.TextureMatrices[0].M43 = 0;
-            //}
+            if (modelId == 0)
+            {
+                model.ScanVisorOnly = true;
+            }
             return model;
         }
 
