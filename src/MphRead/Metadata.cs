@@ -4068,7 +4068,7 @@ namespace MphRead
             /*  2 */ new ObjectMetadata("AlimbicStationShieldControl", 0),
             /*  3 */ new ObjectMetadata("AlimbicComputerStationControl", 0),
             /*  4 */ new ObjectMetadata("AlimbicEnergySensor", 0),
-            /*  5 */ new ObjectMetadata("SamusShip", 0), // sktodo: is this used?
+            /*  5 */ new ObjectMetadata("SamusShip", 0), // unused
             /*  6 */ new ObjectMetadata("Guardbot01_Dead", 0),
             /*  7 */ new ObjectMetadata("Guardbot02_Dead", 0),
             /*  8 */ new ObjectMetadata("Guardian_Dead", 0),
