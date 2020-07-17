@@ -424,22 +424,6 @@ namespace MphRead
             {
                 model.ScanVisorOnly = true;
             }
-            else if (modelId == 45)
-            {
-                var matrix = new Matrix4();
-                matrix.M11 = 0;
-                matrix.M12 = 0;
-                matrix.M13 = 0;
-                matrix.M21 = -0.5f; // fx -2048
-                matrix.M22 = 0;
-                matrix.M23 = 0;
-                matrix.M31 = 0.1f; // fx 410
-                matrix.M32 = -0.95f; // fx -3891
-                matrix.M33 = 0;
-                matrix.M41 = 0;
-                matrix.M42 = 0;
-                matrix.M43 = 0;
-            }
             return model;
         }
 
