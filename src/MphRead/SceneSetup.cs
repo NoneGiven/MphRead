@@ -413,26 +413,29 @@ namespace MphRead
 
         private static Model LoadObject(ObjectEntityData data)
         {
-            ObjectMetadata meta = Metadata.GetObjectById((int)data.ModelId);
+            int modelId = (int)data.ModelId;
+            ObjectMetadata meta = Metadata.GetObjectById(modelId);
             Model model = Read.GetModelByName(meta.Name, meta.RecolorId);
             model.Position = data.Position.ToFloatVector();
+            model.Transform = ComputeModelMatrices(data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector(), model.Position);
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Object;
-            //if (modelId == 45)
-            //{
-            //    model.TextureMatrices[0].M11 = 0;
-            //    model.TextureMatrices[0].M12 = 0;
-            //    model.TextureMatrices[0].M13 = 0;
-            //    model.TextureMatrices[0].M21 = -2048;
-            //    model.TextureMatrices[0].M22 = 0;
-            //    model.TextureMatrices[0].M23 = 0;
-            //    model.TextureMatrices[0].M31 = 410;
-            //    model.TextureMatrices[0].M32 = -38910;
-            //    model.TextureMatrices[0].M33 = 0;
-            //    model.TextureMatrices[0].M41 = 0;
-            //    model.TextureMatrices[0].M42 = 0;
-            //    model.TextureMatrices[0].M43 = 0;
-            //}
+            if (modelId == 45)
+            {
+                var matrix = new Matrix4();
+                matrix.M11 = 0;
+                matrix.M12 = 0;
+                matrix.M13 = 0;
+                matrix.M21 = -0.5f; // fx -2048
+                matrix.M22 = 0;
+                matrix.M23 = 0;
+                matrix.M31 = 0.1f; // fx 410
+                matrix.M32 = -0.95f; // fx -3891
+                matrix.M33 = 0;
+                matrix.M41 = 0;
+                matrix.M42 = 0;
+                matrix.M43 = 0;
+            }
             return model;
         }
 
