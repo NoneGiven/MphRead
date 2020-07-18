@@ -504,6 +504,7 @@ namespace MphRead
             return model;
         }
 
+        // todo: enable drawing door lock, also use "flags" to determine lock/color state
         private static Model LoadDoor(DoorEntityData data)
         {
             string modelName = Metadata.Doors[(int)data.ModelId];
