@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using OpenToolkit.Mathematics;
 
@@ -228,6 +229,8 @@ namespace MphRead
         public string TexturePath { get; }
         public string PalettePath { get; }
         public bool SeparatePaletteHeader { get; }
+        private readonly Dictionary<int, int> _replaceIds = new Dictionary<int, int>();
+        public IReadOnlyDictionary<int, int> ReplaceIds => _replaceIds;
 
         public RecolorMetadata(string name, string modelPath)
         {
@@ -246,13 +249,21 @@ namespace MphRead
         }
 
         public RecolorMetadata(string name, string modelPath, string texturePath, string palettePath,
-            bool separatePaletteHeader = false)
+            bool separatePaletteHeader = false, Dictionary<int, int>? replaceIds = null)
         {
             Name = name;
             ModelPath = modelPath;
             TexturePath = texturePath;
             PalettePath = palettePath;
             SeparatePaletteHeader = separatePaletteHeader;
+            if (replaceIds != null)
+            {
+                Debug.Assert(separatePaletteHeader);
+                foreach (KeyValuePair<int, int> kvp in replaceIds)
+                {
+                    _replaceIds.Add(kvp.Key, kvp.Value);
+                }
+            }
         }
     }
 
@@ -4009,6 +4020,11 @@ namespace MphRead
             /* 3 */ "AlimbicThinDoor",
         };
 
+        public static readonly IReadOnlyList<int> DoorPalettes = new List<int>()
+        {
+            0, 1, 2, 7, 6, 3, 4, 5, 0, 0
+        };
+
         public static readonly IReadOnlyList<string> JumpPads = new List<string>()
         {
             /* 0 */ "JumpPad",
@@ -4220,7 +4236,61 @@ namespace MphRead
                 },
                 {
                     "AlimbicDoor",
-                    new ModelMetadata("AlimbicDoor")
+                    new ModelMetadata("AlimbicDoor",
+                        modelPath: @"models\AlimbicDoor_Model.bin",
+                        animationPath: @"models\AlimbicDoor_Anim.bin",
+                        collisionPath: null,
+                        new List<RecolorMetadata>()
+                        {
+                            new RecolorMetadata("pal_01",
+                                modelPath: @"models\AlimbicDoor_Model.bin",
+                                texturePath: @"models\AlimbicDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, int>() { { 0, 1 } }),
+                            new RecolorMetadata("pal_02",
+                                modelPath: @"models\AlimbicDoor_Model.bin",
+                                texturePath: @"models\AlimbicDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, int>() { { 1, 1 } }),
+                            new RecolorMetadata("pal_03",
+                                modelPath: @"models\AlimbicDoor_Model.bin",
+                                texturePath: @"models\AlimbicDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, int>() { { 2, 1 } }),
+                            new RecolorMetadata("pal_04",
+                                modelPath: @"models\AlimbicDoor_Model.bin",
+                                texturePath: @"models\AlimbicDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, int>() { { 3, 1 } }),
+                            new RecolorMetadata("pal_05",
+                                modelPath: @"models\AlimbicDoor_Model.bin",
+                                texturePath: @"models\AlimbicDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, int>() { { 4, 1 } }),
+                            new RecolorMetadata("pal_06",
+                                modelPath: @"models\AlimbicDoor_Model.bin",
+                                texturePath: @"models\AlimbicDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, int>() { { 5, 1 } }),
+                            new RecolorMetadata("pal_07",
+                                modelPath: @"models\AlimbicDoor_Model.bin",
+                                texturePath: @"models\AlimbicDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, int>() { { 6, 1 } }),
+                            new RecolorMetadata("pal_08",
+                                modelPath: @"models\AlimbicDoor_Model.bin",
+                                texturePath: @"models\AlimbicDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, int>() { { 7, 1 } })
+                        })
                 },
                 {
                     "AlimbicEnergySensor",
@@ -4260,7 +4330,61 @@ namespace MphRead
                 },
                 {
                     "AlimbicThinDoor",
-                    new ModelMetadata("AlimbicThinDoor")
+                    new ModelMetadata("AlimbicThinDoor",
+                        modelPath: @"models\AlimbicThinDoor_Model.bin",
+                        animationPath: @"models\AlimbicThinDoor_Anim.bin",
+                        collisionPath: null,
+                        new List<RecolorMetadata>()
+                        {
+                            new RecolorMetadata("pal_01",
+                                modelPath: @"models\AlimbicThinDoor_Model.bin",
+                                texturePath: @"models\AlimbicThinDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, int>() { { 0, 1 } }),
+                            new RecolorMetadata("pal_02",
+                                modelPath: @"models\AlimbicThinDoor_Model.bin",
+                                texturePath: @"models\AlimbicThinDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, int>() { { 1, 1 } }),
+                            new RecolorMetadata("pal_03",
+                                modelPath: @"models\AlimbicThinDoor_Model.bin",
+                                texturePath: @"models\AlimbicThinDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, int>() { { 2, 1 } }),
+                            new RecolorMetadata("pal_04",
+                                modelPath: @"models\AlimbicThinDoor_Model.bin",
+                                texturePath: @"models\AlimbicThinDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, int>() { { 3, 1 } }),
+                            new RecolorMetadata("pal_05",
+                                modelPath: @"models\AlimbicThinDoor_Model.bin",
+                                texturePath: @"models\AlimbicThinDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, int>() { { 4, 1 } }),
+                            new RecolorMetadata("pal_06",
+                                modelPath: @"models\AlimbicThinDoor_Model.bin",
+                                texturePath: @"models\AlimbicThinDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, int>() { { 5, 1 } }),
+                            new RecolorMetadata("pal_07",
+                                modelPath: @"models\AlimbicThinDoor_Model.bin",
+                                texturePath: @"models\AlimbicThinDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, int>() { { 6, 1 } }),
+                            new RecolorMetadata("pal_08",
+                                modelPath: @"models\AlimbicThinDoor_Model.bin",
+                                texturePath: @"models\AlimbicThinDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, int>() { { 7, 1 } })
+                        })
                 },
                 {
                     "Alimbic_Console",

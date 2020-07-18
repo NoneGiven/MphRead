@@ -137,7 +137,7 @@ namespace MphRead
                     textureBytes = ReadBytes(meta.TexturePath);
                 }
                 ReadOnlySpan<byte> paletteBytes = textureBytes;
-                if (meta.PalettePath != meta.TexturePath)
+                if (meta.PalettePath != meta.TexturePath && meta.ReplaceIds.Count == 0)
                 {
                     paletteBytes = ReadBytes(meta.PalettePath);
                     if (meta.SeparatePaletteHeader)
@@ -155,6 +155,25 @@ namespace MphRead
                 foreach (Palette palette in palettes)
                 {
                     paletteData.Add(GetPaletteData(palette, paletteBytes));
+                }
+                if (meta.PalettePath != meta.TexturePath && meta.ReplaceIds.Count > 0)
+                {
+                    paletteBytes = ReadBytes(meta.PalettePath);
+                    Header paletteHeader = ReadStruct<Header>(paletteBytes[0..Sizes.Header]);
+                    IReadOnlyList<Palette> replacePalettes
+                        = DoOffsets<Palette>(paletteBytes, paletteHeader.PaletteOffset, paletteHeader.PaletteCount);
+                    var replacePaletteData = new List<IReadOnlyList<PaletteData>>();
+                    foreach (Palette palette in replacePalettes)
+                    {
+                        replacePaletteData.Add(GetPaletteData(palette, paletteBytes));
+                    }
+                    for (int i = 0; i < replacePaletteData.Count; i++)
+                    {
+                        if (meta.ReplaceIds.TryGetValue(i, out int replaceId))
+                        {
+                            paletteData[replaceId] = replacePaletteData[i];
+                        }
+                    }
                 }
                 recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
             }

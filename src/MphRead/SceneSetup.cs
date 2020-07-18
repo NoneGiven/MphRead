@@ -504,19 +504,24 @@ namespace MphRead
             return model;
         }
 
-        // todo: load correct palette from Alimbic texture share
         private static Model LoadDoor(DoorEntityData data)
         {
             string modelName = Metadata.Doors[(int)data.ModelId];
-            Model model = Read.GetModelByName(modelName);
+            int recolorId = 0;
+            // AlimbicDoor, AlimbicThinDoor
+            if (data.ModelId == 0 || data.ModelId == 3)
+            {
+                recolorId = Metadata.DoorPalettes[(int)data.PaletteId];
+            }
+            Model model = Read.GetModelByName(modelName, recolorId);
             model.Position = data.Position.ToFloatVector();
             model.Transform = ComputeModelMatrices(data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector(), model.Position);
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             return model;
         }
-
-        // todo: load the right door, etc.
+        
+        // todo: confirm that only the normal door is used
         private static Model LoadDoor(FhDoorEntityData data)
         {
             Model model = Read.GetModelByName("door", firstHunt: true);
