@@ -4042,7 +4042,7 @@ namespace MphRead
             /*  1 */ ("pick_health_A", 0.424316406f),
             /*  2 */ ("pick_health_C", 0.524414063f),
             /*  3 */ ("pick_dblDamage", 0.521484375f),
-            /*  4 */ ("PickUp_EnergyExp", 1.39990234f),
+            /*  4 */ ("PickUp_EnergyExp", 0.286621094f),
             /*  5 */ ("pick_wpn_electro", 0.558837891f),
             /*  6 */ ("PickUp_MissileExp", 0.515136719f),
             /*  7 */ ("pick_wpn_jackhammer", 0.540771484f),
