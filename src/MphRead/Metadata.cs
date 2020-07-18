@@ -4190,7 +4190,7 @@ namespace MphRead
             /* 41 */ "piston_gorealand",
             /* 42 */ null,
             /* 43 */ null,
-            /* 44 */ "SamusShip" // sktodo: how/why is this different from 23?
+            /* 44 */ "SamusShip" // todo: how/why is this different from 23?
         };
 
         public static string? GetPlatformById(int id)
