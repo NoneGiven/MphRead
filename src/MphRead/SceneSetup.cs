@@ -504,6 +504,7 @@ namespace MphRead
             return model;
         }
 
+        // todo: AlimbicThinDoor needs to recolor the model, not the glow
         private static Model LoadDoor(DoorEntityData data)
         {
             string modelName = Metadata.Doors[(int)data.ModelId];
