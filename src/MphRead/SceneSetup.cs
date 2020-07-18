@@ -442,7 +442,7 @@ namespace MphRead
             model.Type = ModelType.Generic;
             return model;
         }
-        
+
         // todo: use more properties
         private static Model LoadFhPlatform(FhPlatformEntityData data)
         {
@@ -521,7 +521,7 @@ namespace MphRead
             model.Type = ModelType.Generic;
             return model;
         }
-        
+
         // todo: confirm that only the normal door is used
         private static Model LoadDoor(FhDoorEntityData data)
         {
