@@ -4119,55 +4119,6 @@ namespace MphRead
             /* 53 */ new ObjectMetadata("WallSwitch", 1, animationIds: new List<int>() { 2, 0, 1, 0 })
         };
 
-        private static readonly IReadOnlyList<string> _platforms = new List<string>()
-        {
-            /*  0 */ "pick_wpn_missile",
-            /*  1 */ "pick_wpn_missile",
-            /*  2 */ "pick_wpn_missile",
-            /*  3 */ "Elevator",
-            /*  4 */ "smasher",
-            /*  5 */ "Platform_Unit4_C1",
-            /*  6 */ "pillar",
-            /*  7 */ "Door_Unit4_RM1",
-            /*  8 */ "pick_wpn_missile",
-            /*  9 */ "pistonmp7",
-            /* 10 */ "pick_wpn_missile",
-            /* 11 */ "unit4_mover1",
-            /* 12 */ "unit4_mover2",
-            /* 13 */ "pick_wpn_missile",
-            /* 14 */ "unit4_mover3",
-            /* 15 */ "pick_wpn_missile",
-            /* 16 */ "pick_wpn_missile",
-            /* 17 */ "cylinderbase",
-            /* 18 */ "unit3_platform",
-            /* 19 */ "unit3_platform2",
-            /* 20 */ "pick_wpn_missile",
-            /* 21 */ "SyluxShip",
-            /* 22 */ "pick_wpn_missile",
-            /* 23 */ "SamusShip",
-            /* 24 */ "unit1_land_plat1",
-            /* 25 */ "unit1_land_plat2",
-            /* 26 */ "unit1_land_plat3",
-            /* 27 */ "unit1_land_plat4",
-            /* 28 */ "unit1_land_plat5",
-            /* 29 */ "pick_wpn_missile",
-            /* 30 */ "unit2_land_elev",
-            /* 31 */ "pick_wpn_missile",
-            /* 32 */ "Crate01",
-            /* 33 */ "pick_wpn_missile",
-            /* 34 */ "pick_wpn_missile",
-            /* 35 */ "pick_wpn_missile",
-            /* 36 */ "unit4_mover3",
-            /* 37 */ "unit4_mover4",
-            /* 38 */ "unit3_mover1",
-            /* 39 */ "unit2_c1_mover",
-            /* 40 */ "unit3_mover2",
-            /* 41 */ "piston_gorealand",
-            /* 42 */ "pick_wpn_missile",
-            /* 43 */ "pick_wpn_missile",
-            /* 44 */ "SamusShip" // sktodo: how/why is this different from 23?
-        };
-
         public static ObjectMetadata GetObjectById(int id)
         {
             if (id < 0 || id > _objects.Count)
@@ -4175,6 +4126,64 @@ namespace MphRead
                 throw new ArgumentException(nameof(id));
             }
             return _objects[id];
+        }
+
+        private static readonly IReadOnlyList<string?> _platforms = new List<string?>()
+        {
+            /*  0 */ null,
+            /*  1 */ null,
+            /*  2 */ null,
+            /*  3 */ "Elevator",
+            /*  4 */ "smasher",
+            /*  5 */ "Platform_Unit4_C1",
+            /*  6 */ "pillar",
+            /*  7 */ "Door_Unit4_RM1",
+            /*  8 */ null,
+            /*  9 */ "pistonmp7",
+            /* 10 */ null,
+            /* 11 */ "unit4_mover1",
+            /* 12 */ "unit4_mover2",
+            /* 13 */ null,
+            /* 14 */ "unit4_mover3",
+            /* 15 */ null,
+            /* 16 */ null,
+            /* 17 */ "cylinderbase",
+            /* 18 */ "unit3_platform",
+            /* 19 */ "unit3_platform2",
+            /* 20 */ null,
+            /* 21 */ "SyluxShip",
+            /* 22 */ null,
+            /* 23 */ "SamusShip",
+            /* 24 */ "unit1_land_plat1",
+            /* 25 */ "unit1_land_plat2",
+            /* 26 */ "unit1_land_plat3",
+            /* 27 */ "unit1_land_plat4",
+            /* 28 */ "unit1_land_plat5",
+            /* 29 */ "unit2_c4_plat",
+            /* 30 */ "unit2_land_elev",
+            /* 31 */ null,
+            /* 32 */ "Crate01",
+            /* 33 */ null,
+            /* 34 */ "unit1_mover2",
+            /* 35 */ "unit2_mover1",
+            /* 36 */ "unit4_mover3",
+            /* 37 */ "unit4_mover4",
+            /* 38 */ "unit3_mover1",
+            /* 39 */ "unit2_c1_mover",
+            /* 40 */ "unit3_mover2",
+            /* 41 */ "piston_gorealand",
+            /* 42 */ null,
+            /* 43 */ null,
+            /* 44 */ "SamusShip" // sktodo: how/why is this different from 23?
+        };
+
+        public static string? GetPlatformById(int id)
+        {
+            if (id < 0 || id > _platforms.Count)
+            {
+                throw new ArgumentException(nameof(id));
+            }
+            return _platforms[id];
         }
 
         // todo: e.g. lod1 in the model folder should have the animation files from the lod0 archive

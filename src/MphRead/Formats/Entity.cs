@@ -41,13 +41,9 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint FieldC;  // Vector1.X?
-        public readonly uint Field10; // Vector1.Y?
-        public readonly uint Field14; // Vector1.Z?
-        public readonly uint Field18; // Vector2.X? // sktodo: is this always scale? should these be part of the header?
-        public readonly uint Field1C; // Vector2.Y?
-        public readonly uint Field20; // Vector2.Z?
-        public readonly uint Field24; // some flag?
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
+        public readonly uint Field24;
         public readonly uint ModelId;
         public readonly uint Field2C;
         public readonly uint Field30;

@@ -216,7 +216,7 @@ namespace MphRead
             {
                 if (entity.Type == EntityType.Platform)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<PlatformEntityData>)entity).Data.Position));
+                    models.Add(LoadPlatform(((Entity<PlatformEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhPlatform)
                 {
@@ -427,6 +427,22 @@ namespace MphRead
             return model;
         }
 
+        // todo: use more properties
+        private static Model LoadPlatform(PlatformEntityData data)
+        {
+            string? name = Metadata.GetPlatformById((int)data.ModelId);
+            if (name == null)
+            {
+                return LoadEntityPlaceholder(EntityType.Platform, data.Position);
+            }
+            Model model = Read.GetModelByName(name);
+            model.Position = data.Position.ToFloatVector();
+            model.Transform = ComputeModelMatrices(data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector(), model.Position);
+            ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Generic;
+            return model;
+        }
+        
         // todo: use more properties
         private static Model LoadFhPlatform(FhPlatformEntityData data)
         {
