@@ -229,8 +229,8 @@ namespace MphRead
         public string TexturePath { get; }
         public string PalettePath { get; }
         public bool SeparatePaletteHeader { get; }
-        private readonly Dictionary<int, int> _replaceIds = new Dictionary<int, int>();
-        public IReadOnlyDictionary<int, int> ReplaceIds => _replaceIds;
+        private readonly Dictionary<int, IEnumerable<int>> _replaceIds = new Dictionary<int, IEnumerable<int>>();
+        public IReadOnlyDictionary<int, IEnumerable<int>> ReplaceIds => _replaceIds;
 
         public RecolorMetadata(string name, string modelPath)
         {
@@ -249,7 +249,7 @@ namespace MphRead
         }
 
         public RecolorMetadata(string name, string modelPath, string texturePath, string palettePath,
-            bool separatePaletteHeader = false, Dictionary<int, int>? replaceIds = null)
+            bool separatePaletteHeader = false, Dictionary<int, IEnumerable<int>>? replaceIds = null)
         {
             Name = name;
             ModelPath = modelPath;
@@ -259,7 +259,7 @@ namespace MphRead
             if (replaceIds != null)
             {
                 Debug.Assert(separatePaletteHeader);
-                foreach (KeyValuePair<int, int> kvp in replaceIds)
+                foreach (KeyValuePair<int, IEnumerable<int>> kvp in replaceIds)
                 {
                     _replaceIds.Add(kvp.Key, kvp.Value);
                 }
@@ -4247,49 +4247,49 @@ namespace MphRead
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separatePaletteHeader: true,
-                                replaceIds: new Dictionary<int, int>() { { 0, 1 } }),
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_02",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separatePaletteHeader: true,
-                                replaceIds: new Dictionary<int, int>() { { 1, 1 } }),
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_03",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separatePaletteHeader: true,
-                                replaceIds: new Dictionary<int, int>() { { 2, 1 } }),
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_04",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separatePaletteHeader: true,
-                                replaceIds: new Dictionary<int, int>() { { 3, 1 } }),
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_05",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separatePaletteHeader: true,
-                                replaceIds: new Dictionary<int, int>() { { 4, 1 } }),
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_06",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separatePaletteHeader: true,
-                                replaceIds: new Dictionary<int, int>() { { 5, 1 } }),
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_07",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separatePaletteHeader: true,
-                                replaceIds: new Dictionary<int, int>() { { 6, 1 } }),
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_08",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separatePaletteHeader: true,
-                                replaceIds: new Dictionary<int, int>() { { 7, 1 } })
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 1 } } })
                         })
                 },
                 {
@@ -4341,49 +4341,49 @@ namespace MphRead
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separatePaletteHeader: true,
-                                replaceIds: new Dictionary<int, int>() { { 0, 1 } }),
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_02",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separatePaletteHeader: true,
-                                replaceIds: new Dictionary<int, int>() { { 1, 1 } }),
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_03",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separatePaletteHeader: true,
-                                replaceIds: new Dictionary<int, int>() { { 2, 1 } }),
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_04",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separatePaletteHeader: true,
-                                replaceIds: new Dictionary<int, int>() { { 3, 1 } }),
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_05",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separatePaletteHeader: true,
-                                replaceIds: new Dictionary<int, int>() { { 4, 1 } }),
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_06",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separatePaletteHeader: true,
-                                replaceIds: new Dictionary<int, int>() { { 5, 1 } }),
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_07",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separatePaletteHeader: true,
-                                replaceIds: new Dictionary<int, int>() { { 6, 1 } }),
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_08",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separatePaletteHeader: true,
-                                replaceIds: new Dictionary<int, int>() { { 7, 1 } })
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 1, 2 } } })
                         })
                 },
                 {

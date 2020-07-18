@@ -169,9 +169,13 @@ namespace MphRead
                     }
                     for (int i = 0; i < replacePaletteData.Count; i++)
                     {
-                        if (meta.ReplaceIds.TryGetValue(i, out int replaceId))
+                        if (meta.ReplaceIds.TryGetValue(i, out IEnumerable<int>? replaceIds))
                         {
-                            paletteData[replaceId] = replacePaletteData[i];
+                            // note: palette header is not being replaced
+                            foreach (int replaceId in replaceIds)
+                            {
+                                paletteData[replaceId] = replacePaletteData[i];
+                            }
                         }
                     }
                 }
