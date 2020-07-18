@@ -216,16 +216,16 @@ namespace MphRead
             {
                 if (entity.Type == EntityType.Platform)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<PlatformEntityData>)entity).Data.Position));
+                    models.Add(LoadPlatform(((Entity<PlatformEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhPlatform)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhPlatformEntityData>)entity).Data.Position));
+                    models.Add(LoadFhPlatform(((Entity<FhPlatformEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.Object)
                 {
                     ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
-                    // todo: handle "-1" objects
+                    // todo: handle "-1" objects (scan points?)
                     if (data.ModelId == UInt32.MaxValue)
                     {
                         models.Add(LoadEntityPlaceholder(entity.Type, data.Position));
@@ -427,6 +427,32 @@ namespace MphRead
             return model;
         }
 
+        // todo: use more properties
+        private static Model LoadPlatform(PlatformEntityData data)
+        {
+            string? name = Metadata.GetPlatformById((int)data.ModelId);
+            if (name == null)
+            {
+                return LoadEntityPlaceholder(EntityType.Platform, data.Position);
+            }
+            Model model = Read.GetModelByName(name);
+            model.Position = data.Position.ToFloatVector();
+            model.Transform = ComputeModelMatrices(data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector(), model.Position);
+            ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Generic;
+            return model;
+        }
+
+        // todo: use more properties
+        private static Model LoadFhPlatform(FhPlatformEntityData data)
+        {
+            Model model = Read.GetModelByName("platform", firstHunt: true);
+            model.Position = data.Position.ToFloatVector();
+            ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Generic;
+            return model;
+        }
+
         private static Model LoadItem(ItemEntityData data)
         {
             (string name, float offset) = Metadata.Items[(int)data.ModelId];
@@ -478,26 +504,31 @@ namespace MphRead
             return model;
         }
 
-        // todo: load correct palette from Alimbic texture share
         private static Model LoadDoor(DoorEntityData data)
         {
             string modelName = Metadata.Doors[(int)data.ModelId];
-            Model model = Read.GetModelByName(modelName);
+            int recolorId = 0;
+            // AlimbicDoor, AlimbicThinDoor
+            if (data.ModelId == 0 || data.ModelId == 3)
+            {
+                recolorId = Metadata.DoorPalettes[(int)data.PaletteId];
+            }
+            Model model = Read.GetModelByName(modelName, recolorId);
             model.Position = data.Position.ToFloatVector();
-            model.Rotation = GetUnitRotation(data.Rotation);
-            model.Type = ModelType.Generic;
+            model.Transform = ComputeModelMatrices(data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector(), model.Position);
             ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Generic;
             return model;
         }
 
-        // todo: load the right door, etc.
+        // todo: confirm that only the normal door is used
         private static Model LoadDoor(FhDoorEntityData data)
         {
             Model model = Read.GetModelByName("door", firstHunt: true);
             model.Position = data.Position.ToFloatVector();
-            model.Rotation = GetUnitRotation(data.Rotation);
-            model.Type = ModelType.Generic;
+            model.Transform = ComputeModelMatrices(data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector(), model.Position);
             ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Generic;
             return model;
         }
 
@@ -543,25 +574,6 @@ namespace MphRead
             model.Type = ModelType.Placeholder;
             ComputeNodeMatrices(model, index: 0);
             return model;
-        }
-
-        private static Vector3 GetUnitRotation(Vector3Fx rotation)
-        {
-            var start = new Vector3(0, 0, 1);
-            Vector3 end = rotation.ToFloatVector();
-            if (start == end)
-            {
-                return start;
-            }
-            var cross = Vector3.Cross(start, end);
-            // if the vector is antiparallel to the default, just rotate 180 in Y
-            if (cross.Length == 0)
-            {
-                return new Vector3(0, -180, 0);
-            }
-            cross.Normalize();
-            float angle = MathHelper.RadiansToDegrees(Vector3.CalculateAngle(start, end));
-            return new Vector3(cross.X * angle, cross.Y * angle, cross.Z * angle);
         }
     }
 }

@@ -613,8 +613,8 @@ namespace MphRead
             {
                 return 1;
             }
-            float distanceOne = Vector3.Distance(_cameraPosition, one.Position);
-            float distanceTwo = Vector3.Distance(_cameraPosition, two.Position);
+            float distanceOne = Vector3.Distance(-1 * _cameraPosition, one.Position);
+            float distanceTwo = Vector3.Distance(-1 * _cameraPosition, two.Position);
             if (distanceOne == distanceTwo)
             {
                 return 0;

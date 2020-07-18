@@ -33,7 +33,7 @@ namespace MphRead
     public readonly struct EntityDataHeader
     {
         public readonly ushort Type;
-        public readonly ushort SomeId;
+        public readonly ushort EntityId; // counts up
     }
 
     // size: 588
@@ -41,14 +41,10 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint FieldC;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
-        public readonly uint Field28;
+        public readonly uint ModelId;
         public readonly uint Field2C;
         public readonly uint Field30;
         public readonly uint Field34;

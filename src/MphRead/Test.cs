@@ -177,6 +177,10 @@ namespace MphRead
                             if (entity.Type == EntityType.Object)
                             {
                                 ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
+                                if (data.ModelId == 5)
+                                {
+                                    System.Diagnostics.Debugger.Break();
+                                }
                             }
                         }
                     }

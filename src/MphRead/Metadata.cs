@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using OpenToolkit.Mathematics;
 
@@ -228,6 +229,8 @@ namespace MphRead
         public string TexturePath { get; }
         public string PalettePath { get; }
         public bool SeparatePaletteHeader { get; }
+        private readonly Dictionary<int, IEnumerable<int>> _replaceIds = new Dictionary<int, IEnumerable<int>>();
+        public IReadOnlyDictionary<int, IEnumerable<int>> ReplaceIds => _replaceIds;
 
         public RecolorMetadata(string name, string modelPath)
         {
@@ -246,13 +249,21 @@ namespace MphRead
         }
 
         public RecolorMetadata(string name, string modelPath, string texturePath, string palettePath,
-            bool separatePaletteHeader = false)
+            bool separatePaletteHeader = false, Dictionary<int, IEnumerable<int>>? replaceIds = null)
         {
             Name = name;
             ModelPath = modelPath;
             TexturePath = texturePath;
             PalettePath = palettePath;
             SeparatePaletteHeader = separatePaletteHeader;
+            if (replaceIds != null)
+            {
+                Debug.Assert(separatePaletteHeader);
+                foreach (KeyValuePair<int, IEnumerable<int>> kvp in replaceIds)
+                {
+                    _replaceIds.Add(kvp.Key, kvp.Value);
+                }
+            }
         }
     }
 
@@ -4009,6 +4020,11 @@ namespace MphRead
             /* 3 */ "AlimbicThinDoor",
         };
 
+        public static readonly IReadOnlyList<int> DoorPalettes = new List<int>()
+        {
+            0, 1, 2, 7, 6, 3, 4, 5, 0, 0
+        };
+
         public static readonly IReadOnlyList<string> JumpPads = new List<string>()
         {
             /* 0 */ "JumpPad",
@@ -4061,14 +4077,14 @@ namespace MphRead
             /* 7 */ "pick_wpn_missile"
         };
 
-        private static readonly List<ObjectMetadata> _objects = new List<ObjectMetadata>()
+        private static readonly IReadOnlyList<ObjectMetadata> _objects = new List<ObjectMetadata>()
         {
             /*  0 */ new ObjectMetadata("AlimbicGhost_01", 0),
             /*  1 */ new ObjectMetadata("AlimbicLightPole", 0),
             /*  2 */ new ObjectMetadata("AlimbicStationShieldControl", 0),
             /*  3 */ new ObjectMetadata("AlimbicComputerStationControl", 0),
             /*  4 */ new ObjectMetadata("AlimbicEnergySensor", 0),
-            /*  5 */ new ObjectMetadata("SamusShip", 0),
+            /*  5 */ new ObjectMetadata("SamusShip", 0), // unused
             /*  6 */ new ObjectMetadata("Guardbot01_Dead", 0),
             /*  7 */ new ObjectMetadata("Guardbot02_Dead", 0),
             /*  8 */ new ObjectMetadata("Guardian_Dead", 0),
@@ -4128,13 +4144,62 @@ namespace MphRead
             return _objects[id];
         }
 
-        public static ObjectMetadata? GetObjectByName(string name)
+        private static readonly IReadOnlyList<string?> _platforms = new List<string?>()
         {
-            if (_objects.Any(o => o.Name == name))
+            /*  0 */ null,
+            /*  1 */ null,
+            /*  2 */ null,
+            /*  3 */ "Elevator",
+            /*  4 */ "smasher",
+            /*  5 */ "Platform_Unit4_C1",
+            /*  6 */ "pillar",
+            /*  7 */ "Door_Unit4_RM1",
+            /*  8 */ null,
+            /*  9 */ "pistonmp7",
+            /* 10 */ null,
+            /* 11 */ "unit4_mover1",
+            /* 12 */ "unit4_mover2",
+            /* 13 */ null,
+            /* 14 */ "unit4_mover3",
+            /* 15 */ null,
+            /* 16 */ null,
+            /* 17 */ "cylinderbase",
+            /* 18 */ "unit3_platform",
+            /* 19 */ "unit3_platform2",
+            /* 20 */ null,
+            /* 21 */ "SyluxShip",
+            /* 22 */ null,
+            /* 23 */ "SamusShip",
+            /* 24 */ "unit1_land_plat1",
+            /* 25 */ "unit1_land_plat2",
+            /* 26 */ "unit1_land_plat3",
+            /* 27 */ "unit1_land_plat4",
+            /* 28 */ "unit1_land_plat5",
+            /* 29 */ "unit2_c4_plat",
+            /* 30 */ "unit2_land_elev",
+            /* 31 */ null,
+            /* 32 */ "Crate01",
+            /* 33 */ null,
+            /* 34 */ "unit1_mover2",
+            /* 35 */ "unit2_mover1",
+            /* 36 */ "unit4_mover3",
+            /* 37 */ "unit4_mover4",
+            /* 38 */ "unit3_mover1",
+            /* 39 */ "unit2_c1_mover",
+            /* 40 */ "unit3_mover2",
+            /* 41 */ "piston_gorealand",
+            /* 42 */ null,
+            /* 43 */ null,
+            /* 44 */ "SamusShip" // todo: how/why is this different from 23?
+        };
+
+        public static string? GetPlatformById(int id)
+        {
+            if (id < 0 || id > _platforms.Count)
             {
-                return _objects.First(o => o.Name == name);
+                throw new ArgumentException(nameof(id));
             }
-            return null;
+            return _platforms[id];
         }
 
         // todo: e.g. lod1 in the model folder should have the animation files from the lod0 archive
@@ -4171,7 +4236,61 @@ namespace MphRead
                 },
                 {
                     "AlimbicDoor",
-                    new ModelMetadata("AlimbicDoor")
+                    new ModelMetadata("AlimbicDoor",
+                        modelPath: @"models\AlimbicDoor_Model.bin",
+                        animationPath: @"models\AlimbicDoor_Anim.bin",
+                        collisionPath: null,
+                        new List<RecolorMetadata>()
+                        {
+                            new RecolorMetadata("pal_01",
+                                modelPath: @"models\AlimbicDoor_Model.bin",
+                                texturePath: @"models\AlimbicDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 1 } } }),
+                            new RecolorMetadata("pal_02",
+                                modelPath: @"models\AlimbicDoor_Model.bin",
+                                texturePath: @"models\AlimbicDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 1 } } }),
+                            new RecolorMetadata("pal_03",
+                                modelPath: @"models\AlimbicDoor_Model.bin",
+                                texturePath: @"models\AlimbicDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 1 } } }),
+                            new RecolorMetadata("pal_04",
+                                modelPath: @"models\AlimbicDoor_Model.bin",
+                                texturePath: @"models\AlimbicDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 1 } } }),
+                            new RecolorMetadata("pal_05",
+                                modelPath: @"models\AlimbicDoor_Model.bin",
+                                texturePath: @"models\AlimbicDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 1 } } }),
+                            new RecolorMetadata("pal_06",
+                                modelPath: @"models\AlimbicDoor_Model.bin",
+                                texturePath: @"models\AlimbicDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 1 } } }),
+                            new RecolorMetadata("pal_07",
+                                modelPath: @"models\AlimbicDoor_Model.bin",
+                                texturePath: @"models\AlimbicDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 1 } } }),
+                            new RecolorMetadata("pal_08",
+                                modelPath: @"models\AlimbicDoor_Model.bin",
+                                texturePath: @"models\AlimbicDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 1 } } })
+                        })
                 },
                 {
                     "AlimbicEnergySensor",
@@ -4211,7 +4330,61 @@ namespace MphRead
                 },
                 {
                     "AlimbicThinDoor",
-                    new ModelMetadata("AlimbicThinDoor")
+                    new ModelMetadata("AlimbicThinDoor",
+                        modelPath: @"models\AlimbicThinDoor_Model.bin",
+                        animationPath: @"models\AlimbicThinDoor_Anim.bin",
+                        collisionPath: null,
+                        new List<RecolorMetadata>()
+                        {
+                            new RecolorMetadata("pal_01",
+                                modelPath: @"models\AlimbicThinDoor_Model.bin",
+                                texturePath: @"models\AlimbicThinDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 1, 2 } } }),
+                            new RecolorMetadata("pal_02",
+                                modelPath: @"models\AlimbicThinDoor_Model.bin",
+                                texturePath: @"models\AlimbicThinDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 1, 2 } } }),
+                            new RecolorMetadata("pal_03",
+                                modelPath: @"models\AlimbicThinDoor_Model.bin",
+                                texturePath: @"models\AlimbicThinDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 1, 2 } } }),
+                            new RecolorMetadata("pal_04",
+                                modelPath: @"models\AlimbicThinDoor_Model.bin",
+                                texturePath: @"models\AlimbicThinDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 1, 2 } } }),
+                            new RecolorMetadata("pal_05",
+                                modelPath: @"models\AlimbicThinDoor_Model.bin",
+                                texturePath: @"models\AlimbicThinDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 1, 2 } } }),
+                            new RecolorMetadata("pal_06",
+                                modelPath: @"models\AlimbicThinDoor_Model.bin",
+                                texturePath: @"models\AlimbicThinDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 1, 2 } } }),
+                            new RecolorMetadata("pal_07",
+                                modelPath: @"models\AlimbicThinDoor_Model.bin",
+                                texturePath: @"models\AlimbicThinDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 1, 2 } } }),
+                            new RecolorMetadata("pal_08",
+                                modelPath: @"models\AlimbicThinDoor_Model.bin",
+                                texturePath: @"models\AlimbicThinDoor_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 1, 2 } } })
+                        })
                 },
                 {
                     "Alimbic_Console",
@@ -5538,6 +5711,14 @@ namespace MphRead
                         archive: "localSylux")
                 },
                 {
+                    "SyluxShip",
+                    new ModelMetadata("SyluxShip", collision: true)
+                },
+                {
+                    "SyluxTurret",
+                    new ModelMetadata("SyluxTurret")
+                },
+                {
                     "TearParticle",
                     new ModelMetadata("TearParticle", animation: false, texture: true)
                 },
@@ -5815,6 +5996,10 @@ namespace MphRead
                 {
                     "unit3_platform2",
                     new ModelMetadata("unit3_platform2", animation: false, collision: true)
+                },
+                {
+                    "unit4_mover1",
+                    new ModelMetadata("unit4_mover1", collision: true)
                 },
                 {
                     "unit4_mover2",
