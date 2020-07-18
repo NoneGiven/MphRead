@@ -33,7 +33,7 @@ namespace MphRead
     public readonly struct EntityDataHeader
     {
         public readonly ushort Type;
-        public readonly ushort SomeId;
+        public readonly ushort EntityId; // counts up
     }
 
     // size: 588
