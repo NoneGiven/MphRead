@@ -317,7 +317,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Teleporter)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<TeleporterEntityData>)entity).Data.Position));
+                    models.Add(LoadTeleporter(((Entity<TeleporterEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.Unknown15)
                 {
@@ -463,6 +463,25 @@ namespace MphRead
             return model;
         }
 
+        // todo: palette
+        private static Model LoadTeleporter(TeleporterEntityData data)
+        {
+            if (data.Invisible != 0)
+            {
+                return LoadEntityPlaceholder(EntityType.Teleporter, data.Position);
+            }
+            int flags = data.ArtifactId < 8 && data.Invisible == 0 ? 2 : 0;
+            // sktodo: TeleporterMP
+            Model model = Read.GetModelByName((flags & 2) == 0 ? "TeleporterSmall" : "Teleporter");
+            model.Position = data.Position.ToFloatVector();
+            Vector3 scale = model.Scale;
+            model.Transform = ComputeModelMatrices(data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector(), model.Position);
+            model.Scale = scale;
+            ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Generic;
+            return model;
+        }
+
         // todo: Energy Tank height is still not right
         private static IEnumerable<Model> LoadItem(ItemEntityData data)
         {
@@ -568,20 +587,22 @@ namespace MphRead
             { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) },
             { EntityType.FhPlatform, new ColorRgb(0x2F, 0x4F, 0x4F) },
             { EntityType.Object, new ColorRgb(0x22, 0x8B, 0x22) },
-            { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
-            { EntityType.FhPlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.Enemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.FhEnemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.Unknown7, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.FhUnknown9, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.Unknown8, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.FhUnknown10, new ColorRgb(0xFF, 0xFF, 0x00) },
-            { EntityType.CameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
-            { EntityType.FhCameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
             { EntityType.Unknown12, new ColorRgb(0x00, 0xFF, 0xFF) },
             { EntityType.Unknown13, new ColorRgb(0xFF, 0x00, 0xFF) },
             { EntityType.Unknown15, new ColorRgb(0x1E, 0x90, 0xFF) },
             { EntityType.Unknown16, new ColorRgb(0xFF, 0xDE, 0xAD) },
+            // "permanent" placeholders
+            { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
+            { EntityType.FhPlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
+            { EntityType.CameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
+            { EntityType.FhCameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
+            { EntityType.Teleporter, new ColorRgb(0xFF, 0xFF, 0xFF) },
             { EntityType.CameraSeq, new ColorRgb(0xFF, 0x69, 0xB4) }
         };
 
