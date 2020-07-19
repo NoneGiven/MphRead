@@ -137,10 +137,10 @@ namespace MphRead
         {
             foreach (Model model in GetAllModels())
             {
-                foreach (Texture texture in model.Textures)
+                foreach (Material material in model.Materials)
                 {
-                    if (texture.Opaque != 0 && texture.Format != TextureFormat.Palette4Bit
-                         && texture.Format != TextureFormat.Palette8Bit && texture.Format != TextureFormat.Palette2Bit)
+                    if (material.TexgenMode != TexgenMode.None && model.TextureMatrices.Count == 0
+                        && ((material.TranslateS != 1 && material.TranslateS != 0) || (material.TranslateT != 1 && material.TranslateT != 0)))
                     {
                         System.Diagnostics.Debugger.Break();
                     }

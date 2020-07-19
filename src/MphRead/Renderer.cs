@@ -933,6 +933,7 @@ namespace MphRead
             TexcoordAnimation? animation = null;
             if (model.TexcoordAnimationGroups.Count > 0 && textureId != UInt16.MaxValue)
             {
+                // todo: this is essentially just always using the first group now
                 group = model.TexcoordAnimationGroups[material.TexcoordAnimationId];
                 group.Animations.TryGetValue(material.Name, out animation);
             }
@@ -950,7 +951,7 @@ namespace MphRead
                 }
                 else
                 {
-                    //GL.Translate(material.TranslateS, material.TranslateT, 0.0f);
+                    GL.Translate(material.ScaleS * width * material.TranslateS, material.ScaleT * height * material.TranslateT, 0.0f);
                     GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
                     GL.Scale(1.0f / width, 1.0f / height, 1.0f);
                 }
