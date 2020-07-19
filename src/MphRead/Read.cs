@@ -182,26 +182,9 @@ namespace MphRead
                 recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
             }
             AnimationResults animations = LoadAnimation(animationPath);
-            var model = new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+            return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
                 textureMatrices, recolors, defaultRecolor);
-            foreach (TexcoordAnimationGroup group in model.TexcoordAnimationGroups)
-            {
-                group.CurrentFrame = 0;
-                foreach (Material material in model.Materials)
-                {
-                    material.TexcoordAnimationId = -1;
-                    for (int i = 0; i < group.Animations.Count; i++)
-                    {
-                        if (group.Animations[i].Name == material.Name)
-                        {
-                            // todo: currently overwriting things so the last group's information is always used
-                            material.TexcoordAnimationId = i;
-                        }
-                    }
-                }
-            }
-            return model;
         }
 
         private class AnimationResults
@@ -271,7 +254,7 @@ namespace MphRead
                 RawTexcoordAnimationGroup rawGroup = DoOffset<RawTexcoordAnimationGroup>(bytes, offset);
                 IReadOnlyList<RawTexcoordAnimation> rawAnimations
                     = DoOffsets<RawTexcoordAnimation>(bytes, rawGroup.AnimationOffset, (int)rawGroup.AnimationCount);
-                var animations = new List<TexcoordAnimation>();
+                var animations = new Dictionary<string, TexcoordAnimation>();
                 foreach (RawTexcoordAnimation rawAnimation in rawAnimations)
                 {
                     var animation = new TexcoordAnimation(rawAnimation);
@@ -280,7 +263,7 @@ namespace MphRead
                     maxRotation = Math.Max(maxRotation, animation.RotateLutIndexZ + animation.RotateLutLengthZ);
                     maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexS + animation.TranslateLutLengthS);
                     maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexT + animation.TranslateLutLengthT);
-                    animations.Add(animation);
+                    animations.Add(animation.Name, animation);
                 }
                 var scales = DoOffsets<Fixed>(bytes, rawGroup.ScaleLutOffset, maxScale).Select(f => f.FloatValue).ToList();
                 var rotations = new List<float>();

@@ -539,10 +539,10 @@ namespace MphRead
         public IReadOnlyList<float> Scales { get; }
         public IReadOnlyList<float> Rotations { get; }
         public IReadOnlyList<float> Translations { get; }
-        public IReadOnlyList<TexcoordAnimation> Animations { get; }
+        public IReadOnlyDictionary<string, TexcoordAnimation> Animations { get; }
 
-        public TexcoordAnimationGroup(RawTexcoordAnimationGroup raw, IReadOnlyList<float> scales,
-            IReadOnlyList<float> rotations, IReadOnlyList<float> translations, IReadOnlyList<TexcoordAnimation> animations)
+        public TexcoordAnimationGroup(RawTexcoordAnimationGroup raw, IReadOnlyList<float> scales, IReadOnlyList<float> rotations,
+            IReadOnlyList<float> translations, IReadOnlyDictionary<string ,TexcoordAnimation> animations)
         {
             FrameCount = (int)raw.FrameCount;
             CurrentFrame = raw.AnimationFrame;

@@ -846,31 +846,32 @@ namespace MphRead
         {
             if (model.TexcoordAnimationGroups.Count > 0)
             {
-                // todo: GetModel is currently overwriting things so the last group's information is always used
-                TexcoordAnimationGroup group = model.TexcoordAnimationGroups.Last();
-                TexcoordAnimation animation = group.Animations[material.TexcoordAnimationId];
-                float scaleS = InterpolateAnimation(group.Scales, animation.ScaleLutIndexS, group.CurrentFrame,
-                    animation.ScaleBlendS, animation.ScaleLutLengthS, group.FrameCount);
-                float scaleT = InterpolateAnimation(group.Scales, animation.ScaleLutIndexT, group.CurrentFrame,
-                    animation.ScaleBlendT, animation.ScaleLutLengthT, group.FrameCount);
-                float rotate = InterpolateAnimation(group.Rotations, animation.RotateLutIndexZ, group.CurrentFrame,
-                    animation.RotateBlendZ, animation.RotateLutLengthZ, group.FrameCount);
-                float translateS = InterpolateAnimation(group.Translations, animation.TranslateLutIndexS, group.CurrentFrame,
-                    animation.TranslateBlendS, animation.TranslateLutLengthS, group.FrameCount);
-                float translateT = InterpolateAnimation(group.Translations, animation.TranslateLutIndexT, group.CurrentFrame,
-                    animation.TranslateBlendT, animation.TranslateLutLengthT, group.FrameCount);
-                GL.MatrixMode(MatrixMode.Texture);
-                GL.Translate(translateS * width, translateT * height, 0);
-                if (rotate != 0)
+                TexcoordAnimationGroup group = model.TexcoordAnimationGroups[material.TexcoordAnimationId];
+                if (group.Animations.TryGetValue(material.Name, out TexcoordAnimation? animation))
                 {
-                    GL.Translate(width / 2, height / 2, 0);
-                    GL.Rotate(MathHelper.RadiansToDegrees(rotate), 0, 0, 1);
-                    GL.Translate(-width / 2, -height / 2, 0);
+                    float scaleS = InterpolateAnimation(group.Scales, animation.ScaleLutIndexS, group.CurrentFrame,
+                        animation.ScaleBlendS, animation.ScaleLutLengthS, group.FrameCount);
+                    float scaleT = InterpolateAnimation(group.Scales, animation.ScaleLutIndexT, group.CurrentFrame,
+                        animation.ScaleBlendT, animation.ScaleLutLengthT, group.FrameCount);
+                    float rotate = InterpolateAnimation(group.Rotations, animation.RotateLutIndexZ, group.CurrentFrame,
+                        animation.RotateBlendZ, animation.RotateLutLengthZ, group.FrameCount);
+                    float translateS = InterpolateAnimation(group.Translations, animation.TranslateLutIndexS, group.CurrentFrame,
+                        animation.TranslateBlendS, animation.TranslateLutLengthS, group.FrameCount);
+                    float translateT = InterpolateAnimation(group.Translations, animation.TranslateLutIndexT, group.CurrentFrame,
+                        animation.TranslateBlendT, animation.TranslateLutLengthT, group.FrameCount);
+                    GL.MatrixMode(MatrixMode.Texture);
+                    GL.Translate(translateS * width, translateT * height, 0);
+                    if (rotate != 0)
+                    {
+                        GL.Translate(width / 2, height / 2, 0);
+                        GL.Rotate(MathHelper.RadiansToDegrees(rotate), 0, 0, 1);
+                        GL.Translate(-width / 2, -height / 2, 0);
+                    }
+                    GL.Scale(scaleS, scaleT, 1);
                 }
-                GL.Scale(scaleS, scaleT, 1);
             }
         }
-
+        
         private void RenderMesh(Model model, Mesh mesh, Material material)
         {
             GL.Color3(1f, 1f, 1f);
