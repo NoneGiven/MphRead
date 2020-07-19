@@ -827,12 +827,10 @@ namespace MphRead
             {
                 return values[start + frame];
             }
-            int maybeLimit = frameCount - blend + 1;
-            int interpLimit = (frameCount - 1) >> (blend >> 1) << (blend >> 1);
-            Debug.Assert(maybeLimit == interpLimit);
-            if (frame >= interpLimit)
+            int limit = (frameCount - 1) >> (blend >> 1) << (blend >> 1);
+            if (frame >= limit)
             {
-                return values[start + lutLength - (frameCount - interpLimit - (frame - interpLimit))];
+                return values[start + lutLength - (frameCount - limit - (frame - limit))];
             }
             int index = Math.DivRem(frame, blend, out int remainder);
             if (remainder == 0)
