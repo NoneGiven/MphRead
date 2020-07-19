@@ -839,12 +839,10 @@ namespace MphRead
             {
                 return values[start + index];
             }
-            return Lerp(values[start + index], values[start + index + 1], 1.0f / blend * remainder);
-        }
-
-        private float Lerp(float first, float second, float by)
-        {
-            return first + (second - first) * by;
+            float first = values[start + index];
+            float second = values[start + index + 1];
+            float factor = 1.0f / blend * remainder;
+            return first + (second - first) * factor;
         }
 
         private void AnimateTexcoords(Model model, Material material, int width, int height)
