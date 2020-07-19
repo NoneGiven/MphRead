@@ -533,14 +533,14 @@ namespace MphRead
         // todo: enable drawing door lock, also use "flags" to determine lock/color state
         private static Model LoadDoor(DoorEntityData data)
         {
-            string modelName = Metadata.Doors[(int)data.ModelId];
+            DoorMetadata meta = Metadata.Doors[(int)data.ModelId];
             int recolorId = 0;
             // AlimbicDoor, AlimbicThinDoor
             if (data.ModelId == 0 || data.ModelId == 3)
             {
                 recolorId = Metadata.DoorPalettes[(int)data.PaletteId];
             }
-            Model model = Read.GetModelByName(modelName, recolorId);
+            Model model = Read.GetModelByName(meta.Name, recolorId);
             model.Position = data.Position.ToFloatVector();
             Vector3 scale = model.Scale;
             model.Transform = ComputeModelMatrices(data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector(), model.Position);

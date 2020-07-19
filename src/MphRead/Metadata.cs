@@ -325,6 +325,20 @@ namespace MphRead
         }
     }
 
+    public class DoorMetadata
+    {
+        public string Name { get; }
+        public string LockName { get; }
+        public float LockOffset { get; }
+
+        public DoorMetadata(string name, string lockName, float lockOffset)
+        {
+            Name = name;
+            LockName = name;
+            LockOffset = lockOffset;
+        }
+    }
+
     public static class Metadata
     {
         public static ModelMetadata? GetEntityByName(string name)
@@ -4043,12 +4057,12 @@ namespace MphRead
                 }
             };
 
-        public static readonly IReadOnlyList<string> Doors = new List<string>()
+        public static readonly IReadOnlyList<DoorMetadata> Doors = new List<DoorMetadata>()
         {
-            /* 0 */ "AlimbicDoor",
-            /* 1 */ "AlimbicMorphBallDoor",
-            /* 2 */ "AlimbicBossDoor",
-            /* 3 */ "AlimbicThinDoor",
+            /* 0 */ new DoorMetadata("AlimbicDoor", "AlimbicDoorLock", 1.39990234f),
+            /* 1 */ new DoorMetadata("AlimbicMorphBallDoor", "AlimbicMorphBallDoorLock", 0.6999512f),
+            /* 2 */ new DoorMetadata("AlimbicBossDoor", "AlimbicBossDoorLock", 3.5f),
+            /* 3 */ new DoorMetadata("AlimbicThinDoor", "ThinDoorLock", 1.39990234f)
         };
 
         public static readonly IReadOnlyList<int> DoorPalettes = new List<int>()
