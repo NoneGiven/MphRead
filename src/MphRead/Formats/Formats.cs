@@ -457,7 +457,8 @@ namespace MphRead
             Position = raw.Position.ToFloatVector();
             Vector1 = raw.Vector1.ToFloatVector();
             Vector2 = raw.Vector2.ToFloatVector();
-            Billboard = raw.Billboard == 1; // todo: figure out what billboard = 2 means
+            // todo: implement billboard = 2 (cylindrical), also "fix" spherical
+            Billboard = raw.Billboard == 1;
             IsRoomNode = Name.StartsWith("rm");
         }
     }
