@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using OpenToolkit.Mathematics;
 
 namespace MphRead
@@ -358,6 +359,7 @@ namespace MphRead
             var right = new Vector3(1, 0, 0);
             var vector = Vector3.Normalize(beamVector.ToFloatVector());
             vector = Vector3ByMatrix4(vector, parentTransform);
+            Vector3 scale = model.Scale; // todo: do this properly
             if (vector.X != 0 || vector.Z != 0)
             {
                 model.Transform = ComputeModelMatrices(vector, up, model.Position);
@@ -366,6 +368,7 @@ namespace MphRead
             {
                 model.Transform = ComputeModelMatrices(vector, right, model.Position);
             }
+            model.Scale = scale;
         }
 
         // todo: avoid loading the same entity multiple times
@@ -375,7 +378,9 @@ namespace MphRead
             string modelName = Metadata.JumpPads[(int)data.ModelId];
             Model model1 = Read.GetModelByName(modelName);
             model1.Position = data.Position.ToFloatVector();
+            Vector3 scale = model1.Scale;
             model1.Transform = ComputeModelMatrices(data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector(), model1.Position);
+            model1.Scale = scale;
             model1.Type = ModelType.JumpPad;
             list.Add(model1);
             Model model2 = Read.GetModelByName("JumpPad_Beam");
@@ -393,7 +398,9 @@ namespace MphRead
             string name = data.ModelId == 1 ? "balljump" : "jumppad_base";
             Model model1 = Read.GetModelByName(name, firstHunt: true);
             model1.Position = data.Position.ToFloatVector();
+            Vector3 scale = model1.Scale;
             model1.Transform = ComputeModelMatrices(data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector(), model1.Position);
+            model1.Scale = scale;
             model1.Type = ModelType.JumpPad;
             list.Add(model1);
             name = data.ModelId == 1 ? "balljump_ray" : "jumppad_ray";
@@ -417,7 +424,9 @@ namespace MphRead
             ObjectMetadata meta = Metadata.GetObjectById(modelId);
             Model model = Read.GetModelByName(meta.Name, meta.RecolorId);
             model.Position = data.Position.ToFloatVector();
+            Vector3 scale = model.Scale;
             model.Transform = ComputeModelMatrices(data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector(), model.Position);
+            model.Scale = scale;
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Object;
             if (modelId == 0)
@@ -430,14 +439,16 @@ namespace MphRead
         // todo: use more properties
         private static Model LoadPlatform(PlatformEntityData data)
         {
-            string? name = Metadata.GetPlatformById((int)data.ModelId);
-            if (name == null)
+            PlatformMetadata? meta = Metadata.GetPlatformById((int)data.ModelId);
+            if (meta == null)
             {
                 return LoadEntityPlaceholder(EntityType.Platform, data.Position);
             }
-            Model model = Read.GetModelByName(name);
+            Model model = Read.GetModelByName(meta.Name);
             model.Position = data.Position.ToFloatVector();
+            Vector3 scale = model.Scale;
             model.Transform = ComputeModelMatrices(data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector(), model.Position);
+            model.Scale = scale;
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             return model;
@@ -532,7 +543,9 @@ namespace MphRead
             }
             Model model = Read.GetModelByName(modelName, recolorId);
             model.Position = data.Position.ToFloatVector();
+            Vector3 scale = model.Scale;
             model.Transform = ComputeModelMatrices(data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector(), model.Position);
+            model.Scale = scale;
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             return model;
@@ -543,12 +556,14 @@ namespace MphRead
         {
             Model model = Read.GetModelByName("door", firstHunt: true);
             model.Position = data.Position.ToFloatVector();
+            Vector3 scale = model.Scale;
             model.Transform = ComputeModelMatrices(data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector(), model.Position);
+            model.Scale = scale;
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             return model;
         }
-
+        
         private static readonly Dictionary<EntityType, ColorRgb> _colorOverrides = new Dictionary<EntityType, ColorRgb>()
         {
             { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) },
