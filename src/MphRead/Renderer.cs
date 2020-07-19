@@ -842,34 +842,28 @@ namespace MphRead
             return first + (second - first) * factor;
         }
 
-        private void AnimateTexcoords(Model model, Material material, int width, int height)
+        private void AnimateTexcoords(TexcoordAnimationGroup group, TexcoordAnimation animation, int width, int height)
         {
-            if (model.TexcoordAnimationGroups.Count > 0)
+            
+            float scaleS = InterpolateAnimation(group.Scales, animation.ScaleLutIndexS, group.CurrentFrame,
+                animation.ScaleBlendS, animation.ScaleLutLengthS, group.FrameCount);
+            float scaleT = InterpolateAnimation(group.Scales, animation.ScaleLutIndexT, group.CurrentFrame,
+                animation.ScaleBlendT, animation.ScaleLutLengthT, group.FrameCount);
+            float rotate = InterpolateAnimation(group.Rotations, animation.RotateLutIndexZ, group.CurrentFrame,
+                animation.RotateBlendZ, animation.RotateLutLengthZ, group.FrameCount);
+            float translateS = InterpolateAnimation(group.Translations, animation.TranslateLutIndexS, group.CurrentFrame,
+                animation.TranslateBlendS, animation.TranslateLutLengthS, group.FrameCount);
+            float translateT = InterpolateAnimation(group.Translations, animation.TranslateLutIndexT, group.CurrentFrame,
+                animation.TranslateBlendT, animation.TranslateLutLengthT, group.FrameCount);
+            GL.MatrixMode(MatrixMode.Texture);
+            GL.Translate(translateS * width, translateT * height, 0);
+            if (rotate != 0)
             {
-                TexcoordAnimationGroup group = model.TexcoordAnimationGroups[material.TexcoordAnimationId];
-                if (group.Animations.TryGetValue(material.Name, out TexcoordAnimation? animation))
-                {
-                    float scaleS = InterpolateAnimation(group.Scales, animation.ScaleLutIndexS, group.CurrentFrame,
-                        animation.ScaleBlendS, animation.ScaleLutLengthS, group.FrameCount);
-                    float scaleT = InterpolateAnimation(group.Scales, animation.ScaleLutIndexT, group.CurrentFrame,
-                        animation.ScaleBlendT, animation.ScaleLutLengthT, group.FrameCount);
-                    float rotate = InterpolateAnimation(group.Rotations, animation.RotateLutIndexZ, group.CurrentFrame,
-                        animation.RotateBlendZ, animation.RotateLutLengthZ, group.FrameCount);
-                    float translateS = InterpolateAnimation(group.Translations, animation.TranslateLutIndexS, group.CurrentFrame,
-                        animation.TranslateBlendS, animation.TranslateLutLengthS, group.FrameCount);
-                    float translateT = InterpolateAnimation(group.Translations, animation.TranslateLutIndexT, group.CurrentFrame,
-                        animation.TranslateBlendT, animation.TranslateLutLengthT, group.FrameCount);
-                    GL.MatrixMode(MatrixMode.Texture);
-                    GL.Translate(translateS * width, translateT * height, 0);
-                    if (rotate != 0)
-                    {
-                        GL.Translate(width / 2, height / 2, 0);
-                        GL.Rotate(MathHelper.RadiansToDegrees(rotate), 0, 0, 1);
-                        GL.Translate(-width / 2, -height / 2, 0);
-                    }
-                    GL.Scale(scaleS, scaleT, 1);
-                }
+                GL.Translate(width / 2, height / 2, 0);
+                GL.Rotate(MathHelper.RadiansToDegrees(rotate), 0, 0, 1);
+                GL.Translate(-width / 2, -height / 2, 0);
             }
+            GL.Scale(scaleS, scaleT, 1);
         }
         
         private void RenderMesh(Model model, Mesh mesh, Material material)
@@ -934,10 +928,18 @@ namespace MphRead
             }
             GL.MatrixMode(MatrixMode.Texture);
             GL.LoadIdentity();
-            if (model.TexcoordAnimationGroups.Count > 0 && textureId != UInt16.MaxValue && material.TexcoordAnimationId != -1)
+
+            TexcoordAnimationGroup? group = null;
+            TexcoordAnimation? animation = null;
+            if (model.TexcoordAnimationGroups.Count > 0 && textureId != UInt16.MaxValue)
+            {
+                group = model.TexcoordAnimationGroups[material.TexcoordAnimationId];
+                group.Animations.TryGetValue(material.Name, out animation);
+            }
+            if (group != null && animation != null)
             {
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
-                AnimateTexcoords(model, material, width, height);
+                AnimateTexcoords(group, animation, width, height);
             }
             else if (material.TexgenMode != TexgenMode.None)
             {
