@@ -125,7 +125,7 @@ namespace MphRead
         private Vector4 _light2Vector = default;
         private Vector4 _light2Color = default;
         private bool _hasFog = false;
-        private bool _showFog = false;
+        private bool _showFog = true;
         private Vector4 _fogColor = default;
         private int _fogOffset = default;
 

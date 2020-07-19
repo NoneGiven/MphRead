@@ -174,7 +174,7 @@ namespace MphRead
             return transform;
         }
 
-        public static Matrix4 ComputeModelMatrices(Vector3 vector1, Vector3 vector2, Vector3 position)
+        public static void ComputeModelMatrices(Model model, Vector3 vector1, Vector3 vector2)
         {
             Vector3 up = Vector3.Cross(vector2, vector1).Normalized();
             var direction = Vector3.Cross(vector1, up);
@@ -196,14 +196,15 @@ namespace MphRead
             transform.M33 = vector1.Z;
             transform.M34 = 0;
 
-            transform.M41 = position.X;
-            transform.M42 = position.Y;
-            transform.M43 = position.Z;
+            transform.M41 = model.Position.X;
+            transform.M42 = model.Position.Y;
+            transform.M43 = model.Position.Z;
             transform.M44 = 1;
 
-            return transform;
+            Matrix4 scaleMatrix = model.Transform.ClearTranslation().ClearRotation();
+            model.Transform = scaleMatrix * transform;
         }
-
+        
         private static IReadOnlyList<Model> LoadEntities(RoomMetadata metadata)
         {
             var models = new List<Model>();
@@ -358,16 +359,14 @@ namespace MphRead
             var right = new Vector3(1, 0, 0);
             var vector = Vector3.Normalize(beamVector.ToFloatVector());
             vector = Vector3ByMatrix4(vector, parentTransform);
-            Vector3 scale = model.Scale; // todo: do this properly
             if (vector.X != 0 || vector.Z != 0)
             {
-                model.Transform = ComputeModelMatrices(vector, up, model.Position);
+                ComputeModelMatrices(model, vector, up);
             }
             else
             {
-                model.Transform = ComputeModelMatrices(vector, right, model.Position);
+                ComputeModelMatrices(model, vector, right);
             }
-            model.Scale = scale;
         }
 
         // todo: avoid loading the same entity multiple times
@@ -377,9 +376,7 @@ namespace MphRead
             string modelName = Metadata.JumpPads[(int)data.ModelId];
             Model model1 = Read.GetModelByName(modelName);
             model1.Position = data.Position.ToFloatVector();
-            Vector3 scale = model1.Scale;
-            model1.Transform = ComputeModelMatrices(data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector(), model1.Position);
-            model1.Scale = scale;
+            ComputeModelMatrices(model1, data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector());
             model1.Type = ModelType.JumpPad;
             list.Add(model1);
             Model model2 = Read.GetModelByName("JumpPad_Beam");
@@ -397,9 +394,7 @@ namespace MphRead
             string name = data.ModelId == 1 ? "balljump" : "jumppad_base";
             Model model1 = Read.GetModelByName(name, firstHunt: true);
             model1.Position = data.Position.ToFloatVector();
-            Vector3 scale = model1.Scale;
-            model1.Transform = ComputeModelMatrices(data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector(), model1.Position);
-            model1.Scale = scale;
+            ComputeModelMatrices(model1, data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector());
             model1.Type = ModelType.JumpPad;
             list.Add(model1);
             name = data.ModelId == 1 ? "balljump_ray" : "jumppad_ray";
@@ -423,9 +418,7 @@ namespace MphRead
             ObjectMetadata meta = Metadata.GetObjectById(modelId);
             Model model = Read.GetModelByName(meta.Name, meta.RecolorId);
             model.Position = data.Position.ToFloatVector();
-            Vector3 scale = model.Scale;
-            model.Transform = ComputeModelMatrices(data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector(), model.Position);
-            model.Scale = scale;
+            ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Object;
             if (modelId == 0)
@@ -445,9 +438,7 @@ namespace MphRead
             }
             Model model = Read.GetModelByName(meta.Name);
             model.Position = data.Position.ToFloatVector();
-            Vector3 scale = model.Scale;
-            model.Transform = ComputeModelMatrices(data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector(), model.Position);
-            model.Scale = scale;
+            ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             return model;
@@ -474,9 +465,7 @@ namespace MphRead
             // sktodo: TeleporterMP
             Model model = Read.GetModelByName((flags & 2) == 0 ? "TeleporterSmall" : "Teleporter");
             model.Position = data.Position.ToFloatVector();
-            Vector3 scale = model.Scale;
-            model.Transform = ComputeModelMatrices(data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector(), model.Position);
-            model.Scale = scale;
+            ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             return model;
@@ -561,9 +550,7 @@ namespace MphRead
             }
             Model model = Read.GetModelByName(meta.Name, recolorId);
             model.Position = data.Position.ToFloatVector();
-            Vector3 scale = model.Scale;
-            model.Transform = ComputeModelMatrices(data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector(), model.Position);
-            model.Scale = scale;
+            ComputeModelMatrices(model, data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             return model;
@@ -574,9 +561,7 @@ namespace MphRead
         {
             Model model = Read.GetModelByName("door", firstHunt: true);
             model.Position = data.Position.ToFloatVector();
-            Vector3 scale = model.Scale;
-            model.Transform = ComputeModelMatrices(data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector(), model.Position);
-            model.Scale = scale;
+            ComputeModelMatrices(model, data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             return model;
