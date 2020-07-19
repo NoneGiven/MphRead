@@ -120,7 +120,6 @@ namespace MphRead
         private bool _transformRoomNodes = false; // undocumented
 
         private static readonly Color4 _clearColor = new Color4(0, 0, 0, 1);
-        private static readonly float _frameTime = 1.0f / 30.0f;
 
         private Vector4 _light1Vector = default;
         private Vector4 _light1Color = default;
@@ -421,9 +420,12 @@ namespace MphRead
             }
         }
 
+        private long _frameCount = -1;
+
         protected override async void OnRenderFrame(FrameEventArgs args)
         {
             // extra non-rendering updates
+            _frameCount++;
             await UpdateModelStates((float)args.Time);
             OnKeyHeld();
 
@@ -636,7 +638,10 @@ namespace MphRead
                 {
                     continue;
                 }
-                ProcessAnimations(model, elapsedTime);
+                if (_frameCount != 0 && _frameCount % 2 == 0)
+                {
+                    ProcessAnimations(model);
+                }
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.PushMatrix();
                 Matrix4 transform = model.Transform;
@@ -803,17 +808,11 @@ namespace MphRead
             }
         }
 
-        private void ProcessAnimations(Model model, double elapsedTime)
+        private void ProcessAnimations(Model model)
         {
             foreach (TexcoordAnimationGroup group in model.TexcoordAnimationGroups)
             {
-                group.Time += elapsedTime;
-                int increment = (int)(group.Time / _frameTime);
-                if (increment != 0)
-                {
-                    group.CurrentFrame += increment;
-                    group.Time -= increment * _frameTime;
-                }
+                group.CurrentFrame++;
                 group.CurrentFrame %= group.FrameCount;
             }
         }
@@ -833,14 +832,14 @@ namespace MphRead
             Debug.Assert(maybeLimit == interpLimit);
             if (frame >= interpLimit)
             {
-                return values[start + frameCount - interpLimit - (frame - interpLimit)];
+                return values[start + lutLength - (frameCount - interpLimit - (frame - interpLimit)) + 1];
             }
             int index = Math.DivRem(frame, blend, out int remainder);
             if (remainder == 0)
             {
-                return values[index];
+                return values[start + index];
             }
-            return Lerp(values[start + index], values[start + index + 1], 1 / blend * remainder);
+            return Lerp(values[start + index], values[start + index + 1], 1.0f / blend * remainder);
         }
 
         private float Lerp(float first, float second, float by)
@@ -850,7 +849,7 @@ namespace MphRead
 
         private void AnimateTexcoords(Model model, Material material, int width, int height)
         {
-            if (model.TexcoordAnimationGroups.Count > 0 && material.Name == "Glass")
+            if (model.TexcoordAnimationGroups.Count > 0)
             {
                 // todo: GetModel is currently overwriting things so the last group's information is always used
                 TexcoordAnimationGroup group = model.TexcoordAnimationGroups.Last();

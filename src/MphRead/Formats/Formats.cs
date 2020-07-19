@@ -533,7 +533,6 @@ namespace MphRead
 
     public class TexcoordAnimationGroup
     {
-        public double Time { get; set; }
         public int FrameCount { get; }
         public int CurrentFrame { get; set; }
         public int Count { get; }
