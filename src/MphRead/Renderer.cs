@@ -950,7 +950,7 @@ namespace MphRead
                 }
                 else
                 {
-                    GL.Translate(material.TranslateS, material.TranslateT, 0.0f);
+                    //GL.Translate(material.TranslateS, material.TranslateT, 0.0f);
                     GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
                     GL.Scale(1.0f / width, 1.0f / height, 1.0f);
                 }
