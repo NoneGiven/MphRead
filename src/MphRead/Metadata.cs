@@ -369,15 +369,14 @@ namespace MphRead
             return result.Value;
         }
 
-        public static RoomMetadata? GetRoomByName(string name)
+        public static (RoomMetadata?, int) GetRoomByName(string name)
         {
             if (RoomMetadata.TryGetValue(name, out RoomMetadata? metadata))
             {
-                return metadata;
+                return (metadata, _roomIds.IndexOf(i => i == metadata.Name));
             }
-            return null;
+            return (null, -1);
         }
-
 
         public static RoomMetadata? GetRoomById(int id)
         {

@@ -10,7 +10,7 @@ namespace MphRead
 
         public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, int layerMask)
         {
-            RoomMetadata? metadata = Metadata.GetRoomByName(name);
+            (RoomMetadata? metadata, int id) = Metadata.GetRoomByName(name);
             if (metadata == null)
             {
                 throw new InvalidOperationException();
@@ -42,7 +42,8 @@ namespace MphRead
             FilterNodes(room, roomLayerMask);
             // todo?: scene min/max coordinates
             ComputeNodeMatrices(room, index: 0);
-            IReadOnlyList<Model> entities = LoadEntities(metadata);
+            bool multiplayer = id >= 93 && id <= 119;
+            IReadOnlyList<Model> entities = LoadEntities(metadata, multiplayer);
             // todo?: area ID/portals
             room.Type = ModelType.Room;
             return (room, metadata, entities);
@@ -205,7 +206,7 @@ namespace MphRead
             model.Transform = scaleMatrix * transform;
         }
         
-        private static IReadOnlyList<Model> LoadEntities(RoomMetadata metadata)
+        private static IReadOnlyList<Model> LoadEntities(RoomMetadata metadata, bool multiplayer)
         {
             var models = new List<Model>();
             if (metadata.EntityPath == null)
@@ -318,7 +319,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Teleporter)
                 {
-                    models.Add(LoadTeleporter(((Entity<TeleporterEntityData>)entity).Data));
+                    models.Add(LoadTeleporter(((Entity<TeleporterEntityData>)entity).Data, multiplayer));
                 }
                 else if (entity.Type == EntityType.Unknown15)
                 {
@@ -455,15 +456,23 @@ namespace MphRead
         }
 
         // todo: palette
-        private static Model LoadTeleporter(TeleporterEntityData data)
+        private static Model LoadTeleporter(TeleporterEntityData data, bool multiplayer)
         {
             if (data.Invisible != 0)
             {
                 return LoadEntityPlaceholder(EntityType.Teleporter, data.Position);
             }
             int flags = data.ArtifactId < 8 && data.Invisible == 0 ? 2 : 0;
-            // sktodo: TeleporterMP
-            Model model = Read.GetModelByName((flags & 2) == 0 ? "TeleporterSmall" : "Teleporter");
+            string modelName;
+            if ((flags & 2) == 0)
+            {
+                modelName = multiplayer ? "TeleporterMP" : "TeleporterSmall";
+            }
+            else
+            {
+                modelName = "Teleporter";
+            }
+            Model model = Read.GetModelByName(modelName);
             model.Position = data.Position.ToFloatVector();
             ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);

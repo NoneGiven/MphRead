@@ -44,10 +44,10 @@ namespace MphRead
             };
             return GetModel("model", path, null, recolors, 0);
         }
-
+        
         public static Model GetRoomByName(string name)
         {
-            RoomMetadata? roomMeta = Metadata.GetRoomByName(name);
+            (RoomMetadata? roomMeta, _) = Metadata.GetRoomByName(name);
             if (roomMeta == null)
             {
                 throw new ProgramException("No room with this name is known. Please provide metadata for a custom room.");
