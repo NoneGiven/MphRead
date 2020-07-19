@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using OpenToolkit.Mathematics;
 
 namespace MphRead
@@ -563,7 +562,7 @@ namespace MphRead
             model.Type = ModelType.Generic;
             return model;
         }
-        
+
         private static readonly Dictionary<EntityType, ColorRgb> _colorOverrides = new Dictionary<EntityType, ColorRgb>()
         {
             { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) },

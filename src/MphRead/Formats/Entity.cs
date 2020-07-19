@@ -254,8 +254,10 @@ namespace MphRead
         public readonly uint Flags;
         public readonly uint FxFlags;
         public readonly uint ModelId;
-        public readonly uint LinkedEntity;
-        public readonly uint ScanId;
+        public readonly ushort LinkedEntity;
+        public readonly ushort ScanId;
+        public readonly ushort Field34;
+        public readonly ushort Field36;
         public readonly uint Field38;
         public readonly uint Field3C;
         public readonly uint Field40;
@@ -324,13 +326,15 @@ namespace MphRead
         public readonly uint PaletteId;
         public readonly uint ModelId;
         public readonly uint Field3C;
-        public readonly ushort TargetLayerId;
+        public readonly byte TargetLayerId;
+        public readonly byte Flags; // sktodo: use these for some stuff
         public readonly byte Field42;
         public readonly byte Field43;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
         public readonly string EntityFilename;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
         public readonly string RoomName;
+        //public readonly uint Field64; // sktodo: does this exist?
     }
 
     // size: 64
@@ -365,8 +369,10 @@ namespace MphRead
         public readonly byte HasBase; // boolean
         public readonly byte Field2E;
         public readonly byte Field2F;
-        public readonly uint Field30;
-        public readonly uint Field34;
+        public readonly ushort MaxSpawnCount;
+        public readonly ushort SpawnInterval;
+        public readonly ushort SpawnDelay;
+        public readonly ushort EntityId;
         public readonly uint Field38;
         public readonly uint Field3C;
         public readonly uint Field40;
@@ -1057,25 +1063,20 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
-        public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
+        public readonly byte Field24;
+        public readonly byte Field25;
+        public readonly byte ArtifactId;
+        public readonly byte Field27;
+        public readonly byte Invisible;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 15)]
+        public readonly string TargetEntity;
         public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
+        public readonly Vector3Fx Field3C;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
+        public readonly string NodeName;
+        //public readonly uint Field58; // sktodo: does this exist?
     }
 
     // size: 104
