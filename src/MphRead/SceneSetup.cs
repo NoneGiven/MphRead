@@ -253,7 +253,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Item)
                 {
-                    models.Add(LoadItem(((Entity<ItemEntityData>)entity).Data));
+                    models.AddRange(LoadItem(((Entity<ItemEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhItem)
                 {
@@ -369,7 +369,7 @@ namespace MphRead
         }
 
         // todo: avoid loading the same entity multiple times
-        private static IReadOnlyList<Model> LoadJumpPad(JumpPadEntityData data)
+        private static IEnumerable<Model> LoadJumpPad(JumpPadEntityData data)
         {
             var list = new List<Model>();
             string modelName = Metadata.JumpPads[(int)data.ModelId];
@@ -453,21 +453,37 @@ namespace MphRead
             return model;
         }
 
-        private static Model LoadItem(ItemEntityData data)
+        // todo: Energy Tank height is still not right
+        private static IEnumerable<Model> LoadItem(ItemEntityData data)
         {
-            (string name, float offset) = Metadata.Items[(int)data.ModelId];
-            Model model = Read.GetModelByName(name);
-            model.Position = new Vector3(
-                data.Position.X.FloatValue,
-                data.Position.Y.FloatValue + offset,
-                data.Position.Z.FloatValue
-            );
-            ComputeNodeMatrices(model, index: 0);
-            model.Type = ModelType.Item;
-            model.Rotating = true;
-            model.Floating = true;
-            model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
-            return model;
+            var models = new List<Model>();
+            Model model;
+            if (data.Enabled != 0)
+            {
+                (string name, float offset) = Metadata.Items[(int)data.ModelId];
+                model = Read.GetModelByName(name);
+                model.Position = new Vector3(
+                    data.Position.X.FloatValue,
+                    data.Position.Y.FloatValue + offset,
+                    data.Position.Z.FloatValue
+                );
+                ComputeNodeMatrices(model, index: 0);
+                model.Type = ModelType.Item;
+                model.Rotating = true;
+                model.Floating = true;
+                model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
+                models.Add(model);
+            }
+            if (data.HasBase != 0)
+            {
+                // todo: does the base need rotation?
+                model = Read.GetModelByName("items_base");
+                model.Position = data.Position.ToFloatVector();
+                ComputeNodeMatrices(model, index: 0);
+                model.Type = ModelType.Generic;
+                models.Add(model);
+            }
+            return models;
         }
 
         // todo: do these have height offsets?

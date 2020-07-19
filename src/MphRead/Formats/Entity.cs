@@ -361,34 +361,15 @@ namespace MphRead
         public readonly uint Field20;
         public readonly uint ItemId;
         public readonly uint ModelId;
-        public readonly uint Field2C;
+        public readonly byte Enabled; // boolean
+        public readonly byte HasBase; // boolean
+        public readonly byte Field2E;
+        public readonly byte Field2F;
         public readonly uint Field30;
         public readonly uint Field34;
         public readonly uint Field38;
         public readonly uint Field3C;
         public readonly uint Field40;
-
-        public ItemEntityData(EntityDataHeader header, Vector3Fx position, uint fieldC, uint field10, uint field14,
-            uint field18, uint field1C, uint field20, uint itemId, uint modelId, uint field2C, uint field30,
-            uint field34, uint field38, uint field3C, uint field40)
-        {
-            Header = header;
-            Position = position;
-            FieldC = fieldC;
-            Field10 = field10;
-            Field14 = field14;
-            Field18 = field18;
-            Field1C = field1C;
-            Field20 = field20;
-            ItemId = itemId;
-            ModelId = modelId;
-            Field2C = field2C;
-            Field30 = field30;
-            Field34 = field34;
-            Field38 = field38;
-            Field3C = field3C;
-            Field40 = field40;
-        }
     }
 
     // size: 50
