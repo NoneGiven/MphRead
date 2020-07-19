@@ -334,7 +334,6 @@ namespace MphRead
         public readonly string EntityFilename;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
         public readonly string RoomName;
-        //public readonly uint Field64; // sktodo: does this exist?
     }
 
     // size: 64
@@ -1076,7 +1075,6 @@ namespace MphRead
         public readonly Vector3Fx Field3C;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
         public readonly string NodeName;
-        //public readonly uint Field58; // sktodo: does this exist?
     }
 
     // size: 104
