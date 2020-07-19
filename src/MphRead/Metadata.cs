@@ -4179,7 +4179,7 @@ namespace MphRead
         {
             /*  0 */ new PlatformMetadata("platform"),
             /*  1 */ null, // duplicate of 0
-            /*  2 */ null, // todo: what is this "platform?"
+            /*  2 */ null, // todo: figure out what this "platform" is
             /*  3 */ new PlatformMetadata("Elevator"),
             /*  4 */ new PlatformMetadata("smasher"),
             /*  5 */ new PlatformMetadata("Platform_Unit4_C1", someFlag: 1),
@@ -4188,19 +4188,19 @@ namespace MphRead
             /*  8 */ new PlatformMetadata("SyluxShip", animationIds: new List<uint>() { UInt32.MaxValue, 1, 0, 2 }),
             /*  9 */ new PlatformMetadata("pistonmp7"),
             /* 10 */ new PlatformMetadata("unit3_brain", animationIds: new List<uint>() { 0, 0, 0, 0 }),
-            /* 11 */ new PlatformMetadata("unit4_mover1"),
-            /* 12 */ new PlatformMetadata("unit4_mover2"),
-            /* 13 */ new PlatformMetadata("ElectroField1"),
+            /* 11 */ new PlatformMetadata("unit4_mover1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 12 */ new PlatformMetadata("unit4_mover2", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 13 */ new PlatformMetadata("ElectroField1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
             /* 14 */ new PlatformMetadata("unit3_platform1"),
-            /* 15 */ new PlatformMetadata("unit3_pipe1"),
-            /* 16 */ new PlatformMetadata("unit3_pipe2"),
+            /* 15 */ new PlatformMetadata("unit3_pipe1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 16 */ new PlatformMetadata("unit3_pipe2", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
             /* 17 */ new PlatformMetadata("cylinderbase"),
             /* 18 */ new PlatformMetadata("unit3_platform"),
             /* 19 */ new PlatformMetadata("unit3_platform2"),
-            /* 20 */ new PlatformMetadata("unit3_jar"),
-            /* 21 */ new PlatformMetadata("SyluxTurret"),
-            /* 22 */ new PlatformMetadata("unit3_jartop"),
-            /* 23 */ new PlatformMetadata("SamusShip"),
+            /* 20 */ new PlatformMetadata("unit3_jar", animationIds: new List<uint>() { 0, 2, 1, 0 }, field20: 0, field24: 0),
+            /* 21 */ new PlatformMetadata("SyluxTurret", animationIds: new List<uint>() { 3, 2, 1, 0 }, field20: 0, field24: 0),
+            /* 22 */ new PlatformMetadata("unit3_jartop", animationIds: new List<uint>() { 0, 2, 1, 0 }, field20: 0, field24: 0),
+            /* 23 */ new PlatformMetadata("SamusShip", animationIds: new List<uint>() { 1, 3, 2, 4 }, field20: 0, field24: 0),
             /* 24 */ new PlatformMetadata("unit1_land_plat1"),
             /* 25 */ new PlatformMetadata("unit1_land_plat2"),
             /* 26 */ new PlatformMetadata("unit1_land_plat3"),
@@ -4209,19 +4209,19 @@ namespace MphRead
             /* 29 */ new PlatformMetadata("unit2_c4_plat"),
             /* 30 */ new PlatformMetadata("unit2_land_elev"),
             /* 31 */ new PlatformMetadata("unit4_platform1"),
-            /* 32 */ new PlatformMetadata("Crate01"),
-            /* 33 */ new PlatformMetadata("unit1_mover1"),
+            /* 32 */ new PlatformMetadata("Crate01", animationIds: new List<uint>() { UInt32.MaxValue, UInt32.MaxValue, 0, 1 }),
+            /* 33 */ new PlatformMetadata("unit1_mover1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
             /* 34 */ new PlatformMetadata("unit1_mover2"),
             /* 35 */ new PlatformMetadata("unit2_mover1"),
             /* 36 */ new PlatformMetadata("unit4_mover3"),
             /* 37 */ new PlatformMetadata("unit4_mover4"),
             /* 38 */ new PlatformMetadata("unit3_mover1"),
             /* 39 */ new PlatformMetadata("unit2_c1_mover"),
-            /* 40 */ new PlatformMetadata("unit3_mover2"),
+            /* 40 */ new PlatformMetadata("unit3_mover2", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
             /* 41 */ new PlatformMetadata("piston_gorealand"),
             /* 42 */ new PlatformMetadata("unit4_tp2_artifact_wo"),
             /* 43 */ new PlatformMetadata("unit4_tp1_artifact_wo"),
-            /* 44 */ new PlatformMetadata("SamusShip")
+            /* 44 */ new PlatformMetadata("SamusShip", animationIds: new List<uint>() { 1, 0, 2, 4 }, field20: 0, field24: 0)
         };
 
         public static PlatformMetadata? GetPlatformById(int id)
