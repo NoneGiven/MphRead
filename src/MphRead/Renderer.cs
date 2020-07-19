@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using MphRead.Export;
@@ -817,55 +818,53 @@ namespace MphRead
             }
         }
 
-        private float InterpolateAnimation(IReadOnlyList<float> values, int start, int frame, int speed, int length)
+        private float InterpolateAnimation(IReadOnlyList<float> values, int start, int frame, int blend, int lutLength, int frameCount)
         {
-            if (length == 1)
+            if (lutLength == 1)
             {
                 return values[start];
             }
-            if (speed == 1)
+            if (blend == 1)
             {
                 return values[start + frame];
             }
-            int v7 = (frame - 1) >> (speed / 2) << (speed / 2);
-            if (frame >= v7)
+            int maybeLimit = frameCount - blend + 1;
+            int interpLimit = (frameCount - 1) >> (blend >> 1) << (blend >> 1);
+            Debug.Assert(maybeLimit == interpLimit);
+            if (frame >= interpLimit)
             {
-                int index = start + frame - v7 + (frame >> (speed / 2));
-                // todo: fix texcoord out of bounds index issue
-                if (index > values.Count - 1)
-                {
-                    return 0;
-                }
+                return values[start + frameCount - interpLimit - (frame - interpLimit)];
+            }
+            int index = Math.DivRem(frame, blend, out int remainder);
+            if (remainder == 0)
+            {
                 return values[index];
             }
-            int index1 = frame >> (speed / 2);
-            int index2 = (frame >> (speed / 2)) + 1;
-            float div = 1 << (speed / 2);
-            int t = frame & ((speed / 2) | 1);
-            if (t != 0)
-            {
-                return values[start + index1] * (1 - t / div) + values[start + index2] * (t / div);
-            }
-            return values[start + index1];
+            return Lerp(values[start + index], values[start + index + 1], 1 / blend * remainder);
+        }
+
+        private float Lerp(float first, float second, float by)
+        {
+            return first + (second - first) * by;
         }
 
         private void AnimateTexcoords(Model model, Material material, int width, int height)
         {
-            if (model.TexcoordAnimationGroups.Count > 0)
+            if (model.TexcoordAnimationGroups.Count > 0 && material.Name == "Glass")
             {
                 // todo: GetModel is currently overwriting things so the last group's information is always used
                 TexcoordAnimationGroup group = model.TexcoordAnimationGroups.Last();
                 TexcoordAnimation animation = group.Animations[material.TexcoordAnimationId];
                 float scaleS = InterpolateAnimation(group.Scales, animation.ScaleLutIndexS, group.CurrentFrame,
-                    animation.ScaleBlendS, animation.ScaleLutLengthS);
+                    animation.ScaleBlendS, animation.ScaleLutLengthS, group.FrameCount);
                 float scaleT = InterpolateAnimation(group.Scales, animation.ScaleLutIndexT, group.CurrentFrame,
-                    animation.ScaleBlendT, animation.ScaleLutLengthT);
+                    animation.ScaleBlendT, animation.ScaleLutLengthT, group.FrameCount);
                 float rotate = InterpolateAnimation(group.Rotations, animation.RotateLutIndexZ, group.CurrentFrame,
-                    animation.RotateBlendZ, animation.RotateLutLengthZ);
+                    animation.RotateBlendZ, animation.RotateLutLengthZ, group.FrameCount);
                 float translateS = InterpolateAnimation(group.Translations, animation.TranslateLutIndexS, group.CurrentFrame,
-                    animation.TranslateBlendS, animation.TranslateLutLengthS);
+                    animation.TranslateBlendS, animation.TranslateLutLengthS, group.FrameCount);
                 float translateT = InterpolateAnimation(group.Translations, animation.TranslateLutIndexT, group.CurrentFrame,
-                    animation.TranslateBlendT, animation.TranslateLutLengthT);
+                    animation.TranslateBlendT, animation.TranslateLutLengthT, group.FrameCount);
                 GL.MatrixMode(MatrixMode.Texture);
                 GL.Translate(translateS * width, translateT * height, 0);
                 if (rotate != 0)
