@@ -87,10 +87,10 @@ void main()
     }
     if (fog_enable) {
         float ndcDepth = (2.0 * gl_FragCoord.z - gl_DepthRange.near - gl_DepthRange.far) / (gl_DepthRange.far - gl_DepthRange.near);
-		float clipDepth = ndcDepth / gl_FragCoord.w;
-		float depth = clamp(clipDepth / 128.0, 0.0, 1.0);
-		float density = depth - (1.0 - float(fog_offset) / 65536.0);
-		if (density < 0.0) {
+        float clipDepth = ndcDepth / gl_FragCoord.w;
+        float depth = clamp(clipDepth / 128.0, 0.0, 1.0);
+        float density = depth - (1.0 - float(fog_offset) / 65536.0);
+        if (density < 0.0) {
             density = 0.0;
         }
         // adjust fog slope
