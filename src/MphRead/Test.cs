@@ -137,11 +137,11 @@ namespace MphRead
         {
             foreach (Model model in GetAllModels())
             {
-                foreach (MaterialAnimationGroup group in model.MaterialAnimationGroups)
+                foreach (TextureAnimationGroup group in model.TextureAnimationGroups)
                 {
                     if (group.Animations.Count > 0)
                     {
-                        System.Diagnostics.Debugger.Break();
+                        //System.Diagnostics.Debugger.Break();
                     }
                 }
             }
@@ -196,10 +196,10 @@ namespace MphRead
             {
                 yield return Read.GetModelByName(meta.Key);
             }
-            foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.FirstHuntModels)
-            {
-                yield return Read.GetModelByName(meta.Key, firstHunt: true);
-            }
+            //foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.FirstHuntModels)
+            //{
+            //    yield return Read.GetModelByName(meta.Key, firstHunt: true);
+            //}
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 yield return Read.GetRoomByName(meta.Key);

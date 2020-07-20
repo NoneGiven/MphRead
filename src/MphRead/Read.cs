@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using MphRead.Archive;
@@ -181,7 +183,12 @@ namespace MphRead
                 }
                 recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
             }
-            AnimationResults animations = LoadAnimation(animationPath);
+            AnimationResults animations = LoadAnimationAndDump(animationPath);
+            if (animations.TextureAnimationGroups.Any(g => g.Animations.Any()))
+            {
+                Console.WriteLine($"{name}: mat {animations.MaterialAnimationGroups.Count}, nod {animations.NodeAnimationGroups.Count}, " +
+                    $"uvs {animations.TexcoordAnimationGroups.Count}, tex {animations.TextureAnimationGroups.Count}");
+            }
             return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
                 textureMatrices, recolors, defaultRecolor);
@@ -308,6 +315,295 @@ namespace MphRead
                 results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, animations));
             }
             return results;
+        }
+
+        private class DumpResult
+        {
+            public uint Offset { get; }
+            public uint Length { get; }
+            public string Description { get; }
+            public IReadOnlyList<byte> Bytes { get; }
+
+            protected DumpResult(uint offset, string description, ReadOnlySpan<byte> bytes)
+            {
+                Offset = offset;
+                Length = (uint)bytes.Length;
+                Description = description;
+                Bytes = bytes.ToArray().ToList();
+            }
+        }
+
+        private class DumpResult<T> : DumpResult
+        {
+            public T Structure { get; }
+
+            public DumpResult(uint offset, string description, ReadOnlySpan<byte> bytes, T structure)
+                : base(offset, description, bytes)
+            {
+                Structure = structure;
+            }
+        }
+
+        private static AnimationResults LoadAnimationAndDump(string? path)
+        {
+            var results = new AnimationResults();
+            if (path == null)
+            {
+                return results;
+            }
+            var dump = new List<DumpResult>();
+            path = Path.Combine(Paths.FileSystem, path);
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
+            AnimationHeader header = ReadStruct<AnimationHeader>(bytes);
+            dump.Add(new DumpResult<AnimationHeader>(0, "Header", bytes[0..Marshal.SizeOf<AnimationHeader>()], header));
+            var nodeGroupOffsets = new List<uint>();
+            var materialGroupOffsets = new List<uint>();
+            var texcoordGroupOffsets = new List<uint>();
+            var textureGroupOffsets = new List<uint>();
+            var unusedGroupOffsets = new List<uint>();
+            for (int i = 0; i < header.Count; i++)
+            {
+                nodeGroupOffsets.Add(SpanReadUint(bytes, (int)header.NodeGroupOffset + i * sizeof(uint)));
+            }
+            dump.Add(new DumpResult<List<uint>>(header.NodeGroupOffset, "NodeGroupOffsets",
+                bytes[((int)header.NodeGroupOffset)..((int)header.NodeGroupOffset + header.Count * sizeof(uint))], nodeGroupOffsets));
+            for (int i = 0; i < header.Count; i++)
+            {
+                materialGroupOffsets.Add(SpanReadUint(bytes, (int)header.MaterialGroupOffset + i * sizeof(uint)));
+            }
+            dump.Add(new DumpResult<List<uint>>(header.MaterialGroupOffset, "MaterialGroupOffsets",
+                bytes[((int)header.MaterialGroupOffset)..((int)header.MaterialGroupOffset + header.Count * sizeof(uint))], materialGroupOffsets));
+            for (int i = 0; i < header.Count; i++)
+            {
+                texcoordGroupOffsets.Add(SpanReadUint(bytes, (int)header.TexcoordGroupOffset + i * sizeof(uint)));
+            }
+            dump.Add(new DumpResult<List<uint>>(header.TexcoordGroupOffset, "TexcoordGroupOffsets",
+                bytes[((int)header.TexcoordGroupOffset)..((int)header.TexcoordGroupOffset + header.Count * sizeof(uint))], texcoordGroupOffsets));
+            for (int i = 0; i < header.Count; i++)
+            {
+                textureGroupOffsets.Add(SpanReadUint(bytes, (int)header.TextureGroupOffset + i * sizeof(uint)));
+            }
+            dump.Add(new DumpResult<List<uint>>(header.TextureGroupOffset, "TextureGroupOffsets",
+                bytes[((int)header.TextureGroupOffset)..((int)header.TextureGroupOffset + header.Count * sizeof(uint))], textureGroupOffsets));
+            for (int i = 0; i < header.Count; i++)
+            {
+                unusedGroupOffsets.Add(SpanReadUint(bytes, (int)header.UnusedGroupOffset + i * sizeof(uint)));
+            }
+            dump.Add(new DumpResult<List<uint>>(header.UnusedGroupOffset, "UnusedGroupOffsets",
+                bytes[((int)header.UnusedGroupOffset)..((int)header.UnusedGroupOffset + header.Count * sizeof(uint))], unusedGroupOffsets));
+            foreach (uint offset in nodeGroupOffsets)
+            {
+                if (offset == 0)
+                {
+                    continue;
+                }
+                RawNodeAnimationGroup rawGroup = DoOffset<RawNodeAnimationGroup>(bytes, offset);
+                dump.Add(new DumpResult<RawNodeAnimationGroup>(offset, "NodeAnimationGroup",
+                    bytes[(int)offset..((int)offset + Marshal.SizeOf<RawNodeAnimationGroup>())], rawGroup));
+                IReadOnlyList<NodeAnimation> rawAnimations
+                    = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, 1);
+                for (int j = 0; j < 1;  j++)
+                {
+                    int size = Marshal.SizeOf<NodeAnimation>();
+                    long start = rawGroup.AnimationOffset + j * size;
+                    dump.Add(new DumpResult<NodeAnimation>((uint)start, "NodeAnimation",
+                        bytes[(int)start..(int)(start + size)], rawAnimations[j]));
+                }
+                var animations = new Dictionary<string, NodeAnimation>();
+                int i = 0;
+                foreach (NodeAnimation animation in rawAnimations)
+                {
+                    animations.Add($"{offset}-{i++}", animation);
+                }
+                results.NodeAnimationGroups.Add(new NodeAnimationGroup(rawGroup, animations));
+            }
+            foreach (uint offset in materialGroupOffsets)
+            {
+                if (offset == 0)
+                {
+                    continue;
+                }
+                RawMaterialAnimationGroup rawGroup = DoOffset<RawMaterialAnimationGroup>(bytes, offset);
+                dump.Add(new DumpResult<RawMaterialAnimationGroup>(offset, "MaterialAnimationGroup",
+                    bytes[(int)offset..((int)offset + Marshal.SizeOf<RawMaterialAnimationGroup>())], rawGroup));
+                IReadOnlyList<MaterialAnimation> rawAnimations
+                    = DoOffsets<MaterialAnimation>(bytes, rawGroup.AnimationOffset, (int)rawGroup.AnimationCount);
+                for (int j = 0; j < rawGroup.AnimationCount; j++)
+                {
+                    int size = Marshal.SizeOf<MaterialAnimation>();
+                    long start = rawGroup.AnimationOffset + j * size;
+                    dump.Add(new DumpResult<MaterialAnimation>((uint)start, "MaterialAnimation",
+                        bytes[(int)start..(int)(start + size)], rawAnimations[j]));
+                }
+                var animations = new Dictionary<string, MaterialAnimation>();
+                foreach (MaterialAnimation animation in rawAnimations)
+                {
+                    animations.Add(animation.Name, animation);
+                }
+                results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup, animations));
+            }
+            foreach (uint offset in texcoordGroupOffsets)
+            {
+                if (offset == 0)
+                {
+                    continue;
+                }
+                int maxScale = 0;
+                int maxRotation = 0;
+                int maxTranslation = 0;
+                RawTexcoordAnimationGroup rawGroup = DoOffset<RawTexcoordAnimationGroup>(bytes, offset);
+                dump.Add(new DumpResult<RawTexcoordAnimationGroup>(offset, "TexcoordAnimationGroup",
+                    bytes[(int)offset..((int)offset + Marshal.SizeOf<RawTexcoordAnimationGroup>())], rawGroup));
+                IReadOnlyList<TexcoordAnimation> rawAnimations
+                    = DoOffsets<TexcoordAnimation>(bytes, rawGroup.AnimationOffset, (int)rawGroup.AnimationCount);
+                for (int j = 0; j < rawGroup.AnimationCount; j++)
+                {
+                    int size = Marshal.SizeOf<TexcoordAnimation>();
+                    long start = rawGroup.AnimationOffset + j * size;
+                    dump.Add(new DumpResult<TexcoordAnimation>((uint)start, "TexcoordAnimation",
+                        bytes[(int)start..(int)(start + size)], rawAnimations[j]));
+                }
+                var animations = new Dictionary<string, TexcoordAnimation>();
+                foreach (TexcoordAnimation animation in rawAnimations)
+                {
+                    maxScale = Math.Max(maxScale, animation.ScaleLutIndexS + animation.ScaleLutLengthS);
+                    maxScale = Math.Max(maxScale, animation.ScaleLutIndexT + animation.ScaleLutLengthT);
+                    maxRotation = Math.Max(maxRotation, animation.RotateLutIndexZ + animation.RotateLutLengthZ);
+                    maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexS + animation.TranslateLutLengthS);
+                    maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexT + animation.TranslateLutLengthT);
+                    animations.Add(animation.Name, animation);
+                }
+                var scales = DoOffsets<Fixed>(bytes, rawGroup.ScaleLutOffset, maxScale).Select(f => f.FloatValue).ToList();
+                dump.Add(new DumpResult<List<float>>(rawGroup.ScaleLutOffset, "Texcoord Scales",
+                    bytes[(int)rawGroup.ScaleLutOffset..((int)rawGroup.ScaleLutOffset + maxScale * sizeof(int))], scales));
+                var rotations = new List<float>();
+                foreach (ushort value in DoOffsets<ushort>(bytes, rawGroup.RotateLutOffset, maxRotation))
+                {
+                    long radians = (0x6487FL * value + 0x80000) >> 20;
+                    rotations.Add(Fixed.ToFloat(radians));
+                }
+                dump.Add(new DumpResult<List<float>>(rawGroup.RotateLutOffset, "Texcoord Rotations",
+                    bytes[(int)rawGroup.RotateLutOffset..((int)rawGroup.RotateLutOffset + maxRotation * sizeof(ushort))], rotations));
+                var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, maxTranslation).Select(f => f.FloatValue).ToList();
+                dump.Add(new DumpResult<List<float>>(rawGroup.TranslateLutOffset, "Texcoord Translations",
+                    bytes[(int)rawGroup.TranslateLutOffset..((int)rawGroup.TranslateLutOffset + maxTranslation * sizeof(int))], translations));
+                results.TexcoordAnimationGroups.Add(new TexcoordAnimationGroup(rawGroup, scales, rotations, translations, animations));
+            }
+            foreach (uint offset in textureGroupOffsets)
+            {
+                if (offset == 0)
+                {
+                    continue;
+                }
+                RawTextureAnimationGroup rawGroup = DoOffset<RawTextureAnimationGroup>(bytes, offset);
+                dump.Add(new DumpResult<RawTextureAnimationGroup>(offset, "TextureAnimationGroup",
+                    bytes[(int)offset..((int)offset + Marshal.SizeOf<RawTextureAnimationGroup>())], rawGroup));
+                IReadOnlyList<TextureAnimation> rawAnimations
+                    = DoOffsets<TextureAnimation>(bytes, rawGroup.AnimationOffset, rawGroup.AnimationCount);
+                for (int j = 0; j < rawGroup.AnimationCount; j++)
+                {
+                    int size = Marshal.SizeOf<TextureAnimation>();
+                    long start = rawGroup.AnimationOffset + j * size;
+                    dump.Add(new DumpResult<TextureAnimation>((uint)start, "TextureAnimation",
+                        bytes[(int)start..(int)(start + size)], rawAnimations[j]));
+                }
+                var animations = new Dictionary<string, TextureAnimation>();
+                foreach (TextureAnimation animation in rawAnimations)
+                {
+                    animations.Add(animation.Name, animation);
+                }
+                ushort frame = DoOffset<ushort>(bytes, rawGroup.FrameDataOffset);
+                dump.Add(new DumpResult<ushort>(rawGroup.FrameDataOffset, "Frame Data",
+                    bytes[(int)rawGroup.FrameDataOffset..((int)rawGroup.FrameDataOffset + sizeof(ushort))], frame));
+                ushort texture = DoOffset<ushort>(bytes, rawGroup.TextureIdOffset);
+                dump.Add(new DumpResult<ushort>(rawGroup.TextureIdOffset, "Texture ID",
+                    bytes[(int)rawGroup.TextureIdOffset..((int)rawGroup.TextureIdOffset + sizeof(ushort))], texture));
+                ushort palette = DoOffset<ushort>(bytes, rawGroup.PaletteOffset);
+                dump.Add(new DumpResult<ushort>(rawGroup.PaletteOffset, "Palette ID",
+                    bytes[(int)rawGroup.PaletteOffset..((int)rawGroup.PaletteOffset + sizeof(ushort))], palette));
+                results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, animations));
+            }
+            Console.WriteLine($"{bytes.Length} bytes (0x00 - 0x{bytes.Length - 1:X2})");
+            Console.WriteLine();
+            foreach (DumpResult line in dump.OrderBy(d => d.Offset))
+            {
+                Dump(line);
+                Console.WriteLine();
+            }
+            return results;
+        }
+
+        private static void Dump(DumpResult line)
+        {
+            Console.WriteLine($"0x{line.Offset:X2}: {line.Description}");
+            Console.WriteLine($"{line.Length} bytes (0x{line.Offset:X2} - 0x{line.Offset + line.Length - 1:X2})");
+            if (line is DumpResult<AnimationHeader> result1)
+            {
+                DumpObj(result1.Structure);
+            }
+            else if (line is DumpResult<RawNodeAnimationGroup> result2)
+            {
+                DumpObj(result2.Structure);
+            }
+            else if (line is DumpResult<NodeAnimation> result3)
+            {
+                DumpObj(result3.Structure);
+            }
+            else if (line is DumpResult<RawMaterialAnimationGroup> result4)
+            {
+                DumpObj(result4.Structure);
+            }
+            else if (line is DumpResult<MaterialAnimation> result5)
+            {
+                DumpObj(result5.Structure);
+            }
+            else if (line is DumpResult<RawTexcoordAnimationGroup> result6)
+            {
+                DumpObj(result6.Structure);
+            }
+            else if (line is DumpResult<TexcoordAnimation> result7)
+            {
+                DumpObj(result7.Structure);
+            }
+            else if (line is DumpResult<RawTextureAnimationGroup> result8)
+            {
+                DumpObj(result8.Structure);
+            }
+            else if (line is DumpResult<TextureAnimation> result9)
+            {
+                DumpObj(result9.Structure);
+            }
+            else if (line is DumpResult<List<uint>> result10)
+            {
+                foreach (uint item in result10.Structure)
+                {
+                    Console.WriteLine(item);
+                }
+            }
+            else if (line is DumpResult<List<float>> result11)
+            {
+                foreach (uint item in result11.Structure)
+                {
+                    Console.WriteLine(item);
+                }
+            }
+            else if (line is DumpResult<ushort> result12)
+            {
+                Console.WriteLine(result12.Structure);
+            }
+        }
+
+        private static void DumpObj(object obj)
+        {
+            Type type = obj.GetType();
+            foreach (FieldInfo info in type.GetFields())
+            {
+                Console.WriteLine($"{info.Name} = {info.GetValue(obj)}");
+            }
+            foreach (PropertyInfo info in type.GetProperties())
+            {
+                Console.WriteLine($"{info.Name} = {info.GetValue(obj)}");
+            }
         }
 
         private static ReadOnlySpan<byte> ReadBytes(string path)

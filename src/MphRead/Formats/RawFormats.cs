@@ -205,7 +205,7 @@ namespace MphRead
     }
 
     // size: 44
-    public readonly struct TextureAnimation
+    public readonly struct MphTextureAnimation
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
         public readonly string Name;
@@ -215,6 +215,20 @@ namespace MphRead
         public readonly ushort MaterialId;
         public readonly ushort MinimumTextureId;
         public readonly ushort Field2A;
+    }
+
+    // size: 44
+    public readonly struct TextureAnimation
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 26)]
+        public readonly string Name;
+        public readonly ushort Count;
+        public readonly ushort StartIndex;
+        public readonly ushort MinimumPaletteId;
+        public readonly ushort MaterialId;
+        public readonly ushort MinimumTextureId;
+        public readonly uint Field2A;
+        public readonly uint Field2B;
     }
 
     // size: 60
