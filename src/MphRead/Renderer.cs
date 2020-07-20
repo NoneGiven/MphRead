@@ -100,6 +100,7 @@ namespace MphRead
             Mesh
         }
 
+        private long _frameCount = -1;
         private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
         private readonly Dictionary<uint, Model> _modelMap = new Dictionary<uint, Model>();
@@ -147,11 +148,15 @@ namespace MphRead
         private bool _showFog = true;
         private Vector4 _fogColor = default;
         private int _fogOffset = default;
+        private bool _frameAdvanceOn = false;
+        private bool _advanceOneFrame = false;
 
         private int _shaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
 
         private readonly List<string> _logs = new List<string>();
+        private bool _recording = false;
+        private int _framesRecorded = 0;
 
         public RenderWindow(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
             : base(gameWindowSettings, nativeWindowSettings)
@@ -402,8 +407,6 @@ namespace MphRead
             }
         }
 
-        private long _frameCount = -1;
-
         protected override async void OnRenderFrame(FrameEventArgs args)
         {
             // extra non-rendering updates
@@ -426,9 +429,19 @@ namespace MphRead
 
             RenderScene(args.Time);
             SwapBuffers();
+            if (_recording)
+            {
+                Images.Screenshot(Size.X, Size.Y, $"frame{_framesRecorded:0000}");
+                _framesRecorded++;
+            }
+            if (_advanceOneFrame)
+            {
+                await PrintOutput();
+                _advanceOneFrame = false;
+            }
             base.OnRenderFrame(args);
         }
-
+        
         private void SetSelectedModel(uint sceneId)
         {
             Deselect();
@@ -620,7 +633,9 @@ namespace MphRead
                 {
                     continue;
                 }
-                if (_frameCount != 0 && _frameCount % 2 == 0)
+                if (_frameCount != 0 &&
+                    ((!_frameAdvanceOn && _frameCount % 2 == 0)
+                    || (_frameAdvanceOn && _advanceOneFrame)))
                 {
                     ProcessAnimations(model);
                 }
@@ -1493,7 +1508,10 @@ namespace MphRead
         {
             if (e.Key == Key.Number5)
             {
-                Images.Screenshot(Size.X, Size.Y);
+                if (!_recording)
+                {
+                    Images.Screenshot(Size.X, Size.Y);
+                }
             }
             else if (e.Key == Key.T)
             {
@@ -1567,7 +1585,15 @@ namespace MphRead
             }
             else if (e.Key == Key.R)
             {
-                ResetCamera();
+                if (e.Control && e.Shift)
+                {
+                    _recording = !_recording;
+                    _framesRecorded = 0;
+                }
+                else
+                {
+                    ResetCamera();
+                }
                 await PrintOutput();
             }
             else if (e.Key == Key.P)
@@ -1582,6 +1608,17 @@ namespace MphRead
                 }
                 ResetCamera();
                 await PrintOutput();
+            }
+            else if (e.Key == Key.Enter)
+            {
+                _frameAdvanceOn = !_frameAdvanceOn;
+            }
+            else if (e.Key == Key.Period)
+            {
+                if (_frameAdvanceOn)
+                {
+                    _advanceOneFrame = true;
+                }
             }
             else if (e.Control && e.Key == Key.O)
             {
@@ -1993,7 +2030,9 @@ namespace MphRead
         {
             Guid guid = await Output.StartBatch();
             await Output.Clear(guid);
-            await Output.Write($"MphRead Version {Program.Version}", guid);
+            string recording = _recording ? " - Recording" : "";
+            string frameAdvance = _recording ? " - Frame Advance" : "";
+            await Output.Write($"MphRead Version {Program.Version}{recording}{frameAdvance}", guid);
             if (_selectionMode == SelectionMode.Model)
             {
                 await PrintModelInfo(guid);
