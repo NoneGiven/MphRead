@@ -183,7 +183,7 @@ namespace MphRead
                 recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
             }
             AnimationResults animations = LoadAnimation(animationPath);
-            if (animations.TextureAnimationGroups.Any(g => !g.Animations.Any()))
+            if (animations.TextureAnimationGroups.Any(g => g.Animations.Any()))
             {
                 LoadAnimationAndDump(animationPath);
             }
