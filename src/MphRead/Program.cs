@@ -26,8 +26,7 @@ namespace MphRead
             if (args.Length == 0)
             {
                 renderer.AddRoom("MP3 PROVING GROUND");
-                renderer.AddModel("Create01");
-                //renderer.AddModel("bombStartLiter", firstHunt: true);
+                renderer.AddModel("Crate01");
                 Nop();
             }
             else if (args.Length > 1)
