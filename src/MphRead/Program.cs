@@ -26,10 +26,10 @@ namespace MphRead
             if (args.Length == 0)
             {
                 Test.TestAllModels();
-                //renderer.AddRoom("UNIT2_LAND");
+                renderer.AddRoom("UNIT2_LAND");
                 //renderer.AddModel("lightningLob", firstHunt: true);
                 //renderer.AddModel("balljump_ray", firstHunt: true);
-                renderer.AddModel("balljump_ray");
+                //renderer.AddModel("balljump_ray");
                 Nop();
             }
             else if (args.Length > 1)

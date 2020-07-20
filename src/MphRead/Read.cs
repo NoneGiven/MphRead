@@ -486,19 +486,28 @@ namespace MphRead
                     animations.Add(animation.Name, animation);
                 }
                 var scales = DoOffsets<Fixed>(bytes, rawGroup.ScaleLutOffset, maxScale).Select(f => f.FloatValue).ToList();
-                dump.Add(new DumpResult<List<float>>(rawGroup.ScaleLutOffset, "Texcoord Scales",
-                    bytes[(int)rawGroup.ScaleLutOffset..((int)rawGroup.ScaleLutOffset + maxScale * sizeof(int))], scales));
+                if (scales.Count > 0)
+                {
+                    dump.Add(new DumpResult<List<float>>(rawGroup.ScaleLutOffset, "Texcoord Scales",
+                        bytes[(int)rawGroup.ScaleLutOffset..((int)rawGroup.ScaleLutOffset + maxScale * sizeof(int))], scales));
+                }
                 var rotations = new List<float>();
                 foreach (ushort value in DoOffsets<ushort>(bytes, rawGroup.RotateLutOffset, maxRotation))
                 {
                     long radians = (0x6487FL * value + 0x80000) >> 20;
                     rotations.Add(Fixed.ToFloat(radians));
                 }
-                dump.Add(new DumpResult<List<float>>(rawGroup.RotateLutOffset, "Texcoord Rotations",
+                if (rotations.Count > 0)
+                {
+                    dump.Add(new DumpResult<List<float>>(rawGroup.RotateLutOffset, "Texcoord Rotations",
                     bytes[(int)rawGroup.RotateLutOffset..((int)rawGroup.RotateLutOffset + maxRotation * sizeof(ushort))], rotations));
+                }
                 var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, maxTranslation).Select(f => f.FloatValue).ToList();
-                dump.Add(new DumpResult<List<float>>(rawGroup.TranslateLutOffset, "Texcoord Translations",
-                    bytes[(int)rawGroup.TranslateLutOffset..((int)rawGroup.TranslateLutOffset + maxTranslation * sizeof(int))], translations));
+                if (translations.Count > 0)
+                {
+                    dump.Add(new DumpResult<List<float>>(rawGroup.TranslateLutOffset, "Texcoord Translations",
+                        bytes[(int)rawGroup.TranslateLutOffset..((int)rawGroup.TranslateLutOffset + maxTranslation * sizeof(int))], translations));
+                }
                 results.TexcoordAnimationGroups.Add(new TexcoordAnimationGroup(rawGroup, scales, rotations, translations, animations));
             }
             foreach (uint offset in textureGroupOffsets)
@@ -587,6 +596,7 @@ namespace MphRead
                 lines.AddRange(Dump(line));
                 lines.Add("");
             }
+            lines.RemoveAt(lines.Count - 1);
             string dumpFile = Path.GetFileNameWithoutExtension(path) + ".txt";
             string dumpPath = Path.Combine(Paths.Export, "..", "..", "Dumps", path.Contains("_fh") ? "FH" : "MPH");
             Directory.CreateDirectory(dumpPath);
