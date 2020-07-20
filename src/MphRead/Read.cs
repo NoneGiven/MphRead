@@ -538,19 +538,22 @@ namespace MphRead
                 if (frameData.Count > 0)
                 {
                     dump.Add(new DumpResult<List<ushort>>(rawGroup.FrameDataOffset, "Frame Data",
-                        bytes[(int)rawGroup.FrameDataOffset..((int)rawGroup.FrameDataOffset + sizeof(ushort))], frameData.ToList()));
+                        bytes[(int)rawGroup.FrameDataOffset..((int)rawGroup.FrameDataOffset + sizeof(ushort) * rawGroup.FrameDataCount)],
+                        frameData.ToList()));
                 }
                 IReadOnlyList<ushort> textureIds = DoOffsets<ushort>(bytes, rawGroup.TextureIdOffset, rawGroup.TextureIdCount);
                 if (textureIds.Count > 0)
                 {
                     dump.Add(new DumpResult<List<ushort>>(rawGroup.TextureIdOffset, "Texture IDs",
-                        bytes[(int)rawGroup.TextureIdOffset..((int)rawGroup.TextureIdOffset + sizeof(ushort))], textureIds.ToList()));
+                        bytes[(int)rawGroup.TextureIdOffset..((int)rawGroup.TextureIdOffset + sizeof(ushort) * rawGroup.TextureIdCount)],
+                        textureIds.ToList()));
                 }
                 IReadOnlyList<ushort> paletteIds = DoOffsets<ushort>(bytes, rawGroup.PaletteIdOffset, rawGroup.PaletteIdCount);
                 if (paletteIds.Count > 0)
                 {
                     dump.Add(new DumpResult<List<ushort>>(rawGroup.PaletteIdOffset, "Palette IDs",
-                        bytes[(int)rawGroup.PaletteIdOffset..((int)rawGroup.PaletteIdOffset + sizeof(ushort))], paletteIds.ToList()));
+                        bytes[(int)rawGroup.PaletteIdOffset..((int)rawGroup.PaletteIdOffset + sizeof(ushort) * rawGroup.PaletteIdCount)],
+                        paletteIds.ToList()));
                 }
                 results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, animations));
             }
