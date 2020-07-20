@@ -10,7 +10,7 @@ namespace MphRead
 
         public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, int layerMask)
         {
-            (RoomMetadata? metadata, int id) = Metadata.GetRoomByName(name);
+            (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
             if (metadata == null)
             {
                 throw new InvalidOperationException();
@@ -42,8 +42,8 @@ namespace MphRead
             FilterNodes(room, roomLayerMask);
             // todo?: scene min/max coordinates
             ComputeNodeMatrices(room, index: 0);
-            bool multiplayer = id >= 93 && id <= 119;
-            IReadOnlyList<Model> entities = LoadEntities(metadata, multiplayer);
+            (int areaId, bool multiplayer) = Metadata.GetAreaInfo(roomId);
+            IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, multiplayer);
             // todo?: area ID/portals
             room.Type = ModelType.Room;
             return (room, metadata, entities);
@@ -206,7 +206,7 @@ namespace MphRead
             model.Transform = scaleMatrix * transform;
         }
         
-        private static IReadOnlyList<Model> LoadEntities(RoomMetadata metadata, bool multiplayer)
+        private static IReadOnlyList<Model> LoadEntities(RoomMetadata metadata, int areaId, bool multiplayer)
         {
             var models = new List<Model>();
             if (metadata.EntityPath == null)
@@ -319,7 +319,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Teleporter)
                 {
-                    models.Add(LoadTeleporter(((Entity<TeleporterEntityData>)entity).Data, multiplayer));
+                    models.Add(LoadTeleporter(((Entity<TeleporterEntityData>)entity).Data, areaId, multiplayer));
                 }
                 else if (entity.Type == EntityType.Unknown15)
                 {
@@ -455,8 +455,7 @@ namespace MphRead
             return model;
         }
 
-        // todo: palette
-        private static Model LoadTeleporter(TeleporterEntityData data, bool multiplayer)
+        private static Model LoadTeleporter(TeleporterEntityData data, int paletteId, bool multiplayer)
         {
             if (data.Invisible != 0)
             {
@@ -472,7 +471,7 @@ namespace MphRead
             {
                 modelName = "Teleporter";
             }
-            Model model = Read.GetModelByName(modelName);
+            Model model = Read.GetModelByName(modelName, paletteId);
             model.Position = data.Position.ToFloatVector();
             ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);

@@ -327,7 +327,7 @@ namespace MphRead
         public readonly uint ModelId;
         public readonly uint Field3C;
         public readonly byte TargetLayerId;
-        public readonly byte Flags; // sktodo: use these for some stuff
+        public readonly byte Flags;
         public readonly byte Field42;
         public readonly byte Field43;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]

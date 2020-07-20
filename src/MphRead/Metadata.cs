@@ -401,6 +401,45 @@ namespace MphRead
             return (ushort)(r | g << 5 | b << 10);
         }
 
+        public static (int, bool) GetAreaInfo(int roomId)
+        {
+            int areaId = 8;
+            if (roomId >= 27 && roomId < 36)
+            {
+                areaId = 0;
+            }
+            else if (roomId >= 36 && roomId < 45)
+            {
+                areaId = 1;
+            }
+            else if (roomId >= 45 && roomId < 56)
+            {
+                areaId = 2;
+            }
+            else if (roomId >= 56 && roomId < 65)
+            {
+                areaId = 3;
+            }
+            else if (roomId >= 65 && roomId < 72)
+            {
+                areaId = 4;
+            }
+            else if (roomId >= 72 && roomId < 77)
+            {
+                areaId = 5;
+            }
+            else if (roomId >= 77 && roomId < 83)
+            {
+                areaId = 6;
+            }
+            else if (roomId >= 83 && roomId < 89)
+            {
+                areaId = 7;
+            }
+            bool multiplayer = roomId >= 93 && roomId <= 119;
+            return (areaId, multiplayer);
+        }
+
         private static readonly IReadOnlyList<string> _roomIds
             = new List<string>()
             {
