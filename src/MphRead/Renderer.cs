@@ -816,7 +816,8 @@ namespace MphRead
             }
         }
 
-        private float InterpolateAnimation(IReadOnlyList<float> values, int start, int frame, int blend, int lutLength, int frameCount)
+        private float InterpolateAnimation(IReadOnlyList<float> values, int start, int frame, int blend, int lutLength, int frameCount,
+            bool isRotation = false)
         {
             if (lutLength == 1)
             {
@@ -838,6 +839,17 @@ namespace MphRead
             }
             float first = values[start + index];
             float second = values[start + index + 1];
+            if (isRotation)
+            {
+                if (first - second > MathF.PI)
+                {
+                    second += MathF.PI * 2f;
+                }
+                else if (first - second < -MathF.PI)
+                {
+                    first += MathF.PI * 2f;
+                }
+            }
             float factor = 1.0f / blend * remainder;
             return first + (second - first) * factor;
         }
@@ -850,7 +862,7 @@ namespace MphRead
             float scaleT = InterpolateAnimation(group.Scales, animation.ScaleLutIndexT, group.CurrentFrame,
                 animation.ScaleBlendT, animation.ScaleLutLengthT, group.FrameCount);
             float rotate = InterpolateAnimation(group.Rotations, animation.RotateLutIndexZ, group.CurrentFrame,
-                animation.RotateBlendZ, animation.RotateLutLengthZ, group.FrameCount);
+                animation.RotateBlendZ, animation.RotateLutLengthZ, group.FrameCount, isRotation: true);
             float translateS = InterpolateAnimation(group.Translations, animation.TranslateLutIndexS, group.CurrentFrame,
                 animation.TranslateBlendS, animation.TranslateLutLengthS, group.FrameCount);
             float translateT = InterpolateAnimation(group.Translations, animation.TranslateLutIndexT, group.CurrentFrame,
