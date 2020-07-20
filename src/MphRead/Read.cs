@@ -183,7 +183,7 @@ namespace MphRead
                 recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
             }
             AnimationResults animations = LoadAnimation(animationPath);
-            if (animations.TextureAnimationGroups.Any(g => !g.Animations.Any()))
+            if (animations.TextureAnimationGroups.Any(g => g.Animations.Any()))
             {
                 LoadAnimationAndDump(animationPath);
             }
@@ -545,11 +545,11 @@ namespace MphRead
                     dump.Add(new DumpResult<ushort>(rawGroup.TextureIdOffset, "Texture ID",
                         bytes[(int)rawGroup.TextureIdOffset..((int)rawGroup.TextureIdOffset + sizeof(ushort))], texture));
                 }
-                if (rawGroup.PaletteOffset != offset)
+                if (rawGroup.PaletteIdOffset != offset)
                 {
-                    ushort palette = DoOffset<ushort>(bytes, rawGroup.PaletteOffset);
-                    dump.Add(new DumpResult<ushort>(rawGroup.PaletteOffset, "Palette ID",
-                        bytes[(int)rawGroup.PaletteOffset..((int)rawGroup.PaletteOffset + sizeof(ushort))], palette));
+                    ushort palette = DoOffset<ushort>(bytes, rawGroup.PaletteIdOffset);
+                    dump.Add(new DumpResult<ushort>(rawGroup.PaletteIdOffset, "Palette ID",
+                        bytes[(int)rawGroup.PaletteIdOffset..((int)rawGroup.PaletteIdOffset + sizeof(ushort))], palette));
                 }
                 results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, animations));
             }

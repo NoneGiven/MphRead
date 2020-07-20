@@ -120,14 +120,14 @@ namespace MphRead
     public readonly struct RawTextureAnimationGroup
     {
         public readonly ushort FrameCount;
-        public readonly ushort Field2;
-        public readonly ushort Field4;
-        public readonly ushort Field6;
+        public readonly ushort FrameDataCount;
+        public readonly ushort TextureIdCount;
+        public readonly ushort PaletteIdCount;
         public readonly ushort AnimationCount;
         public readonly ushort FieldA;
         public readonly uint FrameDataOffset;
         public readonly uint TextureIdOffset;
-        public readonly uint PaletteOffset;
+        public readonly uint PaletteIdOffset;
         public readonly uint AnimationOffset;
         public readonly ushort AnimationFrame;
         public readonly ushort Field1E;
@@ -207,7 +207,7 @@ namespace MphRead
     }
 
     // size: 44
-    public readonly struct MphTextureAnimation
+    public readonly struct TextureAnimation
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
         public readonly string Name;
@@ -217,20 +217,6 @@ namespace MphRead
         public readonly ushort MaterialId;
         public readonly ushort MinimumTextureId;
         public readonly ushort Field2A;
-    }
-
-    // size: 44
-    public readonly struct TextureAnimation
-    {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 26)]
-        public readonly string Name;
-        public readonly ushort Count;
-        public readonly ushort StartIndex;
-        public readonly ushort MinimumPaletteId;
-        public readonly ushort MaterialId;
-        public readonly ushort MinimumTextureId;
-        public readonly uint Field2A;
-        public readonly uint Field2B;
     }
 
     // size: 60
