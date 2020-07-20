@@ -44,7 +44,7 @@ namespace MphRead
             };
             return GetModel("model", path, null, recolors, 0);
         }
-        
+
         public static Model GetRoomByName(string name)
         {
             (RoomMetadata? roomMeta, _) = Metadata.GetRoomByName(name);
@@ -305,7 +305,10 @@ namespace MphRead
                 {
                     animations.Add(animation.Name, animation);
                 }
-                results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, animations));
+                IReadOnlyList<ushort> frameIndices = DoOffsets<ushort>(bytes, rawGroup.FrameIndexOffset, rawGroup.FrameIndexCount);
+                IReadOnlyList<ushort> textureIds = DoOffsets<ushort>(bytes, rawGroup.TextureIdOffset, rawGroup.TextureIdCount);
+                IReadOnlyList<ushort> paletteIds = DoOffsets<ushort>(bytes, rawGroup.PaletteIdOffset, rawGroup.PaletteIdCount);
+                results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, frameIndices, textureIds, paletteIds, animations));
             }
             return results;
         }
