@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -46,7 +45,7 @@ namespace MphRead
             };
             return GetModel("model", path, null, recolors, 0);
         }
-        
+
         public static Model GetRoomByName(string name)
         {
             (RoomMetadata? roomMeta, _) = Metadata.GetRoomByName(name);
@@ -183,11 +182,10 @@ namespace MphRead
                 }
                 recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
             }
-            AnimationResults animations = LoadAnimationAndDump(animationPath);
+            AnimationResults animations = LoadAnimation(animationPath);
             if (animations.TextureAnimationGroups.Any(g => g.Animations.Any()))
             {
-                Console.WriteLine($"{name}: mat {animations.MaterialAnimationGroups.Count}, nod {animations.NodeAnimationGroups.Count}, " +
-                    $"uvs {animations.TexcoordAnimationGroups.Count}, tex {animations.TextureAnimationGroups.Count}");
+                LoadAnimationAndDump(animationPath);
             }
             return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
@@ -324,6 +322,14 @@ namespace MphRead
             public string Description { get; }
             public IReadOnlyList<byte> Bytes { get; }
 
+            protected DumpResult(uint offset, string description, IEnumerable<byte> bytes)
+            {
+                Offset = offset;
+                Length = (uint)bytes.Count();
+                Description = description;
+                Bytes = bytes.ToList();
+            }
+
             protected DumpResult(uint offset, string description, ReadOnlySpan<byte> bytes)
             {
                 Offset = offset;
@@ -336,6 +342,12 @@ namespace MphRead
         private class DumpResult<T> : DumpResult
         {
             public T Structure { get; }
+
+            public DumpResult(uint offset, string description, IEnumerable<byte> bytes, T structure)
+                : base(offset, description, bytes)
+            {
+                Structure = structure;
+            }
 
             public DumpResult(uint offset, string description, ReadOnlySpan<byte> bytes, T structure)
                 : base(offset, description, bytes)
@@ -402,7 +414,7 @@ namespace MphRead
                     bytes[(int)offset..((int)offset + Marshal.SizeOf<RawNodeAnimationGroup>())], rawGroup));
                 IReadOnlyList<NodeAnimation> rawAnimations
                     = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, 1);
-                for (int j = 0; j < 1;  j++)
+                for (int j = 0; j < 1; j++)
                 {
                     int size = Marshal.SizeOf<NodeAnimation>();
                     long start = rawGroup.AnimationOffset + j * size;
@@ -512,100 +524,157 @@ namespace MphRead
                 {
                     animations.Add(animation.Name, animation);
                 }
-                ushort frame = DoOffset<ushort>(bytes, rawGroup.FrameDataOffset);
-                dump.Add(new DumpResult<ushort>(rawGroup.FrameDataOffset, "Frame Data",
-                    bytes[(int)rawGroup.FrameDataOffset..((int)rawGroup.FrameDataOffset + sizeof(ushort))], frame));
-                ushort texture = DoOffset<ushort>(bytes, rawGroup.TextureIdOffset);
-                dump.Add(new DumpResult<ushort>(rawGroup.TextureIdOffset, "Texture ID",
-                    bytes[(int)rawGroup.TextureIdOffset..((int)rawGroup.TextureIdOffset + sizeof(ushort))], texture));
-                ushort palette = DoOffset<ushort>(bytes, rawGroup.PaletteOffset);
-                dump.Add(new DumpResult<ushort>(rawGroup.PaletteOffset, "Palette ID",
-                    bytes[(int)rawGroup.PaletteOffset..((int)rawGroup.PaletteOffset + sizeof(ushort))], palette));
+                if (rawGroup.FrameDataOffset != offset)
+                {
+                    ushort frame = DoOffset<ushort>(bytes, rawGroup.FrameDataOffset);
+                    dump.Add(new DumpResult<ushort>(rawGroup.FrameDataOffset, "Frame Data",
+                        bytes[(int)rawGroup.FrameDataOffset..((int)rawGroup.FrameDataOffset + sizeof(ushort))], frame));
+                }
+                if (rawGroup.TextureIdOffset != offset)
+                {
+                    ushort texture = DoOffset<ushort>(bytes, rawGroup.TextureIdOffset);
+                    dump.Add(new DumpResult<ushort>(rawGroup.TextureIdOffset, "Texture ID",
+                        bytes[(int)rawGroup.TextureIdOffset..((int)rawGroup.TextureIdOffset + sizeof(ushort))], texture));
+                }
+                if (rawGroup.PaletteOffset != offset)
+                {
+                    ushort palette = DoOffset<ushort>(bytes, rawGroup.PaletteOffset);
+                    dump.Add(new DumpResult<ushort>(rawGroup.PaletteOffset, "Palette ID",
+                        bytes[(int)rawGroup.PaletteOffset..((int)rawGroup.PaletteOffset + sizeof(ushort))], palette));
+                }
                 results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, animations));
             }
-            Console.WriteLine($"{bytes.Length} bytes (0x00 - 0x{bytes.Length - 1:X2})");
-            Console.WriteLine();
-            foreach (DumpResult line in dump.OrderBy(d => d.Offset))
+            var gaps = new List<DumpResult>();
+            dump = dump.OrderBy(d => d.Offset).ToList();
+            for (int i = 0; i < dump.Count; i++)
             {
-                Dump(line);
-                Console.WriteLine();
+                DumpResult line = dump[i];
+                uint offset = line.Offset + line.Length;
+                if (i == dump.Count - 1)
+                {
+                    if (offset != bytes.Length)
+                    {
+                        var gap = new List<byte>();
+                        for (uint b = offset; b < bytes.Length; b++)
+                        {
+                            gap.Add(bytes[(int)b]);
+                        }
+                        gaps.Add(new DumpResult<byte>(offset, "Gap", gap, 0));
+                    }
+                }
+                else
+                {
+                    DumpResult next = dump[i + 1];
+                    if (offset < next.Offset)
+                    {
+                        var gap = new List<byte>();
+                        for (uint b = offset; b < next.Offset; b++)
+                        {
+                            gap.Add(bytes[(int)b]);
+                        }
+                        gaps.Add(new DumpResult<byte>(offset, "Gap", gap, 0));
+                    }
+                }
             }
+            dump.AddRange(gaps);
+            dump = dump.OrderBy(d => d.Offset).ToList();
+            var lines = new List<string>();
+            lines.Add(path);
+            lines.Add($"{bytes.Length} bytes (0x00 - 0x{bytes.Length - 1:X2})");
+            lines.Add("");
+            foreach (DumpResult line in dump)
+            {
+                lines.AddRange(Dump(line));
+                lines.Add("");
+            }
+            string dumpFile = Path.GetFileNameWithoutExtension(path) + ".txt";
+            string dumpPath = Path.Combine(Paths.Export, "..", "..", "Dumps", path.Contains("_fh") ? "FH" : "MPH");
+            Directory.CreateDirectory(dumpPath);
+            File.WriteAllLines(Path.Combine(dumpPath, dumpFile), lines);
             return results;
         }
 
-        private static void Dump(DumpResult line)
+        private static IEnumerable<string> Dump(DumpResult line)
         {
-            Console.WriteLine($"0x{line.Offset:X2}: {line.Description}");
-            Console.WriteLine($"{line.Length} bytes (0x{line.Offset:X2} - 0x{line.Offset + line.Length - 1:X2})");
-            if (line is DumpResult<AnimationHeader> result1)
+            var lines = new List<string>();
+            lines.Add($"0x{line.Offset:X2}: {line.Description}");
+            lines.Add($"{line.Length} bytes (0x{line.Offset:X2} - 0x{line.Offset + line.Length - 1:X2})");
+            if (line is DumpResult<byte> result0)
             {
-                DumpObj(result1.Structure);
+                lines.Add(String.Join(' ', result0.Bytes.Select(b => b.ToString("X2"))));
+            }
+            else if (line is DumpResult<AnimationHeader> result1)
+            {
+                lines.AddRange(DumpObj(result1.Structure));
             }
             else if (line is DumpResult<RawNodeAnimationGroup> result2)
             {
-                DumpObj(result2.Structure);
+                lines.AddRange(DumpObj(result2.Structure));
             }
             else if (line is DumpResult<NodeAnimation> result3)
             {
-                DumpObj(result3.Structure);
+                lines.AddRange(DumpObj(result3.Structure));
             }
             else if (line is DumpResult<RawMaterialAnimationGroup> result4)
             {
-                DumpObj(result4.Structure);
+                lines.AddRange(DumpObj(result4.Structure));
             }
             else if (line is DumpResult<MaterialAnimation> result5)
             {
-                DumpObj(result5.Structure);
+                lines.AddRange(DumpObj(result5.Structure));
             }
             else if (line is DumpResult<RawTexcoordAnimationGroup> result6)
             {
-                DumpObj(result6.Structure);
+                lines.AddRange(DumpObj(result6.Structure));
             }
             else if (line is DumpResult<TexcoordAnimation> result7)
             {
-                DumpObj(result7.Structure);
+                lines.AddRange(DumpObj(result7.Structure));
             }
             else if (line is DumpResult<RawTextureAnimationGroup> result8)
             {
-                DumpObj(result8.Structure);
+                lines.AddRange(DumpObj(result8.Structure));
             }
             else if (line is DumpResult<TextureAnimation> result9)
             {
-                DumpObj(result9.Structure);
+                lines.AddRange(DumpObj(result9.Structure));
             }
             else if (line is DumpResult<List<uint>> result10)
             {
                 foreach (uint item in result10.Structure)
                 {
-                    Console.WriteLine(item);
+                    lines.Add($"0x{item:X2}");
                 }
             }
             else if (line is DumpResult<List<float>> result11)
             {
                 foreach (uint item in result11.Structure)
                 {
-                    Console.WriteLine(item);
+                    lines.Add(item.ToString());
                 }
             }
             else if (line is DumpResult<ushort> result12)
             {
-                Console.WriteLine(result12.Structure);
+                lines.Add(result12.Structure.ToString());
             }
+            return lines;
         }
 
-        private static void DumpObj(object obj)
+        private static IEnumerable<string> DumpObj(object obj)
         {
+            var lines = new List<string>();
             Type type = obj.GetType();
             foreach (FieldInfo info in type.GetFields())
             {
-                Console.WriteLine($"{info.Name} = {info.GetValue(obj)}");
+                lines.Add($"{info.Name} = {info.GetValue(obj)}");
             }
             foreach (PropertyInfo info in type.GetProperties())
             {
-                Console.WriteLine($"{info.Name} = {info.GetValue(obj)}");
+                lines.Add($"{info.Name} = {info.GetValue(obj)}");
             }
+            return lines;
         }
-
+        
         private static ReadOnlySpan<byte> ReadBytes(string path)
         {
             return new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));

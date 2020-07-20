@@ -196,10 +196,10 @@ namespace MphRead
             {
                 yield return Read.GetModelByName(meta.Key);
             }
-            //foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.FirstHuntModels)
-            //{
-            //    yield return Read.GetModelByName(meta.Key, firstHunt: true);
-            //}
+            foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.FirstHuntModels)
+            {
+                yield return Read.GetModelByName(meta.Key, firstHunt: true);
+            }
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 yield return Read.GetRoomByName(meta.Key);
