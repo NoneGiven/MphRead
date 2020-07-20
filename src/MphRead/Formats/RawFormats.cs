@@ -97,7 +97,7 @@ namespace MphRead
     public readonly struct AnimationHeader
     {
         public readonly uint NodeGroupOffset;
-        public readonly uint Field4; // todo?: some offset
+        public readonly uint UnusedGroupOffset; // always points to Count zeroes
         public readonly uint MaterialGroupOffset;
         public readonly uint TexcoordGroupOffset;
         public readonly uint TextureGroupOffset;
@@ -121,7 +121,7 @@ namespace MphRead
     {
         public readonly uint FrameCount;
         public readonly uint Field4;
-        public readonly ushort AnimationCount; // todo: might be one uint like the rest?
+        public readonly ushort AnimationCount;
         public readonly ushort FieldA;
         public readonly uint FrameDataOffset;
         public readonly uint TextureIdOffset;
@@ -148,7 +148,7 @@ namespace MphRead
     }
 
     // size: 20
-    public readonly struct NodeAnimationGroup
+    public readonly struct RawNodeAnimationGroup
     {
         public readonly uint Data;
         public readonly uint Fixed32Pointer;
@@ -242,7 +242,7 @@ namespace MphRead
     }
 
     // size: 48
-    public readonly struct NodeAnimation
+    public readonly struct RawNodeAnimation
     {
         public readonly byte Field0;
         public readonly byte Field1;

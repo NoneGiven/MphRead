@@ -232,7 +232,17 @@ namespace MphRead
                 {
                     continue;
                 }
-                results.NodeAnimationGroups.Add(DoOffset<NodeAnimationGroup>(bytes, offset));
+                RawNodeAnimationGroup rawGroup = DoOffset<RawNodeAnimationGroup>(bytes, offset);
+                IReadOnlyList<RawNodeAnimation> rawAnimations
+                    = DoOffsets<RawNodeAnimation>(bytes, rawGroup.AnimationOffset, 1);
+                var animations = new Dictionary<string, NodeAnimation>();
+                int i = 0;
+                foreach (RawNodeAnimation rawAnimation in rawAnimations)
+                {
+                    var animation = new NodeAnimation(rawAnimation);
+                    animations.Add($"{offset}-{i++}", animation);
+                }
+                results.NodeAnimationGroups.Add(new NodeAnimationGroup(rawGroup, animations));
             }
             foreach (uint offset in materialGroupOffsets)
             {

@@ -532,6 +532,43 @@ namespace MphRead
         }
     }
 
+    // todo: just use the structs for the animations instead of classes
+    public class NodeAnimationGroup
+    {
+        public uint Data { get; }
+        public uint Fixed32Pointer { get; }
+        public uint UInt16Pointer { get; }
+        public uint Int32Pointer { get; }
+        public uint AnimationOffset { get; }
+        public IReadOnlyDictionary<string, NodeAnimation> Animations { get; }
+
+        public NodeAnimationGroup(RawNodeAnimationGroup raw, IReadOnlyDictionary<string, NodeAnimation> animations)
+        {
+            Data = raw.Data;
+            Fixed32Pointer = raw.Fixed32Pointer;
+            UInt16Pointer = raw.UInt16Pointer;
+            Int32Pointer = raw.Int32Pointer;
+            AnimationOffset = raw.AnimationOffset;
+            Animations = animations;
+        }
+    }
+
+    public class NodeAnimation
+    {
+        public readonly byte Field0;
+        public readonly byte Field1;
+        public readonly byte Field2;
+        public readonly byte Flags;
+
+        public NodeAnimation(RawNodeAnimation raw)
+        {
+            Field0 = raw.Field0;
+            Field1 = raw.Field1;
+            Field2 = raw.Field2;
+            Flags = raw.Flags;
+        }
+    }
+
     public class TexcoordAnimationGroup
     {
         public int FrameCount { get; }
