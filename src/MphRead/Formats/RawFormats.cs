@@ -120,12 +120,12 @@ namespace MphRead
     public readonly struct RawTextureAnimationGroup
     {
         public readonly ushort FrameCount;
-        public readonly ushort FrameDataCount;
+        public readonly ushort FrameIndexCount;
         public readonly ushort TextureIdCount;
         public readonly ushort PaletteIdCount;
         public readonly ushort AnimationCount;
         public readonly ushort FieldA;
-        public readonly uint FrameDataOffset;
+        public readonly uint FrameIndexOffset;
         public readonly uint TextureIdOffset;
         public readonly uint PaletteIdOffset;
         public readonly uint AnimationOffset;

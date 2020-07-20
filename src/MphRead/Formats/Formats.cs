@@ -580,13 +580,20 @@ namespace MphRead
         public int FrameCount { get; }
         public int CurrentFrame { get; set; }
         public int Count { get; }
+        public IReadOnlyList<ushort> FrameIndices { get; }
+        public IReadOnlyList<ushort> TextureIds { get; }
+        public IReadOnlyList<ushort> PaletteIds { get; }
         public IReadOnlyDictionary<string, TextureAnimation> Animations { get; }
 
-        public TextureAnimationGroup(RawTextureAnimationGroup raw, IReadOnlyDictionary<string, TextureAnimation> animations)
+        public TextureAnimationGroup(RawTextureAnimationGroup raw, IReadOnlyList<ushort> frameIndices, IReadOnlyList<ushort> textureIds,
+            IReadOnlyList<ushort> paletteIds, IReadOnlyDictionary<string, TextureAnimation> animations)
         {
-            FrameCount = (int)raw.FrameCount;
+            FrameCount = raw.FrameCount;
             CurrentFrame = raw.AnimationFrame;
             Count = raw.AnimationCount;
+            FrameIndices = frameIndices;
+            TextureIds = textureIds;
+            PaletteIds = paletteIds;
             Animations = animations;
         }
     }

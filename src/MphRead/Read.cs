@@ -310,7 +310,10 @@ namespace MphRead
                 {
                     animations.Add(animation.Name, animation);
                 }
-                results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, animations));
+                IReadOnlyList<ushort> frameIndices = DoOffsets<ushort>(bytes, rawGroup.FrameIndexOffset, rawGroup.FrameIndexCount);
+                IReadOnlyList<ushort> textureIds = DoOffsets<ushort>(bytes, rawGroup.TextureIdOffset, rawGroup.TextureIdCount);
+                IReadOnlyList<ushort> paletteIds = DoOffsets<ushort>(bytes, rawGroup.PaletteIdOffset, rawGroup.PaletteIdCount);
+                results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, frameIndices, textureIds, paletteIds, animations));
             }
             return results;
         }
@@ -533,13 +536,12 @@ namespace MphRead
                 {
                     animations.Add(animation.Name, animation);
                 }
-                // sktodo: add these to the results
-                IReadOnlyList<ushort> frameData = DoOffsets<ushort>(bytes, rawGroup.FrameDataOffset, rawGroup.FrameDataCount);
-                if (frameData.Count > 0)
+                IReadOnlyList<ushort> frameIndices = DoOffsets<ushort>(bytes, rawGroup.FrameIndexOffset, rawGroup.FrameIndexCount);
+                if (frameIndices.Count > 0)
                 {
-                    dump.Add(new DumpResult<List<ushort>>(rawGroup.FrameDataOffset, "Frame Data",
-                        bytes[(int)rawGroup.FrameDataOffset..((int)rawGroup.FrameDataOffset + sizeof(ushort) * rawGroup.FrameDataCount)],
-                        frameData.ToList()));
+                    dump.Add(new DumpResult<List<ushort>>(rawGroup.FrameIndexOffset, "Frame Indices",
+                        bytes[(int)rawGroup.FrameIndexOffset..((int)rawGroup.FrameIndexOffset + sizeof(ushort) * rawGroup.FrameIndexCount)],
+                        frameIndices.ToList()));
                 }
                 IReadOnlyList<ushort> textureIds = DoOffsets<ushort>(bytes, rawGroup.TextureIdOffset, rawGroup.TextureIdCount);
                 if (textureIds.Count > 0)
@@ -555,7 +557,7 @@ namespace MphRead
                         bytes[(int)rawGroup.PaletteIdOffset..((int)rawGroup.PaletteIdOffset + sizeof(ushort) * rawGroup.PaletteIdCount)],
                         paletteIds.ToList()));
                 }
-                results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, animations));
+                results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, frameIndices, textureIds, paletteIds, animations));
             }
             var gaps = new List<DumpResult>();
             dump = dump.OrderBy(d => d.Offset).ToList();
