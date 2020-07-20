@@ -137,9 +137,9 @@ namespace MphRead
         {
             foreach (Model model in GetAllModels())
             {
-                foreach (MaterialAnimationGroup group in model.MaterialAnimationGroups)
+                foreach (Material material in model.Materials)
                 {
-                    if (group.Animations.Count > 0)
+                    if (material.PolygonMode == PolygonMode.Decal && material.Alpha < 31)
                     {
                         System.Diagnostics.Debugger.Break();
                     }

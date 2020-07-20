@@ -485,8 +485,11 @@ namespace MphRead
         public byte Lighting { get; set; } // todo: probably a bool
         public CullingMode Culling { get; }
         public byte Alpha { get; }
-        public int PaletteId { get; }
         public int TextureId { get; }
+        public int PaletteId { get; }
+        public int TextureBindingId { get; set; }
+        public int CurrentTextureId { get; set; }
+        public int CurrentPaletteId { get; set; }
         public RepeatMode XRepeat { get; }
         public RepeatMode YRepeat { get; }
         public ColorRgb Diffuse { get; }
@@ -513,8 +516,8 @@ namespace MphRead
             Lighting = raw.Lighting;
             Culling = raw.Culling;
             Alpha = raw.Alpha;
-            PaletteId = raw.PaletteId;
-            TextureId = raw.TextureId;
+            CurrentTextureId = TextureId = raw.TextureId;
+            CurrentPaletteId = PaletteId = raw.PaletteId;
             XRepeat = raw.XRepeat;
             YRepeat = raw.YRepeat;
             Diffuse = raw.Diffuse;
