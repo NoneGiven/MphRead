@@ -106,7 +106,7 @@ namespace MphRead
     }
 
     // size: 20
-    public readonly struct MaterialAnimationGroup
+    public readonly struct RawMaterialAnimationGroup
     {
         public readonly uint FrameCount;
         public readonly uint ColorLutOffset;
@@ -117,11 +117,11 @@ namespace MphRead
     }
 
     // size: 44
-    public readonly struct TextureAnimationGroup
+    public readonly struct RawTextureAnimationGroup
     {
         public readonly uint FrameCount;
         public readonly uint Field4;
-        public readonly ushort AnimationCount;
+        public readonly ushort AnimationCount; // todo: might be one uint like the rest?
         public readonly ushort FieldA;
         public readonly uint FrameDataOffset;
         public readonly uint TextureIdOffset;
@@ -158,7 +158,7 @@ namespace MphRead
     }
 
     // size: 140
-    public readonly struct MaterialAnimation
+    public readonly struct RawMaterialAnimation
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
         public readonly string Name;
@@ -205,7 +205,7 @@ namespace MphRead
     }
 
     // size: 44
-    public readonly struct TextureAnimation
+    public readonly struct RawTextureAnimation
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
         public readonly string Name;

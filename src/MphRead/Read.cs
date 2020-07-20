@@ -240,7 +240,16 @@ namespace MphRead
                 {
                     continue;
                 }
-                results.MaterialAnimationGroups.Add(DoOffset<MaterialAnimationGroup>(bytes, offset));
+                RawMaterialAnimationGroup rawGroup = DoOffset<RawMaterialAnimationGroup>(bytes, offset);
+                IReadOnlyList<RawMaterialAnimation> rawAnimations
+                    = DoOffsets<RawMaterialAnimation>(bytes, rawGroup.AnimationOffset, (int)rawGroup.AnimationCount);
+                var animations = new Dictionary<string, MaterialAnimation>();
+                foreach (RawMaterialAnimation rawAnimation in rawAnimations)
+                {
+                    var animation = new MaterialAnimation(rawAnimation);
+                    animations.Add(animation.Name, animation);
+                }
+                results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup, animations));
             }
             foreach (uint offset in texcoordGroupOffsets)
             {
@@ -281,7 +290,16 @@ namespace MphRead
                 {
                     continue;
                 }
-                results.TextureAnimationGroups.Add(DoOffset<TextureAnimationGroup>(bytes, offset));
+                RawTextureAnimationGroup rawGroup = DoOffset<RawTextureAnimationGroup>(bytes, offset);
+                IReadOnlyList<RawTextureAnimation> rawAnimations
+                    = DoOffsets<RawTextureAnimation>(bytes, rawGroup.AnimationOffset, rawGroup.AnimationCount);
+                var animations = new Dictionary<string, TextureAnimation>();
+                foreach (RawTextureAnimation rawAnimation in rawAnimations)
+                {
+                    var animation = new TextureAnimation(rawAnimation);
+                    animations.Add(animation.Name, animation);
+                }
+                results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, animations));
             }
             return results;
         }

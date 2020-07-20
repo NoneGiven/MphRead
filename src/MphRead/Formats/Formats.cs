@@ -595,6 +595,58 @@ namespace MphRead
         }
     }
 
+    public class TextureAnimationGroup
+    {
+        public int FrameCount { get; }
+        public int CurrentFrame { get; set; }
+        public int Count { get; }
+        public IReadOnlyDictionary<string, TextureAnimation> Animations { get; }
+
+        public TextureAnimationGroup(RawTextureAnimationGroup raw, IReadOnlyDictionary<string, TextureAnimation> animations)
+        {
+            FrameCount = (int)raw.FrameCount;
+            CurrentFrame = raw.AnimationFrame;
+            Count = raw.AnimationCount;
+            Animations = animations;
+        }
+    }
+
+    public class TextureAnimation
+    {
+        public string Name { get; }
+        
+        public TextureAnimation(RawTextureAnimation raw)
+        {
+            Name = raw.Name;
+        }
+    }
+
+    public class MaterialAnimationGroup
+    {
+        public int FrameCount { get; }
+        public int CurrentFrame { get; set; }
+        public int Count { get; }
+        public IReadOnlyDictionary<string, MaterialAnimation> Animations { get; }
+
+        public MaterialAnimationGroup(RawMaterialAnimationGroup raw, IReadOnlyDictionary<string, MaterialAnimation> animations)
+        {
+            FrameCount = (int)raw.FrameCount;
+            CurrentFrame = raw.AnimationFrame;
+            Count = (int)raw.AnimationCount;
+            Animations = animations;
+        }
+    }
+
+    public class MaterialAnimation
+    {
+        public string Name { get; }
+
+        public MaterialAnimation(RawMaterialAnimation raw)
+        {
+            Name = raw.Name;
+        }
+    }
+
     public class Entity
     {
         public string NodeName { get; }

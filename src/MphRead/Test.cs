@@ -137,10 +137,9 @@ namespace MphRead
         {
             foreach (Model model in GetAllModels())
             {
-                foreach (Material material in model.Materials)
+                foreach (MaterialAnimationGroup group in model.MaterialAnimationGroups)
                 {
-                    if (material.TexgenMode != TexgenMode.None && model.TextureMatrices.Count == 0
-                        && ((material.TranslateS != 1 && material.TranslateS != 0) || (material.TranslateT != 1 && material.TranslateT != 0)))
+                    if (group.Animations.Count > 0)
                     {
                         System.Diagnostics.Debugger.Break();
                     }
