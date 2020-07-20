@@ -532,7 +532,6 @@ namespace MphRead
         }
     }
 
-    // todo: just use the structs for the animations instead of classes
     public class NodeAnimationGroup
     {
         public uint Data { get; }
@@ -553,22 +552,6 @@ namespace MphRead
         }
     }
 
-    public class NodeAnimation
-    {
-        public readonly byte Field0;
-        public readonly byte Field1;
-        public readonly byte Field2;
-        public readonly byte Flags;
-
-        public NodeAnimation(RawNodeAnimation raw)
-        {
-            Field0 = raw.Field0;
-            Field1 = raw.Field1;
-            Field2 = raw.Field2;
-            Flags = raw.Flags;
-        }
-    }
-
     public class TexcoordAnimationGroup
     {
         public int FrameCount { get; }
@@ -580,7 +563,7 @@ namespace MphRead
         public IReadOnlyDictionary<string, TexcoordAnimation> Animations { get; }
 
         public TexcoordAnimationGroup(RawTexcoordAnimationGroup raw, IReadOnlyList<float> scales, IReadOnlyList<float> rotations,
-            IReadOnlyList<float> translations, IReadOnlyDictionary<string ,TexcoordAnimation> animations)
+            IReadOnlyList<float> translations, IReadOnlyDictionary<string, TexcoordAnimation> animations)
         {
             FrameCount = (int)raw.FrameCount;
             CurrentFrame = raw.AnimationFrame;
@@ -589,46 +572,6 @@ namespace MphRead
             Rotations = rotations;
             Translations = translations;
             Animations = animations;
-        }
-    }
-
-    public class TexcoordAnimation
-    {
-        public string Name { get; }
-        public byte ScaleBlendS { get; }
-        public byte ScaleBlendT { get; }
-        public ushort ScaleLutLengthS { get; }
-        public ushort ScaleLutLengthT { get; }
-        public ushort ScaleLutIndexS { get; }
-        public ushort ScaleLutIndexT { get; }
-        public byte RotateBlendZ { get; }
-        public ushort RotateLutLengthZ { get; }
-        public ushort RotateLutIndexZ { get; }
-        public byte TranslateBlendS { get; }
-        public byte TranslateBlendT { get; }
-        public ushort TranslateLutLengthS { get; }
-        public ushort TranslateLutLengthT { get; }
-        public ushort TranslateLutIndexS { get; }
-        public ushort TranslateLutIndexT { get; }
-
-        public TexcoordAnimation(RawTexcoordAnimation raw)
-        {
-            Name = raw.Name;
-            ScaleBlendS = raw.ScaleBlendS;
-            ScaleBlendT = raw.ScaleBlendT;
-            ScaleLutLengthS = raw.ScaleLutLengthS;
-            ScaleLutLengthT = raw.ScaleLutLengthT;
-            ScaleLutIndexS = raw.ScaleLutIndexS;
-            ScaleLutIndexT = raw.ScaleLutIndexT;
-            RotateBlendZ = raw.RotateBlendZ;
-            RotateLutLengthZ = raw.RotateLutLengthZ;
-            RotateLutIndexZ = raw.RotateLutIndexZ;
-            TranslateBlendS = raw.TranslateBlendS;
-            TranslateBlendT = raw.TranslateBlendT;
-            TranslateLutLengthS = raw.TranslateLutLengthS;
-            TranslateLutLengthT = raw.TranslateLutLengthT;
-            TranslateLutIndexS = raw.TranslateLutIndexS;
-            TranslateLutIndexT = raw.TranslateLutIndexT;
         }
     }
 
@@ -648,16 +591,6 @@ namespace MphRead
         }
     }
 
-    public class TextureAnimation
-    {
-        public string Name { get; }
-        
-        public TextureAnimation(RawTextureAnimation raw)
-        {
-            Name = raw.Name;
-        }
-    }
-
     public class MaterialAnimationGroup
     {
         public int FrameCount { get; }
@@ -671,16 +604,6 @@ namespace MphRead
             CurrentFrame = raw.AnimationFrame;
             Count = (int)raw.AnimationCount;
             Animations = animations;
-        }
-    }
-
-    public class MaterialAnimation
-    {
-        public string Name { get; }
-
-        public MaterialAnimation(RawMaterialAnimation raw)
-        {
-            Name = raw.Name;
         }
     }
 

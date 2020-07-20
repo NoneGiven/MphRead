@@ -947,12 +947,15 @@ namespace MphRead
             {
                 // todo: this is essentially just always using the first group now
                 group = model.TexcoordAnimationGroups[material.TexcoordAnimationId];
-                group.Animations.TryGetValue(material.Name, out animation);
+                if (group.Animations.TryGetValue(material.Name, out TexcoordAnimation result))
+                {
+                    animation = result;
+                }
             }
             if (group != null && animation != null)
             {
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
-                AnimateTexcoords(group, animation, width, height);
+                AnimateTexcoords(group, animation.Value, width, height);
             }
             else if (material.TexgenMode != TexgenMode.None)
             {

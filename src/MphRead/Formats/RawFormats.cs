@@ -158,7 +158,7 @@ namespace MphRead
     }
 
     // size: 140
-    public readonly struct RawMaterialAnimation
+    public readonly struct MaterialAnimation
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
         public readonly string Name;
@@ -205,7 +205,7 @@ namespace MphRead
     }
 
     // size: 44
-    public readonly struct RawTextureAnimation
+    public readonly struct TextureAnimation
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
         public readonly string Name;
@@ -218,7 +218,7 @@ namespace MphRead
     }
 
     // size: 60
-    public readonly struct RawTexcoordAnimation
+    public readonly struct TexcoordAnimation
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
         public readonly string Name;
@@ -242,7 +242,7 @@ namespace MphRead
     }
 
     // size: 48
-    public readonly struct RawNodeAnimation
+    public readonly struct NodeAnimation
     {
         public readonly byte Field0;
         public readonly byte Field1;
