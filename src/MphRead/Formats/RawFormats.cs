@@ -150,7 +150,7 @@ namespace MphRead
     // size: 20
     public readonly struct RawNodeAnimationGroup
     {
-        public readonly uint Data;
+        public readonly uint FrameCount;
         public readonly uint Fixed32Pointer;
         public readonly uint UInt16Pointer;
         public readonly uint Int32Pointer;

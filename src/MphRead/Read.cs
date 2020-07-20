@@ -183,7 +183,7 @@ namespace MphRead
                 recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
             }
             AnimationResults animations = LoadAnimation(animationPath);
-            if (animations.TextureAnimationGroups.Any(g => g.Animations.Any()))
+            if (animations.TextureAnimationGroups.Any(g => !g.Animations.Any()))
             {
                 LoadAnimationAndDump(animationPath);
             }
@@ -673,14 +673,26 @@ namespace MphRead
         private static IEnumerable<string> DumpObj(object obj)
         {
             var lines = new List<string>();
+            var fields = new List<(string, object?)>();
             Type type = obj.GetType();
             foreach (FieldInfo info in type.GetFields())
             {
-                lines.Add($"{info.Name} = {info.GetValue(obj)}");
+                fields.Add((info.Name, info.GetValue(obj)));
             }
             foreach (PropertyInfo info in type.GetProperties())
             {
-                lines.Add($"{info.Name} = {info.GetValue(obj)}");
+                fields.Add((info.Name, info.GetValue(obj)));
+            }
+            foreach ((string name, object? value) in fields)
+            {
+                if (name.Contains("Offset") || name.Contains("Pointer"))
+                {
+                    lines.Add($"{name} = 0x{value:X2}");
+                }
+                else
+                {
+                    lines.Add($"{name} = {value}");
+                } 
             }
             return lines;
         }

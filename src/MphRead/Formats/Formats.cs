@@ -534,7 +534,7 @@ namespace MphRead
 
     public class NodeAnimationGroup
     {
-        public uint Data { get; }
+        public uint FrameCount { get; }
         public uint Fixed32Pointer { get; }
         public uint UInt16Pointer { get; }
         public uint Int32Pointer { get; }
@@ -543,7 +543,7 @@ namespace MphRead
 
         public NodeAnimationGroup(RawNodeAnimationGroup raw, IReadOnlyDictionary<string, NodeAnimation> animations)
         {
-            Data = raw.Data;
+            FrameCount = raw.FrameCount;
             Fixed32Pointer = raw.Fixed32Pointer;
             UInt16Pointer = raw.UInt16Pointer;
             Int32Pointer = raw.Int32Pointer;
