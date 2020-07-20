@@ -116,7 +116,7 @@ namespace MphRead
         public readonly ushort Field12;
     }
 
-    // size: 44 --> 32
+    // size: 32
     public readonly struct RawTextureAnimationGroup
     {
         public readonly ushort FrameCount;
@@ -131,9 +131,6 @@ namespace MphRead
         public readonly uint AnimationOffset;
         public readonly ushort AnimationFrame;
         public readonly ushort Field1E;
-        //public readonly uint Field20;
-        //public readonly uint Field24;
-        //public readonly uint Field28;
     }
 
     // size: 28
