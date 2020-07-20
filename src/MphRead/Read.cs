@@ -533,23 +533,24 @@ namespace MphRead
                 {
                     animations.Add(animation.Name, animation);
                 }
-                if (rawGroup.FrameDataOffset != offset)
+                // sktodo: add these to the results
+                IReadOnlyList<ushort> frameData = DoOffsets<ushort>(bytes, rawGroup.FrameDataOffset, rawGroup.FrameDataCount);
+                if (frameData.Count > 0)
                 {
-                    ushort frame = DoOffset<ushort>(bytes, rawGroup.FrameDataOffset);
-                    dump.Add(new DumpResult<ushort>(rawGroup.FrameDataOffset, "Frame Data",
-                        bytes[(int)rawGroup.FrameDataOffset..((int)rawGroup.FrameDataOffset + sizeof(ushort))], frame));
+                    dump.Add(new DumpResult<List<ushort>>(rawGroup.FrameDataOffset, "Frame Data",
+                        bytes[(int)rawGroup.FrameDataOffset..((int)rawGroup.FrameDataOffset + sizeof(ushort))], frameData.ToList()));
                 }
-                if (rawGroup.TextureIdOffset != offset)
+                IReadOnlyList<ushort> textureIds = DoOffsets<ushort>(bytes, rawGroup.TextureIdOffset, rawGroup.TextureIdCount);
+                if (textureIds.Count > 0)
                 {
-                    ushort texture = DoOffset<ushort>(bytes, rawGroup.TextureIdOffset);
-                    dump.Add(new DumpResult<ushort>(rawGroup.TextureIdOffset, "Texture ID",
-                        bytes[(int)rawGroup.TextureIdOffset..((int)rawGroup.TextureIdOffset + sizeof(ushort))], texture));
+                    dump.Add(new DumpResult<List<ushort>>(rawGroup.TextureIdOffset, "Texture IDs",
+                        bytes[(int)rawGroup.TextureIdOffset..((int)rawGroup.TextureIdOffset + sizeof(ushort))], textureIds.ToList()));
                 }
-                if (rawGroup.PaletteIdOffset != offset)
+                IReadOnlyList<ushort> paletteIds = DoOffsets<ushort>(bytes, rawGroup.PaletteIdOffset, rawGroup.PaletteIdCount);
+                if (paletteIds.Count > 0)
                 {
-                    ushort palette = DoOffset<ushort>(bytes, rawGroup.PaletteIdOffset);
-                    dump.Add(new DumpResult<ushort>(rawGroup.PaletteIdOffset, "Palette ID",
-                        bytes[(int)rawGroup.PaletteIdOffset..((int)rawGroup.PaletteIdOffset + sizeof(ushort))], palette));
+                    dump.Add(new DumpResult<List<ushort>>(rawGroup.PaletteIdOffset, "Palette IDs",
+                        bytes[(int)rawGroup.PaletteIdOffset..((int)rawGroup.PaletteIdOffset + sizeof(ushort))], paletteIds.ToList()));
                 }
                 results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, animations));
             }
@@ -658,18 +659,15 @@ namespace MphRead
             }
             else if (line is DumpResult<List<float>> result11)
             {
-                foreach (uint item in result11.Structure)
-                {
-                    lines.Add(item.ToString());
-                }
+                lines.Add(String.Join(", ", result11.Structure));
             }
-            else if (line is DumpResult<ushort> result12)
+            else if (line is DumpResult<List<ushort>> result12)
             {
-                lines.Add(result12.Structure.ToString());
+                lines.Add(String.Join(", ", result12.Structure));
             }
             return lines;
         }
-
+        
         private static IEnumerable<string> DumpObj(object obj)
         {
             var lines = new List<string>();
