@@ -210,7 +210,7 @@ namespace MphRead
         public readonly string Name;
         public readonly ushort Count;
         public readonly ushort StartIndex;
-        public readonly ushort MinimumPaletteId;
+        public readonly ushort MinimumPaletteId; // todo: do these need to be used?
         public readonly ushort MaterialId;
         public readonly ushort MinimumTextureId;
         public readonly ushort Field2A;

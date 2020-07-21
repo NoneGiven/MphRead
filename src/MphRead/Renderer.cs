@@ -77,7 +77,7 @@ namespace MphRead
         public int MaterialDecal { get; set; }
     }
 
-    public class TextureMap : Dictionary<(int, int), (int, bool)>
+    public class TextureMap : Dictionary<(int TextureId, int PaletteId), (int BindingId, bool OnlyOpaque)>
     {
         public (int, bool) Get(int textureId, int paletteId)
         {
@@ -107,7 +107,6 @@ namespace MphRead
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
 
-        // sktodo: use this for on-the-fly recolor switching too?
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
         private readonly Dictionary<uint, TextureMap> _texPalMap = new Dictionary<uint, TextureMap>();
@@ -319,7 +318,6 @@ namespace MphRead
             {
                 foreach (TextureAnimation animation in group.Animations.Values)
                 {
-                    // sktodo: not sure if "MinXyz" values need to be checked here
                     for (int i = animation.StartIndex; i < animation.StartIndex + animation.Count; i++)
                     {
                         combos.Add((group.TextureIds[i], group.PaletteIds[i]));
@@ -359,30 +357,33 @@ namespace MphRead
 
         private async Task UpdateModelStates(float time)
         {
-            // sktodo: redo this
-            //while (_loadQueue.TryDequeue(out Model? model))
-            //{
-            //    InitTextures(model);
-            //    _models.Add(model);
-            //    _modelMap.Add(model.SceneId, model);
-            //    await PrintOutput();
-            //}
+            while (_loadQueue.TryDequeue(out Model? model))
+            {
+                SceneSetup.ComputeNodeMatrices(model, index: 0);
+                InitTextures(model);
+                _models.Add(model);
+                _modelMap.Add(model.SceneId, model);
+                await PrintOutput();
+            }
 
-            //while (_unloadQueue.TryDequeue(out Model? model))
-            //{
-            //    Deselect();
-            //    _selectedModelId = 0;
-            //    _selectedMeshId = 0;
-            //    _selectionMode = SelectionMode.None;
-            //    foreach (int index in _textureMap[model].Where(i => i != -1).Distinct())
-            //    {
-            //        GL.DeleteTexture(index);
-            //    }
-            //    _textureMap.Remove(model);
-            //    _models.Remove(model);
-            //    _modelMap.Remove(model.SceneId);
-            //    await PrintOutput();
-            //}
+            while (_unloadQueue.TryDequeue(out Model? model))
+            {
+                Deselect();
+                _selectedModelId = 0;
+                _selectedMeshId = 0;
+                _selectionMode = SelectionMode.None;
+                if (_texPalMap.TryGetValue(model.SceneId, out TextureMap? map))
+                {
+                    foreach (int id in map.Values.Select(v => v.BindingId).Distinct())
+                    {
+                        GL.DeleteTexture(id);
+                    }
+                    _texPalMap.Remove(model.SceneId);
+                }
+                _models.Remove(model);
+                _modelMap.Remove(model.SceneId);
+                await PrintOutput();
+            }
 
             if (_selectionMode != SelectionMode.None)
             {
@@ -684,14 +685,6 @@ namespace MphRead
 
         private void UpdateMaterials(Model model)
         {
-            // sktodo:
-            // [x] update animation group
-            // [x] run animation to update binding ID on material
-            // [x] update material parameters (render mode)
-            // [x] use the binding ID
-            // [x] set material alpha + decal in shader
-            // [x] update shader
-            // [x] set texture parameters after binding (filter, wrapping)
             foreach (Material material in model.Materials.Where(m => m.TextureId != UInt16.MaxValue))
             {
                 int textureId = material.CurrentTextureId;
@@ -1630,6 +1623,7 @@ namespace MphRead
             }
             else if (e.Key == Key.M)
             {
+                // todo: fix the crash when the first model in the list isn't scene ID 0
                 if (_models.Any(m => m.Meshes.Count > 0))
                 {
                     if (e.Control)
