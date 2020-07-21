@@ -82,7 +82,7 @@ namespace MphRead
         public readonly uint MatrixId;
         public readonly Fixed ScaleS;
         public readonly Fixed ScaleT;
-        public readonly ushort RotZ;
+        public readonly ushort RotateZ;
         public readonly ushort Field72;
         public readonly Fixed TranslateS;
         public readonly Fixed TranslateT;

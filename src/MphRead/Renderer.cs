@@ -1069,11 +1069,13 @@ namespace MphRead
                     GL.Translate(material.ScaleS * width * material.TranslateS, material.ScaleT * height * material.TranslateT, 0.0f);
                     GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
                     GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+                    GL.Rotate(material.RotateZ, Vector3.UnitZ);
                 }
             }
             else
             {
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+                GL.Rotate(material.RotateZ, Vector3.UnitZ);
             }
             GL.Uniform1(_shaderLocations.UseTexture, GL.IsEnabled(EnableCap.Texture2D) ? 1 : 0);
         }

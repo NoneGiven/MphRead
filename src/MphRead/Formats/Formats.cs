@@ -504,6 +504,7 @@ namespace MphRead
         public float ScaleT { get; }
         public float TranslateS { get; }
         public float TranslateT { get; }
+        public float RotateZ { get; }
 
         public RenderMode GetEffectiveRenderMode(Mesh mesh)
         {
@@ -532,6 +533,8 @@ namespace MphRead
             ScaleT = raw.ScaleT.FloatValue;
             TranslateS = raw.TranslateS.FloatValue;
             TranslateT = raw.TranslateT.FloatValue;
+            // todo: doing rad to deg here is inconsistent with other things, but more efficient
+            RotateZ = MathHelper.RadiansToDegrees(raw.RotateZ / 65536.0f * 2.0f * MathF.PI);
         }
     }
 
