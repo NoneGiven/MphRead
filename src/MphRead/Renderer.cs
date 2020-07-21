@@ -103,16 +103,16 @@ namespace MphRead
         private long _frameCount = -1;
         private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
-        private readonly Dictionary<uint, Model> _modelMap = new Dictionary<uint, Model>();
+        private readonly Dictionary<int, Model> _modelMap = new Dictionary<int, Model>();
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
 
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
-        private readonly Dictionary<uint, TextureMap> _texPalMap = new Dictionary<uint, TextureMap>();
+        private readonly Dictionary<int, TextureMap> _texPalMap = new Dictionary<int, TextureMap>();
 
         private SelectionMode _selectionMode = SelectionMode.None;
-        private uint _selectedModelId = 0;
+        private int _selectedModelId = -1;
         private int _selectedMeshId = 0;
         private int _selectedNodeId = 0;
         private bool _showSelection = true;
@@ -355,7 +355,7 @@ namespace MphRead
             }
         }
 
-        private void DeleteTextures(uint sceneId)
+        private void DeleteTextures(int sceneId)
         {
             if (_texPalMap.TryGetValue(sceneId, out TextureMap? map))
             {
@@ -448,7 +448,7 @@ namespace MphRead
             base.OnRenderFrame(args);
         }
 
-        private void SetSelectedModel(uint sceneId)
+        private void SetSelectedModel(int sceneId)
         {
             Deselect();
             _selectedModelId = sceneId;
@@ -458,7 +458,7 @@ namespace MphRead
             }
         }
 
-        private void SetSelectedNode(uint sceneId, int nodeId)
+        private void SetSelectedNode(int sceneId, int nodeId)
         {
             Deselect();
             _selectedModelId = sceneId;
@@ -469,7 +469,7 @@ namespace MphRead
             }
         }
 
-        private void SetSelectedMesh(uint sceneId, int meshId)
+        private void SetSelectedMesh(int sceneId, int meshId)
         {
             Deselect();
             _selectedModelId = sceneId;
@@ -501,9 +501,12 @@ namespace MphRead
 
         private void Deselect()
         {
-            foreach (Mesh mesh in SelectedModel.Meshes)
+            if (_selectedModelId > -1)
             {
-                mesh.OverrideColor = SelectedModel.Type == ModelType.Placeholder ? mesh.PlaceholderColor : null;
+                foreach (Mesh mesh in SelectedModel.Meshes)
+                {
+                    mesh.OverrideColor = SelectedModel.Type == ModelType.Placeholder ? mesh.PlaceholderColor : null;
+                }
             }
             _flashUp = false;
         }
@@ -1356,7 +1359,7 @@ namespace MphRead
             _ = Output.Read("Unload model: ").ContinueWith(async (task) =>
             {
                 await PrintOutput();
-                if (UInt32.TryParse(task.Result.Trim(), out uint sceneId) && _modelMap.ContainsKey(sceneId))
+                if (Int32.TryParse(task.Result.Trim(), out int sceneId) && _modelMap.ContainsKey(sceneId))
                 {
                     _unloadQueue.Enqueue(_modelMap[sceneId]);
                 }
@@ -1402,7 +1405,7 @@ namespace MphRead
                 if (_selectionMode == SelectionMode.Model)
                 {
                     string value = task.Result.Trim();
-                    if (UInt32.TryParse(value, out uint sceneId) && _modelMap.ContainsKey(sceneId))
+                    if (Int32.TryParse(value, out int sceneId) && _modelMap.ContainsKey(sceneId))
                     {
                         SetSelectedModel(sceneId);
                         await PrintOutput();
@@ -1630,7 +1633,6 @@ namespace MphRead
             }
             else if (e.Key == Key.M)
             {
-                // todo: fix the crash when the first model in the list isn't scene ID 0
                 if (_models.Any(m => m.Meshes.Count > 0))
                 {
                     if (e.Control)
@@ -1651,6 +1653,10 @@ namespace MphRead
                     else
                     {
                         Deselect();
+                        if (_selectedModelId < 0)
+                        {
+                            _selectedModelId = _models[0].SceneId;
+                        }
                         if (_selectionMode == SelectionMode.None)
                         {
                             _selectionMode = SelectionMode.Model;
