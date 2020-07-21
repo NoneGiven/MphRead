@@ -4772,10 +4772,6 @@ namespace MphRead
                         animation: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
-                //{
-                //    "ForceField",
-                //    new ModelMetadata("ForceField")
-                //},
                 {
                     "ForceField",
                     new ModelMetadata("ForceField",
@@ -4834,6 +4830,7 @@ namespace MphRead
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 0 } } })
                         })
                 },
+                // todo: these probably also use AlimbicPalettes
                 {
                     "ForceFieldLock",
                     new ModelMetadata("ForceFieldLock",
