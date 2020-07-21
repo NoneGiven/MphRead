@@ -1195,7 +1195,7 @@ namespace MphRead
         public readonly uint Type;
         public readonly Fixed Width;
         public readonly Fixed Height;
-        public readonly byte Spawn;
+        public readonly byte Spawn; // boolean
     }
 
     // size: 32

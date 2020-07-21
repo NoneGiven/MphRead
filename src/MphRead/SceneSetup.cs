@@ -339,7 +339,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.ForceField)
                 {
-                    models.AddRange(LoadForceField(((Entity<ForceFieldEntityData>)entity).Data));
+                    models.Add(LoadForceField(((Entity<ForceFieldEntityData>)entity).Data));
                 }
             }
             return models;
@@ -575,10 +575,16 @@ namespace MphRead
             return model;
         }
 
-        // todo: load lock
-        private static IEnumerable<Model> LoadForceField(ForceFieldEntityData data)
+        // todo: load lock, fade in/out "animation"
+        private static Model LoadForceField(ForceFieldEntityData data)
         {
-            return new List<Model>() { Read.GetModelByName("ForceField") };
+            Model model = Read.GetModelByName("ForceField", Metadata.DoorPalettes[(int)data.Type]);
+            model.Position = data.Position.ToFloatVector();
+            model.Scale = new Vector3(data.Width.FloatValue, data.Height.FloatValue, 1.0f);
+            ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
+            ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Object;
+            return model;
         }
 
         private static readonly Dictionary<EntityType, ColorRgb> _colorOverrides = new Dictionary<EntityType, ColorRgb>()
