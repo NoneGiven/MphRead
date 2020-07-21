@@ -577,9 +577,8 @@ namespace MphRead
 
         private static readonly Dictionary<EntityType, ColorRgb> _colorOverrides = new Dictionary<EntityType, ColorRgb>()
         {
-            { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) },
-            { EntityType.FhPlatform, new ColorRgb(0x2F, 0x4F, 0x4F) },
-            { EntityType.Object, new ColorRgb(0x22, 0x8B, 0x22) },
+            { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) }, // currently used for ID 2
+            { EntityType.Object, new ColorRgb(0x22, 0x8B, 0x22) }, // currently used for ID -1
             { EntityType.Enemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.FhEnemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.Unknown7, new ColorRgb(0xFF, 0x8C, 0x00) },
