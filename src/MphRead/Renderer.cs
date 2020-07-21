@@ -936,7 +936,7 @@ namespace MphRead
             if (rotate != 0)
             {
                 GL.Translate(width / 2, height / 2, 0);
-                GL.Rotate(MathHelper.RadiansToDegrees(rotate), 0, 0, 1);
+                GL.Rotate(MathHelper.RadiansToDegrees(rotate), Vector3.UnitZ);
                 GL.Translate(-width / 2, -height / 2, 0);
             }
             GL.Scale(scaleS, scaleT, 1);
