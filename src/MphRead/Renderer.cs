@@ -447,7 +447,7 @@ namespace MphRead
             }
             base.OnRenderFrame(args);
         }
-        
+
         private void SetSelectedModel(uint sceneId)
         {
             Deselect();
