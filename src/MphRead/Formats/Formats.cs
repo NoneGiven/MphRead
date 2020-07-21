@@ -457,7 +457,8 @@ namespace MphRead
             Position = raw.Position.ToFloatVector();
             Vector1 = raw.Vector1.ToFloatVector();
             Vector2 = raw.Vector2.ToFloatVector();
-            Billboard = raw.Billboard == 1; // todo: figure out what billboard = 2 means
+            // todo: implement billboard = 2 (cylindrical), also "fix" spherical
+            Billboard = raw.Billboard == 1;
             IsRoomNode = Name.StartsWith("rm");
         }
     }
@@ -484,8 +485,11 @@ namespace MphRead
         public byte Lighting { get; set; } // todo: probably a bool
         public CullingMode Culling { get; }
         public byte Alpha { get; }
-        public int PaletteId { get; }
         public int TextureId { get; }
+        public int PaletteId { get; }
+        public int TextureBindingId { get; set; }
+        public int CurrentTextureId { get; set; }
+        public int CurrentPaletteId { get; set; }
         public RepeatMode XRepeat { get; }
         public RepeatMode YRepeat { get; }
         public ColorRgb Diffuse { get; }
@@ -512,8 +516,8 @@ namespace MphRead
             Lighting = raw.Lighting;
             Culling = raw.Culling;
             Alpha = raw.Alpha;
-            PaletteId = raw.PaletteId;
-            TextureId = raw.TextureId;
+            CurrentTextureId = TextureId = raw.TextureId;
+            CurrentPaletteId = PaletteId = raw.PaletteId;
             XRepeat = raw.XRepeat;
             YRepeat = raw.YRepeat;
             Diffuse = raw.Diffuse;
@@ -531,19 +535,38 @@ namespace MphRead
         }
     }
 
+    public class NodeAnimationGroup
+    {
+        public uint FrameCount { get; }
+        public uint Fixed32Pointer { get; }
+        public uint UInt16Pointer { get; }
+        public uint Int32Pointer { get; }
+        public uint AnimationOffset { get; }
+        public IReadOnlyDictionary<string, NodeAnimation> Animations { get; }
+
+        public NodeAnimationGroup(RawNodeAnimationGroup raw, IReadOnlyDictionary<string, NodeAnimation> animations)
+        {
+            FrameCount = raw.FrameCount;
+            Fixed32Pointer = raw.Fixed32Pointer;
+            UInt16Pointer = raw.UInt16Pointer;
+            Int32Pointer = raw.Int32Pointer;
+            AnimationOffset = raw.AnimationOffset;
+            Animations = animations;
+        }
+    }
+
     public class TexcoordAnimationGroup
     {
-        public double Time { get; set; }
         public int FrameCount { get; }
         public int CurrentFrame { get; set; }
         public int Count { get; }
         public IReadOnlyList<float> Scales { get; }
         public IReadOnlyList<float> Rotations { get; }
         public IReadOnlyList<float> Translations { get; }
-        public IReadOnlyList<TexcoordAnimation> Animations { get; }
+        public IReadOnlyDictionary<string, TexcoordAnimation> Animations { get; }
 
-        public TexcoordAnimationGroup(RawTexcoordAnimationGroup raw, IReadOnlyList<float> scales,
-            IReadOnlyList<float> rotations, IReadOnlyList<float> translations, IReadOnlyList<TexcoordAnimation> animations)
+        public TexcoordAnimationGroup(RawTexcoordAnimationGroup raw, IReadOnlyList<float> scales, IReadOnlyList<float> rotations,
+            IReadOnlyList<float> translations, IReadOnlyDictionary<string, TexcoordAnimation> animations)
         {
             FrameCount = (int)raw.FrameCount;
             CurrentFrame = raw.AnimationFrame;
@@ -555,43 +578,42 @@ namespace MphRead
         }
     }
 
-    public class TexcoordAnimation
+    public class TextureAnimationGroup
     {
-        public string Name { get; }
-        public byte ScaleBlendS { get; }
-        public byte ScaleBlendT { get; }
-        public ushort ScaleLutLengthS { get; }
-        public ushort ScaleLutLengthT { get; }
-        public ushort ScaleLutIndexS { get; }
-        public ushort ScaleLutIndexT { get; }
-        public byte RotateBlendZ { get; }
-        public ushort RotateLutLengthZ { get; }
-        public ushort RotateLutIndexZ { get; }
-        public byte TranslateBlendS { get; }
-        public byte TranslateBlendT { get; }
-        public ushort TranslateLutLengthS { get; }
-        public ushort TranslateLutLengthT { get; }
-        public ushort TranslateLutIndexS { get; }
-        public ushort TranslateLutIndexT { get; }
+        public int FrameCount { get; }
+        public int CurrentFrame { get; set; }
+        public int Count { get; }
+        public IReadOnlyList<ushort> FrameIndices { get; }
+        public IReadOnlyList<ushort> TextureIds { get; }
+        public IReadOnlyList<ushort> PaletteIds { get; }
+        public IReadOnlyDictionary<string, TextureAnimation> Animations { get; }
 
-        public TexcoordAnimation(RawTexcoordAnimation raw)
+        public TextureAnimationGroup(RawTextureAnimationGroup raw, IReadOnlyList<ushort> frameIndices, IReadOnlyList<ushort> textureIds,
+            IReadOnlyList<ushort> paletteIds, IReadOnlyDictionary<string, TextureAnimation> animations)
         {
-            Name = raw.Name;
-            ScaleBlendS = raw.ScaleBlendS;
-            ScaleBlendT = raw.ScaleBlendT;
-            ScaleLutLengthS = raw.ScaleLutLengthS;
-            ScaleLutLengthT = raw.ScaleLutLengthT;
-            ScaleLutIndexS = raw.ScaleLutIndexS;
-            ScaleLutIndexT = raw.ScaleLutIndexT;
-            RotateBlendZ = raw.RotateBlendZ;
-            RotateLutLengthZ = raw.RotateLutLengthZ;
-            RotateLutIndexZ = raw.RotateLutIndexZ;
-            TranslateBlendS = raw.TranslateBlendS;
-            TranslateBlendT = raw.TranslateBlendT;
-            TranslateLutLengthS = raw.TranslateLutLengthS;
-            TranslateLutLengthT = raw.TranslateLutLengthT;
-            TranslateLutIndexS = raw.TranslateLutIndexS;
-            TranslateLutIndexT = raw.TranslateLutIndexT;
+            FrameCount = raw.FrameCount;
+            CurrentFrame = raw.AnimationFrame;
+            Count = raw.AnimationCount;
+            FrameIndices = frameIndices;
+            TextureIds = textureIds;
+            PaletteIds = paletteIds;
+            Animations = animations;
+        }
+    }
+
+    public class MaterialAnimationGroup
+    {
+        public int FrameCount { get; }
+        public int CurrentFrame { get; set; }
+        public int Count { get; }
+        public IReadOnlyDictionary<string, MaterialAnimation> Animations { get; }
+
+        public MaterialAnimationGroup(RawMaterialAnimationGroup raw, IReadOnlyDictionary<string, MaterialAnimation> animations)
+        {
+            FrameCount = (int)raw.FrameCount;
+            CurrentFrame = raw.AnimationFrame;
+            Count = (int)raw.AnimationCount;
+            Animations = animations;
         }
     }
 

@@ -10,7 +10,7 @@ namespace MphRead
 
         public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, int layerMask)
         {
-            RoomMetadata? metadata = Metadata.GetRoomByName(name);
+            (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
             if (metadata == null)
             {
                 throw new InvalidOperationException();
@@ -42,7 +42,8 @@ namespace MphRead
             FilterNodes(room, roomLayerMask);
             // todo?: scene min/max coordinates
             ComputeNodeMatrices(room, index: 0);
-            IReadOnlyList<Model> entities = LoadEntities(metadata);
+            (int areaId, bool multiplayer) = Metadata.GetAreaInfo(roomId);
+            IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, multiplayer);
             // todo?: area ID/portals
             room.Type = ModelType.Room;
             return (room, metadata, entities);
@@ -174,7 +175,7 @@ namespace MphRead
             return transform;
         }
 
-        public static Matrix4 ComputeModelMatrices(Vector3 vector1, Vector3 vector2, Vector3 position)
+        public static void ComputeModelMatrices(Model model, Vector3 vector1, Vector3 vector2)
         {
             Vector3 up = Vector3.Cross(vector2, vector1).Normalized();
             var direction = Vector3.Cross(vector1, up);
@@ -196,15 +197,16 @@ namespace MphRead
             transform.M33 = vector1.Z;
             transform.M34 = 0;
 
-            transform.M41 = position.X;
-            transform.M42 = position.Y;
-            transform.M43 = position.Z;
+            transform.M41 = model.Position.X;
+            transform.M42 = model.Position.Y;
+            transform.M43 = model.Position.Z;
             transform.M44 = 1;
 
-            return transform;
+            Matrix4 scaleMatrix = model.Transform.ClearTranslation().ClearRotation();
+            model.Transform = scaleMatrix * transform;
         }
-
-        private static IReadOnlyList<Model> LoadEntities(RoomMetadata metadata)
+        
+        private static IReadOnlyList<Model> LoadEntities(RoomMetadata metadata, int areaId, bool multiplayer)
         {
             var models = new List<Model>();
             if (metadata.EntityPath == null)
@@ -253,7 +255,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Item)
                 {
-                    models.Add(LoadItem(((Entity<ItemEntityData>)entity).Data));
+                    models.AddRange(LoadItem(((Entity<ItemEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhItem)
                 {
@@ -317,7 +319,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Teleporter)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<TeleporterEntityData>)entity).Data.Position));
+                    models.Add(LoadTeleporter(((Entity<TeleporterEntityData>)entity).Data, areaId, multiplayer));
                 }
                 else if (entity.Type == EntityType.Unknown15)
                 {
@@ -360,22 +362,22 @@ namespace MphRead
             vector = Vector3ByMatrix4(vector, parentTransform);
             if (vector.X != 0 || vector.Z != 0)
             {
-                model.Transform = ComputeModelMatrices(vector, up, model.Position);
+                ComputeModelMatrices(model, vector, up);
             }
             else
             {
-                model.Transform = ComputeModelMatrices(vector, right, model.Position);
+                ComputeModelMatrices(model, vector, right);
             }
         }
 
         // todo: avoid loading the same entity multiple times
-        private static IReadOnlyList<Model> LoadJumpPad(JumpPadEntityData data)
+        private static IEnumerable<Model> LoadJumpPad(JumpPadEntityData data)
         {
             var list = new List<Model>();
             string modelName = Metadata.JumpPads[(int)data.ModelId];
             Model model1 = Read.GetModelByName(modelName);
             model1.Position = data.Position.ToFloatVector();
-            model1.Transform = ComputeModelMatrices(data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector(), model1.Position);
+            ComputeModelMatrices(model1, data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector());
             model1.Type = ModelType.JumpPad;
             list.Add(model1);
             Model model2 = Read.GetModelByName("JumpPad_Beam");
@@ -393,7 +395,7 @@ namespace MphRead
             string name = data.ModelId == 1 ? "balljump" : "jumppad_base";
             Model model1 = Read.GetModelByName(name, firstHunt: true);
             model1.Position = data.Position.ToFloatVector();
-            model1.Transform = ComputeModelMatrices(data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector(), model1.Position);
+            ComputeModelMatrices(model1, data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector());
             model1.Type = ModelType.JumpPad;
             list.Add(model1);
             name = data.ModelId == 1 ? "balljump_ray" : "jumppad_ray";
@@ -417,7 +419,7 @@ namespace MphRead
             ObjectMetadata meta = Metadata.GetObjectById(modelId);
             Model model = Read.GetModelByName(meta.Name, meta.RecolorId);
             model.Position = data.Position.ToFloatVector();
-            model.Transform = ComputeModelMatrices(data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector(), model.Position);
+            ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Object;
             if (modelId == 0)
@@ -430,14 +432,14 @@ namespace MphRead
         // todo: use more properties
         private static Model LoadPlatform(PlatformEntityData data)
         {
-            string? name = Metadata.GetPlatformById((int)data.ModelId);
-            if (name == null)
+            PlatformMetadata? meta = Metadata.GetPlatformById((int)data.ModelId);
+            if (meta == null)
             {
                 return LoadEntityPlaceholder(EntityType.Platform, data.Position);
             }
-            Model model = Read.GetModelByName(name);
+            Model model = Read.GetModelByName(meta.Name);
             model.Position = data.Position.ToFloatVector();
-            model.Transform = ComputeModelMatrices(data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector(), model.Position);
+            ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             return model;
@@ -453,21 +455,61 @@ namespace MphRead
             return model;
         }
 
-        private static Model LoadItem(ItemEntityData data)
+        private static Model LoadTeleporter(TeleporterEntityData data, int paletteId, bool multiplayer)
         {
-            (string name, float offset) = Metadata.Items[(int)data.ModelId];
-            Model model = Read.GetModelByName(name);
-            model.Position = new Vector3(
-                data.Position.X.FloatValue,
-                data.Position.Y.FloatValue + offset,
-                data.Position.Z.FloatValue
-            );
+            if (data.Invisible != 0)
+            {
+                return LoadEntityPlaceholder(EntityType.Teleporter, data.Position);
+            }
+            int flags = data.ArtifactId < 8 && data.Invisible == 0 ? 2 : 0;
+            string modelName;
+            if ((flags & 2) == 0)
+            {
+                modelName = multiplayer ? "TeleporterMP" : "TeleporterSmall";
+            }
+            else
+            {
+                modelName = "Teleporter";
+            }
+            Model model = Read.GetModelByName(modelName, paletteId);
+            model.Position = data.Position.ToFloatVector();
+            ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
-            model.Type = ModelType.Item;
-            model.Rotating = true;
-            model.Floating = true;
-            model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
+            model.Type = ModelType.Generic;
             return model;
+        }
+
+        // todo: Energy Tank height is still not right
+        private static IEnumerable<Model> LoadItem(ItemEntityData data)
+        {
+            var models = new List<Model>();
+            Model model;
+            if (data.Enabled != 0)
+            {
+                (string name, float offset) = Metadata.Items[(int)data.ModelId];
+                model = Read.GetModelByName(name);
+                model.Position = new Vector3(
+                    data.Position.X.FloatValue,
+                    data.Position.Y.FloatValue + offset,
+                    data.Position.Z.FloatValue
+                );
+                ComputeNodeMatrices(model, index: 0);
+                model.Type = ModelType.Item;
+                model.Rotating = true;
+                model.Floating = true;
+                model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
+                models.Add(model);
+            }
+            if (data.HasBase != 0)
+            {
+                // todo: does the base need rotation?
+                model = Read.GetModelByName("items_base");
+                model.Position = data.Position.ToFloatVector();
+                ComputeNodeMatrices(model, index: 0);
+                model.Type = ModelType.Generic;
+                models.Add(model);
+            }
+            return models;
         }
 
         // todo: do these have height offsets?
@@ -504,18 +546,19 @@ namespace MphRead
             return model;
         }
 
+        // todo: enable drawing door lock, also use "flags" to determine lock/color state
         private static Model LoadDoor(DoorEntityData data)
         {
-            string modelName = Metadata.Doors[(int)data.ModelId];
+            DoorMetadata meta = Metadata.Doors[(int)data.ModelId];
             int recolorId = 0;
             // AlimbicDoor, AlimbicThinDoor
             if (data.ModelId == 0 || data.ModelId == 3)
             {
                 recolorId = Metadata.DoorPalettes[(int)data.PaletteId];
             }
-            Model model = Read.GetModelByName(modelName, recolorId);
+            Model model = Read.GetModelByName(meta.Name, recolorId);
             model.Position = data.Position.ToFloatVector();
-            model.Transform = ComputeModelMatrices(data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector(), model.Position);
+            ComputeModelMatrices(model, data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             return model;
@@ -526,7 +569,7 @@ namespace MphRead
         {
             Model model = Read.GetModelByName("door", firstHunt: true);
             model.Position = data.Position.ToFloatVector();
-            model.Transform = ComputeModelMatrices(data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector(), model.Position);
+            ComputeModelMatrices(model, data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             return model;
@@ -537,20 +580,22 @@ namespace MphRead
             { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) },
             { EntityType.FhPlatform, new ColorRgb(0x2F, 0x4F, 0x4F) },
             { EntityType.Object, new ColorRgb(0x22, 0x8B, 0x22) },
-            { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
-            { EntityType.FhPlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.Enemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.FhEnemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.Unknown7, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.FhUnknown9, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.Unknown8, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.FhUnknown10, new ColorRgb(0xFF, 0xFF, 0x00) },
-            { EntityType.CameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
-            { EntityType.FhCameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
             { EntityType.Unknown12, new ColorRgb(0x00, 0xFF, 0xFF) },
             { EntityType.Unknown13, new ColorRgb(0xFF, 0x00, 0xFF) },
             { EntityType.Unknown15, new ColorRgb(0x1E, 0x90, 0xFF) },
             { EntityType.Unknown16, new ColorRgb(0xFF, 0xDE, 0xAD) },
+            // "permanent" placeholders
+            { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
+            { EntityType.FhPlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
+            { EntityType.CameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
+            { EntityType.FhCameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
+            { EntityType.Teleporter, new ColorRgb(0xFF, 0xFF, 0xFF) },
             { EntityType.CameraSeq, new ColorRgb(0xFF, 0x69, 0xB4) }
         };
 

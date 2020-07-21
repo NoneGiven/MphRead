@@ -137,10 +137,9 @@ namespace MphRead
         {
             foreach (Model model in GetAllModels())
             {
-                foreach (Texture texture in model.Textures)
+                foreach (Material material in model.Materials)
                 {
-                    if (texture.Opaque != 0 && texture.Format != TextureFormat.Palette4Bit
-                         && texture.Format != TextureFormat.Palette8Bit && texture.Format != TextureFormat.Palette2Bit)
+                    if (material.PolygonMode == PolygonMode.Decal && material.Alpha < 31)
                     {
                         System.Diagnostics.Debugger.Break();
                     }
@@ -174,10 +173,10 @@ namespace MphRead
                         IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, i);
                         foreach (Entity entity in entities)
                         {
-                            if (entity.Type == EntityType.Object)
+                            if (entity.Type == EntityType.Item)
                             {
-                                ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
-                                if (data.ModelId == 5)
+                                ItemEntityData data = ((Entity<ItemEntityData>)entity).Data;
+                                if (data.Enabled == 0 && data.HasBase != 0 && data.ModelId != 19)
                                 {
                                     System.Diagnostics.Debugger.Break();
                                 }

@@ -73,6 +73,21 @@ namespace MphRead
         public int AlphaScale { get; set; }
         public int UseOverride { get; set; }
         public int OverrideColor { get; set; }
+        public int MaterialAlpha { get; set; }
+        public int MaterialDecal { get; set; }
+    }
+
+    public class TextureMap : Dictionary<(int, int), (int, bool)>
+    {
+        public (int, bool) Get(int textureId, int paletteId)
+        {
+            return this[(textureId, paletteId)];
+        }
+
+        public void Add(int textureId, int paletteId, int bindingId, bool onlyOpaque)
+        {
+            this[(textureId, paletteId)] = (bindingId, onlyOpaque);
+        }
     }
 
     public class RenderWindow : GameWindow
@@ -85,12 +100,18 @@ namespace MphRead
             Mesh
         }
 
+        private long _frameCount = -1;
         private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
         private readonly Dictionary<uint, Model> _modelMap = new Dictionary<uint, Model>();
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
-        private readonly Dictionary<Model, List<int>> _textureMap = new Dictionary<Model, List<int>>();
+
+        // sktodo: use this for on-the-fly recolor switching too?
+        // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
+        private int _textureCount = 0;
+        private readonly Dictionary<uint, TextureMap> _texPalMap = new Dictionary<uint, TextureMap>();
+
         private SelectionMode _selectionMode = SelectionMode.None;
         private uint _selectedModelId = 0;
         private int _selectedMeshId = 0;
@@ -106,7 +127,6 @@ namespace MphRead
         // todo: somehow the axes are reversed from the model coordinates
         private Vector3 _cameraPosition = new Vector3(0, 0, 0);
         private bool _leftMouse = false;
-        public int _textureCount = 0;
 
         private bool _showTextures = true;
         private bool _showColors = true;
@@ -119,21 +139,24 @@ namespace MphRead
         private bool _transformRoomNodes = false; // undocumented
 
         private static readonly Color4 _clearColor = new Color4(0, 0, 0, 1);
-        private static readonly float _frameTime = 1.0f / 30.0f;
 
         private Vector4 _light1Vector = default;
         private Vector4 _light1Color = default;
         private Vector4 _light2Vector = default;
         private Vector4 _light2Color = default;
         private bool _hasFog = false;
-        private bool _showFog = false;
+        private bool _showFog = true;
         private Vector4 _fogColor = default;
         private int _fogOffset = default;
+        private bool _frameAdvanceOn = false;
+        private bool _advanceOneFrame = false;
 
         private int _shaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
 
         private readonly List<string> _logs = new List<string>();
+        private bool _recording = false;
+        private int _framesRecorded = 0;
 
         public RenderWindow(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
             : base(gameWindowSettings, nativeWindowSettings)
@@ -220,6 +243,7 @@ namespace MphRead
             foreach (Model model in _models)
             {
                 InitTextures(model);
+                UpdateMaterials(model);
             }
 
             await PrintOutput();
@@ -259,6 +283,8 @@ namespace MphRead
 
             _shaderLocations.UseOverride = GL.GetUniformLocation(_shaderProgramId, "use_override");
             _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
+            _shaderLocations.MaterialAlpha = GL.GetUniformLocation(_shaderProgramId, "mat_alpha");
+            _shaderLocations.MaterialDecal = GL.GetUniformLocation(_shaderProgramId, "mat_decal");
         }
 
         private string FormatOnOff(bool setting)
@@ -268,134 +294,95 @@ namespace MphRead
 
         private void InitTextures(Model model)
         {
-            _textureMap[model] = new List<int>();
-            int minParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMinFilter.Nearest;
-            int magParameter = _textureFiltering ? (int)TextureMagFilter.Linear : (int)TextureMagFilter.Nearest;
+            var combos = new HashSet<(int, int)>();
             foreach (Material material in model.Materials)
             {
                 if (material.TextureId == UInt16.MaxValue)
                 {
-                    _textureMap[model].Add(-1);
                     continue;
                 }
-                _textureCount++;
-                var pixels = new List<uint>();
-                Texture texture = model.Textures[material.TextureId];
-                ushort width = texture.Width;
-                ushort height = texture.Height;
-                TextureFormat textureFormat = texture.Format;
-                bool decal = material.PolygonMode == PolygonMode.Decal;
-                bool onlyOpaque = true;
-                foreach (ColorRgba pixel in model.GetPixels(material.TextureId, material.PaletteId))
+                if (material.PaletteId == UInt16.MaxValue)
                 {
-                    uint red = pixel.Red;
-                    uint green = pixel.Green;
-                    uint blue = pixel.Blue;
-                    uint alpha = (uint)((decal ? 255 : pixel.Alpha) * material.Alpha / 31.0f);
-                    pixels.Add((red << 0) | (green << 8) | (blue << 16) | (alpha << 24));
-                    if (alpha < 255)
-                    {
-                        onlyOpaque = false;
-                    }
+                    combos.Add((material.TextureId, -1));
                 }
-
-                _textureMap[model].Add(_textureCount);
-
+                else
+                {
+                    combos.Add((material.TextureId, material.PaletteId));
+                }
                 if (material.RenderMode == RenderMode.Unknown3 || material.RenderMode == RenderMode.Unknown4)
                 {
                     _logs.Add($"mat {material.Name} of model {model.Name} has render mode {material.RenderMode}");
                     material.RenderMode = RenderMode.Normal;
                 }
-                // - if material alpha is less than 31, and render mode is not Translucent, set to Translucent
-                // - if render mode is not Normal, but there are no non-opaque pixels, set to Normal
-                // - if render mode is Normal, but there are non-opaque pixels, set to AlphaTest
-                // - if render mode is Translucent, material alpha is 31, and texture format is DirectRgba, set to AlphaTest
-                if (material.Alpha < 31)
-                {
-                    material.RenderMode = RenderMode.Translucent;
-                }
-                if (material.RenderMode != RenderMode.Normal && onlyOpaque)
-                {
-                    material.RenderMode = RenderMode.Normal;
-                }
-                else if (material.RenderMode == RenderMode.Normal && !onlyOpaque)
-                {
-                    material.RenderMode = RenderMode.AlphaTest;
-                }
-                if (material.RenderMode == RenderMode.Translucent && material.Alpha == 31
-                    && textureFormat == TextureFormat.DirectRgb)
-                {
-                    material.RenderMode = RenderMode.AlphaTest;
-                }
-                BindAndMakeTexture(material, _textureCount, width, height, minParameter, magParameter, pixels);
-                GL.BindTexture(TextureTarget.Texture2D, 0);
             }
-        }
-
-        private void BindAndMakeTexture(Material material, int id, int width, int height, int minParameter, int magParameter, List<uint> pixels)
-        {
-            GL.BindTexture(TextureTarget.Texture2D, id);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
-                PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
-            switch (material.XRepeat)
+            foreach (TextureAnimationGroup group in model.TextureAnimationGroups)
             {
-            case RepeatMode.Clamp:
-                GL.TexParameter(TextureTarget.Texture2D,
-                    TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-                break;
-            case RepeatMode.Repeat:
-                GL.TexParameter(TextureTarget.Texture2D,
-                    TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-                break;
-            case RepeatMode.Mirror:
-                GL.TexParameter(TextureTarget.Texture2D,
-                    TextureParameterName.TextureWrapS, (int)TextureWrapMode.MirroredRepeat);
-                break;
+                foreach (TextureAnimation animation in group.Animations.Values)
+                {
+                    // sktodo: not sure if "MinXyz" values need to be checked here
+                    for (int i = animation.StartIndex; i < animation.StartIndex + animation.Count; i++)
+                    {
+                        combos.Add((group.TextureIds[i], group.PaletteIds[i]));
+                    }
+                }
             }
-            switch (material.YRepeat)
+            if (combos.Count > 0)
             {
-            case RepeatMode.Clamp:
-                GL.TexParameter(TextureTarget.Texture2D,
-                    TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-                break;
-            case RepeatMode.Repeat:
-                GL.TexParameter(TextureTarget.Texture2D,
-                    TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-                break;
-            case RepeatMode.Mirror:
-                GL.TexParameter(TextureTarget.Texture2D,
-                    TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat);
-                break;
+                var map = new TextureMap();
+                foreach ((int textureId, int paletteId) in combos)
+                {
+                    _textureCount++;
+                    bool onlyOpaque = true;
+                    var pixels = new List<uint>();
+                    foreach (ColorRgba pixel in model.GetPixels(textureId, paletteId))
+                    {
+                        uint red = pixel.Red;
+                        uint green = pixel.Green;
+                        uint blue = pixel.Blue;
+                        uint alpha = pixel.Alpha;
+                        pixels.Add((red << 0) | (green << 8) | (blue << 16) | (alpha << 24));
+                        if (alpha < 255)
+                        {
+                            onlyOpaque = false;
+                        }
+                    }
+                    Texture texture = model.Textures[textureId];
+                    GL.BindTexture(TextureTarget.Texture2D, _textureCount);
+                    GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, texture.Width, texture.Height, 0,
+                        PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
+                    GL.BindTexture(TextureTarget.Texture2D, 0);
+                    map.Add(textureId, paletteId, _textureCount, onlyOpaque);
+                }
+                _texPalMap.Add(model.SceneId, map);
             }
         }
 
         private async Task UpdateModelStates(float time)
         {
-            while (_loadQueue.TryDequeue(out Model? model))
-            {
-                InitTextures(model);
-                _models.Add(model);
-                _modelMap.Add(model.SceneId, model);
-                await PrintOutput();
-            }
+            // sktodo: redo this
+            //while (_loadQueue.TryDequeue(out Model? model))
+            //{
+            //    InitTextures(model);
+            //    _models.Add(model);
+            //    _modelMap.Add(model.SceneId, model);
+            //    await PrintOutput();
+            //}
 
-            while (_unloadQueue.TryDequeue(out Model? model))
-            {
-                Deselect();
-                _selectedModelId = 0;
-                _selectedMeshId = 0;
-                _selectionMode = SelectionMode.None;
-                foreach (int index in _textureMap[model].Where(i => i != -1).Distinct())
-                {
-                    GL.DeleteTexture(index);
-                }
-                _textureMap.Remove(model);
-                _models.Remove(model);
-                _modelMap.Remove(model.SceneId);
-                await PrintOutput();
-            }
+            //while (_unloadQueue.TryDequeue(out Model? model))
+            //{
+            //    Deselect();
+            //    _selectedModelId = 0;
+            //    _selectedMeshId = 0;
+            //    _selectionMode = SelectionMode.None;
+            //    foreach (int index in _textureMap[model].Where(i => i != -1).Distinct())
+            //    {
+            //        GL.DeleteTexture(index);
+            //    }
+            //    _textureMap.Remove(model);
+            //    _models.Remove(model);
+            //    _modelMap.Remove(model.SceneId);
+            //    await PrintOutput();
+            //}
 
             if (_selectionMode != SelectionMode.None)
             {
@@ -423,6 +410,7 @@ namespace MphRead
         protected override async void OnRenderFrame(FrameEventArgs args)
         {
             // extra non-rendering updates
+            _frameCount++;
             await UpdateModelStates((float)args.Time);
             OnKeyHeld();
 
@@ -441,9 +429,19 @@ namespace MphRead
 
             RenderScene(args.Time);
             SwapBuffers();
+            if (_recording)
+            {
+                Images.Screenshot(Size.X, Size.Y, $"frame{_framesRecorded:0000}");
+                _framesRecorded++;
+            }
+            if (_advanceOneFrame)
+            {
+                await PrintOutput();
+                _advanceOneFrame = false;
+            }
             base.OnRenderFrame(args);
         }
-
+        
         private void SetSelectedModel(uint sceneId)
         {
             Deselect();
@@ -635,7 +633,12 @@ namespace MphRead
                 {
                     continue;
                 }
-                ProcessAnimations(model, elapsedTime);
+                if (_frameCount != 0 &&
+                    ((!_frameAdvanceOn && _frameCount % 2 == 0)
+                    || (_frameAdvanceOn && _advanceOneFrame)))
+                {
+                    ProcessAnimations(model);
+                }
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.PushMatrix();
                 Matrix4 transform = model.Transform;
@@ -654,6 +657,7 @@ namespace MphRead
                     }
                     GL.MultMatrix(ref transform);
                 }
+                UpdateMaterials(model);
                 if (model.Type == ModelType.Room)
                 {
                     RenderRoom(model);
@@ -676,6 +680,69 @@ namespace MphRead
             GL.Uniform1(_shaderLocations.UseFog, _hasFog && _showFog ? 1 : 0);
             GL.Uniform4(_shaderLocations.FogColor, _fogColor);
             GL.Uniform1(_shaderLocations.FogOffset, _fogOffset);
+        }
+
+        private void UpdateMaterials(Model model)
+        {
+            // sktodo:
+            // [x] update animation group
+            // [x] run animation to update binding ID on material
+            // [x] update material parameters (render mode)
+            // [x] use the binding ID
+            // [x] set material alpha + decal in shader
+            // [x] update shader
+            // [x] set texture parameters after binding (filter, wrapping)
+            foreach (Material material in model.Materials.Where(m => m.TextureId != UInt16.MaxValue))
+            {
+                int textureId = material.CurrentTextureId;
+                int paletteId = material.CurrentPaletteId;
+                // todo: group indexing
+                if (model.TextureAnimationGroups.Count > 0)
+                {
+                    TextureAnimationGroup group = model.TextureAnimationGroups[0];
+                    if (group.Animations.TryGetValue(material.Name, out TextureAnimation animation))
+                    {
+                        for (int i = animation.StartIndex; i < animation.StartIndex + animation.Count; i++)
+                        {
+                            if (group.FrameIndices[i] == group.CurrentFrame)
+                            {
+                                textureId = group.TextureIds[i];
+                                paletteId = group.PaletteIds[i];
+                                break;
+                            }
+                        }
+                    }
+                }
+                (int bindingId, bool onlyOpaque) = _texPalMap[model.SceneId].Get(textureId, paletteId);
+                material.TextureBindingId = bindingId;
+                material.CurrentTextureId = textureId;
+                material.CurrentPaletteId = paletteId;
+                UpdateMaterial(material, onlyOpaque, model.Textures[textureId].Format);
+            }
+        }
+
+        private void UpdateMaterial(Material material, bool onlyOpaque, TextureFormat textureFormat)
+        {
+            // - if material alpha is less than 31, and render mode is not Translucent, set to Translucent
+            // - else if render mode is not Normal, but there are no non-opaque pixels, set to Normal
+            // - else if render mode is Normal, but there are non-opaque pixels, set to AlphaTest
+            // - if render mode is Translucent, material alpha is 31, and texture format is DirectRgba, set to AlphaTest
+            if (material.Alpha < 31)
+            {
+                material.RenderMode = RenderMode.Translucent;
+            }
+            else if (material.RenderMode != RenderMode.Normal && onlyOpaque)
+            {
+                material.RenderMode = RenderMode.Normal;
+            }
+            else if (material.RenderMode == RenderMode.Normal && !onlyOpaque)
+            {
+                material.RenderMode = RenderMode.AlphaTest;
+            }
+            if (material.RenderMode == RenderMode.Translucent && material.Alpha == 31 && textureFormat == TextureFormat.DirectRgb)
+            {
+                material.RenderMode = RenderMode.AlphaTest;
+            }
         }
 
         private void RenderRoom(Model model)
@@ -802,80 +869,79 @@ namespace MphRead
             }
         }
 
-        private void ProcessAnimations(Model model, double elapsedTime)
+        private void ProcessAnimations(Model model)
         {
             foreach (TexcoordAnimationGroup group in model.TexcoordAnimationGroups)
             {
-                group.Time += elapsedTime;
-                int increment = (int)(group.Time / _frameTime);
-                if (increment != 0)
-                {
-                    group.CurrentFrame += increment;
-                    group.Time -= increment * _frameTime;
-                }
+                group.CurrentFrame++;
+                group.CurrentFrame %= group.FrameCount;
+            }
+            foreach (TextureAnimationGroup group in model.TextureAnimationGroups)
+            {
+                group.CurrentFrame++;
                 group.CurrentFrame %= group.FrameCount;
             }
         }
 
-        private float InterpolateAnimation(IReadOnlyList<float> values, int start, int frame, int speed, int length)
+        private float InterpolateAnimation(IReadOnlyList<float> values, int start, int frame, int blend, int lutLength, int frameCount,
+            bool isRotation = false)
         {
-            if (length == 1)
+            if (lutLength == 1)
             {
                 return values[start];
             }
-            if (speed == 1)
+            if (blend == 1)
             {
                 return values[start + frame];
             }
-            int v7 = (frame - 1) >> (speed / 2) << (speed / 2);
-            if (frame >= v7)
+            int limit = (frameCount - 1) >> (blend >> 1) << (blend >> 1);
+            if (frame >= limit)
             {
-                int index = start + frame - v7 + (frame >> (speed / 2));
-                // todo: fix texcoord out of bounds index issue
-                if (index > values.Count - 1)
+                return values[start + lutLength - (frameCount - limit - (frame - limit))];
+            }
+            int index = Math.DivRem(frame, blend, out int remainder);
+            if (remainder == 0)
+            {
+                return values[start + index];
+            }
+            float first = values[start + index];
+            float second = values[start + index + 1];
+            if (isRotation)
+            {
+                if (first - second > MathF.PI)
                 {
-                    return 0;
+                    second += MathF.PI * 2f;
                 }
-                return values[index];
+                else if (first - second < -MathF.PI)
+                {
+                    first += MathF.PI * 2f;
+                }
             }
-            int index1 = frame >> (speed / 2);
-            int index2 = (frame >> (speed / 2)) + 1;
-            float div = 1 << (speed / 2);
-            int t = frame & ((speed / 2) | 1);
-            if (t != 0)
-            {
-                return values[start + index1] * (1 - t / div) + values[start + index2] * (t / div);
-            }
-            return values[start + index1];
+            float factor = 1.0f / blend * remainder;
+            return first + (second - first) * factor;
         }
 
-        private void AnimateTexcoords(Model model, Material material, int width, int height)
+        private void AnimateTexcoords(TexcoordAnimationGroup group, TexcoordAnimation animation, int width, int height)
         {
-            if (model.TexcoordAnimationGroups.Count > 0)
+            float scaleS = InterpolateAnimation(group.Scales, animation.ScaleLutIndexS, group.CurrentFrame,
+                animation.ScaleBlendS, animation.ScaleLutLengthS, group.FrameCount);
+            float scaleT = InterpolateAnimation(group.Scales, animation.ScaleLutIndexT, group.CurrentFrame,
+                animation.ScaleBlendT, animation.ScaleLutLengthT, group.FrameCount);
+            float rotate = InterpolateAnimation(group.Rotations, animation.RotateLutIndexZ, group.CurrentFrame,
+                animation.RotateBlendZ, animation.RotateLutLengthZ, group.FrameCount, isRotation: true);
+            float translateS = InterpolateAnimation(group.Translations, animation.TranslateLutIndexS, group.CurrentFrame,
+                animation.TranslateBlendS, animation.TranslateLutLengthS, group.FrameCount);
+            float translateT = InterpolateAnimation(group.Translations, animation.TranslateLutIndexT, group.CurrentFrame,
+                animation.TranslateBlendT, animation.TranslateLutLengthT, group.FrameCount);
+            GL.MatrixMode(MatrixMode.Texture);
+            GL.Translate(translateS * width, translateT * height, 0);
+            if (rotate != 0)
             {
-                // todo: GetModel is currently overwriting things so the last group's information is always used
-                TexcoordAnimationGroup group = model.TexcoordAnimationGroups.Last();
-                TexcoordAnimation animation = group.Animations[material.TexcoordAnimationId];
-                float scaleS = InterpolateAnimation(group.Scales, animation.ScaleLutIndexS, group.CurrentFrame,
-                    animation.ScaleBlendS, animation.ScaleLutLengthS);
-                float scaleT = InterpolateAnimation(group.Scales, animation.ScaleLutIndexT, group.CurrentFrame,
-                    animation.ScaleBlendT, animation.ScaleLutLengthT);
-                float rotate = InterpolateAnimation(group.Rotations, animation.RotateLutIndexZ, group.CurrentFrame,
-                    animation.RotateBlendZ, animation.RotateLutLengthZ);
-                float translateS = InterpolateAnimation(group.Translations, animation.TranslateLutIndexS, group.CurrentFrame,
-                    animation.TranslateBlendS, animation.TranslateLutLengthS);
-                float translateT = InterpolateAnimation(group.Translations, animation.TranslateLutIndexT, group.CurrentFrame,
-                    animation.TranslateBlendT, animation.TranslateLutLengthT);
-                GL.MatrixMode(MatrixMode.Texture);
-                GL.Translate(translateS * width, translateT * height, 0);
-                if (rotate != 0)
-                {
-                    GL.Translate(width / 2, height / 2, 0);
-                    GL.Rotate(MathHelper.RadiansToDegrees(rotate), 0, 0, 1);
-                    GL.Translate(-width / 2, -height / 2, 0);
-                }
-                GL.Scale(scaleS, scaleT, 1);
+                GL.Translate(width / 2, height / 2, 0);
+                GL.Rotate(MathHelper.RadiansToDegrees(rotate), 0, 0, 1);
+                GL.Translate(-width / 2, -height / 2, 0);
             }
+            GL.Scale(scaleS, scaleT, 1);
         }
 
         private void RenderMesh(Model model, Mesh mesh, Material material)
@@ -910,7 +976,7 @@ namespace MphRead
         {
             ushort width = 1;
             ushort height = 1;
-            int textureId = material.TextureId;
+            int textureId = material.CurrentTextureId;
             if (textureId == UInt16.MaxValue)
             {
                 GL.Disable(EnableCap.Texture2D);
@@ -921,7 +987,43 @@ namespace MphRead
                 Texture texture = model.Textures[textureId];
                 width = texture.Width;
                 height = texture.Height;
-                GL.BindTexture(TextureTarget.Texture2D, _textureMap[model][mesh.MaterialId]);
+                GL.BindTexture(TextureTarget.Texture2D, material.TextureBindingId);
+                int minParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMinFilter.Nearest;
+                int magParameter = _textureFiltering ? (int)TextureMagFilter.Linear : (int)TextureMagFilter.Nearest;
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+                switch (material.XRepeat)
+                {
+                case RepeatMode.Clamp:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+                    break;
+                case RepeatMode.Repeat:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+                    break;
+                case RepeatMode.Mirror:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.MirroredRepeat);
+                    break;
+                }
+                switch (material.YRepeat)
+                {
+                case RepeatMode.Clamp:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+                    break;
+                case RepeatMode.Repeat:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+                    break;
+                case RepeatMode.Mirror:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat);
+                    break;
+                }
+                GL.Uniform1(_shaderLocations.MaterialAlpha, material.Alpha / 31.0f);
+                GL.Uniform1(_shaderLocations.MaterialDecal, material.PolygonMode == PolygonMode.Decal ? 1 : 0);
             }
             // _showSelection affects the placeholder colors too
             if (mesh.OverrideColor != null && _showSelection)
@@ -940,10 +1042,22 @@ namespace MphRead
             }
             GL.MatrixMode(MatrixMode.Texture);
             GL.LoadIdentity();
-            if (model.TexcoordAnimationGroups.Count > 0 && textureId != UInt16.MaxValue && material.TexcoordAnimationId != -1)
+
+            TexcoordAnimationGroup? group = null;
+            TexcoordAnimation? animation = null;
+            if (model.TexcoordAnimationGroups.Count > 0 && textureId != UInt16.MaxValue)
+            {
+                // todo: this is essentially just always using the first group now
+                group = model.TexcoordAnimationGroups[material.TexcoordAnimationId];
+                if (group.Animations.TryGetValue(material.Name, out TexcoordAnimation result))
+                {
+                    animation = result;
+                }
+            }
+            if (group != null && animation != null)
             {
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
-                AnimateTexcoords(model, material, width, height);
+                AnimateTexcoords(group, animation.Value, width, height);
             }
             else if (material.TexgenMode != TexgenMode.None)
             {
@@ -954,7 +1068,7 @@ namespace MphRead
                 }
                 else
                 {
-                    GL.Translate(material.TranslateS, material.TranslateT, 0.0f);
+                    GL.Translate(material.ScaleS * width * material.TranslateS, material.ScaleT * height * material.TranslateT, 0.0f);
                     GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
                     GL.Scale(1.0f / width, 1.0f / height, 1.0f);
                 }
@@ -1394,7 +1508,10 @@ namespace MphRead
         {
             if (e.Key == Key.Number5)
             {
-                Images.Screenshot(Size.X, Size.Y);
+                if (!_recording)
+                {
+                    Images.Screenshot(Size.X, Size.Y);
+                }
             }
             else if (e.Key == Key.T)
             {
@@ -1435,14 +1552,6 @@ namespace MphRead
             else if (e.Key == Key.F)
             {
                 _textureFiltering = !_textureFiltering;
-                int minParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMagFilter.Nearest;
-                int magParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMagFilter.Nearest;
-                for (int i = 1; i <= _textureCount; i++)
-                {
-                    GL.BindTexture(TextureTarget.Texture2D, i);
-                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
-                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
-                }
                 await PrintOutput();
             }
             else if (e.Key == Key.L)
@@ -1476,7 +1585,15 @@ namespace MphRead
             }
             else if (e.Key == Key.R)
             {
-                ResetCamera();
+                if (e.Control && e.Shift)
+                {
+                    _recording = !_recording;
+                    _framesRecorded = 0;
+                }
+                else
+                {
+                    ResetCamera();
+                }
                 await PrintOutput();
             }
             else if (e.Key == Key.P)
@@ -1491,6 +1608,17 @@ namespace MphRead
                 }
                 ResetCamera();
                 await PrintOutput();
+            }
+            else if (e.Key == Key.Enter)
+            {
+                _frameAdvanceOn = !_frameAdvanceOn;
+            }
+            else if (e.Key == Key.Period)
+            {
+                if (_frameAdvanceOn)
+                {
+                    _advanceOneFrame = true;
+                }
             }
             else if (e.Control && e.Key == Key.O)
             {
@@ -1715,39 +1843,41 @@ namespace MphRead
             }
             else if (e.Key == Key.Number1 || e.Key == Key.Keypad1)
             {
-                if (_selectionMode == SelectionMode.Model)
-                {
-                    int recolor = SelectedModel.CurrentRecolor - 1;
-                    if (recolor < 0)
-                    {
-                        recolor = SelectedModel.Recolors.Count - 1;
-                    }
-                    SelectedModel.CurrentRecolor = recolor;
-                    foreach (int index in _textureMap[SelectedModel].Where(i => i != -1).Distinct())
-                    {
-                        GL.DeleteTexture(index);
-                    }
-                    InitTextures(SelectedModel);
-                    await PrintOutput();
-                }
+                // sktodo: redo this
+                //if (_selectionMode == SelectionMode.Model)
+                //{
+                //    int recolor = SelectedModel.CurrentRecolor - 1;
+                //    if (recolor < 0)
+                //    {
+                //        recolor = SelectedModel.Recolors.Count - 1;
+                //    }
+                //    SelectedModel.CurrentRecolor = recolor;
+                //    foreach (int index in _textureMap[SelectedModel].Where(i => i != -1).Distinct())
+                //    {
+                //        GL.DeleteTexture(index);
+                //    }
+                //    InitTextures(SelectedModel);
+                //    await PrintOutput();
+                //}
             }
             else if (e.Key == Key.Number2 || e.Key == Key.Keypad2)
             {
-                if (_selectionMode == SelectionMode.Model)
-                {
-                    int recolor = SelectedModel.CurrentRecolor + 1;
-                    if (recolor > SelectedModel.Recolors.Count - 1)
-                    {
-                        recolor = 0;
-                    }
-                    SelectedModel.CurrentRecolor = recolor;
-                    foreach (int index in _textureMap[SelectedModel].Where(i => i != -1).Distinct())
-                    {
-                        GL.DeleteTexture(index);
-                    }
-                    InitTextures(SelectedModel);
-                    await PrintOutput();
-                }
+                // sktodo: redo this
+                //if (_selectionMode == SelectionMode.Model)
+                //{
+                //    int recolor = SelectedModel.CurrentRecolor + 1;
+                //    if (recolor > SelectedModel.Recolors.Count - 1)
+                //    {
+                //        recolor = 0;
+                //    }
+                //    SelectedModel.CurrentRecolor = recolor;
+                //    foreach (int index in _textureMap[SelectedModel].Where(i => i != -1).Distinct())
+                //    {
+                //        GL.DeleteTexture(index);
+                //    }
+                //    InitTextures(SelectedModel);
+                //    await PrintOutput();
+                //}
             }
             else if (e.Key == Key.Escape)
             {
@@ -1900,7 +2030,9 @@ namespace MphRead
         {
             Guid guid = await Output.StartBatch();
             await Output.Clear(guid);
-            await Output.Write($"MphRead Version {Program.Version}", guid);
+            string recording = _recording ? " - Recording" : "";
+            string frameAdvance = _recording ? " - Frame Advance" : "";
+            await Output.Write($"MphRead Version {Program.Version}{recording}{frameAdvance}", guid);
             if (_selectionMode == SelectionMode.Model)
             {
                 await PrintModelInfo(guid);
@@ -1994,7 +2126,7 @@ namespace MphRead
             await Output.Write($"Material: {material.Name} [{mesh.MaterialId}] - {material.RenderMode}, {material.PolygonMode}", guid);
             await Output.Write($"Lighting {material.Lighting}, Alpha {material.Alpha}, " +
                 $"XRepeat {material.XRepeat}, YRepeat {material.YRepeat}", guid);
-            await Output.Write($"Texture ID {material.TextureId}, Palette ID {material.PaletteId}", guid);
+            await Output.Write($"Texture ID {material.CurrentTextureId}, Palette ID {material.CurrentPaletteId}", guid);
             await Output.Write($"Diffuse ({material.Diffuse.Red}, {material.Diffuse.Green}, {material.Diffuse.Blue})" +
                 $" Ambient ({material.Ambient.Red}, {material.Ambient.Green}, {material.Ambient.Blue})" +
                 $" Specular({ material.Specular.Red}, { material.Specular.Green}, { material.Specular.Blue})", guid);

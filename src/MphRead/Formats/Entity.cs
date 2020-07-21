@@ -254,8 +254,10 @@ namespace MphRead
         public readonly uint Flags;
         public readonly uint FxFlags;
         public readonly uint ModelId;
-        public readonly uint LinkedEntity;
-        public readonly uint ScanId;
+        public readonly ushort LinkedEntity;
+        public readonly ushort ScanId;
+        public readonly ushort Field34;
+        public readonly ushort Field36;
         public readonly uint Field38;
         public readonly uint Field3C;
         public readonly uint Field40;
@@ -324,7 +326,8 @@ namespace MphRead
         public readonly uint PaletteId;
         public readonly uint ModelId;
         public readonly uint Field3C;
-        public readonly ushort TargetLayerId;
+        public readonly byte TargetLayerId;
+        public readonly byte Flags;
         public readonly byte Field42;
         public readonly byte Field43;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
@@ -361,34 +364,17 @@ namespace MphRead
         public readonly uint Field20;
         public readonly uint ItemId;
         public readonly uint ModelId;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
+        public readonly byte Enabled; // boolean
+        public readonly byte HasBase; // boolean
+        public readonly byte Field2E;
+        public readonly byte Field2F;
+        public readonly ushort MaxSpawnCount;
+        public readonly ushort SpawnInterval;
+        public readonly ushort SpawnDelay;
+        public readonly ushort EntityId;
         public readonly uint Field38;
         public readonly uint Field3C;
         public readonly uint Field40;
-
-        public ItemEntityData(EntityDataHeader header, Vector3Fx position, uint fieldC, uint field10, uint field14,
-            uint field18, uint field1C, uint field20, uint itemId, uint modelId, uint field2C, uint field30,
-            uint field34, uint field38, uint field3C, uint field40)
-        {
-            Header = header;
-            Position = position;
-            FieldC = fieldC;
-            Field10 = field10;
-            Field14 = field14;
-            Field18 = field18;
-            Field1C = field1C;
-            Field20 = field20;
-            ItemId = itemId;
-            ModelId = modelId;
-            Field2C = field2C;
-            Field30 = field30;
-            Field34 = field34;
-            Field38 = field38;
-            Field3C = field3C;
-            Field40 = field40;
-        }
     }
 
     // size: 50
@@ -1076,25 +1062,19 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
-        public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
+        public readonly byte Field24;
+        public readonly byte Field25;
+        public readonly byte ArtifactId;
+        public readonly byte Field27;
+        public readonly byte Invisible;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 15)]
+        public readonly string TargetEntity;
         public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
+        public readonly Vector3Fx Field3C;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
+        public readonly string NodeName;
     }
 
     // size: 104

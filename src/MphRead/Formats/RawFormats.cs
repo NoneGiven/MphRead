@@ -97,7 +97,7 @@ namespace MphRead
     public readonly struct AnimationHeader
     {
         public readonly uint NodeGroupOffset;
-        public readonly uint Field4; // todo?: some offset
+        public readonly uint UnusedGroupOffset; // always points to Count zeroes
         public readonly uint MaterialGroupOffset;
         public readonly uint TexcoordGroupOffset;
         public readonly uint TextureGroupOffset;
@@ -106,7 +106,7 @@ namespace MphRead
     }
 
     // size: 20
-    public readonly struct MaterialAnimationGroup
+    public readonly struct RawMaterialAnimationGroup
     {
         public readonly uint FrameCount;
         public readonly uint ColorLutOffset;
@@ -116,22 +116,21 @@ namespace MphRead
         public readonly ushort Field12;
     }
 
-    // size: 44
-    public readonly struct TextureAnimationGroup
+    // size: 32
+    public readonly struct RawTextureAnimationGroup
     {
-        public readonly uint FrameCount;
-        public readonly uint Field4;
+        public readonly ushort FrameCount;
+        public readonly ushort FrameIndexCount;
+        public readonly ushort TextureIdCount;
+        public readonly ushort PaletteIdCount;
         public readonly ushort AnimationCount;
         public readonly ushort FieldA;
-        public readonly uint FrameDataOffset;
+        public readonly uint FrameIndexOffset;
         public readonly uint TextureIdOffset;
-        public readonly uint PaletteOffset;
+        public readonly uint PaletteIdOffset;
         public readonly uint AnimationOffset;
         public readonly ushort AnimationFrame;
         public readonly ushort Field1E;
-        public readonly uint Field20;
-        public readonly uint Field24;
-        public readonly uint Field28;
     }
 
     // size: 28
@@ -148,9 +147,9 @@ namespace MphRead
     }
 
     // size: 20
-    public readonly struct NodeAnimationGroup
+    public readonly struct RawNodeAnimationGroup
     {
-        public readonly uint Data;
+        public readonly uint FrameCount;
         public readonly uint Fixed32Pointer;
         public readonly uint UInt16Pointer;
         public readonly uint Int32Pointer;
@@ -218,7 +217,7 @@ namespace MphRead
     }
 
     // size: 60
-    public readonly struct RawTexcoordAnimation
+    public readonly struct TexcoordAnimation
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
         public readonly string Name;

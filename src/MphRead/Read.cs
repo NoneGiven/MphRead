@@ -47,7 +47,7 @@ namespace MphRead
 
         public static Model GetRoomByName(string name)
         {
-            RoomMetadata? roomMeta = Metadata.GetRoomByName(name);
+            (RoomMetadata? roomMeta, _) = Metadata.GetRoomByName(name);
             if (roomMeta == null)
             {
                 throw new ProgramException("No room with this name is known. Please provide metadata for a custom room.");
@@ -182,26 +182,9 @@ namespace MphRead
                 recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
             }
             AnimationResults animations = LoadAnimation(animationPath);
-            var model = new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+            return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
                 textureMatrices, recolors, defaultRecolor);
-            foreach (TexcoordAnimationGroup group in model.TexcoordAnimationGroups)
-            {
-                group.CurrentFrame = 0;
-                foreach (Material material in model.Materials)
-                {
-                    material.TexcoordAnimationId = -1;
-                    for (int i = 0; i < group.Animations.Count; i++)
-                    {
-                        if (group.Animations[i].Name == material.Name)
-                        {
-                            // todo: currently overwriting things so the last group's information is always used
-                            material.TexcoordAnimationId = i;
-                        }
-                    }
-                }
-            }
-            return model;
         }
 
         private class AnimationResults
@@ -249,7 +232,16 @@ namespace MphRead
                 {
                     continue;
                 }
-                results.NodeAnimationGroups.Add(DoOffset<NodeAnimationGroup>(bytes, offset));
+                RawNodeAnimationGroup rawGroup = DoOffset<RawNodeAnimationGroup>(bytes, offset);
+                IReadOnlyList<NodeAnimation> rawAnimations
+                    = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, 1);
+                var animations = new Dictionary<string, NodeAnimation>();
+                int i = 0;
+                foreach (NodeAnimation animation in rawAnimations)
+                {
+                    animations.Add($"{offset}-{i++}", animation);
+                }
+                results.NodeAnimationGroups.Add(new NodeAnimationGroup(rawGroup, animations));
             }
             foreach (uint offset in materialGroupOffsets)
             {
@@ -257,7 +249,15 @@ namespace MphRead
                 {
                     continue;
                 }
-                results.MaterialAnimationGroups.Add(DoOffset<MaterialAnimationGroup>(bytes, offset));
+                RawMaterialAnimationGroup rawGroup = DoOffset<RawMaterialAnimationGroup>(bytes, offset);
+                IReadOnlyList<MaterialAnimation> rawAnimations
+                    = DoOffsets<MaterialAnimation>(bytes, rawGroup.AnimationOffset, (int)rawGroup.AnimationCount);
+                var animations = new Dictionary<string, MaterialAnimation>();
+                foreach (MaterialAnimation animation in rawAnimations)
+                {
+                    animations.Add(animation.Name, animation);
+                }
+                results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup, animations));
             }
             foreach (uint offset in texcoordGroupOffsets)
             {
@@ -269,18 +269,17 @@ namespace MphRead
                 int maxRotation = 0;
                 int maxTranslation = 0;
                 RawTexcoordAnimationGroup rawGroup = DoOffset<RawTexcoordAnimationGroup>(bytes, offset);
-                IReadOnlyList<RawTexcoordAnimation> rawAnimations
-                    = DoOffsets<RawTexcoordAnimation>(bytes, rawGroup.AnimationOffset, (int)rawGroup.AnimationCount);
-                var animations = new List<TexcoordAnimation>();
-                foreach (RawTexcoordAnimation rawAnimation in rawAnimations)
+                IReadOnlyList<TexcoordAnimation> rawAnimations
+                    = DoOffsets<TexcoordAnimation>(bytes, rawGroup.AnimationOffset, (int)rawGroup.AnimationCount);
+                var animations = new Dictionary<string, TexcoordAnimation>();
+                foreach (TexcoordAnimation animation in rawAnimations)
                 {
-                    var animation = new TexcoordAnimation(rawAnimation);
                     maxScale = Math.Max(maxScale, animation.ScaleLutIndexS + animation.ScaleLutLengthS);
                     maxScale = Math.Max(maxScale, animation.ScaleLutIndexT + animation.ScaleLutLengthT);
                     maxRotation = Math.Max(maxRotation, animation.RotateLutIndexZ + animation.RotateLutLengthZ);
                     maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexS + animation.TranslateLutLengthS);
                     maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexT + animation.TranslateLutLengthT);
-                    animations.Add(animation);
+                    animations.Add(animation.Name, animation);
                 }
                 var scales = DoOffsets<Fixed>(bytes, rawGroup.ScaleLutOffset, maxScale).Select(f => f.FloatValue).ToList();
                 var rotations = new List<float>();
@@ -298,7 +297,18 @@ namespace MphRead
                 {
                     continue;
                 }
-                results.TextureAnimationGroups.Add(DoOffset<TextureAnimationGroup>(bytes, offset));
+                RawTextureAnimationGroup rawGroup = DoOffset<RawTextureAnimationGroup>(bytes, offset);
+                IReadOnlyList<TextureAnimation> rawAnimations
+                    = DoOffsets<TextureAnimation>(bytes, rawGroup.AnimationOffset, rawGroup.AnimationCount);
+                var animations = new Dictionary<string, TextureAnimation>();
+                foreach (TextureAnimation animation in rawAnimations)
+                {
+                    animations.Add(animation.Name, animation);
+                }
+                IReadOnlyList<ushort> frameIndices = DoOffsets<ushort>(bytes, rawGroup.FrameIndexOffset, rawGroup.FrameIndexCount);
+                IReadOnlyList<ushort> textureIds = DoOffsets<ushort>(bytes, rawGroup.TextureIdOffset, rawGroup.TextureIdCount);
+                IReadOnlyList<ushort> paletteIds = DoOffsets<ushort>(bytes, rawGroup.PaletteIdOffset, rawGroup.PaletteIdCount);
+                results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, frameIndices, textureIds, paletteIds, animations));
             }
             return results;
         }

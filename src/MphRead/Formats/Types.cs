@@ -5,7 +5,7 @@ namespace MphRead
     // size: 4
     public readonly struct Fixed
     {
-        public int Value { get; }
+        public readonly int Value;
 
         public float FloatValue => ToFloat(Value);
 

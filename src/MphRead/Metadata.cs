@@ -269,15 +269,15 @@ namespace MphRead
 
     public class ObjectMetadata
     {
-        public int SomeId { get; }
+        public int SomeFlag { get; }
         public string Name { get; }
         public IReadOnlyList<int> AnimationIds { get; }
         public int RecolorId { get; }
 
-        public ObjectMetadata(string name, int someId, int paletteId = 0, List<int>? animationIds = null)
+        public ObjectMetadata(string name, int someFlag, int paletteId = 0, List<int>? animationIds = null)
         {
             Name = name;
-            SomeId = someId;
+            SomeFlag = someFlag;
             RecolorId = paletteId;
             if (animationIds == null)
             {
@@ -291,6 +291,51 @@ namespace MphRead
             {
                 AnimationIds = animationIds;
             }
+        }
+    }
+
+    public class PlatformMetadata
+    {
+        public int SomeFlag { get; }
+        public string Name { get; }
+        public IReadOnlyList<uint> AnimationIds { get; }
+        public uint Field20 { get; }
+        public uint Field24 { get; }
+
+        public PlatformMetadata(string name, int someFlag = 0, List<uint>? animationIds = null,
+            uint field20 = UInt32.MaxValue, uint field24 = UInt32.MaxValue)
+        {
+            Name = name;
+            SomeFlag = someFlag;
+            Field20 = field20;
+            Field24 = field24;
+            // instant_sleep_anim_id, wakeup_anim_id, instant_wakeup_anim_id, sleep_anim_id
+            if (animationIds == null)
+            {
+                AnimationIds = new List<uint>() { UInt32.MaxValue, UInt32.MaxValue, UInt32.MaxValue, UInt32.MaxValue };
+            }
+            else if (animationIds.Count != 4)
+            {
+                throw new ArgumentException(nameof(animationIds));
+            }
+            else
+            {
+                AnimationIds = animationIds;
+            }
+        }
+    }
+
+    public class DoorMetadata
+    {
+        public string Name { get; }
+        public string LockName { get; }
+        public float LockOffset { get; }
+
+        public DoorMetadata(string name, string lockName, float lockOffset)
+        {
+            Name = name;
+            LockName = name;
+            LockOffset = lockOffset;
         }
     }
 
@@ -324,15 +369,14 @@ namespace MphRead
             return result.Value;
         }
 
-        public static RoomMetadata? GetRoomByName(string name)
+        public static (RoomMetadata?, int) GetRoomByName(string name)
         {
             if (RoomMetadata.TryGetValue(name, out RoomMetadata? metadata))
             {
-                return metadata;
+                return (metadata, _roomIds.IndexOf(i => i == metadata.Name));
             }
-            return null;
+            return (null, -1);
         }
-
 
         public static RoomMetadata? GetRoomById(int id)
         {
@@ -355,6 +399,45 @@ namespace MphRead
         private static ushort FogColor(byte r, byte g, byte b)
         {
             return (ushort)(r | g << 5 | b << 10);
+        }
+
+        public static (int, bool) GetAreaInfo(int roomId)
+        {
+            int areaId = 8;
+            if (roomId >= 27 && roomId < 36)
+            {
+                areaId = 0;
+            }
+            else if (roomId >= 36 && roomId < 45)
+            {
+                areaId = 1;
+            }
+            else if (roomId >= 45 && roomId < 56)
+            {
+                areaId = 2;
+            }
+            else if (roomId >= 56 && roomId < 65)
+            {
+                areaId = 3;
+            }
+            else if (roomId >= 65 && roomId < 72)
+            {
+                areaId = 4;
+            }
+            else if (roomId >= 72 && roomId < 77)
+            {
+                areaId = 5;
+            }
+            else if (roomId >= 77 && roomId < 83)
+            {
+                areaId = 6;
+            }
+            else if (roomId >= 83 && roomId < 89)
+            {
+                areaId = 7;
+            }
+            bool multiplayer = roomId >= 93 && roomId <= 119;
+            return (areaId, multiplayer);
         }
 
         private static readonly IReadOnlyList<string> _roomIds
@@ -4012,12 +4095,12 @@ namespace MphRead
                 }
             };
 
-        public static readonly IReadOnlyList<string> Doors = new List<string>()
+        public static readonly IReadOnlyList<DoorMetadata> Doors = new List<DoorMetadata>()
         {
-            /* 0 */ "AlimbicDoor",
-            /* 1 */ "AlimbicMorphBallDoor",
-            /* 2 */ "AlimbicBossDoor",
-            /* 3 */ "AlimbicThinDoor",
+            /* 0 */ new DoorMetadata("AlimbicDoor", "AlimbicDoorLock", 1.39990234f),
+            /* 1 */ new DoorMetadata("AlimbicMorphBallDoor", "AlimbicMorphBallDoorLock", 0.6999512f),
+            /* 2 */ new DoorMetadata("AlimbicBossDoor", "AlimbicBossDoorLock", 3.5f),
+            /* 3 */ new DoorMetadata("AlimbicThinDoor", "ThinDoorLock", 1.39990234f)
         };
 
         public static readonly IReadOnlyList<int> DoorPalettes = new List<int>()
@@ -4042,7 +4125,7 @@ namespace MphRead
             /*  1 */ ("pick_health_A", 0.424316406f),
             /*  2 */ ("pick_health_C", 0.524414063f),
             /*  3 */ ("pick_dblDamage", 0.521484375f),
-            /*  4 */ ("PickUp_EnergyExp", 1.39990234f),
+            /*  4 */ ("PickUp_EnergyExp", 0.286621094f),
             /*  5 */ ("pick_wpn_electro", 0.558837891f),
             /*  6 */ ("PickUp_MissileExp", 0.515136719f),
             /*  7 */ ("pick_wpn_jackhammer", 0.540771484f),
@@ -4144,60 +4227,64 @@ namespace MphRead
             return _objects[id];
         }
 
-        private static readonly IReadOnlyList<string?> _platforms = new List<string?>()
+        private static readonly IReadOnlyList<PlatformMetadata?> _platforms = new List<PlatformMetadata?>()
         {
-            /*  0 */ null,
-            /*  1 */ null,
-            /*  2 */ null,
-            /*  3 */ "Elevator",
-            /*  4 */ "smasher",
-            /*  5 */ "Platform_Unit4_C1",
-            /*  6 */ "pillar",
-            /*  7 */ "Door_Unit4_RM1",
-            /*  8 */ null,
-            /*  9 */ "pistonmp7",
-            /* 10 */ null,
-            /* 11 */ "unit4_mover1",
-            /* 12 */ "unit4_mover2",
-            /* 13 */ null,
-            /* 14 */ "unit4_mover3",
-            /* 15 */ null,
-            /* 16 */ null,
-            /* 17 */ "cylinderbase",
-            /* 18 */ "unit3_platform",
-            /* 19 */ "unit3_platform2",
-            /* 20 */ null,
-            /* 21 */ "SyluxShip",
-            /* 22 */ null,
-            /* 23 */ "SamusShip",
-            /* 24 */ "unit1_land_plat1",
-            /* 25 */ "unit1_land_plat2",
-            /* 26 */ "unit1_land_plat3",
-            /* 27 */ "unit1_land_plat4",
-            /* 28 */ "unit1_land_plat5",
-            /* 29 */ "unit2_c4_plat",
-            /* 30 */ "unit2_land_elev",
-            /* 31 */ null,
-            /* 32 */ "Crate01",
-            /* 33 */ null,
-            /* 34 */ "unit1_mover2",
-            /* 35 */ "unit2_mover1",
-            /* 36 */ "unit4_mover3",
-            /* 37 */ "unit4_mover4",
-            /* 38 */ "unit3_mover1",
-            /* 39 */ "unit2_c1_mover",
-            /* 40 */ "unit3_mover2",
-            /* 41 */ "piston_gorealand",
-            /* 42 */ null,
-            /* 43 */ null,
-            /* 44 */ "SamusShip" // todo: how/why is this different from 23?
+            /*  0 */ new PlatformMetadata("platform"),
+            /*  1 */ null, // duplicate of 0
+            /*  2 */ null, // todo: figure out what this "platform" is
+            /*  3 */ new PlatformMetadata("Elevator"),
+            /*  4 */ new PlatformMetadata("smasher"),
+            /*  5 */ new PlatformMetadata("Platform_Unit4_C1", someFlag: 1),
+            /*  6 */ new PlatformMetadata("pillar"),
+            /*  7 */ new PlatformMetadata("Door_Unit4_RM1"),
+            /*  8 */ new PlatformMetadata("SyluxShip", animationIds: new List<uint>() { UInt32.MaxValue, 1, 0, 2 }),
+            /*  9 */ new PlatformMetadata("pistonmp7"),
+            /* 10 */ new PlatformMetadata("unit3_brain", animationIds: new List<uint>() { 0, 0, 0, 0 }),
+            /* 11 */ new PlatformMetadata("unit4_mover1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 12 */ new PlatformMetadata("unit4_mover2", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 13 */ new PlatformMetadata("ElectroField1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 14 */ new PlatformMetadata("unit3_platform1"),
+            /* 15 */ new PlatformMetadata("unit3_pipe1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 16 */ new PlatformMetadata("unit3_pipe2", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 17 */ new PlatformMetadata("cylinderbase"),
+            /* 18 */ new PlatformMetadata("unit3_platform"),
+            /* 19 */ new PlatformMetadata("unit3_platform2"),
+            /* 20 */ new PlatformMetadata("unit3_jar", animationIds: new List<uint>() { 0, 2, 1, 0 }, field20: 0, field24: 0),
+            /* 21 */ new PlatformMetadata("SyluxTurret", animationIds: new List<uint>() { 3, 2, 1, 0 }, field20: 0, field24: 0),
+            /* 22 */ new PlatformMetadata("unit3_jartop", animationIds: new List<uint>() { 0, 2, 1, 0 }, field20: 0, field24: 0),
+            /* 23 */ new PlatformMetadata("SamusShip", animationIds: new List<uint>() { 1, 3, 2, 4 }, field20: 0, field24: 0),
+            /* 24 */ new PlatformMetadata("unit1_land_plat1"),
+            /* 25 */ new PlatformMetadata("unit1_land_plat2"),
+            /* 26 */ new PlatformMetadata("unit1_land_plat3"),
+            /* 27 */ new PlatformMetadata("unit1_land_plat4"),
+            /* 28 */ new PlatformMetadata("unit1_land_plat5"),
+            /* 29 */ new PlatformMetadata("unit2_c4_plat"),
+            /* 30 */ new PlatformMetadata("unit2_land_elev"),
+            /* 31 */ new PlatformMetadata("unit4_platform1"),
+            /* 32 */ new PlatformMetadata("Crate01", animationIds: new List<uint>() { UInt32.MaxValue, UInt32.MaxValue, 0, 1 }),
+            /* 33 */ new PlatformMetadata("unit1_mover1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 34 */ new PlatformMetadata("unit1_mover2"),
+            /* 35 */ new PlatformMetadata("unit2_mover1"),
+            /* 36 */ new PlatformMetadata("unit4_mover3"),
+            /* 37 */ new PlatformMetadata("unit4_mover4"),
+            /* 38 */ new PlatformMetadata("unit3_mover1"),
+            /* 39 */ new PlatformMetadata("unit2_c1_mover"),
+            /* 40 */ new PlatformMetadata("unit3_mover2", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 41 */ new PlatformMetadata("piston_gorealand"),
+            /* 42 */ new PlatformMetadata("unit4_tp2_artifact_wo"),
+            /* 43 */ new PlatformMetadata("unit4_tp1_artifact_wo"),
+            /* 44 */ new PlatformMetadata("SamusShip", animationIds: new List<uint>() { 1, 0, 2, 4 }, field20: 0, field24: 0)
         };
 
-        public static string? GetPlatformById(int id)
+        public static PlatformMetadata? GetPlatformById(int id)
         {
             if (id < 0 || id > _platforms.Count)
             {
                 throw new ArgumentException(nameof(id));
+            }
+            if (id == 1)
+            {
+                id = 0;
             }
             return _platforms[id];
         }
