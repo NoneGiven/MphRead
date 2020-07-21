@@ -339,7 +339,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.ForceField)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<ForceFieldEntityData>)entity).Data.Position));
+                    models.AddRange(LoadForceField(((Entity<ForceFieldEntityData>)entity).Data));
                 }
             }
             return models;
@@ -573,6 +573,12 @@ namespace MphRead
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             return model;
+        }
+
+        // todo: load lock
+        private static IEnumerable<Model> LoadForceField(ForceFieldEntityData data)
+        {
+            return new List<Model>() { Read.GetModelByName("ForceField") };
         }
 
         private static readonly Dictionary<EntityType, ColorRgb> _colorOverrides = new Dictionary<EntityType, ColorRgb>()
