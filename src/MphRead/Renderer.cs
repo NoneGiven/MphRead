@@ -355,6 +355,18 @@ namespace MphRead
             }
         }
 
+        private void DeleteTextures(uint sceneId)
+        {
+            if (_texPalMap.TryGetValue(sceneId, out TextureMap? map))
+            {
+                foreach (int id in map.Values.Select(v => v.BindingId).Distinct())
+                {
+                    GL.DeleteTexture(id);
+                }
+                _texPalMap.Remove(sceneId);
+            }
+        }
+
         private async Task UpdateModelStates(float time)
         {
             while (_loadQueue.TryDequeue(out Model? model))
@@ -372,14 +384,7 @@ namespace MphRead
                 _selectedModelId = 0;
                 _selectedMeshId = 0;
                 _selectionMode = SelectionMode.None;
-                if (_texPalMap.TryGetValue(model.SceneId, out TextureMap? map))
-                {
-                    foreach (int id in map.Values.Select(v => v.BindingId).Distinct())
-                    {
-                        GL.DeleteTexture(id);
-                    }
-                    _texPalMap.Remove(model.SceneId);
-                }
+                DeleteTextures(model.SceneId);
                 _models.Remove(model);
                 _modelMap.Remove(model.SceneId);
                 await PrintOutput();
@@ -1837,41 +1842,33 @@ namespace MphRead
             }
             else if (e.Key == Key.Number1 || e.Key == Key.Keypad1)
             {
-                // sktodo: redo this
-                //if (_selectionMode == SelectionMode.Model)
-                //{
-                //    int recolor = SelectedModel.CurrentRecolor - 1;
-                //    if (recolor < 0)
-                //    {
-                //        recolor = SelectedModel.Recolors.Count - 1;
-                //    }
-                //    SelectedModel.CurrentRecolor = recolor;
-                //    foreach (int index in _textureMap[SelectedModel].Where(i => i != -1).Distinct())
-                //    {
-                //        GL.DeleteTexture(index);
-                //    }
-                //    InitTextures(SelectedModel);
-                //    await PrintOutput();
-                //}
+                if (_selectionMode == SelectionMode.Model && SelectedModel.Recolors.Count > 1)
+                {
+                    int recolor = SelectedModel.CurrentRecolor - 1;
+                    if (recolor < 0)
+                    {
+                        recolor = SelectedModel.Recolors.Count - 1;
+                    }
+                    SelectedModel.CurrentRecolor = recolor;
+                    DeleteTextures(SelectedModel.SceneId);
+                    InitTextures(SelectedModel);
+                    await PrintOutput();
+                }
             }
             else if (e.Key == Key.Number2 || e.Key == Key.Keypad2)
             {
-                // sktodo: redo this
-                //if (_selectionMode == SelectionMode.Model)
-                //{
-                //    int recolor = SelectedModel.CurrentRecolor + 1;
-                //    if (recolor > SelectedModel.Recolors.Count - 1)
-                //    {
-                //        recolor = 0;
-                //    }
-                //    SelectedModel.CurrentRecolor = recolor;
-                //    foreach (int index in _textureMap[SelectedModel].Where(i => i != -1).Distinct())
-                //    {
-                //        GL.DeleteTexture(index);
-                //    }
-                //    InitTextures(SelectedModel);
-                //    await PrintOutput();
-                //}
+                if (_selectionMode == SelectionMode.Model && SelectedModel.Recolors.Count > 1)
+                {
+                    int recolor = SelectedModel.CurrentRecolor + 1;
+                    if (recolor > SelectedModel.Recolors.Count - 1)
+                    {
+                        recolor = 0;
+                    }
+                    SelectedModel.CurrentRecolor = recolor;
+                    DeleteTextures(SelectedModel.SceneId);
+                    InitTextures(SelectedModel);
+                    await PrintOutput();
+                }
             }
             else if (e.Key == Key.Escape)
             {
