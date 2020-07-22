@@ -978,7 +978,7 @@ namespace MphRead
                     GL.CullFace(CullFaceMode.Front);
                 }
             }
-            DoDlist(model, material, mesh);
+            DoDlist(model, mesh);
             if (_lighting)
             {
                 GL.Disable(EnableCap.Lighting);
@@ -1129,7 +1129,7 @@ namespace MphRead
             }
         }
 
-        private void DoDlist(Model model, Material material, Mesh mesh)
+        private void DoDlist(Model model, Mesh mesh)
         {
             IReadOnlyList<RenderInstruction> list = model.RenderInstructionLists[mesh.DlistId];
             float vtxX = 0;
