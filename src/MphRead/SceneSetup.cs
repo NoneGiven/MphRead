@@ -205,7 +205,7 @@ namespace MphRead
             Matrix4 scaleMatrix = model.Transform.ClearTranslation().ClearRotation();
             model.Transform = scaleMatrix * transform;
         }
-        
+
         private static IReadOnlyList<Model> LoadEntities(RoomMetadata metadata, int areaId, bool multiplayer)
         {
             var models = new List<Model>();
