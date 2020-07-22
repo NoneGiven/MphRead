@@ -40,7 +40,7 @@ void main()
         }
         // light 1
         vec3 normal = normalize(mat3(model_mtx) * gl_Normal);
-        float fixed_diffuse1 = dot(-light1vec.xyz, normal);
+        float fixed_diffuse1 = clamp(dot(-light1vec.xyz, normal), 0.0, 1.0);
         vec3 neghalf1 = -(light1vec.xyz / 2.0);
         float d1 = dot(neghalf1, normal);
         float fixed_shininess1 = d1 > 0.0 ? 2.0 * d1 * d1 : 0.0;
@@ -49,7 +49,7 @@ void main()
         vec4 amb1 = cur_ambient * light1col;
         vec4 col1 = spec1 + diff1 + amb1;
         // light 2
-        float fixed_diffuse2 = dot(-light2vec.xyz, normal);
+        float fixed_diffuse2 = clamp(dot(-light2vec.xyz, normal), 0.0, 1.0);
         vec3 neghalf2 = -(light2vec.xyz / 2.0);
         float d2 = dot(neghalf2, normal);
         float fixed_shininess2 = d2 > 0.0 ? 2.0 * d2 * d2 : 0.0;
