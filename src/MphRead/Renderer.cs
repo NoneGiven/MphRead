@@ -668,7 +668,7 @@ namespace MphRead
                 Matrix4 transform = model.Transform;
                 GL.MultMatrix(ref transform);
                 _modelMatrix = Matrix4.Identity;
-                _modelMatrix *= transform;
+                _modelMatrix = transform * _modelMatrix;
                 if (model.Rotating)
                 {
                     model.Spin = (float)(model.Spin + elapsedTime * 360 * 0.35) % 360;
@@ -682,7 +682,7 @@ namespace MphRead
                         transform.M42 += (MathF.Sin(model.Spin / 180 * MathF.PI) + 1) / 8f;
                     }
                     GL.MultMatrix(ref transform);
-                    _modelMatrix *= transform;
+                    _modelMatrix = transform * _modelMatrix;
                 }
                 UpdateMaterials(model);
                 if (model.Type == ModelType.Room)
@@ -868,7 +868,7 @@ namespace MphRead
                     transform = Matrix4.Identity;
                 }
                 GL.MultMatrix(ref transform);
-                _modelMatrix *= transform;
+                _modelMatrix = transform * _modelMatrix;
                 GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref _modelMatrix);
                 foreach (Mesh mesh in model.GetNodeMeshes(node))
                 {

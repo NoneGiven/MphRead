@@ -5,7 +5,7 @@ namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 6, 0, 0);
+        public static Version Version { get; } = new Version(0, 7, 0, 0);
 
         private static void Main(string[] args)
         {
@@ -26,6 +26,7 @@ namespace MphRead
             if (args.Length == 0)
             {
                 renderer.AddRoom("MP3 PROVING GROUND", NodeLayer.Multiplayer0 | NodeLayer.MultiplayerU);
+                //renderer.AddRoom("UNIT2_C1");
                 //renderer.AddModel("Crate01");
                 Nop();
             }
