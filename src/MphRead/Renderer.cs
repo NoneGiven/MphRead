@@ -207,6 +207,7 @@ namespace MphRead
                 roomMeta.Light2Color.Blue / 31.0f,
                 roomMeta.Light2Color.Alpha / 31.0f
             );
+            _lighting = true;
             _hasFog = roomMeta.FogEnabled != 0;
             _fogColor = new Vector4(
                 ((roomMeta.FogColor) & 0x1F) / (float)0x1F,
