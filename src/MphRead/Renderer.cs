@@ -30,6 +30,16 @@ namespace MphRead
             _window = new RenderWindow(settings, native);
         }
 
+        public void AddRoom(int id, NodeLayer layerMask)
+        {
+            _window.AddRoom(id, (int)layerMask);
+        }
+
+        public void AddRoom(string name, NodeLayer layerMask)
+        {
+            _window.AddRoom(name, (int)layerMask);
+        }
+
         public void AddRoom(int id, int layerMask = 0)
         {
             _window.AddRoom(id, layerMask);

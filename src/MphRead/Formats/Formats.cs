@@ -670,6 +670,7 @@ namespace MphRead
         }
     }
 
+    [Flags]
     public enum NodeLayer
     {
         Multiplayer0 = 0x0008,
