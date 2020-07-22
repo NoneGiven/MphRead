@@ -139,9 +139,9 @@ namespace MphRead
             {
                 foreach (Material material in model.Materials)
                 {
-                    if (material.PolygonMode == PolygonMode.Decal && material.Alpha < 31)
+                    if (material.Lighting > 1)
                     {
-                        System.Diagnostics.Debugger.Break();
+                        Console.WriteLine($"{model.Name} | {material.Name} | {material.Lighting}");
                     }
                 }
             }

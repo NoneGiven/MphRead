@@ -482,7 +482,7 @@ namespace MphRead
     public class Material
     {
         public string Name { get; }
-        public byte Lighting { get; set; } // todo: probably a bool
+        public byte Lighting { get; set; } // todo: what do lighting values 3 and 5 mean?
         public CullingMode Culling { get; }
         public byte Alpha { get; }
         public int TextureId { get; }
