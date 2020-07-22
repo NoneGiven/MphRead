@@ -1087,7 +1087,6 @@ namespace MphRead
         {
             if (_lighting && material.Lighting != 0 && (mesh.OverrideColor == null || !_showSelection))
             {
-                // todo: would be nice if the approaches for this and the room lights were the same
                 var ambient = new Vector4(
                     material.Ambient.Red / 31.0f,
                     material.Ambient.Green / 31.0f,
@@ -1107,12 +1106,10 @@ namespace MphRead
                     1.0f
                 );
                 GL.Enable(EnableCap.Lighting);
-                GL.Material(MaterialFace.Front, MaterialParameter.Ambient, ambient);
-                GL.Material(MaterialFace.Front, MaterialParameter.Diffuse, diffuse);
+                GL.Uniform1(_shaderLocations.UseLight, 1);
                 GL.Uniform4(_shaderLocations.Ambient, ambient);
                 GL.Uniform4(_shaderLocations.Diffuse, diffuse);
                 GL.Uniform4(_shaderLocations.Specular, specular);
-                GL.Uniform1(_shaderLocations.UseLight, 1);
             }
             else
             {
