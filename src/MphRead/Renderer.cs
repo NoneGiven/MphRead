@@ -75,6 +75,7 @@ namespace MphRead
         public int OverrideColor { get; set; }
         public int MaterialAlpha { get; set; }
         public int MaterialDecal { get; set; }
+        public int ModelMatrix { get; set; }
     }
 
     public class TextureMap : Dictionary<(int TextureId, int PaletteId), (int BindingId, bool OnlyOpaque)>
@@ -125,6 +126,7 @@ namespace MphRead
         private float _distance = 5.0f;
         // todo: somehow the axes are reversed from the model coordinates
         private Vector3 _cameraPosition = new Vector3(0, 0, 0);
+        private Matrix4 _modelMatrix = Matrix4.Identity;
         private bool _leftMouse = false;
 
         private bool _showTextures = true;
@@ -284,6 +286,7 @@ namespace MphRead
             _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
             _shaderLocations.MaterialAlpha = GL.GetUniformLocation(_shaderProgramId, "mat_alpha");
             _shaderLocations.MaterialDecal = GL.GetUniformLocation(_shaderProgramId, "mat_decal");
+            _shaderLocations.ModelMatrix = GL.GetUniformLocation(_shaderProgramId, "model_mtx");
         }
 
         private string FormatOnOff(bool setting)
@@ -652,6 +655,8 @@ namespace MphRead
                 GL.PushMatrix();
                 Matrix4 transform = model.Transform;
                 GL.MultMatrix(ref transform);
+                _modelMatrix = Matrix4.Identity;
+                _modelMatrix *= transform;
                 if (model.Rotating)
                 {
                     model.Spin = (float)(model.Spin + elapsedTime * 360 * 0.35) % 360;
@@ -665,6 +670,7 @@ namespace MphRead
                         transform.M42 += (MathF.Sin(model.Spin / 180 * MathF.PI) + 1) / 8f;
                     }
                     GL.MultMatrix(ref transform);
+                    _modelMatrix *= transform;
                 }
                 UpdateMaterials(model);
                 if (model.Type == ModelType.Room)
@@ -850,6 +856,8 @@ namespace MphRead
                     transform = Matrix4.Identity;
                 }
                 GL.MultMatrix(ref transform);
+                _modelMatrix *= transform;
+                GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref _modelMatrix);
                 foreach (Mesh mesh in model.GetNodeMeshes(node))
                 {
                     Material material = model.Materials[mesh.MaterialId];
