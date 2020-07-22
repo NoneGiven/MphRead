@@ -955,7 +955,7 @@ namespace MphRead
 
         private void RenderMesh(Model model, Mesh mesh, Material material)
         {
-            GL.Color3(1f, 1f, 1f);
+            GL.Color3(new Vector3(material.Diffuse.Red / 31.0f, material.Diffuse.Green / 31.0f, material.Diffuse.Blue / 31.0f));
             DoTexture(model, mesh, material);
             DoLighting(mesh, material);
             if (_faceCulling)
