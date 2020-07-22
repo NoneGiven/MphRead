@@ -50,12 +50,12 @@ void main()
         vec4 amb_current = ambient;
         if (gl_Color.a == 0) {
             // see comment on DIF_AMB
-            dif_current = vec4(gl_Color.r, gl_Color.g, gl_Color.b, 1.0);
+            dif_current = vec4(gl_Color.rgb, 1.0);
             amb_current = vec4(0.0, 0.0, 0.0, 1.0);
         }
         vec4 col1 = light_calc(light1vec, light1col, normal, dif_current, amb_current, specular);
         vec4 col2 = light_calc(light2vec, light2col, normal, dif_current, amb_current, specular);
-        color = vec4(min(col1.r + col2.r, 1.0), min(col1.g + col2.g, 1.0), min(col1.b + col2.b, 1.0), 1.0);
+        color = vec4(min((col1 + col2).rgb, vec3(1.0, 1.0, 1.0)), 1.0);
     }
     else {
         color = gl_Color;
