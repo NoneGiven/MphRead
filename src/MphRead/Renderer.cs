@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using MphRead.Export;
@@ -75,6 +76,7 @@ namespace MphRead
         public int OverrideColor { get; set; }
         public int MaterialAlpha { get; set; }
         public int MaterialDecal { get; set; }
+        public int ModelMatrix { get; set; }
     }
 
     public class TextureMap : Dictionary<(int TextureId, int PaletteId), (int BindingId, bool OnlyOpaque)>
@@ -103,16 +105,16 @@ namespace MphRead
         private long _frameCount = -1;
         private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
-        private readonly Dictionary<uint, Model> _modelMap = new Dictionary<uint, Model>();
+        private readonly Dictionary<int, Model> _modelMap = new Dictionary<int, Model>();
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
 
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
-        private readonly Dictionary<uint, TextureMap> _texPalMap = new Dictionary<uint, TextureMap>();
+        private readonly Dictionary<int, TextureMap> _texPalMap = new Dictionary<int, TextureMap>();
 
         private SelectionMode _selectionMode = SelectionMode.None;
-        private uint _selectedModelId = 0;
+        private int _selectedModelId = -1;
         private int _selectedMeshId = 0;
         private int _selectedNodeId = 0;
         private bool _showSelection = true;
@@ -125,6 +127,7 @@ namespace MphRead
         private float _distance = 5.0f;
         // todo: somehow the axes are reversed from the model coordinates
         private Vector3 _cameraPosition = new Vector3(0, 0, 0);
+        private Matrix4 _modelMatrix = Matrix4.Identity;
         private bool _leftMouse = false;
 
         private bool _showTextures = true;
@@ -204,6 +207,7 @@ namespace MphRead
                 roomMeta.Light2Color.Blue / 31.0f,
                 roomMeta.Light2Color.Alpha / 31.0f
             );
+            _lighting = true;
             _hasFog = roomMeta.FogEnabled != 0;
             _fogColor = new Vector4(
                 ((roomMeta.FogColor) & 0x1F) / (float)0x1F,
@@ -284,6 +288,7 @@ namespace MphRead
             _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
             _shaderLocations.MaterialAlpha = GL.GetUniformLocation(_shaderProgramId, "mat_alpha");
             _shaderLocations.MaterialDecal = GL.GetUniformLocation(_shaderProgramId, "mat_decal");
+            _shaderLocations.ModelMatrix = GL.GetUniformLocation(_shaderProgramId, "model_mtx");
         }
 
         private string FormatOnOff(bool setting)
@@ -355,7 +360,7 @@ namespace MphRead
             }
         }
 
-        private void DeleteTextures(uint sceneId)
+        private void DeleteTextures(int sceneId)
         {
             if (_texPalMap.TryGetValue(sceneId, out TextureMap? map))
             {
@@ -448,7 +453,7 @@ namespace MphRead
             base.OnRenderFrame(args);
         }
 
-        private void SetSelectedModel(uint sceneId)
+        private void SetSelectedModel(int sceneId)
         {
             Deselect();
             _selectedModelId = sceneId;
@@ -458,7 +463,7 @@ namespace MphRead
             }
         }
 
-        private void SetSelectedNode(uint sceneId, int nodeId)
+        private void SetSelectedNode(int sceneId, int nodeId)
         {
             Deselect();
             _selectedModelId = sceneId;
@@ -469,7 +474,7 @@ namespace MphRead
             }
         }
 
-        private void SetSelectedMesh(uint sceneId, int meshId)
+        private void SetSelectedMesh(int sceneId, int meshId)
         {
             Deselect();
             _selectedModelId = sceneId;
@@ -501,9 +506,12 @@ namespace MphRead
 
         private void Deselect()
         {
-            foreach (Mesh mesh in SelectedModel.Meshes)
+            if (_selectedModelId > -1)
             {
-                mesh.OverrideColor = SelectedModel.Type == ModelType.Placeholder ? mesh.PlaceholderColor : null;
+                foreach (Mesh mesh in SelectedModel.Meshes)
+                {
+                    mesh.OverrideColor = SelectedModel.Type == ModelType.Placeholder ? mesh.PlaceholderColor : null;
+                }
             }
             _flashUp = false;
         }
@@ -649,6 +657,8 @@ namespace MphRead
                 GL.PushMatrix();
                 Matrix4 transform = model.Transform;
                 GL.MultMatrix(ref transform);
+                _modelMatrix = Matrix4.Identity;
+                _modelMatrix *= transform;
                 if (model.Rotating)
                 {
                     model.Spin = (float)(model.Spin + elapsedTime * 360 * 0.35) % 360;
@@ -662,6 +672,7 @@ namespace MphRead
                         transform.M42 += (MathF.Sin(model.Spin / 180 * MathF.PI) + 1) / 8f;
                     }
                     GL.MultMatrix(ref transform);
+                    _modelMatrix *= transform;
                 }
                 UpdateMaterials(model);
                 if (model.Type == ModelType.Room)
@@ -847,6 +858,8 @@ namespace MphRead
                     transform = Matrix4.Identity;
                 }
                 GL.MultMatrix(ref transform);
+                _modelMatrix *= transform;
+                GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref _modelMatrix);
                 foreach (Mesh mesh in model.GetNodeMeshes(node))
                 {
                     Material material = model.Materials[mesh.MaterialId];
@@ -936,7 +949,7 @@ namespace MphRead
             if (rotate != 0)
             {
                 GL.Translate(width / 2, height / 2, 0);
-                GL.Rotate(MathHelper.RadiansToDegrees(rotate), 0, 0, 1);
+                GL.Rotate(MathHelper.RadiansToDegrees(rotate), Vector3.UnitZ);
                 GL.Translate(-width / 2, -height / 2, 0);
             }
             GL.Scale(scaleS, scaleT, 1);
@@ -944,7 +957,10 @@ namespace MphRead
 
         private void RenderMesh(Model model, Mesh mesh, Material material)
         {
-            GL.Color3(1f, 1f, 1f);
+            // MPH applies the material colors initially by calling DIF_AMB with bit 15 set,
+            // so the diffuse color is always set as the vertex color to start
+            // (the emission color is set to white if lighting is disabled or black if lighting is enabled; we can just ignore that)
+            GL.Color3(new Vector3(material.Diffuse.Red / 31.0f, material.Diffuse.Green / 31.0f, material.Diffuse.Blue / 31.0f));
             DoTexture(model, mesh, material);
             DoLighting(mesh, material);
             if (_faceCulling)
@@ -1069,11 +1085,13 @@ namespace MphRead
                     GL.Translate(material.ScaleS * width * material.TranslateS, material.ScaleT * height * material.TranslateT, 0.0f);
                     GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
                     GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+                    GL.Rotate(material.RotateZ, Vector3.UnitZ);
                 }
             }
             else
             {
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
+                GL.Rotate(material.RotateZ, Vector3.UnitZ);
             }
             GL.Uniform1(_shaderLocations.UseTexture, GL.IsEnabled(EnableCap.Texture2D) ? 1 : 0);
         }
@@ -1082,7 +1100,6 @@ namespace MphRead
         {
             if (_lighting && material.Lighting != 0 && (mesh.OverrideColor == null || !_showSelection))
             {
-                // todo: would be nice if the approaches for this and the room lights were the same
                 var ambient = new Vector4(
                     material.Ambient.Red / 31.0f,
                     material.Ambient.Green / 31.0f,
@@ -1102,12 +1119,10 @@ namespace MphRead
                     1.0f
                 );
                 GL.Enable(EnableCap.Lighting);
-                GL.Material(MaterialFace.Front, MaterialParameter.Ambient, ambient);
-                GL.Material(MaterialFace.Front, MaterialParameter.Diffuse, diffuse);
+                GL.Uniform1(_shaderLocations.UseLight, 1);
                 GL.Uniform4(_shaderLocations.Ambient, ambient);
                 GL.Uniform4(_shaderLocations.Diffuse, diffuse);
                 GL.Uniform4(_shaderLocations.Specular, specular);
-                GL.Uniform1(_shaderLocations.UseLight, 1);
             }
             else
             {
@@ -1160,17 +1175,30 @@ namespace MphRead
                     }
                     break;
                 case InstructionCode.DIF_AMB:
-                    // Actual usage of this is to prepare both the diffuse and ambient colors to be applied when NORMAL is called,
-                    // but with bit 15 acting as a flag to directly set the diffuse color as the vertex color immediately.
-                    // However, bit 15 and bits 16-30 (ambient color) are never used by MPH. Still, because of the way we're using
-                    // the shader program, the easiest hack to apply the diffuse color is to just set it as the vertex color.
-                    if (_lighting && (mesh.OverrideColor == null || !_showSelection))
                     {
                         uint rgb = instruction.Arguments[0];
-                        uint r = (rgb >> 0) & 0x1F;
-                        uint g = (rgb >> 5) & 0x1F;
-                        uint b = (rgb >> 10) & 0x1F;
-                        GL.Color3(r / 31.0f, g / 31.0f, b / 31.0f);
+                        uint dr = (rgb >> 0) & 0x1F;
+                        uint dg = (rgb >> 5) & 0x1F;
+                        uint db = (rgb >> 10) & 0x1F;
+                        uint set = (rgb >> 15) & 1;
+                        uint ar = (rgb >> 16) & 0x1F;
+                        uint ag = (rgb >> 21) & 0x1F;
+                        uint ab = (rgb >> 26) & 0x1F;
+                        var diffuse = new Vector4(dr / 31.0f, dg / 31.0f, db / 31.0f, 1.0f);
+                        var ambient = new Vector4(ar / 31.0f, ag / 31.0f, ab / 31.0f, 1.0f);
+                        if (mesh.OverrideColor == null || !_showSelection)
+                        {
+                            if (_lighting)
+                            {
+                                GL.Uniform4(_shaderLocations.Diffuse, diffuse);
+                                GL.Uniform4(_shaderLocations.Ambient, ambient);
+                            }
+                            if (set != 0 && _showColors)
+                            {
+                                Debug.Assert(false); // MPH never does this in a dlist
+                                GL.Color3(dr / 31.0f, dg / 31.0f, db / 31.0f);
+                            }
+                        }
                     }
                     break;
                 case InstructionCode.NORMAL:
@@ -1354,7 +1382,7 @@ namespace MphRead
             _ = Output.Read("Unload model: ").ContinueWith(async (task) =>
             {
                 await PrintOutput();
-                if (UInt32.TryParse(task.Result.Trim(), out uint sceneId) && _modelMap.ContainsKey(sceneId))
+                if (Int32.TryParse(task.Result.Trim(), out int sceneId) && _modelMap.ContainsKey(sceneId))
                 {
                     _unloadQueue.Enqueue(_modelMap[sceneId]);
                 }
@@ -1400,7 +1428,7 @@ namespace MphRead
                 if (_selectionMode == SelectionMode.Model)
                 {
                     string value = task.Result.Trim();
-                    if (UInt32.TryParse(value, out uint sceneId) && _modelMap.ContainsKey(sceneId))
+                    if (Int32.TryParse(value, out int sceneId) && _modelMap.ContainsKey(sceneId))
                     {
                         SetSelectedModel(sceneId);
                         await PrintOutput();
@@ -1628,7 +1656,6 @@ namespace MphRead
             }
             else if (e.Key == Key.M)
             {
-                // todo: fix the crash when the first model in the list isn't scene ID 0
                 if (_models.Any(m => m.Meshes.Count > 0))
                 {
                     if (e.Control)
@@ -1649,6 +1676,10 @@ namespace MphRead
                     else
                     {
                         Deselect();
+                        if (_selectedModelId < 0)
+                        {
+                            _selectedModelId = _models[0].SceneId;
+                        }
                         if (_selectionMode == SelectionMode.None)
                         {
                             _selectionMode = SelectionMode.Model;

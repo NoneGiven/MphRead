@@ -3695,9 +3695,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(1f, 0f, 0f),
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(0f, -1f, 0f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3723,9 +3723,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(1f, 0f, 0f),
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(0f, -1f, 0f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3751,9 +3751,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(1f, 0f, 0f),
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(0f, -1f, 0f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3779,9 +3779,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(1f, 0f, 0f),
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(0f, -1f, 0f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3807,9 +3807,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(1f, 0f, 0f),
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(0f, -1f, 0f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3835,9 +3835,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(1f, 0f, 0f),
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(0f, -1f, 0f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 // First Hunt
@@ -3864,9 +3864,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(1f, 0f, 0f),
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(0f, -1f, 0f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3892,9 +3892,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(1f, 0f, 0f),
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(0f, -1f, 0f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3920,9 +3920,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(1f, 0f, 0f),
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(0f, -1f, 0f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3948,9 +3948,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(1f, 0f, 0f),
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(0f, -1f, 0f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3976,9 +3976,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(1f, 0f, 0f),
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(0f, -1f, 0f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4004,9 +4004,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(1f, 0f, 0f),
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(0f, -1f, 0f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4032,9 +4032,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(1f, 0f, 0f),
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(0f, -1f, 0f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4060,9 +4060,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(1f, 0f, 0f),
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(0f, -1f, 0f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4088,9 +4088,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(1f, 0f, 0f),
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new Vector3(0f, -1f, 0f),
                         new Vector3(-300f, 300f, -300f))
                 }
             };
@@ -4774,8 +4774,63 @@ namespace MphRead
                 },
                 {
                     "ForceField",
-                    new ModelMetadata("ForceField")
+                    new ModelMetadata("ForceField",
+                        modelPath: @"models\ForceField_Model.bin",
+                        animationPath: @"models\ForceField_Anim.bin",
+                        collisionPath: null,
+                        new List<RecolorMetadata>()
+                        {
+                            new RecolorMetadata("pal_01",
+                                modelPath: @"models\ForceField_Model.bin",
+                                texturePath: @"models\ForceField_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 0 } } }),
+                            new RecolorMetadata("pal_02",
+                                modelPath: @"models\ForceField_Model.bin",
+                                texturePath: @"models\ForceField_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 0 } } }),
+                            new RecolorMetadata("pal_03",
+                                modelPath: @"models\ForceField_Model.bin",
+                                texturePath: @"models\ForceField_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 0 } } }),
+                            new RecolorMetadata("pal_04",
+                                modelPath: @"models\ForceField_Model.bin",
+                                texturePath: @"models\ForceField_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 0 } } }),
+                            new RecolorMetadata("pal_05",
+                                modelPath: @"models\ForceField_Model.bin",
+                                texturePath: @"models\ForceField_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 0 } } }),
+                            new RecolorMetadata("pal_06",
+                                modelPath: @"models\ForceField_Model.bin",
+                                texturePath: @"models\ForceField_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 0 } } }),
+                            new RecolorMetadata("pal_07",
+                                modelPath: @"models\ForceField_Model.bin",
+                                texturePath: @"models\ForceField_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 0 } } }),
+                            new RecolorMetadata("pal_08",
+                                modelPath: @"models\ForceField_Model.bin",
+                                texturePath: @"models\ForceField_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 0 } } })
+                        })
                 },
+                // todo: these probably also use AlimbicPalettes
                 {
                     "ForceFieldLock",
                     new ModelMetadata("ForceFieldLock",

@@ -18,6 +18,7 @@ uniform vec4 ambient;
 uniform vec4 specular;
 uniform vec4 fog_color;
 uniform float far_plane;
+uniform mat4 model_mtx;
 
 varying vec2 texcoord;
 varying vec4 color;
@@ -31,24 +32,28 @@ void main()
     }
     if (use_light) {
         // light 1
-        float fixed_diffuse1 = dot(light1vec.xyz, gl_Normal);
+        vec3 normal = normalize(mat3(model_mtx) * gl_Normal);
+        float fixed_diffuse1 = dot(-light1vec.xyz, normal);
         vec3 neghalf1 = -(light1vec.xyz / 2.0);
-        float d1 = dot(neghalf1, gl_Normal);
+        float d1 = dot(neghalf1, normal);
         float fixed_shininess1 = d1 > 0.0 ? 2.0 * d1 * d1 : 0.0;
         vec4 spec1 = specular * light1col * fixed_shininess1;
         vec4 diff1 = diffuse * light1col * fixed_diffuse1;
         vec4 amb1 = ambient * light1col;
         vec4 col1 = spec1 + diff1 + amb1;
         // light 2
-        float fixed_diffuse2 = dot(light2vec.xyz, gl_Normal);
+        float fixed_diffuse2 = dot(-light2vec.xyz, normal);
         vec3 neghalf2 = -(light2vec.xyz / 2.0);
-        float d2 = dot(neghalf2, gl_Normal);
+        float d2 = dot(neghalf2, normal);
         float fixed_shininess2 = d2 > 0.0 ? 2.0 * d2 * d2 : 0.0;
         vec4 spec2 = specular * light2col * fixed_shininess2;
         vec4 diff2 = diffuse * light2col * fixed_diffuse2;
         vec4 amb2 = ambient * light2col;
         vec4 col2 = spec2 + diff2 + amb2;
-        color = gl_Color + col1 + col2;
+        float cr = min(col1.r + col2.r, 1.0);
+        float cg = min(col1.g + col2.g, 1.0);
+        float cb = min(col1.b + col2.b, 1.0);
+        color = vec4(cr, cg, cb, 1.0);
     } else {
         color = gl_Color;
     }

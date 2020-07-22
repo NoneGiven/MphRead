@@ -339,7 +339,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.ForceField)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<ForceFieldEntityData>)entity).Data.Position));
+                    models.Add(LoadForceField(((Entity<ForceFieldEntityData>)entity).Data));
                 }
             }
             return models;
@@ -575,11 +575,22 @@ namespace MphRead
             return model;
         }
 
+        // todo: load lock, fade in/out "animation"
+        private static Model LoadForceField(ForceFieldEntityData data)
+        {
+            Model model = Read.GetModelByName("ForceField", Metadata.DoorPalettes[(int)data.Type]);
+            model.Position = data.Position.ToFloatVector();
+            model.Scale = new Vector3(data.Width.FloatValue, data.Height.FloatValue, 1.0f);
+            ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
+            ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Object;
+            return model;
+        }
+
         private static readonly Dictionary<EntityType, ColorRgb> _colorOverrides = new Dictionary<EntityType, ColorRgb>()
         {
-            { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) },
-            { EntityType.FhPlatform, new ColorRgb(0x2F, 0x4F, 0x4F) },
-            { EntityType.Object, new ColorRgb(0x22, 0x8B, 0x22) },
+            { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) }, // currently used for ID 2
+            { EntityType.Object, new ColorRgb(0x22, 0x8B, 0x22) }, // currently used for ID -1
             { EntityType.Enemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.FhEnemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.Unknown7, new ColorRgb(0xFF, 0x8C, 0x00) },
