@@ -990,10 +990,6 @@ namespace MphRead
                 }
             }
             DoDlist(model, mesh);
-            if (_lighting)
-            {
-                GL.Disable(EnableCap.Lighting);
-            }
         }
 
         private void DoTexture(Model model, Mesh mesh, Material material)
@@ -1128,7 +1124,6 @@ namespace MphRead
                     material.Specular.Blue / 31.0f,
                     1.0f
                 );
-                GL.Enable(EnableCap.Lighting);
                 GL.Uniform1(_shaderLocations.UseLight, 1);
                 GL.Uniform4(_shaderLocations.Ambient, ambient);
                 GL.Uniform4(_shaderLocations.Diffuse, diffuse);
