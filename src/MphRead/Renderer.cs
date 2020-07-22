@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using MphRead.Export;
@@ -134,7 +135,7 @@ namespace MphRead
         private bool _wireframe = false;
         private bool _faceCulling = true;
         private bool _textureFiltering = false;
-        private bool _lighting = false;
+        private bool _lighting = true;
         private bool _scanVisor = false;
         private bool _showInvisible = false;
         private bool _transformRoomNodes = false; // undocumented
@@ -955,6 +956,9 @@ namespace MphRead
 
         private void RenderMesh(Model model, Mesh mesh, Material material)
         {
+            // MPH applies the material colors initially by calling DIF_AMB with bit 15 set,
+            // so the diffuse color is always set as the vertex color to start
+            // (the emission color is set to white if lighting is disabled or black if lighting is enabled; we can just ignore that)
             GL.Color3(new Vector3(material.Diffuse.Red / 31.0f, material.Diffuse.Green / 31.0f, material.Diffuse.Blue / 31.0f));
             DoTexture(model, mesh, material);
             DoLighting(mesh, material);
@@ -974,7 +978,7 @@ namespace MphRead
                     GL.CullFace(CullFaceMode.Front);
                 }
             }
-            DoDlist(model, mesh);
+            DoDlist(model, material, mesh);
             if (_lighting)
             {
                 GL.Disable(EnableCap.Lighting);
@@ -1125,7 +1129,7 @@ namespace MphRead
             }
         }
 
-        private void DoDlist(Model model, Mesh mesh)
+        private void DoDlist(Model model, Material material, Mesh mesh)
         {
             IReadOnlyList<RenderInstruction> list = model.RenderInstructionLists[mesh.DlistId];
             float vtxX = 0;
@@ -1170,17 +1174,25 @@ namespace MphRead
                     }
                     break;
                 case InstructionCode.DIF_AMB:
-                    // Actual usage of this is to prepare both the diffuse and ambient colors to be applied when NORMAL is called,
-                    // but with bit 15 acting as a flag to directly set the diffuse color as the vertex color immediately.
-                    // However, bit 15 and bits 16-30 (ambient color) are never used by MPH. Still, because of the way we're using
-                    // the shader program, the easiest hack to apply the diffuse color is to just set it as the vertex color.
                     if (_lighting && (mesh.OverrideColor == null || !_showSelection))
                     {
                         uint rgb = instruction.Arguments[0];
-                        uint r = (rgb >> 0) & 0x1F;
-                        uint g = (rgb >> 5) & 0x1F;
-                        uint b = (rgb >> 10) & 0x1F;
-                        GL.Color3(r / 31.0f, g / 31.0f, b / 31.0f);
+                        uint dr = (rgb >> 0) & 0x1F;
+                        uint dg = (rgb >> 5) & 0x1F;
+                        uint db = (rgb >> 10) & 0x1F;
+                        uint set = (rgb >> 15) & 1;
+                        uint ar = (rgb >> 16) & 0x1F;
+                        uint ag = (rgb >> 21) & 0x1F;
+                        uint ab = (rgb >> 26) & 0x1F;
+                        var diffuse = new Vector4(dr / 31.0f, dg / 31.0f, db / 31.0f, 1.0f);
+                        var ambient = new Vector4(ar / 31.0f, ag / 31.0f, ab / 31.0f, 1.0f);
+                        GL.Uniform4(_shaderLocations.Diffuse, diffuse);
+                        GL.Uniform4(_shaderLocations.Ambient, ambient);
+                        if (set != 0)
+                        {
+                            Debug.Assert(false); // MPH never does this in a dlist
+                            GL.Color3(dr / 31.0f, dg / 31.0f, db / 31.0f);
+                        }
                     }
                     break;
                 case InstructionCode.NORMAL:
