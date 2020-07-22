@@ -135,7 +135,7 @@ namespace MphRead
         private bool _wireframe = false;
         private bool _faceCulling = true;
         private bool _textureFiltering = false;
-        private bool _lighting = true;
+        private bool _lighting = false;
         private bool _scanVisor = false;
         private bool _showInvisible = false;
         private bool _transformRoomNodes = false; // undocumented
@@ -1174,7 +1174,6 @@ namespace MphRead
                     }
                     break;
                 case InstructionCode.DIF_AMB:
-                    if (_lighting && (mesh.OverrideColor == null || !_showSelection))
                     {
                         uint rgb = instruction.Arguments[0];
                         uint dr = (rgb >> 0) & 0x1F;
@@ -1186,12 +1185,18 @@ namespace MphRead
                         uint ab = (rgb >> 26) & 0x1F;
                         var diffuse = new Vector4(dr / 31.0f, dg / 31.0f, db / 31.0f, 1.0f);
                         var ambient = new Vector4(ar / 31.0f, ag / 31.0f, ab / 31.0f, 1.0f);
-                        GL.Uniform4(_shaderLocations.Diffuse, diffuse);
-                        GL.Uniform4(_shaderLocations.Ambient, ambient);
-                        if (set != 0)
+                        if (mesh.OverrideColor == null || !_showSelection)
                         {
-                            Debug.Assert(false); // MPH never does this in a dlist
-                            GL.Color3(dr / 31.0f, dg / 31.0f, db / 31.0f);
+                            if (_lighting)
+                            {
+                                GL.Uniform4(_shaderLocations.Diffuse, diffuse);
+                                GL.Uniform4(_shaderLocations.Ambient, ambient);
+                            }
+                            if (set != 0 && _showColors)
+                            {
+                                Debug.Assert(false); // MPH never does this in a dlist
+                                GL.Color3(dr / 31.0f, dg / 31.0f, db / 31.0f);
+                            }
                         }
                     }
                     break;
