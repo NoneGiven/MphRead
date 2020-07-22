@@ -1195,12 +1195,15 @@ namespace MphRead
                         {
                             if (_lighting)
                             {
-                                GL.Uniform4(_shaderLocations.Diffuse, diffuse);
-                                GL.Uniform4(_shaderLocations.Ambient, ambient);
+                                // MPH only calls this with zero ambient, and we need to rely on that in order to
+                                // use GL.Color to smuggle in the diffuse, since setting uniforms here doesn't work
+                                Debug.Assert(ambient.X == 0 && ambient.Y == 0 && ambient.Z == 0);
+                                GL.Color4(diffuse.X, diffuse.Y, diffuse.Z, 0.0f);
                             }
                             if (set != 0 && _showColors)
                             {
-                                Debug.Assert(false); // MPH never does this in a dlist
+                                // MPH never does this in a dlist
+                                Debug.Assert(false);
                                 GL.Color3(dr / 31.0f, dg / 31.0f, db / 31.0f);
                             }
                         }

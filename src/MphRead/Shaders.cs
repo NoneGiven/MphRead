@@ -31,6 +31,13 @@ void main()
         gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
     }
     if (use_light) {
+        vec4 cur_diffuse = diffuse;
+        vec4 cur_ambient = ambient;
+        if (gl_Color.a == 0) {
+            // see comment on DIF_AMB
+            cur_diffuse = vec4(gl_Color.r, gl_Color.g, gl_Color.b, 1.0);
+            cur_ambient = vec4(0.0, 0.0, 0.0, 1.0);
+        }
         // light 1
         vec3 normal = normalize(mat3(model_mtx) * gl_Normal);
         float fixed_diffuse1 = dot(-light1vec.xyz, normal);
@@ -38,8 +45,8 @@ void main()
         float d1 = dot(neghalf1, normal);
         float fixed_shininess1 = d1 > 0.0 ? 2.0 * d1 * d1 : 0.0;
         vec4 spec1 = specular * light1col * fixed_shininess1;
-        vec4 diff1 = diffuse * light1col * fixed_diffuse1;
-        vec4 amb1 = ambient * light1col;
+        vec4 diff1 = cur_diffuse * light1col * fixed_diffuse1;
+        vec4 amb1 = cur_ambient * light1col;
         vec4 col1 = spec1 + diff1 + amb1;
         // light 2
         float fixed_diffuse2 = dot(-light2vec.xyz, normal);
@@ -47,8 +54,8 @@ void main()
         float d2 = dot(neghalf2, normal);
         float fixed_shininess2 = d2 > 0.0 ? 2.0 * d2 * d2 : 0.0;
         vec4 spec2 = specular * light2col * fixed_shininess2;
-        vec4 diff2 = diffuse * light2col * fixed_diffuse2;
-        vec4 amb2 = ambient * light2col;
+        vec4 diff2 = cur_diffuse * light2col * fixed_diffuse2;
+        vec4 amb2 = cur_ambient * light2col;
         vec4 col2 = spec2 + diff2 + amb2;
         float cr = min(col1.r + col2.r, 1.0);
         float cg = min(col1.g + col2.g, 1.0);
