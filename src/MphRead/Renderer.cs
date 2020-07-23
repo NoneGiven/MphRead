@@ -315,14 +315,7 @@ namespace MphRead
                 {
                     continue;
                 }
-                if (material.PaletteId == UInt16.MaxValue)
-                {
-                    combos.Add((material.TextureId, -1));
-                }
-                else
-                {
-                    combos.Add((material.TextureId, material.PaletteId));
-                }
+                combos.Add((material.TextureId, material.PaletteId));
                 if (material.RenderMode == RenderMode.Unknown3 || material.RenderMode == RenderMode.Unknown4)
                 {
                     _logs.Add($"mat {material.Name} of model {model.Name} has render mode {material.RenderMode}");
