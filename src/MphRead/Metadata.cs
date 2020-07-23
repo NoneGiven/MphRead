@@ -3864,9 +3864,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3892,9 +3892,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3920,9 +3920,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3948,9 +3948,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3976,9 +3976,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4004,9 +4004,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4032,9 +4032,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4060,9 +4060,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4088,9 +4088,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 }
             };
