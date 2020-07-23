@@ -684,7 +684,6 @@ namespace MphRead
                     GL.MultMatrix(ref transform);
                     _modelMatrix = transform * _modelMatrix;
                 }
-                UpdateMaterials(model);
                 if (model.Type == ModelType.Room)
                 {
                     RenderRoom(model);
@@ -746,7 +745,7 @@ namespace MphRead
             // - else if render mode is not Normal, but there are no non-opaque pixels, set to Normal
             // - else if render mode is Normal, but there are non-opaque pixels, set to AlphaTest
             // - if render mode is Translucent, material alpha is 31, and texture format is DirectRgba, set to AlphaTest
-            if (material.Alpha < 31)
+            if (material.CurrentAlpha < 1.0f)
             {
                 material.RenderMode = RenderMode.Translucent;
             }
@@ -1178,6 +1177,8 @@ namespace MphRead
             GL.Uniform4(_shaderLocations.Specular, specular);
             GL.Uniform1(_shaderLocations.MaterialAlpha, alpha);
             GL.Uniform1(_shaderLocations.MaterialDecal, material.PolygonMode == PolygonMode.Decal ? 1 : 0);
+            material.CurrentAlpha = alpha;
+            UpdateMaterials(model);
         }
 
         private void DoDlist(Model model, Mesh mesh)
