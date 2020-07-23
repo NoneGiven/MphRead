@@ -972,10 +972,6 @@ namespace MphRead
 
         private void RenderMesh(Model model, Mesh mesh, Material material)
         {
-            // MPH applies the material colors initially by calling DIF_AMB with bit 15 set,
-            // so the diffuse color is always set as the vertex color to start
-            // (the emission color is set to white if lighting is disabled or black if lighting is enabled; we can just ignore that)
-            GL.Color3(new Vector3(material.Diffuse.Red / 31.0f, material.Diffuse.Green / 31.0f, material.Diffuse.Blue / 31.0f));
             DoMaterial(model, mesh, material);
             DoTexture(model, mesh, material);
             if (_faceCulling)
@@ -1151,21 +1147,20 @@ namespace MphRead
                 diffuse = new Vector4(diffuseR / 31.0f, diffuseG / 31.0f, diffuseB / 31.0f, 1.0f);
                 ambient = new Vector4(ambientR / 31.0f, ambientG / 31.0f, ambientB / 31.0f, 1.0f);
                 specular = new Vector4(specularR / 31.0f, specularG / 31.0f, specularB / 31.0f, 1.0f);
-                GL.Color4(diffuse); // sktodo: should this happen?
                 alpha /= 31.0f;
             }
             else
             {
-                ambient = new Vector4(
-                    material.Ambient.Red / 31.0f,
-                    material.Ambient.Green / 31.0f,
-                    material.Ambient.Blue / 31.0f,
-                    1.0f
-                );
                 diffuse = new Vector4(
                     material.Diffuse.Red / 31.0f,
                     material.Diffuse.Green / 31.0f,
                     material.Diffuse.Blue / 31.0f,
+                    1.0f
+                );
+                ambient = new Vector4(
+                    material.Ambient.Red / 31.0f,
+                    material.Ambient.Green / 31.0f,
+                    material.Ambient.Blue / 31.0f,
                     1.0f
                 );
                 specular = new Vector4(
@@ -1176,8 +1171,12 @@ namespace MphRead
                 );
                 alpha = material.Alpha / 31.0f;
             }
-            GL.Uniform4(_shaderLocations.Ambient, ambient);
+            // MPH applies the material colors initially by calling DIF_AMB with bit 15 set,
+            // so the diffuse color is always set as the vertex color to start
+            // (the emission color is set to white if lighting is disabled or black if lighting is enabled; we can just ignore that)
+            GL.Color4(diffuse);
             GL.Uniform4(_shaderLocations.Diffuse, diffuse);
+            GL.Uniform4(_shaderLocations.Ambient, ambient);
             GL.Uniform4(_shaderLocations.Specular, specular);
             GL.Uniform1(_shaderLocations.MaterialAlpha, alpha);
             GL.Uniform1(_shaderLocations.MaterialDecal, material.PolygonMode == PolygonMode.Decal ? 1 : 0);
