@@ -661,7 +661,7 @@ namespace MphRead
                     ((!_frameAdvanceOn && _frameCount % 2 == 0)
                     || (_frameAdvanceOn && _advanceOneFrame)))
                 {
-                    ProcessAnimations(model);
+                    UpdateAnimationFrames(model);
                 }
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.PushMatrix();
@@ -890,7 +890,7 @@ namespace MphRead
             }
         }
 
-        private void ProcessAnimations(Model model)
+        private void UpdateAnimationFrames(Model model)
         {
             foreach (TexcoordAnimationGroup group in model.TexcoordAnimationGroups)
             {
@@ -898,6 +898,11 @@ namespace MphRead
                 group.CurrentFrame %= group.FrameCount;
             }
             foreach (TextureAnimationGroup group in model.TextureAnimationGroups)
+            {
+                group.CurrentFrame++;
+                group.CurrentFrame %= group.FrameCount;
+            }
+            foreach (MaterialAnimationGroup group in model.MaterialAnimationGroups)
             {
                 group.CurrentFrame++;
                 group.CurrentFrame %= group.FrameCount;
@@ -971,8 +976,8 @@ namespace MphRead
             // so the diffuse color is always set as the vertex color to start
             // (the emission color is set to white if lighting is disabled or black if lighting is enabled; we can just ignore that)
             GL.Color3(new Vector3(material.Diffuse.Red / 31.0f, material.Diffuse.Green / 31.0f, material.Diffuse.Blue / 31.0f));
+            DoMaterial(model, mesh, material);
             DoTexture(model, mesh, material);
-            DoLighting(mesh, material);
             if (_faceCulling)
             {
                 GL.Enable(EnableCap.CullFace);
@@ -1042,8 +1047,6 @@ namespace MphRead
                         TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat);
                     break;
                 }
-                GL.Uniform1(_shaderLocations.MaterialAlpha, material.Alpha / 31.0f);
-                GL.Uniform1(_shaderLocations.MaterialDecal, material.PolygonMode == PolygonMode.Decal ? 1 : 0);
             }
             // _showSelection affects the placeholder colors too
             if (mesh.OverrideColor != null && _showSelection)
@@ -1062,7 +1065,6 @@ namespace MphRead
             }
             GL.MatrixMode(MatrixMode.Texture);
             GL.LoadIdentity();
-
             TexcoordAnimationGroup? group = null;
             TexcoordAnimation? animation = null;
             if (model.TexcoordAnimationGroups.Count > 0 && textureId != UInt16.MaxValue)
@@ -1102,37 +1104,83 @@ namespace MphRead
             GL.Uniform1(_shaderLocations.UseTexture, GL.IsEnabled(EnableCap.Texture2D) ? 1 : 0);
         }
 
-        private void DoLighting(Mesh mesh, Material material)
+        private void DoMaterial(Model model, Mesh mesh, Material material)
         {
             if (_lighting && material.Lighting != 0 && (mesh.OverrideColor == null || !_showSelection))
             {
-                var ambient = new Vector4(
-                    material.Ambient.Red / 31.0f,
-                    material.Ambient.Green / 31.0f,
-                    material.Ambient.Blue / 31.0f,
-                    1.0f
-                );
-                var diffuse = new Vector4(
-                    material.Diffuse.Red / 31.0f,
-                    material.Diffuse.Green / 31.0f,
-                    material.Diffuse.Blue / 31.0f,
-                    1.0f
-                );
-                var specular = new Vector4(
-                    material.Specular.Red / 31.0f,
-                    material.Specular.Green / 31.0f,
-                    material.Specular.Blue / 31.0f,
-                    1.0f
-                );
                 GL.Uniform1(_shaderLocations.UseLight, 1);
-                GL.Uniform4(_shaderLocations.Ambient, ambient);
-                GL.Uniform4(_shaderLocations.Diffuse, diffuse);
-                GL.Uniform4(_shaderLocations.Specular, specular);
             }
             else
             {
                 GL.Uniform1(_shaderLocations.UseLight, 0);
             }
+            Vector4 diffuse;
+            Vector4 ambient;
+            Vector4 specular;
+            float alpha;
+            // todo: group indexing
+            MaterialAnimationGroup group;
+            if (model.MaterialAnimationGroups.Count > 0
+                && (group = model.MaterialAnimationGroups[0]).Animations.TryGetValue(material.Name, out MaterialAnimation animation))
+            {
+                // sktodo:
+                // - should interpolation work differently?
+                // - missile pickup is flickering a bit (hard to notice when it's moving)
+                // - doors/capsules are playing their fade out animation constantly
+                // - use more properties?
+                float diffuseR = InterpolateAnimation(group.Colors, animation.DiffuseLutStartIndexR, group.CurrentFrame,
+                    animation.DiffuseBlendFactorR, animation.DiffuseLutLengthR, group.FrameCount);
+                float diffuseG = InterpolateAnimation(group.Colors, animation.DiffuseLutStartIndexG, group.CurrentFrame,
+                    animation.DiffuseBlendFactorG, animation.DiffuseLutLengthG, group.FrameCount);
+                float diffuseB = InterpolateAnimation(group.Colors, animation.DiffuseLutStartIndexB, group.CurrentFrame,
+                    animation.DiffuseBlendFactorB, animation.DiffuseLutLengthB, group.FrameCount);
+                float ambientR = InterpolateAnimation(group.Colors, animation.AmbientLutStartIndexR, group.CurrentFrame,
+                    animation.AmbientBlendFactorR, animation.AmbientLutLengthR, group.FrameCount);
+                float ambientG = InterpolateAnimation(group.Colors, animation.AmbientLutStartIndexG, group.CurrentFrame,
+                    animation.AmbientBlendFactorG, animation.AmbientLutLengthG, group.FrameCount);
+                float ambientB = InterpolateAnimation(group.Colors, animation.AmbientLutStartIndexB, group.CurrentFrame,
+                    animation.AmbientBlendFactorB, animation.AmbientLutLengthB, group.FrameCount);
+                float specularR = InterpolateAnimation(group.Colors, animation.SpecularLutStartIndexR, group.CurrentFrame,
+                    animation.SpecularBlendFactorR, animation.SpecularLutLengthR, group.FrameCount);
+                float specularG = InterpolateAnimation(group.Colors, animation.SpecularLutStartIndexG, group.CurrentFrame,
+                    animation.SpecularBlendFactorG, animation.SpecularLutLengthG, group.FrameCount);
+                float specularB = InterpolateAnimation(group.Colors, animation.SpecularLutStartIndexB, group.CurrentFrame,
+                    animation.SpecularBlendFactorB, animation.SpecularLutLengthB, group.FrameCount);
+                alpha = InterpolateAnimation(group.Colors, animation.AlphaLutStartIndex, group.CurrentFrame,
+                    animation.AlphaBlendFactor, animation.AlphaLutLength, group.FrameCount);
+                diffuse = new Vector4(diffuseR / 31.0f, diffuseG / 31.0f, diffuseB / 31.0f, 1.0f);
+                ambient = new Vector4(ambientR / 31.0f, ambientG / 31.0f, ambientB / 31.0f, 1.0f);
+                specular = new Vector4(specularR / 31.0f, specularG / 31.0f, specularB / 31.0f, 1.0f);
+                GL.Color4(diffuse); // sktodo: should this happen?
+                alpha /= 31.0f;
+            }
+            else
+            {
+                ambient = new Vector4(
+                    material.Ambient.Red / 31.0f,
+                    material.Ambient.Green / 31.0f,
+                    material.Ambient.Blue / 31.0f,
+                    1.0f
+                );
+                diffuse = new Vector4(
+                    material.Diffuse.Red / 31.0f,
+                    material.Diffuse.Green / 31.0f,
+                    material.Diffuse.Blue / 31.0f,
+                    1.0f
+                );
+                specular = new Vector4(
+                    material.Specular.Red / 31.0f,
+                    material.Specular.Green / 31.0f,
+                    material.Specular.Blue / 31.0f,
+                    1.0f
+                );
+                alpha = material.Alpha / 31.0f;
+            }
+            GL.Uniform4(_shaderLocations.Ambient, ambient);
+            GL.Uniform4(_shaderLocations.Diffuse, diffuse);
+            GL.Uniform4(_shaderLocations.Specular, specular);
+            GL.Uniform1(_shaderLocations.MaterialAlpha, alpha);
+            GL.Uniform1(_shaderLocations.MaterialDecal, material.PolygonMode == PolygonMode.Decal ? 1 : 0);
         }
 
         private void DoDlist(Model model, Mesh mesh)
@@ -2061,7 +2109,7 @@ namespace MphRead
             Guid guid = await Output.StartBatch();
             await Output.Clear(guid);
             string recording = _recording ? " - Recording" : "";
-            string frameAdvance = _recording ? " - Frame Advance" : "";
+            string frameAdvance = _frameAdvanceOn ? " - Frame Advance" : "";
             await Output.Write($"MphRead Version {Program.Version}{recording}{frameAdvance}", guid);
             if (_selectionMode == SelectionMode.Model)
             {

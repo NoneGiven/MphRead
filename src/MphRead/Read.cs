@@ -268,7 +268,7 @@ namespace MphRead
                     maxColor = Math.Max(maxColor, animation.AlphaLutStartIndex + animation.AlphaLutLength);
                     animations.Add(animation.Name, animation);
                 }
-                var colors = DoOffsets<byte>(bytes, rawGroup.ColorLutOffset, maxColor).ToList();
+                var colors = DoOffsets<byte>(bytes, rawGroup.ColorLutOffset, maxColor).Select(b => (float)b).ToList();
                 results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup, colors, animations));
             }
             foreach (uint offset in texcoordGroupOffsets)

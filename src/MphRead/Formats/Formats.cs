@@ -609,10 +609,10 @@ namespace MphRead
         public int FrameCount { get; }
         public int CurrentFrame { get; set; }
         public int Count { get; }
-        public IReadOnlyList<byte> Colors { get; }
+        public IReadOnlyList<float> Colors { get; }
         public IReadOnlyDictionary<string, MaterialAnimation> Animations { get; }
 
-        public MaterialAnimationGroup(RawMaterialAnimationGroup raw, IReadOnlyList<byte> colors,
+        public MaterialAnimationGroup(RawMaterialAnimationGroup raw, IReadOnlyList<float> colors,
             IReadOnlyDictionary<string, MaterialAnimation> animations)
         {
             FrameCount = (int)raw.FrameCount;
