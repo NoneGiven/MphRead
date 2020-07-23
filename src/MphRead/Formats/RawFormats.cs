@@ -165,7 +165,7 @@ namespace MphRead
         public readonly byte DiffuseBlendFactorR;
         public readonly byte DiffuseBlendFactorG;
         public readonly byte DiffuseBlendFactorB;
-        public readonly byte Field47; // todo: always 0 or 255
+        public readonly byte Field47; // todo: use more properties (this one is always 0 or 255)
         public readonly ushort DiffuseLutLengthR;
         public readonly ushort DiffuseLutLengthG;
         public readonly ushort DiffuseLutLengthB;

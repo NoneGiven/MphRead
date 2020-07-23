@@ -1121,9 +1121,7 @@ namespace MphRead
             {
                 // sktodo:
                 // - should interpolation work differently?
-                // - missile pickup is flickering a bit (hard to notice when it's moving)
                 // - doors/capsules are playing their fade out animation constantly
-                // - use more properties?
                 float diffuseR = InterpolateAnimation(group.Colors, animation.DiffuseLutStartIndexR, group.CurrentFrame,
                     animation.DiffuseBlendFactorR, animation.DiffuseLutLengthR, group.FrameCount);
                 float diffuseG = InterpolateAnimation(group.Colors, animation.DiffuseLutStartIndexG, group.CurrentFrame,
