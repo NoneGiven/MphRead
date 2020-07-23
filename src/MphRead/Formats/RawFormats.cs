@@ -74,7 +74,7 @@ namespace MphRead
         public readonly byte Field53;
         public readonly PolygonMode PolygonMode;
         public readonly RenderMode RenderMode;
-        public readonly byte AnimationFlags;
+        public readonly byte AnimationFlags; // sktodo: alpha only animates if !(flags & 2)
         public readonly ushort Field5A;
         public readonly TexgenMode TexcoordTransformMode;
         public readonly ushort TexcoordAnimationId;
