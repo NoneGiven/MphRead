@@ -249,15 +249,27 @@ namespace MphRead
                 {
                     continue;
                 }
+                int maxColor = 0;
                 RawMaterialAnimationGroup rawGroup = DoOffset<RawMaterialAnimationGroup>(bytes, offset);
                 IReadOnlyList<MaterialAnimation> rawAnimations
                     = DoOffsets<MaterialAnimation>(bytes, rawGroup.AnimationOffset, (int)rawGroup.AnimationCount);
                 var animations = new Dictionary<string, MaterialAnimation>();
                 foreach (MaterialAnimation animation in rawAnimations)
                 {
+                    maxColor = Math.Max(maxColor, animation.DiffuseLutStartIndexR + animation.DiffuseLutLengthR);
+                    maxColor = Math.Max(maxColor, animation.DiffuseLutStartIndexG + animation.DiffuseLutLengthG);
+                    maxColor = Math.Max(maxColor, animation.DiffuseLutStartIndexB + animation.DiffuseLutLengthB);
+                    maxColor = Math.Max(maxColor, animation.AmbientLutStartIndexR + animation.AmbientLutLengthR);
+                    maxColor = Math.Max(maxColor, animation.AmbientLutStartIndexG + animation.AmbientLutLengthG);
+                    maxColor = Math.Max(maxColor, animation.AmbientLutStartIndexB + animation.AmbientLutLengthB);
+                    maxColor = Math.Max(maxColor, animation.SpecularLutStartIndexR + animation.SpecularLutLengthR);
+                    maxColor = Math.Max(maxColor, animation.SpecularLutStartIndexG + animation.SpecularLutLengthG);
+                    maxColor = Math.Max(maxColor, animation.SpecularLutStartIndexB + animation.SpecularLutLengthB);
+                    maxColor = Math.Max(maxColor, animation.AlphaLutStartIndex + animation.AlphaLutLength);
                     animations.Add(animation.Name, animation);
                 }
-                results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup, animations));
+                var colors = DoOffsets<byte>(bytes, rawGroup.ColorLutOffset, maxColor).ToList();
+                results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup, colors, animations));
             }
             foreach (uint offset in texcoordGroupOffsets)
             {
