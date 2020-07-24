@@ -9,22 +9,6 @@ namespace MphRead
     {
 #pragma warning disable IDE0051 // Remove unused private members
 
-        private static int LeadingZeroes(int x)
-        {
-            const int numIntBits = sizeof(int) * 8;
-            x |= x >> 1;
-            x |= x >> 2;
-            x |= x >> 4;
-            x |= x >> 8;
-            x |= x >> 16;
-            x -= x >> 1 & 0x55555555;
-            x = (x >> 2 & 0x33333333) + (x & 0x33333333);
-            x = (x >> 4) + x & 0x0f0f0f0f;
-            x += x >> 8;
-            x += x >> 16;
-            return numIntBits - (x & 0x0000003f);
-        }
-
         public static void TestCollision()
         {
             ushort headerSize = 0;
@@ -202,6 +186,17 @@ namespace MphRead
                 }
             }
             Nop();
+        }
+
+        public static void LightColor(uint arg)
+        {
+            uint r = arg & 0x1F;
+            uint g = (arg >> 5) & 0x1F;
+            uint b = (arg >> 10) & 0x1F;
+            int light = (arg & 0x40000000) == 0 ? 0 : 1;
+            Console.WriteLine($"light: {light} R {r}, G {g}, B {b}");
+            //Console.WriteLine($"light: {light} R 0x{r:X2}, G 0x{g:X2}, B 0x{b:X2}");
+            Console.WriteLine();
         }
 
 #pragma warning restore IDE0051 // Remove unused private members

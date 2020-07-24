@@ -1133,11 +1133,13 @@ namespace MphRead
         public readonly uint Field58;
         public readonly uint Field5C;
         public readonly uint Field60;
-        public readonly uint Field64;
+        public readonly byte Field64; // todo: always 1? enable flag?
+        public readonly ColorRgb Light1Color; // 8-bit color values
         public readonly uint Field68;
         public readonly uint Field6C;
         public readonly uint Field70;
-        public readonly uint Field74;
+        public readonly byte Field74; // same as field 64
+        public readonly ColorRgb Light2Color;
         public readonly uint Field78;
         public readonly uint Field7C;
         public readonly uint Field80;
