@@ -481,7 +481,6 @@ namespace MphRead
             return model;
         }
 
-        // todo: Energy Tank height is still not right
         private static IEnumerable<Model> LoadItem(ItemEntityData data)
         {
             var models = new List<Model>();
