@@ -442,8 +442,6 @@ namespace MphRead
             {
                 throw new ProgramException($"Unexpected entity header version {version}.");
             }
-            // todo: figure out room info layer ID
-            layerId = 1;
             var entities = new List<Entity>();
             EntityHeader header = ReadStruct<EntityHeader>(bytes[0..Sizes.EntityHeader]);
             for (int i = 0; entities.Count < header.Lengths[layerId]; i++)

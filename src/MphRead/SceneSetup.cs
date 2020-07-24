@@ -213,7 +213,9 @@ namespace MphRead
             {
                 return models;
             }
-            IReadOnlyList<Entity> entities = Read.GetEntities(metadata.EntityPath, metadata.LayerId);
+            // todo: figure out room info layer ID
+            int layerId = 1; //metadata.LayerId
+            IReadOnlyList<Entity> entities = Read.GetEntities(metadata.EntityPath, layerId);
             foreach (Entity entity in entities)
             {
                 if (entity.Type == EntityType.Platform)
