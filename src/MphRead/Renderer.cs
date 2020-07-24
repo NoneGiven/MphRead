@@ -1111,9 +1111,7 @@ namespace MphRead
             if (model.MaterialAnimationGroups.Count > 0
                 && (group = model.MaterialAnimationGroups[0]).Animations.TryGetValue(material.Name, out MaterialAnimation animation))
             {
-                // sktodo:
-                // - should interpolation work differently?
-                // - doors/capsules are playing their fade out animation constantly
+                // todo: control animations so everything isn't playing at once
                 float diffuseR = InterpolateAnimation(group.Colors, animation.DiffuseLutStartIndexR, group.CurrentFrame,
                     animation.DiffuseBlendFactorR, animation.DiffuseLutLengthR, group.FrameCount);
                 float diffuseG = InterpolateAnimation(group.Colors, animation.DiffuseLutStartIndexG, group.CurrentFrame,
@@ -1132,12 +1130,19 @@ namespace MphRead
                     animation.SpecularBlendFactorG, animation.SpecularLutLengthG, group.FrameCount);
                 float specularB = InterpolateAnimation(group.Colors, animation.SpecularLutStartIndexB, group.CurrentFrame,
                     animation.SpecularBlendFactorB, animation.SpecularLutLengthB, group.FrameCount);
-                alpha = InterpolateAnimation(group.Colors, animation.AlphaLutStartIndex, group.CurrentFrame,
+                if ((material.AnimationFlags & 2) == 0)
+                {
+                    alpha = InterpolateAnimation(group.Colors, animation.AlphaLutStartIndex, group.CurrentFrame,
                     animation.AlphaBlendFactor, animation.AlphaLutLength, group.FrameCount);
+                    alpha /= 31.0f;
+                }
+                else
+                {
+                    alpha = material.Alpha / 31.0f;
+                }
                 diffuse = new Vector4(diffuseR / 31.0f, diffuseG / 31.0f, diffuseB / 31.0f, 1.0f);
                 ambient = new Vector4(ambientR / 31.0f, ambientG / 31.0f, ambientB / 31.0f, 1.0f);
                 specular = new Vector4(specularR / 31.0f, specularG / 31.0f, specularB / 31.0f, 1.0f);
-                alpha /= 31.0f;
             }
             else
             {

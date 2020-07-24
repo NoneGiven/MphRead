@@ -498,6 +498,7 @@ namespace MphRead
         public ColorRgb Specular { get; }
         public PolygonMode PolygonMode { get; set; }
         public RenderMode RenderMode { get; set; }
+        public byte AnimationFlags { get; set; } // todo: this probably has more uses
         public TexgenMode TexgenMode { get; set; }
         public int TexcoordAnimationId { get; set; }
         public int MatrixId { get; set; }
@@ -528,6 +529,7 @@ namespace MphRead
             Specular = raw.Specular;
             PolygonMode = raw.PolygonMode;
             RenderMode = raw.RenderMode;
+            AnimationFlags = raw.AnimationFlags;
             TexgenMode = raw.TexcoordTransformMode;
             TexcoordAnimationId = raw.TexcoordAnimationId;
             MatrixId = (int)raw.MatrixId;
