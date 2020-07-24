@@ -1187,8 +1187,9 @@ namespace MphRead
             float vtxZ = 0;
             // note: calling this every frame will have some overhead,
             // but baking it in on load would prevent e.g. vertex color toggle
-            foreach (RenderInstruction instruction in list)
+            for (int i = 0; i < list.Count; i++)
             {
+                RenderInstruction instruction = list[i];
                 switch (instruction.Code)
                 {
                 case InstructionCode.BEGIN_VTXS:
