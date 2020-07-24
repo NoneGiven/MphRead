@@ -488,8 +488,12 @@ namespace MphRead
             Model model;
             if (data.Enabled != 0)
             {
-                (string name, float offset) = Metadata.Items[(int)data.ModelId];
-                model = Read.GetModelByName(name);
+                model = Read.GetModelByName(Metadata.Items[(int)data.ModelId]);
+                float offset = data.Position.Y.Value <= -2663
+                    ? Fixed.ToFloat(2663)
+                    : data.Position.Y.Value == 6393
+                        ? Fixed.ToFloat(2812)
+                        : Fixed.ToFloat(2662);
                 model.Position = new Vector3(
                     data.Position.X.FloatValue,
                     data.Position.Y.FloatValue + offset,
