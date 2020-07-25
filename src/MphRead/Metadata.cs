@@ -166,8 +166,13 @@ namespace MphRead
             var recolorList = new List<RecolorMetadata>();
             foreach (string recolor in recolors)
             {
-                string recolorModel = $@"models\{recolorName ?? name}_{recolor}_Model.bin";
-                string texturePath = texture ? $@"models\{recolorName ?? name}_{recolor}_Tex.bin" : recolorModel;
+                string recolorString = $"{recolorName ?? name}_{recolor}";
+                if (recolor.StartsWith("*"))
+                {
+                    recolorString = recolor.Replace("*", "");
+                }
+                string recolorModel = $@"models\{recolorString}_Model.bin";
+                string texturePath = texture ? $@"models\{recolorString}_Tex.bin" : recolorModel;
                 recolorList.Add(new RecolorMetadata(recolor, recolorModel, texturePath));
             }
             Recolors = recolorList;
@@ -334,7 +339,7 @@ namespace MphRead
         public DoorMetadata(string name, string lockName, float lockOffset)
         {
             Name = name;
-            LockName = name;
+            LockName = lockName;
             LockOffset = lockOffset;
         }
     }
@@ -5359,16 +5364,13 @@ namespace MphRead
                         })
                 },
                 {
-                    "octolith_bounty_img",
-                    new ModelMetadata("octolith_bounty_img", animation: false)
-                },
-                {
                     "octolith_ctf",
                     new ModelMetadata("octolith_ctf",
                         recolors: new List<string>()
                         {
                             "orange_img",
-                            "green_img"
+                            "green_img",
+                            "*octolith_bounty_img"
                         },
                         animation: true,
                         mdlSuffix: MdlSuffix.Model)

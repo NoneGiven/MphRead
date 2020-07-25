@@ -536,19 +536,10 @@ namespace MphRead
             ComputeNodeMatrices(nodeBase, index: 0);
             return nodeBase;
         }
-
+        
         private static Model LoadOctolithFlag(OctolithFlagEntityData data, GameMode mode)
         {
-            Model octolith;
-            if (mode == GameMode.Capture)
-            {
-                octolith = Read.GetModelByName("octolith_ctf", data.TeamId);
-            }
-            else // if mode == GameMode.Bounty
-            {
-                // todo: is this right? needs scaling or something
-                octolith = Read.GetModelByName("Octolith");
-            }
+            Model octolith = Read.GetModelByName("octolith_ctf", mode == GameMode.Capture ? data.TeamId : 2);
             // todo: height offset
             octolith.Position = new Vector3(
                     data.Position.X.FloatValue,
