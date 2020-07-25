@@ -1024,7 +1024,7 @@ namespace MphRead
         public readonly uint Field18;
         public readonly uint Field1C;
         public readonly uint Field20;
-        public readonly byte Field24;
+        public readonly byte Field24; // todo: alwyas 0 or 1
     }
 
     // size: 108
