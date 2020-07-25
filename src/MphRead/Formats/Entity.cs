@@ -1107,7 +1107,7 @@ namespace MphRead
     }
 
     // size: 136
-    public readonly struct Unknown16EntityData
+    public readonly struct LightSourceEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
@@ -1133,7 +1133,7 @@ namespace MphRead
         public readonly uint Field58;
         public readonly uint Field5C;
         public readonly uint Field60;
-        public readonly byte Field64; // todo: always 1? enable flag?
+        public readonly byte Field64; // todo: always 0 or 1 -- enable flag?
         public readonly ColorRgb Light1Color; // 8-bit color values
         public readonly uint Field68;
         public readonly uint Field6C;

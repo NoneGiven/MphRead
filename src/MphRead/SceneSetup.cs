@@ -327,9 +327,9 @@ namespace MphRead
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown15EntityData>)entity).Data.Position));
                 }
-                else if (entity.Type == EntityType.Unknown16)
+                else if (entity.Type == EntityType.LightSource)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown16EntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<LightSourceEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Artifact)
                 {
@@ -605,13 +605,13 @@ namespace MphRead
             { EntityType.Unknown12, new ColorRgb(0x00, 0xFF, 0xFF) },
             { EntityType.Unknown13, new ColorRgb(0xFF, 0x00, 0xFF) },
             { EntityType.Unknown15, new ColorRgb(0x1E, 0x90, 0xFF) },
-            { EntityType.Unknown16, new ColorRgb(0xFF, 0xDE, 0xAD) },
             // "permanent" placeholders
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.FhPlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.CameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
             { EntityType.FhCameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
             { EntityType.Teleporter, new ColorRgb(0xFF, 0xFF, 0xFF) },
+            { EntityType.LightSource, new ColorRgb(0xFF, 0xDE, 0xAD) },
             { EntityType.CameraSeq, new ColorRgb(0xFF, 0x69, 0xB4) }
         };
 

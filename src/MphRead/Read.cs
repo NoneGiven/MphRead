@@ -546,11 +546,11 @@ namespace MphRead
                         entities.Add(new Entity<Unknown15EntityData>(entry, type, init.EntityId,
                             ReadStruct<Unknown15EntityData>(bytes[start..end])));
                     }
-                    else if (type == EntityType.Unknown16)
+                    else if (type == EntityType.LightSource)
                     {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown16EntityData>());
-                        entities.Add(new Entity<Unknown16EntityData>(entry, type, init.EntityId,
-                            ReadStruct<Unknown16EntityData>(bytes[start..end])));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<LightSourceEntityData>());
+                        entities.Add(new Entity<LightSourceEntityData>(entry, type, init.EntityId,
+                            ReadStruct<LightSourceEntityData>(bytes[start..end])));
                     }
                     else if (type == EntityType.Artifact)
                     {

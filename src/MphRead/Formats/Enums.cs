@@ -14,15 +14,16 @@ namespace MphRead
         JumpPad = 9,
         PointModule = 10, // FH leftovers only
         CameraPos = 11,
-        Unknown12 = 12,
-        Unknown13 = 13,
+        Unknown12 = 12, // octolith (multiplayer)?
+        Unknown13 = 13, // node?
         Teleporter = 14,
         Unknown15 = 15,
-        Unknown16 = 16,
+        LightSource = 16,
         Artifact = 17,
         CameraSeq = 18,
         ForceField = 19,
         EnemyInstance = 23,
+        // 25 = player?
         EnergyBeam = 26,
         EntityListHead = 27,
         // First Hunt

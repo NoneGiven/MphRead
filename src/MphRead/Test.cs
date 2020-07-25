@@ -173,10 +173,10 @@ namespace MphRead
                         IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, i);
                         foreach (Entity entity in entities)
                         {
-                            if (entity.Type == EntityType.Item)
+                            if (entity.Type == EntityType.LightSource)
                             {
-                                ItemEntityData data = ((Entity<ItemEntityData>)entity).Data;
-                                if (data.Enabled == 0 && data.HasBase != 0 && data.ModelId != 19)
+                                LightSourceEntityData data = ((Entity<LightSourceEntityData>)entity).Data;
+                                if (data.Field64 == 0 || data.Field74 == 0)
                                 {
                                     System.Diagnostics.Debugger.Break();
                                 }
