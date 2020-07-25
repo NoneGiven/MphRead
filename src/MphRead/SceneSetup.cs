@@ -473,7 +473,7 @@ namespace MphRead
             {
                 modelName = "Teleporter";
             }
-            Model model = Read.GetModelByName(modelName, paletteId);
+            Model model = Read.GetModelByName(modelName, multiplayer ? 0 : paletteId);
             model.Position = data.Position.ToFloatVector();
             ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
