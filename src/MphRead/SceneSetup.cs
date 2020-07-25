@@ -524,21 +524,25 @@ namespace MphRead
             Model octolith;
             if (mode == GameMode.Capture)
             {
-                itemBase = Read.GetModelByName("octolith_ctf", data.TeamId);
-                octolith = Read.GetModelByName("flagbase_ctf", data.TeamId);
+                itemBase = Read.GetModelByName("flagbase_ctf", data.TeamId);
+                octolith = Read.GetModelByName("octolith_ctf", data.TeamId);
             }
             else // if mode == GameMode.Bounty
             {
                 itemBase = Read.GetModelByName("flagbase_bounty");
-                // todo: is this right? needs some transforms/height offset
+                // todo: is this right?
                 octolith = Read.GetModelByName("Octolith");
             }
             itemBase.Position = data.Position.ToFloatVector();
             ComputeModelMatrices(itemBase, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(itemBase, index: 0);
             itemBase.Type = ModelType.Generic;
-            // todo: does this need to be transformed any further? height offset?
-            octolith.Position = data.Position.ToFloatVector();
+            // todo: does this need to be transformed any further? also, get the right height offset?
+            octolith.Position = new Vector3(
+                    data.Position.X.FloatValue,
+                    data.Position.Y.FloatValue + 1.15f,
+                    data.Position.Z.FloatValue
+                );
             octolith.Type = ModelType.Generic;
             return new List<Model>() { itemBase, octolith };
         }
