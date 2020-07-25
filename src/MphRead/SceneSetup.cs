@@ -530,14 +530,14 @@ namespace MphRead
             else // if mode == GameMode.Bounty
             {
                 itemBase = Read.GetModelByName("flagbase_bounty");
-                // todo: is this right?
+                // todo: is this right? needs scaling or something
                 octolith = Read.GetModelByName("Octolith");
             }
             itemBase.Position = data.Position.ToFloatVector();
             ComputeModelMatrices(itemBase, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(itemBase, index: 0);
             itemBase.Type = ModelType.Generic;
-            // todo: does this need to be transformed any further? also, get the right height offset?
+            // todo: does this need to be transformed any further? also, get the right height offset
             octolith.Position = new Vector3(
                     data.Position.X.FloatValue,
                     data.Position.Y.FloatValue + 1.15f,
