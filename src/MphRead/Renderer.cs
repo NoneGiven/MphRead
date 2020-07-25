@@ -2108,6 +2108,20 @@ namespace MphRead
         {
             Model model = SelectedModel;
             await Output.Write(guid);
+            string header = "";
+            if (_roomLoaded)
+            {
+                string string1 = $"{(int)(_light1Color.X * 255)};{(int)(_light1Color.Y * 255)};{(int)(_light1Color.Z * 255)}";
+                string string2 = $"{(int)(_light2Color.X * 255)};{(int)(_light2Color.Y * 255)};{(int)(_light2Color.Z * 255)}";
+                header += $"Room \u001b[38;2;{string1}m████\u001b[0m \u001b[38;2;{string2}m████\u001b[0m";
+                header += $" ({_light1Vector.X}, {_light1Vector.Y}, {_light1Vector.Z}) " +
+                    $"({_light2Vector.X}, {_light2Vector.Y}, {_light2Vector.Z})";
+            }
+            else
+            {
+                header = "No room loaded";
+            }
+            await Output.Write(header, guid);
             await Output.Write($"Camera ({_cameraPosition.X * -1}, {_cameraPosition.Y * -1}, {_cameraPosition.Z * -1})", guid);
             await Output.Write(guid);
             await Output.Write($"Model: {model.Name} [{model.SceneId}] {(model.Visible ? "On " : "Off")} - " +
@@ -2120,6 +2134,19 @@ namespace MphRead
             else if (model.Type == ModelType.Placeholder)
             {
                 type += $" - {model.EntityType}";
+                if (model.Entity is Entity<LightSourceEntityData> entity)
+                {
+                    ColorRgb color1 = entity.Data.Light1Color;
+                    ColorRgb color2 = entity.Data.Light2Color;
+                    string string1 = $"{color1.Red};{color1.Green};{color1.Blue}";
+                    string string2 = $"{color2.Red};{color2.Green};{color2.Blue}";
+                    type += $" \u001b[38;2;{string1}m████\u001b[0m \u001b[38;2;{string2}m████\u001b[0m";
+                    type += $" {entity.Data.Field64} / {entity.Data.Field74}";
+                    Vector3Fx vector1 = entity.Data.Light1Vector;
+                    Vector3Fx vector2 = entity.Data.Light2Vector;
+                    type += $" ({vector1.X.FloatValue}, {vector1.Y.FloatValue}, {vector1.Z.FloatValue}) " +
+                        $"({vector2.X.FloatValue}, {vector2.Y.FloatValue}, {vector2.Z.FloatValue})";
+                }
             }
             await Output.Write(type, guid);
             // todo: pickup rotation shows up, but the floating height change does not, would be nice to be consistent

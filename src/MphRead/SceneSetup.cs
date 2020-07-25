@@ -315,7 +315,9 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.LightSource)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<LightSourceEntityData>)entity).Data.Position));
+                    Model model = LoadEntityPlaceholder(entity.Type, ((Entity<LightSourceEntityData>)entity).Data.Position);
+                    model.Entity = entity;
+                    models.Add(model);
                 }
                 else if (entity.Type == EntityType.Artifact)
                 {

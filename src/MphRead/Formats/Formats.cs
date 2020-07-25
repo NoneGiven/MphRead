@@ -137,6 +137,9 @@ namespace MphRead
 
         public IReadOnlyList<Recolor> Recolors { get; }
 
+        // todo: refactor model vs. entity abstraction
+        public Entity? Entity { get; set; }
+
         private static int _nextSceneId = 0;
         public int SceneId { get; } = _nextSceneId++;
 
