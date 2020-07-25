@@ -168,18 +168,15 @@ namespace MphRead
             {
                 if (meta.Value.EntityPath != null)
                 {
-                    for (int i = 0; i < 16; i++)
+                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, Int32.MaxValue);
+                    foreach (Entity entity in entities)
                     {
-                        IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, i);
-                        foreach (Entity entity in entities)
+                        if (entity.Type == EntityType.LightSource)
                         {
-                            if (entity.Type == EntityType.LightSource)
+                            LightSourceEntityData data = ((Entity<LightSourceEntityData>)entity).Data;
+                            if (data.Field64 == 0 || data.Field74 == 0)
                             {
-                                LightSourceEntityData data = ((Entity<LightSourceEntityData>)entity).Data;
-                                if (data.Field64 == 0 || data.Field74 == 0)
-                                {
-                                    System.Diagnostics.Debugger.Break();
-                                }
+                                System.Diagnostics.Debugger.Break();
                             }
                         }
                     }

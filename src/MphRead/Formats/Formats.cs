@@ -633,9 +633,23 @@ namespace MphRead
         public short LayerMask { get; }
         public ushort Length { get; }
         public EntityType Type { get; }
-        public ushort SomeId { get; }
+        public ushort EntityId { get; }
 
-        public Entity(EntityEntry entry, EntityType type, ushort someId)
+        public IEnumerable<int> LayerIds
+        {
+            get
+            {
+                for (int i = 0; i < 16; i++)
+                {
+                    if ((LayerMask & (1 << i)) != 0)
+                    {
+                        yield return i;
+                    }
+                }
+            }
+        }
+
+        public Entity(EntityEntry entry, EntityType type, ushort entityId)
         {
             NodeName = entry.NodeName;
             LayerMask = entry.LayerMask;
@@ -645,7 +659,7 @@ namespace MphRead
                 throw new ProgramException($"Invalid entity type {type}");
             }
             Type = type;
-            SomeId = someId;
+            EntityId = entityId;
         }
 
         public Entity(FhEntityEntry entry, EntityType type, ushort someId)
@@ -656,7 +670,7 @@ namespace MphRead
                 throw new ProgramException($"Invalid entity type {type}");
             }
             Type = type;
-            SomeId = someId;
+            EntityId = someId;
         }
     }
 
