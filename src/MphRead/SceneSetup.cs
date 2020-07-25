@@ -8,26 +8,14 @@ namespace MphRead
     {
         private static readonly Random _random = new Random();
 
-        public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, int layerMask)
+        public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, NodeLayer layerMask, int layerId, GameMode mode)
         {
             (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
             if (metadata == null)
             {
                 throw new InvalidOperationException();
             }
-            int roomLayerMask;
-            if (layerMask != 0)
-            {
-                roomLayerMask = layerMask;
-            }
-            else if (metadata.LayerId != 0)
-            {
-                roomLayerMask = ((1 << metadata.LayerId) & 0xFF) << 6;
-            }
-            else
-            {
-                roomLayerMask = -1;
-            }
+            // roomLayerMask = ((1 << metadata.LayerId) & 0xFF) << 6;
             Model room = Read.GetRoomByName(name);
             // todo?: do whatever with NodePosition/NodeInitialPosition
             // todo?: use this name and ID
@@ -39,17 +27,17 @@ namespace MphRead
                 nodeName = room.Nodes[nodeIndex].Name;
                 nodeId = room.Nodes[nodeIndex].ChildIndex;
             }
-            FilterNodes(room, roomLayerMask);
+            FilterNodes(room, layerMask);
             // todo?: scene min/max coordinates
             ComputeNodeMatrices(room, index: 0);
-            (int areaId, bool multiplayer) = Metadata.GetAreaInfo(roomId);
-            IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, multiplayer);
+            int areaId = Metadata.GetAreaInfo(roomId);
+            IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, layerId, mode);
             // todo?: area ID/portals
             room.Type = ModelType.Room;
             return (room, metadata, entities);
         }
 
-        private static void FilterNodes(Model model, int layerMask)
+        private static void FilterNodes(Model model, NodeLayer layerMask)
         {
             foreach (Node node in model.Nodes)
             {
@@ -91,7 +79,7 @@ namespace MphRead
                         flags |= (int)NodeLayer.CaptureTheFlag;
                     }
                 }
-                if ((flags & layerMask) == 0)
+                if ((flags & (int)layerMask) == 0)
                 {
                     node.Enabled = false;
                 }
@@ -206,14 +194,14 @@ namespace MphRead
             model.Transform = scaleMatrix * transform;
         }
 
-        private static IReadOnlyList<Model> LoadEntities(RoomMetadata metadata, int areaId, bool multiplayer)
+        private static IReadOnlyList<Model> LoadEntities(RoomMetadata metadata, int areaId, int layerId, GameMode mode)
         {
             var models = new List<Model>();
             if (metadata.EntityPath == null)
             {
                 return models;
             }
-            IReadOnlyList<Entity> entities = Read.GetEntities(metadata.EntityPath, metadata.LayerId);
+            IReadOnlyList<Entity> entities = Read.GetEntities(metadata.EntityPath, layerId);
             foreach (Entity entity in entities)
             {
                 if (entity.Type == EntityType.Platform)
@@ -301,41 +289,43 @@ namespace MphRead
                 {
                     models.Add(LoadPointModule(((Entity<FhPointModuleEntityData>)entity).Data));
                 }
-                else if (entity.Type == EntityType.CameraPos)
+                else if (entity.Type == EntityType.CameraPosition)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<CameraPosEntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<CameraPositionEntityData>)entity).Data.Position));
                 }
-                else if (entity.Type == EntityType.FhCameraPos)
+                else if (entity.Type == EntityType.FhCameraPosition)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhCameraPosEntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhCameraPositionEntityData>)entity).Data.Position));
                 }
-                else if (entity.Type == EntityType.Unknown12)
+                else if (entity.Type == EntityType.OctolithFlag)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown12EntityData>)entity).Data.Position));
+                    models.Add(LoadOctolithFlag(((Entity<OctolithFlagEntityData>)entity).Data, mode));
                 }
-                else if (entity.Type == EntityType.Unknown13)
+                else if (entity.Type == EntityType.NodeBase)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown13EntityData>)entity).Data.Position));
+                    models.Add(LoadNodeBase(((Entity<NodeBaseEntityData>)entity).Data, mode));
                 }
                 else if (entity.Type == EntityType.Teleporter)
                 {
-                    models.Add(LoadTeleporter(((Entity<TeleporterEntityData>)entity).Data, areaId, multiplayer));
+                    models.Add(LoadTeleporter(((Entity<TeleporterEntityData>)entity).Data, areaId, mode != GameMode.SinglePlayer));
                 }
                 else if (entity.Type == EntityType.Unknown15)
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown15EntityData>)entity).Data.Position));
                 }
-                else if (entity.Type == EntityType.Unknown16)
+                else if (entity.Type == EntityType.LightSource)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown16EntityData>)entity).Data.Position));
+                    Model model = LoadEntityPlaceholder(entity.Type, ((Entity<LightSourceEntityData>)entity).Data.Position);
+                    model.Entity = entity;
+                    models.Add(model);
                 }
                 else if (entity.Type == EntityType.Artifact)
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<ArtifactEntityData>)entity).Data.Position));
                 }
-                else if (entity.Type == EntityType.CameraSeq)
+                else if (entity.Type == EntityType.CameraSequence)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<CameraSeqEntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<CameraSequenceEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.ForceField)
                 {
@@ -377,7 +367,7 @@ namespace MphRead
             string modelName = Metadata.JumpPads[(int)data.ModelId];
             Model model1 = Read.GetModelByName(modelName);
             model1.Position = data.Position.ToFloatVector();
-            ComputeModelMatrices(model1, data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector());
+            ComputeModelMatrices(model1, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             model1.Type = ModelType.JumpPad;
             list.Add(model1);
             Model model2 = Read.GetModelByName("JumpPad_Beam");
@@ -395,7 +385,7 @@ namespace MphRead
             string name = data.ModelId == 1 ? "balljump" : "jumppad_base";
             Model model1 = Read.GetModelByName(name, firstHunt: true);
             model1.Position = data.Position.ToFloatVector();
-            ComputeModelMatrices(model1, data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector());
+            ComputeModelMatrices(model1, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             model1.Type = ModelType.JumpPad;
             list.Add(model1);
             name = data.ModelId == 1 ? "balljump_ray" : "jumppad_ray";
@@ -471,7 +461,7 @@ namespace MphRead
             {
                 modelName = "Teleporter";
             }
-            Model model = Read.GetModelByName(modelName, paletteId);
+            Model model = Read.GetModelByName(modelName, multiplayer ? 0 : paletteId);
             model.Position = data.Position.ToFloatVector();
             ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
@@ -479,15 +469,18 @@ namespace MphRead
             return model;
         }
 
-        // todo: Energy Tank height is still not right
         private static IEnumerable<Model> LoadItem(ItemEntityData data)
         {
             var models = new List<Model>();
             Model model;
             if (data.Enabled != 0)
             {
-                (string name, float offset) = Metadata.Items[(int)data.ModelId];
-                model = Read.GetModelByName(name);
+                model = Read.GetModelByName(Metadata.Items[(int)data.ModelId]);
+                float offset = data.Position.Y.Value <= -2663
+                    ? Fixed.ToFloat(2663)
+                    : data.Position.Y.Value == 6393
+                        ? Fixed.ToFloat(2812)
+                        : Fixed.ToFloat(2662);
                 model.Position = new Vector3(
                     data.Position.X.FloatValue,
                     data.Position.Y.FloatValue + offset,
@@ -526,6 +519,41 @@ namespace MphRead
             return model;
         }
 
+        // todo: splitting up the bases and flags like this seems to work for CTF, but not Bounty
+        // (the destination has a base, but the flag doesn't)
+        private static Model LoadNodeBase(NodeBaseEntityData data, GameMode mode)
+        {
+            Model nodeBase;
+            if (mode == GameMode.Capture)
+            {
+                nodeBase = Read.GetModelByName("flagbase_ctf", 0); // sktodo: team ID
+            }
+            else // if mode == GameMode.Bounty
+            {
+                // todo: flagbase_cap loads in somewhere in Bounty mode
+                nodeBase = Read.GetModelByName("flagbase_bounty");
+            }
+            nodeBase.Position = data.Position.ToFloatVector();
+            ComputeModelMatrices(nodeBase, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
+            ComputeNodeMatrices(nodeBase, index: 0);
+            return nodeBase;
+        }
+
+        private static Model LoadOctolithFlag(OctolithFlagEntityData data, GameMode mode)
+        {
+            Model octolith = Read.GetModelByName("octolith_ctf", mode == GameMode.Capture ? data.TeamId : 2);
+            // todo: height offset
+            octolith.Position = new Vector3(
+                    data.Position.X.FloatValue,
+                    data.Position.Y.FloatValue + 1.15f,
+                    data.Position.Z.FloatValue
+                );
+            ComputeModelMatrices(octolith, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
+            ComputeNodeMatrices(octolith, index: 0);
+            octolith.Type = ModelType.Generic;
+            return octolith;
+        }
+
         private static Model LoadPointModule(PointModuleEntityData data)
         {
             return LoadPointModule(data.Position.ToFloatVector());
@@ -558,7 +586,7 @@ namespace MphRead
             }
             Model model = Read.GetModelByName(meta.Name, recolorId);
             model.Position = data.Position.ToFloatVector();
-            ComputeModelMatrices(model, data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector());
+            ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             return model;
@@ -569,7 +597,7 @@ namespace MphRead
         {
             Model model = Read.GetModelByName("door", firstHunt: true);
             model.Position = data.Position.ToFloatVector();
-            ComputeModelMatrices(model, data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector());
+            ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             return model;
@@ -597,17 +625,17 @@ namespace MphRead
             { EntityType.FhUnknown9, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.Unknown8, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.FhUnknown10, new ColorRgb(0xFF, 0xFF, 0x00) },
-            { EntityType.Unknown12, new ColorRgb(0x00, 0xFF, 0xFF) },
-            { EntityType.Unknown13, new ColorRgb(0xFF, 0x00, 0xFF) },
+            { EntityType.OctolithFlag, new ColorRgb(0x00, 0xFF, 0xFF) },
+            { EntityType.NodeBase, new ColorRgb(0xFF, 0x00, 0xFF) },
             { EntityType.Unknown15, new ColorRgb(0x1E, 0x90, 0xFF) },
-            { EntityType.Unknown16, new ColorRgb(0xFF, 0xDE, 0xAD) },
             // "permanent" placeholders
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.FhPlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
-            { EntityType.CameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
-            { EntityType.FhCameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
+            { EntityType.CameraPosition, new ColorRgb(0x00, 0xFF, 0x00) },
+            { EntityType.FhCameraPosition, new ColorRgb(0x00, 0xFF, 0x00) },
             { EntityType.Teleporter, new ColorRgb(0xFF, 0xFF, 0xFF) },
-            { EntityType.CameraSeq, new ColorRgb(0xFF, 0x69, 0xB4) }
+            { EntityType.LightSource, new ColorRgb(0xFF, 0xDE, 0xAD) },
+            { EntityType.CameraSequence, new ColorRgb(0xFF, 0x69, 0xB4) }
         };
 
         private static Model LoadEntityPlaceholder(EntityType type, Vector3Fx position)
@@ -619,11 +647,6 @@ namespace MphRead
                 {
                     mesh.OverrideColor = mesh.PlaceholderColor = _colorOverrides[type].AsVector4();
                 }
-            }
-            if (System.Diagnostics.Debugger.IsAttached &&
-                (type == EntityType.Unknown12 || type == EntityType.Unknown13 || type == EntityType.Unknown15))
-            {
-                System.Diagnostics.Debugger.Break();
             }
             model.Position = new Vector3(position.X.FloatValue, position.Y.FloatValue, position.Z.FloatValue);
             model.EntityType = type;

@@ -187,12 +187,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -289,12 +285,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly ushort Field24;
         public readonly byte Field26;
     }
@@ -304,12 +296,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly ushort Field24;
         public readonly ushort Field26;
     }
@@ -319,8 +307,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
+        public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
-        public readonly Vector3Fx Rotation;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
         public readonly string NodeName;
         public readonly uint PaletteId;
@@ -341,8 +329,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
+        public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
-        public readonly Vector3Fx Rotation;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -356,12 +344,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint FieldC;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint ItemId;
         public readonly uint ModelId;
         public readonly byte Enabled; // boolean
@@ -383,12 +367,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint ModelId;
         public readonly uint Field28;
         public readonly ushort Field2C;
@@ -399,12 +379,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -530,12 +506,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -600,12 +572,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -643,12 +611,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -714,12 +678,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -755,12 +715,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -823,8 +779,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly Vector3Fx BaseVector1;
-        public readonly Vector3Fx BaseVector2;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -860,8 +816,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly Vector3Fx BaseVector1;
-        public readonly Vector3Fx BaseVector2;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -926,12 +882,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly byte Field28;
     }
@@ -943,27 +895,19 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly byte Field28;
     }
 
     // size: 104
-    public readonly struct CameraPosEntityData
+    public readonly struct CameraPositionEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -984,16 +928,12 @@ namespace MphRead
 
     // todo: might be interchangeable with the MPH version
     // size: 104
-    public readonly struct FhCameraPosEntityData
+    public readonly struct FhCameraPositionEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -1014,30 +954,22 @@ namespace MphRead
 
     // size: 41
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public readonly struct Unknown12EntityData
+    public readonly struct OctolithFlagEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
-        public readonly byte Field24;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
+        public readonly byte TeamId;
     }
 
     // size: 108
-    public readonly struct Unknown13EntityData
+    public readonly struct NodeBaseEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -1082,12 +1014,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -1107,40 +1035,19 @@ namespace MphRead
     }
 
     // size: 136
-    public readonly struct Unknown16EntityData
+    public readonly struct LightSourceEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
-        public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
-        public readonly uint Field58;
-        public readonly uint Field5C;
-        public readonly uint Field60;
-        public readonly uint Field64;
-        public readonly uint Field68;
-        public readonly uint Field6C;
-        public readonly uint Field70;
-        public readonly uint Field74;
-        public readonly uint Field78;
-        public readonly uint Field7C;
-        public readonly uint Field80;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
+        public readonly Matrix44Fx Matrix;
+        public readonly byte Light1Enabled; // boolean
+        public readonly ColorRgb Light1Color; // 8-bit color values
+        public readonly Vector3Fx Light1Vector;
+        public readonly byte Light2Enabled;
+        public readonly ColorRgb Light2Color;
+        public readonly Vector3Fx Light2Vector;
     }
 
     // size: 70
@@ -1149,12 +1056,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -1166,16 +1069,12 @@ namespace MphRead
     }
 
     // size: 64
-    public readonly struct CameraSeqEntityData
+    public readonly struct CameraSequenceEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;

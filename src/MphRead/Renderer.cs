@@ -30,24 +30,10 @@ namespace MphRead
             _window = new RenderWindow(settings, native);
         }
 
-        public void AddRoom(int id, NodeLayer layerMask)
+        public void AddRoom(string name, NodeLayer layerMask = NodeLayer.None,
+            int layerId = 0, GameMode mode = GameMode.SinglePlayer)
         {
-            _window.AddRoom(id, (int)layerMask);
-        }
-
-        public void AddRoom(string name, NodeLayer layerMask)
-        {
-            _window.AddRoom(name, (int)layerMask);
-        }
-
-        public void AddRoom(int id, int layerMask = 0)
-        {
-            _window.AddRoom(id, layerMask);
-        }
-
-        public void AddRoom(string name, int layerMask = 0)
-        {
-            _window.AddRoom(name, layerMask);
+            _window.AddRoom(name, layerMask, layerId, mode);
         }
 
         public void AddModel(string name, int recolor = 0, bool firstHunt = false)
@@ -175,23 +161,14 @@ namespace MphRead
         {
         }
 
-        public void AddRoom(int id, int layerMask)
-        {
-            RoomMetadata? meta = Metadata.GetRoomById(id);
-            if (meta != null)
-            {
-                AddRoom(meta.Name, layerMask);
-            }
-        }
-
-        public void AddRoom(string name, int layerMask)
+        public void AddRoom(string name, NodeLayer layerMask, int layerId, GameMode mode)
         {
             if (_roomLoaded)
             {
                 throw new InvalidOperationException();
             }
             _roomLoaded = true;
-            (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask);
+            (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask, layerId, mode);
             if (roomMeta.InGameName != null)
             {
                 Title = roomMeta.InGameName;
@@ -315,14 +292,7 @@ namespace MphRead
                 {
                     continue;
                 }
-                if (material.PaletteId == UInt16.MaxValue)
-                {
-                    combos.Add((material.TextureId, -1));
-                }
-                else
-                {
-                    combos.Add((material.TextureId, material.PaletteId));
-                }
+                combos.Add((material.TextureId, material.PaletteId));
                 if (material.RenderMode == RenderMode.Unknown3 || material.RenderMode == RenderMode.Unknown4)
                 {
                     _logs.Add($"mat {material.Name} of model {model.Name} has render mode {material.RenderMode}");
@@ -661,7 +631,7 @@ namespace MphRead
                     ((!_frameAdvanceOn && _frameCount % 2 == 0)
                     || (_frameAdvanceOn && _advanceOneFrame)))
                 {
-                    ProcessAnimations(model);
+                    UpdateAnimationFrames(model);
                 }
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.PushMatrix();
@@ -684,7 +654,6 @@ namespace MphRead
                     GL.MultMatrix(ref transform);
                     _modelMatrix = transform * _modelMatrix;
                 }
-                UpdateMaterials(model);
                 if (model.Type == ModelType.Room)
                 {
                     RenderRoom(model);
@@ -746,7 +715,7 @@ namespace MphRead
             // - else if render mode is not Normal, but there are no non-opaque pixels, set to Normal
             // - else if render mode is Normal, but there are non-opaque pixels, set to AlphaTest
             // - if render mode is Translucent, material alpha is 31, and texture format is DirectRgba, set to AlphaTest
-            if (material.Alpha < 31)
+            if (material.CurrentAlpha < 1.0f)
             {
                 material.RenderMode = RenderMode.Translucent;
             }
@@ -890,7 +859,7 @@ namespace MphRead
             }
         }
 
-        private void ProcessAnimations(Model model)
+        private void UpdateAnimationFrames(Model model)
         {
             foreach (TexcoordAnimationGroup group in model.TexcoordAnimationGroups)
             {
@@ -898,6 +867,11 @@ namespace MphRead
                 group.CurrentFrame %= group.FrameCount;
             }
             foreach (TextureAnimationGroup group in model.TextureAnimationGroups)
+            {
+                group.CurrentFrame++;
+                group.CurrentFrame %= group.FrameCount;
+            }
+            foreach (MaterialAnimationGroup group in model.MaterialAnimationGroups)
             {
                 group.CurrentFrame++;
                 group.CurrentFrame %= group.FrameCount;
@@ -967,12 +941,8 @@ namespace MphRead
 
         private void RenderMesh(Model model, Mesh mesh, Material material)
         {
-            // MPH applies the material colors initially by calling DIF_AMB with bit 15 set,
-            // so the diffuse color is always set as the vertex color to start
-            // (the emission color is set to white if lighting is disabled or black if lighting is enabled; we can just ignore that)
-            GL.Color3(new Vector3(material.Diffuse.Red / 31.0f, material.Diffuse.Green / 31.0f, material.Diffuse.Blue / 31.0f));
+            DoMaterial(model, mesh, material);
             DoTexture(model, mesh, material);
-            DoLighting(mesh, material);
             if (_faceCulling)
             {
                 GL.Enable(EnableCap.CullFace);
@@ -1042,8 +1012,6 @@ namespace MphRead
                         TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat);
                     break;
                 }
-                GL.Uniform1(_shaderLocations.MaterialAlpha, material.Alpha / 31.0f);
-                GL.Uniform1(_shaderLocations.MaterialDecal, material.PolygonMode == PolygonMode.Decal ? 1 : 0);
             }
             // _showSelection affects the placeholder colors too
             if (mesh.OverrideColor != null && _showSelection)
@@ -1062,7 +1030,6 @@ namespace MphRead
             }
             GL.MatrixMode(MatrixMode.Texture);
             GL.LoadIdentity();
-
             TexcoordAnimationGroup? group = null;
             TexcoordAnimation? animation = null;
             if (model.TexcoordAnimationGroups.Count > 0 && textureId != UInt16.MaxValue)
@@ -1102,37 +1069,91 @@ namespace MphRead
             GL.Uniform1(_shaderLocations.UseTexture, GL.IsEnabled(EnableCap.Texture2D) ? 1 : 0);
         }
 
-        private void DoLighting(Mesh mesh, Material material)
+        private void DoMaterial(Model model, Mesh mesh, Material material)
         {
             if (_lighting && material.Lighting != 0 && (mesh.OverrideColor == null || !_showSelection))
             {
-                var ambient = new Vector4(
-                    material.Ambient.Red / 31.0f,
-                    material.Ambient.Green / 31.0f,
-                    material.Ambient.Blue / 31.0f,
-                    1.0f
-                );
-                var diffuse = new Vector4(
-                    material.Diffuse.Red / 31.0f,
-                    material.Diffuse.Green / 31.0f,
-                    material.Diffuse.Blue / 31.0f,
-                    1.0f
-                );
-                var specular = new Vector4(
-                    material.Specular.Red / 31.0f,
-                    material.Specular.Green / 31.0f,
-                    material.Specular.Blue / 31.0f,
-                    1.0f
-                );
                 GL.Uniform1(_shaderLocations.UseLight, 1);
-                GL.Uniform4(_shaderLocations.Ambient, ambient);
-                GL.Uniform4(_shaderLocations.Diffuse, diffuse);
-                GL.Uniform4(_shaderLocations.Specular, specular);
             }
             else
             {
                 GL.Uniform1(_shaderLocations.UseLight, 0);
             }
+            Vector4 diffuse;
+            Vector4 ambient;
+            Vector4 specular;
+            float alpha;
+            // todo: group indexing
+            MaterialAnimationGroup group;
+            if (model.MaterialAnimationGroups.Count > 0
+                && (group = model.MaterialAnimationGroups[0]).Animations.TryGetValue(material.Name, out MaterialAnimation animation))
+            {
+                // todo: control animations so everything isn't playing at once
+                float diffuseR = InterpolateAnimation(group.Colors, animation.DiffuseLutStartIndexR, group.CurrentFrame,
+                    animation.DiffuseBlendFactorR, animation.DiffuseLutLengthR, group.FrameCount);
+                float diffuseG = InterpolateAnimation(group.Colors, animation.DiffuseLutStartIndexG, group.CurrentFrame,
+                    animation.DiffuseBlendFactorG, animation.DiffuseLutLengthG, group.FrameCount);
+                float diffuseB = InterpolateAnimation(group.Colors, animation.DiffuseLutStartIndexB, group.CurrentFrame,
+                    animation.DiffuseBlendFactorB, animation.DiffuseLutLengthB, group.FrameCount);
+                float ambientR = InterpolateAnimation(group.Colors, animation.AmbientLutStartIndexR, group.CurrentFrame,
+                    animation.AmbientBlendFactorR, animation.AmbientLutLengthR, group.FrameCount);
+                float ambientG = InterpolateAnimation(group.Colors, animation.AmbientLutStartIndexG, group.CurrentFrame,
+                    animation.AmbientBlendFactorG, animation.AmbientLutLengthG, group.FrameCount);
+                float ambientB = InterpolateAnimation(group.Colors, animation.AmbientLutStartIndexB, group.CurrentFrame,
+                    animation.AmbientBlendFactorB, animation.AmbientLutLengthB, group.FrameCount);
+                float specularR = InterpolateAnimation(group.Colors, animation.SpecularLutStartIndexR, group.CurrentFrame,
+                    animation.SpecularBlendFactorR, animation.SpecularLutLengthR, group.FrameCount);
+                float specularG = InterpolateAnimation(group.Colors, animation.SpecularLutStartIndexG, group.CurrentFrame,
+                    animation.SpecularBlendFactorG, animation.SpecularLutLengthG, group.FrameCount);
+                float specularB = InterpolateAnimation(group.Colors, animation.SpecularLutStartIndexB, group.CurrentFrame,
+                    animation.SpecularBlendFactorB, animation.SpecularLutLengthB, group.FrameCount);
+                if ((material.AnimationFlags & 2) == 0)
+                {
+                    alpha = InterpolateAnimation(group.Colors, animation.AlphaLutStartIndex, group.CurrentFrame,
+                    animation.AlphaBlendFactor, animation.AlphaLutLength, group.FrameCount);
+                    alpha /= 31.0f;
+                }
+                else
+                {
+                    alpha = material.Alpha / 31.0f;
+                }
+                diffuse = new Vector4(diffuseR / 31.0f, diffuseG / 31.0f, diffuseB / 31.0f, 1.0f);
+                ambient = new Vector4(ambientR / 31.0f, ambientG / 31.0f, ambientB / 31.0f, 1.0f);
+                specular = new Vector4(specularR / 31.0f, specularG / 31.0f, specularB / 31.0f, 1.0f);
+            }
+            else
+            {
+                diffuse = new Vector4(
+                    material.Diffuse.Red / 31.0f,
+                    material.Diffuse.Green / 31.0f,
+                    material.Diffuse.Blue / 31.0f,
+                    1.0f
+                );
+                ambient = new Vector4(
+                    material.Ambient.Red / 31.0f,
+                    material.Ambient.Green / 31.0f,
+                    material.Ambient.Blue / 31.0f,
+                    1.0f
+                );
+                specular = new Vector4(
+                    material.Specular.Red / 31.0f,
+                    material.Specular.Green / 31.0f,
+                    material.Specular.Blue / 31.0f,
+                    1.0f
+                );
+                alpha = material.Alpha / 31.0f;
+            }
+            // MPH applies the material colors initially by calling DIF_AMB with bit 15 set,
+            // so the diffuse color is always set as the vertex color to start
+            // (the emission color is set to white if lighting is disabled or black if lighting is enabled; we can just ignore that)
+            GL.Color4(diffuse);
+            GL.Uniform4(_shaderLocations.Diffuse, diffuse);
+            GL.Uniform4(_shaderLocations.Ambient, ambient);
+            GL.Uniform4(_shaderLocations.Specular, specular);
+            GL.Uniform1(_shaderLocations.MaterialAlpha, alpha);
+            GL.Uniform1(_shaderLocations.MaterialDecal, material.PolygonMode == PolygonMode.Decal ? 1 : 0);
+            material.CurrentAlpha = alpha;
+            UpdateMaterials(model);
         }
 
         private void DoDlist(Model model, Mesh mesh)
@@ -1143,8 +1164,9 @@ namespace MphRead
             float vtxZ = 0;
             // note: calling this every frame will have some overhead,
             // but baking it in on load would prevent e.g. vertex color toggle
-            foreach (RenderInstruction instruction in list)
+            for (int i = 0; i < list.Count; i++)
             {
+                RenderInstruction instruction = list[i];
                 switch (instruction.Code)
                 {
                 case InstructionCode.BEGIN_VTXS:
@@ -2061,7 +2083,7 @@ namespace MphRead
             Guid guid = await Output.StartBatch();
             await Output.Clear(guid);
             string recording = _recording ? " - Recording" : "";
-            string frameAdvance = _recording ? " - Frame Advance" : "";
+            string frameAdvance = _frameAdvanceOn ? " - Frame Advance" : "";
             await Output.Write($"MphRead Version {Program.Version}{recording}{frameAdvance}", guid);
             if (_selectionMode == SelectionMode.Model)
             {
@@ -2086,6 +2108,20 @@ namespace MphRead
         {
             Model model = SelectedModel;
             await Output.Write(guid);
+            string header = "";
+            if (_roomLoaded)
+            {
+                string string1 = $"{(int)(_light1Color.X * 255)};{(int)(_light1Color.Y * 255)};{(int)(_light1Color.Z * 255)}";
+                string string2 = $"{(int)(_light2Color.X * 255)};{(int)(_light2Color.Y * 255)};{(int)(_light2Color.Z * 255)}";
+                header += $"Room \u001b[38;2;{string1}m████\u001b[0m \u001b[38;2;{string2}m████\u001b[0m";
+                header += $" ({_light1Vector.X}, {_light1Vector.Y}, {_light1Vector.Z}) " +
+                    $"({_light2Vector.X}, {_light2Vector.Y}, {_light2Vector.Z})";
+            }
+            else
+            {
+                header = "No room loaded";
+            }
+            await Output.Write(header, guid);
             await Output.Write($"Camera ({_cameraPosition.X * -1}, {_cameraPosition.Y * -1}, {_cameraPosition.Z * -1})", guid);
             await Output.Write(guid);
             await Output.Write($"Model: {model.Name} [{model.SceneId}] {(model.Visible ? "On " : "Off")} - " +
@@ -2098,6 +2134,19 @@ namespace MphRead
             else if (model.Type == ModelType.Placeholder)
             {
                 type += $" - {model.EntityType}";
+                if (model.Entity is Entity<LightSourceEntityData> entity)
+                {
+                    ColorRgb color1 = entity.Data.Light1Color;
+                    ColorRgb color2 = entity.Data.Light2Color;
+                    string string1 = $"{color1.Red};{color1.Green};{color1.Blue}";
+                    string string2 = $"{color2.Red};{color2.Green};{color2.Blue}";
+                    type += $" \u001b[38;2;{string1}m████\u001b[0m \u001b[38;2;{string2}m████\u001b[0m";
+                    type += $" {entity.Data.Light1Enabled} / {entity.Data.Light2Enabled}";
+                    Vector3Fx vector1 = entity.Data.Light1Vector;
+                    Vector3Fx vector2 = entity.Data.Light2Vector;
+                    type += $" ({vector1.X.FloatValue}, {vector1.Y.FloatValue}, {vector1.Z.FloatValue}) " +
+                        $"({vector2.X.FloatValue}, {vector2.Y.FloatValue}, {vector2.Z.FloatValue})";
+                }
             }
             await Output.Write(type, guid);
             // todo: pickup rotation shows up, but the floating height change does not, would be nice to be consistent

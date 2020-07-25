@@ -166,8 +166,13 @@ namespace MphRead
             var recolorList = new List<RecolorMetadata>();
             foreach (string recolor in recolors)
             {
-                string recolorModel = $@"models\{recolorName ?? name}_{recolor}_Model.bin";
-                string texturePath = texture ? $@"models\{recolorName ?? name}_{recolor}_Tex.bin" : recolorModel;
+                string recolorString = $"{recolorName ?? name}_{recolor}";
+                if (recolor.StartsWith("*"))
+                {
+                    recolorString = recolor.Replace("*", "");
+                }
+                string recolorModel = $@"models\{recolorString}_Model.bin";
+                string texturePath = texture ? $@"models\{recolorString}_Tex.bin" : recolorModel;
                 recolorList.Add(new RecolorMetadata(recolor, recolorModel, texturePath));
             }
             Recolors = recolorList;
@@ -334,7 +339,7 @@ namespace MphRead
         public DoorMetadata(string name, string lockName, float lockOffset)
         {
             Name = name;
-            LockName = name;
+            LockName = lockName;
             LockOffset = lockOffset;
         }
     }
@@ -401,7 +406,7 @@ namespace MphRead
             return (ushort)(r | g << 5 | b << 10);
         }
 
-        public static (int, bool) GetAreaInfo(int roomId)
+        public static int GetAreaInfo(int roomId)
         {
             int areaId = 8;
             if (roomId >= 27 && roomId < 36)
@@ -436,8 +441,8 @@ namespace MphRead
             {
                 areaId = 7;
             }
-            bool multiplayer = roomId >= 93 && roomId <= 119;
-            return (areaId, multiplayer);
+            //bool multiplayer = roomId >= 93 && roomId <= 119;
+            return areaId;
         }
 
         private static readonly IReadOnlyList<string> _roomIds
@@ -3864,9 +3869,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3892,9 +3897,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3920,9 +3925,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3948,9 +3953,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3976,9 +3981,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4004,9 +4009,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4032,9 +4037,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4060,9 +4065,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4088,9 +4093,9 @@ namespace MphRead
                         0,
                         0,
                         new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(0f, -1f, 0f),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgba(4, 4, 16, 0),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 }
             };
@@ -4118,33 +4123,33 @@ namespace MphRead
             /* 5 */ "JumpPad_Station"
         };
 
-        public static readonly IReadOnlyList<(string, float)> Items
-            = new List<(string, float)>()
+        public static readonly IReadOnlyList<string> Items
+            = new List<string>()
         {
-            /*  0 */ ("pick_health_B", 0.487792969f),
-            /*  1 */ ("pick_health_A", 0.424316406f),
-            /*  2 */ ("pick_health_C", 0.524414063f),
-            /*  3 */ ("pick_dblDamage", 0.521484375f),
-            /*  4 */ ("PickUp_EnergyExp", 0.286621094f),
-            /*  5 */ ("pick_wpn_electro", 0.558837891f),
-            /*  6 */ ("PickUp_MissileExp", 0.515136719f),
-            /*  7 */ ("pick_wpn_jackhammer", 0.540771484f),
-            /*  8 */ ("pick_wpn_snipergun", 0.550781250f),
-            /*  9 */ ("pick_wpn_shotgun", 0.544921875f),
-            /* 10 */ ("pick_wpn_mortar", 0.481933594f),
-            /* 11 */ ("pick_wpn_ghostbuster", 0.606933594f),
-            /* 12 */ ("pick_wpn_gorea", 0.406982422f),
-            /* 13 */ ("pick_ammo_green", 0.307128906f),
-            /* 14 */ ("pick_ammo_green", 0.307128906f),
-            /* 15 */ ("pick_ammo_orange", 0.375732422f),
-            /* 16 */ ("pick_ammo_orange", 0.375732422f),
-            /* 17 */ ("pick_invis", 0.511962891f),
-            /* 18 */ ("PickUp_AmmoExp", 0.502929688f),
-            /* 19 */ ("Artifact_Key", 0.351074219f),
-            /* 20 */ ("pick_deathball", 0.558837891f),
-            /* 21 */ ("pick_wpn_all", 0.444580078f),
+            /*  0 */ "pick_health_B",
+            /*  1 */ "pick_health_A",
+            /*  2 */ "pick_health_C",
+            /*  3 */ "pick_dblDamage",
+            /*  4 */ "PickUp_EnergyExp",
+            /*  5 */ "pick_wpn_electro",
+            /*  6 */ "PickUp_MissileExp",
+            /*  7 */ "pick_wpn_jackhammer",
+            /*  8 */ "pick_wpn_snipergun",
+            /*  9 */ "pick_wpn_shotgun",
+            /* 10 */ "pick_wpn_mortar",
+            /* 11 */ "pick_wpn_ghostbuster",
+            /* 12 */ "pick_wpn_gorea",
+            /* 13 */ "pick_ammo_green",
+            /* 14 */ "pick_ammo_green",
+            /* 15 */ "pick_ammo_orange",
+            /* 16 */ "pick_ammo_orange",
+            /* 17 */ "pick_invis",
+            /* 18 */ "PickUp_AmmoExp",
+            /* 19 */ "Artifact_Key",
+            /* 20 */ "pick_deathball",
+            /* 21 */ "pick_wpn_all",
             // unused
-            /* 22 */ ("pick_wpn_missile", 0.558837891f)
+            /* 22 */ "pick_wpn_missile"
         };
 
         public static readonly IReadOnlyList<string> FhItems
@@ -4766,8 +4771,8 @@ namespace MphRead
                     new ModelMetadata("flagbase_ctf",
                         recolors: new List<string>()
                         {
-                            "green_img",
-                            "orange_img"
+                            "orange_img",
+                            "green_img"
                         },
                         animation: true,
                         mdlSuffix: MdlSuffix.Model)
@@ -5359,16 +5364,13 @@ namespace MphRead
                         })
                 },
                 {
-                    "octolith_bounty_img",
-                    new ModelMetadata("octolith_bounty_img", animation: false)
-                },
-                {
                     "octolith_ctf",
                     new ModelMetadata("octolith_ctf",
                         recolors: new List<string>()
                         {
+                            "orange_img",
                             "green_img",
-                            "orange_img"
+                            "*octolith_bounty_img"
                         },
                         animation: true,
                         mdlSuffix: MdlSuffix.Model)

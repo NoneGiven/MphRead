@@ -137,6 +137,9 @@ namespace MphRead
 
         public IReadOnlyList<Recolor> Recolors { get; }
 
+        // todo: refactor model vs. entity abstraction
+        public Entity? Entity { get; set; }
+
         private static int _nextSceneId = 0;
         public int SceneId { get; } = _nextSceneId++;
 
@@ -485,6 +488,7 @@ namespace MphRead
         public byte Lighting { get; set; } // todo: what do lighting values 3 and 5 mean?
         public CullingMode Culling { get; }
         public byte Alpha { get; }
+        public float CurrentAlpha { get; set; }
         public int TextureId { get; }
         public int PaletteId { get; }
         public int TextureBindingId { get; set; }
@@ -497,6 +501,7 @@ namespace MphRead
         public ColorRgb Specular { get; }
         public PolygonMode PolygonMode { get; set; }
         public RenderMode RenderMode { get; set; }
+        public byte AnimationFlags { get; set; } // todo: this probably has more uses
         public TexgenMode TexgenMode { get; set; }
         public int TexcoordAnimationId { get; set; }
         public int MatrixId { get; set; }
@@ -517,6 +522,7 @@ namespace MphRead
             Lighting = raw.Lighting;
             Culling = raw.Culling;
             Alpha = raw.Alpha;
+            CurrentAlpha = Alpha / 31.0f;
             CurrentTextureId = TextureId = raw.TextureId;
             CurrentPaletteId = PaletteId = raw.PaletteId;
             XRepeat = raw.XRepeat;
@@ -526,6 +532,7 @@ namespace MphRead
             Specular = raw.Specular;
             PolygonMode = raw.PolygonMode;
             RenderMode = raw.RenderMode;
+            AnimationFlags = raw.AnimationFlags;
             TexgenMode = raw.TexcoordTransformMode;
             TexcoordAnimationId = raw.TexcoordAnimationId;
             MatrixId = (int)raw.MatrixId;
@@ -609,13 +616,16 @@ namespace MphRead
         public int FrameCount { get; }
         public int CurrentFrame { get; set; }
         public int Count { get; }
+        public IReadOnlyList<float> Colors { get; }
         public IReadOnlyDictionary<string, MaterialAnimation> Animations { get; }
 
-        public MaterialAnimationGroup(RawMaterialAnimationGroup raw, IReadOnlyDictionary<string, MaterialAnimation> animations)
+        public MaterialAnimationGroup(RawMaterialAnimationGroup raw, IReadOnlyList<float> colors,
+            IReadOnlyDictionary<string, MaterialAnimation> animations)
         {
             FrameCount = (int)raw.FrameCount;
             CurrentFrame = raw.AnimationFrame;
             Count = (int)raw.AnimationCount;
+            Colors = colors;
             Animations = animations;
         }
     }
@@ -626,9 +636,31 @@ namespace MphRead
         public short LayerMask { get; }
         public ushort Length { get; }
         public EntityType Type { get; }
-        public ushort SomeId { get; }
+        public ushort EntityId { get; }
+        public bool FirstHunt { get; }
 
-        public Entity(EntityEntry entry, EntityType type, ushort someId)
+        public IEnumerable<int> LayerIds
+        {
+            get
+            {
+                if (FirstHunt)
+                {
+                    yield return -1;
+                }
+                else
+                {
+                    for (int i = 0; i < 16; i++)
+                    {
+                        if ((LayerMask & (1 << i)) != 0)
+                        {
+                            yield return i;
+                        }
+                    }
+                }
+            }
+        }
+
+        public Entity(EntityEntry entry, EntityType type, ushort entityId)
         {
             NodeName = entry.NodeName;
             LayerMask = entry.LayerMask;
@@ -638,10 +670,11 @@ namespace MphRead
                 throw new ProgramException($"Invalid entity type {type}");
             }
             Type = type;
-            SomeId = someId;
+            EntityId = entityId;
+            FirstHunt = false;
         }
 
-        public Entity(FhEntityEntry entry, EntityType type, ushort someId)
+        public Entity(FhEntityEntry entry, EntityType type, ushort entityId)
         {
             NodeName = entry.NodeName;
             if (!Enum.IsDefined(typeof(EntityType), type))
@@ -649,7 +682,8 @@ namespace MphRead
                 throw new ProgramException($"Invalid entity type {type}");
             }
             Type = type;
-            SomeId = someId;
+            EntityId = entityId;
+            FirstHunt = true;
         }
     }
 
@@ -670,9 +704,24 @@ namespace MphRead
         }
     }
 
+    // todo: FH game modes
+    // todo: use these to set up all the appropriate layer stuff
+    public enum GameMode
+    {
+        SinglePlayer,
+        Battle,
+        Survival,
+        PrimeHunter,
+        Capture,
+        Bounty,
+        Nodes,
+        Defender
+    }
+
     [Flags]
     public enum NodeLayer
     {
+        None = 0x0000, // todo: um
         Multiplayer0 = 0x0008,
         Multiplayer1 = 0x0010,
         MultiplayerU = 0x0020,

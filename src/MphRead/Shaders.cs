@@ -23,45 +23,41 @@ uniform mat4 model_mtx;
 varying vec2 texcoord;
 varying vec4 color;
 
+vec4 light_calc(vec4 light_vec, vec4 light_col, vec3 normal_vec, vec4 dif_col, vec4 amb_col, vec4 spe_col)
+{
+    vec3 sight_vec = vec3(0.0, 0.0, -1.0);
+    float dif_factor = max(0.0, -dot(light_vec.xyz, normal_vec));
+    vec3 half_vec = (light_vec.xyz + sight_vec) / 2.0;
+    float spe_factor = max(0.0, dot(-half_vec, normal_vec));
+    spe_factor = spe_factor * spe_factor;
+    vec4 spe_out = spe_col * light_col * spe_factor;
+    vec4 dif_out = dif_col * light_col * dif_factor;
+    vec4 amb_out = amb_col * light_col;
+    return spe_out + dif_out + amb_out;
+}
+
 void main()
 {
     if (is_billboard) {
         gl_Position = gl_ProjectionMatrix * (gl_ModelViewMatrix * vec4(0.0, 0.0, 0.0, 1.0) + vec4(gl_Vertex.x, gl_Vertex.y, gl_Vertex.z, 0.0));
-    } else {
+    }
+    else {
         gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
     }
     if (use_light) {
-        vec4 cur_diffuse = diffuse;
-        vec4 cur_ambient = ambient;
+        vec3 normal = normalize(mat3(model_mtx) * gl_Normal);
+        vec4 dif_current = diffuse;
+        vec4 amb_current = ambient;
         if (gl_Color.a == 0) {
             // see comment on DIF_AMB
-            cur_diffuse = vec4(gl_Color.r, gl_Color.g, gl_Color.b, 1.0);
-            cur_ambient = vec4(0.0, 0.0, 0.0, 1.0);
+            dif_current = vec4(gl_Color.rgb, 1.0);
+            amb_current = vec4(0.0, 0.0, 0.0, 1.0);
         }
-        // light 1
-        vec3 normal = normalize(mat3(model_mtx) * gl_Normal);
-        float fixed_diffuse1 = clamp(dot(-light1vec.xyz, normal), 0.0, 1.0);
-        vec3 neghalf1 = -(light1vec.xyz / 2.0);
-        float d1 = dot(neghalf1, normal);
-        float fixed_shininess1 = d1 > 0.0 ? 2.0 * d1 * d1 : 0.0;
-        vec4 spec1 = specular * light1col * fixed_shininess1;
-        vec4 diff1 = cur_diffuse * light1col * fixed_diffuse1;
-        vec4 amb1 = cur_ambient * light1col;
-        vec4 col1 = spec1 + diff1 + amb1;
-        // light 2
-        float fixed_diffuse2 = clamp(dot(-light2vec.xyz, normal), 0.0, 1.0);
-        vec3 neghalf2 = -(light2vec.xyz / 2.0);
-        float d2 = dot(neghalf2, normal);
-        float fixed_shininess2 = d2 > 0.0 ? 2.0 * d2 * d2 : 0.0;
-        vec4 spec2 = specular * light2col * fixed_shininess2;
-        vec4 diff2 = cur_diffuse * light2col * fixed_diffuse2;
-        vec4 amb2 = cur_ambient * light2col;
-        vec4 col2 = spec2 + diff2 + amb2;
-        float cr = min(col1.r + col2.r, 1.0);
-        float cg = min(col1.g + col2.g, 1.0);
-        float cb = min(col1.b + col2.b, 1.0);
-        color = vec4(cr, cg, cb, 1.0);
-    } else {
+        vec4 col1 = light_calc(light1vec, light1col, normal, dif_current, amb_current, specular);
+        vec4 col2 = light_calc(light2vec, light2col, normal, dif_current, amb_current, specular);
+        color = vec4(min((col1 + col2).rgb, vec3(1.0, 1.0, 1.0)), 1.0);
+    }
+    else {
         color = gl_Color;
     }
     texcoord = vec2(gl_TextureMatrix[0] * gl_MultiTexCoord0);
@@ -97,7 +93,8 @@ void main()
             col.b = override_color.b;
             col.a *= override_color.a;
         }
-    } else {
+    }
+    else {
         col = use_override ? override_color : color;
     }
     if (fog_enable) {

@@ -165,7 +165,7 @@ namespace MphRead
         public readonly byte DiffuseBlendFactorR;
         public readonly byte DiffuseBlendFactorG;
         public readonly byte DiffuseBlendFactorB;
-        public readonly byte Field47;
+        public readonly byte Field47; // todo: use more properties (this one is always 0 or 255)
         public readonly ushort DiffuseLutLengthR;
         public readonly ushort DiffuseLutLengthG;
         public readonly ushort DiffuseLutLengthB;
@@ -175,7 +175,7 @@ namespace MphRead
         public readonly byte AmbientBlendFactorR;
         public readonly byte AmbientBlendFactorG;
         public readonly byte AmbientBlendFactorB;
-        public readonly byte Field57;
+        public readonly byte Field57; // same as 47
         public readonly ushort AmbientLutLengthR;
         public readonly ushort AmbientLutLengthG;
         public readonly ushort AmbientLutLengthB;
@@ -185,7 +185,7 @@ namespace MphRead
         public readonly byte SpecularBlendFactorR;
         public readonly byte SpecularBlendFactorG;
         public readonly byte SpecularBlendFactorB;
-        public readonly byte Field67;
+        public readonly byte Field67; // same as 47
         public readonly ushort SpecularLutLengthR;
         public readonly ushort SpecularLutLengthG;
         public readonly ushort SpecularLutLengthB;

@@ -18,6 +18,11 @@ namespace MphRead
         {
             return value / (float)(1 << 12);
         }
+
+        public override string? ToString()
+        {
+            return Value.ToString();
+        }
     }
 
     // size: 12

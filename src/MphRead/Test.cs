@@ -168,24 +168,28 @@ namespace MphRead
             {
                 if (meta.Value.EntityPath != null)
                 {
-                    for (int i = 0; i < 16; i++)
+                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
+                    foreach (Entity entity in entities)
                     {
-                        IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, i);
-                        foreach (Entity entity in entities)
+                        if (entity.Type == EntityType.LightSource)
                         {
-                            if (entity.Type == EntityType.Item)
-                            {
-                                ItemEntityData data = ((Entity<ItemEntityData>)entity).Data;
-                                if (data.Enabled == 0 && data.HasBase != 0 && data.ModelId != 19)
-                                {
-                                    System.Diagnostics.Debugger.Break();
-                                }
-                            }
+                            LightSourceEntityData data = ((Entity<LightSourceEntityData>)entity).Data;
                         }
                     }
                 }
             }
             Nop();
+        }
+
+        public static void LightColor(uint arg)
+        {
+            uint r = arg & 0x1F;
+            uint g = (arg >> 5) & 0x1F;
+            uint b = (arg >> 10) & 0x1F;
+            int light = (arg & 0x40000000) == 0 ? 0 : 1;
+            Console.WriteLine($"light: {light} R {r}, G {g}, B {b}");
+            //Console.WriteLine($"light: {light} R 0x{r:X2}, G 0x{g:X2}, B 0x{b:X2}");
+            Console.WriteLine();
         }
 
 #pragma warning restore IDE0051 // Remove unused private members
