@@ -634,16 +634,24 @@ namespace MphRead
         public ushort Length { get; }
         public EntityType Type { get; }
         public ushort EntityId { get; }
+        public bool FirstHunt { get; }
 
         public IEnumerable<int> LayerIds
         {
             get
             {
-                for (int i = 0; i < 16; i++)
+                if (FirstHunt)
                 {
-                    if ((LayerMask & (1 << i)) != 0)
+                    yield return -1;
+                }
+                else
+                {
+                    for (int i = 0; i < 16; i++)
                     {
-                        yield return i;
+                        if ((LayerMask & (1 << i)) != 0)
+                        {
+                            yield return i;
+                        }
                     }
                 }
             }
@@ -660,9 +668,10 @@ namespace MphRead
             }
             Type = type;
             EntityId = entityId;
+            FirstHunt = false;
         }
 
-        public Entity(FhEntityEntry entry, EntityType type, ushort someId)
+        public Entity(FhEntityEntry entry, EntityType type, ushort entityId)
         {
             NodeName = entry.NodeName;
             if (!Enum.IsDefined(typeof(EntityType), type))
@@ -670,7 +679,8 @@ namespace MphRead
                 throw new ProgramException($"Invalid entity type {type}");
             }
             Type = type;
-            EntityId = someId;
+            EntityId = entityId;
+            FirstHunt = true;
         }
     }
 

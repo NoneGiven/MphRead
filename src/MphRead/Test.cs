@@ -168,7 +168,7 @@ namespace MphRead
             {
                 if (meta.Value.EntityPath != null)
                 {
-                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, Int32.MaxValue);
+                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
                     foreach (Entity entity in entities)
                     {
                         if (entity.Type == EntityType.LightSource)

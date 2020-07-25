@@ -453,12 +453,12 @@ namespace MphRead
                 {
                     break;
                 }
-                if (layerId == Int32.MaxValue || (entry.LayerMask & (1 << layerId)) != 0)
+                if (layerId == -1 || (entry.LayerMask & (1 << layerId)) != 0)
                 {
                     entities.Add(ReadEntity(bytes, entry));
                 }
             }
-            Debug.Assert(layerId == Int32.MaxValue || entities.Count == header.Lengths[layerId]);
+            Debug.Assert(layerId == -1 || entities.Count == header.Lengths[layerId]);
             return entities;
         }
 
