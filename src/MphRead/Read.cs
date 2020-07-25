@@ -558,11 +558,11 @@ namespace MphRead
                         entities.Add(new Entity<ArtifactEntityData>(entry, type, init.EntityId,
                             ReadStruct<ArtifactEntityData>(bytes[start..end])));
                     }
-                    else if (type == EntityType.CameraSeq)
+                    else if (type == EntityType.CameraSequence)
                     {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<CameraSeqEntityData>());
-                        entities.Add(new Entity<CameraSeqEntityData>(entry, type, init.EntityId,
-                            ReadStruct<CameraSeqEntityData>(bytes[start..end])));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<CameraSequenceEntityData>());
+                        entities.Add(new Entity<CameraSequenceEntityData>(entry, type, init.EntityId,
+                            ReadStruct<CameraSequenceEntityData>(bytes[start..end])));
                     }
                     else if (type == EntityType.ForceField)
                     {

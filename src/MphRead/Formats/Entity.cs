@@ -1168,7 +1168,7 @@ namespace MphRead
     }
 
     // size: 64
-    public readonly struct CameraSeqEntityData
+    public readonly struct CameraSequenceEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;

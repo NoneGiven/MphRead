@@ -335,9 +335,9 @@ namespace MphRead
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<ArtifactEntityData>)entity).Data.Position));
                 }
-                else if (entity.Type == EntityType.CameraSeq)
+                else if (entity.Type == EntityType.CameraSequence)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<CameraSeqEntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<CameraSequenceEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.ForceField)
                 {
@@ -612,7 +612,7 @@ namespace MphRead
             { EntityType.FhCameraPosition, new ColorRgb(0x00, 0xFF, 0x00) },
             { EntityType.Teleporter, new ColorRgb(0xFF, 0xFF, 0xFF) },
             { EntityType.LightSource, new ColorRgb(0xFF, 0xDE, 0xAD) },
-            { EntityType.CameraSeq, new ColorRgb(0xFF, 0x69, 0xB4) }
+            { EntityType.CameraSequence, new ColorRgb(0xFF, 0x69, 0xB4) }
         };
 
         private static Model LoadEntityPlaceholder(EntityType type, Vector3Fx position)

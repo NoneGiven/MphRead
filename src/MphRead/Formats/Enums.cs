@@ -20,7 +20,7 @@ namespace MphRead
         Unknown15 = 15,
         LightSource = 16,
         Artifact = 17,
-        CameraSeq = 18,
+        CameraSequence = 18,
         ForceField = 19,
         EnemyInstance = 23,
         // 25 = player
