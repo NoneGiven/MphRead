@@ -1014,7 +1014,7 @@ namespace MphRead
 
     // size: 41
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public readonly struct Unknown12EntityData
+    public readonly struct OctolithFlagEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
@@ -1028,7 +1028,7 @@ namespace MphRead
     }
 
     // size: 108
-    public readonly struct Unknown13EntityData
+    public readonly struct NodeDefenseEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;

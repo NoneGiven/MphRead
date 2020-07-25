@@ -14,8 +14,8 @@ namespace MphRead
         JumpPad = 9,
         PointModule = 10, // FH leftovers only
         CameraPos = 11,
-        Unknown12 = 12, // octolith (multiplayer)?
-        Unknown13 = 13, // node?
+        OctolithFlag = 12,
+        NodeDefense = 13,
         Teleporter = 14,
         Unknown15 = 15,
         LightSource = 16,

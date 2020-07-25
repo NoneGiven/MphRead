@@ -522,17 +522,17 @@ namespace MphRead
                         entities.Add(new Entity<CameraPosEntityData>(entry, type, init.EntityId,
                             ReadStruct<CameraPosEntityData>(bytes[start..end])));
                     }
-                    else if (type == EntityType.Unknown12)
+                    else if (type == EntityType.OctolithFlag)
                     {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown12EntityData>());
-                        entities.Add(new Entity<Unknown12EntityData>(entry, type, init.EntityId,
-                            ReadStruct<Unknown12EntityData>(bytes[start..end])));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<OctolithFlagEntityData>());
+                        entities.Add(new Entity<OctolithFlagEntityData>(entry, type, init.EntityId,
+                            ReadStruct<OctolithFlagEntityData>(bytes[start..end])));
                     }
-                    else if (type == EntityType.Unknown13)
+                    else if (type == EntityType.NodeDefense)
                     {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown13EntityData>());
-                        entities.Add(new Entity<Unknown13EntityData>(entry, type, init.EntityId,
-                            ReadStruct<Unknown13EntityData>(bytes[start..end])));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<NodeDefenseEntityData>());
+                        entities.Add(new Entity<NodeDefenseEntityData>(entry, type, init.EntityId,
+                            ReadStruct<NodeDefenseEntityData>(bytes[start..end])));
                     }
                     else if (type == EntityType.Teleporter)
                     {

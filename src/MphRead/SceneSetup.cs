@@ -311,13 +311,13 @@ namespace MphRead
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhCameraPosEntityData>)entity).Data.Position));
                 }
-                else if (entity.Type == EntityType.Unknown12)
+                else if (entity.Type == EntityType.OctolithFlag)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown12EntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<OctolithFlagEntityData>)entity).Data.Position));
                 }
-                else if (entity.Type == EntityType.Unknown13)
+                else if (entity.Type == EntityType.NodeDefense)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown13EntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<NodeDefenseEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.Teleporter)
                 {
@@ -602,8 +602,8 @@ namespace MphRead
             { EntityType.FhUnknown9, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.Unknown8, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.FhUnknown10, new ColorRgb(0xFF, 0xFF, 0x00) },
-            { EntityType.Unknown12, new ColorRgb(0x00, 0xFF, 0xFF) },
-            { EntityType.Unknown13, new ColorRgb(0xFF, 0x00, 0xFF) },
+            { EntityType.OctolithFlag, new ColorRgb(0x00, 0xFF, 0xFF) },
+            { EntityType.NodeDefense, new ColorRgb(0xFF, 0x00, 0xFF) },
             { EntityType.Unknown15, new ColorRgb(0x1E, 0x90, 0xFF) },
             // "permanent" placeholders
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
@@ -624,11 +624,6 @@ namespace MphRead
                 {
                     mesh.OverrideColor = mesh.PlaceholderColor = _colorOverrides[type].AsVector4();
                 }
-            }
-            if (System.Diagnostics.Debugger.IsAttached &&
-                (type == EntityType.Unknown12 || type == EntityType.Unknown13 || type == EntityType.Unknown15))
-            {
-                System.Diagnostics.Debugger.Break();
             }
             model.Position = new Vector3(position.X.FloatValue, position.Y.FloatValue, position.Z.FloatValue);
             model.EntityType = type;
