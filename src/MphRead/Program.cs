@@ -9,6 +9,7 @@ namespace MphRead
 
         private static void Main(string[] args)
         {
+            ConsoleColor.Setup();
             if (args.Length > 1)
             {
                 if (args[0] == "-export" || args[0] == "-e")
@@ -25,8 +26,8 @@ namespace MphRead
             using var renderer = new Renderer();
             if (args.Length == 0)
             {
-                renderer.AddRoom("MP3 PROVING GROUND", NodeLayer.Multiplayer0 | NodeLayer.MultiplayerU);
-                //renderer.AddRoom("UNIT2_C1");
+                //renderer.AddRoom("MP3 PROVING GROUND", NodeLayer.Multiplayer0 | NodeLayer.MultiplayerU);
+                renderer.AddRoom("UNIT2_C1");
                 //renderer.AddModel("Crate01");
                 Nop();
             }
