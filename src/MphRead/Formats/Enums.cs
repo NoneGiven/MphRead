@@ -7,13 +7,13 @@ namespace MphRead
         PlayerSpawn = 2,
         Door = 3,
         Item = 4,
-        ItemInstance = 5,
+        // 5 = item instance
         Enemy = 6,
         Unknown7 = 7,
         Unknown8 = 8,
         JumpPad = 9,
         PointModule = 10, // FH leftovers only
-        CameraPos = 11,
+        CameraPosition = 11,
         OctolithFlag = 12,
         NodeDefense = 13,
         Teleporter = 14,
@@ -23,7 +23,7 @@ namespace MphRead
         CameraSeq = 18,
         ForceField = 19,
         EnemyInstance = 23,
-        // 25 = player?
+        // 25 = player
         EnergyBeam = 26,
         EntityListHead = 27,
         // First Hunt

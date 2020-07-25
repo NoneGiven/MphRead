@@ -303,9 +303,9 @@ namespace MphRead
                 {
                     models.Add(LoadPointModule(((Entity<FhPointModuleEntityData>)entity).Data));
                 }
-                else if (entity.Type == EntityType.CameraPos)
+                else if (entity.Type == EntityType.CameraPosition)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<CameraPosEntityData>)entity).Data.Position));
+                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<CameraPositionEntityData>)entity).Data.Position));
                 }
                 else if (entity.Type == EntityType.FhCameraPos)
                 {
@@ -608,7 +608,7 @@ namespace MphRead
             // "permanent" placeholders
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.FhPlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
-            { EntityType.CameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
+            { EntityType.CameraPosition, new ColorRgb(0x00, 0xFF, 0x00) },
             { EntityType.FhCameraPos, new ColorRgb(0x00, 0xFF, 0x00) },
             { EntityType.Teleporter, new ColorRgb(0xFF, 0xFF, 0xFF) },
             { EntityType.LightSource, new ColorRgb(0xFF, 0xDE, 0xAD) },

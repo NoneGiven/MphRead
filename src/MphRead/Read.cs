@@ -516,11 +516,11 @@ namespace MphRead
                         entities.Add(new Entity<PointModuleEntityData>(entry, type, init.EntityId,
                             ReadStruct<PointModuleEntityData>(bytes[start..end])));
                     }
-                    else if (type == EntityType.CameraPos)
+                    else if (type == EntityType.CameraPosition)
                     {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<CameraPosEntityData>());
-                        entities.Add(new Entity<CameraPosEntityData>(entry, type, init.EntityId,
-                            ReadStruct<CameraPosEntityData>(bytes[start..end])));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<CameraPositionEntityData>());
+                        entities.Add(new Entity<CameraPositionEntityData>(entry, type, init.EntityId,
+                            ReadStruct<CameraPositionEntityData>(bytes[start..end])));
                     }
                     else if (type == EntityType.OctolithFlag)
                     {
