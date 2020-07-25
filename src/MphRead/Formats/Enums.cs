@@ -22,10 +22,10 @@ namespace MphRead
         Artifact = 17,
         CameraSequence = 18,
         ForceField = 19,
-        EnemyInstance = 23,
+        // 23 = enemy instance
         // 25 = player
-        EnergyBeam = 26,
-        EntityListHead = 27,
+        // 26 = energy beam
+        // 27 = entity list header
         // First Hunt
         FhPlayerSpawn = 101,
         FhDoor = 103,
