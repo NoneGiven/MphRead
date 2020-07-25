@@ -30,24 +30,10 @@ namespace MphRead
             _window = new RenderWindow(settings, native);
         }
 
-        public void AddRoom(int id, NodeLayer layerMask)
+        public void AddRoom(string name, NodeLayer layerMask = NodeLayer.None,
+            int layerId = 0, GameMode mode = GameMode.SinglePlayer)
         {
-            _window.AddRoom(id, (int)layerMask);
-        }
-
-        public void AddRoom(string name, NodeLayer layerMask)
-        {
-            _window.AddRoom(name, (int)layerMask);
-        }
-
-        public void AddRoom(int id, int layerMask = 0)
-        {
-            _window.AddRoom(id, layerMask);
-        }
-
-        public void AddRoom(string name, int layerMask = 0)
-        {
-            _window.AddRoom(name, layerMask);
+            _window.AddRoom(name, layerMask, layerId, mode);
         }
 
         public void AddModel(string name, int recolor = 0, bool firstHunt = false)
@@ -175,23 +161,14 @@ namespace MphRead
         {
         }
 
-        public void AddRoom(int id, int layerMask)
-        {
-            RoomMetadata? meta = Metadata.GetRoomById(id);
-            if (meta != null)
-            {
-                AddRoom(meta.Name, layerMask);
-            }
-        }
-
-        public void AddRoom(string name, int layerMask)
+        public void AddRoom(string name, NodeLayer layerMask, int layerId, GameMode mode)
         {
             if (_roomLoaded)
             {
                 throw new InvalidOperationException();
             }
             _roomLoaded = true;
-            (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask);
+            (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask, layerId, mode);
             if (roomMeta.InGameName != null)
             {
                 Title = roomMeta.InGameName;

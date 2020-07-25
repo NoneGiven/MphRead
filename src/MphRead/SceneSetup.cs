@@ -8,26 +8,14 @@ namespace MphRead
     {
         private static readonly Random _random = new Random();
 
-        public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, int layerMask)
+        public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, NodeLayer layerMask, int layerId, GameMode mode)
         {
             (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
             if (metadata == null)
             {
                 throw new InvalidOperationException();
             }
-            int roomLayerMask;
-            if (layerMask != 0)
-            {
-                roomLayerMask = layerMask;
-            }
-            else if (metadata.LayerId != 0)
-            {
-                roomLayerMask = ((1 << metadata.LayerId) & 0xFF) << 6;
-            }
-            else
-            {
-                roomLayerMask = -1;
-            }
+            // roomLayerMask = ((1 << metadata.LayerId) & 0xFF) << 6;
             Model room = Read.GetRoomByName(name);
             // todo?: do whatever with NodePosition/NodeInitialPosition
             // todo?: use this name and ID
@@ -39,17 +27,17 @@ namespace MphRead
                 nodeName = room.Nodes[nodeIndex].Name;
                 nodeId = room.Nodes[nodeIndex].ChildIndex;
             }
-            FilterNodes(room, roomLayerMask);
+            FilterNodes(room, layerMask);
             // todo?: scene min/max coordinates
             ComputeNodeMatrices(room, index: 0);
-            (int areaId, bool multiplayer) = Metadata.GetAreaInfo(roomId);
-            IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, multiplayer);
+            int areaId = Metadata.GetAreaInfo(roomId);
+            IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, layerId, mode);
             // todo?: area ID/portals
             room.Type = ModelType.Room;
             return (room, metadata, entities);
         }
 
-        private static void FilterNodes(Model model, int layerMask)
+        private static void FilterNodes(Model model, NodeLayer layerMask)
         {
             foreach (Node node in model.Nodes)
             {
@@ -91,7 +79,7 @@ namespace MphRead
                         flags |= (int)NodeLayer.CaptureTheFlag;
                     }
                 }
-                if ((flags & layerMask) == 0)
+                if ((flags & (int)layerMask) == 0)
                 {
                     node.Enabled = false;
                 }
@@ -206,15 +194,13 @@ namespace MphRead
             model.Transform = scaleMatrix * transform;
         }
 
-        private static IReadOnlyList<Model> LoadEntities(RoomMetadata metadata, int areaId, bool multiplayer)
+        private static IReadOnlyList<Model> LoadEntities(RoomMetadata metadata, int areaId, int layerId, GameMode mode)
         {
             var models = new List<Model>();
             if (metadata.EntityPath == null)
             {
                 return models;
             }
-            // todo: figure out room info layer ID
-            int layerId = 1; //metadata.LayerId
             IReadOnlyList<Entity> entities = Read.GetEntities(metadata.EntityPath, layerId);
             foreach (Entity entity in entities)
             {
@@ -313,7 +299,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.OctolithFlag)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<OctolithFlagEntityData>)entity).Data.Position));
+                    models.AddRange(LoadOctolithFlag(((Entity<OctolithFlagEntityData>)entity).Data, mode));
                 }
                 else if (entity.Type == EntityType.NodeDefense)
                 {
@@ -321,7 +307,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Teleporter)
                 {
-                    models.Add(LoadTeleporter(((Entity<TeleporterEntityData>)entity).Data, areaId, multiplayer));
+                    models.Add(LoadTeleporter(((Entity<TeleporterEntityData>)entity).Data, areaId, mode != GameMode.SinglePlayer));
                 }
                 else if (entity.Type == EntityType.Unknown15)
                 {
@@ -529,6 +515,32 @@ namespace MphRead
             model.Floating = true;
             model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
             return model;
+        }
+
+        // todo: flagbase_cap loads in somewhere in Bounty mode
+        private static IEnumerable<Model> LoadOctolithFlag(OctolithFlagEntityData data, GameMode mode)
+        {
+            Model itemBase;
+            Model octolith;
+            if (mode == GameMode.Capture)
+            {
+                itemBase = Read.GetModelByName("octolith_ctf", data.TeamId);
+                octolith = Read.GetModelByName("flagbase_ctf", data.TeamId);
+            }
+            else // if mode == GameMode.Bounty
+            {
+                itemBase = Read.GetModelByName("flagbase_bounty");
+                // todo: is this right? needs some transforms/height offset
+                octolith = Read.GetModelByName("Octolith");
+            }
+            itemBase.Position = data.Position.ToFloatVector();
+            ComputeModelMatrices(itemBase, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
+            ComputeNodeMatrices(itemBase, index: 0);
+            itemBase.Type = ModelType.Generic;
+            // todo: does this need to be transformed any further? height offset?
+            octolith.Position = data.Position.ToFloatVector();
+            octolith.Type = ModelType.Generic;
+            return new List<Model>() { itemBase, octolith };
         }
 
         private static Model LoadPointModule(PointModuleEntityData data)

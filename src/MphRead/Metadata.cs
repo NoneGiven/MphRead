@@ -401,7 +401,7 @@ namespace MphRead
             return (ushort)(r | g << 5 | b << 10);
         }
 
-        public static (int, bool) GetAreaInfo(int roomId)
+        public static int GetAreaInfo(int roomId)
         {
             int areaId = 8;
             if (roomId >= 27 && roomId < 36)
@@ -436,8 +436,8 @@ namespace MphRead
             {
                 areaId = 7;
             }
-            bool multiplayer = roomId >= 93 && roomId <= 119;
-            return (areaId, multiplayer);
+            //bool multiplayer = roomId >= 93 && roomId <= 119;
+            return areaId;
         }
 
         private static readonly IReadOnlyList<string> _roomIds
@@ -4766,8 +4766,8 @@ namespace MphRead
                     new ModelMetadata("flagbase_ctf",
                         recolors: new List<string>()
                         {
-                            "green_img",
-                            "orange_img"
+                            "orange_img",
+                            "green_img"
                         },
                         animation: true,
                         mdlSuffix: MdlSuffix.Model)
@@ -5367,8 +5367,8 @@ namespace MphRead
                     new ModelMetadata("octolith_ctf",
                         recolors: new List<string>()
                         {
-                            "green_img",
-                            "orange_img"
+                            "orange_img",
+                            "green_img"
                         },
                         animation: true,
                         mdlSuffix: MdlSuffix.Model)

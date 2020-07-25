@@ -677,9 +677,24 @@ namespace MphRead
         }
     }
 
+    // todo: FH game modes
+    // todo: use these to set up all the appropriate layer stuff
+    public enum GameMode
+    {
+        SinglePlayer,
+        Battle,
+        Survival,
+        PrimeHunter,
+        Capture,
+        Bounty,
+        Nodes,
+        Defender
+    }
+
     [Flags]
     public enum NodeLayer
     {
+        None = 0x0000, // todo: um
         Multiplayer0 = 0x0008,
         Multiplayer1 = 0x0010,
         MultiplayerU = 0x0020,
