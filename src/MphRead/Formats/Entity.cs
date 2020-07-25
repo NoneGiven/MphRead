@@ -1034,6 +1034,7 @@ namespace MphRead
         public readonly uint Field60;
     }
 
+    // sktodo: confirm the vectors
     // size: 136
     public readonly struct LightSourceEntityData
     {
@@ -1041,32 +1042,13 @@ namespace MphRead
         public readonly Vector3Fx Position;
         public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
-        public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
-        public readonly uint Field58;
-        public readonly uint Field5C;
-        public readonly uint Field60;
+        public readonly Matrix44Fx Matrix;
         public readonly byte Field64; // todo: always 0 or 1
         public readonly ColorRgb Light1Color; // 8-bit color values
-        public readonly uint Field68;
-        public readonly uint Field6C;
-        public readonly uint Field70;
+        public readonly Vector3Fx Light1Vector;
         public readonly byte Field74; // same as field 64
         public readonly ColorRgb Light2Color;
-        public readonly uint Field78;
-        public readonly uint Field7C;
-        public readonly uint Field80;
+        public readonly Vector3Fx Light2Vector;
     }
 
     // size: 70

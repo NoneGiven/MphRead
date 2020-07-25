@@ -174,10 +174,6 @@ namespace MphRead
                         if (entity.Type == EntityType.LightSource)
                         {
                             LightSourceEntityData data = ((Entity<LightSourceEntityData>)entity).Data;
-                            if (data.Field64 == 0 || data.Field74 == 0)
-                            {
-                                System.Diagnostics.Debugger.Break();
-                            }
                         }
                     }
                 }
