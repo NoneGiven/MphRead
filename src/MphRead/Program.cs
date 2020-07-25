@@ -50,7 +50,7 @@ namespace MphRead
                             Exit();
                         }
                         int mask = GetInt(args, i + 2);
-                        renderer.AddRoom(modelName, mask);
+                        renderer.AddRoom(modelName, (NodeLayer)mask);
                     }
                     else if (arg == "-model" || arg == "-m")
                     {
