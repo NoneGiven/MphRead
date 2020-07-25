@@ -367,7 +367,7 @@ namespace MphRead
             string modelName = Metadata.JumpPads[(int)data.ModelId];
             Model model1 = Read.GetModelByName(modelName);
             model1.Position = data.Position.ToFloatVector();
-            ComputeModelMatrices(model1, data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector());
+            ComputeModelMatrices(model1, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             model1.Type = ModelType.JumpPad;
             list.Add(model1);
             Model model2 = Read.GetModelByName("JumpPad_Beam");
@@ -385,7 +385,7 @@ namespace MphRead
             string name = data.ModelId == 1 ? "balljump" : "jumppad_base";
             Model model1 = Read.GetModelByName(name, firstHunt: true);
             model1.Position = data.Position.ToFloatVector();
-            ComputeModelMatrices(model1, data.BaseVector2.ToFloatVector(), data.BaseVector1.ToFloatVector());
+            ComputeModelMatrices(model1, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             model1.Type = ModelType.JumpPad;
             list.Add(model1);
             name = data.ModelId == 1 ? "balljump_ray" : "jumppad_ray";
@@ -538,7 +538,7 @@ namespace MphRead
             ComputeNodeMatrices(nodeBase, index: 0);
             return nodeBase;
         }
-        
+
         private static Model LoadOctolithFlag(OctolithFlagEntityData data, GameMode mode)
         {
             Model octolith = Read.GetModelByName("octolith_ctf", mode == GameMode.Capture ? data.TeamId : 2);
@@ -586,7 +586,7 @@ namespace MphRead
             }
             Model model = Read.GetModelByName(meta.Name, recolorId);
             model.Position = data.Position.ToFloatVector();
-            ComputeModelMatrices(model, data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector());
+            ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             return model;
@@ -597,7 +597,7 @@ namespace MphRead
         {
             Model model = Read.GetModelByName("door", firstHunt: true);
             model.Position = data.Position.ToFloatVector();
-            ComputeModelMatrices(model, data.Rotation.ToFloatVector(), data.Vector2.ToFloatVector());
+            ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             return model;

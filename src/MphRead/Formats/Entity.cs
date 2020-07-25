@@ -307,8 +307,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
+        public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
-        public readonly Vector3Fx Rotation;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
         public readonly string NodeName;
         public readonly uint PaletteId;
@@ -329,8 +329,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
+        public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
-        public readonly Vector3Fx Rotation;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -779,8 +779,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly Vector3Fx BaseVector1;
-        public readonly Vector3Fx BaseVector2;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -816,8 +816,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly Vector3Fx BaseVector1;
-        public readonly Vector3Fx BaseVector2;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
