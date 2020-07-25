@@ -299,11 +299,11 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.OctolithFlag)
                 {
-                    models.AddRange(LoadOctolithFlag(((Entity<OctolithFlagEntityData>)entity).Data, mode));
+                    models.Add(LoadOctolithFlag(((Entity<OctolithFlagEntityData>)entity).Data, mode));
                 }
-                else if (entity.Type == EntityType.NodeDefense)
+                else if (entity.Type == EntityType.NodeBase)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<NodeDefenseEntityData>)entity).Data.Position));
+                    models.Add(LoadNodeBase(((Entity<NodeBaseEntityData>)entity).Data, mode));
                 }
                 else if (entity.Type == EntityType.Teleporter)
                 {
@@ -517,34 +517,48 @@ namespace MphRead
             return model;
         }
 
-        // todo: flagbase_cap loads in somewhere in Bounty mode
-        private static IEnumerable<Model> LoadOctolithFlag(OctolithFlagEntityData data, GameMode mode)
+        // todo: splitting up the bases and flags like this seems to work for CTF, but not Bounty
+        // (the destination has a base, but the flag doesn't)
+        private static Model LoadNodeBase(NodeBaseEntityData data, GameMode mode)
         {
-            Model itemBase;
+            Model nodeBase;
+            if (mode == GameMode.Capture)
+            {
+                nodeBase = Read.GetModelByName("flagbase_ctf", 0); // sktodo: team ID
+            }
+            else // if mode == GameMode.Bounty
+            {
+                // todo: flagbase_cap loads in somewhere in Bounty mode
+                nodeBase = Read.GetModelByName("flagbase_bounty");
+            }
+            nodeBase.Position = data.Position.ToFloatVector();
+            ComputeModelMatrices(nodeBase, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
+            ComputeNodeMatrices(nodeBase, index: 0);
+            return nodeBase;
+        }
+
+        private static Model LoadOctolithFlag(OctolithFlagEntityData data, GameMode mode)
+        {
             Model octolith;
             if (mode == GameMode.Capture)
             {
-                itemBase = Read.GetModelByName("flagbase_ctf", data.TeamId);
                 octolith = Read.GetModelByName("octolith_ctf", data.TeamId);
             }
             else // if mode == GameMode.Bounty
             {
-                itemBase = Read.GetModelByName("flagbase_bounty");
                 // todo: is this right? needs scaling or something
                 octolith = Read.GetModelByName("Octolith");
             }
-            itemBase.Position = data.Position.ToFloatVector();
-            ComputeModelMatrices(itemBase, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
-            ComputeNodeMatrices(itemBase, index: 0);
-            itemBase.Type = ModelType.Generic;
-            // todo: does this need to be transformed any further? also, get the right height offset
+            // todo: height offset
             octolith.Position = new Vector3(
                     data.Position.X.FloatValue,
                     data.Position.Y.FloatValue + 1.15f,
                     data.Position.Z.FloatValue
                 );
+            ComputeModelMatrices(octolith, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
+            ComputeNodeMatrices(octolith, index: 0);
             octolith.Type = ModelType.Generic;
-            return new List<Model>() { itemBase, octolith };
+            return octolith;
         }
 
         private static Model LoadPointModule(PointModuleEntityData data)
@@ -619,7 +633,7 @@ namespace MphRead
             { EntityType.Unknown8, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.FhUnknown10, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.OctolithFlag, new ColorRgb(0x00, 0xFF, 0xFF) },
-            { EntityType.NodeDefense, new ColorRgb(0xFF, 0x00, 0xFF) },
+            { EntityType.NodeBase, new ColorRgb(0xFF, 0x00, 0xFF) },
             { EntityType.Unknown15, new ColorRgb(0x1E, 0x90, 0xFF) },
             // "permanent" placeholders
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },

@@ -15,7 +15,7 @@ namespace MphRead
         PointModule = 10, // FH leftovers only
         CameraPosition = 11,
         OctolithFlag = 12,
-        NodeDefense = 13,
+        NodeBase = 13,
         Teleporter = 14,
         Unknown15 = 15,
         LightSource = 16,

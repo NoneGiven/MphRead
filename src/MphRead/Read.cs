@@ -528,11 +528,11 @@ namespace MphRead
                         entities.Add(new Entity<OctolithFlagEntityData>(entry, type, init.EntityId,
                             ReadStruct<OctolithFlagEntityData>(bytes[start..end])));
                     }
-                    else if (type == EntityType.NodeDefense)
+                    else if (type == EntityType.NodeBase)
                     {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<NodeDefenseEntityData>());
-                        entities.Add(new Entity<NodeDefenseEntityData>(entry, type, init.EntityId,
-                            ReadStruct<NodeDefenseEntityData>(bytes[start..end])));
+                        Debug.Assert(entry.Length == Marshal.SizeOf<NodeBaseEntityData>());
+                        entities.Add(new Entity<NodeBaseEntityData>(entry, type, init.EntityId,
+                            ReadStruct<NodeBaseEntityData>(bytes[start..end])));
                     }
                     else if (type == EntityType.Teleporter)
                     {
