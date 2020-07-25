@@ -187,12 +187,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -289,12 +285,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly ushort Field24;
         public readonly byte Field26;
     }
@@ -304,12 +296,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly ushort Field24;
         public readonly ushort Field26;
     }
@@ -356,12 +344,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint FieldC;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint ItemId;
         public readonly uint ModelId;
         public readonly byte Enabled; // boolean
@@ -383,12 +367,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint ModelId;
         public readonly uint Field28;
         public readonly ushort Field2C;
@@ -399,12 +379,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -530,12 +506,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -600,12 +572,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -643,12 +611,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -714,12 +678,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -755,12 +715,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -926,12 +882,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly byte Field28;
     }
@@ -943,12 +895,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly byte Field28;
     }
@@ -958,12 +906,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -988,12 +932,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -1074,12 +1014,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -1103,12 +1039,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -1143,12 +1075,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
@@ -1164,12 +1092,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
-        public readonly uint Field0C;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
         public readonly uint Field24;
         public readonly uint Field28;
         public readonly uint Field2C;
