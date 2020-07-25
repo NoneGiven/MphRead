@@ -650,11 +650,11 @@ namespace MphRead
                     entities.Add(new Entity<FhPointModuleEntityData>(entry, type, init.EntityId,
                         ReadStruct<FhPointModuleEntityData>(bytes[start..end])));
                 }
-                else if (type == EntityType.FhCameraPos)
+                else if (type == EntityType.FhCameraPosition)
                 {
-                    end = start + Marshal.SizeOf<FhCameraPosEntityData>();
-                    entities.Add(new Entity<FhCameraPosEntityData>(entry, type, init.EntityId,
-                        ReadStruct<FhCameraPosEntityData>(bytes[start..end])));
+                    end = start + Marshal.SizeOf<FhCameraPositionEntityData>();
+                    entities.Add(new Entity<FhCameraPositionEntityData>(entry, type, init.EntityId,
+                        ReadStruct<FhCameraPositionEntityData>(bytes[start..end])));
                 }
                 else
                 {

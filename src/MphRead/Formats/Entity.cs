@@ -984,7 +984,7 @@ namespace MphRead
 
     // todo: might be interchangeable with the MPH version
     // size: 104
-    public readonly struct FhCameraPosEntityData
+    public readonly struct FhCameraPositionEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;

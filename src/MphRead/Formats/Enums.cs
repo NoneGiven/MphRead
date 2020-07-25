@@ -36,7 +36,7 @@ namespace MphRead
         FhPlatform = 111,
         FhJumpPad = 112,
         FhPointModule = 113,
-        FhCameraPos = 114
+        FhCameraPosition = 114
     }
 
     public enum ModelType
