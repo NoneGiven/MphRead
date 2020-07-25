@@ -2141,7 +2141,7 @@ namespace MphRead
                     string string1 = $"{color1.Red};{color1.Green};{color1.Blue}";
                     string string2 = $"{color2.Red};{color2.Green};{color2.Blue}";
                     type += $" \u001b[38;2;{string1}m████\u001b[0m \u001b[38;2;{string2}m████\u001b[0m";
-                    type += $" {entity.Data.Field64} / {entity.Data.Field74}";
+                    type += $" {entity.Data.Light1Enabled} / {entity.Data.Light2Enabled}";
                     Vector3Fx vector1 = entity.Data.Light1Vector;
                     Vector3Fx vector2 = entity.Data.Light2Vector;
                     type += $" ({vector1.X.FloatValue}, {vector1.Y.FloatValue}, {vector1.Z.FloatValue}) " +

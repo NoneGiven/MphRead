@@ -1034,7 +1034,6 @@ namespace MphRead
         public readonly uint Field60;
     }
 
-    // sktodo: confirm the vectors
     // size: 136
     public readonly struct LightSourceEntityData
     {
@@ -1043,10 +1042,10 @@ namespace MphRead
         public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
         public readonly Matrix44Fx Matrix;
-        public readonly byte Field64; // todo: always 0 or 1
+        public readonly byte Light1Enabled; // boolean
         public readonly ColorRgb Light1Color; // 8-bit color values
         public readonly Vector3Fx Light1Vector;
-        public readonly byte Field74; // same as field 64
+        public readonly byte Light2Enabled;
         public readonly ColorRgb Light2Color;
         public readonly Vector3Fx Light2Vector;
     }
