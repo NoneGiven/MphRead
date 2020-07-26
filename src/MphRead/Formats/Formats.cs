@@ -789,32 +789,32 @@ namespace MphRead
                 Vector3 point5 = point0 + sideY + sideZ;
                 Vector3 point6 = point0 + sideX + sideY;
                 Vector3 point7 = point0 + sideX + sideY + sideZ;
-                //
+                // face 1
                 yield return point0;
                 yield return point4;
                 yield return point2;
                 yield return point6;
-                //
+                // face 2
                 yield return point2;
                 yield return point6;
                 yield return point3;
                 yield return point7;
-                //
+                // face 3
                 yield return point3;
                 yield return point7;
                 yield return point1;
                 yield return point5;
-                //
+                // face 4
                 yield return point1;
                 yield return point5;
                 yield return point0;
                 yield return point4;
-                //
+                // face 5
                 yield return point6;
                 yield return point4;
                 yield return point7;
                 yield return point5;
-                //
+                // face 6
                 yield return point0;
                 yield return point2;
                 yield return point1;
