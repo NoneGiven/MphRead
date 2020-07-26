@@ -79,15 +79,17 @@ namespace MphRead
         public string? AnimationPath { get; }
         public string? CollisionPath { get; }
         public IReadOnlyList<RecolorMetadata> Recolors { get; }
+        public bool UseLightSources { get; }
 
         public ModelMetadata(string name, string modelPath, string? animationPath, string? collisionPath,
-            IReadOnlyList<RecolorMetadata> recolors)
+            IReadOnlyList<RecolorMetadata> recolors, bool useLightSources = false)
         {
             Name = name;
             ModelPath = modelPath;
             AnimationPath = animationPath;
             CollisionPath = collisionPath;
             Recolors = recolors;
+            UseLightSources = useLightSources;
         }
 
         public ModelMetadata(string name, string? animationPath, string? texturePath = null)
@@ -123,8 +125,8 @@ namespace MphRead
         }
 
         public ModelMetadata(string name, IEnumerable<string> recolors, string? remove = null,
-            bool animation = false, string? animationPath = null, bool texture = false,
-            MdlSuffix mdlSuffix = MdlSuffix.None, string? archive = null, string? recolorName = null)
+            bool animation = false, string? animationPath = null, bool texture = false, MdlSuffix mdlSuffix = MdlSuffix.None,
+            string? archive = null, string? recolorName = null, bool useLightSources = false)
         {
             Name = name;
             string suffix = "";
@@ -176,6 +178,7 @@ namespace MphRead
                 recolorList.Add(new RecolorMetadata(recolor, recolorModel, texturePath));
             }
             Recolors = recolorList;
+            UseLightSources = useLightSources;
         }
 
         public ModelMetadata(string name, bool animation = true, bool collision = false,
@@ -4535,7 +4538,7 @@ namespace MphRead
                                 modelPath: @"_archives\common\samus_ice_img_Model.bin",
                                 texturePath: @"_archives\common\samus_ice_img_Model.bin",
                                 palettePath: @"_archives\common\samus_ice_img_Model.bin")
-                        })
+                        }, useLightSources: true)
                 },
                 {
                     "arcWelder1",
@@ -4980,7 +4983,8 @@ namespace MphRead
                             "pal_01"
                         },
                         texture: true,
-                        archive: "Guardian")
+                        archive: "Guardian",
+                        useLightSources: true)
                 },
                 {
                     "Guardian_lod1",
@@ -4990,7 +4994,8 @@ namespace MphRead
                         {
                             "pal_01"
                         },
-                        texture: true)
+                        texture: true,
+                        useLightSources: true)
                 },
                 // next two not part of the game's files, edited to allow choosing the unused recolors
                 {
@@ -5025,7 +5030,7 @@ namespace MphRead
                                 modelPath: @"models\GuardianR_pal_Team02_Model.bin",
                                 texturePath: @"models\GuardianR_pal_Team02_Tex.bin",
                                 palettePath: @"models\GuardianR_pal_Team02_Tex.bin")
-                        })
+                        }, useLightSources: true)
                 },
                 {
                     "GuardianR_lod1",
@@ -5059,7 +5064,7 @@ namespace MphRead
                                 modelPath: @"models\GuardianR_pal_Team02_Model.bin",
                                 texturePath: @"models\GuardianR_pal_Team02_Tex.bin",
                                 palettePath: @"models\GuardianR_pal_Team02_Tex.bin")
-                        })
+                        }, useLightSources: true)
                 },
                 {
                     "Guardian_Stasis",
@@ -5156,7 +5161,8 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true,
-                        archive: "Kanden")
+                        archive: "Kanden",
+                        useLightSources: true) // todo: confirm lod0 vs. lod1 for using light sources
                 },
                 {
                     "Kanden_lod1",
@@ -5171,7 +5177,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
-                        texture: true)
+                        texture: true,
+                        useLightSources: true)
                 },
                 {
                     "KandenAlt_lod0",
@@ -5188,8 +5195,10 @@ namespace MphRead
                         },
                         texture: true,
                         archive: "Kanden",
-                        recolorName: "Kanden")
+                        recolorName: "Kanden",
+                        useLightSources: true)
                 },
+                // note: confirmed this does not use light sources
                 {
                     "KandenAlt_TailBomb",
                     new ModelMetadata("KandenAlt_TailBomb",
@@ -5220,7 +5229,8 @@ namespace MphRead
                             "img_Team02"
                         },
                         texture: true,
-                        archive: "localKanden")
+                        archive: "localKanden",
+                        useLightSources: true)
                 },
                 {
                     "koth_data_flow",
@@ -5300,7 +5310,8 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true,
-                        archive: "Nox")
+                        archive: "Nox",
+                        useLightSources: true)
                 },
                 {
                     "Nox_lod1",
@@ -5315,7 +5326,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
-                        texture: true)
+                        texture: true,
+                        useLightSources: true)
                 },
                 {
                     "NoxAlt_lod0",
@@ -5332,7 +5344,8 @@ namespace MphRead
                         },
                         texture: true,
                         archive: "Nox",
-                        recolorName: "Nox")
+                        recolorName: "Nox",
+                        useLightSources: true)
                 },
                 {
                     "NoxGun",
@@ -5347,7 +5360,8 @@ namespace MphRead
                             "img_Team02"
                         },
                         texture: true,
-                        archive: "localNox")
+                        archive: "localNox",
+                        useLightSources: true)
                 },
                 {
                     "nox_ice",
@@ -5361,7 +5375,7 @@ namespace MphRead
                                 modelPath: @"_archives\common\samus_ice_img_Model.bin",
                                 texturePath: @"_archives\common\samus_ice_img_Model.bin",
                                 palettePath: @"_archives\common\samus_ice_img_Model.bin")
-                        })
+                        }, useLightSources: true)
                 },
                 {
                     "octolith_ctf",
@@ -5584,7 +5598,8 @@ namespace MphRead
                             "pal_team02"
                         },
                         texture: true,
-                        archive: "Samus")
+                        archive: "Samus",
+                        useLightSources: true)
                 },
                 {
                     "Samus_lod1",
@@ -5599,7 +5614,8 @@ namespace MphRead
                             "pal_team01",
                             "pal_team02"
                         },
-                        texture: true)
+                        texture: true,
+                        useLightSources: true)
                 },
                 {
                     "SamusAlt_lod0",
@@ -5617,7 +5633,8 @@ namespace MphRead
                         animation: false,
                         texture: true,
                         archive: "Samus",
-                        recolorName: "Samus")
+                        recolorName: "Samus",
+                        useLightSources: true)
                 },
                 {
                     "SamusGun",
@@ -5632,7 +5649,8 @@ namespace MphRead
                             "img_Team02"
                         },
                         texture: true,
-                        archive: "localSamus")
+                        archive: "localSamus",
+                        useLightSources: true)
                 },
                 {
                     "samus_ice",
@@ -5646,7 +5664,7 @@ namespace MphRead
                                 modelPath: @"_archives\common\samus_ice_img_Model.bin",
                                 texturePath: @"_archives\common\samus_ice_img_Model.bin",
                                 palettePath: @"_archives\common\samus_ice_img_Model.bin")
-                        })
+                        }, useLightSources: true)
                 },
                 {
                     "SecretSwitch",
@@ -5731,7 +5749,8 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true,
-                        archive: "Spire")
+                        archive: "Spire",
+                        useLightSources: true)
                 },
                 {
                     "Spire_lod1",
@@ -5746,7 +5765,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
-                        texture: true)
+                        texture: true,
+                        useLightSources: true)
                 },
                 {
                     "SpireAlt_lod0",
@@ -5763,7 +5783,8 @@ namespace MphRead
                         },
                         texture: true,
                         archive: "Spire",
-                        recolorName: "Spire")
+                        recolorName: "Spire",
+                        useLightSources: true)
                 },
                 {
                     "SpireGun",
@@ -5778,7 +5799,8 @@ namespace MphRead
                             "img_Team02"
                         },
                         texture: true,
-                        archive: "localSpire")
+                        archive: "localSpire",
+                        useLightSources: true)
                 },
                 {
                     "splashRing",
@@ -5805,7 +5827,8 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true,
-                        archive: "Sylux")
+                        archive: "Sylux",
+                        useLightSources: true)
                 },
                 {
                     "Sylux_lod1",
@@ -5820,7 +5843,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
-                        texture: true)
+                        texture: true,
+                        useLightSources: true)
                 },
                 {
                     "SyluxAlt_lod0",
@@ -5837,7 +5861,8 @@ namespace MphRead
                         },
                         texture: true,
                         archive: "Sylux",
-                        recolorName: "Sylux")
+                        recolorName: "Sylux",
+                        useLightSources: true)
                 },
                 {
                     "SyluxGun",
@@ -5852,7 +5877,8 @@ namespace MphRead
                             "img_Team02"
                         },
                         texture: true,
-                        archive: "localSylux")
+                        archive: "localSylux",
+                        useLightSources: true)
                 },
                 {
                     "SyluxShip",
@@ -6004,7 +6030,8 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true,
-                        archive: "Trace")
+                        archive: "Trace",
+                        useLightSources: true)
                 },
                 {
                     "Trace_lod1",
@@ -6019,7 +6046,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
-                        texture: true)
+                        texture: true,
+                        useLightSources: true)
                 },
                 {
                     "TraceAlt_lod0",
@@ -6036,7 +6064,8 @@ namespace MphRead
                         },
                         texture: true,
                         archive: "Trace",
-                        recolorName: "Trace")
+                        recolorName: "Trace",
+                        useLightSources: true)
                 },
                 {
                     "TraceGun",
@@ -6051,7 +6080,8 @@ namespace MphRead
                             "img_Team02"
                         },
                         texture: true,
-                        archive: "localTrace")
+                        archive: "localTrace",
+                        useLightSources: true)
                 },
                 {
                     "trail",
@@ -6191,7 +6221,8 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true,
-                        archive: "Weavel")
+                        archive: "Weavel",
+                        useLightSources: true)
                 },
                 {
                     "Weavel_lod1",
@@ -6206,7 +6237,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
-                        texture: true)
+                        texture: true,
+                        useLightSources: true)
                 },
                 {
                     "WeavelAlt_lod0",
@@ -6223,7 +6255,8 @@ namespace MphRead
                         },
                         texture: true,
                         archive: "Weavel",
-                        recolorName: "Weavel")
+                        recolorName: "Weavel",
+                        useLightSources: true)
                 },
                 {
                     "WeavelAlt_Turret_lod0",
@@ -6240,7 +6273,8 @@ namespace MphRead
                         },
                         texture: true,
                         archive: "Weavel",
-                        recolorName: "Weavel")
+                        recolorName: "Weavel",
+                        useLightSources: true)
                 },
                 {
                     "WeavelGun",
@@ -6255,7 +6289,8 @@ namespace MphRead
                             "img_Team02"
                         },
                         texture: true,
-                        archive: "localWeavel")
+                        archive: "localWeavel",
+                        useLightSources: true)
                 },
                 {
                     "zoomer",

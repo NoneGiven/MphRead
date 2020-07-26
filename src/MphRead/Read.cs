@@ -42,7 +42,7 @@ namespace MphRead
             {
                 new RecolorMetadata("default", path, externalTexture ? path.Replace("_Model", "_Tex") : path)
             };
-            return GetModel("model", path, null, recolors, 0);
+            return GetModel("model", path, null, recolors, defaultRecolor: 0, useLightSources: false);
         }
 
         public static Model GetRoomByName(string name)
@@ -71,14 +71,14 @@ namespace MphRead
             {
                 new RecolorMetadata("default", meta.ModelPath, meta.TexturePath ?? meta.ModelPath)
             };
-            Model room = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, recolors, defaultRecolor: 0);
+            Model room = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, recolors, defaultRecolor: 0, useLightSources: false);
             room.Type = ModelType.Room;
             return room;
         }
 
         private static Model GetModel(ModelMetadata meta, int defaultRecolor)
         {
-            Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.Recolors, defaultRecolor);
+            Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.Recolors, defaultRecolor, meta.UseLightSources);
             return model;
         }
 
@@ -89,7 +89,7 @@ namespace MphRead
             {
                 new RecolorMetadata("default", path)
             };
-            return GetModel(name, path, null, recolors, defaultRecolor: 0);
+            return GetModel(name, path, null, recolors, defaultRecolor: 0, useLightSources: false);
         }
 
         public static Header GetHeader(string path)
@@ -100,7 +100,7 @@ namespace MphRead
         }
 
         private static Model GetModel(string name, string modelPath, string? animationPath,
-            IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor)
+            IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor, bool useLightSources)
         {
             if (defaultRecolor < 0 || defaultRecolor > recolorMeta.Count - 1)
             {
@@ -184,7 +184,7 @@ namespace MphRead
             AnimationResults animations = LoadAnimation(animationPath);
             return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                textureMatrices, recolors, defaultRecolor);
+                textureMatrices, recolors, defaultRecolor, useLightSources);
         }
 
         private class AnimationResults

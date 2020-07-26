@@ -11,6 +11,7 @@ namespace MphRead
     {
         public bool Visible { get; set; } = true;
         public bool ScanVisorOnly { get; set; }
+        public bool UseLightSources { get; }
         public ModelType Type { get; set; }
         public EntityType EntityType { get; set; } // currently only used when ModelType is Placeholder
 
@@ -148,7 +149,7 @@ namespace MphRead
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
             IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
             IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
-            IReadOnlyList<Matrix44Fx> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor)
+            IReadOnlyList<Matrix44Fx> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor, bool useLightSources)
         {
             ThrowIfInvalidEnums(materials);
             Name = name;
@@ -167,6 +168,7 @@ namespace MphRead
             CurrentRecolor = defaultRecolor;
             float scale = Header.ScaleBase.FloatValue * (1 << (int)Header.ScaleFactor);
             Scale = new Vector3(scale, scale, scale);
+            UseLightSources = useLightSources;
         }
 
         public IEnumerable<ColorRgba> GetPixels(int textureId, int paletteId)
