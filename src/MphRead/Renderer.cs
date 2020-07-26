@@ -135,6 +135,7 @@ namespace MphRead
         private bool _lighting = false;
         private bool _scanVisor = false;
         private bool _showInvisible = false;
+        private int _showLightVolumes = 0;
         private bool _transformRoomNodes = false; // undocumented
 
         private static readonly Color4 _clearColor = new Color4(0, 0, 0, 1);
@@ -626,48 +627,47 @@ namespace MphRead
             _models.Sort(CompareModels);
             foreach (Model model in _models)
             {
-                if ((model.Type == ModelType.Placeholder && !_showInvisible) || (model.ScanVisorOnly && !_scanVisor))
+                if ((model.Type != ModelType.Placeholder || _showInvisible) && (!model.ScanVisorOnly || _scanVisor))
                 {
-                    continue;
-                }
-                if (_frameCount != 0 &&
-                    ((!_frameAdvanceOn && _frameCount % 2 == 0)
-                    || (_frameAdvanceOn && _advanceOneFrame)))
-                {
-                    UpdateAnimationFrames(model);
-                }
-                GL.MatrixMode(MatrixMode.Modelview);
-                GL.PushMatrix();
-                Matrix4 transform = model.Transform;
-                GL.MultMatrix(ref transform);
-                _modelMatrix = Matrix4.Identity;
-                _modelMatrix = transform * _modelMatrix;
-                if (model.Rotating)
-                {
-                    model.Spin = (float)(model.Spin + elapsedTime * 360 * 0.35) % 360;
-                    transform = SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
-                        MathHelper.DegreesToRadians(model.SpinAxis.X * model.Spin),
-                        MathHelper.DegreesToRadians(model.SpinAxis.Y * model.Spin),
-                        MathHelper.DegreesToRadians(model.SpinAxis.Z * model.Spin)),
-                        Vector3.Zero);
-                    if (model.Floating)
+                    if (_frameCount != 0 &&
+                        ((!_frameAdvanceOn && _frameCount % 2 == 0)
+                        || (_frameAdvanceOn && _advanceOneFrame)))
                     {
-                        transform.M42 += (MathF.Sin(model.Spin / 180 * MathF.PI) + 1) / 8f;
+                        UpdateAnimationFrames(model);
                     }
+                    GL.MatrixMode(MatrixMode.Modelview);
+                    GL.PushMatrix();
+                    Matrix4 transform = model.Transform;
                     GL.MultMatrix(ref transform);
+                    _modelMatrix = Matrix4.Identity;
                     _modelMatrix = transform * _modelMatrix;
+                    if (model.Rotating)
+                    {
+                        model.Spin = (float)(model.Spin + elapsedTime * 360 * 0.35) % 360;
+                        transform = SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
+                            MathHelper.DegreesToRadians(model.SpinAxis.X * model.Spin),
+                            MathHelper.DegreesToRadians(model.SpinAxis.Y * model.Spin),
+                            MathHelper.DegreesToRadians(model.SpinAxis.Z * model.Spin)),
+                            Vector3.Zero);
+                        if (model.Floating)
+                        {
+                            transform.M42 += (MathF.Sin(model.Spin / 180 * MathF.PI) + 1) / 8f;
+                        }
+                        GL.MultMatrix(ref transform);
+                        _modelMatrix = transform * _modelMatrix;
+                    }
+                    if (model.Type == ModelType.Room)
+                    {
+                        RenderRoom(model);
+                    }
+                    else
+                    {
+                        RenderModel(model);
+                    }
+                    GL.MatrixMode(MatrixMode.Modelview);
+                    GL.PopMatrix();
                 }
-                if (model.Type == ModelType.Room)
-                {
-                    RenderRoom(model);
-                }
-                else
-                {
-                    RenderModel(model);
-                }
-                GL.MatrixMode(MatrixMode.Modelview);
-                GL.PopMatrix();
-                if (model.EntityType == EntityType.LightSource && _showInvisible)
+                if (model.EntityType == EntityType.LightSource && _showLightVolumes > 0)
                 {
                     RenderLightVolume(model.SceneId);
                 }
@@ -677,6 +677,7 @@ namespace MphRead
         private void RenderLightVolume(int sceneId)
         {
             LightSource lightSource = _lightSources[sceneId];
+            LightSourceEntityData data = lightSource.Entity.Data;
             GL.UseProgram(_shaderProgramId);
             GL.Uniform1(_shaderLocations.AlphaScale, 1.0f);
             GL.Uniform1(_shaderLocations.UseLight, 0);
@@ -686,12 +687,14 @@ namespace MphRead
             GL.Uniform1(_shaderLocations.IsBillboard, 0);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-            var transform = Matrix4.CreateTranslation(lightSource.Entity.Data.Position.ToFloatVector());
+            var transform = Matrix4.CreateTranslation(data.Position.ToFloatVector());
             GL.MatrixMode(MatrixMode.Modelview);
             GL.PushMatrix();
             GL.MultMatrix(ref transform);
             GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Back : CullFaceMode.Front);
-            ColorRgb color = _showSelection ? lightSource.Entity.Data.Light1Color : lightSource.Entity.Data.Light2Color;
+            ColorRgb color = _showLightVolumes == 1
+                ? data.Light1Enabled != 0 ? data.Light1Color : new ColorRgb(0, 0, 0)
+                : data.Light2Enabled != 0 ? data.Light2Color : new ColorRgb(0, 0, 0);
             GL.Uniform4(_shaderLocations.OverrideColor, color.AsVector4(0.5f));
             var verts = lightSource.GetVertices().ToList();
             for (int i = 0; i < verts.Count; i++)
@@ -1701,6 +1704,15 @@ namespace MphRead
             else if (e.Key == Key.L)
             {
                 _lighting = !_lighting;
+                await PrintOutput();
+            }
+            else if (e.Key == Key.Z)
+            {
+                _showLightVolumes++;
+                if (_showLightVolumes > 2)
+                {
+                    _showLightVolumes = 0;
+                }
                 await PrintOutput();
             }
             else if (e.Key == Key.G)
