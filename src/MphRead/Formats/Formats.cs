@@ -793,7 +793,7 @@ namespace MphRead
                     {
                         return Vector3.Cross(point - bottom, top - bottom).Length / (top - bottom).Length <= Volume.CylinderRadius;
                     }
-                } 
+                }
             }
             else if (Volume.Type == VolumeType.Sphere)
             {
