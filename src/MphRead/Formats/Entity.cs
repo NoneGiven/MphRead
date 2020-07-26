@@ -1,5 +1,8 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using OpenToolkit.Mathematics;
 
 namespace MphRead
 {
@@ -1034,6 +1037,41 @@ namespace MphRead
         public readonly uint Field60;
     }
 
+    // size: 60
+    [StructLayout(LayoutKind.Explicit)]
+    public readonly struct CollisionVolume
+    {
+        // box
+        [FieldOffset(0)]
+        public readonly Vector3Fx BoxVector1;
+        [FieldOffset(12)]
+        public readonly Vector3Fx BoxVector2;
+        [FieldOffset(24)]
+        public readonly Vector3Fx BoxVector3;
+        [FieldOffset(36)]
+        public readonly Vector3Fx BoxPosition;
+        [FieldOffset(48)]
+        public readonly Fixed BoxDot1;
+        [FieldOffset(52)]
+        public readonly Fixed BoxDot2;
+        [FieldOffset(56)]
+        public readonly Fixed BoxDot3;
+        // cylinder
+        [FieldOffset(0)]
+        public readonly Vector3Fx CylinderVector1;
+        [FieldOffset(12)]
+        public readonly Vector3Fx CylinderPosition;
+        [FieldOffset(24)]
+        public readonly Fixed CylinderRadius;
+        [FieldOffset(28)]
+        public readonly Fixed CylinderDot;
+        // sphere
+        [FieldOffset(0)]
+        public readonly Vector3Fx SpherePosition;
+        [FieldOffset(12)]
+        public readonly Fixed SphereRadius;
+    }
+
     // size: 136
     public readonly struct LightSourceEntityData
     {
@@ -1041,13 +1079,30 @@ namespace MphRead
         public readonly Vector3Fx Position;
         public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
-        public readonly Matrix44Fx Matrix;
+        public readonly VolumeType VolumeType;
+        public readonly CollisionVolume Volume;
         public readonly byte Light1Enabled; // boolean
         public readonly ColorRgb Light1Color; // 8-bit color values
         public readonly Vector3Fx Light1Vector;
         public readonly byte Light2Enabled;
         public readonly ColorRgb Light2Color;
         public readonly Vector3Fx Light2Vector;
+
+        public IEnumerable<Vector3> GetBoxVertices()
+        {
+            Vector3 origin = Volume.BoxPosition.ToFloatVector() + Position.ToFloatVector();
+            Vector3 sideX = Volume.BoxVector1.ToFloatVector() * Volume.BoxDot1.FloatValue;
+            Vector3 sideY = Volume.BoxVector2.ToFloatVector() * Volume.BoxDot2.FloatValue;
+            Vector3 sideZ = Volume.BoxVector3.ToFloatVector() * Volume.BoxDot3.FloatValue;
+            yield return origin;
+            yield return origin + sideZ;
+            yield return origin + sideX;
+            yield return origin + sideX + sideZ;
+            yield return origin + sideY;
+            yield return origin + sideY + sideZ;
+            yield return origin + sideX + sideY;
+            yield return origin + sideX + sideY + sideZ;
+        }
     }
 
     // size: 70

@@ -39,6 +39,13 @@ namespace MphRead
         FhCameraPosition = 114
     }
 
+    public enum VolumeType
+    {
+        Box = 0,
+        Cylinder = 1,
+        Sphere = 2
+    }
+
     public enum ModelType
     {
         Generic,
