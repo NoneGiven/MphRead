@@ -706,30 +706,67 @@ namespace MphRead
         }
     }
 
+    public readonly struct CollisionVolume
+    {
+        public readonly Vector3 BoxVector1;
+        public readonly Vector3 BoxVector2;
+        public readonly Vector3 BoxVector3;
+        public readonly Vector3 BoxPosition;
+        public readonly float BoxDot1;
+        public readonly float BoxDot2;
+        public readonly float BoxDot3;
+        public readonly Vector3 CylinderVector;
+        public readonly Vector3 CylinderPosition;
+        public readonly float CylinderRadius;
+        public readonly float CylinderDot;
+        public readonly Vector3 SpherePosition;
+        public readonly float SphereRadius;
+
+        public CollisionVolume(RawCollisionVolume raw)
+        {
+            BoxVector1 = raw.BoxVector1.ToFloatVector();
+            BoxVector2 = raw.BoxVector2.ToFloatVector();
+            BoxVector3 = raw.BoxVector3.ToFloatVector();
+            BoxPosition = raw.BoxPosition.ToFloatVector();
+            BoxDot1 = raw.BoxDot1.FloatValue;
+            BoxDot2 = raw.BoxDot2.FloatValue;
+            BoxDot3 = raw.BoxDot3.FloatValue;
+            CylinderVector = raw.CylinderVector.ToFloatVector();
+            CylinderPosition = raw.CylinderPosition.ToFloatVector();
+            CylinderRadius = raw.CylinderRadius.FloatValue;
+            CylinderDot = raw.CylinderDot.FloatValue;
+            SpherePosition = raw.SpherePosition.ToFloatVector();
+            SphereRadius = raw.SphereRadius.FloatValue;
+        }
+    }
+
     public class LightSource
     {
         public Entity<LightSourceEntityData> Entity { get; }
+        public Vector3 Position { get; }
+        public CollisionVolume Volume { get; }
 
         public LightSource(Entity<LightSourceEntityData> entity)
         {
             Entity = entity;
+            Position = entity.Data.Position.ToFloatVector();
+            Volume = new CollisionVolume(entity.Data.Volume);
         }
 
         // sktodo
         public bool TestPoint(Vector3 point)
         {
-            CollisionVolume volume = Entity.Data.Volume;
             if (Entity.Data.VolumeType == VolumeType.Box)
             {
-                Vector3 difference = point - (volume.BoxPosition.ToFloatVector() + Entity.Data.Position.ToFloatVector());
-                float dot1 = Vector3.Dot(volume.BoxVector1.ToFloatVector(), difference);
-                if (dot1 >= 0 && dot1 <= volume.BoxDot1.FloatValue)
+                Vector3 difference = point - (Volume.BoxPosition + Position);
+                float dot1 = Vector3.Dot(Volume.BoxVector1, difference);
+                if (dot1 >= 0 && dot1 <= Volume.BoxDot1)
                 {
-                    float dot2 = Vector3.Dot(volume.BoxVector2.ToFloatVector(), difference);
-                    if (dot2 >= 0 && dot2 <= volume.BoxDot2.FloatValue)
+                    float dot2 = Vector3.Dot(Volume.BoxVector2, difference);
+                    if (dot2 >= 0 && dot2 <= Volume.BoxDot2)
                     {
-                        float dot3 = Vector3.Dot(volume.BoxVector3.ToFloatVector(), difference);
-                        return dot3 >= 0 && dot3 <= volume.BoxDot3.FloatValue;
+                        float dot3 = Vector3.Dot(Volume.BoxVector3, difference);
+                        return dot3 >= 0 && dot3 <= Volume.BoxDot3;
                     }
                 }
             }
@@ -739,13 +776,12 @@ namespace MphRead
         public IEnumerable<Vector3> GetVertices()
         {
             // sktodo: return for other types
-            CollisionVolume volume = Entity.Data.Volume;
             if (Entity.Data.VolumeType == VolumeType.Box)
             {
-                Vector3 point0 = volume.BoxPosition.ToFloatVector();
-                Vector3 sideX = volume.BoxVector1.ToFloatVector() * volume.BoxDot1.FloatValue;
-                Vector3 sideY = volume.BoxVector2.ToFloatVector() * volume.BoxDot2.FloatValue;
-                Vector3 sideZ = volume.BoxVector3.ToFloatVector() * volume.BoxDot3.FloatValue;
+                Vector3 point0 = Volume.BoxPosition;
+                Vector3 sideX = Volume.BoxVector1 * Volume.BoxDot1;
+                Vector3 sideY = Volume.BoxVector2 * Volume.BoxDot2;
+                Vector3 sideZ = Volume.BoxVector3 * Volume.BoxDot3;
                 Vector3 point1 = point0 + sideZ;
                 Vector3 point2 = point0 + sideX;
                 Vector3 point3 = point0 + sideX + sideZ;

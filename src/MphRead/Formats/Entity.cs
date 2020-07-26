@@ -1039,7 +1039,7 @@ namespace MphRead
 
     // size: 60
     [StructLayout(LayoutKind.Explicit)]
-    public readonly struct CollisionVolume
+    public readonly struct RawCollisionVolume
     {
         // box
         [FieldOffset(0)]
@@ -1058,7 +1058,7 @@ namespace MphRead
         public readonly Fixed BoxDot3;
         // cylinder
         [FieldOffset(0)]
-        public readonly Vector3Fx CylinderVector1;
+        public readonly Vector3Fx CylinderVector;
         [FieldOffset(12)]
         public readonly Vector3Fx CylinderPosition;
         [FieldOffset(24)]
@@ -1080,7 +1080,7 @@ namespace MphRead
         public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
         public readonly VolumeType VolumeType;
-        public readonly CollisionVolume Volume;
+        public readonly RawCollisionVolume Volume;
         public readonly byte Light1Enabled; // boolean
         public readonly ColorRgb Light1Color; // 8-bit color values
         public readonly Vector3Fx Light1Vector;
