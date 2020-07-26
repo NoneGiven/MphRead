@@ -718,6 +718,21 @@ namespace MphRead
         // sktodo
         public bool TestPoint(Vector3 point)
         {
+            CollisionVolume volume = Entity.Data.Volume;
+            if (Entity.Data.VolumeType == VolumeType.Box)
+            {
+                Vector3 difference = point - (volume.BoxPosition.ToFloatVector() + Entity.Data.Position.ToFloatVector());
+                float dot1 = Vector3.Dot(volume.BoxVector1.ToFloatVector(), difference);
+                if (dot1 >= 0 && dot1 <= volume.BoxDot1.FloatValue)
+                {
+                    float dot2 = Vector3.Dot(volume.BoxVector2.ToFloatVector(), difference);
+                    if (dot2 >= 0 && dot2 <= volume.BoxDot2.FloatValue)
+                    {
+                        float dot3 = Vector3.Dot(volume.BoxVector3.ToFloatVector(), difference);
+                        return dot3 >= 0 && dot3 <= volume.BoxDot3.FloatValue;
+                    }
+                }
+            }
             return false;
         }
 

@@ -669,23 +669,48 @@ namespace MphRead
                 GL.PopMatrix();
                 if (model.EntityType == EntityType.LightSource && _showInvisible)
                 {
-                    //GL.UseProgram(_shaderProgramId);
-                    //GL.Uniform1(_shaderLocations.AlphaScale, 1.0f);
-                    //GL.DepthMask(true);
-                    //GL.Enable(EnableCap.Blend);
-                    //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-                    //GL.Enable(EnableCap.AlphaTest);
-                    //GL.AlphaFunc(AlphaFunction.Gequal, 0.999f);
-                    //RenderLightVolume(model.SceneId);
-                    //GL.AlphaFunc(AlphaFunction.Less, 0.999f);
-                    //GL.DepthMask(false);
-                    //RenderLightVolume(model.SceneId);
-                    //GL.DepthMask(true);
-                    //GL.Disable(EnableCap.Blend);
-                    //GL.Disable(EnableCap.AlphaTest);
-                    //GL.UseProgram(0);
+                    RenderLightVolume(model.SceneId);
                 }
             }
+        }
+
+        private void RenderLightVolume(int sceneId)
+        {
+            LightSource lightSource = _lightSources[sceneId];
+            GL.UseProgram(_shaderProgramId);
+            GL.Uniform1(_shaderLocations.AlphaScale, 1.0f);
+            GL.Uniform1(_shaderLocations.UseLight, 0);
+            GL.Uniform1(_shaderLocations.UseFog, 0);
+            GL.Uniform1(_shaderLocations.UseTexture, 0);
+            GL.Uniform1(_shaderLocations.UseOverride, 1);
+            GL.Uniform1(_shaderLocations.IsBillboard, 0);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            var transform = Matrix4.CreateTranslation(lightSource.Entity.Data.Position.ToFloatVector());
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PushMatrix();
+            GL.MultMatrix(ref transform);
+            GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Back : CullFaceMode.Front);
+            ColorRgb color = _showSelection ? lightSource.Entity.Data.Light1Color : lightSource.Entity.Data.Light2Color;
+            GL.Uniform4(_shaderLocations.OverrideColor, color.AsVector4(0.5f));
+            var verts = lightSource.GetVertices().ToList();
+            for (int i = 0; i < verts.Count; i++)
+            {
+                Vector3 vert = verts[i];
+                if (i % 4 == 0)
+                {
+                    GL.Begin(PrimitiveType.TriangleStrip);
+                }
+                GL.Vertex3(vert);
+                if (i % 4 == 3)
+                {
+                    GL.End();
+                }
+            }
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PopMatrix();
+            GL.Disable(EnableCap.Blend);
+            GL.UseProgram(0);
         }
 
         private void UpdateUniforms()
@@ -769,42 +794,6 @@ namespace MphRead
             {
                 material.RenderMode = RenderMode.AlphaTest;
             }
-        }
-
-        private void RenderLightVolume(int sceneId)
-        {
-            LightSource lightSource = _lightSources[sceneId];
-            var transform = Matrix4.CreateTranslation(lightSource.Entity.Data.Position.ToFloatVector());
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PushMatrix();
-            GL.MultMatrix(ref transform);
-            GL.UseProgram(_shaderProgramId);
-            //GL.Disable(EnableCap.CullFace);
-            GL.CullFace(CullFaceMode.Back);
-            GL.Uniform1(_shaderLocations.UseLight, 0);
-            GL.Uniform1(_shaderLocations.UseFog, 0);
-            GL.Uniform1(_shaderLocations.UseOverride, 1);
-            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(1, 0f, 0f, 0.3f));
-            //GL.Uniform4(_shaderLocations.OverrideColor, lightSource.Entity.Data.Light1Color.AsVector4());
-            //GL.Uniform1(_shaderLocations.MaterialAlpha, 0.5f);
-            GL.Uniform1(_shaderLocations.IsBillboard, 0);
-            var verts = lightSource.GetVertices().ToList();
-            for (int i = 0; i < verts.Count; i++)
-            {
-                Vector3 vert = verts[i];
-                if (i % 4 == 0)
-                {
-                    GL.Begin(PrimitiveType.TriangleStrip);
-                }
-                GL.Vertex3(vert);
-                if (i % 4 == 3)
-                {
-                    GL.End();
-                }
-            }
-            GL.UseProgram(0);
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PopMatrix();
         }
 
         private void RenderRoom(Model model)
