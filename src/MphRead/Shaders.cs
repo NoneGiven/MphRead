@@ -9,13 +9,13 @@ namespace MphRead
 uniform bool is_billboard;
 uniform bool use_light;
 uniform bool fog_enable;
-uniform vec4 light1vec;
-uniform vec4 light1col;
-uniform vec4 light2vec;
-uniform vec4 light2col;
-uniform vec4 diffuse;
-uniform vec4 ambient;
-uniform vec4 specular;
+uniform vec3 light1vec;
+uniform vec3 light1col;
+uniform vec3 light2vec;
+uniform vec3 light2col;
+uniform vec3 diffuse;
+uniform vec3 ambient;
+uniform vec3 specular;
 uniform vec4 fog_color;
 uniform float far_plane;
 uniform mat4 model_mtx;
@@ -23,16 +23,16 @@ uniform mat4 model_mtx;
 varying vec2 texcoord;
 varying vec4 color;
 
-vec4 light_calc(vec4 light_vec, vec4 light_col, vec3 normal_vec, vec4 dif_col, vec4 amb_col, vec4 spe_col)
+vec3 light_calc(vec3 light_vec, vec3 light_col, vec3 normal_vec, vec3 dif_col, vec3 amb_col, vec3 spe_col)
 {
     vec3 sight_vec = vec3(0.0, 0.0, -1.0);
-    float dif_factor = max(0.0, -dot(light_vec.xyz, normal_vec));
-    vec3 half_vec = (light_vec.xyz + sight_vec) / 2.0;
+    float dif_factor = max(0.0, -dot(light_vec, normal_vec));
+    vec3 half_vec = (light_vec + sight_vec) / 2.0;
     float spe_factor = max(0.0, dot(-half_vec, normal_vec));
     spe_factor = spe_factor * spe_factor;
-    vec4 spe_out = spe_col * light_col * spe_factor;
-    vec4 dif_out = dif_col * light_col * dif_factor;
-    vec4 amb_out = amb_col * light_col;
+    vec3 spe_out = spe_col * light_col * spe_factor;
+    vec3 dif_out = dif_col * light_col * dif_factor;
+    vec3 amb_out = amb_col * light_col;
     return spe_out + dif_out + amb_out;
 }
 
@@ -46,16 +46,16 @@ void main()
     }
     if (use_light) {
         vec3 normal = normalize(mat3(model_mtx) * gl_Normal);
-        vec4 dif_current = diffuse;
-        vec4 amb_current = ambient;
+        vec3 dif_current = diffuse;
+        vec3 amb_current = ambient;
         if (gl_Color.a == 0) {
             // see comment on DIF_AMB
-            dif_current = vec4(gl_Color.rgb, 1.0);
-            amb_current = vec4(0.0, 0.0, 0.0, 1.0);
+            dif_current = gl_Color.rgb;
+            amb_current = vec3(0.0, 0.0, 0.0);
         }
-        vec4 col1 = light_calc(light1vec, light1col, normal, dif_current, amb_current, specular);
-        vec4 col2 = light_calc(light2vec, light2col, normal, dif_current, amb_current, specular);
-        color = vec4(min((col1 + col2).rgb, vec3(1.0, 1.0, 1.0)), 1.0);
+        vec3 col1 = light_calc(light1vec, light1col, normal, dif_current, amb_current, specular);
+        vec3 col2 = light_calc(light2vec, light2col, normal, dif_current, amb_current, specular);
+        color = vec4(min((col1 + col2), vec3(1.0, 1.0, 1.0)), 1.0);
     }
     else {
         color = gl_Color;
@@ -69,7 +69,6 @@ uniform bool is_billboard;
 uniform bool use_texture;
 uniform bool fog_enable;
 uniform vec4 fog_color;
-uniform vec4 ambient;
 uniform int fog_offset;
 uniform float alpha_scale;
 uniform sampler2D tex;

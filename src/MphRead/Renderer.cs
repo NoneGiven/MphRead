@@ -138,10 +138,10 @@ namespace MphRead
 
         private static readonly Color4 _clearColor = new Color4(0, 0, 0, 1);
 
-        private Vector4 _light1Vector = default;
-        private Vector4 _light1Color = default;
-        private Vector4 _light2Vector = default;
-        private Vector4 _light2Color = default;
+        private Vector3 _light1Vector = default;
+        private Vector3 _light1Color = default;
+        private Vector3 _light2Vector = default;
+        private Vector3 _light2Color = default;
         private bool _hasFog = false;
         private bool _showFog = true;
         private Vector4 _fogColor = default;
@@ -180,19 +180,17 @@ namespace MphRead
             {
                 _modelMap.Add(entity.SceneId, entity);
             }
-            _light1Vector = new Vector4(roomMeta.Light1Vector);
-            _light1Color = new Vector4(
+            _light1Vector = roomMeta.Light1Vector;
+            _light1Color = new Vector3(
                 roomMeta.Light1Color.Red / 31.0f,
                 roomMeta.Light1Color.Green / 31.0f,
-                roomMeta.Light1Color.Blue / 31.0f,
-                roomMeta.Light1Color.Alpha / 31.0f
+                roomMeta.Light1Color.Blue / 31.0f
             );
-            _light2Vector = new Vector4(roomMeta.Light2Vector);
-            _light2Color = new Vector4(
+            _light2Vector = roomMeta.Light2Vector;
+            _light2Color = new Vector3(
                 roomMeta.Light2Color.Red / 31.0f,
                 roomMeta.Light2Color.Green / 31.0f,
-                roomMeta.Light2Color.Blue / 31.0f,
-                roomMeta.Light2Color.Alpha / 31.0f
+                roomMeta.Light2Color.Blue / 31.0f
             );
             _lighting = true;
             _hasFog = roomMeta.FogEnabled != 0;
@@ -669,13 +667,18 @@ namespace MphRead
 
         private void UpdateUniforms()
         {
-            GL.Uniform4(_shaderLocations.Light1Vector, _light1Vector);
-            GL.Uniform4(_shaderLocations.Light1Color, _light1Color);
-            GL.Uniform4(_shaderLocations.Light2Vector, _light2Vector);
-            GL.Uniform4(_shaderLocations.Light2Color, _light2Color);
+            UpdateLights();
             GL.Uniform1(_shaderLocations.UseFog, _hasFog && _showFog ? 1 : 0);
             GL.Uniform4(_shaderLocations.FogColor, _fogColor);
             GL.Uniform1(_shaderLocations.FogOffset, _fogOffset);
+        }
+
+        private void UpdateLights()
+        {
+            GL.Uniform3(_shaderLocations.Light1Vector, _light1Vector);
+            GL.Uniform3(_shaderLocations.Light1Color, _light1Color);
+            GL.Uniform3(_shaderLocations.Light2Vector, _light2Vector);
+            GL.Uniform3(_shaderLocations.Light2Color, _light2Color);
         }
 
         private void UpdateMaterials(Model model)
@@ -1079,9 +1082,9 @@ namespace MphRead
             {
                 GL.Uniform1(_shaderLocations.UseLight, 0);
             }
-            Vector4 diffuse;
-            Vector4 ambient;
-            Vector4 specular;
+            Vector3 diffuse;
+            Vector3 ambient;
+            Vector3 specular;
             float alpha;
             // todo: group indexing
             MaterialAnimationGroup group;
@@ -1117,39 +1120,36 @@ namespace MphRead
                 {
                     alpha = material.Alpha / 31.0f;
                 }
-                diffuse = new Vector4(diffuseR / 31.0f, diffuseG / 31.0f, diffuseB / 31.0f, 1.0f);
-                ambient = new Vector4(ambientR / 31.0f, ambientG / 31.0f, ambientB / 31.0f, 1.0f);
-                specular = new Vector4(specularR / 31.0f, specularG / 31.0f, specularB / 31.0f, 1.0f);
+                diffuse = new Vector3(diffuseR / 31.0f, diffuseG / 31.0f, diffuseB / 31.0f);
+                ambient = new Vector3(ambientR / 31.0f, ambientG / 31.0f, ambientB / 31.0f);
+                specular = new Vector3(specularR / 31.0f, specularG / 31.0f, specularB / 31.0f);
             }
             else
             {
-                diffuse = new Vector4(
+                diffuse = new Vector3(
                     material.Diffuse.Red / 31.0f,
                     material.Diffuse.Green / 31.0f,
-                    material.Diffuse.Blue / 31.0f,
-                    1.0f
+                    material.Diffuse.Blue / 31.0f
                 );
-                ambient = new Vector4(
+                ambient = new Vector3(
                     material.Ambient.Red / 31.0f,
                     material.Ambient.Green / 31.0f,
-                    material.Ambient.Blue / 31.0f,
-                    1.0f
+                    material.Ambient.Blue / 31.0f
                 );
-                specular = new Vector4(
+                specular = new Vector3(
                     material.Specular.Red / 31.0f,
                     material.Specular.Green / 31.0f,
-                    material.Specular.Blue / 31.0f,
-                    1.0f
+                    material.Specular.Blue / 31.0f
                 );
                 alpha = material.Alpha / 31.0f;
             }
             // MPH applies the material colors initially by calling DIF_AMB with bit 15 set,
             // so the diffuse color is always set as the vertex color to start
             // (the emission color is set to white if lighting is disabled or black if lighting is enabled; we can just ignore that)
-            GL.Color4(diffuse);
-            GL.Uniform4(_shaderLocations.Diffuse, diffuse);
-            GL.Uniform4(_shaderLocations.Ambient, ambient);
-            GL.Uniform4(_shaderLocations.Specular, specular);
+            GL.Color3(diffuse);
+            GL.Uniform3(_shaderLocations.Diffuse, diffuse);
+            GL.Uniform3(_shaderLocations.Ambient, ambient);
+            GL.Uniform3(_shaderLocations.Specular, specular);
             GL.Uniform1(_shaderLocations.MaterialAlpha, alpha);
             GL.Uniform1(_shaderLocations.MaterialDecal, material.PolygonMode == PolygonMode.Decal ? 1 : 0);
             material.CurrentAlpha = alpha;
