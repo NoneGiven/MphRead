@@ -745,12 +745,24 @@ namespace MphRead
         public Entity<LightSourceEntityData> Entity { get; }
         public Vector3 Position { get; }
         public CollisionVolume Volume { get; }
+        public bool Light1Enabled { get; }
+        public Vector3 Light1Color { get; }
+        public Vector3 Light1Vector { get; }
+        public bool Light2Enabled { get; }
+        public Vector3 Light2Color { get; }
+        public Vector3 Light2Vector { get; }
 
         public LightSource(Entity<LightSourceEntityData> entity)
         {
             Entity = entity;
             Position = entity.Data.Position.ToFloatVector();
             Volume = new CollisionVolume(entity.Data.Volume);
+            Light1Enabled = entity.Data.Light1Enabled != 0;
+            Light1Color = entity.Data.Light1Color.AsVector3();
+            Light1Vector = entity.Data.Light1Vector.ToFloatVector();
+            Light2Enabled = entity.Data.Light2Enabled != 0;
+            Light2Color = entity.Data.Light2Color.AsVector3();
+            Light2Vector = entity.Data.Light2Vector.ToFloatVector();
         }
 
         // sktodo

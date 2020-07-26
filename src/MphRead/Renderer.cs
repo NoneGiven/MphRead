@@ -843,26 +843,23 @@ namespace MphRead
             GL.UseProgram(0);
         }
 
-        // todo: implement this properly
         // todo?: does anything special need to happen for overlapping light sources?
         private void UpdateLightSources(Vector3 position)
         {
-            for (int i = 0; i < _lightSources.Count; i++)
+            foreach (LightSource lightSource in _lightSources.Values)
             {
-                //Entity<LightSourceEntityData> lightSource = _lightSources.Values.ElementAt(i).Entity;
-                //float distance = Vector3.Distance(position, lightSource.Data.Position.ToFloatVector());
-                //if (distance < 2.5f)
-                //{
-                //    if (lightSource.Data.Light1Enabled != 0)
-                //    {
-                //        UseLight1(lightSource.Data.Light1Vector.ToFloatVector(), lightSource.Data.Light1Color.AsVector3());
-                //    }
-                //    if (lightSource.Data.Light2Enabled != 0)
-                //    {
-                //        UseLight2(lightSource.Data.Light2Vector.ToFloatVector(), lightSource.Data.Light2Color.AsVector3());
-                //    }
-                //    break;
-                //}
+                if (lightSource.TestPoint(position))
+                {
+                    if (lightSource.Light1Enabled)
+                    {
+                        UseLight1(lightSource.Light1Vector, lightSource.Light1Color);
+                    }
+                    if (lightSource.Light2Enabled)
+                    {
+                        UseLight2(lightSource.Light2Vector, lightSource.Light2Color);
+                    }
+                    break;
+                }
             }
         }
 
