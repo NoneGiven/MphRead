@@ -104,7 +104,7 @@ namespace MphRead
         private readonly Dictionary<int, Model> _modelMap = new Dictionary<int, Model>();
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
-        private readonly List<Entity<LightSourceEntityData>> _lightSources = new List<Entity<LightSourceEntityData>>();
+        private readonly Dictionary<int, LightSource> _lightSources = new Dictionary<int, LightSource>();
 
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
@@ -182,7 +182,7 @@ namespace MphRead
                 _modelMap.Add(entity.SceneId, entity);
                 if (entity.Entity is Entity<LightSourceEntityData> lightSource)
                 {
-                    _lightSources.Add(lightSource);
+                    _lightSources.Add(entity.SceneId, new LightSource(lightSource));
                 }
             }
             _light1Vector = roomMeta.Light1Vector;
@@ -667,6 +667,24 @@ namespace MphRead
                 }
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.PopMatrix();
+                if (model.EntityType == EntityType.LightSource && _showInvisible)
+                {
+                    //GL.UseProgram(_shaderProgramId);
+                    //GL.Uniform1(_shaderLocations.AlphaScale, 1.0f);
+                    //GL.DepthMask(true);
+                    //GL.Enable(EnableCap.Blend);
+                    //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+                    //GL.Enable(EnableCap.AlphaTest);
+                    //GL.AlphaFunc(AlphaFunction.Gequal, 0.999f);
+                    //RenderLightVolume(model.SceneId);
+                    //GL.AlphaFunc(AlphaFunction.Less, 0.999f);
+                    //GL.DepthMask(false);
+                    //RenderLightVolume(model.SceneId);
+                    //GL.DepthMask(true);
+                    //GL.Disable(EnableCap.Blend);
+                    //GL.Disable(EnableCap.AlphaTest);
+                    //GL.UseProgram(0);
+                }
             }
         }
 
@@ -753,6 +771,42 @@ namespace MphRead
             }
         }
 
+        private void RenderLightVolume(int sceneId)
+        {
+            LightSource lightSource = _lightSources[sceneId];
+            var transform = Matrix4.CreateTranslation(lightSource.Entity.Data.Position.ToFloatVector());
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PushMatrix();
+            GL.MultMatrix(ref transform);
+            GL.UseProgram(_shaderProgramId);
+            //GL.Disable(EnableCap.CullFace);
+            GL.CullFace(CullFaceMode.Back);
+            GL.Uniform1(_shaderLocations.UseLight, 0);
+            GL.Uniform1(_shaderLocations.UseFog, 0);
+            GL.Uniform1(_shaderLocations.UseOverride, 1);
+            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(1, 0f, 0f, 0.3f));
+            //GL.Uniform4(_shaderLocations.OverrideColor, lightSource.Entity.Data.Light1Color.AsVector4());
+            //GL.Uniform1(_shaderLocations.MaterialAlpha, 0.5f);
+            GL.Uniform1(_shaderLocations.IsBillboard, 0);
+            var verts = lightSource.GetVertices().ToList();
+            for (int i = 0; i < verts.Count; i++)
+            {
+                Vector3 vert = verts[i];
+                if (i % 4 == 0)
+                {
+                    GL.Begin(PrimitiveType.TriangleStrip);
+                }
+                GL.Vertex3(vert);
+                if (i % 4 == 3)
+                {
+                    GL.End();
+                }
+            }
+            GL.UseProgram(0);
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PopMatrix();
+        }
+
         private void RenderRoom(Model model)
         {
             // todo: should use room nodes only as roots; need to handle things like force fields separately
@@ -803,20 +857,20 @@ namespace MphRead
         {
             for (int i = 0; i < _lightSources.Count; i++)
             {
-                Entity<LightSourceEntityData> lightSource = _lightSources[i];
-                float distance = Vector3.Distance(position, lightSource.Data.Position.ToFloatVector());
-                if (distance < 2.5f)
-                {
-                    if (lightSource.Data.Light1Enabled != 0)
-                    {
-                        UseLight1(lightSource.Data.Light1Vector.ToFloatVector(), lightSource.Data.Light1Color.AsVector3());
-                    }
-                    if (lightSource.Data.Light2Enabled != 0)
-                    {
-                        UseLight2(lightSource.Data.Light2Vector.ToFloatVector(), lightSource.Data.Light2Color.AsVector3());
-                    }
-                    break;
-                }
+                //Entity<LightSourceEntityData> lightSource = _lightSources.Values.ElementAt(i).Entity;
+                //float distance = Vector3.Distance(position, lightSource.Data.Position.ToFloatVector());
+                //if (distance < 2.5f)
+                //{
+                //    if (lightSource.Data.Light1Enabled != 0)
+                //    {
+                //        UseLight1(lightSource.Data.Light1Vector.ToFloatVector(), lightSource.Data.Light1Color.AsVector3());
+                //    }
+                //    if (lightSource.Data.Light2Enabled != 0)
+                //    {
+                //        UseLight2(lightSource.Data.Light2Vector.ToFloatVector(), lightSource.Data.Light2Color.AsVector3());
+                //    }
+                //    break;
+                //}
             }
         }
 

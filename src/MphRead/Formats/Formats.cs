@@ -706,6 +706,72 @@ namespace MphRead
         }
     }
 
+    public class LightSource
+    {
+        public Entity<LightSourceEntityData> Entity { get; }
+
+        public LightSource(Entity<LightSourceEntityData> entity)
+        {
+            Entity = entity;
+        }
+
+        // sktodo
+        public bool TestPoint(Vector3 point)
+        {
+            return false;
+        }
+
+        public IEnumerable<Vector3> GetVertices()
+        {
+            // sktodo: return for other types
+            CollisionVolume volume = Entity.Data.Volume;
+            if (Entity.Data.VolumeType == VolumeType.Box)
+            {
+                Vector3 point0 = volume.BoxPosition.ToFloatVector();
+                Vector3 sideX = volume.BoxVector1.ToFloatVector() * volume.BoxDot1.FloatValue;
+                Vector3 sideY = volume.BoxVector2.ToFloatVector() * volume.BoxDot2.FloatValue;
+                Vector3 sideZ = volume.BoxVector3.ToFloatVector() * volume.BoxDot3.FloatValue;
+                Vector3 point1 = point0 + sideZ;
+                Vector3 point2 = point0 + sideX;
+                Vector3 point3 = point0 + sideX + sideZ;
+                Vector3 point4 = point0 + sideY;
+                Vector3 point5 = point0 + sideY + sideZ;
+                Vector3 point6 = point0 + sideX + sideY;
+                Vector3 point7 = point0 + sideX + sideY + sideZ;
+                //
+                yield return point0;
+                yield return point4;
+                yield return point2;
+                yield return point6;
+                //
+                yield return point2;
+                yield return point6;
+                yield return point3;
+                yield return point7;
+                //
+                yield return point3;
+                yield return point7;
+                yield return point1;
+                yield return point5;
+                //
+                yield return point1;
+                yield return point5;
+                yield return point0;
+                yield return point4;
+                //
+                yield return point6;
+                yield return point4;
+                yield return point7;
+                yield return point5;
+                //
+                yield return point0;
+                yield return point2;
+                yield return point1;
+                yield return point3;
+            }
+        }
+    }
+
     // todo: FH game modes
     // todo: use these to set up all the appropriate layer stuff
     public enum GameMode

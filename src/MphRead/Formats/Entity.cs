@@ -1087,22 +1087,6 @@ namespace MphRead
         public readonly byte Light2Enabled;
         public readonly ColorRgb Light2Color;
         public readonly Vector3Fx Light2Vector;
-
-        public IEnumerable<Vector3> GetBoxVertices()
-        {
-            Vector3 origin = Volume.BoxPosition.ToFloatVector() + Position.ToFloatVector();
-            Vector3 sideX = Volume.BoxVector1.ToFloatVector() * Volume.BoxDot1.FloatValue;
-            Vector3 sideY = Volume.BoxVector2.ToFloatVector() * Volume.BoxDot2.FloatValue;
-            Vector3 sideZ = Volume.BoxVector3.ToFloatVector() * Volume.BoxDot3.FloatValue;
-            yield return origin;
-            yield return origin + sideZ;
-            yield return origin + sideX;
-            yield return origin + sideX + sideZ;
-            yield return origin + sideY;
-            yield return origin + sideY + sideZ;
-            yield return origin + sideX + sideY;
-            yield return origin + sideX + sideY + sideZ;
-        }
     }
 
     // size: 70
