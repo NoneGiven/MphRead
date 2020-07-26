@@ -104,6 +104,7 @@ namespace MphRead
         private readonly Dictionary<int, Model> _modelMap = new Dictionary<int, Model>();
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
+        private readonly List<Entity<LightSourceEntityData>> _lightSources = new List<Entity<LightSourceEntityData>>();
 
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
@@ -179,6 +180,10 @@ namespace MphRead
             foreach (Model entity in entities)
             {
                 _modelMap.Add(entity.SceneId, entity);
+                if (entity.Entity is Entity<LightSourceEntityData> lightSource)
+                {
+                    _lightSources.Add(lightSource);
+                }
             }
             _light1Vector = roomMeta.Light1Vector;
             _light1Color = new Vector3(
@@ -667,18 +672,30 @@ namespace MphRead
 
         private void UpdateUniforms()
         {
-            UpdateLights();
+            UseRoomLights();
             GL.Uniform1(_shaderLocations.UseFog, _hasFog && _showFog ? 1 : 0);
             GL.Uniform4(_shaderLocations.FogColor, _fogColor);
             GL.Uniform1(_shaderLocations.FogOffset, _fogOffset);
         }
 
-        private void UpdateLights()
+        private void UseRoomLights()
         {
             GL.Uniform3(_shaderLocations.Light1Vector, _light1Vector);
             GL.Uniform3(_shaderLocations.Light1Color, _light1Color);
             GL.Uniform3(_shaderLocations.Light2Vector, _light2Vector);
             GL.Uniform3(_shaderLocations.Light2Color, _light2Color);
+        }
+
+        private void UseLight1(Vector3 vector, Vector3 color)
+        {
+            GL.Uniform3(_shaderLocations.Light1Vector, vector);
+            GL.Uniform3(_shaderLocations.Light1Color, color);
+        }
+
+        private void UseLight2(Vector3 vector, Vector3 color)
+        {
+            GL.Uniform3(_shaderLocations.Light2Vector, vector);
+            GL.Uniform3(_shaderLocations.Light2Color, color);
         }
 
         private void UpdateMaterials(Model model)
@@ -780,9 +797,36 @@ namespace MphRead
             GL.UseProgram(0);
         }
 
+        // todo: implement this properly
+        // todo?: does anything special need to happen for overlapping light sources?
+        private void UpdateLightSources(Vector3 position)
+        {
+            for (int i = 0; i < _lightSources.Count; i++)
+            {
+                Entity<LightSourceEntityData> lightSource = _lightSources[i];
+                float distance = Vector3.Distance(position, lightSource.Data.Position.ToFloatVector());
+                if (distance < 2.5f)
+                {
+                    if (lightSource.Data.Light1Enabled != 0)
+                    {
+                        UseLight1(lightSource.Data.Light1Vector.ToFloatVector(), lightSource.Data.Light1Color.AsVector3());
+                    }
+                    if (lightSource.Data.Light2Enabled != 0)
+                    {
+                        UseLight2(lightSource.Data.Light2Vector.ToFloatVector(), lightSource.Data.Light2Color.AsVector3());
+                    }
+                    break;
+                }
+            }
+        }
+
         private void RenderModel(Model model)
         {
             GL.UseProgram(_shaderProgramId);
+            if (model.UseLightSources)
+            {
+                UpdateLightSources(model.Position);
+            }
             GL.Uniform1(_shaderLocations.AlphaScale, 1.0f);
             // pass 1: opaque
             GL.DepthMask(true);
