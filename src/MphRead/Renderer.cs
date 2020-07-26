@@ -823,6 +823,7 @@ namespace MphRead
         private void RenderModel(Model model)
         {
             GL.UseProgram(_shaderProgramId);
+            UseRoomLights();
             if (model.UseLightSources)
             {
                 UpdateLightSources(model.Position);
