@@ -104,6 +104,7 @@ namespace MphRead
         private readonly Dictionary<int, Model> _modelMap = new Dictionary<int, Model>();
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
+        private readonly Dictionary<int, LightSource> _lightSources = new Dictionary<int, LightSource>();
 
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
@@ -134,14 +135,15 @@ namespace MphRead
         private bool _lighting = false;
         private bool _scanVisor = false;
         private bool _showInvisible = false;
+        private int _showLightVolumes = 0;
         private bool _transformRoomNodes = false; // undocumented
 
         private static readonly Color4 _clearColor = new Color4(0, 0, 0, 1);
 
-        private Vector4 _light1Vector = default;
-        private Vector4 _light1Color = default;
-        private Vector4 _light2Vector = default;
-        private Vector4 _light2Color = default;
+        private Vector3 _light1Vector = default;
+        private Vector3 _light1Color = default;
+        private Vector3 _light2Vector = default;
+        private Vector3 _light2Color = default;
         private bool _hasFog = false;
         private bool _showFog = true;
         private Vector4 _fogColor = default;
@@ -179,20 +181,22 @@ namespace MphRead
             foreach (Model entity in entities)
             {
                 _modelMap.Add(entity.SceneId, entity);
+                if (entity.Entity is Entity<LightSourceEntityData> lightSource)
+                {
+                    _lightSources.Add(entity.SceneId, new LightSource(lightSource));
+                }
             }
-            _light1Vector = new Vector4(roomMeta.Light1Vector);
-            _light1Color = new Vector4(
+            _light1Vector = roomMeta.Light1Vector;
+            _light1Color = new Vector3(
                 roomMeta.Light1Color.Red / 31.0f,
                 roomMeta.Light1Color.Green / 31.0f,
-                roomMeta.Light1Color.Blue / 31.0f,
-                roomMeta.Light1Color.Alpha / 31.0f
+                roomMeta.Light1Color.Blue / 31.0f
             );
-            _light2Vector = new Vector4(roomMeta.Light2Vector);
-            _light2Color = new Vector4(
+            _light2Vector = roomMeta.Light2Vector;
+            _light2Color = new Vector3(
                 roomMeta.Light2Color.Red / 31.0f,
                 roomMeta.Light2Color.Green / 31.0f,
-                roomMeta.Light2Color.Blue / 31.0f,
-                roomMeta.Light2Color.Alpha / 31.0f
+                roomMeta.Light2Color.Blue / 31.0f
             );
             _lighting = true;
             _hasFog = roomMeta.FogEnabled != 0;
@@ -621,61 +625,114 @@ namespace MphRead
         private void RenderScene(double elapsedTime)
         {
             _models.Sort(CompareModels);
-            foreach (Model model in _models)
+            for (int i = 0; i < _models.Count; i++)
             {
-                if ((model.Type == ModelType.Placeholder && !_showInvisible) || (model.ScanVisorOnly && !_scanVisor))
+                Model model = _models[i];
+                if ((model.Type != ModelType.Placeholder || _showInvisible) && (!model.ScanVisorOnly || _scanVisor))
                 {
-                    continue;
-                }
-                if (_frameCount != 0 &&
-                    ((!_frameAdvanceOn && _frameCount % 2 == 0)
-                    || (_frameAdvanceOn && _advanceOneFrame)))
-                {
-                    UpdateAnimationFrames(model);
-                }
-                GL.MatrixMode(MatrixMode.Modelview);
-                GL.PushMatrix();
-                Matrix4 transform = model.Transform;
-                GL.MultMatrix(ref transform);
-                _modelMatrix = Matrix4.Identity;
-                _modelMatrix = transform * _modelMatrix;
-                if (model.Rotating)
-                {
-                    model.Spin = (float)(model.Spin + elapsedTime * 360 * 0.35) % 360;
-                    transform = SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
-                        MathHelper.DegreesToRadians(model.SpinAxis.X * model.Spin),
-                        MathHelper.DegreesToRadians(model.SpinAxis.Y * model.Spin),
-                        MathHelper.DegreesToRadians(model.SpinAxis.Z * model.Spin)),
-                        Vector3.Zero);
-                    if (model.Floating)
+                    if (_frameCount != 0 &&
+                        ((!_frameAdvanceOn && _frameCount % 2 == 0)
+                        || (_frameAdvanceOn && _advanceOneFrame)))
                     {
-                        transform.M42 += (MathF.Sin(model.Spin / 180 * MathF.PI) + 1) / 8f;
+                        UpdateAnimationFrames(model);
                     }
+                    GL.MatrixMode(MatrixMode.Modelview);
+                    GL.PushMatrix();
+                    Matrix4 transform = model.Transform;
                     GL.MultMatrix(ref transform);
+                    _modelMatrix = Matrix4.Identity;
                     _modelMatrix = transform * _modelMatrix;
+                    if (model.Rotating)
+                    {
+                        model.Spin = (float)(model.Spin + elapsedTime * 360 * 0.35) % 360;
+                        transform = SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
+                            MathHelper.DegreesToRadians(model.SpinAxis.X * model.Spin),
+                            MathHelper.DegreesToRadians(model.SpinAxis.Y * model.Spin),
+                            MathHelper.DegreesToRadians(model.SpinAxis.Z * model.Spin)),
+                            Vector3.Zero);
+                        if (model.Floating)
+                        {
+                            transform.M42 += (MathF.Sin(model.Spin / 180 * MathF.PI) + 1) / 8f;
+                        }
+                        GL.MultMatrix(ref transform);
+                        _modelMatrix = transform * _modelMatrix;
+                    }
+                    if (model.Type == ModelType.Room)
+                    {
+                        RenderRoom(model);
+                    }
+                    else
+                    {
+                        RenderModel(model);
+                    }
+                    GL.MatrixMode(MatrixMode.Modelview);
+                    GL.PopMatrix();
                 }
-                if (model.Type == ModelType.Room)
+                if (model.EntityType == EntityType.LightSource && _showLightVolumes > 0)
                 {
-                    RenderRoom(model);
+                    RenderLightVolume(model.SceneId);
                 }
-                else
-                {
-                    RenderModel(model);
-                }
-                GL.MatrixMode(MatrixMode.Modelview);
-                GL.PopMatrix();
             }
+        }
+
+        private void RenderLightVolume(int sceneId)
+        {
+            LightSource lightSource = _lightSources[sceneId];
+            LightSourceEntityData data = lightSource.Entity.Data;
+            GL.UseProgram(_shaderProgramId);
+            GL.Uniform1(_shaderLocations.AlphaScale, 1.0f);
+            GL.Uniform1(_shaderLocations.UseLight, 0);
+            GL.Uniform1(_shaderLocations.UseFog, 0);
+            GL.Uniform1(_shaderLocations.UseTexture, 0);
+            GL.Uniform1(_shaderLocations.UseOverride, 1);
+            GL.Uniform1(_shaderLocations.IsBillboard, 0);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            var transform = Matrix4.CreateTranslation(data.Position.ToFloatVector());
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PushMatrix();
+            GL.MultMatrix(ref transform);
+            // the depth buffer can't always handle this
+            //GL.Enable(EnableCap.CullFace);
+            //GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
+            GL.Disable(EnableCap.CullFace);
+            ColorRgb color = _showLightVolumes == 1
+                ? data.Light1Enabled != 0 ? data.Light1Color : new ColorRgb(0, 0, 0)
+                : data.Light2Enabled != 0 ? data.Light2Color : new ColorRgb(0, 0, 0);
+            GL.Uniform4(_shaderLocations.OverrideColor, color.AsVector4(0.5f));
+            RenderVolume(lightSource.Volume);
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PopMatrix();
+            GL.Disable(EnableCap.Blend);
+            GL.UseProgram(0);
         }
 
         private void UpdateUniforms()
         {
-            GL.Uniform4(_shaderLocations.Light1Vector, _light1Vector);
-            GL.Uniform4(_shaderLocations.Light1Color, _light1Color);
-            GL.Uniform4(_shaderLocations.Light2Vector, _light2Vector);
-            GL.Uniform4(_shaderLocations.Light2Color, _light2Color);
+            UseRoomLights();
             GL.Uniform1(_shaderLocations.UseFog, _hasFog && _showFog ? 1 : 0);
             GL.Uniform4(_shaderLocations.FogColor, _fogColor);
             GL.Uniform1(_shaderLocations.FogOffset, _fogOffset);
+        }
+
+        private void UseRoomLights()
+        {
+            GL.Uniform3(_shaderLocations.Light1Vector, _light1Vector);
+            GL.Uniform3(_shaderLocations.Light1Color, _light1Color);
+            GL.Uniform3(_shaderLocations.Light2Vector, _light2Vector);
+            GL.Uniform3(_shaderLocations.Light2Color, _light2Color);
+        }
+
+        private void UseLight1(Vector3 vector, Vector3 color)
+        {
+            GL.Uniform3(_shaderLocations.Light1Vector, vector);
+            GL.Uniform3(_shaderLocations.Light1Color, color);
+        }
+
+        private void UseLight2(Vector3 vector, Vector3 color)
+        {
+            GL.Uniform3(_shaderLocations.Light2Vector, vector);
+            GL.Uniform3(_shaderLocations.Light2Color, color);
         }
 
         private void UpdateMaterials(Model model)
@@ -777,9 +834,34 @@ namespace MphRead
             GL.UseProgram(0);
         }
 
+        // todo?: does anything special need to happen for overlapping light sources?
+        private void UpdateLightSources(Vector3 position)
+        {
+            foreach (LightSource lightSource in _lightSources.Values)
+            {
+                if (lightSource.TestPoint(position))
+                {
+                    if (lightSource.Light1Enabled)
+                    {
+                        UseLight1(lightSource.Light1Vector, lightSource.Light1Color);
+                    }
+                    if (lightSource.Light2Enabled)
+                    {
+                        UseLight2(lightSource.Light2Vector, lightSource.Light2Color);
+                    }
+                    break;
+                }
+            }
+        }
+
         private void RenderModel(Model model)
         {
             GL.UseProgram(_shaderProgramId);
+            UseRoomLights();
+            if (model.UseLightSources)
+            {
+                UpdateLightSources(model.Position);
+            }
             GL.Uniform1(_shaderLocations.AlphaScale, 1.0f);
             // pass 1: opaque
             GL.DepthMask(true);
@@ -1079,9 +1161,9 @@ namespace MphRead
             {
                 GL.Uniform1(_shaderLocations.UseLight, 0);
             }
-            Vector4 diffuse;
-            Vector4 ambient;
-            Vector4 specular;
+            Vector3 diffuse;
+            Vector3 ambient;
+            Vector3 specular;
             float alpha;
             // todo: group indexing
             MaterialAnimationGroup group;
@@ -1117,39 +1199,36 @@ namespace MphRead
                 {
                     alpha = material.Alpha / 31.0f;
                 }
-                diffuse = new Vector4(diffuseR / 31.0f, diffuseG / 31.0f, diffuseB / 31.0f, 1.0f);
-                ambient = new Vector4(ambientR / 31.0f, ambientG / 31.0f, ambientB / 31.0f, 1.0f);
-                specular = new Vector4(specularR / 31.0f, specularG / 31.0f, specularB / 31.0f, 1.0f);
+                diffuse = new Vector3(diffuseR / 31.0f, diffuseG / 31.0f, diffuseB / 31.0f);
+                ambient = new Vector3(ambientR / 31.0f, ambientG / 31.0f, ambientB / 31.0f);
+                specular = new Vector3(specularR / 31.0f, specularG / 31.0f, specularB / 31.0f);
             }
             else
             {
-                diffuse = new Vector4(
+                diffuse = new Vector3(
                     material.Diffuse.Red / 31.0f,
                     material.Diffuse.Green / 31.0f,
-                    material.Diffuse.Blue / 31.0f,
-                    1.0f
+                    material.Diffuse.Blue / 31.0f
                 );
-                ambient = new Vector4(
+                ambient = new Vector3(
                     material.Ambient.Red / 31.0f,
                     material.Ambient.Green / 31.0f,
-                    material.Ambient.Blue / 31.0f,
-                    1.0f
+                    material.Ambient.Blue / 31.0f
                 );
-                specular = new Vector4(
+                specular = new Vector3(
                     material.Specular.Red / 31.0f,
                     material.Specular.Green / 31.0f,
-                    material.Specular.Blue / 31.0f,
-                    1.0f
+                    material.Specular.Blue / 31.0f
                 );
                 alpha = material.Alpha / 31.0f;
             }
             // MPH applies the material colors initially by calling DIF_AMB with bit 15 set,
             // so the diffuse color is always set as the vertex color to start
             // (the emission color is set to white if lighting is disabled or black if lighting is enabled; we can just ignore that)
-            GL.Color4(diffuse);
-            GL.Uniform4(_shaderLocations.Diffuse, diffuse);
-            GL.Uniform4(_shaderLocations.Ambient, ambient);
-            GL.Uniform4(_shaderLocations.Specular, specular);
+            GL.Color3(diffuse);
+            GL.Uniform3(_shaderLocations.Diffuse, diffuse);
+            GL.Uniform3(_shaderLocations.Ambient, ambient);
+            GL.Uniform3(_shaderLocations.Specular, specular);
             GL.Uniform1(_shaderLocations.MaterialAlpha, alpha);
             GL.Uniform1(_shaderLocations.MaterialDecal, material.PolygonMode == PolygonMode.Decal ? 1 : 0);
             material.CurrentAlpha = alpha;
@@ -1613,6 +1692,15 @@ namespace MphRead
             else if (e.Key == Key.L)
             {
                 _lighting = !_lighting;
+                await PrintOutput();
+            }
+            else if (e.Key == Key.Z)
+            {
+                _showLightVolumes++;
+                if (_showLightVolumes > 2)
+                {
+                    _showLightVolumes = 0;
+                }
                 await PrintOutput();
             }
             else if (e.Key == Key.G)
@@ -2246,6 +2334,226 @@ namespace MphRead
                     await Output.Write(log, guid);
                 }
                 await Output.Write(guid);
+            }
+        }
+
+        private Vector3 GetDiscVertices(Vector3 center, float radius, int index)
+        {
+            return new Vector3(
+                center.X + radius * MathF.Cos(2f * MathF.PI * index / 16f),
+                center.Y,
+                center.Z + radius * MathF.Sin(2f * MathF.PI * index / 16f)
+            );
+        }
+
+        private readonly List<Vector3> _sphereVertices = new List<Vector3>();
+
+        private void RenderVolume(CollisionVolume volume)
+        {
+            if (volume.Type == VolumeType.Box)
+            {
+                Vector3 point0 = volume.BoxPosition;
+                Vector3 sideX = volume.BoxVector1 * volume.BoxDot1;
+                Vector3 sideY = volume.BoxVector2 * volume.BoxDot2;
+                Vector3 sideZ = volume.BoxVector3 * volume.BoxDot3;
+                Vector3 point1 = point0 + sideZ;
+                Vector3 point2 = point0 + sideX;
+                Vector3 point3 = point0 + sideX + sideZ;
+                Vector3 point4 = point0 + sideY;
+                Vector3 point5 = point0 + sideY + sideZ;
+                Vector3 point6 = point0 + sideX + sideY;
+                Vector3 point7 = point0 + sideX + sideY + sideZ;
+                // sides
+                GL.Begin(PrimitiveType.TriangleStrip);
+                GL.Vertex3(point2);
+                GL.Vertex3(point6);
+                GL.Vertex3(point0);
+                GL.Vertex3(point4);
+                GL.Vertex3(point1);
+                GL.Vertex3(point5);
+                GL.Vertex3(point3);
+                GL.Vertex3(point7);
+                GL.Vertex3(point2);
+                GL.Vertex3(point6);
+                GL.End();
+                // top
+                GL.Begin(PrimitiveType.TriangleStrip);
+                GL.Vertex3(point5);
+                GL.Vertex3(point4);
+                GL.Vertex3(point7);
+                GL.Vertex3(point6);
+                GL.End();
+                // bottom
+                GL.Begin(PrimitiveType.TriangleStrip);
+                GL.Vertex3(point3);
+                GL.Vertex3(point2);
+                GL.Vertex3(point1);
+                GL.Vertex3(point0);
+                GL.End();
+            }
+            else if (volume.Type == VolumeType.Cylinder)
+            {
+                Vector3 center = volume.CylinderPosition;
+                float radius = volume.CylinderRadius;
+                Vector3 height = volume.CylinderPosition + volume.CylinderVector * volume.CylinderDot;
+                Vector3 pointB1 = GetDiscVertices(center, radius, 0);
+                Vector3 pointB2 = GetDiscVertices(center, radius, 1);
+                Vector3 pointB3 = GetDiscVertices(center, radius, 2);
+                Vector3 pointB4 = GetDiscVertices(center, radius, 3);
+                Vector3 pointB5 = GetDiscVertices(center, radius, 4);
+                Vector3 pointB6 = GetDiscVertices(center, radius, 5);
+                Vector3 pointB7 = GetDiscVertices(center, radius, 6);
+                Vector3 pointB8 = GetDiscVertices(center, radius, 7);
+                Vector3 pointB9 = GetDiscVertices(center, radius, 8);
+                Vector3 pointB10 = GetDiscVertices(center, radius, 9);
+                Vector3 pointB11 = GetDiscVertices(center, radius, 10);
+                Vector3 pointB12 = GetDiscVertices(center, radius, 11);
+                Vector3 pointB13 = GetDiscVertices(center, radius, 12);
+                Vector3 pointB14 = GetDiscVertices(center, radius, 13);
+                Vector3 pointB15 = GetDiscVertices(center, radius, 14);
+                Vector3 pointB16 = GetDiscVertices(center, radius, 15);
+                Vector3 pointT1 = pointB1 + height;
+                Vector3 pointT2 = pointB2 + height;
+                Vector3 pointT3 = pointB3 + height;
+                Vector3 pointT4 = pointB4 + height;
+                Vector3 pointT5 = pointB5 + height;
+                Vector3 pointT6 = pointB6 + height;
+                Vector3 pointT7 = pointB7 + height;
+                Vector3 pointT8 = pointB8 + height;
+                Vector3 pointT9 = pointB9 + height;
+                Vector3 pointT10 = pointB10 + height;
+                Vector3 pointT11 = pointB11 + height;
+                Vector3 pointT12 = pointB12 + height;
+                Vector3 pointT13 = pointB13 + height;
+                Vector3 pointT14 = pointB14 + height;
+                Vector3 pointT15 = pointB15 + height;
+                Vector3 pointT16 = pointB16 + height;
+                // bottom
+                GL.Begin(PrimitiveType.TriangleFan);
+                GL.Vertex3(center);
+                GL.Vertex3(pointB1);
+                GL.Vertex3(pointB2);
+                GL.Vertex3(pointB3);
+                GL.Vertex3(pointB4);
+                GL.Vertex3(pointB5);
+                GL.Vertex3(pointB6);
+                GL.Vertex3(pointB7);
+                GL.Vertex3(pointB8);
+                GL.Vertex3(pointB9);
+                GL.Vertex3(pointB10);
+                GL.Vertex3(pointB11);
+                GL.Vertex3(pointB12);
+                GL.Vertex3(pointB13);
+                GL.Vertex3(pointB14);
+                GL.Vertex3(pointB15);
+                GL.Vertex3(pointB16);
+                GL.Vertex3(pointB1);
+                GL.End();
+                // top
+                GL.Begin(PrimitiveType.TriangleFan);
+                GL.Vertex3(center + height);
+                GL.Vertex3(pointT16);
+                GL.Vertex3(pointT15);
+                GL.Vertex3(pointT14);
+                GL.Vertex3(pointT13);
+                GL.Vertex3(pointT12);
+                GL.Vertex3(pointT11);
+                GL.Vertex3(pointT10);
+                GL.Vertex3(pointT9);
+                GL.Vertex3(pointT8);
+                GL.Vertex3(pointT7);
+                GL.Vertex3(pointT6);
+                GL.Vertex3(pointT5);
+                GL.Vertex3(pointT4);
+                GL.Vertex3(pointT3);
+                GL.Vertex3(pointT2);
+                GL.Vertex3(pointT1);
+                GL.Vertex3(pointT16);
+                GL.End();
+                // sides
+                GL.Begin(PrimitiveType.TriangleStrip);
+                GL.Vertex3(pointB1);
+                GL.Vertex3(pointT1);
+                GL.Vertex3(pointB2);
+                GL.Vertex3(pointT2);
+                GL.Vertex3(pointB3);
+                GL.Vertex3(pointT3);
+                GL.Vertex3(pointB4);
+                GL.Vertex3(pointT4);
+                GL.Vertex3(pointB5);
+                GL.Vertex3(pointT5);
+                GL.Vertex3(pointB6);
+                GL.Vertex3(pointT6);
+                GL.Vertex3(pointB7);
+                GL.Vertex3(pointT7);
+                GL.Vertex3(pointB8);
+                GL.Vertex3(pointT8);
+                GL.Vertex3(pointB9);
+                GL.Vertex3(pointT9);
+                GL.Vertex3(pointB10);
+                GL.Vertex3(pointT10);
+                GL.Vertex3(pointB11);
+                GL.Vertex3(pointT11);
+                GL.Vertex3(pointB12);
+                GL.Vertex3(pointT12);
+                GL.Vertex3(pointB13);
+                GL.Vertex3(pointT13);
+                GL.Vertex3(pointB14);
+                GL.Vertex3(pointT14);
+                GL.Vertex3(pointB15);
+                GL.Vertex3(pointT15);
+                GL.Vertex3(pointB16);
+                GL.Vertex3(pointT16);
+                GL.Vertex3(pointB1);
+                GL.Vertex3(pointT1);
+                GL.End();
+            }
+            else if (volume.Type == VolumeType.Sphere)
+            {
+                _sphereVertices.Clear();
+                int stackCount = 16;
+                int sectorCount = 24;
+                float radius = volume.SphereRadius;
+                float sectorStep = 2 * MathF.PI / sectorCount;
+                float stackStep = MathF.PI / stackCount;
+                float sectorAngle, stackAngle, x, y, z, xy;
+                for (int i = 0; i <= stackCount; i++)
+                {
+                    stackAngle = MathF.PI / 2 - i * stackStep;
+                    xy = radius * MathF.Cos(stackAngle);
+                    z = radius * MathF.Sin(stackAngle);
+                    for (int j = 0; j <= sectorCount; j++)
+                    {
+                        sectorAngle = j * sectorStep;
+                        x = xy * MathF.Cos(sectorAngle);
+                        y = xy * MathF.Sin(sectorAngle);
+                        _sphereVertices.Add(new Vector3(x, z, y));
+                    }
+                }
+                GL.Begin(PrimitiveType.Triangles);
+                GL.Translate(volume.SpherePosition);
+                int k1, k2;
+                for (int i = 0; i < stackCount; i++)
+                {
+                    k1 = i * (sectorCount + 1);
+                    k2 = k1 + sectorCount + 1;
+                    for (int j = 0; j < sectorCount; j++, k1++, k2++)
+                    {
+                        if (i != 0)
+                        {
+                            GL.Vertex3(_sphereVertices[k1 + 1]);
+                            GL.Vertex3(_sphereVertices[k2]);
+                            GL.Vertex3(_sphereVertices[k1]);
+                        }
+                        if (i != (stackCount - 1))
+                        {
+                            GL.Vertex3(_sphereVertices[k2 + 1]);
+                            GL.Vertex3(_sphereVertices[k2]);
+                            GL.Vertex3(_sphereVertices[k1 + 1]);
+                        }
+                    }
+                }
+                GL.End();
             }
         }
     }

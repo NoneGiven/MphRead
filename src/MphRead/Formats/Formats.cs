@@ -11,6 +11,7 @@ namespace MphRead
     {
         public bool Visible { get; set; } = true;
         public bool ScanVisorOnly { get; set; }
+        public bool UseLightSources { get; }
         public ModelType Type { get; set; }
         public EntityType EntityType { get; set; } // currently only used when ModelType is Placeholder
 
@@ -148,7 +149,7 @@ namespace MphRead
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
             IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
             IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
-            IReadOnlyList<Matrix44Fx> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor)
+            IReadOnlyList<Matrix44Fx> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor, bool useLightSources)
         {
             ThrowIfInvalidEnums(materials);
             Name = name;
@@ -167,6 +168,7 @@ namespace MphRead
             CurrentRecolor = defaultRecolor;
             float scale = Header.ScaleBase.FloatValue * (1 << (int)Header.ScaleFactor);
             Scale = new Vector3(scale, scale, scale);
+            UseLightSources = useLightSources;
         }
 
         public IEnumerable<ColorRgba> GetPixels(int textureId, int paletteId)
@@ -701,6 +703,103 @@ namespace MphRead
             : base(entry, type, someId)
         {
             Data = data;
+        }
+    }
+
+    public readonly struct CollisionVolume
+    {
+        public readonly VolumeType Type;
+        public readonly Vector3 BoxVector1;
+        public readonly Vector3 BoxVector2;
+        public readonly Vector3 BoxVector3;
+        public readonly Vector3 BoxPosition;
+        public readonly float BoxDot1;
+        public readonly float BoxDot2;
+        public readonly float BoxDot3;
+        public readonly Vector3 CylinderVector;
+        public readonly Vector3 CylinderPosition;
+        public readonly float CylinderRadius;
+        public readonly float CylinderDot;
+        public readonly Vector3 SpherePosition;
+        public readonly float SphereRadius;
+
+        public CollisionVolume(RawCollisionVolume raw, VolumeType type)
+        {
+            Type = type;
+            BoxVector1 = raw.BoxVector1.ToFloatVector();
+            BoxVector2 = raw.BoxVector2.ToFloatVector();
+            BoxVector3 = raw.BoxVector3.ToFloatVector();
+            BoxPosition = raw.BoxPosition.ToFloatVector();
+            BoxDot1 = raw.BoxDot1.FloatValue;
+            BoxDot2 = raw.BoxDot2.FloatValue;
+            BoxDot3 = raw.BoxDot3.FloatValue;
+            CylinderVector = raw.CylinderVector.ToFloatVector();
+            CylinderPosition = raw.CylinderPosition.ToFloatVector();
+            CylinderRadius = raw.CylinderRadius.FloatValue;
+            CylinderDot = raw.CylinderDot.FloatValue;
+            SpherePosition = raw.SpherePosition.ToFloatVector();
+            SphereRadius = raw.SphereRadius.FloatValue;
+        }
+    }
+
+    public class LightSource
+    {
+        public Entity<LightSourceEntityData> Entity { get; }
+        public Vector3 Position { get; }
+        public CollisionVolume Volume { get; }
+        public bool Light1Enabled { get; }
+        public Vector3 Light1Color { get; }
+        public Vector3 Light1Vector { get; }
+        public bool Light2Enabled { get; }
+        public Vector3 Light2Color { get; }
+        public Vector3 Light2Vector { get; }
+
+        public LightSource(Entity<LightSourceEntityData> entity)
+        {
+            Entity = entity;
+            Position = entity.Data.Position.ToFloatVector();
+            Volume = new CollisionVolume(entity.Data.Volume, entity.Data.VolumeType);
+            Light1Enabled = entity.Data.Light1Enabled != 0;
+            Light1Color = entity.Data.Light1Color.AsVector3();
+            Light1Vector = entity.Data.Light1Vector.ToFloatVector();
+            Light2Enabled = entity.Data.Light2Enabled != 0;
+            Light2Color = entity.Data.Light2Color.AsVector3();
+            Light2Vector = entity.Data.Light2Vector.ToFloatVector();
+        }
+
+        public bool TestPoint(Vector3 point)
+        {
+            if (Volume.Type == VolumeType.Box)
+            {
+                Vector3 difference = point - (Volume.BoxPosition + Position);
+                float dot1 = Vector3.Dot(Volume.BoxVector1, difference);
+                if (dot1 >= 0 && dot1 <= Volume.BoxDot1)
+                {
+                    float dot2 = Vector3.Dot(Volume.BoxVector2, difference);
+                    if (dot2 >= 0 && dot2 <= Volume.BoxDot2)
+                    {
+                        float dot3 = Vector3.Dot(Volume.BoxVector3, difference);
+                        return dot3 >= 0 && dot3 <= Volume.BoxDot3;
+                    }
+                }
+            }
+            else if (Volume.Type == VolumeType.Cylinder)
+            {
+                Vector3 bottom = Volume.CylinderPosition + Position;
+                Vector3 top = bottom + Volume.CylinderVector * Volume.CylinderDot;
+                if (Vector3.Dot(point - bottom, top - bottom) >= 0)
+                {
+                    if (Vector3.Dot(point - top, top - bottom) <= 0)
+                    {
+                        return Vector3.Cross(point - bottom, top - bottom).Length / (top - bottom).Length <= Volume.CylinderRadius;
+                    }
+                }
+            }
+            else if (Volume.Type == VolumeType.Sphere)
+            {
+                return Vector3.Distance(Volume.SpherePosition + Position, point) <= Volume.SphereRadius;
+            }
+            return false;
         }
     }
 

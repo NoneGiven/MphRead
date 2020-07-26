@@ -174,6 +174,10 @@ namespace MphRead
                         if (entity.Type == EntityType.LightSource)
                         {
                             LightSourceEntityData data = ((Entity<LightSourceEntityData>)entity).Data;
+                            if (data.VolumeType == VolumeType.Cylinder)
+                            {
+                                Console.WriteLine(data.Volume.CylinderVector.ToFloatVector());
+                            }
                         }
                     }
                 }

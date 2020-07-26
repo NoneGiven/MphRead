@@ -15,7 +15,10 @@ namespace MphRead
             {
                 throw new InvalidOperationException();
             }
-            // roomLayerMask = ((1 << metadata.LayerId) & 0xFF) << 6;
+            if (layerMask == NodeLayer.None)
+            {
+                layerMask = (NodeLayer)(((1 << metadata.LayerId) & 0xFF) << 6);
+            }
             Model room = Read.GetRoomByName(name);
             // todo?: do whatever with NodePosition/NodeInitialPosition
             // todo?: use this name and ID

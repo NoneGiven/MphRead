@@ -1034,6 +1034,41 @@ namespace MphRead
         public readonly uint Field60;
     }
 
+    // size: 60
+    [StructLayout(LayoutKind.Explicit)]
+    public readonly struct RawCollisionVolume
+    {
+        // box
+        [FieldOffset(0)]
+        public readonly Vector3Fx BoxVector1;
+        [FieldOffset(12)]
+        public readonly Vector3Fx BoxVector2;
+        [FieldOffset(24)]
+        public readonly Vector3Fx BoxVector3;
+        [FieldOffset(36)]
+        public readonly Vector3Fx BoxPosition;
+        [FieldOffset(48)]
+        public readonly Fixed BoxDot1;
+        [FieldOffset(52)]
+        public readonly Fixed BoxDot2;
+        [FieldOffset(56)]
+        public readonly Fixed BoxDot3;
+        // cylinder
+        [FieldOffset(0)]
+        public readonly Vector3Fx CylinderVector;
+        [FieldOffset(12)]
+        public readonly Vector3Fx CylinderPosition;
+        [FieldOffset(24)]
+        public readonly Fixed CylinderRadius;
+        [FieldOffset(28)]
+        public readonly Fixed CylinderDot;
+        // sphere
+        [FieldOffset(0)]
+        public readonly Vector3Fx SpherePosition;
+        [FieldOffset(12)]
+        public readonly Fixed SphereRadius;
+    }
+
     // size: 136
     public readonly struct LightSourceEntityData
     {
@@ -1041,7 +1076,8 @@ namespace MphRead
         public readonly Vector3Fx Position;
         public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
-        public readonly Matrix44Fx Matrix;
+        public readonly VolumeType VolumeType;
+        public readonly RawCollisionVolume Volume;
         public readonly byte Light1Enabled; // boolean
         public readonly ColorRgb Light1Color; // 8-bit color values
         public readonly Vector3Fx Light1Vector;
