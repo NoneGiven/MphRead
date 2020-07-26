@@ -767,7 +767,6 @@ namespace MphRead
             Light2Vector = entity.Data.Light2Vector.ToFloatVector();
         }
 
-        // sktodo: return for sphere
         public bool TestPoint(Vector3 point)
         {
             if (Volume.Type == VolumeType.Box)
@@ -798,7 +797,7 @@ namespace MphRead
             }
             else if (Volume.Type == VolumeType.Sphere)
             {
-
+                return Vector3.Distance(Volume.SpherePosition + Position, point) <= Volume.SphereRadius;
             }
             return false;
         }

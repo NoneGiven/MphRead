@@ -625,8 +625,9 @@ namespace MphRead
         private void RenderScene(double elapsedTime)
         {
             _models.Sort(CompareModels);
-            foreach (Model model in _models)
+            for (int i = 0; i < _models.Count; i++)
             {
+                Model model = _models[i];
                 if ((model.Type != ModelType.Placeholder || _showInvisible) && (!model.ScanVisorOnly || _scanVisor))
                 {
                     if (_frameCount != 0 &&
@@ -691,7 +692,7 @@ namespace MphRead
             GL.MatrixMode(MatrixMode.Modelview);
             GL.PushMatrix();
             GL.MultMatrix(ref transform);
-            // sktodo: depth buffer can't always handle this
+            // the depth buffer can't always handle this
             //GL.Enable(EnableCap.CullFace);
             //GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
             GL.Disable(EnableCap.CullFace);
@@ -2345,9 +2346,10 @@ namespace MphRead
             );
         }
 
+        private readonly List<Vector3> _sphereVertices = new List<Vector3>();
+
         private void RenderVolume(CollisionVolume volume)
         {
-            // sktodo: return for sphere
             if (volume.Type == VolumeType.Box)
             {
                 Vector3 point0 = volume.BoxPosition;
@@ -2508,7 +2510,50 @@ namespace MphRead
             }
             else if (volume.Type == VolumeType.Sphere)
             {
-
+                _sphereVertices.Clear();
+                int stackCount = 16;
+                int sectorCount = 24;
+                float radius = volume.SphereRadius;
+                float sectorStep = 2 * MathF.PI / sectorCount;
+                float stackStep = MathF.PI / stackCount;
+                float sectorAngle, stackAngle, x, y, z, xy;
+                for (int i = 0; i <= stackCount; i++)
+                {
+                    stackAngle = MathF.PI / 2 - i * stackStep;
+                    xy = radius * MathF.Cos(stackAngle);
+                    z = radius * MathF.Sin(stackAngle);
+                    for (int j = 0; j <= sectorCount; j++)
+                    {
+                        sectorAngle = j * sectorStep;
+                        x = xy * MathF.Cos(sectorAngle);
+                        y = xy * MathF.Sin(sectorAngle);
+                        _sphereVertices.Add(new Vector3(x, z, y));
+                    }
+                }
+                GL.Begin(PrimitiveType.Triangles);
+                GL.Translate(volume.SpherePosition);
+                int k1, k2;
+                for (int i = 0; i < stackCount; i++)
+                {
+                    k1 = i * (sectorCount + 1);
+                    k2 = k1 + sectorCount + 1;
+                    for (int j = 0; j < sectorCount; j++, k1++, k2++)
+                    {
+                        if (i != 0)
+                        {
+                            GL.Vertex3(_sphereVertices[k1 + 1]);
+                            GL.Vertex3(_sphereVertices[k2]);
+                            GL.Vertex3(_sphereVertices[k1]);
+                        }
+                        if (i != (stackCount - 1))
+                        {
+                            GL.Vertex3(_sphereVertices[k2 + 1]);
+                            GL.Vertex3(_sphereVertices[k2]);
+                            GL.Vertex3(_sphereVertices[k1 + 1]);
+                        }
+                    }
+                }
+                GL.End();
             }
         }
     }
