@@ -765,7 +765,7 @@ namespace MphRead
             Light2Vector = entity.Data.Light2Vector.ToFloatVector();
         }
 
-        // sktodo
+        // sktodo: return for other types
         public bool TestPoint(Vector3 point)
         {
             if (Entity.Data.VolumeType == VolumeType.Box)
