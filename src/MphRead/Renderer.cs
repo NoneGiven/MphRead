@@ -691,7 +691,7 @@ namespace MphRead
             GL.MatrixMode(MatrixMode.Modelview);
             GL.PushMatrix();
             GL.MultMatrix(ref transform);
-            GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Back : CullFaceMode.Front);
+            GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
             ColorRgb color = _showLightVolumes == 1
                 ? data.Light1Enabled != 0 ? data.Light1Color : new ColorRgb(0, 0, 0)
                 : data.Light2Enabled != 0 ? data.Light2Color : new ColorRgb(0, 0, 0);
