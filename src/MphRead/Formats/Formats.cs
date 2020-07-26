@@ -708,6 +708,7 @@ namespace MphRead
 
     public readonly struct CollisionVolume
     {
+        public readonly VolumeType Type;
         public readonly Vector3 BoxVector1;
         public readonly Vector3 BoxVector2;
         public readonly Vector3 BoxVector3;
@@ -722,8 +723,9 @@ namespace MphRead
         public readonly Vector3 SpherePosition;
         public readonly float SphereRadius;
 
-        public CollisionVolume(RawCollisionVolume raw)
+        public CollisionVolume(RawCollisionVolume raw, VolumeType type)
         {
+            Type = type;
             BoxVector1 = raw.BoxVector1.ToFloatVector();
             BoxVector2 = raw.BoxVector2.ToFloatVector();
             BoxVector3 = raw.BoxVector3.ToFloatVector();
@@ -756,7 +758,7 @@ namespace MphRead
         {
             Entity = entity;
             Position = entity.Data.Position.ToFloatVector();
-            Volume = new CollisionVolume(entity.Data.Volume);
+            Volume = new CollisionVolume(entity.Data.Volume, entity.Data.VolumeType);
             Light1Enabled = entity.Data.Light1Enabled != 0;
             Light1Color = entity.Data.Light1Color.AsVector3();
             Light1Vector = entity.Data.Light1Vector.ToFloatVector();
@@ -765,10 +767,10 @@ namespace MphRead
             Light2Vector = entity.Data.Light2Vector.ToFloatVector();
         }
 
-        // sktodo: return for other types
+        // sktodo: return for sphere
         public bool TestPoint(Vector3 point)
         {
-            if (Entity.Data.VolumeType == VolumeType.Box)
+            if (Volume.Type == VolumeType.Box)
             {
                 Vector3 difference = point - (Volume.BoxPosition + Position);
                 float dot1 = Vector3.Dot(Volume.BoxVector1, difference);
@@ -782,56 +784,23 @@ namespace MphRead
                     }
                 }
             }
-            return false;
-        }
-
-        public IEnumerable<Vector3> GetVertices()
-        {
-            // sktodo: return for other types
-            if (Entity.Data.VolumeType == VolumeType.Box)
+            else if (Volume.Type == VolumeType.Cylinder)
             {
-                Vector3 point0 = Volume.BoxPosition;
-                Vector3 sideX = Volume.BoxVector1 * Volume.BoxDot1;
-                Vector3 sideY = Volume.BoxVector2 * Volume.BoxDot2;
-                Vector3 sideZ = Volume.BoxVector3 * Volume.BoxDot3;
-                Vector3 point1 = point0 + sideZ;
-                Vector3 point2 = point0 + sideX;
-                Vector3 point3 = point0 + sideX + sideZ;
-                Vector3 point4 = point0 + sideY;
-                Vector3 point5 = point0 + sideY + sideZ;
-                Vector3 point6 = point0 + sideX + sideY;
-                Vector3 point7 = point0 + sideX + sideY + sideZ;
-                // face 1
-                yield return point6;
-                yield return point4;
-                yield return point2;
-                yield return point0;
-                // face 2
-                yield return point7;
-                yield return point6;
-                yield return point3;
-                yield return point2;
-                // face 3
-                yield return point5;
-                yield return point7;
-                yield return point1;
-                yield return point3;
-                // face 4
-                yield return point4;
-                yield return point5;
-                yield return point0;
-                yield return point1;
-                // face 5
-                yield return point5;
-                yield return point4;
-                yield return point7;
-                yield return point6;
-                // face 6
-                yield return point3;
-                yield return point2;
-                yield return point1;
-                yield return point0;
+                Vector3 bottom = Volume.CylinderPosition + Position;
+                Vector3 top = bottom + Volume.CylinderVector * Volume.CylinderDot;
+                if (Vector3.Dot(point - bottom, top - bottom) >= 0)
+                {
+                    if (Vector3.Dot(point - top, top - bottom) <= 0)
+                    {
+                        return Vector3.Cross(point - bottom, top - bottom).Length / (top - bottom).Length <= Volume.CylinderRadius;
+                    }
+                } 
             }
+            else if (Volume.Type == VolumeType.Sphere)
+            {
+
+            }
+            return false;
         }
     }
 

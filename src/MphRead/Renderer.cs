@@ -691,25 +691,15 @@ namespace MphRead
             GL.MatrixMode(MatrixMode.Modelview);
             GL.PushMatrix();
             GL.MultMatrix(ref transform);
-            GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
+            // sktodo: depth buffer can't always handle this
+            //GL.Enable(EnableCap.CullFace);
+            //GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
+            GL.Disable(EnableCap.CullFace);
             ColorRgb color = _showLightVolumes == 1
                 ? data.Light1Enabled != 0 ? data.Light1Color : new ColorRgb(0, 0, 0)
                 : data.Light2Enabled != 0 ? data.Light2Color : new ColorRgb(0, 0, 0);
             GL.Uniform4(_shaderLocations.OverrideColor, color.AsVector4(0.5f));
-            var verts = lightSource.GetVertices().ToList();
-            for (int i = 0; i < verts.Count; i++)
-            {
-                Vector3 vert = verts[i];
-                if (i % 4 == 0)
-                {
-                    GL.Begin(PrimitiveType.TriangleStrip);
-                }
-                GL.Vertex3(vert);
-                if (i % 4 == 3)
-                {
-                    GL.End();
-                }
-            }
+            RenderVolume(lightSource.Volume);
             GL.MatrixMode(MatrixMode.Modelview);
             GL.PopMatrix();
             GL.Disable(EnableCap.Blend);
@@ -2343,6 +2333,182 @@ namespace MphRead
                     await Output.Write(log, guid);
                 }
                 await Output.Write(guid);
+            }
+        }
+
+        private Vector3 GetDiscVertices(Vector3 center, float radius, int index)
+        {
+            return new Vector3(
+                center.X + radius * MathF.Cos(2f * MathF.PI * index / 16f),
+                center.Y,
+                center.Z + radius * MathF.Sin(2f * MathF.PI * index / 16f)
+            );
+        }
+
+        private void RenderVolume(CollisionVolume volume)
+        {
+            // sktodo: return for sphere
+            if (volume.Type == VolumeType.Box)
+            {
+                Vector3 point0 = volume.BoxPosition;
+                Vector3 sideX = volume.BoxVector1 * volume.BoxDot1;
+                Vector3 sideY = volume.BoxVector2 * volume.BoxDot2;
+                Vector3 sideZ = volume.BoxVector3 * volume.BoxDot3;
+                Vector3 point1 = point0 + sideZ;
+                Vector3 point2 = point0 + sideX;
+                Vector3 point3 = point0 + sideX + sideZ;
+                Vector3 point4 = point0 + sideY;
+                Vector3 point5 = point0 + sideY + sideZ;
+                Vector3 point6 = point0 + sideX + sideY;
+                Vector3 point7 = point0 + sideX + sideY + sideZ;
+                // sides
+                GL.Begin(PrimitiveType.TriangleStrip);
+                GL.Vertex3(point2);
+                GL.Vertex3(point6);
+                GL.Vertex3(point0);
+                GL.Vertex3(point4);
+                GL.Vertex3(point1);
+                GL.Vertex3(point5);
+                GL.Vertex3(point3);
+                GL.Vertex3(point7);
+                GL.Vertex3(point2);
+                GL.Vertex3(point6);
+                GL.End();
+                // top
+                GL.Begin(PrimitiveType.TriangleStrip);
+                GL.Vertex3(point5);
+                GL.Vertex3(point4);
+                GL.Vertex3(point7);
+                GL.Vertex3(point6);
+                GL.End();
+                // bottom
+                GL.Begin(PrimitiveType.TriangleStrip);
+                GL.Vertex3(point3);
+                GL.Vertex3(point2);
+                GL.Vertex3(point1);
+                GL.Vertex3(point0);
+                GL.End();
+            }
+            else if (volume.Type == VolumeType.Cylinder)
+            {
+                Vector3 center = volume.CylinderPosition;
+                float radius = volume.CylinderRadius;
+                Vector3 height = volume.CylinderPosition + volume.CylinderVector * volume.CylinderDot;
+                Vector3 pointB1 = GetDiscVertices(center, radius, 0);
+                Vector3 pointB2 = GetDiscVertices(center, radius, 1);
+                Vector3 pointB3 = GetDiscVertices(center, radius, 2);
+                Vector3 pointB4 = GetDiscVertices(center, radius, 3);
+                Vector3 pointB5 = GetDiscVertices(center, radius, 4);
+                Vector3 pointB6 = GetDiscVertices(center, radius, 5);
+                Vector3 pointB7 = GetDiscVertices(center, radius, 6);
+                Vector3 pointB8 = GetDiscVertices(center, radius, 7);
+                Vector3 pointB9 = GetDiscVertices(center, radius, 8);
+                Vector3 pointB10 = GetDiscVertices(center, radius, 9);
+                Vector3 pointB11 = GetDiscVertices(center, radius, 10);
+                Vector3 pointB12 = GetDiscVertices(center, radius, 11);
+                Vector3 pointB13 = GetDiscVertices(center, radius, 12);
+                Vector3 pointB14 = GetDiscVertices(center, radius, 13);
+                Vector3 pointB15 = GetDiscVertices(center, radius, 14);
+                Vector3 pointB16 = GetDiscVertices(center, radius, 15);
+                Vector3 pointT1 = pointB1 + height;
+                Vector3 pointT2 = pointB2 + height;
+                Vector3 pointT3 = pointB3 + height;
+                Vector3 pointT4 = pointB4 + height;
+                Vector3 pointT5 = pointB5 + height;
+                Vector3 pointT6 = pointB6 + height;
+                Vector3 pointT7 = pointB7 + height;
+                Vector3 pointT8 = pointB8 + height;
+                Vector3 pointT9 = pointB9 + height;
+                Vector3 pointT10 = pointB10 + height;
+                Vector3 pointT11 = pointB11 + height;
+                Vector3 pointT12 = pointB12 + height;
+                Vector3 pointT13 = pointB13 + height;
+                Vector3 pointT14 = pointB14 + height;
+                Vector3 pointT15 = pointB15 + height;
+                Vector3 pointT16 = pointB16 + height;
+                // bottom
+                GL.Begin(PrimitiveType.TriangleFan);
+                GL.Vertex3(center);
+                GL.Vertex3(pointB1);
+                GL.Vertex3(pointB2);
+                GL.Vertex3(pointB3);
+                GL.Vertex3(pointB4);
+                GL.Vertex3(pointB5);
+                GL.Vertex3(pointB6);
+                GL.Vertex3(pointB7);
+                GL.Vertex3(pointB8);
+                GL.Vertex3(pointB9);
+                GL.Vertex3(pointB10);
+                GL.Vertex3(pointB11);
+                GL.Vertex3(pointB12);
+                GL.Vertex3(pointB13);
+                GL.Vertex3(pointB14);
+                GL.Vertex3(pointB15);
+                GL.Vertex3(pointB16);
+                GL.Vertex3(pointB1);
+                GL.End();
+                // top
+                GL.Begin(PrimitiveType.TriangleFan);
+                GL.Vertex3(center + height);
+                GL.Vertex3(pointT16);
+                GL.Vertex3(pointT15);
+                GL.Vertex3(pointT14);
+                GL.Vertex3(pointT13);
+                GL.Vertex3(pointT12);
+                GL.Vertex3(pointT11);
+                GL.Vertex3(pointT10);
+                GL.Vertex3(pointT9);
+                GL.Vertex3(pointT8);
+                GL.Vertex3(pointT7);
+                GL.Vertex3(pointT6);
+                GL.Vertex3(pointT5);
+                GL.Vertex3(pointT4);
+                GL.Vertex3(pointT3);
+                GL.Vertex3(pointT2);
+                GL.Vertex3(pointT1);
+                GL.Vertex3(pointT16);
+                GL.End();
+                // sides
+                GL.Begin(PrimitiveType.TriangleStrip);
+                GL.Vertex3(pointB1);
+                GL.Vertex3(pointT1);
+                GL.Vertex3(pointB2);
+                GL.Vertex3(pointT2);
+                GL.Vertex3(pointB3);
+                GL.Vertex3(pointT3);
+                GL.Vertex3(pointB4);
+                GL.Vertex3(pointT4);
+                GL.Vertex3(pointB5);
+                GL.Vertex3(pointT5);
+                GL.Vertex3(pointB6);
+                GL.Vertex3(pointT6);
+                GL.Vertex3(pointB7);
+                GL.Vertex3(pointT7);
+                GL.Vertex3(pointB8);
+                GL.Vertex3(pointT8);
+                GL.Vertex3(pointB9);
+                GL.Vertex3(pointT9);
+                GL.Vertex3(pointB10);
+                GL.Vertex3(pointT10);
+                GL.Vertex3(pointB11);
+                GL.Vertex3(pointT11);
+                GL.Vertex3(pointB12);
+                GL.Vertex3(pointT12);
+                GL.Vertex3(pointB13);
+                GL.Vertex3(pointT13);
+                GL.Vertex3(pointB14);
+                GL.Vertex3(pointT14);
+                GL.Vertex3(pointB15);
+                GL.Vertex3(pointT15);
+                GL.Vertex3(pointB16);
+                GL.Vertex3(pointT16);
+                GL.Vertex3(pointB1);
+                GL.Vertex3(pointT1);
+                GL.End();
+            }
+            else if (volume.Type == VolumeType.Sphere)
+            {
+
             }
         }
     }
