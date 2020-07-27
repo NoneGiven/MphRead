@@ -195,7 +195,7 @@ namespace MphRead
             public List<TextureAnimationGroup> TextureAnimationGroups { get; } = new List<TextureAnimationGroup>();
         }
 
-        // todo: parse the rest of the animation types
+        // todo: parse node animations, figure out group indexing
         private static AnimationResults LoadAnimation(string? path)
         {
             var results = new AnimationResults();

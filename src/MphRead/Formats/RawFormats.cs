@@ -101,8 +101,8 @@ namespace MphRead
         public readonly uint MaterialGroupOffset;
         public readonly uint TexcoordGroupOffset;
         public readonly uint TextureGroupOffset;
-        public readonly ushort Count; // todo?: always 1?
-        public readonly ushort Field16; // todo?: always 0?
+        public readonly ushort Count;
+        public readonly ushort Field16; // always 0 except for testlevel_Anim (FH), where it's 52428
     }
 
     // size: 20
