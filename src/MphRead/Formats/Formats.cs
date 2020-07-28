@@ -14,7 +14,7 @@ namespace MphRead
         public bool UseLightSources { get; }
         public ModelType Type { get; set; }
         public EntityType EntityType { get; set; } // currently only used when ModelType is Placeholder
-        public NodeLayer NodeLayer { get; set; }
+        public ushort EntityLayer { get; set; }
 
         public string Name { get; }
         public Header Header { get; }
@@ -636,37 +636,16 @@ namespace MphRead
     public class Entity
     {
         public string NodeName { get; }
-        public NodeLayer LayerMask { get; }
+        public ushort LayerMask { get; }
         public ushort Length { get; }
         public EntityType Type { get; }
         public ushort EntityId { get; }
         public bool FirstHunt { get; }
 
-        public IEnumerable<int> LayerIds
-        {
-            get
-            {
-                if (FirstHunt)
-                {
-                    yield return -1;
-                }
-                else
-                {
-                    for (int i = 0; i < 16; i++)
-                    {
-                        if (((int)LayerMask & (1 << i)) != 0)
-                        {
-                            yield return i;
-                        }
-                    }
-                }
-            }
-        }
-
         public Entity(EntityEntry entry, EntityType type, ushort entityId)
         {
             NodeName = entry.NodeName;
-            LayerMask = (NodeLayer)entry.LayerMask;
+            LayerMask = entry.LayerMask;
             Length = entry.Length;
             if (!Enum.IsDefined(typeof(EntityType), type))
             {

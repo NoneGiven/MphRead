@@ -525,7 +525,7 @@ namespace MphRead
                 {
                     throw new ProgramException($"Invalid entity type {entity.Type}");
                 }
-                models[^1].NodeLayer = entity.LayerMask;
+                models[^1].EntityLayer = entity.LayerMask;
             }
             return models;
         }

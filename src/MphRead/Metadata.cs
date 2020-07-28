@@ -379,6 +379,11 @@ namespace MphRead
             return list[playerCount == 3 ? 1 : (playerCount == 4 ? 2 : 0)];
         }
 
+        public static IEnumerable<GameMode> GetEntityLayerGameModes(int layerId)
+        {
+            return _modeLayers.Where(kvp => kvp.Value.Contains(layerId)).Select(kvp => kvp.Key).OrderBy(m => m);
+        }
+
         public static ModelMetadata? GetEntityByName(string name)
         {
             if (ModelMetadata.TryGetValue(name, out ModelMetadata? metadata))
