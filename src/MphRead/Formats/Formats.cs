@@ -13,8 +13,8 @@ namespace MphRead
         public bool ScanVisorOnly { get; set; }
         public bool UseLightSources { get; }
         public ModelType Type { get; set; }
-        public EntityType EntityType { get; set; } // currently only used when ModelType is Placeholder
-        public ushort EntityLayer { get; set; }
+        public EntityType EntityType { get; set; }
+        public ushort EntityLayer { get; set; } = UInt16.MaxValue;
 
         public string Name { get; }
         public Header Header { get; }

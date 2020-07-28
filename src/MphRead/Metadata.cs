@@ -351,7 +351,7 @@ namespace MphRead
 
     public static class Metadata
     {
-        private static IReadOnlyDictionary<GameMode, IReadOnlyList<int>> _modeLayers
+        private static readonly IReadOnlyDictionary<GameMode, IReadOnlyList<int>> _modeLayers
             = new Dictionary<GameMode, IReadOnlyList<int>>()
         {
             { GameMode.Battle, new List<int>() { 0, 1, 2 } },
@@ -377,11 +377,6 @@ namespace MphRead
                 return list[0];
             }
             return list[playerCount == 3 ? 1 : (playerCount == 4 ? 2 : 0)];
-        }
-
-        public static IEnumerable<GameMode> GetEntityLayerGameModes(int layerId)
-        {
-            return _modeLayers.Where(kvp => kvp.Value.Contains(layerId)).Select(kvp => kvp.Key).OrderBy(m => m);
         }
 
         public static ModelMetadata? GetEntityByName(string name)

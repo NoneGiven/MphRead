@@ -391,6 +391,7 @@ namespace MphRead
             IReadOnlyList<Entity> entities = Read.GetEntities(metadata.EntityPath, layerId);
             foreach (Entity entity in entities)
             {
+                int count = models.Count;
                 if (entity.Type == EntityType.Platform)
                 {
                     models.Add(LoadPlatform(((Entity<PlatformEntityData>)entity).Data));
@@ -522,7 +523,12 @@ namespace MphRead
                 {
                     throw new ProgramException($"Invalid entity type {entity.Type}");
                 }
-                models[^1].EntityLayer = entity.LayerMask;
+                int added = models.Count - count;
+                for (int i = models.Count - added; i < models.Count; i++)
+                {
+                    models[i].EntityLayer = entity.LayerMask;
+                    models[i].EntityType = entity.Type;
+                }
             }
             return models;
         }
