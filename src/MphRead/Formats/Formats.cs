@@ -808,6 +808,7 @@ namespace MphRead
     // todo: use these to set up all the appropriate layer stuff
     public enum GameMode
     {
+        None,
         SinglePlayer,
         Battle,
         Survival,
@@ -825,8 +826,8 @@ namespace MphRead
         Unknown1 = 0x1, // 1 << 0
         Unknown2 = 0x2, // 1 << 1
         Unknown4 = 0x4, // 1 << 2
-        Multiplayer0 = 0x8, // 1 << 3
-        Multiplayer1 = 0x10, // 1 << 4
+        MultiplayerLod0 = 0x8, // 1 << 3
+        MultiplayerLod1 = 0x10, // 1 << 4
         MultiplayerU = 0x20, // 1 << 5
         Unknown40 = 0x40, // 1 << 6
         Unknown80 = 0x80, // 1 << 7

@@ -20,7 +20,7 @@ namespace MphRead
         public uint BattleTimeLimit { get; }
         public uint TimeLimit { get; }
         public short PointLimit { get; }
-        public short LayerId { get; }
+        public short NodeLayer { get; }
         public ushort FogEnabled { get; }
         public ushort Fog { get; }
         public ushort FogColor { get; }
@@ -31,12 +31,13 @@ namespace MphRead
         public ColorRgb Light2Color { get; }
         public Vector3 Light2Vector { get; }
         public Vector3 RoomSize { get; }
+        public bool Multiplayer { get; }
 
         public RoomMetadata(string name, string? inGameName, string pathName, string modelPath,
             string animationPath, string collisionPath, string? texturePath, string? entityPath, string? nodePath,
-            string? roomNodeName, uint battleTimeLimit, uint timeLimit, short pointLimit, short layerId, ushort fogEnabled,
+            string? roomNodeName, uint battleTimeLimit, uint timeLimit, short pointLimit, short nodeLayer, ushort fogEnabled,
             ushort fog, ushort fogColor, uint fogSlope, uint fogOffset, ColorRgb light1Color,
-            Vector3 light1Vector, ColorRgb light2Color, Vector3 light2Vector, Vector3 roomSize)
+            Vector3 light1Vector, ColorRgb light2Color, Vector3 light2Vector, Vector3 roomSize, bool multiplayer = false)
         {
             Name = name;
             InGameName = inGameName;
@@ -51,7 +52,7 @@ namespace MphRead
             BattleTimeLimit = battleTimeLimit;
             TimeLimit = timeLimit;
             PointLimit = pointLimit;
-            LayerId = layerId;
+            NodeLayer = nodeLayer;
             FogEnabled = fogEnabled;
             Fog = fog;
             FogColor = fogColor;
@@ -62,6 +63,7 @@ namespace MphRead
             Light2Color = light2Color;
             Light2Vector = light2Vector;
             RoomSize = roomSize;
+            Multiplayer = multiplayer;
         }
     }
 
@@ -2892,7 +2894,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "MP2 HARVESTER",
@@ -2920,7 +2923,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(9, 11, 6),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(300f, -300f, 300f))
+                        new Vector3(300f, -300f, 300f),
+                        multiplayer: true)
                 },
                 {
                     "MP3 PROVING GROUND",
@@ -2948,7 +2952,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(13, 12, 7),
                         new Vector3(0.099854f, -1f, 0f),
-                        new Vector3(-76f, 81f, -7.127930f))
+                        new Vector3(-76f, 81f, -7.127930f),
+                        multiplayer: true)
                 },
                 {
                     "MP4 HIGHGROUND - EXPANDED",
@@ -2976,7 +2981,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(32f, -42f, 31f))
+                        new Vector3(32f, -42f, 31f),
+                        multiplayer: true)
                 },
                 {
                     "MP4 HIGHGROUND",
@@ -3004,7 +3010,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-76f, 81f, -7.127930f))
+                        new Vector3(-76f, 81f, -7.127930f),
+                        multiplayer: true)
                 },
                 {
                     "MP5 FUEL SLUICE",
@@ -3032,7 +3039,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(32f, -40.748779f, 31f))
+                        new Vector3(32f, -40.748779f, 31f),
+                        multiplayer: true)
                 },
                 {
                     "MP6 HEADSHOT",
@@ -3060,7 +3068,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-72f, 72f, -3f))
+                        new Vector3(-72f, 72f, -3f),
+                        multiplayer: true)
                 },
                 {
                     "MP7 PROCESSOR CORE",
@@ -3088,7 +3097,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(13, 6, 4),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(23f, -42f, 42f))
+                        new Vector3(23f, -42f, 42f),
+                        multiplayer: true)
                 },
                 {
                     "MP8 FIRE CONTROL",
@@ -3116,7 +3126,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "MP9 CRYOCHASM",
@@ -3144,7 +3155,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(8, 8, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(300f, -300f, 300f))
+                        new Vector3(300f, -300f, 300f),
+                        multiplayer: true)
                 },
                 {
                     "MP10 OVERLOAD",
@@ -3172,7 +3184,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-68f, 60f, 0f))
+                        new Vector3(-68f, 60f, 0f),
+                        multiplayer: true)
                 },
                 {
                     "MP11 BREAKTHROUGH",
@@ -3200,7 +3213,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(8, 8, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(36f, -27f, 26f))
+                        new Vector3(36f, -27f, 26f),
+                        multiplayer: true)
                 },
                 {
                     "MP12 SIC TRANSIT",
@@ -3228,7 +3242,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(4, 4, 8),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "MP13 ACCELERATOR",
@@ -3256,7 +3271,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(300f, -300f, 300f))
+                        new Vector3(300f, -300f, 300f),
+                        multiplayer: true)
                 },
                 {
                     "MP14 OUTER REACH",
@@ -3284,7 +3300,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-68f, 60f, 0f))
+                        new Vector3(-68f, 60f, 0f),
+                        multiplayer: true)
                 },
                 {
                     "CTF1 FAULT LINE - EXPANDED",
@@ -3312,7 +3329,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(4, 4, 8),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(39f, -27f, 26f))
+                        new Vector3(39f, -27f, 26f),
+                        multiplayer: true)
                 },
                 {
                     "CTF1_FAULT LINE",
@@ -3340,7 +3358,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(4, 4, 8),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "AD1 TRANSFER LOCK BT",
@@ -3368,7 +3387,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(300f, -300f, 300f))
+                        new Vector3(300f, -300f, 300f),
+                        multiplayer: true)
                 },
                 {
                     "AD1 TRANSFER LOCK DM",
@@ -3396,7 +3416,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-71f, 85f, 2f))
+                        new Vector3(-71f, 85f, 2f),
+                        multiplayer: true)
                 },
                 {
                     "AD2 MAGMA VENTS",
@@ -3424,7 +3445,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(21f, -53f, 59f))
+                        new Vector3(21f, -53f, 59f),
+                        multiplayer: true)
                 },
                 {
                     "AD2 ALINOS PERCH",
@@ -3452,7 +3474,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "UNIT1 ALINOS LANDFALL",
@@ -3480,7 +3503,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(300f, -300f, 300f))
+                        new Vector3(300f, -300f, 300f),
+                        multiplayer: true)
                 },
                 {
                     "UNIT2 LANDING BAY",
@@ -3508,7 +3532,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-23f, 25f, -11f))
+                        new Vector3(-23f, 25f, -11f),
+                        multiplayer: true)
                 },
                 {
                     "UNIT 3 VESPER STARPORT",
@@ -3536,7 +3561,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(28f, -27f, 26f))
+                        new Vector3(28f, -27f, 26f),
+                        multiplayer: true)
                 },
                 {
                     "UNIT 4 ARCTERRA BASE",
@@ -3564,7 +3590,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(4, 4, 8),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "Gorea Prison",
@@ -3592,7 +3619,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(27, 18, 9),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(300f, -300f, 300f))
+                        new Vector3(300f, -300f, 300f),
+                        multiplayer: true)
                 },
                 {
                     "E3 FIRST HUNT",
@@ -3620,7 +3648,8 @@ namespace MphRead
                         new Vector3(0.099854f, -1f, 0f),
                         new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-44f, 42f, -5f))
+                        new Vector3(-44f, 42f, -5f),
+                        multiplayer: true)
                 },
                 // model, animation, collision files for these two test levels must be taken from First Hunt
                 {
@@ -3706,7 +3735,8 @@ namespace MphRead
                         new Vector3(1f, 0f, 0f),
                         new ColorRgb(31, 31, 31),
                         new Vector3(0f, -1f, 0f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "biodefense chamber 05",
@@ -3734,7 +3764,8 @@ namespace MphRead
                         new Vector3(1f, 0f, 0f),
                         new ColorRgb(31, 31, 31),
                         new Vector3(0f, -1f, 0f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "biodefense chamber 03",
@@ -3762,7 +3793,8 @@ namespace MphRead
                         new Vector3(1f, 0f, 0f),
                         new ColorRgb(31, 31, 31),
                         new Vector3(0f, -1f, 0f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "biodefense chamber 08",
@@ -3790,7 +3822,8 @@ namespace MphRead
                         new Vector3(1f, 0f, 0f),
                         new ColorRgb(31, 31, 31),
                         new Vector3(0f, -1f, 0f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "biodefense chamber 04",
@@ -3818,7 +3851,8 @@ namespace MphRead
                         new Vector3(1f, 0f, 0f),
                         new ColorRgb(31, 31, 31),
                         new Vector3(0f, -1f, 0f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "biodefense chamber 07",
@@ -3846,7 +3880,8 @@ namespace MphRead
                         new Vector3(1f, 0f, 0f),
                         new ColorRgb(31, 31, 31),
                         new Vector3(0f, -1f, 0f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 // First Hunt
                 {
@@ -3875,7 +3910,8 @@ namespace MphRead
                         new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
                         new ColorRgb(4, 4, 16),
                         new Vector3(0.0f, 0.96875f, -0.2441406f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "FH_SURVIVOR",
@@ -3931,7 +3967,8 @@ namespace MphRead
                         new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
                         new ColorRgb(4, 4, 16),
                         new Vector3(0.0f, 0.96875f, -0.2441406f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "FH_MP3",
@@ -3959,7 +3996,8 @@ namespace MphRead
                         new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
                         new ColorRgb(4, 4, 16),
                         new Vector3(0.0f, 0.96875f, -0.2441406f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "FH_MP5",
@@ -3987,7 +4025,8 @@ namespace MphRead
                         new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
                         new ColorRgb(4, 4, 16),
                         new Vector3(0.0f, 0.96875f, -0.2441406f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "FH_TEST",
@@ -4099,7 +4138,8 @@ namespace MphRead
                         new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
                         new ColorRgb(4, 4, 16),
                         new Vector3(0.0f, 0.96875f, -0.2441406f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 }
             };
 

@@ -151,7 +151,7 @@ namespace MphRead
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
-                SceneSetup.LoadRoom(meta.Key, NodeLayer.None, 0, GameMode.SinglePlayer);
+                SceneSetup.LoadRoom(meta.Key);
             }
         }
 

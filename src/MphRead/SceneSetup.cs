@@ -8,16 +8,55 @@ namespace MphRead
     {
         private static readonly Random _random = new Random();
 
-        public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, NodeLayer layerMask, int layerId, GameMode mode)
+        public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, GameMode mode = GameMode.None,
+            int playerCount = 0, int entityLayerId = 0, int nodeLayerMask = 0)
         {
             (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
             if (metadata == null)
             {
                 throw new InvalidOperationException();
             }
-            if (layerMask == NodeLayer.None)
+            if (mode == GameMode.None)
             {
-                layerMask = (NodeLayer)(((1 << metadata.LayerId) & 0xFF) << 6);
+                mode = metadata.Multiplayer ? GameMode.Battle : GameMode.SinglePlayer;
+            }
+            if (playerCount < 1)
+            {
+                if (mode == GameMode.SinglePlayer)
+                {
+                    playerCount = 1;
+                }
+                else
+                {
+                    playerCount = 2;
+                }
+            }
+            // sktodo: for MP entities at least, there should be some way to set entityLayerId -- 1P may require "save file"
+            if (nodeLayerMask == 0)
+            {
+                if (mode == GameMode.SinglePlayer)
+                {
+                    if (metadata.NodeLayer > 0)
+                    {
+                        nodeLayerMask = nodeLayerMask & 0xC03F | (((1 << metadata.NodeLayer) & 0xFF) << 6);
+                    }
+                }
+                else
+                {
+                    nodeLayerMask |= (int)NodeLayer.MultiplayerU;
+                    if (playerCount <= 2)
+                    {
+                        nodeLayerMask |= (int)NodeLayer.MultiplayerLod0;
+                    }
+                    else
+                    {
+                        nodeLayerMask |= (int)NodeLayer.MultiplayerLod1;
+                    }
+                    if (mode == GameMode.Capture) // sktodo: is this it?
+                    {
+                        nodeLayerMask |= (int)NodeLayer.CaptureTheFlag;
+                    }
+                }
             }
             Model room = Read.GetRoomByName(name);
             // todo?: do whatever with NodePosition/NodeInitialPosition
@@ -30,17 +69,18 @@ namespace MphRead
                 nodeName = room.Nodes[nodeIndex].Name;
                 nodeId = room.Nodes[nodeIndex].ChildIndex;
             }
-            FilterNodes(room, layerMask);
+            FilterNodes(room, nodeLayerMask);
             // todo?: scene min/max coordinates
             ComputeNodeMatrices(room, index: 0);
             int areaId = Metadata.GetAreaInfo(roomId);
-            IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, layerId, mode);
+            // sktodo: layerId for 1P and MP
+            IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
             // todo?: area ID/portals
             room.Type = ModelType.Room;
             return (room, metadata, entities);
         }
 
-        private static void FilterNodes(Model model, NodeLayer layerMask)
+        private static void FilterNodes(Model model, int layerMask)
         {
             foreach (Node node in model.Nodes)
             {
@@ -55,6 +95,7 @@ namespace MphRead
                     continue;
                 }
 
+                // todo: refactor this
                 int flags = 0;
                 // we actually have to step through 4 characters at a time rather than using Contains,
                 // based on the game's behavior with e.g. "_ml_s010blocks", which is not visible in SP or MP;
@@ -68,11 +109,11 @@ namespace MphRead
                     }
                     else if (chunk == "_ml0")
                     {
-                        flags |= (int)NodeLayer.Multiplayer0;
+                        flags |= (int)NodeLayer.MultiplayerLod0;
                     }
                     else if (chunk == "_ml1")
                     {
-                        flags |= (int)NodeLayer.Multiplayer1;
+                        flags |= (int)NodeLayer.MultiplayerLod1;
                     }
                     else if (chunk == "_mpu")
                     {
@@ -83,7 +124,7 @@ namespace MphRead
                         flags |= (int)NodeLayer.CaptureTheFlag;
                     }
                 }
-                if ((flags & (int)layerMask) == 0)
+                if ((flags & layerMask) == 0)
                 {
                     node.Enabled = false;
                 }
