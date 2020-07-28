@@ -88,7 +88,6 @@ namespace MphRead
             FilterNodes(room, nodeLayerMask);
             // todo?: scene min/max coordinates
             ComputeNodeMatrices(room, index: 0);
-            // sktodo: layerId for 1P and MP
             IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
             // todo?: area ID/portals
             room.Type = ModelType.Room;
