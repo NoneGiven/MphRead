@@ -8,8 +8,9 @@ namespace MphRead
     {
         private static readonly Random _random = new Random();
 
+        // todo: artifact flags
         public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, GameMode mode = GameMode.None,
-            int playerCount = 0, int entityLayerId = -1, int nodeLayerMask = 0)
+            int playerCount = 0, BossFlags bossFlags = BossFlags.None, int entityLayerId = -1, int nodeLayerMask = 0)
         {
             (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
             int areaId = Metadata.GetAreaInfo(roomId);
@@ -36,11 +37,10 @@ namespace MphRead
             {
                 if (mode == GameMode.SinglePlayer)
                 {
-                    // sktodo: a door's target layer ID (at least) can change the game state to a non-255 layer ID,
+                    // todo: a door's target layer ID (at least) can change the game state to a non-255 layer ID,
                     // in which case that value should be used directly here instead of using the area state/ID
-                    // sktodo: document and implement area state values
-                    int areaState = 0;
-                    entityLayerId = (areaState >> 2 * areaId) & 3;
+                    // --> there are two doors with ID 3 in UNIT1_RM6, not sure if it can be set at runtime?
+                    entityLayerId = ((int)bossFlags >> 2 * areaId) & 3;
                 }
                 else
                 {

@@ -30,7 +30,8 @@ namespace MphRead
             _window = new RenderWindow(settings, native);
         }
 
-        public void AddRoom(string name, GameMode mode = GameMode.None, int playerCount = 0, int nodeLayerId = 0, int entityLayerId = -1)
+        public void AddRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
+            int nodeLayerId = 0, int entityLayerId = -1)
         {
             _window.AddRoom(name, mode, playerCount, entityLayerId, nodeLayerId);
         }

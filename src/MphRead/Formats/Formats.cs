@@ -835,6 +835,22 @@ namespace MphRead
         CaptureTheFlag = 0x4000
     }
 
+    [Flags]
+    public enum BossFlags
+    {
+        None = 0x0,
+        Unit1B1 = 0x0,
+        Unit1B2 = 0x0,
+        Unit2B1 = 0x0,
+        Unit2B2 = 0x0,
+        Unit3B1 = 0x0,
+        Unit3B2 = 0x0,
+        Unit4B1 = 0x0,
+        Unit4B2 = 0x0,
+        All = 0xFFFF
+    }
+
+    [Flags]
     public enum EntityLayer : ushort
     {
         None = 0x0,
