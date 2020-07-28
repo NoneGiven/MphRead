@@ -351,6 +351,34 @@ namespace MphRead
 
     public static class Metadata
     {
+        private static IReadOnlyDictionary<GameMode, IReadOnlyList<int>> _modeLayers
+            = new Dictionary<GameMode, IReadOnlyList<int>>()
+        {
+            { GameMode.Battle, new List<int>() { 0, 1, 2 } },
+            { GameMode.BattleTeams, new List<int>() { 3 } },
+            { GameMode.Survival, new List<int>() { 15 } },
+            { GameMode.SurvivalTeams, new List<int>() { 15 } },
+            { GameMode.Capture, new List<int>() { 12 } },
+            { GameMode.Bounty, new List<int>() { 8, 9, 10 } },
+            { GameMode.BountyTeams, new List<int>() { 11 } },
+            { GameMode.Nodes, new List<int>() { 4, 5, 6 } },
+            { GameMode.NodesTeams, new List<int>() { 7 } },
+            { GameMode.Defender, new List<int>() { 14 } },
+            { GameMode.DefenderTeams, new List<int>() { 14 } },
+            { GameMode.PrimeHunter, new List<int>() { 0, 1, 2 } },
+            { GameMode.Unknown15, new List<int>() { 13 } }
+        };
+
+        public static int GetMultiplayerEntityLayer(GameMode mode, int playerCount)
+        {
+            IReadOnlyList<int> list = _modeLayers[mode];
+            if (list.Count == 1)
+            {
+                return list[0];
+            }
+            return list[playerCount == 3 ? 1 : (playerCount == 4 ? 2 : 0)];
+        }
+
         public static ModelMetadata? GetEntityByName(string name)
         {
             if (ModelMetadata.TryGetValue(name, out ModelMetadata? metadata))

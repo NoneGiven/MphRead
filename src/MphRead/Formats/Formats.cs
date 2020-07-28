@@ -820,7 +820,8 @@ namespace MphRead
         NodesTeams = 11,
         Defender = 12,
         DefenderTeams = 13,
-        PrimeHunter = 14
+        PrimeHunter = 14,
+        Unknown15 = 15 // todo?: unused
     }
 
     [Flags]

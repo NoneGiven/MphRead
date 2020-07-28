@@ -44,8 +44,7 @@ namespace MphRead
                 }
                 else
                 {
-                    // sktodo: multiplayer entity layer based on mode
-                    entityLayerId = 0;
+                    entityLayerId = Metadata.GetMultiplayerEntityLayer(mode, playerCount);
                 }
             }
             if (nodeLayerMask == 0)
@@ -92,6 +91,136 @@ namespace MphRead
             // todo?: area ID/portals
             room.Type = ModelType.Room;
             return (room, metadata, entities);
+        }
+
+        public static int GetMultiplayerEntityLayer(GameMode mode, int playerCount)
+        {
+            if (mode == GameMode.BattleTeams)
+            {
+                return 3;
+            }
+            if (mode == GameMode.Nodes)
+            {
+                if (playerCount == 3)
+                {
+                    return 5;
+                }
+                if (playerCount == 4)
+                {
+                    return 6;
+                }
+                return 4;
+            }
+            if (mode == GameMode.NodesTeams)
+            {
+                return 7;
+            }
+            if (mode == GameMode.Bounty)
+            {
+                if (playerCount == 3)
+                {
+                    return 9;
+                }
+                if (playerCount == 4)
+                {
+                    return 10;
+                }
+                return 8;
+            }
+            if (mode == GameMode.BountyTeams)
+            {
+                return 11;
+            }
+            if (mode == GameMode.Capture)
+            {
+                return 12;
+            }
+
+            int layerId = 0;
+            if (mode != GameMode.Battle && mode != GameMode.PrimeHunter)
+            {
+                switch (mode)
+                {
+                case GameMode.BattleTeams:
+                    layerId = 3;
+                    break;
+                case GameMode.Nodes:
+                    if (playerCount > 2u)
+                    {
+                        if (playerCount == 3)
+                        {
+                            layerId = 5;
+                        }
+                        else if (playerCount == 4)
+                        {
+                            layerId = 6;
+                        }
+                    }
+                    else
+                    {
+                        layerId = 4;
+                    }
+                    break;
+                case GameMode.NodesTeams:
+                    layerId = 7;
+                    break;
+                case GameMode.Bounty:
+                    if (playerCount > 2u)
+                    {
+                        if (playerCount == 3)
+                        {
+                            layerId = 9;
+                        }
+                        else if (playerCount == 4)
+                        {
+                            layerId = 10;
+                        }
+                    }
+                    else
+                    {
+                        layerId = 8;
+                    }
+                    break;
+                case GameMode.BountyTeams:
+                    layerId = 11;
+                    break;
+                case GameMode.Capture:
+                    layerId = 12;
+                    break;
+                case (GameMode)15:
+                    layerId = 13;
+                    break;
+                default:
+                    if ((int)mode > 13)
+                    {
+                        if ((int)mode > 6)
+                        {
+                            layerId = 15;
+                        }
+                    }
+                    else
+                    {
+                        layerId = 14;
+                    }
+                    break;
+                }
+            }
+            else if (playerCount > 2u)
+            {
+                if (playerCount == 3)
+                {
+                    layerId = 1;
+                }
+                else if (playerCount == 4)
+                {
+                    layerId = 2;
+                }
+            }
+            else
+            {
+                layerId = 0;
+            }
+            return layerId;
         }
 
         private static void FilterNodes(Model model, int layerMask)
