@@ -851,29 +851,6 @@ namespace MphRead
         All = 0xFFFF
     }
 
-    [Flags]
-    public enum EntityLayer : ushort
-    {
-        None = 0x0,
-        Unknown0 = 0x1, // 1 << 0
-        Unknown1 = 0x2, // 1 << 1
-        Unknown2 = 0x4, // 1 << 2
-        Unknown3 = 0x8, // 1 << 3
-        Unknown4 = 0x10, // 1 << 4
-        Unknown5 = 0x20, // 1 << 5
-        Unknown6 = 0x40, // 1 << 6
-        Unknown7 = 0x80, // 1 << 7
-        Unknown8 = 0x100, // 1 << 8
-        Unknown9 = 0x200, // 1 << 9
-        Unknown10 = 0x400, // 1 << 10
-        Unknown11 = 0x800, // 1 << 11
-        Unknown12 = 0x1000, // 1 << 12
-        Unknown13 = 0x2000, // 1 << 13
-        Unknown14 = 0x4000, // 1 << 14
-        Unknown15 = 0x8000, // 1 << 15
-        All = 0xFFFF
-    }
-
     public enum InstructionCode : uint
     {
         NOP = 0x400,
