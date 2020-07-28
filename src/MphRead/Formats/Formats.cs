@@ -805,18 +805,22 @@ namespace MphRead
     }
 
     // todo: FH game modes
-    // todo: use these to set up all the appropriate layer stuff
     public enum GameMode
     {
-        None,
-        SinglePlayer,
-        Battle,
-        Survival,
-        PrimeHunter,
-        Capture,
-        Bounty,
-        Nodes,
-        Defender
+        None = 0,
+        SinglePlayer = 2,
+        Battle = 3,
+        BattleTeams = 4,
+        Survival = 5,
+        SurvivalTeams = 6,
+        Capture = 7,
+        Bounty = 8,
+        BountyTeams = 9,
+        Nodes = 10,
+        NodesTeams = 11,
+        Defender = 12,
+        DefenderTeams = 13,
+        PrimeHunter = 14
     }
 
     [Flags]

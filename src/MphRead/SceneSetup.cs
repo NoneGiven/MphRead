@@ -68,7 +68,7 @@ namespace MphRead
                     {
                         nodeLayerMask |= (int)NodeLayer.MultiplayerLod1;
                     }
-                    if (mode == GameMode.Capture) // sktodo: is this it?
+                    if (mode == GameMode.Capture)
                     {
                         nodeLayerMask |= (int)NodeLayer.CaptureTheFlag;
                     }
