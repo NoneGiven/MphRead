@@ -840,14 +840,14 @@ namespace MphRead
     public enum BossFlags
     {
         None = 0x0,
-        Unit1B1 = 0x0,
-        Unit1B2 = 0x0,
-        Unit2B1 = 0x0,
-        Unit2B2 = 0x0,
-        Unit3B1 = 0x0,
-        Unit3B2 = 0x0,
-        Unit4B1 = 0x0,
-        Unit4B2 = 0x0,
+        Unit1B1 = 0x1,
+        Unit1B2 = 0x4,
+        Unit2B1 = 0x10,
+        Unit2B2 = 0x40,
+        Unit3B1 = 0x100,
+        Unit3B2 = 0x400,
+        Unit4B1 = 0x1000,
+        Unit4B2 = 0x4000,
         All = 0xFFFF
     }
 

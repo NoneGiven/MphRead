@@ -41,6 +41,8 @@ namespace MphRead
                     // in which case that value should be used directly here instead of using the area state/ID
                     // --> there are two doors with ID 3 in UNIT1_RM6, not sure if it can be set at runtime?
                     entityLayerId = ((int)bossFlags >> 2 * areaId) & 3;
+                    // sktodo: based on the possible values of bossFlags, this seems like it can only return 0 or 1,
+                    // which leaves a lot of entities unused (e.g. 0x4)... is that correct?
                 }
                 else
                 {
