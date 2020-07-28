@@ -16,7 +16,7 @@ namespace MphRead
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
         public readonly string NodeName; // todo: use this for partial room visibility
-        public readonly short LayerMask;
+        public readonly ushort LayerMask;
         public readonly ushort Length;
         public readonly uint DataOffset;
     }

@@ -635,7 +635,7 @@ namespace MphRead
     public class Entity
     {
         public string NodeName { get; }
-        public short LayerMask { get; }
+        public ushort LayerMask { get; }
         public ushort Length { get; }
         public EntityType Type { get; }
         public ushort EntityId { get; }
@@ -820,11 +820,24 @@ namespace MphRead
     [Flags]
     public enum NodeLayer
     {
-        None = 0x0000, // todo: um
-        Multiplayer0 = 0x0008,
-        Multiplayer1 = 0x0010,
-        MultiplayerU = 0x0020,
-        CaptureTheFlag = 0x4000
+        None = 0x0,
+        Unknown1 = 0x1, // 1 << 0
+        Unknown2 = 0x2, // 1 << 1
+        Unknown4 = 0x4, // 1 << 2
+        Multiplayer0 = 0x8, // 1 << 3
+        Multiplayer1 = 0x10, // 1 << 4
+        MultiplayerU = 0x20, // 1 << 5
+        Unknown40 = 0x40, // 1 << 6
+        Unknown80 = 0x80, // 1 << 7
+        Unknown100 = 0x100, // 1 << 8
+        Unknown200 = 0x200, // 1 << 9
+        Unknown400 = 0x400, // 1 << 10
+        Unknown800 = 0x800, // 1 << 11
+        Unknown1000 = 0x1000, // 1 << 12
+        Unknown2000 = 0x2000, // 1 << 13
+        CaptureTheFlag = 0x4000, // 1 << 14
+        Unknown8000 = 0x8000, // 1 << 15
+        All = 0xFFFF
     }
 
     public enum InstructionCode : uint
