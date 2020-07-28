@@ -13,7 +13,8 @@ namespace MphRead
         public bool ScanVisorOnly { get; set; }
         public bool UseLightSources { get; }
         public ModelType Type { get; set; }
-        public EntityType EntityType { get; set; } // currently only used when ModelType is Placeholder
+        public EntityType EntityType { get; set; }
+        public ushort EntityLayer { get; set; } = UInt16.MaxValue;
 
         public string Name { get; }
         public Header Header { get; }
@@ -635,32 +636,11 @@ namespace MphRead
     public class Entity
     {
         public string NodeName { get; }
-        public short LayerMask { get; }
+        public ushort LayerMask { get; }
         public ushort Length { get; }
         public EntityType Type { get; }
         public ushort EntityId { get; }
         public bool FirstHunt { get; }
-
-        public IEnumerable<int> LayerIds
-        {
-            get
-            {
-                if (FirstHunt)
-                {
-                    yield return -1;
-                }
-                else
-                {
-                    for (int i = 0; i < 16; i++)
-                    {
-                        if ((LayerMask & (1 << i)) != 0)
-                        {
-                            yield return i;
-                        }
-                    }
-                }
-            }
-        }
 
         public Entity(EntityEntry entry, EntityType type, ushort entityId)
         {
@@ -804,27 +784,50 @@ namespace MphRead
     }
 
     // todo: FH game modes
-    // todo: use these to set up all the appropriate layer stuff
     public enum GameMode
     {
-        SinglePlayer,
-        Battle,
-        Survival,
-        PrimeHunter,
-        Capture,
-        Bounty,
-        Nodes,
-        Defender
+        None = 0,
+        SinglePlayer = 2,
+        Battle = 3,
+        BattleTeams = 4,
+        Survival = 5,
+        SurvivalTeams = 6,
+        Capture = 7,
+        Bounty = 8,
+        BountyTeams = 9,
+        Nodes = 10,
+        NodesTeams = 11,
+        Defender = 12,
+        DefenderTeams = 13,
+        PrimeHunter = 14,
+        Unknown15 = 15 // todo?: unused
     }
 
     [Flags]
-    public enum NodeLayer
+    public enum NodeLayer : ushort
     {
-        None = 0x0000, // todo: um
-        Multiplayer0 = 0x0008,
-        Multiplayer1 = 0x0010,
-        MultiplayerU = 0x0020,
+        None = 0x0,
+        MultiplayerLod0 = 0x8,
+        MultiplayerLod1 = 0x10,
+        MultiplayerU = 0x20,
+        Unknown40 = 0x40, // todo?: 0x1048 shows up in menus, including inside the ship
+        Unknown1000 = 0x1000,
         CaptureTheFlag = 0x4000
+    }
+
+    [Flags]
+    public enum BossFlags
+    {
+        None = 0x0,
+        Unit1B1 = 0x1,
+        Unit1B2 = 0x4,
+        Unit2B1 = 0x10,
+        Unit2B2 = 0x40,
+        Unit3B1 = 0x100,
+        Unit3B2 = 0x400,
+        Unit4B1 = 0x1000,
+        Unit4B2 = 0x4000,
+        All = 0x5555
     }
 
     public enum InstructionCode : uint

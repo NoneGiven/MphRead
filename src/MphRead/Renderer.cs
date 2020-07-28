@@ -30,10 +30,10 @@ namespace MphRead
             _window = new RenderWindow(settings, native);
         }
 
-        public void AddRoom(string name, NodeLayer layerMask = NodeLayer.None,
-            int layerId = 0, GameMode mode = GameMode.SinglePlayer)
+        public void AddRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
+            BossFlags bossFlags = BossFlags.None, int nodeLayerId = 0, int entityLayerId = -1)
         {
-            _window.AddRoom(name, layerMask, layerId, mode);
+            _window.AddRoom(name, mode, playerCount, bossFlags, entityLayerId, nodeLayerId);
         }
 
         public void AddModel(string name, int recolor = 0, bool firstHunt = false)
@@ -163,14 +163,16 @@ namespace MphRead
         {
         }
 
-        public void AddRoom(string name, NodeLayer layerMask, int layerId, GameMode mode)
+        public void AddRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
+            BossFlags bossFlags = BossFlags.None, int entityLayerId = -1, int nodeLayerMask = 0)
         {
             if (_roomLoaded)
             {
                 throw new InvalidOperationException();
             }
             _roomLoaded = true;
-            (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities) = SceneSetup.LoadRoom(name, layerMask, layerId, mode);
+            (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities)
+                = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, entityLayerId, nodeLayerMask);
             if (roomMeta.InGameName != null)
             {
                 Title = roomMeta.InGameName;

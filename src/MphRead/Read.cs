@@ -195,7 +195,7 @@ namespace MphRead
             public List<TextureAnimationGroup> TextureAnimationGroups { get; } = new List<TextureAnimationGroup>();
         }
 
-        // todo: parse the rest of the animation types
+        // todo: parse node animations, figure out group indexing
         private static AnimationResults LoadAnimation(string? path)
         {
             var results = new AnimationResults();
@@ -482,9 +482,9 @@ namespace MphRead
                 EntityType.PointModule => ReadEntity<PointModuleEntityData>(bytes, entry, header),
                 EntityType.CameraPosition => ReadEntity<CameraPositionEntityData>(bytes, entry, header),
                 EntityType.OctolithFlag => ReadEntity<OctolithFlagEntityData>(bytes, entry, header),
-                EntityType.NodeBase => ReadEntity<NodeBaseEntityData>(bytes, entry, header),
+                EntityType.FlagBase => ReadEntity<FlagBaseEntityData>(bytes, entry, header),
                 EntityType.Teleporter => ReadEntity<TeleporterEntityData>(bytes, entry, header),
-                EntityType.Unknown15 => ReadEntity<Unknown15EntityData>(bytes, entry, header),
+                EntityType.NodeDefense => ReadEntity<NodeDefenseEntityData>(bytes, entry, header),
                 EntityType.LightSource => ReadEntity<LightSourceEntityData>(bytes, entry, header),
                 EntityType.Artifact => ReadEntity<ArtifactEntityData>(bytes, entry, header),
                 EntityType.CameraSequence => ReadEntity<CameraSequenceEntityData>(bytes, entry, header),

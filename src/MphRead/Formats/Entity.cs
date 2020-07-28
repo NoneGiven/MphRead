@@ -16,7 +16,7 @@ namespace MphRead
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
         public readonly string NodeName; // todo: use this for partial room visibility
-        public readonly short LayerMask;
+        public readonly ushort LayerMask;
         public readonly ushort Length;
         public readonly uint DataOffset;
     }
@@ -964,13 +964,13 @@ namespace MphRead
     }
 
     // size: 108
-    public readonly struct NodeBaseEntityData
+    public readonly struct FlagBaseEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
         public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
-        public readonly uint Field24;
+        public readonly uint TeamId;
         public readonly uint Field28;
         public readonly uint Field2C;
         public readonly uint Field30;
@@ -1010,7 +1010,7 @@ namespace MphRead
     }
 
     // size: 104
-    public readonly struct Unknown15EntityData
+    public readonly struct NodeDefenseEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
@@ -1023,7 +1023,7 @@ namespace MphRead
         public readonly uint Field34;
         public readonly uint Field38;
         public readonly uint Field3C;
-        public readonly uint Field40;
+        public readonly Fixed Scale;
         public readonly uint Field44;
         public readonly uint Field48;
         public readonly uint Field4C;

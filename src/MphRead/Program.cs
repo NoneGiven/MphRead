@@ -26,8 +26,7 @@ namespace MphRead
             using var renderer = new Renderer();
             if (args.Length == 0)
             {
-                renderer.AddRoom("MP3 PROVING GROUND", NodeLayer.Multiplayer0 | NodeLayer.MultiplayerU);
-                //renderer.AddRoom("UNIT2_C1");
+                renderer.AddRoom("MP3 PROVING GROUND");
                 //renderer.AddModel("Crate01");
                 Nop();
             }
@@ -38,6 +37,7 @@ namespace MphRead
                 for (int i = 0; i < args.Length; i++)
                 {
                     string arg = args[i];
+                    // todo: update parameters
                     if (arg == "-room" || arg == "-r")
                     {
                         if (foundRoom)
@@ -51,7 +51,7 @@ namespace MphRead
                             Exit();
                         }
                         int mask = GetInt(args, i + 2);
-                        renderer.AddRoom(modelName, (NodeLayer)mask);
+                        renderer.AddRoom(modelName);
                     }
                     else if (arg == "-model" || arg == "-m")
                     {

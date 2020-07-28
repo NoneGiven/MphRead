@@ -147,6 +147,14 @@ namespace MphRead
             }
         }
 
+        public static void TestAllLayers()
+        {
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                SceneSetup.LoadRoom(meta.Key);
+            }
+        }
+
         public static void TestAllNodes()
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
