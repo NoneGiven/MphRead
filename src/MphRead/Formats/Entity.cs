@@ -964,7 +964,7 @@ namespace MphRead
     }
 
     // size: 108
-    public readonly struct NodeBaseEntityData
+    public readonly struct FlagBaseEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;
@@ -1010,7 +1010,7 @@ namespace MphRead
     }
 
     // size: 104
-    public readonly struct Unknown15EntityData
+    public readonly struct NodeDefenseEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly Vector3Fx Position;

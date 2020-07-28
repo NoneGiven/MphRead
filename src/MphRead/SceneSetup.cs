@@ -41,8 +41,7 @@ namespace MphRead
                     // in which case that value should be used directly here instead of using the area state/ID
                     // --> there are two doors with ID 3 in UNIT1_RM6, not sure if it can be set at runtime?
                     entityLayerId = ((int)bossFlags >> 2 * areaId) & 3;
-                    // sktodo: based on the possible values of bossFlags, this seems like it can only return 0 or 1,
-                    // which leaves a lot of entities unused (e.g. 0x4)... is that correct?
+                    // sktodo: since this can only return 0 or 1, confirm that entities with a layer mask of 0x4 are unused
                 }
                 else
                 {
@@ -489,19 +488,19 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.OctolithFlag)
                 {
-                    models.Add(LoadOctolithFlag(((Entity<OctolithFlagEntityData>)entity).Data, mode));
+                    models.AddRange(LoadOctolithFlag(((Entity<OctolithFlagEntityData>)entity).Data, mode));
                 }
-                else if (entity.Type == EntityType.NodeBase)
+                else if (entity.Type == EntityType.FlagBase)
                 {
-                    models.Add(LoadNodeBase(((Entity<NodeBaseEntityData>)entity).Data, mode));
+                    models.AddRange(LoadFlagBase(((Entity<FlagBaseEntityData>)entity).Data, mode));
                 }
                 else if (entity.Type == EntityType.Teleporter)
                 {
                     models.Add(LoadTeleporter(((Entity<TeleporterEntityData>)entity).Data, areaId, mode != GameMode.SinglePlayer));
                 }
-                else if (entity.Type == EntityType.Unknown15)
+                else if (entity.Type == EntityType.NodeDefense)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown15EntityData>)entity).Data.Position));
+                    models.AddRange(LoadNodeDefense(((Entity<NodeDefenseEntityData>)entity).Data, mode));
                 }
                 else if (entity.Type == EntityType.LightSource)
                 {
@@ -714,41 +713,75 @@ namespace MphRead
             return model;
         }
 
-        // todo: splitting up the bases and flags like this seems to work for CTF, but not Bounty
-        // (the destination has a base, but the flag doesn't)
-        private static Model LoadNodeBase(NodeBaseEntityData data, GameMode mode)
+        private static IEnumerable<Model> LoadOctolithFlag(OctolithFlagEntityData data, GameMode mode)
         {
-            Model nodeBase;
-            if (mode == GameMode.Capture)
+            var models = new List<Model>();
+            if (mode == GameMode.Capture || mode == GameMode.Bounty)
             {
-                nodeBase = Read.GetModelByName("flagbase_ctf", 0); // sktodo: team ID
-            }
-            else // if mode == GameMode.Bounty
-            {
-                // todo: flagbase_cap loads in somewhere in Bounty mode
-                nodeBase = Read.GetModelByName("flagbase_bounty");
-            }
-            nodeBase.Position = data.Position.ToFloatVector();
-            ComputeModelMatrices(nodeBase, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
-            ComputeNodeMatrices(nodeBase, index: 0);
-            return nodeBase;
-        }
-
-        private static Model LoadOctolithFlag(OctolithFlagEntityData data, GameMode mode)
-        {
-            Model octolith = Read.GetModelByName("octolith_ctf", mode == GameMode.Capture ? data.TeamId : 2);
-            // todo: height offset
-            octolith.Position = new Vector3(
+                Model octolith = Read.GetModelByName("octolith_ctf", mode == GameMode.Capture ? data.TeamId : 2);
+                // sktodo: height offset
+                octolith.Position = new Vector3(
                     data.Position.X.FloatValue,
                     data.Position.Y.FloatValue + 1.15f,
                     data.Position.Z.FloatValue
                 );
-            ComputeModelMatrices(octolith, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
-            ComputeNodeMatrices(octolith, index: 0);
-            octolith.Type = ModelType.Generic;
-            return octolith;
+                ComputeModelMatrices(octolith, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
+                ComputeNodeMatrices(octolith, index: 0);
+                octolith.Type = ModelType.Generic;
+                models.Add(octolith);
+                if (mode == GameMode.Bounty)
+                {
+                    Model flagBase = Read.GetModelByName("flagbase_bounty");
+                    flagBase.Position = data.Position.ToFloatVector();
+                    ComputeModelMatrices(flagBase, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
+                    ComputeNodeMatrices(flagBase, index: 0);
+                    flagBase.Type = ModelType.Generic;
+                    models.Add(flagBase);
+                }
+            }
+            return models;
         }
 
+        private static IEnumerable<Model> LoadFlagBase(FlagBaseEntityData data, GameMode mode)
+        {
+            var models = new List<Model>();
+            // note: setup like this is necessary because e.g. Sic Transit has OctolithFlags/FlagBases
+            // enabled in Defender mode according to their layer masks, but they don't appear in-game
+            if (mode == GameMode.Capture || mode == GameMode.Bounty)
+            {
+                // sktodo: team ID
+                Model flagBase = Read.GetModelByName(mode == GameMode.Capture ? "flagbase_ctf" : "flagbase_cap", 0);
+                flagBase.Position = data.Position.ToFloatVector();
+                ComputeModelMatrices(flagBase, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
+                ComputeNodeMatrices(flagBase, index: 0);
+                flagBase.Type = ModelType.Generic;
+                models.Add(flagBase);
+            }
+            return models;
+        }
+
+        private static IEnumerable<Model> LoadNodeDefense(NodeDefenseEntityData data, GameMode mode)
+        {
+            var models = new List<Model>();
+            if (mode == GameMode.Defender || mode == GameMode.Nodes)
+            {
+                Model node = Read.GetModelByName("koth_data_flow");
+                node.Position = data.Position.ToFloatVector();
+                ComputeModelMatrices(node, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
+                ComputeNodeMatrices(node, index: 0);
+                node.Type = ModelType.Generic;
+                models.Add(node);
+                // sktodo: scaling and spinning
+                Model circle = Read.GetModelByName("koth_terminal");
+                circle.Position = data.Position.ToFloatVector();
+                ComputeModelMatrices(circle, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
+                ComputeNodeMatrices(circle, index: 0);
+                circle.Type = ModelType.Generic;
+                models.Add(circle);
+            }
+            return models;
+        }
+        
         private static Model LoadPointModule(PointModuleEntityData data)
         {
             return LoadPointModule(data.Position.ToFloatVector());
@@ -821,8 +854,8 @@ namespace MphRead
             { EntityType.Unknown8, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.FhUnknown10, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.OctolithFlag, new ColorRgb(0x00, 0xFF, 0xFF) },
-            { EntityType.NodeBase, new ColorRgb(0xFF, 0x00, 0xFF) },
-            { EntityType.Unknown15, new ColorRgb(0x1E, 0x90, 0xFF) },
+            { EntityType.FlagBase, new ColorRgb(0xFF, 0x00, 0xFF) },
+            { EntityType.NodeDefense, new ColorRgb(0x1E, 0x90, 0xFF) },
             // "permanent" placeholders
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.FhPlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
