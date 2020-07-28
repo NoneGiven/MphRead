@@ -37,11 +37,9 @@ namespace MphRead
             {
                 if (mode == GameMode.SinglePlayer)
                 {
-                    // todo: a door's target layer ID (at least) can change the game state to a non-255 layer ID,
-                    // in which case that value should be used directly here instead of using the area state/ID
-                    // --> there are two doors with ID 3 in UNIT1_RM6, not sure if it can be set at runtime?
+                    // todo: finer state changes for target layer ID (forced fights);
+                    // there are two doors with ID 3 in UNIT1_RM6, the rest are set in-game
                     entityLayerId = ((int)bossFlags >> 2 * areaId) & 3;
-                    // sktodo: since this can only return 0 or 1, confirm that entities with a layer mask of 0x4 are unused
                 }
                 else
                 {
