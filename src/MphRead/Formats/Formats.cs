@@ -827,7 +827,7 @@ namespace MphRead
         Unit3B2 = 0x400,
         Unit4B1 = 0x1000,
         Unit4B2 = 0x4000,
-        All = 0xFFFF
+        All = 0x5555
     }
 
     public enum InstructionCode : uint
