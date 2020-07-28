@@ -792,7 +792,7 @@ namespace MphRead
             }
             return models;
         }
-        
+
         private static Model LoadPointModule(PointModuleEntityData data)
         {
             return LoadPointModule(data.Position.ToFloatVector());
