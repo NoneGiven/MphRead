@@ -2214,6 +2214,7 @@ namespace MphRead
             await Output.Write(guid);
             await Output.Write($"Model: {model.Name} [{model.SceneId}] {(model.Visible ? "On " : "Off")} - " +
                 $"Color {model.CurrentRecolor} / {model.Recolors.Count - 1}", guid);
+            await Output.Write($"{model.NodeLayer}", guid);
             string type = $"{model.Type}";
             if (model.Type == ModelType.Room)
             {

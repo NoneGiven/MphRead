@@ -54,6 +54,7 @@ namespace MphRead
                 {
                     continue;
                 }
+
                 int flags = 0;
                 // we actually have to step through 4 characters at a time rather than using Contains,
                 // based on the game's behavior with e.g. "_ml_s010blocks", which is not visible in SP or MP;
@@ -334,6 +335,11 @@ namespace MphRead
                 {
                     models.Add(LoadForceField(((Entity<ForceFieldEntityData>)entity).Data));
                 }
+                else
+                {
+                    throw new ProgramException($"Invalid entity type {entity.Type}");
+                }
+                models[^1].NodeLayer = entity.LayerMask;
             }
             return models;
         }
