@@ -723,7 +723,7 @@ namespace MphRead
             if (mode == GameMode.Capture || mode == GameMode.Bounty)
             {
                 Model octolith = Read.GetModelByName("octolith_ctf", mode == GameMode.Capture ? data.TeamId : 2);
-                // sktodo: height offset
+                // sktodo: exact height offset
                 octolith.Position = new Vector3(
                     data.Position.X.FloatValue,
                     data.Position.Y.FloatValue + 1.15f,
@@ -776,9 +776,15 @@ namespace MphRead
                 ComputeNodeMatrices(node, index: 0);
                 node.Type = ModelType.Generic;
                 models.Add(node);
-                // sktodo: radius, height offset, spinning
+                // todo: spinning when active
+                // sktodo: exact height offset
                 Model circle = Read.GetModelByName("koth_terminal");
-                circle.Position = data.Position.ToFloatVector();
+                circle.Position = new Vector3(
+                    data.Position.X.FloatValue,
+                    data.Position.Y.FloatValue + 0.5f,
+                    data.Position.Z.FloatValue
+                );
+                circle.Scale = new Vector3(data.Scale.FloatValue, data.Scale.FloatValue, data.Scale.FloatValue);
                 ComputeModelMatrices(circle, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
                 ComputeNodeMatrices(circle, index: 0);
                 circle.Type = ModelType.Generic;

@@ -1023,7 +1023,7 @@ namespace MphRead
         public readonly uint Field34;
         public readonly uint Field38;
         public readonly uint Field3C;
-        public readonly uint Field40;
+        public readonly Fixed Scale;
         public readonly uint Field44;
         public readonly uint Field48;
         public readonly uint Field4C;
