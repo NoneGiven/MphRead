@@ -823,22 +823,33 @@ namespace MphRead
     public enum NodeLayer : ushort
     {
         None = 0x0,
-        Unknown1 = 0x1, // 1 << 0
-        Unknown2 = 0x2, // 1 << 1
-        Unknown4 = 0x4, // 1 << 2
-        MultiplayerLod0 = 0x8, // 1 << 3
-        MultiplayerLod1 = 0x10, // 1 << 4
-        MultiplayerU = 0x20, // 1 << 5
-        Unknown40 = 0x40, // 1 << 6
-        Unknown80 = 0x80, // 1 << 7
-        Unknown100 = 0x100, // 1 << 8
-        Unknown200 = 0x200, // 1 << 9
-        Unknown400 = 0x400, // 1 << 10
-        Unknown800 = 0x800, // 1 << 11
-        Unknown1000 = 0x1000, // 1 << 12
-        Unknown2000 = 0x2000, // 1 << 13
-        CaptureTheFlag = 0x4000, // 1 << 14
-        Unknown8000 = 0x8000, // 1 << 15
+        MultiplayerLod0 = 0x8,
+        MultiplayerLod1 = 0x10,
+        MultiplayerU = 0x20,
+        Unknown40 = 0x40, // todo?: 0x1048 shows up in menus, including inside the ship
+        Unknown1000 = 0x1000,
+        CaptureTheFlag = 0x4000
+    }
+
+    public enum EntityLayer : ushort
+    {
+        None = 0x0,
+        Unknown0 = 0x1, // 1 << 0
+        Unknown1 = 0x2, // 1 << 1
+        Unknown2 = 0x4, // 1 << 2
+        Unknown3 = 0x8, // 1 << 3
+        Unknown4 = 0x10, // 1 << 4
+        Unknown5 = 0x20, // 1 << 5
+        Unknown6 = 0x40, // 1 << 6
+        Unknown7 = 0x80, // 1 << 7
+        Unknown8 = 0x100, // 1 << 8
+        Unknown9 = 0x200, // 1 << 9
+        Unknown10 = 0x400, // 1 << 10
+        Unknown11 = 0x800, // 1 << 11
+        Unknown12 = 0x1000, // 1 << 12
+        Unknown13 = 0x2000, // 1 << 13
+        Unknown14 = 0x4000, // 1 << 14
+        Unknown15 = 0x8000, // 1 << 15
         All = 0xFFFF
     }
 

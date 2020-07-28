@@ -9,9 +9,10 @@ namespace MphRead
         private static readonly Random _random = new Random();
 
         public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, GameMode mode = GameMode.None,
-            int playerCount = 0, int entityLayerId = 0, int nodeLayerMask = 0)
+            int playerCount = 0, int entityLayerId = -1, int nodeLayerMask = 0)
         {
             (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
+            int areaId = Metadata.GetAreaInfo(roomId);
             if (metadata == null)
             {
                 throw new InvalidOperationException();
@@ -31,7 +32,22 @@ namespace MphRead
                     playerCount = 2;
                 }
             }
-            // sktodo: for MP entities at least, there should be some way to set entityLayerId -- 1P may require "save file"
+            if (entityLayerId < 0 || entityLayerId > 15)
+            {
+                if (mode == GameMode.SinglePlayer)
+                {
+                    // sktodo: a door's target layer ID (at least) can change the game state to a non-255 layer ID,
+                    // in which case that value should be used directly here instead of using the area state/ID
+                    // sktodo: document and implement area state values
+                    int areaState = 0;
+                    entityLayerId = (areaState >> 2 * areaId) & 3;
+                }
+                else
+                {
+                    // sktodo: multiplayer entity layer based on mode
+                    entityLayerId = 0;
+                }
+            }
             if (nodeLayerMask == 0)
             {
                 if (mode == GameMode.SinglePlayer)
@@ -72,7 +88,6 @@ namespace MphRead
             FilterNodes(room, nodeLayerMask);
             // todo?: scene min/max coordinates
             ComputeNodeMatrices(room, index: 0);
-            int areaId = Metadata.GetAreaInfo(roomId);
             // sktodo: layerId for 1P and MP
             IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
             // todo?: area ID/portals
