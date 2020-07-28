@@ -749,8 +749,9 @@ namespace MphRead
             // enabled in Defender mode according to their layer masks, but they don't appear in-game
             if (mode == GameMode.Capture || mode == GameMode.Bounty)
             {
-                // sktodo: team ID
-                Model flagBase = Read.GetModelByName(mode == GameMode.Capture ? "flagbase_ctf" : "flagbase_cap", 0);
+                string name = mode == GameMode.Capture ? "flagbase_ctf" : "flagbase_cap";
+                int paletteId = mode == GameMode.Capture ? (int)data.TeamId : 0;
+                Model flagBase = Read.GetModelByName(name, paletteId);
                 flagBase.Position = data.Position.ToFloatVector();
                 ComputeModelMatrices(flagBase, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
                 ComputeNodeMatrices(flagBase, index: 0);
@@ -771,7 +772,7 @@ namespace MphRead
                 ComputeNodeMatrices(node, index: 0);
                 node.Type = ModelType.Generic;
                 models.Add(node);
-                // sktodo: scaling and spinning
+                // sktodo: radius, height offset, spinning
                 Model circle = Read.GetModelByName("koth_terminal");
                 circle.Position = data.Position.ToFloatVector();
                 ComputeModelMatrices(circle, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
