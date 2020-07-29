@@ -5,10 +5,11 @@ namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 6, 0, 0);
+        public static Version Version { get; } = new Version(0, 7, 0, 0);
 
         private static void Main(string[] args)
         {
+            ConsoleColor.Setup();
             if (args.Length > 1)
             {
                 if (args[0] == "-export" || args[0] == "-e")
@@ -25,11 +26,8 @@ namespace MphRead
             using var renderer = new Renderer();
             if (args.Length == 0)
             {
-                Test.TestAllModels();
-                renderer.AddRoom("UNIT2_LAND");
-                //renderer.AddModel("lightningLob", firstHunt: true);
-                //renderer.AddModel("balljump_ray", firstHunt: true);
-                //renderer.AddModel("balljump_ray");
+                renderer.AddRoom("MP3 PROVING GROUND");
+                //renderer.AddModel("Crate01");
                 Nop();
             }
             else if (args.Length > 1)
@@ -39,6 +37,7 @@ namespace MphRead
                 for (int i = 0; i < args.Length; i++)
                 {
                     string arg = args[i];
+                    // todo: update parameters
                     if (arg == "-room" || arg == "-r")
                     {
                         if (foundRoom)
@@ -52,7 +51,7 @@ namespace MphRead
                             Exit();
                         }
                         int mask = GetInt(args, i + 2);
-                        renderer.AddRoom(modelName, mask);
+                        renderer.AddRoom(modelName);
                     }
                     else if (arg == "-model" || arg == "-m")
                     {

@@ -18,6 +18,11 @@ namespace MphRead
         {
             return value / (float)(1 << 12);
         }
+
+        public override string? ToString()
+        {
+            return Value.ToString();
+        }
     }
 
     // size: 12
@@ -84,9 +89,14 @@ namespace MphRead
             Blue = blue;
         }
 
-        public Vector4 AsVector4()
+        public Vector3 AsVector3()
         {
-            return new Vector4(Red / 255f, Green / 255f, Blue / 255f, 1f);
+            return new Vector3(Red / 255f, Green / 255f, Blue / 255f);
+        }
+
+        public Vector4 AsVector4(float alpha = 1f)
+        {
+            return new Vector4(Red / 255f, Green / 255f, Blue / 255f, alpha);
         }
     }
 

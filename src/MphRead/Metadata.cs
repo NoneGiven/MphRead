@@ -20,23 +20,24 @@ namespace MphRead
         public uint BattleTimeLimit { get; }
         public uint TimeLimit { get; }
         public short PointLimit { get; }
-        public short LayerId { get; }
+        public short NodeLayer { get; }
         public ushort FogEnabled { get; }
         public ushort Fog { get; }
         public ushort FogColor { get; }
         public uint FogSlope { get; }
         public uint FogOffset { get; }
-        public ColorRgba Light1Color { get; }
+        public ColorRgb Light1Color { get; }
         public Vector3 Light1Vector { get; }
-        public ColorRgba Light2Color { get; }
+        public ColorRgb Light2Color { get; }
         public Vector3 Light2Vector { get; }
         public Vector3 RoomSize { get; }
+        public bool Multiplayer { get; }
 
         public RoomMetadata(string name, string? inGameName, string pathName, string modelPath,
             string animationPath, string collisionPath, string? texturePath, string? entityPath, string? nodePath,
-            string? roomNodeName, uint battleTimeLimit, uint timeLimit, short pointLimit, short layerId, ushort fogEnabled,
-            ushort fog, ushort fogColor, uint fogSlope, uint fogOffset, ColorRgba light1Color,
-            Vector3 light1Vector, ColorRgba light2Color, Vector3 light2Vector, Vector3 roomSize)
+            string? roomNodeName, uint battleTimeLimit, uint timeLimit, short pointLimit, short nodeLayer, ushort fogEnabled,
+            ushort fog, ushort fogColor, uint fogSlope, uint fogOffset, ColorRgb light1Color,
+            Vector3 light1Vector, ColorRgb light2Color, Vector3 light2Vector, Vector3 roomSize, bool multiplayer = false)
         {
             Name = name;
             InGameName = inGameName;
@@ -51,7 +52,7 @@ namespace MphRead
             BattleTimeLimit = battleTimeLimit;
             TimeLimit = timeLimit;
             PointLimit = pointLimit;
-            LayerId = layerId;
+            NodeLayer = nodeLayer;
             FogEnabled = fogEnabled;
             Fog = fog;
             FogColor = fogColor;
@@ -62,6 +63,7 @@ namespace MphRead
             Light2Color = light2Color;
             Light2Vector = light2Vector;
             RoomSize = roomSize;
+            Multiplayer = multiplayer;
         }
     }
 
@@ -79,15 +81,17 @@ namespace MphRead
         public string? AnimationPath { get; }
         public string? CollisionPath { get; }
         public IReadOnlyList<RecolorMetadata> Recolors { get; }
+        public bool UseLightSources { get; }
 
         public ModelMetadata(string name, string modelPath, string? animationPath, string? collisionPath,
-            IReadOnlyList<RecolorMetadata> recolors)
+            IReadOnlyList<RecolorMetadata> recolors, bool useLightSources = false)
         {
             Name = name;
             ModelPath = modelPath;
             AnimationPath = animationPath;
             CollisionPath = collisionPath;
             Recolors = recolors;
+            UseLightSources = useLightSources;
         }
 
         public ModelMetadata(string name, string? animationPath, string? texturePath = null)
@@ -123,8 +127,8 @@ namespace MphRead
         }
 
         public ModelMetadata(string name, IEnumerable<string> recolors, string? remove = null,
-            bool animation = false, string? animationPath = null, bool texture = false,
-            MdlSuffix mdlSuffix = MdlSuffix.None, string? archive = null, string? recolorName = null)
+            bool animation = false, string? animationPath = null, bool texture = false, MdlSuffix mdlSuffix = MdlSuffix.None,
+            string? archive = null, string? recolorName = null, bool useLightSources = false)
         {
             Name = name;
             string suffix = "";
@@ -166,11 +170,17 @@ namespace MphRead
             var recolorList = new List<RecolorMetadata>();
             foreach (string recolor in recolors)
             {
-                string recolorModel = $@"models\{recolorName ?? name}_{recolor}_Model.bin";
-                string texturePath = texture ? $@"models\{recolorName ?? name}_{recolor}_Tex.bin" : recolorModel;
+                string recolorString = $"{recolorName ?? name}_{recolor}";
+                if (recolor.StartsWith("*"))
+                {
+                    recolorString = recolor.Replace("*", "");
+                }
+                string recolorModel = $@"models\{recolorString}_Model.bin";
+                string texturePath = texture ? $@"models\{recolorString}_Tex.bin" : recolorModel;
                 recolorList.Add(new RecolorMetadata(recolor, recolorModel, texturePath));
             }
             Recolors = recolorList;
+            UseLightSources = useLightSources;
         }
 
         public ModelMetadata(string name, bool animation = true, bool collision = false,
@@ -334,13 +344,41 @@ namespace MphRead
         public DoorMetadata(string name, string lockName, float lockOffset)
         {
             Name = name;
-            LockName = name;
+            LockName = lockName;
             LockOffset = lockOffset;
         }
     }
 
     public static class Metadata
     {
+        private static readonly IReadOnlyDictionary<GameMode, IReadOnlyList<int>> _modeLayers
+            = new Dictionary<GameMode, IReadOnlyList<int>>()
+        {
+            { GameMode.Battle, new List<int>() { 0, 1, 2 } },
+            { GameMode.BattleTeams, new List<int>() { 3 } },
+            { GameMode.Survival, new List<int>() { 15 } },
+            { GameMode.SurvivalTeams, new List<int>() { 15 } },
+            { GameMode.Capture, new List<int>() { 12 } },
+            { GameMode.Bounty, new List<int>() { 8, 9, 10 } },
+            { GameMode.BountyTeams, new List<int>() { 11 } },
+            { GameMode.Nodes, new List<int>() { 4, 5, 6 } },
+            { GameMode.NodesTeams, new List<int>() { 7 } },
+            { GameMode.Defender, new List<int>() { 14 } },
+            { GameMode.DefenderTeams, new List<int>() { 14 } },
+            { GameMode.PrimeHunter, new List<int>() { 0, 1, 2 } },
+            { GameMode.Unknown15, new List<int>() { 13 } }
+        };
+
+        public static int GetMultiplayerEntityLayer(GameMode mode, int playerCount)
+        {
+            IReadOnlyList<int> list = _modeLayers[mode];
+            if (list.Count == 1)
+            {
+                return list[0];
+            }
+            return list[playerCount == 3 ? 1 : (playerCount == 4 ? 2 : 0)];
+        }
+
         public static ModelMetadata? GetEntityByName(string name)
         {
             if (ModelMetadata.TryGetValue(name, out ModelMetadata? metadata))
@@ -401,7 +439,7 @@ namespace MphRead
             return (ushort)(r | g << 5 | b << 10);
         }
 
-        public static (int, bool) GetAreaInfo(int roomId)
+        public static int GetAreaInfo(int roomId)
         {
             int areaId = 8;
             if (roomId >= 27 && roomId < 36)
@@ -436,8 +474,8 @@ namespace MphRead
             {
                 areaId = 7;
             }
-            bool multiplayer = roomId >= 93 && roomId <= 119;
-            return (areaId, multiplayer);
+            //bool multiplayer = roomId >= 93 && roomId <= 119;
+            return areaId;
         }
 
         private static readonly IReadOnlyList<string> _roomIds
@@ -612,9 +650,9 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x4,
                         65180,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(10f, 0f, 0f))
                 },
@@ -640,9 +678,9 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x4,
                         65180,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(0f, 0f, 10f))
                 },
@@ -668,9 +706,9 @@ namespace MphRead
                         FogColor(31, 18, 6),
                         0x4,
                         65180,
-                        new ColorRgba(31, 18, 6, 0),
+                        new ColorRgb(31, 18, 6),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 6, 4, 0),
+                        new ColorRgb(13, 6, 4),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(10f, 0f, 0f))
                 },
@@ -696,9 +734,9 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x4,
                         65180,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(0f, 0f, 10f))
                 },
@@ -724,9 +762,9 @@ namespace MphRead
                         FogColor(18, 31, 18),
                         0x4,
                         65152,
-                        new ColorRgba(24, 31, 24, 0),
+                        new ColorRgb(24, 31, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(10.378662f, 0f, 0f))
                 },
@@ -752,9 +790,9 @@ namespace MphRead
                         FogColor(18, 31, 18),
                         0x4,
                         65152,
-                        new ColorRgba(24, 31, 24, 0),
+                        new ColorRgb(24, 31, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(0f, 0f, 10.378662f))
                 },
@@ -780,9 +818,9 @@ namespace MphRead
                         FogColor(24, 20, 31),
                         0x4,
                         65152,
-                        new ColorRgba(24, 20, 31, 0),
+                        new ColorRgb(24, 20, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(10f, 0f, 0f))
                 },
@@ -808,9 +846,9 @@ namespace MphRead
                         FogColor(24, 20, 31),
                         0x4,
                         65152,
-                        new ColorRgba(24, 20, 31, 0),
+                        new ColorRgb(24, 20, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(0f, 0f, 10f))
                 },
@@ -836,9 +874,9 @@ namespace MphRead
                         FogColor(20, 27, 31),
                         0x4,
                         65152,
-                        new ColorRgba(20, 27, 31, 0),
+                        new ColorRgb(20, 27, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(8, 8, 15, 0),
+                        new ColorRgb(8, 8, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(10f, 0f, 0f))
                 },
@@ -864,9 +902,9 @@ namespace MphRead
                         FogColor(20, 27, 31),
                         0x4,
                         65152,
-                        new ColorRgba(20, 27, 31, 0),
+                        new ColorRgb(20, 27, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(8, 8, 15, 0),
+                        new ColorRgb(8, 8, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(0f, 0f, 10f))
                 },
@@ -892,9 +930,9 @@ namespace MphRead
                         FogColor(8, 28, 20),
                         0x4,
                         65535,
-                        new ColorRgba(8, 28, 20, 0),
+                        new ColorRgb(8, 28, 20),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 6, 12, 0),
+                        new ColorRgb(4, 6, 12),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(0f, 2.295166f, 22.654053f))
                 },
@@ -920,9 +958,9 @@ namespace MphRead
                         FogColor(8, 28, 20),
                         0x4,
                         65535,
-                        new ColorRgba(8, 28, 20, 0),
+                        new ColorRgb(8, 28, 20),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 6, 12, 0),
+                        new ColorRgb(4, 6, 12),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(0f, -1.869873f, 22.653809f))
                 },
@@ -948,9 +986,9 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x4,
                         65535,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(10f, 0f, 0f))
                 },
@@ -976,9 +1014,9 @@ namespace MphRead
                         FogColor(8, 28, 20),
                         0x4,
                         65535,
-                        new ColorRgba(8, 28, 20, 0),
+                        new ColorRgb(8, 28, 20),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 6, 12, 0),
+                        new ColorRgb(4, 6, 12),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(0f, 0f, 20f))
                 },
@@ -1004,9 +1042,9 @@ namespace MphRead
                         FogColor(24, 20, 31),
                         0x4,
                         65152,
-                        new ColorRgba(24, 20, 31, 0),
+                        new ColorRgb(24, 20, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(0f, 0f, 10f))
                 },
@@ -1032,9 +1070,9 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x4,
                         65180,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -1060,9 +1098,9 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x4,
                         65180,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -1088,9 +1126,9 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x4,
                         65180,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -1116,9 +1154,9 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x4,
                         65180,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -1144,9 +1182,9 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x4,
                         65180,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-41f, 41f, 6f))
                 },
@@ -1172,9 +1210,9 @@ namespace MphRead
                         FogColor(19, 29, 31),
                         0x4,
                         65535,
-                        new ColorRgba(19, 29, 31, 0),
+                        new ColorRgb(19, 29, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 6, 12, 0),
+                        new ColorRgb(4, 6, 12),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(32f, -72f, 72f))
                 },
@@ -1200,9 +1238,9 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x4,
                         65180,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -1228,9 +1266,9 @@ namespace MphRead
                         FogColor(31, 18, 6),
                         0x6,
                         65350,
-                        new ColorRgba(8, 28, 20, 0),
+                        new ColorRgb(8, 28, 20),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(20, 8, 8, 0),
+                        new ColorRgb(20, 8, 8),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -1256,9 +1294,9 @@ namespace MphRead
                         FogColor(12, 6, 18),
                         0x4,
                         65180,
-                        new ColorRgba(12, 6, 18, 0),
+                        new ColorRgb(12, 6, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(31, 25, 21, 0),
+                        new ColorRgb(31, 25, 21),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-11f, 10f, 0f))
                 },
@@ -1284,9 +1322,9 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x4,
                         65180,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(13f, -27f, 26f))
                 },
@@ -1312,9 +1350,9 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x4,
                         65180,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -1340,9 +1378,9 @@ namespace MphRead
                         FogColor(31, 18, 6),
                         0x4,
                         65300,
-                        new ColorRgba(31, 18, 6, 0),
+                        new ColorRgb(31, 18, 6),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 9, 4, 0),
+                        new ColorRgb(13, 9, 4),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -1368,9 +1406,9 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x4,
                         65180,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-37f, 45f, -1f))
                 },
@@ -1396,9 +1434,9 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x4,
                         65180,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(25f, -27f, 20f))
                 },
@@ -1424,9 +1462,9 @@ namespace MphRead
                         FogColor(31, 18, 6),
                         0x4,
                         65180,
-                        new ColorRgba(31, 18, 6, 0),
+                        new ColorRgb(31, 18, 6),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 6, 4, 0),
+                        new ColorRgb(13, 6, 4),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -1452,9 +1490,9 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x4,
                         65180,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -1480,9 +1518,9 @@ namespace MphRead
                         FogColor(31, 18, 6),
                         0x6,
                         65350,
-                        new ColorRgba(8, 28, 20, 0),
+                        new ColorRgb(8, 28, 20),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 6, 12, 0),
+                        new ColorRgb(4, 6, 12),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-37f, 45f, -1f))
                 },
@@ -1508,9 +1546,9 @@ namespace MphRead
                         FogColor(12, 6, 18),
                         0x4,
                         65180,
-                        new ColorRgba(12, 6, 18, 0),
+                        new ColorRgb(12, 6, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(31, 25, 21, 0),
+                        new ColorRgb(31, 25, 21),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(25f, -27f, 20f))
                 },
@@ -1536,9 +1574,9 @@ namespace MphRead
                         FogColor(18, 31, 18),
                         0x4,
                         65152,
-                        new ColorRgba(24, 24, 24, 0),
+                        new ColorRgb(24, 24, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -1564,9 +1602,9 @@ namespace MphRead
                         FogColor(18, 31, 18),
                         0x4,
                         65152,
-                        new ColorRgba(24, 31, 24, 0),
+                        new ColorRgb(24, 31, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -1592,9 +1630,9 @@ namespace MphRead
                         FogColor(18, 31, 18),
                         0x4,
                         65152,
-                        new ColorRgba(24, 31, 24, 0),
+                        new ColorRgb(24, 31, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-24f, 27f, 0f))
                 },
@@ -1620,9 +1658,9 @@ namespace MphRead
                         FogColor(18, 31, 18),
                         0x4,
                         65152,
-                        new ColorRgba(24, 31, 24, 0),
+                        new ColorRgb(24, 31, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(17f, -14f, 14f))
                 },
@@ -1648,9 +1686,9 @@ namespace MphRead
                         FogColor(18, 31, 18),
                         0x4,
                         65152,
-                        new ColorRgba(24, 31, 24, 0),
+                        new ColorRgb(24, 31, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -1676,9 +1714,9 @@ namespace MphRead
                         FogColor(18, 31, 18),
                         0x4,
                         65152,
-                        new ColorRgba(24, 31, 24, 0),
+                        new ColorRgb(24, 31, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -1704,9 +1742,9 @@ namespace MphRead
                         FogColor(18, 31, 18),
                         0x4,
                         65152,
-                        new ColorRgba(24, 31, 24, 0),
+                        new ColorRgb(24, 31, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-49f, 48f, 0f))
                 },
@@ -1732,9 +1770,9 @@ namespace MphRead
                         FogColor(18, 31, 18),
                         0x4,
                         65152,
-                        new ColorRgba(24, 31, 24, 0),
+                        new ColorRgb(24, 31, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(48f, -49f, 47f))
                 },
@@ -1760,9 +1798,9 @@ namespace MphRead
                         FogColor(18, 31, 18),
                         0x4,
                         65152,
-                        new ColorRgba(24, 31, 24, 0),
+                        new ColorRgb(24, 31, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-70f, 70f, -21.227783f))
                 },
@@ -1788,9 +1826,9 @@ namespace MphRead
                         FogColor(17, 29, 16),
                         0x6,
                         65350,
-                        new ColorRgba(8, 28, 20, 0),
+                        new ColorRgb(8, 28, 20),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 6, 12, 0),
+                        new ColorRgb(4, 6, 12),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(48f, -70f, 70f))
                 },
@@ -1816,9 +1854,9 @@ namespace MphRead
                         FogColor(12, 6, 18),
                         0x4,
                         65180,
-                        new ColorRgba(12, 6, 18, 0),
+                        new ColorRgb(12, 6, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(31, 25, 21, 0),
+                        new ColorRgb(31, 25, 21),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -1844,9 +1882,9 @@ namespace MphRead
                         FogColor(18, 31, 18),
                         0x4,
                         65152,
-                        new ColorRgba(18, 31, 18, 0),
+                        new ColorRgb(18, 31, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -1872,9 +1910,9 @@ namespace MphRead
                         FogColor(18, 31, 18),
                         0x4,
                         65152,
-                        new ColorRgba(24, 31, 24, 0),
+                        new ColorRgb(24, 31, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -1900,9 +1938,9 @@ namespace MphRead
                         FogColor(29, 20, 10),
                         0x4,
                         65152,
-                        new ColorRgba(29, 20, 10, 0),
+                        new ColorRgb(29, 20, 10),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -1928,9 +1966,9 @@ namespace MphRead
                         FogColor(0, 25, 31),
                         0x4,
                         31727,
-                        new ColorRgba(24, 31, 24, 0),
+                        new ColorRgb(24, 31, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-43f, 44f, 0f))
                 },
@@ -1956,9 +1994,9 @@ namespace MphRead
                         FogColor(18, 31, 18),
                         0x4,
                         65152,
-                        new ColorRgba(24, 31, 24, 0),
+                        new ColorRgb(24, 31, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(33f, -33f, 55f))
                 },
@@ -1984,9 +2022,9 @@ namespace MphRead
                         FogColor(0, 31, 10),
                         0x4,
                         31727,
-                        new ColorRgba(24, 31, 24, 0),
+                        new ColorRgb(24, 31, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -2012,9 +2050,9 @@ namespace MphRead
                         FogColor(29, 20, 10),
                         0x4,
                         65152,
-                        new ColorRgba(29, 20, 10, 0),
+                        new ColorRgb(29, 20, 10),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -2040,9 +2078,9 @@ namespace MphRead
                         FogColor(17, 29, 16),
                         0x6,
                         65350,
-                        new ColorRgba(8, 28, 20, 0),
+                        new ColorRgb(8, 28, 20),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 6, 12, 0),
+                        new ColorRgb(4, 6, 12),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -2068,9 +2106,9 @@ namespace MphRead
                         FogColor(12, 6, 18),
                         0x4,
                         65180,
-                        new ColorRgba(12, 6, 18, 0),
+                        new ColorRgb(12, 6, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(31, 25, 21, 0),
+                        new ColorRgb(31, 25, 21),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -2096,9 +2134,9 @@ namespace MphRead
                         FogColor(24, 20, 31),
                         0x4,
                         65152,
-                        new ColorRgba(24, 20, 31, 0),
+                        new ColorRgb(24, 20, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -2124,9 +2162,9 @@ namespace MphRead
                         FogColor(24, 20, 31),
                         0x4,
                         65152,
-                        new ColorRgba(24, 20, 31, 0),
+                        new ColorRgb(24, 20, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -2152,9 +2190,9 @@ namespace MphRead
                         FogColor(24, 20, 31),
                         0x4,
                         65152,
-                        new ColorRgba(24, 20, 31, 0),
+                        new ColorRgb(24, 20, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-22f, 18f, -2f))
                 },
@@ -2180,9 +2218,9 @@ namespace MphRead
                         FogColor(24, 20, 31),
                         0x4,
                         65152,
-                        new ColorRgba(24, 20, 31, 0),
+                        new ColorRgb(24, 20, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(13.299805f, -15f, 11f))
                 },
@@ -2208,9 +2246,9 @@ namespace MphRead
                         FogColor(24, 20, 31),
                         0x4,
                         65152,
-                        new ColorRgba(24, 20, 31, 0),
+                        new ColorRgb(24, 20, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -2236,9 +2274,9 @@ namespace MphRead
                         FogColor(20, 27, 31),
                         0x6,
                         65350,
-                        new ColorRgba(8, 28, 20, 0),
+                        new ColorRgb(8, 28, 20),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 6, 12, 0),
+                        new ColorRgb(4, 6, 12),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -2264,9 +2302,9 @@ namespace MphRead
                         FogColor(12, 6, 18),
                         0x4,
                         65180,
-                        new ColorRgba(12, 6, 18, 0),
+                        new ColorRgb(12, 6, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(31, 25, 21, 0),
+                        new ColorRgb(31, 25, 21),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -2292,9 +2330,9 @@ namespace MphRead
                         FogColor(24, 20, 31),
                         0x4,
                         65152,
-                        new ColorRgba(24, 20, 31, 0),
+                        new ColorRgb(24, 20, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -2320,9 +2358,9 @@ namespace MphRead
                         FogColor(24, 20, 31),
                         0x4,
                         65152,
-                        new ColorRgba(24, 20, 31, 0),
+                        new ColorRgb(24, 20, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -2348,9 +2386,9 @@ namespace MphRead
                         FogColor(24, 20, 31),
                         0x4,
                         65152,
-                        new ColorRgba(24, 20, 31, 0),
+                        new ColorRgb(24, 20, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -2376,9 +2414,9 @@ namespace MphRead
                         FogColor(20, 27, 31),
                         0x6,
                         65350,
-                        new ColorRgba(8, 28, 20, 0),
+                        new ColorRgb(8, 28, 20),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 6, 12, 0),
+                        new ColorRgb(4, 6, 12),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-19f, 27f, -1f))
                 },
@@ -2404,9 +2442,9 @@ namespace MphRead
                         FogColor(12, 6, 18),
                         0x4,
                         65180,
-                        new ColorRgba(12, 6, 18, 0),
+                        new ColorRgb(12, 6, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(31, 25, 21, 0),
+                        new ColorRgb(31, 25, 21),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(15f, -29f, 26f))
                 },
@@ -2432,9 +2470,9 @@ namespace MphRead
                         FogColor(10, 14, 16),
                         0x4,
                         65300,
-                        new ColorRgba(10, 14, 18, 0),
+                        new ColorRgb(10, 14, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 4, 8, 0),
+                        new ColorRgb(4, 4, 8),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -2460,9 +2498,9 @@ namespace MphRead
                         FogColor(20, 27, 31),
                         0x4,
                         65152,
-                        new ColorRgba(20, 27, 31, 0),
+                        new ColorRgb(20, 27, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(8, 8, 15, 0),
+                        new ColorRgb(8, 8, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -2488,9 +2526,9 @@ namespace MphRead
                         FogColor(10, 14, 16),
                         0x4,
                         65300,
-                        new ColorRgba(10, 14, 18, 0),
+                        new ColorRgb(10, 14, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 4, 8, 0),
+                        new ColorRgb(4, 4, 8),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-23f, 41f, -29f))
                 },
@@ -2516,9 +2554,9 @@ namespace MphRead
                         FogColor(20, 27, 31),
                         0x4,
                         65300,
-                        new ColorRgba(20, 27, 31, 0),
+                        new ColorRgb(20, 27, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(8, 8, 15, 0),
+                        new ColorRgb(8, 8, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(30f, -27f, 42f))
                 },
@@ -2544,9 +2582,9 @@ namespace MphRead
                         FogColor(20, 27, 31),
                         0x6,
                         65350,
-                        new ColorRgba(8, 28, 20, 0),
+                        new ColorRgb(8, 28, 20),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 6, 12, 0),
+                        new ColorRgb(4, 6, 12),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -2572,9 +2610,9 @@ namespace MphRead
                         FogColor(12, 6, 18),
                         0x4,
                         65180,
-                        new ColorRgba(12, 6, 18, 0),
+                        new ColorRgb(12, 6, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(31, 25, 21, 0),
+                        new ColorRgb(31, 25, 21),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -2600,9 +2638,9 @@ namespace MphRead
                         FogColor(0, 0, 0),
                         0x4,
                         65300,
-                        new ColorRgba(10, 14, 18, 0),
+                        new ColorRgb(10, 14, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 4, 8, 0),
+                        new ColorRgb(4, 4, 8),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-32f, 31f, -3.599854f))
                 },
@@ -2628,9 +2666,9 @@ namespace MphRead
                         FogColor(10, 14, 16),
                         0x4,
                         65300,
-                        new ColorRgba(10, 14, 18, 0),
+                        new ColorRgb(10, 14, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 4, 8, 0),
+                        new ColorRgb(4, 4, 8),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(24f, -30f, 29f))
                 },
@@ -2656,9 +2694,9 @@ namespace MphRead
                         FogColor(20, 27, 31),
                         0x4,
                         65152,
-                        new ColorRgba(20, 27, 31, 0),
+                        new ColorRgb(20, 27, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(8, 8, 15, 0),
+                        new ColorRgb(8, 8, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -2684,9 +2722,9 @@ namespace MphRead
                         FogColor(10, 14, 16),
                         0x4,
                         65300,
-                        new ColorRgba(10, 14, 18, 0),
+                        new ColorRgb(10, 14, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 4, 8, 0),
+                        new ColorRgb(4, 4, 8),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -2712,9 +2750,9 @@ namespace MphRead
                         FogColor(20, 27, 31),
                         0x6,
                         65350,
-                        new ColorRgba(8, 28, 20, 0),
+                        new ColorRgb(8, 28, 20),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 6, 12, 0),
+                        new ColorRgb(4, 6, 12),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-72f, 70f, 0f))
                 },
@@ -2740,9 +2778,9 @@ namespace MphRead
                         FogColor(12, 6, 18),
                         0x4,
                         65180,
-                        new ColorRgba(12, 6, 18, 0),
+                        new ColorRgb(12, 6, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(31, 25, 21, 0),
+                        new ColorRgb(31, 25, 21),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(23.5f, -26f, 26f))
                 },
@@ -2768,9 +2806,9 @@ namespace MphRead
                         FogColor(17, 29, 16),
                         0x6,
                         65330,
-                        new ColorRgba(17, 29, 16, 0),
+                        new ColorRgb(17, 29, 16),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 6, 12, 0),
+                        new ColorRgb(4, 6, 12),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -2796,9 +2834,9 @@ namespace MphRead
                         FogColor(17, 29, 16),
                         0x5,
                         65535,
-                        new ColorRgba(19, 27, 16, 0),
+                        new ColorRgb(19, 27, 16),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 6, 12, 0),
+                        new ColorRgb(4, 6, 12),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(300f, -300f, 300f))
                 },
@@ -2824,9 +2862,9 @@ namespace MphRead
                         FogColor(9, 18, 24),
                         0x4,
                         32550,
-                        new ColorRgba(18, 24, 27, 0),
+                        new ColorRgb(18, 24, 27),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 18, 24, 0),
+                        new ColorRgb(9, 18, 24),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-72f, 70f, 0f))
                 },
@@ -2852,9 +2890,9 @@ namespace MphRead
                         FogColor(16, 30, 25),
                         0x4,
                         65535,
-                        new ColorRgba(18, 16, 14, 0),
+                        new ColorRgb(18, 16, 14),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(27, 18, 9, 0),
+                        new ColorRgb(27, 18, 9),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(23.5f, -26f, 26f))
                 },
@@ -2880,11 +2918,12 @@ namespace MphRead
                         FogColor(18, 31, 18),
                         0x4,
                         65152,
-                        new ColorRgba(24, 31, 24, 0),
+                        new ColorRgb(24, 31, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "MP2 HARVESTER",
@@ -2908,11 +2947,12 @@ namespace MphRead
                         FogColor(25, 30, 20),
                         0x4,
                         65152,
-                        new ColorRgba(25, 30, 20, 0),
+                        new ColorRgb(25, 30, 20),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 11, 6, 0),
+                        new ColorRgb(9, 11, 6),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(300f, -300f, 300f))
+                        new Vector3(300f, -300f, 300f),
+                        multiplayer: true)
                 },
                 {
                     "MP3 PROVING GROUND",
@@ -2936,11 +2976,12 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x5,
                         65180,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0.099854f, -1f, 0f),
-                        new Vector3(-76f, 81f, -7.127930f))
+                        new Vector3(-76f, 81f, -7.127930f),
+                        multiplayer: true)
                 },
                 {
                     "MP4 HIGHGROUND - EXPANDED",
@@ -2964,11 +3005,12 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x5,
                         65200,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(32f, -42f, 31f))
+                        new Vector3(32f, -42f, 31f),
+                        multiplayer: true)
                 },
                 {
                     "MP4 HIGHGROUND",
@@ -2992,11 +3034,12 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x5,
                         65200,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-76f, 81f, -7.127930f))
+                        new Vector3(-76f, 81f, -7.127930f),
+                        multiplayer: true)
                 },
                 {
                     "MP5 FUEL SLUICE",
@@ -3020,11 +3063,12 @@ namespace MphRead
                         FogColor(24, 20, 31),
                         0x3,
                         65152,
-                        new ColorRgba(18, 22, 30, 0),
+                        new ColorRgb(18, 22, 30),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(32f, -40.748779f, 31f))
+                        new Vector3(32f, -40.748779f, 31f),
+                        multiplayer: true)
                 },
                 {
                     "MP6 HEADSHOT",
@@ -3048,11 +3092,12 @@ namespace MphRead
                         FogColor(24, 20, 31),
                         0x3,
                         65152,
-                        new ColorRgba(18, 22, 30, 0),
+                        new ColorRgb(18, 22, 30),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-72f, 72f, -3f))
+                        new Vector3(-72f, 72f, -3f),
+                        multiplayer: true)
                 },
                 {
                     "MP7 PROCESSOR CORE",
@@ -3076,11 +3121,12 @@ namespace MphRead
                         FogColor(31, 18, 6),
                         0x6,
                         65300,
-                        new ColorRgba(31, 18, 6, 0),
+                        new ColorRgb(31, 18, 6),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 6, 4, 0),
+                        new ColorRgb(13, 6, 4),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(23f, -42f, 42f))
+                        new Vector3(23f, -42f, 42f),
+                        multiplayer: true)
                 },
                 {
                     "MP8 FIRE CONTROL",
@@ -3104,11 +3150,12 @@ namespace MphRead
                         FogColor(20, 24, 31),
                         0x3,
                         65152,
-                        new ColorRgba(18, 22, 30, 0),
+                        new ColorRgb(18, 22, 30),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "MP9 CRYOCHASM",
@@ -3132,11 +3179,12 @@ namespace MphRead
                         FogColor(20, 27, 31),
                         0x5,
                         65152,
-                        new ColorRgba(20, 27, 31, 0),
+                        new ColorRgb(20, 27, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(8, 8, 15, 0),
+                        new ColorRgb(8, 8, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(300f, -300f, 300f))
+                        new Vector3(300f, -300f, 300f),
+                        multiplayer: true)
                 },
                 {
                     "MP10 OVERLOAD",
@@ -3160,11 +3208,12 @@ namespace MphRead
                         FogColor(18, 31, 18),
                         0x5,
                         65152,
-                        new ColorRgba(24, 31, 24, 0),
+                        new ColorRgb(24, 31, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-68f, 60f, 0f))
+                        new Vector3(-68f, 60f, 0f),
+                        multiplayer: true)
                 },
                 {
                     "MP11 BREAKTHROUGH",
@@ -3188,11 +3237,12 @@ namespace MphRead
                         FogColor(20, 27, 31),
                         0x5,
                         65152,
-                        new ColorRgba(20, 27, 31, 0),
+                        new ColorRgb(20, 27, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(8, 8, 15, 0),
+                        new ColorRgb(8, 8, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(36f, -27f, 26f))
+                        new Vector3(36f, -27f, 26f),
+                        multiplayer: true)
                 },
                 {
                     "MP12 SIC TRANSIT",
@@ -3216,11 +3266,12 @@ namespace MphRead
                         FogColor(10, 14, 18),
                         0x6,
                         65300,
-                        new ColorRgba(10, 14, 18, 0),
+                        new ColorRgb(10, 14, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 4, 8, 0),
+                        new ColorRgb(4, 4, 8),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "MP13 ACCELERATOR",
@@ -3244,11 +3295,12 @@ namespace MphRead
                         FogColor(24, 20, 31),
                         0x3,
                         65152,
-                        new ColorRgba(18, 22, 30, 0),
+                        new ColorRgb(18, 22, 30),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(300f, -300f, 300f))
+                        new Vector3(300f, -300f, 300f),
+                        multiplayer: true)
                 },
                 {
                     "MP14 OUTER REACH",
@@ -3272,11 +3324,12 @@ namespace MphRead
                         FogColor(24, 20, 31),
                         0x4,
                         65152,
-                        new ColorRgba(24, 20, 31, 0),
+                        new ColorRgb(24, 20, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-68f, 60f, 0f))
+                        new Vector3(-68f, 60f, 0f),
+                        multiplayer: true)
                 },
                 {
                     "CTF1 FAULT LINE - EXPANDED",
@@ -3300,11 +3353,12 @@ namespace MphRead
                         FogColor(10, 14, 18),
                         0x6,
                         65300,
-                        new ColorRgba(10, 14, 18, 0),
+                        new ColorRgb(10, 14, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 4, 8, 0),
+                        new ColorRgb(4, 4, 8),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(39f, -27f, 26f))
+                        new Vector3(39f, -27f, 26f),
+                        multiplayer: true)
                 },
                 {
                     "CTF1_FAULT LINE",
@@ -3328,11 +3382,12 @@ namespace MphRead
                         FogColor(10, 14, 18),
                         0x6,
                         65300,
-                        new ColorRgba(10, 14, 18, 0),
+                        new ColorRgb(10, 14, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 4, 8, 0),
+                        new ColorRgb(4, 4, 8),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "AD1 TRANSFER LOCK BT",
@@ -3356,11 +3411,12 @@ namespace MphRead
                         FogColor(29, 20, 10),
                         0x4,
                         65152,
-                        new ColorRgba(29, 20, 10, 0),
+                        new ColorRgb(29, 20, 10),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(300f, -300f, 300f))
+                        new Vector3(300f, -300f, 300f),
+                        multiplayer: true)
                 },
                 {
                     "AD1 TRANSFER LOCK DM",
@@ -3384,11 +3440,12 @@ namespace MphRead
                         FogColor(29, 20, 10),
                         0x4,
                         65300,
-                        new ColorRgba(29, 20, 10, 0),
+                        new ColorRgb(29, 20, 10),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-71f, 85f, 2f))
+                        new Vector3(-71f, 85f, 2f),
+                        multiplayer: true)
                 },
                 {
                     "AD2 MAGMA VENTS",
@@ -3412,11 +3469,12 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x5,
                         65200,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(21f, -53f, 59f))
+                        new Vector3(21f, -53f, 59f),
+                        multiplayer: true)
                 },
                 {
                     "AD2 ALINOS PERCH",
@@ -3440,11 +3498,12 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x5,
                         65200,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "UNIT1 ALINOS LANDFALL",
@@ -3468,11 +3527,12 @@ namespace MphRead
                         FogColor(31, 24, 18),
                         0x4,
                         65180,
-                        new ColorRgba(31, 24, 18, 0),
+                        new ColorRgb(31, 24, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(13, 12, 7, 0),
+                        new ColorRgb(13, 12, 7),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(300f, -300f, 300f))
+                        new Vector3(300f, -300f, 300f),
+                        multiplayer: true)
                 },
                 {
                     "UNIT2 LANDING BAY",
@@ -3496,11 +3556,12 @@ namespace MphRead
                         FogColor(18, 31, 18),
                         0x4,
                         65152,
-                        new ColorRgba(24, 31, 24, 0),
+                        new ColorRgb(24, 31, 24),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(7, 11, 15, 0),
+                        new ColorRgb(7, 11, 15),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-23f, 25f, -11f))
+                        new Vector3(-23f, 25f, -11f),
+                        multiplayer: true)
                 },
                 {
                     "UNIT 3 VESPER STARPORT",
@@ -3524,11 +3585,12 @@ namespace MphRead
                         FogColor(24, 20, 31),
                         0x3,
                         65152,
-                        new ColorRgba(18, 22, 30, 0),
+                        new ColorRgb(18, 22, 30),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(28f, -27f, 26f))
+                        new Vector3(28f, -27f, 26f),
+                        multiplayer: true)
                 },
                 {
                     "UNIT 4 ARCTERRA BASE",
@@ -3552,11 +3614,12 @@ namespace MphRead
                         FogColor(10, 14, 18),
                         0x6,
                         65300,
-                        new ColorRgba(10, 14, 18, 0),
+                        new ColorRgb(10, 14, 18),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(4, 4, 8, 0),
+                        new ColorRgb(4, 4, 8),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "Gorea Prison",
@@ -3580,11 +3643,12 @@ namespace MphRead
                         FogColor(16, 30, 25),
                         0x4,
                         65535,
-                        new ColorRgba(18, 16, 14, 0),
+                        new ColorRgb(18, 16, 14),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(27, 18, 9, 0),
+                        new ColorRgb(27, 18, 9),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(300f, -300f, 300f))
+                        new Vector3(300f, -300f, 300f),
+                        multiplayer: true)
                 },
                 {
                     "E3 FIRST HUNT",
@@ -3608,11 +3672,12 @@ namespace MphRead
                         FogColor(24, 20, 31),
                         0x5,
                         65152,
-                        new ColorRgba(24, 20, 31, 0),
+                        new ColorRgb(24, 20, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(9, 8, 14, 0),
+                        new ColorRgb(9, 8, 14),
                         new Vector3(0f, 0.999756f, -0.099854f),
-                        new Vector3(-44f, 42f, -5f))
+                        new Vector3(-44f, 42f, -5f),
+                        multiplayer: true)
                 },
                 // model, animation, collision files for these two test levels must be taken from First Hunt
                 {
@@ -3637,9 +3702,9 @@ namespace MphRead
                         FogColor(8, 16, 31),
                         0x5,
                         65152,
-                        new ColorRgba(31, 31, 31, 0),
+                        new ColorRgb(31, 31, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(10, 10, 31, 0),
+                        new ColorRgb(10, 10, 31),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(29f, -42f, 42f))
                 },
@@ -3665,9 +3730,9 @@ namespace MphRead
                         FogColor(8, 16, 31),
                         0x5,
                         65152,
-                        new ColorRgba(31, 31, 31, 0),
+                        new ColorRgb(31, 31, 31),
                         new Vector3(0.099854f, -1f, 0f),
-                        new ColorRgba(10, 10, 31, 0),
+                        new ColorRgb(10, 10, 31),
                         new Vector3(0f, 0.999756f, -0.099854f),
                         new Vector3(-300f, 300f, -300f))
                 },
@@ -3694,11 +3759,12 @@ namespace MphRead
                         0,
                         0,
                         0,
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new Vector3(-300f, 300f, -300f))
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(1f, 0f, 0f),
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(0f, -1f, 0f),
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "biodefense chamber 05",
@@ -3722,11 +3788,12 @@ namespace MphRead
                         0,
                         0,
                         0,
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new Vector3(-300f, 300f, -300f))
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(1f, 0f, 0f),
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(0f, -1f, 0f),
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "biodefense chamber 03",
@@ -3750,11 +3817,12 @@ namespace MphRead
                         0,
                         0,
                         0,
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new Vector3(-300f, 300f, -300f))
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(1f, 0f, 0f),
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(0f, -1f, 0f),
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "biodefense chamber 08",
@@ -3778,11 +3846,12 @@ namespace MphRead
                         0,
                         0,
                         0,
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new Vector3(-300f, 300f, -300f))
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(1f, 0f, 0f),
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(0f, -1f, 0f),
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "biodefense chamber 04",
@@ -3806,11 +3875,12 @@ namespace MphRead
                         0,
                         0,
                         0,
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new Vector3(-300f, 300f, -300f))
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(1f, 0f, 0f),
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(0f, -1f, 0f),
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "biodefense chamber 07",
@@ -3834,11 +3904,12 @@ namespace MphRead
                         0,
                         0,
                         0,
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new Vector3(-300f, 300f, -300f))
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(1f, 0f, 0f),
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(0f, -1f, 0f),
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 // First Hunt
                 {
@@ -3863,11 +3934,12 @@ namespace MphRead
                         0,
                         0,
                         0,
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new Vector3(-300f, 300f, -300f))
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgb(4, 4, 16),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "FH_SURVIVOR",
@@ -3891,10 +3963,10 @@ namespace MphRead
                         0,
                         0,
                         0,
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgb(4, 4, 16),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -3919,11 +3991,12 @@ namespace MphRead
                         0,
                         0,
                         0,
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new Vector3(-300f, 300f, -300f))
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgb(4, 4, 16),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "FH_MP3",
@@ -3947,11 +4020,12 @@ namespace MphRead
                         0,
                         0,
                         0,
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new Vector3(-300f, 300f, -300f))
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgb(4, 4, 16),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "FH_MP5",
@@ -3975,11 +4049,12 @@ namespace MphRead
                         0,
                         0,
                         0,
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new Vector3(-300f, 300f, -300f))
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgb(4, 4, 16),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "FH_TEST",
@@ -4003,10 +4078,10 @@ namespace MphRead
                         0,
                         0,
                         0,
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgb(4, 4, 16),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4031,10 +4106,10 @@ namespace MphRead
                         0,
                         0,
                         0,
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgb(4, 4, 16),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4059,10 +4134,10 @@ namespace MphRead
                         0,
                         0,
                         0,
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgb(4, 4, 16),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4087,11 +4162,12 @@ namespace MphRead
                         0,
                         0,
                         0,
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new ColorRgba(31, 31, 31, 0),
-                        new Vector3(1f, 1f, 1f),
-                        new Vector3(-300f, 300f, -300f))
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new ColorRgb(4, 4, 16),
+                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 }
             };
 
@@ -4118,33 +4194,33 @@ namespace MphRead
             /* 5 */ "JumpPad_Station"
         };
 
-        public static readonly IReadOnlyList<(string, float)> Items
-            = new List<(string, float)>()
+        public static readonly IReadOnlyList<string> Items
+            = new List<string>()
         {
-            /*  0 */ ("pick_health_B", 0.487792969f),
-            /*  1 */ ("pick_health_A", 0.424316406f),
-            /*  2 */ ("pick_health_C", 0.524414063f),
-            /*  3 */ ("pick_dblDamage", 0.521484375f),
-            /*  4 */ ("PickUp_EnergyExp", 0.286621094f),
-            /*  5 */ ("pick_wpn_electro", 0.558837891f),
-            /*  6 */ ("PickUp_MissileExp", 0.515136719f),
-            /*  7 */ ("pick_wpn_jackhammer", 0.540771484f),
-            /*  8 */ ("pick_wpn_snipergun", 0.550781250f),
-            /*  9 */ ("pick_wpn_shotgun", 0.544921875f),
-            /* 10 */ ("pick_wpn_mortar", 0.481933594f),
-            /* 11 */ ("pick_wpn_ghostbuster", 0.606933594f),
-            /* 12 */ ("pick_wpn_gorea", 0.406982422f),
-            /* 13 */ ("pick_ammo_green", 0.307128906f),
-            /* 14 */ ("pick_ammo_green", 0.307128906f),
-            /* 15 */ ("pick_ammo_orange", 0.375732422f),
-            /* 16 */ ("pick_ammo_orange", 0.375732422f),
-            /* 17 */ ("pick_invis", 0.511962891f),
-            /* 18 */ ("PickUp_AmmoExp", 0.502929688f),
-            /* 19 */ ("Artifact_Key", 0.351074219f),
-            /* 20 */ ("pick_deathball", 0.558837891f),
-            /* 21 */ ("pick_wpn_all", 0.444580078f),
+            /*  0 */ "pick_health_B",
+            /*  1 */ "pick_health_A",
+            /*  2 */ "pick_health_C",
+            /*  3 */ "pick_dblDamage",
+            /*  4 */ "PickUp_EnergyExp",
+            /*  5 */ "pick_wpn_electro",
+            /*  6 */ "PickUp_MissileExp",
+            /*  7 */ "pick_wpn_jackhammer",
+            /*  8 */ "pick_wpn_snipergun",
+            /*  9 */ "pick_wpn_shotgun",
+            /* 10 */ "pick_wpn_mortar",
+            /* 11 */ "pick_wpn_ghostbuster",
+            /* 12 */ "pick_wpn_gorea",
+            /* 13 */ "pick_ammo_green",
+            /* 14 */ "pick_ammo_green",
+            /* 15 */ "pick_ammo_orange",
+            /* 16 */ "pick_ammo_orange",
+            /* 17 */ "pick_invis",
+            /* 18 */ "PickUp_AmmoExp",
+            /* 19 */ "Artifact_Key",
+            /* 20 */ "pick_deathball",
+            /* 21 */ "pick_wpn_all",
             // unused
-            /* 22 */ ("pick_wpn_missile", 0.558837891f)
+            /* 22 */ "pick_wpn_missile"
         };
 
         public static readonly IReadOnlyList<string> FhItems
@@ -4243,7 +4319,7 @@ namespace MphRead
             /* 11 */ new PlatformMetadata("unit4_mover1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
             /* 12 */ new PlatformMetadata("unit4_mover2", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
             /* 13 */ new PlatformMetadata("ElectroField1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
-            /* 14 */ new PlatformMetadata("unit3_platform1"),
+            /* 14 */ new PlatformMetadata("Unit3_platform1"),
             /* 15 */ new PlatformMetadata("unit3_pipe1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
             /* 16 */ new PlatformMetadata("unit3_pipe2", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
             /* 17 */ new PlatformMetadata("cylinderbase"),
@@ -4530,7 +4606,7 @@ namespace MphRead
                                 modelPath: @"_archives\common\samus_ice_img_Model.bin",
                                 texturePath: @"_archives\common\samus_ice_img_Model.bin",
                                 palettePath: @"_archives\common\samus_ice_img_Model.bin")
-                        })
+                        }, useLightSources: true)
                 },
                 {
                     "arcWelder1",
@@ -4766,16 +4842,71 @@ namespace MphRead
                     new ModelMetadata("flagbase_ctf",
                         recolors: new List<string>()
                         {
-                            "green_img",
-                            "orange_img"
+                            "orange_img",
+                            "green_img"
                         },
                         animation: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "ForceField",
-                    new ModelMetadata("ForceField")
+                    new ModelMetadata("ForceField",
+                        modelPath: @"models\ForceField_Model.bin",
+                        animationPath: @"models\ForceField_Anim.bin",
+                        collisionPath: null,
+                        new List<RecolorMetadata>()
+                        {
+                            new RecolorMetadata("pal_01",
+                                modelPath: @"models\ForceField_Model.bin",
+                                texturePath: @"models\ForceField_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 0 } } }),
+                            new RecolorMetadata("pal_02",
+                                modelPath: @"models\ForceField_Model.bin",
+                                texturePath: @"models\ForceField_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 0 } } }),
+                            new RecolorMetadata("pal_03",
+                                modelPath: @"models\ForceField_Model.bin",
+                                texturePath: @"models\ForceField_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 0 } } }),
+                            new RecolorMetadata("pal_04",
+                                modelPath: @"models\ForceField_Model.bin",
+                                texturePath: @"models\ForceField_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 0 } } }),
+                            new RecolorMetadata("pal_05",
+                                modelPath: @"models\ForceField_Model.bin",
+                                texturePath: @"models\ForceField_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 0 } } }),
+                            new RecolorMetadata("pal_06",
+                                modelPath: @"models\ForceField_Model.bin",
+                                texturePath: @"models\ForceField_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 0 } } }),
+                            new RecolorMetadata("pal_07",
+                                modelPath: @"models\ForceField_Model.bin",
+                                texturePath: @"models\ForceField_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 0 } } }),
+                            new RecolorMetadata("pal_08",
+                                modelPath: @"models\ForceField_Model.bin",
+                                texturePath: @"models\ForceField_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 0 } } })
+                        })
                 },
+                // todo: these probably also use AlimbicPalettes
                 {
                     "ForceFieldLock",
                     new ModelMetadata("ForceFieldLock",
@@ -4920,7 +5051,8 @@ namespace MphRead
                             "pal_01"
                         },
                         texture: true,
-                        archive: "Guardian")
+                        archive: "Guardian",
+                        useLightSources: true)
                 },
                 {
                     "Guardian_lod1",
@@ -4930,7 +5062,8 @@ namespace MphRead
                         {
                             "pal_01"
                         },
-                        texture: true)
+                        texture: true,
+                        useLightSources: true)
                 },
                 // next two not part of the game's files, edited to allow choosing the unused recolors
                 {
@@ -4965,7 +5098,7 @@ namespace MphRead
                                 modelPath: @"models\GuardianR_pal_Team02_Model.bin",
                                 texturePath: @"models\GuardianR_pal_Team02_Tex.bin",
                                 palettePath: @"models\GuardianR_pal_Team02_Tex.bin")
-                        })
+                        }, useLightSources: true)
                 },
                 {
                     "GuardianR_lod1",
@@ -4999,7 +5132,7 @@ namespace MphRead
                                 modelPath: @"models\GuardianR_pal_Team02_Model.bin",
                                 texturePath: @"models\GuardianR_pal_Team02_Tex.bin",
                                 palettePath: @"models\GuardianR_pal_Team02_Tex.bin")
-                        })
+                        }, useLightSources: true)
                 },
                 {
                     "Guardian_Stasis",
@@ -5096,7 +5229,8 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true,
-                        archive: "Kanden")
+                        archive: "Kanden",
+                        useLightSources: true) // todo: confirm lod0 vs. lod1 for using light sources
                 },
                 {
                     "Kanden_lod1",
@@ -5111,7 +5245,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
-                        texture: true)
+                        texture: true,
+                        useLightSources: true)
                 },
                 {
                     "KandenAlt_lod0",
@@ -5128,8 +5263,10 @@ namespace MphRead
                         },
                         texture: true,
                         archive: "Kanden",
-                        recolorName: "Kanden")
+                        recolorName: "Kanden",
+                        useLightSources: true)
                 },
+                // note: confirmed this does not use light sources
                 {
                     "KandenAlt_TailBomb",
                     new ModelMetadata("KandenAlt_TailBomb",
@@ -5160,7 +5297,8 @@ namespace MphRead
                             "img_Team02"
                         },
                         texture: true,
-                        archive: "localKanden")
+                        archive: "localKanden",
+                        useLightSources: true)
                 },
                 {
                     "koth_data_flow",
@@ -5240,7 +5378,8 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true,
-                        archive: "Nox")
+                        archive: "Nox",
+                        useLightSources: true)
                 },
                 {
                     "Nox_lod1",
@@ -5255,7 +5394,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
-                        texture: true)
+                        texture: true,
+                        useLightSources: true)
                 },
                 {
                     "NoxAlt_lod0",
@@ -5272,7 +5412,8 @@ namespace MphRead
                         },
                         texture: true,
                         archive: "Nox",
-                        recolorName: "Nox")
+                        recolorName: "Nox",
+                        useLightSources: true)
                 },
                 {
                     "NoxGun",
@@ -5287,7 +5428,8 @@ namespace MphRead
                             "img_Team02"
                         },
                         texture: true,
-                        archive: "localNox")
+                        archive: "localNox",
+                        useLightSources: true)
                 },
                 {
                     "nox_ice",
@@ -5301,19 +5443,16 @@ namespace MphRead
                                 modelPath: @"_archives\common\samus_ice_img_Model.bin",
                                 texturePath: @"_archives\common\samus_ice_img_Model.bin",
                                 palettePath: @"_archives\common\samus_ice_img_Model.bin")
-                        })
-                },
-                {
-                    "octolith_bounty_img",
-                    new ModelMetadata("octolith_bounty_img", animation: false)
+                        }, useLightSources: true)
                 },
                 {
                     "octolith_ctf",
                     new ModelMetadata("octolith_ctf",
                         recolors: new List<string>()
                         {
+                            "orange_img",
                             "green_img",
-                            "orange_img"
+                            "*octolith_bounty_img"
                         },
                         animation: true,
                         mdlSuffix: MdlSuffix.Model)
@@ -5527,7 +5666,8 @@ namespace MphRead
                             "pal_team02"
                         },
                         texture: true,
-                        archive: "Samus")
+                        archive: "Samus",
+                        useLightSources: true)
                 },
                 {
                     "Samus_lod1",
@@ -5542,7 +5682,8 @@ namespace MphRead
                             "pal_team01",
                             "pal_team02"
                         },
-                        texture: true)
+                        texture: true,
+                        useLightSources: true)
                 },
                 {
                     "SamusAlt_lod0",
@@ -5560,7 +5701,8 @@ namespace MphRead
                         animation: false,
                         texture: true,
                         archive: "Samus",
-                        recolorName: "Samus")
+                        recolorName: "Samus",
+                        useLightSources: true)
                 },
                 {
                     "SamusGun",
@@ -5575,7 +5717,8 @@ namespace MphRead
                             "img_Team02"
                         },
                         texture: true,
-                        archive: "localSamus")
+                        archive: "localSamus",
+                        useLightSources: true)
                 },
                 {
                     "samus_ice",
@@ -5589,7 +5732,7 @@ namespace MphRead
                                 modelPath: @"_archives\common\samus_ice_img_Model.bin",
                                 texturePath: @"_archives\common\samus_ice_img_Model.bin",
                                 palettePath: @"_archives\common\samus_ice_img_Model.bin")
-                        })
+                        }, useLightSources: true)
                 },
                 {
                     "SecretSwitch",
@@ -5674,7 +5817,8 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true,
-                        archive: "Spire")
+                        archive: "Spire",
+                        useLightSources: true)
                 },
                 {
                     "Spire_lod1",
@@ -5689,7 +5833,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
-                        texture: true)
+                        texture: true,
+                        useLightSources: true)
                 },
                 {
                     "SpireAlt_lod0",
@@ -5706,7 +5851,8 @@ namespace MphRead
                         },
                         texture: true,
                         archive: "Spire",
-                        recolorName: "Spire")
+                        recolorName: "Spire",
+                        useLightSources: true)
                 },
                 {
                     "SpireGun",
@@ -5721,7 +5867,8 @@ namespace MphRead
                             "img_Team02"
                         },
                         texture: true,
-                        archive: "localSpire")
+                        archive: "localSpire",
+                        useLightSources: true)
                 },
                 {
                     "splashRing",
@@ -5748,7 +5895,8 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true,
-                        archive: "Sylux")
+                        archive: "Sylux",
+                        useLightSources: true)
                 },
                 {
                     "Sylux_lod1",
@@ -5763,7 +5911,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
-                        texture: true)
+                        texture: true,
+                        useLightSources: true)
                 },
                 {
                     "SyluxAlt_lod0",
@@ -5780,7 +5929,8 @@ namespace MphRead
                         },
                         texture: true,
                         archive: "Sylux",
-                        recolorName: "Sylux")
+                        recolorName: "Sylux",
+                        useLightSources: true)
                 },
                 {
                     "SyluxGun",
@@ -5795,7 +5945,8 @@ namespace MphRead
                             "img_Team02"
                         },
                         texture: true,
-                        archive: "localSylux")
+                        archive: "localSylux",
+                        useLightSources: true)
                 },
                 {
                     "SyluxShip",
@@ -5947,7 +6098,8 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true,
-                        archive: "Trace")
+                        archive: "Trace",
+                        useLightSources: true)
                 },
                 {
                     "Trace_lod1",
@@ -5962,7 +6114,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
-                        texture: true)
+                        texture: true,
+                        useLightSources: true)
                 },
                 {
                     "TraceAlt_lod0",
@@ -5979,7 +6132,8 @@ namespace MphRead
                         },
                         texture: true,
                         archive: "Trace",
-                        recolorName: "Trace")
+                        recolorName: "Trace",
+                        useLightSources: true)
                 },
                 {
                     "TraceGun",
@@ -5994,7 +6148,8 @@ namespace MphRead
                             "img_Team02"
                         },
                         texture: true,
-                        archive: "localTrace")
+                        archive: "localTrace",
+                        useLightSources: true)
                 },
                 {
                     "trail",
@@ -6134,7 +6289,8 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true,
-                        archive: "Weavel")
+                        archive: "Weavel",
+                        useLightSources: true)
                 },
                 {
                     "Weavel_lod1",
@@ -6149,7 +6305,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
-                        texture: true)
+                        texture: true,
+                        useLightSources: true)
                 },
                 {
                     "WeavelAlt_lod0",
@@ -6166,7 +6323,8 @@ namespace MphRead
                         },
                         texture: true,
                         archive: "Weavel",
-                        recolorName: "Weavel")
+                        recolorName: "Weavel",
+                        useLightSources: true)
                 },
                 {
                     "WeavelAlt_Turret_lod0",
@@ -6183,7 +6341,8 @@ namespace MphRead
                         },
                         texture: true,
                         archive: "Weavel",
-                        recolorName: "Weavel")
+                        recolorName: "Weavel",
+                        useLightSources: true)
                 },
                 {
                     "WeavelGun",
@@ -6198,7 +6357,8 @@ namespace MphRead
                             "img_Team02"
                         },
                         texture: true,
-                        archive: "localWeavel")
+                        archive: "localWeavel",
+                        useLightSources: true)
                 },
                 {
                     "zoomer",

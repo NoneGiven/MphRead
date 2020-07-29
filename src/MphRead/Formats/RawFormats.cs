@@ -82,7 +82,7 @@ namespace MphRead
         public readonly uint MatrixId;
         public readonly Fixed ScaleS;
         public readonly Fixed ScaleT;
-        public readonly ushort RotZ;
+        public readonly ushort RotateZ;
         public readonly ushort Field72;
         public readonly Fixed TranslateS;
         public readonly Fixed TranslateT;
@@ -101,8 +101,8 @@ namespace MphRead
         public readonly uint MaterialGroupOffset;
         public readonly uint TexcoordGroupOffset;
         public readonly uint TextureGroupOffset;
-        public readonly ushort Count; // todo?: always 1?
-        public readonly ushort Field16; // todo?: always 0?
+        public readonly ushort Count;
+        public readonly ushort Field16; // always 0 except for testlevel_Anim (FH), where it's 52428
     }
 
     // size: 20
@@ -165,7 +165,7 @@ namespace MphRead
         public readonly byte DiffuseBlendFactorR;
         public readonly byte DiffuseBlendFactorG;
         public readonly byte DiffuseBlendFactorB;
-        public readonly byte Field47;
+        public readonly byte Field47; // todo: use more properties (this one is always 0 or 255)
         public readonly ushort DiffuseLutLengthR;
         public readonly ushort DiffuseLutLengthG;
         public readonly ushort DiffuseLutLengthB;
@@ -175,7 +175,7 @@ namespace MphRead
         public readonly byte AmbientBlendFactorR;
         public readonly byte AmbientBlendFactorG;
         public readonly byte AmbientBlendFactorB;
-        public readonly byte Field57;
+        public readonly byte Field57; // same as 47
         public readonly ushort AmbientLutLengthR;
         public readonly ushort AmbientLutLengthG;
         public readonly ushort AmbientLutLengthB;
@@ -185,7 +185,7 @@ namespace MphRead
         public readonly byte SpecularBlendFactorR;
         public readonly byte SpecularBlendFactorG;
         public readonly byte SpecularBlendFactorB;
-        public readonly byte Field67;
+        public readonly byte Field67; // same as 47
         public readonly ushort SpecularLutLengthR;
         public readonly ushort SpecularLutLengthG;
         public readonly ushort SpecularLutLengthB;
@@ -210,7 +210,7 @@ namespace MphRead
         public readonly string Name;
         public readonly ushort Count;
         public readonly ushort StartIndex;
-        public readonly ushort MinimumPaletteId;
+        public readonly ushort MinimumPaletteId; // todo: do these need to be used?
         public readonly ushort MaterialId;
         public readonly ushort MinimumTextureId;
         public readonly ushort Field2A;

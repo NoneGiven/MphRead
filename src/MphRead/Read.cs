@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using MphRead.Archive;
@@ -43,7 +42,7 @@ namespace MphRead
             {
                 new RecolorMetadata("default", path, externalTexture ? path.Replace("_Model", "_Tex") : path)
             };
-            return GetModel("model", path, null, recolors, 0);
+            return GetModel("model", path, null, recolors, defaultRecolor: 0, useLightSources: false);
         }
 
         public static Model GetRoomByName(string name)
@@ -72,14 +71,14 @@ namespace MphRead
             {
                 new RecolorMetadata("default", meta.ModelPath, meta.TexturePath ?? meta.ModelPath)
             };
-            Model room = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, recolors, defaultRecolor: 0);
+            Model room = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, recolors, defaultRecolor: 0, useLightSources: false);
             room.Type = ModelType.Room;
             return room;
         }
 
         private static Model GetModel(ModelMetadata meta, int defaultRecolor)
         {
-            Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.Recolors, defaultRecolor);
+            Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.Recolors, defaultRecolor, meta.UseLightSources);
             return model;
         }
 
@@ -90,7 +89,7 @@ namespace MphRead
             {
                 new RecolorMetadata("default", path)
             };
-            return GetModel(name, path, null, recolors, defaultRecolor: 0);
+            return GetModel(name, path, null, recolors, defaultRecolor: 0, useLightSources: false);
         }
 
         public static Header GetHeader(string path)
@@ -101,7 +100,7 @@ namespace MphRead
         }
 
         private static Model GetModel(string name, string modelPath, string? animationPath,
-            IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor)
+            IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor, bool useLightSources)
         {
             if (defaultRecolor < 0 || defaultRecolor > recolorMeta.Count - 1)
             {
@@ -183,13 +182,9 @@ namespace MphRead
                 recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
             }
             AnimationResults animations = LoadAnimation(animationPath);
-            if (animations.TextureAnimationGroups.Any(g => g.Animations.Any()))
-            {
-                LoadAnimationAndDump(animationPath);
-            }
             return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                textureMatrices, recolors, defaultRecolor);
+                textureMatrices, recolors, defaultRecolor, useLightSources);
         }
 
         private class AnimationResults
@@ -200,7 +195,7 @@ namespace MphRead
             public List<TextureAnimationGroup> TextureAnimationGroups { get; } = new List<TextureAnimationGroup>();
         }
 
-        // todo: parse the rest of the animation types
+        // todo: parse node animations, figure out group indexing
         private static AnimationResults LoadAnimation(string? path)
         {
             var results = new AnimationResults();
@@ -254,15 +249,27 @@ namespace MphRead
                 {
                     continue;
                 }
+                int maxColor = 0;
                 RawMaterialAnimationGroup rawGroup = DoOffset<RawMaterialAnimationGroup>(bytes, offset);
                 IReadOnlyList<MaterialAnimation> rawAnimations
                     = DoOffsets<MaterialAnimation>(bytes, rawGroup.AnimationOffset, (int)rawGroup.AnimationCount);
                 var animations = new Dictionary<string, MaterialAnimation>();
                 foreach (MaterialAnimation animation in rawAnimations)
                 {
+                    maxColor = Math.Max(maxColor, animation.DiffuseLutStartIndexR + animation.DiffuseLutLengthR);
+                    maxColor = Math.Max(maxColor, animation.DiffuseLutStartIndexG + animation.DiffuseLutLengthG);
+                    maxColor = Math.Max(maxColor, animation.DiffuseLutStartIndexB + animation.DiffuseLutLengthB);
+                    maxColor = Math.Max(maxColor, animation.AmbientLutStartIndexR + animation.AmbientLutLengthR);
+                    maxColor = Math.Max(maxColor, animation.AmbientLutStartIndexG + animation.AmbientLutLengthG);
+                    maxColor = Math.Max(maxColor, animation.AmbientLutStartIndexB + animation.AmbientLutLengthB);
+                    maxColor = Math.Max(maxColor, animation.SpecularLutStartIndexR + animation.SpecularLutLengthR);
+                    maxColor = Math.Max(maxColor, animation.SpecularLutStartIndexG + animation.SpecularLutLengthG);
+                    maxColor = Math.Max(maxColor, animation.SpecularLutStartIndexB + animation.SpecularLutLengthB);
+                    maxColor = Math.Max(maxColor, animation.AlphaLutStartIndex + animation.AlphaLutLength);
                     animations.Add(animation.Name, animation);
                 }
-                results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup, animations));
+                var colors = DoOffsets<byte>(bytes, rawGroup.ColorLutOffset, maxColor).Select(b => (float)b).ToList();
+                results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup, colors, animations));
             }
             foreach (uint offset in texcoordGroupOffsets)
             {
@@ -318,388 +325,6 @@ namespace MphRead
             return results;
         }
 
-        private class DumpResult
-        {
-            public uint Offset { get; }
-            public uint Length { get; }
-            public string Description { get; }
-            public IReadOnlyList<byte> Bytes { get; }
-
-            protected DumpResult(uint offset, string description, IEnumerable<byte> bytes)
-            {
-                Offset = offset;
-                Length = (uint)bytes.Count();
-                Description = description;
-                Bytes = bytes.ToList();
-            }
-
-            protected DumpResult(uint offset, string description, ReadOnlySpan<byte> bytes)
-            {
-                Offset = offset;
-                Length = (uint)bytes.Length;
-                Description = description;
-                Bytes = bytes.ToArray().ToList();
-            }
-        }
-
-        private class DumpResult<T> : DumpResult
-        {
-            public T Structure { get; }
-
-            public DumpResult(uint offset, string description, IEnumerable<byte> bytes, T structure)
-                : base(offset, description, bytes)
-            {
-                Structure = structure;
-            }
-
-            public DumpResult(uint offset, string description, ReadOnlySpan<byte> bytes, T structure)
-                : base(offset, description, bytes)
-            {
-                Structure = structure;
-            }
-        }
-
-        private static AnimationResults LoadAnimationAndDump(string? path)
-        {
-            var results = new AnimationResults();
-            if (path == null)
-            {
-                return results;
-            }
-            var dump = new List<DumpResult>();
-            path = Path.Combine(Paths.FileSystem, path);
-            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
-            AnimationHeader header = ReadStruct<AnimationHeader>(bytes);
-            dump.Add(new DumpResult<AnimationHeader>(0, "Header", bytes[0..Marshal.SizeOf<AnimationHeader>()], header));
-            var nodeGroupOffsets = new List<uint>();
-            var materialGroupOffsets = new List<uint>();
-            var texcoordGroupOffsets = new List<uint>();
-            var textureGroupOffsets = new List<uint>();
-            var unusedGroupOffsets = new List<uint>();
-            for (int i = 0; i < header.Count; i++)
-            {
-                nodeGroupOffsets.Add(SpanReadUint(bytes, (int)header.NodeGroupOffset + i * sizeof(uint)));
-            }
-            dump.Add(new DumpResult<List<uint>>(header.NodeGroupOffset, "NodeGroupOffsets",
-                bytes[((int)header.NodeGroupOffset)..((int)header.NodeGroupOffset + header.Count * sizeof(uint))], nodeGroupOffsets));
-            for (int i = 0; i < header.Count; i++)
-            {
-                materialGroupOffsets.Add(SpanReadUint(bytes, (int)header.MaterialGroupOffset + i * sizeof(uint)));
-            }
-            dump.Add(new DumpResult<List<uint>>(header.MaterialGroupOffset, "MaterialGroupOffsets",
-                bytes[((int)header.MaterialGroupOffset)..((int)header.MaterialGroupOffset + header.Count * sizeof(uint))], materialGroupOffsets));
-            for (int i = 0; i < header.Count; i++)
-            {
-                texcoordGroupOffsets.Add(SpanReadUint(bytes, (int)header.TexcoordGroupOffset + i * sizeof(uint)));
-            }
-            dump.Add(new DumpResult<List<uint>>(header.TexcoordGroupOffset, "TexcoordGroupOffsets",
-                bytes[((int)header.TexcoordGroupOffset)..((int)header.TexcoordGroupOffset + header.Count * sizeof(uint))], texcoordGroupOffsets));
-            for (int i = 0; i < header.Count; i++)
-            {
-                textureGroupOffsets.Add(SpanReadUint(bytes, (int)header.TextureGroupOffset + i * sizeof(uint)));
-            }
-            dump.Add(new DumpResult<List<uint>>(header.TextureGroupOffset, "TextureGroupOffsets",
-                bytes[((int)header.TextureGroupOffset)..((int)header.TextureGroupOffset + header.Count * sizeof(uint))], textureGroupOffsets));
-            for (int i = 0; i < header.Count; i++)
-            {
-                unusedGroupOffsets.Add(SpanReadUint(bytes, (int)header.UnusedGroupOffset + i * sizeof(uint)));
-            }
-            dump.Add(new DumpResult<List<uint>>(header.UnusedGroupOffset, "UnusedGroupOffsets",
-                bytes[((int)header.UnusedGroupOffset)..((int)header.UnusedGroupOffset + header.Count * sizeof(uint))], unusedGroupOffsets));
-            foreach (uint offset in nodeGroupOffsets)
-            {
-                if (offset == 0)
-                {
-                    continue;
-                }
-                RawNodeAnimationGroup rawGroup = DoOffset<RawNodeAnimationGroup>(bytes, offset);
-                dump.Add(new DumpResult<RawNodeAnimationGroup>(offset, "NodeAnimationGroup",
-                    bytes[(int)offset..((int)offset + Marshal.SizeOf<RawNodeAnimationGroup>())], rawGroup));
-                IReadOnlyList<NodeAnimation> rawAnimations
-                    = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, 1);
-                for (int j = 0; j < 1; j++)
-                {
-                    int size = Marshal.SizeOf<NodeAnimation>();
-                    long start = rawGroup.AnimationOffset + j * size;
-                    dump.Add(new DumpResult<NodeAnimation>((uint)start, "NodeAnimation",
-                        bytes[(int)start..(int)(start + size)], rawAnimations[j]));
-                }
-                var animations = new Dictionary<string, NodeAnimation>();
-                int i = 0;
-                foreach (NodeAnimation animation in rawAnimations)
-                {
-                    animations.Add($"{offset}-{i++}", animation);
-                }
-                results.NodeAnimationGroups.Add(new NodeAnimationGroup(rawGroup, animations));
-            }
-            foreach (uint offset in materialGroupOffsets)
-            {
-                if (offset == 0)
-                {
-                    continue;
-                }
-                RawMaterialAnimationGroup rawGroup = DoOffset<RawMaterialAnimationGroup>(bytes, offset);
-                dump.Add(new DumpResult<RawMaterialAnimationGroup>(offset, "MaterialAnimationGroup",
-                    bytes[(int)offset..((int)offset + Marshal.SizeOf<RawMaterialAnimationGroup>())], rawGroup));
-                IReadOnlyList<MaterialAnimation> rawAnimations
-                    = DoOffsets<MaterialAnimation>(bytes, rawGroup.AnimationOffset, (int)rawGroup.AnimationCount);
-                for (int j = 0; j < rawGroup.AnimationCount; j++)
-                {
-                    int size = Marshal.SizeOf<MaterialAnimation>();
-                    long start = rawGroup.AnimationOffset + j * size;
-                    dump.Add(new DumpResult<MaterialAnimation>((uint)start, "MaterialAnimation",
-                        bytes[(int)start..(int)(start + size)], rawAnimations[j]));
-                }
-                var animations = new Dictionary<string, MaterialAnimation>();
-                foreach (MaterialAnimation animation in rawAnimations)
-                {
-                    animations.Add(animation.Name, animation);
-                }
-                results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup, animations));
-            }
-            foreach (uint offset in texcoordGroupOffsets)
-            {
-                if (offset == 0)
-                {
-                    continue;
-                }
-                int maxScale = 0;
-                int maxRotation = 0;
-                int maxTranslation = 0;
-                RawTexcoordAnimationGroup rawGroup = DoOffset<RawTexcoordAnimationGroup>(bytes, offset);
-                dump.Add(new DumpResult<RawTexcoordAnimationGroup>(offset, "TexcoordAnimationGroup",
-                    bytes[(int)offset..((int)offset + Marshal.SizeOf<RawTexcoordAnimationGroup>())], rawGroup));
-                IReadOnlyList<TexcoordAnimation> rawAnimations
-                    = DoOffsets<TexcoordAnimation>(bytes, rawGroup.AnimationOffset, (int)rawGroup.AnimationCount);
-                for (int j = 0; j < rawGroup.AnimationCount; j++)
-                {
-                    int size = Marshal.SizeOf<TexcoordAnimation>();
-                    long start = rawGroup.AnimationOffset + j * size;
-                    dump.Add(new DumpResult<TexcoordAnimation>((uint)start, "TexcoordAnimation",
-                        bytes[(int)start..(int)(start + size)], rawAnimations[j]));
-                }
-                var animations = new Dictionary<string, TexcoordAnimation>();
-                foreach (TexcoordAnimation animation in rawAnimations)
-                {
-                    maxScale = Math.Max(maxScale, animation.ScaleLutIndexS + animation.ScaleLutLengthS);
-                    maxScale = Math.Max(maxScale, animation.ScaleLutIndexT + animation.ScaleLutLengthT);
-                    maxRotation = Math.Max(maxRotation, animation.RotateLutIndexZ + animation.RotateLutLengthZ);
-                    maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexS + animation.TranslateLutLengthS);
-                    maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexT + animation.TranslateLutLengthT);
-                    animations.Add(animation.Name, animation);
-                }
-                var scales = DoOffsets<Fixed>(bytes, rawGroup.ScaleLutOffset, maxScale).Select(f => f.FloatValue).ToList();
-                if (scales.Count > 0)
-                {
-                    dump.Add(new DumpResult<List<float>>(rawGroup.ScaleLutOffset, "Texcoord Scales",
-                        bytes[(int)rawGroup.ScaleLutOffset..((int)rawGroup.ScaleLutOffset + maxScale * sizeof(int))], scales));
-                }
-                var rotations = new List<float>();
-                foreach (ushort value in DoOffsets<ushort>(bytes, rawGroup.RotateLutOffset, maxRotation))
-                {
-                    long radians = (0x6487FL * value + 0x80000) >> 20;
-                    rotations.Add(Fixed.ToFloat(radians));
-                }
-                if (rotations.Count > 0)
-                {
-                    dump.Add(new DumpResult<List<float>>(rawGroup.RotateLutOffset, "Texcoord Rotations",
-                    bytes[(int)rawGroup.RotateLutOffset..((int)rawGroup.RotateLutOffset + maxRotation * sizeof(ushort))], rotations));
-                }
-                var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, maxTranslation).Select(f => f.FloatValue).ToList();
-                if (translations.Count > 0)
-                {
-                    dump.Add(new DumpResult<List<float>>(rawGroup.TranslateLutOffset, "Texcoord Translations",
-                        bytes[(int)rawGroup.TranslateLutOffset..((int)rawGroup.TranslateLutOffset + maxTranslation * sizeof(int))], translations));
-                }
-                results.TexcoordAnimationGroups.Add(new TexcoordAnimationGroup(rawGroup, scales, rotations, translations, animations));
-            }
-            foreach (uint offset in textureGroupOffsets)
-            {
-                if (offset == 0)
-                {
-                    continue;
-                }
-                RawTextureAnimationGroup rawGroup = DoOffset<RawTextureAnimationGroup>(bytes, offset);
-                dump.Add(new DumpResult<RawTextureAnimationGroup>(offset, "TextureAnimationGroup",
-                    bytes[(int)offset..((int)offset + Marshal.SizeOf<RawTextureAnimationGroup>())], rawGroup));
-                IReadOnlyList<TextureAnimation> rawAnimations
-                    = DoOffsets<TextureAnimation>(bytes, rawGroup.AnimationOffset, rawGroup.AnimationCount);
-                for (int j = 0; j < rawGroup.AnimationCount; j++)
-                {
-                    int size = Marshal.SizeOf<TextureAnimation>();
-                    long start = rawGroup.AnimationOffset + j * size;
-                    dump.Add(new DumpResult<TextureAnimation>((uint)start, "TextureAnimation",
-                        bytes[(int)start..(int)(start + size)], rawAnimations[j]));
-                }
-                var animations = new Dictionary<string, TextureAnimation>();
-                foreach (TextureAnimation animation in rawAnimations)
-                {
-                    animations.Add(animation.Name, animation);
-                }
-                IReadOnlyList<ushort> frameIndices = DoOffsets<ushort>(bytes, rawGroup.FrameIndexOffset, rawGroup.FrameIndexCount);
-                if (frameIndices.Count > 0)
-                {
-                    dump.Add(new DumpResult<List<ushort>>(rawGroup.FrameIndexOffset, "Frame Indices",
-                        bytes[(int)rawGroup.FrameIndexOffset..((int)rawGroup.FrameIndexOffset + sizeof(ushort) * rawGroup.FrameIndexCount)],
-                        frameIndices.ToList()));
-                }
-                IReadOnlyList<ushort> textureIds = DoOffsets<ushort>(bytes, rawGroup.TextureIdOffset, rawGroup.TextureIdCount);
-                if (textureIds.Count > 0)
-                {
-                    dump.Add(new DumpResult<List<ushort>>(rawGroup.TextureIdOffset, "Texture IDs",
-                        bytes[(int)rawGroup.TextureIdOffset..((int)rawGroup.TextureIdOffset + sizeof(ushort) * rawGroup.TextureIdCount)],
-                        textureIds.ToList()));
-                }
-                IReadOnlyList<ushort> paletteIds = DoOffsets<ushort>(bytes, rawGroup.PaletteIdOffset, rawGroup.PaletteIdCount);
-                if (paletteIds.Count > 0)
-                {
-                    dump.Add(new DumpResult<List<ushort>>(rawGroup.PaletteIdOffset, "Palette IDs",
-                        bytes[(int)rawGroup.PaletteIdOffset..((int)rawGroup.PaletteIdOffset + sizeof(ushort) * rawGroup.PaletteIdCount)],
-                        paletteIds.ToList()));
-                }
-                results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, frameIndices, textureIds, paletteIds, animations));
-            }
-            var gaps = new List<DumpResult>();
-            dump = dump.OrderBy(d => d.Offset).ToList();
-            for (int i = 0; i < dump.Count; i++)
-            {
-                DumpResult line = dump[i];
-                uint offset = line.Offset + line.Length;
-                if (i == dump.Count - 1)
-                {
-                    if (offset != bytes.Length)
-                    {
-                        var gap = new List<byte>();
-                        for (uint b = offset; b < bytes.Length; b++)
-                        {
-                            gap.Add(bytes[(int)b]);
-                        }
-                        gaps.Add(new DumpResult<byte>(offset, "Gap", gap, 0));
-                    }
-                }
-                else
-                {
-                    DumpResult next = dump[i + 1];
-                    if (offset < next.Offset)
-                    {
-                        var gap = new List<byte>();
-                        for (uint b = offset; b < next.Offset; b++)
-                        {
-                            gap.Add(bytes[(int)b]);
-                        }
-                        gaps.Add(new DumpResult<byte>(offset, "Gap", gap, 0));
-                    }
-                }
-            }
-            dump.AddRange(gaps);
-            dump = dump.OrderBy(d => d.Offset).ToList();
-            var lines = new List<string>();
-            lines.Add(path);
-            lines.Add($"{bytes.Length} bytes (0x00 - 0x{bytes.Length - 1:X2})");
-            lines.Add("");
-            foreach (DumpResult line in dump)
-            {
-                lines.AddRange(Dump(line));
-                lines.Add("");
-            }
-            lines.RemoveAt(lines.Count - 1);
-            string dumpFile = Path.GetFileNameWithoutExtension(path) + ".txt";
-            string dumpPath = Path.Combine(Paths.Export, "..", "..", "Dumps", path.Contains("_fh") ? "FH" : "MPH");
-            Directory.CreateDirectory(dumpPath);
-            File.WriteAllLines(Path.Combine(dumpPath, dumpFile), lines);
-            return results;
-        }
-
-        private static IEnumerable<string> Dump(DumpResult line)
-        {
-            var lines = new List<string>();
-            lines.Add($"0x{line.Offset:X2}: {line.Description}");
-            lines.Add($"{line.Length} bytes (0x{line.Offset:X2} - 0x{line.Offset + line.Length - 1:X2})");
-            if (line is DumpResult<byte> result0)
-            {
-                lines.Add(String.Join(' ', result0.Bytes.Select(b => b.ToString("X2"))));
-            }
-            else if (line is DumpResult<AnimationHeader> result1)
-            {
-                lines.AddRange(DumpObj(result1.Structure));
-            }
-            else if (line is DumpResult<RawNodeAnimationGroup> result2)
-            {
-                lines.AddRange(DumpObj(result2.Structure));
-            }
-            else if (line is DumpResult<NodeAnimation> result3)
-            {
-                lines.AddRange(DumpObj(result3.Structure));
-            }
-            else if (line is DumpResult<RawMaterialAnimationGroup> result4)
-            {
-                lines.AddRange(DumpObj(result4.Structure));
-            }
-            else if (line is DumpResult<MaterialAnimation> result5)
-            {
-                lines.AddRange(DumpObj(result5.Structure));
-            }
-            else if (line is DumpResult<RawTexcoordAnimationGroup> result6)
-            {
-                lines.AddRange(DumpObj(result6.Structure));
-            }
-            else if (line is DumpResult<TexcoordAnimation> result7)
-            {
-                lines.AddRange(DumpObj(result7.Structure));
-            }
-            else if (line is DumpResult<RawTextureAnimationGroup> result8)
-            {
-                lines.AddRange(DumpObj(result8.Structure));
-            }
-            else if (line is DumpResult<TextureAnimation> result9)
-            {
-                lines.AddRange(DumpObj(result9.Structure));
-            }
-            else if (line is DumpResult<List<uint>> result10)
-            {
-                foreach (uint item in result10.Structure)
-                {
-                    lines.Add($"0x{item:X2}");
-                }
-            }
-            else if (line is DumpResult<List<float>> result11)
-            {
-                lines.Add(String.Join(", ", result11.Structure));
-            }
-            else if (line is DumpResult<List<ushort>> result12)
-            {
-                lines.Add(String.Join(", ", result12.Structure));
-            }
-            return lines;
-        }
-        
-        private static IEnumerable<string> DumpObj(object obj)
-        {
-            var lines = new List<string>();
-            var fields = new List<(string, object?)>();
-            Type type = obj.GetType();
-            foreach (FieldInfo info in type.GetFields())
-            {
-                fields.Add((info.Name, info.GetValue(obj)));
-            }
-            foreach (PropertyInfo info in type.GetProperties())
-            {
-                fields.Add((info.Name, info.GetValue(obj)));
-            }
-            foreach ((string name, object? value) in fields)
-            {
-                if (name.Contains("Offset") || name.Contains("Pointer"))
-                {
-                    lines.Add($"{name} = 0x{value:X2}");
-                }
-                else
-                {
-                    lines.Add($"{name} = {value}");
-                } 
-            }
-            return lines;
-        }
-        
         private static ReadOnlySpan<byte> ReadBytes(string path)
         {
             return new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
@@ -817,143 +442,64 @@ namespace MphRead
             {
                 throw new ProgramException($"Unexpected entity header version {version}.");
             }
-            // todo: figure out room info layer ID
-            layerId = 1;
             var entities = new List<Entity>();
             EntityHeader header = ReadStruct<EntityHeader>(bytes[0..Sizes.EntityHeader]);
-            for (int i = 0; entities.Count < header.Lengths[layerId]; i++)
+            for (int i = 0; ; i++)
             {
                 int start = Sizes.EntityHeader + Sizes.EntityEntry * i;
                 int end = start + Sizes.EntityEntry;
                 EntityEntry entry = ReadStruct<EntityEntry>(bytes[start..end]);
-                if ((entry.LayerMask & (1 << layerId)) != 0)
+                if (entry.DataOffset == 0)
                 {
-                    start = (int)entry.DataOffset;
-                    end = start + Sizes.EntityDataHeader;
-                    EntityDataHeader init = ReadStruct<EntityDataHeader>(bytes[start..end]);
-                    var type = (EntityType)init.Type;
-                    end = start + entry.Length;
-                    if (type == EntityType.Platform)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<PlatformEntityData>());
-                        entities.Add(new Entity<PlatformEntityData>(entry, type, init.EntityId,
-                            ReadStruct<PlatformEntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.Object)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<ObjectEntityData>());
-                        entities.Add(new Entity<ObjectEntityData>(entry, type, init.EntityId,
-                            ReadStruct<ObjectEntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.PlayerSpawn)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<PlayerSpawnEntityData>());
-                        entities.Add(new Entity<PlayerSpawnEntityData>(entry, type, init.EntityId,
-                            ReadStruct<PlayerSpawnEntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.Door)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<DoorEntityData>());
-                        entities.Add(new Entity<DoorEntityData>(entry, type, init.EntityId,
-                            ReadStruct<DoorEntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.Item)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<ItemEntityData>());
-                        entities.Add(new Entity<ItemEntityData>(entry, type, init.EntityId,
-                            ReadStruct<ItemEntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.Enemy)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<EnemyEntityData>());
-                        entities.Add(new Entity<EnemyEntityData>(entry, type, init.EntityId,
-                            ReadStruct<EnemyEntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.Unknown7)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown7EntityData>());
-                        entities.Add(new Entity<Unknown7EntityData>(entry, type, init.EntityId,
-                            ReadStruct<Unknown7EntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.Unknown8)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown8EntityData>());
-                        entities.Add(new Entity<Unknown8EntityData>(entry, type, init.EntityId,
-                            ReadStruct<Unknown8EntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.JumpPad)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<JumpPadEntityData>());
-                        entities.Add(new Entity<JumpPadEntityData>(entry, type, init.EntityId,
-                            ReadStruct<JumpPadEntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.PointModule)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<PointModuleEntityData>());
-                        entities.Add(new Entity<PointModuleEntityData>(entry, type, init.EntityId,
-                            ReadStruct<PointModuleEntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.CameraPos)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<CameraPosEntityData>());
-                        entities.Add(new Entity<CameraPosEntityData>(entry, type, init.EntityId,
-                            ReadStruct<CameraPosEntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.Unknown12)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown12EntityData>());
-                        entities.Add(new Entity<Unknown12EntityData>(entry, type, init.EntityId,
-                            ReadStruct<Unknown12EntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.Unknown13)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown13EntityData>());
-                        entities.Add(new Entity<Unknown13EntityData>(entry, type, init.EntityId,
-                            ReadStruct<Unknown13EntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.Teleporter)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<TeleporterEntityData>());
-                        entities.Add(new Entity<TeleporterEntityData>(entry, type, init.EntityId,
-                            ReadStruct<TeleporterEntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.Unknown15)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown15EntityData>());
-                        entities.Add(new Entity<Unknown15EntityData>(entry, type, init.EntityId,
-                            ReadStruct<Unknown15EntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.Unknown16)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<Unknown16EntityData>());
-                        entities.Add(new Entity<Unknown16EntityData>(entry, type, init.EntityId,
-                            ReadStruct<Unknown16EntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.Artifact)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<ArtifactEntityData>());
-                        entities.Add(new Entity<ArtifactEntityData>(entry, type, init.EntityId,
-                            ReadStruct<ArtifactEntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.CameraSeq)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<CameraSeqEntityData>());
-                        entities.Add(new Entity<CameraSeqEntityData>(entry, type, init.EntityId,
-                            ReadStruct<CameraSeqEntityData>(bytes[start..end])));
-                    }
-                    else if (type == EntityType.ForceField)
-                    {
-                        Debug.Assert(entry.Length == Marshal.SizeOf<ForceFieldEntityData>());
-                        entities.Add(new Entity<ForceFieldEntityData>(entry, type, init.EntityId,
-                            ReadStruct<ForceFieldEntityData>(bytes[start..end])));
-                    }
-                    else
-                    {
-                        throw new ProgramException($"Invalid entity type {type}");
-                    }
+                    break;
+                }
+                if (layerId == -1 || (entry.LayerMask & (1 << layerId)) != 0)
+                {
+                    entities.Add(ReadEntity(bytes, entry));
                 }
             }
+            Debug.Assert(layerId == -1 || entities.Count == header.Lengths[layerId]);
             return entities;
+        }
+
+        private static Entity ReadEntity(ReadOnlySpan<byte> bytes, EntityEntry entry)
+        {
+            int start = (int)entry.DataOffset;
+            int end = start + Sizes.EntityDataHeader;
+            EntityDataHeader header = ReadStruct<EntityDataHeader>(bytes[start..end]);
+            var type = (EntityType)header.Type;
+            return type switch
+            {
+                EntityType.Platform => ReadEntity<PlatformEntityData>(bytes, entry, header),
+                EntityType.Object => ReadEntity<ObjectEntityData>(bytes, entry, header),
+                EntityType.PlayerSpawn => ReadEntity<PlayerSpawnEntityData>(bytes, entry, header),
+                EntityType.Door => ReadEntity<DoorEntityData>(bytes, entry, header),
+                EntityType.Item => ReadEntity<ItemEntityData>(bytes, entry, header),
+                EntityType.Enemy => ReadEntity<EnemyEntityData>(bytes, entry, header),
+                EntityType.Unknown7 => ReadEntity<Unknown7EntityData>(bytes, entry, header),
+                EntityType.Unknown8 => ReadEntity<Unknown8EntityData>(bytes, entry, header),
+                EntityType.JumpPad => ReadEntity<JumpPadEntityData>(bytes, entry, header),
+                EntityType.PointModule => ReadEntity<PointModuleEntityData>(bytes, entry, header),
+                EntityType.CameraPosition => ReadEntity<CameraPositionEntityData>(bytes, entry, header),
+                EntityType.OctolithFlag => ReadEntity<OctolithFlagEntityData>(bytes, entry, header),
+                EntityType.FlagBase => ReadEntity<FlagBaseEntityData>(bytes, entry, header),
+                EntityType.Teleporter => ReadEntity<TeleporterEntityData>(bytes, entry, header),
+                EntityType.NodeDefense => ReadEntity<NodeDefenseEntityData>(bytes, entry, header),
+                EntityType.LightSource => ReadEntity<LightSourceEntityData>(bytes, entry, header),
+                EntityType.Artifact => ReadEntity<ArtifactEntityData>(bytes, entry, header),
+                EntityType.CameraSequence => ReadEntity<CameraSequenceEntityData>(bytes, entry, header),
+                EntityType.ForceField => ReadEntity<ForceFieldEntityData>(bytes, entry, header),
+                _ => throw new ProgramException($"Invalid entity type {type}")
+            };
+        }
+
+        private static Entity<T> ReadEntity<T>(ReadOnlySpan<byte> bytes, EntityEntry entry, EntityDataHeader header)
+            where T : struct
+        {
+            int start = (int)entry.DataOffset;
+            int end = start + entry.Length;
+            Debug.Assert(entry.Length == Marshal.SizeOf<T>());
+            return new Entity<T>(entry, (EntityType)header.Type, header.EntityId, ReadStruct<T>(bytes[start..end]));
         }
 
         private static IReadOnlyList<Entity> GetFirstHuntEntities(ReadOnlySpan<byte> bytes)
@@ -961,84 +507,46 @@ namespace MphRead
             var entities = new List<Entity>();
             for (int i = 0; ; i++)
             {
-                int start = 4 + Sizes.FhEntityEntry * i;
-                int end = start + Sizes.FhEntityEntry;
+                int start = sizeof(uint) + Sizes.FhEntityEntry * i;
+                int end = start + Sizes.EntityEntry;
                 FhEntityEntry entry = ReadStruct<FhEntityEntry>(bytes[start..end]);
                 if (entry.DataOffset == 0)
                 {
                     break;
                 }
-                start = (int)entry.DataOffset;
-                end = start + Sizes.EntityDataHeader;
-                EntityDataHeader init = ReadStruct<EntityDataHeader>(bytes[start..end]);
-                var type = (EntityType)(init.Type + 100);
-                // todo: could assert that none of the end offsets exceed any other entry's start offset
-                if (type == EntityType.FhPlayerSpawn)
-                {
-                    end = start + Marshal.SizeOf<FhPlayerSpawnEntityData>();
-                    entities.Add(new Entity<FhPlayerSpawnEntityData>(entry, type, init.EntityId,
-                        ReadStruct<FhPlayerSpawnEntityData>(bytes[start..end])));
-                }
-                else if (type == EntityType.FhDoor)
-                {
-                    end = start + Marshal.SizeOf<FhDoorEntityData>();
-                    entities.Add(new Entity<FhDoorEntityData>(entry, type, init.EntityId,
-                        ReadStruct<FhDoorEntityData>(bytes[start..end])));
-                }
-                else if (type == EntityType.FhItem)
-                {
-                    end = start + Marshal.SizeOf<FhItemEntityData>();
-                    entities.Add(new Entity<FhItemEntityData>(entry, type, init.EntityId,
-                        ReadStruct<FhItemEntityData>(bytes[start..end])));
-                }
-                else if (type == EntityType.FhEnemy)
-                {
-                    end = start + Marshal.SizeOf<FhEnemyEntityData>();
-                    entities.Add(new Entity<FhEnemyEntityData>(entry, type, init.EntityId,
-                        ReadStruct<FhEnemyEntityData>(bytes[start..end])));
-                }
-                else if (type == EntityType.FhUnknown9)
-                {
-                    end = start + Marshal.SizeOf<FhUnknown9EntityData>();
-                    entities.Add(new Entity<FhUnknown9EntityData>(entry, type, init.EntityId,
-                        ReadStruct<FhUnknown9EntityData>(bytes[start..end])));
-                }
-                else if (type == EntityType.FhUnknown10)
-                {
-                    end = start + Marshal.SizeOf<FhUnknown10EntityData>();
-                    entities.Add(new Entity<FhUnknown10EntityData>(entry, type, init.EntityId,
-                        ReadStruct<FhUnknown10EntityData>(bytes[start..end])));
-                }
-                else if (type == EntityType.FhPlatform)
-                {
-                    end = start + Marshal.SizeOf<FhPlatformEntityData>();
-                    entities.Add(new Entity<FhPlatformEntityData>(entry, type, init.EntityId,
-                        ReadStruct<FhPlatformEntityData>(bytes[start..end])));
-                }
-                else if (type == EntityType.FhJumpPad)
-                {
-                    end = start + Marshal.SizeOf<FhJumpPadEntityData>();
-                    entities.Add(new Entity<FhJumpPadEntityData>(entry, type, init.EntityId,
-                        ReadStruct<FhJumpPadEntityData>(bytes[start..end])));
-                }
-                else if (type == EntityType.FhPointModule)
-                {
-                    end = start + Marshal.SizeOf<FhPointModuleEntityData>();
-                    entities.Add(new Entity<FhPointModuleEntityData>(entry, type, init.EntityId,
-                        ReadStruct<FhPointModuleEntityData>(bytes[start..end])));
-                }
-                else if (type == EntityType.FhCameraPos)
-                {
-                    end = start + Marshal.SizeOf<FhCameraPosEntityData>();
-                    entities.Add(new Entity<FhCameraPosEntityData>(entry, type, init.EntityId,
-                        ReadStruct<FhCameraPosEntityData>(bytes[start..end])));
-                }
-                else
-                {
-                    throw new ProgramException($"Invalid entity type {type}");
-                }
+                entities.Add(ReadFirstHuntEntity(bytes, entry));
             }
             return entities;
+        }
+
+        private static Entity ReadFirstHuntEntity(ReadOnlySpan<byte> bytes, FhEntityEntry entry)
+        {
+            int start = (int)entry.DataOffset;
+            int end = start + Sizes.EntityDataHeader;
+            EntityDataHeader header = ReadStruct<EntityDataHeader>(bytes[start..end]);
+            var type = (EntityType)(header.Type + 100);
+            return type switch
+            {
+                EntityType.FhPlayerSpawn => ReadFirstHuntEntity<FhPlayerSpawnEntityData>(bytes, entry, header),
+                EntityType.FhDoor => ReadFirstHuntEntity<FhDoorEntityData>(bytes, entry, header),
+                EntityType.FhItem => ReadFirstHuntEntity<FhItemEntityData>(bytes, entry, header),
+                EntityType.FhEnemy => ReadFirstHuntEntity<FhEnemyEntityData>(bytes, entry, header),
+                EntityType.FhUnknown9 => ReadFirstHuntEntity<FhUnknown9EntityData>(bytes, entry, header),
+                EntityType.FhUnknown10 => ReadFirstHuntEntity<FhUnknown10EntityData>(bytes, entry, header),
+                EntityType.FhPlatform => ReadFirstHuntEntity<FhPlatformEntityData>(bytes, entry, header),
+                EntityType.FhJumpPad => ReadFirstHuntEntity<FhJumpPadEntityData>(bytes, entry, header),
+                EntityType.FhPointModule => ReadFirstHuntEntity<FhPointModuleEntityData>(bytes, entry, header),
+                EntityType.FhCameraPosition => ReadFirstHuntEntity<FhCameraPositionEntityData>(bytes, entry, header),
+                _ => throw new ProgramException($"Invalid entity type {type}")
+            };
+        }
+
+        private static Entity<T> ReadFirstHuntEntity<T>(ReadOnlySpan<byte> bytes, FhEntityEntry entry, EntityDataHeader header)
+            where T : struct
+        {
+            int start = (int)entry.DataOffset;
+            int end = start + Marshal.SizeOf<T>();
+            return new Entity<T>(entry, (EntityType)(header.Type + 100), header.EntityId, ReadStruct<T>(bytes[start..end]));
         }
 
         private static void Nop() { }

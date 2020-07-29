@@ -7,24 +7,25 @@ namespace MphRead
         PlayerSpawn = 2,
         Door = 3,
         Item = 4,
-        ItemInstance = 5,
+        // 5 = item instance
         Enemy = 6,
         Unknown7 = 7,
         Unknown8 = 8,
         JumpPad = 9,
         PointModule = 10, // FH leftovers only
-        CameraPos = 11,
-        Unknown12 = 12,
-        Unknown13 = 13,
+        CameraPosition = 11,
+        OctolithFlag = 12,
+        FlagBase = 13,
         Teleporter = 14,
-        Unknown15 = 15,
-        Unknown16 = 16,
+        NodeDefense = 15,
+        LightSource = 16,
         Artifact = 17,
-        CameraSeq = 18,
+        CameraSequence = 18,
         ForceField = 19,
-        EnemyInstance = 23,
-        EnergyBeam = 26,
-        EntityListHead = 27,
+        // 23 = enemy instance
+        // 25 = player
+        // 26 = energy beam
+        // 27 = entity list header
         // First Hunt
         FhPlayerSpawn = 101,
         FhDoor = 103,
@@ -35,7 +36,14 @@ namespace MphRead
         FhPlatform = 111,
         FhJumpPad = 112,
         FhPointModule = 113,
-        FhCameraPos = 114
+        FhCameraPosition = 114
+    }
+
+    public enum VolumeType
+    {
+        Box = 0,
+        Cylinder = 1,
+        Sphere = 2
     }
 
     public enum ModelType

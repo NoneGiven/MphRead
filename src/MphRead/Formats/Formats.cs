@@ -11,8 +11,10 @@ namespace MphRead
     {
         public bool Visible { get; set; } = true;
         public bool ScanVisorOnly { get; set; }
+        public bool UseLightSources { get; }
         public ModelType Type { get; set; }
-        public EntityType EntityType { get; set; } // currently only used when ModelType is Placeholder
+        public EntityType EntityType { get; set; }
+        public ushort EntityLayer { get; set; } = UInt16.MaxValue;
 
         public string Name { get; }
         public Header Header { get; }
@@ -126,6 +128,7 @@ namespace MphRead
         public bool Rotating { get; set; }
         public bool Floating { get; set; }
         public float Spin { get; set; }
+        public float SpinSpeed { get; set; }
         // refers to the untransformed model's axis
         public Vector3 SpinAxis { get; set; } = Vector3.UnitY;
 
@@ -137,15 +140,18 @@ namespace MphRead
 
         public IReadOnlyList<Recolor> Recolors { get; }
 
-        private static uint _nextSceneId = 0;
-        public uint SceneId { get; } = _nextSceneId++;
+        // todo: refactor model vs. entity abstraction
+        public Entity? Entity { get; set; }
+
+        private static int _nextSceneId = 0;
+        public int SceneId { get; } = _nextSceneId++;
 
         public Model(string name, Header header, IReadOnlyList<RawNode> nodes, IReadOnlyList<RawMesh> meshes,
             IReadOnlyList<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
             IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
             IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
-            IReadOnlyList<Matrix44Fx> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor)
+            IReadOnlyList<Matrix44Fx> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor, bool useLightSources)
         {
             ThrowIfInvalidEnums(materials);
             Name = name;
@@ -164,6 +170,7 @@ namespace MphRead
             CurrentRecolor = defaultRecolor;
             float scale = Header.ScaleBase.FloatValue * (1 << (int)Header.ScaleFactor);
             Scale = new Vector3(scale, scale, scale);
+            UseLightSources = useLightSources;
         }
 
         public IEnumerable<ColorRgba> GetPixels(int textureId, int paletteId)
@@ -482,11 +489,15 @@ namespace MphRead
     public class Material
     {
         public string Name { get; }
-        public byte Lighting { get; set; } // todo: probably a bool
+        public byte Lighting { get; set; } // todo: what do lighting values 3 and 5 mean?
         public CullingMode Culling { get; }
         public byte Alpha { get; }
-        public int PaletteId { get; }
+        public float CurrentAlpha { get; set; }
         public int TextureId { get; }
+        public int PaletteId { get; }
+        public int TextureBindingId { get; set; }
+        public int CurrentTextureId { get; set; }
+        public int CurrentPaletteId { get; set; }
         public RepeatMode XRepeat { get; }
         public RepeatMode YRepeat { get; }
         public ColorRgb Diffuse { get; }
@@ -494,6 +505,7 @@ namespace MphRead
         public ColorRgb Specular { get; }
         public PolygonMode PolygonMode { get; set; }
         public RenderMode RenderMode { get; set; }
+        public byte AnimationFlags { get; set; } // todo: this probably has more uses
         public TexgenMode TexgenMode { get; set; }
         public int TexcoordAnimationId { get; set; }
         public int MatrixId { get; set; }
@@ -501,6 +513,7 @@ namespace MphRead
         public float ScaleT { get; }
         public float TranslateS { get; }
         public float TranslateT { get; }
+        public float RotateZ { get; }
 
         public RenderMode GetEffectiveRenderMode(Mesh mesh)
         {
@@ -513,8 +526,9 @@ namespace MphRead
             Lighting = raw.Lighting;
             Culling = raw.Culling;
             Alpha = raw.Alpha;
-            PaletteId = raw.PaletteId;
-            TextureId = raw.TextureId;
+            CurrentAlpha = Alpha / 31.0f;
+            CurrentTextureId = TextureId = raw.TextureId;
+            CurrentPaletteId = PaletteId = raw.PaletteId;
             XRepeat = raw.XRepeat;
             YRepeat = raw.YRepeat;
             Diffuse = raw.Diffuse;
@@ -522,6 +536,7 @@ namespace MphRead
             Specular = raw.Specular;
             PolygonMode = raw.PolygonMode;
             RenderMode = raw.RenderMode;
+            AnimationFlags = raw.AnimationFlags;
             TexgenMode = raw.TexcoordTransformMode;
             TexcoordAnimationId = raw.TexcoordAnimationId;
             MatrixId = (int)raw.MatrixId;
@@ -529,6 +544,8 @@ namespace MphRead
             ScaleT = raw.ScaleT.FloatValue;
             TranslateS = raw.TranslateS.FloatValue;
             TranslateT = raw.TranslateT.FloatValue;
+            // todo: doing rad to deg here is inconsistent with other things, but more efficient
+            RotateZ = MathHelper.RadiansToDegrees(raw.RotateZ / 65536.0f * 2.0f * MathF.PI);
         }
     }
 
@@ -603,13 +620,16 @@ namespace MphRead
         public int FrameCount { get; }
         public int CurrentFrame { get; set; }
         public int Count { get; }
+        public IReadOnlyList<float> Colors { get; }
         public IReadOnlyDictionary<string, MaterialAnimation> Animations { get; }
 
-        public MaterialAnimationGroup(RawMaterialAnimationGroup raw, IReadOnlyDictionary<string, MaterialAnimation> animations)
+        public MaterialAnimationGroup(RawMaterialAnimationGroup raw, IReadOnlyList<float> colors,
+            IReadOnlyDictionary<string, MaterialAnimation> animations)
         {
             FrameCount = (int)raw.FrameCount;
             CurrentFrame = raw.AnimationFrame;
             Count = (int)raw.AnimationCount;
+            Colors = colors;
             Animations = animations;
         }
     }
@@ -617,12 +637,13 @@ namespace MphRead
     public class Entity
     {
         public string NodeName { get; }
-        public short LayerMask { get; }
+        public ushort LayerMask { get; }
         public ushort Length { get; }
         public EntityType Type { get; }
-        public ushort SomeId { get; }
+        public ushort EntityId { get; }
+        public bool FirstHunt { get; }
 
-        public Entity(EntityEntry entry, EntityType type, ushort someId)
+        public Entity(EntityEntry entry, EntityType type, ushort entityId)
         {
             NodeName = entry.NodeName;
             LayerMask = entry.LayerMask;
@@ -632,10 +653,11 @@ namespace MphRead
                 throw new ProgramException($"Invalid entity type {type}");
             }
             Type = type;
-            SomeId = someId;
+            EntityId = entityId;
+            FirstHunt = false;
         }
 
-        public Entity(FhEntityEntry entry, EntityType type, ushort someId)
+        public Entity(FhEntityEntry entry, EntityType type, ushort entityId)
         {
             NodeName = entry.NodeName;
             if (!Enum.IsDefined(typeof(EntityType), type))
@@ -643,7 +665,8 @@ namespace MphRead
                 throw new ProgramException($"Invalid entity type {type}");
             }
             Type = type;
-            SomeId = someId;
+            EntityId = entityId;
+            FirstHunt = true;
         }
     }
 
@@ -664,12 +687,148 @@ namespace MphRead
         }
     }
 
-    public enum NodeLayer
+    public readonly struct CollisionVolume
     {
-        Multiplayer0 = 0x0008,
-        Multiplayer1 = 0x0010,
-        MultiplayerU = 0x0020,
+        public readonly VolumeType Type;
+        public readonly Vector3 BoxVector1;
+        public readonly Vector3 BoxVector2;
+        public readonly Vector3 BoxVector3;
+        public readonly Vector3 BoxPosition;
+        public readonly float BoxDot1;
+        public readonly float BoxDot2;
+        public readonly float BoxDot3;
+        public readonly Vector3 CylinderVector;
+        public readonly Vector3 CylinderPosition;
+        public readonly float CylinderRadius;
+        public readonly float CylinderDot;
+        public readonly Vector3 SpherePosition;
+        public readonly float SphereRadius;
+
+        public CollisionVolume(RawCollisionVolume raw, VolumeType type)
+        {
+            Type = type;
+            BoxVector1 = raw.BoxVector1.ToFloatVector();
+            BoxVector2 = raw.BoxVector2.ToFloatVector();
+            BoxVector3 = raw.BoxVector3.ToFloatVector();
+            BoxPosition = raw.BoxPosition.ToFloatVector();
+            BoxDot1 = raw.BoxDot1.FloatValue;
+            BoxDot2 = raw.BoxDot2.FloatValue;
+            BoxDot3 = raw.BoxDot3.FloatValue;
+            CylinderVector = raw.CylinderVector.ToFloatVector();
+            CylinderPosition = raw.CylinderPosition.ToFloatVector();
+            CylinderRadius = raw.CylinderRadius.FloatValue;
+            CylinderDot = raw.CylinderDot.FloatValue;
+            SpherePosition = raw.SpherePosition.ToFloatVector();
+            SphereRadius = raw.SphereRadius.FloatValue;
+        }
+    }
+
+    public class LightSource
+    {
+        public Entity<LightSourceEntityData> Entity { get; }
+        public Vector3 Position { get; }
+        public CollisionVolume Volume { get; }
+        public bool Light1Enabled { get; }
+        public Vector3 Light1Color { get; }
+        public Vector3 Light1Vector { get; }
+        public bool Light2Enabled { get; }
+        public Vector3 Light2Color { get; }
+        public Vector3 Light2Vector { get; }
+
+        public LightSource(Entity<LightSourceEntityData> entity)
+        {
+            Entity = entity;
+            Position = entity.Data.Position.ToFloatVector();
+            Volume = new CollisionVolume(entity.Data.Volume, entity.Data.VolumeType);
+            Light1Enabled = entity.Data.Light1Enabled != 0;
+            Light1Color = entity.Data.Light1Color.AsVector3();
+            Light1Vector = entity.Data.Light1Vector.ToFloatVector();
+            Light2Enabled = entity.Data.Light2Enabled != 0;
+            Light2Color = entity.Data.Light2Color.AsVector3();
+            Light2Vector = entity.Data.Light2Vector.ToFloatVector();
+        }
+
+        public bool TestPoint(Vector3 point)
+        {
+            if (Volume.Type == VolumeType.Box)
+            {
+                Vector3 difference = point - (Volume.BoxPosition + Position);
+                float dot1 = Vector3.Dot(Volume.BoxVector1, difference);
+                if (dot1 >= 0 && dot1 <= Volume.BoxDot1)
+                {
+                    float dot2 = Vector3.Dot(Volume.BoxVector2, difference);
+                    if (dot2 >= 0 && dot2 <= Volume.BoxDot2)
+                    {
+                        float dot3 = Vector3.Dot(Volume.BoxVector3, difference);
+                        return dot3 >= 0 && dot3 <= Volume.BoxDot3;
+                    }
+                }
+            }
+            else if (Volume.Type == VolumeType.Cylinder)
+            {
+                Vector3 bottom = Volume.CylinderPosition + Position;
+                Vector3 top = bottom + Volume.CylinderVector * Volume.CylinderDot;
+                if (Vector3.Dot(point - bottom, top - bottom) >= 0)
+                {
+                    if (Vector3.Dot(point - top, top - bottom) <= 0)
+                    {
+                        return Vector3.Cross(point - bottom, top - bottom).Length / (top - bottom).Length <= Volume.CylinderRadius;
+                    }
+                }
+            }
+            else if (Volume.Type == VolumeType.Sphere)
+            {
+                return Vector3.Distance(Volume.SpherePosition + Position, point) <= Volume.SphereRadius;
+            }
+            return false;
+        }
+    }
+
+    // todo: FH game modes
+    public enum GameMode
+    {
+        None = 0,
+        SinglePlayer = 2,
+        Battle = 3,
+        BattleTeams = 4,
+        Survival = 5,
+        SurvivalTeams = 6,
+        Capture = 7,
+        Bounty = 8,
+        BountyTeams = 9,
+        Nodes = 10,
+        NodesTeams = 11,
+        Defender = 12,
+        DefenderTeams = 13,
+        PrimeHunter = 14,
+        Unknown15 = 15 // todo?: unused
+    }
+
+    [Flags]
+    public enum NodeLayer : ushort
+    {
+        None = 0x0,
+        MultiplayerLod0 = 0x8,
+        MultiplayerLod1 = 0x10,
+        MultiplayerU = 0x20,
+        Unknown40 = 0x40, // todo?: 0x1048 shows up in menus, including inside the ship
+        Unknown1000 = 0x1000,
         CaptureTheFlag = 0x4000
+    }
+
+    [Flags]
+    public enum BossFlags
+    {
+        None = 0x0,
+        Unit1B1 = 0x1,
+        Unit1B2 = 0x4,
+        Unit2B1 = 0x10,
+        Unit2B2 = 0x40,
+        Unit3B1 = 0x100,
+        Unit3B2 = 0x400,
+        Unit4B1 = 0x1000,
+        Unit4B2 = 0x4000,
+        All = 0x5555
     }
 
     public enum InstructionCode : uint

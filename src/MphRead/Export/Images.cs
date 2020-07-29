@@ -11,7 +11,7 @@ namespace MphRead.Export
 {
     public static class Images
     {
-        public static void Screenshot(int width, int height)
+        public static void Screenshot(int width, int height, string? name = null)
         {
             using var bitmap = new Bitmap(width, height);
             var rectangle = new Rectangle(0, 0, width, height);
@@ -21,7 +21,8 @@ namespace MphRead.Export
             bitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
             string path = Path.Combine(Paths.Export, "_screenshots");
             Directory.CreateDirectory(path);
-            bitmap.Save(Path.Combine(path, $"{DateTimeOffset.Now.ToUnixTimeMilliseconds()}.png"));
+            name ??= DateTimeOffset.Now.ToUnixTimeMilliseconds().ToString();
+            bitmap.Save(Path.Combine(path, $"{name}.png"));
         }
 
         public static void ExportImages(Model model)
