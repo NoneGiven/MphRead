@@ -646,7 +646,7 @@ namespace MphRead
                     _modelMatrix = transform * _modelMatrix;
                     if (model.Rotating)
                     {
-                        model.Spin = (float)(model.Spin + elapsedTime * 360 * 0.35) % 360;
+                        model.Spin = (float)(model.Spin + elapsedTime * 360 * model.SpinSpeed) % 360;
                         transform = SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
                             MathHelper.DegreesToRadians(model.SpinAxis.X * model.Spin),
                             MathHelper.DegreesToRadians(model.SpinAxis.Y * model.Spin),

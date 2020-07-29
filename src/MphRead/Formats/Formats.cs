@@ -128,6 +128,7 @@ namespace MphRead
         public bool Rotating { get; set; }
         public bool Floating { get; set; }
         public float Spin { get; set; }
+        public float SpinSpeed { get; set; }
         // refers to the untransformed model's axis
         public Vector3 SpinAxis { get; set; } = Vector3.UnitY;
 
