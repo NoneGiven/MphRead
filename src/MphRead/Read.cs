@@ -182,7 +182,7 @@ namespace MphRead
                 }
                 recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
             }
-            AnimationResults animations = LoadAnimation(animationPath);
+            AnimationResults animations = LoadAnimationAndDump(animationPath);
             return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
                 textureMatrices, recolors, defaultRecolor, useLightSources);
@@ -478,7 +478,14 @@ namespace MphRead
                 if (colors.Count > 0)
                 {
                     dump.Add(new DumpResult<List<float>>(rawGroup.ColorLutOffset, "Material Colors",
-                        bytes[(int)rawGroup.ColorLutOffset..((int)rawGroup.ColorLutOffset + maxColor * sizeof(int))], colors));
+                        bytes[(int)rawGroup.ColorLutOffset..((int)rawGroup.ColorLutOffset + maxColor * sizeof(byte))], colors));
+                    int padding = colors.Count % 4;
+                    if (padding != 0)
+                    {
+                        IEnumerable<byte> paddingBytes = Enumerable.Repeat((byte)0, 4 - padding);
+                        dump.Add(new DumpResult<List<byte>>(rawGroup.ColorLutOffset + (uint)maxColor * sizeof(byte),
+                            "Padding", paddingBytes, paddingBytes.ToList()));
+                    }
                 }
                 results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup, colors, animations));
             }
@@ -618,9 +625,11 @@ namespace MphRead
             }
             dump.AddRange(gaps);
             dump = dump.OrderBy(d => d.Offset).ToList();
+            string filename = Path.GetFileNameWithoutExtension(path);
             var lines = new List<string>();
-            lines.Add(path);
+            lines.Add(filename);
             lines.Add($"{bytes.Length} bytes (0x00 - 0x{bytes.Length - 1:X2})");
+            lines.Add($"Gaps: {gaps.Count}");
             lines.Add("");
             foreach (DumpResult line in dump)
             {
@@ -628,7 +637,7 @@ namespace MphRead
                 lines.Add("");
             }
             lines.RemoveAt(lines.Count - 1);
-            string dumpFile = Path.GetFileNameWithoutExtension(path) + ".txt";
+            string dumpFile = $"{filename}.txt";
             string dumpPath = Path.Combine(Paths.Export, "..", "..", "Dumps", path.Contains("_fh") ? "FH" : "MPH");
             Directory.CreateDirectory(dumpPath);
             File.WriteAllLines(Path.Combine(dumpPath, dumpFile), lines);
@@ -694,6 +703,10 @@ namespace MphRead
             else if (line is DumpResult<List<ushort>> result12)
             {
                 lines.Add(String.Join(", ", result12.Structure));
+            }
+            else if (line is DumpResult<List<byte>> result13)
+            {
+                lines.Add(String.Join(' ', result13.Structure.Select(s => $"{s:X2}")));
             }
             return lines;
         }

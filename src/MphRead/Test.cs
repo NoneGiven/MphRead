@@ -141,7 +141,7 @@ namespace MphRead
                 {
                     if (material.Lighting > 1)
                     {
-                        Console.WriteLine($"{model.Name} | {material.Name} | {material.Lighting}");
+                        //Console.WriteLine($"{model.Name} | {material.Name} | {material.Lighting}");
                     }
                 }
             }
