@@ -715,7 +715,7 @@ namespace MphRead
 
         private static Model LoadArtifact(ArtifactEntityData data)
         {
-            // todo: load correct model, height offset, confirm rotation is correct
+            // todo: load correct model, height offset, rotation is too slow
             Model model = Read.GetModelByName("Artifact01");
             model.Position = data.Position.ToFloatVector();
             ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
