@@ -157,7 +157,8 @@ namespace MphRead
                 var position = new Vector3(
                     node.Position.X / model.Scale.X,
                     node.Position.Y / model.Scale.Y,
-                    node.Position.Z / model.Scale.Z);
+                    node.Position.Z / model.Scale.Z
+                );
                 Matrix4 transform = ComputeNodeTransforms(node.Scale, node.Angle, position);
                 if (node.ParentIndex == UInt16.MaxValue)
                 {
@@ -719,7 +720,11 @@ namespace MphRead
         {
             // todo: load correct model, height offset, rotation is too slow
             Model model = Read.GetModelByName("Artifact01");
-            model.Position = data.Position.ToFloatVector();
+            model.Position = new Vector3(
+                data.Position.X.FloatValue,
+                data.Position.Y.FloatValue + 0.4f,
+                data.Position.Z.FloatValue
+            );
             ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
@@ -771,7 +776,7 @@ namespace MphRead
                     mesh.OverrideColor = mesh.PlaceholderColor = _colorOverrides[type].AsVector4();
                 }
             }
-            model.Position = new Vector3(position.X.FloatValue, position.Y.FloatValue, position.Z.FloatValue);
+            model.Position = position.ToFloatVector();
             model.EntityType = type;
             model.Type = ModelType.Placeholder;
             ComputeNodeMatrices(model, index: 0);
