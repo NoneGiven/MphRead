@@ -379,7 +379,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Artifact)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<ArtifactEntityData>)entity).Data.Position));
+                    models.Add(LoadArtifact(((Entity<ArtifactEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.CameraSequence)
                 {
@@ -519,6 +519,7 @@ namespace MphRead
             {
                 return LoadEntityPlaceholder(EntityType.Teleporter, data.Position);
             }
+            // todo: how to use ArtifactId?
             int flags = data.ArtifactId < 8 && data.Invisible == 0 ? 2 : 0;
             string modelName;
             if ((flags & 2) == 0)
@@ -712,6 +713,19 @@ namespace MphRead
             return model;
         }
 
+        private static Model LoadArtifact(ArtifactEntityData data)
+        {
+            // todo: load correct model, height offset, confirm rotation is correct
+            Model model = Read.GetModelByName("Artifact01");
+            model.Position = data.Position.ToFloatVector();
+            ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
+            ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Generic;
+            model.Rotating = true;
+            model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
+            return model;
+        }
+
         // todo: load lock, fade in/out "animation"
         private static Model LoadForceField(ForceFieldEntityData data)
         {
@@ -734,15 +748,12 @@ namespace MphRead
             { EntityType.FhUnknown9, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.Unknown8, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.FhUnknown10, new ColorRgb(0xFF, 0xFF, 0x00) },
-            { EntityType.OctolithFlag, new ColorRgb(0x00, 0xFF, 0xFF) },
-            { EntityType.FlagBase, new ColorRgb(0xFF, 0x00, 0xFF) },
-            { EntityType.NodeDefense, new ColorRgb(0x1E, 0x90, 0xFF) },
             // "permanent" placeholders
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.FhPlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.CameraPosition, new ColorRgb(0x00, 0xFF, 0x00) },
             { EntityType.FhCameraPosition, new ColorRgb(0x00, 0xFF, 0x00) },
-            { EntityType.Teleporter, new ColorRgb(0xFF, 0xFF, 0xFF) },
+            { EntityType.Teleporter, new ColorRgb(0xFF, 0xFF, 0xFF) }, // used for invisible teleporters
             { EntityType.LightSource, new ColorRgb(0xFF, 0xDE, 0xAD) },
             { EntityType.CameraSequence, new ColorRgb(0xFF, 0x69, 0xB4) }
         };
