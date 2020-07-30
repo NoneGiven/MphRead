@@ -447,7 +447,7 @@ namespace MphRead
                 int animationCount = (int)((offset - rawGroup.AnimationOffset) / Sizes.NodeAnimation);
                 IReadOnlyList<NodeAnimation> rawAnimations
                     = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, animationCount);
-                for (int j = 0; j < 1; j++)
+                for (int j = 0; j < animationCount; j++)
                 {
                     int size = Marshal.SizeOf<NodeAnimation>();
                     long start = rawGroup.AnimationOffset + j * size;
