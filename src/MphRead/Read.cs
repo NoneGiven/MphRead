@@ -350,21 +350,24 @@ namespace MphRead
             public int Length { get; }
             public string Description { get; }
             public IReadOnlyList<byte> Bytes { get; }
+            public int Size { get; }
 
-            protected DumpResult(uint offset, string description, IEnumerable<byte> bytes)
+            protected DumpResult(uint offset, string description, IEnumerable<byte> bytes, int size)
             {
                 Offset = offset;
                 Length = bytes.Count();
                 Description = description;
                 Bytes = bytes.ToList();
+                Size = size;
             }
 
-            protected DumpResult(uint offset, string description, ReadOnlySpan<byte> bytes)
+            protected DumpResult(uint offset, string description, ReadOnlySpan<byte> bytes, int size)
             {
                 Offset = offset;
                 Length = bytes.Length;
                 Description = description;
                 Bytes = bytes.ToArray().ToList();
+                Size = size;
             }
         }
 
@@ -372,14 +375,14 @@ namespace MphRead
         {
             public T Structure { get; }
 
-            public DumpResult(uint offset, string description, IEnumerable<byte> bytes, T structure)
-                : base(offset, description, bytes)
+            public DumpResult(uint offset, string description, IEnumerable<byte> bytes, T structure, int size = 0)
+                : base(offset, description, bytes, size)
             {
                 Structure = structure;
             }
 
-            public DumpResult(uint offset, string description, ReadOnlySpan<byte> bytes, T structure)
-                : base(offset, description, bytes)
+            public DumpResult(uint offset, string description, ReadOnlySpan<byte> bytes, T structure, int size = 0)
+                : base(offset, description, bytes, size)
             {
                 Structure = structure;
             }
@@ -529,7 +532,8 @@ namespace MphRead
                 if (colors.Count > 0)
                 {
                     dump.Add(new DumpResult<List<float>>(rawGroup.ColorLutOffset, "Material Colors",
-                        bytes[(int)rawGroup.ColorLutOffset..((int)rawGroup.ColorLutOffset + maxColor * sizeof(byte))], colors));
+                        bytes[(int)rawGroup.ColorLutOffset..((int)rawGroup.ColorLutOffset + maxColor * sizeof(byte))],
+                        colors, sizeof(byte)));
                     int padding = colors.Count % 4;
                     if (padding != 0)
                     {
@@ -575,7 +579,8 @@ namespace MphRead
                 if (scales.Count > 0)
                 {
                     dump.Add(new DumpResult<List<float>>(rawGroup.ScaleLutOffset, "Texcoord Scales",
-                        bytes[(int)rawGroup.ScaleLutOffset..((int)rawGroup.ScaleLutOffset + maxScale * sizeof(int))], scales));
+                        bytes[(int)rawGroup.ScaleLutOffset..((int)rawGroup.ScaleLutOffset + maxScale * sizeof(int))],
+                        scales, sizeof(int)));
                 }
                 var rotations = new List<float>();
                 foreach (ushort value in DoOffsets<ushort>(bytes, rawGroup.RotateLutOffset, maxRotation))
@@ -586,13 +591,15 @@ namespace MphRead
                 if (rotations.Count > 0)
                 {
                     dump.Add(new DumpResult<List<float>>(rawGroup.RotateLutOffset, "Texcoord Rotations",
-                    bytes[(int)rawGroup.RotateLutOffset..((int)rawGroup.RotateLutOffset + maxRotation * sizeof(ushort))], rotations));
+                        bytes[(int)rawGroup.RotateLutOffset..((int)rawGroup.RotateLutOffset + maxRotation * sizeof(ushort))],
+                        rotations, sizeof(ushort)));
                 }
                 var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, maxTranslation).Select(f => f.FloatValue).ToList();
                 if (translations.Count > 0)
                 {
                     dump.Add(new DumpResult<List<float>>(rawGroup.TranslateLutOffset, "Texcoord Translations",
-                        bytes[(int)rawGroup.TranslateLutOffset..((int)rawGroup.TranslateLutOffset + maxTranslation * sizeof(int))], translations));
+                        bytes[(int)rawGroup.TranslateLutOffset..((int)rawGroup.TranslateLutOffset + maxTranslation * sizeof(int))],
+                        translations, sizeof(int)));
                 }
                 results.TexcoordAnimationGroups.Add(new TexcoordAnimationGroup(rawGroup, scales, rotations, translations, animations));
             }
@@ -789,7 +796,7 @@ namespace MphRead
             }
             else if (line is DumpResult<List<float>> result14)
             {
-                AddListHeader(sizeof(float));
+                AddListHeader(result14.Size);
                 lines.Add(String.Join(", ", result14.Structure));
             }
             else if (line is DumpResult<List<ushort>> result15)
