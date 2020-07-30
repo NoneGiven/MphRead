@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using OpenToolkit.Mathematics;
 
 namespace MphRead
@@ -930,6 +931,18 @@ namespace MphRead
                 index++;
             }
             return -1;
+        }
+
+        public static bool Any<TSource>(this ReadOnlySpan<TSource> source, Func<TSource, bool> predicate)
+        {
+            foreach (TSource item in source)
+            {
+                if (predicate.Invoke(item))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

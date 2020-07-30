@@ -537,9 +537,10 @@ namespace MphRead
                     int padding = (maxColor * sizeof(byte)) % 4;
                     if (padding != 0)
                     {
-                        IEnumerable<byte> paddingBytes = Enumerable.Repeat((byte)0, 4 - padding);
-                        dump.Add(new DumpResult<List<byte>>(rawGroup.ColorLutOffset + (uint)maxColor * sizeof(byte),
-                            "Padding", paddingBytes, paddingBytes.ToList()));
+                        int start = (int)rawGroup.ColorLutOffset + maxColor * sizeof(byte);
+                        ReadOnlySpan<byte> paddingBytes = bytes[start..(start + (4 - padding))];
+                        Debug.Assert(!paddingBytes.Any(b => b != 0));
+                        dump.Add(new DumpResult<List<byte>>((uint)start, "Padding", paddingBytes, paddingBytes.ToArray().ToList()));
                     }
                 }
                 results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup, colors, animations));
@@ -597,9 +598,10 @@ namespace MphRead
                 int padding = (rotations.Count * sizeof(ushort)) % 4;
                 if (padding != 0)
                 {
-                    IEnumerable<byte> paddingBytes = Enumerable.Repeat((byte)0, 4 - padding);
-                    dump.Add(new DumpResult<List<byte>>(rawGroup.RotateLutOffset + (uint)maxRotation * sizeof(ushort),
-                        "Padding", paddingBytes, paddingBytes.ToList()));
+                    int start = (int)rawGroup.RotateLutOffset + maxRotation * sizeof(ushort);
+                    ReadOnlySpan<byte> paddingBytes = bytes[start..(start + (4 - padding))];
+                    Debug.Assert(!paddingBytes.Any(b => b != 0));
+                    dump.Add(new DumpResult<List<byte>>((uint)start, "Padding", paddingBytes, paddingBytes.ToArray().ToList()));
                 }
                 var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, maxTranslation).Select(f => f.FloatValue).ToList();
                 if (translations.Count > 0)
@@ -657,9 +659,10 @@ namespace MphRead
                 int padding = (paletteIds.Count * sizeof(ushort)) % 4;
                 if (padding != 0)
                 {
-                    IEnumerable<byte> paddingBytes = Enumerable.Repeat((byte)0, 4 - padding);
-                    dump.Add(new DumpResult<List<byte>>(rawGroup.PaletteIdOffset + (uint)rawGroup.PaletteIdCount * sizeof(ushort),
-                        "Padding", paddingBytes, paddingBytes.ToList()));
+                    int start = (int)rawGroup.PaletteIdOffset + rawGroup.PaletteIdCount * sizeof(ushort);
+                    ReadOnlySpan<byte> paddingBytes = bytes[start..(start + (4 - padding))];
+                    Debug.Assert(!paddingBytes.Any(b => b != 0));
+                    dump.Add(new DumpResult<List<byte>>((uint)start, "Padding", paddingBytes, paddingBytes.ToArray().ToList()));
                 }
                 results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, frameIndices, textureIds, paletteIds, animations));
             }
