@@ -580,7 +580,7 @@ namespace MphRead
             int endPointer = pointer + (int)dlist.Size;
             if (endPointer >= bytes.Length)
             {
-                throw new ProgramException($"End pointer size {endPointer} too long for dlist size {dlist.Size}.");
+                throw new ProgramException($"End pointer {endPointer} too large for dlist size {bytes.Length}.");
             }
             while (pointer < endPointer)
             {

@@ -26,12 +26,8 @@ namespace MphRead
     {
         public readonly uint Offset;
         public readonly uint Size;
-        public readonly int XMinimum;
-        public readonly int YMinimum;
-        public readonly int ZMinimum;
-        public readonly int XMaximum;
-        public readonly int YMaximum;
-        public readonly int ZMaximum;
+        public readonly Vector3Fx MinCoordinates;
+        public readonly Vector3Fx MaxCoordinates;
     }
 
     // size: 132
