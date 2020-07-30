@@ -534,7 +534,7 @@ namespace MphRead
                     dump.Add(new DumpResult<List<float>>(rawGroup.ColorLutOffset, "Material Colors",
                         bytes[(int)rawGroup.ColorLutOffset..((int)rawGroup.ColorLutOffset + maxColor * sizeof(byte))],
                         colors, sizeof(byte)));
-                    int padding = colors.Count % 4;
+                    int padding = (maxColor * sizeof(byte)) % 4;
                     if (padding != 0)
                     {
                         IEnumerable<byte> paddingBytes = Enumerable.Repeat((byte)0, 4 - padding);
@@ -594,6 +594,13 @@ namespace MphRead
                         bytes[(int)rawGroup.RotateLutOffset..((int)rawGroup.RotateLutOffset + maxRotation * sizeof(ushort))],
                         rotations, sizeof(ushort)));
                 }
+                int padding = (rotations.Count * sizeof(ushort)) % 4;
+                if (padding != 0)
+                {
+                    IEnumerable<byte> paddingBytes = Enumerable.Repeat((byte)0, 4 - padding);
+                    dump.Add(new DumpResult<List<byte>>(rawGroup.RotateLutOffset + (uint)maxRotation * sizeof(ushort),
+                        "Padding", paddingBytes, paddingBytes.ToList()));
+                }
                 var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, maxTranslation).Select(f => f.FloatValue).ToList();
                 if (translations.Count > 0)
                 {
@@ -646,6 +653,13 @@ namespace MphRead
                     dump.Add(new DumpResult<List<ushort>>(rawGroup.PaletteIdOffset, "Palette IDs",
                         bytes[(int)rawGroup.PaletteIdOffset..((int)rawGroup.PaletteIdOffset + sizeof(ushort) * rawGroup.PaletteIdCount)],
                         paletteIds.ToList()));
+                }
+                int padding = (paletteIds.Count * sizeof(ushort)) % 4;
+                if (padding != 0)
+                {
+                    IEnumerable<byte> paddingBytes = Enumerable.Repeat((byte)0, 4 - padding);
+                    dump.Add(new DumpResult<List<byte>>(rawGroup.PaletteIdOffset + (uint)rawGroup.PaletteIdCount * sizeof(ushort),
+                        "Padding", paddingBytes, paddingBytes.ToList()));
                 }
                 results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, frameIndices, textureIds, paletteIds, animations));
             }
