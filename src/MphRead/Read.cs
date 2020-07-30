@@ -441,8 +441,12 @@ namespace MphRead
                 RawNodeAnimationGroup rawGroup = DoOffset<RawNodeAnimationGroup>(bytes, offset);
                 dump.Add(new DumpResult<RawNodeAnimationGroup>(offset, "NodeAnimationGroup",
                     bytes[(int)offset..((int)offset + Marshal.SizeOf<RawNodeAnimationGroup>())], rawGroup));
+                // there doesn't seem to be an animation count, so we have to assume it from the space between offsets
+                Debug.Assert(offset > rawGroup.AnimationOffset);
+                Debug.Assert((offset - rawGroup.AnimationOffset) % Sizes.NodeAnimation == 0);
+                int animationCount = (int)((offset - rawGroup.AnimationOffset) / Sizes.NodeAnimation);
                 IReadOnlyList<NodeAnimation> rawAnimations
-                    = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, 1);
+                    = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, animationCount);
                 for (int j = 0; j < 1; j++)
                 {
                     int size = Marshal.SizeOf<NodeAnimation>();
@@ -456,7 +460,36 @@ namespace MphRead
                 {
                     animations.Add($"{offset}-{i++}", animation);
                 }
-                results.NodeAnimationGroups.Add(new NodeAnimationGroup(rawGroup, animations));
+                // todo: do the animation have counts like the others, or do we have to just assume the layout?
+                Debug.Assert(rawGroup.UInt16Pointer > rawGroup.Fixed32Pointer);
+                Debug.Assert(rawGroup.Int32Pointer > rawGroup.UInt16Pointer);
+                Debug.Assert(rawGroup.AnimationOffset > rawGroup.Int32Pointer);
+                Debug.Assert((rawGroup.UInt16Pointer - rawGroup.Fixed32Pointer) % sizeof(int) == 0);
+                Debug.Assert((rawGroup.Int32Pointer - rawGroup.UInt16Pointer) % sizeof(ushort) == 0);
+                Debug.Assert((rawGroup.AnimationOffset - rawGroup.Int32Pointer) % sizeof(int) == 0);
+                int maxFixed32 = (int)((rawGroup.UInt16Pointer - rawGroup.Fixed32Pointer) / sizeof(int));
+                int maxUInt16 = (int)((rawGroup.Int32Pointer - rawGroup.UInt16Pointer) / sizeof(ushort));
+                int maxInt32 = (int)((rawGroup.AnimationOffset - rawGroup.Int32Pointer) / sizeof(int));
+                // todo: what are these?
+                var fixed32s = DoOffsets<Fixed>(bytes, rawGroup.Fixed32Pointer, maxFixed32).ToList();
+                if (fixed32s.Count > 0)
+                {
+                    dump.Add(new DumpResult<List<Fixed>>(rawGroup.Fixed32Pointer, "Fixed32s",
+                        bytes[(int)rawGroup.Fixed32Pointer..((int)rawGroup.Fixed32Pointer + maxFixed32 * sizeof(int))], fixed32s));
+                }
+                var uint16s = DoOffsets<ushort>(bytes, rawGroup.UInt16Pointer, maxUInt16).ToList();
+                if (uint16s.Count > 0)
+                {
+                    dump.Add(new DumpResult<List<ushort>>(rawGroup.UInt16Pointer, "UInt16s",
+                        bytes[(int)rawGroup.UInt16Pointer..((int)rawGroup.UInt16Pointer + maxUInt16 * sizeof(ushort))], uint16s));
+                }
+                var int32s = DoOffsets<int>(bytes, rawGroup.Int32Pointer, maxInt32).ToList();
+                if (int32s.Count > 0)
+                {
+                    dump.Add(new DumpResult<List<int>>(rawGroup.Int32Pointer, "Int32s",
+                        bytes[(int)rawGroup.Int32Pointer..((int)rawGroup.Int32Pointer + maxInt32 * sizeof(int))], int32s));
+                }
+                results.NodeAnimationGroups.Add(new NodeAnimationGroup(rawGroup, fixed32s, uint16s, int32s, animations));
             }
             foreach (uint offset in materialGroupOffsets)
             {
