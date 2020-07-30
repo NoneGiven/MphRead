@@ -14,28 +14,6 @@ namespace MphRead
         public static readonly int NodeAnimation = Marshal.SizeOf(typeof(NodeAnimation));
     }
 
-    public readonly struct TextureData
-    {
-        public readonly uint Data;
-        public readonly byte Alpha;
-
-        public TextureData(uint data, byte alpha)
-        {
-            Data = data;
-            Alpha = alpha;
-        }
-    }
-
-    public readonly struct PaletteData
-    {
-        public readonly ushort Data;
-
-        public PaletteData(ushort data)
-        {
-            Data = data;
-        }
-    }
-
     // size: 4
     public readonly struct RawMesh
     {

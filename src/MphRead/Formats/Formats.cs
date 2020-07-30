@@ -549,6 +549,28 @@ namespace MphRead
         }
     }
 
+    public readonly struct TextureData
+    {
+        public readonly uint Data;
+        public readonly byte Alpha;
+
+        public TextureData(uint data, byte alpha)
+        {
+            Data = data;
+            Alpha = alpha;
+        }
+    }
+
+    public readonly struct PaletteData
+    {
+        public readonly ushort Data;
+
+        public PaletteData(ushort data)
+        {
+            Data = data;
+        }
+    }
+
     public class NodeAnimationGroup
     {
         public int FrameCount { get; }
