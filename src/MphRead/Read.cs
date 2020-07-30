@@ -474,19 +474,19 @@ namespace MphRead
                 var fixed32s = DoOffsets<Fixed>(bytes, rawGroup.Fixed32Pointer, maxFixed32).ToList();
                 if (fixed32s.Count > 0)
                 {
-                    dump.Add(new DumpResult<List<Fixed>>(rawGroup.Fixed32Pointer, "Fixed32s",
+                    dump.Add(new DumpResult<List<Fixed>>(rawGroup.Fixed32Pointer, "Node Fixed32s",
                         bytes[(int)rawGroup.Fixed32Pointer..((int)rawGroup.Fixed32Pointer + maxFixed32 * sizeof(int))], fixed32s));
                 }
                 var uint16s = DoOffsets<ushort>(bytes, rawGroup.UInt16Pointer, maxUInt16).ToList();
                 if (uint16s.Count > 0)
                 {
-                    dump.Add(new DumpResult<List<ushort>>(rawGroup.UInt16Pointer, "UInt16s",
+                    dump.Add(new DumpResult<List<ushort>>(rawGroup.UInt16Pointer, "Node UInt16s",
                         bytes[(int)rawGroup.UInt16Pointer..((int)rawGroup.UInt16Pointer + maxUInt16 * sizeof(ushort))], uint16s));
                 }
                 var int32s = DoOffsets<int>(bytes, rawGroup.Int32Pointer, maxInt32).ToList();
                 if (int32s.Count > 0)
                 {
-                    dump.Add(new DumpResult<List<int>>(rawGroup.Int32Pointer, "Int32s",
+                    dump.Add(new DumpResult<List<int>>(rawGroup.Int32Pointer, "Node Int32s",
                         bytes[(int)rawGroup.Int32Pointer..((int)rawGroup.Int32Pointer + maxInt32 * sizeof(int))], int32s));
                 }
                 results.NodeAnimationGroups.Add(new NodeAnimationGroup(rawGroup, fixed32s, uint16s, int32s, animations));
