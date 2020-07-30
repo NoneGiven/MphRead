@@ -227,10 +227,6 @@ namespace MphRead
 
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Texture2D);
-            GL.PolygonMode(MaterialFace.FrontAndBack,
-                _wireframe
-                ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
-                : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
 
             GL.DepthFunc(DepthFunction.Lequal);
 
@@ -1043,6 +1039,10 @@ namespace MphRead
                     GL.CullFace(CullFaceMode.Front);
                 }
             }
+            GL.PolygonMode(MaterialFace.FrontAndBack,
+                _wireframe || material.Wireframe != 0
+                ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
+                : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
             DoDlist(model, mesh);
         }
 
@@ -1671,10 +1671,6 @@ namespace MphRead
             else if (e.Key == Key.Q)
             {
                 _wireframe = !_wireframe;
-                GL.PolygonMode(MaterialFace.FrontAndBack,
-                    _wireframe
-                        ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
-                        : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
                 await PrintOutput();
             }
             else if (e.Key == Key.B)
