@@ -62,7 +62,7 @@ namespace MphRead
         Modulate = 0,
         Decal = 1,
         Toon = 2,
-        Shadow = 3
+        Shadow = 3 // unused
     }
 
     public enum RepeatMode : byte
