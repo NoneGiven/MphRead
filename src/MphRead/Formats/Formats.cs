@@ -492,6 +492,7 @@ namespace MphRead
         public byte Lighting { get; set; } // todo: what do lighting values 3 and 5 mean?
         public CullingMode Culling { get; }
         public byte Alpha { get; }
+        public byte Wireframe { get; }
         public float CurrentAlpha { get; set; }
         public int TextureId { get; }
         public int PaletteId { get; }
@@ -526,6 +527,7 @@ namespace MphRead
             Lighting = raw.Lighting;
             Culling = raw.Culling;
             Alpha = raw.Alpha;
+            Wireframe = raw.Wireframe;
             CurrentAlpha = Alpha / 31.0f;
             CurrentTextureId = TextureId = raw.TextureId;
             CurrentPaletteId = PaletteId = raw.PaletteId;

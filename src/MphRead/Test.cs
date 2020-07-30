@@ -139,10 +139,6 @@ namespace MphRead
             {
                 foreach (Material material in model.Materials)
                 {
-                    if (material.Lighting > 1)
-                    {
-                        Console.WriteLine($"{model.Name} | {material.Name} | {material.Lighting}");
-                    }
                 }
             }
         }
