@@ -234,15 +234,33 @@ namespace MphRead
                     continue;
                 }
                 RawNodeAnimationGroup rawGroup = DoOffset<RawNodeAnimationGroup>(bytes, offset);
+                // there doesn't seem to be an animation count, so we have to assume it from the space between offsets
+                Debug.Assert(offset > rawGroup.AnimationOffset);
+                Debug.Assert((offset - rawGroup.AnimationOffset) % Sizes.NodeAnimation == 0);
+                int animationCount = (int)((offset - rawGroup.AnimationOffset) / Sizes.NodeAnimation);
                 IReadOnlyList<NodeAnimation> rawAnimations
-                    = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, 1);
+                    = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, animationCount);
                 var animations = new Dictionary<string, NodeAnimation>();
                 int i = 0;
                 foreach (NodeAnimation animation in rawAnimations)
                 {
                     animations.Add($"{offset}-{i++}", animation);
                 }
-                results.NodeAnimationGroups.Add(new NodeAnimationGroup(rawGroup, animations));
+                // todo: do the animation have counts like the others, or do we have to just assume the layout?
+                Debug.Assert(rawGroup.UInt16Pointer > rawGroup.Fixed32Pointer);
+                Debug.Assert(rawGroup.Int32Pointer > rawGroup.UInt16Pointer);
+                Debug.Assert(rawGroup.AnimationOffset > rawGroup.Int32Pointer);
+                Debug.Assert((rawGroup.UInt16Pointer - rawGroup.Fixed32Pointer) % sizeof(int) == 0);
+                Debug.Assert((rawGroup.Int32Pointer - rawGroup.UInt16Pointer) % sizeof(ushort) == 0);
+                Debug.Assert((rawGroup.AnimationOffset - rawGroup.Int32Pointer) % sizeof(int) == 0);
+                int maxFixed32 = (int)((rawGroup.UInt16Pointer - rawGroup.Fixed32Pointer) / sizeof(int));
+                int maxUInt16 = (int)((rawGroup.Int32Pointer - rawGroup.UInt16Pointer) / sizeof(ushort));
+                int maxInt32 = (int)((rawGroup.AnimationOffset - rawGroup.Int32Pointer) / sizeof(int));
+                // todo: what are these?
+                var fixed32s = DoOffsets<Fixed>(bytes, rawGroup.Fixed32Pointer, maxFixed32).ToList();
+                var uint16s = DoOffsets<ushort>(bytes, rawGroup.UInt16Pointer, maxUInt16).ToList();
+                var int32s = DoOffsets<int>(bytes, rawGroup.Int32Pointer, maxInt32).ToList();
+                results.NodeAnimationGroups.Add(new NodeAnimationGroup(rawGroup, fixed32s, uint16s, int32s, animations));
             }
             foreach (uint offset in materialGroupOffsets)
             {

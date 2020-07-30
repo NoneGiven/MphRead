@@ -551,21 +551,23 @@ namespace MphRead
 
     public class NodeAnimationGroup
     {
-        public uint FrameCount { get; }
-        public uint Fixed32Pointer { get; }
-        public uint UInt16Pointer { get; }
-        public uint Int32Pointer { get; }
-        public uint AnimationOffset { get; }
+        public int FrameCount { get; }
+        public int CurrentFrame { get; set; }
+        public int Count { get; }
+        public IReadOnlyList<Fixed> Fixed32s { get; }
+        public IReadOnlyList<ushort> UInt16s { get; }
+        public IReadOnlyList<int> Int32s { get; }
         public IReadOnlyDictionary<string, NodeAnimation> Animations { get; }
 
-        public NodeAnimationGroup(RawNodeAnimationGroup raw, IReadOnlyDictionary<string, NodeAnimation> animations)
+        public NodeAnimationGroup(RawNodeAnimationGroup raw, IReadOnlyList<Fixed> fixed32s, IReadOnlyList<ushort> uint16s,
+            IReadOnlyList<int> int32s, IReadOnlyDictionary<string, NodeAnimation> animations)
         {
-            FrameCount = raw.FrameCount;
-            Fixed32Pointer = raw.Fixed32Pointer;
-            UInt16Pointer = raw.UInt16Pointer;
-            Int32Pointer = raw.Int32Pointer;
-            AnimationOffset = raw.AnimationOffset;
+            FrameCount = (int)raw.FrameCount;
+            Fixed32s = fixed32s;
+            UInt16s = uint16s;
+            Int32s = int32s;
             Animations = animations;
+            Count = Animations.Count;
         }
     }
 
@@ -589,6 +591,7 @@ namespace MphRead
             Rotations = rotations;
             Translations = translations;
             Animations = animations;
+            Debug.Assert(Count == Animations.Count);
         }
     }
 
@@ -612,6 +615,7 @@ namespace MphRead
             TextureIds = textureIds;
             PaletteIds = paletteIds;
             Animations = animations;
+            Debug.Assert(Count == Animations.Count);
         }
     }
 
@@ -631,6 +635,7 @@ namespace MphRead
             Count = (int)raw.AnimationCount;
             Colors = colors;
             Animations = animations;
+            Debug.Assert(Count == Animations.Count);
         }
     }
 

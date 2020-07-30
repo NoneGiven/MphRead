@@ -11,6 +11,7 @@ namespace MphRead
         public static readonly int EntityDataHeader = Marshal.SizeOf(typeof(EntityDataHeader));
         public static readonly int JumpPadEntityData = Marshal.SizeOf(typeof(JumpPadEntityData));
         public static readonly int ItemEntityData = Marshal.SizeOf(typeof(ItemEntityData));
+        public static readonly int NodeAnimation = Marshal.SizeOf(typeof(NodeAnimation));
     }
 
     public readonly struct TextureData
