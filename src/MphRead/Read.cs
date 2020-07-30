@@ -351,6 +351,7 @@ namespace MphRead
             public string Description { get; }
             public IReadOnlyList<byte> Bytes { get; }
             public int Size { get; }
+            public bool Zeroes { get; }
 
             protected DumpResult(uint offset, string description, IEnumerable<byte> bytes, int size)
             {
@@ -359,6 +360,7 @@ namespace MphRead
                 Description = description;
                 Bytes = bytes.ToList();
                 Size = size;
+                Zeroes = !bytes.Any(b => b != 0);
             }
 
             protected DumpResult(uint offset, string description, ReadOnlySpan<byte> bytes, int size)
@@ -368,6 +370,7 @@ namespace MphRead
                 Description = description;
                 Bytes = bytes.ToArray().ToList();
                 Size = size;
+                Zeroes = !bytes.Any(b => b != 0);
             }
         }
 
@@ -680,7 +683,7 @@ namespace MphRead
             var lines = new List<string>();
             lines.Add(filename);
             lines.Add($"{bytes.Length} bytes (0x00 - 0x{bytes.Length - 1:X2})");
-            lines.Add($"Gaps: {gaps.Count}");
+            lines.Add($"Gaps: {gaps.Count(g => !g.Zeroes)} ({gaps.Count})");
             lines.Add("");
             foreach (DumpResult line in dump)
             {
