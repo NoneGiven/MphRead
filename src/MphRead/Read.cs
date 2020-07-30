@@ -347,14 +347,14 @@ namespace MphRead
         private class DumpResult
         {
             public uint Offset { get; }
-            public uint Length { get; }
+            public int Length { get; }
             public string Description { get; }
             public IReadOnlyList<byte> Bytes { get; }
 
             protected DumpResult(uint offset, string description, IEnumerable<byte> bytes)
             {
                 Offset = offset;
-                Length = (uint)bytes.Count();
+                Length = bytes.Count();
                 Description = description;
                 Bytes = bytes.ToList();
             }
@@ -362,7 +362,7 @@ namespace MphRead
             protected DumpResult(uint offset, string description, ReadOnlySpan<byte> bytes)
             {
                 Offset = offset;
-                Length = (uint)bytes.Length;
+                Length = bytes.Length;
                 Description = description;
                 Bytes = bytes.ToArray().ToList();
             }
@@ -647,7 +647,7 @@ namespace MphRead
             for (int i = 0; i < dump.Count; i++)
             {
                 DumpResult line = dump[i];
-                uint offset = line.Offset + line.Length;
+                uint offset = (uint)(line.Offset + line.Length);
                 if (i == dump.Count - 1)
                 {
                     if (offset != bytes.Length)
@@ -698,66 +698,109 @@ namespace MphRead
         private static IEnumerable<string> Dump(DumpResult line)
         {
             var lines = new List<string>();
-            lines.Add($"0x{line.Offset:X2}: {line.Description}");
-            lines.Add($"{line.Length} bytes (0x{line.Offset:X2} - 0x{line.Offset + line.Length - 1:X2})");
+            void AddHeader()
+            {
+                lines.Add($"0x{line.Offset:X2}: {line.Description}");
+                lines.Add($"{line.Length} bytes (0x{line.Offset:X2} - 0x{line.Offset + line.Length - 1:X2})");
+            }
+            void AddListHeader(int size)
+            {
+                // sktodo
+                lines.Add($"0x{line.Offset:X2}: {line.Description}");
+                int count = line.Length / size;
+                string entries = $"{count} entr{(count == 1 ? "y" : "ies")}";
+                lines.Add($"{entries}, {line.Length} bytes (0x{line.Offset:X2} - 0x{line.Offset + line.Length - 1:X2})");
+            }
             if (line is DumpResult<byte> result0)
             {
+                AddHeader();
                 lines.Add(String.Join(' ', result0.Bytes.Select(b => b.ToString("X2"))));
             }
             else if (line is DumpResult<AnimationHeader> result1)
             {
+                AddHeader();
                 lines.AddRange(DumpObj(result1.Structure));
             }
             else if (line is DumpResult<RawNodeAnimationGroup> result2)
             {
+                AddHeader();
                 lines.AddRange(DumpObj(result2.Structure));
             }
             else if (line is DumpResult<NodeAnimation> result3)
             {
+                AddHeader();
                 lines.AddRange(DumpObj(result3.Structure));
             }
             else if (line is DumpResult<RawMaterialAnimationGroup> result4)
             {
+                AddHeader();
                 lines.AddRange(DumpObj(result4.Structure));
             }
             else if (line is DumpResult<MaterialAnimation> result5)
             {
+                AddHeader();
                 lines.AddRange(DumpObj(result5.Structure));
             }
             else if (line is DumpResult<RawTexcoordAnimationGroup> result6)
             {
+                AddHeader();
                 lines.AddRange(DumpObj(result6.Structure));
             }
             else if (line is DumpResult<TexcoordAnimation> result7)
             {
+                AddHeader();
                 lines.AddRange(DumpObj(result7.Structure));
             }
             else if (line is DumpResult<RawTextureAnimationGroup> result8)
             {
+                AddHeader();
                 lines.AddRange(DumpObj(result8.Structure));
             }
             else if (line is DumpResult<TextureAnimation> result9)
             {
+                AddHeader();
                 lines.AddRange(DumpObj(result9.Structure));
             }
-            else if (line is DumpResult<List<uint>> result10)
+            else if (line is DumpResult<List<Fixed>> result10)
             {
-                foreach (uint item in result10.Structure)
+                AddListHeader(sizeof(int));
+                lines.Add(String.Join(", ", result10.Structure));
+            }
+            else if (line is DumpResult<List<int>> result11)
+            {
+                AddListHeader(sizeof(int));
+                lines.Add(String.Join(", ", result11.Structure));
+            }
+            else if (line is DumpResult<List<uint>> result12)
+            {
+                AddListHeader(sizeof(uint));
+                foreach (uint item in result12.Structure)
                 {
                     lines.Add($"0x{item:X2}");
                 }
             }
-            else if (line is DumpResult<List<float>> result11)
+            else if (line is DumpResult<List<uint>> result13)
             {
-                lines.Add(String.Join(", ", result11.Structure));
+                AddListHeader(sizeof(uint));
+                foreach (uint item in result13.Structure)
+                {
+                    lines.Add($"0x{item:X2}");
+                }
             }
-            else if (line is DumpResult<List<ushort>> result12)
+            else if (line is DumpResult<List<float>> result14)
             {
-                lines.Add(String.Join(", ", result12.Structure));
+                AddListHeader(sizeof(float));
+                lines.Add(String.Join(", ", result14.Structure));
             }
-            else if (line is DumpResult<List<byte>> result13)
+            else if (line is DumpResult<List<ushort>> result15)
             {
-                lines.Add(String.Join(' ', result13.Structure.Select(s => $"{s:X2}")));
+                AddListHeader(sizeof(ushort));
+                lines.Add(String.Join(", ", result15.Structure));
+            }
+            else if (line is DumpResult<List<byte>> result16)
+            {
+                AddHeader();
+                lines.Add(String.Join(' ', result16.Structure.Select(s => $"{s:X2}")));
             }
             return lines;
         }
