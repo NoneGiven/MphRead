@@ -534,14 +534,6 @@ namespace MphRead
                     dump.Add(new DumpResult<List<float>>(rawGroup.ColorLutOffset, "Material Colors",
                         bytes[(int)rawGroup.ColorLutOffset..((int)rawGroup.ColorLutOffset + maxColor * sizeof(byte))],
                         colors, sizeof(byte)));
-                    int padding = (maxColor * sizeof(byte)) % 4;
-                    if (padding != 0)
-                    {
-                        int start = (int)rawGroup.ColorLutOffset + maxColor * sizeof(byte);
-                        ReadOnlySpan<byte> paddingBytes = bytes[start..(start + (4 - padding))];
-                        Debug.Assert(!paddingBytes.Any(b => b != 0));
-                        dump.Add(new DumpResult<List<byte>>((uint)start, "Padding", paddingBytes, paddingBytes.ToArray().ToList()));
-                    }
                 }
                 results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup, colors, animations));
             }
@@ -595,14 +587,6 @@ namespace MphRead
                         bytes[(int)rawGroup.RotateLutOffset..((int)rawGroup.RotateLutOffset + maxRotation * sizeof(ushort))],
                         rotations, sizeof(ushort)));
                 }
-                int padding = (rotations.Count * sizeof(ushort)) % 4;
-                if (padding != 0)
-                {
-                    int start = (int)rawGroup.RotateLutOffset + maxRotation * sizeof(ushort);
-                    ReadOnlySpan<byte> paddingBytes = bytes[start..(start + (4 - padding))];
-                    Debug.Assert(!paddingBytes.Any(b => b != 0));
-                    dump.Add(new DumpResult<List<byte>>((uint)start, "Padding", paddingBytes, paddingBytes.ToArray().ToList()));
-                }
                 var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, maxTranslation).Select(f => f.FloatValue).ToList();
                 if (translations.Count > 0)
                 {
@@ -655,14 +639,6 @@ namespace MphRead
                     dump.Add(new DumpResult<List<ushort>>(rawGroup.PaletteIdOffset, "Palette IDs",
                         bytes[(int)rawGroup.PaletteIdOffset..((int)rawGroup.PaletteIdOffset + sizeof(ushort) * rawGroup.PaletteIdCount)],
                         paletteIds.ToList()));
-                }
-                int padding = (paletteIds.Count * sizeof(ushort)) % 4;
-                if (padding != 0)
-                {
-                    int start = (int)rawGroup.PaletteIdOffset + rawGroup.PaletteIdCount * sizeof(ushort);
-                    ReadOnlySpan<byte> paddingBytes = bytes[start..(start + (4 - padding))];
-                    Debug.Assert(!paddingBytes.Any(b => b != 0));
-                    dump.Add(new DumpResult<List<byte>>((uint)start, "Padding", paddingBytes, paddingBytes.ToArray().ToList()));
                 }
                 results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, frameIndices, textureIds, paletteIds, animations));
             }
