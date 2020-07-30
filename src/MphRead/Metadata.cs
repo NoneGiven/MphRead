@@ -6506,12 +6506,12 @@ namespace MphRead
                     new ModelMetadata("lightningLob", firstHunt: true)
                 },
                 {
-                    "Metroid_Lo",
-                    new ModelMetadata("Metroid_Lo", remove: "_Lo", firstHunt: true)
-                },
-                {
                     "metroid",
                     new ModelMetadata("metroid", firstHunt: true)
+                },
+                {
+                    "Metroid_Lo",
+                    new ModelMetadata("Metroid_Lo", remove: "_Lo", firstHunt: true)
                 },
                 {
                     "missileCollide",
@@ -6530,12 +6530,16 @@ namespace MphRead
                     new ModelMetadata("missileColLiterER", firstHunt: true)
                 },
                 {
+                    "Mochtroid",
+                    new ModelMetadata("Mochtroid", firstHunt: true)
+                },
+                {
                     "Mochtroid_Lo",
                     new ModelMetadata("Mochtroid_Lo", remove: "_Lo", firstHunt: true)
                 },
                 {
-                    "Mochtroid",
-                    new ModelMetadata("Mochtroid", firstHunt: true)
+                    "morphBall",
+                    new ModelMetadata("morphBall", animation: false, firstHunt: true)
                 },
                 {
                     "morphBall_Blue",
@@ -6544,10 +6548,6 @@ namespace MphRead
                 {
                     "morphBall_Green",
                     new ModelMetadata("morphBall_Green", animation: false, firstHunt: true)
-                },
-                {
-                    "morphBall",
-                    new ModelMetadata("morphBall", animation: false, firstHunt: true)
                 },
                 {
                     "morphBall_White",
