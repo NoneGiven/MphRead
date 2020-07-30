@@ -701,7 +701,8 @@ namespace MphRead
             void AddHeader()
             {
                 lines.Add($"0x{line.Offset:X2}: {line.Description}");
-                lines.Add($"{line.Length} bytes (0x{line.Offset:X2} - 0x{line.Offset + line.Length - 1:X2})");
+                lines.Add($"{line.Length} byte{(line.Length == 1 ? "" : "s")}" +
+                    $" (0x{line.Offset:X2} - 0x{line.Offset + line.Length - 1:X2})");
             }
             void AddListHeader(int size)
             {
@@ -709,7 +710,8 @@ namespace MphRead
                 lines.Add($"0x{line.Offset:X2}: {line.Description}");
                 int count = line.Length / size;
                 string entries = $"{count} entr{(count == 1 ? "y" : "ies")}";
-                lines.Add($"{entries}, {line.Length} bytes (0x{line.Offset:X2} - 0x{line.Offset + line.Length - 1:X2})");
+                lines.Add($"{entries}, {line.Length} byte{(line.Length == 1 ? "" : "s")}" +
+                    $" (0x{line.Offset:X2} - 0x{line.Offset + line.Length - 1:X2})");
             }
             if (line is DumpResult<byte> result0)
             {
