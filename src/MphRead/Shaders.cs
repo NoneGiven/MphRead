@@ -77,7 +77,7 @@ varying vec4 color;
 uniform bool use_override;
 uniform vec4 override_color;
 uniform float mat_alpha;
-uniform bool mat_mode;
+uniform int mat_mode;
 
 void main()
 {
