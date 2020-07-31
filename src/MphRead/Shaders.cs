@@ -124,8 +124,17 @@ void main()
     vec4 col;
     if (use_texture) {
         vec4 texcolor = texture2D(tex, texcoord);
-        texcolor = vec4(texcolor.x, texcolor.y, texcolor.z, mat_alpha * (mat_mode == 1 ? 1.0 : texcolor.w));
-        col = (mat_mode == 2 ? toon_color(color) : color) * texcolor;
+        if (mat_mode == 1) {
+            col = vec4(
+                (texcolor.r * texcolor.a + color.r * (1 - texcolor.a)),
+                (texcolor.g * texcolor.a + color.g * (1 - texcolor.a)),
+                (texcolor.b * texcolor.a + color.b * (1 - texcolor.a)),
+                mat_alpha * color.a
+            );
+        }
+        else {
+            col = (mat_mode == 2 ? toon_color(color) : color) * vec4(texcolor.rgb, mat_alpha * texcolor.a);
+        }
         if (use_override) {
             col.r = override_color.r;
             col.g = override_color.g;
