@@ -257,6 +257,8 @@ namespace MphRead
             GL.LinkProgram(_shaderProgramId);
             GL.DetachShader(_shaderProgramId, vertexShader);
             GL.DetachShader(_shaderProgramId, fragmentShader);
+            GL.DeleteShader(fragmentShader);
+            GL.DeleteShader(vertexShader);
 
             _shaderLocations.IsBillboard = GL.GetUniformLocation(_shaderProgramId, "is_billboard");
             _shaderLocations.UseLight = GL.GetUniformLocation(_shaderProgramId, "use_light");
