@@ -714,8 +714,7 @@ namespace MphRead
         private static IEnumerable<Model> LoadArtifact(ArtifactEntityData data)
         {
             var models = new List<Model>();
-            // sktodo: load correct model, rotation is too slow
-            // todo: load base w/ its own height offset
+            // sktodo: correct rotation speed
             string name = data.ModelId >= 8 ? "Octolith" : $"Artifact0{data.ModelId + 1}";
             Model model = Read.GetModelByName(name);
             float offset = data.ModelId >= 8 ? GetOctolithHeightOffset() : model.Nodes[0].Offset.FloatValue;
@@ -723,7 +722,7 @@ namespace MphRead
                 data.Position.X.FloatValue,
                 data.Position.Y.FloatValue + offset,
                 data.Position.Z.FloatValue
-            );;
+            );
             ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
@@ -733,7 +732,17 @@ namespace MphRead
             models.Add(model);
             if (data.HasBase != 0)
             {
-
+                Model baseModel = Read.GetModelByName("ArtifactBase");
+                offset = GetArtifactBaseHeightOffset(model.Nodes[0].Offset);
+                baseModel.Position = new Vector3(
+                    data.Position.X.FloatValue,
+                    model.Position.Y + offset,
+                    data.Position.Z.FloatValue
+                );
+                ComputeModelMatrices(baseModel, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
+                ComputeNodeMatrices(baseModel, index: 0);
+                baseModel.Type = ModelType.Generic;
+                models.Add(baseModel);
             }
             return models;
         }
@@ -762,6 +771,11 @@ namespace MphRead
         private static float GetOctolithHeightOffset()
         {
             return Fixed.ToFloat(7168);
+        }
+
+        private static float GetArtifactBaseHeightOffset(Fixed value)
+        {
+            return value.Value <= 3116 ? Fixed.ToFloat(-3116) : Fixed.ToFloat(-3117);
         }
 
         private static readonly Dictionary<EntityType, ColorRgb> _colorOverrides = new Dictionary<EntityType, ColorRgb>()
