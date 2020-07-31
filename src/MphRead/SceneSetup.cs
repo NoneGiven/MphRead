@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Mathematics;
 
 namespace MphRead
