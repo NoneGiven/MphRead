@@ -539,6 +539,15 @@ namespace MphRead
             return model;
         }
 
+        public static float GetHeightOffset(Fixed value)
+        {
+            return value.Value <= -2663
+                ? Fixed.ToFloat(2663)
+                : value.Value == 6393
+                    ? Fixed.ToFloat(2812)
+                    : Fixed.ToFloat(2662);
+        }
+
         private static IEnumerable<Model> LoadItem(ItemEntityData data)
         {
             var models = new List<Model>();
@@ -546,14 +555,9 @@ namespace MphRead
             if (data.Enabled != 0)
             {
                 model = Read.GetModelByName(Metadata.Items[(int)data.ModelId]);
-                float offset = data.Position.Y.Value <= -2663
-                    ? Fixed.ToFloat(2663)
-                    : data.Position.Y.Value == 6393
-                        ? Fixed.ToFloat(2812)
-                        : Fixed.ToFloat(2662);
                 model.Position = new Vector3(
                     data.Position.X.FloatValue,
-                    data.Position.Y.FloatValue + offset,
+                    data.Position.Y.FloatValue + GetHeightOffset(data.Position.Y),
                     data.Position.Z.FloatValue
                 );
                 ComputeNodeMatrices(model, index: 0);
@@ -719,18 +723,18 @@ namespace MphRead
         private static Model LoadArtifact(ArtifactEntityData data)
         {
             // sktodo: load correct model, height offset, rotation is too slow
-            Model model = Read.GetModelByName("Artifact01");
+            Model model = Read.GetModelByName("Octolith");
             model.Position = new Vector3(
                 data.Position.X.FloatValue,
-                data.Position.Y.FloatValue + 0.4f,
+                data.Position.Y.FloatValue,
                 data.Position.Z.FloatValue
             );
             ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
-            model.Rotating = true;
-            model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
-            model.SpinSpeed = 0.35f;
+            //model.Rotating = true;
+            //model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
+            //model.SpinSpeed = 0.35f;
             return model;
         }
 

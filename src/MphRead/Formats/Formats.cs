@@ -430,6 +430,8 @@ namespace MphRead
         public Vector3 Scale { get; set; }
         public Vector3 Angle { get; set; }
         public Vector3 Position { get; set; }
+        // need to keep this as fixed to potentially pass to the magic height offset function later
+        public Fixed Offset { get; }
         public Vector3 Vector1 { get; }
         public Vector3 Vector2 { get; }
         public bool Billboard { get; }
@@ -462,6 +464,7 @@ namespace MphRead
                 raw.AngleZ / 65536.0f * 2.0f * MathF.PI
             );
             Position = raw.Position.ToFloatVector();
+            Offset = raw.Offset;
             Vector1 = raw.Vector1.ToFloatVector();
             Vector2 = raw.Vector2.ToFloatVector();
             // todo: implement billboard = 2 (cylindrical), also "fix" spherical

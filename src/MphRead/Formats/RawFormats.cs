@@ -332,7 +332,7 @@ namespace MphRead
         public readonly short AngleZ;
         public readonly ushort Field62;
         public readonly Vector3Fx Position;
-        public readonly uint Field70;
+        public readonly Fixed Offset;
         public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
         public readonly byte Billboard;
