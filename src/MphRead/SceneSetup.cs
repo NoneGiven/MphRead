@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Mathematics;
 
 namespace MphRead
@@ -733,7 +734,7 @@ namespace MphRead
             if (data.HasBase != 0)
             {
                 Model baseModel = Read.GetModelByName("ArtifactBase");
-                offset = GetArtifactBaseHeightOffset(model.Nodes[0].Offset);
+                offset = GetArtifactBaseHeightOffset(data.Position.Y.Value + model.Nodes[0].Offset.Value);
                 baseModel.Position = new Vector3(
                     data.Position.X.FloatValue,
                     model.Position.Y + offset,
@@ -773,9 +774,9 @@ namespace MphRead
             return Fixed.ToFloat(7168);
         }
 
-        private static float GetArtifactBaseHeightOffset(Fixed value)
+        private static float GetArtifactBaseHeightOffset(int value)
         {
-            return value.Value <= 3116 ? Fixed.ToFloat(-3116) : Fixed.ToFloat(-3117);
+            return value <= 3116 ? Fixed.ToFloat(-3116) : Fixed.ToFloat(-3117);
         }
 
         private static readonly Dictionary<EntityType, ColorRgb> _colorOverrides = new Dictionary<EntityType, ColorRgb>()
