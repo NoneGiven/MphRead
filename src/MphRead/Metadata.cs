@@ -379,6 +379,52 @@ namespace MphRead
             return list[playerCount == 3 ? 1 : (playerCount == 4 ? 2 : 0)];
         }
 
+        // this is only set/used by Octolith
+        public static readonly IReadOnlyList<Vector3> ToonTable = new List<Vector3>()
+        {
+            GetTableColor(0x2000),
+            GetTableColor(0x2000),
+            GetTableColor(0x2020),
+            GetTableColor(0x2021),
+            GetTableColor(0x2021),
+            GetTableColor(0x2041),
+            GetTableColor(0x2441),
+            GetTableColor(0x2461),
+            GetTableColor(0x2461),
+            GetTableColor(0x2462),
+            GetTableColor(0x2482),
+            GetTableColor(0x2482),
+            GetTableColor(0x28C3),
+            GetTableColor(0x2CE4),
+            GetTableColor(0x3105),
+            GetTableColor(0x3546),
+            GetTableColor(0x3967),
+            GetTableColor(0x3D88),
+            GetTableColor(0x41C9),
+            GetTableColor(0x45EA),
+            GetTableColor(0x4A0B),
+            GetTableColor(0x4E4B),
+            GetTableColor(0x526C),
+            GetTableColor(0x568D),
+            GetTableColor(0x5ACE),
+            GetTableColor(0x5EEF),
+            GetTableColor(0x6310),
+            GetTableColor(0x6751),
+            GetTableColor(0x6B72),
+            GetTableColor(0x6F93),
+            GetTableColor(0x73D4),
+            GetTableColor(0x77F5)
+        };
+
+        // todo: consolidate stuff like this
+        private static Vector3 GetTableColor(ushort value)
+        {
+            int r = (value >> 0) & 0x1F;
+            int g = (value >> 5) & 0x1F;
+            int b = (value >> 10) & 0x1F;
+            return new Vector3(r / 31.0f, g / 31.0f, b / 31.0f);
+        }
+
         public static ModelMetadata? GetEntityByName(string name)
         {
             if (ModelMetadata.TryGetValue(name, out ModelMetadata? metadata))

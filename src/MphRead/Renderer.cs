@@ -71,7 +71,7 @@ namespace MphRead
         public int UseOverride { get; set; }
         public int OverrideColor { get; set; }
         public int MaterialAlpha { get; set; }
-        public int MaterialDecal { get; set; }
+        public int MaterialMode { get; set; }
         public int ModelMatrix { get; set; }
     }
 
@@ -276,7 +276,7 @@ namespace MphRead
             _shaderLocations.UseOverride = GL.GetUniformLocation(_shaderProgramId, "use_override");
             _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
             _shaderLocations.MaterialAlpha = GL.GetUniformLocation(_shaderProgramId, "mat_alpha");
-            _shaderLocations.MaterialDecal = GL.GetUniformLocation(_shaderProgramId, "mat_decal");
+            _shaderLocations.MaterialMode = GL.GetUniformLocation(_shaderProgramId, "mat_mode");
             _shaderLocations.ModelMatrix = GL.GetUniformLocation(_shaderProgramId, "model_mtx");
         }
 
@@ -1232,7 +1232,7 @@ namespace MphRead
             GL.Uniform3(_shaderLocations.Ambient, ambient);
             GL.Uniform3(_shaderLocations.Specular, specular);
             GL.Uniform1(_shaderLocations.MaterialAlpha, alpha);
-            GL.Uniform1(_shaderLocations.MaterialDecal, material.PolygonMode == PolygonMode.Decal ? 1 : 0);
+            GL.Uniform1(_shaderLocations.MaterialMode, (int)material.PolygonMode);
             material.CurrentAlpha = alpha;
             UpdateMaterials(model);
         }

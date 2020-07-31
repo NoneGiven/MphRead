@@ -77,14 +77,15 @@ varying vec4 color;
 uniform bool use_override;
 uniform vec4 override_color;
 uniform float mat_alpha;
-uniform bool mat_decal;
+uniform bool mat_mode;
 
 void main()
 {
+    // mat_mode: 0 - modulate, 1 - decal, 2 - toon
     vec4 col;
     if (use_texture) {
         vec4 texcolor = texture2D(tex, texcoord);
-        texcolor = vec4(texcolor.x, texcolor.y, texcolor.z, mat_alpha * (mat_decal ? 1.0 : texcolor.w));
+        texcolor = vec4(texcolor.x, texcolor.y, texcolor.z, mat_alpha * (mat_mode == 1 ? 1.0 : texcolor.w));
         col = color * texcolor;
         if (use_override) {
             col.r = override_color.r;
