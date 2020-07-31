@@ -380,7 +380,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Artifact)
                 {
-                    models.Add(LoadArtifact(((Entity<ArtifactEntityData>)entity).Data));
+                    models.AddRange(LoadArtifact(((Entity<ArtifactEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.CameraSequence)
                 {
@@ -711,12 +711,14 @@ namespace MphRead
             return model;
         }
 
-        private static Model LoadArtifact(ArtifactEntityData data)
+        private static IEnumerable<Model> LoadArtifact(ArtifactEntityData data)
         {
-            // sktodo: load correct model, height offset, rotation is too slow
+            var models = new List<Model>();
+            // sktodo: load correct model, rotation is too slow
             // todo: load base w/ its own height offset
-            Model model = Read.GetModelByName("Octolith");
-            float offset = data.ModelId >= 8 ? GetOctolithHeightOffset() : 0f;
+            string name = data.ModelId >= 8 ? "Octolith" : $"Artifact0{data.ModelId + 1}";
+            Model model = Read.GetModelByName(name);
+            float offset = data.ModelId >= 8 ? GetOctolithHeightOffset() : model.Nodes[0].Offset.FloatValue;
             model.Position = new Vector3(
                 data.Position.X.FloatValue,
                 data.Position.Y.FloatValue + offset,
@@ -725,10 +727,15 @@ namespace MphRead
             ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
-            //model.Rotating = true;
-            //model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
-            //model.SpinSpeed = 0.35f;
-            return model;
+            model.Rotating = true;
+            model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
+            model.SpinSpeed = 0.35f;
+            models.Add(model);
+            if (data.HasBase != 0)
+            {
+
+            }
+            return models;
         }
 
         // todo: load lock, fade in/out "animation"

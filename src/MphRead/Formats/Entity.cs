@@ -1094,11 +1094,14 @@ namespace MphRead
         public readonly Vector3Fx Position;
         public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
-        public readonly uint Field24;
+        public readonly byte ModelId;
+        public readonly byte ArtifactId;
+        public readonly byte Trigger;
+        public readonly byte HasBase;
         public readonly uint Field28;
         public readonly uint Field2C;
         public readonly uint Field30;
-        public readonly uint ModelId;
+        public readonly uint Field34;
         public readonly uint Field38;
         public readonly uint Field3C;
         public readonly ushort Field40;
