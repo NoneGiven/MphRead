@@ -858,7 +858,7 @@ namespace MphRead
         {
             GL.UseProgram(_shaderProgramId);
             UseRoomLights();
-            if (model.UseLightOverride) // sktodo: add a property
+            if (model.UseLightOverride)
             {
                 // todo: could add a height offset to really match the player position vs. the camera
                 Vector3 player = _cameraPosition * -1;
