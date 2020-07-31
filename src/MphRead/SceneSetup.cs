@@ -539,15 +539,6 @@ namespace MphRead
             return model;
         }
 
-        public static float GetHeightOffset(Fixed value)
-        {
-            return value.Value <= -2663
-                ? Fixed.ToFloat(2663)
-                : value.Value == 6393
-                    ? Fixed.ToFloat(2812)
-                    : Fixed.ToFloat(2662);
-        }
-
         private static IEnumerable<Model> LoadItem(ItemEntityData data)
         {
             var models = new List<Model>();
@@ -557,7 +548,7 @@ namespace MphRead
                 model = Read.GetModelByName(Metadata.Items[(int)data.ModelId]);
                 model.Position = new Vector3(
                     data.Position.X.FloatValue,
-                    data.Position.Y.FloatValue + GetHeightOffset(data.Position.Y),
+                    data.Position.Y.FloatValue + GetItemHeightOffset(data.Position.Y),
                     data.Position.Z.FloatValue
                 );
                 ComputeNodeMatrices(model, index: 0);
@@ -723,12 +714,14 @@ namespace MphRead
         private static Model LoadArtifact(ArtifactEntityData data)
         {
             // sktodo: load correct model, height offset, rotation is too slow
+            // todo: load base w/ its own height offset
             Model model = Read.GetModelByName("Octolith");
+            float offset = data.ModelId >= 8 ? GetOctolithHeightOffset(data.Position.Y) : 0f;
             model.Position = new Vector3(
                 data.Position.X.FloatValue,
-                data.Position.Y.FloatValue,
+                data.Position.Y.FloatValue + offset,
                 data.Position.Z.FloatValue
-            );
+            );;
             ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
@@ -748,6 +741,20 @@ namespace MphRead
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Object;
             return model;
+        }
+
+        private static float GetItemHeightOffset(Fixed value)
+        {
+            return value.Value <= -2663
+                ? Fixed.ToFloat(2663)
+                : value.Value == 6393
+                    ? Fixed.ToFloat(2812)
+                    : Fixed.ToFloat(2662);
+        }
+
+        private static float GetOctolithHeightOffset(Fixed value)
+        {
+            return Fixed.ToFloat(7168);
         }
 
         private static readonly Dictionary<EntityType, ColorRgb> _colorOverrides = new Dictionary<EntityType, ColorRgb>()

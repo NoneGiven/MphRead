@@ -1098,7 +1098,7 @@ namespace MphRead
         public readonly uint Field28;
         public readonly uint Field2C;
         public readonly uint Field30;
-        public readonly uint Field34;
+        public readonly uint ModelId;
         public readonly uint Field38;
         public readonly uint Field3C;
         public readonly ushort Field40;
