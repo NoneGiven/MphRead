@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Mathematics;
 
 namespace MphRead
@@ -157,7 +158,8 @@ namespace MphRead
                 var position = new Vector3(
                     node.Position.X / model.Scale.X,
                     node.Position.Y / model.Scale.Y,
-                    node.Position.Z / model.Scale.Z);
+                    node.Position.Z / model.Scale.Z
+                );
                 Matrix4 transform = ComputeNodeTransforms(node.Scale, node.Angle, position);
                 if (node.ParentIndex == UInt16.MaxValue)
                 {
@@ -216,6 +218,28 @@ namespace MphRead
             transform.M24 = 0;
             transform.M34 = 0;
             transform.M44 = 1;
+
+            return transform;
+        }
+
+        public static Matrix3 GetTransformMatrix(Vector3 vector1, Vector3 vector2)
+        {
+            Vector3 up = Vector3.Cross(vector2, vector1).Normalized();
+            var direction = Vector3.Cross(vector1, up);
+
+            Matrix3 transform = default;
+
+            transform.M11 = up.X;
+            transform.M12 = up.Y;
+            transform.M13 = up.Z;
+
+            transform.M21 = direction.X;
+            transform.M22 = direction.Y;
+            transform.M23 = direction.Z;
+
+            transform.M31 = vector1.X;
+            transform.M32 = vector1.Y;
+            transform.M33 = vector1.Z;
 
             return transform;
         }
@@ -379,7 +403,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Artifact)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<ArtifactEntityData>)entity).Data.Position));
+                    models.AddRange(LoadArtifact(((Entity<ArtifactEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.CameraSequence)
                 {
@@ -519,6 +543,7 @@ namespace MphRead
             {
                 return LoadEntityPlaceholder(EntityType.Teleporter, data.Position);
             }
+            // todo: how to use ArtifactId?
             int flags = data.ArtifactId < 8 && data.Invisible == 0 ? 2 : 0;
             string modelName;
             if ((flags & 2) == 0)
@@ -544,14 +569,9 @@ namespace MphRead
             if (data.Enabled != 0)
             {
                 model = Read.GetModelByName(Metadata.Items[(int)data.ModelId]);
-                float offset = data.Position.Y.Value <= -2663
-                    ? Fixed.ToFloat(2663)
-                    : data.Position.Y.Value == 6393
-                        ? Fixed.ToFloat(2812)
-                        : Fixed.ToFloat(2662);
                 model.Position = new Vector3(
                     data.Position.X.FloatValue,
-                    data.Position.Y.FloatValue + offset,
+                    data.Position.Y.FloatValue + GetItemHeightOffset(data.Position.Y),
                     data.Position.Z.FloatValue
                 );
                 ComputeNodeMatrices(model, index: 0);
@@ -559,6 +579,7 @@ namespace MphRead
                 model.Rotating = true;
                 model.Floating = true;
                 model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
+                model.SpinSpeed = 0.35f;
                 models.Add(model);
             }
             if (data.HasBase != 0)
@@ -584,6 +605,7 @@ namespace MphRead
             model.Rotating = true;
             model.Floating = true;
             model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
+            model.SpinSpeed = 0.35f;
             return model;
         }
 
@@ -712,6 +734,50 @@ namespace MphRead
             return model;
         }
 
+        private static IEnumerable<Model> LoadArtifact(ArtifactEntityData data)
+        {
+            var models = new List<Model>();
+            // sktodo: correct rotation speed
+            string name = data.ModelId >= 8 ? "Octolith" : $"Artifact0{data.ModelId + 1}";
+            Model model = Read.GetModelByName(name);
+            float offset = data.ModelId >= 8 ? GetOctolithHeightOffset() : model.Nodes[0].Offset.FloatValue;
+            model.Position = new Vector3(
+                data.Position.X.FloatValue,
+                data.Position.Y.FloatValue + offset,
+                data.Position.Z.FloatValue
+            );
+            ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
+            ComputeNodeMatrices(model, index: 0);
+            model.Type = ModelType.Generic;
+            // todo: maybe the Octolith technically rotates
+            if (data.ModelId < 8)
+            {
+                model.Rotating = true;
+                model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
+                model.SpinSpeed = 0.35f;
+            }
+            else
+            {
+                model.UseLightOverride = true;
+            }
+            models.Add(model);
+            if (data.HasBase != 0)
+            {
+                Model baseModel = Read.GetModelByName("ArtifactBase");
+                offset = GetArtifactBaseHeightOffset(data.Position.Y.Value + model.Nodes[0].Offset.Value);
+                baseModel.Position = new Vector3(
+                    data.Position.X.FloatValue,
+                    model.Position.Y + offset,
+                    data.Position.Z.FloatValue
+                );
+                ComputeModelMatrices(baseModel, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
+                ComputeNodeMatrices(baseModel, index: 0);
+                baseModel.Type = ModelType.Generic;
+                models.Add(baseModel);
+            }
+            return models;
+        }
+
         // todo: load lock, fade in/out "animation"
         private static Model LoadForceField(ForceFieldEntityData data)
         {
@@ -724,6 +790,25 @@ namespace MphRead
             return model;
         }
 
+        private static float GetItemHeightOffset(Fixed value)
+        {
+            return value.Value <= -2663
+                ? Fixed.ToFloat(2663)
+                : value.Value == 6393
+                    ? Fixed.ToFloat(2812)
+                    : Fixed.ToFloat(2662);
+        }
+
+        private static float GetOctolithHeightOffset()
+        {
+            return Fixed.ToFloat(7168);
+        }
+
+        private static float GetArtifactBaseHeightOffset(int value)
+        {
+            return value <= 3116 ? Fixed.ToFloat(-3116) : Fixed.ToFloat(-3117);
+        }
+
         private static readonly Dictionary<EntityType, ColorRgb> _colorOverrides = new Dictionary<EntityType, ColorRgb>()
         {
             { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) }, // currently used for ID 2
@@ -734,15 +819,12 @@ namespace MphRead
             { EntityType.FhUnknown9, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.Unknown8, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.FhUnknown10, new ColorRgb(0xFF, 0xFF, 0x00) },
-            { EntityType.OctolithFlag, new ColorRgb(0x00, 0xFF, 0xFF) },
-            { EntityType.FlagBase, new ColorRgb(0xFF, 0x00, 0xFF) },
-            { EntityType.NodeDefense, new ColorRgb(0x1E, 0x90, 0xFF) },
             // "permanent" placeholders
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.FhPlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.CameraPosition, new ColorRgb(0x00, 0xFF, 0x00) },
             { EntityType.FhCameraPosition, new ColorRgb(0x00, 0xFF, 0x00) },
-            { EntityType.Teleporter, new ColorRgb(0xFF, 0xFF, 0xFF) },
+            { EntityType.Teleporter, new ColorRgb(0xFF, 0xFF, 0xFF) }, // used for invisible teleporters
             { EntityType.LightSource, new ColorRgb(0xFF, 0xDE, 0xAD) },
             { EntityType.CameraSequence, new ColorRgb(0xFF, 0x69, 0xB4) }
         };
@@ -757,7 +839,7 @@ namespace MphRead
                     mesh.OverrideColor = mesh.PlaceholderColor = _colorOverrides[type].AsVector4();
                 }
             }
-            model.Position = new Vector3(position.X.FloatValue, position.Y.FloatValue, position.Z.FloatValue);
+            model.Position = position.ToFloatVector();
             model.EntityType = type;
             model.Type = ModelType.Placeholder;
             ComputeNodeMatrices(model, index: 0);

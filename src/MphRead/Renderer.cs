@@ -71,7 +71,7 @@ namespace MphRead
         public int UseOverride { get; set; }
         public int OverrideColor { get; set; }
         public int MaterialAlpha { get; set; }
-        public int MaterialDecal { get; set; }
+        public int MaterialMode { get; set; }
         public int ModelMatrix { get; set; }
     }
 
@@ -227,10 +227,6 @@ namespace MphRead
 
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Texture2D);
-            GL.PolygonMode(MaterialFace.FrontAndBack,
-                _wireframe
-                ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
-                : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
 
             GL.DepthFunc(DepthFunction.Lequal);
 
@@ -261,6 +257,8 @@ namespace MphRead
             GL.LinkProgram(_shaderProgramId);
             GL.DetachShader(_shaderProgramId, vertexShader);
             GL.DetachShader(_shaderProgramId, fragmentShader);
+            GL.DeleteShader(fragmentShader);
+            GL.DeleteShader(vertexShader);
 
             _shaderLocations.IsBillboard = GL.GetUniformLocation(_shaderProgramId, "is_billboard");
             _shaderLocations.UseLight = GL.GetUniformLocation(_shaderProgramId, "use_light");
@@ -280,7 +278,7 @@ namespace MphRead
             _shaderLocations.UseOverride = GL.GetUniformLocation(_shaderProgramId, "use_override");
             _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
             _shaderLocations.MaterialAlpha = GL.GetUniformLocation(_shaderProgramId, "mat_alpha");
-            _shaderLocations.MaterialDecal = GL.GetUniformLocation(_shaderProgramId, "mat_decal");
+            _shaderLocations.MaterialMode = GL.GetUniformLocation(_shaderProgramId, "mat_mode");
             _shaderLocations.ModelMatrix = GL.GetUniformLocation(_shaderProgramId, "model_mtx");
         }
 
@@ -646,7 +644,7 @@ namespace MphRead
                     _modelMatrix = transform * _modelMatrix;
                     if (model.Rotating)
                     {
-                        model.Spin = (float)(model.Spin + elapsedTime * 360 * 0.35) % 360;
+                        model.Spin = (float)(model.Spin + elapsedTime * 360 * model.SpinSpeed) % 360;
                         transform = SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
                             MathHelper.DegreesToRadians(model.SpinAxis.X * model.Spin),
                             MathHelper.DegreesToRadians(model.SpinAxis.Y * model.Spin),
@@ -860,7 +858,21 @@ namespace MphRead
         {
             GL.UseProgram(_shaderProgramId);
             UseRoomLights();
-            if (model.UseLightSources)
+            if (model.UseLightOverride)
+            {
+                // todo: could add a height offset to really match the player position vs. the camera
+                Vector3 player = _cameraPosition * -1;
+                var vector1 = new Vector3(0, 1, 0); // Octolith's up vector
+                Vector3 vector2 = new Vector3(player.X - model.Position.X, 0, player.Z - model.Position.Z).Normalized();
+                Matrix3 transform = SceneSetup.GetTransformMatrix(vector2, vector1);
+                Vector3 lightVector = (Metadata.OctolithLight1Vector * transform).Normalized();
+                GL.Uniform3(_shaderLocations.Light1Vector, lightVector);
+                GL.Uniform3(_shaderLocations.Light1Color, Metadata.OctolithLightColor);
+                lightVector = (Metadata.OctolithLight2Vector * transform).Normalized();
+                GL.Uniform3(_shaderLocations.Light2Vector, lightVector);
+                GL.Uniform3(_shaderLocations.Light2Color, Metadata.OctolithLightColor);
+            }
+            else if (model.UseLightSources)
             {
                 UpdateLightSources(model.Position);
             }
@@ -1043,6 +1055,10 @@ namespace MphRead
                     GL.CullFace(CullFaceMode.Front);
                 }
             }
+            GL.PolygonMode(MaterialFace.FrontAndBack,
+                _wireframe || material.Wireframe != 0
+                ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
+                : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
             DoDlist(model, mesh);
         }
 
@@ -1232,7 +1248,7 @@ namespace MphRead
             GL.Uniform3(_shaderLocations.Ambient, ambient);
             GL.Uniform3(_shaderLocations.Specular, specular);
             GL.Uniform1(_shaderLocations.MaterialAlpha, alpha);
-            GL.Uniform1(_shaderLocations.MaterialDecal, material.PolygonMode == PolygonMode.Decal ? 1 : 0);
+            GL.Uniform1(_shaderLocations.MaterialMode, (int)material.PolygonMode);
             material.CurrentAlpha = alpha;
             UpdateMaterials(model);
         }
@@ -1671,10 +1687,6 @@ namespace MphRead
             else if (e.Key == Key.Q)
             {
                 _wireframe = !_wireframe;
-                GL.PolygonMode(MaterialFace.FrontAndBack,
-                    _wireframe
-                        ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
-                        : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
                 await PrintOutput();
             }
             else if (e.Key == Key.B)

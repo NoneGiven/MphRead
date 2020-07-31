@@ -12,6 +12,7 @@ namespace MphRead
         public bool Visible { get; set; } = true;
         public bool ScanVisorOnly { get; set; }
         public bool UseLightSources { get; }
+        public bool UseLightOverride { get; set; } // for Octoliths
         public ModelType Type { get; set; }
         public EntityType EntityType { get; set; }
         public ushort EntityLayer { get; set; } = UInt16.MaxValue;
@@ -128,6 +129,7 @@ namespace MphRead
         public bool Rotating { get; set; }
         public bool Floating { get; set; }
         public float Spin { get; set; }
+        public float SpinSpeed { get; set; }
         // refers to the untransformed model's axis
         public Vector3 SpinAxis { get; set; } = Vector3.UnitY;
 
@@ -429,6 +431,8 @@ namespace MphRead
         public Vector3 Scale { get; set; }
         public Vector3 Angle { get; set; }
         public Vector3 Position { get; set; }
+        // need to keep this as fixed to potentially pass to the magic height offset function later
+        public Fixed Offset { get; }
         public Vector3 Vector1 { get; }
         public Vector3 Vector2 { get; }
         public bool Billboard { get; }
@@ -461,6 +465,7 @@ namespace MphRead
                 raw.AngleZ / 65536.0f * 2.0f * MathF.PI
             );
             Position = raw.Position.ToFloatVector();
+            Offset = raw.Offset;
             Vector1 = raw.Vector1.ToFloatVector();
             Vector2 = raw.Vector2.ToFloatVector();
             // todo: implement billboard = 2 (cylindrical), also "fix" spherical
@@ -491,6 +496,7 @@ namespace MphRead
         public byte Lighting { get; set; } // todo: what do lighting values 3 and 5 mean?
         public CullingMode Culling { get; }
         public byte Alpha { get; }
+        public byte Wireframe { get; }
         public float CurrentAlpha { get; set; }
         public int TextureId { get; }
         public int PaletteId { get; }
@@ -525,6 +531,7 @@ namespace MphRead
             Lighting = raw.Lighting;
             Culling = raw.Culling;
             Alpha = raw.Alpha;
+            Wireframe = raw.Wireframe;
             CurrentAlpha = Alpha / 31.0f;
             CurrentTextureId = TextureId = raw.TextureId;
             CurrentPaletteId = PaletteId = raw.PaletteId;
@@ -548,23 +555,47 @@ namespace MphRead
         }
     }
 
+    public readonly struct TextureData
+    {
+        public readonly uint Data;
+        public readonly byte Alpha;
+
+        public TextureData(uint data, byte alpha)
+        {
+            Data = data;
+            Alpha = alpha;
+        }
+    }
+
+    public readonly struct PaletteData
+    {
+        public readonly ushort Data;
+
+        public PaletteData(ushort data)
+        {
+            Data = data;
+        }
+    }
+
     public class NodeAnimationGroup
     {
-        public uint FrameCount { get; }
-        public uint Fixed32Pointer { get; }
-        public uint UInt16Pointer { get; }
-        public uint Int32Pointer { get; }
-        public uint AnimationOffset { get; }
+        public int FrameCount { get; }
+        public int CurrentFrame { get; set; }
+        public int Count { get; }
+        public IReadOnlyList<Fixed> Fixed32s { get; }
+        public IReadOnlyList<ushort> UInt16s { get; }
+        public IReadOnlyList<int> Int32s { get; }
         public IReadOnlyDictionary<string, NodeAnimation> Animations { get; }
 
-        public NodeAnimationGroup(RawNodeAnimationGroup raw, IReadOnlyDictionary<string, NodeAnimation> animations)
+        public NodeAnimationGroup(RawNodeAnimationGroup raw, IReadOnlyList<Fixed> fixed32s, IReadOnlyList<ushort> uint16s,
+            IReadOnlyList<int> int32s, IReadOnlyDictionary<string, NodeAnimation> animations)
         {
-            FrameCount = raw.FrameCount;
-            Fixed32Pointer = raw.Fixed32Pointer;
-            UInt16Pointer = raw.UInt16Pointer;
-            Int32Pointer = raw.Int32Pointer;
-            AnimationOffset = raw.AnimationOffset;
+            FrameCount = (int)raw.FrameCount;
+            Fixed32s = fixed32s;
+            UInt16s = uint16s;
+            Int32s = int32s;
             Animations = animations;
+            Count = Animations.Count;
         }
     }
 
@@ -588,6 +619,7 @@ namespace MphRead
             Rotations = rotations;
             Translations = translations;
             Animations = animations;
+            Debug.Assert(Count == Animations.Count);
         }
     }
 
@@ -611,6 +643,7 @@ namespace MphRead
             TextureIds = textureIds;
             PaletteIds = paletteIds;
             Animations = animations;
+            Debug.Assert(Count == Animations.Count);
         }
     }
 
@@ -630,6 +663,7 @@ namespace MphRead
             Count = (int)raw.AnimationCount;
             Colors = colors;
             Animations = animations;
+            Debug.Assert(Count == Animations.Count);
         }
     }
 

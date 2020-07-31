@@ -11,28 +11,7 @@ namespace MphRead
         public static readonly int EntityDataHeader = Marshal.SizeOf(typeof(EntityDataHeader));
         public static readonly int JumpPadEntityData = Marshal.SizeOf(typeof(JumpPadEntityData));
         public static readonly int ItemEntityData = Marshal.SizeOf(typeof(ItemEntityData));
-    }
-
-    public readonly struct TextureData
-    {
-        public readonly uint Data;
-        public readonly byte Alpha;
-
-        public TextureData(uint data, byte alpha)
-        {
-            Data = data;
-            Alpha = alpha;
-        }
-    }
-
-    public readonly struct PaletteData
-    {
-        public readonly ushort Data;
-
-        public PaletteData(ushort data)
-        {
-            Data = data;
-        }
+        public static readonly int NodeAnimation = Marshal.SizeOf(typeof(NodeAnimation));
     }
 
     // size: 4
@@ -47,12 +26,8 @@ namespace MphRead
     {
         public readonly uint Offset;
         public readonly uint Size;
-        public readonly int XMinimum;
-        public readonly int YMinimum;
-        public readonly int ZMinimum;
-        public readonly int XMaximum;
-        public readonly int YMaximum;
-        public readonly int ZMaximum;
+        public readonly Vector3Fx MinCoordinates;
+        public readonly Vector3Fx MaxCoordinates;
     }
 
     // size: 132
@@ -357,7 +332,7 @@ namespace MphRead
         public readonly short AngleZ;
         public readonly ushort Field62;
         public readonly Vector3Fx Position;
-        public readonly uint Field70;
+        public readonly Fixed Offset;
         public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
         public readonly byte Billboard;

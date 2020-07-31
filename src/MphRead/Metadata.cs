@@ -379,6 +379,57 @@ namespace MphRead
             return list[playerCount == 3 ? 1 : (playerCount == 4 ? 2 : 0)];
         }
 
+        public static readonly Vector3 OctolithLight1Vector = new Vector3(0, 0.3005371f, -0.5f);
+        public static readonly Vector3 OctolithLight2Vector = new Vector3(0, 0, -0.5f);
+        public static readonly Vector3 OctolithLightColor = new Vector3(1, 1, 1);
+
+        // this is only set/used by Octolith
+        // todo: set this as a uniform
+        public static readonly IReadOnlyList<Vector3> ToonTable = new List<Vector3>()
+        {
+            GetTableColor(0x2000),
+            GetTableColor(0x2000),
+            GetTableColor(0x2020),
+            GetTableColor(0x2021),
+            GetTableColor(0x2021),
+            GetTableColor(0x2041),
+            GetTableColor(0x2441),
+            GetTableColor(0x2461),
+            GetTableColor(0x2461),
+            GetTableColor(0x2462),
+            GetTableColor(0x2482),
+            GetTableColor(0x2482),
+            GetTableColor(0x28C3),
+            GetTableColor(0x2CE4),
+            GetTableColor(0x3105),
+            GetTableColor(0x3546),
+            GetTableColor(0x3967),
+            GetTableColor(0x3D88),
+            GetTableColor(0x41C9),
+            GetTableColor(0x45EA),
+            GetTableColor(0x4A0B),
+            GetTableColor(0x4E4B),
+            GetTableColor(0x526C),
+            GetTableColor(0x568D),
+            GetTableColor(0x5ACE),
+            GetTableColor(0x5EEF),
+            GetTableColor(0x6310),
+            GetTableColor(0x6751),
+            GetTableColor(0x6B72),
+            GetTableColor(0x6F93),
+            GetTableColor(0x73D4),
+            GetTableColor(0x77F5)
+        };
+
+        // todo: consolidate stuff like this
+        private static Vector3 GetTableColor(ushort value)
+        {
+            int r = (value >> 0) & 0x1F;
+            int g = (value >> 5) & 0x1F;
+            int b = (value >> 10) & 0x1F;
+            return new Vector3(r / 31.0f, g / 31.0f, b / 31.0f);
+        }
+
         public static ModelMetadata? GetEntityByName(string name)
         {
             if (ModelMetadata.TryGetValue(name, out ModelMetadata? metadata))
@@ -5228,6 +5279,7 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "Kanden",
                         useLightSources: true) // todo: confirm lod0 vs. lod1 for using light sources
@@ -5245,6 +5297,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
+                        animationPath: $@"_archives\Kanden\Kanden_Anim.bin",
                         texture: true,
                         useLightSources: true)
                 },
@@ -5261,6 +5315,7 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "Kanden",
                         recolorName: "Kanden",
@@ -5296,6 +5351,7 @@ namespace MphRead
                             "img_Team01",
                             "img_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "localKanden",
                         useLightSources: true)
@@ -5377,6 +5433,7 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "Nox",
                         useLightSources: true)
@@ -5394,6 +5451,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
+                        animationPath: $@"_archives\Nox\Nox_Anim.bin",
                         texture: true,
                         useLightSources: true)
                 },
@@ -5410,6 +5469,7 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "Nox",
                         recolorName: "Nox",
@@ -5427,6 +5487,7 @@ namespace MphRead
                             "img_Team01",
                             "img_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "localNox",
                         useLightSources: true)
@@ -5665,6 +5726,7 @@ namespace MphRead
                             "pal_team01",
                             "pal_team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "Samus",
                         useLightSources: true)
@@ -5682,6 +5744,8 @@ namespace MphRead
                             "pal_team01",
                             "pal_team02"
                         },
+                        animation: true,
+                        animationPath: $@"_archives\Samus\Samus_Anim.bin",
                         texture: true,
                         useLightSources: true)
                 },
@@ -5698,7 +5762,6 @@ namespace MphRead
                             "pal_team01",
                             "pal_team02"
                         },
-                        animation: false,
                         texture: true,
                         archive: "Samus",
                         recolorName: "Samus",
@@ -5716,6 +5779,7 @@ namespace MphRead
                             "img_Team01",
                             "img_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "localSamus",
                         useLightSources: true)
@@ -5816,6 +5880,7 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "Spire",
                         useLightSources: true)
@@ -5833,6 +5898,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
+                        animationPath: $@"_archives\Spire\Spire_Anim.bin",
                         texture: true,
                         useLightSources: true)
                 },
@@ -5849,6 +5916,7 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "Spire",
                         recolorName: "Spire",
@@ -5866,6 +5934,7 @@ namespace MphRead
                             "img_Team01",
                             "img_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "localSpire",
                         useLightSources: true)
@@ -5894,6 +5963,7 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "Sylux",
                         useLightSources: true)
@@ -5911,6 +5981,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
+                        animationPath: $@"_archives\Sylux\Sylux_Anim.bin",
                         texture: true,
                         useLightSources: true)
                 },
@@ -5927,6 +5999,7 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "Sylux",
                         recolorName: "Sylux",
@@ -5944,6 +6017,7 @@ namespace MphRead
                             "img_Team01",
                             "img_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "localSylux",
                         useLightSources: true)
@@ -6097,6 +6171,7 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "Trace",
                         useLightSources: true)
@@ -6114,6 +6189,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
+                        animationPath: $@"_archives\Trace\Trace_Anim.bin",
                         texture: true,
                         useLightSources: true)
                 },
@@ -6130,6 +6207,7 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "Trace",
                         recolorName: "Trace",
@@ -6147,6 +6225,7 @@ namespace MphRead
                             "img_Team01",
                             "img_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "localTrace",
                         useLightSources: true)
@@ -6288,6 +6367,7 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "Weavel",
                         useLightSources: true)
@@ -6305,6 +6385,8 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
+                        animationPath: $@"_archives\Weavel\Weavel_Anim.bin",
                         texture: true,
                         useLightSources: true)
                 },
@@ -6321,6 +6403,7 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "Weavel",
                         recolorName: "Weavel",
@@ -6339,6 +6422,7 @@ namespace MphRead
                             "pal_Team01",
                             "pal_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "Weavel",
                         recolorName: "Weavel",
@@ -6356,6 +6440,7 @@ namespace MphRead
                             "img_Team01",
                             "img_Team02"
                         },
+                        animation: true,
                         texture: true,
                         archive: "localWeavel",
                         useLightSources: true)
@@ -6506,12 +6591,12 @@ namespace MphRead
                     new ModelMetadata("lightningLob", firstHunt: true)
                 },
                 {
-                    "Metroid_Lo",
-                    new ModelMetadata("Metroid_Lo", remove: "_Lo", firstHunt: true)
-                },
-                {
                     "metroid",
                     new ModelMetadata("metroid", firstHunt: true)
+                },
+                {
+                    "Metroid_Lo",
+                    new ModelMetadata("Metroid_Lo", remove: "_Lo", firstHunt: true)
                 },
                 {
                     "missileCollide",
@@ -6530,12 +6615,16 @@ namespace MphRead
                     new ModelMetadata("missileColLiterER", firstHunt: true)
                 },
                 {
+                    "Mochtroid",
+                    new ModelMetadata("Mochtroid", firstHunt: true)
+                },
+                {
                     "Mochtroid_Lo",
                     new ModelMetadata("Mochtroid_Lo", remove: "_Lo", firstHunt: true)
                 },
                 {
-                    "Mochtroid",
-                    new ModelMetadata("Mochtroid", firstHunt: true)
+                    "morphBall",
+                    new ModelMetadata("morphBall", animation: false, firstHunt: true)
                 },
                 {
                     "morphBall_Blue",
@@ -6544,10 +6633,6 @@ namespace MphRead
                 {
                     "morphBall_Green",
                     new ModelMetadata("morphBall_Green", animation: false, firstHunt: true)
-                },
-                {
-                    "morphBall",
-                    new ModelMetadata("morphBall", animation: false, firstHunt: true)
                 },
                 {
                     "morphBall_White",
