@@ -222,6 +222,28 @@ namespace MphRead
             return transform;
         }
 
+        public static Matrix3 GetTransformMatrix(Vector3 vector1, Vector3 vector2)
+        {
+            Vector3 up = Vector3.Cross(vector2, vector1).Normalized();
+            var direction = Vector3.Cross(vector1, up);
+
+            Matrix3 transform = default;
+
+            transform.M11 = up.X;
+            transform.M12 = up.Y;
+            transform.M13 = up.Z;
+
+            transform.M21 = direction.X;
+            transform.M22 = direction.Y;
+            transform.M23 = direction.Z;
+
+            transform.M31 = vector1.X;
+            transform.M32 = vector1.Y;
+            transform.M33 = vector1.Z;
+
+            return transform;
+        }
+
         public static void ComputeModelMatrices(Model model, Vector3 vector1, Vector3 vector2)
         {
             Vector3 up = Vector3.Cross(vector2, vector1).Normalized();
@@ -727,9 +749,17 @@ namespace MphRead
             ComputeModelMatrices(model, data.Vector2.ToFloatVector(), data.Vector1.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
-            model.Rotating = true;
-            model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
-            model.SpinSpeed = 0.35f;
+            // todo: maybe the Octolith technically rotates
+            if (data.ModelId < 8)
+            {
+                model.Rotating = true;
+                model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
+                model.SpinSpeed = 0.35f;
+            }
+            else
+            {
+                model.UseLightOverride = true;
+            }
             models.Add(model);
             if (data.HasBase != 0)
             {

@@ -379,6 +379,10 @@ namespace MphRead
             return list[playerCount == 3 ? 1 : (playerCount == 4 ? 2 : 0)];
         }
 
+        public static readonly Vector3 OctolithLight1Vector = new Vector3(0, 0.3005371f, -0.5f);
+        public static readonly Vector3 OctolithLight2Vector = new Vector3(0, 0, -0.5f);
+        public static readonly Vector3 OctolithLightColor = new Vector3(1, 1, 1);
+
         // this is only set/used by Octolith
         // todo: set this as a uniform
         public static readonly IReadOnlyList<Vector3> ToonTable = new List<Vector3>()

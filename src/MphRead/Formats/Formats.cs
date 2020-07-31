@@ -12,6 +12,7 @@ namespace MphRead
         public bool Visible { get; set; } = true;
         public bool ScanVisorOnly { get; set; }
         public bool UseLightSources { get; }
+        public bool UseLightOverride { get; set; } // for Octoliths
         public ModelType Type { get; set; }
         public EntityType EntityType { get; set; }
         public ushort EntityLayer { get; set; } = UInt16.MaxValue;

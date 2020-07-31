@@ -139,8 +139,51 @@ namespace MphRead
             {
                 foreach (Material material in model.Materials)
                 {
+                    GetPolygonAttrs(model, material, 1);
                 }
             }
+        }
+
+        public static void GetPolygonAttrs(Model model, int polygonId)
+        {
+            foreach (Material material in model.Materials)
+            {
+                GetPolygonAttrs(model, material, polygonId);
+            }
+        }
+
+        public static void GetPolygonAttrs(Model model, Material material, int polygonId)
+        {
+            int v19 = polygonId == 1 ? 0x4000 : 0;
+            int v20 = v19 | 0x8000;
+            int attr = v20 | material.Lighting | 16 * (int)material.PolygonMode
+                | ((int)material.Culling << 6) | (polygonId << 24) | (material.Alpha << 16);
+            Console.WriteLine($"{model.Name} - {material.Name}");
+            Console.WriteLine($"light = {material.Lighting}, mode = {(int)material.PolygonMode} ({material.PolygonMode}), " +
+                $"cull = {(int)material.Culling} ({material.Culling}), alpha = {material.Alpha}, id = {polygonId}");
+            DumpPolygonAttr((uint)attr);
+        }
+
+        public static void DumpPolygonAttr(uint attr)
+        {
+            Console.WriteLine($"0x{attr:X2}");
+            string bits = Convert.ToString(attr, 2);
+            Console.WriteLine(bits);
+            Console.WriteLine($"light1: {attr & 0x1}");
+            Console.WriteLine($"light2: {(attr >> 1) & 0x1}");
+            Console.WriteLine($"light3: {(attr >> 2) & 0x1}");
+            Console.WriteLine($"light4: {(attr >> 3) & 0x1}");
+            Console.WriteLine($"mode: {(attr >> 4) & 0x2}");
+            Console.WriteLine($"back: {(attr >> 6) & 0x1}");
+            Console.WriteLine($"front: {(attr >> 7) & 0x1}");
+            Console.WriteLine($"clear: {(attr >> 11) & 0x1}");
+            Console.WriteLine($"far: {(attr >> 12) & 0x1}");
+            Console.WriteLine($"1dot: {(attr >> 13) & 0x1}");
+            Console.WriteLine($"depth: {(attr >> 14) & 0x1}");
+            Console.WriteLine($"fog: {(attr >> 15) & 0x1}");
+            Console.WriteLine($"alpha: {(attr >> 16) & 0x1F}");
+            Console.WriteLine($"id: {(attr >> 24) & 0x3F}");
+            Console.WriteLine();
         }
 
         public static void TestAllLayers()

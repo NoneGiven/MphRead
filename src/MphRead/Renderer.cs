@@ -858,7 +858,21 @@ namespace MphRead
         {
             GL.UseProgram(_shaderProgramId);
             UseRoomLights();
-            if (model.UseLightSources)
+            if (model.UseLightOverride) // sktodo: add a property
+            {
+                // todo: could add a height offset to really match the player position vs. the camera
+                Vector3 player = _cameraPosition * -1;
+                var vector1 = new Vector3(0, 1, 0); // Octolith's up vector
+                Vector3 vector2 = new Vector3(player.X - model.Position.X, 0, player.Z - model.Position.Z).Normalized();
+                Matrix3 transform = SceneSetup.GetTransformMatrix(vector2, vector1);
+                Vector3 lightVector = (Metadata.OctolithLight1Vector * transform).Normalized();
+                GL.Uniform3(_shaderLocations.Light1Vector, lightVector);
+                GL.Uniform3(_shaderLocations.Light1Color, Metadata.OctolithLightColor);
+                lightVector = (Metadata.OctolithLight2Vector * transform).Normalized();
+                GL.Uniform3(_shaderLocations.Light2Vector, lightVector);
+                GL.Uniform3(_shaderLocations.Light2Color, Metadata.OctolithLightColor);
+            }
+            else if (model.UseLightSources)
             {
                 UpdateLightSources(model.Position);
             }
