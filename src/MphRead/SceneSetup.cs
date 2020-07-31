@@ -716,7 +716,7 @@ namespace MphRead
             // sktodo: load correct model, height offset, rotation is too slow
             // todo: load base w/ its own height offset
             Model model = Read.GetModelByName("Octolith");
-            float offset = data.ModelId >= 8 ? GetOctolithHeightOffset(data.Position.Y) : 0f;
+            float offset = data.ModelId >= 8 ? GetOctolithHeightOffset() : 0f;
             model.Position = new Vector3(
                 data.Position.X.FloatValue,
                 data.Position.Y.FloatValue + offset,
@@ -752,7 +752,7 @@ namespace MphRead
                     : Fixed.ToFloat(2662);
         }
 
-        private static float GetOctolithHeightOffset(Fixed value)
+        private static float GetOctolithHeightOffset()
         {
             return Fixed.ToFloat(7168);
         }
