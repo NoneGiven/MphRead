@@ -736,7 +736,6 @@ namespace MphRead
         private static IEnumerable<Model> LoadArtifact(ArtifactEntityData data)
         {
             var models = new List<Model>();
-            // sktodo: correct rotation speed
             string name = data.ModelId >= 8 ? "Octolith" : $"Artifact0{data.ModelId + 1}";
             Model model = Read.GetModelByName(name);
             float offset = data.ModelId >= 8 ? GetOctolithHeightOffset() : model.Nodes[0].Offset.FloatValue;
@@ -753,7 +752,7 @@ namespace MphRead
             {
                 model.Rotating = true;
                 model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
-                model.SpinSpeed = 0.35f;
+                model.SpinSpeed = 0.5f;
             }
             else
             {
