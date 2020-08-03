@@ -138,21 +138,25 @@ namespace MphRead
                 for (int i = 0; i < args.Length; i++)
                 {
                     string arg = args[i];
-                    if (i == args.Length - 1)
+                    if (arg.StartsWith("-") && arg.Length > 1)
                     {
-                        arguments.Add(new Argument(arg, null));
-                    }
-                    else
-                    {
-                        string value = args[i + 1];
-                        if (value.StartsWith("-"))
+                        arg = arg.Substring(1);
+                        if (i == args.Length - 1)
                         {
                             arguments.Add(new Argument(arg, null));
                         }
                         else
                         {
-                            arguments.Add(new Argument(arg, value));
-                            i++;
+                            string value = args[i + 1];
+                            if (value.StartsWith("-"))
+                            {
+                                arguments.Add(new Argument(arg, null));
+                            }
+                            else
+                            {
+                                arguments.Add(new Argument(arg, value));
+                                i++;
+                            }
                         }
                     }
                 }
