@@ -665,17 +665,15 @@ namespace MphRead
             public readonly Mesh Mesh;
             public readonly Material Material;
             public readonly bool RenderMesh;
-            public readonly bool RenderVolume;
             public readonly int PolygonId;
 
-            public RenderItem(Model model, Node node, Mesh mesh, Material material, bool renderMesh, bool renderVolume, int polygonId)
+            public RenderItem(Model model, Node node, Mesh mesh, Material material, bool renderMesh, int polygonId)
             {
                 Model = model;
                 Node = node;
                 Mesh = mesh;
                 Material = material;
                 RenderMesh = renderMesh;
-                RenderVolume = renderVolume;
                 PolygonId = polygonId;
             }
         }
@@ -707,10 +705,9 @@ namespace MphRead
                     bool renderMesh = renderModel && node.MeshCount > 0 && node.Enabled && model.NodeParentsEnabled(node);
                     foreach (Mesh mesh in model.GetNodeMeshes(j))
                     {
-                        bool renderVolume = model.EntityType == EntityType.LightSource;
                         Material material = model.Materials[mesh.MaterialId];
                         // sktodo: separate lists
-                        _renderList.Add(new RenderItem(model, node, mesh, material, renderMesh, renderVolume,
+                        _renderList.Add(new RenderItem(model, node, mesh, material, renderMesh,
                             material.RenderMode == RenderMode.Translucent ? polygonId++ : 0));
                     }
                 }
@@ -780,10 +777,6 @@ namespace MphRead
             {
                 GL.StencilFunc(StencilFunction.Equal, item.PolygonId, 0xFF);
                 RenderMesh(item);
-                if (item.RenderVolume)
-                {
-                    RenderLightVolume(item.Model.SceneId);
-                }
             }
             GL.DepthMask(true);
             GL.Disable(EnableCap.Blend);
