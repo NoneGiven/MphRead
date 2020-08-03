@@ -664,16 +664,14 @@ namespace MphRead
             public readonly Node Node;
             public readonly Mesh Mesh;
             public readonly Material Material;
-            public readonly bool RenderMesh;
             public readonly int PolygonId;
 
-            public RenderItem(Model model, Node node, Mesh mesh, Material material, bool renderMesh, int polygonId)
+            public RenderItem(Model model, Node node, Mesh mesh, Material material, int polygonId)
             {
                 Model = model;
                 Node = node;
                 Mesh = mesh;
                 Material = material;
-                RenderMesh = renderMesh;
                 PolygonId = polygonId;
             }
         }
@@ -702,13 +700,14 @@ namespace MphRead
                 for (int j = 0; j < model.Nodes.Count; j++)
                 {
                     Node node = model.Nodes[j];
-                    bool renderMesh = renderModel && node.MeshCount > 0 && node.Enabled && model.NodeParentsEnabled(node);
-                    foreach (Mesh mesh in model.GetNodeMeshes(j))
+                    if (renderModel && node.MeshCount > 0 && node.Enabled && model.NodeParentsEnabled(node))
                     {
-                        Material material = model.Materials[mesh.MaterialId];
-                        // sktodo: separate lists
-                        _renderList.Add(new RenderItem(model, node, mesh, material, renderMesh,
-                            material.RenderMode == RenderMode.Translucent ? polygonId++ : 0));
+                        foreach (Mesh mesh in model.GetNodeMeshes(j))
+                        {
+                            Material material = model.Materials[mesh.MaterialId];
+                            _renderList.Add(new RenderItem(model, node, mesh, material,
+                                material.RenderMode == RenderMode.Translucent ? polygonId++ : 0));
+                        }
                     }
                 }
             }
@@ -724,7 +723,7 @@ namespace MphRead
             GL.StencilMask(0xFF);
             GL.StencilOp(StencilOp.Zero, StencilOp.Zero, StencilOp.Zero);
             GL.StencilFunc(StencilFunction.Always, 0, 0xFF);
-            foreach (RenderItem item in _renderList.Where(r => r.RenderMesh && r.Material.RenderMode != RenderMode.Decal))
+            foreach (RenderItem item in _renderList.Where(r => r.Material.RenderMode != RenderMode.Decal))
             {
                 RenderMesh(item);
             }
@@ -735,7 +734,7 @@ namespace MphRead
             GL.DepthFunc(DepthFunction.Lequal);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-            foreach (RenderItem item in _renderList.Where(r => r.RenderMesh && r.Material.RenderMode == RenderMode.Decal))
+            foreach (RenderItem item in _renderList.Where(r => r.Material.RenderMode == RenderMode.Decal))
             {
                 RenderMesh(item);
             }
@@ -746,7 +745,7 @@ namespace MphRead
             GL.AlphaFunc(AlphaFunction.Less, 1.0f);
             GL.ColorMask(false, false, false, false);
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
-            foreach (RenderItem item in _renderList.Where(r => r.RenderMesh && r.Material.RenderMode == RenderMode.Translucent))
+            foreach (RenderItem item in _renderList.Where(r => r.Material.RenderMode == RenderMode.Translucent))
             {
                 GL.StencilFunc(StencilFunction.Greater, item.PolygonId, 0xFF);
                 RenderMesh(item);
@@ -756,7 +755,7 @@ namespace MphRead
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
             GL.StencilFunc(StencilFunction.Always, 0, 0xFF);
             GL.AlphaFunc(AlphaFunction.Equal, 1.0f);
-            foreach (RenderItem item in _renderList.Where(r => r.RenderMesh && r.Material.RenderMode != RenderMode.Decal))
+            foreach (RenderItem item in _renderList.Where(r => r.Material.RenderMode != RenderMode.Decal))
             {
                 RenderMesh(item);
             }
@@ -766,14 +765,14 @@ namespace MphRead
             GL.DepthMask(false);
             GL.DepthFunc(DepthFunction.Lequal);
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
-            foreach (RenderItem item in _renderList.Where(r => r.RenderMesh && r.Material.RenderMode == RenderMode.Translucent))
+            foreach (RenderItem item in _renderList.Where(r => r.Material.RenderMode == RenderMode.Translucent))
             {
                 GL.StencilFunc(StencilFunction.Notequal, item.PolygonId, 0xFF);
                 RenderMesh(item);
             }
             // pass 6: translucent (before)
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
-            foreach (RenderItem item in _renderList.Where(r => r.RenderMesh && r.Material.RenderMode == RenderMode.Translucent))
+            foreach (RenderItem item in _renderList.Where(r => r.Material.RenderMode == RenderMode.Translucent))
             {
                 GL.StencilFunc(StencilFunction.Equal, item.PolygonId, 0xFF);
                 RenderMesh(item);
