@@ -6,6 +6,7 @@ namespace MphRead
         public static string FragmentShader => _fragmentShader;
 
         private static readonly string _vertexShader = @"
+#version 120
 uniform bool is_billboard;
 uniform bool use_light;
 uniform bool fog_enable;
@@ -48,7 +49,7 @@ void main()
         vec3 normal = normalize(mat3(model_mtx) * gl_Normal);
         vec3 dif_current = diffuse;
         vec3 amb_current = ambient;
-        if (gl_Color.a == 0) {
+        if (gl_Color.a == 0.0) {
             // see comment on DIF_AMB
             dif_current = gl_Color.rgb;
             amb_current = vec3(0.0, 0.0, 0.0);
@@ -65,6 +66,7 @@ void main()
 ";
 
         private static readonly string _fragmentShader = @"
+#version 120
 uniform bool is_billboard;
 uniform bool use_texture;
 uniform bool fog_enable;
