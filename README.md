@@ -27,7 +27,7 @@ Ensure there is a `paths.txt` file in the same location as the `MphRead` binary.
 ```
 MphRead usage:
 
-    -room <room_name> [layer_mask]
+    -room <room_name>
     -model <model_name> [recolor_index]
 
 The layer mask and recolor index are optional.
