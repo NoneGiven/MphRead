@@ -32,7 +32,7 @@ namespace MphRead
             else
             {
                 var rooms = new List<string>();
-                var models = new List<string>();
+                var models = new List<(string, int)>();
                 GameMode mode = GameMode.None;
                 int playerCount = 0;
                 BossFlags bossFlags = BossFlags.None;
@@ -71,9 +71,9 @@ namespace MphRead
                 {
                     entityLayerId = entityValue;
                 }
-                foreach (string modelName in GetStrings(arguments, "model", "m"))
+                foreach ((string, int) pair in GetPairs(arguments, "model", "m"))
                 {
-                    models.Add(modelName);
+                    models.Add(pair);
                 }
                 if (rooms.Count > 1 || (rooms.Count == 0 && models.Count == 0))
                 {
@@ -84,9 +84,10 @@ namespace MphRead
                 {
                     renderer.AddRoom(room, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
                 }
-                foreach (string model in models)
+                bool firstHunt = arguments.Any(a => a.Name == "fh");
+                foreach ((string model, int recolor) in models)
                 {
-                    renderer.AddModel(model);
+                    renderer.AddModel(model, recolor, firstHunt);
                 }
                 renderer.Run();
             }
@@ -95,22 +96,25 @@ namespace MphRead
         private readonly struct Argument
         {
             public readonly string Name;
-            public readonly string? StringValue;
+            public readonly string? ValueOne;
+            public readonly string? ValueTwo;
 
-            public Argument(string name, string? value)
+            public Argument(string name, string? valueOne, string? valueTwo = null)
             {
                 Name = name;
-                StringValue = value;
+                ValueOne = valueOne;
+                ValueTwo = valueTwo;
             }
         }
 
-        private static IEnumerable<string> GetStrings(IEnumerable<Argument> arguments, string fullName, string shortName)
+        private static IEnumerable<(string, int)> GetPairs(IEnumerable<Argument> arguments, string fullName, string shortName)
         {
             foreach (Argument argument in arguments.Where(a => a.Name == fullName || a.Name == shortName))
             {
-                if (argument.StringValue != null)
+                if (argument.ValueOne != null)
                 {
-                    yield return argument.StringValue;
+                    Int32.TryParse(argument.ValueTwo, out int valueTwo);
+                    yield return (argument.ValueOne, valueTwo);
                 }
             }
         }
@@ -131,9 +135,9 @@ namespace MphRead
         private static bool TryGetString(IEnumerable<Argument> arguments, string fullName, string shortName,
             [NotNullWhen(true)] out string? value)
         {
-            if (TryGetArgument(arguments, fullName, shortName, out Argument? argument) && argument.Value.StringValue != null)
+            if (TryGetArgument(arguments, fullName, shortName, out Argument? argument) && argument.Value.ValueOne != null)
             {
-                value = argument.Value.StringValue;
+                value = argument.Value.ValueOne;
                 return true;
             }
             value = null;
@@ -149,7 +153,7 @@ namespace MphRead
                 {
                     value = intValue;
                     return true;
-                } 
+                }
             }
             value = 0;
             return false;
@@ -172,14 +176,20 @@ namespace MphRead
                         }
                         else
                         {
-                            string value = args[i + 1];
-                            if (value.StartsWith("-"))
+                            string valueOne = args[i + 1];
+                            if (valueOne.StartsWith("-"))
                             {
                                 arguments.Add(new Argument(arg, null));
                             }
                             else
                             {
-                                arguments.Add(new Argument(arg, value));
+                                string? valueTwo = null;
+                                if (i < args.Length - 2 && !args[i + 2].StartsWith("-"))
+                                {
+                                    valueTwo = args[i + 2];
+                                    i++;
+                                }
+                                arguments.Add(new Argument(arg, valueOne, valueTwo));
                                 i++;
                             }
                         }
@@ -193,7 +203,7 @@ namespace MphRead
         private static void Exit()
         {
             Console.WriteLine("MphRead usage:");
-            Console.WriteLine("    -room <room_name> [layer_mask]");
+            Console.WriteLine("    -room <room_name>");
             Console.WriteLine("    -model <model_name> [recolor_index]");
             Console.WriteLine("At most one room may be specified. Any number of models may be specified.");
             Console.WriteLine("- or -");
