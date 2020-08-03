@@ -26,7 +26,7 @@ namespace MphRead.Export
             sb.AppendLine("bpy.ops.wm.collada_import(filepath =");
             AppendIndent();
             AppendIndent();
-            sb.AppendLine($"f'{daePath}')");
+            sb.AppendLine($"fr'{daePath}')");
             AppendIndent();
             sb.AppendLine("set_common()");
             var invertMeshIds = new HashSet<int>();

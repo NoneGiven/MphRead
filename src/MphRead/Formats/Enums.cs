@@ -78,8 +78,7 @@ namespace MphRead
         Decal = 1,
         Translucent = 2,
         Unknown3 = 3,
-        Unknown4 = 4,
-        AlphaTest = 5 // viewer only
+        Unknown4 = 4
     }
 
     public enum TexgenMode : uint

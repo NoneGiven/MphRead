@@ -31,9 +31,9 @@ namespace MphRead
         }
 
         public void AddRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
-            BossFlags bossFlags = BossFlags.None, int nodeLayerId = 0, int entityLayerId = -1)
+            BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
         {
-            _window.AddRoom(name, mode, playerCount, bossFlags, entityLayerId, nodeLayerId);
+            _window.AddRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
         }
 
         public void AddModel(string name, int recolor = 0, bool firstHunt = false)
@@ -67,7 +67,6 @@ namespace MphRead
         public int UseFog { get; set; }
         public int FogColor { get; set; }
         public int FogOffset { get; set; }
-        public int AlphaScale { get; set; }
         public int UseOverride { get; set; }
         public int OverrideColor { get; set; }
         public int MaterialAlpha { get; set; }
@@ -164,7 +163,7 @@ namespace MphRead
         }
 
         public void AddRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
-            BossFlags bossFlags = BossFlags.None, int entityLayerId = -1, int nodeLayerMask = 0)
+            BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
         {
             if (_roomLoaded)
             {
@@ -172,7 +171,7 @@ namespace MphRead
             }
             _roomLoaded = true;
             (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities)
-                = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, entityLayerId, nodeLayerMask);
+                = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
             if (roomMeta.InGameName != null)
             {
                 Title = roomMeta.InGameName;
@@ -273,7 +272,6 @@ namespace MphRead
             _shaderLocations.UseFog = GL.GetUniformLocation(_shaderProgramId, "fog_enable");
             _shaderLocations.FogColor = GL.GetUniformLocation(_shaderProgramId, "fog_color");
             _shaderLocations.FogOffset = GL.GetUniformLocation(_shaderProgramId, "fog_offset");
-            _shaderLocations.AlphaScale = GL.GetUniformLocation(_shaderProgramId, "alpha_scale");
 
             _shaderLocations.UseOverride = GL.GetUniformLocation(_shaderProgramId, "use_override");
             _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
@@ -364,6 +362,7 @@ namespace MphRead
                 InitTextures(model);
                 _models.Add(model);
                 _modelMap.Add(model.SceneId, model);
+                _updateLists = true;
                 await PrintOutput();
             }
 
@@ -409,7 +408,8 @@ namespace MphRead
             await UpdateModelStates((float)args.Time);
             OnKeyHeld();
 
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
+            GL.ClearStencil(0);
 
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
             float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
@@ -422,6 +422,11 @@ namespace MphRead
             TransformCamera();
             UpdateCameraPosition();
 
+            if (_updateLists)
+            {
+                UpdateLists();
+                _updateLists = false;
+            }
             RenderScene(args.Time);
             SwapBuffers();
             if (_recording)
@@ -587,6 +592,37 @@ namespace MphRead
             }
         }
 
+        private bool _updateLists = true;
+        private int _maxListId = 0;
+        private readonly Dictionary<int, int> _listIds = new Dictionary<int, int>();
+
+        private void UpdateLists()
+        {
+            for (int i = 1; i <= _maxListId; i++)
+            {
+                GL.DeleteLists(i, 1);
+            }
+            _maxListId = 0;
+            for (int i = 0; i < _models.Count; i++)
+            {
+                _listIds.Clear();
+                Model model = _models[i];
+                for (int j = 0; j < model.Meshes.Count; j++)
+                {
+                    Mesh mesh = model.Meshes[j];
+                    if (!_listIds.TryGetValue(mesh.DlistId, out int listId))
+                    {
+                        listId = GL.GenLists(1);
+                        GL.NewList(listId, ListMode.Compile);
+                        DoDlist(model, mesh);
+                        GL.EndList();
+                        _maxListId = Math.Max(listId, _maxListId);
+                    }
+                    mesh.ListId = listId;
+                }
+            }
+        }
+
         private int CompareModels(Model one, Model two)
         {
             if (one.Type == ModelType.Room)
@@ -622,65 +658,166 @@ namespace MphRead
             return -1;
         }
 
+        private readonly struct MeshInfo
+        {
+            public readonly Model Model;
+            public readonly Node Node;
+            public readonly Mesh Mesh;
+            public readonly Material Material;
+            public readonly int PolygonId;
+
+            public MeshInfo(Model model, Node node, Mesh mesh, Material material, int polygonId)
+            {
+                Model = model;
+                Node = node;
+                Mesh = mesh;
+                Material = material;
+                PolygonId = polygonId;
+            }
+        }
+
+        // avoiding overhead by duplicating things in these lists
+        private readonly List<MeshInfo> _decalMeshes = new List<MeshInfo>();
+        private readonly List<MeshInfo> _nonDecalMeshes = new List<MeshInfo>();
+        private readonly List<MeshInfo> _translucentMeshes = new List<MeshInfo>();
+
         private void RenderScene(double elapsedTime)
         {
+            _decalMeshes.Clear();
+            _nonDecalMeshes.Clear();
+            _translucentMeshes.Clear();
+            int polygonId = 1;
             _models.Sort(CompareModels);
             for (int i = 0; i < _models.Count; i++)
             {
                 Model model = _models[i];
-                if ((model.Type != ModelType.Placeholder || _showInvisible) && (!model.ScanVisorOnly || _scanVisor))
-                {
-                    if (_frameCount != 0 &&
+                if (_frameCount != 0 &&
                         ((!_frameAdvanceOn && _frameCount % 2 == 0)
                         || (_frameAdvanceOn && _advanceOneFrame)))
-                    {
-                        UpdateAnimationFrames(model);
-                    }
-                    GL.MatrixMode(MatrixMode.Modelview);
-                    GL.PushMatrix();
-                    Matrix4 transform = model.Transform;
-                    GL.MultMatrix(ref transform);
-                    _modelMatrix = Matrix4.Identity;
-                    _modelMatrix = transform * _modelMatrix;
-                    if (model.Rotating)
-                    {
-                        model.Spin = (float)(model.Spin + elapsedTime * 360 * model.SpinSpeed) % 360;
-                        transform = SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
-                            MathHelper.DegreesToRadians(model.SpinAxis.X * model.Spin),
-                            MathHelper.DegreesToRadians(model.SpinAxis.Y * model.Spin),
-                            MathHelper.DegreesToRadians(model.SpinAxis.Z * model.Spin)),
-                            Vector3.Zero);
-                        if (model.Floating)
-                        {
-                            transform.M42 += (MathF.Sin(model.Spin / 180 * MathF.PI) + 1) / 8f;
-                        }
-                        GL.MultMatrix(ref transform);
-                        _modelMatrix = transform * _modelMatrix;
-                    }
-                    if (model.Type == ModelType.Room)
-                    {
-                        RenderRoom(model);
-                    }
-                    else
-                    {
-                        RenderModel(model);
-                    }
-                    GL.MatrixMode(MatrixMode.Modelview);
-                    GL.PopMatrix();
-                }
-                if (model.EntityType == EntityType.LightSource && _showLightVolumes > 0)
                 {
-                    RenderLightVolume(model.SceneId);
+                    UpdateAnimationFrames(model);
+                }
+                if (model.Rotating)
+                {
+                    model.Spin = (float)(model.Spin + elapsedTime * 360 * model.SpinSpeed) % 360;
+                }
+                bool renderModel = (model.Type != ModelType.Placeholder || _showInvisible) && (!model.ScanVisorOnly || _scanVisor);
+                for (int j = 0; j < model.Nodes.Count; j++)
+                {
+                    Node node = model.Nodes[j];
+                    if (renderModel && node.MeshCount > 0 && node.Enabled && model.NodeParentsEnabled(node))
+                    {
+                        foreach (Mesh mesh in model.GetNodeMeshes(j))
+                        {
+                            Material material = model.Materials[mesh.MaterialId];
+                            var meshInfo = new MeshInfo(model, node, mesh, material,
+                                material.RenderMode == RenderMode.Translucent ? polygonId++ : 0);
+                            if (material.RenderMode != RenderMode.Decal)
+                            {
+                                _nonDecalMeshes.Add(meshInfo);
+                            }
+                            else
+                            {
+                                _decalMeshes.Add(meshInfo);
+                            }
+                            if (material.RenderMode == RenderMode.Translucent)
+                            {
+                                _translucentMeshes.Add(meshInfo);
+                            }
+                        }
+                    }
+                }
+            }
+            GL.UseProgram(_shaderProgramId);
+            UpdateUniforms();
+            // pass 1: opaque
+            GL.ColorMask(true, true, true, true);
+            GL.Enable(EnableCap.AlphaTest);
+            GL.AlphaFunc(AlphaFunction.Equal, 1.0f);
+            GL.DepthFunc(DepthFunction.Less);
+            GL.DepthMask(true);
+            GL.Enable(EnableCap.StencilTest);
+            GL.StencilMask(0xFF);
+            GL.StencilOp(StencilOp.Zero, StencilOp.Zero, StencilOp.Zero);
+            GL.StencilFunc(StencilFunction.Always, 0, 0xFF);
+            for (int i = 0; i < _nonDecalMeshes.Count; i++)
+            {
+                MeshInfo item = _nonDecalMeshes[i];
+                RenderMesh(item);
+            }
+            GL.Disable(EnableCap.AlphaTest);
+            // pass 2: decal
+            GL.Enable(EnableCap.PolygonOffsetFill);
+            GL.PolygonOffset(-1, -1);
+            GL.DepthFunc(DepthFunction.Lequal);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            for (int i = 0; i < _decalMeshes.Count; i++)
+            {
+                MeshInfo item = _decalMeshes[i];
+                RenderMesh(item);
+            }
+            GL.PolygonOffset(0, 0);
+            GL.Disable(EnableCap.PolygonOffsetFill);
+            // pass 3: mark transparent faces in stencil
+            GL.Enable(EnableCap.AlphaTest);
+            GL.AlphaFunc(AlphaFunction.Less, 1.0f);
+            GL.ColorMask(false, false, false, false);
+            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
+            for (int i = 0; i < _translucentMeshes.Count; i++)
+            {
+                MeshInfo item = _translucentMeshes[i];
+                GL.StencilFunc(StencilFunction.Greater, item.PolygonId, 0xFF);
+                RenderMesh(item);
+            }
+            // pass 4: rebuild depth buffer
+            GL.Clear(ClearBufferMask.DepthBufferBit);
+            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
+            GL.StencilFunc(StencilFunction.Always, 0, 0xFF);
+            GL.AlphaFunc(AlphaFunction.Equal, 1.0f);
+            for (int i = 0; i < _nonDecalMeshes.Count; i++)
+            {
+                MeshInfo item = _nonDecalMeshes[i];
+                RenderMesh(item);
+            }
+            // pass 5: translucent (behind)
+            GL.AlphaFunc(AlphaFunction.Less, 1.0f);
+            GL.ColorMask(true, true, true, true);
+            GL.DepthMask(false);
+            GL.DepthFunc(DepthFunction.Lequal);
+            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
+            for (int i = 0; i < _translucentMeshes.Count; i++)
+            {
+                MeshInfo item = _translucentMeshes[i];
+                GL.StencilFunc(StencilFunction.Notequal, item.PolygonId, 0xFF);
+                RenderMesh(item);
+            }
+            // pass 6: translucent (before)
+            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
+            for (int i = 0; i < _translucentMeshes.Count; i++)
+            {
+                MeshInfo item = _translucentMeshes[i];
+                GL.StencilFunc(StencilFunction.Equal, item.PolygonId, 0xFF);
+                RenderMesh(item);
+            }
+            GL.DepthMask(true);
+            GL.Disable(EnableCap.Blend);
+            GL.Disable(EnableCap.AlphaTest);
+            GL.Disable(EnableCap.StencilTest);
+            GL.UseProgram(0);
+            if (_showLightVolumes > 0)
+            {
+                foreach (KeyValuePair<int, LightSource> kvp in _lightSources)
+                {
+                    RenderLightVolume(kvp.Value);
                 }
             }
         }
 
-        private void RenderLightVolume(int sceneId)
+        private void RenderLightVolume(LightSource lightSource)
         {
-            LightSource lightSource = _lightSources[sceneId];
             LightSourceEntityData data = lightSource.Entity.Data;
             GL.UseProgram(_shaderProgramId);
-            GL.Uniform1(_shaderLocations.AlphaScale, 1.0f);
             GL.Uniform1(_shaderLocations.UseLight, 0);
             GL.Uniform1(_shaderLocations.UseFog, 0);
             GL.Uniform1(_shaderLocations.UseTexture, 0);
@@ -737,9 +874,14 @@ namespace MphRead
 
         private void UpdateMaterials(Model model)
         {
-            foreach (Material material in model.Materials.Where(m => m.TextureId != UInt16.MaxValue))
+            for (int i = 0; i < model.Materials.Count; i++)
             {
+                Material material = model.Materials[i];
                 int textureId = material.CurrentTextureId;
+                if (textureId == UInt16.MaxValue)
+                {
+                    continue;
+                }
                 int paletteId = material.CurrentPaletteId;
                 // todo: group indexing
                 if (model.TextureAnimationGroups.Count > 0)
@@ -747,12 +889,12 @@ namespace MphRead
                     TextureAnimationGroup group = model.TextureAnimationGroups[0];
                     if (group.Animations.TryGetValue(material.Name, out TextureAnimation animation))
                     {
-                        for (int i = animation.StartIndex; i < animation.StartIndex + animation.Count; i++)
+                        for (int j = animation.StartIndex; j < animation.StartIndex + animation.Count; j++)
                         {
-                            if (group.FrameIndices[i] == group.CurrentFrame)
+                            if (group.FrameIndices[j] == group.CurrentFrame)
                             {
-                                textureId = group.TextureIds[i];
-                                paletteId = group.PaletteIds[i];
+                                textureId = group.TextureIds[j];
+                                paletteId = group.PaletteIds[j];
                                 break;
                             }
                         }
@@ -762,16 +904,12 @@ namespace MphRead
                 material.TextureBindingId = bindingId;
                 material.CurrentTextureId = textureId;
                 material.CurrentPaletteId = paletteId;
-                UpdateMaterial(material, onlyOpaque, model.Textures[textureId].Format);
+                UpdateMaterial(material, onlyOpaque);
             }
         }
 
-        private void UpdateMaterial(Material material, bool onlyOpaque, TextureFormat textureFormat)
+        private void UpdateMaterial(Material material, bool onlyOpaque)
         {
-            // - if material alpha is less than 31, and render mode is not Translucent, set to Translucent
-            // - else if render mode is not Normal, but there are no non-opaque pixels, set to Normal
-            // - else if render mode is Normal, but there are non-opaque pixels, set to AlphaTest
-            // - if render mode is Translucent, material alpha is 31, and texture format is DirectRgba, set to AlphaTest
             if (material.CurrentAlpha < 1.0f)
             {
                 material.RenderMode = RenderMode.Translucent;
@@ -782,56 +920,76 @@ namespace MphRead
             }
             else if (material.RenderMode == RenderMode.Normal && !onlyOpaque)
             {
-                material.RenderMode = RenderMode.AlphaTest;
-            }
-            if (material.RenderMode == RenderMode.Translucent && material.Alpha == 31 && textureFormat == TextureFormat.DirectRgb)
-            {
-                material.RenderMode = RenderMode.AlphaTest;
+                material.RenderMode = RenderMode.Translucent;
             }
         }
 
-        private void RenderRoom(Model model)
+        private void RenderMesh(MeshInfo item)
         {
-            // todo: should use room nodes only as roots; need to handle things like force fields separately
-            GL.UseProgram(_shaderProgramId);
-            UpdateUniforms();
-            GL.Uniform1(_shaderLocations.AlphaScale, 1.0f);
-            // pass 1: opaque
-            GL.DepthMask(true);
-            foreach (Node node in model.Nodes)
+            Model model = item.Model;
+
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PushMatrix();
+            Matrix4 transform = model.Transform;
+            GL.MultMatrix(ref transform);
+            _modelMatrix = Matrix4.Identity;
+            _modelMatrix = transform * _modelMatrix;
+            if (model.Rotating)
             {
-                RenderNode(model, node, RenderMode.Normal);
+                transform = SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
+                    MathHelper.DegreesToRadians(model.SpinAxis.X * model.Spin),
+                    MathHelper.DegreesToRadians(model.SpinAxis.Y * model.Spin),
+                    MathHelper.DegreesToRadians(model.SpinAxis.Z * model.Spin)),
+                    Vector3.Zero);
+                if (model.Floating)
+                {
+                    transform.M42 += (MathF.Sin(model.Spin / 180 * MathF.PI) + 1) / 8f;
+                }
+                GL.MultMatrix(ref transform);
+                _modelMatrix = transform * _modelMatrix;
             }
-            // pass 2: decal
-            GL.Enable(EnableCap.PolygonOffsetFill);
-            GL.PolygonOffset(-1, -1);
-            GL.DepthMask(false);
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-            foreach (Node node in model.Nodes)
+
+            UseRoomLights();
+            if (model.UseLightOverride)
             {
-                RenderNode(model, node, RenderMode.Decal);
+                // todo: could add a height offset to really match the player position vs. the camera
+                Vector3 player = _cameraPosition * -1;
+                var vector1 = new Vector3(0, 1, 0); // Octolith's up vector
+                Vector3 vector2 = new Vector3(player.X - model.Position.X, 0, player.Z - model.Position.Z).Normalized();
+                Matrix3 lightTransform = SceneSetup.GetTransformMatrix(vector2, vector1);
+                Vector3 lightVector = (Metadata.OctolithLight1Vector * lightTransform).Normalized();
+                GL.Uniform3(_shaderLocations.Light1Vector, lightVector);
+                GL.Uniform3(_shaderLocations.Light1Color, Metadata.OctolithLightColor);
+                lightVector = (Metadata.OctolithLight2Vector * lightTransform).Normalized();
+                GL.Uniform3(_shaderLocations.Light2Vector, lightVector);
+                GL.Uniform3(_shaderLocations.Light2Color, Metadata.OctolithLightColor);
             }
-            // pass 3: translucent with alpha test
-            GL.DepthMask(true);
-            GL.Enable(EnableCap.AlphaTest);
-            GL.AlphaFunc(AlphaFunction.Gequal, 0.01f);
-            foreach (Node node in model.Nodes)
+            else if (model.UseLightSources)
             {
-                RenderNode(model, node, RenderMode.AlphaTest);
+                UpdateLightSources(model.Position);
             }
-            GL.Disable(EnableCap.AlphaTest);
-            // pass 4: translucent
-            GL.DepthMask(false);
-            foreach (Node node in model.Nodes)
+
+            Node node = item.Node;
+
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PushMatrix();
+            Matrix4 nodeTransform = node.Transform;
+            if (model.Type == ModelType.Room && !_transformRoomNodes)
             {
-                RenderNode(model, node, RenderMode.Translucent);
+                nodeTransform = Matrix4.Identity;
             }
-            GL.PolygonOffset(0, 0);
-            GL.Disable(EnableCap.PolygonOffsetFill);
-            GL.DepthMask(true);
-            GL.Disable(EnableCap.Blend);
-            GL.UseProgram(0);
+            GL.MultMatrix(ref nodeTransform);
+            _modelMatrix = nodeTransform * _modelMatrix;
+            GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref _modelMatrix);
+            GL.Uniform1(_shaderLocations.IsBillboard, node.Billboard ? 1 : 0);
+
+            RenderMesh(model, item.Mesh, item.Material);
+
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PopMatrix();
+
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PopMatrix();
         }
 
         // todo?: does anything special need to happen for overlapping light sources?
@@ -851,107 +1009,6 @@ namespace MphRead
                     }
                     break;
                 }
-            }
-        }
-
-        private void RenderModel(Model model)
-        {
-            GL.UseProgram(_shaderProgramId);
-            UseRoomLights();
-            if (model.UseLightOverride)
-            {
-                // todo: could add a height offset to really match the player position vs. the camera
-                Vector3 player = _cameraPosition * -1;
-                var vector1 = new Vector3(0, 1, 0); // Octolith's up vector
-                Vector3 vector2 = new Vector3(player.X - model.Position.X, 0, player.Z - model.Position.Z).Normalized();
-                Matrix3 transform = SceneSetup.GetTransformMatrix(vector2, vector1);
-                Vector3 lightVector = (Metadata.OctolithLight1Vector * transform).Normalized();
-                GL.Uniform3(_shaderLocations.Light1Vector, lightVector);
-                GL.Uniform3(_shaderLocations.Light1Color, Metadata.OctolithLightColor);
-                lightVector = (Metadata.OctolithLight2Vector * transform).Normalized();
-                GL.Uniform3(_shaderLocations.Light2Vector, lightVector);
-                GL.Uniform3(_shaderLocations.Light2Color, Metadata.OctolithLightColor);
-            }
-            else if (model.UseLightSources)
-            {
-                UpdateLightSources(model.Position);
-            }
-            GL.Uniform1(_shaderLocations.AlphaScale, 1.0f);
-            // pass 1: opaque
-            GL.DepthMask(true);
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-            foreach (Node node in model.Nodes)
-            {
-                RenderNode(model, node, RenderMode.Normal);
-            }
-            // pass 2: opaque pixels on translucent surfaces
-            GL.Enable(EnableCap.AlphaTest);
-            GL.AlphaFunc(AlphaFunction.Gequal, 0.999f);
-            foreach (Node node in model.Nodes)
-            {
-                RenderNode(model, node, RenderMode.Decal);
-            }
-            foreach (Node node in model.Nodes)
-            {
-                RenderNode(model, node, RenderMode.Translucent);
-            }
-            foreach (Node node in model.Nodes)
-            {
-                RenderNode(model, node, RenderMode.AlphaTest);
-            }
-            // pass 3: translucent
-            GL.AlphaFunc(AlphaFunction.Less, 0.999f);
-            GL.DepthMask(false);
-            foreach (Node node in model.Nodes)
-            {
-                RenderNode(model, node, RenderMode.Decal);
-            }
-            foreach (Node node in model.Nodes)
-            {
-                RenderNode(model, node, RenderMode.Translucent);
-            }
-            foreach (Node node in model.Nodes)
-            {
-                RenderNode(model, node, RenderMode.AlphaTest);
-            }
-            GL.DepthMask(true);
-            GL.Disable(EnableCap.Blend);
-            GL.Disable(EnableCap.AlphaTest);
-            GL.UseProgram(0);
-        }
-
-        private void RenderNode(Model model, Node node, RenderMode modeFilter, bool invertFilter = false)
-        {
-            if (node.MeshCount > 0 && node.Enabled && model.NodeParentsEnabled(node))
-            {
-                GL.MatrixMode(MatrixMode.Modelview);
-                GL.PushMatrix();
-                Matrix4 transform = node.Transform;
-                if (model.Type == ModelType.Room && !_transformRoomNodes)
-                {
-                    transform = Matrix4.Identity;
-                }
-                GL.MultMatrix(ref transform);
-                _modelMatrix = transform * _modelMatrix;
-                GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref _modelMatrix);
-                foreach (Mesh mesh in model.GetNodeMeshes(node))
-                {
-                    Material material = model.Materials[mesh.MaterialId];
-                    RenderMode renderMode = _selectionMode == SelectionMode.None || !_showSelection
-                        ? material.RenderMode
-                        : material.GetEffectiveRenderMode(mesh);
-                    if ((!invertFilter && renderMode != modeFilter)
-                        || (invertFilter && renderMode == modeFilter)
-                        || !model.Visible || !mesh.Visible)
-                    {
-                        continue;
-                    }
-                    GL.Uniform1(_shaderLocations.IsBillboard, node.Billboard ? 1 : 0);
-                    RenderMesh(model, mesh, material);
-                }
-                GL.MatrixMode(MatrixMode.Modelview);
-                GL.PopMatrix();
             }
         }
 
@@ -1059,7 +1116,7 @@ namespace MphRead
                 _wireframe || material.Wireframe != 0
                 ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
                 : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
-            DoDlist(model, mesh);
+            GL.CallList(mesh.ListId);
         }
 
         private void DoTexture(Model model, Mesh mesh, Material material)
@@ -1067,11 +1124,7 @@ namespace MphRead
             ushort width = 1;
             ushort height = 1;
             int textureId = material.CurrentTextureId;
-            if (textureId == UInt16.MaxValue)
-            {
-                GL.Disable(EnableCap.Texture2D);
-            }
-            else if (_showTextures)
+            if (textureId != UInt16.MaxValue)
             {
                 GL.Enable(EnableCap.Texture2D);
                 Texture texture = model.Textures[textureId];
@@ -1166,7 +1219,7 @@ namespace MphRead
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
                 GL.Rotate(material.RotateZ, Vector3.UnitZ);
             }
-            GL.Uniform1(_shaderLocations.UseTexture, GL.IsEnabled(EnableCap.Texture2D) ? 1 : 0);
+            GL.Uniform1(_shaderLocations.UseTexture, textureId != UInt16.MaxValue && _showTextures ? 1 : 0);
         }
 
         private void DoMaterial(Model model, Mesh mesh, Material material)
@@ -1669,19 +1722,12 @@ namespace MphRead
             else if (e.Key == Key.T)
             {
                 _showTextures = !_showTextures;
-                if (_showTextures)
-                {
-                    GL.Enable(EnableCap.Texture2D);
-                }
-                else
-                {
-                    GL.Disable(EnableCap.Texture2D);
-                }
                 await PrintOutput();
             }
             else if (e.Key == Key.C)
             {
                 _showColors = !_showColors;
+                _updateLists = true;
                 await PrintOutput();
             }
             else if (e.Key == Key.Q)

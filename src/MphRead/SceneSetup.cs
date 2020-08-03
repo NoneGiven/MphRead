@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using OpenToolkit.Graphics.OpenGL;
 using OpenToolkit.Mathematics;
 
 namespace MphRead
@@ -11,7 +10,7 @@ namespace MphRead
 
         // todo: artifact flags
         public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, GameMode mode = GameMode.None,
-            int playerCount = 0, BossFlags bossFlags = BossFlags.None, int entityLayerId = -1, int nodeLayerMask = 0)
+            int playerCount = 0, BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
         {
             (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
             int areaId = Metadata.GetAreaInfo(roomId);
@@ -490,6 +489,7 @@ namespace MphRead
             {
                 model2.Rotating = true;
                 model2.SpinAxis = Vector3.UnitZ;
+                model2.SpinSpeed = 0.35f;
             }
             list.Add(model2);
             return list;
@@ -737,7 +737,6 @@ namespace MphRead
         private static IEnumerable<Model> LoadArtifact(ArtifactEntityData data)
         {
             var models = new List<Model>();
-            // sktodo: correct rotation speed
             string name = data.ModelId >= 8 ? "Octolith" : $"Artifact0{data.ModelId + 1}";
             Model model = Read.GetModelByName(name);
             float offset = data.ModelId >= 8 ? GetOctolithHeightOffset() : model.Nodes[0].Offset.FloatValue;
@@ -754,7 +753,7 @@ namespace MphRead
             {
                 model.Rotating = true;
                 model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
-                model.SpinSpeed = 0.35f;
+                model.SpinSpeed = 0.5f;
             }
             else
             {

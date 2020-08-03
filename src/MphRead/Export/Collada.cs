@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using OpenToolkit.Mathematics;
@@ -18,14 +19,14 @@ namespace MphRead.Export
 
         private static string FloatFormat(Vector3 vector)
         {
-            return $"{FloatFormat(vector.X)} {FloatFormat(vector.Y)} {FloatFormat(vector.Z)}";
+            return FormattableString.Invariant($"{FloatFormat(vector.X)} {FloatFormat(vector.Y)} {FloatFormat(vector.Z)}");
         }
 
         private static string FloatFormat(float input)
         {
             // this is slightly more accurate than the %f format specifier used in MetroidModelViewer
             // 0.454875469 rounds to 0.454875, but MetroidModelViewer outputs 0.454876
-            return MathF.Round(input, 6, MidpointRounding.AwayFromZero).ToString("F6");
+            return MathF.Round(input, 6, MidpointRounding.AwayFromZero).ToString("F6", CultureInfo.InvariantCulture);
         }
 
         public static void ExportModel(string modelName)

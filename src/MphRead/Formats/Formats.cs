@@ -479,6 +479,7 @@ namespace MphRead
         public int MaterialId { get; }
         public int DlistId { get; }
 
+        public int ListId { get; set; }
         public bool Visible { get; set; } = true;
         public Vector4? PlaceholderColor { get; set; }
         public Vector4? OverrideColor { get; set; }
