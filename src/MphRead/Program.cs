@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace MphRead
 {
@@ -10,85 +12,152 @@ namespace MphRead
         private static void Main(string[] args)
         {
             ConsoleColor.Setup();
-            if (args.Length > 1)
+            IReadOnlyList<Argument> arguments = ParseArguments(args);
+            if (arguments.Count == 0)
             {
-                if (args[0] == "-export" || args[0] == "-e")
-                {
-                    Read.ReadAndExport(args[1]);
-                    return;
-                }
-                if (args[0] == "-extract" || args[0] == "-x")
-                {
-                    Read.ExtractArchive(args[1]);
-                    return;
-                }
-            }
-            using var renderer = new Renderer();
-            if (args.Length == 0)
-            {
+                using var renderer = new Renderer();
                 renderer.AddRoom("MP3 PROVING GROUND");
                 //renderer.AddModel("Crate01");
                 Nop();
+                renderer.Run();
             }
-            else if (args.Length > 1)
+            else if (TryGetString(arguments, "export", "e", out string? exportValue))
             {
-                bool foundRoom = false;
-                bool foundModel = false;
-                for (int i = 0; i < args.Length; i++)
+                Read.ReadAndExport(exportValue);
+            }
+            else if (TryGetString(arguments, "extract", "x", out string? extractValue))
+            {
+                Read.ExtractArchive(extractValue);
+            }
+            else
+            {
+                var rooms = new List<string>();
+                var models = new List<string>();
+                if (TryGetInt(arguments, "room", "r", out int roomId))
                 {
-                    string arg = args[i];
-                    // todo: update parameters
-                    if (arg == "-room" || arg == "-r")
+                    RoomMetadata? meta = Metadata.GetRoomById(roomId);
+                    if (meta == null)
                     {
-                        if (foundRoom)
-                        {
-                            Exit();
-                        }
-                        foundRoom = true;
-                        string? modelName = GetString(args, i + 1);
-                        if (modelName == null)
-                        {
-                            Exit();
-                        }
-                        int mask = GetInt(args, i + 2);
-                        renderer.AddRoom(modelName);
+                        Exit();
                     }
-                    else if (arg == "-model" || arg == "-m")
-                    {
-                        foundModel = true;
-                        string? name = GetString(args, i + 1);
-                        if (name == null)
-                        {
-                            Exit();
-                        }
-                        int recolor = GetInt(args, i + 2);
-                        renderer.AddModel(name, recolor);
-                    }
+                    rooms.Add(meta.Name);
                 }
-                if (!foundRoom && !foundModel)
+                else if (TryGetString(arguments, "room", "r", out string? roomName))
+                {
+                    rooms.Add(roomName);
+                }
+                foreach (string modelName in GetStrings(arguments, "model", "m"))
+                {
+                    models.Add(modelName);
+                }
+                if (rooms.Count > 1 || (rooms.Count == 0 && models.Count == 0))
                 {
                     Exit();
                 }
+                using var renderer = new Renderer();
+                foreach (string room in rooms)
+                {
+                    renderer.AddRoom(room);
+                }
+                foreach (string model in models)
+                {
+                    renderer.AddModel(model);
+                }
+                renderer.Run();
             }
-            renderer.Run();
         }
 
-        private static string? GetString(string[] args, int index)
+        private readonly struct Argument
         {
-            if (index > args.Length - 1)
+            public readonly string Name;
+            public readonly string? StringValue;
+
+            public Argument(string name, string? value)
             {
-                return null;
+                Name = name;
+                StringValue = value;
             }
-            return args[index];
         }
 
-        private static int GetInt(string[] args, int index)
+        private static IEnumerable<string> GetStrings(IEnumerable<Argument> arguments, string fullName, string shortName)
         {
-            if (index > args.Length - 1 || !Int32.TryParse(args[index], out int result))
+            foreach (Argument argument in arguments.Where(a => a.Name == fullName || a.Name == shortName))
             {
-                return 0;
+                if (argument.StringValue != null)
+                {
+                    yield return argument.StringValue;
+                }
             }
-            return result;
+        }
+
+        private static bool TryGetArgument(IEnumerable<Argument> arguments, string fullName, string shortName,
+            [NotNullWhen(true)] out Argument? argument)
+        {
+            IEnumerable<Argument> matches = arguments.Where(a => a.Name == fullName || a.Name == shortName);
+            if (matches.Any())
+            {
+                argument = matches.First();
+                return true;
+            }
+            argument = null;
+            return false;
+        }
+
+        private static bool TryGetString(IEnumerable<Argument> arguments, string fullName, string shortName,
+            [NotNullWhen(true)] out string? value)
+        {
+            if (TryGetArgument(arguments, fullName, shortName, out Argument? argument) && argument.Value.StringValue != null)
+            {
+                value = argument.Value.StringValue;
+                return true;
+            }
+            value = null;
+            return false;
+        }
+
+        private static bool TryGetInt(IEnumerable<Argument> arguments, string fullName, string shortName,
+            out int value)
+        {
+            if (TryGetString(arguments, fullName, shortName, out string? stringValue))
+            {
+                if (Int32.TryParse(stringValue, out int intValue))
+                {
+                    value = intValue;
+                    return true;
+                } 
+            }
+            value = 0;
+            return false;
+        }
+
+        private static IReadOnlyList<Argument> ParseArguments(string[] args)
+        {
+            var arguments = new List<Argument>();
+            if (args != null)
+            {
+                for (int i = 0; i < args.Length; i++)
+                {
+                    string arg = args[i];
+                    if (i == args.Length - 1)
+                    {
+                        arguments.Add(new Argument(arg, null));
+                    }
+                    else
+                    {
+                        string value = args[i + 1];
+                        if (value.StartsWith("-"))
+                        {
+                            arguments.Add(new Argument(arg, null));
+                        }
+                        else
+                        {
+                            arguments.Add(new Argument(arg, value));
+                            i++;
+                        }
+                    }
+                }
+            }
+            return arguments;
         }
 
         [DoesNotReturn]
