@@ -489,6 +489,7 @@ namespace MphRead
             {
                 model2.Rotating = true;
                 model2.SpinAxis = Vector3.UnitZ;
+                model2.SpinSpeed = 0.35f;
             }
             list.Add(model2);
             return list;
