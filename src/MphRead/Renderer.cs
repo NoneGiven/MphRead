@@ -423,6 +423,10 @@ namespace MphRead
             TransformCamera();
             UpdateCameraPosition();
 
+            if (_frameCount == 0)
+            {
+                UpdateLists();
+            }
             RenderScene(args.Time);
             SwapBuffers();
             if (_recording)
@@ -585,6 +589,32 @@ namespace MphRead
                 float y = MathF.Round(_distance * MathF.Sin(theta) * MathF.Cos(phi), 4) * -1;
                 float z = MathF.Round(_distance * MathF.Sin(theta) * MathF.Sin(phi), 4);
                 _cameraPosition = new Vector3(x, y, z);
+            }
+        }
+
+        private int _maxListId = 0;
+        private readonly Dictionary<int, int> _listIds = new Dictionary<int, int>();
+
+        // todo: if nothing has changed, don't redo any dlists
+        private void UpdateLists()
+        {
+            for (int i = 0; i < _models.Count; i++)
+            {
+                _listIds.Clear();
+                Model model = _models[i];
+                for (int j = 0; j < model.Meshes.Count; j++)
+                {
+                    Mesh mesh = model.Meshes[j];
+                    if (!_listIds.TryGetValue(mesh.DlistId, out int listId))
+                    {
+                        listId = GL.GenLists(1);
+                        GL.NewList(listId, ListMode.Compile);
+                        DoDlist(model, mesh);
+                        GL.EndList();
+                        _maxListId = Math.Max(listId, _maxListId);
+                    }
+                    mesh.ListId = listId;
+                }
             }
         }
 
@@ -1060,7 +1090,8 @@ namespace MphRead
                 _wireframe || material.Wireframe != 0
                 ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
                 : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
-            DoDlist(model, mesh);
+            //DoDlist(model, mesh);
+            GL.CallList(mesh.ListId);
         }
 
         private void DoTexture(Model model, Mesh mesh, Material material)
