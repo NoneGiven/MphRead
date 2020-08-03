@@ -259,6 +259,7 @@ namespace MphRead
             _shaderLocations.ModelMatrix = GL.GetUniformLocation(_shaderProgramId, "model_mtx");
             _shaderLocations.ViewMatrix = GL.GetUniformLocation(_shaderProgramId, "view_mtx");
             _shaderLocations.ProjectionMatrix = GL.GetUniformLocation(_shaderProgramId, "proj_mtx");
+            _shaderLocations.TextureMatrix = GL.GetUniformLocation(_shaderProgramId, "tex_mtx");
 
             GL.UseProgram(_shaderProgramId);
         }
@@ -1031,7 +1032,7 @@ namespace MphRead
             return first + (second - first) * factor;
         }
 
-        private void AnimateTexcoords(TexcoordAnimationGroup group, TexcoordAnimation animation, int width, int height)
+        private Matrix4 AnimateTexcoords(TexcoordAnimationGroup group, TexcoordAnimation animation, int width, int height)
         {
             float scaleS = InterpolateAnimation(group.Scales, animation.ScaleLutIndexS, group.CurrentFrame,
                 animation.ScaleBlendS, animation.ScaleLutLengthS, group.FrameCount);
@@ -1043,15 +1044,15 @@ namespace MphRead
                 animation.TranslateBlendS, animation.TranslateLutLengthS, group.FrameCount);
             float translateT = InterpolateAnimation(group.Translations, animation.TranslateLutIndexT, group.CurrentFrame,
                 animation.TranslateBlendT, animation.TranslateLutLengthT, group.FrameCount);
-            GL.MatrixMode(MatrixMode.Texture);
-            GL.Translate(translateS * width, translateT * height, 0);
+            var textureMatrix = Matrix4.CreateTranslation(translateS * width, translateT * height, 0);
             if (rotate != 0)
             {
-                GL.Translate(width / 2, height / 2, 0);
-                GL.Rotate(MathHelper.RadiansToDegrees(rotate), Vector3.UnitZ);
-                GL.Translate(-width / 2, -height / 2, 0);
+                textureMatrix = Matrix4.CreateTranslation(width / 2, height / 2, 0) * textureMatrix;
+                textureMatrix = Matrix4.CreateRotationZ(rotate) * textureMatrix;
+                textureMatrix = Matrix4.CreateTranslation(-width / 2, -height / 2, 0) * textureMatrix;
             }
-            GL.Scale(scaleS, scaleT, 1);
+            textureMatrix = Matrix4.CreateScale(scaleS, scaleT, 1) * textureMatrix;
+            return textureMatrix;
         }
 
         private void RenderMesh(Model model, Mesh mesh, Material material)
@@ -1143,8 +1144,7 @@ namespace MphRead
             {
                 GL.Uniform1(_shaderLocations.UseOverride, 0);
             }
-            GL.MatrixMode(MatrixMode.Texture);
-            GL.LoadIdentity();
+            Matrix4 textureMatrix = Matrix4.Identity;
             TexcoordAnimationGroup? group = null;
             TexcoordAnimation? animation = null;
             if (model.TexcoordAnimationGroups.Count > 0 && textureId != UInt16.MaxValue)
@@ -1158,29 +1158,30 @@ namespace MphRead
             }
             if (group != null && animation != null)
             {
-                GL.Scale(1.0f / width, 1.0f / height, 1.0f);
-                AnimateTexcoords(group, animation.Value, width, height);
+                textureMatrix = Matrix4.CreateScale(1.0f / width, 1.0f / height, 1.0f) * textureMatrix;
+                textureMatrix = AnimateTexcoords(group, animation.Value, width, height) * textureMatrix;
             }
             else if (material.TexgenMode != TexgenMode.None)
             {
                 if (model.TextureMatrices.Count > 0)
                 {
-                    Matrix4 matrix = model.TextureMatrices[material.MatrixId];
-                    GL.LoadMatrix(ref matrix);
+                    textureMatrix = model.TextureMatrices[material.MatrixId] * textureMatrix;
                 }
                 else
                 {
-                    GL.Translate(material.ScaleS * width * material.TranslateS, material.ScaleT * height * material.TranslateT, 0.0f);
-                    GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
-                    GL.Scale(1.0f / width, 1.0f / height, 1.0f);
-                    GL.Rotate(material.RotateZ, Vector3.UnitZ);
+                    textureMatrix = Matrix4.CreateTranslation(material.ScaleS * width * material.TranslateS,
+                        material.ScaleT * height * material.TranslateT, 0.0f) * textureMatrix;
+                    textureMatrix = Matrix4.CreateScale(material.ScaleS, material.ScaleT, 1.0f) * textureMatrix;
+                    textureMatrix = Matrix4.CreateScale(1.0f / width, 1.0f / height, 1.0f) * textureMatrix;
+                    textureMatrix = Matrix4.CreateRotationZ(material.RotateZ) * textureMatrix;
                 }
             }
             else
             {
-                GL.Scale(1.0f / width, 1.0f / height, 1.0f);
-                GL.Rotate(material.RotateZ, Vector3.UnitZ);
+                textureMatrix = Matrix4.CreateScale(1.0f / width, 1.0f / height, 1.0f) * textureMatrix;
+                textureMatrix = Matrix4.CreateRotationZ(material.RotateZ) * textureMatrix;
             }
+            GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref textureMatrix);
             GL.Uniform1(_shaderLocations.UseTexture, textureId != UInt16.MaxValue && _showTextures ? 1 : 0);
         }
 

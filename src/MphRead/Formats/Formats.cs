@@ -551,8 +551,7 @@ namespace MphRead
             ScaleT = raw.ScaleT.FloatValue;
             TranslateS = raw.TranslateS.FloatValue;
             TranslateT = raw.TranslateT.FloatValue;
-            // todo: doing rad to deg here is inconsistent with other things, but more efficient
-            RotateZ = MathHelper.RadiansToDegrees(raw.RotateZ / 65536.0f * 2.0f * MathF.PI);
+            RotateZ = raw.RotateZ / 65536.0f * 2.0f * MathF.PI;
         }
     }
 
