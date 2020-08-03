@@ -531,6 +531,7 @@ namespace MphRead
 
         private void TransformCamera()
         {
+            // todo: only update this when the camera position changes
             Matrix4 viewMatrix = Matrix4.Identity;
             if (_cameraMode == CameraMode.Pivot)
             {
