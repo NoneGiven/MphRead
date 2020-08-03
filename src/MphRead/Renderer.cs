@@ -812,10 +812,10 @@ namespace MphRead
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             var transform = Matrix4.CreateTranslation(data.Position.ToFloatVector());
             GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
-            // the depth buffer can't always handle this
-            //GL.Enable(EnableCap.CullFace);
-            //GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
-            GL.Disable(EnableCap.CullFace);
+            GL.Enable(EnableCap.CullFace);
+            GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
+            // alternative if the depth buffer can't handle the above:
+            //GL.Disable(EnableCap.CullFace);
             ColorRgb color = _showLightVolumes == 1
                 ? data.Light1Enabled != 0 ? data.Light1Color : new ColorRgb(0, 0, 0)
                 : data.Light2Enabled != 0 ? data.Light2Color : new ColorRgb(0, 0, 0);
