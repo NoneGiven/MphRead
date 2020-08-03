@@ -704,6 +704,7 @@ namespace MphRead
                     {
                         bool renderVolume = model.EntityType == EntityType.LightSource;
                         Material material = model.Materials[mesh.MaterialId];
+                        // sktodo: separate lists
                         _renderList.Add(new RenderItem(model, node, mesh, material, renderMesh, renderVolume,
                             material.RenderMode == RenderMode.Translucent ? polygonId++ : 0));
                     }
@@ -856,9 +857,14 @@ namespace MphRead
 
         private void UpdateMaterials(Model model)
         {
-            foreach (Material material in model.Materials.Where(m => m.TextureId != UInt16.MaxValue))
+            for (int i = 0; i < model.Materials.Count; i++)
             {
+                Material material = model.Materials[i];
                 int textureId = material.CurrentTextureId;
+                if (textureId == UInt16.MaxValue)
+                {
+                    continue;
+                }
                 int paletteId = material.CurrentPaletteId;
                 // todo: group indexing
                 if (model.TextureAnimationGroups.Count > 0)
@@ -866,12 +872,12 @@ namespace MphRead
                     TextureAnimationGroup group = model.TextureAnimationGroups[0];
                     if (group.Animations.TryGetValue(material.Name, out TextureAnimation animation))
                     {
-                        for (int i = animation.StartIndex; i < animation.StartIndex + animation.Count; i++)
+                        for (int j = animation.StartIndex; j < animation.StartIndex + animation.Count; j++)
                         {
-                            if (group.FrameIndices[i] == group.CurrentFrame)
+                            if (group.FrameIndices[j] == group.CurrentFrame)
                             {
-                                textureId = group.TextureIds[i];
-                                paletteId = group.PaletteIds[i];
+                                textureId = group.TextureIds[j];
+                                paletteId = group.PaletteIds[j];
                                 break;
                             }
                         }
@@ -1198,7 +1204,7 @@ namespace MphRead
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
                 GL.Rotate(material.RotateZ, Vector3.UnitZ);
             }
-            GL.Uniform1(_shaderLocations.UseTexture, GL.IsEnabled(EnableCap.Texture2D) ? 1 : 0);
+            GL.Uniform1(_shaderLocations.UseTexture, _showTextures ? 1 : 0);
         }
 
         private void DoMaterial(Model model, Mesh mesh, Material material)
