@@ -33,6 +33,11 @@ namespace MphRead
             {
                 var rooms = new List<string>();
                 var models = new List<string>();
+                GameMode mode = GameMode.None;
+                int playerCount = 0;
+                BossFlags bossFlags = BossFlags.None;
+                int nodeLayerMask = 0;
+                int entityLayerId = -1;
                 if (TryGetInt(arguments, "room", "r", out int roomId))
                 {
                     RoomMetadata? meta = Metadata.GetRoomById(roomId);
@@ -46,6 +51,26 @@ namespace MphRead
                 {
                     rooms.Add(roomName);
                 }
+                if (TryGetInt(arguments, "mode", "g", out int modeValue))
+                {
+                    mode = (GameMode)modeValue;
+                }
+                if (TryGetInt(arguments, "player", "p", out int playerValue))
+                {
+                    playerCount = playerValue;
+                }
+                if (TryGetInt(arguments, "boss", "b", out int bossValue))
+                {
+                    bossFlags = (BossFlags)bossValue;
+                }
+                if (TryGetInt(arguments, "node", "n", out int nodeValue))
+                {
+                    nodeLayerMask = nodeValue;
+                }
+                if (TryGetInt(arguments, "entity", "l", out int entityValue))
+                {
+                    entityLayerId = entityValue;
+                }
                 foreach (string modelName in GetStrings(arguments, "model", "m"))
                 {
                     models.Add(modelName);
@@ -57,7 +82,7 @@ namespace MphRead
                 using var renderer = new Renderer();
                 foreach (string room in rooms)
                 {
-                    renderer.AddRoom(room);
+                    renderer.AddRoom(room, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
                 }
                 foreach (string model in models)
                 {
