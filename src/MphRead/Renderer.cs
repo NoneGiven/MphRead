@@ -31,9 +31,9 @@ namespace MphRead
         }
 
         public void AddRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
-            BossFlags bossFlags = BossFlags.None, int nodeLayerId = 0, int entityLayerId = -1)
+            BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
         {
-            _window.AddRoom(name, mode, playerCount, bossFlags, entityLayerId, nodeLayerId);
+            _window.AddRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
         }
 
         public void AddModel(string name, int recolor = 0, bool firstHunt = false)
@@ -163,7 +163,7 @@ namespace MphRead
         }
 
         public void AddRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
-            BossFlags bossFlags = BossFlags.None, int entityLayerId = -1, int nodeLayerMask = 0)
+            BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
         {
             if (_roomLoaded)
             {
@@ -171,7 +171,7 @@ namespace MphRead
             }
             _roomLoaded = true;
             (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities)
-                = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, entityLayerId, nodeLayerMask);
+                = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
             if (roomMeta.InGameName != null)
             {
                 Title = roomMeta.InGameName;

@@ -10,7 +10,7 @@ namespace MphRead
 
         // todo: artifact flags
         public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, GameMode mode = GameMode.None,
-            int playerCount = 0, BossFlags bossFlags = BossFlags.None, int entityLayerId = -1, int nodeLayerMask = 0)
+            int playerCount = 0, BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
         {
             (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
             int areaId = Metadata.GetAreaInfo(roomId);
