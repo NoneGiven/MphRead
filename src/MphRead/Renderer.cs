@@ -286,11 +286,6 @@ namespace MphRead
             GL.UseProgram(_shaderProgramId);
         }
 
-        private string FormatOnOff(bool setting)
-        {
-            return setting ? "on" : "off";
-        }
-
         private void InitTextures(Model model)
         {
             var combos = new HashSet<(int, int)>();
@@ -2359,6 +2354,11 @@ namespace MphRead
                 $" Ambient ({material.Ambient.Red}, {material.Ambient.Green}, {material.Ambient.Blue})" +
                 $" Specular({ material.Specular.Red}, { material.Specular.Green}, { material.Specular.Blue})", guid);
             await Output.Write(guid);
+        }
+
+        private string FormatOnOff(bool setting)
+        {
+            return setting ? "on" : "off";
         }
 
         private async Task PrintMenu(Guid guid)
