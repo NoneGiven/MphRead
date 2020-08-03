@@ -894,7 +894,6 @@ namespace MphRead
             }
         }
 
-        // sktodo
         private void UpdateMaterial(Material material, bool onlyOpaque)
         {
             if (material.CurrentAlpha < 1.0f)
