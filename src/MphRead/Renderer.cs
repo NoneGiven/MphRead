@@ -2546,7 +2546,6 @@ namespace MphRead
                     }
                 }
                 GL.Begin(PrimitiveType.Triangles);
-                GL.Translate(volume.SpherePosition);
                 int k1, k2;
                 for (int i = 0; i < stackCount; i++)
                 {
@@ -2556,15 +2555,15 @@ namespace MphRead
                     {
                         if (i != 0)
                         {
-                            GL.Vertex3(_sphereVertices[k1 + 1]);
-                            GL.Vertex3(_sphereVertices[k2]);
-                            GL.Vertex3(_sphereVertices[k1]);
+                            GL.Vertex3(_sphereVertices[k1 + 1] + volume.SpherePosition);
+                            GL.Vertex3(_sphereVertices[k2] + volume.SpherePosition);
+                            GL.Vertex3(_sphereVertices[k1] + volume.SpherePosition);
                         }
                         if (i != (stackCount - 1))
                         {
-                            GL.Vertex3(_sphereVertices[k2 + 1]);
-                            GL.Vertex3(_sphereVertices[k2]);
-                            GL.Vertex3(_sphereVertices[k1 + 1]);
+                            GL.Vertex3(_sphereVertices[k2 + 1] + volume.SpherePosition);
+                            GL.Vertex3(_sphereVertices[k2] + volume.SpherePosition);
+                            GL.Vertex3(_sphereVertices[k1 + 1] + volume.SpherePosition);
                         }
                     }
                 }
