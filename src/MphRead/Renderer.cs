@@ -897,14 +897,18 @@ namespace MphRead
         // sktodo
         private void UpdateMaterial(Material material, bool onlyOpaque)
         {
-            if (material.CurrentAlpha == 1.0f && onlyOpaque)
+            if (material.CurrentAlpha < 1.0f)
+            {
+                material.RenderMode = RenderMode.Translucent;
+            }
+            else if (material.RenderMode != RenderMode.Normal && onlyOpaque)
             {
                 material.RenderMode = RenderMode.Normal;
             }
-            else
+            else if (material.RenderMode == RenderMode.Normal && !onlyOpaque)
             {
                 material.RenderMode = RenderMode.Translucent;
-            } 
+            }
         }
 
         private void RenderMesh(RenderItem item)
@@ -931,7 +935,7 @@ namespace MphRead
                 GL.MultMatrix(ref transform);
                 _modelMatrix = transform * _modelMatrix;
             }
-            
+
             UseRoomLights();
             if (model.UseLightOverride)
             {
