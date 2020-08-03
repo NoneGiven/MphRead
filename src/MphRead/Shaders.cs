@@ -70,7 +70,6 @@ uniform bool use_texture;
 uniform bool fog_enable;
 uniform vec4 fog_color;
 uniform int fog_offset;
-uniform float alpha_scale;
 uniform sampler2D tex;
 varying vec2 texcoord;
 varying vec4 color;
@@ -155,12 +154,12 @@ void main()
         }
         // adjust fog slope
         density = sqrt(density / 32.0);
-        gl_FragColor = vec4((col * (1.0 - density) + fog_color * density).xyz, col.a * alpha_scale);
+        gl_FragColor = vec4((col * (1.0 - density) + fog_color * density).xyz, col.a);
         // float i = density;
         // gl_FragColor = vec4(i, i, i, 1);
     }
     else {
-        gl_FragColor = col * vec4(1.0, 1.0, 1.0, alpha_scale);
+        gl_FragColor = col;
     }
 }
 ";

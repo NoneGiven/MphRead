@@ -67,7 +67,6 @@ namespace MphRead
         public int UseFog { get; set; }
         public int FogColor { get; set; }
         public int FogOffset { get; set; }
-        public int AlphaScale { get; set; }
         public int UseOverride { get; set; }
         public int OverrideColor { get; set; }
         public int MaterialAlpha { get; set; }
@@ -273,7 +272,6 @@ namespace MphRead
             _shaderLocations.UseFog = GL.GetUniformLocation(_shaderProgramId, "fog_enable");
             _shaderLocations.FogColor = GL.GetUniformLocation(_shaderProgramId, "fog_color");
             _shaderLocations.FogOffset = GL.GetUniformLocation(_shaderProgramId, "fog_offset");
-            _shaderLocations.AlphaScale = GL.GetUniformLocation(_shaderProgramId, "alpha_scale");
 
             _shaderLocations.UseOverride = GL.GetUniformLocation(_shaderProgramId, "use_override");
             _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
@@ -364,6 +362,7 @@ namespace MphRead
                 InitTextures(model);
                 _models.Add(model);
                 _modelMap.Add(model.SceneId, model);
+                _updateLists = true;
                 await PrintOutput();
             }
 
@@ -423,9 +422,10 @@ namespace MphRead
             TransformCamera();
             UpdateCameraPosition();
 
-            if (_frameCount == 0)
+            if (_updateLists)
             {
                 UpdateLists();
+                _updateLists = false;
             }
             RenderScene(args.Time);
             SwapBuffers();
@@ -592,12 +592,17 @@ namespace MphRead
             }
         }
 
+        private bool _updateLists = true;
         private int _maxListId = 0;
         private readonly Dictionary<int, int> _listIds = new Dictionary<int, int>();
 
-        // todo: if nothing has changed, don't redo any dlists
         private void UpdateLists()
         {
+            for (int i = 1; i <= _maxListId; i++)
+            {
+                GL.DeleteLists(i, 1);
+            }
+            _maxListId = 0;
             for (int i = 0; i < _models.Count; i++)
             {
                 _listIds.Clear();
@@ -712,7 +717,6 @@ namespace MphRead
             }
             GL.UseProgram(_shaderProgramId);
             UpdateUniforms();
-            GL.Uniform1(_shaderLocations.AlphaScale, 1.0f);
             // pass 1: opaque
             GL.ColorMask(true, true, true, true);
             GL.Enable(EnableCap.AlphaTest);
@@ -800,7 +804,6 @@ namespace MphRead
             LightSource lightSource = _lightSources[sceneId];
             LightSourceEntityData data = lightSource.Entity.Data;
             GL.UseProgram(_shaderProgramId);
-            GL.Uniform1(_shaderLocations.AlphaScale, 1.0f); // sktodo
             GL.Uniform1(_shaderLocations.UseLight, 0);
             GL.Uniform1(_shaderLocations.UseFog, 0);
             GL.Uniform1(_shaderLocations.UseTexture, 0);
@@ -1096,7 +1099,6 @@ namespace MphRead
                 _wireframe || material.Wireframe != 0
                 ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
                 : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
-            //DoDlist(model, mesh);
             GL.CallList(mesh.ListId);
         }
 
@@ -1720,6 +1722,7 @@ namespace MphRead
             else if (e.Key == Key.C)
             {
                 _showColors = !_showColors;
+                _updateLists = true;
                 await PrintOutput();
             }
             else if (e.Key == Key.Q)
