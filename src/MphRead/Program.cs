@@ -55,7 +55,7 @@ namespace MphRead
                 {
                     mode = (GameMode)modeValue;
                 }
-                if (TryGetInt(arguments, "player", "p", out int playerValue))
+                if (TryGetInt(arguments, "players", "p", out int playerValue))
                 {
                     playerCount = playerValue;
                 }
@@ -203,9 +203,11 @@ namespace MphRead
         private static void Exit()
         {
             Console.WriteLine("MphRead usage:");
-            Console.WriteLine("    -room <room_name>");
+            Console.WriteLine("    -room <room_name -or- room_id>");
             Console.WriteLine("    -model <model_name> [recolor_index]");
             Console.WriteLine("At most one room may be specified. Any number of models may be specified.");
+            Console.WriteLine("To load First Hunt models, include -fh in the argument list.");
+            Console.WriteLine("Available room options: -mode, -players, -boss, -node, -entity");
             Console.WriteLine("- or -");
             Console.WriteLine("    -extract <archive_path>");
             Console.WriteLine("If the target archive is LZ10-compressed, it will be decompressed.");
