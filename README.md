@@ -27,11 +27,13 @@ Ensure there is a `paths.txt` file in the same location as the `MphRead` binary.
 ```
 MphRead usage:
 
-    -room <room_name>
+    -room <room_name -or- room_id>
     -model <model_name> [recolor_index]
 
 The layer mask and recolor index are optional.
 At most one room may be specified, while any number of models may be specified.
+To load First Hunt models, include -fh in the argument list.
+Available room options: -mode, -players, -boss, -node, -entity
 
 - or -
 
