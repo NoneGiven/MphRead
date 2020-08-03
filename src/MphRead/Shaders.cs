@@ -9,6 +9,7 @@ namespace MphRead
 #version 120
 uniform bool is_billboard;
 uniform bool use_light;
+uniform bool show_colors;
 uniform bool fog_enable;
 uniform vec3 light1vec;
 uniform vec3 light1col;
@@ -47,13 +48,14 @@ void main()
     else {
         gl_Position = proj_mtx * view_mtx * model_mtx * gl_Vertex;
     }
+    vec4 vtx_color = show_colors ? gl_Color : vec4(1.0);
     if (use_light) {
         vec3 normal = normalize(mat3(model_mtx) * gl_Normal);
         vec3 dif_current = diffuse;
         vec3 amb_current = ambient;
         if (gl_Color.a == 0.0) {
             // see comment on DIF_AMB
-            dif_current = gl_Color.rgb;
+            dif_current = vtx_color.rgb;
             amb_current = vec3(0.0, 0.0, 0.0);
         }
         vec3 col1 = light_calc(light1vec, light1col, normal, dif_current, amb_current, specular);
@@ -61,7 +63,8 @@ void main()
         color = vec4(min((col1 + col2), vec3(1.0, 1.0, 1.0)), 1.0);
     }
     else {
-        color = gl_Color;
+        // alpha will only be less than 1.0 here if DIF_AMB is used but lighting is disabled
+        color = vec4(vtx_color.rgb, 1.0);
     }
     texcoord = vec2(gl_TextureMatrix[0] * gl_MultiTexCoord0);
 }
@@ -173,6 +176,7 @@ void main()
     {
         public int IsBillboard { get; set; }
         public int UseLight { get; set; }
+        public int ShowColors { get; set; }
         public int UseTexture { get; set; }
         public int Light1Color { get; set; }
         public int Light1Vector { get; set; }

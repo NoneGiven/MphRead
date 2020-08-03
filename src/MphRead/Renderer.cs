@@ -239,6 +239,7 @@ namespace MphRead
 
             _shaderLocations.IsBillboard = GL.GetUniformLocation(_shaderProgramId, "is_billboard");
             _shaderLocations.UseLight = GL.GetUniformLocation(_shaderProgramId, "use_light");
+            _shaderLocations.ShowColors = GL.GetUniformLocation(_shaderProgramId, "show_colors");
             _shaderLocations.UseTexture = GL.GetUniformLocation(_shaderProgramId, "use_texture");
             _shaderLocations.Light1Color = GL.GetUniformLocation(_shaderProgramId, "light1col");
             _shaderLocations.Light1Vector = GL.GetUniformLocation(_shaderProgramId, "light1vec");
@@ -352,6 +353,7 @@ namespace MphRead
                 DeleteTextures(model.SceneId);
                 _models.Remove(model);
                 _modelMap.Remove(model.SceneId);
+                _updateLists = true;
                 await PrintOutput();
             }
 
@@ -822,6 +824,7 @@ namespace MphRead
             GL.Uniform1(_shaderLocations.UseFog, _hasFog && _showFog ? 1 : 0);
             GL.Uniform4(_shaderLocations.FogColor, _fogColor);
             GL.Uniform1(_shaderLocations.FogOffset, _fogOffset);
+            GL.Uniform1(_shaderLocations.ShowColors, _showColors ? 1 : 0);
         }
 
         private void UseRoomLights()
@@ -1314,7 +1317,7 @@ namespace MphRead
                     }
                     break;
                 case InstructionCode.COLOR:
-                    if (_showColors && (mesh.OverrideColor == null || !_showSelection))
+                    // shader - if (_showColors && (mesh.OverrideColor == null || !_showSelection))
                     {
                         uint rgb = instruction.Arguments[0];
                         uint r = (rgb >> 0) & 0x1F;
@@ -1337,14 +1340,12 @@ namespace MphRead
                         var ambient = new Vector4(ar / 31.0f, ag / 31.0f, ab / 31.0f, 1.0f);
                         if (mesh.OverrideColor == null || !_showSelection)
                         {
-                            if (_lighting)
-                            {
-                                // MPH only calls this with zero ambient, and we need to rely on that in order to
-                                // use GL.Color to smuggle in the diffuse, since setting uniforms here doesn't work
-                                Debug.Assert(ambient.X == 0 && ambient.Y == 0 && ambient.Z == 0);
-                                GL.Color4(diffuse.X, diffuse.Y, diffuse.Z, 0.0f);
-                            }
-                            if (set != 0 && _showColors)
+                            // shader - if (_lighting)
+                            // MPH only calls this with zero ambient, and we need to rely on that in order to
+                            // use GL.Color to smuggle in the diffuse, since setting uniforms here doesn't work
+                            Debug.Assert(ambient.X == 0 && ambient.Y == 0 && ambient.Z == 0);
+                            GL.Color4(diffuse.X, diffuse.Y, diffuse.Z, 0.0f);
+                            if (set != 0) // shader - && _showColors
                             {
                                 // MPH never does this in a dlist
                                 Debug.Assert(false);
@@ -1699,7 +1700,6 @@ namespace MphRead
             else if (e.Key == Key.C)
             {
                 _showColors = !_showColors;
-                _updateLists = true;
                 await PrintOutput();
             }
             else if (e.Key == Key.Q)
