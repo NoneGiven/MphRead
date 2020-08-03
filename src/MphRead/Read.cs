@@ -420,12 +420,12 @@ namespace MphRead
 
         private static IReadOnlyList<PaletteData> GetPaletteData(Palette palette, ReadOnlySpan<byte> paletteBytes)
         {
-            if (palette.Count % 2 != 0)
+            if (palette.Size % 2 != 0)
             {
-                throw new ProgramException($"Palette count {palette.Count} is not divisible by 2.");
+                throw new ProgramException($"Palette size {palette.Size} is not divisible by 2.");
             }
             var data = new List<PaletteData>();
-            for (int i = 0; i < palette.Count / 2; i++)
+            for (int i = 0; i < palette.Size / 2; i++)
             {
                 ushort entry = SpanReadUshort(paletteBytes, (int)(palette.Offset + i * 2));
                 data.Add(new PaletteData(entry));
