@@ -390,9 +390,9 @@ namespace MphRead
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
             GL.ClearStencil(0);
 
+            // todo: calculate this in the resize event
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
             float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
-
             float fov = MathHelper.DegreesToRadians(80.0f);
             var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.001f, 10000.0f);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref perspectiveMatrix);
@@ -679,29 +679,37 @@ namespace MphRead
                 {
                     model.Spin = (float)(model.Spin + elapsedTime * 360 * model.SpinSpeed) % 360;
                 }
-                bool renderModel = (model.Type != ModelType.Placeholder || _showInvisible) && (!model.ScanVisorOnly || _scanVisor);
+                if (!model.Visible || (model.Type == ModelType.Placeholder && !_showInvisible) || (model.ScanVisorOnly && !_scanVisor))
+                {
+                    continue;
+                }
                 for (int j = 0; j < model.Nodes.Count; j++)
                 {
                     Node node = model.Nodes[j];
-                    if (renderModel && node.MeshCount > 0 && node.Enabled && model.NodeParentsEnabled(node))
+                    if (node.MeshCount == 0 || !node.Enabled || !model.NodeParentsEnabled(node))
                     {
-                        foreach (Mesh mesh in model.GetNodeMeshes(j))
+                        continue;
+                    }
+                    foreach (Mesh mesh in model.GetNodeMeshes(j))
+                    {
+                        if (!mesh.Visible)
                         {
-                            Material material = model.Materials[mesh.MaterialId];
-                            var meshInfo = new MeshInfo(model, node, mesh, material,
-                                material.RenderMode == RenderMode.Translucent ? polygonId++ : 0);
-                            if (material.RenderMode != RenderMode.Decal)
-                            {
-                                _nonDecalMeshes.Add(meshInfo);
-                            }
-                            else
-                            {
-                                _decalMeshes.Add(meshInfo);
-                            }
-                            if (material.RenderMode == RenderMode.Translucent)
-                            {
-                                _translucentMeshes.Add(meshInfo);
-                            }
+                            continue;
+                        }
+                        Material material = model.Materials[mesh.MaterialId];
+                        var meshInfo = new MeshInfo(model, node, mesh, material,
+                            material.RenderMode == RenderMode.Translucent ? polygonId++ : 0);
+                        if (material.RenderMode != RenderMode.Decal)
+                        {
+                            _nonDecalMeshes.Add(meshInfo);
+                        }
+                        else
+                        {
+                            _decalMeshes.Add(meshInfo);
+                        }
+                        if (material.RenderMode == RenderMode.Translucent)
+                        {
+                            _translucentMeshes.Add(meshInfo);
                         }
                     }
                 }
