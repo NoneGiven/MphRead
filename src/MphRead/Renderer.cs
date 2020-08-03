@@ -801,9 +801,7 @@ namespace MphRead
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             var transform = Matrix4.CreateTranslation(data.Position.ToFloatVector());
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PushMatrix();
-            GL.MultMatrix(ref transform);
+            GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
             // the depth buffer can't always handle this
             //GL.Enable(EnableCap.CullFace);
             //GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
@@ -813,8 +811,6 @@ namespace MphRead
                 : data.Light2Enabled != 0 ? data.Light2Color : new ColorRgb(0, 0, 0);
             GL.Uniform4(_shaderLocations.OverrideColor, color.AsVector4(0.5f));
             RenderVolume(lightSource.Volume);
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PopMatrix();
             GL.Disable(EnableCap.Blend);
         }
 
@@ -902,11 +898,7 @@ namespace MphRead
         private void RenderMesh(MeshInfo item)
         {
             Model model = item.Model;
-
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PushMatrix();
             Matrix4 transform = model.Transform;
-            GL.MultMatrix(ref transform);
             _modelMatrix = Matrix4.Identity;
             _modelMatrix = transform * _modelMatrix;
             if (model.Rotating)
@@ -920,10 +912,8 @@ namespace MphRead
                 {
                     transform.M42 += (MathF.Sin(model.Spin / 180 * MathF.PI) + 1) / 8f;
                 }
-                GL.MultMatrix(ref transform);
                 _modelMatrix = transform * _modelMatrix;
             }
-
             UseRoomLights();
             if (model.UseLightOverride)
             {
@@ -943,28 +933,16 @@ namespace MphRead
             {
                 UpdateLightSources(model.Position);
             }
-
             Node node = item.Node;
-
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PushMatrix();
             Matrix4 nodeTransform = node.Transform;
             if (model.Type == ModelType.Room && !_transformRoomNodes)
             {
                 nodeTransform = Matrix4.Identity;
             }
-            GL.MultMatrix(ref nodeTransform);
             _modelMatrix = nodeTransform * _modelMatrix;
             GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref _modelMatrix);
             GL.Uniform1(_shaderLocations.IsBillboard, node.Billboard ? 1 : 0);
-
             RenderMesh(model, item.Mesh, item.Material);
-
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PopMatrix();
-
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PopMatrix();
         }
 
         // todo?: does anything special need to happen for overlapping light sources?
