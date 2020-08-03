@@ -168,4 +168,28 @@ void main()
 }
 ";
     }
+
+    public class ShaderLocations
+    {
+        public int IsBillboard { get; set; }
+        public int UseLight { get; set; }
+        public int UseTexture { get; set; }
+        public int Light1Color { get; set; }
+        public int Light1Vector { get; set; }
+        public int Light2Color { get; set; }
+        public int Light2Vector { get; set; }
+        public int Diffuse { get; set; }
+        public int Ambient { get; set; }
+        public int Specular { get; set; }
+        public int UseFog { get; set; }
+        public int FogColor { get; set; }
+        public int FogOffset { get; set; }
+        public int UseOverride { get; set; }
+        public int OverrideColor { get; set; }
+        public int MaterialAlpha { get; set; }
+        public int MaterialMode { get; set; }
+        public int ModelMatrix { get; set; }
+        public int ViewMatrix { get; set; }
+        public int ProjectionMatrix { get; set; }
+    }
 }
