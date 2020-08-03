@@ -1110,11 +1110,7 @@ namespace MphRead
             ushort width = 1;
             ushort height = 1;
             int textureId = material.CurrentTextureId;
-            if (textureId == UInt16.MaxValue)
-            {
-                GL.Disable(EnableCap.Texture2D);
-            }
-            else if (_showTextures)
+            if (textureId != UInt16.MaxValue)
             {
                 GL.Enable(EnableCap.Texture2D);
                 Texture texture = model.Textures[textureId];
@@ -1209,7 +1205,7 @@ namespace MphRead
                 GL.Scale(1.0f / width, 1.0f / height, 1.0f);
                 GL.Rotate(material.RotateZ, Vector3.UnitZ);
             }
-            GL.Uniform1(_shaderLocations.UseTexture, _showTextures ? 1 : 0);
+            GL.Uniform1(_shaderLocations.UseTexture, textureId != UInt16.MaxValue && _showTextures ? 1 : 0);
         }
 
         private void DoMaterial(Model model, Mesh mesh, Material material)
@@ -1712,14 +1708,6 @@ namespace MphRead
             else if (e.Key == Key.T)
             {
                 _showTextures = !_showTextures;
-                if (_showTextures)
-                {
-                    GL.Enable(EnableCap.Texture2D);
-                }
-                else
-                {
-                    GL.Disable(EnableCap.Texture2D);
-                }
                 await PrintOutput();
             }
             else if (e.Key == Key.C)
