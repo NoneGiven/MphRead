@@ -72,6 +72,8 @@ namespace MphRead
         public int MaterialAlpha { get; set; }
         public int MaterialMode { get; set; }
         public int ModelMatrix { get; set; }
+        public int ViewMatrix { get; set; }
+        public int ProjectionMatrix { get; set; }
     }
 
     public class TextureMap : Dictionary<(int TextureId, int PaletteId), (int BindingId, bool OnlyOpaque)>
@@ -278,6 +280,10 @@ namespace MphRead
             _shaderLocations.MaterialAlpha = GL.GetUniformLocation(_shaderProgramId, "mat_alpha");
             _shaderLocations.MaterialMode = GL.GetUniformLocation(_shaderProgramId, "mat_mode");
             _shaderLocations.ModelMatrix = GL.GetUniformLocation(_shaderProgramId, "model_mtx");
+            _shaderLocations.ViewMatrix = GL.GetUniformLocation(_shaderProgramId, "view_mtx");
+            _shaderLocations.ProjectionMatrix = GL.GetUniformLocation(_shaderProgramId, "proj_mtx");
+
+            GL.UseProgram(_shaderProgramId);
         }
 
         private string FormatOnOff(bool setting)
@@ -414,10 +420,9 @@ namespace MphRead
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
             float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
 
-            GL.MatrixMode(MatrixMode.Projection);
             float fov = MathHelper.DegreesToRadians(80.0f);
             var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.001f, 10000.0f);
-            GL.LoadMatrix(ref perspectiveMatrix);
+            GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref perspectiveMatrix);
 
             TransformCamera();
             UpdateCameraPosition();
@@ -553,20 +558,20 @@ namespace MphRead
 
         private void TransformCamera()
         {
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.LoadIdentity();
+            Matrix4 viewMatrix = Matrix4.Identity;
             if (_cameraMode == CameraMode.Pivot)
             {
-                GL.Translate(0, 0, _distance * -1);
-                GL.Rotate(_angleX, 1, 0, 0);
-                GL.Rotate(_angleY, 0, 1, 0);
+                viewMatrix = Matrix4.CreateTranslation(new Vector3(0, 0, _distance * -1)) * viewMatrix;
+                viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * viewMatrix;
+                viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * viewMatrix;
             }
             else if (_cameraMode == CameraMode.Roam)
             {
-                GL.Rotate(_angleX, 1, 0, 0);
-                GL.Rotate(_angleY, 0, 1, 0);
-                GL.Translate(_cameraPosition.X, _cameraPosition.Y, _cameraPosition.Z);
+                viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * viewMatrix;
+                viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * viewMatrix;
+                viewMatrix = Matrix4.CreateTranslation(_cameraPosition) * viewMatrix;
             }
+            GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref viewMatrix);
         }
 
         private void UpdateCameraPosition()
@@ -728,7 +733,6 @@ namespace MphRead
                     }
                 }
             }
-            GL.UseProgram(_shaderProgramId);
             UpdateUniforms();
             // pass 1: opaque
             GL.ColorMask(true, true, true, true);
@@ -804,7 +808,6 @@ namespace MphRead
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
-            GL.UseProgram(0);
             if (_showLightVolumes > 0)
             {
                 foreach (KeyValuePair<int, LightSource> kvp in _lightSources)
@@ -817,7 +820,6 @@ namespace MphRead
         private void RenderLightVolume(LightSource lightSource)
         {
             LightSourceEntityData data = lightSource.Entity.Data;
-            GL.UseProgram(_shaderProgramId);
             GL.Uniform1(_shaderLocations.UseLight, 0);
             GL.Uniform1(_shaderLocations.UseFog, 0);
             GL.Uniform1(_shaderLocations.UseTexture, 0);
@@ -841,7 +843,6 @@ namespace MphRead
             GL.MatrixMode(MatrixMode.Modelview);
             GL.PopMatrix();
             GL.Disable(EnableCap.Blend);
-            GL.UseProgram(0);
         }
 
         private void UpdateUniforms()

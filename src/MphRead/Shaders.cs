@@ -19,6 +19,8 @@ uniform vec3 ambient;
 uniform vec3 specular;
 uniform vec4 fog_color;
 uniform float far_plane;
+uniform mat4 proj_mtx;
+uniform mat4 view_mtx;
 uniform mat4 model_mtx;
 
 varying vec2 texcoord;
@@ -40,10 +42,10 @@ vec3 light_calc(vec3 light_vec, vec3 light_col, vec3 normal_vec, vec3 dif_col, v
 void main()
 {
     if (is_billboard) {
-        gl_Position = gl_ProjectionMatrix * (gl_ModelViewMatrix * vec4(0.0, 0.0, 0.0, 1.0) + vec4(gl_Vertex.x, gl_Vertex.y, gl_Vertex.z, 0.0));
+        gl_Position = proj_mtx * (view_mtx * model_mtx * vec4(0.0, 0.0, 0.0, 1.0) + vec4(gl_Vertex.xyz, 0.0));
     }
     else {
-        gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+        gl_Position = proj_mtx * view_mtx * model_mtx * gl_Vertex;
     }
     if (use_light) {
         vec3 normal = normalize(mat3(model_mtx) * gl_Normal);
