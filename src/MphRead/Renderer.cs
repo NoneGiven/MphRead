@@ -1089,7 +1089,6 @@ namespace MphRead
             int textureId = material.CurrentTextureId;
             if (textureId != UInt16.MaxValue)
             {
-                GL.Enable(EnableCap.Texture2D);
                 Texture texture = model.Textures[textureId];
                 width = texture.Width;
                 height = texture.Height;
