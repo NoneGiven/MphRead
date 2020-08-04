@@ -260,6 +260,8 @@ namespace MphRead
             _shaderLocations.ViewMatrix = GL.GetUniformLocation(_shaderProgramId, "view_mtx");
             _shaderLocations.ProjectionMatrix = GL.GetUniformLocation(_shaderProgramId, "proj_mtx");
             _shaderLocations.TextureMatrix = GL.GetUniformLocation(_shaderProgramId, "tex_mtx");
+            _shaderLocations.TexgenMode = GL.GetUniformLocation(_shaderProgramId, "texgen_mode");
+            _shaderLocations.TexgenMatrix = GL.GetUniformLocation(_shaderProgramId, "texgen_mtx");
 
             GL.UseProgram(_shaderProgramId);
         }

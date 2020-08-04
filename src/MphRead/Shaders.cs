@@ -24,6 +24,8 @@ uniform mat4 proj_mtx;
 uniform mat4 view_mtx;
 uniform mat4 model_mtx;
 uniform mat4 tex_mtx;
+uniform int texgen_mode;
+uniform mat4 texgen_mtx;
 
 varying vec2 texcoord;
 varying vec4 color;
@@ -67,6 +69,7 @@ void main()
         // alpha will only be less than 1.0 here if DIF_AMB is used but lighting is disabled
         color = vec4(vtx_color.rgb, 1.0);
     }
+    // texgen mode: 0 - none, 1 - texcoord, 2 - normal, 3 - vertex
     texcoord = vec2(tex_mtx * gl_MultiTexCoord0);
 }
 ";
@@ -197,5 +200,7 @@ void main()
         public int ViewMatrix { get; set; }
         public int ProjectionMatrix { get; set; }
         public int TextureMatrix { get; set; }
+        public int TexgenMode { get; set; }
+        public int TexgenMatrix { get; set; }
     }
 }
