@@ -1165,19 +1165,12 @@ namespace MphRead
             {
                 textureMatrix = AnimateTexcoords(group, animation.Value) * textureMatrix;
             }
-            else if (material.TexgenMode != TexgenMode.None)
+            else if (material.TexgenMode == TexgenMode.Texcoord)
             {
-                if (model.TextureMatrices.Count > 0)
-                {
-                    textureMatrix = model.TextureMatrices[material.MatrixId] * textureMatrix;
-                }
-                else
-                {
-                    textureMatrix = Matrix4.CreateTranslation(material.ScaleS * material.TranslateS,
+                textureMatrix = Matrix4.CreateTranslation(material.ScaleS * material.TranslateS,
                         material.ScaleT * material.TranslateT, 0.0f) * textureMatrix;
-                    textureMatrix = Matrix4.CreateScale(material.ScaleS, material.ScaleT, 1.0f) * textureMatrix;
-                    textureMatrix = Matrix4.CreateRotationZ(material.RotateZ) * textureMatrix;
-                }
+                textureMatrix = Matrix4.CreateScale(material.ScaleS, material.ScaleT, 1.0f) * textureMatrix;
+                textureMatrix = Matrix4.CreateRotationZ(material.RotateZ) * textureMatrix;
             }
             GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref textureMatrix);
             GL.Uniform1(_shaderLocations.UseTexture, textureId != UInt16.MaxValue && _showTextures ? 1 : 0);
