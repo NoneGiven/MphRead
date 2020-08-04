@@ -594,9 +594,18 @@ namespace MphRead
                     Mesh mesh = model.Meshes[j];
                     if (!_listIds.TryGetValue(mesh.DlistId, out int listId))
                     {
+                        int textureWidth = 0;
+                        int textureHeight = 0;
+                        Material material = model.Materials[mesh.MaterialId];
+                        if (material.TextureId != UInt16.MaxValue)
+                        {
+                            Texture texture = model.Textures[material.TextureId];
+                            textureWidth = texture.Width;
+                            textureHeight = texture.Height;
+                        }
                         listId = GL.GenLists(1);
                         GL.NewList(listId, ListMode.Compile);
-                        DoDlist(model, mesh);
+                        DoDlist(model, mesh, textureWidth, textureHeight);
                         GL.EndList();
                         _maxListId = Math.Max(listId, _maxListId);
                     }
@@ -1034,7 +1043,7 @@ namespace MphRead
             return first + (second - first) * factor;
         }
 
-        private Matrix4 AnimateTexcoords(TexcoordAnimationGroup group, TexcoordAnimation animation, int width, int height)
+        private Matrix4 AnimateTexcoords(TexcoordAnimationGroup group, TexcoordAnimation animation)
         {
             float scaleS = InterpolateAnimation(group.Scales, animation.ScaleLutIndexS, group.CurrentFrame,
                 animation.ScaleBlendS, animation.ScaleLutLengthS, group.FrameCount);
@@ -1046,12 +1055,12 @@ namespace MphRead
                 animation.TranslateBlendS, animation.TranslateLutLengthS, group.FrameCount);
             float translateT = InterpolateAnimation(group.Translations, animation.TranslateLutIndexT, group.CurrentFrame,
                 animation.TranslateBlendT, animation.TranslateLutLengthT, group.FrameCount);
-            var textureMatrix = Matrix4.CreateTranslation(translateS * width, translateT * height, 0);
+            var textureMatrix = Matrix4.CreateTranslation(translateS, translateT, 0.0f);
             if (rotate != 0)
             {
-                textureMatrix = Matrix4.CreateTranslation(width / 2, height / 2, 0) * textureMatrix;
+                textureMatrix = Matrix4.CreateTranslation(0.5f, 0.5f, 0.0f) * textureMatrix;
                 textureMatrix = Matrix4.CreateRotationZ(rotate) * textureMatrix;
-                textureMatrix = Matrix4.CreateTranslation(-width / 2, -height / 2, 0) * textureMatrix;
+                textureMatrix = Matrix4.CreateTranslation(-0.5f, -0.5f, 0.0f) * textureMatrix;
             }
             textureMatrix = Matrix4.CreateScale(scaleS, scaleT, 1) * textureMatrix;
             return textureMatrix;
@@ -1086,14 +1095,9 @@ namespace MphRead
 
         private void DoTexture(Model model, Mesh mesh, Material material)
         {
-            ushort width = 1;
-            ushort height = 1;
             int textureId = material.CurrentTextureId;
             if (textureId != UInt16.MaxValue)
             {
-                Texture texture = model.Textures[textureId];
-                width = texture.Width;
-                height = texture.Height;
                 GL.BindTexture(TextureTarget.Texture2D, material.TextureBindingId);
                 int minParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMinFilter.Nearest;
                 int magParameter = _textureFiltering ? (int)TextureMagFilter.Linear : (int)TextureMagFilter.Nearest;
@@ -1159,8 +1163,7 @@ namespace MphRead
             }
             if (group != null && animation != null)
             {
-                textureMatrix = Matrix4.CreateScale(1.0f / width, 1.0f / height, 1.0f) * textureMatrix;
-                textureMatrix = AnimateTexcoords(group, animation.Value, width, height) * textureMatrix;
+                textureMatrix = AnimateTexcoords(group, animation.Value) * textureMatrix;
             }
             else if (material.TexgenMode != TexgenMode.None)
             {
@@ -1170,17 +1173,11 @@ namespace MphRead
                 }
                 else
                 {
-                    textureMatrix = Matrix4.CreateTranslation(material.ScaleS * width * material.TranslateS,
-                        material.ScaleT * height * material.TranslateT, 0.0f) * textureMatrix;
+                    textureMatrix = Matrix4.CreateTranslation(material.ScaleS * material.TranslateS,
+                        material.ScaleT * material.TranslateT, 0.0f) * textureMatrix;
                     textureMatrix = Matrix4.CreateScale(material.ScaleS, material.ScaleT, 1.0f) * textureMatrix;
-                    textureMatrix = Matrix4.CreateScale(1.0f / width, 1.0f / height, 1.0f) * textureMatrix;
                     textureMatrix = Matrix4.CreateRotationZ(material.RotateZ) * textureMatrix;
                 }
-            }
-            else
-            {
-                textureMatrix = Matrix4.CreateScale(1.0f / width, 1.0f / height, 1.0f) * textureMatrix;
-                textureMatrix = Matrix4.CreateRotationZ(material.RotateZ) * textureMatrix;
             }
             GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref textureMatrix);
             GL.Uniform1(_shaderLocations.UseTexture, textureId != UInt16.MaxValue && _showTextures ? 1 : 0);
@@ -1270,7 +1267,7 @@ namespace MphRead
             UpdateMaterials(model);
         }
 
-        private void DoDlist(Model model, Mesh mesh)
+        private void DoDlist(Model model, Mesh mesh, int textureWidth, int textureHeight)
         {
             IReadOnlyList<RenderInstruction> list = model.RenderInstructionLists[mesh.DlistId];
             float vtxX = 0;
@@ -1366,6 +1363,7 @@ namespace MphRead
                     break;
                 case InstructionCode.TEXCOORD:
                     {
+                        Debug.Assert(textureWidth > 0 && textureHeight > 0);
                         uint st = instruction.Arguments[0];
                         int s = (int)((st >> 0) & 0xFFFF);
                         if ((s & 0x8000) > 0)
@@ -1377,7 +1375,7 @@ namespace MphRead
                         {
                             t = (int)(t | 0xFFFF0000);
                         }
-                        GL.TexCoord2(s / 16.0f, t / 16.0f);
+                        GL.TexCoord2(s / 16.0f / textureWidth, t / 16.0f / textureHeight);
                     }
                     break;
                 case InstructionCode.VTX_16:
