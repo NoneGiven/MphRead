@@ -199,6 +199,7 @@ namespace MphRead
 
         protected override async void OnLoad()
         {
+            MakeCurrent();
             await Output.Begin();
             GL.ClearColor(_clearColor);
 
