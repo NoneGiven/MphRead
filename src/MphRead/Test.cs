@@ -7,8 +7,6 @@ namespace MphRead
 {
     public static class Test
     {
-#pragma warning disable IDE0051 // Remove unused private members
-
         public static void TestCollision()
         {
             ushort headerSize = 0;
@@ -37,7 +35,7 @@ namespace MphRead
             return Enumerable.SequenceEqual(bone, btwo);
         }
 
-        public static void WriteAllModels()
+        private static void WriteAllModels()
         {
             string modelPath = Path.Combine(Paths.FileSystem, "models");
             var modelFiles = new List<string>();
@@ -242,8 +240,6 @@ namespace MphRead
             //Console.WriteLine($"light: {light} R 0x{r:X2}, G 0x{g:X2}, B 0x{b:X2}");
             Console.WriteLine();
         }
-
-#pragma warning restore IDE0051 // Remove unused private members
 
         private static IEnumerable<Model> GetAllModels()
         {

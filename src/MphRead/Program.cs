@@ -169,7 +169,7 @@ namespace MphRead
                     string arg = args[i];
                     if (arg.StartsWith("-") && arg.Length > 1)
                     {
-                        arg = arg.Substring(1);
+                        arg = arg[1..];
                         if (i == args.Length - 1)
                         {
                             arguments.Add(new Argument(arg, null));
