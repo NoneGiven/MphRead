@@ -803,37 +803,38 @@ namespace MphRead
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
-            if (_showLightVolumes > 0)
+            if (_showLightVolumes > 0 && _lightSources.Count > 0)
             {
+                GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
+                GL.Uniform1(_shaderLocations.UseLight, 0);
+                GL.Uniform1(_shaderLocations.UseFog, 0);
+                GL.Uniform1(_shaderLocations.UseTexture, 0);
+                GL.Uniform1(_shaderLocations.UseOverride, 1);
+                GL.Uniform1(_shaderLocations.IsBillboard, 0);
+                GL.Enable(EnableCap.Blend);
+                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+                GL.Enable(EnableCap.CullFace);
+                // alternative if the depth buffer can't handle the above:
+                //GL.Disable(EnableCap.CullFace);
                 foreach (KeyValuePair<int, LightSource> kvp in _lightSources)
                 {
                     RenderLightVolume(kvp.Value);
                 }
+                GL.Disable(EnableCap.Blend);
             }
         }
 
         private void RenderLightVolume(LightSource lightSource)
         {
             LightSourceEntityData data = lightSource.Entity.Data;
-            GL.Uniform1(_shaderLocations.UseLight, 0);
-            GL.Uniform1(_shaderLocations.UseFog, 0);
-            GL.Uniform1(_shaderLocations.UseTexture, 0);
-            GL.Uniform1(_shaderLocations.UseOverride, 1);
-            GL.Uniform1(_shaderLocations.IsBillboard, 0);
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
             var transform = Matrix4.CreateTranslation(data.Position.ToFloatVector());
             GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
-            GL.Enable(EnableCap.CullFace);
-            GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
-            // alternative if the depth buffer can't handle the above:
-            //GL.Disable(EnableCap.CullFace);
             ColorRgb color = _showLightVolumes == 1
                 ? data.Light1Enabled != 0 ? data.Light1Color : new ColorRgb(0, 0, 0)
                 : data.Light2Enabled != 0 ? data.Light2Color : new ColorRgb(0, 0, 0);
             GL.Uniform4(_shaderLocations.OverrideColor, color.AsVector4(0.5f));
             RenderVolume(lightSource.Volume);
-            GL.Disable(EnableCap.Blend);
         }
 
         private void UpdateUniforms()
