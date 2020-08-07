@@ -6450,10 +6450,10 @@ namespace MphRead
                     new ModelMetadata("zoomer")
                 },
                 // 2D images only, no mesh/dlist, probably just swapped in for other textures on models
-                {
-                    "doubleDamage_img",
-                    new ModelMetadata("doubleDamage_img", animation: false, archive: "common")
-                },
+                //{
+                //    "doubleDamage_img",
+                //    new ModelMetadata("doubleDamage_img", animation: false, archive: "common")
+                //},
                 // todo?: seemingly 2D images only, no polygons render even though they have a mesh/dlist
                 {
                     "arcWelder",

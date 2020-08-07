@@ -141,6 +141,9 @@ namespace MphRead
 
         public IReadOnlyList<Recolor> Recolors { get; }
 
+        public IReadOnlyList<uint> NodeIds { get; }
+        public IReadOnlyList<uint> WeightIds { get; }
+
         // todo: refactor model vs. entity abstraction
         public Entity? Entity { get; set; }
 
@@ -152,7 +155,8 @@ namespace MphRead
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
             IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
             IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
-            IReadOnlyList<Matrix44Fx> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor, bool useLightSources)
+            IReadOnlyList<Matrix44Fx> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor, bool useLightSources,
+            IReadOnlyList<uint> nodeIds, IReadOnlyList<uint> weightIds)
         {
             ThrowIfInvalidEnums(materials);
             Name = name;
@@ -172,6 +176,8 @@ namespace MphRead
             float scale = Header.ScaleBase.FloatValue * (1 << (int)Header.ScaleFactor);
             Scale = new Vector3(scale, scale, scale);
             UseLightSources = useLightSources;
+            NodeIds = nodeIds;
+            WeightIds = weightIds;
         }
 
         public IEnumerable<ColorRgba> GetPixels(int textureId, int paletteId)

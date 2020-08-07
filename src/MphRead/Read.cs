@@ -181,10 +181,16 @@ namespace MphRead
                 }
                 recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
             }
+            //  todo: when the counts/offsets are zero, these values should probably be skipped, even though they are always present
+            int count = (int)header.UnknownAnimationCount - Sizes.Header;
+            Debug.Assert(count >= sizeof(uint) && count % sizeof(uint) == 0);
+            count /= 4;
+            IReadOnlyList<uint> nodeIds = DoOffsets<uint>(initialBytes, (uint)Sizes.Header, count);
+            IReadOnlyList<uint> weightIds = DoOffsets<uint>(initialBytes, header.UnknownAnimationCount, count);
             AnimationResults animations = LoadAnimation(animationPath);
             return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                textureMatrices, recolors, defaultRecolor, useLightSources);
+                textureMatrices, recolors, defaultRecolor, useLightSources, nodeIds, weightIds);
         }
 
         private class AnimationResults
