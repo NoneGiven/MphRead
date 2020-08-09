@@ -153,5 +153,25 @@ namespace MphRead
                 new Vector4(matrix.Row3)
             );
         }
+
+        public static Matrix4 Keep3x3(this Matrix4x3 matrix)
+        {
+            return new Matrix4(
+                new Vector4(matrix.Row0, 0.0f),
+                new Vector4(matrix.Row1, 0.0f),
+                new Vector4(matrix.Row2, 0.0f),
+                Vector4.Zero
+            );
+        }
+
+        public static Matrix4 Keep3x3(this Matrix4 matrix)
+        {
+            return new Matrix4(
+                new Vector4(matrix.Row0.Xyz, 0.0f),
+                new Vector4(matrix.Row1.Xyz, 0.0f),
+                new Vector4(matrix.Row2.Xyz, 0.0f),
+                Vector4.Zero
+            );
+        }
     }
 }

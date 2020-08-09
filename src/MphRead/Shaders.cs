@@ -9,6 +9,7 @@ namespace MphRead
 #version 120
 uniform bool is_billboard;
 uniform bool use_light;
+uniform bool use_texture;
 uniform bool show_colors;
 uniform bool fog_enable;
 uniform vec3 light1vec;
@@ -68,28 +69,32 @@ void main()
         // alpha will only be less than 1.0 here if DIF_AMB is used but lighting is disabled
         color = vec4(vtx_color.rgb, 1.0);
     }
-    // texgen mode: 0 - none, 1 - texcoord, 2 - normal, 3 - vertex
-    if (texgen_mode == 0 || texgen_mode == 1) {
-        texcoord = vec2(tex_mtx * gl_MultiTexCoord0);
+    if (use_texture) {
+        // texgen mode: 0 - none, 1 - texcoord, 2 - normal, 3 - vertex
+        if (texgen_mode == 0 || texgen_mode == 1) {
+            texcoord = vec2(tex_mtx * gl_MultiTexCoord0);
+        }
+        else if (texgen_mode == 2 || texgen_mode == 3) {
+            mat2x4 texgen_mtx = mat2x4(
+                vec4(tex_mtx[0][0], tex_mtx[0][1], tex_mtx[0][2], gl_MultiTexCoord0.x),
+                vec4(tex_mtx[1][0], tex_mtx[1][1], tex_mtx[1][2], gl_MultiTexCoord0.y)
+            );
+            if (texgen_mode == 2) {
+                texcoord = vec4(normal, 1.0) * texgen_mtx;
+            }
+            else {
+                texcoord = vec4(gl_Vertex.xyz, 1.0) * texgen_mtx;
+            }
+        }
     }
-    else if (texgen_mode == 2 || texgen_mode == 3) {
-        mat2x4 texgen_mtx = mat2x4(
-            vec4(tex_mtx[0][0], tex_mtx[0][1], tex_mtx[0][2], gl_MultiTexCoord0.x),
-            vec4(tex_mtx[1][0], tex_mtx[1][1], tex_mtx[1][2], gl_MultiTexCoord0.y)
-        );
-        if (texgen_mode == 2) {
-            texcoord = vec4(normal, 1.0) * texgen_mtx;
-        }
-        else {
-            texcoord = vec4(gl_Vertex.xyz, 1.0) * texgen_mtx;
-        }
+    else {
+        texcoord = vec2(0.0, 0.0);
     }
 }
 ";
 
         private static readonly string _fragmentShader = @"
 #version 120
-uniform bool is_billboard;
 uniform bool use_texture;
 uniform bool fog_enable;
 uniform vec4 fog_color;
