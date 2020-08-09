@@ -193,9 +193,20 @@ namespace MphRead
         {
             Model model = Read.GetModelByName(name, recolor, firstHunt);
             SceneSetup.ComputeNodeMatrices(model, index: 0);
+            // sktodo: where do model texture matrices come from? do they change?
+            if (model.Name == "SamusAlt_lod0")
+            {
+                model.TextureMatrices.Add(Test.ParseMatrix64("00 10 00 00 00 00 00 00 19 1A 1B 1C 1D 1E 22 24 00 00 00 00 00 10 00 00 33 " +
+                    "35 37 33 36 38 3A 3C 00 00 00 00 00 00 00 00 50 53 55 58 5B 5E 61 63 00 00 00 00 00 00 00 00 7A 7B 7C 7E 7F 80 7F 80"));
+            }
             _models.Add(model);
             _modelMap.Add(model.SceneId, model);
         }
+
+        // sktodo: where does "current texture matrix" come from? how does the Morph Ball's change between frames?
+        // --> also, this division assumes a square texture
+        private readonly Matrix4 _currentTextureMatrix = Test.ParseMatrix48("FF EF FF FF FD FF FF FF 08 00 00 00 FF FF FF FF 52 0F " +
+            "00 00 9D 04 00 00 F7 FF FF FF 9D 04 00 00 AD F0 FF FF FE FF FF FF 7F F4 FF FF CA D2 FF FF").AsMatrix4() * (1 / 32.0f);
 
         protected override async void OnLoad()
         {
@@ -226,9 +237,19 @@ namespace MphRead
             int vertexShader = GL.CreateShader(ShaderType.VertexShader);
             GL.ShaderSource(vertexShader, Shaders.VertexShader);
             GL.CompileShader(vertexShader);
+            string vertexLog = GL.GetShaderInfoLog(vertexShader);
             int fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
             GL.ShaderSource(fragmentShader, Shaders.FragmentShader);
             GL.CompileShader(fragmentShader);
+            string fragmentLog = GL.GetShaderInfoLog(fragmentShader);
+            if (vertexLog != "" || fragmentLog != "")
+            {
+                if (Debugger.IsAttached)
+                {
+                    Debugger.Break();
+                }
+                throw new ProgramException("Failed to compile shaders.");
+            }
             _shaderProgramId = GL.CreateProgram();
             GL.AttachShader(_shaderProgramId, vertexShader);
             GL.AttachShader(_shaderProgramId, fragmentShader);
@@ -262,7 +283,6 @@ namespace MphRead
             _shaderLocations.ProjectionMatrix = GL.GetUniformLocation(_shaderProgramId, "proj_mtx");
             _shaderLocations.TextureMatrix = GL.GetUniformLocation(_shaderProgramId, "tex_mtx");
             _shaderLocations.TexgenMode = GL.GetUniformLocation(_shaderProgramId, "texgen_mode");
-            _shaderLocations.TexgenMatrix = GL.GetUniformLocation(_shaderProgramId, "texgen_mtx");
 
             GL.UseProgram(_shaderProgramId);
         }
@@ -960,12 +980,13 @@ namespace MphRead
             Matrix4 nodeTransform = node.Transform;
             if (model.Type == ModelType.Room && !_transformRoomNodes)
             {
+                // todo: this is unlikely to matter, but should we pass this for texgen purposes?
                 nodeTransform = Matrix4.Identity;
             }
             _modelMatrix = nodeTransform * _modelMatrix;
             GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref _modelMatrix);
             GL.Uniform1(_shaderLocations.IsBillboard, node.Billboard ? 1 : 0);
-            RenderMesh(model, item.Mesh, item.Material);
+            RenderMesh(model, node, item.Mesh, item.Material);
         }
 
         // todo?: does anything special need to happen for overlapping light sources?
@@ -1068,10 +1089,10 @@ namespace MphRead
             return textureMatrix;
         }
 
-        private void RenderMesh(Model model, Mesh mesh, Material material)
+        private void RenderMesh(Model model, Node node, Mesh mesh, Material material)
         {
             DoMaterial(model, mesh, material);
-            DoTexture(model, mesh, material);
+            DoTexture(model, node, mesh, material);
             if (_faceCulling)
             {
                 GL.Enable(EnableCap.CullFace);
@@ -1095,7 +1116,7 @@ namespace MphRead
             GL.CallList(mesh.ListId);
         }
 
-        private void DoTexture(Model model, Mesh mesh, Material material)
+        private void DoTexture(Model model, Node node, Mesh mesh, Material material)
         {
             int textureId = material.CurrentTextureId;
             if (textureId != UInt16.MaxValue)
@@ -1165,15 +1186,50 @@ namespace MphRead
             }
             if (group != null && animation != null)
             {
-                textureMatrix = AnimateTexcoords(group, animation.Value) * textureMatrix;
+                textureMatrix = AnimateTexcoords(group, animation.Value);
             }
-            else if (material.TexgenMode == TexgenMode.Texcoord)
+            if (material.TexgenMode != TexgenMode.None)
             {
-                textureMatrix = Matrix4.CreateTranslation(material.ScaleS * material.TranslateS,
-                        material.ScaleT * material.TranslateT, 0.0f) * textureMatrix;
-                textureMatrix = Matrix4.CreateScale(material.ScaleS, material.ScaleT, 1.0f) * textureMatrix;
-                textureMatrix = Matrix4.CreateRotationZ(material.RotateZ) * textureMatrix;
+                if (group == null || animation == null)
+                {
+                    if (model.TextureMatrices.Count > 0)
+                    {
+                        textureMatrix = model.TextureMatrices[material.MatrixId];
+                    }
+                    else
+                    {
+                        // this code path is probably never taken when using TexgenMode.Normal,
+                        // becuase the texture matrix access would null ref -- so the second multiplication is either
+                        // multiplying by the model texture matrix (same as the first) or by the animation result
+                        textureMatrix = Matrix4.CreateTranslation(material.ScaleS * material.TranslateS,
+                        material.ScaleT * material.TranslateT, 0.0f);
+                        textureMatrix = Matrix4.CreateScale(material.ScaleS, material.ScaleT, 1.0f) * textureMatrix;
+                        textureMatrix = Matrix4.CreateRotationZ(material.RotateZ) * textureMatrix;
+                    }
+                }
+                if (material.TexgenMode == TexgenMode.Normal)
+                {
+                    // sktodo: when to take the code path where _currentTextureMatrix isn't used?
+                    Matrix4 productMatrix = new Matrix4(new Matrix3(node.Transform)) * _currentTextureMatrix;
+                    productMatrix.M12 *= -1;
+                    productMatrix.M13 *= -1;
+                    productMatrix.M22 *= -1;
+                    productMatrix.M23 *= -1;
+                    productMatrix.M32 *= -1;
+                    productMatrix.M33 *= -1;
+                    Debug.Assert(material.MatrixId < model.TextureMatrices.Count);
+                    textureMatrix = productMatrix * model.TextureMatrices[material.MatrixId] * textureMatrix;
+                    textureMatrix = new Matrix4(
+                        textureMatrix.Row0 * 16.0f,
+                        textureMatrix.Row1 * 16.0f,
+                        textureMatrix.Row2 * 16.0f,
+                        textureMatrix.Row3
+                    );
+                    textureMatrix.Transpose();
+                    GL.TexCoord2(0.5f, 0.5f);
+                }
             }
+            GL.Uniform1(_shaderLocations.TexgenMode, (int)material.TexgenMode);
             GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref textureMatrix);
             GL.Uniform1(_shaderLocations.UseTexture, textureId != UInt16.MaxValue && _showTextures ? 1 : 0);
         }

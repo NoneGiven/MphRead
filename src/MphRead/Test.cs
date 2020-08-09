@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using OpenToolkit.Mathematics;
 
 namespace MphRead
 {
@@ -140,6 +141,109 @@ namespace MphRead
                     GetPolygonAttrs(model, material, 1);
                 }
             }
+        }
+
+        public static Matrix4x3 ParseMatrix12(params string[] values)
+        {
+            if (values.Length != 12 || values.Any(v => v.Length != 8))
+            {
+                throw new ArgumentException(nameof(values));
+            }
+            return new Matrix4x3(
+                Int32.Parse(values[0], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[1], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[2], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[3], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[4], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[5], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[6], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[7], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[8], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[9], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[10], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[11], System.Globalization.NumberStyles.HexNumber) / 4096f
+            );
+        }
+
+        public static Matrix4 ParseMatrix16(params string[] values)
+        {
+            if (values.Length != 16 || values.Any(v => v.Length != 8))
+            {
+                throw new ArgumentException(nameof(values));
+            }
+            return new Matrix4(
+                Int32.Parse(values[ 0], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[ 1], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[ 2], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[ 3], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[ 4], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[ 5], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[ 6], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[ 7], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[ 8], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[ 9], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[10], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[11], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[12], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[13], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[14], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[15], System.Globalization.NumberStyles.HexNumber) / 4096f
+            );
+        }
+
+        public static Matrix4 ParseMatrix16(string value)
+        {
+            return ParseMatrix16(value.Split(' '));
+        }
+
+        public static Matrix4x3 ParseMatrix48(string value)
+        {
+            string[] values = value.Split(' ');
+            if (values.Length != 48 || values.Any(v => v.Length != 2))
+            {
+                throw new ArgumentException(nameof(values));
+            }
+            return ParseMatrix12(
+                values[3] + values[2] + values[1] + values[0],
+                values[7] + values[6] + values[5] + values[4],
+                values[11] + values[10] + values[9] + values[8],
+                values[15] + values[14] + values[13] + values[12],
+                values[19] + values[18] + values[17] + values[16],
+                values[23] + values[22] + values[21] + values[20],
+                values[27] + values[26] + values[25] + values[24],
+                values[31] + values[30] + values[29] + values[28],
+                values[35] + values[34] + values[33] + values[32],
+                values[39] + values[38] + values[37] + values[36],
+                values[43] + values[42] + values[41] + values[40],
+                values[47] + values[46] + values[45] + values[44]
+            );
+        }
+
+        public static Matrix4 ParseMatrix64(string value)
+        {
+            string[] values = value.Split(' ');
+            if (values.Length != 64 || values.Any(v => v.Length != 2))
+            {
+                throw new ArgumentException(nameof(values));
+            }
+            return ParseMatrix16(
+                values[ 3] + values[ 2] + values[ 1] + values[ 0],
+                values[ 7] + values[ 6] + values[ 5] + values[ 4],
+                values[11] + values[10] + values[ 9] + values[ 8],
+                values[15] + values[14] + values[13] + values[12],
+                values[19] + values[18] + values[17] + values[16],
+                values[23] + values[22] + values[21] + values[20],
+                values[27] + values[26] + values[25] + values[24],
+                values[31] + values[30] + values[29] + values[28],
+                values[35] + values[34] + values[33] + values[32],
+                values[39] + values[38] + values[37] + values[36],
+                values[43] + values[42] + values[41] + values[40],
+                values[47] + values[46] + values[45] + values[44],
+                values[51] + values[50] + values[49] + values[48],
+                values[55] + values[54] + values[53] + values[52],
+                values[59] + values[58] + values[57] + values[56],
+                values[63] + values[62] + values[61] + values[60]
+            );
         }
 
         public static void GetPolygonAttrs(Model model, int polygonId)

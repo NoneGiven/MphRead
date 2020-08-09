@@ -23,7 +23,7 @@ namespace MphRead
         public IReadOnlyList<Mesh> Meshes { get; }
         public IReadOnlyList<Material> Materials { get; }
         public IReadOnlyList<DisplayList> DisplayLists { get; }
-        public IReadOnlyList<Matrix4> TextureMatrices { get; }
+        public List<Matrix4> TextureMatrices { get; }
 
         // count and order match Dlists
         public IReadOnlyList<IReadOnlyList<RenderInstruction>> RenderInstructionLists { get; }

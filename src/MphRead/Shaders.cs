@@ -25,7 +25,6 @@ uniform mat4 view_mtx;
 uniform mat4 model_mtx;
 uniform mat4 tex_mtx;
 uniform int texgen_mode;
-uniform mat4 texgen_mtx;
 
 varying vec2 texcoord;
 varying vec4 color;
@@ -52,8 +51,8 @@ void main()
         gl_Position = proj_mtx * view_mtx * model_mtx * gl_Vertex;
     }
     vec4 vtx_color = show_colors ? gl_Color : vec4(1.0);
+    vec3 normal = normalize(mat3(model_mtx) * gl_Normal);
     if (use_light) {
-        vec3 normal = normalize(mat3(model_mtx) * gl_Normal);
         vec3 dif_current = diffuse;
         vec3 amb_current = ambient;
         if (gl_Color.a == 0.0) {
@@ -70,7 +69,21 @@ void main()
         color = vec4(vtx_color.rgb, 1.0);
     }
     // texgen mode: 0 - none, 1 - texcoord, 2 - normal, 3 - vertex
-    texcoord = vec2(tex_mtx * gl_MultiTexCoord0);
+    if (texgen_mode == 0 || texgen_mode == 1) {
+        texcoord = vec2(tex_mtx * gl_MultiTexCoord0);
+    }
+    else if (texgen_mode == 2 || texgen_mode == 3) {
+        mat2x4 texgen_mtx = mat2x4(
+            vec4(tex_mtx[0][0], tex_mtx[0][1], tex_mtx[0][2], gl_MultiTexCoord0.x),
+            vec4(tex_mtx[1][0], tex_mtx[1][1], tex_mtx[1][2], gl_MultiTexCoord0.y)
+        );
+        if (texgen_mode == 2) {
+            texcoord = vec4(normal, 1.0) * texgen_mtx;
+        }
+        else {
+            texcoord = vec4(gl_Vertex.xyz, 1.0) * texgen_mtx;
+        }
+    }
 }
 ";
 
@@ -82,12 +95,13 @@ uniform bool fog_enable;
 uniform vec4 fog_color;
 uniform int fog_offset;
 uniform sampler2D tex;
-varying vec2 texcoord;
-varying vec4 color;
 uniform bool use_override;
 uniform vec4 override_color;
 uniform float mat_alpha;
 uniform int mat_mode;
+
+varying vec2 texcoord;
+varying vec4 color;
 
 vec4 toon_color(vec4 vtx_color)
 {
@@ -201,6 +215,5 @@ void main()
         public int ProjectionMatrix { get; set; }
         public int TextureMatrix { get; set; }
         public int TexgenMode { get; set; }
-        public int TexgenMatrix { get; set; }
     }
 }
