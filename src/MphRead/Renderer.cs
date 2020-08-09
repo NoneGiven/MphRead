@@ -1198,9 +1198,6 @@ namespace MphRead
                     }
                     else
                     {
-                        // this code path is probably never taken when using TexgenMode.Normal,
-                        // becuase the texture matrix access would null ref -- so the second multiplication is either
-                        // multiplying by the model texture matrix (same as the first) or by the animation result
                         textureMatrix = Matrix4.CreateTranslation(material.ScaleS * material.TranslateS,
                         material.ScaleT * material.TranslateT, 0.0f);
                         textureMatrix = Matrix4.CreateScale(material.ScaleS, material.ScaleT, 1.0f) * textureMatrix;
@@ -1218,6 +1215,8 @@ namespace MphRead
                     productMatrix.M32 *= -1;
                     productMatrix.M33 *= -1;
                     Debug.Assert(material.MatrixId < model.TextureMatrices.Count);
+                    // textureMatrix will either be the model texture matrix again or the animation result;
+                    // it can't be the material properties since that path implies a TextureMatrices indexing error here
                     textureMatrix = productMatrix * model.TextureMatrices[material.MatrixId] * textureMatrix;
                     textureMatrix = new Matrix4(
                         textureMatrix.Row0 * 16.0f,
