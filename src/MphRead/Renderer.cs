@@ -2385,7 +2385,7 @@ namespace MphRead
             await Output.Write($"Texture ID {material.CurrentTextureId}, Palette ID {material.CurrentPaletteId}", guid);
             await Output.Write($"Diffuse ({material.Diffuse.Red}, {material.Diffuse.Green}, {material.Diffuse.Blue})" +
                 $" Ambient ({material.Ambient.Red}, {material.Ambient.Green}, {material.Ambient.Blue})" +
-                $" Specular({ material.Specular.Red}, { material.Specular.Green}, { material.Specular.Blue})", guid);
+                $" Specular ({ material.Specular.Red}, { material.Specular.Green}, { material.Specular.Blue})", guid);
             await Output.Write(guid);
         }
 
