@@ -757,6 +757,7 @@ namespace MphRead
             }
             else
             {
+                // todo: this (and some other entity setup stuff) should be applied no matter how the model is loaded
                 model.UseLightOverride = true;
             }
             models.Add(model);
