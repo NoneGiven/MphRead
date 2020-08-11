@@ -145,7 +145,7 @@ namespace MphRead
 
         public static Matrix4x3 Concat43(Matrix4x3 first, Matrix4x3 second)
         {
-            var output = Matrix4x3.Zero;
+            Matrix4x3 output = Matrix4x3.Zero;
             output.M11 = first.M13 * second.M31 + first.M11 * second.M11 + first.M12 * second.M21;
             output.M12 = first.M13 * second.M32 + first.M11 * second.M12 + first.M12 * second.M22;
             output.M13 = first.M13 * second.M33 + first.M11 * second.M13 + first.M12 * second.M23;
@@ -279,16 +279,16 @@ namespace MphRead
                 throw new ArgumentException(nameof(values));
             }
             return new Matrix4(
-                Int32.Parse(values[ 0], System.Globalization.NumberStyles.HexNumber) / 4096f,
-                Int32.Parse(values[ 1], System.Globalization.NumberStyles.HexNumber) / 4096f,
-                Int32.Parse(values[ 2], System.Globalization.NumberStyles.HexNumber) / 4096f,
-                Int32.Parse(values[ 3], System.Globalization.NumberStyles.HexNumber) / 4096f,
-                Int32.Parse(values[ 4], System.Globalization.NumberStyles.HexNumber) / 4096f,
-                Int32.Parse(values[ 5], System.Globalization.NumberStyles.HexNumber) / 4096f,
-                Int32.Parse(values[ 6], System.Globalization.NumberStyles.HexNumber) / 4096f,
-                Int32.Parse(values[ 7], System.Globalization.NumberStyles.HexNumber) / 4096f,
-                Int32.Parse(values[ 8], System.Globalization.NumberStyles.HexNumber) / 4096f,
-                Int32.Parse(values[ 9], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[0], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[1], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[2], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[3], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[4], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[5], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[6], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[7], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[8], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[9], System.Globalization.NumberStyles.HexNumber) / 4096f,
                 Int32.Parse(values[10], System.Globalization.NumberStyles.HexNumber) / 4096f,
                 Int32.Parse(values[11], System.Globalization.NumberStyles.HexNumber) / 4096f,
                 Int32.Parse(values[12], System.Globalization.NumberStyles.HexNumber) / 4096f,
@@ -334,9 +334,9 @@ namespace MphRead
                 throw new ArgumentException(nameof(values));
             }
             return ParseMatrix16(
-                values[ 3] + values[ 2] + values[ 1] + values[ 0],
-                values[ 7] + values[ 6] + values[ 5] + values[ 4],
-                values[11] + values[10] + values[ 9] + values[ 8],
+                values[3] + values[2] + values[1] + values[0],
+                values[7] + values[6] + values[5] + values[4],
+                values[11] + values[10] + values[9] + values[8],
                 values[15] + values[14] + values[13] + values[12],
                 values[19] + values[18] + values[17] + values[16],
                 values[23] + values[22] + values[21] + values[20],
