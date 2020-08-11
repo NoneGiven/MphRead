@@ -143,6 +143,113 @@ namespace MphRead
             }
         }
 
+        public static Matrix4x3 Concat43(Matrix4x3 first, Matrix4x3 second)
+        {
+            var output = Matrix4x3.Zero;
+            output.M11 = first.M13 * second.M31 + first.M11 * second.M11 + first.M12 * second.M21;
+            output.M12 = first.M13 * second.M32 + first.M11 * second.M12 + first.M12 * second.M22;
+            output.M13 = first.M13 * second.M33 + first.M11 * second.M13 + first.M12 * second.M23;
+            output.M21 = first.M23 * second.M31 + first.M21 * second.M11 + first.M22 * second.M21;
+            output.M22 = first.M23 * second.M32 + first.M21 * second.M12 + first.M22 * second.M22;
+            output.M23 = first.M23 * second.M33 + first.M21 * second.M13 + first.M22 * second.M23;
+            output.M31 = first.M33 * second.M31 + first.M31 * second.M11 + first.M32 * second.M21;
+            output.M32 = first.M33 * second.M32 + first.M31 * second.M12 + first.M32 * second.M22;
+            output.M33 = first.M33 * second.M33 + first.M31 * second.M13 + first.M32 * second.M23;
+            output.M41 = second.M41 + first.M43 * second.M31 + first.M41 * second.M11 + first.M42 * second.M21;
+            output.M42 = second.M42 + first.M43 * second.M32 + first.M41 * second.M12 + first.M42 * second.M22;
+            output.M43 = second.M43 + first.M43 * second.M33 + first.M41 * second.M13 + first.M42 * second.M23;
+            return output;
+        }
+
+        public static void TestMatrix()
+        {
+            // 0x020DB528 (passed to draw_animated_model from CModel_draw from draw_player)
+            // updated in sub_201DCE4 -- I guess it's just the model transform?
+            Matrix4x3 mtx1 = Test.ParseMatrix48("03 F0 FF FF 00 00 00 00 9C 00 00 00 F9 FF FF FF FB 0F 00 00 3E FF FF FF 64 FF FF FF 3E FF FF FF 08 F0 FF FF 22 00 00 00 86 40 00 00 F1 AD FD FF");
+            // 0x220DA430 (constant?)
+            Matrix4x3 mtx2 = Test.ParseMatrix48("FD 0F 00 00 D3 FF FF FF 97 00 00 00 00 00 00 00 53 0F 00 00 9B 04 00 00 62 FF FF FF 66 FB FF FF 50 0F 00 00 F4 E8 FF FF DA 0B FF FF BF F8 01 00");
+            // concatenation result
+            Matrix4x3 currentTextureMatrix = Test.ParseMatrix48("FF EF FF FF 00 00 00 00 FE FF FF FF 00 00 00 00 86 0F 00 00 DF 03 00 00 01 00 00 00 DF 03 00 00 7A F0 FF FF 00 00 00 00 7F F4 FF FF CA D2 FF FF");
+            Matrix4x3 mult = Concat43(mtx1, mtx2);
+
+            var trans = new Matrix4(
+                new Vector4(mtx1.Row0, 0.0f),
+                new Vector4(mtx1.Row1, 0.0f),
+                new Vector4(mtx1.Row2, 0.0f),
+                new Vector4(mtx1.Row3, 1.0f)
+            );
+            Vector3 pos = trans.ExtractTranslation();
+            Vector3 rot = trans.ExtractRotation().ToEulerAngles();
+            rot = new Vector3(
+                MathHelper.RadiansToDegrees(rot.X),
+                MathHelper.RadiansToDegrees(rot.Y),
+                MathHelper.RadiansToDegrees(rot.Z)
+            );
+            Vector3 scale = trans.ExtractScale();
+        }
+
+        public enum Hunter : byte
+        {
+            Samus = 0,
+            Kanden = 1,
+            Trace = 2,
+            Sylux = 3,
+            Noxus = 4,
+            Spire = 5,
+            Weavel = 6,
+            Guardian = 7
+        }
+
+        public static void TestLogic()
+        {
+            Hunter hunter = 0;
+            int flags = 0;
+            int v45 = 0;
+
+            if (hunter == Hunter.Noxus)
+            {
+
+            }
+            else if (hunter > Hunter.Samus && hunter != Hunter.Spire)
+            {
+                if (hunter == Hunter.Kanden)
+                {
+                    /* call sub_202657C */
+                }
+                else // Trace, Sylux, Weavel, Guardian
+                {
+
+                }
+            }
+            else // Samus, Spire
+            {
+                // the "404 + 64" used in the vector setup seems to point to fx32 0.5
+                if (hunter > Hunter.Samus || (flags & 0x80) > 0) // Spire OR colliding with platform
+                {
+                    /* v45 vector setup 1 */
+                    v45 = 1;
+                }
+                else // Samus AND !(colliding with platform)
+                {
+                    /* v45 vector setup 2 */
+                    v45 = 2;
+                }
+                if (v45 > 0)
+                {
+                    /* matrix setup */
+                    if (hunter == Hunter.Samus)
+                    {
+                        /* 4F4 matrix concat */
+                    }
+                    /* 4F4 cross product and normalize */
+                    if (hunter == Hunter.Spire)
+                    {
+                        /* 4F4 matrix multiplication */
+                    }
+                }
+            }
+        }
+
         public static Matrix4x3 ParseMatrix12(params string[] values)
         {
             if (values.Length != 12 || values.Any(v => v.Length != 8))
