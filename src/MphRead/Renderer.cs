@@ -202,18 +202,18 @@ namespace MphRead
             Model model = Read.GetModelByName(name, recolor, firstHunt);
             model.Rotation = new Vector3(0, 270, 0);
             SceneSetup.ComputeNodeMatrices(model, index: 0);
-            // sktodo: where do model texture matrices come from? do they change?
+            // sktodo: where do model texture matrices come from?
+            // in RAM, this appears to be a 4x4 identity matrix where only the upper-left 4x2 is set (the rest is garbage data),
+            // and ultimately only the top 3x2 is actually used in the multiplications with the texenv matrix
+            // --> however, the AlimbicCapsule texture matrix (above) is not the samem although it also appears to be only 4x2
             if (model.Name == "SamusAlt_lod0")
             {
-                // this appears to be a 4x4 identity matrix where only the top 4x2 is set (the rest is garbage data),
-                // and only the top 3x2 is actually used in the multiplications with the texenv matrix
-                model.TextureMatrices.Add(Test.ParseMatrix64("00 10 00 00 00 00 00 00 19 1A 1B 1C 1D 1E 22 24 00 00 00 00 00 10 00 00 33 " +
-                    "35 37 33 36 38 3A 3C 00 00 00 00 00 00 00 00 50 53 55 58 5B 5E 61 63 00 00 00 00 00 00 00 00 7A 7B 7C 7E 7F 80 7F 80"));
+                model.TextureMatrices.Add(Matrix4.Identity);
             }
             _models.Add(model);
             _modelMap.Add(model.SceneId, model);
         }
-
+        
         protected override async void OnLoad()
         {
             MakeCurrent();
