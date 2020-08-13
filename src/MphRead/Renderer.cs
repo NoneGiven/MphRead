@@ -212,8 +212,6 @@ namespace MphRead
             _modelMap.Add(model.SceneId, model);
         }
 
-        private readonly Matrix4 _currentTextureMatrix = Test.ParseMatrix48("00 F0 FF FF 00 00 00 00 00 00 00 00 00 00 00 00 50 0F 00 00 A2 04 00 00 00 00 00 00 A2 04 00 00 B0 F0 FF FF 00 00 00 00 83 F4 FF FF E4 D2 FF FF").AsMatrix4();
-
         protected override async void OnLoad()
         {
             MakeCurrent();
@@ -1204,45 +1202,28 @@ namespace MphRead
                     {
                         Texture texture = model.Textures[material.TextureId];
                         Debug.Assert(texture.Width == texture.Height && texture.Width > 0 && texture.Width % 2 == 0);
-                        // in-game, the matrices in the first multiplication are 4x3 and the rest are 4x4, and all three
-                        // multiplications use only the upper-left 3x3 elements with the upper-left 3x3 of a 4x4 as the destination;
-                        // here the math works out by making everything a 4x4 with zeroes for elements outside the 3x3
+                        // the nodeTransform * currentTextureMatrix multiplication is between two 4x3 into a 4x4,
+                        // but only reads/writes the upper-left 3x3 of all three matrices
                         Matrix4 product = node.Transform.Keep3x3();
                         // sktodo: is this node animation check for texgen correct?
                         if (!model.NodeAnimationGroups.Any(n => n.Animations.Any()) || (model.Header.Flags & 1) > 0)
                         {
-                            Matrix4x3 moreCamera = Test.ParseMatrix12(
-                                "00000000", "00000000", "00001000",
-                                "00000000", "00001000", "00000000",
-                                "FFFFF000", "00000000", "00000000",
-                                "FFFFFFDE", "FFFFE99A", "00013376");
-                            Matrix4x3 newCamera = Test.ParseMatrix12(
-                                "00000000", "00000000", "00001000",
-                                "00000000", "00001000", "00000000",
-                                "FFFFF000", "00000000", "00000000",
-                                "0000605F", "FFFFE99A", "00013376");
-                            Matrix4x3 matrixD9B50 = Test.ParseMatrix48("00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 10 00 00 00 00 00 00 00 00 00 00 00 F0 FF FF");
-                            Matrix4x3 field4F4 = Test.ParseMatrix48("00 00 00 00 00 00 00 00 00 10 00 00 00 00 00 00 00 10 00 00 00 00 00 00 00 F0 FF FF 00 00 00 00 00 00 00 00 8A CC FE FF 00 08 00 00 5F 60 00 00");
-                            //         x           y           z
-                            // biped: 39 CE FE FF 00 08 00 00 DE FF FF FF
-                            Matrix4x3 currentTextureMatrix = Test.Concat43(field4F4, matrixD9B50);
-                            int x = 5;
                             var cameraMatrix = new Matrix4x3(
                                 _viewMatrix.Row0.Xyz,
                                 _viewMatrix.Row1.Xyz,
                                 _viewMatrix.Row2.Xyz,
                                 _viewMatrix.Row3.Xyz
                             );
-                            //cameraMatrix = Test.ParseMatrix48("00 00 00 00 5E FB FF FF 50 0F 00 00 00 00 00 00 50 0F 00 00 A2 04 00 00 00 F0 FF FF 00 00 00 00 00 00 00 00 5F 60 00 00 D5 93 FF FF D3 F6 00 00");
                             // sktodo: turn model transform into 4F4
+                            Matrix4x3 field4F4 = Test.ParseMatrix48("" +
+                                "00 00 00 00 00 00 00 00 00 10 00 00 " +
+                                "00 00 00 00 00 10 00 00 00 00 00 00 " +
+                                "00 F0 FF FF 00 00 00 00 00 00 00 00 " +
+                                "8A CC FE FF 00 08 00 00 5F 60 00 00");
                             // --> then on to other models to see if they do anything different
                             // (still tabling the billboard node transform thing for now)
                             // and then, finally, model texture matrices
-                            // --> need to confirm values before and after the concatenation
-                            currentTextureMatrix = Test.Concat43(field4F4, cameraMatrix);
-                            var y = _currentTextureMatrix;
-                            // sktodo: currently, this is causing the texture to change as the camera moves
-                            // --> sorta need to confirm in multiplayer, but I don't think this should happen!
+                            Matrix4x3 currentTextureMatrix = Test.Concat43(field4F4, cameraMatrix);
                             product *= currentTextureMatrix.Keep3x3();
                         }
                         product.M12 *= -1;
@@ -1251,13 +1232,13 @@ namespace MphRead
                         product.M23 *= -1;
                         product.M32 *= -1;
                         product.M33 *= -1;
-                        var expected = Test.ParseMatrix64("00 00 FE FF 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 16 FE FF C0 6B FF FF 00 00 00 00 00 00 00 00 C0 6B FF FF 00 EA 01 00 CC 2A 7E 02 30 2B 7E 02 50 2B 7E 02 78 AE 11 02 FF FF FF FF");
-                        // sktodo: replace this condition with an assert once we're loading model texture matrices
+                        // the texenv * modelTextureMatrix multiplications are between two 4x4 into a 4x4,
+                        // but only reads the upper 3x3 of the first matrix and upper 3x2 of the second,
+                        // and only writes the upper 3x3 of the destination
                         if (material.MatrixId < model.TextureMatrices.Count)
                         {
                             product = Test.Mult44(product, model.TextureMatrices[material.MatrixId]);
                         }
-                        expected = Test.ParseMatrix64("00 00 FE FF 00 00 00 00 00 00 00 00 FF FF FF FF 00 00 00 00 00 16 FE FF 00 00 00 00 E4 2A 7E 02 00 00 00 00 C0 6B FF FF 00 00 00 00 01 00 00 00 A8 21 1E 02 02 00 00 00 4C 7C 04 02 A0 2B 7E 02");
                         // textureMatrix will either be the model texture matrix again or the animation result;
                         // it can't be the material properties since that path implies an indexing error on the line above
                         product = Test.Mult44(product, textureMatrix) * (1.0f / (texture.Width / 2));
@@ -2261,7 +2242,7 @@ namespace MphRead
 
         private void MoveModel()
         {
-            float step = 0.3f;
+            float step = 0.1f;
             if (KeyboardState.IsKeyDown(Key.W)) // move Z-
             {
                 SelectedModel.Position = SelectedModel.Position.WithZ(SelectedModel.Position.Z - step);
@@ -2286,6 +2267,29 @@ namespace MphRead
             {
                 SelectedModel.Position = SelectedModel.Position.WithX(SelectedModel.Position.X + step);
             }
+            step = 1.5f;
+            Vector3 rotation = SelectedModel.Rotation;
+            if (KeyboardState.IsKeyDown(Key.Up)) // rotate up
+            {
+                rotation.X += step;
+                rotation.X %= 360f;
+            }
+            else if (KeyboardState.IsKeyDown(Key.Down)) // rotate down
+            {
+                rotation.X -= step;
+                rotation.X %= 360f;
+            }
+            if (KeyboardState.IsKeyDown(Key.Left)) // rotate left
+            {
+                rotation.Y += step;
+                rotation.Y %= 360f;
+            }
+            else if (KeyboardState.IsKeyDown(Key.Right)) // rotate right
+            {
+                rotation.Y -= step;
+                rotation.Y %= 360f;
+            }
+            SelectedModel.Rotation = rotation;
         }
 
         private enum CameraMode

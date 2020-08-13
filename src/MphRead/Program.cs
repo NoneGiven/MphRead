@@ -15,7 +15,6 @@ namespace MphRead
             IReadOnlyList<Argument> arguments = ParseArguments(args);
             if (arguments.Count == 0)
             {
-                Test.TestMatrix();
                 using var renderer = new Renderer();
                 renderer.AddRoom("UNIT2_LAND");
                 renderer.AddModel("SamusAlt_lod0");
