@@ -1217,14 +1217,15 @@ namespace MphRead
                                 _viewMatrix.Row3.Xyz
                             );
                             // sktodo: turn model transform into 4F4
+                            // --> then on to other models to see if they do anything different
+                            // (still tabling the billboard node transform thing for now)
+                            // and then, finally, model texture matrices
                             Matrix4x3 field4F4 = Test.ParseMatrix48("" +
                                 "00 00 00 00 00 00 00 00 00 10 00 00 " +
                                 "00 00 00 00 00 10 00 00 00 00 00 00 " +
                                 "00 F0 FF FF 00 00 00 00 00 00 00 00 " +
                                 "8A CC FE FF 00 08 00 00 5F 60 00 00");
-                            // --> then on to other models to see if they do anything different
-                            // (still tabling the billboard node transform thing for now)
-                            // and then, finally, model texture matrices
+                            // sktodo: this concatenation changes based on flag but 0 and the model scale
                             Matrix4x3 currentTextureMatrix = Test.Concat43(field4F4, cameraMatrix);
                             product *= currentTextureMatrix.Keep3x3();
                         }
