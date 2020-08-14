@@ -573,8 +573,6 @@ namespace MphRead
             }
             else if (_cameraMode == CameraMode.Roam)
             {
-                //_angleY = -90;
-                //_angleX = 16.83156f;
                 _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateTranslation(_cameraPosition) * _viewMatrix;
@@ -2268,7 +2266,7 @@ namespace MphRead
             {
                 SelectedModel.Position = SelectedModel.Position.WithX(SelectedModel.Position.X + step);
             }
-            step = 1.5f;
+            step = 2.5f;
             Vector3 rotation = SelectedModel.Rotation;
             if (KeyboardState.IsKeyDown(Key.Up)) // rotate up
             {
