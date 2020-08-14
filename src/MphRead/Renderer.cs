@@ -573,8 +573,8 @@ namespace MphRead
             }
             else if (_cameraMode == CameraMode.Roam)
             {
-                _angleY = -90;
-                _angleX = 16.83156f;
+                //_angleY = -90;
+                //_angleX = 16.83156f;
                 _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateTranslation(_cameraPosition) * _viewMatrix;
@@ -1216,17 +1216,15 @@ namespace MphRead
                                 _viewMatrix.Row2.Xyz,
                                 _viewMatrix.Row3.Xyz
                             );
-                            // sktodo: turn model transform into 4F4
-                            // --> then on to other models to see if they do anything different
+                            // sktodo: see if other models do anything different with currentTextureMatrix
                             // (still tabling the billboard node transform thing for now)
                             // and then, finally, model texture matrices
-                            Matrix4x3 field4F4 = Test.ParseMatrix48("" +
-                                "00 00 00 00 00 00 00 00 00 10 00 00 " +
-                                "00 00 00 00 00 10 00 00 00 00 00 00 " +
-                                "00 F0 FF FF 00 00 00 00 00 00 00 00 " +
-                                "8A CC FE FF 00 08 00 00 5F 60 00 00");
+                            var modelMatrix = Matrix4x3.CreateRotationZ(MathHelper.DegreesToRadians(model.Rotation.Z));
+                            modelMatrix = Matrix4x3.CreateRotationY(MathHelper.DegreesToRadians(model.Rotation.Y)) * modelMatrix;
+                            modelMatrix = Matrix4x3.CreateRotationX(MathHelper.DegreesToRadians(model.Rotation.X)) * modelMatrix;
+                            modelMatrix.Row3 = model.Position;
                             // sktodo: this concatenation changes based on flag but 0 and the model scale
-                            Matrix4x3 currentTextureMatrix = Test.Concat43(field4F4, cameraMatrix);
+                            Matrix4x3 currentTextureMatrix = Test.Concat43(modelMatrix, cameraMatrix);
                             product *= currentTextureMatrix.Keep3x3();
                         }
                         product.M12 *= -1;
