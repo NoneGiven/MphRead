@@ -1229,6 +1229,11 @@ namespace MphRead
                             Matrix4x3 currentTextureMatrix = Test.Concat43(modelMatrix, cameraMatrix);
                             product *= currentTextureMatrix.Keep3x3();
                         }
+                        else
+                        {
+                            // sktodo: this is needed for Dialanche -- confirm if it's correct for other things
+                            product *= (1.0f / (texture.Width / 2));
+                        } 
                         product.M12 *= -1;
                         product.M13 *= -1;
                         product.M22 *= -1;
