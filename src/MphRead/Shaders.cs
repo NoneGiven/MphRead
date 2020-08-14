@@ -80,7 +80,9 @@ void main()
                 vec4(tex_mtx[1][0], tex_mtx[1][1], tex_mtx[1][2], gl_MultiTexCoord0.y)
             );
             if (texgen_mode == 2) {
-                // need to use the untransformed normal here
+                // todo?: apparently need to use the untransformed normal here
+                // --> confirm if this has to do with the model vs. node transform affecting the normal,
+                // and if that means anything needs to be done different here or with lighting
                 texcoord = vec4(gl_Normal, 1.0) * texgen_mtx;
             }
             else {

@@ -16,7 +16,7 @@ namespace MphRead
             if (arguments.Count == 0)
             {
                 using var renderer = new Renderer();
-                renderer.AddRoom("UNIT2_LAND");
+                renderer.AddRoom("UNIT2_RM1");
                 renderer.AddModel("SamusAlt_lod0");
                 Nop();
                 renderer.Run();
