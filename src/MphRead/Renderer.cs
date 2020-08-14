@@ -206,7 +206,11 @@ namespace MphRead
             // in RAM, this appears to be a 4x4 identity matrix where only the upper-left 4x2 is set (the rest is garbage data),
             // and ultimately only the top 3x2 is actually used in the multiplications with the texenv matrix
             // --> however, the AlimbicCapsule texture matrix (above) is not the samem although it also appears to be only 4x2
-            if (model.Name == "SamusAlt_lod0")
+            // sktodo: how does the Dialanche node transform work?
+            // is it that because Morph Ball has no node animations, they have to use model-level rotation,
+            // but since Dialanche has node animations (but not rotation), they can just use the node transform?
+            // might be able to mimick this by just checking for node animations/flag bit 0 in MoveModel
+            if (model.Name == "SamusAlt_lod0" || model.Name == "SpireAlt_lod0")
             {
                 model.TextureMatrices.Add(Matrix4.Identity);
             }
