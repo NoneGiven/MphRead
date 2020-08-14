@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using OpenToolkit.Mathematics;
 
 namespace MphRead
@@ -161,7 +162,20 @@ namespace MphRead
             return output;
         }
 
-        public static void TestMatrix()
+        // todo: could replace this with "keep 3x2"
+        public static Matrix4 Mult44(Matrix4 first, Matrix4 second)
+        {
+            Matrix4 output = Matrix4.Zero;
+            output.M11 = first.M13 * second.M31 + first.M11 * second.M11 + first.M12 * second.M21;
+            output.M12 = first.M13 * second.M32 + first.M11 * second.M12 + first.M12 * second.M22;
+            output.M21 = first.M23 * second.M31 + first.M21 * second.M11 + first.M22 * second.M21;
+            output.M22 = first.M23 * second.M32 + first.M21 * second.M12 + first.M22 * second.M22;
+            output.M31 = first.M33 * second.M31 + first.M31 * second.M11 + first.M32 * second.M21;
+            output.M32 = first.M33 * second.M32 + first.M31 * second.M12 + first.M32 * second.M22;
+            return output;
+        }
+
+        public static void TestMatrices()
         {
             // 0x020DB528 (passed to draw_animated_model from CModel_draw from draw_player)
             // updated in sub_201DCE4 -- I guess it's just the model transform?
@@ -224,14 +238,17 @@ namespace MphRead
             else // Samus, Spire
             {
                 // the "404 + 64" used in the vector setup seems to point to fx32 0.5
+                // might be a modifier for movement speed, or terrain angle?
                 if (hunter > Hunter.Samus || (flags & 0x80) > 0) // Spire OR colliding with platform
                 {
                     /* v45 vector setup 1 */
+                    // (?) calculate vector based on speed
                     v45 = 1;
                 }
                 else // Samus AND !(colliding with platform)
                 {
                     /* v45 vector setup 2 */
+                    // calculate vector based on current and previous position
                     v45 = 2;
                 }
                 if (v45 > 0)
@@ -248,6 +265,44 @@ namespace MphRead
                     }
                 }
             }
+        }
+
+        public static void TestMatrix()
+        {
+            var field58 = new Vector3(0, 0, 1);
+            var field64 = new Vector3(0, 1, 0);
+            var field70 = new Vector3(-1, 0, 0);
+            Matrix3 mat1 = TestVectors(field58, field64, field70);
+            Nop();
+            field58 = new Vector3(1, 0, 0);
+            field64 = new Vector3(0, 1, 0);
+            field70 = new Vector3(0, 0, 1);
+            Matrix3 mat2 = TestVectors(field58, field64, field70);
+            Quaternion quat1 = new Matrix4(mat1).ExtractRotation();
+            Vector3 rot1 = quat1.ToEulerAngles();
+            rot1 = new Vector3(MathHelper.RadiansToDegrees(rot1.X), MathHelper.RadiansToDegrees(rot1.Y), MathHelper.RadiansToDegrees(rot1.Z));
+            Quaternion quat2 = new Matrix4(mat2).ExtractRotation();
+            Vector3 rot2 = quat2.ToEulerAngles();
+            rot2 = new Vector3(MathHelper.RadiansToDegrees(rot2.X), MathHelper.RadiansToDegrees(rot2.Y), MathHelper.RadiansToDegrees(rot2.Z));
+
+            Nop();
+        }
+
+        public static Matrix3 TestVectors(Vector3 field58, Vector3 field64, Vector3 field70)
+        {
+            var field4F4 = new Matrix3(
+                new Vector3(field58.X, 0, field58.Z),
+                new Vector3(field64.X, field64.Y, field64.Z),
+                new Vector3(field70.X, 0, field70.Y)
+            );
+
+            field4F4.Row2 = Vector3.Cross(field4F4.Row0, field4F4.Row1);
+            field4F4.Row1 = Vector3.Cross(field4F4.Row2, field4F4.Row0);
+            field4F4.Row0 = field4F4.Row0.Normalized();
+            field4F4.Row1 = field4F4.Row1.Normalized();
+            field4F4.Row2 = field4F4.Row2.Normalized();
+
+            return field4F4;
         }
 
         public static Matrix4x3 ParseMatrix12(params string[] values)

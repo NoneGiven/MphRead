@@ -1,3 +1,4 @@
+using System;
 using OpenToolkit.Mathematics;
 
 namespace MphRead
@@ -17,6 +18,11 @@ namespace MphRead
         public static float ToFloat(int value)
         {
             return value / (float)(1 << 12);
+        }
+
+        public static float ToFloat(string value)
+        {
+            return ToFloat(Int32.Parse(value, System.Globalization.NumberStyles.HexNumber));
         }
 
         public override string? ToString()

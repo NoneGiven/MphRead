@@ -200,21 +200,20 @@ namespace MphRead
         public void AddModel(string name, int recolor, bool firstHunt)
         {
             Model model = Read.GetModelByName(name, recolor, firstHunt);
+            model.Rotation = new Vector3(0, 270, 0);
             SceneSetup.ComputeNodeMatrices(model, index: 0);
-            // sktodo: where do model texture matrices come from? do they change?
+            // sktodo: where do model texture matrices come from?
+            // in RAM, this appears to be a 4x4 identity matrix where only the upper-left 4x2 is set (the rest is garbage data),
+            // and ultimately only the top 3x2 is actually used in the multiplications with the texenv matrix
+            // --> however, the AlimbicCapsule texture matrix (above) is not the samem although it also appears to be only 4x2
             if (model.Name == "SamusAlt_lod0")
             {
-                model.TextureMatrices.Add(Test.ParseMatrix64("00 10 00 00 00 00 00 00 19 1A 1B 1C 1D 1E 22 24 00 00 00 00 00 10 00 00 33 " +
-                    "35 37 33 36 38 3A 3C 00 00 00 00 00 00 00 00 50 53 55 58 5B 5E 61 63 00 00 00 00 00 00 00 00 7A 7B 7C 7E 7F 80 7F 80"));
+                model.TextureMatrices.Add(Matrix4.Identity);
             }
             _models.Add(model);
             _modelMap.Add(model.SceneId, model);
         }
-
-        // sktodo: where does "current texture matrix" come from? how does the Morph Ball's change between frames?
-        private readonly Matrix4 _currentTextureMatrix = Test.ParseMatrix48("FF EF FF FF FD FF FF FF 08 00 00 00 FF FF FF FF 52 0F " +
-            "00 00 9D 04 00 00 F7 FF FF FF 9D 04 00 00 AD F0 FF FF FE FF FF FF 7F F4 FF FF CA D2 FF FF").Keep3x3();
-
+        
         protected override async void OnLoad()
         {
             MakeCurrent();
@@ -560,23 +559,25 @@ namespace MphRead
             }
         }
 
+        private Matrix4 _viewMatrix = Matrix4.Identity;
+
         private void TransformCamera()
         {
             // todo: only update this when the camera position changes
-            Matrix4 viewMatrix = Matrix4.Identity;
+            _viewMatrix = Matrix4.Identity;
             if (_cameraMode == CameraMode.Pivot)
             {
-                viewMatrix = Matrix4.CreateTranslation(new Vector3(0, 0, _distance * -1)) * viewMatrix;
-                viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * viewMatrix;
-                viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * viewMatrix;
+                _viewMatrix = Matrix4.CreateTranslation(new Vector3(0, 0, _distance * -1)) * _viewMatrix;
+                _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * _viewMatrix;
+                _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
             }
             else if (_cameraMode == CameraMode.Roam)
             {
-                viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * viewMatrix;
-                viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * viewMatrix;
-                viewMatrix = Matrix4.CreateTranslation(_cameraPosition) * viewMatrix;
+                _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * _viewMatrix;
+                _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
+                _viewMatrix = Matrix4.CreateTranslation(_cameraPosition) * _viewMatrix;
             }
-            GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref viewMatrix);
+            GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref _viewMatrix);
         }
 
         private void UpdateCameraPosition()
@@ -775,6 +776,8 @@ namespace MphRead
             // pass 2: decal
             GL.Enable(EnableCap.PolygonOffsetFill);
             GL.PolygonOffset(-1, -1);
+            // todo?: decals shouldn't render unless they have ~equal depth to the previous polygon,
+            // which means the rendering order here needs to be the same as it is in-game
             GL.DepthFunc(DepthFunction.Lequal);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
@@ -1199,14 +1202,28 @@ namespace MphRead
                     {
                         Texture texture = model.Textures[material.TextureId];
                         Debug.Assert(texture.Width == texture.Height && texture.Width > 0 && texture.Width % 2 == 0);
-                        // in-game, the matrices in the first multiplication are 4x3 and the rest are 4x4, and all three
-                        // multiplications use only the upper-left 3x3 elements with the upper-left 3x3 of a 4x4 as the destination;
-                        // here the math works out by making everything a 4x4 with zeroes for elements outside the 3x3
+                        // the nodeTransform * currentTextureMatrix multiplication is between two 4x3 into a 4x4,
+                        // but only reads/writes the upper-left 3x3 of all three matrices
                         Matrix4 product = node.Transform.Keep3x3();
                         // sktodo: is this node animation check for texgen correct?
                         if (!model.NodeAnimationGroups.Any(n => n.Animations.Any()) || (model.Header.Flags & 1) > 0)
                         {
-                            product *= _currentTextureMatrix; // already 3x3
+                            var cameraMatrix = new Matrix4x3(
+                                _viewMatrix.Row0.Xyz,
+                                _viewMatrix.Row1.Xyz,
+                                _viewMatrix.Row2.Xyz,
+                                _viewMatrix.Row3.Xyz
+                            );
+                            // sktodo: see if other models do anything different with currentTextureMatrix
+                            // (still tabling the billboard node transform thing for now)
+                            // and then, finally, model texture matrices
+                            var modelMatrix = Matrix4x3.CreateRotationZ(MathHelper.DegreesToRadians(model.Rotation.Z));
+                            modelMatrix = Matrix4x3.CreateRotationY(MathHelper.DegreesToRadians(model.Rotation.Y)) * modelMatrix;
+                            modelMatrix = Matrix4x3.CreateRotationX(MathHelper.DegreesToRadians(model.Rotation.X)) * modelMatrix;
+                            modelMatrix.Row3 = model.Position;
+                            // sktodo: this concatenation changes based on flag but 0 and the model scale
+                            Matrix4x3 currentTextureMatrix = Test.Concat43(modelMatrix, cameraMatrix);
+                            product *= currentTextureMatrix.Keep3x3();
                         }
                         product.M12 *= -1;
                         product.M13 *= -1;
@@ -1214,14 +1231,16 @@ namespace MphRead
                         product.M23 *= -1;
                         product.M32 *= -1;
                         product.M33 *= -1;
-                        // sktodo: replace this condition with an assert once we're loading model texture matrices
+                        // the texenv * modelTextureMatrix multiplications are between two 4x4 into a 4x4,
+                        // but only reads the upper 3x3 of the first matrix and upper 3x2 of the second,
+                        // and only writes the upper 3x3 of the destination
                         if (material.MatrixId < model.TextureMatrices.Count)
                         {
-                            product *= model.TextureMatrices[material.MatrixId].Keep3x3();
+                            product = Test.Mult44(product, model.TextureMatrices[material.MatrixId]);
                         }
                         // textureMatrix will either be the model texture matrix again or the animation result;
                         // it can't be the material properties since that path implies an indexing error on the line above
-                        product = product * textureMatrix.Keep3x3() * (1.0f / (texture.Width / 2));
+                        product = Test.Mult44(product, textureMatrix) * (1.0f / (texture.Width / 2));
                         textureMatrix = new Matrix4(
                             product.Row0 * 16.0f,
                             product.Row1 * 16.0f,
@@ -2222,7 +2241,7 @@ namespace MphRead
 
         private void MoveModel()
         {
-            float step = 0.3f;
+            float step = 0.1f;
             if (KeyboardState.IsKeyDown(Key.W)) // move Z-
             {
                 SelectedModel.Position = SelectedModel.Position.WithZ(SelectedModel.Position.Z - step);
@@ -2247,6 +2266,29 @@ namespace MphRead
             {
                 SelectedModel.Position = SelectedModel.Position.WithX(SelectedModel.Position.X + step);
             }
+            step = 2.5f;
+            Vector3 rotation = SelectedModel.Rotation;
+            if (KeyboardState.IsKeyDown(Key.Up)) // rotate up
+            {
+                rotation.X += step;
+                rotation.X %= 360f;
+            }
+            else if (KeyboardState.IsKeyDown(Key.Down)) // rotate down
+            {
+                rotation.X -= step;
+                rotation.X %= 360f;
+            }
+            if (KeyboardState.IsKeyDown(Key.Left)) // rotate left
+            {
+                rotation.Y += step;
+                rotation.Y %= 360f;
+            }
+            else if (KeyboardState.IsKeyDown(Key.Right)) // rotate right
+            {
+                rotation.Y -= step;
+                rotation.Y %= 360f;
+            }
+            SelectedModel.Rotation = rotation;
         }
 
         private enum CameraMode
