@@ -200,7 +200,6 @@ namespace MphRead
         public void AddModel(string name, int recolor, bool firstHunt)
         {
             Model model = Read.GetModelByName(name, recolor, firstHunt);
-            model.Rotation = new Vector3(-90, 0, 90);
             SceneSetup.ComputeNodeMatrices(model, index: 0);
             // sktodo: where do model texture matrices come from?
             // in RAM, this appears to be a 4x4 identity matrix where only the upper-left 4x2 is set (the rest is garbage data),
@@ -1214,6 +1213,7 @@ namespace MphRead
                                 _viewMatrix.Row2.Xyz,
                                 _viewMatrix.Row3.Xyz
                             );
+                            // todo: this "4F4/some_matrix" computation is based mostly on the Morph Ball
                             var modelMatrix = Matrix4x3.CreateRotationZ(MathHelper.DegreesToRadians(model.Rotation.Z));
                             modelMatrix = Matrix4x3.CreateRotationY(MathHelper.DegreesToRadians(model.Rotation.Y)) * modelMatrix;
                             modelMatrix = Matrix4x3.CreateRotationX(MathHelper.DegreesToRadians(model.Rotation.X)) * modelMatrix;
