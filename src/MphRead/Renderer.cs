@@ -1280,9 +1280,9 @@ namespace MphRead
             {
                 GL.Uniform1(_shaderLocations.UseLight, 0);
             }
-            Vector3 diffuse = material.CurrentDiffuse.AsVector3();
-            Vector3 ambient = material.CurrentAmbient.AsVector3();
-            Vector3 specular = material.CurrentSpecular.AsVector3();
+            Vector3 diffuse = material.CurrentDiffuse;
+            Vector3 ambient = material.CurrentAmbient;
+            Vector3 specular = material.CurrentSpecular;
             float alpha = material.CurrentAlpha;
             // todo: group indexing
             MaterialAnimationGroup group;
@@ -1290,7 +1290,7 @@ namespace MphRead
                 && (group = model.MaterialAnimationGroups[0]).Animations.TryGetValue(material.Name, out MaterialAnimation animation))
             {
                 // todo: control animations so everything isn't playing at once
-                if ((material.AnimationFlags & 1) == 0)
+                if (!material.AnimationFlags.HasFlag(AnimationFlags.DisableColor))
                 {
                     float diffuseR = InterpolateAnimation(group.Colors, animation.DiffuseLutStartIndexR, group.CurrentFrame,
                         animation.DiffuseBlendFactorR, animation.DiffuseLutLengthR, group.FrameCount);
@@ -1314,7 +1314,7 @@ namespace MphRead
                     ambient = new Vector3(ambientR / 31.0f, ambientG / 31.0f, ambientB / 31.0f);
                     specular = new Vector3(specularR / 31.0f, specularG / 31.0f, specularB / 31.0f);
                 }
-                if ((material.AnimationFlags & 2) == 0)
+                if (!material.AnimationFlags.HasFlag(AnimationFlags.DisableAlpha))
                 {
                     alpha = InterpolateAnimation(group.Colors, animation.AlphaLutStartIndex, group.CurrentFrame,
                     animation.AlphaBlendFactor, animation.AlphaLutLength, group.FrameCount);

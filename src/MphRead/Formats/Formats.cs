@@ -515,12 +515,12 @@ namespace MphRead
         public ColorRgb Diffuse { get; }
         public ColorRgb Ambient { get; }
         public ColorRgb Specular { get; }
-        public ColorRgb CurrentDiffuse { get; set; }
-        public ColorRgb CurrentAmbient { get; set; }
-        public ColorRgb CurrentSpecular { get; set; }
+        public Vector3 CurrentDiffuse { get; set; }
+        public Vector3 CurrentAmbient { get; set; }
+        public Vector3 CurrentSpecular { get; set; }
         public PolygonMode PolygonMode { get; set; }
         public RenderMode RenderMode { get; set; }
-        public byte AnimationFlags { get; set; } // todo: this probably has more uses
+        public AnimationFlags AnimationFlags { get; set; }
         public TexgenMode TexgenMode { get; set; }
         public int TexcoordAnimationId { get; set; }
         public int MatrixId { get; set; }
@@ -550,12 +550,12 @@ namespace MphRead
             Diffuse = raw.Diffuse;
             Ambient = raw.Ambient;
             Specular = raw.Specular;
-            CurrentDiffuse = raw.Diffuse;
-            CurrentAmbient = raw.Ambient;
-            CurrentSpecular = raw.Specular;
+            CurrentDiffuse = raw.Diffuse / 31.0f;
+            CurrentAmbient = raw.Ambient / 31.0f;
+            CurrentSpecular = raw.Specular / 31.0f;
             PolygonMode = raw.PolygonMode;
             RenderMode = raw.RenderMode;
-            AnimationFlags = raw.AnimationFlags;
+            AnimationFlags = (AnimationFlags)raw.AnimationFlags;
             TexgenMode = raw.TexcoordTransformMode;
             TexcoordAnimationId = raw.TexcoordAnimationId;
             MatrixId = (int)raw.MatrixId;
@@ -847,6 +847,14 @@ namespace MphRead
         DefenderTeams = 13,
         PrimeHunter = 14,
         Unknown15 = 15 // todo?: unused
+    }
+
+    [Flags]
+    public enum AnimationFlags : byte
+    {
+        None = 0x0,
+        DisableColor = 0x1,
+        DisableAlpha = 0x2
     }
 
     [Flags]

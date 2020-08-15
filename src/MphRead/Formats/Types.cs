@@ -104,6 +104,11 @@ namespace MphRead
         {
             return new Vector4(Red / 255f, Green / 255f, Blue / 255f, alpha);
         }
+
+        public static Vector3 operator/(ColorRgb left, float right)
+        {
+            return new Vector3(left.Red / right, left.Green / right, left.Blue / right);
+        }
     }
 
     // size: 4
