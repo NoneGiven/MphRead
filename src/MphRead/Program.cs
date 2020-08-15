@@ -16,8 +16,9 @@ namespace MphRead
             if (arguments.Count == 0)
             {
                 using var renderer = new Renderer();
-                renderer.AddRoom("MP3 PROVING GROUND");
-                //renderer.AddModel("Crate01");
+                renderer.AddRoom("MP7 PROCESSOR CORE");
+                renderer.AddModel("SpireAlt_lod0");
+                renderer.AddModel("SamusAlt_lod0");
                 Nop();
                 renderer.Run();
             }

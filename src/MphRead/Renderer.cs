@@ -200,7 +200,7 @@ namespace MphRead
         public void AddModel(string name, int recolor, bool firstHunt)
         {
             Model model = Read.GetModelByName(name, recolor, firstHunt);
-            model.Rotation = new Vector3(0, 270, 0);
+            model.Rotation = new Vector3(-90, 0, 90);
             SceneSetup.ComputeNodeMatrices(model, index: 0);
             // sktodo: where do model texture matrices come from?
             // in RAM, this appears to be a 4x4 identity matrix where only the upper-left 4x2 is set (the rest is garbage data),
@@ -217,7 +217,7 @@ namespace MphRead
             _models.Add(model);
             _modelMap.Add(model.SceneId, model);
         }
-        
+
         protected override async void OnLoad()
         {
             MakeCurrent();
@@ -577,6 +577,8 @@ namespace MphRead
             }
             else if (_cameraMode == CameraMode.Roam)
             {
+                _angleX = 0;
+                _angleY = 0;
                 _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateTranslation(_cameraPosition) * _viewMatrix;
@@ -1233,7 +1235,29 @@ namespace MphRead
                         {
                             // sktodo: this is needed for Dialanche -- confirm if it's correct for other things
                             product *= (1.0f / (texture.Width / 2));
-                        } 
+                        }
+                        // 00 F0 FF FF 00 00 00 00 00 00 00 00 00 00 00 00 68 FB FF FF 54 0F 00 00 00 00 00 00 54 0F 00 00 98 04 00 00 00 00 00 00 80 F4 FF FF D0 D2 FF FF
+                        Matrix4 trans = Test.ParseMatrix48("00 F0 FF FF 00 00 00 00 00 00 00 00 00 00 00 00 67 FB FF FF 53 0F 00 00 00 00 00 00 53 0F 00 00 98 04 00 00 00 00 00 00 7F 4F FF FF CA D2 FF FF").AsMatrix4();
+                        trans.M44 = 1;
+                        Vector3 pos = trans.ExtractTranslation();
+                        Vector3 rot = trans.ExtractRotation().ToEulerAngles();
+                        rot = new Vector3(
+                            MathHelper.RadiansToDegrees(rot.X),
+                            MathHelper.RadiansToDegrees(rot.Y),
+                            MathHelper.RadiansToDegrees(rot.Z)
+                        );
+                        Vector3 scale = trans.ExtractScale();
+                        ////////
+                        Matrix4 trans2 = Test.ParseMatrix48("00 00 00 00 00 00 00 00 00 F0 FF FF 00 F0 FF FF 00 00 00 00 00 00 00 00 00 00 00 00 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00").AsMatrix4();
+                        trans2.M44 = 1;
+                        Vector3 pos2 = trans2.ExtractTranslation();
+                        Vector3 rot2 = trans2.ExtractRotation().ToEulerAngles();
+                        rot2 = new Vector3(
+                            MathHelper.RadiansToDegrees(rot2.X),
+                            MathHelper.RadiansToDegrees(rot2.Y),
+                            MathHelper.RadiansToDegrees(rot2.Z)
+                        );
+                        Vector3 scale2 = trans2.ExtractScale();
                         product.M12 *= -1;
                         product.M13 *= -1;
                         product.M22 *= -1;
