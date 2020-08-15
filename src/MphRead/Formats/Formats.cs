@@ -23,7 +23,7 @@ namespace MphRead
         public IReadOnlyList<Mesh> Meshes { get; }
         public IReadOnlyList<Material> Materials { get; }
         public IReadOnlyList<DisplayList> DisplayLists { get; }
-        public IReadOnlyList<Matrix4> TextureMatrices { get; }
+        public List<Matrix4> TextureMatrices { get; }
 
         // count and order match Dlists
         public IReadOnlyList<IReadOnlyList<RenderInstruction>> RenderInstructionLists { get; }
@@ -141,6 +141,9 @@ namespace MphRead
 
         public IReadOnlyList<Recolor> Recolors { get; }
 
+        public IReadOnlyList<uint> NodeIds { get; }
+        public IReadOnlyList<uint> WeightIds { get; }
+
         // todo: refactor model vs. entity abstraction
         public Entity? Entity { get; set; }
 
@@ -152,7 +155,8 @@ namespace MphRead
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
             IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
             IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
-            IReadOnlyList<Matrix44Fx> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor, bool useLightSources)
+            IReadOnlyList<Matrix44Fx> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor, bool useLightSources,
+            IReadOnlyList<uint> nodeIds, IReadOnlyList<uint> weightIds)
         {
             ThrowIfInvalidEnums(materials);
             Name = name;
@@ -172,6 +176,8 @@ namespace MphRead
             float scale = Header.ScaleBase.FloatValue * (1 << (int)Header.ScaleFactor);
             Scale = new Vector3(scale, scale, scale);
             UseLightSources = useLightSources;
+            NodeIds = nodeIds;
+            WeightIds = weightIds;
         }
 
         public IEnumerable<ColorRgba> GetPixels(int textureId, int paletteId)
@@ -551,8 +557,7 @@ namespace MphRead
             ScaleT = raw.ScaleT.FloatValue;
             TranslateS = raw.TranslateS.FloatValue;
             TranslateT = raw.TranslateT.FloatValue;
-            // todo: doing rad to deg here is inconsistent with other things, but more efficient
-            RotateZ = MathHelper.RadiansToDegrees(raw.RotateZ / 65536.0f * 2.0f * MathF.PI);
+            RotateZ = raw.RotateZ / 65536.0f * 2.0f * MathF.PI;
         }
     }
 

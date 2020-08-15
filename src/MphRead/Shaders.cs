@@ -6,8 +6,11 @@ namespace MphRead
         public static string FragmentShader => _fragmentShader;
 
         private static readonly string _vertexShader = @"
+#version 120
 uniform bool is_billboard;
 uniform bool use_light;
+uniform bool use_texture;
+uniform bool show_colors;
 uniform bool fog_enable;
 uniform vec3 light1vec;
 uniform vec3 light1col;
@@ -18,7 +21,11 @@ uniform vec3 ambient;
 uniform vec3 specular;
 uniform vec4 fog_color;
 uniform float far_plane;
+uniform mat4 proj_mtx;
+uniform mat4 view_mtx;
 uniform mat4 model_mtx;
+uniform mat4 tex_mtx;
+uniform int texgen_mode;
 
 varying vec2 texcoord;
 varying vec4 color;
@@ -39,18 +46,19 @@ vec3 light_calc(vec3 light_vec, vec3 light_col, vec3 normal_vec, vec3 dif_col, v
 void main()
 {
     if (is_billboard) {
-        gl_Position = gl_ProjectionMatrix * (gl_ModelViewMatrix * vec4(0.0, 0.0, 0.0, 1.0) + vec4(gl_Vertex.x, gl_Vertex.y, gl_Vertex.z, 0.0));
+        gl_Position = proj_mtx * (view_mtx * model_mtx * vec4(0.0, 0.0, 0.0, 1.0) + vec4(gl_Vertex.xyz, 0.0));
     }
     else {
-        gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+        gl_Position = proj_mtx * view_mtx * model_mtx * gl_Vertex;
     }
+    vec4 vtx_color = show_colors ? gl_Color : vec4(1.0);
+    vec3 normal = normalize(mat3(model_mtx) * gl_Normal);
     if (use_light) {
-        vec3 normal = normalize(mat3(model_mtx) * gl_Normal);
         vec3 dif_current = diffuse;
         vec3 amb_current = ambient;
-        if (gl_Color.a == 0) {
+        if (gl_Color.a == 0.0) {
             // see comment on DIF_AMB
-            dif_current = gl_Color.rgb;
+            dif_current = vtx_color.rgb;
             amb_current = vec3(0.0, 0.0, 0.0);
         }
         vec3 col1 = light_calc(light1vec, light1col, normal, dif_current, amb_current, specular);
@@ -58,25 +66,50 @@ void main()
         color = vec4(min((col1 + col2), vec3(1.0, 1.0, 1.0)), 1.0);
     }
     else {
-        color = gl_Color;
+        // alpha will only be less than 1.0 here if DIF_AMB is used but lighting is disabled
+        color = vec4(vtx_color.rgb, 1.0);
     }
-    texcoord = vec2(gl_TextureMatrix[0] * gl_MultiTexCoord0);
+    if (use_texture) {
+        // texgen mode: 0 - none, 1 - texcoord, 2 - normal, 3 - vertex
+        if (texgen_mode == 0 || texgen_mode == 1) {
+            texcoord = vec2(tex_mtx * gl_MultiTexCoord0);
+        }
+        else if (texgen_mode == 2 || texgen_mode == 3) {
+            mat2x4 texgen_mtx = mat2x4(
+                vec4(tex_mtx[0][0], tex_mtx[0][1], tex_mtx[0][2], gl_MultiTexCoord0.x),
+                vec4(tex_mtx[1][0], tex_mtx[1][1], tex_mtx[1][2], gl_MultiTexCoord0.y)
+            );
+            if (texgen_mode == 2) {
+                // todo?: apparently need to use the untransformed normal here
+                // --> confirm if this has to do with the model vs. node transform affecting the normal,
+                // and if that means anything needs to be done different here or with lighting
+                texcoord = vec4(gl_Normal, 1.0) * texgen_mtx;
+            }
+            else {
+                texcoord = vec4(gl_Vertex.xyz, 1.0) * texgen_mtx;
+            }
+        }
+    }
+    else {
+        texcoord = vec2(0.0, 0.0);
+    }
 }
 ";
 
         private static readonly string _fragmentShader = @"
-uniform bool is_billboard;
+#version 120
 uniform bool use_texture;
 uniform bool fog_enable;
 uniform vec4 fog_color;
 uniform int fog_offset;
 uniform sampler2D tex;
-varying vec2 texcoord;
-varying vec4 color;
 uniform bool use_override;
 uniform vec4 override_color;
 uniform float mat_alpha;
 uniform int mat_mode;
+
+varying vec2 texcoord;
+varying vec4 color;
 
 vec4 toon_color(vec4 vtx_color)
 {
@@ -163,5 +196,32 @@ void main()
     }
 }
 ";
+    }
+
+    public class ShaderLocations
+    {
+        public int IsBillboard { get; set; }
+        public int UseLight { get; set; }
+        public int ShowColors { get; set; }
+        public int UseTexture { get; set; }
+        public int Light1Color { get; set; }
+        public int Light1Vector { get; set; }
+        public int Light2Color { get; set; }
+        public int Light2Vector { get; set; }
+        public int Diffuse { get; set; }
+        public int Ambient { get; set; }
+        public int Specular { get; set; }
+        public int UseFog { get; set; }
+        public int FogColor { get; set; }
+        public int FogOffset { get; set; }
+        public int UseOverride { get; set; }
+        public int OverrideColor { get; set; }
+        public int MaterialAlpha { get; set; }
+        public int MaterialMode { get; set; }
+        public int ModelMatrix { get; set; }
+        public int ViewMatrix { get; set; }
+        public int ProjectionMatrix { get; set; }
+        public int TextureMatrix { get; set; }
+        public int TexgenMode { get; set; }
     }
 }

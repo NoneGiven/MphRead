@@ -273,7 +273,7 @@ namespace MphRead
     public readonly struct Palette
     {
         public readonly uint Offset;
-        public readonly uint Count;
+        public readonly uint Size;
         public readonly uint Unknown4;
         public readonly uint UnknownReference5;
     }

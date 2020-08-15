@@ -2,13 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using OpenToolkit.Mathematics;
 
 namespace MphRead
 {
     public static class Test
     {
-#pragma warning disable IDE0051 // Remove unused private members
-
         public static void TestCollision()
         {
             ushort headerSize = 0;
@@ -37,7 +36,7 @@ namespace MphRead
             return Enumerable.SequenceEqual(bone, btwo);
         }
 
-        public static void WriteAllModels()
+        private static void WriteAllModels()
         {
             string modelPath = Path.Combine(Paths.FileSystem, "models");
             var modelFiles = new List<string>();
@@ -144,6 +143,270 @@ namespace MphRead
             }
         }
 
+        public static Matrix4x3 Concat43(Matrix4x3 first, Matrix4x3 second)
+        {
+            Matrix4x3 output = Matrix4x3.Zero;
+            output.M11 = first.M13 * second.M31 + first.M11 * second.M11 + first.M12 * second.M21;
+            output.M12 = first.M13 * second.M32 + first.M11 * second.M12 + first.M12 * second.M22;
+            output.M13 = first.M13 * second.M33 + first.M11 * second.M13 + first.M12 * second.M23;
+            output.M21 = first.M23 * second.M31 + first.M21 * second.M11 + first.M22 * second.M21;
+            output.M22 = first.M23 * second.M32 + first.M21 * second.M12 + first.M22 * second.M22;
+            output.M23 = first.M23 * second.M33 + first.M21 * second.M13 + first.M22 * second.M23;
+            output.M31 = first.M33 * second.M31 + first.M31 * second.M11 + first.M32 * second.M21;
+            output.M32 = first.M33 * second.M32 + first.M31 * second.M12 + first.M32 * second.M22;
+            output.M33 = first.M33 * second.M33 + first.M31 * second.M13 + first.M32 * second.M23;
+            output.M41 = second.M41 + first.M43 * second.M31 + first.M41 * second.M11 + first.M42 * second.M21;
+            output.M42 = second.M42 + first.M43 * second.M32 + first.M41 * second.M12 + first.M42 * second.M22;
+            output.M43 = second.M43 + first.M43 * second.M33 + first.M41 * second.M13 + first.M42 * second.M23;
+            return output;
+        }
+
+        // todo: could replace this with "keep 3x2"
+        public static Matrix4 Mult44(Matrix4 first, Matrix4 second)
+        {
+            Matrix4 output = Matrix4.Zero;
+            output.M11 = first.M13 * second.M31 + first.M11 * second.M11 + first.M12 * second.M21;
+            output.M12 = first.M13 * second.M32 + first.M11 * second.M12 + first.M12 * second.M22;
+            output.M21 = first.M23 * second.M31 + first.M21 * second.M11 + first.M22 * second.M21;
+            output.M22 = first.M23 * second.M32 + first.M21 * second.M12 + first.M22 * second.M22;
+            output.M31 = first.M33 * second.M31 + first.M31 * second.M11 + first.M32 * second.M21;
+            output.M32 = first.M33 * second.M32 + first.M31 * second.M12 + first.M32 * second.M22;
+            return output;
+        }
+
+        public static void TestMatrices()
+        {
+            // 0x020DB528 (passed to draw_animated_model from CModel_draw from draw_player)
+            // updated in sub_201DCE4 -- I guess it's just the model transform?
+            Matrix4x3 mtx1 = Test.ParseMatrix48("03 F0 FF FF 00 00 00 00 9C 00 00 00 F9 FF FF FF FB 0F 00 00 3E FF FF FF 64 FF FF FF 3E FF FF FF 08 F0 FF FF 22 00 00 00 86 40 00 00 F1 AD FD FF");
+            // 0x220DA430 (constant?)
+            Matrix4x3 mtx2 = Test.ParseMatrix48("FD 0F 00 00 D3 FF FF FF 97 00 00 00 00 00 00 00 53 0F 00 00 9B 04 00 00 62 FF FF FF 66 FB FF FF 50 0F 00 00 F4 E8 FF FF DA 0B FF FF BF F8 01 00");
+            // concatenation result
+            Matrix4x3 currentTextureMatrix = Test.ParseMatrix48("FF EF FF FF 00 00 00 00 FE FF FF FF 00 00 00 00 86 0F 00 00 DF 03 00 00 01 00 00 00 DF 03 00 00 7A F0 FF FF 00 00 00 00 7F F4 FF FF CA D2 FF FF");
+            Matrix4x3 mult = Concat43(mtx1, mtx2);
+
+            var trans = new Matrix4(
+                new Vector4(mtx1.Row0, 0.0f),
+                new Vector4(mtx1.Row1, 0.0f),
+                new Vector4(mtx1.Row2, 0.0f),
+                new Vector4(mtx1.Row3, 1.0f)
+            );
+            Vector3 pos = trans.ExtractTranslation();
+            Vector3 rot = trans.ExtractRotation().ToEulerAngles();
+            rot = new Vector3(
+                MathHelper.RadiansToDegrees(rot.X),
+                MathHelper.RadiansToDegrees(rot.Y),
+                MathHelper.RadiansToDegrees(rot.Z)
+            );
+            Vector3 scale = trans.ExtractScale();
+        }
+
+        public enum Hunter : byte
+        {
+            Samus = 0,
+            Kanden = 1,
+            Trace = 2,
+            Sylux = 3,
+            Noxus = 4,
+            Spire = 5,
+            Weavel = 6,
+            Guardian = 7
+        }
+
+        public static void TestLogic()
+        {
+            Hunter hunter = 0;
+            int flags = 0;
+            int v45 = 0;
+
+            if (hunter == Hunter.Noxus)
+            {
+
+            }
+            else if (hunter > Hunter.Samus && hunter != Hunter.Spire)
+            {
+                if (hunter == Hunter.Kanden)
+                {
+                    /* call sub_202657C */
+                }
+                else // Trace, Sylux, Weavel, Guardian
+                {
+
+                }
+            }
+            else // Samus, Spire
+            {
+                // the "404 + 64" used in the vector setup seems to point to fx32 0.5
+                // might be a modifier for movement speed, or terrain angle?
+                if (hunter > Hunter.Samus || (flags & 0x80) > 0) // Spire OR colliding with platform
+                {
+                    /* v45 vector setup 1 */
+                    // (?) calculate vector based on speed
+                    v45 = 1;
+                }
+                else // Samus AND !(colliding with platform)
+                {
+                    /* v45 vector setup 2 */
+                    // calculate vector based on current and previous position
+                    v45 = 2;
+                }
+                if (v45 > 0)
+                {
+                    /* matrix setup */
+                    if (hunter == Hunter.Samus)
+                    {
+                        /* 4F4 matrix concat */
+                    }
+                    /* 4F4 cross product and normalize */
+                    if (hunter == Hunter.Spire)
+                    {
+                        /* 4F4 matrix multiplication */
+                    }
+                }
+            }
+        }
+
+        public static void TestMatrix()
+        {
+            var field58 = new Vector3(0, 0, 1);
+            var field64 = new Vector3(0, 1, 0);
+            var field70 = new Vector3(-1, 0, 0);
+            Matrix3 mat1 = TestVectors(field58, field64, field70);
+            Nop();
+            field58 = new Vector3(1, 0, 0);
+            field64 = new Vector3(0, 1, 0);
+            field70 = new Vector3(0, 0, 1);
+            Matrix3 mat2 = TestVectors(field58, field64, field70);
+            Quaternion quat1 = new Matrix4(mat1).ExtractRotation();
+            Vector3 rot1 = quat1.ToEulerAngles();
+            rot1 = new Vector3(MathHelper.RadiansToDegrees(rot1.X), MathHelper.RadiansToDegrees(rot1.Y), MathHelper.RadiansToDegrees(rot1.Z));
+            Quaternion quat2 = new Matrix4(mat2).ExtractRotation();
+            Vector3 rot2 = quat2.ToEulerAngles();
+            rot2 = new Vector3(MathHelper.RadiansToDegrees(rot2.X), MathHelper.RadiansToDegrees(rot2.Y), MathHelper.RadiansToDegrees(rot2.Z));
+
+            Nop();
+        }
+
+        public static Matrix3 TestVectors(Vector3 field58, Vector3 field64, Vector3 field70)
+        {
+            var field4F4 = new Matrix3(
+                new Vector3(field58.X, 0, field58.Z),
+                new Vector3(field64.X, field64.Y, field64.Z),
+                new Vector3(field70.X, 0, field70.Y)
+            );
+
+            field4F4.Row2 = Vector3.Cross(field4F4.Row0, field4F4.Row1);
+            field4F4.Row1 = Vector3.Cross(field4F4.Row2, field4F4.Row0);
+            field4F4.Row0 = field4F4.Row0.Normalized();
+            field4F4.Row1 = field4F4.Row1.Normalized();
+            field4F4.Row2 = field4F4.Row2.Normalized();
+
+            return field4F4;
+        }
+
+        public static Matrix4x3 ParseMatrix12(params string[] values)
+        {
+            if (values.Length != 12 || values.Any(v => v.Length != 8))
+            {
+                throw new ArgumentException(nameof(values));
+            }
+            return new Matrix4x3(
+                Int32.Parse(values[0], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[1], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[2], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[3], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[4], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[5], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[6], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[7], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[8], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[9], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[10], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[11], System.Globalization.NumberStyles.HexNumber) / 4096f
+            );
+        }
+
+        public static Matrix4 ParseMatrix16(params string[] values)
+        {
+            if (values.Length != 16 || values.Any(v => v.Length != 8))
+            {
+                throw new ArgumentException(nameof(values));
+            }
+            return new Matrix4(
+                Int32.Parse(values[0], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[1], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[2], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[3], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[4], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[5], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[6], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[7], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[8], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[9], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[10], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[11], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[12], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[13], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[14], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(values[15], System.Globalization.NumberStyles.HexNumber) / 4096f
+            );
+        }
+
+        public static Matrix4 ParseMatrix16(string value)
+        {
+            return ParseMatrix16(value.Split(' '));
+        }
+
+        public static Matrix4x3 ParseMatrix48(string value)
+        {
+            string[] values = value.Split(' ');
+            if (values.Length != 48 || values.Any(v => v.Length != 2))
+            {
+                throw new ArgumentException(nameof(values));
+            }
+            return ParseMatrix12(
+                values[3] + values[2] + values[1] + values[0],
+                values[7] + values[6] + values[5] + values[4],
+                values[11] + values[10] + values[9] + values[8],
+                values[15] + values[14] + values[13] + values[12],
+                values[19] + values[18] + values[17] + values[16],
+                values[23] + values[22] + values[21] + values[20],
+                values[27] + values[26] + values[25] + values[24],
+                values[31] + values[30] + values[29] + values[28],
+                values[35] + values[34] + values[33] + values[32],
+                values[39] + values[38] + values[37] + values[36],
+                values[43] + values[42] + values[41] + values[40],
+                values[47] + values[46] + values[45] + values[44]
+            );
+        }
+
+        public static Matrix4 ParseMatrix64(string value)
+        {
+            string[] values = value.Split(' ');
+            if (values.Length != 64 || values.Any(v => v.Length != 2))
+            {
+                throw new ArgumentException(nameof(values));
+            }
+            return ParseMatrix16(
+                values[3] + values[2] + values[1] + values[0],
+                values[7] + values[6] + values[5] + values[4],
+                values[11] + values[10] + values[9] + values[8],
+                values[15] + values[14] + values[13] + values[12],
+                values[19] + values[18] + values[17] + values[16],
+                values[23] + values[22] + values[21] + values[20],
+                values[27] + values[26] + values[25] + values[24],
+                values[31] + values[30] + values[29] + values[28],
+                values[35] + values[34] + values[33] + values[32],
+                values[39] + values[38] + values[37] + values[36],
+                values[43] + values[42] + values[41] + values[40],
+                values[47] + values[46] + values[45] + values[44],
+                values[51] + values[50] + values[49] + values[48],
+                values[55] + values[54] + values[53] + values[52],
+                values[59] + values[58] + values[57] + values[56],
+                values[63] + values[62] + values[61] + values[60]
+            );
+        }
+
         public static void GetPolygonAttrs(Model model, int polygonId)
         {
             foreach (Material material in model.Materials)
@@ -242,8 +505,6 @@ namespace MphRead
             //Console.WriteLine($"light: {light} R 0x{r:X2}, G 0x{g:X2}, B 0x{b:X2}");
             Console.WriteLine();
         }
-
-#pragma warning restore IDE0051 // Remove unused private members
 
         private static IEnumerable<Model> GetAllModels()
         {

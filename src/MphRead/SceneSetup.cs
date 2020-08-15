@@ -115,7 +115,7 @@ namespace MphRead
                 for (int i = 0; node.Name.Length - i >= 4; i += 4)
                 {
                     string chunk = node.Name.Substring(i, 4);
-                    if (chunk.StartsWith("_s") && Int32.TryParse(chunk.Substring(2), out int id))
+                    if (chunk.StartsWith("_s") && Int32.TryParse(chunk[2..], out int id))
                     {
                         flags = (int)((uint)flags & 0xC03F | (((uint)flags << 18 >> 24) | (uint)(1 << id)) << 6);
                     }
@@ -757,6 +757,7 @@ namespace MphRead
             }
             else
             {
+                // todo: this (and some other entity setup stuff) should be applied no matter how the model is loaded
                 model.UseLightOverride = true;
             }
             models.Add(model);

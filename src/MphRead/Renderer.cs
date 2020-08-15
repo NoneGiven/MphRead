@@ -52,28 +52,6 @@ namespace MphRead
         }
     }
 
-    public class ShaderLocations
-    {
-        public int IsBillboard { get; set; }
-        public int UseLight { get; set; }
-        public int UseTexture { get; set; }
-        public int Light1Color { get; set; }
-        public int Light1Vector { get; set; }
-        public int Light2Color { get; set; }
-        public int Light2Vector { get; set; }
-        public int Diffuse { get; set; }
-        public int Ambient { get; set; }
-        public int Specular { get; set; }
-        public int UseFog { get; set; }
-        public int FogColor { get; set; }
-        public int FogOffset { get; set; }
-        public int UseOverride { get; set; }
-        public int OverrideColor { get; set; }
-        public int MaterialAlpha { get; set; }
-        public int MaterialMode { get; set; }
-        public int ModelMatrix { get; set; }
-    }
-
     public class TextureMap : Dictionary<(int TextureId, int PaletteId), (int BindingId, bool OnlyOpaque)>
     {
         public (int, bool) Get(int textureId, int paletteId)
@@ -181,6 +159,14 @@ namespace MphRead
             _modelMap.Add(room.SceneId, room);
             foreach (Model entity in entities)
             {
+                if (entity.Name == "AlimbicCapsule")
+                {
+                    // todo: billboard node transforms (for texgen)
+                    entity.TextureMatrices.Add(Test.ParseMatrix64("00 00 00 00 00 00 00 00 00 00 00 00 AC 14 10 82 00 F8 FF FF 00 00 00 00 " +
+                        "00 00 00 00 FF DE BD 49 9A 01 00 00 CD F0 FF FF 00 00 00 00 8A 14 00 62 00 00 00 00 00 00 00 00 00 00 00 00 FF EE BD 38"));
+                    //entity.Nodes[2].Transform = Test.ParseMatrix48("00 10 00 00 FE FF FF FF 08 00 00 00 00 00 00 00 53 0F 00 00 9B 04 00 00 " +
+                    //    "F8 FF FF FF 65 FB FF FF 53 0F 00 00 D4 FF FF FF 1F 05 00 00 C2 7F FF FF").AsMatrix4();
+                }
                 _modelMap.Add(entity.SceneId, entity);
                 if (entity.Entity is Entity<LightSourceEntityData> lightSource)
                 {
@@ -215,12 +201,21 @@ namespace MphRead
         {
             Model model = Read.GetModelByName(name, recolor, firstHunt);
             SceneSetup.ComputeNodeMatrices(model, index: 0);
+            // sktodo: where do model texture matrices come from?
+            // in RAM, this appears to be a 4x4 identity matrix where only the upper-left 4x2 is set (the rest is garbage data),
+            // and ultimately only the top 3x2 is actually used in the multiplications with the texenv matrix
+            // --> however, the AlimbicCapsule texture matrix (above) is not the same
+            if (model.Name == "SamusAlt_lod0" || model.Name == "SpireAlt_lod0")
+            {
+                model.TextureMatrices.Add(Matrix4.Identity);
+            }
             _models.Add(model);
             _modelMap.Add(model.SceneId, model);
         }
 
         protected override async void OnLoad()
         {
+            MakeCurrent();
             await Output.Begin();
             GL.ClearColor(_clearColor);
 
@@ -247,9 +242,19 @@ namespace MphRead
             int vertexShader = GL.CreateShader(ShaderType.VertexShader);
             GL.ShaderSource(vertexShader, Shaders.VertexShader);
             GL.CompileShader(vertexShader);
+            string vertexLog = GL.GetShaderInfoLog(vertexShader);
             int fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
             GL.ShaderSource(fragmentShader, Shaders.FragmentShader);
             GL.CompileShader(fragmentShader);
+            string fragmentLog = GL.GetShaderInfoLog(fragmentShader);
+            if (vertexLog != "" || fragmentLog != "")
+            {
+                if (Debugger.IsAttached)
+                {
+                    Debugger.Break();
+                }
+                throw new ProgramException("Failed to compile shaders.");
+            }
             _shaderProgramId = GL.CreateProgram();
             GL.AttachShader(_shaderProgramId, vertexShader);
             GL.AttachShader(_shaderProgramId, fragmentShader);
@@ -261,6 +266,7 @@ namespace MphRead
 
             _shaderLocations.IsBillboard = GL.GetUniformLocation(_shaderProgramId, "is_billboard");
             _shaderLocations.UseLight = GL.GetUniformLocation(_shaderProgramId, "use_light");
+            _shaderLocations.ShowColors = GL.GetUniformLocation(_shaderProgramId, "show_colors");
             _shaderLocations.UseTexture = GL.GetUniformLocation(_shaderProgramId, "use_texture");
             _shaderLocations.Light1Color = GL.GetUniformLocation(_shaderProgramId, "light1col");
             _shaderLocations.Light1Vector = GL.GetUniformLocation(_shaderProgramId, "light1vec");
@@ -278,11 +284,12 @@ namespace MphRead
             _shaderLocations.MaterialAlpha = GL.GetUniformLocation(_shaderProgramId, "mat_alpha");
             _shaderLocations.MaterialMode = GL.GetUniformLocation(_shaderProgramId, "mat_mode");
             _shaderLocations.ModelMatrix = GL.GetUniformLocation(_shaderProgramId, "model_mtx");
-        }
+            _shaderLocations.ViewMatrix = GL.GetUniformLocation(_shaderProgramId, "view_mtx");
+            _shaderLocations.ProjectionMatrix = GL.GetUniformLocation(_shaderProgramId, "proj_mtx");
+            _shaderLocations.TextureMatrix = GL.GetUniformLocation(_shaderProgramId, "tex_mtx");
+            _shaderLocations.TexgenMode = GL.GetUniformLocation(_shaderProgramId, "texgen_mode");
 
-        private string FormatOnOff(bool setting)
-        {
-            return setting ? "on" : "off";
+            GL.UseProgram(_shaderProgramId);
         }
 
         private void InitTextures(Model model)
@@ -375,6 +382,7 @@ namespace MphRead
                 DeleteTextures(model.SceneId);
                 _models.Remove(model);
                 _modelMap.Remove(model.SceneId);
+                _updateLists = true;
                 await PrintOutput();
             }
 
@@ -411,13 +419,12 @@ namespace MphRead
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
             GL.ClearStencil(0);
 
+            // todo: calculate this in the resize event
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
             float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
-
-            GL.MatrixMode(MatrixMode.Projection);
             float fov = MathHelper.DegreesToRadians(80.0f);
             var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.001f, 10000.0f);
-            GL.LoadMatrix(ref perspectiveMatrix);
+            GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref perspectiveMatrix);
 
             TransformCamera();
             UpdateCameraPosition();
@@ -551,22 +558,25 @@ namespace MphRead
             }
         }
 
+        private Matrix4 _viewMatrix = Matrix4.Identity;
+
         private void TransformCamera()
         {
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.LoadIdentity();
+            // todo: only update this when the camera position changes
+            _viewMatrix = Matrix4.Identity;
             if (_cameraMode == CameraMode.Pivot)
             {
-                GL.Translate(0, 0, _distance * -1);
-                GL.Rotate(_angleX, 1, 0, 0);
-                GL.Rotate(_angleY, 0, 1, 0);
+                _viewMatrix = Matrix4.CreateTranslation(new Vector3(0, 0, _distance * -1)) * _viewMatrix;
+                _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * _viewMatrix;
+                _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
             }
             else if (_cameraMode == CameraMode.Roam)
             {
-                GL.Rotate(_angleX, 1, 0, 0);
-                GL.Rotate(_angleY, 0, 1, 0);
-                GL.Translate(_cameraPosition.X, _cameraPosition.Y, _cameraPosition.Z);
+                _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * _viewMatrix;
+                _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
+                _viewMatrix = Matrix4.CreateTranslation(_cameraPosition) * _viewMatrix;
             }
+            GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref _viewMatrix);
         }
 
         private void UpdateCameraPosition()
@@ -612,9 +622,18 @@ namespace MphRead
                     Mesh mesh = model.Meshes[j];
                     if (!_listIds.TryGetValue(mesh.DlistId, out int listId))
                     {
+                        int textureWidth = 0;
+                        int textureHeight = 0;
+                        Material material = model.Materials[mesh.MaterialId];
+                        if (material.TextureId != UInt16.MaxValue)
+                        {
+                            Texture texture = model.Textures[material.TextureId];
+                            textureWidth = texture.Width;
+                            textureHeight = texture.Height;
+                        }
                         listId = GL.GenLists(1);
                         GL.NewList(listId, ListMode.Compile);
-                        DoDlist(model, mesh);
+                        DoDlist(model, mesh, textureWidth, textureHeight);
                         GL.EndList();
                         _maxListId = Math.Max(listId, _maxListId);
                     }
@@ -701,34 +720,41 @@ namespace MphRead
                 {
                     model.Spin = (float)(model.Spin + elapsedTime * 360 * model.SpinSpeed) % 360;
                 }
-                bool renderModel = (model.Type != ModelType.Placeholder || _showInvisible) && (!model.ScanVisorOnly || _scanVisor);
+                if (!model.Visible || (model.Type == ModelType.Placeholder && !_showInvisible) || (model.ScanVisorOnly && !_scanVisor))
+                {
+                    continue;
+                }
                 for (int j = 0; j < model.Nodes.Count; j++)
                 {
                     Node node = model.Nodes[j];
-                    if (renderModel && node.MeshCount > 0 && node.Enabled && model.NodeParentsEnabled(node))
+                    if (node.MeshCount == 0 || !node.Enabled || !model.NodeParentsEnabled(node))
                     {
-                        foreach (Mesh mesh in model.GetNodeMeshes(j))
+                        continue;
+                    }
+                    foreach (Mesh mesh in model.GetNodeMeshes(j))
+                    {
+                        if (!mesh.Visible)
                         {
-                            Material material = model.Materials[mesh.MaterialId];
-                            var meshInfo = new MeshInfo(model, node, mesh, material,
-                                material.RenderMode == RenderMode.Translucent ? polygonId++ : 0);
-                            if (material.RenderMode != RenderMode.Decal)
-                            {
-                                _nonDecalMeshes.Add(meshInfo);
-                            }
-                            else
-                            {
-                                _decalMeshes.Add(meshInfo);
-                            }
-                            if (material.RenderMode == RenderMode.Translucent)
-                            {
-                                _translucentMeshes.Add(meshInfo);
-                            }
+                            continue;
+                        }
+                        Material material = model.Materials[mesh.MaterialId];
+                        var meshInfo = new MeshInfo(model, node, mesh, material,
+                            material.RenderMode == RenderMode.Translucent ? polygonId++ : 0);
+                        if (material.RenderMode != RenderMode.Decal)
+                        {
+                            _nonDecalMeshes.Add(meshInfo);
+                        }
+                        else
+                        {
+                            _decalMeshes.Add(meshInfo);
+                        }
+                        if (material.RenderMode == RenderMode.Translucent)
+                        {
+                            _translucentMeshes.Add(meshInfo);
                         }
                     }
                 }
             }
-            GL.UseProgram(_shaderProgramId);
             UpdateUniforms();
             // pass 1: opaque
             GL.ColorMask(true, true, true, true);
@@ -749,6 +775,8 @@ namespace MphRead
             // pass 2: decal
             GL.Enable(EnableCap.PolygonOffsetFill);
             GL.PolygonOffset(-1, -1);
+            // todo?: decals shouldn't render unless they have ~equal depth to the previous polygon,
+            // which means the rendering order here needs to be the same as it is in-game
             GL.DepthFunc(DepthFunction.Lequal);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
@@ -804,44 +832,38 @@ namespace MphRead
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
-            GL.UseProgram(0);
-            if (_showLightVolumes > 0)
+            if (_showLightVolumes > 0 && _lightSources.Count > 0)
             {
+                GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
+                GL.Uniform1(_shaderLocations.UseLight, 0);
+                GL.Uniform1(_shaderLocations.UseFog, 0);
+                GL.Uniform1(_shaderLocations.UseTexture, 0);
+                GL.Uniform1(_shaderLocations.UseOverride, 1);
+                GL.Uniform1(_shaderLocations.IsBillboard, 0);
+                GL.Enable(EnableCap.Blend);
+                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+                GL.Enable(EnableCap.CullFace);
+                // alternative if the depth buffer can't handle the above:
+                //GL.Disable(EnableCap.CullFace);
                 foreach (KeyValuePair<int, LightSource> kvp in _lightSources)
                 {
                     RenderLightVolume(kvp.Value);
                 }
+                GL.Disable(EnableCap.Blend);
             }
         }
 
         private void RenderLightVolume(LightSource lightSource)
         {
             LightSourceEntityData data = lightSource.Entity.Data;
-            GL.UseProgram(_shaderProgramId);
-            GL.Uniform1(_shaderLocations.UseLight, 0);
-            GL.Uniform1(_shaderLocations.UseFog, 0);
-            GL.Uniform1(_shaderLocations.UseTexture, 0);
-            GL.Uniform1(_shaderLocations.UseOverride, 1);
-            GL.Uniform1(_shaderLocations.IsBillboard, 0);
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
             var transform = Matrix4.CreateTranslation(data.Position.ToFloatVector());
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PushMatrix();
-            GL.MultMatrix(ref transform);
-            // the depth buffer can't always handle this
-            //GL.Enable(EnableCap.CullFace);
-            //GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
-            GL.Disable(EnableCap.CullFace);
+            GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
             ColorRgb color = _showLightVolumes == 1
                 ? data.Light1Enabled != 0 ? data.Light1Color : new ColorRgb(0, 0, 0)
                 : data.Light2Enabled != 0 ? data.Light2Color : new ColorRgb(0, 0, 0);
             GL.Uniform4(_shaderLocations.OverrideColor, color.AsVector4(0.5f));
             RenderVolume(lightSource.Volume);
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PopMatrix();
-            GL.Disable(EnableCap.Blend);
-            GL.UseProgram(0);
         }
 
         private void UpdateUniforms()
@@ -850,6 +872,7 @@ namespace MphRead
             GL.Uniform1(_shaderLocations.UseFog, _hasFog && _showFog ? 1 : 0);
             GL.Uniform4(_shaderLocations.FogColor, _fogColor);
             GL.Uniform1(_shaderLocations.FogOffset, _fogOffset);
+            GL.Uniform1(_shaderLocations.ShowColors, _showColors ? 1 : 0);
         }
 
         private void UseRoomLights()
@@ -927,11 +950,7 @@ namespace MphRead
         private void RenderMesh(MeshInfo item)
         {
             Model model = item.Model;
-
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PushMatrix();
             Matrix4 transform = model.Transform;
-            GL.MultMatrix(ref transform);
             _modelMatrix = Matrix4.Identity;
             _modelMatrix = transform * _modelMatrix;
             if (model.Rotating)
@@ -945,10 +964,8 @@ namespace MphRead
                 {
                     transform.M42 += (MathF.Sin(model.Spin / 180 * MathF.PI) + 1) / 8f;
                 }
-                GL.MultMatrix(ref transform);
                 _modelMatrix = transform * _modelMatrix;
             }
-
             UseRoomLights();
             if (model.UseLightOverride)
             {
@@ -968,28 +985,17 @@ namespace MphRead
             {
                 UpdateLightSources(model.Position);
             }
-
             Node node = item.Node;
-
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PushMatrix();
             Matrix4 nodeTransform = node.Transform;
             if (model.Type == ModelType.Room && !_transformRoomNodes)
             {
+                // todo: this is unlikely to matter, but should we pass this for texgen purposes?
                 nodeTransform = Matrix4.Identity;
             }
-            GL.MultMatrix(ref nodeTransform);
             _modelMatrix = nodeTransform * _modelMatrix;
             GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref _modelMatrix);
             GL.Uniform1(_shaderLocations.IsBillboard, node.Billboard ? 1 : 0);
-
-            RenderMesh(model, item.Mesh, item.Material);
-
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PopMatrix();
-
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PopMatrix();
+            RenderMesh(model, node, item.Mesh, item.Material);
         }
 
         // todo?: does anything special need to happen for overlapping light sources?
@@ -1069,7 +1075,7 @@ namespace MphRead
             return first + (second - first) * factor;
         }
 
-        private void AnimateTexcoords(TexcoordAnimationGroup group, TexcoordAnimation animation, int width, int height)
+        private Matrix4 AnimateTexcoords(TexcoordAnimationGroup group, TexcoordAnimation animation)
         {
             float scaleS = InterpolateAnimation(group.Scales, animation.ScaleLutIndexS, group.CurrentFrame,
                 animation.ScaleBlendS, animation.ScaleLutLengthS, group.FrameCount);
@@ -1081,21 +1087,21 @@ namespace MphRead
                 animation.TranslateBlendS, animation.TranslateLutLengthS, group.FrameCount);
             float translateT = InterpolateAnimation(group.Translations, animation.TranslateLutIndexT, group.CurrentFrame,
                 animation.TranslateBlendT, animation.TranslateLutLengthT, group.FrameCount);
-            GL.MatrixMode(MatrixMode.Texture);
-            GL.Translate(translateS * width, translateT * height, 0);
+            var textureMatrix = Matrix4.CreateTranslation(translateS, translateT, 0.0f);
             if (rotate != 0)
             {
-                GL.Translate(width / 2, height / 2, 0);
-                GL.Rotate(MathHelper.RadiansToDegrees(rotate), Vector3.UnitZ);
-                GL.Translate(-width / 2, -height / 2, 0);
+                textureMatrix = Matrix4.CreateTranslation(0.5f, 0.5f, 0.0f) * textureMatrix;
+                textureMatrix = Matrix4.CreateRotationZ(rotate) * textureMatrix;
+                textureMatrix = Matrix4.CreateTranslation(-0.5f, -0.5f, 0.0f) * textureMatrix;
             }
-            GL.Scale(scaleS, scaleT, 1);
+            textureMatrix = Matrix4.CreateScale(scaleS, scaleT, 1) * textureMatrix;
+            return textureMatrix;
         }
 
-        private void RenderMesh(Model model, Mesh mesh, Material material)
+        private void RenderMesh(Model model, Node node, Mesh mesh, Material material)
         {
             DoMaterial(model, mesh, material);
-            DoTexture(model, mesh, material);
+            DoTexture(model, node, mesh, material);
             if (_faceCulling)
             {
                 GL.Enable(EnableCap.CullFace);
@@ -1119,17 +1125,11 @@ namespace MphRead
             GL.CallList(mesh.ListId);
         }
 
-        private void DoTexture(Model model, Mesh mesh, Material material)
+        private void DoTexture(Model model, Node node, Mesh mesh, Material material)
         {
-            ushort width = 1;
-            ushort height = 1;
             int textureId = material.CurrentTextureId;
             if (textureId != UInt16.MaxValue)
             {
-                GL.Enable(EnableCap.Texture2D);
-                Texture texture = model.Textures[textureId];
-                width = texture.Width;
-                height = texture.Height;
                 GL.BindTexture(TextureTarget.Texture2D, material.TextureBindingId);
                 int minParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMinFilter.Nearest;
                 int magParameter = _textureFiltering ? (int)TextureMagFilter.Linear : (int)TextureMagFilter.Nearest;
@@ -1165,7 +1165,94 @@ namespace MphRead
                         TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat);
                     break;
                 }
+                Matrix4 textureMatrix = Matrix4.Identity;
+                TexcoordAnimationGroup? group = null;
+                TexcoordAnimation? animation = null;
+                if (model.TexcoordAnimationGroups.Count > 0 && textureId != UInt16.MaxValue)
+                {
+                    // todo: this is essentially just always using the first group now
+                    group = model.TexcoordAnimationGroups[material.TexcoordAnimationId];
+                    if (group.Animations.TryGetValue(material.Name, out TexcoordAnimation result))
+                    {
+                        animation = result;
+                    }
+                }
+                if (group != null && animation != null)
+                {
+                    textureMatrix = AnimateTexcoords(group, animation.Value);
+                }
+                if (material.TexgenMode != TexgenMode.None)
+                {
+                    if (group == null || animation == null)
+                    {
+                        if (model.TextureMatrices.Count > 0)
+                        {
+                            textureMatrix = model.TextureMatrices[material.MatrixId];
+                        }
+                        else
+                        {
+                            textureMatrix = Matrix4.CreateTranslation(material.ScaleS * material.TranslateS,
+                            material.ScaleT * material.TranslateT, 0.0f);
+                            textureMatrix = Matrix4.CreateScale(material.ScaleS, material.ScaleT, 1.0f) * textureMatrix;
+                            textureMatrix = Matrix4.CreateRotationZ(material.RotateZ) * textureMatrix;
+                        }
+                    }
+                    if (material.TexgenMode == TexgenMode.Normal)
+                    {
+                        Texture texture = model.Textures[material.TextureId];
+                        Debug.Assert(texture.Width == texture.Height && texture.Width > 0 && texture.Width % 2 == 0);
+                        // the nodeTransform * currentTextureMatrix multiplication is between two 4x3 into a 4x4,
+                        // but only reads/writes the upper-left 3x3 of all three matrices
+                        Matrix4 product = node.Transform.Keep3x3();
+                        // sktodo: is this node animation check equivalent to what the game does? and is this the right flags field?
+                        if (!model.NodeAnimationGroups.Any(n => n.Animations.Any()) || (model.Header.Flags & 1) > 0)
+                        {
+                            var cameraMatrix = new Matrix4x3(
+                                _viewMatrix.Row0.Xyz,
+                                _viewMatrix.Row1.Xyz,
+                                _viewMatrix.Row2.Xyz,
+                                _viewMatrix.Row3.Xyz
+                            );
+                            // todo: this "4F4/some_matrix" computation is based mostly on the Morph Ball
+                            var modelMatrix = Matrix4x3.CreateRotationZ(MathHelper.DegreesToRadians(model.Rotation.Z));
+                            modelMatrix = Matrix4x3.CreateRotationY(MathHelper.DegreesToRadians(model.Rotation.Y)) * modelMatrix;
+                            modelMatrix = Matrix4x3.CreateRotationX(MathHelper.DegreesToRadians(model.Rotation.X)) * modelMatrix;
+                            modelMatrix.Row3 = model.Position;
+                            // sktodo: this concatenation changes based on flag bit 0 and the model scale
+                            Matrix4x3 currentTextureMatrix = Test.Concat43(modelMatrix, cameraMatrix);
+                            product *= currentTextureMatrix.Keep3x3();
+                        }
+                        product.M12 *= -1;
+                        product.M13 *= -1;
+                        product.M22 *= -1;
+                        product.M23 *= -1;
+                        product.M32 *= -1;
+                        product.M33 *= -1;
+                        // the texenv * modelTextureMatrix multiplications are between two 4x4 into a 4x4,
+                        // but only reads the upper 3x3 of the first matrix and upper 3x2 of the second,
+                        // and only writes the upper 3x3 of the destination
+                        if (material.MatrixId < model.TextureMatrices.Count)
+                        {
+                            product = Test.Mult44(product, model.TextureMatrices[material.MatrixId]);
+                        }
+                        // textureMatrix will either be the model texture matrix again or the animation result;
+                        // it can't be the material properties since that path implies an indexing error on the line above
+                        // sktodo: Dialanche seems to need another dividion by texture width
+                        product = Test.Mult44(product, textureMatrix) * (1.0f / (texture.Width / 2));
+                        textureMatrix = new Matrix4(
+                            product.Row0 * 16.0f,
+                            product.Row1 * 16.0f,
+                            product.Row2 * 16.0f,
+                            product.Row3
+                        );
+                        textureMatrix.Transpose();
+                        GL.TexCoord2(0.5f, 0.5f); // this may be changed by the dlist
+                    }
+                }
+                GL.Uniform1(_shaderLocations.TexgenMode, (int)material.TexgenMode);
+                GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref textureMatrix);
             }
+            GL.Uniform1(_shaderLocations.UseTexture, textureId != UInt16.MaxValue && _showTextures ? 1 : 0);
             // _showSelection affects the placeholder colors too
             if (mesh.OverrideColor != null && _showSelection)
             {
@@ -1181,45 +1268,6 @@ namespace MphRead
             {
                 GL.Uniform1(_shaderLocations.UseOverride, 0);
             }
-            GL.MatrixMode(MatrixMode.Texture);
-            GL.LoadIdentity();
-            TexcoordAnimationGroup? group = null;
-            TexcoordAnimation? animation = null;
-            if (model.TexcoordAnimationGroups.Count > 0 && textureId != UInt16.MaxValue)
-            {
-                // todo: this is essentially just always using the first group now
-                group = model.TexcoordAnimationGroups[material.TexcoordAnimationId];
-                if (group.Animations.TryGetValue(material.Name, out TexcoordAnimation result))
-                {
-                    animation = result;
-                }
-            }
-            if (group != null && animation != null)
-            {
-                GL.Scale(1.0f / width, 1.0f / height, 1.0f);
-                AnimateTexcoords(group, animation.Value, width, height);
-            }
-            else if (material.TexgenMode != TexgenMode.None)
-            {
-                if (model.TextureMatrices.Count > 0)
-                {
-                    Matrix4 matrix = model.TextureMatrices[material.MatrixId];
-                    GL.LoadMatrix(ref matrix);
-                }
-                else
-                {
-                    GL.Translate(material.ScaleS * width * material.TranslateS, material.ScaleT * height * material.TranslateT, 0.0f);
-                    GL.Scale(material.ScaleS, material.ScaleT, 1.0f);
-                    GL.Scale(1.0f / width, 1.0f / height, 1.0f);
-                    GL.Rotate(material.RotateZ, Vector3.UnitZ);
-                }
-            }
-            else
-            {
-                GL.Scale(1.0f / width, 1.0f / height, 1.0f);
-                GL.Rotate(material.RotateZ, Vector3.UnitZ);
-            }
-            GL.Uniform1(_shaderLocations.UseTexture, textureId != UInt16.MaxValue && _showTextures ? 1 : 0);
         }
 
         private void DoMaterial(Model model, Mesh mesh, Material material)
@@ -1306,7 +1354,7 @@ namespace MphRead
             UpdateMaterials(model);
         }
 
-        private void DoDlist(Model model, Mesh mesh)
+        private void DoDlist(Model model, Mesh mesh, int textureWidth, int textureHeight)
         {
             IReadOnlyList<RenderInstruction> list = model.RenderInstructionLists[mesh.DlistId];
             float vtxX = 0;
@@ -1342,7 +1390,7 @@ namespace MphRead
                     }
                     break;
                 case InstructionCode.COLOR:
-                    if (_showColors && (mesh.OverrideColor == null || !_showSelection))
+                    // shader - if (_showColors && (mesh.OverrideColor == null || !_showSelection))
                     {
                         uint rgb = instruction.Arguments[0];
                         uint r = (rgb >> 0) & 0x1F;
@@ -1365,14 +1413,12 @@ namespace MphRead
                         var ambient = new Vector4(ar / 31.0f, ag / 31.0f, ab / 31.0f, 1.0f);
                         if (mesh.OverrideColor == null || !_showSelection)
                         {
-                            if (_lighting)
-                            {
-                                // MPH only calls this with zero ambient, and we need to rely on that in order to
-                                // use GL.Color to smuggle in the diffuse, since setting uniforms here doesn't work
-                                Debug.Assert(ambient.X == 0 && ambient.Y == 0 && ambient.Z == 0);
-                                GL.Color4(diffuse.X, diffuse.Y, diffuse.Z, 0.0f);
-                            }
-                            if (set != 0 && _showColors)
+                            // shader - if (_lighting)
+                            // MPH only calls this with zero ambient, and we need to rely on that in order to
+                            // use GL.Color to smuggle in the diffuse, since setting uniforms here doesn't work
+                            Debug.Assert(ambient.X == 0 && ambient.Y == 0 && ambient.Z == 0);
+                            GL.Color4(diffuse.X, diffuse.Y, diffuse.Z, 0.0f);
+                            if (set != 0) // shader - && _showColors
                             {
                                 // MPH never does this in a dlist
                                 Debug.Assert(false);
@@ -1404,6 +1450,7 @@ namespace MphRead
                     break;
                 case InstructionCode.TEXCOORD:
                     {
+                        Debug.Assert(textureWidth > 0 && textureHeight > 0);
                         uint st = instruction.Arguments[0];
                         int s = (int)((st >> 0) & 0xFFFF);
                         if ((s & 0x8000) > 0)
@@ -1415,7 +1462,7 @@ namespace MphRead
                         {
                             t = (int)(t | 0xFFFF0000);
                         }
-                        GL.TexCoord2(s / 16.0f, t / 16.0f);
+                        GL.TexCoord2(s / 16.0f / textureWidth, t / 16.0f / textureHeight);
                     }
                     break;
                 case InstructionCode.VTX_16:
@@ -1727,7 +1774,6 @@ namespace MphRead
             else if (e.Key == Key.C)
             {
                 _showColors = !_showColors;
-                _updateLists = true;
                 await PrintOutput();
             }
             else if (e.Key == Key.Q)
@@ -2193,7 +2239,7 @@ namespace MphRead
 
         private void MoveModel()
         {
-            float step = 0.3f;
+            float step = 0.1f;
             if (KeyboardState.IsKeyDown(Key.W)) // move Z-
             {
                 SelectedModel.Position = SelectedModel.Position.WithZ(SelectedModel.Position.Z - step);
@@ -2218,6 +2264,29 @@ namespace MphRead
             {
                 SelectedModel.Position = SelectedModel.Position.WithX(SelectedModel.Position.X + step);
             }
+            step = 2.5f;
+            Vector3 rotation = SelectedModel.Rotation;
+            if (KeyboardState.IsKeyDown(Key.Up)) // rotate up
+            {
+                rotation.X += step;
+                rotation.X %= 360f;
+            }
+            else if (KeyboardState.IsKeyDown(Key.Down)) // rotate down
+            {
+                rotation.X -= step;
+                rotation.X %= 360f;
+            }
+            if (KeyboardState.IsKeyDown(Key.Left)) // rotate left
+            {
+                rotation.Y += step;
+                rotation.Y %= 360f;
+            }
+            else if (KeyboardState.IsKeyDown(Key.Right)) // rotate right
+            {
+                rotation.Y -= step;
+                rotation.Y %= 360f;
+            }
+            SelectedModel.Rotation = rotation;
         }
 
         private enum CameraMode
@@ -2350,14 +2419,20 @@ namespace MphRead
                 $"Material ID {mesh.MaterialId}, DList ID {mesh.DlistId}", guid);
             await Output.Write(guid);
             Material material = SelectedModel.Materials[mesh.MaterialId];
-            await Output.Write($"Material: {material.Name} [{mesh.MaterialId}] - {material.RenderMode}, {material.PolygonMode}", guid);
+            await Output.Write($"Material: {material.Name} [{mesh.MaterialId}] - {material.RenderMode}, {material.PolygonMode}" +
+                $" - {material.TexgenMode}", guid);
             await Output.Write($"Lighting {material.Lighting}, Alpha {material.Alpha}, " +
                 $"XRepeat {material.XRepeat}, YRepeat {material.YRepeat}", guid);
             await Output.Write($"Texture ID {material.CurrentTextureId}, Palette ID {material.CurrentPaletteId}", guid);
             await Output.Write($"Diffuse ({material.Diffuse.Red}, {material.Diffuse.Green}, {material.Diffuse.Blue})" +
                 $" Ambient ({material.Ambient.Red}, {material.Ambient.Green}, {material.Ambient.Blue})" +
-                $" Specular({ material.Specular.Red}, { material.Specular.Green}, { material.Specular.Blue})", guid);
+                $" Specular ({ material.Specular.Red}, { material.Specular.Green}, { material.Specular.Blue})", guid);
             await Output.Write(guid);
+        }
+
+        private string FormatOnOff(bool setting)
+        {
+            return setting ? "on" : "off";
         }
 
         private async Task PrintMenu(Guid guid)
@@ -2591,7 +2666,6 @@ namespace MphRead
                     }
                 }
                 GL.Begin(PrimitiveType.Triangles);
-                GL.Translate(volume.SpherePosition);
                 int k1, k2;
                 for (int i = 0; i < stackCount; i++)
                 {
@@ -2601,15 +2675,15 @@ namespace MphRead
                     {
                         if (i != 0)
                         {
-                            GL.Vertex3(_sphereVertices[k1 + 1]);
-                            GL.Vertex3(_sphereVertices[k2]);
-                            GL.Vertex3(_sphereVertices[k1]);
+                            GL.Vertex3(_sphereVertices[k1 + 1] + volume.SpherePosition);
+                            GL.Vertex3(_sphereVertices[k2] + volume.SpherePosition);
+                            GL.Vertex3(_sphereVertices[k1] + volume.SpherePosition);
                         }
                         if (i != (stackCount - 1))
                         {
-                            GL.Vertex3(_sphereVertices[k2 + 1]);
-                            GL.Vertex3(_sphereVertices[k2]);
-                            GL.Vertex3(_sphereVertices[k1 + 1]);
+                            GL.Vertex3(_sphereVertices[k2 + 1] + volume.SpherePosition);
+                            GL.Vertex3(_sphereVertices[k2] + volume.SpherePosition);
+                            GL.Vertex3(_sphereVertices[k1 + 1] + volume.SpherePosition);
                         }
                     }
                 }

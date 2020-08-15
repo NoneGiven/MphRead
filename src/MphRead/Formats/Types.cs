@@ -1,3 +1,4 @@
+using System;
 using OpenToolkit.Mathematics;
 
 namespace MphRead
@@ -17,6 +18,11 @@ namespace MphRead
         public static float ToFloat(int value)
         {
             return value / (float)(1 << 12);
+        }
+
+        public static float ToFloat(string value)
+        {
+            return ToFloat(Int32.Parse(value, System.Globalization.NumberStyles.HexNumber));
         }
 
         public override string? ToString()
@@ -137,6 +143,41 @@ namespace MphRead
         public static Vector3 WithZ(this Vector3 vector, float z)
         {
             return new Vector3(vector.X, vector.Y, z);
+        }
+
+        public static Matrix3 AsMatrix3(this Matrix4x3 matrix)
+        {
+            return new Matrix3(matrix.Row0, matrix.Row1, matrix.Row2);
+        }
+
+        public static Matrix4 AsMatrix4(this Matrix4x3 matrix)
+        {
+            return new Matrix4(
+                new Vector4(matrix.Row0),
+                new Vector4(matrix.Row1),
+                new Vector4(matrix.Row2),
+                new Vector4(matrix.Row3)
+            );
+        }
+
+        public static Matrix4 Keep3x3(this Matrix4x3 matrix)
+        {
+            return new Matrix4(
+                new Vector4(matrix.Row0, 0.0f),
+                new Vector4(matrix.Row1, 0.0f),
+                new Vector4(matrix.Row2, 0.0f),
+                Vector4.Zero
+            );
+        }
+
+        public static Matrix4 Keep3x3(this Matrix4 matrix)
+        {
+            return new Matrix4(
+                new Vector4(matrix.Row0.Xyz, 0.0f),
+                new Vector4(matrix.Row1.Xyz, 0.0f),
+                new Vector4(matrix.Row2.Xyz, 0.0f),
+                Vector4.Zero
+            );
         }
     }
 }

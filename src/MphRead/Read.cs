@@ -181,10 +181,16 @@ namespace MphRead
                 }
                 recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
             }
+            //  todo: when the counts/offsets are zero, these values should probably be skipped, even though they are always present
+            int count = (int)header.UnknownAnimationCount - Sizes.Header;
+            Debug.Assert(count >= sizeof(uint) && count % sizeof(uint) == 0);
+            count /= 4;
+            IReadOnlyList<uint> nodeIds = DoOffsets<uint>(initialBytes, (uint)Sizes.Header, count);
+            IReadOnlyList<uint> weightIds = DoOffsets<uint>(initialBytes, header.UnknownAnimationCount, count);
             AnimationResults animations = LoadAnimation(animationPath);
             return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                textureMatrices, recolors, defaultRecolor, useLightSources);
+                textureMatrices, recolors, defaultRecolor, useLightSources, nodeIds, weightIds);
         }
 
         private class AnimationResults
@@ -420,12 +426,12 @@ namespace MphRead
 
         private static IReadOnlyList<PaletteData> GetPaletteData(Palette palette, ReadOnlySpan<byte> paletteBytes)
         {
-            if (palette.Count % 2 != 0)
+            if (palette.Size % 2 != 0)
             {
-                throw new ProgramException($"Palette count {palette.Count} is not divisible by 2.");
+                throw new ProgramException($"Palette size {palette.Size} is not divisible by 2.");
             }
             var data = new List<PaletteData>();
-            for (int i = 0; i < palette.Count / 2; i++)
+            for (int i = 0; i < palette.Size / 2; i++)
             {
                 ushort entry = SpanReadUshort(paletteBytes, (int)(palette.Offset + i * 2));
                 data.Add(new PaletteData(entry));

@@ -7,7 +7,7 @@ namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 7, 0, 0);
+        public static Version Version { get; } = new Version(0, 8, 0, 0);
 
         private static void Main(string[] args)
         {
@@ -169,7 +169,7 @@ namespace MphRead
                     string arg = args[i];
                     if (arg.StartsWith("-") && arg.Length > 1)
                     {
-                        arg = arg.Substring(1);
+                        arg = arg[1..];
                         if (i == args.Length - 1)
                         {
                             arguments.Add(new Argument(arg, null));
