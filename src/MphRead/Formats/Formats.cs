@@ -16,6 +16,7 @@ namespace MphRead
         public ModelType Type { get; set; }
         public EntityType EntityType { get; set; }
         public ushort EntityLayer { get; set; } = UInt16.MaxValue;
+        public byte Flags { get; set; } // todo: enum for model flags
 
         public string Name { get; }
         public Header Header { get; }
@@ -178,6 +179,11 @@ namespace MphRead
             UseLightSources = useLightSources;
             NodeIds = nodeIds;
             WeightIds = weightIds;
+            Flags = header.Flags;
+            if (materials.Any(m => m.Lighting > 0))
+            {
+                Flags |= 1;
+            }
         }
 
         public IEnumerable<ColorRgba> GetPixels(int textureId, int paletteId)
@@ -503,8 +509,8 @@ namespace MphRead
         public byte Lighting { get; set; } // todo: what do lighting values 3 and 5 mean?
         public CullingMode Culling { get; }
         public byte Alpha { get; }
-        public byte Wireframe { get; }
         public float CurrentAlpha { get; set; }
+        public byte Wireframe { get; }
         public int TextureId { get; }
         public int PaletteId { get; }
         public int TextureBindingId { get; set; }
@@ -515,9 +521,12 @@ namespace MphRead
         public ColorRgb Diffuse { get; }
         public ColorRgb Ambient { get; }
         public ColorRgb Specular { get; }
+        public Vector3 CurrentDiffuse { get; set; }
+        public Vector3 CurrentAmbient { get; set; }
+        public Vector3 CurrentSpecular { get; set; }
         public PolygonMode PolygonMode { get; set; }
         public RenderMode RenderMode { get; set; }
-        public byte AnimationFlags { get; set; } // todo: this probably has more uses
+        public AnimationFlags AnimationFlags { get; set; }
         public TexgenMode TexgenMode { get; set; }
         public int TexcoordAnimationId { get; set; }
         public int MatrixId { get; set; }
@@ -547,9 +556,12 @@ namespace MphRead
             Diffuse = raw.Diffuse;
             Ambient = raw.Ambient;
             Specular = raw.Specular;
+            CurrentDiffuse = raw.Diffuse / 31.0f;
+            CurrentAmbient = raw.Ambient / 31.0f;
+            CurrentSpecular = raw.Specular / 31.0f;
             PolygonMode = raw.PolygonMode;
             RenderMode = raw.RenderMode;
-            AnimationFlags = raw.AnimationFlags;
+            AnimationFlags = (AnimationFlags)raw.AnimationFlags;
             TexgenMode = raw.TexcoordTransformMode;
             TexcoordAnimationId = raw.TexcoordAnimationId;
             MatrixId = (int)raw.MatrixId;
@@ -841,6 +853,14 @@ namespace MphRead
         DefenderTeams = 13,
         PrimeHunter = 14,
         Unknown15 = 15 // todo?: unused
+    }
+
+    [Flags]
+    public enum AnimationFlags : byte
+    {
+        None = 0x0,
+        DisableColor = 0x1,
+        DisableAlpha = 0x2
     }
 
     [Flags]
