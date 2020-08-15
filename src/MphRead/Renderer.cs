@@ -161,7 +161,7 @@ namespace MphRead
             {
                 if (entity.Name == "AlimbicCapsule")
                 {
-                    // sktodo: how does the billboard node transform work?
+                    // todo: billboard node transforms (for texgen)
                     entity.TextureMatrices.Add(Test.ParseMatrix64("00 00 00 00 00 00 00 00 00 00 00 00 AC 14 10 82 00 F8 FF FF 00 00 00 00 " +
                         "00 00 00 00 FF DE BD 49 9A 01 00 00 CD F0 FF FF 00 00 00 00 8A 14 00 62 00 00 00 00 00 00 00 00 00 00 00 00 FF EE BD 38"));
                     //entity.Nodes[2].Transform = Test.ParseMatrix48("00 10 00 00 FE FF FF FF 08 00 00 00 00 00 00 00 53 0F 00 00 9B 04 00 00 " +
@@ -205,11 +205,7 @@ namespace MphRead
             // sktodo: where do model texture matrices come from?
             // in RAM, this appears to be a 4x4 identity matrix where only the upper-left 4x2 is set (the rest is garbage data),
             // and ultimately only the top 3x2 is actually used in the multiplications with the texenv matrix
-            // --> however, the AlimbicCapsule texture matrix (above) is not the samem although it also appears to be only 4x2
-            // sktodo: how does the Dialanche node transform work?
-            // is it that because Morph Ball has no node animations, they have to use model-level rotation,
-            // but since Dialanche has node animations (but not rotation), they can just use the node transform?
-            // might be able to mimick this by just checking for node animations/flag bit 0 in MoveModel
+            // --> however, the AlimbicCapsule texture matrix (above) is not the same
             if (model.Name == "SamusAlt_lod0" || model.Name == "SpireAlt_lod0")
             {
                 model.TextureMatrices.Add(Matrix4.Identity);
@@ -577,8 +573,6 @@ namespace MphRead
             }
             else if (_cameraMode == CameraMode.Roam)
             {
-                _angleX = 0;
-                _angleY = 0;
                 _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateTranslation(_cameraPosition) * _viewMatrix;
@@ -1211,7 +1205,7 @@ namespace MphRead
                         // the nodeTransform * currentTextureMatrix multiplication is between two 4x3 into a 4x4,
                         // but only reads/writes the upper-left 3x3 of all three matrices
                         Matrix4 product = node.Transform.Keep3x3();
-                        // sktodo: is this node animation check for texgen correct?
+                        // sktodo: is this node animation check equivalent to what the game does? and is this the right flags field?
                         if (!model.NodeAnimationGroups.Any(n => n.Animations.Any()) || (model.Header.Flags & 1) > 0)
                         {
                             var cameraMatrix = new Matrix4x3(
@@ -1220,44 +1214,14 @@ namespace MphRead
                                 _viewMatrix.Row2.Xyz,
                                 _viewMatrix.Row3.Xyz
                             );
-                            // sktodo: see if other models do anything different with currentTextureMatrix
-                            // (still tabling the billboard node transform thing for now)
-                            // and then, finally, model texture matrices
                             var modelMatrix = Matrix4x3.CreateRotationZ(MathHelper.DegreesToRadians(model.Rotation.Z));
                             modelMatrix = Matrix4x3.CreateRotationY(MathHelper.DegreesToRadians(model.Rotation.Y)) * modelMatrix;
                             modelMatrix = Matrix4x3.CreateRotationX(MathHelper.DegreesToRadians(model.Rotation.X)) * modelMatrix;
                             modelMatrix.Row3 = model.Position;
-                            // sktodo: this concatenation changes based on flag but 0 and the model scale
+                            // sktodo: this concatenation changes based on flag bit 0 and the model scale
                             Matrix4x3 currentTextureMatrix = Test.Concat43(modelMatrix, cameraMatrix);
                             product *= currentTextureMatrix.Keep3x3();
                         }
-                        else
-                        {
-                            // sktodo: this is needed for Dialanche -- confirm if it's correct for other things
-                            product *= (1.0f / (texture.Width / 2));
-                        }
-                        // 00 F0 FF FF 00 00 00 00 00 00 00 00 00 00 00 00 68 FB FF FF 54 0F 00 00 00 00 00 00 54 0F 00 00 98 04 00 00 00 00 00 00 80 F4 FF FF D0 D2 FF FF
-                        Matrix4 trans = Test.ParseMatrix48("00 F0 FF FF 00 00 00 00 00 00 00 00 00 00 00 00 67 FB FF FF 53 0F 00 00 00 00 00 00 53 0F 00 00 98 04 00 00 00 00 00 00 7F 4F FF FF CA D2 FF FF").AsMatrix4();
-                        trans.M44 = 1;
-                        Vector3 pos = trans.ExtractTranslation();
-                        Vector3 rot = trans.ExtractRotation().ToEulerAngles();
-                        rot = new Vector3(
-                            MathHelper.RadiansToDegrees(rot.X),
-                            MathHelper.RadiansToDegrees(rot.Y),
-                            MathHelper.RadiansToDegrees(rot.Z)
-                        );
-                        Vector3 scale = trans.ExtractScale();
-                        ////////
-                        Matrix4 trans2 = Test.ParseMatrix48("00 00 00 00 00 00 00 00 00 F0 FF FF 00 F0 FF FF 00 00 00 00 00 00 00 00 00 00 00 00 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00").AsMatrix4();
-                        trans2.M44 = 1;
-                        Vector3 pos2 = trans2.ExtractTranslation();
-                        Vector3 rot2 = trans2.ExtractRotation().ToEulerAngles();
-                        rot2 = new Vector3(
-                            MathHelper.RadiansToDegrees(rot2.X),
-                            MathHelper.RadiansToDegrees(rot2.Y),
-                            MathHelper.RadiansToDegrees(rot2.Z)
-                        );
-                        Vector3 scale2 = trans2.ExtractScale();
                         product.M12 *= -1;
                         product.M13 *= -1;
                         product.M22 *= -1;
@@ -1273,6 +1237,7 @@ namespace MphRead
                         }
                         // textureMatrix will either be the model texture matrix again or the animation result;
                         // it can't be the material properties since that path implies an indexing error on the line above
+                        // sktodo: Dialanche seems to need another dividion by texture width
                         product = Test.Mult44(product, textureMatrix) * (1.0f / (texture.Width / 2));
                         textureMatrix = new Matrix4(
                             product.Row0 * 16.0f,
