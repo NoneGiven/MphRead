@@ -1272,6 +1272,8 @@ namespace MphRead
 
         private void DoMaterial(Model model, Mesh mesh, Material material)
         {
+            // todo: control animations so everything isn't playing at once, and remove this temporary line
+            material.AnimationFlags = AnimationFlags.DisableAlpha;
             if (_lighting && material.Lighting != 0 && (mesh.OverrideColor == null || !_showSelection))
             {
                 GL.Uniform1(_shaderLocations.UseLight, 1);
@@ -1289,7 +1291,6 @@ namespace MphRead
             if (model.MaterialAnimationGroups.Count > 0
                 && (group = model.MaterialAnimationGroups[0]).Animations.TryGetValue(material.Name, out MaterialAnimation animation))
             {
-                // todo: control animations so everything isn't playing at once
                 if (!material.AnimationFlags.HasFlag(AnimationFlags.DisableColor))
                 {
                     float diffuseR = InterpolateAnimation(group.Colors, animation.DiffuseLutStartIndexR, group.CurrentFrame,
