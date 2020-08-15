@@ -16,6 +16,7 @@ namespace MphRead
         public ModelType Type { get; set; }
         public EntityType EntityType { get; set; }
         public ushort EntityLayer { get; set; } = UInt16.MaxValue;
+        public byte Flags { get; set; } // todo: enum for model flags
 
         public string Name { get; }
         public Header Header { get; }
@@ -178,6 +179,7 @@ namespace MphRead
             UseLightSources = useLightSources;
             NodeIds = nodeIds;
             WeightIds = weightIds;
+            Flags = header.Flags;
         }
 
         public IEnumerable<ColorRgba> GetPixels(int textureId, int paletteId)

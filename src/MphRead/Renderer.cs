@@ -207,6 +207,8 @@ namespace MphRead
             // --> however, the AlimbicCapsule texture matrix (above) is not the same
             if (model.Name == "SamusAlt_lod0" || model.Name == "SpireAlt_lod0")
             {
+                // todo: look into what sets model flags at runtime and remove this temporary code
+                model.Flags = 1;
                 model.TextureMatrices.Add(Matrix4.Identity);
             }
             _models.Add(model);
@@ -1204,22 +1206,26 @@ namespace MphRead
                         // the nodeTransform * currentTextureMatrix multiplication is between two 4x3 into a 4x4,
                         // but only reads/writes the upper-left 3x3 of all three matrices
                         Matrix4 product = node.Transform.Keep3x3();
-                        // sktodo: is this node animation check equivalent to what the game does? and is this the right flags field?
-                        if (!model.NodeAnimationGroups.Any(n => n.Animations.Any()) || (model.Header.Flags & 1) > 0)
+                        // sktodo: this needs to check the right flags
+                        if (model.Header.NodeAnimationOffset == 0 || (model.Header.Flags & 1) > 0)
                         {
-                            var cameraMatrix = new Matrix4x3(
-                                _viewMatrix.Row0.Xyz,
-                                _viewMatrix.Row1.Xyz,
-                                _viewMatrix.Row2.Xyz,
-                                _viewMatrix.Row3.Xyz
-                            );
                             // todo: this "4F4/some_matrix" computation is based mostly on the Morph Ball
                             var modelMatrix = Matrix4x3.CreateRotationZ(MathHelper.DegreesToRadians(model.Rotation.Z));
                             modelMatrix = Matrix4x3.CreateRotationY(MathHelper.DegreesToRadians(model.Rotation.Y)) * modelMatrix;
                             modelMatrix = Matrix4x3.CreateRotationX(MathHelper.DegreesToRadians(model.Rotation.X)) * modelMatrix;
                             modelMatrix.Row3 = model.Position;
-                            // sktodo: this concatenation changes based on flag bit 0 and the model scale
-                            Matrix4x3 currentTextureMatrix = Test.Concat43(modelMatrix, cameraMatrix);
+                            // sktodo: this computation needs to change based the model scale
+                            Matrix4x3 currentTextureMatrix = modelMatrix;
+                            if ((model.Flags & 1) > 0)
+                            {
+                                var cameraMatrix = new Matrix4x3(
+                                    _viewMatrix.Row0.Xyz,
+                                    _viewMatrix.Row1.Xyz,
+                                    _viewMatrix.Row2.Xyz,
+                                    _viewMatrix.Row3.Xyz
+                                );
+                                currentTextureMatrix = Test.Concat43(currentTextureMatrix, cameraMatrix);
+                            }
                             product *= currentTextureMatrix.Keep3x3();
                         }
                         product.M12 *= -1;
