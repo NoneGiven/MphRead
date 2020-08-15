@@ -1212,8 +1212,16 @@ namespace MphRead
                             modelMatrix = Matrix4x3.CreateRotationY(MathHelper.DegreesToRadians(model.Rotation.Y)) * modelMatrix;
                             modelMatrix = Matrix4x3.CreateRotationX(MathHelper.DegreesToRadians(model.Rotation.X)) * modelMatrix;
                             modelMatrix.Row3 = model.Position;
-                            // sktodo: this computation needs to change based the model scale
                             Matrix4x3 currentTextureMatrix = modelMatrix;
+                            // in-game, there's only one uniform scale factor for models
+                            if (model.Scale.X != 1)
+                            {
+                                Matrix4x3 scaleMatrix = Matrix4x3.Zero;
+                                scaleMatrix.M11 = model.Scale.X;
+                                scaleMatrix.M22 = model.Scale.Y;
+                                scaleMatrix.M33 = model.Scale.Z;
+                                currentTextureMatrix = Test.Concat43(scaleMatrix, currentTextureMatrix);
+                            }
                             if ((model.Flags & 1) > 0)
                             {
                                 var cameraMatrix = new Matrix4x3(
