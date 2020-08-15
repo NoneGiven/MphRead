@@ -503,8 +503,8 @@ namespace MphRead
         public byte Lighting { get; set; } // todo: what do lighting values 3 and 5 mean?
         public CullingMode Culling { get; }
         public byte Alpha { get; }
-        public byte Wireframe { get; }
         public float CurrentAlpha { get; set; }
+        public byte Wireframe { get; }
         public int TextureId { get; }
         public int PaletteId { get; }
         public int TextureBindingId { get; set; }
