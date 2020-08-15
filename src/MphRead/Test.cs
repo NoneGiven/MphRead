@@ -315,44 +315,122 @@ namespace MphRead
 
         public class CModel
         {
-            public Model Model { get; set; } = null!;
+            public MModel Model { get; set; } = null!;
             public short SomeFlag { get; set; }
+            public CNodeAnimation NodeAnimation { get; set; } = null!;
+        }
+        
+        public class CNodeAnimation
+        {
+            public UIntPtr NodeAnimation { get; set; }
+        }
+
+        public class MModel
+        {
+            public UIntPtr NodeAnimation { get; set; }
+            public byte Flags { get; set; }
+            public float Scale { get; set; }
         }
 
         // (?) determine if other Hunters are visible based on partial room?
         private static bool IsVisibleMaybe(CPlayer player)
         {
-            return true;
+            return player != null;
         }
 
-        private static readonly Model _mdl200D960 = null!;
+        private static readonly MModel _mdl200D960 = null!;
 
-        private static readonly Model _mdl200D938 = null!;
+        private static readonly MModel _mdl200D938 = null!;
 
-        private static readonly Model _mdl200E490 = null!;
+        private static readonly MModel _mdl200E490 = null!;
 
         private static readonly Matrix4x3 _mtx20D955C = Matrix4x3.Zero;
+
+        private static readonly Matrix4x3 _viewMatrix = Matrix4x3.Zero;
+
+        private static Matrix4x3 _currentTextureMatrix = Matrix4x3.Zero;
 
         private static readonly int _mem20E97B0 = 0;
 
         private static readonly int _mem20DA5D0 = 0;
+
+        private static int _mem20E3EA0 = 0;
+
+        private static readonly int _gameState = 2;
+
+        // ???
+        private static void Memory1FF8000()
+        {
+        }
 
         private static void CModelDraw(CModel model, Matrix4x3 someMatrix)
         {
             DrawAnimatedModel(model.Model, someMatrix, (byte)model.SomeFlag);
         }
 
-        private static void DrawAnimatedModel(Model model, Matrix4x3 someMatrix, byte flags)
+        private static void DrawAnimatedModel(MModel model, Matrix4x3 texMatrix, byte flags)
         {
+            Matrix4x3 currentTextureMatrix;
+            if ((model.Flags & 1) > 0) // if any materials have lighting enabled
+            {
+                if (model.Scale == 1)
+                {
+                    currentTextureMatrix = Concat43(texMatrix, _viewMatrix);
+                }
+                else
+                {
+                    var scaleMatrix = Matrix4x3.CreateScale(model.Scale);
+                    currentTextureMatrix = Concat43(scaleMatrix, texMatrix);
+                    currentTextureMatrix = Concat43(currentTextureMatrix, _viewMatrix);
+                }
+            }
+            else
+            {
+                if (model.Scale == 1)
+                {
+                    currentTextureMatrix = texMatrix;
+                }
+                else
+                {
+                    var scaleMatrix = Matrix4x3.CreateScale(model.Scale);
+                    currentTextureMatrix = Concat43(scaleMatrix, texMatrix);
+                }
+            }
+            _currentTextureMatrix = currentTextureMatrix;
+            _mem20E3EA0 = 0;
+            if (model.NodeAnimation != UIntPtr.Zero)
+            {
+                if ((flags & 1) > 0) // ???
+                {
+                    Memory1FF8000();
+                }
+                else
+                {
+                    Memory1FF8000();
+                    _mem20E3EA0 = -2147483648;
+                }
+            }
         }
 
-        private static readonly int _gameState = 2;
+        private static void CModelInitializeAnimationData(CModel model)
+        {
+            CNodeAnimationSetData(model.Model, model.NodeAnimation.NodeAnimation);
+        }
+
+        private static void CNodeAnimationSetData(MModel model, UIntPtr nodeAnimation)
+        {
+            model.NodeAnimation = nodeAnimation;
+        }
 
         // model draw calls in draw_player
         public static void TestLogic2(CPlayer player, int playerId)
         {
             if (!player.MoreFlags.HasFlag(MoreFlags.HideModel))
             {
+                if (player.Hunter == Hunter.Spire && ((int)player.MoreFlags & 8) > 0)
+                {
+                    CModelInitializeAnimationData(player.Model);
+                }
                 if (playerId == 0 || IsVisibleMaybe(player))
                 {
                     // one of these must be checking if the player is P1 but the camera is third person
@@ -367,12 +445,16 @@ namespace MphRead
                     {
                         if (player.Hunter == Hunter.Kanden)
                         {
+                            CNodeAnimationSetData(player.Model.Model, UIntPtr.Zero);
                             CModelDraw(player.Model, _mtx20D955C);
+                            CNodeAnimationSetData(player.Model.Model, player.Model.NodeAnimation.NodeAnimation);
                         }
                         else if (player.Hunter == Hunter.Spire)
                         {
                             if (((int)player.MoreFlags & 8) > 0)
                             {
+                                CModelInitializeAnimationData(player.Model);
+                                CNodeAnimationSetData(player.Model.Model, UIntPtr.Zero);
                                 var matrix = Matrix4x3.CreateTranslation(player.Position);
                                 DrawAnimatedModel(_mdl200D960, matrix, (byte)player.Model.SomeFlag);
                             }
@@ -391,10 +473,7 @@ namespace MphRead
                             // v54 = sub_20AC190(dword_200D970, dword_200D974, v52, v53);
                             // v55 = sub_20AC5AC(v54);
                             int v55 = 1;
-                            Matrix4x3 scaleMatrix = Matrix4x3.Zero;
-                            scaleMatrix.M11 = v55;
-                            scaleMatrix.M22 = v55;
-                            scaleMatrix.M33 = v55;
+                            var scaleMatrix = Matrix4x3.CreateScale(v55);
                             Matrix4x3 matrix = Concat43(scaleMatrix, player.SomeMatrix);
                             CModelDraw(player.Field1A4, matrix);
                         }
