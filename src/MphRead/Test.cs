@@ -288,6 +288,7 @@ namespace MphRead
             FullCharge = 0x1,
             HideModel = 0x2,
             WeaponFiring = 0x4,
+            AltFormAttack = 0x8
         }
 
         public class CPlayer
@@ -427,7 +428,7 @@ namespace MphRead
         {
             if (!player.MoreFlags.HasFlag(MoreFlags.HideModel))
             {
-                if (player.Hunter == Hunter.Spire && ((int)player.MoreFlags & 8) > 0)
+                if (player.Hunter == Hunter.Spire && player.MoreFlags.HasFlag(MoreFlags.AltFormAttack))
                 {
                     CModelInitializeAnimationData(player.Model);
                 }
@@ -451,7 +452,7 @@ namespace MphRead
                         }
                         else if (player.Hunter == Hunter.Spire)
                         {
-                            if (((int)player.MoreFlags & 8) > 0)
+                            if (player.MoreFlags.HasFlag(MoreFlags.AltFormAttack))
                             {
                                 CModelInitializeAnimationData(player.Model);
                                 CNodeAnimationSetData(player.Model.Model, UIntPtr.Zero);
