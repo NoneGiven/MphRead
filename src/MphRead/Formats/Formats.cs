@@ -515,6 +515,9 @@ namespace MphRead
         public ColorRgb Diffuse { get; }
         public ColorRgb Ambient { get; }
         public ColorRgb Specular { get; }
+        public ColorRgb CurrentDiffuse { get; set; }
+        public ColorRgb CurrentAmbient { get; set; }
+        public ColorRgb CurrentSpecular { get; set; }
         public PolygonMode PolygonMode { get; set; }
         public RenderMode RenderMode { get; set; }
         public byte AnimationFlags { get; set; } // todo: this probably has more uses
@@ -547,6 +550,9 @@ namespace MphRead
             Diffuse = raw.Diffuse;
             Ambient = raw.Ambient;
             Specular = raw.Specular;
+            CurrentDiffuse = raw.Diffuse;
+            CurrentAmbient = raw.Ambient;
+            CurrentSpecular = raw.Specular;
             PolygonMode = raw.PolygonMode;
             RenderMode = raw.RenderMode;
             AnimationFlags = raw.AnimationFlags;
