@@ -207,8 +207,6 @@ namespace MphRead
             // --> however, the AlimbicCapsule texture matrix (above) is not the same
             if (model.Name == "SamusAlt_lod0" || model.Name == "SpireAlt_lod0")
             {
-                // todo: look into what sets model flags at runtime and remove this temporary code
-                model.Flags = 1;
                 model.TextureMatrices.Add(Matrix4.Identity);
             }
             _models.Add(model);

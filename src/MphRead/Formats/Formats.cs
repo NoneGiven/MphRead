@@ -180,6 +180,10 @@ namespace MphRead
             NodeIds = nodeIds;
             WeightIds = weightIds;
             Flags = header.Flags;
+            if (materials.Any(m => m.Lighting > 0))
+            {
+                Flags |= 1;
+            }
         }
 
         public IEnumerable<ColorRgba> GetPixels(int textureId, int paletteId)
