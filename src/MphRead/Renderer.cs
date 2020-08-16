@@ -1204,9 +1204,10 @@ namespace MphRead
                         // the nodeTransform * currentTextureMatrix multiplication is between two 4x3 into a 4x4,
                         // but only reads/writes the upper-left 3x3 of all three matrices
                         Matrix4 product = node.Transform.Keep3x3();
-                        // todo: Dialanche sets its node animation pointer to 0 while attacking
+                        // sktodo: this is not exactly equivalent to the game checking the node animation pointer
+                        // (also, special cases like Dialanche setting its pointer to 0 while attacking)
                         // sktodo: this needs to check the CModel some_flag field
-                        if (model.Header.NodeAnimationOffset == 0)
+                        if (!model.NodeAnimationGroups.Any(n => n.Animations.Any()))
                         {
                             // todo: this "4F4/some_matrix" computation is based mostly on the Morph Ball
                             var modelMatrix = Matrix4x3.CreateRotationZ(MathHelper.DegreesToRadians(model.Rotation.Z));
