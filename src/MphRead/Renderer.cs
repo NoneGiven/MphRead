@@ -1227,6 +1227,7 @@ namespace MphRead
                         // the texenv * modelTextureMatrix multiplications are between two 4x4 into a 4x4,
                         // but only reads the upper 3x3 of the first matrix and upper 3x2 of the second,
                         // and only writes the upper 3x3 of the destination
+                        // sktodo: replace with an assert once model texture matrices are loaded
                         if (material.MatrixId < model.TextureMatrices.Count)
                         {
                             product = Test.Mult44(product, model.TextureMatrices[material.MatrixId]);
