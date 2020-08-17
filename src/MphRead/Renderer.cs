@@ -1198,7 +1198,7 @@ namespace MphRead
                                 model.ExtraTransform.Row3.Xyz
                             );
                             // in-game, there's only one uniform scale factor for models
-                            if (model.Scale.X != 1)
+                            if (model.Scale.X != 1 || model.Scale.Y != 1 || model.Scale.Z != 1)
                             {
                                 Matrix4x3 scaleMatrix = Matrix4x3.Zero;
                                 scaleMatrix.M11 = model.Scale.X;
