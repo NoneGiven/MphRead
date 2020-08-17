@@ -289,7 +289,7 @@ namespace MphRead
         public readonly uint DlistOffset;
         public readonly uint NodeOffset;
         public readonly ushort NodeAnimationCount;
-        public readonly byte Flags;
+        public readonly byte Flags; // always 0 in the file
         public readonly byte Field1F;
         public readonly uint UnknownNodeId;
         public readonly uint MeshOffset;

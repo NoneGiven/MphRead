@@ -80,7 +80,7 @@ void main()
                 vec4(tex_mtx[1][0], tex_mtx[1][1], tex_mtx[1][2], gl_MultiTexCoord0.y)
             );
             if (texgen_mode == 2) {
-                texcoord = vec4(normal, 1.0) * texgen_mtx;
+                texcoord = vec4(gl_Normal, 1.0) * texgen_mtx;
             }
             else {
                 texcoord = vec4(gl_Vertex.xyz, 1.0) * texgen_mtx;

@@ -339,6 +339,27 @@ namespace MphRead
                 }
             }
         }
+
+        public Matrix4 ExtraTransform { get; private set; } = Matrix4.Identity;
+
+        public void Process(double elapsedTime)
+        {
+            ExtraTransform = Transform;
+            if (Rotating)
+            {
+                Spin = (float)(Spin + elapsedTime * 360 * SpinSpeed) % 360;
+                Matrix4 transform = SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
+                    MathHelper.DegreesToRadians(SpinAxis.X * Spin),
+                    MathHelper.DegreesToRadians(SpinAxis.Y * Spin),
+                    MathHelper.DegreesToRadians(SpinAxis.Z * Spin)),
+                    Vector3.Zero);
+                if (Floating)
+                {
+                    transform.M42 += (MathF.Sin(Spin / 180 * MathF.PI) + 1) / 8f;
+                }
+                ExtraTransform = transform * ExtraTransform;
+            }
+        }
     }
 
     public class Recolor

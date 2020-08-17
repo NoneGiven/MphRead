@@ -716,10 +716,7 @@ namespace MphRead
                 {
                     UpdateAnimationFrames(model);
                 }
-                if (model.Rotating)
-                {
-                    model.Spin = (float)(model.Spin + elapsedTime * 360 * model.SpinSpeed) % 360;
-                }
+                model.Process(elapsedTime);
                 if (!model.Visible || (model.Type == ModelType.Placeholder && !_showInvisible) || (model.ScanVisorOnly && !_scanVisor))
                 {
                     continue;
@@ -950,22 +947,7 @@ namespace MphRead
         private void RenderMesh(MeshInfo item)
         {
             Model model = item.Model;
-            Matrix4 transform = model.Transform;
-            _modelMatrix = Matrix4.Identity;
-            _modelMatrix = transform * _modelMatrix;
-            if (model.Rotating)
-            {
-                transform = SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
-                    MathHelper.DegreesToRadians(model.SpinAxis.X * model.Spin),
-                    MathHelper.DegreesToRadians(model.SpinAxis.Y * model.Spin),
-                    MathHelper.DegreesToRadians(model.SpinAxis.Z * model.Spin)),
-                    Vector3.Zero);
-                if (model.Floating)
-                {
-                    transform.M42 += (MathF.Sin(model.Spin / 180 * MathF.PI) + 1) / 8f;
-                }
-                _modelMatrix = transform * _modelMatrix;
-            }
+            _modelMatrix = model.ExtraTransform;
             UseRoomLights();
             if (model.UseLightOverride)
             {
@@ -1204,15 +1186,17 @@ namespace MphRead
                         // the nodeTransform * currentTextureMatrix multiplication is between two 4x3 into a 4x4,
                         // but only reads/writes the upper-left 3x3 of all three matrices
                         Matrix4 product = node.Transform.Keep3x3();
-                        // sktodo: this needs to check the right flags
-                        if (model.Header.NodeAnimationOffset == 0 || (model.Header.Flags & 1) > 0)
+                        // sktodo: this is not exactly equivalent to the game checking the node animation pointer
+                        // (also, special cases like Dialanche setting its pointer to 0 while attacking)
+                        // sktodo: this needs to check the CModel some_flag field
+                        if (!model.NodeAnimationGroups.Any(n => n.Animations.Any()))
                         {
-                            // todo: this "4F4/some_matrix" computation is based mostly on the Morph Ball
-                            var modelMatrix = Matrix4x3.CreateRotationZ(MathHelper.DegreesToRadians(model.Rotation.Z));
-                            modelMatrix = Matrix4x3.CreateRotationY(MathHelper.DegreesToRadians(model.Rotation.Y)) * modelMatrix;
-                            modelMatrix = Matrix4x3.CreateRotationX(MathHelper.DegreesToRadians(model.Rotation.X)) * modelMatrix;
-                            modelMatrix.Row3 = model.Position;
-                            Matrix4x3 currentTextureMatrix = modelMatrix;
+                            var currentTextureMatrix = new Matrix4x3(
+                                model.ExtraTransform.Row0.Xyz,
+                                model.ExtraTransform.Row1.Xyz,
+                                model.ExtraTransform.Row2.Xyz,
+                                model.ExtraTransform.Row3.Xyz
+                            );
                             // in-game, there's only one uniform scale factor for models
                             if (model.Scale.X != 1)
                             {
