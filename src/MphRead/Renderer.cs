@@ -288,8 +288,18 @@ namespace MphRead
             _shaderLocations.ProjectionMatrix = GL.GetUniformLocation(_shaderProgramId, "proj_mtx");
             _shaderLocations.TextureMatrix = GL.GetUniformLocation(_shaderProgramId, "tex_mtx");
             _shaderLocations.TexgenMode = GL.GetUniformLocation(_shaderProgramId, "texgen_mode");
+            _shaderLocations.ToonTable = GL.GetUniformLocation(_shaderProgramId, "toon_table");
 
             GL.UseProgram(_shaderProgramId);
+
+            var floats = new List<float>();
+            foreach (Vector3 vector in Metadata.ToonTable)
+            {
+                floats.Add(vector.X);
+                floats.Add(vector.Y);
+                floats.Add(vector.Z);
+            }
+            GL.Uniform3(_shaderLocations.ToonTable, Metadata.ToonTable.Count, floats.ToArray());
         }
 
         private void InitTextures(Model model)
@@ -1198,7 +1208,7 @@ namespace MphRead
                                 model.ExtraTransform.Row3.Xyz
                             );
                             // in-game, there's only one uniform scale factor for models
-                            if (model.Scale.X != 1)
+                            if (model.Scale.X != 1 || model.Scale.Y != 1 || model.Scale.Z != 1)
                             {
                                 Matrix4x3 scaleMatrix = Matrix4x3.Zero;
                                 scaleMatrix.M11 = model.Scale.X;
@@ -1227,6 +1237,7 @@ namespace MphRead
                         // the texenv * modelTextureMatrix multiplications are between two 4x4 into a 4x4,
                         // but only reads the upper 3x3 of the first matrix and upper 3x2 of the second,
                         // and only writes the upper 3x3 of the destination
+                        // sktodo: replace with an assert once model texture matrices are loaded
                         if (material.MatrixId < model.TextureMatrices.Count)
                         {
                             product = Test.Mult44(product, model.TextureMatrices[material.MatrixId]);

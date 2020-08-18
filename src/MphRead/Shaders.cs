@@ -104,46 +104,13 @@ uniform bool use_override;
 uniform vec4 override_color;
 uniform float mat_alpha;
 uniform int mat_mode;
+uniform vec3[32] toon_table;
 
 varying vec2 texcoord;
 varying vec4 color;
 
 vec4 toon_color(vec4 vtx_color)
 {
-    vec3 toon_table[32] = vec3[](
-        vec3(0, 0, 0.2580645),
-        vec3(0, 0, 0.2580645),
-        vec3(0, 0.032258064, 0.2580645),
-        vec3(0.032258064, 0.032258064, 0.2580645),
-        vec3(0.032258064, 0.032258064, 0.2580645),
-        vec3(0.032258064, 0.06451613, 0.2580645),
-        vec3(0.032258064, 0.06451613, 0.29032257),
-        vec3(0.032258064, 0.09677419, 0.29032257),
-        vec3(0.032258064, 0.09677419, 0.29032257),
-        vec3(0.06451613, 0.09677419, 0.29032257),
-        vec3(0.06451613, 0.12903225, 0.29032257),
-        vec3(0.06451613, 0.12903225, 0.29032257),
-        vec3(0.09677419, 0.19354838, 0.32258064),
-        vec3(0.12903225, 0.22580644, 0.3548387),
-        vec3(0.16129032, 0.2580645, 0.38709676),
-        vec3(0.19354838, 0.32258064, 0.41935483),
-        vec3(0.22580644, 0.3548387, 0.4516129),
-        vec3(0.2580645, 0.38709676, 0.48387095),
-        vec3(0.29032257, 0.4516129, 0.516129),
-        vec3(0.32258064, 0.48387095, 0.5483871),
-        vec3(0.3548387, 0.516129, 0.58064514),
-        vec3(0.3548387, 0.58064514, 0.61290324),
-        vec3(0.38709676, 0.61290324, 0.6451613),
-        vec3(0.41935483, 0.6451613, 0.67741936),
-        vec3(0.4516129, 0.7096774, 0.7096774),
-        vec3(0.48387095, 0.7419355, 0.7419355),
-        vec3(0.516129, 0.7741935, 0.7741935),
-        vec3(0.5483871, 0.83870965, 0.8064516),
-        vec3(0.58064514, 0.87096775, 0.83870965),
-        vec3(0.61290324, 0.9032258, 0.87096775),
-        vec3(0.6451613, 0.9677419, 0.9032258),
-        vec3(0.67741936, 1, 0.9354839)
-    );
     return vec4(toon_table[int(vtx_color.r * 31)], vtx_color.a);
 }
 
@@ -161,8 +128,12 @@ void main()
                 mat_alpha * color.a
             );
         }
+        else if (mat_mode == 2) {
+            vec4 toon = toon_color(color);
+            col = vec4(texcolor.rgb * toon.rgb + toon.rgb, mat_alpha * texcolor.a * color.a);
+        }
         else {
-            col = (mat_mode == 2 ? toon_color(color) : color) * vec4(texcolor.rgb, mat_alpha * texcolor.a);
+            col = color * vec4(texcolor.rgb, mat_alpha * texcolor.a);
         }
         if (use_override) {
             col.r = override_color.r;
@@ -220,5 +191,6 @@ void main()
         public int ProjectionMatrix { get; set; }
         public int TextureMatrix { get; set; }
         public int TexgenMode { get; set; }
+        public int ToonTable { get; set; }
     }
 }

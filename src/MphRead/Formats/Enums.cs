@@ -61,7 +61,7 @@ namespace MphRead
     {
         Modulate = 0,
         Decal = 1,
-        Toon = 2,
+        Toon = 2, // MPH only uses this in "highlight" shading mode
         Shadow = 3 // unused
     }
 
@@ -86,7 +86,7 @@ namespace MphRead
         None = 0,
         Texcoord = 1,
         Normal = 2,
-        Vertex = 3
+        Vertex = 3 // unused
     }
 
     public enum CullingMode : byte
