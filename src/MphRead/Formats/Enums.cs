@@ -61,7 +61,7 @@ namespace MphRead
     {
         Modulate = 0,
         Decal = 1,
-        Toon = 2,
+        Toon = 2, // MPH only uses this in "highlight" shading mode
         Shadow = 3 // unused
     }
 

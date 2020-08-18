@@ -161,8 +161,12 @@ void main()
                 mat_alpha * color.a
             );
         }
+        else if (mat_mode == 2) {
+            vec4 toon = toon_color(color);
+            col = vec4(texcolor.r * toon.r + toon.r, texcolor.g * toon.g + toon.g, texcolor.b * toon.b + toon.b, mat_alpha * texcolor.a * color.a);
+        }
         else {
-            col = (mat_mode == 2 ? toon_color(color) : color) * vec4(texcolor.rgb, mat_alpha * texcolor.a);
+            col = color * vec4(texcolor.rgb, mat_alpha * texcolor.a);
         }
         if (use_override) {
             col.r = override_color.r;
