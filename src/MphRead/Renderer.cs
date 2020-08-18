@@ -159,14 +159,6 @@ namespace MphRead
             _modelMap.Add(room.SceneId, room);
             foreach (Model entity in entities)
             {
-                if (entity.Name == "AlimbicCapsule")
-                {
-                    // todo: billboard node transforms (for texgen)
-                    entity.TextureMatrices.Add(Test.ParseMatrix64("00 00 00 00 00 00 00 00 00 00 00 00 AC 14 10 82 00 F8 FF FF 00 00 00 00 " +
-                        "00 00 00 00 FF DE BD 49 9A 01 00 00 CD F0 FF FF 00 00 00 00 8A 14 00 62 00 00 00 00 00 00 00 00 00 00 00 00 FF EE BD 38"));
-                    //entity.Nodes[2].Transform = Test.ParseMatrix48("00 10 00 00 FE FF FF FF 08 00 00 00 00 00 00 00 53 0F 00 00 9B 04 00 00 " +
-                    //    "F8 FF FF FF 65 FB FF FF 53 0F 00 00 D4 FF FF FF 1F 05 00 00 C2 7F FF FF").AsMatrix4();
-                }
                 _modelMap.Add(entity.SceneId, entity);
                 if (entity.Entity is Entity<LightSourceEntityData> lightSource)
                 {
@@ -201,14 +193,6 @@ namespace MphRead
         {
             Model model = Read.GetModelByName(name, recolor, firstHunt);
             SceneSetup.ComputeNodeMatrices(model, index: 0);
-            // sktodo: where do model texture matrices come from?
-            // in RAM, this appears to be a 4x4 identity matrix where only the upper-left 4x2 is set (the rest is garbage data),
-            // and ultimately only the top 3x2 is actually used in the multiplications with the texenv matrix
-            // --> however, the AlimbicCapsule texture matrix (above) is not the same
-            if (model.Name == "SamusAlt_lod0" || model.Name == "SpireAlt_lod0")
-            {
-                model.TextureMatrices.Add(Matrix4.Identity);
-            }
             _models.Add(model);
             _modelMap.Add(model.SceneId, model);
         }
@@ -1195,6 +1179,7 @@ namespace MphRead
                         Debug.Assert(texture.Width == texture.Height && texture.Width > 0 && texture.Width % 2 == 0);
                         // the nodeTransform * currentTextureMatrix multiplication is between two 4x3 into a 4x4,
                         // but only reads/writes the upper-left 3x3 of all three matrices
+                        // todo: billboard node transforms need to work as they do in-game
                         Matrix4 product = node.Transform.Keep3x3();
                         // sktodo: this is not exactly equivalent to the game checking the node animation pointer
                         // (also, special cases like Dialanche setting its pointer to 0 while attacking)
@@ -1237,6 +1222,8 @@ namespace MphRead
                         // the texenv * modelTextureMatrix multiplications are between two 4x4 into a 4x4,
                         // but only reads the upper 3x3 of the first matrix and upper 3x2 of the second,
                         // and only writes the upper 3x3 of the destination
+                        // note: in RAM, model texture matrices are 4x4, but only the leftmost 4x2 or 4x3 is set,
+                        // and the rest is garbage data, and ultimately only the upper-left 3x2 is actually used
                         // sktodo: replace with an assert once model texture matrices are loaded
                         if (material.MatrixId < model.TextureMatrices.Count)
                         {

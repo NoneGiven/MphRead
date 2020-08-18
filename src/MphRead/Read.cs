@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using MphRead.Archive;
 using MphRead.Export;
+using OpenToolkit.Mathematics;
 
 namespace MphRead
 {
@@ -118,7 +119,6 @@ namespace MphRead
                 instructions.Add(DoRenderInstructions(initialBytes, dlist));
             }
             IReadOnlyList<RawMaterial> materials = DoOffsets<RawMaterial>(initialBytes, header.MaterialOffset, header.MaterialCount);
-            IReadOnlyList<Matrix44Fx> textureMatrices = DoOffsets<Matrix44Fx>(initialBytes, header.TextureMatrixOffset, header.MatrixCount);
             var recolors = new List<Recolor>();
             foreach (RecolorMetadata meta in recolorMeta)
             {
@@ -180,6 +180,24 @@ namespace MphRead
                     }
                 }
                 recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
+            }
+            var textureMatrices = new List<Matrix4>();
+            if (name == "AlimbicCapsule")
+            {
+                Debug.Assert(header.TextureMatrixCount == 1);
+                Matrix4 textureMatrix = Matrix4.Zero;
+                textureMatrix.M21 = Fixed.ToFloat(-2048);
+                textureMatrix.M31 = Fixed.ToFloat(410);
+                textureMatrix.M32 = Fixed.ToFloat(-3891);
+                textureMatrices.Add(textureMatrix);
+            }
+            else
+            {
+                // sktodo: confirm loading of texture matrices
+                for (int i = 0; i < header.TextureMatrixCount; i++)
+                {
+                    textureMatrices.Add(Matrix4.Identity);
+                }
             }
             //  todo: when the counts/offsets are zero, these values should probably be skipped, even though they are always present
             int count = (int)header.UnknownAnimationCount - Sizes.Header;
