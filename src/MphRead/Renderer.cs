@@ -288,8 +288,18 @@ namespace MphRead
             _shaderLocations.ProjectionMatrix = GL.GetUniformLocation(_shaderProgramId, "proj_mtx");
             _shaderLocations.TextureMatrix = GL.GetUniformLocation(_shaderProgramId, "tex_mtx");
             _shaderLocations.TexgenMode = GL.GetUniformLocation(_shaderProgramId, "texgen_mode");
+            _shaderLocations.ToonTable = GL.GetUniformLocation(_shaderProgramId, "toon_table");
 
             GL.UseProgram(_shaderProgramId);
+
+            var floats = new List<float>();
+            foreach (Vector3 vector in Metadata.ToonTable)
+            {
+                floats.Add(vector.X);
+                floats.Add(vector.Y);
+                floats.Add(vector.Z);
+            }
+            GL.Uniform3(_shaderLocations.ToonTable, Metadata.ToonTable.Count, floats.ToArray());
         }
 
         private void InitTextures(Model model)

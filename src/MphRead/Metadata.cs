@@ -384,7 +384,6 @@ namespace MphRead
         public static readonly Vector3 OctolithLightColor = new Vector3(1, 1, 1);
 
         // this is only set/used by Octolith
-        // todo: set this as a uniform
         public static readonly IReadOnlyList<Vector3> ToonTable = new List<Vector3>()
         {
             GetTableColor(0x2000),
