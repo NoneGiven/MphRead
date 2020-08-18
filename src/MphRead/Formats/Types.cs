@@ -81,6 +81,40 @@ namespace MphRead
         }
     }
 
+    public static class Matrix
+    {
+        public static Matrix4x3 Concat43(Matrix4x3 first, Matrix4x3 second)
+        {
+            Matrix4x3 output = Matrix4x3.Zero;
+            output.M11 = first.M13 * second.M31 + first.M11 * second.M11 + first.M12 * second.M21;
+            output.M12 = first.M13 * second.M32 + first.M11 * second.M12 + first.M12 * second.M22;
+            output.M13 = first.M13 * second.M33 + first.M11 * second.M13 + first.M12 * second.M23;
+            output.M21 = first.M23 * second.M31 + first.M21 * second.M11 + first.M22 * second.M21;
+            output.M22 = first.M23 * second.M32 + first.M21 * second.M12 + first.M22 * second.M22;
+            output.M23 = first.M23 * second.M33 + first.M21 * second.M13 + first.M22 * second.M23;
+            output.M31 = first.M33 * second.M31 + first.M31 * second.M11 + first.M32 * second.M21;
+            output.M32 = first.M33 * second.M32 + first.M31 * second.M12 + first.M32 * second.M22;
+            output.M33 = first.M33 * second.M33 + first.M31 * second.M13 + first.M32 * second.M23;
+            output.M41 = second.M41 + first.M43 * second.M31 + first.M41 * second.M11 + first.M42 * second.M21;
+            output.M42 = second.M42 + first.M43 * second.M32 + first.M41 * second.M12 + first.M42 * second.M22;
+            output.M43 = second.M43 + first.M43 * second.M33 + first.M41 * second.M13 + first.M42 * second.M23;
+            return output;
+        }
+
+        // todo: could replace this with "keep 3x2"
+        public static Matrix4 Multiply44(Matrix4 first, Matrix4 second)
+        {
+            Matrix4 output = Matrix4.Zero;
+            output.M11 = first.M13 * second.M31 + first.M11 * second.M11 + first.M12 * second.M21;
+            output.M12 = first.M13 * second.M32 + first.M11 * second.M12 + first.M12 * second.M22;
+            output.M21 = first.M23 * second.M31 + first.M21 * second.M11 + first.M22 * second.M21;
+            output.M22 = first.M23 * second.M32 + first.M21 * second.M12 + first.M22 * second.M22;
+            output.M31 = first.M33 * second.M31 + first.M31 * second.M11 + first.M32 * second.M21;
+            output.M32 = first.M33 * second.M32 + first.M31 * second.M12 + first.M32 * second.M22;
+            return output;
+        }
+    }
+
     // size: 3
     public readonly struct ColorRgb
     {

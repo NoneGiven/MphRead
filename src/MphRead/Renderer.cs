@@ -1199,7 +1199,7 @@ namespace MphRead
                                 scaleMatrix.M11 = model.Scale.X;
                                 scaleMatrix.M22 = model.Scale.Y;
                                 scaleMatrix.M33 = model.Scale.Z;
-                                currentTextureMatrix = Test.Concat43(scaleMatrix, currentTextureMatrix);
+                                currentTextureMatrix = Matrix.Concat43(scaleMatrix, currentTextureMatrix);
                             }
                             if ((model.Flags & 1) > 0)
                             {
@@ -1209,7 +1209,7 @@ namespace MphRead
                                     _viewMatrix.Row2.Xyz,
                                     _viewMatrix.Row3.Xyz
                                 );
-                                currentTextureMatrix = Test.Concat43(currentTextureMatrix, cameraMatrix);
+                                currentTextureMatrix = Matrix.Concat43(currentTextureMatrix, cameraMatrix);
                             }
                             product *= currentTextureMatrix.Keep3x3();
                         }
@@ -1227,12 +1227,12 @@ namespace MphRead
                         // sktodo: replace with an assert once model texture matrices are loaded
                         if (material.MatrixId < model.TextureMatrices.Count)
                         {
-                            product = Test.Mult44(product, model.TextureMatrices[material.MatrixId]);
+                            product = Matrix.Multiply44(product, model.TextureMatrices[material.MatrixId]);
                         }
                         // textureMatrix will either be the model texture matrix again or the animation result;
                         // it can't be the material properties since that path implies an indexing error on the line above
                         // sktodo: Dialanche seems to need another dividion by texture width
-                        product = Test.Mult44(product, textureMatrix) * (1.0f / (texture.Width / 2));
+                        product = Matrix.Multiply44(product, textureMatrix) * (1.0f / (texture.Width / 2));
                         textureMatrix = new Matrix4(
                             product.Row0 * 16.0f,
                             product.Row1 * 16.0f,
