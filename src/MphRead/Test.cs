@@ -140,7 +140,10 @@ namespace MphRead
             {
                 foreach (Material material in model.Materials)
                 {
-                    GetPolygonAttrs(model, material, 1);
+                    if (material.TexgenMode == TexgenMode.Vertex)
+                    {
+                        Console.WriteLine($"{model.Name} - {material.Name}");
+                    }
                 }
             }
         }
@@ -537,8 +540,8 @@ namespace MphRead
         //[StructLayout(LayoutKind.Sequential, Pack = 1)]
         public struct WeaponInfo
         {
-            public byte Id1;
-            public byte Id2;
+            public byte Id;
+            public byte Field1; // same as Id
             public ushort Field2;
             public ushort Field4;
             public ushort Field6;
@@ -546,11 +549,12 @@ namespace MphRead
             public byte Field9;
             public byte FieldA;
             public byte FieldB;
-            public ushort FieldC;
+            public ushort SplashDamage;
             public ushort FieldE;
             public ushort Field10;
             public ushort Field12;
-            public ushort Field14;
+            public byte Field14;
+            public byte Field15;
             public byte AmmoType;
             public byte Field17;
             public byte Field18;
@@ -563,14 +567,14 @@ namespace MphRead
             public ushort FullCharge;
             public ushort Field24;
             public ushort AmmoCost;
-            public ushort SomeAmmo1;
-            public ushort SomeAmmo2;
-            public ushort Field2C;
-            public ushort Field2E;
-            public ushort Field30;
-            public ushort Field32;
-            public ushort Field34;
-            public ushort Field36;
+            public ushort ChargeCost;
+            public ushort Field2A; // same as ChargeCost
+            public ushort UnchargedDamage;
+            public ushort Field2E; // some damage value?
+            public ushort ChargedDamage;
+            public ushort HeadshotDamage;
+            public ushort Field34; // some headshot damage value?
+            public ushort ChargedHeadshotDamage;
             public ushort Field38;
             public ushort Field3A;
             public ushort Field3C;
@@ -664,7 +668,7 @@ namespace MphRead
             public ushort FieldEC;
             public ushort FieldEE;
 
-            public string Name => _weaponNames[Id1];
+            public string Name => _weaponNames[Id];
         }
 
         public static void TestWeaponInfo()

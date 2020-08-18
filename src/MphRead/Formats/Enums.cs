@@ -86,7 +86,7 @@ namespace MphRead
         None = 0,
         Texcoord = 1,
         Normal = 2,
-        Vertex = 3
+        Vertex = 3 // unused
     }
 
     public enum CullingMode : byte
