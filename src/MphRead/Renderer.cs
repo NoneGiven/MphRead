@@ -1174,6 +1174,9 @@ namespace MphRead
                         materialMatrix = Matrix4.CreateScale(material.ScaleS, material.ScaleT, 1.0f) * materialMatrix;
                         materialMatrix = Matrix4.CreateRotationZ(material.RotateZ) * materialMatrix;
                     }
+                    // for texcoord texgen, the animation result is used if any, otherwise the material matrix is used.
+                    // for normal texgen, two matrices are multiplied. the first is always the material matrix.
+                    // the second is the animation result if any, otherwise it's the material matrix again.
                     if (group == null || animation == null)
                     {
                         texcoordMatrix = materialMatrix;
