@@ -1189,10 +1189,11 @@ namespace MphRead
                         // but only reads/writes the upper-left 3x3 of all three matrices
                         // todo: billboard node transforms need to work as they do in-game
                         Matrix4 product = node.Transform.Keep3x3();
-                        // sktodo: this is not exactly equivalent to the game checking the node animation pointer
-                        // (also, special cases like Dialanche setting its pointer to 0 while attacking)
-                        // note: in-game, this also uses the some_flag CModel field or constant 0
-                        // --> none of the models with normal texgen seem to set bit 0 of that flag, so we can ignore it
+                        // todo: this may not be exactly equivalent to the game checking the node animation pointer
+                        // note: in-game, this also uses the some_flag CModel field or constant 0,
+                        // byt none of the models with normal texgen seem to set bit 0 of that flag, so we can ignore it
+                        // --> also, Dialanche sets it pointed to 0 while attacking, but that doesn't seem to chnage its appearance
+                        // (at least from the controlling player's camera), so we're ignoring that too
                         if (!model.NodeAnimationGroups.Any(n => n.Animations.Any()))
                         {
                             var currentTextureMatrix = new Matrix4x3(
@@ -1232,7 +1233,6 @@ namespace MphRead
                         // but only reads the upper 3x3 of the first matrix and upper 3x2 of the second,
                         // and only writes the upper 3x3 of the destination
                         product = Matrix.Multiply44(product, materialMatrix);
-                        // sktodo: Dialanche seems to need another division by texture width?
                         product = Matrix.Multiply44(product, texcoordMatrix) * (1.0f / (texture.Width / 2));
                         texcoordMatrix = new Matrix4(
                             product.Row0 * 16.0f,
