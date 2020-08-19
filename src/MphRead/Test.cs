@@ -138,57 +138,23 @@ namespace MphRead
         {
             foreach (Model model in GetAllModels())
             {
-                foreach (Material material in model.Materials)
+                if (model.Header.TextureMatrixCount > 1)
                 {
-                    if (material.TexgenMode == TexgenMode.Vertex)
-                    {
-                        Console.WriteLine($"{model.Name} - {material.Name}");
-                    }
+                    Console.WriteLine($"{model.Header.TextureMatrixCount} - {model.Name}");
                 }
             }
-        }
-
-        public static Matrix4x3 Concat43(Matrix4x3 first, Matrix4x3 second)
-        {
-            Matrix4x3 output = Matrix4x3.Zero;
-            output.M11 = first.M13 * second.M31 + first.M11 * second.M11 + first.M12 * second.M21;
-            output.M12 = first.M13 * second.M32 + first.M11 * second.M12 + first.M12 * second.M22;
-            output.M13 = first.M13 * second.M33 + first.M11 * second.M13 + first.M12 * second.M23;
-            output.M21 = first.M23 * second.M31 + first.M21 * second.M11 + first.M22 * second.M21;
-            output.M22 = first.M23 * second.M32 + first.M21 * second.M12 + first.M22 * second.M22;
-            output.M23 = first.M23 * second.M33 + first.M21 * second.M13 + first.M22 * second.M23;
-            output.M31 = first.M33 * second.M31 + first.M31 * second.M11 + first.M32 * second.M21;
-            output.M32 = first.M33 * second.M32 + first.M31 * second.M12 + first.M32 * second.M22;
-            output.M33 = first.M33 * second.M33 + first.M31 * second.M13 + first.M32 * second.M23;
-            output.M41 = second.M41 + first.M43 * second.M31 + first.M41 * second.M11 + first.M42 * second.M21;
-            output.M42 = second.M42 + first.M43 * second.M32 + first.M41 * second.M12 + first.M42 * second.M22;
-            output.M43 = second.M43 + first.M43 * second.M33 + first.M41 * second.M13 + first.M42 * second.M23;
-            return output;
-        }
-
-        // todo: could replace this with "keep 3x2"
-        public static Matrix4 Mult44(Matrix4 first, Matrix4 second)
-        {
-            Matrix4 output = Matrix4.Zero;
-            output.M11 = first.M13 * second.M31 + first.M11 * second.M11 + first.M12 * second.M21;
-            output.M12 = first.M13 * second.M32 + first.M11 * second.M12 + first.M12 * second.M22;
-            output.M21 = first.M23 * second.M31 + first.M21 * second.M11 + first.M22 * second.M21;
-            output.M22 = first.M23 * second.M32 + first.M21 * second.M12 + first.M22 * second.M22;
-            output.M31 = first.M33 * second.M31 + first.M31 * second.M11 + first.M32 * second.M21;
-            output.M32 = first.M33 * second.M32 + first.M31 * second.M12 + first.M32 * second.M22;
-            return output;
         }
 
         public static void TestMatrices()
         {
             // 0x020DB528 (passed to draw_animated_model from CModel_draw from draw_player)
             // updated in sub_201DCE4 -- I guess it's just the model transform?
-            Matrix4x3 mtx1 = Test.ParseMatrix48("03 F0 FF FF 00 00 00 00 9C 00 00 00 F9 FF FF FF FB 0F 00 00 3E FF FF FF 64 FF FF FF 3E FF FF FF 08 F0 FF FF 22 00 00 00 86 40 00 00 F1 AD FD FF");
+            Matrix4x3 mtx1 = ParseMatrix48("03 F0 FF FF 00 00 00 00 9C 00 00 00 F9 FF FF FF FB 0F 00 00 3E FF FF FF 64 FF FF FF 3E FF FF FF 08 F0 FF FF 22 00 00 00 86 40 00 00 F1 AD FD FF");
             // 0x220DA430 (constant?)
-            Matrix4x3 mtx2 = Test.ParseMatrix48("FD 0F 00 00 D3 FF FF FF 97 00 00 00 00 00 00 00 53 0F 00 00 9B 04 00 00 62 FF FF FF 66 FB FF FF 50 0F 00 00 F4 E8 FF FF DA 0B FF FF BF F8 01 00");
+            Matrix4x3 mtx2 = ParseMatrix48("FD 0F 00 00 D3 FF FF FF 97 00 00 00 00 00 00 00 53 0F 00 00 9B 04 00 00 62 FF FF FF 66 FB FF FF 50 0F 00 00 F4 E8 FF FF DA 0B FF FF BF F8 01 00");
             // concatenation result
-            Matrix4x3 currentTextureMatrix = Test.ParseMatrix48("FF EF FF FF 00 00 00 00 FE FF FF FF 00 00 00 00 86 0F 00 00 DF 03 00 00 01 00 00 00 DF 03 00 00 7A F0 FF FF 00 00 00 00 7F F4 FF FF CA D2 FF FF");
-            Matrix4x3 mult = Concat43(mtx1, mtx2);
+            Matrix4x3 currentTextureMatrix = ParseMatrix48("FF EF FF FF 00 00 00 00 FE FF FF FF 00 00 00 00 86 0F 00 00 DF 03 00 00 01 00 00 00 DF 03 00 00 7A F0 FF FF 00 00 00 00 7F F4 FF FF CA D2 FF FF");
+            Matrix4x3 mult = Matrix.Concat43(mtx1, mtx2);
 
             var trans = new Matrix4(
                 new Vector4(mtx1.Row0, 0.0f),
@@ -381,13 +347,13 @@ namespace MphRead
             {
                 if (model.Scale == 1)
                 {
-                    currentTextureMatrix = Concat43(texMatrix, _viewMatrix);
+                    currentTextureMatrix = Matrix.Concat43(texMatrix, _viewMatrix);
                 }
                 else
                 {
                     var scaleMatrix = Matrix4x3.CreateScale(model.Scale);
-                    currentTextureMatrix = Concat43(scaleMatrix, texMatrix);
-                    currentTextureMatrix = Concat43(currentTextureMatrix, _viewMatrix);
+                    currentTextureMatrix = Matrix.Concat43(scaleMatrix, texMatrix);
+                    currentTextureMatrix = Matrix.Concat43(currentTextureMatrix, _viewMatrix);
                 }
             }
             else
@@ -399,7 +365,7 @@ namespace MphRead
                 else
                 {
                     var scaleMatrix = Matrix4x3.CreateScale(model.Scale);
-                    currentTextureMatrix = Concat43(scaleMatrix, texMatrix);
+                    currentTextureMatrix = Matrix.Concat43(scaleMatrix, texMatrix);
                 }
             }
             _currentTextureMatrix = currentTextureMatrix;
@@ -415,6 +381,15 @@ namespace MphRead
                     Memory1FF8000();
                     _mem20E3EA0 = -2147483648;
                 }
+            }
+            // later, in normal texgen:
+            if (_mem20E3EA0 >= 0)
+            {
+                // node_transform * current_texture_matrix
+            }
+            else
+            {
+                // node_transform only
             }
         }
 
@@ -480,7 +455,7 @@ namespace MphRead
                             // v55 = sub_20AC5AC(v54);
                             int v55 = 1;
                             var scaleMatrix = Matrix4x3.CreateScale(v55);
-                            Matrix4x3 matrix = Concat43(scaleMatrix, player.SomeMatrix);
+                            Matrix4x3 matrix = Matrix.Concat43(scaleMatrix, player.SomeMatrix);
                             CModelDraw(player.Field1A4, matrix);
                         }
                     }

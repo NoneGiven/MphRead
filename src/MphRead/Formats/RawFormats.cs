@@ -305,13 +305,13 @@ namespace MphRead
         public readonly uint NodePosition;
         public readonly ushort MaterialCount;
         public readonly ushort NodeCount;
-        public readonly uint TextureMatrixOffset;
+        public readonly uint TextureMatrixOffset; // only set at runtime
         public readonly uint NodeAnimationOffset;
         public readonly uint TextureCoordinateAnimations;
         public readonly uint MaterialAnimations;
         public readonly uint TextureAnimations;
         public readonly ushort MeshCount;
-        public readonly ushort MatrixCount;
+        public readonly ushort TextureMatrixCount;
     }
 
     // size: 240

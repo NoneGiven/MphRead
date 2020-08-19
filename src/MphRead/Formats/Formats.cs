@@ -24,7 +24,7 @@ namespace MphRead
         public IReadOnlyList<Mesh> Meshes { get; }
         public IReadOnlyList<Material> Materials { get; }
         public IReadOnlyList<DisplayList> DisplayLists { get; }
-        public List<Matrix4> TextureMatrices { get; }
+        public IReadOnlyList<Matrix4> TextureMatrices { get; }
 
         // count and order match Dlists
         public IReadOnlyList<IReadOnlyList<RenderInstruction>> RenderInstructionLists { get; }
@@ -156,7 +156,7 @@ namespace MphRead
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
             IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
             IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
-            IReadOnlyList<Matrix44Fx> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor, bool useLightSources,
+            IReadOnlyList<Matrix4> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor, bool useLightSources,
             IReadOnlyList<uint> nodeIds, IReadOnlyList<uint> weightIds)
         {
             ThrowIfInvalidEnums(materials);
@@ -171,7 +171,7 @@ namespace MphRead
             MaterialAnimationGroups = materialGroups;
             TexcoordAnimationGroups = texcoordGroups;
             TextureAnimationGroups = textureGroups;
-            TextureMatrices = textureMatrices.Select(m => m.ToFloatMatrix()).ToList();
+            TextureMatrices = textureMatrices;
             Recolors = recolors;
             CurrentRecolor = defaultRecolor;
             float scale = Header.ScaleBase.FloatValue * (1 << (int)Header.ScaleFactor);

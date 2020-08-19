@@ -767,7 +767,7 @@ namespace MphRead
             else
             {
                 model.SpinSpeed = 0.5f;
-            } 
+            }
             models.Add(model);
             if (data.HasBase != 0)
             {
