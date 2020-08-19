@@ -344,7 +344,9 @@ namespace MphRead
 
         public void Process(double elapsedTime)
         {
+            // for Morph Ball/Dialanche, the extra transform holds model-level rotation
             ExtraTransform = Transform;
+            // for items, the extra transform holds the rotation and position for spinning and floating
             if (Rotating)
             {
                 Spin = (float)(Spin + elapsedTime * 360 * SpinSpeed) % 360;
