@@ -181,6 +181,8 @@ namespace MphRead
                 }
                 recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
             }
+            // note: in RAM, model texture matrices are 4x4, but only the leftmost 4x2 or 4x3 is set,
+            // and the rest is garbage data, and ultimately only the upper-left 3x2 is actually used
             var textureMatrices = new List<Matrix4>();
             if (name == "AlimbicCapsule")
             {

@@ -1165,8 +1165,6 @@ namespace MphRead
                     // however, we only use it for the one hard-coded matrix in AlimbicCapsule
                     if (model.TextureMatrices.Count > 0)
                     {
-                        // note: in RAM, model texture matrices are 4x4, but only the leftmost 4x2 or 4x3 is set,
-                        // and the rest is garbage data, and ultimately only the upper-left 3x2 is actually used
                         materialMatrix = model.TextureMatrices[material.MatrixId];
                     }
                     else
