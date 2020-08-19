@@ -752,8 +752,7 @@ namespace MphRead
             model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
             if (data.ModelId >= 8)
             {
-                // todo: confirm Octolith spin speed
-                model.SpinSpeed = 0.3f;
+                model.SpinSpeed = 0.25f;
                 // todo: this (and some other entity setup stuff) should be applied no matter how the model is loaded
                 model.UseLightOverride = true;
             }
