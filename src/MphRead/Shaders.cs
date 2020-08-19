@@ -2,10 +2,7 @@ namespace MphRead
 {
     public static class Shaders
     {
-        public static string VertexShader => _vertexShader;
-        public static string FragmentShader => _fragmentShader;
-
-        private static readonly string _vertexShader = @"
+        public static string VertexShader { get; } = @"
 #version 120
 uniform bool is_billboard;
 uniform bool use_light;
@@ -93,7 +90,7 @@ void main()
 }
 ";
 
-        private static readonly string _fragmentShader = @"
+        public static string FragmentShader { get; } = @"
 #version 120
 uniform bool use_texture;
 uniform bool fog_enable;
