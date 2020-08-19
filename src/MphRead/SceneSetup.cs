@@ -579,14 +579,7 @@ namespace MphRead
                 model.Rotating = true;
                 model.Floating = true;
                 model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
-                if (model.Name == "Artifact_Key")
-                {
-                    model.SpinSpeed = -0.35f;
-                }
-                else
-                {
-                    model.SpinSpeed = 0.35f;
-                }
+                model.SpinSpeed = 0.35f;
                 models.Add(model);
             }
             if (data.HasBase != 0)
