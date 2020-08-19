@@ -1141,9 +1141,10 @@ namespace MphRead
                         TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat);
                     break;
                 }
-                Matrix4 textureMatrix = Matrix4.Identity;
+                Matrix4 texcoordMatrix = Matrix4.Identity;
                 TexcoordAnimationGroup? group = null;
                 TexcoordAnimation? animation = null;
+                // todo: was there a reason animation couldn't be put inside the texgen condition?
                 if (model.TexcoordAnimationGroups.Count > 0 && textureId != UInt16.MaxValue)
                 {
                     // todo: this is essentially just always using the first group now
@@ -1155,23 +1156,29 @@ namespace MphRead
                 }
                 if (group != null && animation != null)
                 {
-                    textureMatrix = AnimateTexcoords(group, animation.Value);
+                    texcoordMatrix = AnimateTexcoords(group, animation.Value);
                 }
                 if (material.TexgenMode != TexgenMode.None)
                 {
+                    Matrix4 materialMatrix;
+                    // in-game, this is a list of precomputed matrices that we compute on the fly in the next block;
+                    // however, we only use it for the one hard-coded matrix in AlimbicCapsule
+                    if (model.TextureMatrices.Count > 0)
+                    {
+                        // note: in RAM, model texture matrices are 4x4, but only the leftmost 4x2 or 4x3 is set,
+                        // and the rest is garbage data, and ultimately only the upper-left 3x2 is actually used
+                        materialMatrix = model.TextureMatrices[material.MatrixId];
+                    }
+                    else
+                    {
+                        materialMatrix = Matrix4.CreateTranslation(material.ScaleS * material.TranslateS,
+                            material.ScaleT * material.TranslateT, 0.0f);
+                        materialMatrix = Matrix4.CreateScale(material.ScaleS, material.ScaleT, 1.0f) * materialMatrix;
+                        materialMatrix = Matrix4.CreateRotationZ(material.RotateZ) * materialMatrix;
+                    }
                     if (group == null || animation == null)
                     {
-                        if (model.TextureMatrices.Count > 0)
-                        {
-                            textureMatrix = model.TextureMatrices[material.MatrixId];
-                        }
-                        else
-                        {
-                            textureMatrix = Matrix4.CreateTranslation(material.ScaleS * material.TranslateS,
-                            material.ScaleT * material.TranslateT, 0.0f);
-                            textureMatrix = Matrix4.CreateScale(material.ScaleS, material.ScaleT, 1.0f) * textureMatrix;
-                            textureMatrix = Matrix4.CreateRotationZ(material.RotateZ) * textureMatrix;
-                        }
+                        texcoordMatrix = materialMatrix;
                     }
                     if (material.TexgenMode == TexgenMode.Normal)
                     {
@@ -1222,29 +1229,21 @@ namespace MphRead
                         // the texenv * modelTextureMatrix multiplications are between two 4x4 into a 4x4,
                         // but only reads the upper 3x3 of the first matrix and upper 3x2 of the second,
                         // and only writes the upper 3x3 of the destination
-                        // note: in RAM, model texture matrices are 4x4, but only the leftmost 4x2 or 4x3 is set,
-                        // and the rest is garbage data, and ultimately only the upper-left 3x2 is actually used
-                        // sktodo: replace with an assert once model texture matrices are loaded
-                        if (material.MatrixId < model.TextureMatrices.Count)
-                        {
-                            product = Matrix.Multiply44(product, model.TextureMatrices[material.MatrixId]);
-                        }
-                        // textureMatrix will either be the model texture matrix again or the animation result;
-                        // it can't be the material properties since that path implies an indexing error on the line above
-                        // sktodo: Dialanche seems to need another dividion by texture width
-                        product = Matrix.Multiply44(product, textureMatrix) * (1.0f / (texture.Width / 2));
-                        textureMatrix = new Matrix4(
+                        product = Matrix.Multiply44(product, materialMatrix);
+                        // sktodo: Dialanche seems to need another division by texture width
+                        product = Matrix.Multiply44(product, texcoordMatrix) * (1.0f / (texture.Width / 2));
+                        texcoordMatrix = new Matrix4(
                             product.Row0 * 16.0f,
                             product.Row1 * 16.0f,
                             product.Row2 * 16.0f,
                             product.Row3
                         );
-                        textureMatrix.Transpose();
+                        texcoordMatrix.Transpose();
                         GL.TexCoord2(0.5f, 0.5f); // this may be changed by the dlist
                     }
                 }
                 GL.Uniform1(_shaderLocations.TexgenMode, (int)material.TexgenMode);
-                GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref textureMatrix);
+                GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref texcoordMatrix);
             }
             GL.Uniform1(_shaderLocations.UseTexture, textureId != UInt16.MaxValue && _showTextures ? 1 : 0);
             // _showSelection affects the placeholder colors too

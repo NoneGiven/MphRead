@@ -191,14 +191,6 @@ namespace MphRead
                 textureMatrix.M32 = Fixed.ToFloat(-3891);
                 textureMatrices.Add(textureMatrix);
             }
-            else
-            {
-                // sktodo: confirm loading of texture matrices
-                for (int i = 0; i < header.TextureMatrixCount; i++)
-                {
-                    textureMatrices.Add(Matrix4.Identity);
-                }
-            }
             //  todo: when the counts/offsets are zero, these values should probably be skipped, even though they are always present
             int count = (int)header.UnknownAnimationCount - Sizes.Header;
             Debug.Assert(count >= sizeof(uint) && count % sizeof(uint) == 0);

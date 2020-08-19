@@ -154,7 +154,7 @@ namespace MphRead
             Matrix4x3 mtx2 = ParseMatrix48("FD 0F 00 00 D3 FF FF FF 97 00 00 00 00 00 00 00 53 0F 00 00 9B 04 00 00 62 FF FF FF 66 FB FF FF 50 0F 00 00 F4 E8 FF FF DA 0B FF FF BF F8 01 00");
             // concatenation result
             Matrix4x3 currentTextureMatrix = ParseMatrix48("FF EF FF FF 00 00 00 00 FE FF FF FF 00 00 00 00 86 0F 00 00 DF 03 00 00 01 00 00 00 DF 03 00 00 7A F0 FF FF 00 00 00 00 7F F4 FF FF CA D2 FF FF");
-            Matrix4x3 mult = Concat43(mtx1, mtx2);
+            Matrix4x3 mult = Matrix.Concat43(mtx1, mtx2);
 
             var trans = new Matrix4(
                 new Vector4(mtx1.Row0, 0.0f),
@@ -347,13 +347,13 @@ namespace MphRead
             {
                 if (model.Scale == 1)
                 {
-                    currentTextureMatrix = Concat43(texMatrix, _viewMatrix);
+                    currentTextureMatrix = Matrix.Concat43(texMatrix, _viewMatrix);
                 }
                 else
                 {
                     var scaleMatrix = Matrix4x3.CreateScale(model.Scale);
-                    currentTextureMatrix = Concat43(scaleMatrix, texMatrix);
-                    currentTextureMatrix = Concat43(currentTextureMatrix, _viewMatrix);
+                    currentTextureMatrix = Matrix.Concat43(scaleMatrix, texMatrix);
+                    currentTextureMatrix = Matrix.Concat43(currentTextureMatrix, _viewMatrix);
                 }
             }
             else
@@ -365,7 +365,7 @@ namespace MphRead
                 else
                 {
                     var scaleMatrix = Matrix4x3.CreateScale(model.Scale);
-                    currentTextureMatrix = Concat43(scaleMatrix, texMatrix);
+                    currentTextureMatrix = Matrix.Concat43(scaleMatrix, texMatrix);
                 }
             }
             _currentTextureMatrix = currentTextureMatrix;
@@ -382,6 +382,15 @@ namespace MphRead
                     _mem20E3EA0 = -2147483648;
                 }
             }
+            // later, in normal texgen:
+            if (_mem20E3EA0 >= 0)
+            {
+                // node_transform * current_texture_matrix
+            }
+            else
+            {
+                // node_transform only
+            } 
         }
 
         private static void CModelInitializeAnimationData(CModel model)
@@ -446,7 +455,7 @@ namespace MphRead
                             // v55 = sub_20AC5AC(v54);
                             int v55 = 1;
                             var scaleMatrix = Matrix4x3.CreateScale(v55);
-                            Matrix4x3 matrix = Concat43(scaleMatrix, player.SomeMatrix);
+                            Matrix4x3 matrix = Matrix.Concat43(scaleMatrix, player.SomeMatrix);
                             CModelDraw(player.Field1A4, matrix);
                         }
                     }
