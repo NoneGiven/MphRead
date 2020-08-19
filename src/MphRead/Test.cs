@@ -390,7 +390,7 @@ namespace MphRead
             else
             {
                 // node_transform only
-            } 
+            }
         }
 
         private static void CModelInitializeAnimationData(CModel model)
