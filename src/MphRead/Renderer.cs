@@ -709,6 +709,7 @@ namespace MphRead
             for (int i = 0; i < _models.Count; i++)
             {
                 Model model = _models[i];
+                // todo: FPS stuff
                 if (_frameCount != 0 &&
                         ((!_frameAdvanceOn && _frameCount % 2 == 0)
                         || (_frameAdvanceOn && _advanceOneFrame)))
@@ -720,6 +721,7 @@ namespace MphRead
                 {
                     continue;
                 }
+                int modelPolygonId = model.Type == ModelType.Room ? 0 : polygonId++;
                 for (int j = 0; j < model.Nodes.Count; j++)
                 {
                     Node node = model.Nodes[j];
@@ -734,8 +736,23 @@ namespace MphRead
                             continue;
                         }
                         Material material = model.Materials[mesh.MaterialId];
-                        var meshInfo = new MeshInfo(model, node, mesh, material,
-                            material.RenderMode == RenderMode.Translucent ? polygonId++ : 0);
+                        int meshPolygonId;
+                        if (model.Type == ModelType.Room)
+                        {
+                            if (material.RenderMode == RenderMode.Translucent)
+                            {
+                                meshPolygonId = polygonId++;
+                            }
+                            else
+                            {
+                                meshPolygonId = 0;
+                            }
+                        }
+                        else
+                        {
+                            meshPolygonId = modelPolygonId;
+                        }
+                        var meshInfo = new MeshInfo(model, node, mesh, material, meshPolygonId);
                         if (material.RenderMode != RenderMode.Decal)
                         {
                             _nonDecalMeshes.Add(meshInfo);
@@ -749,6 +766,10 @@ namespace MphRead
                             _translucentMeshes.Add(meshInfo);
                         }
                     }
+                }
+                if (model.Type == ModelType.Room)
+                {
+
                 }
             }
             UpdateUniforms();
