@@ -248,7 +248,6 @@ namespace MphRead
             GL.DeleteShader(fragmentShader);
             GL.DeleteShader(vertexShader);
 
-            _shaderLocations.IsBillboard = GL.GetUniformLocation(_shaderProgramId, "is_billboard");
             _shaderLocations.UseLight = GL.GetUniformLocation(_shaderProgramId, "use_light");
             _shaderLocations.ShowColors = GL.GetUniformLocation(_shaderProgramId, "show_colors");
             _shaderLocations.UseTexture = GL.GetUniformLocation(_shaderProgramId, "use_texture");
@@ -836,7 +835,6 @@ namespace MphRead
                 GL.Uniform1(_shaderLocations.UseFog, 0);
                 GL.Uniform1(_shaderLocations.UseTexture, 0);
                 GL.Uniform1(_shaderLocations.UseOverride, 1);
-                GL.Uniform1(_shaderLocations.IsBillboard, 0);
                 GL.Enable(EnableCap.Blend);
                 GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                 GL.Enable(EnableCap.CullFace);
@@ -980,7 +978,6 @@ namespace MphRead
             }
             _modelMatrix = nodeTransform * _modelMatrix;
             GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref _modelMatrix);
-            GL.Uniform1(_shaderLocations.IsBillboard, node.Billboard ? 1 : 0);
             RenderMesh(model, node, item.Mesh, item.Material);
         }
 

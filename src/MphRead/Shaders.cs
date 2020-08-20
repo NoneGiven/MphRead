@@ -4,7 +4,6 @@ namespace MphRead
     {
         public static string VertexShader { get; } = @"
 #version 120
-uniform bool is_billboard;
 uniform bool use_light;
 uniform bool use_texture;
 uniform bool show_colors;
@@ -160,7 +159,6 @@ void main()
 
     public class ShaderLocations
     {
-        public int IsBillboard { get; set; }
         public int UseLight { get; set; }
         public int ShowColors { get; set; }
         public int UseTexture { get; set; }
