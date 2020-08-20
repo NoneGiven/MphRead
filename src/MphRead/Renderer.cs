@@ -553,22 +553,28 @@ namespace MphRead
         }
 
         private Matrix4 _viewMatrix = Matrix4.Identity;
+        private Matrix4 _viewInvRotMatrix = Matrix4.Identity;
 
         private void TransformCamera()
         {
             // todo: only update this when the camera position changes
             _viewMatrix = Matrix4.Identity;
+            _viewInvRotMatrix = Matrix4.Identity;
             if (_cameraMode == CameraMode.Pivot)
             {
-                _viewMatrix = Matrix4.CreateTranslation(new Vector3(0, 0, _distance * -1)) * _viewMatrix;
+                _viewMatrix = Matrix4.CreateTranslation(new Vector3(0, 0, _distance * -1));
                 _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
+                _viewInvRotMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _angleY));
+                _viewInvRotMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-1 * _angleX)) * _viewInvRotMatrix;
             }
             else if (_cameraMode == CameraMode.Roam)
             {
-                _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * _viewMatrix;
+                _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX));
                 _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateTranslation(_cameraPosition) * _viewMatrix;
+                _viewInvRotMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _angleY));
+                _viewInvRotMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-1 * _angleX)) * _viewInvRotMatrix;
             }
             GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref _viewMatrix);
         }
@@ -942,6 +948,10 @@ namespace MphRead
         {
             Model model = item.Model;
             _modelMatrix = model.ExtraTransform;
+            if (item.Node.Billboard)
+            {
+                _modelMatrix = _viewInvRotMatrix * _modelMatrix.ClearRotation();
+            }
             UseRoomLights();
             if (model.UseLightOverride)
             {

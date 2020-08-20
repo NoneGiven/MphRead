@@ -503,7 +503,7 @@ namespace MphRead
             Offset = raw.Offset;
             Vector1 = raw.Vector1.ToFloatVector();
             Vector2 = raw.Vector2.ToFloatVector();
-            // todo: implement billboard = 2 (cylindrical), also "fix" spherical
+            // todo: implement billboard = 2 (cylindrical)
             Billboard = raw.Billboard == 1;
             IsRoomNode = Name.StartsWith("rm");
         }

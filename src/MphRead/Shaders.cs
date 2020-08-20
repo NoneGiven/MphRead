@@ -42,12 +42,7 @@ vec3 light_calc(vec3 light_vec, vec3 light_col, vec3 normal_vec, vec3 dif_col, v
 
 void main()
 {
-    if (is_billboard) {
-        gl_Position = proj_mtx * (view_mtx * model_mtx * vec4(0.0, 0.0, 0.0, 1.0) + vec4(gl_Vertex.xyz, 0.0));
-    }
-    else {
-        gl_Position = proj_mtx * view_mtx * model_mtx * gl_Vertex;
-    }
+    gl_Position = proj_mtx * view_mtx * model_mtx * gl_Vertex;
     vec4 vtx_color = show_colors ? gl_Color : vec4(1.0);
     vec3 normal = normalize(mat3(model_mtx) * gl_Normal);
     if (use_light) {
