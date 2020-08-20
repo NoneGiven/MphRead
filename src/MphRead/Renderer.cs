@@ -655,14 +655,6 @@ namespace MphRead
             {
                 return 1;
             }
-            if (one.Type == ModelType.JumpPad && two.Type == ModelType.JumpPadBeam)
-            {
-                return -1;
-            }
-            if (one.Type == ModelType.JumpPadBeam && two.Type == ModelType.JumpPad)
-            {
-                return 1;
-            }
             float distanceOne = Vector3.Distance(-1 * _cameraPosition, one.Position);
             float distanceTwo = Vector3.Distance(-1 * _cameraPosition, two.Position);
             if (distanceOne == distanceTwo)
@@ -709,14 +701,15 @@ namespace MphRead
             for (int i = 0; i < _models.Count; i++)
             {
                 Model model = _models[i];
-                // todo: FPS stuff
-                if (_frameCount != 0 &&
-                        ((!_frameAdvanceOn && _frameCount % 2 == 0)
-                        || (_frameAdvanceOn && _advanceOneFrame)))
+                if (!_frameAdvanceOn || _advanceOneFrame)
                 {
-                    UpdateAnimationFrames(model);
+                    // todo: FPS stuff
+                    if (_frameCount != 0 && _frameCount % 2 == 0)
+                    {
+                        UpdateAnimationFrames(model);
+                    }
+                    model.Process(elapsedTime);
                 }
-                model.Process(elapsedTime);
                 if (!model.Visible || (model.Type == ModelType.Placeholder && !_showInvisible) || (model.ScanVisorOnly && !_scanVisor))
                 {
                     continue;
