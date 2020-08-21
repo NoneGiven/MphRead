@@ -760,10 +760,6 @@ namespace MphRead
                         }
                     }
                 }
-                if (model.Type == ModelType.Room)
-                {
-
-                }
             }
             UpdateUniforms();
             // pass 1: opaque
