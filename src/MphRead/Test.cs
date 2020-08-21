@@ -851,6 +851,20 @@ namespace MphRead
             Console.WriteLine();
         }
 
+        public static Vector3 LightCalc(Vector3 light_vec, Vector3 light_col, Vector3 normal_vec,
+            Vector3 dif_col, Vector3 amb_col, Vector3 spe_col)
+        {
+            var sight_vec = new Vector3(0.0f, 0.0f, -1.0f);
+            float dif_factor = Math.Max(0.0f, -Vector3.Dot(light_vec, normal_vec));
+            Vector3 half_vec = (light_vec + sight_vec) / 2.0f;
+            float spe_factor = Math.Max(0.0f, Vector3.Dot(-half_vec, normal_vec));
+            spe_factor *= spe_factor;
+            Vector3 spe_out = spe_col * light_col * spe_factor;
+            Vector3 dif_out = dif_col * light_col * dif_factor;
+            Vector3 amb_out = amb_col * light_col;
+            return spe_out + dif_out + amb_out;
+        }
+
         public static void TestAllLayers()
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
