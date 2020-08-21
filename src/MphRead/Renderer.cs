@@ -248,7 +248,6 @@ namespace MphRead
             GL.DeleteShader(fragmentShader);
             GL.DeleteShader(vertexShader);
 
-            _shaderLocations.IsBillboard = GL.GetUniformLocation(_shaderProgramId, "is_billboard");
             _shaderLocations.UseLight = GL.GetUniformLocation(_shaderProgramId, "use_light");
             _shaderLocations.ShowColors = GL.GetUniformLocation(_shaderProgramId, "show_colors");
             _shaderLocations.UseTexture = GL.GetUniformLocation(_shaderProgramId, "use_texture");
@@ -553,22 +552,28 @@ namespace MphRead
         }
 
         private Matrix4 _viewMatrix = Matrix4.Identity;
+        private Matrix4 _viewInvRotMatrix = Matrix4.Identity;
 
         private void TransformCamera()
         {
             // todo: only update this when the camera position changes
             _viewMatrix = Matrix4.Identity;
+            _viewInvRotMatrix = Matrix4.Identity;
             if (_cameraMode == CameraMode.Pivot)
             {
-                _viewMatrix = Matrix4.CreateTranslation(new Vector3(0, 0, _distance * -1)) * _viewMatrix;
+                _viewMatrix = Matrix4.CreateTranslation(new Vector3(0, 0, _distance * -1));
                 _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
+                _viewInvRotMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _angleY));
+                _viewInvRotMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-1 * _angleX)) * _viewInvRotMatrix;
             }
             else if (_cameraMode == CameraMode.Roam)
             {
-                _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * _viewMatrix;
+                _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX));
                 _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateTranslation(_cameraPosition) * _viewMatrix;
+                _viewInvRotMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _angleY));
+                _viewInvRotMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-1 * _angleX)) * _viewInvRotMatrix;
             }
             GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref _viewMatrix);
         }
@@ -650,14 +655,6 @@ namespace MphRead
             {
                 return 1;
             }
-            if (one.Type == ModelType.JumpPad && two.Type == ModelType.JumpPadBeam)
-            {
-                return -1;
-            }
-            if (one.Type == ModelType.JumpPadBeam && two.Type == ModelType.JumpPad)
-            {
-                return 1;
-            }
             float distanceOne = Vector3.Distance(-1 * _cameraPosition, one.Position);
             float distanceTwo = Vector3.Distance(-1 * _cameraPosition, two.Position);
             if (distanceOne == distanceTwo)
@@ -704,17 +701,20 @@ namespace MphRead
             for (int i = 0; i < _models.Count; i++)
             {
                 Model model = _models[i];
-                if (_frameCount != 0 &&
-                        ((!_frameAdvanceOn && _frameCount % 2 == 0)
-                        || (_frameAdvanceOn && _advanceOneFrame)))
+                if (!_frameAdvanceOn || _advanceOneFrame)
                 {
-                    UpdateAnimationFrames(model);
+                    // todo: FPS stuff
+                    if (_frameCount != 0 && _frameCount % 2 == 0)
+                    {
+                        UpdateAnimationFrames(model);
+                    }
+                    model.Process(elapsedTime);
                 }
-                model.Process(elapsedTime);
                 if (!model.Visible || (model.Type == ModelType.Placeholder && !_showInvisible) || (model.ScanVisorOnly && !_scanVisor))
                 {
                     continue;
                 }
+                int modelPolygonId = model.Type == ModelType.Room ? 0 : polygonId++;
                 for (int j = 0; j < model.Nodes.Count; j++)
                 {
                     Node node = model.Nodes[j];
@@ -729,8 +729,23 @@ namespace MphRead
                             continue;
                         }
                         Material material = model.Materials[mesh.MaterialId];
-                        var meshInfo = new MeshInfo(model, node, mesh, material,
-                            material.RenderMode == RenderMode.Translucent ? polygonId++ : 0);
+                        int meshPolygonId;
+                        if (model.Type == ModelType.Room)
+                        {
+                            if (material.RenderMode == RenderMode.Translucent)
+                            {
+                                meshPolygonId = polygonId++;
+                            }
+                            else
+                            {
+                                meshPolygonId = 0;
+                            }
+                        }
+                        else
+                        {
+                            meshPolygonId = modelPolygonId;
+                        }
+                        var meshInfo = new MeshInfo(model, node, mesh, material, meshPolygonId);
                         if (material.RenderMode != RenderMode.Decal)
                         {
                             _nonDecalMeshes.Add(meshInfo);
@@ -830,7 +845,6 @@ namespace MphRead
                 GL.Uniform1(_shaderLocations.UseFog, 0);
                 GL.Uniform1(_shaderLocations.UseTexture, 0);
                 GL.Uniform1(_shaderLocations.UseOverride, 1);
-                GL.Uniform1(_shaderLocations.IsBillboard, 0);
                 GL.Enable(EnableCap.Blend);
                 GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                 GL.Enable(EnableCap.CullFace);
@@ -942,6 +956,10 @@ namespace MphRead
         {
             Model model = item.Model;
             _modelMatrix = model.ExtraTransform;
+            if (item.Node.Billboard)
+            {
+                _modelMatrix = _viewInvRotMatrix * _modelMatrix.ClearRotation();
+            }
             UseRoomLights();
             if (model.UseLightOverride)
             {
@@ -970,7 +988,6 @@ namespace MphRead
             }
             _modelMatrix = nodeTransform * _modelMatrix;
             GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref _modelMatrix);
-            GL.Uniform1(_shaderLocations.IsBillboard, node.Billboard ? 1 : 0);
             RenderMesh(model, node, item.Mesh, item.Material);
         }
 
@@ -1189,9 +1206,11 @@ namespace MphRead
                         // but only reads/writes the upper-left 3x3 of all three matrices
                         // todo: billboard node transforms need to work as they do in-game
                         Matrix4 product = node.Transform.Keep3x3();
-                        // sktodo: this is not exactly equivalent to the game checking the node animation pointer
-                        // (also, special cases like Dialanche setting its pointer to 0 while attacking)
-                        // sktodo: this needs to check the CModel some_flag field
+                        // todo: this may not be exactly equivalent to the game checking the node animation pointer
+                        // note: in-game, this also uses the some_flag CModel field or constant 0,
+                        // byt none of the models with normal texgen seem to set bit 0 of that flag, so we can ignore it
+                        // --> also, Dialanche sets it pointed to 0 while attacking, but that doesn't seem to chnage its appearance
+                        // (at least from the controlling player's camera), so we're ignoring that too
                         if (!model.NodeAnimationGroups.Any(n => n.Animations.Any()))
                         {
                             var currentTextureMatrix = new Matrix4x3(
@@ -1231,7 +1250,6 @@ namespace MphRead
                         // but only reads the upper 3x3 of the first matrix and upper 3x2 of the second,
                         // and only writes the upper 3x3 of the destination
                         product = Matrix.Multiply44(product, materialMatrix);
-                        // sktodo: Dialanche seems to need another division by texture width
                         product = Matrix.Multiply44(product, texcoordMatrix) * (1.0f / (texture.Width / 2));
                         texcoordMatrix = new Matrix4(
                             product.Row0 * 16.0f,
