@@ -797,29 +797,21 @@ namespace MphRead
         }
     }
 
-    public class LightSource
+    public class DisplayVolume
     {
-        public Entity<LightSourceEntityData> Entity { get; }
         public Vector3 Position { get; }
         public CollisionVolume Volume { get; }
-        public bool Light1Enabled { get; }
-        public Vector3 Light1Color { get; }
-        public Vector3 Light1Vector { get; }
-        public bool Light2Enabled { get; }
-        public Vector3 Light2Color { get; }
-        public Vector3 Light2Vector { get; }
 
-        public LightSource(Entity<LightSourceEntityData> entity)
+        public DisplayVolume(Vector3Fx position, RawCollisionVolume volume, VolumeType volumeType)
         {
-            Entity = entity;
-            Position = entity.Data.Position.ToFloatVector();
-            Volume = new CollisionVolume(entity.Data.Volume, entity.Data.VolumeType);
-            Light1Enabled = entity.Data.Light1Enabled != 0;
-            Light1Color = entity.Data.Light1Color.AsVector3();
-            Light1Vector = entity.Data.Light1Vector.ToFloatVector();
-            Light2Enabled = entity.Data.Light2Enabled != 0;
-            Light2Color = entity.Data.Light2Color.AsVector3();
-            Light2Vector = entity.Data.Light2Vector.ToFloatVector();
+            Position = position.ToFloatVector();
+            Volume = new CollisionVolume(volume, volumeType);
+        }
+
+        public DisplayVolume(Vector3 position, CollisionVolume volume)
+        {
+            Position = position;
+            Volume = volume;
         }
 
         public bool TestPoint(Vector3 point)
@@ -855,6 +847,27 @@ namespace MphRead
                 return Vector3.Distance(Volume.SpherePosition + Position, point) <= Volume.SphereRadius;
             }
             return false;
+        }
+    }
+
+    public class LightSource : DisplayVolume
+    {
+        public bool Light1Enabled { get; }
+        public Vector3 Light1Color { get; }
+        public Vector3 Light1Vector { get; }
+        public bool Light2Enabled { get; }
+        public Vector3 Light2Color { get; }
+        public Vector3 Light2Vector { get; }
+
+        public LightSource(Entity<LightSourceEntityData> entity)
+            : base(entity.Data.Position, entity.Data.Volume, entity.Data.VolumeType)
+        {
+            Light1Enabled = entity.Data.Light1Enabled != 0;
+            Light1Color = entity.Data.Light1Color.AsVector3();
+            Light1Vector = entity.Data.Light1Vector.ToFloatVector();
+            Light2Enabled = entity.Data.Light2Enabled != 0;
+            Light2Color = entity.Data.Light2Color.AsVector3();
+            Light2Vector = entity.Data.Light2Vector.ToFloatVector();
         }
     }
 

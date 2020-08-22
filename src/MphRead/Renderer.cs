@@ -30,6 +30,16 @@ namespace MphRead
             _window = new RenderWindow(settings, native);
         }
 
+        public void AddRoom(int id, GameMode mode = GameMode.None, int playerCount = 0,
+            BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
+        {
+            RoomMetadata? meta = Metadata.GetRoomById(id);
+            if (meta != null)
+            {
+                _window.AddRoom(meta.Name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
+            }
+        }
+
         public void AddRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
             BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
         {
@@ -82,6 +92,7 @@ namespace MphRead
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
         private readonly Dictionary<int, LightSource> _lightSources = new Dictionary<int, LightSource>();
+        private readonly Dictionary<int, DisplayVolume> _unknown8s = new Dictionary<int, DisplayVolume>();
 
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
@@ -112,7 +123,7 @@ namespace MphRead
         private bool _lighting = false;
         private bool _scanVisor = false;
         private bool _showInvisible = false;
-        private int _showLightVolumes = 0;
+        private int _showVolumes = 0;
         private bool _transformRoomNodes = false; // undocumented
 
         private static readonly Color4 _clearColor = new Color4(0, 0, 0, 1);
@@ -163,6 +174,11 @@ namespace MphRead
                 if (entity.Entity is Entity<LightSourceEntityData> lightSource)
                 {
                     _lightSources.Add(entity.SceneId, new LightSource(lightSource));
+                }
+                else if (entity.Entity is Entity<Unknown8EntityData> unknown8)
+                {
+                    Unknown8EntityData data = unknown8.Data;
+                    _unknown8s.Add(entity.SceneId, new DisplayVolume(data.Position, data.Volume, data.VolumeType));
                 }
             }
             _light1Vector = roomMeta.Light1Vector;
@@ -838,7 +854,7 @@ namespace MphRead
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
-            if (_showLightVolumes > 0 && _lightSources.Count > 0)
+            if (_showVolumes > 0 && (_lightSources.Count > 0 || _unknown8s.Count > 0))
             {
                 GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
                 GL.Uniform1(_shaderLocations.UseLight, 0);
@@ -850,24 +866,43 @@ namespace MphRead
                 GL.Enable(EnableCap.CullFace);
                 // alternative if the depth buffer can't handle the above:
                 //GL.Disable(EnableCap.CullFace);
-                foreach (KeyValuePair<int, LightSource> kvp in _lightSources)
+                if (_showVolumes == 1 || _showVolumes == 2)
                 {
-                    RenderLightVolume(kvp.Value);
+                    foreach (KeyValuePair<int, LightSource> kvp in _lightSources)
+                    {
+                        RenderLightVolume(kvp.Value);
+                    }
+                }
+                else if (_showVolumes == 3)
+                {
+                    foreach (KeyValuePair<int, DisplayVolume> kvp in _unknown8s)
+                    {
+                        RenderUnknown8Volume(kvp.Value);
+                    }
                 }
                 GL.Disable(EnableCap.Blend);
             }
         }
 
+        private void RenderUnknown8Volume(DisplayVolume volume)
+        {
+            GL.CullFace(volume.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
+            var transform = Matrix4.CreateTranslation(volume.Position);
+            GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
+            var color = new Vector4(1, 1, 1, 0.5f);
+            GL.Uniform4(_shaderLocations.OverrideColor, color);
+            RenderVolume(volume.Volume);
+        }
+
         private void RenderLightVolume(LightSource lightSource)
         {
-            LightSourceEntityData data = lightSource.Entity.Data;
             GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
-            var transform = Matrix4.CreateTranslation(data.Position.ToFloatVector());
+            var transform = Matrix4.CreateTranslation(lightSource.Position);
             GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
-            ColorRgb color = _showLightVolumes == 1
-                ? data.Light1Enabled != 0 ? data.Light1Color : new ColorRgb(0, 0, 0)
-                : data.Light2Enabled != 0 ? data.Light2Color : new ColorRgb(0, 0, 0);
-            GL.Uniform4(_shaderLocations.OverrideColor, color.AsVector4(0.5f));
+            Vector3 color = _showVolumes == 1
+                ? lightSource.Light1Enabled ? lightSource.Light1Color : Vector3.Zero
+                : lightSource.Light2Enabled ? lightSource.Light2Color : Vector3.Zero;
+            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(color, 0.5f));
             RenderVolume(lightSource.Volume);
         }
 
@@ -1795,10 +1830,10 @@ namespace MphRead
             }
             else if (e.Key == Key.Z)
             {
-                _showLightVolumes++;
-                if (_showLightVolumes > 2)
+                _showVolumes++;
+                if (_showVolumes > 3)
                 {
-                    _showLightVolumes = 0;
+                    _showVolumes = 0;
                 }
                 await PrintOutput();
             }
