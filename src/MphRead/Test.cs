@@ -890,6 +890,29 @@ namespace MphRead
 
         public static void TestAllEntities()
         {
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                if (meta.Value.EntityPath != null)
+                {
+                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
+                    foreach (Entity entity in entities)
+                    {
+                        if (entity.Type == EntityType.JumpPad)
+                        {
+                            JumpPadEntityData data = ((Entity<JumpPadEntityData>)entity).Data;
+                            if (data.Active == 0)
+                            {
+                                Debugger.Break();
+                            }
+                        }
+                    }
+                }
+            }
+            Nop();
+        }
+
+        public static void TestUnknown8s()
+        {
             var types = new HashSet<uint>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
