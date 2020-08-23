@@ -473,10 +473,15 @@ namespace MphRead
             ComputeJumpPadBeamTransform(model2, data.BeamVector, model1.Transform);
             ComputeNodeMatrices(model2, index: 0);
             model2.Type = ModelType.JumpPadBeam;
+            // todo: room state
+            if (data.Active == 0)
+            {
+                model2.Visible = false;
+            }
             list.Add(model2);
             return list;
         }
-
+        
         private static IReadOnlyList<Model> LoadJumpPad(FhJumpPadEntityData data)
         {
             var list = new List<Model>();
