@@ -858,7 +858,7 @@ namespace MphRead
         public bool Active { get; }
 
         public JumpPadDisplay(Entity<JumpPadEntityData> entity)
-            : base(entity.Data.Position, entity.Data.Volume, entity.Data.VolumeType)
+            : base(entity.Data.Header.Position, entity.Data.Volume, entity.Data.VolumeType)
         {
             Vector = entity.Data.BeamVector.ToFloatVector();
             Speed = entity.Data.Speed.FloatValue;
@@ -873,7 +873,7 @@ namespace MphRead
         public uint Flags { get; }
 
         public Unknown8Display(Entity<Unknown8EntityData> entity)
-            : base(entity.Data.Position, entity.Data.Volume, entity.Data.VolumeType)
+            : base(entity.Data.Header.Position, entity.Data.Volume, entity.Data.VolumeType)
         {
             Type = entity.Data.Type;
             Flags = entity.Data.Flags;
@@ -946,7 +946,7 @@ namespace MphRead
         public Vector3 Light2Vector { get; }
 
         public LightSource(Entity<LightSourceEntityData> entity)
-            : base(entity.Data.Position, entity.Data.Volume, entity.Data.VolumeType)
+            : base(entity.Data.Header.Position, entity.Data.Volume, entity.Data.VolumeType)
         {
             Light1Enabled = entity.Data.Light1Enabled != 0;
             Light1Color = entity.Data.Light1Color.AsVector3();
