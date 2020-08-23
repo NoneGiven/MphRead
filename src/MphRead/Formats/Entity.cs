@@ -641,7 +641,6 @@ namespace MphRead
     public readonly struct Unknown8EntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly VolumeType VolumeType;
         public readonly RawCollisionVolume Volume;
         public readonly ushort Field64; // always UInt16.MaxValue
         public readonly byte Active; // boolean -- in 1P, may be controlled by room state bits
@@ -731,7 +730,6 @@ namespace MphRead
         public readonly EntityDataHeader Header;
         public readonly uint Field24;
         public readonly uint Field28;
-        public readonly VolumeType VolumeType;
         public readonly RawCollisionVolume Volume;
         public readonly Vector3Fx BeamVector;
         public readonly Fixed Speed;
@@ -941,38 +939,40 @@ namespace MphRead
         public readonly uint Field60;
     }
 
-    // size: 60
+    // size: 64
     [StructLayout(LayoutKind.Explicit)]
     public readonly struct RawCollisionVolume
     {
-        // box
         [FieldOffset(0)]
+        public readonly VolumeType Type;
+        // box
+        [FieldOffset(4)]
         public readonly Vector3Fx BoxVector1;
-        [FieldOffset(12)]
+        [FieldOffset(16)]
         public readonly Vector3Fx BoxVector2;
-        [FieldOffset(24)]
+        [FieldOffset(28)]
         public readonly Vector3Fx BoxVector3;
-        [FieldOffset(36)]
+        [FieldOffset(40)]
         public readonly Vector3Fx BoxPosition;
-        [FieldOffset(48)]
-        public readonly Fixed BoxDot1;
         [FieldOffset(52)]
-        public readonly Fixed BoxDot2;
+        public readonly Fixed BoxDot1;
         [FieldOffset(56)]
+        public readonly Fixed BoxDot2;
+        [FieldOffset(60)]
         public readonly Fixed BoxDot3;
         // cylinder
-        [FieldOffset(0)]
+        [FieldOffset(4)]
         public readonly Vector3Fx CylinderVector;
-        [FieldOffset(12)]
+        [FieldOffset(16)]
         public readonly Vector3Fx CylinderPosition;
-        [FieldOffset(24)]
-        public readonly Fixed CylinderRadius;
         [FieldOffset(28)]
+        public readonly Fixed CylinderRadius;
+        [FieldOffset(32)]
         public readonly Fixed CylinderDot;
         // sphere
-        [FieldOffset(0)]
+        [FieldOffset(4)]
         public readonly Vector3Fx SpherePosition;
-        [FieldOffset(12)]
+        [FieldOffset(16)]
         public readonly Fixed SphereRadius;
     }
 
@@ -980,7 +980,6 @@ namespace MphRead
     public readonly struct LightSourceEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly VolumeType VolumeType;
         public readonly RawCollisionVolume Volume;
         public readonly byte Light1Enabled; // boolean
         public readonly ColorRgb Light1Color; // 8-bit color values

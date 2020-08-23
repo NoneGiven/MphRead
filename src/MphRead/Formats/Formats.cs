@@ -778,9 +778,9 @@ namespace MphRead
         public readonly Vector3 SpherePosition;
         public readonly float SphereRadius;
 
-        public CollisionVolume(RawCollisionVolume raw, VolumeType type)
+        public CollisionVolume(RawCollisionVolume raw)
         {
-            Type = type;
+            Type = raw.Type;
             BoxVector1 = raw.BoxVector1.ToFloatVector();
             BoxVector2 = raw.BoxVector2.ToFloatVector();
             BoxVector3 = raw.BoxVector3.ToFloatVector();
@@ -803,10 +803,10 @@ namespace MphRead
         public CollisionVolume Volume { get; }
         public Vector3 Color { get; protected set; } = Vector3.Zero;
 
-        public DisplayVolume(Vector3Fx position, RawCollisionVolume volume, VolumeType volumeType)
+        public DisplayVolume(Vector3Fx position, RawCollisionVolume volume)
         {
             Position = position.ToFloatVector();
-            Volume = new CollisionVolume(volume, volumeType);
+            Volume = new CollisionVolume(volume);
         }
 
         public DisplayVolume(Vector3 position, CollisionVolume volume)
@@ -858,7 +858,7 @@ namespace MphRead
         public bool Active { get; }
 
         public JumpPadDisplay(Entity<JumpPadEntityData> entity)
-            : base(entity.Data.Header.Position, entity.Data.Volume, entity.Data.VolumeType)
+            : base(entity.Data.Header.Position, entity.Data.Volume)
         {
             Vector = entity.Data.BeamVector.ToFloatVector();
             Speed = entity.Data.Speed.FloatValue;
@@ -873,7 +873,7 @@ namespace MphRead
         public uint Flags { get; }
 
         public Unknown8Display(Entity<Unknown8EntityData> entity)
-            : base(entity.Data.Header.Position, entity.Data.Volume, entity.Data.VolumeType)
+            : base(entity.Data.Header.Position, entity.Data.Volume)
         {
             Type = entity.Data.Type;
             Flags = entity.Data.Flags;
@@ -946,7 +946,7 @@ namespace MphRead
         public Vector3 Light2Vector { get; }
 
         public LightSource(Entity<LightSourceEntityData> entity)
-            : base(entity.Data.Header.Position, entity.Data.Volume, entity.Data.VolumeType)
+            : base(entity.Data.Header.Position, entity.Data.Volume)
         {
             Light1Enabled = entity.Data.Light1Enabled != 0;
             Light1Color = entity.Data.Light1Color.AsVector3();
