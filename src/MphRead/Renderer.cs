@@ -2558,21 +2558,33 @@ namespace MphRead
             else if (volume.Type == VolumeType.Cylinder)
             {
                 _vertices.Clear();
-                Vector3 start = volume.CylinderPosition;
-                Vector3 end = volume.CylinderPosition + volume.CylinderVector * volume.CylinderDot;
+                Vector3 vector = volume.CylinderVector.Normalized();
                 float radius = volume.CylinderRadius;
-                Matrix3 rotation = Matrix.RotateAlign(Vector3.UnitY, volume.CylinderVector);
-                for (int i = 0; i < 16; i++)
+                Matrix3 rotation = Matrix.RotateAlign(Vector3.UnitY, vector);
+                Vector3 start;
+                Vector3 end;
+                // cylinder volumes are always axis-aligned, so we can use this hack to avoid normal issues
+                if (vector == Vector3.UnitX || vector == Vector3.UnitY || vector == Vector3.UnitZ)
                 {
-                    _vertices.Add(GetDiscVertices(radius, i) * rotation + end);
+                    start = volume.CylinderPosition;
+                    end = volume.CylinderPosition + vector * volume.CylinderDot;
                 }
+                else
+                {
+                    start = volume.CylinderPosition + vector * volume.CylinderDot;
+                    end = volume.CylinderPosition;
+                } 
                 for (int i = 0; i < 16; i++)
                 {
                     _vertices.Add(GetDiscVertices(radius, i) * rotation + start);
                 }
+                for (int i = 0; i < 16; i++)
+                {
+                    _vertices.Add(GetDiscVertices(radius, i) * rotation + end);
+                }
                 // bottom
                 GL.Begin(PrimitiveType.TriangleFan);
-                GL.Vertex3(end);
+                GL.Vertex3(start);
                 GL.Vertex3(_vertices[0]);
                 GL.Vertex3(_vertices[1]);
                 GL.Vertex3(_vertices[2]);
@@ -2593,7 +2605,7 @@ namespace MphRead
                 GL.End();
                 // top
                 GL.Begin(PrimitiveType.TriangleFan);
-                GL.Vertex3(start);
+                GL.Vertex3(end);
                 GL.Vertex3(_vertices[31]);
                 GL.Vertex3(_vertices[30]);
                 GL.Vertex3(_vertices[29]);
