@@ -700,7 +700,7 @@ namespace MphRead
         public readonly ushort Field88;
         public readonly ushort Field8A;
         public readonly uint Field8C; // always 0 or 1
-        public readonly uint Field90; // fx32? (usually 0.375, 0.25 for the type 18 in 1P Elder Passage)
+        public readonly uint Flags; // 0x200 = affects biped, 0x400 = affects alt
     }
     
     // size: 260

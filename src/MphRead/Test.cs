@@ -908,13 +908,8 @@ namespace MphRead
                             types.Add(data.Type);
                             Console.WriteLine($"{data.VolumeType} - {data.Type} ({data.Active})");
                             Console.WriteLine($"{data.Field64}, {data.Field67}, {data.Field68}, {data.Field69}, {data.Field6A}, " +
-                                $"{data.Param1}, {data.Field72}, {data.Field74}, {data.Field78}, " +
-                                $"{data.Field7A}, {data.Field7C}, {data.Field80}, {data.Field84}, {data.Field88}, {data.Field8A}, {data.Field8C}, " +
-                                $"{data.Field90}");
-                            if (data.Field90 != 1536 && data.Field90 != 1024)
-                            {
-                                Debugger.Break();
-                            }
+                                $"{data.Param1}, {data.Field72}, {data.Field74}, {data.Field78}, {data.Field7A}, {data.Field7C}, " +
+                                $"{data.Field80}, {data.Field84}, {data.Field88}, {data.Field8A}, {data.Field8C}");
                         }
                     }
                     if (entities.Any(t => t.Type == EntityType.Unknown8))
