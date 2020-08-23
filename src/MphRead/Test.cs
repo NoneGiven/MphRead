@@ -890,24 +890,40 @@ namespace MphRead
 
         public static void TestAllEntities()
         {
+            var types = new HashSet<uint>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 if (meta.Value.EntityPath != null)
                 {
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
+                    if (entities.Any(t => t.Type == EntityType.Unknown8))
+                    {
+                        Console.WriteLine(meta.Key);
+                    }
                     foreach (Entity entity in entities)
                     {
-                        if (entity.Type == EntityType.LightSource)
+                        if (entity.Type == EntityType.Unknown8)
                         {
-                            LightSourceEntityData data = ((Entity<LightSourceEntityData>)entity).Data;
-                            if (data.VolumeType == VolumeType.Cylinder)
+                            Unknown8EntityData data = ((Entity<Unknown8EntityData>)entity).Data;
+                            types.Add(data.Type);
+                            Console.WriteLine($"{data.VolumeType} - {data.Type} ({data.Active})");
+                            Console.WriteLine($"{data.Field64}, {data.Field67}, {data.Field68}, {data.Field69}, {data.Field6A}, " +
+                                $"{data.Param1}, {data.Field72}, {data.Field74}, {data.Field78}, " +
+                                $"{data.Field7A}, {data.Field7C}, {data.Field80}, {data.Field84}, {data.Field88}, {data.Field8A}, {data.Field8C}, " +
+                                $"{data.Field90}");
+                            if (data.Field90 != 1536 && data.Field90 != 1024)
                             {
-                                Console.WriteLine(data.Volume.CylinderVector.ToFloatVector());
+                                Debugger.Break();
                             }
                         }
                     }
+                    if (entities.Any(t => t.Type == EntityType.Unknown8))
+                    {
+                        Console.WriteLine();
+                    }
                 }
             }
+            Console.WriteLine(String.Join(", ", types.OrderBy(t => t)));
             Nop();
         }
 

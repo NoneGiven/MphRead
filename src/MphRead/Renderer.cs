@@ -877,7 +877,10 @@ namespace MphRead
                 {
                     foreach (KeyValuePair<int, DisplayVolume> kvp in _unknown8s)
                     {
-                        RenderUnknown8Volume(kvp.Value);
+                        if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
+                        {
+                            RenderUnknown8Volume(kvp.Value);
+                        }
                     }
                 }
                 GL.Disable(EnableCap.Blend);
@@ -2391,6 +2394,10 @@ namespace MphRead
                     Vector3Fx vector2 = entity.Data.Light2Vector;
                     type += $" ({vector1.X.FloatValue}, {vector1.Y.FloatValue}, {vector1.Z.FloatValue}) " +
                         $"({vector2.X.FloatValue}, {vector2.Y.FloatValue}, {vector2.Z.FloatValue})";
+                }
+                else if (model.Entity is Entity<Unknown8EntityData> unknown8)
+                {
+                    type += $" - Type {unknown8.Data.Type}";
                 }
             }
             await Output.Write(type, guid);

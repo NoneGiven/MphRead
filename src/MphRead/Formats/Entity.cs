@@ -682,20 +682,27 @@ namespace MphRead
         public readonly Vector3Fx Vector2;
         public readonly VolumeType VolumeType;
         public readonly RawCollisionVolume Volume;
-        public readonly uint Field64;
-        public readonly uint Field68;
-        public readonly uint Field6C;
-        public readonly uint Field70;
-        public readonly uint Field74;
-        public readonly uint Field78;
+        public readonly ushort Field64; // always UInt16.MaxValue
+        public readonly byte Active; // boolean -- in 1P, may be controlled by room state bits
+        public readonly byte Field67; // boolean
+        public readonly byte Field68; // boolean
+        public readonly byte Field69; // boolean
+        public readonly ushort Field6A; // always 0 or 1
+        public readonly uint Type;
+        public readonly ushort Param1; // seconds for escape sequence, gravity/jump assist values, etc.
+        public readonly ushort Field72; // always 0 except for type 15, where it's always UInt16.MaxValue
+        public readonly uint Field74; // always 0 except for type 15, where it's always 2
+        public readonly ushort Field78;
+        public readonly ushort Field7A; // always 0
         public readonly uint Field7C;
-        public readonly uint Field80;
-        public readonly uint Field84;
-        public readonly uint Field88;
-        public readonly uint Field8C;
-        public readonly uint Field90;
+        public readonly uint Field80; // always 0
+        public readonly uint Field84; // always 0
+        public readonly ushort Field88;
+        public readonly ushort Field8A;
+        public readonly uint Field8C; // always 0 or 1
+        public readonly uint Field90; // fx32? (usually 0.375, 0.25 for the type 18 in 1P Elder Passage)
     }
-
+    
     // size: 260
     public readonly struct FhUnknown10EntityData
     {
