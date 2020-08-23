@@ -733,11 +733,11 @@ namespace MphRead
         public readonly RawCollisionVolume Volume;
         public readonly Vector3Fx BeamVector;
         public readonly Fixed Speed;
-        public readonly short Field7C;
-        public readonly ushort Field7E;
+        public readonly ushort Field7C;
+        public readonly ushort CooldownTime;
         public readonly byte Active; // boolean
         public readonly byte Field81;
-        public readonly short Field82;
+        public readonly ushort Field82;
         public readonly uint ModelId;
         public readonly uint BeamType;
         public readonly uint Field8C;
