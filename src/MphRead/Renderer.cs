@@ -92,7 +92,7 @@ namespace MphRead
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
         private readonly Dictionary<int, LightSource> _lightSources = new Dictionary<int, LightSource>();
-        private readonly Dictionary<int, DisplayVolume> _unknown8s = new Dictionary<int, DisplayVolume>();
+        private readonly Dictionary<int, Unknown8Display> _unknown8s = new Dictionary<int, Unknown8Display>();
 
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
@@ -177,8 +177,7 @@ namespace MphRead
                 }
                 else if (entity.Entity is Entity<Unknown8EntityData> unknown8)
                 {
-                    Unknown8EntityData data = unknown8.Data;
-                    _unknown8s.Add(entity.SceneId, new DisplayVolume(data.Position, data.Volume, data.VolumeType));
+                    _unknown8s.Add(entity.SceneId, new Unknown8Display(unknown8));
                 }
             }
             _light1Vector = roomMeta.Light1Vector;
@@ -875,7 +874,7 @@ namespace MphRead
                 }
                 else if (_showVolumes == 3)
                 {
-                    foreach (KeyValuePair<int, DisplayVolume> kvp in _unknown8s)
+                    foreach (KeyValuePair<int, Unknown8Display> kvp in _unknown8s)
                     {
                         if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
                         {
@@ -887,14 +886,13 @@ namespace MphRead
             }
         }
 
-        private void RenderUnknown8Volume(DisplayVolume volume)
+        private void RenderUnknown8Volume(Unknown8Display unknown8)
         {
-            GL.CullFace(volume.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
-            var transform = Matrix4.CreateTranslation(volume.Position);
+            GL.CullFace(unknown8.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
+            var transform = Matrix4.CreateTranslation(unknown8.Position);
             GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
-            var color = new Vector4(1, 1, 1, 0.5f);
-            GL.Uniform4(_shaderLocations.OverrideColor, color);
-            RenderVolume(volume.Volume);
+            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(unknown8.Color, 0.5f));
+            RenderVolume(unknown8.Volume);
         }
 
         private void RenderLightVolume(LightSource lightSource)
