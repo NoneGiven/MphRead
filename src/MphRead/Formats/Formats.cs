@@ -801,6 +801,7 @@ namespace MphRead
     {
         public Vector3 Position { get; }
         public CollisionVolume Volume { get; }
+        public Vector3 Color { get; protected set; } = Vector3.Zero;
 
         public DisplayVolume(Vector3Fx position, RawCollisionVolume volume, VolumeType volumeType)
         {
@@ -850,11 +851,26 @@ namespace MphRead
         }
     }
 
+    public class JumpPadDisplay : DisplayVolume
+    {
+        public Vector3 Vector { get; }
+        public float Speed { get; }
+        public bool Active { get; }
+
+        public JumpPadDisplay(Entity<JumpPadEntityData> entity)
+            : base(entity.Data.Position, entity.Data.Volume, entity.Data.VolumeType)
+        {
+            Vector = entity.Data.BeamVector.ToFloatVector();
+            Speed = entity.Data.Speed.FloatValue;
+            Active = entity.Data.Active != 0;
+            Color = new Vector3(0, 1, 0);
+        }
+    }
+
     public class Unknown8Display : DisplayVolume
     {
         public uint Type { get; }
         public uint Flags { get; }
-        public Vector3 Color { get; } = Vector3.Zero;
 
         public Unknown8Display(Entity<Unknown8EntityData> entity)
             : base(entity.Data.Position, entity.Data.Volume, entity.Data.VolumeType)

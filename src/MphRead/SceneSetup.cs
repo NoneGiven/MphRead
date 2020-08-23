@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using OpenToolkit.Mathematics;
 
 namespace MphRead
@@ -358,7 +360,10 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.JumpPad)
                 {
-                    models.AddRange(LoadJumpPad(((Entity<JumpPadEntityData>)entity).Data));
+                    IEnumerable<Model> model = LoadJumpPad(((Entity<JumpPadEntityData>)entity).Data);
+                    Debug.Assert(model.Count() == 2);
+                    model.First().Entity = entity;
+                    models.AddRange(model);
                 }
                 else if (entity.Type == EntityType.FhJumpPad)
                 {

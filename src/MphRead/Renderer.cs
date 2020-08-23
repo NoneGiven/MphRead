@@ -93,6 +93,7 @@ namespace MphRead
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
         private readonly Dictionary<int, LightSource> _lightSources = new Dictionary<int, LightSource>();
         private readonly Dictionary<int, Unknown8Display> _unknown8s = new Dictionary<int, Unknown8Display>();
+        private readonly Dictionary<int, JumpPadDisplay> _jumpPads = new Dictionary<int, JumpPadDisplay>();
 
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
@@ -178,6 +179,10 @@ namespace MphRead
                 else if (entity.Entity is Entity<Unknown8EntityData> unknown8)
                 {
                     _unknown8s.Add(entity.SceneId, new Unknown8Display(unknown8));
+                }
+                else if (entity.Entity is Entity<JumpPadEntityData> jumpPad)
+                {
+                    _jumpPads.Add(entity.SceneId, new JumpPadDisplay(jumpPad));
                 }
             }
             _light1Vector = roomMeta.Light1Vector;
@@ -390,6 +395,9 @@ namespace MphRead
                 DeleteTextures(model.SceneId);
                 _models.Remove(model);
                 _modelMap.Remove(model.SceneId);
+                _lightSources.Remove(model.SceneId);
+                _unknown8s.Remove(model.SceneId);
+                _jumpPads.Remove(model.SceneId);
                 _updateLists = true;
                 await PrintOutput();
             }
@@ -853,7 +861,7 @@ namespace MphRead
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
-            if (_showVolumes > 0 && (_lightSources.Count > 0 || _unknown8s.Count > 0))
+            if (_showVolumes > 0 && (_lightSources.Count > 0 || _unknown8s.Count > 0 || _jumpPads.Count > 0))
             {
                 GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
                 GL.Uniform1(_shaderLocations.UseLight, 0);
@@ -878,7 +886,17 @@ namespace MphRead
                     {
                         if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
                         {
-                            RenderUnknown8Volume(kvp.Value);
+                            RenderVolume(kvp.Value);
+                        }
+                    }
+                }
+                else if (_showVolumes == 4)
+                {
+                    foreach (KeyValuePair<int, JumpPadDisplay> kvp in _jumpPads)
+                    {
+                        if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
+                        {
+                            RenderVolume(kvp.Value);
                         }
                     }
                 }
@@ -886,7 +904,7 @@ namespace MphRead
             }
         }
 
-        private void RenderUnknown8Volume(Unknown8Display unknown8)
+        private void RenderVolume(DisplayVolume unknown8)
         {
             GL.CullFace(unknown8.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
             var transform = Matrix4.CreateTranslation(unknown8.Position);
@@ -1832,7 +1850,7 @@ namespace MphRead
             else if (e.Key == Key.Z)
             {
                 _showVolumes++;
-                if (_showVolumes > 3)
+                if (_showVolumes > 4)
                 {
                     _showVolumes = 0;
                 }
