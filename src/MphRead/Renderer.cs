@@ -119,6 +119,7 @@ namespace MphRead
         private bool _showTextures = true;
         private bool _showColors = true;
         private bool _wireframe = false;
+        private bool _volumeEdges = false;
         private bool _faceCulling = true;
         private bool _textureFiltering = false;
         private bool _lighting = false;
@@ -863,7 +864,6 @@ namespace MphRead
             GL.Disable(EnableCap.StencilTest);
             if (_showVolumes > 0 && (_lightSources.Count > 0 || _unknown8s.Count > 0 || _jumpPads.Count > 0))
             {
-                GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
                 GL.Uniform1(_shaderLocations.UseLight, 0);
                 GL.Uniform1(_shaderLocations.UseFog, 0);
                 GL.Uniform1(_shaderLocations.UseTexture, 0);
@@ -877,7 +877,13 @@ namespace MphRead
                 {
                     foreach (KeyValuePair<int, LightSource> kvp in _lightSources)
                     {
+                        GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
                         RenderLightVolume(kvp.Value);
+                        if (_volumeEdges)
+                        {
+                            GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Line);
+                            RenderLightVolume(kvp.Value);
+                        }
                     }
                 }
                 else if (_showVolumes == 3)
@@ -886,7 +892,13 @@ namespace MphRead
                     {
                         if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
                         {
+                            GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
                             RenderVolume(kvp.Value);
+                            if (_volumeEdges)
+                            {
+                                GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Line);
+                                RenderVolume(kvp.Value);
+                            }
                         }
                     }
                 }
@@ -896,7 +908,13 @@ namespace MphRead
                     {
                         if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
                         {
+                            GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
                             RenderVolume(kvp.Value);
+                            if (_volumeEdges)
+                            {
+                                GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Line);
+                                RenderVolume(kvp.Value);
+                            }
                         }
                     }
                 }
@@ -1825,7 +1843,14 @@ namespace MphRead
             }
             else if (e.Key == Key.Q)
             {
-                _wireframe = !_wireframe;
+                if (_showVolumes > 0)
+                {
+                    _volumeEdges = !_volumeEdges;
+                }
+                else
+                {
+                    _wireframe = !_wireframe;
+                }
                 await PrintOutput();
             }
             else if (e.Key == Key.B)
