@@ -824,6 +824,7 @@ namespace MphRead
         public readonly byte Field28;
     }
 
+    // todo: rename to MorphCamera if it isn't used for anything else
     // size: 104
     public readonly struct CameraPositionEntityData
     {
@@ -831,7 +832,7 @@ namespace MphRead
         public readonly RawCollisionVolume Volume;
     }
 
-    // todo: might be interchangeable with the MPH version
+    // todo: looks interchangeable with the MPH version, but the volume struct doesn't match
     // size: 104
     public readonly struct FhCameraPositionEntityData
     {
