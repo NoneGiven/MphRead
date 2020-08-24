@@ -94,6 +94,7 @@ namespace MphRead
         private readonly Dictionary<int, LightSource> _lightSources = new Dictionary<int, LightSource>();
         private readonly Dictionary<int, Unknown8Display> _unknown8s = new Dictionary<int, Unknown8Display>();
         private readonly Dictionary<int, JumpPadDisplay> _jumpPads = new Dictionary<int, JumpPadDisplay>();
+        private readonly Dictionary<int, MorphCameraDisplay> _morphCameras = new Dictionary<int, MorphCameraDisplay>();
 
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
@@ -184,6 +185,10 @@ namespace MphRead
                 else if (entity.Entity is Entity<JumpPadEntityData> jumpPad)
                 {
                     _jumpPads.Add(entity.SceneId, new JumpPadDisplay(jumpPad));
+                }
+                else if (entity.Entity is Entity<CameraPositionEntityData> morphCamera)
+                {
+                    _morphCameras.Add(entity.SceneId, new MorphCameraDisplay(morphCamera));
                 }
             }
             _light1Vector = roomMeta.Light1Vector;
@@ -399,6 +404,7 @@ namespace MphRead
                 _lightSources.Remove(model.SceneId);
                 _unknown8s.Remove(model.SceneId);
                 _jumpPads.Remove(model.SceneId);
+                _morphCameras.Remove(model.SceneId);
                 _updateLists = true;
                 await PrintOutput();
             }
@@ -862,7 +868,7 @@ namespace MphRead
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
-            if (_showVolumes > 0 && (_lightSources.Count > 0 || _unknown8s.Count > 0 || _jumpPads.Count > 0))
+            if (_showVolumes > 0 && (_lightSources.Count > 0 || _unknown8s.Count > 0 || _jumpPads.Count > 0 || _morphCameras.Count > 0))
             {
                 GL.Uniform1(_shaderLocations.UseLight, 0);
                 GL.Uniform1(_shaderLocations.UseFog, 0);
@@ -905,6 +911,22 @@ namespace MphRead
                 else if (_showVolumes == 4)
                 {
                     foreach (KeyValuePair<int, JumpPadDisplay> kvp in _jumpPads)
+                    {
+                        if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
+                        {
+                            GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
+                            RenderVolume(kvp.Value);
+                            if (_volumeEdges)
+                            {
+                                GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Line);
+                                RenderVolume(kvp.Value);
+                            }
+                        }
+                    }
+                }
+                else if (_showVolumes == 5)
+                {
+                    foreach (KeyValuePair<int, MorphCameraDisplay> kvp in _morphCameras)
                     {
                         if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
                         {
@@ -1875,7 +1897,7 @@ namespace MphRead
             else if (e.Key == Key.Z)
             {
                 _showVolumes++;
-                if (_showVolumes > 4)
+                if (_showVolumes > 5)
                 {
                     _showVolumes = 0;
                 }

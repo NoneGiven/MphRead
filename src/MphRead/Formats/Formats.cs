@@ -851,6 +851,15 @@ namespace MphRead
         }
     }
 
+    public class MorphCameraDisplay : DisplayVolume
+    {
+        public MorphCameraDisplay(Entity<CameraPositionEntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.Volume)
+        {
+            Color = new Vector3(1, 1, 0);
+        }
+    }
+
     public class JumpPadDisplay : DisplayVolume
     {
         public Vector3 Vector { get; }

@@ -379,7 +379,9 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.CameraPosition)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<CameraPositionEntityData>)entity).Data.Header.Position));
+                    Model model = LoadEntityPlaceholder(entity.Type, ((Entity<CameraPositionEntityData>)entity).Data.Header.Position);
+                    model.Entity = entity;
+                    models.Add(model);
                 }
                 else if (entity.Type == EntityType.FhCameraPosition)
                 {
