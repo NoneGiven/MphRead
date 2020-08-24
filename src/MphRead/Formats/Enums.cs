@@ -46,6 +46,14 @@ namespace MphRead
         Sphere = 2
     }
 
+    public enum FhVolumeType : uint
+    {
+        Unknown0 = 0,
+        Box = 1,
+        Unknown2 = 2,
+        Unknown3 = 3
+    }
+
     public enum ModelType
     {
         Generic,

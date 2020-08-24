@@ -190,6 +190,10 @@ namespace MphRead
                 {
                     _morphCameras.Add(entity.SceneId, new MorphCameraDisplay(morphCamera));
                 }
+                else if (entity.Entity is Entity<FhCameraPositionEntityData> fhMorphCamera)
+                {
+                    _morphCameras.Add(entity.SceneId, new MorphCameraDisplay(fhMorphCamera));
+                }
             }
             _light1Vector = roomMeta.Light1Vector;
             _light1Color = new Vector3(

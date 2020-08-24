@@ -795,6 +795,32 @@ namespace MphRead
             SpherePosition = raw.SpherePosition.ToFloatVector();
             SphereRadius = raw.SphereRadius.FloatValue;
         }
+
+        public CollisionVolume(FhRawCollisionVolume raw)
+        {
+            // sktodo: other types
+            if (raw.Type == FhVolumeType.Box)
+            {
+                Type = VolumeType.Box;
+            }
+            else
+            {
+                throw new ProgramException("Invalid volume type.");
+            }
+            BoxVector1 = raw.BoxVector1.ToFloatVector();
+            BoxVector2 = raw.BoxVector2.ToFloatVector();
+            BoxVector3 = raw.BoxVector3.ToFloatVector();
+            BoxPosition = raw.BoxPosition.ToFloatVector();
+            BoxDot1 = raw.BoxDot1.FloatValue;
+            BoxDot2 = raw.BoxDot2.FloatValue;
+            BoxDot3 = raw.BoxDot3.FloatValue;
+            CylinderVector = raw.CylinderVector.ToFloatVector();
+            CylinderPosition = raw.CylinderPosition.ToFloatVector();
+            CylinderRadius = raw.CylinderRadius.FloatValue;
+            CylinderDot = raw.CylinderDot.FloatValue;
+            SpherePosition = raw.SpherePosition.ToFloatVector();
+            SphereRadius = raw.SphereRadius.FloatValue;
+        }
     }
 
     public abstract class DisplayVolume
@@ -804,6 +830,12 @@ namespace MphRead
         public Vector3 Color { get; protected set; } = Vector3.Zero;
 
         public DisplayVolume(Vector3Fx position, RawCollisionVolume volume)
+        {
+            Position = position.ToFloatVector();
+            Volume = new CollisionVolume(volume);
+        }
+
+        public DisplayVolume(Vector3Fx position, FhRawCollisionVolume volume)
         {
             Position = position.ToFloatVector();
             Volume = new CollisionVolume(volume);
@@ -854,6 +886,12 @@ namespace MphRead
     public class MorphCameraDisplay : DisplayVolume
     {
         public MorphCameraDisplay(Entity<CameraPositionEntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.Volume)
+        {
+            Color = new Vector3(1, 1, 0);
+        }
+
+        public MorphCameraDisplay(Entity<FhCameraPositionEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
             Color = new Vector3(1, 1, 0);

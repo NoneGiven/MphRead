@@ -837,22 +837,7 @@ namespace MphRead
     public readonly struct FhCameraPositionEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
-        public readonly uint Field58;
-        public readonly uint Field5C;
-        public readonly uint Field60;
+        public readonly FhRawCollisionVolume Volume;
     }
 
     // size: 41
@@ -956,6 +941,43 @@ namespace MphRead
         [FieldOffset(32)]
         public readonly Fixed CylinderDot;
         // sphere
+        [FieldOffset(4)]
+        public readonly Vector3Fx SpherePosition;
+        [FieldOffset(16)]
+        public readonly Fixed SphereRadius;
+    }
+
+    // size: 64
+    [StructLayout(LayoutKind.Explicit)]
+    public readonly struct FhRawCollisionVolume
+    {
+        [FieldOffset(0)]
+        public readonly FhVolumeType Type;
+        // box
+        [FieldOffset(4)]
+        public readonly Vector3Fx BoxPosition;
+        [FieldOffset(16)]
+        public readonly Vector3Fx BoxVector1;
+        [FieldOffset(28)]
+        public readonly Vector3Fx BoxVector2;
+        [FieldOffset(40)]
+        public readonly Vector3Fx BoxVector3;
+        [FieldOffset(52)]
+        public readonly Fixed BoxDot1;
+        [FieldOffset(56)]
+        public readonly Fixed BoxDot2;
+        [FieldOffset(60)]
+        public readonly Fixed BoxDot3;
+        // todo: cylinder
+        [FieldOffset(4)]
+        public readonly Vector3Fx CylinderVector;
+        [FieldOffset(16)]
+        public readonly Vector3Fx CylinderPosition;
+        [FieldOffset(28)]
+        public readonly Fixed CylinderRadius;
+        [FieldOffset(32)]
+        public readonly Fixed CylinderDot;
+        // todo: sphere
         [FieldOffset(4)]
         public readonly Vector3Fx SpherePosition;
         [FieldOffset(16)]
