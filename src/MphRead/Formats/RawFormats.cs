@@ -466,7 +466,7 @@ namespace MphRead
         public readonly uint Field40;
         public readonly ushort Field44;
         public readonly ushort Field46;
-        public readonly uint Field48;
+        public readonly Fixed Field48; // might be a Vector3Fx around this
         public readonly uint Field4C;
         public readonly uint Field50;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
