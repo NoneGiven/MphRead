@@ -1019,10 +1019,18 @@ namespace MphRead
     public readonly struct CameraSequenceEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
+        public readonly byte Id;
+        public readonly byte Field25;
+        public readonly byte Field26;
+        public readonly byte Field27;
+        public readonly byte Field28;
+        public readonly byte Field29;
+        public readonly ushort Field2A;
+        public readonly byte Field2C;
+        public readonly byte Field2D;
+        public readonly ushort Entity1;
+        public readonly ushort Entity2;
+        public readonly ushort Entity3;
         public readonly uint Field34;
         public readonly uint Field38;
     }
