@@ -945,6 +945,10 @@ namespace MphRead
                     }
                 }
                 GL.Disable(EnableCap.Blend);
+                if (!_faceCulling)
+                {
+                    GL.Disable(EnableCap.CullFace);
+                }
             }
         }
 
