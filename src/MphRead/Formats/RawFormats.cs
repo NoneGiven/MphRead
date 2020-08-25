@@ -12,6 +12,8 @@ namespace MphRead
         public static readonly int JumpPadEntityData = Marshal.SizeOf(typeof(JumpPadEntityData));
         public static readonly int ItemEntityData = Marshal.SizeOf(typeof(ItemEntityData));
         public static readonly int NodeAnimation = Marshal.SizeOf(typeof(NodeAnimation));
+        public static readonly int CameraSequenceHeader = Marshal.SizeOf(typeof(CameraSequenceHeader));
+        public static readonly int CameraSequenceFrame = Marshal.SizeOf(typeof(CameraSequenceFrame));
     }
 
     // size: 4
@@ -351,5 +353,123 @@ namespace MphRead
         public readonly uint FieldE4;
         public readonly uint FieldE8;
         public readonly uint FieldEC;
+    }
+
+    // size: 64
+    [StructLayout(LayoutKind.Explicit)]
+    public readonly struct RawCollisionVolume
+    {
+        [FieldOffset(0)]
+        public readonly VolumeType Type;
+        // box
+        [FieldOffset(4)]
+        public readonly Vector3Fx BoxVector1;
+        [FieldOffset(16)]
+        public readonly Vector3Fx BoxVector2;
+        [FieldOffset(28)]
+        public readonly Vector3Fx BoxVector3;
+        [FieldOffset(40)]
+        public readonly Vector3Fx BoxPosition;
+        [FieldOffset(52)]
+        public readonly Fixed BoxDot1;
+        [FieldOffset(56)]
+        public readonly Fixed BoxDot2;
+        [FieldOffset(60)]
+        public readonly Fixed BoxDot3;
+        // cylinder
+        [FieldOffset(4)]
+        public readonly Vector3Fx CylinderVector;
+        [FieldOffset(16)]
+        public readonly Vector3Fx CylinderPosition;
+        [FieldOffset(28)]
+        public readonly Fixed CylinderRadius;
+        [FieldOffset(32)]
+        public readonly Fixed CylinderDot;
+        // sphere
+        [FieldOffset(4)]
+        public readonly Vector3Fx SpherePosition;
+        [FieldOffset(16)]
+        public readonly Fixed SphereRadius;
+    }
+
+    // size: 64
+    [StructLayout(LayoutKind.Explicit)]
+    public readonly struct FhRawCollisionVolume
+    {
+        [FieldOffset(0)]
+        public readonly FhVolumeType Type;
+        // box
+        [FieldOffset(4)]
+        public readonly Vector3Fx BoxPosition;
+        [FieldOffset(16)]
+        public readonly Vector3Fx BoxVector1;
+        [FieldOffset(28)]
+        public readonly Vector3Fx BoxVector2;
+        [FieldOffset(40)]
+        public readonly Vector3Fx BoxVector3;
+        [FieldOffset(52)]
+        public readonly Fixed BoxDot1;
+        [FieldOffset(56)]
+        public readonly Fixed BoxDot2;
+        [FieldOffset(60)]
+        public readonly Fixed BoxDot3;
+        // todo: cylinder
+        [FieldOffset(4)]
+        public readonly Vector3Fx CylinderVector;
+        [FieldOffset(16)]
+        public readonly Vector3Fx CylinderPosition;
+        [FieldOffset(28)]
+        public readonly Fixed CylinderRadius;
+        [FieldOffset(32)]
+        public readonly Fixed CylinderDot;
+        // todo: sphere
+        [FieldOffset(4)]
+        public readonly Vector3Fx SpherePosition;
+        [FieldOffset(16)]
+        public readonly Fixed SphereRadius;
+    }
+
+    // size: 8
+    public readonly struct CameraSequenceHeader
+    {
+        public readonly ushort Count;
+        public readonly byte Flags;
+        // these fields aren't used in ReadCamSeqData, which is probably the only place this struct is read
+        public readonly byte Padding1;
+        public readonly uint Padding2;
+    }
+
+    // size: 100 (100 bytes are read from the file into a 112-byte struct)
+    public readonly struct CameraSequenceFrame
+    {
+        public readonly uint Field0;
+        public readonly uint Field4;
+        public readonly uint Field8;
+        public readonly uint FieldC;
+        public readonly uint Field10;
+        public readonly uint Field14;
+        public readonly uint Field18;
+        public readonly uint Field1C;
+        public readonly uint Field20;
+        public readonly uint Field24;
+        public readonly uint Field28;
+        public readonly uint Field2C;
+        public readonly byte Field30;
+        public readonly byte Field31;
+        public readonly byte Field32;
+        public readonly byte Field33;
+        public readonly byte Field34;
+        public readonly byte Field35;
+        public readonly ushort Field36;
+        public readonly uint Entity1; // runtime pointer
+        public readonly uint Entity2; // runtime pointer
+        public readonly uint Field40;
+        public readonly ushort Field44;
+        public readonly ushort Field46;
+        public readonly uint Field48;
+        public readonly uint Field4C;
+        public readonly uint Field50;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
+        public readonly string NodeName; // actually "NodeNameOrRef" union
     }
 }

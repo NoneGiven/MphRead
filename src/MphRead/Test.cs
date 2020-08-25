@@ -10,6 +10,20 @@ namespace MphRead
 {
     public static class Test
     {
+        public static void TestCameraSequences()
+        {
+            // todo: metadata for this
+            foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Paths.FileSystem, "cameraEditor")))
+            {
+                string name = Path.GetFileNameWithoutExtension(filePath);
+                if (name != "cameraEditBG")
+                {
+                    IReadOnlyList<CameraSequenceFrame> frames = Read.ReadCameraSequence(name);
+                    Nop();
+                }
+            }
+        }
+
         public static void TestCollision()
         {
             ushort headerSize = 0;
