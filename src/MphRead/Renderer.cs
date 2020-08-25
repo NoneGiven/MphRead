@@ -30,6 +30,16 @@ namespace MphRead
             _window = new RenderWindow(settings, native);
         }
 
+        public void AddRoom(int id, GameMode mode = GameMode.None, int playerCount = 0,
+            BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
+        {
+            RoomMetadata? meta = Metadata.GetRoomById(id);
+            if (meta != null)
+            {
+                _window.AddRoom(meta.Name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
+            }
+        }
+
         public void AddRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
             BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
         {
@@ -82,6 +92,9 @@ namespace MphRead
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
         private readonly Dictionary<int, LightSource> _lightSources = new Dictionary<int, LightSource>();
+        private readonly Dictionary<int, Unknown8Display> _unknown8s = new Dictionary<int, Unknown8Display>();
+        private readonly Dictionary<int, JumpPadDisplay> _jumpPads = new Dictionary<int, JumpPadDisplay>();
+        private readonly Dictionary<int, MorphCameraDisplay> _morphCameras = new Dictionary<int, MorphCameraDisplay>();
 
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
@@ -107,12 +120,13 @@ namespace MphRead
         private bool _showTextures = true;
         private bool _showColors = true;
         private bool _wireframe = false;
+        private bool _volumeEdges = false;
         private bool _faceCulling = true;
         private bool _textureFiltering = false;
         private bool _lighting = false;
         private bool _scanVisor = false;
         private bool _showInvisible = false;
-        private int _showLightVolumes = 0;
+        private int _showVolumes = 0;
         private bool _transformRoomNodes = false; // undocumented
 
         private static readonly Color4 _clearColor = new Color4(0, 0, 0, 1);
@@ -163,6 +177,22 @@ namespace MphRead
                 if (entity.Entity is Entity<LightSourceEntityData> lightSource)
                 {
                     _lightSources.Add(entity.SceneId, new LightSource(lightSource));
+                }
+                else if (entity.Entity is Entity<Unknown8EntityData> unknown8)
+                {
+                    _unknown8s.Add(entity.SceneId, new Unknown8Display(unknown8));
+                }
+                else if (entity.Entity is Entity<JumpPadEntityData> jumpPad)
+                {
+                    _jumpPads.Add(entity.SceneId, new JumpPadDisplay(jumpPad));
+                }
+                else if (entity.Entity is Entity<CameraPositionEntityData> morphCamera)
+                {
+                    _morphCameras.Add(entity.SceneId, new MorphCameraDisplay(morphCamera));
+                }
+                else if (entity.Entity is Entity<FhCameraPositionEntityData> fhMorphCamera)
+                {
+                    _morphCameras.Add(entity.SceneId, new MorphCameraDisplay(fhMorphCamera));
                 }
             }
             _light1Vector = roomMeta.Light1Vector;
@@ -375,6 +405,10 @@ namespace MphRead
                 DeleteTextures(model.SceneId);
                 _models.Remove(model);
                 _modelMap.Remove(model.SceneId);
+                _lightSources.Remove(model.SceneId);
+                _unknown8s.Remove(model.SceneId);
+                _jumpPads.Remove(model.SceneId);
+                _morphCameras.Remove(model.SceneId);
                 _updateLists = true;
                 await PrintOutput();
             }
@@ -838,9 +872,8 @@ namespace MphRead
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
-            if (_showLightVolumes > 0 && _lightSources.Count > 0)
+            if (_showVolumes > 0 && (_lightSources.Count > 0 || _unknown8s.Count > 0 || _jumpPads.Count > 0 || _morphCameras.Count > 0))
             {
-                GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
                 GL.Uniform1(_shaderLocations.UseLight, 0);
                 GL.Uniform1(_shaderLocations.UseFog, 0);
                 GL.Uniform1(_shaderLocations.UseTexture, 0);
@@ -850,24 +883,93 @@ namespace MphRead
                 GL.Enable(EnableCap.CullFace);
                 // alternative if the depth buffer can't handle the above:
                 //GL.Disable(EnableCap.CullFace);
-                foreach (KeyValuePair<int, LightSource> kvp in _lightSources)
+                if (_showVolumes == 1 || _showVolumes == 2)
                 {
-                    RenderLightVolume(kvp.Value);
+                    foreach (KeyValuePair<int, LightSource> kvp in _lightSources)
+                    {
+                        GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
+                        RenderLightVolume(kvp.Value);
+                        if (_volumeEdges)
+                        {
+                            GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Line);
+                            RenderLightVolume(kvp.Value);
+                        }
+                    }
+                }
+                else if (_showVolumes == 3)
+                {
+                    foreach (KeyValuePair<int, Unknown8Display> kvp in _unknown8s)
+                    {
+                        if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
+                        {
+                            GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
+                            RenderVolume(kvp.Value);
+                            if (_volumeEdges)
+                            {
+                                GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Line);
+                                RenderVolume(kvp.Value);
+                            }
+                        }
+                    }
+                }
+                else if (_showVolumes == 4)
+                {
+                    foreach (KeyValuePair<int, JumpPadDisplay> kvp in _jumpPads)
+                    {
+                        if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
+                        {
+                            GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
+                            RenderVolume(kvp.Value);
+                            if (_volumeEdges)
+                            {
+                                GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Line);
+                                RenderVolume(kvp.Value);
+                            }
+                        }
+                    }
+                }
+                else if (_showVolumes == 5)
+                {
+                    foreach (KeyValuePair<int, MorphCameraDisplay> kvp in _morphCameras)
+                    {
+                        if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
+                        {
+                            GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
+                            RenderVolume(kvp.Value);
+                            if (_volumeEdges)
+                            {
+                                GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Line);
+                                RenderVolume(kvp.Value);
+                            }
+                        }
+                    }
                 }
                 GL.Disable(EnableCap.Blend);
+                if (!_faceCulling)
+                {
+                    GL.Disable(EnableCap.CullFace);
+                }
             }
+        }
+
+        private void RenderVolume(DisplayVolume unknown8)
+        {
+            GL.CullFace(unknown8.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
+            var transform = Matrix4.CreateTranslation(unknown8.Position);
+            GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
+            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(unknown8.Color, 0.5f));
+            RenderVolume(unknown8.Volume);
         }
 
         private void RenderLightVolume(LightSource lightSource)
         {
-            LightSourceEntityData data = lightSource.Entity.Data;
             GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
-            var transform = Matrix4.CreateTranslation(data.Position.ToFloatVector());
+            var transform = Matrix4.CreateTranslation(lightSource.Position);
             GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
-            ColorRgb color = _showLightVolumes == 1
-                ? data.Light1Enabled != 0 ? data.Light1Color : new ColorRgb(0, 0, 0)
-                : data.Light2Enabled != 0 ? data.Light2Color : new ColorRgb(0, 0, 0);
-            GL.Uniform4(_shaderLocations.OverrideColor, color.AsVector4(0.5f));
+            Vector3 color = _showVolumes == 1
+                ? lightSource.Light1Enabled ? lightSource.Light1Color : Vector3.Zero
+                : lightSource.Light2Enabled ? lightSource.Light2Color : Vector3.Zero;
+            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(color, 0.5f));
             RenderVolume(lightSource.Volume);
         }
 
@@ -1771,7 +1873,14 @@ namespace MphRead
             }
             else if (e.Key == Key.Q)
             {
-                _wireframe = !_wireframe;
+                if (_showVolumes > 0)
+                {
+                    _volumeEdges = !_volumeEdges;
+                }
+                else
+                {
+                    _wireframe = !_wireframe;
+                }
                 await PrintOutput();
             }
             else if (e.Key == Key.B)
@@ -1795,10 +1904,10 @@ namespace MphRead
             }
             else if (e.Key == Key.Z)
             {
-                _showLightVolumes++;
-                if (_showLightVolumes > 2)
+                _showVolumes++;
+                if (_showVolumes > 5)
                 {
-                    _showLightVolumes = 0;
+                    _showVolumes = 0;
                 }
                 await PrintOutput();
             }
@@ -2357,6 +2466,10 @@ namespace MphRead
                     type += $" ({vector1.X.FloatValue}, {vector1.Y.FloatValue}, {vector1.Z.FloatValue}) " +
                         $"({vector2.X.FloatValue}, {vector2.Y.FloatValue}, {vector2.Z.FloatValue})";
                 }
+                else if (model.Entity is Entity<Unknown8EntityData> unknown8)
+                {
+                    type += $" - Type {unknown8.Data.Type}";
+                }
             }
             await Output.Write(type, guid);
             // todo: pickup rotation shows up, but the floating height change does not, would be nice to be consistent
@@ -2465,17 +2578,18 @@ namespace MphRead
             }
         }
 
-        private Vector3 GetDiscVertices(Vector3 center, float radius, int index)
+        private Vector3 GetDiscVertices(float radius, int index)
         {
             return new Vector3(
-                center.X + radius * MathF.Cos(2f * MathF.PI * index / 16f),
-                center.Y,
-                center.Z + radius * MathF.Sin(2f * MathF.PI * index / 16f)
+                radius * MathF.Cos(2f * MathF.PI * index / 16f),
+                0.0f,
+                radius * MathF.Sin(2f * MathF.PI * index / 16f)
             );
         }
 
-        private readonly List<Vector3> _sphereVertices = new List<Vector3>();
+        private readonly List<Vector3> _vertices = new List<Vector3>();
 
+        // matrix transform accounts for the entity position
         private void RenderVolume(CollisionVolume volume)
         {
             if (volume.Type == VolumeType.Box)
@@ -2521,124 +2635,114 @@ namespace MphRead
             }
             else if (volume.Type == VolumeType.Cylinder)
             {
-                Vector3 center = volume.CylinderPosition;
+                _vertices.Clear();
+                Vector3 vector = volume.CylinderVector.Normalized();
                 float radius = volume.CylinderRadius;
-                Vector3 height = volume.CylinderPosition + volume.CylinderVector * volume.CylinderDot;
-                Vector3 pointB1 = GetDiscVertices(center, radius, 0);
-                Vector3 pointB2 = GetDiscVertices(center, radius, 1);
-                Vector3 pointB3 = GetDiscVertices(center, radius, 2);
-                Vector3 pointB4 = GetDiscVertices(center, radius, 3);
-                Vector3 pointB5 = GetDiscVertices(center, radius, 4);
-                Vector3 pointB6 = GetDiscVertices(center, radius, 5);
-                Vector3 pointB7 = GetDiscVertices(center, radius, 6);
-                Vector3 pointB8 = GetDiscVertices(center, radius, 7);
-                Vector3 pointB9 = GetDiscVertices(center, radius, 8);
-                Vector3 pointB10 = GetDiscVertices(center, radius, 9);
-                Vector3 pointB11 = GetDiscVertices(center, radius, 10);
-                Vector3 pointB12 = GetDiscVertices(center, radius, 11);
-                Vector3 pointB13 = GetDiscVertices(center, radius, 12);
-                Vector3 pointB14 = GetDiscVertices(center, radius, 13);
-                Vector3 pointB15 = GetDiscVertices(center, radius, 14);
-                Vector3 pointB16 = GetDiscVertices(center, radius, 15);
-                Vector3 pointT1 = pointB1 + height;
-                Vector3 pointT2 = pointB2 + height;
-                Vector3 pointT3 = pointB3 + height;
-                Vector3 pointT4 = pointB4 + height;
-                Vector3 pointT5 = pointB5 + height;
-                Vector3 pointT6 = pointB6 + height;
-                Vector3 pointT7 = pointB7 + height;
-                Vector3 pointT8 = pointB8 + height;
-                Vector3 pointT9 = pointB9 + height;
-                Vector3 pointT10 = pointB10 + height;
-                Vector3 pointT11 = pointB11 + height;
-                Vector3 pointT12 = pointB12 + height;
-                Vector3 pointT13 = pointB13 + height;
-                Vector3 pointT14 = pointB14 + height;
-                Vector3 pointT15 = pointB15 + height;
-                Vector3 pointT16 = pointB16 + height;
+                Matrix3 rotation = Matrix.RotateAlign(Vector3.UnitY, vector);
+                Vector3 start;
+                Vector3 end;
+                // cylinder volumes are always axis-aligned, so we can use this hack to avoid normal issues
+                if (vector == Vector3.UnitX || vector == Vector3.UnitY || vector == Vector3.UnitZ)
+                {
+                    start = volume.CylinderPosition;
+                    end = volume.CylinderPosition + vector * volume.CylinderDot;
+                }
+                else
+                {
+                    start = volume.CylinderPosition + vector * volume.CylinderDot;
+                    end = volume.CylinderPosition;
+                }
+                for (int i = 0; i < 16; i++)
+                {
+                    _vertices.Add(GetDiscVertices(radius, i) * rotation + start);
+                }
+                for (int i = 0; i < 16; i++)
+                {
+                    _vertices.Add(GetDiscVertices(radius, i) * rotation + end);
+                }
                 // bottom
                 GL.Begin(PrimitiveType.TriangleFan);
-                GL.Vertex3(center);
-                GL.Vertex3(pointB1);
-                GL.Vertex3(pointB2);
-                GL.Vertex3(pointB3);
-                GL.Vertex3(pointB4);
-                GL.Vertex3(pointB5);
-                GL.Vertex3(pointB6);
-                GL.Vertex3(pointB7);
-                GL.Vertex3(pointB8);
-                GL.Vertex3(pointB9);
-                GL.Vertex3(pointB10);
-                GL.Vertex3(pointB11);
-                GL.Vertex3(pointB12);
-                GL.Vertex3(pointB13);
-                GL.Vertex3(pointB14);
-                GL.Vertex3(pointB15);
-                GL.Vertex3(pointB16);
-                GL.Vertex3(pointB1);
+                GL.Vertex3(start);
+                GL.Vertex3(_vertices[0]);
+                GL.Vertex3(_vertices[1]);
+                GL.Vertex3(_vertices[2]);
+                GL.Vertex3(_vertices[3]);
+                GL.Vertex3(_vertices[4]);
+                GL.Vertex3(_vertices[5]);
+                GL.Vertex3(_vertices[6]);
+                GL.Vertex3(_vertices[7]);
+                GL.Vertex3(_vertices[8]);
+                GL.Vertex3(_vertices[9]);
+                GL.Vertex3(_vertices[10]);
+                GL.Vertex3(_vertices[11]);
+                GL.Vertex3(_vertices[12]);
+                GL.Vertex3(_vertices[13]);
+                GL.Vertex3(_vertices[14]);
+                GL.Vertex3(_vertices[15]);
+                GL.Vertex3(_vertices[0]);
                 GL.End();
                 // top
                 GL.Begin(PrimitiveType.TriangleFan);
-                GL.Vertex3(center + height);
-                GL.Vertex3(pointT16);
-                GL.Vertex3(pointT15);
-                GL.Vertex3(pointT14);
-                GL.Vertex3(pointT13);
-                GL.Vertex3(pointT12);
-                GL.Vertex3(pointT11);
-                GL.Vertex3(pointT10);
-                GL.Vertex3(pointT9);
-                GL.Vertex3(pointT8);
-                GL.Vertex3(pointT7);
-                GL.Vertex3(pointT6);
-                GL.Vertex3(pointT5);
-                GL.Vertex3(pointT4);
-                GL.Vertex3(pointT3);
-                GL.Vertex3(pointT2);
-                GL.Vertex3(pointT1);
-                GL.Vertex3(pointT16);
+                GL.Vertex3(end);
+                GL.Vertex3(_vertices[31]);
+                GL.Vertex3(_vertices[30]);
+                GL.Vertex3(_vertices[29]);
+                GL.Vertex3(_vertices[28]);
+                GL.Vertex3(_vertices[27]);
+                GL.Vertex3(_vertices[26]);
+                GL.Vertex3(_vertices[25]);
+                GL.Vertex3(_vertices[24]);
+                GL.Vertex3(_vertices[23]);
+                GL.Vertex3(_vertices[22]);
+                GL.Vertex3(_vertices[21]);
+                GL.Vertex3(_vertices[20]);
+                GL.Vertex3(_vertices[19]);
+                GL.Vertex3(_vertices[18]);
+                GL.Vertex3(_vertices[17]);
+                GL.Vertex3(_vertices[16]);
+                GL.Vertex3(_vertices[31]);
                 GL.End();
                 // sides
                 GL.Begin(PrimitiveType.TriangleStrip);
-                GL.Vertex3(pointB1);
-                GL.Vertex3(pointT1);
-                GL.Vertex3(pointB2);
-                GL.Vertex3(pointT2);
-                GL.Vertex3(pointB3);
-                GL.Vertex3(pointT3);
-                GL.Vertex3(pointB4);
-                GL.Vertex3(pointT4);
-                GL.Vertex3(pointB5);
-                GL.Vertex3(pointT5);
-                GL.Vertex3(pointB6);
-                GL.Vertex3(pointT6);
-                GL.Vertex3(pointB7);
-                GL.Vertex3(pointT7);
-                GL.Vertex3(pointB8);
-                GL.Vertex3(pointT8);
-                GL.Vertex3(pointB9);
-                GL.Vertex3(pointT9);
-                GL.Vertex3(pointB10);
-                GL.Vertex3(pointT10);
-                GL.Vertex3(pointB11);
-                GL.Vertex3(pointT11);
-                GL.Vertex3(pointB12);
-                GL.Vertex3(pointT12);
-                GL.Vertex3(pointB13);
-                GL.Vertex3(pointT13);
-                GL.Vertex3(pointB14);
-                GL.Vertex3(pointT14);
-                GL.Vertex3(pointB15);
-                GL.Vertex3(pointT15);
-                GL.Vertex3(pointB16);
-                GL.Vertex3(pointT16);
-                GL.Vertex3(pointB1);
-                GL.Vertex3(pointT1);
+                GL.Vertex3(_vertices[0]);
+                GL.Vertex3(_vertices[16]);
+                GL.Vertex3(_vertices[1]);
+                GL.Vertex3(_vertices[17]);
+                GL.Vertex3(_vertices[2]);
+                GL.Vertex3(_vertices[18]);
+                GL.Vertex3(_vertices[3]);
+                GL.Vertex3(_vertices[19]);
+                GL.Vertex3(_vertices[4]);
+                GL.Vertex3(_vertices[20]);
+                GL.Vertex3(_vertices[5]);
+                GL.Vertex3(_vertices[21]);
+                GL.Vertex3(_vertices[6]);
+                GL.Vertex3(_vertices[22]);
+                GL.Vertex3(_vertices[7]);
+                GL.Vertex3(_vertices[23]);
+                GL.Vertex3(_vertices[8]);
+                GL.Vertex3(_vertices[24]);
+                GL.Vertex3(_vertices[9]);
+                GL.Vertex3(_vertices[25]);
+                GL.Vertex3(_vertices[10]);
+                GL.Vertex3(_vertices[26]);
+                GL.Vertex3(_vertices[11]);
+                GL.Vertex3(_vertices[27]);
+                GL.Vertex3(_vertices[12]);
+                GL.Vertex3(_vertices[28]);
+                GL.Vertex3(_vertices[13]);
+                GL.Vertex3(_vertices[29]);
+                GL.Vertex3(_vertices[14]);
+                GL.Vertex3(_vertices[30]);
+                GL.Vertex3(_vertices[15]);
+                GL.Vertex3(_vertices[31]);
+                GL.Vertex3(_vertices[0]);
+                GL.Vertex3(_vertices[16]);
                 GL.End();
             }
             else if (volume.Type == VolumeType.Sphere)
             {
-                _sphereVertices.Clear();
+                _vertices.Clear();
                 int stackCount = 16;
                 int sectorCount = 24;
                 float radius = volume.SphereRadius;
@@ -2655,7 +2759,7 @@ namespace MphRead
                         sectorAngle = j * sectorStep;
                         x = xy * MathF.Cos(sectorAngle);
                         y = xy * MathF.Sin(sectorAngle);
-                        _sphereVertices.Add(new Vector3(x, z, y));
+                        _vertices.Add(new Vector3(x, z, y));
                     }
                 }
                 GL.Begin(PrimitiveType.Triangles);
@@ -2668,15 +2772,15 @@ namespace MphRead
                     {
                         if (i != 0)
                         {
-                            GL.Vertex3(_sphereVertices[k1 + 1] + volume.SpherePosition);
-                            GL.Vertex3(_sphereVertices[k2] + volume.SpherePosition);
-                            GL.Vertex3(_sphereVertices[k1] + volume.SpherePosition);
+                            GL.Vertex3(_vertices[k1 + 1] + volume.SpherePosition);
+                            GL.Vertex3(_vertices[k2] + volume.SpherePosition);
+                            GL.Vertex3(_vertices[k1] + volume.SpherePosition);
                         }
                         if (i != (stackCount - 1))
                         {
-                            GL.Vertex3(_sphereVertices[k2 + 1] + volume.SpherePosition);
-                            GL.Vertex3(_sphereVertices[k2] + volume.SpherePosition);
-                            GL.Vertex3(_sphereVertices[k1 + 1] + volume.SpherePosition);
+                            GL.Vertex3(_vertices[k2 + 1] + volume.SpherePosition);
+                            GL.Vertex3(_vertices[k2] + volume.SpherePosition);
+                            GL.Vertex3(_vertices[k1 + 1] + volume.SpherePosition);
                         }
                     }
                 }

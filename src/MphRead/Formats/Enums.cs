@@ -39,11 +39,19 @@ namespace MphRead
         FhCameraPosition = 114
     }
 
-    public enum VolumeType
+    public enum VolumeType : uint
     {
         Box = 0,
         Cylinder = 1,
         Sphere = 2
+    }
+
+    public enum FhVolumeType : uint
+    {
+        Unknown0 = 0,
+        Box = 1,
+        Unknown2 = 2,
+        Unknown3 = 3
     }
 
     public enum ModelType

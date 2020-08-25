@@ -113,6 +113,24 @@ namespace MphRead
             output.M32 = first.M33 * second.M32 + first.M31 * second.M12 + first.M32 * second.M22;
             return output;
         }
+
+        public static Matrix3 RotateAlign(Vector3 from, Vector3 to)
+        {
+            var axis = Vector3.Cross(from, to);
+            float cos = Vector3.Dot(from, to);
+            float k = 1.0f / (1.0f + cos);
+            return new Matrix3(
+                (axis.X * axis.X * k) + cos,
+                (axis.Z * axis.X * k) - axis.Z,
+                (axis.Z * axis.X * k) + axis.Y,
+                (axis.X * axis.Y * k) + axis.Z,
+                (axis.Y * axis.Y * k) + cos,
+                (axis.Z * axis.Y * k) - axis.X,
+                (axis.X * axis.Z * k) - axis.Y,
+                (axis.Y * axis.Z * k) + axis.X,
+                (axis.Z * axis.Z * k) + cos
+            );
+        }
     }
 
     // size: 3

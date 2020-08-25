@@ -778,9 +778,35 @@ namespace MphRead
         public readonly Vector3 SpherePosition;
         public readonly float SphereRadius;
 
-        public CollisionVolume(RawCollisionVolume raw, VolumeType type)
+        public CollisionVolume(RawCollisionVolume raw)
         {
-            Type = type;
+            Type = raw.Type;
+            BoxVector1 = raw.BoxVector1.ToFloatVector();
+            BoxVector2 = raw.BoxVector2.ToFloatVector();
+            BoxVector3 = raw.BoxVector3.ToFloatVector();
+            BoxPosition = raw.BoxPosition.ToFloatVector();
+            BoxDot1 = raw.BoxDot1.FloatValue;
+            BoxDot2 = raw.BoxDot2.FloatValue;
+            BoxDot3 = raw.BoxDot3.FloatValue;
+            CylinderVector = raw.CylinderVector.ToFloatVector();
+            CylinderPosition = raw.CylinderPosition.ToFloatVector();
+            CylinderRadius = raw.CylinderRadius.FloatValue;
+            CylinderDot = raw.CylinderDot.FloatValue;
+            SpherePosition = raw.SpherePosition.ToFloatVector();
+            SphereRadius = raw.SphereRadius.FloatValue;
+        }
+
+        public CollisionVolume(FhRawCollisionVolume raw)
+        {
+            // sktodo: other types
+            if (raw.Type == FhVolumeType.Box)
+            {
+                Type = VolumeType.Box;
+            }
+            else
+            {
+                throw new ProgramException("Invalid volume type.");
+            }
             BoxVector1 = raw.BoxVector1.ToFloatVector();
             BoxVector2 = raw.BoxVector2.ToFloatVector();
             BoxVector3 = raw.BoxVector3.ToFloatVector();
@@ -797,29 +823,28 @@ namespace MphRead
         }
     }
 
-    public class LightSource
+    public abstract class DisplayVolume
     {
-        public Entity<LightSourceEntityData> Entity { get; }
         public Vector3 Position { get; }
         public CollisionVolume Volume { get; }
-        public bool Light1Enabled { get; }
-        public Vector3 Light1Color { get; }
-        public Vector3 Light1Vector { get; }
-        public bool Light2Enabled { get; }
-        public Vector3 Light2Color { get; }
-        public Vector3 Light2Vector { get; }
+        public Vector3 Color { get; protected set; } = Vector3.Zero;
 
-        public LightSource(Entity<LightSourceEntityData> entity)
+        public DisplayVolume(Vector3Fx position, RawCollisionVolume volume)
         {
-            Entity = entity;
-            Position = entity.Data.Position.ToFloatVector();
-            Volume = new CollisionVolume(entity.Data.Volume, entity.Data.VolumeType);
-            Light1Enabled = entity.Data.Light1Enabled != 0;
-            Light1Color = entity.Data.Light1Color.AsVector3();
-            Light1Vector = entity.Data.Light1Vector.ToFloatVector();
-            Light2Enabled = entity.Data.Light2Enabled != 0;
-            Light2Color = entity.Data.Light2Color.AsVector3();
-            Light2Vector = entity.Data.Light2Vector.ToFloatVector();
+            Position = position.ToFloatVector();
+            Volume = new CollisionVolume(volume);
+        }
+
+        public DisplayVolume(Vector3Fx position, FhRawCollisionVolume volume)
+        {
+            Position = position.ToFloatVector();
+            Volume = new CollisionVolume(volume);
+        }
+
+        public DisplayVolume(Vector3 position, CollisionVolume volume)
+        {
+            Position = position;
+            Volume = volume;
         }
 
         public bool TestPoint(Vector3 point)
@@ -855,6 +880,127 @@ namespace MphRead
                 return Vector3.Distance(Volume.SpherePosition + Position, point) <= Volume.SphereRadius;
             }
             return false;
+        }
+    }
+
+    public class MorphCameraDisplay : DisplayVolume
+    {
+        public MorphCameraDisplay(Entity<CameraPositionEntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.Volume)
+        {
+            Color = new Vector3(1, 1, 0);
+        }
+
+        public MorphCameraDisplay(Entity<FhCameraPositionEntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.Volume)
+        {
+            Color = new Vector3(1, 1, 0);
+        }
+    }
+
+    public class JumpPadDisplay : DisplayVolume
+    {
+        public Vector3 Vector { get; }
+        public float Speed { get; }
+        public bool Active { get; }
+
+        public JumpPadDisplay(Entity<JumpPadEntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.Volume)
+        {
+            Vector = entity.Data.BeamVector.ToFloatVector();
+            Speed = entity.Data.Speed.FloatValue;
+            Active = entity.Data.Active != 0;
+            Color = new Vector3(0, 1, 0);
+        }
+    }
+
+    public class Unknown8Display : DisplayVolume
+    {
+        public uint Type { get; }
+        public uint Flags { get; }
+
+        public Unknown8Display(Entity<Unknown8EntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.Volume)
+        {
+            Type = entity.Data.Type;
+            Flags = entity.Data.Flags;
+            if (Type == 0) // jump - orange
+            {
+                Color = new Vector3(1, 0.549f, 0);
+            }
+            else if (Type == 5) // maze - purple
+            {
+                Color = new Vector3(0.615f, 0, 0.909f);
+            }
+            else if (Type == 7) // damage - red
+            {
+                Color = new Vector3(1, 0, 0);
+            }
+            else if (Type == 15) // gravity - light blue
+            {
+                Color = new Vector3(0.141f, 1, 1);
+            }
+            else if (Type == 18) // camera - green
+            {
+                Color = new Vector3(0, 1, 0);
+            }
+            else if (Type == 21) // death - dark blue
+            {
+                Color = new Vector3(0, 0, 0.858f);
+            }
+            else if (Type == 23) // save - light yellow
+            {
+                Color = new Vector3(1, 1, 0.6f);
+            }
+            else if (Type == 25) // test - light orange
+            {
+                Color = new Vector3(1, 0.792f, 0.6f);
+            }
+            else if (Type == 35) // morph - yellow
+            {
+                Color = new Vector3(0.964f, 1, 0.058f);
+            }
+            else if (Type == 44) // sound - white
+            {
+                Color = new Vector3(1, 1, 1);
+            }
+            else if (Type == 46) // moat - pale blue
+            {
+                Color = new Vector3(0.596f, 0.658f, 0.964f);
+            }
+            else if (Type == 56) // crystal - pale red
+            {
+                Color = new Vector3(0.964f, 0.596f, 0.596f);
+            }
+            else if (Type == 57) // trigger - pink
+            {
+                Color = new Vector3(0.972f, 0.086f, 0.831f);
+            }
+            else if (Type == 58) // escape - pale green
+            {
+                Color = new Vector3(0.619f, 0.980f, 0.678f);
+            }
+        }
+    }
+
+    public class LightSource : DisplayVolume
+    {
+        public bool Light1Enabled { get; }
+        public Vector3 Light1Color { get; }
+        public Vector3 Light1Vector { get; }
+        public bool Light2Enabled { get; }
+        public Vector3 Light2Color { get; }
+        public Vector3 Light2Vector { get; }
+
+        public LightSource(Entity<LightSourceEntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.Volume)
+        {
+            Light1Enabled = entity.Data.Light1Enabled != 0;
+            Light1Color = entity.Data.Light1Color.AsVector3();
+            Light1Vector = entity.Data.Light1Vector.ToFloatVector();
+            Light2Enabled = entity.Data.Light2Enabled != 0;
+            Light2Color = entity.Data.Light2Color.AsVector3();
+            Light2Vector = entity.Data.Light2Vector.ToFloatVector();
         }
     }
 
