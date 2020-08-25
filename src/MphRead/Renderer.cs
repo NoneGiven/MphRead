@@ -2651,7 +2651,7 @@ namespace MphRead
                 {
                     start = volume.CylinderPosition + vector * volume.CylinderDot;
                     end = volume.CylinderPosition;
-                } 
+                }
                 for (int i = 0; i < 16; i++)
                 {
                     _vertices.Add(GetDiscVertices(radius, i) * rotation + start);

@@ -485,7 +485,7 @@ namespace MphRead
             list.Add(model2);
             return list;
         }
-        
+
         private static IReadOnlyList<Model> LoadJumpPad(FhJumpPadEntityData data)
         {
             var list = new List<Model>();

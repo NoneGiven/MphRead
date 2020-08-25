@@ -662,7 +662,7 @@ namespace MphRead
         public readonly uint Field8C; // always 0 or 1
         public readonly uint Flags; // 0x200 = affects biped, 0x400 = affects alt
     }
-    
+
     // size: 260
     public readonly struct FhUnknown10EntityData
     {
