@@ -798,7 +798,7 @@ namespace MphRead
 
         public CollisionVolume(FhRawCollisionVolume raw)
         {
-            // sktodo: other types
+            // todo: confirm FH collision union for cylinder and sphere
             if (raw.Type == FhVolumeType.Box)
             {
                 Type = VolumeType.Box;
@@ -827,7 +827,8 @@ namespace MphRead
     {
         public Vector3 Position { get; }
         public CollisionVolume Volume { get; }
-        public Vector3 Color { get; protected set; } = Vector3.Zero;
+        public Vector3 Color1 { get; protected set; } = Vector3.Zero;
+        public Vector3 Color2 { get; protected set; } = Vector3.Zero;
 
         public DisplayVolume(Vector3Fx position, RawCollisionVolume volume)
         {
@@ -846,6 +847,8 @@ namespace MphRead
             Position = position;
             Volume = volume;
         }
+
+        public abstract Vector3? GetColor(int index);
 
         public bool TestPoint(Vector3 point)
         {
@@ -888,13 +891,22 @@ namespace MphRead
         public MorphCameraDisplay(Entity<CameraPositionEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
-            Color = new Vector3(1, 1, 0);
+            Color1 = new Vector3(1, 1, 0);
         }
 
         public MorphCameraDisplay(Entity<FhCameraPositionEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
-            Color = new Vector3(1, 1, 0);
+            Color1 = new Vector3(1, 1, 0);
+        }
+
+        public override Vector3? GetColor(int index)
+        {
+            if (index == 7)
+            {
+                return Color1;
+            }
+            return null;
         }
     }
 
@@ -910,20 +922,39 @@ namespace MphRead
             Vector = entity.Data.BeamVector.ToFloatVector();
             Speed = entity.Data.Speed.FloatValue;
             Active = entity.Data.Active != 0;
-            Color = new Vector3(0, 1, 0);
+            Color1 = new Vector3(0, 1, 0);
+        }
+
+        public override Vector3? GetColor(int index)
+        {
+            if (index == 6)
+            {
+                return Color1;
+            }
+            return null;
         }
     }
 
+    // todo: some subtypes might not use their volume? if so, don't render them (confirm that all unk8s do, also)
     public class Unknown7Display : DisplayVolume
     {
         public Unknown7Display(Entity<Unknown7EntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
-            // todo: different colors for different types
-            Color = new Vector3(1, 0, 0);
+            // sktodo: colors for parent and child event
+            Color1 = new Vector3(1, 0, 0);
+        }
+
+        public override Vector3? GetColor(int index)
+        {
+            if (index == 3)
+            {
+                return Color1;
+            }
+            return null;
         }
     }
-    
+
     public class Unknown8Display : DisplayVolume
     {
         public uint EntryEventId { get; }
@@ -936,83 +967,115 @@ namespace MphRead
             EntryEventId = entity.Data.InsideEventId;
             ExitEventId = entity.Data.OutsideEventId;
             Flags = entity.Data.Flags;
-            if (EntryEventId == 0) // jump - orange
+            Color1 = SetColor(EntryEventId);
+            Color2 = SetColor(ExitEventId);
+        }
+
+        public override Vector3? GetColor(int index)
+        {
+            if (index == 4)
             {
-                Color = new Vector3(1, 0.549f, 0);
+                return Color1;
             }
-            else if (EntryEventId == 5) // maze - purple
+            if (index == 5)
             {
-                Color = new Vector3(0.615f, 0, 0.909f);
+                return Color2;
             }
-            else if (EntryEventId == 7) // damage - red
+            return null;
+        }
+
+        private Vector3 SetColor(uint eventId)
+        {
+            if (eventId == 0) // None - black
             {
-                Color = new Vector3(1, 0, 0);
+                return new Vector3(0, 0, 0);
             }
-            else if (EntryEventId == 15) // gravity - light blue
+            if (eventId == 5) // SetActive - purple
             {
-                Color = new Vector3(0.141f, 1, 1);
+                return new Vector3(0.615f, 0, 0.909f);
             }
-            else if (EntryEventId == 18) // camera - green
+            if (eventId == 7) // Damage - red
             {
-                Color = new Vector3(0, 1, 0);
+                return new Vector3(1, 0, 0);
             }
-            else if (EntryEventId == 21) // death - dark blue
+            if (eventId == 15) // Gravity - light blue
             {
-                Color = new Vector3(0, 0, 0.858f);
+                return new Vector3(0.141f, 1, 1);
             }
-            else if (EntryEventId == 23) // save - light yellow
+            if (eventId == 18) // Activate - green
             {
-                Color = new Vector3(1, 1, 0.6f);
+                return new Vector3(0, 1, 0);
             }
-            else if (EntryEventId == 25) // test - light orange
+            if (eventId == 21) // Death - dark blue
             {
-                Color = new Vector3(1, 0.792f, 0.6f);
+                return new Vector3(0, 0, 0.858f);
             }
-            else if (EntryEventId == 35) // morph - yellow
+            if (eventId == 23) // save - light yellow
             {
-                Color = new Vector3(0.964f, 1, 0.058f);
+                return new Vector3(1, 1, 0.6f);
             }
-            else if (EntryEventId == 44) // sound - white
+            if (eventId == 25) // test - light orange
             {
-                Color = new Vector3(1, 1, 1);
+                return new Vector3(1, 0.792f, 0.6f);
             }
-            else if (EntryEventId == 46) // moat - pale blue
+            if (eventId == 35) // morph - yellow
             {
-                Color = new Vector3(0.596f, 0.658f, 0.964f);
+                return new Vector3(0.964f, 1, 0.058f);
             }
-            else if (EntryEventId == 56) // crystal - pale red
+            if (eventId == 44) // sound - gray
             {
-                Color = new Vector3(0.964f, 0.596f, 0.596f);
+                return new Vector3(0.5f, 0.5f, 0.5f);
             }
-            else if (EntryEventId == 57) // trigger - pink
+            if (eventId == 46) // moat - pale blue
             {
-                Color = new Vector3(0.972f, 0.086f, 0.831f);
+                return new Vector3(0.596f, 0.658f, 0.964f);
             }
-            else if (EntryEventId == 58) // escape - pale green
+            if (eventId == 56) // crystal - pale red
             {
-                Color = new Vector3(0.619f, 0.980f, 0.678f);
+                return new Vector3(0.964f, 0.596f, 0.596f);
             }
+            if (eventId == 57) // trigger - pink
+            {
+                return new Vector3(0.972f, 0.086f, 0.831f);
+            }
+            if (eventId == 58) // Escape - pale green
+            {
+                return new Vector3(0.619f, 0.980f, 0.678f);
+            }
+            // unknown - white
+            return new Vector3(1, 1, 1);
         }
     }
 
     public class LightSource : DisplayVolume
     {
         public bool Light1Enabled { get; }
-        public Vector3 Light1Color { get; }
         public Vector3 Light1Vector { get; }
         public bool Light2Enabled { get; }
-        public Vector3 Light2Color { get; }
         public Vector3 Light2Vector { get; }
 
         public LightSource(Entity<LightSourceEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
             Light1Enabled = entity.Data.Light1Enabled != 0;
-            Light1Color = entity.Data.Light1Color.AsVector3();
+            Color1 = entity.Data.Light1Color.AsVector3();
             Light1Vector = entity.Data.Light1Vector.ToFloatVector();
             Light2Enabled = entity.Data.Light2Enabled != 0;
-            Light2Color = entity.Data.Light2Color.AsVector3();
+            Color2 = entity.Data.Light2Color.AsVector3();
             Light2Vector = entity.Data.Light2Vector.ToFloatVector();
+        }
+
+        public override Vector3? GetColor(int index)
+        {
+            if (index == 1)
+            {
+                return Color1;
+            }
+            if (index == 2)
+            {
+                return Color2;
+            }
+            return null;
         }
     }
 
