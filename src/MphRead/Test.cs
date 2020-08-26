@@ -937,7 +937,7 @@ namespace MphRead
                         if (entity.Type == EntityType.Unknown7)
                         {
                             Unknown7EntityData data = ((Entity<Unknown7EntityData>)entity).Data;
-                            if (data.Flags != 0 && data.Flags != 1)
+                            if (data.Padding1 != 0)
                             {
                                 Debugger.Break();
                             }

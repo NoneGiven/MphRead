@@ -1,4 +1,6 @@
 using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace MphRead
@@ -544,9 +546,10 @@ namespace MphRead
         public readonly uint Field24;
         public readonly RawCollisionVolume Volume;
         public readonly ushort Field68;
-        public readonly byte Field6A; // boolean?
-        public readonly byte Field6B; // boolean?
-        public readonly ushort Flags; // boolean?
+        public readonly byte Field6A; // boolean
+        public readonly byte Field6B; // boolean
+        public readonly byte Field6C; // boolean
+        public readonly byte Padding1;
         public readonly ushort Field6E;
         public readonly ushort Field70;
         public readonly ushort Field72;
