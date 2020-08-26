@@ -342,7 +342,9 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Unknown7)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown7EntityData>)entity).Data.Header.Position));
+                    Model model = LoadEntityPlaceholder(entity.Type, ((Entity<Unknown7EntityData>)entity).Data.Header.Position);
+                    model.Entity = entity;
+                    models.Add(model);
                 }
                 else if (entity.Type == EntityType.FhUnknown9)
                 {

@@ -914,6 +914,16 @@ namespace MphRead
         }
     }
 
+    public class Unknown7Display : DisplayVolume
+    {
+        public Unknown7Display(Entity<Unknown7EntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.Volume)
+        {
+            // todo: different colors for different types
+            Color = new Vector3(1, 0, 0);
+        }
+    }
+    
     public class Unknown8Display : DisplayVolume
     {
         public uint Type { get; }

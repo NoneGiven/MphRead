@@ -92,6 +92,7 @@ namespace MphRead
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
         private readonly Dictionary<int, LightSource> _lightSources = new Dictionary<int, LightSource>();
+        private readonly Dictionary<int, Unknown7Display> _unknown7s = new Dictionary<int, Unknown7Display>();
         private readonly Dictionary<int, Unknown8Display> _unknown8s = new Dictionary<int, Unknown8Display>();
         private readonly Dictionary<int, JumpPadDisplay> _jumpPads = new Dictionary<int, JumpPadDisplay>();
         private readonly Dictionary<int, MorphCameraDisplay> _morphCameras = new Dictionary<int, MorphCameraDisplay>();
@@ -177,6 +178,10 @@ namespace MphRead
                 if (entity.Entity is Entity<LightSourceEntityData> lightSource)
                 {
                     _lightSources.Add(entity.SceneId, new LightSource(lightSource));
+                }
+                else if (entity.Entity is Entity<Unknown7EntityData> unknown7)
+                {
+                    _unknown7s.Add(entity.SceneId, new Unknown7Display(unknown7));
                 }
                 else if (entity.Entity is Entity<Unknown8EntityData> unknown8)
                 {
@@ -406,6 +411,7 @@ namespace MphRead
                 _models.Remove(model);
                 _modelMap.Remove(model.SceneId);
                 _lightSources.Remove(model.SceneId);
+                _unknown7s.Remove(model.SceneId);
                 _unknown8s.Remove(model.SceneId);
                 _jumpPads.Remove(model.SceneId);
                 _morphCameras.Remove(model.SceneId);
@@ -872,7 +878,8 @@ namespace MphRead
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
-            if (_showVolumes > 0 && (_lightSources.Count > 0 || _unknown8s.Count > 0 || _jumpPads.Count > 0 || _morphCameras.Count > 0))
+            if (_showVolumes > 0 && (_lightSources.Count > 0 || _unknown7s.Count > 0 || _unknown8s.Count > 0
+                || _jumpPads.Count > 0 || _morphCameras.Count > 0))
             {
                 GL.Uniform1(_shaderLocations.UseLight, 0);
                 GL.Uniform1(_shaderLocations.UseFog, 0);
@@ -898,7 +905,7 @@ namespace MphRead
                 }
                 else if (_showVolumes == 3)
                 {
-                    foreach (KeyValuePair<int, Unknown8Display> kvp in _unknown8s)
+                    foreach (KeyValuePair<int, Unknown7Display> kvp in _unknown7s)
                     {
                         if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
                         {
@@ -914,7 +921,7 @@ namespace MphRead
                 }
                 else if (_showVolumes == 4)
                 {
-                    foreach (KeyValuePair<int, JumpPadDisplay> kvp in _jumpPads)
+                    foreach (KeyValuePair<int, Unknown8Display> kvp in _unknown8s)
                     {
                         if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
                         {
@@ -929,6 +936,22 @@ namespace MphRead
                     }
                 }
                 else if (_showVolumes == 5)
+                {
+                    foreach (KeyValuePair<int, JumpPadDisplay> kvp in _jumpPads)
+                    {
+                        if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
+                        {
+                            GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
+                            RenderVolume(kvp.Value);
+                            if (_volumeEdges)
+                            {
+                                GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Line);
+                                RenderVolume(kvp.Value);
+                            }
+                        }
+                    }
+                }
+                else if (_showVolumes == 6)
                 {
                     foreach (KeyValuePair<int, MorphCameraDisplay> kvp in _morphCameras)
                     {
@@ -1905,7 +1928,7 @@ namespace MphRead
             else if (e.Key == Key.Z)
             {
                 _showVolumes++;
-                if (_showVolumes > 5)
+                if (_showVolumes > 6)
                 {
                     _showVolumes = 0;
                 }
