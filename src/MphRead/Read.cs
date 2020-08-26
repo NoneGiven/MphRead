@@ -605,7 +605,7 @@ namespace MphRead
             IReadOnlyList<CameraSequenceFrame> frames = DoOffsets<CameraSequenceFrame>(bytes, offset, header.Count);
             return frames;
         }
-        
+
         private static void Nop() { }
 
         private static IReadOnlyList<RenderInstruction> DoRenderInstructions(ReadOnlySpan<byte> bytes, DisplayList dlist)

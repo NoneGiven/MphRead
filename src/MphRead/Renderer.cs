@@ -918,7 +918,7 @@ namespace MphRead
                 RenderVolume(volume.Volume);
             }
         }
-        
+
         private void UpdateUniforms()
         {
             UseRoomLights();
@@ -1058,7 +1058,7 @@ namespace MphRead
                 }
             }
         }
-        
+
         private void UpdateAnimationFrames(Model model)
         {
             foreach (TexcoordAnimationGroup group in model.TexcoordAnimationGroups)

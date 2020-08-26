@@ -1069,11 +1069,11 @@ namespace MphRead
         {
             if (index == 1)
             {
-                return Color1;
+                return Light1Enabled ? Color1 : Vector3.Zero;
             }
             if (index == 2)
             {
-                return Color2;
+                return Light2Enabled ? Color2 : Vector3.Zero;
             }
             return null;
         }
