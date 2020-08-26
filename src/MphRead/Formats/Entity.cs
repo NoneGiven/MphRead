@@ -558,7 +558,7 @@ namespace MphRead
         public readonly uint Field78;
         public readonly ushort PreviousId;
         public readonly ushort Field7E;
-        public readonly uint Field80;
+        public readonly uint EventId;
         public readonly uint Field84;
         public readonly uint Field88;
         public readonly ushort NextId;
