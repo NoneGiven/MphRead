@@ -926,67 +926,69 @@ namespace MphRead
     
     public class Unknown8Display : DisplayVolume
     {
-        public uint Type { get; }
+        public uint EntryEventId { get; }
+        public uint ExitEventId { get; }
         public uint Flags { get; }
 
         public Unknown8Display(Entity<Unknown8EntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
-            Type = entity.Data.Type;
+            EntryEventId = entity.Data.InsideEventId;
+            ExitEventId = entity.Data.OutsideEventId;
             Flags = entity.Data.Flags;
-            if (Type == 0) // jump - orange
+            if (EntryEventId == 0) // jump - orange
             {
                 Color = new Vector3(1, 0.549f, 0);
             }
-            else if (Type == 5) // maze - purple
+            else if (EntryEventId == 5) // maze - purple
             {
                 Color = new Vector3(0.615f, 0, 0.909f);
             }
-            else if (Type == 7) // damage - red
+            else if (EntryEventId == 7) // damage - red
             {
                 Color = new Vector3(1, 0, 0);
             }
-            else if (Type == 15) // gravity - light blue
+            else if (EntryEventId == 15) // gravity - light blue
             {
                 Color = new Vector3(0.141f, 1, 1);
             }
-            else if (Type == 18) // camera - green
+            else if (EntryEventId == 18) // camera - green
             {
                 Color = new Vector3(0, 1, 0);
             }
-            else if (Type == 21) // death - dark blue
+            else if (EntryEventId == 21) // death - dark blue
             {
                 Color = new Vector3(0, 0, 0.858f);
             }
-            else if (Type == 23) // save - light yellow
+            else if (EntryEventId == 23) // save - light yellow
             {
                 Color = new Vector3(1, 1, 0.6f);
             }
-            else if (Type == 25) // test - light orange
+            else if (EntryEventId == 25) // test - light orange
             {
                 Color = new Vector3(1, 0.792f, 0.6f);
             }
-            else if (Type == 35) // morph - yellow
+            else if (EntryEventId == 35) // morph - yellow
             {
                 Color = new Vector3(0.964f, 1, 0.058f);
             }
-            else if (Type == 44) // sound - white
+            else if (EntryEventId == 44) // sound - white
             {
                 Color = new Vector3(1, 1, 1);
             }
-            else if (Type == 46) // moat - pale blue
+            else if (EntryEventId == 46) // moat - pale blue
             {
                 Color = new Vector3(0.596f, 0.658f, 0.964f);
             }
-            else if (Type == 56) // crystal - pale red
+            else if (EntryEventId == 56) // crystal - pale red
             {
                 Color = new Vector3(0.964f, 0.596f, 0.596f);
             }
-            else if (Type == 57) // trigger - pink
+            else if (EntryEventId == 57) // trigger - pink
             {
                 Color = new Vector3(0.972f, 0.086f, 0.831f);
             }
-            else if (Type == 58) // escape - pale green
+            else if (EntryEventId == 58) // escape - pale green
             {
                 Color = new Vector3(0.619f, 0.980f, 0.678f);
             }

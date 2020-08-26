@@ -2491,7 +2491,7 @@ namespace MphRead
                 }
                 else if (model.Entity is Entity<Unknown8EntityData> unknown8)
                 {
-                    type += $" - Type {unknown8.Data.Type}";
+                    type += $" - Entry event ID {unknown8.Data.InsideEventId}";
                 }
             }
             await Output.Write(type, guid);

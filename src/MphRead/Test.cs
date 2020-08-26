@@ -937,10 +937,6 @@ namespace MphRead
                         if (entity.Type == EntityType.Unknown7)
                         {
                             Unknown7EntityData data = ((Entity<Unknown7EntityData>)entity).Data;
-                            if (data.Padding1 != 0)
-                            {
-                                Debugger.Break();
-                            }
                         }
                     }
                 }
@@ -950,35 +946,24 @@ namespace MphRead
 
         public static void TestUnknown8s()
         {
-            var types = new HashSet<uint>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 if (meta.Value.EntityPath != null)
                 {
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
-                    if (entities.Any(t => t.Type == EntityType.Unknown8))
-                    {
-                        Console.WriteLine(meta.Key);
-                    }
                     foreach (Entity entity in entities)
                     {
                         if (entity.Type == EntityType.Unknown8)
                         {
                             Unknown8EntityData data = ((Entity<Unknown8EntityData>)entity).Data;
-                            types.Add(data.Type);
-                            Console.WriteLine($"{data.Volume.Type} - {data.Type} ({data.Active})");
-                            Console.WriteLine($"{data.Field64}, {data.Field67}, {data.Field68}, {data.Field69}, {data.Field6A}, " +
-                                $"{data.Param1}, {data.Field72}, {data.Field74}, {data.NextId}, {data.Field7A}, {data.Field7C}, " +
-                                $"{data.Field80}, {data.Field84}, {data.PreviousId}, {data.Field8A}, {data.Field8C}");
+                            if (data.Field8A > 1)
+                            {
+                                Debugger.Break();
+                            }
                         }
-                    }
-                    if (entities.Any(t => t.Type == EntityType.Unknown8))
-                    {
-                        Console.WriteLine();
                     }
                 }
             }
-            Console.WriteLine(String.Join(", ", types.OrderBy(t => t)));
             Nop();
         }
 
