@@ -555,16 +555,42 @@ namespace MphRead
         public readonly ushort Field72;
         public readonly uint Field74;
         public readonly uint Field78;
-        public readonly ushort Field7C;
+        public readonly ushort PreviousId;
         public readonly ushort Field7E;
         public readonly uint Field80;
         public readonly uint Field84;
         public readonly uint Field88;
-        public readonly ushort Field8C;
+        public readonly ushort NextId;
         public readonly ushort Field8E;
         public readonly uint Field90;
         public readonly uint Field94;
         public readonly uint Field98;
+    }
+
+    // size: 152
+    public readonly struct Unknown8EntityData
+    {
+        public readonly EntityDataHeader Header;
+        public readonly RawCollisionVolume Volume;
+        public readonly ushort Field64; // always UInt16.MaxValue
+        public readonly byte Active; // boolean -- in 1P, may be controlled by room state bits
+        public readonly byte Field67; // boolean
+        public readonly byte Field68; // boolean
+        public readonly byte Field69; // boolean
+        public readonly ushort Field6A; // always 0 or 1
+        public readonly uint Type;
+        public readonly ushort Param1; // seconds for escape sequence, gravity/jump assist values, etc.
+        public readonly ushort Field72; // always 0 except for type 15, where it's always UInt16.MaxValue
+        public readonly uint Field74; // always 0 except for type 15, where it's always 2
+        public readonly ushort PreviousId;
+        public readonly ushort Field7A; // always 0 -- padding?
+        public readonly uint Field7C;
+        public readonly uint Field80; // always 0
+        public readonly uint Field84; // always 0
+        public readonly ushort NextId;
+        public readonly ushort Field8A; // padding?
+        public readonly uint Field8C; // always 0 or 1
+        public readonly uint Flags; // 0x200 = affects biped, 0x400 = affects alt
     }
 
     // size: 272
@@ -629,32 +655,6 @@ namespace MphRead
         public readonly uint Field100;
         public readonly uint Field104;
         public readonly uint Field108;
-    }
-
-    // size: 152
-    public readonly struct Unknown8EntityData
-    {
-        public readonly EntityDataHeader Header;
-        public readonly RawCollisionVolume Volume;
-        public readonly ushort Field64; // always UInt16.MaxValue
-        public readonly byte Active; // boolean -- in 1P, may be controlled by room state bits
-        public readonly byte Field67; // boolean
-        public readonly byte Field68; // boolean
-        public readonly byte Field69; // boolean
-        public readonly ushort Field6A; // always 0 or 1
-        public readonly uint Type;
-        public readonly ushort Param1; // seconds for escape sequence, gravity/jump assist values, etc.
-        public readonly ushort Field72; // always 0 except for type 15, where it's always UInt16.MaxValue
-        public readonly uint Field74; // always 0 except for type 15, where it's always 2
-        public readonly ushort Field78;
-        public readonly ushort Field7A; // always 0
-        public readonly uint Field7C;
-        public readonly uint Field80; // always 0
-        public readonly uint Field84; // always 0
-        public readonly ushort Field88;
-        public readonly ushort Field8A;
-        public readonly uint Field8C; // always 0 or 1
-        public readonly uint Flags; // 0x200 = affects biped, 0x400 = affects alt
     }
 
     // size: 260
