@@ -553,7 +553,8 @@ namespace MphRead
         public readonly ushort Field6E;
         public readonly ushort Field70;
         public readonly ushort Field72;
-        public readonly uint Field74;
+        public readonly ushort ActivationFlags; // in-game this is treated as uint, but the extra bits are never set/checked
+        public readonly ushort Padding2;
         public readonly uint Field78;
         public readonly ushort PreviousId;
         public readonly ushort Field7E;
