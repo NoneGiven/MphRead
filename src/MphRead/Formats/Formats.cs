@@ -902,7 +902,7 @@ namespace MphRead
 
         public override Vector3? GetColor(int index)
         {
-            if (index == 7)
+            if (index == 8)
             {
                 return Color1;
             }
@@ -927,7 +927,7 @@ namespace MphRead
 
         public override Vector3? GetColor(int index)
         {
-            if (index == 6)
+            if (index == 7)
             {
                 return Color1;
             }
@@ -941,8 +941,8 @@ namespace MphRead
         public Unknown7Display(Entity<Unknown7EntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
-            // sktodo: colors for parent and child event
-            Color1 = new Vector3(1, 0, 0);
+            Color1 = Metadata.GetEventColor(entity.Data.ParentEventId);
+            Color2 = Metadata.GetEventColor(entity.Data.ChildEventId);
         }
 
         public override Vector3? GetColor(int index)
@@ -950,6 +950,10 @@ namespace MphRead
             if (index == 3)
             {
                 return Color1;
+            }
+            if (index == 4)
+            {
+                return Color2;
             }
             return null;
         }
@@ -967,83 +971,21 @@ namespace MphRead
             EntryEventId = entity.Data.InsideEventId;
             ExitEventId = entity.Data.OutsideEventId;
             Flags = entity.Data.Flags;
-            Color1 = SetColor(EntryEventId);
-            Color2 = SetColor(ExitEventId);
+            Color1 = Metadata.GetEventColor(EntryEventId);
+            Color2 = Metadata.GetEventColor(ExitEventId);
         }
 
         public override Vector3? GetColor(int index)
         {
-            if (index == 4)
+            if (index == 5)
             {
                 return Color1;
             }
-            if (index == 5)
+            if (index == 6)
             {
                 return Color2;
             }
             return null;
-        }
-
-        private Vector3 SetColor(uint eventId)
-        {
-            if (eventId == 0) // None - black
-            {
-                return new Vector3(0, 0, 0);
-            }
-            if (eventId == 5) // SetActive - purple
-            {
-                return new Vector3(0.615f, 0, 0.909f);
-            }
-            if (eventId == 7) // Damage - red
-            {
-                return new Vector3(1, 0, 0);
-            }
-            if (eventId == 15) // Gravity - light blue
-            {
-                return new Vector3(0.141f, 1, 1);
-            }
-            if (eventId == 18) // Activate - green
-            {
-                return new Vector3(0, 1, 0);
-            }
-            if (eventId == 21) // Death - dark blue
-            {
-                return new Vector3(0, 0, 0.858f);
-            }
-            if (eventId == 23) // save - light yellow
-            {
-                return new Vector3(1, 1, 0.6f);
-            }
-            if (eventId == 25) // test - light orange
-            {
-                return new Vector3(1, 0.792f, 0.6f);
-            }
-            if (eventId == 35) // morph - yellow
-            {
-                return new Vector3(0.964f, 1, 0.058f);
-            }
-            if (eventId == 44) // sound - gray
-            {
-                return new Vector3(0.5f, 0.5f, 0.5f);
-            }
-            if (eventId == 46) // moat - pale blue
-            {
-                return new Vector3(0.596f, 0.658f, 0.964f);
-            }
-            if (eventId == 56) // crystal - pale red
-            {
-                return new Vector3(0.964f, 0.596f, 0.596f);
-            }
-            if (eventId == 57) // trigger - pink
-            {
-                return new Vector3(0.972f, 0.086f, 0.831f);
-            }
-            if (eventId == 58) // Escape - pale green
-            {
-                return new Vector3(0.619f, 0.980f, 0.678f);
-            }
-            // unknown - white
-            return new Vector3(1, 1, 1);
         }
     }
 

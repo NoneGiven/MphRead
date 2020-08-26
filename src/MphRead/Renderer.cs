@@ -1039,7 +1039,7 @@ namespace MphRead
             RenderMesh(model, node, item.Mesh, item.Material);
         }
 
-        // todo?: does anything special need to happen for overlapping light sources?
+        // todo: handle overlapping light sources and fade in/out
         private void UpdateLightSources(Vector3 position)
         {
             foreach (LightSource lightSource in _lightSources.Values)
@@ -1851,10 +1851,21 @@ namespace MphRead
             else if (e.Key == Key.Z)
             {
                 // todo: this needs to be organized
-                _showVolumes++;
-                if (_showVolumes > 7)
+                if (e.Shift)
                 {
-                    _showVolumes = 0;
+                    _showVolumes--;
+                    if (_showVolumes < 0)
+                    {
+                        _showVolumes = 8;
+                    }
+                }
+                else
+                {
+                    _showVolumes++;
+                    if (_showVolumes > 8)
+                    {
+                        _showVolumes = 0;
+                    }
                 }
                 await PrintOutput();
             }

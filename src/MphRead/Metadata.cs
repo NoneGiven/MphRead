@@ -4415,6 +4415,69 @@ namespace MphRead
             return _platforms[id];
         }
 
+        // todo: organize/enum
+        public static Vector3 GetEventColor(uint eventId)
+        {
+            if (eventId == 0) // None - black
+            {
+                return new Vector3(0, 0, 0);
+            }
+            if (eventId == 5) // SetActive - purple
+            {
+                return new Vector3(0.615f, 0, 0.909f);
+            }
+            if (eventId == 7) // Damage - red
+            {
+                return new Vector3(1, 0, 0);
+            }
+            if (eventId == 15) // Gravity - light blue
+            {
+                return new Vector3(0.141f, 1, 1);
+            }
+            if (eventId == 18) // Activate - green
+            {
+                return new Vector3(0, 1, 0);
+            }
+            if (eventId == 21) // Death - dark blue
+            {
+                return new Vector3(0, 0, 0.858f);
+            }
+            if (eventId == 23) // save - light yellow
+            {
+                return new Vector3(1, 1, 0.6f);
+            }
+            if (eventId == 25) // test - light orange
+            {
+                return new Vector3(1, 0.792f, 0.6f);
+            }
+            if (eventId == 35) // morph - yellow
+            {
+                return new Vector3(0.964f, 1, 0.058f);
+            }
+            if (eventId == 44) // sound - gray
+            {
+                return new Vector3(0.5f, 0.5f, 0.5f);
+            }
+            if (eventId == 46) // moat - pale blue
+            {
+                return new Vector3(0.596f, 0.658f, 0.964f);
+            }
+            if (eventId == 56) // crystal - pale red
+            {
+                return new Vector3(0.964f, 0.596f, 0.596f);
+            }
+            if (eventId == 57) // trigger - pink
+            {
+                return new Vector3(0.972f, 0.086f, 0.831f);
+            }
+            if (eventId == 58) // Escape - pale green
+            {
+                return new Vector3(0.619f, 0.980f, 0.678f);
+            }
+            // unknown - white
+            return new Vector3(1, 1, 1);
+        }
+
         // todo: e.g. lod1 in the model folder should have the animation files from the lod0 archive
         public static readonly IReadOnlyDictionary<string, ModelMetadata> ModelMetadata
             = new Dictionary<string, ModelMetadata>()
