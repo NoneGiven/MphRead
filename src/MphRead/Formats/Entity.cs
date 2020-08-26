@@ -541,12 +541,12 @@ namespace MphRead
     public readonly struct Unknown7EntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Field24;
+        public readonly uint Type; // subtype 0-4?
         public readonly RawCollisionVolume Volume;
         public readonly ushort Field68;
-        public readonly byte Field6A; // boolean
-        public readonly byte Field6B; // boolean
-        public readonly byte Field6C; // boolean
+        public readonly byte Active; // boolean
+        public readonly byte IgnoreRoomState; // boolean -- set flags bit 0 based on Active boolean only
+        public readonly byte DeactivateAfterUse; // boolean -- set flags bit 1
         public readonly byte Padding6D;
         public readonly ushort Field6E;
         public readonly ushort Field70;
