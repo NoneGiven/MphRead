@@ -558,14 +558,14 @@ namespace MphRead
         public readonly uint Field78;
         public readonly ushort PreviousId;
         public readonly ushort Field7E;
-        public readonly uint EventId;
-        public readonly uint Field84;
-        public readonly uint Field88;
+        public readonly uint EventId1;
+        public readonly uint Field84; // event param?
+        public readonly uint Field88; // event param?
         public readonly ushort NextId;
         public readonly ushort Field8E;
-        public readonly uint Field90;
-        public readonly uint Field94;
-        public readonly uint Field98;
+        public readonly uint EventId2;
+        public readonly uint Field94; // event param?
+        public readonly uint Field98; // event param?
     }
 
     // size: 152
