@@ -542,32 +542,23 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
-        public readonly uint Field58;
-        public readonly uint Field5C;
-        public readonly uint Field60;
-        public readonly uint Field64;
-        public readonly uint Field68;
-        public readonly uint Field6C;
-        public readonly uint Field70;
+        public readonly RawCollisionVolume Volume;
+        public readonly ushort Field68;
+        public readonly byte Field6A; // boolean?
+        public readonly byte Field6B; // boolean?
+        public readonly ushort Flags; // boolean?
+        public readonly ushort Field6E;
+        public readonly ushort Field70;
+        public readonly ushort Field72;
         public readonly uint Field74;
         public readonly uint Field78;
-        public readonly uint Field7C;
+        public readonly ushort Field7C;
+        public readonly ushort Field7E;
         public readonly uint Field80;
         public readonly uint Field84;
         public readonly uint Field88;
-        public readonly uint Field8C;
+        public readonly ushort Field8C;
+        public readonly ushort Field8E;
         public readonly uint Field90;
         public readonly uint Field94;
         public readonly uint Field98;

@@ -925,6 +925,29 @@ namespace MphRead
             Nop();
         }
 
+        public static void TestUnknown7s()
+        {
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                if (meta.Value.EntityPath != null)
+                {
+                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
+                    foreach (Entity entity in entities)
+                    {
+                        if (entity.Type == EntityType.Unknown7)
+                        {
+                            Unknown7EntityData data = ((Entity<Unknown7EntityData>)entity).Data;
+                            if (data.Flags != 0 && data.Flags != 1)
+                            {
+                                Debugger.Break();
+                            }
+                        }
+                    }
+                }
+            }
+            Nop();
+        }
+
         public static void TestUnknown8s()
         {
             var types = new HashSet<uint>();
