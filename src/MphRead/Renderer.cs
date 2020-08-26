@@ -903,8 +903,9 @@ namespace MphRead
                         }
                     }
                 }
-                else if (_showVolumes == 3)
+                else if (_showVolumes == 3) // sktodo: colors for parent and child event
                 {
+                    // todo: some subtypes might not use their volume? if so, don't render them (confirm that all unk8s do, also)
                     foreach (KeyValuePair<int, Unknown7Display> kvp in _unknown7s)
                     {
                         if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
@@ -919,23 +920,23 @@ namespace MphRead
                         }
                     }
                 }
-                else if (_showVolumes == 4)
+                else if (_showVolumes == 4 || _showVolumes == 5)
                 {
                     foreach (KeyValuePair<int, Unknown8Display> kvp in _unknown8s)
                     {
                         if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
                         {
                             GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
-                            RenderVolume(kvp.Value);
+                            RenderUnk8Volume(kvp.Value);
                             if (_volumeEdges)
                             {
                                 GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Line);
-                                RenderVolume(kvp.Value);
+                                RenderUnk8Volume(kvp.Value);
                             }
                         }
                     }
                 }
-                else if (_showVolumes == 5)
+                else if (_showVolumes == 6)
                 {
                     foreach (KeyValuePair<int, JumpPadDisplay> kvp in _jumpPads)
                     {
@@ -951,7 +952,7 @@ namespace MphRead
                         }
                     }
                 }
-                else if (_showVolumes == 6)
+                else if (_showVolumes == 7)
                 {
                     foreach (KeyValuePair<int, MorphCameraDisplay> kvp in _morphCameras)
                     {
@@ -996,6 +997,18 @@ namespace MphRead
             RenderVolume(lightSource.Volume);
         }
 
+        // sktodo: make a class method to do the color choosing so these can all go through one render method,
+        // and ideally all be in one list, too
+        private void RenderUnk8Volume(Unknown8Display unknown8)
+        {
+            GL.CullFace(unknown8.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
+            var transform = Matrix4.CreateTranslation(unknown8.Position);
+            GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
+            Vector3 color = _showVolumes == 4 ? unknown8.EntryEventColor : unknown8.ExitEventColor;
+            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(color, 0.5f));
+            RenderVolume(unknown8.Volume);
+        }
+        
         private void UpdateUniforms()
         {
             UseRoomLights();
@@ -1927,8 +1940,9 @@ namespace MphRead
             }
             else if (e.Key == Key.Z)
             {
+                // todo: this needs to be organized
                 _showVolumes++;
-                if (_showVolumes > 6)
+                if (_showVolumes > 7)
                 {
                     _showVolumes = 0;
                 }
