@@ -574,7 +574,7 @@ namespace MphRead
         public readonly ushort Field64; // always UInt16.MaxValue
         public readonly byte Active; // boolean -- in 1P, may be controlled by room state bits
         public readonly byte Field67; // boolean
-        public readonly byte Field68; // boolean
+        public readonly byte AllowOverlap; // boolean
         public readonly byte EventDelay; // always 0 or 1
         public readonly ushort Field6A; // always 0 or 1
         public readonly uint InsideEventId;
