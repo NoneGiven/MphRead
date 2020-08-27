@@ -548,8 +548,8 @@ namespace MphRead
         public readonly byte IgnoreRoomState; // boolean -- set flags bit 0 based on Active boolean only
         public readonly byte DeactivateAfterUse; // boolean -- set flags bit 1
         public readonly byte Padding6D;
-        public readonly ushort Field6E;
-        public readonly ushort Field70;
+        public readonly ushort RefreshDelay;
+        public readonly ushort InitialDelay;
         public readonly ushort Field72;
         public readonly ushort TriggerFlags; // in-game this is treated as uint, but the extra bits are never set/checked
         public readonly ushort Padding76;
