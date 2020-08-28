@@ -911,10 +911,10 @@ namespace MphRead
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
                     foreach (Entity entity in entities)
                     {
-                        if (entity.Type == EntityType.JumpPad)
+                        if (entity.Type == EntityType.Item)
                         {
-                            JumpPadEntityData data = ((Entity<JumpPadEntityData>)entity).Data;
-                            if (data.Active == 0)
+                            ItemEntityData data = ((Entity<ItemEntityData>)entity).Data;
+                            if (data.AlwaysActive == 0)
                             {
                                 Debugger.Break();
                             }

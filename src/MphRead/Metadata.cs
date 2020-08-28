@@ -4229,6 +4229,8 @@ namespace MphRead
             /* 3 */ new DoorMetadata("AlimbicThinDoor", "ThinDoorLock", 1.39990234f)
         };
 
+        // 0-7 are for beam doors, 8 is unused?, 9 is for regular doors
+        // (only a few rooms use index 0, since the usual thing is to use index 9)
         public static readonly IReadOnlyList<int> DoorPalettes = new List<int>()
         {
             0, 1, 2, 7, 6, 3, 4, 5, 0, 0
@@ -5020,6 +5022,7 @@ namespace MphRead
                         })
                 },
                 // todo: these probably also use AlimbicPalettes
+                // todo: confirm texture shares with load_object
                 {
                     "ForceFieldLock",
                     new ModelMetadata("ForceFieldLock",

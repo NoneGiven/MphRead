@@ -45,26 +45,20 @@ namespace MphRead
         public readonly EntityDataHeader Header;
         public readonly uint Field24;
         public readonly uint ModelId;
-        public readonly uint Field2C;
+        public readonly ushort Field2C;
+        public readonly byte Field2E;
+        public readonly byte Field2F;
         public readonly uint Field30;
         public readonly uint Field34;
-        public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
-        public readonly uint Field58;
-        public readonly uint Field5C;
-        public readonly uint Field60;
-        public readonly uint Field64;
-        public readonly uint Field68;
-        public readonly uint Field6C;
-        public readonly uint Field70;
-        public readonly uint Field74;
-        public readonly uint Field78;
+        public readonly byte Field38;
+        public readonly byte Field39;
+        public readonly ushort Field3A;
+        public readonly Vector3Fx Position1;
+        public readonly Vector3Fx Position2;
+        public readonly Vector3Fx Position3;
+        public readonly Vector3Fx Position4;
+        public readonly Vector3Fx Position5;
+        public readonly Fixed Scale;
         public readonly uint Field7C;
         public readonly uint Field80;
         public readonly uint Field84;
@@ -79,26 +73,11 @@ namespace MphRead
         public readonly uint FieldA8;
         public readonly uint FieldAC;
         public readonly uint FieldB0;
-        public readonly uint FieldB4;
-        public readonly uint FieldB8;
-        public readonly uint FieldBC;
-        public readonly uint FieldC0;
-        public readonly uint FieldC4;
-        public readonly uint FieldC8;
-        public readonly uint FieldCC;
-        public readonly uint FieldD0;
-        public readonly uint FieldD4;
-        public readonly uint FieldD8;
-        public readonly uint FieldDC;
-        public readonly uint FieldE0;
-        public readonly uint FieldE4;
-        public readonly uint FieldE8;
-        public readonly uint FieldEC;
-        public readonly uint FieldF0;
-        public readonly uint FieldF4;
-        public readonly uint FieldF8;
-        public readonly uint FieldFC;
-        public readonly uint Field100;
+        public readonly Vector4Fx Rotation1;
+        public readonly Vector4Fx Rotation2;
+        public readonly Vector4Fx Rotation3;
+        public readonly Vector4Fx Rotation4;
+        public readonly Vector4Fx Rotation5;
         public readonly uint Field104;
         public readonly uint Field108;
         public readonly uint Field10C;
@@ -124,32 +103,28 @@ namespace MphRead
         public readonly uint Field15C;
         public readonly uint Field160;
         public readonly uint Field164;
-        public readonly uint Field168;
-        public readonly uint Field16C;
-        public readonly uint Field170;
-        public readonly uint Field174;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
+        public readonly string PortalName;
         public readonly uint Field178;
         public readonly uint Field17C;
         public readonly uint Field180;
-        public readonly uint Field184;
+        public readonly uint Flags;
         public readonly uint Field188;
-        public readonly uint Field18C;
-        public readonly uint Field190;
-        public readonly uint Field194;
-        public readonly uint Field198;
-        public readonly uint Field19C;
-        public readonly uint Field1A0;
+        public readonly Vector3Fx Field18C;
+        public readonly Vector3Fx Field198;
         public readonly uint Field1A4;
         public readonly uint Field1A8;
         public readonly uint Field1AC;
         public readonly uint Field1B0;
-        public readonly uint Field1B4;
+        public readonly uint FxId1;
         public readonly uint Field1B8;
         public readonly uint Field1BC;
-        public readonly uint Field1C0;
-        public readonly uint Field1C4;
-        public readonly uint Field1C8;
-        public readonly uint Field1CC;
+        public readonly uint FxId2;
+        public readonly uint FxId3;
+        public readonly byte HasItem; // boolean?
+        public readonly byte Field1C9;
+        public readonly ushort Field1CA;
+        public readonly uint ItemModel;
         public readonly uint Field1D0;
         public readonly uint Field1D4;
         public readonly uint Field1D8;
@@ -278,10 +253,11 @@ namespace MphRead
     public readonly struct PlayerSpawnEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly ushort Field24;
-        public readonly byte Field26;
+        public readonly byte Field24; // boolean
+        public readonly byte Active; // boolean
+        public readonly byte Field26; // always 0, 1, or 255
     }
-
+    
     // size: 44
     public readonly struct FhPlayerSpawnEntityData
     {
@@ -298,9 +274,9 @@ namespace MphRead
         public readonly string NodeName;
         public readonly uint PaletteId;
         public readonly uint ModelId;
-        public readonly uint Field3C;
+        public readonly uint TargetRoomId;
         public readonly byte TargetLayerId;
-        public readonly byte Flags;
+        public readonly byte Flags; // bit 0 - locked
         public readonly byte Field42;
         public readonly byte Field43;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
@@ -329,12 +305,12 @@ namespace MphRead
         public readonly uint ModelId;
         public readonly byte Enabled; // boolean
         public readonly byte HasBase; // boolean
-        public readonly byte Field2E;
+        public readonly byte AlwaysActive; // boolean -- set flags bit 0 based on Active boolean only and ignore room state
         public readonly byte Field2F;
         public readonly ushort MaxSpawnCount;
         public readonly ushort SpawnInterval;
         public readonly ushort SpawnDelay;
-        public readonly ushort EntityId;
+        public readonly ushort SomeEntityId; // todo: parent? child?
         public readonly uint Field38;
         public readonly uint Field3C;
         public readonly uint Field40;
@@ -545,7 +521,7 @@ namespace MphRead
         public readonly RawCollisionVolume Volume;
         public readonly ushort Field68;
         public readonly byte Active; // boolean
-        public readonly byte IgnoreRoomState; // boolean -- set flags bit 0 based on Active boolean only
+        public readonly byte AlwaysActive; // boolean -- set flags bit 0 based on Active boolean only and ignore room state
         public readonly byte DeactivateAfterUse; // boolean -- set flags bit 1
         public readonly byte Padding6D;
         public readonly ushort RefreshDelay;
