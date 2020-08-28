@@ -4262,7 +4262,7 @@ namespace MphRead
             /* 10 */ "pick_wpn_mortar",
             /* 11 */ "pick_wpn_ghostbuster",
             /* 12 */ "pick_wpn_gorea",
-            /* 13 */ "pick_ammo_green",
+            /* 13 */ "pick_ammo_green", // todo: these are probably big/small versions
             /* 14 */ "pick_ammo_green",
             /* 15 */ "pick_ammo_orange",
             /* 16 */ "pick_ammo_orange",

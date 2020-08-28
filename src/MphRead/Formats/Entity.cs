@@ -301,7 +301,7 @@ namespace MphRead
     public readonly struct ItemEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint ItemId;
+        public readonly uint ItemEntityId;
         public readonly uint ModelId;
         public readonly byte Enabled; // boolean
         public readonly byte HasBase; // boolean
