@@ -474,7 +474,7 @@ namespace MphRead
             {
                 return GetFirstHuntEntities(bytes);
             }
-            else if (version != 2)
+            if (version != 2)
             {
                 throw new ProgramException($"Unexpected entity header version {version}.");
             }
