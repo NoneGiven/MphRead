@@ -967,7 +967,7 @@ namespace MphRead
             /* 245 */ "effects/ultimateCol_PS.bin",
             /* 246 */ "effects/enemyMortarProjectile_PS.bin"
         };
-        
+
         public static (RoomMetadata?, int) GetRoomByName(string name)
         {
             if (RoomMetadata.TryGetValue(name, out RoomMetadata? metadata))

@@ -749,8 +749,17 @@ namespace MphRead
 
         public string ChildEffect => Metadata.Effects[(int)ChildEffectId];
 
-        public EffectElement(RawEffectElement raw)
+        // sktodo: remove this
+        public uint Diff { get; }
+
+        public EffectElement(RawEffectElement raw, uint diff)
         {
+            Diff = diff;
+            DrawableCount = raw.DrawableCount;
+            DrawableOffset = raw.DrawableOffset;
+            SomeCount = raw.SomeCount;
+            SomeOffset = raw.SomeOffset;
+
             Name = raw.Name;
             ModelName = raw.ModelName;
             Flags = raw.Flags;
@@ -764,7 +773,19 @@ namespace MphRead
             Field68 = raw.Field68;
         }
     }
-    
+
+    public class Drawable
+    {
+        public string Name { get; }
+        public uint Field4 { get; }
+
+        public Drawable(RawDrawable raw, string name)
+        {
+            Name = name;
+            Field4 = raw.Field4;
+        }
+    }
+
     public class Entity
     {
         public string NodeName { get; }

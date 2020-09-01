@@ -505,17 +505,13 @@ namespace MphRead
         public readonly uint Field68;
         public readonly uint SomeCount;
         public readonly uint SomeOffset;
-        public readonly uint Field74;
-        public readonly uint Field78;
-        public readonly uint Field7C;
-        public readonly uint Field80;
     }
 
-    // size: 12
-    public readonly struct Drawable
+    // sktodo
+    // size: ?
+    public readonly struct RawDrawable
     {
-        public readonly uint Model;
-        public readonly uint Node;
-        public readonly uint DisplayList;
+        public readonly uint NameOffset;
+        public readonly uint Field4;
     }
 }

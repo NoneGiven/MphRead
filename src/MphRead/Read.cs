@@ -618,13 +618,17 @@ namespace MphRead
             foreach (uint offset in elementOffsets)
             {
                 RawEffectElement element = DoOffset<RawEffectElement>(bytes, offset);
-                //IReadOnlyList<Drawable> drawables = DoOffsets<Drawable>(bytes, element.DrawableOffset, element.DrawableCount);
                 IReadOnlyList<uint> someList = DoOffsets<uint>(bytes, element.SomeOffset, 2 * element.SomeCount);
-                elements.Add(new EffectElement(element));
+                var drawables = new List<Drawable>();
+                foreach (RawDrawable drawable in DoOffsets<RawDrawable>(bytes, element.DrawableOffset, element.DrawableCount))
+                {
+                    drawables.Add(new Drawable(drawable, ReadString(bytes, drawable.NameOffset, 16)));
+                }
+                elements.Add(new EffectElement(element, element.SomeOffset - element.DrawableOffset));
             }
             return new Effect(effect, list1, list2, elements);
         }
-        
+
         private static void Nop() { }
 
         private static IReadOnlyList<RenderInstruction> DoRenderInstructions(ReadOnlySpan<byte> bytes, DisplayList dlist)
@@ -709,7 +713,7 @@ namespace MphRead
         {
             return DoOffsets<T>(bytes, offset, (int)count);
         }
-        
+
         public static IReadOnlyList<T> DoOffsets<T>(ReadOnlySpan<byte> bytes, uint offset, int count) where T : struct
         {
             int ioffset = (int)offset;
@@ -737,6 +741,29 @@ namespace MphRead
             return (T)result;
         }
 
+        public static string ReadString(ReadOnlySpan<byte> bytes, uint offset, int length)
+        {
+            return ReadString(bytes, (int)offset, length);
+        }
+
+        public static string ReadString(ReadOnlySpan<byte> bytes, int offset, int length)
+        {
+            int end = offset;
+            for (int i = 0; i < length; i++)
+            {
+                if (bytes[offset + i] == 0)
+                {
+                    break;
+                }
+                end++;
+            }
+            if (end == offset)
+            {
+                return "";
+            }
+            return Encoding.ASCII.GetString(bytes[offset..end]);
+        }
+        
         public static void ExtractArchive(string name)
         {
             string input = Path.Combine(Paths.FileSystem, "archives", $"{name}.arc");
