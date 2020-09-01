@@ -92,9 +92,7 @@ namespace MphRead
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
         private readonly Dictionary<int, LightSource> _lightSources = new Dictionary<int, LightSource>();
-        private readonly Dictionary<int, Unknown8Display> _unknown8s = new Dictionary<int, Unknown8Display>();
-        private readonly Dictionary<int, JumpPadDisplay> _jumpPads = new Dictionary<int, JumpPadDisplay>();
-        private readonly Dictionary<int, MorphCameraDisplay> _morphCameras = new Dictionary<int, MorphCameraDisplay>();
+        private readonly Dictionary<int, DisplayVolume> _displayVolumes = new Dictionary<int, DisplayVolume>();
 
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
@@ -176,23 +174,29 @@ namespace MphRead
                 _modelMap.Add(entity.SceneId, entity);
                 if (entity.Entity is Entity<LightSourceEntityData> lightSource)
                 {
-                    _lightSources.Add(entity.SceneId, new LightSource(lightSource));
+                    var display = new LightSource(lightSource);
+                    _displayVolumes.Add(entity.SceneId, display);
+                    _lightSources.Add(entity.SceneId, display);
+                }
+                else if (entity.Entity is Entity<Unknown7EntityData> unknown7)
+                {
+                    _displayVolumes.Add(entity.SceneId, new Unknown7Display(unknown7));
                 }
                 else if (entity.Entity is Entity<Unknown8EntityData> unknown8)
                 {
-                    _unknown8s.Add(entity.SceneId, new Unknown8Display(unknown8));
+                    _displayVolumes.Add(entity.SceneId, new Unknown8Display(unknown8));
                 }
                 else if (entity.Entity is Entity<JumpPadEntityData> jumpPad)
                 {
-                    _jumpPads.Add(entity.SceneId, new JumpPadDisplay(jumpPad));
+                    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(jumpPad));
                 }
                 else if (entity.Entity is Entity<CameraPositionEntityData> morphCamera)
                 {
-                    _morphCameras.Add(entity.SceneId, new MorphCameraDisplay(morphCamera));
+                    _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(morphCamera));
                 }
                 else if (entity.Entity is Entity<FhCameraPositionEntityData> fhMorphCamera)
                 {
-                    _morphCameras.Add(entity.SceneId, new MorphCameraDisplay(fhMorphCamera));
+                    _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(fhMorphCamera));
                 }
             }
             _light1Vector = roomMeta.Light1Vector;
@@ -406,9 +410,7 @@ namespace MphRead
                 _models.Remove(model);
                 _modelMap.Remove(model.SceneId);
                 _lightSources.Remove(model.SceneId);
-                _unknown8s.Remove(model.SceneId);
-                _jumpPads.Remove(model.SceneId);
-                _morphCameras.Remove(model.SceneId);
+                _displayVolumes.Remove(model.SceneId);
                 _updateLists = true;
                 await PrintOutput();
             }
@@ -872,7 +874,7 @@ namespace MphRead
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
-            if (_showVolumes > 0 && (_lightSources.Count > 0 || _unknown8s.Count > 0 || _jumpPads.Count > 0 || _morphCameras.Count > 0))
+            if (_showVolumes > 0 && _displayVolumes.Count > 0)
             {
                 GL.Uniform1(_shaderLocations.UseLight, 0);
                 GL.Uniform1(_shaderLocations.UseFog, 0);
@@ -883,64 +885,16 @@ namespace MphRead
                 GL.Enable(EnableCap.CullFace);
                 // alternative if the depth buffer can't handle the above:
                 //GL.Disable(EnableCap.CullFace);
-                if (_showVolumes == 1 || _showVolumes == 2)
+                foreach (KeyValuePair<int, DisplayVolume> kvp in _displayVolumes)
                 {
-                    foreach (KeyValuePair<int, LightSource> kvp in _lightSources)
+                    if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
                     {
                         GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
-                        RenderLightVolume(kvp.Value);
+                        RenderDisplayVolume(kvp.Value);
                         if (_volumeEdges)
                         {
                             GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Line);
-                            RenderLightVolume(kvp.Value);
-                        }
-                    }
-                }
-                else if (_showVolumes == 3)
-                {
-                    foreach (KeyValuePair<int, Unknown8Display> kvp in _unknown8s)
-                    {
-                        if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
-                        {
-                            GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
-                            RenderVolume(kvp.Value);
-                            if (_volumeEdges)
-                            {
-                                GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Line);
-                                RenderVolume(kvp.Value);
-                            }
-                        }
-                    }
-                }
-                else if (_showVolumes == 4)
-                {
-                    foreach (KeyValuePair<int, JumpPadDisplay> kvp in _jumpPads)
-                    {
-                        if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
-                        {
-                            GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
-                            RenderVolume(kvp.Value);
-                            if (_volumeEdges)
-                            {
-                                GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Line);
-                                RenderVolume(kvp.Value);
-                            }
-                        }
-                    }
-                }
-                else if (_showVolumes == 5)
-                {
-                    foreach (KeyValuePair<int, MorphCameraDisplay> kvp in _morphCameras)
-                    {
-                        if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
-                        {
-                            GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
-                            RenderVolume(kvp.Value);
-                            if (_volumeEdges)
-                            {
-                                GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Line);
-                                RenderVolume(kvp.Value);
-                            }
+                            RenderDisplayVolume(kvp.Value);
                         }
                     }
                 }
@@ -952,25 +906,17 @@ namespace MphRead
             }
         }
 
-        private void RenderVolume(DisplayVolume unknown8)
+        private void RenderDisplayVolume(DisplayVolume volume)
         {
-            GL.CullFace(unknown8.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
-            var transform = Matrix4.CreateTranslation(unknown8.Position);
-            GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
-            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(unknown8.Color, 0.5f));
-            RenderVolume(unknown8.Volume);
-        }
-
-        private void RenderLightVolume(LightSource lightSource)
-        {
-            GL.CullFace(lightSource.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
-            var transform = Matrix4.CreateTranslation(lightSource.Position);
-            GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
-            Vector3 color = _showVolumes == 1
-                ? lightSource.Light1Enabled ? lightSource.Light1Color : Vector3.Zero
-                : lightSource.Light2Enabled ? lightSource.Light2Color : Vector3.Zero;
-            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(color, 0.5f));
-            RenderVolume(lightSource.Volume);
+            Vector3? color = volume.GetColor(_showVolumes);
+            if (color != null)
+            {
+                GL.CullFace(volume.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
+                var transform = Matrix4.CreateTranslation(volume.Position);
+                GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
+                GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(color.Value, 0.5f));
+                RenderVolume(volume.Volume);
+            }
         }
 
         private void UpdateUniforms()
@@ -1093,7 +1039,7 @@ namespace MphRead
             RenderMesh(model, node, item.Mesh, item.Material);
         }
 
-        // todo?: does anything special need to happen for overlapping light sources?
+        // todo: handle overlapping light sources and fade in/out
         private void UpdateLightSources(Vector3 position)
         {
             foreach (LightSource lightSource in _lightSources.Values)
@@ -1102,11 +1048,11 @@ namespace MphRead
                 {
                     if (lightSource.Light1Enabled)
                     {
-                        UseLight1(lightSource.Light1Vector, lightSource.Light1Color);
+                        UseLight1(lightSource.Light1Vector, lightSource.Color1);
                     }
                     if (lightSource.Light2Enabled)
                     {
-                        UseLight2(lightSource.Light2Vector, lightSource.Light2Color);
+                        UseLight2(lightSource.Light2Vector, lightSource.Color2);
                     }
                     break;
                 }
@@ -1904,10 +1850,22 @@ namespace MphRead
             }
             else if (e.Key == Key.Z)
             {
-                _showVolumes++;
-                if (_showVolumes > 5)
+                // todo: this needs to be organized
+                if (e.Shift)
                 {
-                    _showVolumes = 0;
+                    _showVolumes--;
+                    if (_showVolumes < 0)
+                    {
+                        _showVolumes = 8;
+                    }
+                }
+                else
+                {
+                    _showVolumes++;
+                    if (_showVolumes > 8)
+                    {
+                        _showVolumes = 0;
+                    }
                 }
                 await PrintOutput();
             }
@@ -2468,7 +2426,7 @@ namespace MphRead
                 }
                 else if (model.Entity is Entity<Unknown8EntityData> unknown8)
                 {
-                    type += $" - Type {unknown8.Data.Type}";
+                    type += $" - Entry event ID {unknown8.Data.InsideEventId}";
                 }
             }
             await Output.Write(type, guid);

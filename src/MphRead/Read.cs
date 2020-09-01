@@ -474,7 +474,7 @@ namespace MphRead
             {
                 return GetFirstHuntEntities(bytes);
             }
-            else if (version != 2)
+            if (version != 2)
             {
                 throw new ProgramException($"Unexpected entity header version {version}.");
             }
@@ -585,6 +585,51 @@ namespace MphRead
             return new Entity<T>(entry, (EntityType)(header.Type + 100), header.EntityId, ReadStruct<T>(bytes[start..end]));
         }
 
+        // todo: should return a CameraSequence class (flags etc.)
+        public static IReadOnlyList<CameraSequenceFrame> ReadCameraSequence(string name)
+        {
+            name = Path.Combine(Paths.FileSystem, $@"cameraEditor\{name}.bin");
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(name));
+            if (bytes.Length < Sizes.CameraSequenceHeader)
+            {
+                throw new ProgramException("Invalid camera sequence file format.");
+            }
+            CameraSequenceHeader header = ReadStruct<CameraSequenceHeader>(bytes);
+            int length = Sizes.CameraSequenceHeader + Sizes.CameraSequenceFrame * header.Count;
+            Debug.Assert(bytes.Length == length);
+            if (bytes.Length < length)
+            {
+                throw new ProgramException("Invalid camera sequence file format.");
+            }
+            uint offset = (uint)Sizes.CameraSequenceHeader;
+            IReadOnlyList<CameraSequenceFrame> frames = DoOffsets<CameraSequenceFrame>(bytes, offset, header.Count);
+            return frames;
+        }
+
+        // todo: should this load child effects automatically?
+        public static Effect ReadEffect(string name)
+        {
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, name)));
+            RawEffect effect = ReadStruct<RawEffect>(bytes);
+            IReadOnlyList<uint> list1 = DoOffsets<uint>(bytes, effect.Offset1, effect.Count1);
+            IReadOnlyList<uint> list2 = DoOffsets<uint>(bytes, effect.Offset2, effect.Count2);
+            IReadOnlyList<uint> elementOffsets = DoOffsets<uint>(bytes, effect.ElementOffset, effect.ElementCount);
+            var elements = new List<EffectElement>();
+            foreach (uint offset in elementOffsets)
+            {
+                // sktodo: what's in between the particle name offsets and the next element?
+                RawEffectElement element = DoOffset<RawEffectElement>(bytes, offset);
+                var particles = new List<string>();
+                foreach (uint nameOffset in DoOffsets<uint>(bytes, element.ParticleOffset, element.ParticleCount))
+                {
+                    particles.Add(ReadString(bytes, nameOffset, 16));
+                }
+                IReadOnlyList<uint> someList = DoOffsets<uint>(bytes, element.SomeOffset, 2 * element.SomeCount);
+                elements.Add(new EffectElement(element, particles, someList));
+            }
+            return new Effect(effect, list1, list2, elements, name);
+        }
+
         private static void Nop() { }
 
         private static IReadOnlyList<RenderInstruction> DoRenderInstructions(ReadOnlySpan<byte> bytes, DisplayList dlist)
@@ -665,6 +710,11 @@ namespace MphRead
             return DoOffsets<T>(bytes, offset, 1).First();
         }
 
+        public static IReadOnlyList<T> DoOffsets<T>(ReadOnlySpan<byte> bytes, uint offset, uint count) where T : struct
+        {
+            return DoOffsets<T>(bytes, offset, (int)count);
+        }
+
         public static IReadOnlyList<T> DoOffsets<T>(ReadOnlySpan<byte> bytes, uint offset, int count) where T : struct
         {
             int ioffset = (int)offset;
@@ -690,6 +740,29 @@ namespace MphRead
                 throw new ProgramException($"Failed to read {typeof(T)} struct.");
             }
             return (T)result;
+        }
+
+        public static string ReadString(ReadOnlySpan<byte> bytes, uint offset, int length)
+        {
+            return ReadString(bytes, (int)offset, length);
+        }
+
+        public static string ReadString(ReadOnlySpan<byte> bytes, int offset, int length)
+        {
+            int end = offset;
+            for (int i = 0; i < length; i++)
+            {
+                if (bytes[offset + i] == 0)
+                {
+                    break;
+                }
+                end++;
+            }
+            if (end == offset)
+            {
+                return "";
+            }
+            return Encoding.ASCII.GetString(bytes[offset..end]);
         }
 
         public static void ExtractArchive(string name)

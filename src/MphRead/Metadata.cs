@@ -457,6 +457,517 @@ namespace MphRead
             return result.Value;
         }
 
+        public static readonly IReadOnlyList<DoorMetadata> Doors = new List<DoorMetadata>()
+        {
+            /* 0 */ new DoorMetadata("AlimbicDoor", "AlimbicDoorLock", 1.39990234f),
+            /* 1 */ new DoorMetadata("AlimbicMorphBallDoor", "AlimbicMorphBallDoorLock", 0.6999512f),
+            /* 2 */ new DoorMetadata("AlimbicBossDoor", "AlimbicBossDoorLock", 3.5f),
+            /* 3 */ new DoorMetadata("AlimbicThinDoor", "ThinDoorLock", 1.39990234f)
+        };
+
+        // 0-7 are for beam doors, 8 is unused?, 9 is for regular doors
+        // (only a few rooms use index 0, since the usual thing is to use index 9)
+        public static readonly IReadOnlyList<int> DoorPalettes = new List<int>()
+        {
+            0, 1, 2, 7, 6, 3, 4, 5, 0, 0
+        };
+
+        public static readonly IReadOnlyList<string> JumpPads = new List<string>()
+        {
+            /* 0 */ "JumpPad",
+            /* 1 */ "JumpPad_Alimbic",
+            /* 2 */ "JumpPad_Ice",
+            /* 3 */ "JumpPad_IceStation",
+            /* 4 */ "JumpPad_Lava",
+            /* 5 */ "JumpPad_Station"
+        };
+
+        public static readonly IReadOnlyList<string> Items
+            = new List<string>()
+        {
+            /*  0 */ "pick_health_B",
+            /*  1 */ "pick_health_A",
+            /*  2 */ "pick_health_C",
+            /*  3 */ "pick_dblDamage",
+            /*  4 */ "PickUp_EnergyExp",
+            /*  5 */ "pick_wpn_electro",
+            /*  6 */ "PickUp_MissileExp",
+            /*  7 */ "pick_wpn_jackhammer",
+            /*  8 */ "pick_wpn_snipergun",
+            /*  9 */ "pick_wpn_shotgun",
+            /* 10 */ "pick_wpn_mortar",
+            /* 11 */ "pick_wpn_ghostbuster",
+            /* 12 */ "pick_wpn_gorea",
+            /* 13 */ "pick_ammo_green", // small
+            /* 14 */ "pick_ammo_green", // big
+            /* 15 */ "pick_ammo_orange", // small
+            /* 16 */ "pick_ammo_orange", // big
+            /* 17 */ "pick_invis",
+            /* 18 */ "PickUp_AmmoExp",
+            /* 19 */ "Artifact_Key",
+            /* 20 */ "pick_deathball",
+            /* 21 */ "pick_wpn_all",
+            // unused
+            /* 22 */ "pick_wpn_missile"
+        };
+
+        public static readonly IReadOnlyList<string> FhItems
+            = new List<string>()
+        {
+            /* 0 */ "pick_ammo_A",
+            /* 1 */ "pick_ammo_B",
+            /* 2 */ "pick_health_A",
+            /* 3 */ "pick_health_B",
+            /* 4 */ "pick_dblDamage",
+            /* 5 */ "pick_morphball", // unused
+            /* 6 */ "pick_wpn_electro",
+            /* 7 */ "pick_wpn_missile"
+        };
+
+        private static readonly IReadOnlyList<ObjectMetadata> _objects = new List<ObjectMetadata>()
+        {
+            /*  0 */ new ObjectMetadata("AlimbicGhost_01", 0),
+            /*  1 */ new ObjectMetadata("AlimbicLightPole", 0),
+            /*  2 */ new ObjectMetadata("AlimbicStationShieldControl", 0),
+            /*  3 */ new ObjectMetadata("AlimbicComputerStationControl", 0),
+            /*  4 */ new ObjectMetadata("AlimbicEnergySensor", 0),
+            /*  5 */ new ObjectMetadata("SamusShip", 0), // unused
+            /*  6 */ new ObjectMetadata("Guardbot01_Dead", 0),
+            /*  7 */ new ObjectMetadata("Guardbot02_Dead", 0),
+            /*  8 */ new ObjectMetadata("Guardian_Dead", 0),
+            /*  9 */ new ObjectMetadata("Psychobit_Dead", 0),
+            /* 10 */ new ObjectMetadata("AlimbicLightPole02", 0),
+            /* 11 */ new ObjectMetadata("AlimbicComputerStationControl02", 0),
+            /* 12 */ new ObjectMetadata("Generic_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 13 */ new ObjectMetadata("Generic_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 14 */ new ObjectMetadata("Generic_Power", 0),
+            /* 15 */ new ObjectMetadata("Generic_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 16 */ new ObjectMetadata("Generic_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 17 */ new ObjectMetadata("Alimbic_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 18 */ new ObjectMetadata("Alimbic_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 19 */ new ObjectMetadata("Alimbic_Power", 0),
+            /* 20 */ new ObjectMetadata("Alimbic_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 21 */ new ObjectMetadata("Alimbic_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 22 */ new ObjectMetadata("Lava_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 23 */ new ObjectMetadata("Lava_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 24 */ new ObjectMetadata("Lava_Power", 0),
+            /* 25 */ new ObjectMetadata("Lava_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 26 */ new ObjectMetadata("Lava_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 27 */ new ObjectMetadata("Ice_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 28 */ new ObjectMetadata("Ice_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 29 */ new ObjectMetadata("Ice_Power", 0),
+            /* 30 */ new ObjectMetadata("Ice_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 31 */ new ObjectMetadata("Ice_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 32 */ new ObjectMetadata("Ruins_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 33 */ new ObjectMetadata("Ruins_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 34 */ new ObjectMetadata("Ruins_Power", 0),
+            /* 35 */ new ObjectMetadata("Ruins_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 36 */ new ObjectMetadata("Ruins_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 37 */ new ObjectMetadata("PlantCarnivarous_Branched", 0),
+            /* 38 */ new ObjectMetadata("PlantCarnivarous_Pod", 0),
+            /* 39 */ new ObjectMetadata("PlantCarnivarous_PodLeaves", 0),
+            /* 40 */ new ObjectMetadata("PlantCarnivarous_Vine", 0),
+            /* 41 */ new ObjectMetadata("GhostSwitch", 0),
+            /* 42 */ new ObjectMetadata("Switch", 1),
+            /* 43 */ new ObjectMetadata("Guardian_Stasis", 0, animationIds: new List<int>() { 0xFF, 0, 0, 0 }),
+            /* 44 */ new ObjectMetadata("AlimbicStatue_lod0", 0, animationIds: new List<int>() { 0xFF, 0, 0, 0 }),
+            /* 45 */ new ObjectMetadata("AlimbicCapsule", 0),
+            /* 46 */ new ObjectMetadata("SniperTarget", 1, animationIds: new List<int>() { 0, 2, 1, 0 }),
+            /* 47 */ new ObjectMetadata("SecretSwitch", 0, 1, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            /* 48 */ new ObjectMetadata("SecretSwitch", 0, 2, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            /* 49 */ new ObjectMetadata("SecretSwitch", 0, 3, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            /* 50 */ new ObjectMetadata("SecretSwitch", 0, 4, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            /* 51 */ new ObjectMetadata("SecretSwitch", 0, 5, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            /* 52 */ new ObjectMetadata("SecretSwitch", 0, 6, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            /* 53 */ new ObjectMetadata("WallSwitch", 1, animationIds: new List<int>() { 2, 0, 1, 0 })
+        };
+
+        public static ObjectMetadata GetObjectById(int id)
+        {
+            if (id < 0 || id > _objects.Count)
+            {
+                throw new ArgumentException(nameof(id));
+            }
+            return _objects[id];
+        }
+
+        private static readonly IReadOnlyList<PlatformMetadata?> _platforms = new List<PlatformMetadata?>()
+        {
+            /*  0 */ new PlatformMetadata("platform"),
+            /*  1 */ null, // duplicate of 0
+            /*  2 */ null, // todo: figure out what this "platform" is
+            /*  3 */ new PlatformMetadata("Elevator"),
+            /*  4 */ new PlatformMetadata("smasher"),
+            /*  5 */ new PlatformMetadata("Platform_Unit4_C1", someFlag: 1),
+            /*  6 */ new PlatformMetadata("pillar"),
+            /*  7 */ new PlatformMetadata("Door_Unit4_RM1"),
+            /*  8 */ new PlatformMetadata("SyluxShip", animationIds: new List<uint>() { UInt32.MaxValue, 1, 0, 2 }),
+            /*  9 */ new PlatformMetadata("pistonmp7"),
+            /* 10 */ new PlatformMetadata("unit3_brain", animationIds: new List<uint>() { 0, 0, 0, 0 }),
+            /* 11 */ new PlatformMetadata("unit4_mover1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 12 */ new PlatformMetadata("unit4_mover2", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 13 */ new PlatformMetadata("ElectroField1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 14 */ new PlatformMetadata("Unit3_platform1"),
+            /* 15 */ new PlatformMetadata("unit3_pipe1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 16 */ new PlatformMetadata("unit3_pipe2", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 17 */ new PlatformMetadata("cylinderbase"),
+            /* 18 */ new PlatformMetadata("unit3_platform"),
+            /* 19 */ new PlatformMetadata("unit3_platform2"),
+            /* 20 */ new PlatformMetadata("unit3_jar", animationIds: new List<uint>() { 0, 2, 1, 0 }, field20: 0, field24: 0),
+            /* 21 */ new PlatformMetadata("SyluxTurret", animationIds: new List<uint>() { 3, 2, 1, 0 }, field20: 0, field24: 0),
+            /* 22 */ new PlatformMetadata("unit3_jartop", animationIds: new List<uint>() { 0, 2, 1, 0 }, field20: 0, field24: 0),
+            /* 23 */ new PlatformMetadata("SamusShip", animationIds: new List<uint>() { 1, 3, 2, 4 }, field20: 0, field24: 0),
+            /* 24 */ new PlatformMetadata("unit1_land_plat1"),
+            /* 25 */ new PlatformMetadata("unit1_land_plat2"),
+            /* 26 */ new PlatformMetadata("unit1_land_plat3"),
+            /* 27 */ new PlatformMetadata("unit1_land_plat4"),
+            /* 28 */ new PlatformMetadata("unit1_land_plat5"),
+            /* 29 */ new PlatformMetadata("unit2_c4_plat"),
+            /* 30 */ new PlatformMetadata("unit2_land_elev"),
+            /* 31 */ new PlatformMetadata("unit4_platform1"),
+            /* 32 */ new PlatformMetadata("Crate01", animationIds: new List<uint>() { UInt32.MaxValue, UInt32.MaxValue, 0, 1 }),
+            /* 33 */ new PlatformMetadata("unit1_mover1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 34 */ new PlatformMetadata("unit1_mover2"),
+            /* 35 */ new PlatformMetadata("unit2_mover1"),
+            /* 36 */ new PlatformMetadata("unit4_mover3"),
+            /* 37 */ new PlatformMetadata("unit4_mover4"),
+            /* 38 */ new PlatformMetadata("unit3_mover1"),
+            /* 39 */ new PlatformMetadata("unit2_c1_mover"),
+            /* 40 */ new PlatformMetadata("unit3_mover2", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 41 */ new PlatformMetadata("piston_gorealand"),
+            /* 42 */ new PlatformMetadata("unit4_tp2_artifact_wo"),
+            /* 43 */ new PlatformMetadata("unit4_tp1_artifact_wo"),
+            /* 44 */ new PlatformMetadata("SamusShip", animationIds: new List<uint>() { 1, 0, 2, 4 }, field20: 0, field24: 0)
+        };
+
+        public static PlatformMetadata? GetPlatformById(int id)
+        {
+            if (id < 0 || id > _platforms.Count)
+            {
+                throw new ArgumentException(nameof(id));
+            }
+            if (id == 1)
+            {
+                id = 0;
+            }
+            return _platforms[id];
+        }
+
+        // todo: organize/enum
+        public static Vector3 GetEventColor(uint eventId)
+        {
+            if (eventId == 0) // None - black
+            {
+                return new Vector3(0, 0, 0);
+            }
+            if (eventId == 5) // SetActive - purple
+            {
+                return new Vector3(0.615f, 0, 0.909f);
+            }
+            if (eventId == 7) // Damage - red
+            {
+                return new Vector3(1, 0, 0);
+            }
+            if (eventId == 15) // Gravity - light blue
+            {
+                return new Vector3(0.141f, 1, 1);
+            }
+            if (eventId == 18) // Activate - green
+            {
+                return new Vector3(0, 1, 0);
+            }
+            if (eventId == 21) // Death - dark blue
+            {
+                return new Vector3(0, 0, 0.858f);
+            }
+            if (eventId == 23) // save - light yellow
+            {
+                return new Vector3(1, 1, 0.6f);
+            }
+            if (eventId == 25) // test - light orange
+            {
+                return new Vector3(1, 0.792f, 0.6f);
+            }
+            if (eventId == 35) // morph - yellow
+            {
+                return new Vector3(0.964f, 1, 0.058f);
+            }
+            if (eventId == 44) // sound - gray
+            {
+                return new Vector3(0.5f, 0.5f, 0.5f);
+            }
+            if (eventId == 46) // moat - pale blue
+            {
+                return new Vector3(0.596f, 0.658f, 0.964f);
+            }
+            if (eventId == 56) // crystal - pale red
+            {
+                return new Vector3(0.964f, 0.596f, 0.596f);
+            }
+            if (eventId == 57) // trigger - pink
+            {
+                return new Vector3(0.972f, 0.086f, 0.831f);
+            }
+            if (eventId == 58) // Escape - pale green
+            {
+                return new Vector3(0.619f, 0.980f, 0.678f);
+            }
+            // unknown - white
+            return new Vector3(1, 1, 1);
+        }
+
+        // todo: files not referenced by this list: powerBeamNoSplatMP_PS.bin, sparksDown_PS.bin
+        public static readonly IReadOnlyList<string> Effects = new List<string>()
+        {
+            /*   0 */ "", // unused?
+            /*   1 */ "_archives/effects/powerBeam_PS.bin",
+            /*   2 */ "_archives/effects/powerBeamNoSplat_PS.bin",
+            /*   3 */ "effects/blastCapHit_PS.bin",
+            /*   4 */ "effects/blastCapBlow_PS.bin",
+            /*   5 */ "_archives/effects/missile1_PS.bin",
+            /*   6 */ "_archives/effects/mortar1_PS.bin",
+            /*   7 */ "_archives/effects/shotGunCol_PS.bin",
+            /*   8 */ "_archives/effects/shotGunShrapnel_PS.bin",
+            /*   9 */ "effects/bombStart_PS.bin",
+            /*  10 */ "effects/ballDeath_PS.bin",
+            /*  11 */ "_archives/effects/jackHammerCol_PS.bin",
+            /*  12 */ "effects/effectiveHitPB_PS.bin",
+            /*  13 */ "effects/effectiveHitElectric_PS.bin",
+            /*  14 */ "effects/effectiveHitMsl_PS.bin",
+            /*  15 */ "effects/effectiveHitJack_PS.bin",
+            /*  16 */ "effects/effectiveHitSniper_PS.bin",
+            /*  17 */ "effects/effectiveHitIce_PS.bin",
+            /*  18 */ "effects/effectiveHitMortar_PS.bin",
+            /*  19 */ "effects/effectiveHitGhost_PS.bin",
+            /*  20 */ "effects/sprEffectivePB_PS.bin",
+            /*  21 */ "effects/sprEffectiveElectric_PS.bin",
+            /*  22 */ "effects/sprEffectiveMsl_PS.bin",
+            /*  23 */ "effects/sprEffectiveJack_PS.bin",
+            /*  24 */ "effects/sprEffectiveSniper_PS.bin",
+            /*  25 */ "effects/sprEffectiveIce_PS.bin",
+            /*  26 */ "effects/sprEffectiveMortar_PS.bin",
+            /*  27 */ "effects/sprEffectiveGhost_PS.bin",
+            /*  28 */ "_archives/effects/sniperCol_PS.bin",
+            /*  29 */ "effects/shriekBatTrail_PS.bin",
+            /*  30 */ "effects/samusFurl_PS.bin",
+            /*  31 */ "effects/spawnEffect_PS.bin",
+            /*  32 */ "effects/test_PS.bin",
+            /*  33 */ "effects/spawnEffectMP_PS.bin",
+            /*  34 */ "effects/burstFlame_PS.bin",
+            /*  35 */ "effects/gunSmoke_PS.bin",
+            /*  36 */ "effects/jetFlame_PS.bin",
+            /*  37 */ "effects/spireAltSlam_PS.bin",
+            /*  38 */ "effects/steamBurst_PS.bin",
+            /*  39 */ "effects/steamSamusShip_PS.bin",
+            /*  40 */ "effects/steamDoorway_PS.bin",
+            /*  41 */ "effects/goreaArmChargeUp_PS.bin",
+            /*  42 */ "effects/goreaBallExplode_PS.bin",
+            /*  43 */ "effects/goreaShoulderDamageLoop_PS.bin",
+            /*  44 */ "effects/goreaShoulderHits_PS.bin",
+            /*  45 */ "effects/goreaShoulderKill_PS.bin",
+            /*  46 */ "effects/goreaChargeElc_PS.bin",
+            /*  47 */ "effects/goreaChargeIce_PS.bin",
+            /*  48 */ "effects/goreaChargeJak_PS.bin",
+            /*  49 */ "effects/goreaChargeMrt_PS.bin",
+            /*  50 */ "effects/goreaChargeSnp_PS.bin",
+            /*  51 */ "effects/goreaFireElc_PS.bin",
+            /*  52 */ "effects/goreaFireGst_PS.bin",
+            /*  53 */ "effects/goreaFireIce_PS.bin",
+            /*  54 */ "effects/goreaFireJak_PS.bin",
+            /*  55 */ "effects/goreaFireMrt_PS.bin",
+            /*  56 */ "effects/goreaFireSnp_PS.bin",
+            /*  57 */ "effects/muzzleElc_PS.bin",
+            /*  58 */ "effects/muzzleGst_PS.bin",
+            /*  59 */ "effects/muzzleIce_PS.bin",
+            /*  60 */ "effects/muzzleJak_PS.bin",
+            /*  61 */ "effects/muzzleMrt_PS.bin",
+            /*  62 */ "effects/muzzlePB_PS.bin",
+            /*  63 */ "effects/muzzleSnp_PS.bin",
+            /*  64 */ "effects/tear_PS.bin",
+            /*  65 */ "effects/cylCrystalCharge_PS.bin",
+            /*  66 */ "effects/cylCrystalKill_PS.bin",
+            /*  67 */ "effects/cylCrystalShot_PS.bin",
+            /*  68 */ "effects/tearSplat_PS.bin",
+            /*  69 */ "effects/eyeShieldCharge_PS.bin",
+            /*  70 */ "effects/eyeShieldHit_PS.bin",
+            /*  71 */ "effects/goreaSlam_PS.bin",
+            /*  72 */ "effects/goreaBallExplode2_PS.bin",
+            /*  73 */ "effects/cylCrystalKill2_PS.bin",
+            /*  74 */ "effects/cylCrystalKill3_PS.bin",
+            /*  75 */ "effects/goreaCrystalExplode_PS.bin",
+            /*  76 */ "effects/deathBio1_PS.bin",
+            /*  77 */ "effects/deathMech1_PS.bin",
+            /*  78 */ "effects/iceWave_PS.bin",
+            /*  79 */ "effects/goreaMeteor_PS.bin",
+            /*  80 */ "effects/goreaTeleport_PS.bin",
+            /*  81 */ "effects/tearChargeUp_PS.bin",
+            /*  82 */ "effects/eyeShield_PS.bin",
+            /*  83 */ "effects/eyeShieldDefeat_PS.bin",
+            /*  84 */ "effects/grateSparks_PS.bin",
+            /*  85 */ "effects/electroCharge_PS.bin",
+            /*  86 */ "effects/electroHit_PS.bin",
+            /*  87 */ "effects/torch_PS.bin",
+            /*  88 */ "effects/jetFlameBlue_PS.bin",
+            /*  89 */ "effects/lavaBurstLarge_PS.bin",
+            /*  90 */ "effects/lavaBurstSmall_PS.bin",
+            /*  91 */ "effects/ember_PS.bin",
+            /*  92 */ "effects/powerBeamCharge_PS.bin",
+            /*  93 */ "effects/lavaDemonDive_PS.bin",
+            /*  94 */ "effects/lavaDemonHurl_PS.bin",
+            /*  95 */ "effects/lavaDemonRise_PS.bin",
+            /*  96 */ "effects/iceDemonHurl_PS.bin",
+            /*  97 */ "effects/lavaBurstExtraLarge_PS.bin",
+            /*  98 */ "effects/powerBeamChargeNoSplat_PS.bin",
+            /*  99 */ "effects/powerBeamHolo_PS.bin",
+            /* 100 */ "effects/powerBeamLava_PS.bin",
+            /* 101 */ "effects/hangingDrip_PS.bin",
+            /* 102 */ "effects/hangingSpit_PS.bin",
+            /* 103 */ "effects/hangingSplash_PS.bin",
+            /* 104 */ "effects/goreaEyeFlash_PS.bin",
+            /* 105 */ "effects/smokeBurst_PS.bin",
+            /* 106 */ "effects/sparks_PS.bin",
+            /* 107 */ "effects/sparksFall_PS.bin", // no such file?
+            /* 108 */ "effects/shriekBatCol_PS.bin",
+            /* 109 */ "effects/eyeTurretCharge_PS.bin",
+            /* 110 */ "effects/lavaDemonSplat_PS.bin",
+            /* 111 */ "effects/tearDrips_PS.bin",
+            /* 112 */ "effects/syluxShipExhaust_PS.bin",
+            /* 113 */ "effects/bombStartSylux_PS.bin",
+            /* 114 */ "effects/lockDefeat_PS.bin",
+            /* 115 */ "effects/ineffectivePsycho_PS.bin",
+            /* 116 */ "effects/cylCrystalProjectile_PS.bin",
+            /* 117 */ "effects/cylWeakSpotShot_PS.bin",
+            /* 118 */ "effects/eyeLaser_PS.bin",
+            /* 119 */ "effects/bombStartMP_PS.bin",
+            /* 120 */ "effects/enemyMslCol_PS.bin",
+            /* 121 */ "effects/powerBeamHoloBG_PS.bin",
+            /* 122 */ "effects/powerBeamHoloB_PS.bin",
+            /* 123 */ "effects/powerBeamIce_PS.bin",
+            /* 124 */ "effects/powerBeamRock_PS.bin",
+            /* 125 */ "effects/powerBeamSand_PS.bin",
+            /* 126 */ "effects/powerBeamSnow_PS.bin",
+            /* 127 */ "effects/bubblesRising_PS.bin",
+            /* 128 */ "effects/bombKanden_PS.bin",
+            /* 129 */ "effects/collapsingStreaks_PS.bin",
+            /* 130 */ "effects/fireProjectile_PS.bin",
+            /* 131 */ "effects/iceDemonSplat_PS.bin",
+            /* 132 */ "effects/iceDemonRise_PS.bin",
+            /* 133 */ "effects/iceDemonDive_PS.bin",
+            /* 134 */ "effects/hammerProjectile_PS.bin",
+            /* 135 */ "effects/synapseKill_PS.bin",
+            /* 136 */ "effects/samusDash_PS.bin",
+            /* 137 */ "effects/electroProjectile_PS.bin",
+            /* 138 */ "effects/cylHomingProjectile_PS.bin",
+            /* 139 */ "effects/cylHomingKill_PS.bin",
+            /* 140 */ "effects/energyRippleB_PS.bin",
+            /* 141 */ "effects/energyRippleBG_PS.bin",
+            /* 142 */ "effects/energyRippleO_PS.bin",
+            /* 143 */ "effects/columnCrash_PS.bin",
+            /* 144 */ "effects/artifactKeyEffect_PS.bin",
+            /* 145 */ "effects/bombBlue_PS.bin",
+            /* 146 */ "effects/bombSylux_PS.bin",
+            /* 147 */ "effects/columnBreak_PS.bin",
+            /* 148 */ "effects/grappleEnd_PS.bin",
+            /* 149 */ "effects/bombStartSyluxG_PS.bin",
+            /* 150 */ "effects/bombStartSyluxO_PS.bin",
+            /* 151 */ "effects/bombStartSyluxP_PS.bin",
+            /* 152 */ "effects/bombStartSyluxR_PS.bin",
+            /* 153 */ "effects/bombStartSyluxW_PS.bin",
+            /* 154 */ "effects/mpEffectivePB_PS.bin",
+            /* 155 */ "effects/mpEffectiveElectric_PS.bin",
+            /* 156 */ "effects/mpEffectiveMsl_PS.bin",
+            /* 157 */ "effects/mpEffectiveJack_PS.bin",
+            /* 158 */ "effects/mpEffectiveSniper_PS.bin",
+            /* 159 */ "effects/mpEffectiveIce_PS.bin",
+            /* 160 */ "effects/mpEffectiveMortar_PS.bin",
+            /* 161 */ "effects/mpEffectiveGhost_PS.bin",
+            /* 162 */ "effects/pipeTricity_PS.bin",
+            /* 163 */ "effects/breakableExplode_PS.bin",
+            /* 164 */ "effects/goreaCrystalHit_PS.bin",
+            /* 165 */ "effects/chargeElc_PS.bin",
+            /* 166 */ "effects/chargeIce_PS.bin",
+            /* 167 */ "effects/chargeJak_PS.bin",
+            /* 168 */ "effects/chargeMrt_PS.bin",
+            /* 169 */ "effects/chargePB_PS.bin",
+            /* 170 */ "effects/chargeMsl_PS.bin",
+            /* 171 */ "effects/electroChargeNA_PS.bin",
+            /* 172 */ "effects/mortarSecondary_PS.bin", // no such file?
+            /* 173 */ "_archives/effects/jackHammerColNA_PS.bin",
+            /* 174 */ "effects/goreaMeteorLaunch_PS.bin",
+            /* 175 */ "effects/goreaReveal_PS.bin",
+            /* 176 */ "effects/goreaMeteorDamage_PS.bin",
+            /* 177 */ "effects/goreaMeteorDestroy_PS.bin",
+            /* 178 */ "effects/goreaMeteorHit_PS.bin",
+            /* 179 */ "effects/goreaGrappleDamage_PS.bin",
+            /* 180 */ "effects/goreaGrappleDie_PS.bin",
+            /* 181 */ "effects/deathBall_PS.bin",
+            /* 182 */ "effects/nozzleJet_PS.bin",
+            /* 183 */ "effects/syluxMissile_PS.bin",
+            /* 184 */ "effects/syluxMissileCol_PS.bin",
+            /* 185 */ "effects/syluxMissileFlash_PS.bin",
+            /* 186 */ "effects/sphereTricity_PS.bin",
+            /* 187 */ "effects/flamingAltForm_PS.bin",
+            /* 188 */ "effects/flamingGun_PS.bin",
+            /* 189 */ "effects/flamingHunter_PS.bin",
+            /* 190 */ "_archives/effects/missileCharged_PS.bin",
+            /* 191 */ "_archives/effects/mortarCharged_PS.bin",
+            /* 192 */ "_archives/effects/mortarChargedAffinity_PS.bin",
+            /* 193 */ "effects/deathBio2_PS.bin",
+            /* 194 */ "effects/chargeLoopElc_PS.bin",
+            /* 195 */ "effects/chargeLoopIce_PS.bin",
+            /* 196 */ "effects/chargeLoopMrt_PS.bin",
+            /* 197 */ "effects/chargeLoopMsl_PS.bin",
+            /* 198 */ "effects/chargeLoopPB_PS.bin",
+            /* 199 */ "effects/sphereTricitySmall_PS.bin",
+            /* 200 */ "effects/generatorExplosion_PS.bin",
+            /* 201 */ "effects/eyeDamageLoop_PS.bin",
+            /* 202 */ "effects/eyeHit_PS.bin",
+            /* 203 */ "effects/eyelKill_PS.bin",
+            /* 204 */ "effects/eyeKill2_PS.bin",
+            /* 205 */ "effects/eyeKill3_PS.bin",
+            /* 206 */ "effects/eyeFinalKill_PS.bin",
+            /* 207 */ "effects/chargeTurret_PS.bin",
+            /* 208 */ "effects/flashTurret_PS.bin",
+            /* 209 */ "effects/ultimateProjectile_PS.bin",
+            /* 210 */ "effects/goreaLaserCharge_PS.bin",
+            /* 211 */ "effects/mortarProjectile_PS.bin",
+            /* 212 */ "effects/fallingSnow_PS.bin",
+            /* 213 */ "effects/fallingDust_PS.bin",
+            /* 214 */ "effects/fallingRock_PS.bin",
+            /* 215 */ "effects/deathMech2_PS.bin",
+            /* 216 */ "effects/deathAlt_PS.bin",
+            /* 217 */ "effects/iceDemonDeath_PS.bin",
+            /* 218 */ "effects/lavaDemonDeath_PS.bin",
+            /* 219 */ "effects/deathBio3_PS.bin",
+            /* 220 */ "effects/deathBio4_PS.bin",
+            /* 221 */ "effects/deathBio5_PS.bin",
+            /* 222 */ "effects/deathStatue_PS.bin",
+            /* 223 */ "effects/deathTick_PS.bin",
+            /* 224 */ "effects/goreaLaserCol_PS.bin",
+            /* 225 */ "effects/goreaHurt_PS.bin",
+            /* 226 */ "effects/explosionAbove_PS.bin",
+            /* 227 */ "effects/fireFlurry_PS.bin",
+            /* 228 */ "effects/snowFlurry_PS.bin",
+            /* 229 */ "effects/enemySpawn_PS.bin",
+            /* 230 */ "effects/teleporter_PS.bin",
+            /* 231 */ "_archives/effects/iceShatter_PS.bin",
+            /* 232 */ "effects/sphereTricityDeath_PS.bin",
+            /* 233 */ "effects/greenFlurry_PS.bin",
+            /* 234 */ "effects/pmagAbsorb_PS.bin",
+            /* 235 */ "effects/noxHit_PS.bin",
+            /* 236 */ "effects/spireBurst_PS.bin",
+            /* 237 */ "effects/electroProjectileUncharged_PS.bin",
+            /* 238 */ "effects/enemyProjectile1_PS.bin",
+            /* 239 */ "effects/enemyCol1_PS.bin",
+            /* 240 */ "effects/psychoCharge_PS.bin",
+            /* 241 */ "effects/hammerProjectileSml_PS.bin",
+            /* 242 */ "effects/nozzleJetOff_PS.bin",
+            /* 243 */ "effects/powerBeamChargeNoSplatMP_PS.bin", // no such file?
+            /* 244 */ "effects/doubleDamageGun_PS.bin",
+            /* 245 */ "effects/ultimateCol_PS.bin",
+            /* 246 */ "effects/enemyMortarProjectile_PS.bin"
+        };
+
         public static (RoomMetadata?, int) GetRoomByName(string name)
         {
             if (RoomMetadata.TryGetValue(name, out RoomMetadata? metadata))
@@ -4221,200 +4732,6 @@ namespace MphRead
                 }
             };
 
-        public static readonly IReadOnlyList<DoorMetadata> Doors = new List<DoorMetadata>()
-        {
-            /* 0 */ new DoorMetadata("AlimbicDoor", "AlimbicDoorLock", 1.39990234f),
-            /* 1 */ new DoorMetadata("AlimbicMorphBallDoor", "AlimbicMorphBallDoorLock", 0.6999512f),
-            /* 2 */ new DoorMetadata("AlimbicBossDoor", "AlimbicBossDoorLock", 3.5f),
-            /* 3 */ new DoorMetadata("AlimbicThinDoor", "ThinDoorLock", 1.39990234f)
-        };
-
-        public static readonly IReadOnlyList<int> DoorPalettes = new List<int>()
-        {
-            0, 1, 2, 7, 6, 3, 4, 5, 0, 0
-        };
-
-        public static readonly IReadOnlyList<string> JumpPads = new List<string>()
-        {
-            /* 0 */ "JumpPad",
-            /* 1 */ "JumpPad_Alimbic",
-            /* 2 */ "JumpPad_Ice",
-            /* 3 */ "JumpPad_IceStation",
-            /* 4 */ "JumpPad_Lava",
-            /* 5 */ "JumpPad_Station"
-        };
-
-        public static readonly IReadOnlyList<string> Items
-            = new List<string>()
-        {
-            /*  0 */ "pick_health_B",
-            /*  1 */ "pick_health_A",
-            /*  2 */ "pick_health_C",
-            /*  3 */ "pick_dblDamage",
-            /*  4 */ "PickUp_EnergyExp",
-            /*  5 */ "pick_wpn_electro",
-            /*  6 */ "PickUp_MissileExp",
-            /*  7 */ "pick_wpn_jackhammer",
-            /*  8 */ "pick_wpn_snipergun",
-            /*  9 */ "pick_wpn_shotgun",
-            /* 10 */ "pick_wpn_mortar",
-            /* 11 */ "pick_wpn_ghostbuster",
-            /* 12 */ "pick_wpn_gorea",
-            /* 13 */ "pick_ammo_green",
-            /* 14 */ "pick_ammo_green",
-            /* 15 */ "pick_ammo_orange",
-            /* 16 */ "pick_ammo_orange",
-            /* 17 */ "pick_invis",
-            /* 18 */ "PickUp_AmmoExp",
-            /* 19 */ "Artifact_Key",
-            /* 20 */ "pick_deathball",
-            /* 21 */ "pick_wpn_all",
-            // unused
-            /* 22 */ "pick_wpn_missile"
-        };
-
-        public static readonly IReadOnlyList<string> FhItems
-            = new List<string>()
-        {
-            /* 0 */ "pick_ammo_A",
-            /* 1 */ "pick_ammo_B",
-            /* 2 */ "pick_health_A",
-            /* 3 */ "pick_health_B",
-            /* 4 */ "pick_dblDamage",
-            /* 5 */ "pick_morphball", // unused
-            /* 6 */ "pick_wpn_electro",
-            /* 7 */ "pick_wpn_missile"
-        };
-
-        private static readonly IReadOnlyList<ObjectMetadata> _objects = new List<ObjectMetadata>()
-        {
-            /*  0 */ new ObjectMetadata("AlimbicGhost_01", 0),
-            /*  1 */ new ObjectMetadata("AlimbicLightPole", 0),
-            /*  2 */ new ObjectMetadata("AlimbicStationShieldControl", 0),
-            /*  3 */ new ObjectMetadata("AlimbicComputerStationControl", 0),
-            /*  4 */ new ObjectMetadata("AlimbicEnergySensor", 0),
-            /*  5 */ new ObjectMetadata("SamusShip", 0), // unused
-            /*  6 */ new ObjectMetadata("Guardbot01_Dead", 0),
-            /*  7 */ new ObjectMetadata("Guardbot02_Dead", 0),
-            /*  8 */ new ObjectMetadata("Guardian_Dead", 0),
-            /*  9 */ new ObjectMetadata("Psychobit_Dead", 0),
-            /* 10 */ new ObjectMetadata("AlimbicLightPole02", 0),
-            /* 11 */ new ObjectMetadata("AlimbicComputerStationControl02", 0),
-            /* 12 */ new ObjectMetadata("Generic_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 13 */ new ObjectMetadata("Generic_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 14 */ new ObjectMetadata("Generic_Power", 0),
-            /* 15 */ new ObjectMetadata("Generic_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 16 */ new ObjectMetadata("Generic_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 17 */ new ObjectMetadata("Alimbic_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 18 */ new ObjectMetadata("Alimbic_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 19 */ new ObjectMetadata("Alimbic_Power", 0),
-            /* 20 */ new ObjectMetadata("Alimbic_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 21 */ new ObjectMetadata("Alimbic_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 22 */ new ObjectMetadata("Lava_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 23 */ new ObjectMetadata("Lava_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 24 */ new ObjectMetadata("Lava_Power", 0),
-            /* 25 */ new ObjectMetadata("Lava_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 26 */ new ObjectMetadata("Lava_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 27 */ new ObjectMetadata("Ice_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 28 */ new ObjectMetadata("Ice_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 29 */ new ObjectMetadata("Ice_Power", 0),
-            /* 30 */ new ObjectMetadata("Ice_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 31 */ new ObjectMetadata("Ice_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 32 */ new ObjectMetadata("Ruins_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 33 */ new ObjectMetadata("Ruins_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 34 */ new ObjectMetadata("Ruins_Power", 0),
-            /* 35 */ new ObjectMetadata("Ruins_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 36 */ new ObjectMetadata("Ruins_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 37 */ new ObjectMetadata("PlantCarnivarous_Branched", 0),
-            /* 38 */ new ObjectMetadata("PlantCarnivarous_Pod", 0),
-            /* 39 */ new ObjectMetadata("PlantCarnivarous_PodLeaves", 0),
-            /* 40 */ new ObjectMetadata("PlantCarnivarous_Vine", 0),
-            /* 41 */ new ObjectMetadata("GhostSwitch", 0),
-            /* 42 */ new ObjectMetadata("Switch", 1),
-            /* 43 */ new ObjectMetadata("Guardian_Stasis", 0, animationIds: new List<int>() { 0xFF, 0, 0, 0 }),
-            /* 44 */ new ObjectMetadata("AlimbicStatue_lod0", 0, animationIds: new List<int>() { 0xFF, 0, 0, 0 }),
-            /* 45 */ new ObjectMetadata("AlimbicCapsule", 0),
-            /* 46 */ new ObjectMetadata("SniperTarget", 1, animationIds: new List<int>() { 0, 2, 1, 0 }),
-            /* 47 */ new ObjectMetadata("SecretSwitch", 0, 1, animationIds: new List<int>() { 1, 2, 0, 0 }),
-            /* 48 */ new ObjectMetadata("SecretSwitch", 0, 2, animationIds: new List<int>() { 1, 2, 0, 0 }),
-            /* 49 */ new ObjectMetadata("SecretSwitch", 0, 3, animationIds: new List<int>() { 1, 2, 0, 0 }),
-            /* 50 */ new ObjectMetadata("SecretSwitch", 0, 4, animationIds: new List<int>() { 1, 2, 0, 0 }),
-            /* 51 */ new ObjectMetadata("SecretSwitch", 0, 5, animationIds: new List<int>() { 1, 2, 0, 0 }),
-            /* 52 */ new ObjectMetadata("SecretSwitch", 0, 6, animationIds: new List<int>() { 1, 2, 0, 0 }),
-            /* 53 */ new ObjectMetadata("WallSwitch", 1, animationIds: new List<int>() { 2, 0, 1, 0 })
-        };
-
-        public static ObjectMetadata GetObjectById(int id)
-        {
-            if (id < 0 || id > _objects.Count)
-            {
-                throw new ArgumentException(nameof(id));
-            }
-            return _objects[id];
-        }
-
-        private static readonly IReadOnlyList<PlatformMetadata?> _platforms = new List<PlatformMetadata?>()
-        {
-            /*  0 */ new PlatformMetadata("platform"),
-            /*  1 */ null, // duplicate of 0
-            /*  2 */ null, // todo: figure out what this "platform" is
-            /*  3 */ new PlatformMetadata("Elevator"),
-            /*  4 */ new PlatformMetadata("smasher"),
-            /*  5 */ new PlatformMetadata("Platform_Unit4_C1", someFlag: 1),
-            /*  6 */ new PlatformMetadata("pillar"),
-            /*  7 */ new PlatformMetadata("Door_Unit4_RM1"),
-            /*  8 */ new PlatformMetadata("SyluxShip", animationIds: new List<uint>() { UInt32.MaxValue, 1, 0, 2 }),
-            /*  9 */ new PlatformMetadata("pistonmp7"),
-            /* 10 */ new PlatformMetadata("unit3_brain", animationIds: new List<uint>() { 0, 0, 0, 0 }),
-            /* 11 */ new PlatformMetadata("unit4_mover1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
-            /* 12 */ new PlatformMetadata("unit4_mover2", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
-            /* 13 */ new PlatformMetadata("ElectroField1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
-            /* 14 */ new PlatformMetadata("Unit3_platform1"),
-            /* 15 */ new PlatformMetadata("unit3_pipe1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
-            /* 16 */ new PlatformMetadata("unit3_pipe2", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
-            /* 17 */ new PlatformMetadata("cylinderbase"),
-            /* 18 */ new PlatformMetadata("unit3_platform"),
-            /* 19 */ new PlatformMetadata("unit3_platform2"),
-            /* 20 */ new PlatformMetadata("unit3_jar", animationIds: new List<uint>() { 0, 2, 1, 0 }, field20: 0, field24: 0),
-            /* 21 */ new PlatformMetadata("SyluxTurret", animationIds: new List<uint>() { 3, 2, 1, 0 }, field20: 0, field24: 0),
-            /* 22 */ new PlatformMetadata("unit3_jartop", animationIds: new List<uint>() { 0, 2, 1, 0 }, field20: 0, field24: 0),
-            /* 23 */ new PlatformMetadata("SamusShip", animationIds: new List<uint>() { 1, 3, 2, 4 }, field20: 0, field24: 0),
-            /* 24 */ new PlatformMetadata("unit1_land_plat1"),
-            /* 25 */ new PlatformMetadata("unit1_land_plat2"),
-            /* 26 */ new PlatformMetadata("unit1_land_plat3"),
-            /* 27 */ new PlatformMetadata("unit1_land_plat4"),
-            /* 28 */ new PlatformMetadata("unit1_land_plat5"),
-            /* 29 */ new PlatformMetadata("unit2_c4_plat"),
-            /* 30 */ new PlatformMetadata("unit2_land_elev"),
-            /* 31 */ new PlatformMetadata("unit4_platform1"),
-            /* 32 */ new PlatformMetadata("Crate01", animationIds: new List<uint>() { UInt32.MaxValue, UInt32.MaxValue, 0, 1 }),
-            /* 33 */ new PlatformMetadata("unit1_mover1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
-            /* 34 */ new PlatformMetadata("unit1_mover2"),
-            /* 35 */ new PlatformMetadata("unit2_mover1"),
-            /* 36 */ new PlatformMetadata("unit4_mover3"),
-            /* 37 */ new PlatformMetadata("unit4_mover4"),
-            /* 38 */ new PlatformMetadata("unit3_mover1"),
-            /* 39 */ new PlatformMetadata("unit2_c1_mover"),
-            /* 40 */ new PlatformMetadata("unit3_mover2", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
-            /* 41 */ new PlatformMetadata("piston_gorealand"),
-            /* 42 */ new PlatformMetadata("unit4_tp2_artifact_wo"),
-            /* 43 */ new PlatformMetadata("unit4_tp1_artifact_wo"),
-            /* 44 */ new PlatformMetadata("SamusShip", animationIds: new List<uint>() { 1, 0, 2, 4 }, field20: 0, field24: 0)
-        };
-
-        public static PlatformMetadata? GetPlatformById(int id)
-        {
-            if (id < 0 || id > _platforms.Count)
-            {
-                throw new ArgumentException(nameof(id));
-            }
-            if (id == 1)
-            {
-                id = 0;
-            }
-            return _platforms[id];
-        }
-
         // todo: e.g. lod1 in the model folder should have the animation files from the lod0 archive
         public static readonly IReadOnlyDictionary<string, ModelMetadata> ModelMetadata
             = new Dictionary<string, ModelMetadata>()
@@ -4842,10 +5159,6 @@ namespace MphRead
                     new ModelMetadata("CylinderBoss")
                 },
                 {
-                    "deathParticle",
-                    new ModelMetadata("deathParticle", animation: false, texture: true, archive: "effectsBase")
-                },
-                {
                     "deepspace",
                     new ModelMetadata("deepspace", archive: "shipSpace")
                 },
@@ -4957,6 +5270,7 @@ namespace MphRead
                         })
                 },
                 // todo: these probably also use AlimbicPalettes
+                // todo: confirm texture shares with load_object
                 {
                     "ForceFieldLock",
                     new ModelMetadata("ForceFieldLock",
@@ -5003,10 +5317,6 @@ namespace MphRead
                         share: @"models\GenericEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
-                    "geo1",
-                    new ModelMetadata("geo1", animation: false, texture: true, archive: "effectsBase")
                 },
                 {
                     "GhostSwitch",
@@ -5524,14 +5834,6 @@ namespace MphRead
                 {
                     "octolith_simple",
                     new ModelMetadata("octolith_simple", animation: false)
-                },
-                {
-                    "particles",
-                    new ModelMetadata("particles", animation: false, texture: true, archive: "effectsBase")
-                },
-                {
-                    "particles2",
-                    new ModelMetadata("particles2", animation: false, texture: true, archive: "effectsBase")
                 },
                 {
                     "PickUp_AmmoExp",
@@ -6447,6 +6749,23 @@ namespace MphRead
                 {
                     "zoomer",
                     new ModelMetadata("zoomer")
+                },
+                // effectsBase
+                {
+                    "deathParticle",
+                    new ModelMetadata("deathParticle", animation: false, texture: true, archive: "effectsBase")
+                },
+                {
+                    "geo1",
+                    new ModelMetadata("geo1", animation: false, texture: true, archive: "effectsBase")
+                },
+                {
+                    "particles",
+                    new ModelMetadata("particles", animation: false, texture: true, archive: "effectsBase")
+                },
+                {
+                    "particles2",
+                    new ModelMetadata("particles2", animation: false, texture: true, archive: "effectsBase")
                 },
                 // 2D images only, no mesh/dlist, probably just swapped in for other textures on models
                 //{

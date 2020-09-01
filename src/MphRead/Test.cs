@@ -10,6 +10,37 @@ namespace MphRead
 {
     public static class Test
     {
+        public static void TestCameraSequences()
+        {
+            // todo: metadata for this
+            foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Paths.FileSystem, "cameraEditor")))
+            {
+                string name = Path.GetFileNameWithoutExtension(filePath);
+                if (name != "cameraEditBG")
+                {
+                    IReadOnlyList<CameraSequenceFrame> frames = Read.ReadCameraSequence(name);
+                    Nop();
+                }
+            }
+        }
+
+        public static void TestEffects()
+        {
+            foreach (string path in Metadata.Effects)
+            {
+                if (path != "" && path != "effects/sparksFall_PS.bin" && path != "effects/mortarSecondary_PS.bin"
+                    && path != "effects/powerBeamChargeNoSplatMP_PS.bin")
+                {
+                    Effect effect = Read.ReadEffect(path);
+                    foreach (EffectElement element in effect.Elements)
+                    {
+                        Nop();
+                    }
+                }
+            }
+            Nop();
+        }
+
         public static void TestCollision()
         {
             ushort headerSize = 0;
@@ -897,10 +928,10 @@ namespace MphRead
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
                     foreach (Entity entity in entities)
                     {
-                        if (entity.Type == EntityType.JumpPad)
+                        if (entity.Type == EntityType.Item)
                         {
-                            JumpPadEntityData data = ((Entity<JumpPadEntityData>)entity).Data;
-                            if (data.Active == 0)
+                            ItemEntityData data = ((Entity<ItemEntityData>)entity).Data;
+                            if (data.AlwaysActive == 0)
                             {
                                 Debugger.Break();
                             }
@@ -911,37 +942,45 @@ namespace MphRead
             Nop();
         }
 
-        public static void TestUnknown8s()
+        public static void TestUnknown7s()
         {
-            var types = new HashSet<uint>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 if (meta.Value.EntityPath != null)
                 {
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
-                    if (entities.Any(t => t.Type == EntityType.Unknown8))
+                    foreach (Entity entity in entities)
                     {
-                        Console.WriteLine(meta.Key);
+                        if (entity.Type == EntityType.Unknown7)
+                        {
+                            Unknown7EntityData data = ((Entity<Unknown7EntityData>)entity).Data;
+                        }
                     }
+                }
+            }
+            Nop();
+        }
+
+        public static void TestUnknown8s()
+        {
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                if (meta.Value.EntityPath != null)
+                {
+                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
                     foreach (Entity entity in entities)
                     {
                         if (entity.Type == EntityType.Unknown8)
                         {
                             Unknown8EntityData data = ((Entity<Unknown8EntityData>)entity).Data;
-                            types.Add(data.Type);
-                            Console.WriteLine($"{data.Volume.Type} - {data.Type} ({data.Active})");
-                            Console.WriteLine($"{data.Field64}, {data.Field67}, {data.Field68}, {data.Field69}, {data.Field6A}, " +
-                                $"{data.Param1}, {data.Field72}, {data.Field74}, {data.Field78}, {data.Field7A}, {data.Field7C}, " +
-                                $"{data.Field80}, {data.Field84}, {data.Field88}, {data.Field8A}, {data.Field8C}");
+                            if (data.Field8A > 1)
+                            {
+                                Debugger.Break();
+                            }
                         }
-                    }
-                    if (entities.Any(t => t.Type == EntityType.Unknown8))
-                    {
-                        Console.WriteLine();
                     }
                 }
             }
-            Console.WriteLine(String.Join(", ", types.OrderBy(t => t)));
             Nop();
         }
 

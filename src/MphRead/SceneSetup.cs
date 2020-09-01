@@ -310,6 +310,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.PlayerSpawn)
                 {
+                    // todo: compute model matrices for placeholders to show e.g. player spawn angle
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<PlayerSpawnEntityData>)entity).Data.Header.Position));
                 }
                 else if (entity.Type == EntityType.FhPlayerSpawn)
@@ -342,7 +343,9 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Unknown7)
                 {
-                    models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<Unknown7EntityData>)entity).Data.Header.Position));
+                    Model model = LoadEntityPlaceholder(entity.Type, ((Entity<Unknown7EntityData>)entity).Data.Header.Position);
+                    model.Entity = entity;
+                    models.Add(model);
                 }
                 else if (entity.Type == EntityType.FhUnknown9)
                 {
@@ -721,7 +724,7 @@ namespace MphRead
             return model;
         }
 
-        // todo: enable drawing door lock, also use "flags" to determine lock/color state
+        // sktodo: enable drawing door lock, also use "flags" to determine lock/color state
         private static Model LoadDoor(DoorEntityData data)
         {
             DoorMetadata meta = Metadata.Doors[(int)data.ModelId];
@@ -731,6 +734,11 @@ namespace MphRead
             {
                 recolorId = Metadata.DoorPalettes[(int)data.PaletteId];
             }
+            // in practice (actual palette indices, not the index into the metadata):
+            // - standard = 0, 1, 2, 3, 4, 6
+            // - morph ball = 0
+            // - boss = 0
+            // - thin = 0, 7
             Model model = Read.GetModelByName(meta.Name, recolorId);
             model.Position = data.Header.Position.ToFloatVector();
             ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
