@@ -617,15 +617,15 @@ namespace MphRead
             var elements = new List<EffectElement>();
             foreach (uint offset in elementOffsets)
             {
-                // sktodo: what's in between the drawable name offsets and the next element?
+                // sktodo: what's in between the particle name offsets and the next element?
                 RawEffectElement element = DoOffset<RawEffectElement>(bytes, offset);
-                var drawables = new List<string>();
-                foreach (uint nameOffset in DoOffsets<uint>(bytes, element.DrawableOffset, element.DrawableCount))
+                var particles = new List<string>();
+                foreach (uint nameOffset in DoOffsets<uint>(bytes, element.ParticleOffset, element.ParticleCount))
                 {
-                    drawables.Add(ReadString(bytes, nameOffset, 16));
+                    particles.Add(ReadString(bytes, nameOffset, 16));
                 }
                 IReadOnlyList<uint> someList = DoOffsets<uint>(bytes, element.SomeOffset, 2 * element.SomeCount);
-                elements.Add(new EffectElement(element, drawables, someList));
+                elements.Add(new EffectElement(element, particles, someList));
             }
             return new Effect(effect, list1, list2, elements, name);
         }

@@ -492,8 +492,8 @@ namespace MphRead
         public readonly string Name;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
         public readonly string ModelName;
-        public readonly uint DrawableCount;
-        public readonly uint DrawableOffset;
+        public readonly uint ParticleCount;
+        public readonly uint ParticleOffset;
         public readonly uint Flags;
         public readonly uint Field4C;
         public readonly uint Field50;

@@ -731,7 +731,7 @@ namespace MphRead
     {
         public string Name { get; }
         public string ModelName { get; }
-        public IReadOnlyList<string> Drawables { get; }
+        public IReadOnlyList<string> Particles { get; }
         public uint Flags { get; }
         public uint Field4C { get; }
         public uint Field50 { get; }
@@ -745,7 +745,7 @@ namespace MphRead
 
         public string ChildEffect => Metadata.Effects[(int)ChildEffectId];
 
-        public EffectElement(RawEffectElement raw, IReadOnlyList<string> drawables, IReadOnlyList<uint> someList)
+        public EffectElement(RawEffectElement raw, IReadOnlyList<string> particles, IReadOnlyList<uint> someList)
         {
             Name = raw.Name;
             ModelName = raw.ModelName;
@@ -758,7 +758,7 @@ namespace MphRead
             Field60 = raw.Field60;
             Field64 = raw.Field64;
             Field68 = raw.Field68;
-            Drawables = drawables;
+            Particles = particles;
             Debug.Assert(someList.Count % 2 == 0);
             Debug.Assert(someList.Count == raw.SomeCount * 2);
             var pairList = new List<(uint, uint)>();
