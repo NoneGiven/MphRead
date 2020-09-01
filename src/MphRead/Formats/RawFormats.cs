@@ -472,4 +472,50 @@ namespace MphRead
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
         public readonly string NodeName; // actually "NodeNameOrRef" union
     }
+
+    // size: 28
+    public readonly struct RawEffect
+    {
+        public readonly uint Field0; // sktodo: always garbage in the file?
+        public readonly uint Count1;
+        public readonly uint Offset1;
+        public readonly uint Count2;
+        public readonly uint Offset2;
+        public readonly uint ElementCount;
+        public readonly uint ElementOffset;
+    }
+
+    // size: 132
+    public readonly struct RawEffectElement
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public readonly string Name;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public readonly string ModelName;
+        public readonly uint DrawableCount;
+        public readonly uint DrawableOffset;
+        public readonly uint Flags;
+        public readonly uint Field4C;
+        public readonly uint Field50;
+        public readonly uint Field54;
+        public readonly uint ChildEffectId;
+        public readonly uint Field5C;
+        public readonly uint Field60;
+        public readonly uint Field64;
+        public readonly uint Field68;
+        public readonly uint SomeCount;
+        public readonly uint SomeOffset;
+        public readonly uint Field74;
+        public readonly uint Field78;
+        public readonly uint Field7C;
+        public readonly uint Field80;
+    }
+
+    // size: 12
+    public readonly struct Drawable
+    {
+        public readonly uint Model;
+        public readonly uint Node;
+        public readonly uint DisplayList;
+    }
 }

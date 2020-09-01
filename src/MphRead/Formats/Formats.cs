@@ -708,6 +708,63 @@ namespace MphRead
         }
     }
 
+    public class Effect
+    {
+        public uint Field0 { get; }
+        public IReadOnlyList<uint> List1 { get; }
+        public IReadOnlyList<uint> List2 { get; }
+        public IReadOnlyList<EffectElement> Elements { get; }
+
+        public Effect(RawEffect raw, IReadOnlyList<uint> list1, IReadOnlyList<uint> list2, IReadOnlyList<EffectElement> elements)
+        {
+            Field0 = raw.Field0;
+            List1 = list1;
+            List2 = list2;
+            Elements = elements;
+        }
+    }
+
+    public class EffectElement
+    {
+        public string Name { get; }
+        public string ModelName { get; }
+
+        // sktodo
+        public uint DrawableCount { get; }
+        public uint DrawableOffset { get; }
+
+        public uint Flags { get; }
+        public uint Field4C { get; }
+        public uint Field50 { get; }
+        public uint Field54 { get; }
+        public uint ChildEffectId { get; }
+        public uint Field5C { get; }
+        public uint Field60 { get; }
+        public uint Field64 { get; }
+        public uint Field68 { get; }
+
+        // sktodo
+        public uint SomeCount { get; }
+        public uint SomeOffset { get; }
+
+        public string ChildEffect => Metadata.Effects[(int)ChildEffectId];
+
+        public EffectElement(RawEffectElement raw)
+        {
+            Name = raw.Name;
+            ModelName = raw.ModelName;
+            Flags = raw.Flags;
+            Field4C = raw.Field4C;
+            Field50 = raw.Field50;
+            Field54 = raw.Field54;
+            ChildEffectId = raw.ChildEffectId;
+            Field5C = raw.Field5C;
+            Field60 = raw.Field60;
+            Field64 = raw.Field64;
+            Field68 = raw.Field68;
+        }
+    }
+    
     public class Entity
     {
         public string NodeName { get; }

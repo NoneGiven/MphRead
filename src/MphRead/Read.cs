@@ -606,6 +606,25 @@ namespace MphRead
             return frames;
         }
 
+        // todo: should this load child effects automatically?
+        public static Effect ReadEffect(string name)
+        {
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, name)));
+            RawEffect effect = ReadStruct<RawEffect>(bytes);
+            IReadOnlyList<uint> list1 = DoOffsets<uint>(bytes, effect.Offset1, effect.Count1);
+            IReadOnlyList<uint> list2 = DoOffsets<uint>(bytes, effect.Offset2, effect.Count2);
+            IReadOnlyList<uint> elementOffsets = DoOffsets<uint>(bytes, effect.ElementOffset, effect.ElementCount);
+            var elements = new List<EffectElement>();
+            foreach (uint offset in elementOffsets)
+            {
+                RawEffectElement element = DoOffset<RawEffectElement>(bytes, offset);
+                //IReadOnlyList<Drawable> drawables = DoOffsets<Drawable>(bytes, element.DrawableOffset, element.DrawableCount);
+                IReadOnlyList<uint> someList = DoOffsets<uint>(bytes, element.SomeOffset, 2 * element.SomeCount);
+                elements.Add(new EffectElement(element));
+            }
+            return new Effect(effect, list1, list2, elements);
+        }
+        
         private static void Nop() { }
 
         private static IReadOnlyList<RenderInstruction> DoRenderInstructions(ReadOnlySpan<byte> bytes, DisplayList dlist)
@@ -686,6 +705,11 @@ namespace MphRead
             return DoOffsets<T>(bytes, offset, 1).First();
         }
 
+        public static IReadOnlyList<T> DoOffsets<T>(ReadOnlySpan<byte> bytes, uint offset, uint count) where T : struct
+        {
+            return DoOffsets<T>(bytes, offset, (int)count);
+        }
+        
         public static IReadOnlyList<T> DoOffsets<T>(ReadOnlySpan<byte> bytes, uint offset, int count) where T : struct
         {
             int ioffset = (int)offset;
