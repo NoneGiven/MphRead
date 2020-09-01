@@ -5159,10 +5159,6 @@ namespace MphRead
                     new ModelMetadata("CylinderBoss")
                 },
                 {
-                    "deathParticle",
-                    new ModelMetadata("deathParticle", animation: false, texture: true, archive: "effectsBase")
-                },
-                {
                     "deepspace",
                     new ModelMetadata("deepspace", archive: "shipSpace")
                 },
@@ -5321,10 +5317,6 @@ namespace MphRead
                         share: @"models\GenericEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
-                    "geo1",
-                    new ModelMetadata("geo1", animation: false, texture: true, archive: "effectsBase")
                 },
                 {
                     "GhostSwitch",
@@ -5842,14 +5834,6 @@ namespace MphRead
                 {
                     "octolith_simple",
                     new ModelMetadata("octolith_simple", animation: false)
-                },
-                {
-                    "particles",
-                    new ModelMetadata("particles", animation: false, texture: true, archive: "effectsBase")
-                },
-                {
-                    "particles2",
-                    new ModelMetadata("particles2", animation: false, texture: true, archive: "effectsBase")
                 },
                 {
                     "PickUp_AmmoExp",
@@ -6765,6 +6749,23 @@ namespace MphRead
                 {
                     "zoomer",
                     new ModelMetadata("zoomer")
+                },
+                // effectsBase
+                {
+                    "deathParticle",
+                    new ModelMetadata("deathParticle", animation: false, texture: true, archive: "effectsBase")
+                },
+                {
+                    "geo1",
+                    new ModelMetadata("geo1", animation: false, texture: true, archive: "effectsBase")
+                },
+                {
+                    "particles",
+                    new ModelMetadata("particles", animation: false, texture: true, archive: "effectsBase")
+                },
+                {
+                    "particles2",
+                    new ModelMetadata("particles2", animation: false, texture: true, archive: "effectsBase")
                 },
                 // 2D images only, no mesh/dlist, probably just swapped in for other textures on models
                 //{
