@@ -26,7 +26,7 @@ namespace MphRead
         BeamEffect = 21,
         Bomb = 22,
         EnemyInstance = 23,
-        Unknown24 = 24,
+        Halfturret = 24,
         Player = 25,
         BeamProjectile = 26,
         // 27 = entity list header
