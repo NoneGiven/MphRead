@@ -341,9 +341,9 @@ namespace MphRead
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhEnemyEntityData>)entity).Data.Header.Position));
                 }
-                else if (entity.Type == EntityType.Unknown7)
+                else if (entity.Type == EntityType.TriggerVolume)
                 {
-                    Model model = LoadEntityPlaceholder(entity.Type, ((Entity<Unknown7EntityData>)entity).Data.Header.Position);
+                    Model model = LoadEntityPlaceholder(entity.Type, ((Entity<TriggerVolumeEntityData>)entity).Data.Header.Position);
                     model.Entity = entity;
                     models.Add(model);
                 }
@@ -351,9 +351,9 @@ namespace MphRead
                 {
                     models.Add(LoadEntityPlaceholder(entity.Type, ((Entity<FhUnknown9EntityData>)entity).Data.Header.Position));
                 }
-                else if (entity.Type == EntityType.Unknown8)
+                else if (entity.Type == EntityType.AreaVolume)
                 {
-                    Model model = LoadEntityPlaceholder(entity.Type, ((Entity<Unknown8EntityData>)entity).Data.Header.Position);
+                    Model model = LoadEntityPlaceholder(entity.Type, ((Entity<AreaVolumeEntityData>)entity).Data.Header.Position);
                     model.Entity = entity;
                     models.Add(model);
                 }
@@ -839,9 +839,9 @@ namespace MphRead
             { EntityType.Object, new ColorRgb(0x22, 0x8B, 0x22) }, // currently used for ID -1
             { EntityType.Enemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.FhEnemy, new ColorRgb(0x00, 0x00, 0x8B) },
-            { EntityType.Unknown7, new ColorRgb(0xFF, 0x8C, 0x00) },
+            { EntityType.TriggerVolume, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.FhUnknown9, new ColorRgb(0xFF, 0x8C, 0x00) },
-            { EntityType.Unknown8, new ColorRgb(0xFF, 0xFF, 0x00) },
+            { EntityType.AreaVolume, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.FhUnknown10, new ColorRgb(0xFF, 0xFF, 0x00) },
             // "permanent" placeholders
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },

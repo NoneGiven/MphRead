@@ -514,7 +514,7 @@ namespace MphRead
     }
 
     // size: 160
-    public readonly struct Unknown7EntityData
+    public readonly struct TriggerVolumeEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly uint Type; // subtype 0-4?
@@ -543,7 +543,7 @@ namespace MphRead
     }
 
     // size: 152
-    public readonly struct Unknown8EntityData
+    public readonly struct AreaVolumeEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly RawCollisionVolume Volume;

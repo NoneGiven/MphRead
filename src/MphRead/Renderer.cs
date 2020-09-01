@@ -178,13 +178,13 @@ namespace MphRead
                     _displayVolumes.Add(entity.SceneId, display);
                     _lightSources.Add(entity.SceneId, display);
                 }
-                else if (entity.Entity is Entity<Unknown7EntityData> unknown7)
+                else if (entity.Entity is Entity<TriggerVolumeEntityData> unknown7)
                 {
-                    _displayVolumes.Add(entity.SceneId, new Unknown7Display(unknown7));
+                    _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(unknown7));
                 }
-                else if (entity.Entity is Entity<Unknown8EntityData> unknown8)
+                else if (entity.Entity is Entity<AreaVolumeEntityData> unknown8)
                 {
-                    _displayVolumes.Add(entity.SceneId, new Unknown8Display(unknown8));
+                    _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(unknown8));
                 }
                 else if (entity.Entity is Entity<JumpPadEntityData> jumpPad)
                 {
@@ -2424,7 +2424,7 @@ namespace MphRead
                     type += $" ({vector1.X.FloatValue}, {vector1.Y.FloatValue}, {vector1.Z.FloatValue}) " +
                         $"({vector2.X.FloatValue}, {vector2.Y.FloatValue}, {vector2.Z.FloatValue})";
                 }
-                else if (model.Entity is Entity<Unknown8EntityData> unknown8)
+                else if (model.Entity is Entity<AreaVolumeEntityData> unknown8)
                 {
                     type += $" - Entry event ID {unknown8.Data.InsideEventId}";
                 }

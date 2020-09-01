@@ -997,10 +997,10 @@ namespace MphRead
         }
     }
 
-    // todo: some subtypes might not use their volume? if so, don't render them (confirm that all unk8s do, also)
-    public class Unknown7Display : DisplayVolume
+    // todo: some subtypes might not use their volume? if so, don't render them (confirm that all AreaVolumes do, also)
+    public class TriggerVolumeDisplay : DisplayVolume
     {
-        public Unknown7Display(Entity<Unknown7EntityData> entity)
+        public TriggerVolumeDisplay(Entity<TriggerVolumeEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
             Color1 = Metadata.GetEventColor(entity.Data.ParentEventId);
@@ -1021,13 +1021,13 @@ namespace MphRead
         }
     }
 
-    public class Unknown8Display : DisplayVolume
+    public class AreaVolumeDisplay : DisplayVolume
     {
         public uint EntryEventId { get; }
         public uint ExitEventId { get; }
         public uint Flags { get; }
 
-        public Unknown8Display(Entity<Unknown8EntityData> entity)
+        public AreaVolumeDisplay(Entity<AreaVolumeEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
             EntryEventId = entity.Data.InsideEventId;
