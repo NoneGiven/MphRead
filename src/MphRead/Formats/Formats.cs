@@ -710,13 +710,16 @@ namespace MphRead
 
     public class Effect
     {
+        public string Name { get; }
         public uint Field0 { get; }
         public IReadOnlyList<uint> List1 { get; }
         public IReadOnlyList<uint> List2 { get; }
         public IReadOnlyList<EffectElement> Elements { get; }
 
-        public Effect(RawEffect raw, IReadOnlyList<uint> list1, IReadOnlyList<uint> list2, IReadOnlyList<EffectElement> elements)
+        public Effect(RawEffect raw, IReadOnlyList<uint> list1, IReadOnlyList<uint> list2,
+            IReadOnlyList<EffectElement> elements, string name)
         {
+            Name = Path.GetFileNameWithoutExtension(name).Replace("_PS", "");
             Field0 = raw.Field0;
             List1 = list1;
             List2 = list2;
@@ -728,11 +731,7 @@ namespace MphRead
     {
         public string Name { get; }
         public string ModelName { get; }
-
-        // sktodo
-        public uint DrawableCount { get; }
-        public uint DrawableOffset { get; }
-
+        public IReadOnlyList<string> Drawables { get; }
         public uint Flags { get; }
         public uint Field4C { get; }
         public uint Field50 { get; }
@@ -742,24 +741,12 @@ namespace MphRead
         public uint Field60 { get; }
         public uint Field64 { get; }
         public uint Field68 { get; }
-
-        // sktodo
-        public uint SomeCount { get; }
-        public uint SomeOffset { get; }
+        public IReadOnlyList<uint> SomeList { get; }
 
         public string ChildEffect => Metadata.Effects[(int)ChildEffectId];
 
-        // sktodo: remove this
-        public uint Diff { get; }
-
-        public EffectElement(RawEffectElement raw, uint diff)
+        public EffectElement(RawEffectElement raw, IReadOnlyList<string> drawables, IReadOnlyList<uint> someList)
         {
-            Diff = diff;
-            DrawableCount = raw.DrawableCount;
-            DrawableOffset = raw.DrawableOffset;
-            SomeCount = raw.SomeCount;
-            SomeOffset = raw.SomeOffset;
-
             Name = raw.Name;
             ModelName = raw.ModelName;
             Flags = raw.Flags;
@@ -771,18 +758,8 @@ namespace MphRead
             Field60 = raw.Field60;
             Field64 = raw.Field64;
             Field68 = raw.Field68;
-        }
-    }
-
-    public class Drawable
-    {
-        public string Name { get; }
-        public uint Field4 { get; }
-
-        public Drawable(RawDrawable raw, string name)
-        {
-            Name = name;
-            Field4 = raw.Field4;
+            Drawables = drawables;
+            SomeList = someList;
         }
     }
 

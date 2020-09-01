@@ -26,7 +26,6 @@ namespace MphRead
 
         public static void TestEffects()
         {
-            var diffs = new HashSet<uint>();
             foreach (string path in Metadata.Effects)
             {
                 if (path != "" && path != "effects/sparksFall_PS.bin" && path != "effects/mortarSecondary_PS.bin"
@@ -35,15 +34,10 @@ namespace MphRead
                     Effect effect = Read.ReadEffect(path);
                     foreach (EffectElement element in effect.Elements)
                     {
-                        if (element.DrawableCount == 1)
-                        {
-                            diffs.Add(element.Diff);
-                        }
+                        Nop();
                     }
                 }
             }
-            uint least = diffs.OrderBy(d => d).First();
-            uint most = diffs.OrderBy(d => d).Last();
             Nop();
         }
 

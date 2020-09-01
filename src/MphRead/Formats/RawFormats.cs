@@ -476,7 +476,7 @@ namespace MphRead
     // size: 28
     public readonly struct RawEffect
     {
-        public readonly uint Field0; // sktodo: always garbage in the file?
+        public readonly uint Field0; // always garbage in the file
         public readonly uint Count1;
         public readonly uint Offset1;
         public readonly uint Count2;
@@ -485,7 +485,7 @@ namespace MphRead
         public readonly uint ElementOffset;
     }
 
-    // size: 132
+    // size: 116
     public readonly struct RawEffectElement
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
@@ -505,13 +505,5 @@ namespace MphRead
         public readonly uint Field68;
         public readonly uint SomeCount;
         public readonly uint SomeOffset;
-    }
-
-    // sktodo
-    // size: ?
-    public readonly struct RawDrawable
-    {
-        public readonly uint NameOffset;
-        public readonly uint Field4;
     }
 }

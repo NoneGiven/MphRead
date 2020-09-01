@@ -617,16 +617,18 @@ namespace MphRead
             var elements = new List<EffectElement>();
             foreach (uint offset in elementOffsets)
             {
+                // sktodo: what's in between the drawable name offsets and the next element?
                 RawEffectElement element = DoOffset<RawEffectElement>(bytes, offset);
-                IReadOnlyList<uint> someList = DoOffsets<uint>(bytes, element.SomeOffset, 2 * element.SomeCount);
-                var drawables = new List<Drawable>();
-                foreach (RawDrawable drawable in DoOffsets<RawDrawable>(bytes, element.DrawableOffset, element.DrawableCount))
+                var drawables = new List<string>();
+                foreach (uint nameOffset in DoOffsets<uint>(bytes, element.DrawableOffset, element.DrawableCount))
                 {
-                    drawables.Add(new Drawable(drawable, ReadString(bytes, drawable.NameOffset, 16)));
+                    drawables.Add(ReadString(bytes, nameOffset, 16));
                 }
-                elements.Add(new EffectElement(element, element.SomeOffset - element.DrawableOffset));
+                // sktodo: split into pairs?
+                IReadOnlyList<uint> someList = DoOffsets<uint>(bytes, element.SomeOffset, 2 * element.SomeCount);
+                elements.Add(new EffectElement(element, drawables, someList));
             }
-            return new Effect(effect, list1, list2, elements);
+            return new Effect(effect, list1, list2, elements, name);
         }
 
         private static void Nop() { }
@@ -763,7 +765,7 @@ namespace MphRead
             }
             return Encoding.ASCII.GetString(bytes[offset..end]);
         }
-        
+
         public static void ExtractArchive(string name)
         {
             string input = Path.Combine(Paths.FileSystem, "archives", $"{name}.arc");
