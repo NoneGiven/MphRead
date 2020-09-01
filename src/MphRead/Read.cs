@@ -624,7 +624,6 @@ namespace MphRead
                 {
                     drawables.Add(ReadString(bytes, nameOffset, 16));
                 }
-                // sktodo: split into pairs?
                 IReadOnlyList<uint> someList = DoOffsets<uint>(bytes, element.SomeOffset, 2 * element.SomeCount);
                 elements.Add(new EffectElement(element, drawables, someList));
             }

@@ -741,7 +741,7 @@ namespace MphRead
         public uint Field60 { get; }
         public uint Field64 { get; }
         public uint Field68 { get; }
-        public IReadOnlyList<uint> SomeList { get; }
+        public IReadOnlyList<(uint, uint)> SomeList { get; }
 
         public string ChildEffect => Metadata.Effects[(int)ChildEffectId];
 
@@ -759,7 +759,14 @@ namespace MphRead
             Field64 = raw.Field64;
             Field68 = raw.Field68;
             Drawables = drawables;
-            SomeList = someList;
+            Debug.Assert(someList.Count % 2 == 0);
+            Debug.Assert(someList.Count == raw.SomeCount * 2);
+            var pairList = new List<(uint, uint)>();
+            for (int i = 0; i < someList.Count; i += 2)
+            {
+                pairList.Add((someList[i], someList[i + 1]));
+            }
+            SomeList = pairList;
         }
     }
 
