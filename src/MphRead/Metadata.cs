@@ -670,7 +670,7 @@ namespace MphRead
             }
             if (eventId == 15) // Gravity - light blue
             {
-                return new Vector3(0.141f, 1, 1);
+                return new Vector3(0.141f, 1f, 1f);
             }
             if (eventId == 18) // Activate - green
             {
@@ -678,29 +678,29 @@ namespace MphRead
             }
             if (eventId == 21) // Death - dark blue
             {
-                return new Vector3(0, 0, 0.858f);
+                return new Vector3(0f, 0f, 0.858f);
             }
             if (eventId == 23) // save - light yellow
             {
-                return new Vector3(1, 1, 0.6f);
+                return new Vector3(1f, 1f, 0.6f);
             }
-            if (eventId == 25) // test - light orange
+            if (eventId == 25) // test - pale orange
             {
-                return new Vector3(1, 0.792f, 0.6f);
+                return new Vector3(1f, 0.792f, 0.6f);
             }
             if (eventId == 35) // morph - yellow
             {
-                return new Vector3(0.964f, 1, 0.058f);
+                return new Vector3(0.964f, 1f, 0.058f);
             }
             if (eventId == 44) // sound - gray
             {
                 return new Vector3(0.5f, 0.5f, 0.5f);
             }
-            if (eventId == 46) // moat - pale blue
+            if (eventId == 46) // moat - periwinkle
             {
                 return new Vector3(0.596f, 0.658f, 0.964f);
             }
-            if (eventId == 56) // crystal - pale red
+            if (eventId == 56) // crystal - salmon
             {
                 return new Vector3(0.964f, 0.596f, 0.596f);
             }
@@ -708,14 +708,78 @@ namespace MphRead
             {
                 return new Vector3(0.972f, 0.086f, 0.831f);
             }
-            if (eventId == 58) // Escape - pale green
+            if (eventId == 58) // Escape - mint
             {
                 return new Vector3(0.619f, 0.980f, 0.678f);
             }
-            // unknown - white
+            if (eventId == 9) // Unknown9 - dark red
+            {
+                return new Vector3(0.549f, 0.18f, 0.18f);
+            }
+            if (eventId == 12) // Unknown12 - dark teal
+            {
+                return new Vector3(0.094f, 0.506f, 0.51f);
+            }
+            if (eventId == 16) // Unknown16 - navy blue
+            {
+                return new Vector3(0.094f, 0.094f, 0.557f);
+            }
+            if (eventId == 17) // Unknown17 - olive
+            {
+                return new Vector3(0.647f, 0.663f, 0.169f);
+            }
+            if (eventId == 26) // Unknown26 - dark green
+            {
+                return new Vector3(0.118f, 0.588f, 0.118f);
+            }
+            if (eventId == 27) // Unknown27 - light purple
+            {
+                return new Vector3(0.784f, 0.325f, 1f);
+            }
+            if (eventId == 28) // Unknown28 - orange
+            {
+                return new Vector3(1f, 0.612f, 0.153f);
+            }
+            if (eventId == 33) // Unknown33 - lavender
+            {
+                return new Vector3(0.906f, 0.702f, 1f);
+            }
+            if (eventId == 34) // Unknown34 - pale blue
+            {
+                return new Vector3(0.784f, 0.984f, 0.988f);
+            }
+            if (eventId == 36) // Unknown36 - light red
+            {
+                return new Vector3(1f, 0.325f, 0.294f);
+            }
+            if (eventId == 42) // Unknown42 - pink
+            {
+                return new Vector3(0.988f, 0.463f, 0.824f);
+            }
+            if (eventId == 45) // Unknown45 - sea green
+            {
+                return new Vector3(0.165f, 0.894f, 0.678f);
+            }
+            if (eventId == 53) // Unknown53 - brown
+            {
+                return new Vector3(0.549f, 0.345f, 0.102f);
+            }
+            if (eventId == 54) // Unknown54 - pale green
+            {
+                return new Vector3(0.471f, 0.769f, 0.525f);
+            }
+            if (eventId == 60) // Unknown60 - light orange
+            {
+                return new Vector3(1f, 0.765f, 0.49f);
+            }
+            if (eventId == 61) // Unknown61 - sky blue
+            {
+                return new Vector3(0.165f, 0.816f, 0.894f);
+            }
+            // unknown - white (no other IDs are used by trigger/area volumes)
             return new Vector3(1, 1, 1);
         }
-
+        
         // todo: files not referenced by this list: powerBeamNoSplatMP_PS.bin, sparksDown_PS.bin
         public static readonly IReadOnlyList<string> Effects = new List<string>()
         {
