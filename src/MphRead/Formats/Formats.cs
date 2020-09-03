@@ -1031,7 +1031,7 @@ namespace MphRead
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
             EntryEventId = entity.Data.InsideEventId;
-            ExitEventId = entity.Data.OutsideEventId;
+            ExitEventId = entity.Data.ExitEventId;
             Flags = entity.Data.Flags;
             Color1 = Metadata.GetEventColor(EntryEventId);
             Color2 = Metadata.GetEventColor(ExitEventId);

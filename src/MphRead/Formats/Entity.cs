@@ -558,9 +558,9 @@ namespace MphRead
         public readonly uint InsideEventParam2; // always 0 except for type 15, where it's always 2
         public readonly ushort ParentId; // this can have real values -- not used for event propagation, but is for "dedup" check
         public readonly ushort Padding7A;
-        public readonly uint OutsideEventId;
-        public readonly uint OutsideEventParam1; // always 0
-        public readonly uint OutsideEventParam2; // always 0
+        public readonly uint ExitEventId;
+        public readonly uint ExitEventParam1; // always 0
+        public readonly uint ExitEventParam2; // always 0
         public readonly ushort ChildId; // always the same as ParentId
         public readonly ushort Field8A;
         public readonly uint Field8C; // always 0 or 1
