@@ -2058,7 +2058,7 @@ namespace MphRead
                     await PrintOutput();
                 }
             }
-            else if (e.Key == Key.Minus || e.Key == Key.Minus)
+            else if (e.Key == Key.Minus || e.Key == Key.KeypadMinus)
             {
                 if (_modelMap.TryGetValue(_selectedModelId, out Model? model) && model.Meshes.Count > 0)
                 {

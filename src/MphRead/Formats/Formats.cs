@@ -779,7 +779,11 @@ namespace MphRead
         public ushort EntityId { get; }
         public bool FirstHunt { get; }
 
-        public Entity(EntityEntry entry, EntityType type, ushort entityId)
+        public Vector3 Position { get; }
+        public readonly Vector3 UpVector;
+        public readonly Vector3 RightVector;
+
+        public Entity(EntityEntry entry, EntityType type, ushort entityId, EntityDataHeader header)
         {
             NodeName = entry.NodeName;
             LayerMask = entry.LayerMask;
@@ -791,9 +795,12 @@ namespace MphRead
             Type = type;
             EntityId = entityId;
             FirstHunt = false;
+            Position = header.Position.ToFloatVector();
+            UpVector = header.UpVector.ToFloatVector();
+            RightVector = header.RightVector.ToFloatVector();
         }
 
-        public Entity(FhEntityEntry entry, EntityType type, ushort entityId)
+        public Entity(FhEntityEntry entry, EntityType type, ushort entityId, EntityDataHeader header)
         {
             NodeName = entry.NodeName;
             if (!Enum.IsDefined(typeof(EntityType), type))
@@ -803,6 +810,9 @@ namespace MphRead
             Type = type;
             EntityId = entityId;
             FirstHunt = true;
+            Position = header.Position.ToFloatVector();
+            UpVector = header.UpVector.ToFloatVector();
+            RightVector = header.RightVector.ToFloatVector();
         }
     }
 
@@ -810,14 +820,14 @@ namespace MphRead
     {
         public T Data { get; }
 
-        public Entity(EntityEntry entry, EntityType type, ushort someId, T data)
-            : base(entry, type, someId)
+        public Entity(EntityEntry entry, EntityType type, ushort someId, T data, EntityDataHeader header)
+            : base(entry, type, someId, header)
         {
             Data = data;
         }
 
-        public Entity(FhEntityEntry entry, EntityType type, ushort someId, T data)
-            : base(entry, type, someId)
+        public Entity(FhEntityEntry entry, EntityType type, ushort someId, T data, EntityDataHeader header)
+            : base(entry, type, someId, header)
         {
             Data = data;
         }
