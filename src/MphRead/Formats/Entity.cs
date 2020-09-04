@@ -547,12 +547,12 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly RawCollisionVolume Volume;
-        public readonly ushort Field64; // always UInt16.MaxValue
+        public readonly ushort Unused64; // always UInt16.MaxValue
         public readonly byte Active; // boolean -- in 1P, may be controlled by room state bits
-        public readonly byte Field67; // boolean
-        public readonly byte AllowOverlap; // boolean
+        public readonly byte AlwaysActive; // boolean -- ignore 1P state bits
+        public readonly byte AllowMultiple; // boolean
         public readonly byte EventDelay; // always 0 or 1
-        public readonly ushort Field6A; // always 0 or 1
+        public readonly ushort Unused6A; // always 0 or 1
         public readonly Message InsideEvent;
         public readonly uint InsideEventParam1; // seconds for escape sequence, gravity/jump assist values, etc.
         public readonly uint InsideEventParam2; // always 0 except for type 15, where it's always 2
@@ -562,8 +562,8 @@ namespace MphRead
         public readonly uint ExitEventParam1; // always 0
         public readonly uint ExitEventParam2; // always 0
         public readonly ushort ChildId; // always the same as ParentId
-        public readonly ushort Field8A;
-        public readonly uint Field8C; // always 0 or 1
+        public readonly ushort Cooldown;
+        public readonly uint Priority; // always 0 or 1
         public readonly uint Flags; // 0x200 = affects biped, 0x400 = affects alt
     }
 
