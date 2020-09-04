@@ -877,7 +877,7 @@ namespace MphRead
             {
                 foreach (Mesh mesh in model.Meshes)
                 {
-                    mesh.OverrideColor = mesh.PlaceholderColor = _colorOverrides[entity.Type].AsVector4();
+                    mesh.PlaceholderColor = _colorOverrides[entity.Type].AsVector4();
                 }
             }
             model.Position = entity.Position;

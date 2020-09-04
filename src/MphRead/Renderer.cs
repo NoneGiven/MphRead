@@ -414,28 +414,6 @@ namespace MphRead
                 _updateLists = true;
                 await PrintOutput();
             }
-
-            if (_selectionMode != SelectionMode.None)
-            {
-                if (_selectionMode == SelectionMode.Mesh)
-                {
-                    UpdateSelected(SelectedModel.Meshes[_selectedMeshId], time);
-                }
-                else if (_selectionMode == SelectionMode.Node)
-                {
-                    foreach (Mesh mesh in SelectedModel.GetNodeMeshes(_selectedNodeId))
-                    {
-                        UpdateSelected(mesh, time);
-                    }
-                }
-                else if (_selectionMode == SelectionMode.Model)
-                {
-                    foreach (Mesh mesh in SelectedModel.Meshes)
-                    {
-                        UpdateSelected(mesh, time);
-                    }
-                }
-            }
         }
 
         protected override async void OnRenderFrame(FrameEventArgs args)
@@ -484,7 +462,26 @@ namespace MphRead
             _selectedModelId = sceneId;
             foreach (Mesh mesh in SelectedModel.Meshes)
             {
-                mesh.OverrideColor = new Vector4(1f, 1f, 1f, 1f);
+                mesh.Selection = Selection.Selected;
+            }
+            if (SelectedModel.Entity != null)
+            {
+                ushort parentId = SelectedModel.Entity.GetParentId();
+                if (_modelMap.TryGetValue(parentId, out Model? parent))
+                {
+                    foreach (Mesh mesh in parent.Meshes)
+                    {
+                        mesh.Selection = Selection.Parent;
+                    }
+                }
+                ushort childId = SelectedModel.Entity.GetChildId();
+                if (childId != parentId && _modelMap.TryGetValue(childId, out Model? child))
+                {
+                    foreach (Mesh mesh in child.Meshes)
+                    {
+                        mesh.Selection = Selection.Child;
+                    }
+                }
             }
         }
 
@@ -495,7 +492,7 @@ namespace MphRead
             _selectedNodeId = nodeId;
             foreach (Mesh mesh in SelectedModel.GetNodeMeshes(_selectedNodeId))
             {
-                mesh.OverrideColor = new Vector4(1f, 1f, 1f, 1f);
+                mesh.Selection = Selection.Selected;
             }
         }
 
@@ -504,41 +501,37 @@ namespace MphRead
             Deselect();
             _selectedModelId = sceneId;
             _selectedMeshId = meshId;
-            SelectedModel.Meshes[meshId].OverrideColor = new Vector4(1f, 1f, 1f, 1f);
+            SelectedModel.Meshes[meshId].Selection = Selection.Selected;
         }
-
-        private bool _flashUp = false;
-
-        private void UpdateSelected(Mesh mesh, float time)
-        {
-            // todo: meshes can get out sync due to existing alpha values
-            // --> also tends to break when tabbing out/resizing/etc.
-            Vector4 color = mesh.OverrideColor.GetValueOrDefault();
-            float value = color.X;
-            value -= time * 1.5f * (_flashUp ? -1 : 1);
-            if (value < 0)
-            {
-                value = 0;
-                _flashUp = true;
-            }
-            else if (value > 1)
-            {
-                value = 1;
-                _flashUp = false;
-            }
-            mesh.OverrideColor = new Vector4(value, value, value, color.W);
-        }
-
+        
         private void Deselect()
         {
             if (_selectedModelId > -1)
             {
                 foreach (Mesh mesh in SelectedModel.Meshes)
                 {
-                    mesh.OverrideColor = SelectedModel.Type == ModelType.Placeholder ? mesh.PlaceholderColor : null;
+                    mesh.Selection = Selection.None;
+                }
+                if (SelectedModel.Entity != null)
+                {
+                    ushort parentId = SelectedModel.Entity.GetParentId();
+                    if (_modelMap.TryGetValue(parentId, out Model? parent))
+                    {
+                        foreach (Mesh mesh in parent.Meshes)
+                        {
+                            mesh.Selection = Selection.None;
+                        }
+                    }
+                    ushort childId = SelectedModel.Entity.GetChildId();
+                    if (childId != parentId && _modelMap.TryGetValue(childId, out Model? child))
+                    {
+                        foreach (Mesh mesh in child.Meshes)
+                        {
+                            mesh.Selection = Selection.None;
+                        }
+                    }
                 }
             }
-            _flashUp = false;
         }
 
         private void ResetCamera()
@@ -1313,16 +1306,20 @@ namespace MphRead
                 GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref texcoordMatrix);
             }
             GL.Uniform1(_shaderLocations.UseTexture, textureId != UInt16.MaxValue && _showTextures ? 1 : 0);
-            // _showSelection affects the placeholder colors too
-            if (mesh.OverrideColor != null && _showSelection)
+            Vector4? overrideColor = null;
+            if (_showSelection)
             {
+                overrideColor = mesh.OverrideCol;
+            }
+            if (overrideColor == null)
+            {
+                overrideColor = mesh.PlaceholderColor;
+            }
+            if (overrideColor != null)
+            {
+                Vector4 overrideColorValue = overrideColor.Value;
                 GL.Uniform1(_shaderLocations.UseOverride, 1);
-                var overrideColor = new Vector4(
-                    mesh.OverrideColor.Value.X,
-                    mesh.OverrideColor.Value.Y,
-                    mesh.OverrideColor.Value.Z,
-                    mesh.OverrideColor.Value.W);
-                GL.Uniform4(_shaderLocations.OverrideColor, ref overrideColor);
+                GL.Uniform4(_shaderLocations.OverrideColor, ref overrideColorValue);
             }
             else
             {
@@ -1334,7 +1331,7 @@ namespace MphRead
         {
             // todo: control animations so everything isn't playing at once, and remove this temporary line
             material.AnimationFlags = AnimationFlags.DisableAlpha;
-            if (_lighting && material.Lighting != 0 && (mesh.OverrideColor == null || !_showSelection))
+            if (_lighting && material.Lighting != 0)
             {
                 GL.Uniform1(_shaderLocations.UseLight, 1);
             }
@@ -1452,19 +1449,16 @@ namespace MphRead
                         uint ab = (rgb >> 26) & 0x1F;
                         var diffuse = new Vector4(dr / 31.0f, dg / 31.0f, db / 31.0f, 1.0f);
                         var ambient = new Vector4(ar / 31.0f, ag / 31.0f, ab / 31.0f, 1.0f);
-                        if (mesh.OverrideColor == null || !_showSelection)
+                        // shader - if (_lighting)
+                        // MPH only calls this with zero ambient, and we need to rely on that in order to
+                        // use GL.Color to smuggle in the diffuse, since setting uniforms here doesn't work
+                        Debug.Assert(ambient.X == 0 && ambient.Y == 0 && ambient.Z == 0);
+                        GL.Color4(diffuse.X, diffuse.Y, diffuse.Z, 0.0f);
+                        if (set != 0) // shader - && _showColors
                         {
-                            // shader - if (_lighting)
-                            // MPH only calls this with zero ambient, and we need to rely on that in order to
-                            // use GL.Color to smuggle in the diffuse, since setting uniforms here doesn't work
-                            Debug.Assert(ambient.X == 0 && ambient.Y == 0 && ambient.Z == 0);
-                            GL.Color4(diffuse.X, diffuse.Y, diffuse.Z, 0.0f);
-                            if (set != 0) // shader - && _showColors
-                            {
-                                // MPH never does this in a dlist
-                                Debug.Assert(false);
-                                GL.Color3(dr / 31.0f, dg / 31.0f, db / 31.0f);
-                            }
+                            // MPH never does this in a dlist
+                            Debug.Assert(false);
+                            GL.Color3(dr / 31.0f, dg / 31.0f, db / 31.0f);
                         }
                     }
                     break;
@@ -2046,14 +2040,15 @@ namespace MphRead
                     }
                     else if (_selectionMode == SelectionMode.Model)
                     {
-                        UpdateTargetTypes();
-                        Model? nextModel = _models.Where(m => m.SceneId > model.SceneId &&
-                            (_showInvisible || m.Type != ModelType.Placeholder) &&
-                            (_showVolumes == 0 || (m.Entity != null && _targetTypes.Contains(m.Entity.Type))) &&
-                            (_scanVisor || !m.ScanVisorOnly)).OrderBy(m => m.SceneId).FirstOrDefault();
-                        if (nextModel == null)
+                        Model? nextModel = model;
+                        IEnumerable<Model> matches = GetModelMatches();
+                        if (matches.Any())
                         {
-                            nextModel = _models.OrderBy(m => m.SceneId).First(m => m.Meshes.Count > 0);
+                            nextModel = matches.FirstOrDefault(m => m.SceneId > model.SceneId);
+                            if (nextModel == null)
+                            {
+                                nextModel = matches.First();
+                            }
                         }
                         _selectedMeshId = 0;
                         _selectedNodeId = 0;
@@ -2066,6 +2061,7 @@ namespace MphRead
             {
                 if (_modelMap.TryGetValue(_selectedModelId, out Model? model) && model.Meshes.Count > 0)
                 {
+                    int x = model.SceneId;
                     if (_selectionMode == SelectionMode.Mesh)
                     {
                         int meshIndex = _selectedMeshId - 1;
@@ -2112,20 +2108,18 @@ namespace MphRead
                     }
                     else if (_selectionMode == SelectionMode.Model)
                     {
-                        UpdateTargetTypes();
-                        Model? nextModel = _models.Where(m => m.SceneId < model.SceneId &&
-                            (_showInvisible || m.Type != ModelType.Placeholder) &&
-                            (_showVolumes == 0 || (m.Entity != null && _targetTypes.Contains(m.Entity.Type))) &&
-                            (_scanVisor || !m.ScanVisorOnly)).OrderBy(m => m.SceneId).LastOrDefault();
-                        if (nextModel == null)
+                        Model? nextModel = model;
+                        IEnumerable<Model> matches = GetModelMatches();
+                        if (matches.Any())
                         {
-                            nextModel = _models.OrderBy(m => m.SceneId).Last(m => m.Meshes.Count > 0);
-                        }
-                        if (nextModel == null)
-                        {
-                            nextModel = model;
+                            nextModel = matches.LastOrDefault(m => m.SceneId < model.SceneId);
+                            if (nextModel == null)
+                            {
+                                nextModel = matches.Last();
+                            }
                         }
                         _selectedMeshId = 0;
+                        _selectedNodeId = 0;
                         SetSelectedModel(nextModel.SceneId);
                     }
                     await PrintOutput();
@@ -2197,6 +2191,14 @@ namespace MphRead
                 Close();
             }
             base.OnKeyDown(e);
+        }
+
+        private IEnumerable<Model> GetModelMatches()
+        {
+            UpdateTargetTypes();
+            return _models.Where(m => (_showInvisible || m.Type != ModelType.Placeholder) &&
+                (_showVolumes == 0 || (m.Entity != null && _targetTypes.Contains(m.Entity.Type))) &&
+                (_scanVisor || !m.ScanVisorOnly)).OrderBy(m => m.SceneId);
         }
 
         private void UpdateTargetTypes()

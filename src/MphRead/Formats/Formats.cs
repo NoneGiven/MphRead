@@ -541,13 +541,42 @@ namespace MphRead
         public int ListId { get; set; }
         public bool Visible { get; set; } = true;
         public Vector4? PlaceholderColor { get; set; }
-        public Vector4? OverrideColor { get; set; }
+
+        public Selection Selection { get; set; } = Selection.None;
+
+        public Vector4? OverrideCol
+        {
+            get
+            {
+                if (Selection == Selection.Selected)
+                {
+                    return new Vector4(1, 1, 1, 1);
+                }
+                if (Selection == Selection.Parent)
+                {
+                    return new Vector4(1, 0, 0, 1);
+                }
+                if (Selection == Selection.Child)
+                {
+                    return new Vector4(0, 0, 1, 1);
+                }
+                return null;
+            }
+        }
 
         public Mesh(RawMesh raw)
         {
             MaterialId = raw.MaterialId;
             DlistId = raw.DlistId;
         }
+    }
+
+    public enum Selection
+    {
+        None,
+        Selected,
+        Parent,
+        Child
     }
 
     public class Material
@@ -585,7 +614,7 @@ namespace MphRead
 
         public RenderMode GetEffectiveRenderMode(Mesh mesh)
         {
-            return mesh.OverrideColor == null ? RenderMode : RenderMode.Translucent;
+            return mesh.Selection == Selection.None ? RenderMode : RenderMode.Translucent;
         }
 
         public Material(RawMaterial raw)
@@ -838,6 +867,16 @@ namespace MphRead
             UpVector = header.UpVector.ToFloatVector();
             RightVector = header.RightVector.ToFloatVector();
         }
+
+        public virtual ushort GetParentId()
+        {
+            return UInt16.MaxValue;
+        }
+
+        public virtual ushort GetChildId()
+        {
+            return UInt16.MaxValue;
+        }
     }
 
     public class Entity<T> : Entity where T : struct
@@ -854,6 +893,32 @@ namespace MphRead
             : base(entry, type, someId, header)
         {
             Data = data;
+        }
+
+        public override ushort GetParentId()
+        {
+            if (Data is TriggerVolumeEntityData triggerData)
+            {
+                return triggerData.ParentId;
+            }
+            if (Data is AreaVolumeEntityData areaData)
+            {
+                return areaData.ParentId;
+            }
+            return base.GetParentId();
+        }
+        
+        public override ushort GetChildId()
+        {
+            if (Data is TriggerVolumeEntityData triggerData)
+            {
+                return triggerData.ChildId;
+            }
+            if (Data is AreaVolumeEntityData areaData)
+            {
+                return areaData.ChildId;
+            }
+            return base.GetChildId();
         }
     }
 
