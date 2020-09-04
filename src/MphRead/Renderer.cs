@@ -1315,7 +1315,7 @@ namespace MphRead
             Vector4? overrideColor = null;
             if (_showSelection)
             {
-                overrideColor = mesh.OverrideCol;
+                overrideColor = mesh.OverrideColor;
             }
             if (overrideColor == null)
             {

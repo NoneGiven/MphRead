@@ -544,7 +544,7 @@ namespace MphRead
 
         public Selection Selection { get; set; } = Selection.None;
 
-        public Vector4? OverrideCol
+        public Vector4? OverrideColor
         {
             get
             {
