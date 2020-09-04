@@ -1115,8 +1115,8 @@ namespace MphRead
         public TriggerVolumeDisplay(Entity<TriggerVolumeEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
-            Color1 = Metadata.GetEventColor(entity.Data.ParentEventId);
-            Color2 = Metadata.GetEventColor(entity.Data.ChildEventId);
+            Color1 = Metadata.GetEventColor(entity.Data.ParentEvent);
+            Color2 = Metadata.GetEventColor(entity.Data.ChildEvent);
         }
 
         public override Vector3? GetColor(int index)
@@ -1135,18 +1135,18 @@ namespace MphRead
 
     public class AreaVolumeDisplay : DisplayVolume
     {
-        public uint EntryEventId { get; }
-        public uint ExitEventId { get; }
+        public Message InsideEvent { get; }
+        public Message ExitEvent { get; }
         public uint Flags { get; }
 
         public AreaVolumeDisplay(Entity<AreaVolumeEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
-            EntryEventId = entity.Data.InsideEventId;
-            ExitEventId = entity.Data.ExitEventId;
+            InsideEvent = entity.Data.InsideEvent;
+            ExitEvent = entity.Data.ExitEvent;
             Flags = entity.Data.Flags;
-            Color1 = Metadata.GetEventColor(EntryEventId);
-            Color2 = Metadata.GetEventColor(ExitEventId);
+            Color1 = Metadata.GetEventColor(InsideEvent);
+            Color2 = Metadata.GetEventColor(ExitEvent);
         }
 
         public override Vector3? GetColor(int index)

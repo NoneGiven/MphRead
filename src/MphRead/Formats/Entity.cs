@@ -532,12 +532,12 @@ namespace MphRead
         public readonly uint Field78;
         public readonly ushort ParentId;
         public readonly ushort Padding7E;
-        public readonly uint ParentEventId;
+        public readonly Message ParentEvent;
         public readonly uint ParentEventParam1;
         public readonly uint ParentEventParam2;
         public readonly ushort ChildId;
         public readonly ushort Padding8E;
-        public readonly uint ChildEventId;
+        public readonly Message ChildEvent;
         public readonly uint ChildEventParam1;
         public readonly uint ChildEventParam2;
     }
@@ -553,12 +553,12 @@ namespace MphRead
         public readonly byte AllowOverlap; // boolean
         public readonly byte EventDelay; // always 0 or 1
         public readonly ushort Field6A; // always 0 or 1
-        public readonly uint InsideEventId;
+        public readonly Message InsideEvent;
         public readonly uint InsideEventParam1; // seconds for escape sequence, gravity/jump assist values, etc.
         public readonly uint InsideEventParam2; // always 0 except for type 15, where it's always 2
         public readonly ushort ParentId; // this can have real values -- not used for event propagation, but is for "dedup" check
         public readonly ushort Padding7A;
-        public readonly uint ExitEventId;
+        public readonly Message ExitEvent;
         public readonly uint ExitEventParam1; // always 0
         public readonly uint ExitEventParam2; // always 0
         public readonly ushort ChildId; // always the same as ParentId

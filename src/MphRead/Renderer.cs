@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using MphRead.Export;
@@ -467,7 +468,7 @@ namespace MphRead
             if (SelectedModel.Entity != null)
             {
                 ushort parentId = SelectedModel.Entity.GetParentId();
-                if (_modelMap.TryGetValue(parentId, out Model? parent))
+                if (TryGetByEntityId(parentId, out Model? parent))
                 {
                     foreach (Mesh mesh in parent.Meshes)
                     {
@@ -475,7 +476,7 @@ namespace MphRead
                     }
                 }
                 ushort childId = SelectedModel.Entity.GetChildId();
-                if (childId != parentId && _modelMap.TryGetValue(childId, out Model? child))
+                if (childId != parentId && TryGetByEntityId(childId, out Model? child))
                 {
                     foreach (Mesh mesh in child.Meshes)
                     {
@@ -483,6 +484,12 @@ namespace MphRead
                     }
                 }
             }
+        }
+
+        private bool TryGetByEntityId(ushort id, [NotNullWhen(true)] out Model? model)
+        {
+            model = _models.FirstOrDefault(m => m.Entity?.EntityId == id);
+            return model != null;
         }
 
         private void SetSelectedNode(int sceneId, int nodeId)
@@ -503,7 +510,7 @@ namespace MphRead
             _selectedMeshId = meshId;
             SelectedModel.Meshes[meshId].Selection = Selection.Selected;
         }
-        
+
         private void Deselect()
         {
             if (_selectedModelId > -1)
@@ -515,7 +522,7 @@ namespace MphRead
                 if (SelectedModel.Entity != null)
                 {
                     ushort parentId = SelectedModel.Entity.GetParentId();
-                    if (_modelMap.TryGetValue(parentId, out Model? parent))
+                    if (TryGetByEntityId(parentId, out Model? parent))
                     {
                         foreach (Mesh mesh in parent.Meshes)
                         {
@@ -523,7 +530,7 @@ namespace MphRead
                         }
                     }
                     ushort childId = SelectedModel.Entity.GetChildId();
-                    if (childId != parentId && _modelMap.TryGetValue(childId, out Model? child))
+                    if (childId != parentId && TryGetByEntityId(childId, out Model? child))
                     {
                         foreach (Mesh mesh in child.Meshes)
                         {
@@ -2458,9 +2465,39 @@ namespace MphRead
                     type += $" ({vector1.X.FloatValue}, {vector1.Y.FloatValue}, {vector1.Z.FloatValue}) " +
                         $"({vector2.X.FloatValue}, {vector2.Y.FloatValue}, {vector2.Z.FloatValue})";
                 }
-                else if (model.Entity is Entity<AreaVolumeEntityData> unknown8)
+                else if (model.Entity is Entity<AreaVolumeEntityData> area)
                 {
-                    type += $" - Entry event ID {unknown8.Data.InsideEventId}";
+                    type += Environment.NewLine + $"Entry: {area.Data.InsideEvent}";
+                    type += Environment.NewLine + $" Exit: {area.Data.ExitEvent}";
+                    if (TryGetByEntityId(area.Data.ParentId, out Model? parent))
+                    {
+                        type += Environment.NewLine + $"Target: {parent.Entity?.Type} ({area.Data.ParentId})";
+                    }
+                    else
+                    {
+                        type += Environment.NewLine + "Target: None";
+                    }
+                }
+                else if (model.Entity is Entity<TriggerVolumeEntityData> trigger)
+                {
+                    type += Environment.NewLine + $"Parent: {trigger.Data.ParentEvent}";
+                    if (TryGetByEntityId(trigger.Data.ParentId, out Model? parent))
+                    {
+                        type += $", Target: {parent.Entity?.Type} ({trigger.Data.ParentId})";
+                    }
+                    else
+                    {
+                        type += ", Target: None";
+                    } 
+                    type += Environment.NewLine + $" Child: {trigger.Data.ChildEvent}";
+                    if (TryGetByEntityId(trigger.Data.ChildId, out Model? child))
+                    {
+                        type += $", Target: {child.Entity?.Type} ({trigger.Data.ChildId})";
+                    }
+                    else
+                    {
+                        type += ", Target: None";
+                    }
                 }
             }
             await Output.Write(type, guid);

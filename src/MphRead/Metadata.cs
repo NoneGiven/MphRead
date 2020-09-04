@@ -654,125 +654,125 @@ namespace MphRead
         }
 
         // todo: organize/enum
-        public static Vector3 GetEventColor(uint eventId)
+        public static Vector3 GetEventColor(Message eventId)
         {
-            if (eventId == 0) // None - black
+            if (eventId == Message.None) // black
             {
                 return new Vector3(0, 0, 0);
             }
-            if (eventId == 5) // SetActive - purple
+            if (eventId == Message.SetActive) // purple
             {
                 return new Vector3(0.615f, 0, 0.909f);
             }
-            if (eventId == 7) // Damage - red
+            if (eventId == Message.Damge) // red
             {
                 return new Vector3(1, 0, 0);
             }
-            if (eventId == 15) // Gravity - light blue
+            if (eventId == Message.Gravity) // light blue
             {
                 return new Vector3(0.141f, 1f, 1f);
             }
-            if (eventId == 18) // Activate - green
+            if (eventId == Message.Activate) // green
             {
                 return new Vector3(0, 1, 0);
             }
-            if (eventId == 21) // Death - dark blue
+            if (eventId == Message.Death) // dark blue
             {
                 return new Vector3(0f, 0f, 0.858f);
             }
-            if (eventId == 23) // save - light yellow
+            if (eventId == Message.SavePoint) // light yellow
             {
                 return new Vector3(1f, 1f, 0.6f);
             }
-            if (eventId == 25) // test - pale orange
+            if (eventId == Message.Unknown25) // pale orange
             {
                 return new Vector3(1f, 0.792f, 0.6f);
             }
-            if (eventId == 35) // morph - yellow
+            if (eventId == Message.Unknown35) // yellow
             {
                 return new Vector3(0.964f, 1f, 0.058f);
             }
-            if (eventId == 44) // sound - gray
+            if (eventId == Message.Unknown44) // gray
             {
                 return new Vector3(0.5f, 0.5f, 0.5f);
             }
-            if (eventId == 46) // moat - periwinkle
+            if (eventId == Message.Unknown46) // periwinkle
             {
                 return new Vector3(0.596f, 0.658f, 0.964f);
             }
-            if (eventId == 56) // crystal - salmon
+            if (eventId == Message.Unknown56) // salmon
             {
                 return new Vector3(0.964f, 0.596f, 0.596f);
             }
-            if (eventId == 57) // trigger - pink
+            if (eventId == Message.Unknown56) // pink
             {
                 return new Vector3(0.972f, 0.086f, 0.831f);
             }
-            if (eventId == 58) // Escape - mint
+            if (eventId == Message.Unknown56) // mint
             {
                 return new Vector3(0.619f, 0.980f, 0.678f);
             }
-            if (eventId == 9) // Unknown9 - dark red
+            if (eventId == Message.Unknown9) // dark red
             {
                 return new Vector3(0.549f, 0.18f, 0.18f);
             }
-            if (eventId == 12) // Unknown12 - dark teal
+            if (eventId == Message.Unknown12) // dark teal
             {
                 return new Vector3(0.094f, 0.506f, 0.51f);
             }
-            if (eventId == 16) // Unknown16 - navy blue
+            if (eventId == Message.Unknown16) // navy blue
             {
                 return new Vector3(0.094f, 0.094f, 0.557f);
             }
-            if (eventId == 17) // Unknown17 - olive
+            if (eventId == Message.Unknown17) // olive
             {
                 return new Vector3(0.647f, 0.663f, 0.169f);
             }
-            if (eventId == 26) // Unknown26 - dark green
+            if (eventId == Message.Unknown26) // dark green
             {
                 return new Vector3(0.118f, 0.588f, 0.118f);
             }
-            if (eventId == 27) // Unknown27 - light purple
+            if (eventId == Message.Unknown27) // light purple
             {
                 return new Vector3(0.784f, 0.325f, 1f);
             }
-            if (eventId == 28) // Unknown28 - orange
+            if (eventId == Message.Unknown28) // orange
             {
                 return new Vector3(1f, 0.612f, 0.153f);
             }
-            if (eventId == 33) // Unknown33 - lavender
+            if (eventId == Message.Unknown33) // lavender
             {
                 return new Vector3(0.906f, 0.702f, 1f);
             }
-            if (eventId == 34) // Unknown34 - pale blue
+            if (eventId == Message.Unknown34) // pale blue
             {
                 return new Vector3(0.784f, 0.984f, 0.988f);
             }
-            if (eventId == 36) // Unknown36 - light red
+            if (eventId == Message.Unknown36) // light red
             {
                 return new Vector3(1f, 0.325f, 0.294f);
             }
-            if (eventId == 42) // Unknown42 - pink
+            if (eventId == Message.Unknown42) // pink
             {
                 return new Vector3(0.988f, 0.463f, 0.824f);
             }
-            if (eventId == 45) // Unknown45 - sea green
+            if (eventId == Message.Unknown45) // sea green
             {
                 return new Vector3(0.165f, 0.894f, 0.678f);
             }
-            if (eventId == 53) // Unknown53 - brown
+            if (eventId == Message.Unknown53) // brown
             {
                 return new Vector3(0.549f, 0.345f, 0.102f);
             }
-            if (eventId == 54) // Unknown54 - pale green
+            if (eventId == Message.Unknown54) // pale green
             {
                 return new Vector3(0.471f, 0.769f, 0.525f);
             }
-            if (eventId == 60) // Unknown60 - light orange
+            if (eventId == Message.Unknown60) // light orange
             {
                 return new Vector3(1f, 0.765f, 0.49f);
             }
-            if (eventId == 61) // Unknown61 - sky blue
+            if (eventId == Message.Unknown61) // sky blue
             {
                 return new Vector3(0.165f, 0.816f, 0.894f);
             }
