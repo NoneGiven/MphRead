@@ -1798,6 +1798,8 @@ namespace MphRead
             base.OnMouseWheel(e);
         }
 
+        private readonly HashSet<EntityType> _targetTypes = new HashSet<EntityType>();
+
         protected override async void OnKeyDown(KeyboardKeyEventArgs e)
         {
             if (e.Key == Key.Number5)
@@ -2044,8 +2046,10 @@ namespace MphRead
                     }
                     else if (_selectionMode == SelectionMode.Model)
                     {
+                        UpdateTargetTypes();
                         Model? nextModel = _models.Where(m => m.SceneId > model.SceneId &&
                             (_showInvisible || m.Type != ModelType.Placeholder) &&
+                            (_showVolumes == 0 || (m.Entity != null && _targetTypes.Contains(m.Entity.Type))) &&
                             (_scanVisor || !m.ScanVisorOnly)).OrderBy(m => m.SceneId).FirstOrDefault();
                         if (nextModel == null)
                         {
@@ -2108,8 +2112,10 @@ namespace MphRead
                     }
                     else if (_selectionMode == SelectionMode.Model)
                     {
+                        UpdateTargetTypes();
                         Model? nextModel = _models.Where(m => m.SceneId < model.SceneId &&
                             (_showInvisible || m.Type != ModelType.Placeholder) &&
+                            (_showVolumes == 0 || (m.Entity != null && _targetTypes.Contains(m.Entity.Type))) &&
                             (_scanVisor || !m.ScanVisorOnly)).OrderBy(m => m.SceneId).LastOrDefault();
                         if (nextModel == null)
                         {
@@ -2191,6 +2197,32 @@ namespace MphRead
                 Close();
             }
             base.OnKeyDown(e);
+        }
+
+        private void UpdateTargetTypes()
+        {
+            _targetTypes.Clear();
+            if (_showVolumes == 1 || _showVolumes == 2)
+            {
+                _targetTypes.Add(EntityType.LightSource);
+            }
+            else if (_showVolumes == 3 || _showVolumes == 4)
+            {
+                _targetTypes.Add(EntityType.TriggerVolume);
+            }
+            else if (_showVolumes == 5 || _showVolumes == 6)
+            {
+                _targetTypes.Add(EntityType.AreaVolume);
+            }
+            else if (_showVolumes == 7)
+            {
+                _targetTypes.Add(EntityType.JumpPad);
+            }
+            else if (_showVolumes == 8)
+            {
+                _targetTypes.Add(EntityType.CameraPosition);
+                _targetTypes.Add(EntityType.FhCameraPosition);
+            }
         }
 
         private void OnKeyHeld()

@@ -146,7 +146,31 @@ namespace MphRead
         public IReadOnlyList<uint> WeightIds { get; }
 
         // todo: refactor model vs. entity abstraction
-        public Entity? Entity { get; set; }
+        private Entity? _entity = null;
+        public Entity? Entity
+        {
+            get
+            {
+                return _entity;
+            }
+            set
+            {
+                _entity = value;
+                if (_entity?.Type == EntityType.TriggerVolume)
+                {
+                    ParentId = ((Entity<TriggerVolumeEntityData>)_entity).Data.ParentId;
+                    ChildId = ((Entity<TriggerVolumeEntityData>)_entity).Data.ChildId;
+                }
+                else if (_entity?.Type == EntityType.AreaVolume)
+                {
+                    ParentId = ((Entity<AreaVolumeEntityData>)_entity).Data.ParentId;
+                    ChildId = ((Entity<AreaVolumeEntityData>)_entity).Data.ChildId;
+                }
+            }
+        }
+
+        public ushort ParentId { get; private set; } = UInt16.MaxValue;
+        public ushort ChildId { get; private set; } = UInt16.MaxValue;
 
         private static int _nextSceneId = 0;
         public int SceneId { get; } = _nextSceneId++;
