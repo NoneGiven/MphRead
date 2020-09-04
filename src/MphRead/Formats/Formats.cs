@@ -146,7 +146,31 @@ namespace MphRead
         public IReadOnlyList<uint> WeightIds { get; }
 
         // todo: refactor model vs. entity abstraction
-        public Entity? Entity { get; set; }
+        private Entity? _entity = null;
+        public Entity? Entity
+        {
+            get
+            {
+                return _entity;
+            }
+            set
+            {
+                _entity = value;
+                if (_entity?.Type == EntityType.TriggerVolume)
+                {
+                    ParentId = ((Entity<TriggerVolumeEntityData>)_entity).Data.ParentId;
+                    ChildId = ((Entity<TriggerVolumeEntityData>)_entity).Data.ChildId;
+                }
+                else if (_entity?.Type == EntityType.AreaVolume)
+                {
+                    ParentId = ((Entity<AreaVolumeEntityData>)_entity).Data.ParentId;
+                    ChildId = ((Entity<AreaVolumeEntityData>)_entity).Data.ChildId;
+                }
+            }
+        }
+
+        public ushort ParentId { get; private set; } = UInt16.MaxValue;
+        public ushort ChildId { get; private set; } = UInt16.MaxValue;
 
         private static int _nextSceneId = 0;
         public int SceneId { get; } = _nextSceneId++;
@@ -517,13 +541,55 @@ namespace MphRead
         public int ListId { get; set; }
         public bool Visible { get; set; } = true;
         public Vector4? PlaceholderColor { get; set; }
-        public Vector4? OverrideColor { get; set; }
 
+        public Selection Selection { get; set; } = Selection.None;
+
+        public Vector4? OverrideColor
+        {
+            get
+            {
+                static float GetFactor()
+                {
+                    long ms = Environment.TickCount64;
+                    float percentage = (ms % 1000) / 1000f;
+                    if (ms / 1000 % 10 % 2 == 0)
+                    {
+                        percentage = 1 - percentage;
+                    }
+                    return percentage;
+                }
+                if (Selection == Selection.Selected)
+                {
+                    float factor = GetFactor();
+                    return new Vector4(factor, factor, factor, 1);
+                }
+                if (Selection == Selection.Parent)
+                {
+                    float factor = GetFactor();
+                    return new Vector4(factor, 0, 0, 1);
+                }
+                if (Selection == Selection.Child)
+                {
+                    float factor = GetFactor();
+                    return new Vector4(0, 0, factor, 1);
+                }
+                return null;
+            }
+        }
+        
         public Mesh(RawMesh raw)
         {
             MaterialId = raw.MaterialId;
             DlistId = raw.DlistId;
         }
+    }
+
+    public enum Selection
+    {
+        None,
+        Selected,
+        Parent,
+        Child
     }
 
     public class Material
@@ -561,7 +627,7 @@ namespace MphRead
 
         public RenderMode GetEffectiveRenderMode(Mesh mesh)
         {
-            return mesh.OverrideColor == null ? RenderMode : RenderMode.Translucent;
+            return mesh.Selection == Selection.None ? RenderMode : RenderMode.Translucent;
         }
 
         public Material(RawMaterial raw)
@@ -779,7 +845,11 @@ namespace MphRead
         public ushort EntityId { get; }
         public bool FirstHunt { get; }
 
-        public Entity(EntityEntry entry, EntityType type, ushort entityId)
+        public Vector3 Position { get; }
+        public readonly Vector3 UpVector;
+        public readonly Vector3 RightVector;
+
+        public Entity(EntityEntry entry, EntityType type, ushort entityId, EntityDataHeader header)
         {
             NodeName = entry.NodeName;
             LayerMask = entry.LayerMask;
@@ -791,9 +861,12 @@ namespace MphRead
             Type = type;
             EntityId = entityId;
             FirstHunt = false;
+            Position = header.Position.ToFloatVector();
+            UpVector = header.UpVector.ToFloatVector();
+            RightVector = header.RightVector.ToFloatVector();
         }
 
-        public Entity(FhEntityEntry entry, EntityType type, ushort entityId)
+        public Entity(FhEntityEntry entry, EntityType type, ushort entityId, EntityDataHeader header)
         {
             NodeName = entry.NodeName;
             if (!Enum.IsDefined(typeof(EntityType), type))
@@ -803,6 +876,19 @@ namespace MphRead
             Type = type;
             EntityId = entityId;
             FirstHunt = true;
+            Position = header.Position.ToFloatVector();
+            UpVector = header.UpVector.ToFloatVector();
+            RightVector = header.RightVector.ToFloatVector();
+        }
+
+        public virtual ushort GetParentId()
+        {
+            return UInt16.MaxValue;
+        }
+
+        public virtual ushort GetChildId()
+        {
+            return UInt16.MaxValue;
         }
     }
 
@@ -810,16 +896,42 @@ namespace MphRead
     {
         public T Data { get; }
 
-        public Entity(EntityEntry entry, EntityType type, ushort someId, T data)
-            : base(entry, type, someId)
+        public Entity(EntityEntry entry, EntityType type, ushort someId, T data, EntityDataHeader header)
+            : base(entry, type, someId, header)
         {
             Data = data;
         }
 
-        public Entity(FhEntityEntry entry, EntityType type, ushort someId, T data)
-            : base(entry, type, someId)
+        public Entity(FhEntityEntry entry, EntityType type, ushort someId, T data, EntityDataHeader header)
+            : base(entry, type, someId, header)
         {
             Data = data;
+        }
+
+        public override ushort GetParentId()
+        {
+            if (Data is TriggerVolumeEntityData triggerData)
+            {
+                return triggerData.ParentId;
+            }
+            if (Data is AreaVolumeEntityData areaData)
+            {
+                return areaData.ParentId;
+            }
+            return base.GetParentId();
+        }
+        
+        public override ushort GetChildId()
+        {
+            if (Data is TriggerVolumeEntityData triggerData)
+            {
+                return triggerData.ChildId;
+            }
+            if (Data is AreaVolumeEntityData areaData)
+            {
+                return areaData.ChildId;
+            }
+            return base.GetChildId();
         }
     }
 
@@ -997,14 +1109,14 @@ namespace MphRead
         }
     }
 
-    // todo: some subtypes might not use their volume? if so, don't render them (confirm that all unk8s do, also)
-    public class Unknown7Display : DisplayVolume
+    // todo: some subtypes might not use their volume? if so, don't render them (confirm that all AreaVolumes do, also)
+    public class TriggerVolumeDisplay : DisplayVolume
     {
-        public Unknown7Display(Entity<Unknown7EntityData> entity)
+        public TriggerVolumeDisplay(Entity<TriggerVolumeEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
-            Color1 = Metadata.GetEventColor(entity.Data.ParentEventId);
-            Color2 = Metadata.GetEventColor(entity.Data.ChildEventId);
+            Color1 = Metadata.GetEventColor(entity.Data.ParentEvent);
+            Color2 = Metadata.GetEventColor(entity.Data.ChildEvent);
         }
 
         public override Vector3? GetColor(int index)
@@ -1021,20 +1133,20 @@ namespace MphRead
         }
     }
 
-    public class Unknown8Display : DisplayVolume
+    public class AreaVolumeDisplay : DisplayVolume
     {
-        public uint EntryEventId { get; }
-        public uint ExitEventId { get; }
+        public Message InsideEvent { get; }
+        public Message ExitEvent { get; }
         public uint Flags { get; }
 
-        public Unknown8Display(Entity<Unknown8EntityData> entity)
+        public AreaVolumeDisplay(Entity<AreaVolumeEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
-            EntryEventId = entity.Data.InsideEventId;
-            ExitEventId = entity.Data.OutsideEventId;
+            InsideEvent = entity.Data.InsideEvent;
+            ExitEvent = entity.Data.ExitEvent;
             Flags = entity.Data.Flags;
-            Color1 = Metadata.GetEventColor(EntryEventId);
-            Color2 = Metadata.GetEventColor(ExitEventId);
+            Color1 = Metadata.GetEventColor(InsideEvent);
+            Color2 = Metadata.GetEventColor(ExitEvent);
         }
 
         public override Vector3? GetColor(int index)

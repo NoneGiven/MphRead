@@ -942,7 +942,7 @@ namespace MphRead
             Nop();
         }
 
-        public static void TestUnknown7s()
+        public static void TestTriggerVolumes()
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
@@ -951,9 +951,9 @@ namespace MphRead
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
                     foreach (Entity entity in entities)
                     {
-                        if (entity.Type == EntityType.Unknown7)
+                        if (entity.Type == EntityType.TriggerVolume)
                         {
-                            Unknown7EntityData data = ((Entity<Unknown7EntityData>)entity).Data;
+                            TriggerVolumeEntityData data = ((Entity<TriggerVolumeEntityData>)entity).Data;
                         }
                     }
                 }
@@ -961,7 +961,7 @@ namespace MphRead
             Nop();
         }
 
-        public static void TestUnknown8s()
+        public static void TestAreaVolumes()
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
@@ -970,9 +970,9 @@ namespace MphRead
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
                     foreach (Entity entity in entities)
                     {
-                        if (entity.Type == EntityType.Unknown8)
+                        if (entity.Type == EntityType.AreaVolume)
                         {
-                            Unknown8EntityData data = ((Entity<Unknown8EntityData>)entity).Data;
+                            AreaVolumeEntityData data = ((Entity<AreaVolumeEntityData>)entity).Data;
                             if (data.Field8A > 1)
                             {
                                 Debugger.Break();

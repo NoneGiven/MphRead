@@ -512,8 +512,8 @@ namespace MphRead
                 EntityType.Door => ReadEntity<DoorEntityData>(bytes, entry, header),
                 EntityType.Item => ReadEntity<ItemEntityData>(bytes, entry, header),
                 EntityType.Enemy => ReadEntity<EnemyEntityData>(bytes, entry, header),
-                EntityType.Unknown7 => ReadEntity<Unknown7EntityData>(bytes, entry, header),
-                EntityType.Unknown8 => ReadEntity<Unknown8EntityData>(bytes, entry, header),
+                EntityType.TriggerVolume => ReadEntity<TriggerVolumeEntityData>(bytes, entry, header),
+                EntityType.AreaVolume => ReadEntity<AreaVolumeEntityData>(bytes, entry, header),
                 EntityType.JumpPad => ReadEntity<JumpPadEntityData>(bytes, entry, header),
                 EntityType.PointModule => ReadEntity<PointModuleEntityData>(bytes, entry, header),
                 EntityType.CameraPosition => ReadEntity<CameraPositionEntityData>(bytes, entry, header),
@@ -535,7 +535,7 @@ namespace MphRead
             int start = (int)entry.DataOffset;
             int end = start + entry.Length;
             Debug.Assert(entry.Length == Marshal.SizeOf<T>());
-            return new Entity<T>(entry, (EntityType)header.Type, header.EntityId, ReadStruct<T>(bytes[start..end]));
+            return new Entity<T>(entry, (EntityType)header.Type, header.EntityId, ReadStruct<T>(bytes[start..end]), header);
         }
 
         private static IReadOnlyList<Entity> GetFirstHuntEntities(ReadOnlySpan<byte> bytes)
@@ -582,9 +582,9 @@ namespace MphRead
         {
             int start = (int)entry.DataOffset;
             int end = start + Marshal.SizeOf<T>();
-            return new Entity<T>(entry, (EntityType)(header.Type + 100), header.EntityId, ReadStruct<T>(bytes[start..end]));
+            return new Entity<T>(entry, (EntityType)(header.Type + 100), header.EntityId, ReadStruct<T>(bytes[start..end]), header);
         }
-
+        
         // todo: should return a CameraSequence class (flags etc.)
         public static IReadOnlyList<CameraSequenceFrame> ReadCameraSequence(string name)
         {

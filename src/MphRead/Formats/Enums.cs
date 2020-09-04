@@ -7,10 +7,10 @@ namespace MphRead
         PlayerSpawn = 2,
         Door = 3,
         Item = 4,
-        // 5 = item instance
+        ItemInstance = 5,
         Enemy = 6,
-        Unknown7 = 7,
-        Unknown8 = 8,
+        TriggerVolume = 7,
+        AreaVolume = 8,
         JumpPad = 9,
         PointModule = 10, // FH leftovers only
         CameraPosition = 11,
@@ -22,17 +22,21 @@ namespace MphRead
         Artifact = 17,
         CameraSequence = 18,
         ForceField = 19,
-        // 23 = enemy instance
-        // 25 = player
-        // 26 = energy beam
+        // 20 = missing?
+        BeamEffect = 21,
+        Bomb = 22,
+        EnemyInstance = 23,
+        Halfturret = 24,
+        Player = 25,
+        BeamProjectile = 26,
         // 27 = entity list header
         // First Hunt
         FhPlayerSpawn = 101,
         FhDoor = 103,
         FhItem = 104,
         FhEnemy = 106,
-        FhUnknown9 = 109, // Unknown7
-        FhUnknown10 = 110, // Unknown8
+        FhUnknown9 = 109,
+        FhUnknown10 = 110,
         FhPlatform = 111,
         FhJumpPad = 112,
         FhPointModule = 113,
@@ -112,5 +116,53 @@ namespace MphRead
         PaletteA5I3 = 4, // A5I3 
         DirectRgb = 5,   // RGB
         PaletteA3I5 = 6  // A3I5
+    }
+
+    public enum Message : uint
+    {
+        None = 0,
+        SetActive = 5,
+        Destroyed = 6,
+        Damge = 7,
+        Unknown9 = 9,
+        Unknown12 = 12,
+        Gravity = 15,
+        Unknown16 = 16, // unlock?
+        Unknown17 = 17, // lock?
+        Activate = 18,
+        Unknown19 = 19, // match over?
+        Impact = 20,
+        Death = 21,
+        Unknown22 = 22,
+        SavePoint = 23,
+        Unknown25 = 25,
+        Unknown26 = 26, // UI message-related?
+        Unknown27 = 27, // UI message-related?
+        Unknown28 = 28, // UI message-related?
+        Unknown29 = 29, // spawn item here?
+        Unknown30 = 30,
+        Unknown31 = 31, // platform collision?
+        Unknown32 = 32,
+        Unknown33 = 33, // unlock all?
+        Unknown34 = 34, // lock all?
+        Unknown35 = 35,
+        Unknown36 = 36,
+        Unknown41 = 41,
+        Unknown42 = 42,
+        Unknown43 = 43,
+        Unknown44 = 44, // platform wakeup?
+        Unknown45 = 45, // platform sleep?
+        Unknown46 = 46,
+        Unknown50 = 50,
+        Unknown52 = 52,
+        Unknown53 = 53,
+        Unknown54 = 54,
+        Unknown55 = 55,
+        Unknown56 = 56,
+        Checkpoint = 57,
+        EscapeStart = 58,
+        Unknown59 = 59,
+        Unknown60 = 60,
+        Unknown61 = 61 // also starts escape sequence?
     }
 }
