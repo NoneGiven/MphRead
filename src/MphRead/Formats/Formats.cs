@@ -548,22 +548,35 @@ namespace MphRead
         {
             get
             {
+                static float GetFactor()
+                {
+                    long ms = Environment.TickCount64;
+                    float percentage = (ms % 1000) / 1000f;
+                    if (ms / 1000 % 10 % 2 == 0)
+                    {
+                        percentage = 1 - percentage;
+                    }
+                    return percentage;
+                }
                 if (Selection == Selection.Selected)
                 {
-                    return new Vector4(1, 1, 1, 1);
+                    float factor = GetFactor();
+                    return new Vector4(factor, factor, factor, 1);
                 }
                 if (Selection == Selection.Parent)
                 {
-                    return new Vector4(1, 0, 0, 1);
+                    float factor = GetFactor();
+                    return new Vector4(factor, 0, 0, 1) * GetFactor();
                 }
                 if (Selection == Selection.Child)
                 {
-                    return new Vector4(0, 0, 1, 1);
+                    float factor = GetFactor();
+                    return new Vector4(0, 0, factor, 1) * GetFactor();
                 }
                 return null;
             }
         }
-
+        
         public Mesh(RawMesh raw)
         {
             MaterialId = raw.MaterialId;
