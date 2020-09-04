@@ -389,7 +389,7 @@ namespace MphRead
             }
         }
 
-        private async Task UpdateModelStates(float time)
+        private async Task LoadAndUnload()
         {
             while (_loadQueue.TryDequeue(out Model? model))
             {
@@ -400,7 +400,6 @@ namespace MphRead
                 _updateLists = true;
                 await PrintOutput();
             }
-
             while (_unloadQueue.TryDequeue(out Model? model))
             {
                 Deselect();
@@ -421,7 +420,7 @@ namespace MphRead
         {
             // extra non-rendering updates
             _frameCount++;
-            await UpdateModelStates((float)args.Time);
+            await LoadAndUnload();
             OnKeyHeld();
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
@@ -1861,6 +1860,12 @@ namespace MphRead
                     {
                         _showVolumes = 8;
                     }
+                    if (_selectionMode == SelectionMode.Model)
+                    {
+                        Deselect();
+                        _selectedModelId = 0;
+                        await SelectNextModel();
+                    }
                 }
                 else
                 {
@@ -1868,6 +1873,12 @@ namespace MphRead
                     if (_showVolumes > 8)
                     {
                         _showVolumes = 0;
+                    }
+                    if (_selectionMode == SelectionMode.Model)
+                    {
+                        Deselect();
+                        _selectedModelId = 0;
+                        await SelectNextModel();
                     }
                 }
                 await PrintOutput();
@@ -1999,138 +2010,11 @@ namespace MphRead
             }
             else if (e.Key == Key.Plus || e.Key == Key.KeypadPlus)
             {
-                if (_modelMap.TryGetValue(_selectedModelId, out Model? model) && model.Meshes.Count > 0)
-                {
-                    if (_selectionMode == SelectionMode.Mesh)
-                    {
-                        int meshIndex = _selectedMeshId + 1;
-                        if (meshIndex > model.Meshes.Count - 1)
-                        {
-                            meshIndex = 0;
-                        }
-                        if (!SelectedModel.Nodes[_selectedNodeId].GetMeshIds().Contains(meshIndex))
-                        {
-                            for (int i = 0; i < SelectedModel.Nodes.Count; i++)
-                            {
-                                if (SelectedModel.Nodes[i].GetMeshIds().Contains(meshIndex))
-                                {
-                                    SetSelectedNode(_selectedModelId, i);
-                                }
-                            }
-                        }
-                        SetSelectedMesh(_selectedModelId, meshIndex);
-                    }
-                    else if (_selectionMode == SelectionMode.Node)
-                    {
-                        int nodeIndex;
-                        if (e.Shift)
-                        {
-                            nodeIndex = model.GetNextRoomNodeId(_selectedNodeId);
-                        }
-                        else
-                        {
-                            nodeIndex = _selectedNodeId + 1;
-                            if (nodeIndex > model.Nodes.Count - 1)
-                            {
-                                nodeIndex = 0;
-                            }
-                        }
-                        if (model.Nodes[nodeIndex].MeshCount > 0)
-                        {
-                            _selectedMeshId = model.Nodes[nodeIndex].GetMeshIds().First();
-                        }
-                        else
-                        {
-                            _selectedMeshId = 0;
-                        }
-                        SetSelectedNode(_selectedModelId, nodeIndex);
-                    }
-                    else if (_selectionMode == SelectionMode.Model)
-                    {
-                        Model? nextModel = model;
-                        IEnumerable<Model> matches = GetModelMatches();
-                        if (matches.Any())
-                        {
-                            nextModel = matches.FirstOrDefault(m => m.SceneId > model.SceneId);
-                            if (nextModel == null)
-                            {
-                                nextModel = matches.First();
-                            }
-                        }
-                        _selectedMeshId = 0;
-                        _selectedNodeId = 0;
-                        SetSelectedModel(nextModel.SceneId);
-                    }
-                    await PrintOutput();
-                }
+                await SelectNextModel(e.Shift);
             }
             else if (e.Key == Key.Minus || e.Key == Key.KeypadMinus)
             {
-                if (_modelMap.TryGetValue(_selectedModelId, out Model? model) && model.Meshes.Count > 0)
-                {
-                    int x = model.SceneId;
-                    if (_selectionMode == SelectionMode.Mesh)
-                    {
-                        int meshIndex = _selectedMeshId - 1;
-                        if (meshIndex < 0)
-                        {
-                            meshIndex = model.Meshes.Count - 1;
-                        }
-                        if (!SelectedModel.Nodes[_selectedNodeId].GetMeshIds().Contains(meshIndex))
-                        {
-                            for (int i = 0; i < SelectedModel.Nodes.Count; i++)
-                            {
-                                if (SelectedModel.Nodes[i].GetMeshIds().Contains(meshIndex))
-                                {
-                                    SetSelectedNode(_selectedModelId, i);
-                                }
-                            }
-                        }
-                        SetSelectedMesh(_selectedModelId, meshIndex);
-                    }
-                    else if (_selectionMode == SelectionMode.Node)
-                    {
-                        int nodeIndex;
-                        if (e.Shift)
-                        {
-                            nodeIndex = model.GetPreviousRoomNodeId(_selectedNodeId);
-                        }
-                        else
-                        {
-                            nodeIndex = _selectedNodeId - 1;
-                            if (nodeIndex < 0)
-                            {
-                                nodeIndex = model.Nodes.Count - 1;
-                            }
-                        }
-                        if (model.Nodes[nodeIndex].MeshCount > 0)
-                        {
-                            _selectedMeshId = model.Nodes[nodeIndex].GetMeshIds().First();
-                        }
-                        else
-                        {
-                            _selectedMeshId = 0;
-                        }
-                        SetSelectedNode(_selectedModelId, nodeIndex);
-                    }
-                    else if (_selectionMode == SelectionMode.Model)
-                    {
-                        Model? nextModel = model;
-                        IEnumerable<Model> matches = GetModelMatches();
-                        if (matches.Any())
-                        {
-                            nextModel = matches.LastOrDefault(m => m.SceneId < model.SceneId);
-                            if (nextModel == null)
-                            {
-                                nextModel = matches.Last();
-                            }
-                        }
-                        _selectedMeshId = 0;
-                        _selectedNodeId = 0;
-                        SetSelectedModel(nextModel.SceneId);
-                    }
-                    await PrintOutput();
-                }
+                await SelectPreviousModel(e.Shift);
             }
             else if (e.Key == Key.X)
             {
@@ -2206,6 +2090,142 @@ namespace MphRead
             return _models.Where(m => (_showInvisible || m.Type != ModelType.Placeholder) &&
                 (_showVolumes == 0 || (m.Entity != null && _targetTypes.Contains(m.Entity.Type))) &&
                 (_scanVisor || !m.ScanVisorOnly)).OrderBy(m => m.SceneId);
+        }
+
+        private async Task SelectNextModel(bool shift = false)
+        {
+            if (_modelMap.TryGetValue(_selectedModelId, out Model? model) && model.Meshes.Count > 0)
+            {
+                if (_selectionMode == SelectionMode.Mesh)
+                {
+                    int meshIndex = _selectedMeshId + 1;
+                    if (meshIndex > model.Meshes.Count - 1)
+                    {
+                        meshIndex = 0;
+                    }
+                    if (!SelectedModel.Nodes[_selectedNodeId].GetMeshIds().Contains(meshIndex))
+                    {
+                        for (int i = 0; i < SelectedModel.Nodes.Count; i++)
+                        {
+                            if (SelectedModel.Nodes[i].GetMeshIds().Contains(meshIndex))
+                            {
+                                SetSelectedNode(_selectedModelId, i);
+                            }
+                        }
+                    }
+                    SetSelectedMesh(_selectedModelId, meshIndex);
+                }
+                else if (_selectionMode == SelectionMode.Node)
+                {
+                    int nodeIndex;
+                    if (shift)
+                    {
+                        nodeIndex = model.GetNextRoomNodeId(_selectedNodeId);
+                    }
+                    else
+                    {
+                        nodeIndex = _selectedNodeId + 1;
+                        if (nodeIndex > model.Nodes.Count - 1)
+                        {
+                            nodeIndex = 0;
+                        }
+                    }
+                    if (model.Nodes[nodeIndex].MeshCount > 0)
+                    {
+                        _selectedMeshId = model.Nodes[nodeIndex].GetMeshIds().First();
+                    }
+                    else
+                    {
+                        _selectedMeshId = 0;
+                    }
+                    SetSelectedNode(_selectedModelId, nodeIndex);
+                }
+                else if (_selectionMode == SelectionMode.Model)
+                {
+                    Model? nextModel = model;
+                    IEnumerable<Model> matches = GetModelMatches();
+                    if (matches.Any())
+                    {
+                        nextModel = matches.FirstOrDefault(m => m.SceneId > model.SceneId);
+                        if (nextModel == null)
+                        {
+                            nextModel = matches.First();
+                        }
+                    }
+                    _selectedMeshId = 0;
+                    _selectedNodeId = 0;
+                    SetSelectedModel(nextModel.SceneId);
+                }
+                await PrintOutput();
+            }
+        }
+
+        private async Task SelectPreviousModel(bool shift)
+        {
+            if (_modelMap.TryGetValue(_selectedModelId, out Model? model) && model.Meshes.Count > 0)
+            {
+                if (_selectionMode == SelectionMode.Mesh)
+                {
+                    int meshIndex = _selectedMeshId - 1;
+                    if (meshIndex < 0)
+                    {
+                        meshIndex = model.Meshes.Count - 1;
+                    }
+                    if (!SelectedModel.Nodes[_selectedNodeId].GetMeshIds().Contains(meshIndex))
+                    {
+                        for (int i = 0; i < SelectedModel.Nodes.Count; i++)
+                        {
+                            if (SelectedModel.Nodes[i].GetMeshIds().Contains(meshIndex))
+                            {
+                                SetSelectedNode(_selectedModelId, i);
+                            }
+                        }
+                    }
+                    SetSelectedMesh(_selectedModelId, meshIndex);
+                }
+                else if (_selectionMode == SelectionMode.Node)
+                {
+                    int nodeIndex;
+                    if (shift)
+                    {
+                        nodeIndex = model.GetPreviousRoomNodeId(_selectedNodeId);
+                    }
+                    else
+                    {
+                        nodeIndex = _selectedNodeId - 1;
+                        if (nodeIndex < 0)
+                        {
+                            nodeIndex = model.Nodes.Count - 1;
+                        }
+                    }
+                    if (model.Nodes[nodeIndex].MeshCount > 0)
+                    {
+                        _selectedMeshId = model.Nodes[nodeIndex].GetMeshIds().First();
+                    }
+                    else
+                    {
+                        _selectedMeshId = 0;
+                    }
+                    SetSelectedNode(_selectedModelId, nodeIndex);
+                }
+                else if (_selectionMode == SelectionMode.Model)
+                {
+                    Model? nextModel = model;
+                    IEnumerable<Model> matches = GetModelMatches();
+                    if (matches.Any())
+                    {
+                        nextModel = matches.LastOrDefault(m => m.SceneId < model.SceneId);
+                        if (nextModel == null)
+                        {
+                            nextModel = matches.Last();
+                        }
+                    }
+                    _selectedMeshId = 0;
+                    _selectedNodeId = 0;
+                    SetSelectedModel(nextModel.SceneId);
+                }
+                await PrintOutput();
+            }
         }
 
         private void UpdateTargetTypes()
