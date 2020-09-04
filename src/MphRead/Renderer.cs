@@ -2508,7 +2508,7 @@ namespace MphRead
                     else
                     {
                         type += ", Target: None";
-                    } 
+                    }
                     type += Environment.NewLine + $" Child: {trigger.Data.ChildEvent}";
                     if (TryGetByEntityId(trigger.Data.ChildId, out Model? child))
                     {
