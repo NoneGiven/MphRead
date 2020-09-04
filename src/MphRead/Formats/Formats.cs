@@ -566,12 +566,12 @@ namespace MphRead
                 if (Selection == Selection.Parent)
                 {
                     float factor = GetFactor();
-                    return new Vector4(factor, 0, 0, 1) * GetFactor();
+                    return new Vector4(factor, 0, 0, 1);
                 }
                 if (Selection == Selection.Child)
                 {
                     float factor = GetFactor();
-                    return new Vector4(0, 0, factor, 1) * GetFactor();
+                    return new Vector4(0, 0, factor, 1);
                 }
                 return null;
             }
