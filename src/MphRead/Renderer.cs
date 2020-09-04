@@ -1140,7 +1140,7 @@ namespace MphRead
 
         private void RenderMesh(Model model, Node node, Mesh mesh, Material material)
         {
-            DoMaterial(model, mesh, material);
+            DoMaterial(model, material);
             DoTexture(model, node, mesh, material);
             if (_faceCulling)
             {
@@ -1333,7 +1333,7 @@ namespace MphRead
             }
         }
 
-        private void DoMaterial(Model model, Mesh mesh, Material material)
+        private void DoMaterial(Model model, Material material)
         {
             // todo: control animations so everything isn't playing at once, and remove this temporary line
             material.AnimationFlags = AnimationFlags.DisableAlpha;
