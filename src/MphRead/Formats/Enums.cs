@@ -118,6 +118,15 @@ namespace MphRead
         PaletteA3I5 = 6  // A3I5
     }
 
+    public enum TriggerType : uint
+    {
+        Normal = 0,
+        Threshold = 1,
+        Splitter = 2,
+        Automatic = 3,
+        Unknown4 = 4
+    }
+
     public enum Message : uint
     {
         None = 0,

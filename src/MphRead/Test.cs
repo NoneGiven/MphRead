@@ -950,10 +950,6 @@ namespace MphRead
                         if (entity.Type == EntityType.TriggerVolume)
                         {
                             TriggerVolumeEntityData data = ((Entity<TriggerVolumeEntityData>)entity).Data;
-                            if (data.Type != 2 && data.ParentEvent == Message.None && data.ChildEvent == Message.None)
-                            {
-                                Debugger.Break();
-                            }
                         }
                     }
                 }

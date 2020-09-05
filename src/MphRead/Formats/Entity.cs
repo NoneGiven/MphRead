@@ -517,7 +517,7 @@ namespace MphRead
     public readonly struct TriggerVolumeEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Type; // subtype 0-4?
+        public readonly TriggerType Type;
         public readonly RawCollisionVolume Volume;
         public readonly ushort Field68;
         public readonly byte Active; // boolean

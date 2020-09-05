@@ -556,14 +556,11 @@ namespace MphRead
             return MathF.Abs(one - two) < 0.001f;
         }
 
-        private void LookAt(Vector3 target, bool skipGoTo)
+        private void LookAt(Vector3 target)
         {
             if (_cameraMode == CameraMode.Roam)
             {
-                if (!skipGoTo)
-                {
-                    _cameraPosition = -1 * target.WithZ(target.Z + 5);
-                }
+                _cameraPosition = -1 * target.WithZ(target.Z + 5);
                 Vector3 position = -1 * _cameraPosition;
                 Vector3 unit = FloatEqual(position.Z, target.Z) && FloatEqual(position.X, target.X)
                     ? Vector3.UnitZ
@@ -2020,12 +2017,39 @@ namespace MphRead
             {
                 if (_selectionMode == SelectionMode.Model)
                 {
-                    LookAt(SelectedModel.Position, e.Control);
+                    if (e.Control)
+                    {
+                        if (SelectedModel.Entity != null)
+                        {
+                            if (e.Shift)
+                            {
+                                ushort childId = SelectedModel.Entity.GetChildId();
+                                Model? child = _models.FirstOrDefault(m => m.Entity?.EntityId == childId);
+                                if (child != null)
+                                {
+                                    LookAt(child.Position);
+                                }
+                            }
+                            else
+                            {
+                                ushort parentId = SelectedModel.Entity.GetParentId();
+                                Model? parent = _models.FirstOrDefault(m => m.Entity?.EntityId == parentId);
+                                if (parent != null)
+                                {
+                                    LookAt(parent.Position);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        LookAt(SelectedModel.Position);
+                    }
                 }
                 else if (_selectionMode == SelectionMode.Node || _selectionMode == SelectionMode.Mesh)
                 {
                     // todo: could keep track of vertex positions during rendering and use them here to locate the mesh
-                    LookAt(SelectedModel.Nodes[_selectedNodeId].Position, e.Control);
+                    LookAt(SelectedModel.Nodes[_selectedNodeId].Position);
                 }
             }
             else if (e.Key == Key.Number0 || e.Key == Key.Keypad0)
@@ -2465,13 +2489,16 @@ namespace MphRead
             await Output.Write($"Model: {model.Name} [{model.SceneId}] {(model.Visible ? "On " : "Off")} - " +
                 $"Color {model.CurrentRecolor} / {model.Recolors.Count - 1}", guid);
             string type = $"{model.Type}";
+            if (model.Entity != null)
+            {
+                type = $"{model.EntityType} {model.Entity.EntityId}";
+            }
             if (model.Type == ModelType.Room)
             {
                 type += $" ({model.Nodes.Count(n => n.IsRoomNode)})";
             }
             else if (model.Type == ModelType.Placeholder)
             {
-                type += $" - {model.EntityType}";
                 if (model.Entity is Entity<LightSourceEntityData> entity)
                 {
                     ColorRgb color1 = entity.Data.Light1Color;
@@ -2500,6 +2527,7 @@ namespace MphRead
                 }
                 else if (model.Entity is Entity<TriggerVolumeEntityData> trigger)
                 {
+                    type += $" ({trigger.Data.Type})";
                     type += Environment.NewLine + $"Parent: {trigger.Data.ParentEvent}";
                     if (TryGetByEntityId(trigger.Data.ParentId, out Model? parent))
                     {
