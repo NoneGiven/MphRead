@@ -919,24 +919,6 @@ namespace MphRead
             Nop();
         }
 
-        private class EventInfo
-        {
-            public Message Message { get; }
-            public EntityType Type { get; }
-            public ushort EntityId { get; }
-            public EventInfo Parent { get; }
-            public EventInfo Child { get; }
-
-            public EventInfo(Message message, EntityType type, ushort entityId, EventInfo parent, EventInfo child)
-            {
-                Message = message;
-                Type = type;
-                EntityId = entityId;
-                Parent = parent;
-                Child = child;
-            }
-        }
-
         public static void TestAllEntities()
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
@@ -949,10 +931,6 @@ namespace MphRead
                         if (entity.Type == EntityType.AreaVolume)
                         {
                             AreaVolumeEntityData data = ((Entity<AreaVolumeEntityData>)entity).Data;
-                            if (data.Priority != 0)
-                            {
-                                Debugger.Break();
-                            }
                         }
                     }
                 }
@@ -972,6 +950,10 @@ namespace MphRead
                         if (entity.Type == EntityType.TriggerVolume)
                         {
                             TriggerVolumeEntityData data = ((Entity<TriggerVolumeEntityData>)entity).Data;
+                            if (data.Type != 2 && data.ParentEvent == Message.None && data.ChildEvent == Message.None)
+                            {
+                                Debugger.Break();
+                            }
                         }
                     }
                 }

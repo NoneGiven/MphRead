@@ -556,7 +556,7 @@ namespace MphRead
         public readonly Message InsideEvent;
         public readonly uint InsideEventParam1; // seconds for escape sequence, gravity/jump assist values, etc.
         public readonly uint InsideEventParam2; // always 0 except for type 15, where it's always 2
-        public readonly ushort ParentId; // this can have real values -- not used for event propagation, but is for "dedup" check
+        public readonly ushort ParentId;
         public readonly ushort Padding7A;
         public readonly Message ExitEvent;
         public readonly uint ExitEventParam1; // always 0
