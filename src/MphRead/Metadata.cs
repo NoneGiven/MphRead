@@ -704,7 +704,7 @@ namespace MphRead
             {
                 return new Vector3(0.964f, 0.596f, 0.596f);
             }
-            if (eventId == Message.Checkpoint) // pink
+            if (eventId == Message.Checkpoint) // magenta
             {
                 return new Vector3(0.972f, 0.086f, 0.831f);
             }
