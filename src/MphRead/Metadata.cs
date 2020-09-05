@@ -664,7 +664,7 @@ namespace MphRead
             {
                 return new Vector3(0.615f, 0, 0.909f);
             }
-            if (eventId == Message.Damge) // red
+            if (eventId == Message.Damage) // red
             {
                 return new Vector3(1, 0, 0);
             }

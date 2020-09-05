@@ -919,21 +919,215 @@ namespace MphRead
             Nop();
         }
 
+        private class Info
+        {
+            public Entity Entity { get; }
+            public string Room { get; }
+            public uint Type { get; }
+
+            public Info(Entity entity, string room, uint type)
+            {
+                Entity = entity;
+                Room = room;
+                Type = type;
+            }
+        }
+
         public static void TestAllEntities()
         {
+            var byType = new Dictionary<Message, List<Info>>();
+            var byRoom = new Dictionary<string, Dictionary<ushort, Entity>>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 if (meta.Value.EntityPath != null)
                 {
+                    byRoom.Add(meta.Key, new Dictionary<ushort, Entity>());
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
                     foreach (Entity entity in entities)
                     {
                         if (entity.Type == EntityType.AreaVolume)
                         {
+                            byRoom[meta.Key].Add(entity.EntityId, entity);
                             AreaVolumeEntityData data = ((Entity<AreaVolumeEntityData>)entity).Data;
+                            if (data.InsideEvent != Message.None)
+                            {
+                                if (!byType.ContainsKey(data.InsideEvent))
+                                {
+                                    byType.Add(data.InsideEvent, new List<Info>());
+                                }
+                                byType[data.InsideEvent].Add(new Info(entity, meta.Key, type: 0));
+                            }
+                            if (data.ExitEvent != Message.None)
+                            {
+                                if (!byType.ContainsKey(data.ExitEvent))
+                                {
+                                    byType.Add(data.ExitEvent, new List<Info>());
+                                }
+                                byType[data.ExitEvent].Add(new Info(entity, meta.Key, type: 1));
+                            }
+                        }
+                        if (entity.Type == EntityType.TriggerVolume)
+                        {
+                            byRoom[meta.Key].Add(entity.EntityId, entity);
+                            TriggerVolumeEntityData data = ((Entity<TriggerVolumeEntityData>)entity).Data;
+                            if (data.ParentEvent != Message.None)
+                            {
+                                if (!byType.ContainsKey(data.ParentEvent))
+                                {
+                                    byType.Add(data.ParentEvent, new List<Info>());
+                                }
+                                byType[data.ParentEvent].Add(new Info(entity, meta.Key, type: 0));
+                            }
+                            if (data.ChildEvent != Message.None)
+                            {
+                                if (!byType.ContainsKey(data.ChildEvent))
+                                {
+                                    byType.Add(data.ChildEvent, new List<Info>());
+                                }
+                                byType[data.ChildEvent].Add(new Info(entity, meta.Key, type: 1));
+                            }
                         }
                     }
                 }
+            }
+            static void WriteIndent(int indent)
+            {
+                for (int i = 0; i < indent; i++)
+                {
+                    Console.Write(" ");
+                }
+            }
+            void WriteTriggerInfo(string arena, Entity<TriggerVolumeEntityData> splitter, int indent)
+            {
+                if (splitter.Data.ParentId != UInt16.MaxValue)
+                {
+                    if (byRoom[arena].TryGetValue(splitter.Data.ParentId, out Entity? splitParent))
+                    {
+                        WriteIndent(indent);
+                        Console.WriteLine($"Parent: {splitParent.Type} ({splitParent.EntityId})");
+                        if (splitParent is Entity<TriggerVolumeEntityData> parentData && parentData.Data.Type == 2)
+                        {
+                            WriteTriggerInfo(arena, parentData, indent + 4);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Parent: MISSING {splitter.Data.ParentId}");
+                    }
+                }
+                if (splitter.Data.ChildId != UInt16.MaxValue)
+                {
+                    if (byRoom[arena].TryGetValue(splitter.Data.ChildId, out Entity? splitChild))
+                    {
+                        WriteIndent(indent);
+                        Console.WriteLine($"Child: {splitChild.Type} ({splitChild.EntityId})");
+                        if (splitChild is Entity<TriggerVolumeEntityData> childData && childData.Data.Type == 2)
+                        {
+                            WriteTriggerInfo(arena, childData, indent + 4);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Parent: MISSING {splitter.Data.ChildId}");
+                    }
+                }
+            }
+            foreach (KeyValuePair<Message, List<Info>> kvp in byType.OrderBy(k => k.Key))
+            {
+                Console.WriteLine();
+                Console.WriteLine(kvp.Key);
+                Console.WriteLine();
+                foreach (Info value in kvp.Value.OrderBy(v => v.Room).ThenBy(v => v.Entity.EntityId))
+                {
+                    if (value.Entity is Entity<TriggerVolumeEntityData> trigger)
+                    {
+                        Entity entity = value.Entity;
+                        string room = value.Room;
+                        uint type = value.Type;
+                        Console.WriteLine($"TriggerVolume ({entity.EntityId}) in {room}");
+                        Console.Write(type == 0 ? "Parent" : "Child");
+                        Entity? target = null;
+                        ushort otherId = type == 0 ? trigger.Data.ParentId : trigger.Data.ChildId;
+                        if (otherId != UInt16.MaxValue)
+                        {
+                            if (byRoom[room].TryGetValue(otherId, out target))
+                            {
+                                Console.Write($", Target: {target.Type} ({target.EntityId})");
+                            }
+                            else
+                            {
+                                Console.Write($", Target: MISSING {otherId}");
+                            } 
+                        }
+                        else
+                        {
+                            Console.Write(" (no target)");
+                        }
+                        Console.WriteLine();
+                        if (target != null && target is Entity<TriggerVolumeEntityData> next && next.Data.Type == 2)
+                        {
+                            // sktodo
+                            WriteTriggerInfo(room, next, 0);
+                        }
+                    }
+                    else if (value.Entity is Entity<AreaVolumeEntityData> area)
+                    {
+                        Entity entity = value.Entity;
+                        string room = value.Room;
+                        uint type = value.Type;
+                        Console.WriteLine($"AreaVolume ({entity.EntityId}) in {room}");
+                        Console.Write("Inside");
+                        if (type == 0)
+                        {
+                            if (area.Data.InsideEvent == Message.Damage || area.Data.InsideEvent == Message.Death
+                                || area.Data.InsideEvent == Message.Gravity || area.Data.InsideEvent == Message.Unknown35
+                                || area.Data.InsideEvent == Message.Unknown46)
+                            {
+                                Console.Write(", Target: Player");
+                            }
+                            else if (area.Data.ParentId != UInt16.MaxValue)
+                            {
+                                if (byRoom[room].TryGetValue(area.Data.ParentId, out Entity? target))
+                                {
+                                    Console.Write($", Target: {target.Type} ({target.EntityId})");
+                                }
+                                else
+                                {
+                                    Console.Write($", Target: MISSING {area.Data.ParentId}");
+                                }
+                            }
+                            else
+                            {
+                                Console.Write(" (no target)");
+                            }
+                        }
+                        else if (type == 1)
+                        {
+                            if (area.Data.ExitEvent == Message.Damage || area.Data.ExitEvent == Message.Death)
+                            {
+                                Console.Write(", Target: Player");
+                            }
+                            else if (area.Data.ChildId != UInt16.MaxValue)
+                            {
+                                if (byRoom[room].TryGetValue(area.Data.ChildId, out Entity? target))
+                                {
+                                    Console.Write($", Target: {target.Type} ({target.EntityId})");
+                                }
+                                else
+                                {
+                                    Console.Write($", Target: MISSING {area.Data.ChildId}");
+                                } 
+                            }
+                            else
+                            {
+                                Console.Write(" (no target)");
+                            }
+                        }
+                        Console.WriteLine();
+                    }
+                    Console.WriteLine();
+                }
+                Console.WriteLine("======================================================================");
             }
             Nop();
         }

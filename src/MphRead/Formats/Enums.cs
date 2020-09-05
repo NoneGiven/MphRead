@@ -123,7 +123,7 @@ namespace MphRead
         None = 0,
         SetActive = 5,
         Destroyed = 6,
-        Damge = 7,
+        Damage = 7,
         Unknown9 = 9,
         Unknown12 = 12,
         Gravity = 15,
