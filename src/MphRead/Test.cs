@@ -945,9 +945,9 @@ namespace MphRead
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
                     foreach (Entity entity in entities)
                     {
+                        byRoom[meta.Key].Add(entity.EntityId, entity);
                         if (entity.Type == EntityType.AreaVolume)
                         {
-                            byRoom[meta.Key].Add(entity.EntityId, entity);
                             AreaVolumeEntityData data = ((Entity<AreaVolumeEntityData>)entity).Data;
                             if (data.InsideEvent != Message.None)
                             {
@@ -968,7 +968,6 @@ namespace MphRead
                         }
                         if (entity.Type == EntityType.TriggerVolume)
                         {
-                            byRoom[meta.Key].Add(entity.EntityId, entity);
                             TriggerVolumeEntityData data = ((Entity<TriggerVolumeEntityData>)entity).Data;
                             if (data.ParentEvent != Message.None)
                             {
@@ -1012,6 +1011,7 @@ namespace MphRead
                     }
                     else
                     {
+                        WriteIndent(indent);
                         Console.WriteLine($"Parent: MISSING {splitter.Data.ParentId}");
                     }
                 }
@@ -1028,7 +1028,8 @@ namespace MphRead
                     }
                     else
                     {
-                        Console.WriteLine($"Parent: MISSING {splitter.Data.ChildId}");
+                        WriteIndent(indent);
+                        Console.WriteLine($"Child: MISSING {splitter.Data.ChildId}");
                     }
                 }
             }
@@ -1067,7 +1068,7 @@ namespace MphRead
                         if (target != null && target is Entity<TriggerVolumeEntityData> next && next.Data.Type == 2)
                         {
                             // sktodo
-                            WriteTriggerInfo(room, next, 0);
+                            WriteTriggerInfo(room, next, 4);
                         }
                     }
                     else if (value.Entity is Entity<AreaVolumeEntityData> area)
