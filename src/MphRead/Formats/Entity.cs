@@ -519,17 +519,17 @@ namespace MphRead
         public readonly EntityDataHeader Header;
         public readonly TriggerType Type;
         public readonly RawCollisionVolume Volume;
-        public readonly ushort Field68;
+        public readonly ushort Unused68; // always UInt16.MaxValue
         public readonly byte Active; // boolean
         public readonly byte AlwaysActive; // boolean -- set flags bit 0 based on Active boolean only and ignore room state
         public readonly byte DeactivateAfterUse; // boolean -- set flags bit 1
         public readonly byte Padding6D;
         public readonly ushort RefreshDelay;
         public readonly ushort InitialDelay;
-        public readonly ushort Field72;
+        public readonly ushort RequiredStateBit; // for subtype 4
         public readonly ushort TriggerFlags; // in-game this is treated as uint, but the extra bits are never set/checked
         public readonly ushort Padding76;
-        public readonly uint Field78;
+        public readonly uint TriggerThreshold; // for subtype 1
         public readonly ushort ParentId;
         public readonly ushort Padding7E;
         public readonly Message ParentEvent;
