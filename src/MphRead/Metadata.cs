@@ -704,11 +704,11 @@ namespace MphRead
             {
                 return new Vector3(0.964f, 0.596f, 0.596f);
             }
-            if (eventId == Message.Unknown56) // pink
+            if (eventId == Message.Checkpoint) // pink
             {
                 return new Vector3(0.972f, 0.086f, 0.831f);
             }
-            if (eventId == Message.Unknown56) // mint
+            if (eventId == Message.EscapeStart) // mint
             {
                 return new Vector3(0.619f, 0.980f, 0.678f);
             }
