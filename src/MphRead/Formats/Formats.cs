@@ -836,6 +836,22 @@ namespace MphRead
         }
     }
 
+    public class StringTableEntry
+    {
+        public string Id { get; }
+        public string Value { get; }
+        public byte Speed { get; }
+        public char Category { get; }
+
+        public StringTableEntry(RawStringTableEntry raw, string value)
+        {
+            Id = new string(raw.Id.Reverse().ToArray());
+            Speed = raw.Speed;
+            Category = raw.Category;
+            Value = value;
+        }
+    }
+    
     public class Entity
     {
         public string NodeName { get; }

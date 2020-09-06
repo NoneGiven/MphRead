@@ -678,7 +678,7 @@ namespace MphRead
             return result;
         }
 
-        private static uint SpanReadUint(ReadOnlySpan<byte> bytes, int offset)
+        public static uint SpanReadUint(ReadOnlySpan<byte> bytes, int offset)
         {
             return SpanReadUint(bytes, ref offset);
         }
@@ -708,6 +708,11 @@ namespace MphRead
         public static T DoOffset<T>(ReadOnlySpan<byte> bytes, uint offset) where T : struct
         {
             return DoOffsets<T>(bytes, offset, 1).First();
+        }
+
+        public static IReadOnlyList<T> DoOffsets<T>(ReadOnlySpan<byte> bytes, int offset, uint count) where T : struct
+        {
+            return DoOffsets<T>(bytes, (uint)offset, (int)count);
         }
 
         public static IReadOnlyList<T> DoOffsets<T>(ReadOnlySpan<byte> bytes, uint offset, uint count) where T : struct

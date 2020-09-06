@@ -488,7 +488,7 @@ namespace MphRead
     // size: 116
     public readonly struct RawEffectElement
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] // todo: do these work if all 32 characters are used?
         public readonly string Name;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
         public readonly string ModelName;
@@ -505,5 +505,16 @@ namespace MphRead
         public readonly uint Field68;
         public readonly uint SomeCount;
         public readonly uint SomeOffset;
+    }
+
+    // size: 11
+    public readonly struct RawStringTableEntry
+    {
+        [MarshalAsAttribute(UnmanagedType.ByValArray, SizeConst = 4)]
+        public readonly char[] Id; // need all 4 characters (no terminator)
+        public readonly uint Offset;
+        public readonly ushort Length;
+        public readonly byte Speed;
+        public readonly char Category;
     }
 }

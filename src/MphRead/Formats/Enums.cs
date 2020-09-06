@@ -174,4 +174,14 @@ namespace MphRead
         Unknown60 = 60,
         Unknown61 = 61 // also starts escape sequence?
     }
+
+    public enum Language
+    {
+        English,
+        French,
+        German,
+        Italian,
+        Japanese,
+        Spanish
+    }
 }
