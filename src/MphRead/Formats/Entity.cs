@@ -778,8 +778,9 @@ namespace MphRead
     public readonly struct PointModuleEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Field24;
-        public readonly byte Field28;
+        public readonly ushort Field24; // previous/next?
+        public readonly ushort Field26;
+        public readonly byte Active; // boolean - always 0 in MPH
     }
 
     // todo: might be interchangeable with the MPH version
@@ -788,8 +789,9 @@ namespace MphRead
     public readonly struct FhPointModuleEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Field24;
-        public readonly byte Field28;
+        public readonly ushort Field24;
+        public readonly ushort Field26;
+        public readonly byte Active; // boolean
     }
 
     // todo: rename to MorphCamera if it isn't used for anything else
