@@ -44,9 +44,9 @@ namespace MphRead
             return " ";
         }
 
-        private static string GetMessage(char type, uint id, string table, Language language)
+        public static string GetMessage(char type, uint id, string table, Language language = Language.English)
         {
-            string fullId = type + id.ToString();
+            string fullId = type + id.ToString().PadLeft(3, '0');
             foreach (StringTableEntry entry in ReadStringTable(table, language))
             {
                 if (entry.Id == fullId)
