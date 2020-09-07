@@ -22,6 +22,40 @@ namespace MphRead
             }
             return entries;
         }
+
+        public static string GetHudMessage(uint id, Language language = Language.English)
+        {
+            if (id >= 1 && id <= 11)
+            {
+                return GetMessage('H', id, StringTables.HudMsgsCommon, language);
+            }
+            if (id >= 101 && id <= 122)
+            {
+                return GetMessage('H', id, StringTables.HudMessagesSP, language);
+            }
+            if (id >= 201 && id <= 257)
+            {
+                return GetMessage('H', id, StringTables.HudMessagesMP, language);
+            }
+            if (id >= 301 && id <= 305)
+            {
+                return GetMessage('W', id - 300, StringTables.HudMessagesMP, language);
+            }
+            return " ";
+        }
+
+        private static string GetMessage(char type, uint id, string table, Language language)
+        {
+            string fullId = type + id.ToString();
+            foreach (StringTableEntry entry in ReadStringTable(table, language))
+            {
+                if (entry.Id == fullId)
+                {
+                    return entry.Value;
+                }
+            }
+            return " ";
+        }
         
         private static string GetFolder(Language language)
         {
