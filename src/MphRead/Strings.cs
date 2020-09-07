@@ -12,8 +12,8 @@ namespace MphRead
             string path = Path.Combine(Paths.FileSystem, GetFolder(language), name);
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             uint count = Read.SpanReadUint(bytes, 0);
-            // todo: what are the extra bytes after the length in ScanLog.bin?
-            // seems to be an offset to 8 bytes before the first string data
+            // ScanLog has an 8-byte header and 8 bytes between the last entry and first string,
+            // which are related to parsing max string length and not necessary for us to use
             int offset = name == StringTables.ScanLog ? 8 : 4;
             foreach (RawStringTableEntry entry in Read.DoOffsets<RawStringTableEntry>(bytes, offset, count))
             {
