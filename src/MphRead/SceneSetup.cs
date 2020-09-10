@@ -826,6 +826,7 @@ namespace MphRead
             model.Scale = new Vector3(data.Width.FloatValue, data.Height.FloatValue, 1.0f);
             ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
+            model.Visible = data.Active != 0;
             model.Type = ModelType.Object;
             model.Entity = entity;
             return model;

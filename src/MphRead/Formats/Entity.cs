@@ -121,7 +121,7 @@ namespace MphRead
         public readonly uint Field1BC;
         public readonly uint EffectId2;
         public readonly uint EffectId3;
-        public readonly byte HasItem; // boolean?
+        public readonly byte SomeItemValue;
         public readonly byte Field1C9;
         public readonly ushort Field1CA;
         public readonly uint ItemModel;
@@ -909,7 +909,7 @@ namespace MphRead
         public readonly ushort Message3Target;
         public readonly ushort Padding3A;
         public readonly uint Message3Id;
-        public readonly ushort LinkedEntityId;
+        public readonly ushort LinkedEntityId; // always UInt16.MaxValue
     }
 
     // size: 64
@@ -928,7 +928,7 @@ namespace MphRead
         public readonly ushort Entity1;
         public readonly ushort Entity2;
         public readonly ushort Entity3;
-        public readonly uint Field34;
+        public readonly uint SomeMessageId;
         public readonly uint Field38;
     }
 
@@ -937,10 +937,10 @@ namespace MphRead
     public readonly struct ForceFieldEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Type;
+        public readonly uint Type; // 0-8 beam lock, 9 no lock
         public readonly Fixed Width;
         public readonly Fixed Height;
-        public readonly byte Spawn; // boolean
+        public readonly byte Active; // boolean
     }
 
     // size: 32
