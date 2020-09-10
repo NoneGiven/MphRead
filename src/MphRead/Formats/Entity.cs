@@ -48,10 +48,10 @@ namespace MphRead
         public readonly ushort Field2C;
         public readonly byte Field2E;
         public readonly byte Field2F;
-        public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly byte Field38;
-        public readonly byte Field39;
+        public readonly ushort Field30;
+        public readonly ushort Field32;
+        public readonly uint ScanEventId;
+        public readonly ushort Field38;
         public readonly ushort Field3A;
         public readonly Vector3Fx Position1;
         public readonly Vector3Fx Position2;
@@ -116,11 +116,11 @@ namespace MphRead
         public readonly uint Field1A8;
         public readonly uint Field1AC;
         public readonly uint Field1B0;
-        public readonly uint FxId1;
+        public readonly uint EffectId1;
         public readonly uint Field1B8;
         public readonly uint Field1BC;
-        public readonly uint FxId2;
-        public readonly uint FxId3;
+        public readonly uint EffectId2;
+        public readonly uint EffectId3;
         public readonly byte HasItem; // boolean?
         public readonly byte Field1C9;
         public readonly ushort Field1CA;
@@ -128,30 +128,34 @@ namespace MphRead
         public readonly uint Field1D0;
         public readonly uint Field1D4;
         public readonly uint Field1D8;
-        public readonly uint Field1DC;
-        public readonly uint Field1E0;
-        public readonly uint Field1E4;
+        public readonly uint Message1Id;
+        public readonly uint Message1Param1;
+        public readonly uint Message1Param2;
         public readonly uint Field1E8;
-        public readonly uint Field1EC;
-        public readonly uint Field1F0;
-        public readonly uint Field1F4;
+        public readonly uint Message2Id;
+        public readonly uint Message2Param1;
+        public readonly uint Message2Param2;
         public readonly uint Field1F8;
-        public readonly uint Field1FC;
-        public readonly uint Field200;
-        public readonly uint Field204;
-        public readonly uint Field208;
+        public readonly uint Message3Id;
+        public readonly uint Message3Param1;
+        public readonly uint Message3Param2;
+        public readonly ushort Field208;
+        public readonly ushort Field20A;
         public readonly uint Field20C;
         public readonly uint Field210;
         public readonly uint Field214;
-        public readonly uint Field218;
+        public readonly ushort Field218;
+        public readonly ushort Field21A;
         public readonly uint Field21C;
         public readonly uint Field220;
         public readonly uint Field224;
-        public readonly uint Field228;
+        public readonly ushort Field228;
+        public readonly ushort Field22A;
         public readonly uint Field22C;
         public readonly uint Field230;
         public readonly uint Field234;
-        public readonly uint Field238;
+        public readonly ushort Field238;
+        public readonly ushort Field23A;
         public readonly uint Field23C;
         public readonly uint Field240;
         public readonly uint Field244;
@@ -217,35 +221,20 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly uint Flags;
-        public readonly uint FxFlags;
+        public readonly uint EffectFlags;
         public readonly uint ModelId;
         public readonly ushort LinkedEntity;
         public readonly ushort ScanId;
         public readonly ushort Field34;
         public readonly ushort Field36;
-        public readonly uint Field38;
-        public readonly uint Field3C;
+        public readonly uint ScanEventId;
+        public readonly uint EffectId;
         public readonly uint Field40;
         public readonly uint Field44;
         public readonly uint Field48;
         public readonly uint Field4C;
         public readonly uint Field50;
-        public readonly uint Field54;
-        public readonly uint Field58;
-        public readonly uint Field5C;
-        public readonly uint Field60;
-        public readonly uint Field64;
-        public readonly uint Field68;
-        public readonly uint Field6C;
-        public readonly uint Field70;
-        public readonly uint Field74;
-        public readonly uint Field78;
-        public readonly uint Field7C;
-        public readonly uint Field80;
-        public readonly uint Field84;
-        public readonly uint Field88;
-        public readonly uint Field8C;
-        public readonly uint Field90;
+        public readonly RawCollisionVolume Volume;
     }
 
     // size: 43
@@ -311,9 +300,9 @@ namespace MphRead
         public readonly ushort SpawnInterval;
         public readonly ushort SpawnDelay;
         public readonly ushort SomeEntityId; // todo: parent? child?
-        public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly uint Field40;
+        public readonly uint CollectedMessageId;
+        public readonly uint CollectedMessageParam1;
+        public readonly uint CollectedMessageParam2;
     }
 
     // size: 50
@@ -330,11 +319,12 @@ namespace MphRead
     public readonly struct EnemyEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
+        public readonly uint Type;
+        public readonly uint Subtype;
+        public readonly uint TextureId;
+        public readonly uint HunterWeapon;
+        public readonly ushort Health;
+        public readonly ushort HealthMax;
         public readonly uint Field38;
         public readonly uint Field3C;
         public readonly uint Field40;
@@ -431,23 +421,31 @@ namespace MphRead
         public readonly uint Field1AC;
         public readonly uint Field1B0;
         public readonly uint Field1B4;
-        public readonly uint Field1B8;
-        public readonly uint Field1BC;
-        public readonly uint Field1C0;
-        public readonly uint Field1C4;
+        public readonly ushort Field1B8;
+        public readonly byte SomeLimit;
+        public readonly byte Field1BB;
+        public readonly byte SpawnCount;
+        public readonly byte Active;
+        public readonly byte AlwaysActive;
+        public readonly byte HasItem;
+        public readonly ushort Field1C0;
+        public readonly ushort CooldownTime;
+        public readonly ushort InitialCooldown;
+        public readonly ushort Padding1C6;
         public readonly uint Field1C8;
         public readonly uint Field1CC;
-        public readonly uint Field1D0;
-        public readonly uint Field1D4;
-        public readonly uint Field1D8;
-        public readonly uint Field1DC;
-        public readonly uint Field1E0;
-        public readonly uint Field1E4;
-        public readonly uint Field1E8;
-        public readonly uint Field1EC;
-        public readonly uint Field1F0;
-        public readonly uint Field1F4;
-        public readonly uint Field1F8;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
+        public readonly string NodeName;
+        public readonly ushort EntityId1;
+        public readonly ushort Field1E2;
+        public readonly uint MessageId1;
+        public readonly ushort EntityId2;
+        public readonly ushort Field1EA;
+        public readonly uint MessageId2;
+        public readonly ushort EntityId3;
+        public readonly ushort Field1F2;
+        public readonly uint MessageId3;
+        public readonly uint ItemId;
     }
 
     // size: 268
