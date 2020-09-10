@@ -121,7 +121,7 @@ namespace MphRead
         public readonly uint Field1BC;
         public readonly uint EffectId2;
         public readonly uint EffectId3;
-        public readonly byte SomeItemValue;
+        public readonly byte ItemChance;
         public readonly byte Field1C9;
         public readonly ushort Field1CA;
         public readonly uint ItemModel;
@@ -427,7 +427,7 @@ namespace MphRead
         public readonly byte SpawnCount;
         public readonly byte Active;
         public readonly byte AlwaysActive;
-        public readonly byte HasItem;
+        public readonly byte ItemChance;
         public readonly ushort Field1C0;
         public readonly ushort CooldownTime;
         public readonly ushort InitialCooldown;
@@ -445,7 +445,7 @@ namespace MphRead
         public readonly ushort EntityId3;
         public readonly ushort Field1F2;
         public readonly uint MessageId3;
-        public readonly uint ItemId;
+        public readonly uint ItemModel;
     }
 
     // size: 268
