@@ -510,7 +510,7 @@ namespace MphRead
     // size: 11
     public readonly struct RawStringTableEntry
     {
-        [MarshalAsAttribute(UnmanagedType.ByValArray, SizeConst = 4)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public readonly char[] Id; // need all 4 characters (no terminator)
         public readonly uint Offset;
         public readonly ushort Length;
