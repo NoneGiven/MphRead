@@ -706,7 +706,7 @@ namespace MphRead
         public readonly ushort Field82;
         public readonly uint ModelId;
         public readonly uint BeamType;
-        public readonly uint Field8C;
+        public readonly uint Flags;
     }
 
     // size: 272
@@ -846,10 +846,10 @@ namespace MphRead
         public readonly byte Field24;
         public readonly byte Field25;
         public readonly byte ArtifactId;
-        public readonly byte Field27;
+        public readonly byte Active;
         public readonly byte Invisible;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 15)]
-        public readonly string TargetEntity;
+        public readonly string TargetRoom;
         public readonly uint Field38;
         public readonly Vector3Fx Field3C;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
@@ -898,15 +898,18 @@ namespace MphRead
         public readonly EntityDataHeader Header;
         public readonly byte ModelId;
         public readonly byte ArtifactId;
-        public readonly byte Trigger;
+        public readonly byte Active;
         public readonly byte HasBase;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly ushort Field40;
+        public readonly ushort Message1Target;
+        public readonly ushort Padding2A;
+        public readonly uint Message1Id;
+        public readonly ushort Message2Target;
+        public readonly ushort Padding32;
+        public readonly uint Message2Id;
+        public readonly ushort Message3Target;
+        public readonly ushort Padding3A;
+        public readonly uint Message3Id;
+        public readonly ushort LinkedEntityId;
     }
 
     // size: 64
