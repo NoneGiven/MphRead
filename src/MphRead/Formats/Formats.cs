@@ -1092,7 +1092,7 @@ namespace MphRead
 
         public override Vector3? GetColor(int index)
         {
-            if (index == 8)
+            if (index == 7)
             {
                 return Color1;
             }
@@ -1117,7 +1117,7 @@ namespace MphRead
 
         public override Vector3? GetColor(int index)
         {
-            if (index == 7)
+            if (index == 8)
             {
                 return Color1;
             }
@@ -1125,6 +1125,24 @@ namespace MphRead
         }
     }
 
+    public class ObjectDisplay : DisplayVolume
+    {
+        public ObjectDisplay(Entity<ObjectEntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.Volume)
+        {
+            Color1 = new Vector3(1, 0, 0);
+        }
+
+        public override Vector3? GetColor(int index)
+        {
+            if (index == 9)
+            {
+                return Color1;
+            }
+            return null;
+        }
+    }
+    
     // todo: some subtypes might not use their volume? if so, don't render them (confirm that all AreaVolumes do, also)
     public class TriggerVolumeDisplay : DisplayVolume
     {

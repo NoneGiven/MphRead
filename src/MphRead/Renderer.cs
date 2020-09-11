@@ -187,10 +187,6 @@ namespace MphRead
                 {
                     _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(unknown8));
                 }
-                else if (entity.Entity is Entity<JumpPadEntityData> jumpPad)
-                {
-                    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(jumpPad));
-                }
                 else if (entity.Entity is Entity<CameraPositionEntityData> morphCamera)
                 {
                     _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(morphCamera));
@@ -198,6 +194,14 @@ namespace MphRead
                 else if (entity.Entity is Entity<FhCameraPositionEntityData> fhMorphCamera)
                 {
                     _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(fhMorphCamera));
+                }
+                else if (entity.Entity is Entity<JumpPadEntityData> jumpPad)
+                {
+                    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(jumpPad));
+                }
+                else if (entity.Entity is Entity<ObjectEntityData> obj)
+                {
+                    _displayVolumes.Add(entity.SceneId, new ObjectDisplay(obj));
                 }
             }
             _light1Vector = roomMeta.Light1Vector;
@@ -1867,7 +1871,7 @@ namespace MphRead
                 else
                 {
                     _showVolumes++;
-                    if (_showVolumes > 8)
+                    if (_showVolumes > 9)
                     {
                         _showVolumes = 0;
                     }
@@ -2269,15 +2273,19 @@ namespace MphRead
             }
             else if (_showVolumes == 7)
             {
-                _targetTypes.Add(EntityType.JumpPad);
-            }
-            else if (_showVolumes == 8)
-            {
                 _targetTypes.Add(EntityType.CameraPosition);
                 _targetTypes.Add(EntityType.FhCameraPosition);
             }
+            else if (_showVolumes == 8)
+            {
+                _targetTypes.Add(EntityType.JumpPad);
+            }
+            else if (_showVolumes == 9)
+            {
+                _targetTypes.Add(EntityType.Object);
+            }
         }
-
+        
         private void OnKeyHeld()
         {
             if ((KeyboardState.IsKeyDown(Key.AltLeft) || KeyboardState.IsKeyDown(Key.AltRight))
