@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
-using OpenToolkit.Graphics.OpenGL;
 
 namespace MphRead.Formats.Sound
 {
@@ -15,8 +15,12 @@ namespace MphRead.Formats.Sound
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             var files = new List<DngFile>();
             uint fileCount = Read.SpanReadUint(bytes, 0);
-            foreach (DngHeader header in Read.DoOffsets<DngHeader>(bytes, 4, fileCount))
+            Debug.Assert(fileCount > 0);
+            IReadOnlyList<DngHeader> headers = Read.DoOffsets<DngHeader>(bytes, 4, fileCount);
+            IReadOnlyList<string> names = Read.ReadStrings(bytes, headers.Last().Offset + headers.Last().Size, fileCount);
+            for (int i = 0; i < headers.Count; i++)
             {
+                DngHeader header = headers[i];
                 var entries = new List<DngFileEntry>();
                 uint entryCount = Read.SpanReadUint(bytes, header.Offset);
                 foreach (DngEntry entry in Read.DoOffsets<DngEntry>(bytes, header.Offset + 4, entryCount))
@@ -30,7 +34,7 @@ namespace MphRead.Formats.Sound
                         Read.DoOffsets<uint>(bytes, header.Offset + entry.Offset4, entry.Count4)
                     ));
                 }
-                files.Add(new DngFile(header, entries));
+                files.Add(new DngFile(names[i], header, entries));
             }
             return files;
         }
@@ -62,11 +66,13 @@ namespace MphRead.Formats.Sound
 
     public class DngFile
     {
+        public string Name { get; }
         public DngHeader Header { get; }
         public IReadOnlyList<DngFileEntry> Entries { get; }
 
-        public DngFile(DngHeader header, IReadOnlyList<DngFileEntry> entries)
+        public DngFile(string name, DngHeader header, IReadOnlyList<DngFileEntry> entries)
         {
+            Name = name;
             Header = header;
             Entries = entries;
         }

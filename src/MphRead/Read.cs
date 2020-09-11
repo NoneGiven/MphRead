@@ -757,7 +757,7 @@ namespace MphRead
             return ReadString(bytes, (int)offset, length);
         }
 
-        public static string ReadString(ReadOnlySpan<byte> bytes, int offset, int length)
+        public static string ReadString(ReadOnlySpan<byte> bytes, int offset, int length = -1)
         {
             int end = offset;
             for (int i = 0; i < length; i++)
@@ -775,6 +775,36 @@ namespace MphRead
             return Encoding.ASCII.GetString(bytes[offset..end]);
         }
 
+        public static IReadOnlyList<string> ReadStrings(ReadOnlySpan<byte> bytes, uint offset, uint count)
+        {
+            return ReadStrings(bytes, (int)offset, (int)count);
+        }
+
+        public static IReadOnlyList<string> ReadStrings(ReadOnlySpan<byte> bytes, int offset, int count)
+        {
+            var strings = new List<string>();
+
+            while (strings.Count < count)
+            {
+                int end = offset;
+                byte value = bytes[end];
+                while (value != 0)
+                {
+                    value = bytes[++end];
+                }
+                if (end == offset)
+                {
+                    strings.Add("");
+                }
+                else
+                {
+                    strings.Add(Encoding.ASCII.GetString(bytes[offset..end]));
+                }
+                offset = end + 1;
+            }
+            return strings;
+        }
+        
         public static void ExtractArchive(string name)
         {
             string input = Path.Combine(Paths.FileSystem, "archives", $"{name}.arc");
