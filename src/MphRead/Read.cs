@@ -678,6 +678,11 @@ namespace MphRead
             return result;
         }
 
+        public static uint SpanReadUint(ReadOnlySpan<byte> bytes, uint offset)
+        {
+            return SpanReadUint(bytes, (int)offset);
+        }
+
         public static uint SpanReadUint(ReadOnlySpan<byte> bytes, int offset)
         {
             return SpanReadUint(bytes, ref offset);
