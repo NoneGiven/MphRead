@@ -9,7 +9,7 @@ namespace MphRead
     public static class SceneSetup
     {
         private static readonly Random _random = new Random();
-
+        
         // todo: artifact flags
         public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, GameMode mode = GameMode.None,
             int playerCount = 0, BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
@@ -603,7 +603,7 @@ namespace MphRead
                 model.Entity = entity;
                 model.Rotating = true;
                 model.Floating = true;
-                model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
+                model.Spin = GetItemRotation();
                 model.SpinSpeed = 0.35f;
                 models.Add(model);
             }
@@ -632,11 +632,20 @@ namespace MphRead
             model.Entity = entity;
             model.Rotating = true;
             model.Floating = true;
-            model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
+            model.Spin = GetItemRotation();
             model.SpinSpeed = 0.35f;
             return model;
         }
 
+        private static ushort _itemRotation = 0;
+
+        public static float GetItemRotation()
+        {
+            float rotation = _itemRotation / (float)(UInt16.MaxValue + 1) * 360f;
+            _itemRotation += 0x2000;
+            return rotation;
+        }
+        
         private static IEnumerable<Model> LoadOctolithFlag(Entity<OctolithFlagEntityData> entity, GameMode mode)
         {
             OctolithFlagEntityData data = entity.Data;
@@ -787,6 +796,7 @@ namespace MphRead
             model.Type = ModelType.Generic;
             model.Entity = entity;
             model.Rotating = true;
+            // todo: "real" method of determining starting spin
             model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
             if (data.ModelId >= 8)
             {
