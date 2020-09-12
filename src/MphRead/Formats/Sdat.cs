@@ -71,7 +71,7 @@ namespace MphRead.Formats.Sound
     public readonly struct SfxScriptEntry
     {
         public readonly ushort SfxId;
-        public readonly ushort Field2;
+        public readonly ushort Delay;
         public readonly byte Param1; // todo: these are passed to play_sfx_2; what are they?
         public readonly byte Param2;
         public readonly ushort Param3;
