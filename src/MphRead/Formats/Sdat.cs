@@ -75,7 +75,7 @@ namespace MphRead.Formats.Sound
         public readonly byte Param1; // todo: these are passed to play_sfx_2; what are they?
         public readonly byte Param2;
         public readonly ushort Param3;
-        public readonly uint Handle;
+        public readonly uint Handle; // set at runtime
     }
 
     public class SfxScriptFile
