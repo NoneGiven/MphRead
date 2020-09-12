@@ -9,23 +9,41 @@ namespace MphRead.Formats.Sound
 {
     public static class SoundRead
     {
-        public static IReadOnlyList<DngFile> ReadDng()
+        public static IReadOnlyList<SfxScriptFile> ReadSfxScriptFiles()
         {
-            string path = Path.Combine(Paths.FileSystem, "data", "sound", "DGNFILES.DAT");
+            string path = Path.Combine(Paths.FileSystem, "data", "sound", "SFXSCRIPTFILES.DAT");
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
-            var files = new List<DngFile>();
             uint fileCount = Read.SpanReadUint(bytes, 0);
             Debug.Assert(fileCount > 0);
-            IReadOnlyList<DngHeader> headers = Read.DoOffsets<DngHeader>(bytes, 4, fileCount);
+            var files = new List<SfxScriptFile>();
+            IReadOnlyList<SfxScriptHeader> headers = Read.DoOffsets<SfxScriptHeader>(bytes, 4, fileCount);
             IReadOnlyList<string> names = Read.ReadStrings(bytes, headers.Last().Offset + headers.Last().Size, fileCount);
             for (int i = 0; i < headers.Count; i++)
             {
-                DngHeader header = headers[i];
-                var entries = new List<DngFileEntry>();
+                SfxScriptHeader header = headers[i];
                 uint entryCount = Read.SpanReadUint(bytes, header.Offset);
-                foreach (DngEntry entry in Read.DoOffsets<DngEntry>(bytes, header.Offset + 4, entryCount))
+                files.Add(new SfxScriptFile(names[i], header, Read.DoOffsets<SfxScriptEntry>(bytes, header.Offset + 4, entryCount)));
+            }
+            return files;
+        }
+        
+        public static IReadOnlyList<DgnFile> ReadDgnFiles()
+        {
+            string path = Path.Combine(Paths.FileSystem, "data", "sound", "DGNFILES.DAT");
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
+            uint fileCount = Read.SpanReadUint(bytes, 0);
+            Debug.Assert(fileCount > 0);
+            var files = new List<DgnFile>();
+            IReadOnlyList<DgnHeader> headers = Read.DoOffsets<DgnHeader>(bytes, 4, fileCount);
+            IReadOnlyList<string> names = Read.ReadStrings(bytes, headers.Last().Offset + headers.Last().Size, fileCount);
+            for (int i = 0; i < headers.Count; i++)
+            {
+                DgnHeader header = headers[i];
+                var entries = new List<DgnFileEntry>();
+                uint entryCount = Read.SpanReadUint(bytes, header.Offset);
+                foreach (DgnEntry entry in Read.DoOffsets<DgnEntry>(bytes, header.Offset + 4, entryCount))
                 {
-                    entries.Add(new DngFileEntry(
+                    entries.Add(new DgnFileEntry(
                         entry.Field0,
                         entry.Field2,
                         Read.DoOffsets<uint>(bytes, header.Offset + entry.Offset1, entry.Count1),
@@ -34,14 +52,48 @@ namespace MphRead.Formats.Sound
                         Read.DoOffsets<uint>(bytes, header.Offset + entry.Offset4, entry.Count4)
                     ));
                 }
-                files.Add(new DngFile(names[i], header, entries));
+                files.Add(new DgnFile(names[i], header, entries));
             }
             return files;
         }
     }
-    
+
     // size: 8
-    public readonly struct DngHeader
+    public readonly struct SfxScriptHeader
+    {
+        public readonly uint Offset;
+        public readonly ushort Size;
+        public readonly byte Field6;
+        public readonly byte Field7;
+    }
+
+    // size: 12
+    public readonly struct SfxScriptEntry
+    {
+        public readonly ushort SfxId;
+        public readonly ushort Field2;
+        public readonly byte Param1; // todo: these are passed to play_sfx_2; what are they?
+        public readonly byte Param2;
+        public readonly ushort Param3;
+        public readonly uint Handle;
+    }
+
+    public class SfxScriptFile
+    {
+        public string Name { get; }
+        public SfxScriptHeader Header { get; }
+        public IReadOnlyList<SfxScriptEntry> Entries { get; }
+
+        public SfxScriptFile(string name, SfxScriptHeader header, IReadOnlyList<SfxScriptEntry> entries)
+        {
+            Name = name;
+            Header = header;
+            Entries = entries;
+        }
+    }
+
+    // size: 8
+    public readonly struct DgnHeader
     {
         public readonly uint Offset;
         public readonly ushort Size;
@@ -50,7 +102,7 @@ namespace MphRead.Formats.Sound
     }
 
     // size: 36
-    public readonly struct DngEntry
+    public readonly struct DgnEntry
     {
         public readonly ushort Field0;
         public readonly ushort Field2;
@@ -64,13 +116,13 @@ namespace MphRead.Formats.Sound
         public readonly uint Offset4;
     }
 
-    public class DngFile
+    public class DgnFile
     {
         public string Name { get; }
-        public DngHeader Header { get; }
-        public IReadOnlyList<DngFileEntry> Entries { get; }
+        public DgnHeader Header { get; }
+        public IReadOnlyList<DgnFileEntry> Entries { get; }
 
-        public DngFile(string name, DngHeader header, IReadOnlyList<DngFileEntry> entries)
+        public DgnFile(string name, DgnHeader header, IReadOnlyList<DgnFileEntry> entries)
         {
             Name = name;
             Header = header;
@@ -78,7 +130,7 @@ namespace MphRead.Formats.Sound
         }
     }
 
-    public class DngFileEntry
+    public class DgnFileEntry
     {
         public ushort Field0 { get; }
         public ushort Field2 { get; }
@@ -87,7 +139,7 @@ namespace MphRead.Formats.Sound
         public IReadOnlyList<uint> Data3 { get; }
         public IReadOnlyList<uint> Data4 { get; }
 
-        public DngFileEntry(ushort field0, ushort field2, IReadOnlyList<uint> data1,
+        public DgnFileEntry(ushort field0, ushort field2, IReadOnlyList<uint> data1,
             IReadOnlyList<uint> data2, IReadOnlyList<uint> data3, IReadOnlyList<uint> data4)
         {
             Field0 = field0;
