@@ -9,7 +9,7 @@ namespace MphRead
     public static class SceneSetup
     {
         private static readonly Random _random = new Random();
-        
+
         // todo: artifact flags
         public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, GameMode mode = GameMode.None,
             int playerCount = 0, BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
@@ -645,7 +645,7 @@ namespace MphRead
             _itemRotation += 0x2000;
             return rotation;
         }
-        
+
         private static IEnumerable<Model> LoadOctolithFlag(Entity<OctolithFlagEntityData> entity, GameMode mode)
         {
             OctolithFlagEntityData data = entity.Data;
