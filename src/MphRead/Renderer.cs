@@ -1859,7 +1859,7 @@ namespace MphRead
                     _showVolumes--;
                     if (_showVolumes < 0)
                     {
-                        _showVolumes = 8;
+                        _showVolumes = 9;
                     }
                     if (_selectionMode == SelectionMode.Model)
                     {
