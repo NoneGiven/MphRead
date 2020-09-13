@@ -547,7 +547,7 @@ namespace MphRead
         public struct WeaponInfo
         {
             public byte BeamId;
-            public byte WeaponId; // same as BeamId except for platform beams
+            public byte WeaponId; // same as BeamId except for platform beams, which have a value of 9
             public ushort Field2;
             public ushort Field4;
             public ushort Field6;

@@ -112,7 +112,7 @@ namespace MphRead
         public readonly uint Field188;
         public readonly Vector3Fx Field18C;
         public readonly Vector3Fx Field198;
-        public readonly uint SomeSfxIndex;
+        public readonly uint BeamIndex;
         public readonly uint Field1A8;
         public readonly uint Field1AC;
         public readonly uint Field1B0;
