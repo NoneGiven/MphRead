@@ -785,7 +785,7 @@ namespace MphRead
             var models = new List<Model>();
             string name = data.ModelId >= 8 ? "Octolith" : $"Artifact0{data.ModelId + 1}";
             Model model = Read.GetModelByName(name);
-            float offset = data.ModelId >= 8 ? GetOctolithHeightOffset() : model.Nodes[0].Offset.FloatValue;
+            float offset = data.ModelId >= 8 ? GetOctolithHeightOffset() : model.Nodes[0].CullRadius.FloatValue;
             model.Position = new Vector3(
                 data.Header.Position.X.FloatValue,
                 data.Header.Position.Y.FloatValue + offset,
@@ -812,7 +812,7 @@ namespace MphRead
             if (data.HasBase != 0)
             {
                 Model baseModel = Read.GetModelByName("ArtifactBase");
-                offset = GetArtifactBaseHeightOffset(data.Header.Position.Y.Value + model.Nodes[0].Offset.Value);
+                offset = GetArtifactBaseHeightOffset(data.Header.Position.Y.Value + model.Nodes[0].CullRadius.Value);
                 baseModel.Position = new Vector3(
                     data.Header.Position.X.FloatValue,
                     model.Position.Y + offset,
