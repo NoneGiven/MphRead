@@ -546,12 +546,12 @@ namespace MphRead
         //[StructLayout(LayoutKind.Sequential, Pack = 1)]
         public struct WeaponInfo
         {
-            public byte Id;
-            public byte Field1; // same as Id
+            public byte BeamId;
+            public byte WeaponId; // same as BeamId except for platform beams
             public ushort Field2;
             public ushort Field4;
             public ushort Field6;
-            public byte Priority;
+            public byte Flags;
             public byte Field9;
             public byte FieldA;
             public byte FieldB;
@@ -559,15 +559,16 @@ namespace MphRead
             public ushort FieldE;
             public ushort Field10;
             public ushort Field12;
-            public byte Field14;
-            public byte Field15;
+            public byte ShowCooldown;
+            public byte Field15; // related to shot cooldown
             public byte AmmoType;
             public byte Field17;
             public byte Field18;
             public byte Field19;
             public byte Field1A;
             public byte Field1B;
-            public ushort Field1C;
+            public byte Field1C;
+            public byte Field1D;
             public ushort Field1E;
             public ushort Field20;
             public ushort FullCharge;
@@ -674,7 +675,7 @@ namespace MphRead
             public ushort FieldEC;
             public ushort FieldEE;
 
-            public string Name => _weaponNames[Id];
+            public string Name => _weaponNames[BeamId];
         }
 
         public static void TestWeaponInfo()
