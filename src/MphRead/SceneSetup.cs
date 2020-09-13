@@ -603,7 +603,7 @@ namespace MphRead
                 model.Entity = entity;
                 model.Rotating = true;
                 model.Floating = true;
-                model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
+                model.Spin = GetItemRotation();
                 model.SpinSpeed = 0.35f;
                 models.Add(model);
             }
@@ -632,9 +632,18 @@ namespace MphRead
             model.Entity = entity;
             model.Rotating = true;
             model.Floating = true;
-            model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
+            model.Spin = GetItemRotation();
             model.SpinSpeed = 0.35f;
             return model;
+        }
+
+        private static ushort _itemRotation = 0;
+
+        public static float GetItemRotation()
+        {
+            float rotation = _itemRotation / (float)(UInt16.MaxValue + 1) * 360f;
+            _itemRotation += 0x2000;
+            return rotation;
         }
 
         private static IEnumerable<Model> LoadOctolithFlag(Entity<OctolithFlagEntityData> entity, GameMode mode)
@@ -776,7 +785,7 @@ namespace MphRead
             var models = new List<Model>();
             string name = data.ModelId >= 8 ? "Octolith" : $"Artifact0{data.ModelId + 1}";
             Model model = Read.GetModelByName(name);
-            float offset = data.ModelId >= 8 ? GetOctolithHeightOffset() : model.Nodes[0].Offset.FloatValue;
+            float offset = data.ModelId >= 8 ? GetOctolithHeightOffset() : model.Nodes[0].CullRadius.FloatValue;
             model.Position = new Vector3(
                 data.Header.Position.X.FloatValue,
                 data.Header.Position.Y.FloatValue + offset,
@@ -787,6 +796,7 @@ namespace MphRead
             model.Type = ModelType.Generic;
             model.Entity = entity;
             model.Rotating = true;
+            // todo: "real" method of determining starting spin
             model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
             if (data.ModelId >= 8)
             {
@@ -802,7 +812,7 @@ namespace MphRead
             if (data.HasBase != 0)
             {
                 Model baseModel = Read.GetModelByName("ArtifactBase");
-                offset = GetArtifactBaseHeightOffset(data.Header.Position.Y.Value + model.Nodes[0].Offset.Value);
+                offset = GetArtifactBaseHeightOffset(data.Header.Position.Y.Value + model.Nodes[0].CullRadius.Value);
                 baseModel.Position = new Vector3(
                     data.Header.Position.X.FloatValue,
                     model.Position.Y + offset,
@@ -817,7 +827,7 @@ namespace MphRead
             return models;
         }
 
-        // todo: load lock, fade in/out "animation"
+        // todo: load lock, fade in/out "animation" --> 216A180 for lock palette stuff
         private static Model LoadForceField(Entity<ForceFieldEntityData> entity)
         {
             ForceFieldEntityData data = entity.Data;
@@ -826,6 +836,7 @@ namespace MphRead
             model.Scale = new Vector3(data.Width.FloatValue, data.Height.FloatValue, 1.0f);
             ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
+            model.Visible = data.Active != 0;
             model.Type = ModelType.Object;
             model.Entity = entity;
             return model;

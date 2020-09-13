@@ -928,13 +928,9 @@ namespace MphRead
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
                     foreach (Entity entity in entities)
                     {
-                        if (entity.Type == EntityType.Item)
+                        if (entity.Type == EntityType.Platform)
                         {
-                            ItemEntityData data = ((Entity<ItemEntityData>)entity).Data;
-                            if (data.AlwaysActive == 0)
-                            {
-                                Debugger.Break();
-                            }
+                            PlatformEntityData data = ((Entity<PlatformEntityData>)entity).Data;
                         }
                     }
                 }
@@ -973,10 +969,6 @@ namespace MphRead
                         if (entity.Type == EntityType.AreaVolume)
                         {
                             AreaVolumeEntityData data = ((Entity<AreaVolumeEntityData>)entity).Data;
-                            if (data.Field8A > 1)
-                            {
-                                Debugger.Break();
-                            }
                         }
                     }
                 }

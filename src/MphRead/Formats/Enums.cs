@@ -118,12 +118,21 @@ namespace MphRead
         PaletteA3I5 = 6  // A3I5
     }
 
+    public enum TriggerType : uint
+    {
+        Normal = 0,
+        Threshold = 1,
+        Splitter = 2,
+        Automatic = 3,
+        Unknown4 = 4
+    }
+
     public enum Message : uint
     {
         None = 0,
         SetActive = 5,
         Destroyed = 6,
-        Damge = 7,
+        Damage = 7,
         Unknown9 = 9,
         Unknown12 = 12,
         Gravity = 15,
@@ -164,5 +173,15 @@ namespace MphRead
         Unknown59 = 59,
         Unknown60 = 60,
         Unknown61 = 61 // also starts escape sequence?
+    }
+
+    public enum Language
+    {
+        English,
+        French,
+        German,
+        Italian,
+        Japanese,
+        Spanish
     }
 }

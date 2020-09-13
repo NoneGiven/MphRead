@@ -637,6 +637,7 @@ namespace MphRead
             /* 41 */ new PlatformMetadata("piston_gorealand"),
             /* 42 */ new PlatformMetadata("unit4_tp2_artifact_wo"),
             /* 43 */ new PlatformMetadata("unit4_tp1_artifact_wo"),
+            // todo: what's the difference between this and 23?
             /* 44 */ new PlatformMetadata("SamusShip", animationIds: new List<uint>() { 1, 0, 2, 4 }, field20: 0, field24: 0)
         };
 
@@ -664,7 +665,7 @@ namespace MphRead
             {
                 return new Vector3(0.615f, 0, 0.909f);
             }
-            if (eventId == Message.Damge) // red
+            if (eventId == Message.Damage) // red
             {
                 return new Vector3(1, 0, 0);
             }
@@ -704,11 +705,11 @@ namespace MphRead
             {
                 return new Vector3(0.964f, 0.596f, 0.596f);
             }
-            if (eventId == Message.Unknown56) // pink
+            if (eventId == Message.Checkpoint) // magenta
             {
                 return new Vector3(0.972f, 0.086f, 0.831f);
             }
-            if (eventId == Message.Unknown56) // mint
+            if (eventId == Message.EscapeStart) // mint
             {
                 return new Vector3(0.619f, 0.980f, 0.678f);
             }
@@ -779,7 +780,7 @@ namespace MphRead
             // unknown - white (no other IDs are used by trigger/area volumes)
             return new Vector3(1, 1, 1);
         }
-        
+
         // todo: files not referenced by this list: powerBeamNoSplatMP_PS.bin, sparksDown_PS.bin
         public static readonly IReadOnlyList<string> Effects = new List<string>()
         {

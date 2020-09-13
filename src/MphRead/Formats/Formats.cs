@@ -491,7 +491,7 @@ namespace MphRead
         public Vector3 Angle { get; set; }
         public Vector3 Position { get; set; }
         // need to keep this as fixed to potentially pass to the magic height offset function later
-        public Fixed Offset { get; }
+        public Fixed CullRadius { get; }
         public Vector3 Vector1 { get; }
         public Vector3 Vector2 { get; }
         public bool Billboard { get; }
@@ -524,7 +524,7 @@ namespace MphRead
                 raw.AngleZ / 65536.0f * 2.0f * MathF.PI
             );
             Position = raw.Position.ToFloatVector();
-            Offset = raw.Offset;
+            CullRadius = raw.CullRadius;
             Vector1 = raw.Vector1.ToFloatVector();
             Vector2 = raw.Vector2.ToFloatVector();
             // todo: implement billboard = 2 (cylindrical)
@@ -576,7 +576,7 @@ namespace MphRead
                 return null;
             }
         }
-        
+
         public Mesh(RawMesh raw)
         {
             MaterialId = raw.MaterialId;
@@ -836,6 +836,22 @@ namespace MphRead
         }
     }
 
+    public class StringTableEntry
+    {
+        public string Id { get; }
+        public string Value { get; }
+        public byte Speed { get; }
+        public char Category { get; }
+
+        public StringTableEntry(RawStringTableEntry raw, string value)
+        {
+            Id = new string(raw.Id.Reverse().ToArray());
+            Speed = raw.Speed;
+            Category = raw.Category;
+            Value = value;
+        }
+    }
+
     public class Entity
     {
         public string NodeName { get; }
@@ -920,7 +936,7 @@ namespace MphRead
             }
             return base.GetParentId();
         }
-        
+
         public override ushort GetChildId()
         {
             if (Data is TriggerVolumeEntityData triggerData)
@@ -1076,7 +1092,7 @@ namespace MphRead
 
         public override Vector3? GetColor(int index)
         {
-            if (index == 8)
+            if (index == 7)
             {
                 return Color1;
             }
@@ -1101,7 +1117,25 @@ namespace MphRead
 
         public override Vector3? GetColor(int index)
         {
-            if (index == 7)
+            if (index == 8)
+            {
+                return Color1;
+            }
+            return null;
+        }
+    }
+
+    public class ObjectDisplay : DisplayVolume
+    {
+        public ObjectDisplay(Entity<ObjectEntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.Volume)
+        {
+            Color1 = new Vector3(1, 0, 0);
+        }
+
+        public override Vector3? GetColor(int index)
+        {
+            if (index == 9)
             {
                 return Color1;
             }

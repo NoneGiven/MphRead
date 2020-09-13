@@ -334,7 +334,7 @@ namespace MphRead
         public readonly short AngleZ;
         public readonly ushort Field62;
         public readonly Vector3Fx Position;
-        public readonly Fixed Offset;
+        public readonly Fixed CullRadius;
         public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
         public readonly byte Billboard;
@@ -488,7 +488,7 @@ namespace MphRead
     // size: 116
     public readonly struct RawEffectElement
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] // todo: do these work if all 32 characters are used?
         public readonly string Name;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
         public readonly string ModelName;
@@ -505,5 +505,16 @@ namespace MphRead
         public readonly uint Field68;
         public readonly uint SomeCount;
         public readonly uint SomeOffset;
+    }
+
+    // size: 11
+    public readonly struct RawStringTableEntry
+    {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public readonly char[] Id; // need all 4 characters (no terminator)
+        public readonly uint Offset;
+        public readonly ushort Length;
+        public readonly byte Speed;
+        public readonly char Category;
     }
 }
