@@ -576,7 +576,7 @@ namespace MphRead
                 return null;
             }
         }
-        
+
         public Mesh(RawMesh raw)
         {
             MaterialId = raw.MaterialId;
@@ -851,7 +851,7 @@ namespace MphRead
             Value = value;
         }
     }
-    
+
     public class Entity
     {
         public string NodeName { get; }
@@ -936,7 +936,7 @@ namespace MphRead
             }
             return base.GetParentId();
         }
-        
+
         public override ushort GetChildId()
         {
             if (Data is TriggerVolumeEntityData triggerData)
@@ -1142,7 +1142,7 @@ namespace MphRead
             return null;
         }
     }
-    
+
     // todo: some subtypes might not use their volume? if so, don't render them (confirm that all AreaVolumes do, also)
     public class TriggerVolumeDisplay : DisplayVolume
     {

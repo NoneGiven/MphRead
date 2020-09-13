@@ -780,7 +780,7 @@ namespace MphRead
             // unknown - white (no other IDs are used by trigger/area volumes)
             return new Vector3(1, 1, 1);
         }
-        
+
         // todo: files not referenced by this list: powerBeamNoSplatMP_PS.bin, sparksDown_PS.bin
         public static readonly IReadOnlyList<string> Effects = new List<string>()
         {
