@@ -11,6 +11,15 @@ namespace MphRead.Formats.Sound
     // (we know there are in sound_data, and we know there aren't in INTERMUSICINFO/ASSIGNMUSIC/SNDTBLS)
     public static class SoundRead
     {
+        public static IReadOnlyList<Sound3dEntry> ReadSound3dList()
+        {
+            string path = Path.Combine(Paths.FileSystem, "data", "sound", "SND3DLIST.DAT");
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
+            uint count = Read.SpanReadUint(bytes, 0);
+            Debug.Assert(count > 0);
+            return Read.DoOffsets<Sound3dEntry>(bytes, 4, count);
+        }
+
         public static SoundTable ReadSoundTables()
         {
             string path = Path.Combine(Paths.FileSystem, "data", "sound", "SNDTBLS.DAT");
@@ -98,6 +107,13 @@ namespace MphRead.Formats.Sound
         }
     }
 
+    // size: 8
+    public readonly struct Sound3dEntry
+    {
+        public readonly uint Field0;
+        public readonly uint Field4;
+    }
+    
     // size: 12
     public readonly struct RawSoundTableEntry
     {
