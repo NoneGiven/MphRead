@@ -8,9 +8,26 @@ using System.Runtime.InteropServices;
 namespace MphRead.Formats.Sound
 {
     // todo: are any bytes not being read in SFXSCRIPTFILES or DGNFILES?
-    // (we know there are in sound_data, and we know there aren't in INTERMUSICINFO/ASSIGNMUSIC/SNDTBLS)
+    // (we know there are in sound_data, and we know there aren't in the rest of the current ones)
     public static class SoundRead
     {
+        public static IReadOnlyList<BgmSelectEntry> ReadBgmSelectList()
+        {
+            string path = Path.Combine(Paths.FileSystem, "data", "sound", "BGMSELECTLIST.DAT");
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
+            uint count = Read.SpanReadUint(bytes, 0);
+            Debug.Assert(count > 0);
+            IReadOnlyList<RawBgmSelectEntry> rawEntries = Read.DoOffsets<RawBgmSelectEntry>(bytes, 4, count);
+            long offset = count * Marshal.SizeOf<RawBgmSelectEntry>() + 4;
+            IReadOnlyList<string> names = Read.ReadStrings(bytes, offset, count);
+            var entries = new List<BgmSelectEntry>();
+            for (int i = 0; i < rawEntries.Count; i++)
+            {
+                entries.Add(new BgmSelectEntry(names[i], rawEntries[i]));
+            }
+            return entries;
+        }
+
         public static IReadOnlyList<Sound3dEntry> ReadSound3dList()
         {
             string path = Path.Combine(Paths.FileSystem, "data", "sound", "SND3DLIST.DAT");
@@ -39,7 +56,7 @@ namespace MphRead.Formats.Sound
             }
             return new SoundTable(entries, categories);
         }
-        
+
         public static IReadOnlyList<RoomMusic> ReadAssignMusic()
         {
             string path = Path.Combine(Paths.FileSystem, "data", "sound", "ASSIGNMUSIC.DAT");
@@ -48,7 +65,7 @@ namespace MphRead.Formats.Sound
             Debug.Assert(count > 0);
             return Read.DoOffsets<RoomMusic>(bytes, 4, count);
         }
-        
+
         public static IReadOnlyList<MusicTrack> ReadInterMusicInfo()
         {
             string path = Path.Combine(Paths.FileSystem, "data", "sound", "INTERMUSICINFO.DAT");
@@ -57,7 +74,7 @@ namespace MphRead.Formats.Sound
             Debug.Assert(count > 0);
             return Read.DoOffsets<MusicTrack>(bytes, 4, count);
         }
-        
+
         public static IReadOnlyList<SfxScriptFile> ReadSfxScriptFiles()
         {
             string path = Path.Combine(Paths.FileSystem, "data", "sound", "SFXSCRIPTFILES.DAT");
@@ -75,7 +92,7 @@ namespace MphRead.Formats.Sound
             }
             return files;
         }
-        
+
         public static IReadOnlyList<DgnFile> ReadDgnFiles()
         {
             string path = Path.Combine(Paths.FileSystem, "data", "sound", "DGNFILES.DAT");
@@ -107,13 +124,43 @@ namespace MphRead.Formats.Sound
         }
     }
 
+    // size: 16
+    public readonly struct RawBgmSelectEntry
+    {
+        public readonly ushort Id;
+        public readonly ushort Type; // 0 - SSEQ ID, 1 - track ID, 2 - STRM ID
+        public readonly uint Field4;
+        public readonly uint Field8;
+        public readonly uint FieldC;
+    }
+
+    public class BgmSelectEntry
+    {
+        public string Name { get; }
+        public ushort Id { get; }
+        public ushort Type { get; }
+        public uint Field4 { get; }
+        public uint Field8 { get; }
+        public uint FieldC { get; }
+
+        public BgmSelectEntry(string name, RawBgmSelectEntry raw)
+        {
+            Name = name;
+            Id = raw.Id;
+            Type = raw.Type;
+            Field4 = raw.Field4;
+            Field8 = raw.Field8;
+            FieldC = raw.FieldC;
+        }
+    }
+    
     // size: 8
     public readonly struct Sound3dEntry
     {
         public readonly uint Field0;
         public readonly uint Field4;
     }
-    
+
     // size: 12
     public readonly struct RawSoundTableEntry
     {
