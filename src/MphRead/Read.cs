@@ -775,6 +775,11 @@ namespace MphRead
             return Encoding.ASCII.GetString(bytes[offset..end]);
         }
 
+        public static IReadOnlyList<string> ReadStrings(ReadOnlySpan<byte> bytes, long offset, int count)
+        {
+            return ReadStrings(bytes, (int)offset, count);
+        }
+
         public static IReadOnlyList<string> ReadStrings(ReadOnlySpan<byte> bytes, long offset, uint count)
         {
             return ReadStrings(bytes, (int)offset, (int)count);

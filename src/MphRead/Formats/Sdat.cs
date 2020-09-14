@@ -8,8 +8,7 @@ using System.Runtime.InteropServices;
 namespace MphRead.Formats.Sound
 {
     // todo: are any bytes not being read in SFXSCRIPTFILES or DGNFILES?
-    // (we know there are in sound_data, and we know there aren't in INTERMUSICINFO and ASSIGNMUSIC)
-    // also, there are no unread bytes in SNDTBLS, but are we missing something that references the categories?
+    // (we know there are in sound_data, and we know there aren't in INTERMUSICINFO/ASSIGNMUSIC/SNDTBLS)
     public static class SoundRead
     {
         public static SoundTable ReadSoundTables()
@@ -19,9 +18,10 @@ namespace MphRead.Formats.Sound
             uint count = Read.SpanReadUint(bytes, 0);
             Debug.Assert(count > 0);
             IReadOnlyList<RawSoundTableEntry> rawEntries = Read.DoOffsets<RawSoundTableEntry>(bytes, 4, count);
-            IReadOnlyList<string> names = Read.ReadStrings(bytes, count * Marshal.SizeOf<RawSoundTableEntry>() + 4, count);
-            // these don't appear to be referenced
-            IReadOnlyList<string> categories = Read.ReadStrings(bytes, 0x3792, 18);
+            long offset = count * Marshal.SizeOf<RawSoundTableEntry>() + 4;
+            IReadOnlyList<string> names = Read.ReadStrings(bytes, offset, count);
+            offset += names.Sum(n => n.Length) + names.Count;
+            IReadOnlyList<string> categories = Read.ReadStrings(bytes, offset, rawEntries.Max(r => r.CategoryId) + 1);
             var entries = new List<SoundTableEntry>();
             for (int i = 0; i < rawEntries.Count; i++)
             {
