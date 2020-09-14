@@ -11,19 +11,29 @@ namespace MphRead.Formats.Sound
     // (we know there are in sound_data, and we know there aren't in the rest of the current ones)
     public static class SoundRead
     {
-        public static IReadOnlyList<BgmSelectEntry> ReadBgmSelectList()
+        public static IReadOnlyList<SoundSelectEntry> ReadBgmSelectList()
         {
-            string path = Path.Combine(Paths.FileSystem, "data", "sound", "BGMSELECTLIST.DAT");
+            return ReadSelectList("BGMSELECTLIST.DAT");
+        }
+
+        public static IReadOnlyList<SoundSelectEntry> ReadSfxSelectList()
+        {
+            return ReadSelectList("SFXSELECTLIST.DAT");
+        }
+
+        private static IReadOnlyList<SoundSelectEntry> ReadSelectList(string filename)
+        {
+            string path = Path.Combine(Paths.FileSystem, "data", "sound", filename);
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             uint count = Read.SpanReadUint(bytes, 0);
             Debug.Assert(count > 0);
-            IReadOnlyList<RawBgmSelectEntry> rawEntries = Read.DoOffsets<RawBgmSelectEntry>(bytes, 4, count);
-            long offset = count * Marshal.SizeOf<RawBgmSelectEntry>() + 4;
+            IReadOnlyList<RawSoundSelectEntry> rawEntries = Read.DoOffsets<RawSoundSelectEntry>(bytes, 4, count);
+            long offset = count * Marshal.SizeOf<RawSoundSelectEntry>() + 4;
             IReadOnlyList<string> names = Read.ReadStrings(bytes, offset, count);
-            var entries = new List<BgmSelectEntry>();
+            var entries = new List<SoundSelectEntry>();
             for (int i = 0; i < rawEntries.Count; i++)
             {
-                entries.Add(new BgmSelectEntry(names[i], rawEntries[i]));
+                entries.Add(new SoundSelectEntry(names[i], rawEntries[i]));
             }
             return entries;
         }
@@ -125,16 +135,18 @@ namespace MphRead.Formats.Sound
     }
 
     // size: 16
-    public readonly struct RawBgmSelectEntry
+    public readonly struct RawSoundSelectEntry
     {
         public readonly ushort Id;
-        public readonly ushort Type; // 0 - SSEQ ID, 1 - track ID, 2 - STRM ID
+        // BGM: 0 - SSEQ ID, 1 - track ID, 2 - STRM ID
+        // SFX: 0 - SFX ID, 1 - DGN ID, 2 - script ID, 3 - STRM ID
+        public readonly ushort Type;
         public readonly uint Field4;
         public readonly uint Field8;
         public readonly uint FieldC;
     }
-
-    public class BgmSelectEntry
+    
+    public class SoundSelectEntry
     {
         public string Name { get; }
         public ushort Id { get; }
@@ -143,7 +155,7 @@ namespace MphRead.Formats.Sound
         public uint Field8 { get; }
         public uint FieldC { get; }
 
-        public BgmSelectEntry(string name, RawBgmSelectEntry raw)
+        public SoundSelectEntry(string name, RawSoundSelectEntry raw)
         {
             Name = name;
             Id = raw.Id;
