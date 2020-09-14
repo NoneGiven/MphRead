@@ -43,7 +43,7 @@ namespace MphRead.Formats.Sound
                     long start = offset + Marshal.SizeOf<SoundSampleHeader>();
                     // todo: what are these? and what are the bytes?
                     int size = (header.Field6 + header.Field8) * 4;
-                    samples.Add(new SoundSample(header, bytes.Slice(start, size)));
+                    samples.Add(new SoundSample(offset, header, bytes.Slice(start, size)));
                 }
             }
             return samples;
@@ -184,17 +184,20 @@ namespace MphRead.Formats.Sound
 
     public class SoundSample
     {
+        public uint Offset { get; }
         public SoundSampleHeader Header { get; }
         public IReadOnlyList<byte> Bytes { get; }
 
-        public SoundSample(SoundSampleHeader header, ReadOnlySpan<byte> bytes)
+        public SoundSample(uint offset, SoundSampleHeader header, ReadOnlySpan<byte> bytes)
         {
+            Offset = offset;
             Header = header;
             Bytes = bytes.ToArray();
         }
 
         private SoundSample()
         {
+            Offset = 0;
             Header = default;
             Bytes = new List<byte>();
         }
