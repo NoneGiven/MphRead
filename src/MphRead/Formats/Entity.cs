@@ -325,7 +325,9 @@ namespace MphRead
         public readonly uint HunterWeapon;
         public readonly ushort Health;
         public readonly ushort HealthMax;
-        public readonly uint Field38;
+        public readonly ushort Field38;
+        public readonly byte Field3A;
+        public readonly byte SpawnChance;
         public readonly uint Field3C;
         public readonly uint Field40;
         public readonly uint Field44;
