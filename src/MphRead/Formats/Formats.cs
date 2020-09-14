@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using OpenToolkit.Mathematics;
 
 namespace MphRead
@@ -1366,6 +1367,36 @@ namespace MphRead
 
     public static class CollectionExtensions
     {
+        public static ReadOnlySpan<T> Slice<T>(this ReadOnlySpan<T> source, uint start)
+        {
+            return source[(int)start..];
+        }
+
+        public static ReadOnlySpan<T> Slice<T>(this ReadOnlySpan<T> source, uint start, uint length)
+        {
+            return source.Slice((int)start, (int)length);
+        }
+
+        public static ReadOnlySpan<T> Slice<T>(this ReadOnlySpan<T> source, int start, uint length)
+        {
+            return source.Slice(start, (int)length);
+        }
+
+        public static ReadOnlySpan<T> Slice<T>(this ReadOnlySpan<T> source, uint start, int length)
+        {
+            return source.Slice((int)start, length);
+        }
+
+        public static ReadOnlySpan<T> Slice<T>(this ReadOnlySpan<T> source, long start, int length)
+        {
+            return source.Slice((int)start, length);
+        }
+
+        public static ReadOnlySpan<T> Slice<T>(this ReadOnlySpan<T> source, long start, uint length)
+        {
+            return source.Slice((int)start, (int)length);
+        }
+
         public static int IndexOf<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate)
         {
             int index = 0;

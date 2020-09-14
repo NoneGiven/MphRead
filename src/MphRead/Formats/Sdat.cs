@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -11,6 +12,44 @@ namespace MphRead.Formats.Sound
     // (we know there are in sound_data, and we know there aren't in the rest of the current ones)
     public static class SoundRead
     {
+        public static IReadOnlyList<SoundSample> ReadSoundSamples()
+        {
+            return ReadSoundSamples("SNDSAMPLES.DAT");
+        }
+
+        public static IReadOnlyList<SoundSample> ReadWfsSoundSamples()
+        {
+            return ReadSoundSamples("WFSSNDSAMPLES.DAT");
+        }
+
+        // note: SNDSAMPLES data is padded to multiples of 512 bytes, WFSSNDSAMPLES data is not
+        // todo: confirm no unused bytes (given the padding)
+        private static IReadOnlyList<SoundSample> ReadSoundSamples(string filename)
+        {
+            string path = Path.Combine(Paths.FileSystem, "data", "sound", filename);
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
+            uint count = Read.SpanReadUint(bytes, 0);
+            Debug.Assert(count > 0);
+            IReadOnlyList<uint> offsets = Read.DoOffsets<uint>(bytes, 4, count);
+            var samples = new List<SoundSample>();
+            foreach (uint offset in offsets)
+            {
+                if (offset == 0)
+                {
+                    samples.Add(SoundSample.CreateNull());
+                }
+                else
+                {
+                    SoundSampleHeader header = Read.DoOffset<SoundSampleHeader>(bytes, offset);
+                    long start = offset + Marshal.SizeOf<SoundSampleHeader>();
+                    // todo: what are these? and what are the bytes?
+                    int size = (header.Field6 + header.Field8) * 4;
+                    samples.Add(new SoundSample(header, bytes.Slice(start, size)));
+                }
+            }
+            return samples;
+        }
+
         public static IReadOnlyList<SoundSelectEntry> ReadBgmSelectList()
         {
             return ReadSelectList("BGMSELECTLIST.DAT");
@@ -134,6 +173,39 @@ namespace MphRead.Formats.Sound
         }
     }
 
+    // size: 12
+    public readonly struct SoundSampleHeader
+    {
+        public readonly uint Field0;
+        public readonly ushort Field4;
+        public readonly ushort Field6;
+        public readonly ushort Field8;
+        public readonly ushort FieldA;
+    }
+
+    public class SoundSample
+    {
+        public SoundSampleHeader Header { get; }
+        public IReadOnlyList<byte> Bytes { get; }
+
+        public SoundSample(SoundSampleHeader header, ReadOnlySpan<byte> bytes)
+        {
+            Header = header;
+            Bytes = bytes.ToArray();
+        }
+
+        private SoundSample()
+        {
+            Header = default;
+            Bytes = new List<byte>();
+        }
+        
+        public static SoundSample CreateNull()
+        {
+            return new SoundSample();
+        }
+    }
+
     // size: 16
     public readonly struct RawSoundSelectEntry
     {
@@ -145,7 +217,7 @@ namespace MphRead.Formats.Sound
         public readonly uint Field8;
         public readonly uint FieldC;
     }
-    
+
     public class SoundSelectEntry
     {
         public string Name { get; }
@@ -165,7 +237,7 @@ namespace MphRead.Formats.Sound
             FieldC = raw.FieldC;
         }
     }
-    
+
     // size: 8
     public readonly struct Sound3dEntry
     {
