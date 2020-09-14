@@ -9,8 +9,28 @@ namespace MphRead.Formats.Sound
 {
     // todo: are any bytes not being read in SFXSCRIPTFILES or DGNFILES?
     // (we know there are in sound_data, and we know there aren't in INTERMUSICINFO and ASSIGNMUSIC)
+    // also, there are no unread bytes in SNDTBLS, but are we missing something that references the categories?
     public static class SoundRead
     {
+        public static SoundTable ReadSoundTables()
+        {
+            string path = Path.Combine(Paths.FileSystem, "data", "sound", "SNDTBLS.DAT");
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
+            uint count = Read.SpanReadUint(bytes, 0);
+            Debug.Assert(count > 0);
+            IReadOnlyList<RawSoundTableEntry> rawEntries = Read.DoOffsets<RawSoundTableEntry>(bytes, 4, count);
+            IReadOnlyList<string> names = Read.ReadStrings(bytes, count * Marshal.SizeOf<RawSoundTableEntry>() + 4, count);
+            // these don't appear to be referenced
+            IReadOnlyList<string> categories = Read.ReadStrings(bytes, 0x3792, 18);
+            var entries = new List<SoundTableEntry>();
+            for (int i = 0; i < rawEntries.Count; i++)
+            {
+                RawSoundTableEntry rawEntry = rawEntries[i];
+                entries.Add(new SoundTableEntry(names[i], categories[rawEntry.CategoryId], rawEntry));
+            }
+            return new SoundTable(entries, categories);
+        }
+        
         public static IReadOnlyList<RoomMusic> ReadAssignMusic()
         {
             string path = Path.Combine(Paths.FileSystem, "data", "sound", "ASSIGNMUSIC.DAT");
@@ -75,6 +95,56 @@ namespace MphRead.Formats.Sound
                 files.Add(new DgnFile(names[i], header, entries));
             }
             return files;
+        }
+    }
+
+    // size: 12
+    public readonly struct RawSoundTableEntry
+    {
+        public readonly ushort Field0;
+        public readonly byte CategoryId;
+        public readonly byte Field3;
+        public readonly byte Field4;
+        public readonly byte Field5;
+        public readonly ushort Size;
+        public readonly uint Data;
+    }
+
+    public class SoundTable
+    {
+        public IReadOnlyList<SoundTableEntry> Entries { get; }
+        public IReadOnlyList<string> Categories { get; }
+
+        public SoundTable(IReadOnlyList<SoundTableEntry> entries, IReadOnlyList<string> categories)
+        {
+            Entries = entries;
+            Categories = categories;
+        }
+    }
+
+    public class SoundTableEntry
+    {
+        public string Name { get; }
+        public string Category { get; }
+        public ushort Field0;
+        public byte CategoryId;
+        public byte Field3;
+        public byte Field4;
+        public byte Field5;
+        public ushort Size;
+        public uint Data;
+
+        public SoundTableEntry(string name, string category, RawSoundTableEntry raw)
+        {
+            Name = name;
+            Category = category;
+            Field0 = raw.Field0;
+            CategoryId = raw.CategoryId;
+            Field3 = raw.Field3;
+            Field4 = raw.Field4;
+            Field5 = raw.Field5;
+            Size = raw.Size;
+            Data = raw.Data;
         }
     }
 
