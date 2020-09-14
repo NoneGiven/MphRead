@@ -7,8 +7,28 @@ using System.Runtime.InteropServices;
 
 namespace MphRead.Formats.Sound
 {
+    // todo: are any bytes not being read in SFXSCRIPTFILES or DGNFILES?
+    // (we know there are in sound_data, and we know there aren't in INTERMUSICINFO and ASSIGNMUSIC)
     public static class SoundRead
     {
+        public static IReadOnlyList<RoomMusic> ReadAssignMusic()
+        {
+            string path = Path.Combine(Paths.FileSystem, "data", "sound", "ASSIGNMUSIC.DAT");
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
+            uint count = Read.SpanReadUint(bytes, 0);
+            Debug.Assert(count > 0);
+            return Read.DoOffsets<RoomMusic>(bytes, 4, count);
+        }
+        
+        public static IReadOnlyList<MusicTrack> ReadInterMusicInfo()
+        {
+            string path = Path.Combine(Paths.FileSystem, "data", "sound", "INTERMUSICINFO.DAT");
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
+            uint count = Read.SpanReadUint(bytes, 0);
+            Debug.Assert(count > 0);
+            return Read.DoOffsets<MusicTrack>(bytes, 4, count);
+        }
+        
         public static IReadOnlyList<SfxScriptFile> ReadSfxScriptFiles()
         {
             string path = Path.Combine(Paths.FileSystem, "data", "sound", "SFXSCRIPTFILES.DAT");
@@ -56,6 +76,23 @@ namespace MphRead.Formats.Sound
             }
             return files;
         }
+    }
+
+    // size: 8
+    public readonly struct RoomMusic
+    {
+        public readonly ushort RoomId;
+        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U2, SizeConst = 3)]
+        public readonly ushort[] TrackIds;
+    }
+
+    // size: 8
+    public readonly struct MusicTrack
+    {
+        public readonly ushort SeqId;
+        public readonly ushort Field2;
+        public readonly ushort Field4;
+        public readonly ushort Field6;
     }
 
     // size: 8
