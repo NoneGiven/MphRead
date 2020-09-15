@@ -42,7 +42,7 @@ namespace MphRead.Formats.Sound
                     SoundSampleHeader header = Read.DoOffset<SoundSampleHeader>(bytes, offset);
                     long start = offset + Marshal.SizeOf<SoundSampleHeader>();
                     // todo: what are these? and what are the bytes?
-                    int size = (header.Field6 + header.Field8) * 4;
+                    uint size = (header.LoopStart + header.LoopLength) * 4;
                     samples.Add(new SoundSample(offset, header, bytes.Slice(start, size)));
                 }
             }
@@ -175,33 +175,47 @@ namespace MphRead.Formats.Sound
     // size: 12
     public readonly struct SoundSampleHeader
     {
-        public readonly uint Field0;
-        public readonly ushort Field4;
-        public readonly ushort Field6;
-        public readonly ushort Field8;
-        public readonly ushort FieldA;
+        public readonly byte Format;
+        public readonly byte LoopFlag; // boolean
+        public readonly ushort SampleRate;
+        public readonly ushort Timer; // SND_TIMER_CLOCK / SampleRate
+        public readonly ushort LoopStart; // number of 32-bit words
+        public readonly uint LoopLength; // number of 32-bit words
     }
 
     public class SoundSample
     {
         public uint Offset { get; }
-        public SoundSampleHeader Header { get; }
-        public IReadOnlyList<byte> Bytes { get; }
+        public WaveFormat Format { get; }
+        public bool Loop { get; }
+        public ushort SampleRate { get; }
+        public ushort Timer { get; }
+        public ushort LoopStart { get; }
+        public uint LoopLength { get; }
+        public IReadOnlyList<byte> Data { get; }
 
-        public SoundSample(uint offset, SoundSampleHeader header, ReadOnlySpan<byte> bytes)
+        public SoundSample(uint offset, SoundSampleHeader header, ReadOnlySpan<byte> data)
         {
+            if (header.Format < 0 || header.Format > 2)
+            {
+                throw new ProgramException($"Invalid wave format {header.Format}.");
+            }
             Offset = offset;
-            Header = header;
-            Bytes = bytes.ToArray();
+            Format = (WaveFormat)header.Format;
+            Loop = header.LoopFlag != 0;
+            SampleRate = header.SampleRate;
+            Timer = header.Timer;
+            LoopStart = header.LoopStart;
+            LoopLength = header.LoopLength;
+            Data = data.ToArray();
         }
 
         private SoundSample()
         {
-            Offset = 0;
-            Header = default;
-            Bytes = new List<byte>();
+            Format = WaveFormat.None;
+            Data = new List<byte>();
         }
-        
+
         public static SoundSample CreateNull()
         {
             return new SoundSample();
