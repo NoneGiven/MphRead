@@ -12,6 +12,15 @@ namespace MphRead
 {
     public static class Test
     {
+        public static uint Rng { get; private set; }
+
+        public static uint GetRandomInt(uint value)
+        {
+            Rng *= 0x7FF8A3ED;
+            Rng += 0x2AA01D31;
+            return (uint)((Rng >> 16) * value / 0x10000L);
+        }
+
         public static int GetSfxIndex(string query)
         {
             IReadOnlyList<SoundSample> samples = SoundRead.ReadSoundSamples();
