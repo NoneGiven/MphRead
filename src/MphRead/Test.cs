@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using MphRead.Formats.Sound;
 using OpenToolkit.Mathematics;
 
 namespace MphRead

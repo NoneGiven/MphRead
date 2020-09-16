@@ -11,6 +11,154 @@ namespace MphRead.Formats.Sound
     // (we know there are in sound_data, and we know there aren't in the rest of the current ones)
     public static class SoundRead
     {
+        public static void ExportSamples(bool adpcmRoundingError = false)
+        {
+            IReadOnlyList<SoundSample> samples = ReadWfsSoundSamples();
+            foreach (SoundSample sample in samples)
+            {
+                try
+                {
+                    ExportSample(sample, adpcmRoundingError);
+                }
+                catch (WaveExportException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+            }
+        }
+
+        public static void ExportSample(int id, bool adpcmRoundingError = false)
+        {
+            IReadOnlyList<SoundSample> samples = ReadSoundSamples();
+            ExportSample(samples[id], adpcmRoundingError);
+        }
+
+        // todo: support PCM8 and PCM16, even though MPH doesn't use them
+        public static void ExportSample(SoundSample sample, bool adpcmRoundingError = false)
+        {
+            string id = sample.Id.ToString().PadLeft(3, '0');
+            if (sample.Data.Count == 0)
+            {
+                throw new WaveExportException($"Sample {id} contains no data.");
+            }
+            if (sample.Format != WaveFormat.ADPCM)
+            {
+                throw new WaveExportException($"Format {sample.Format} is unsupported.");
+            }
+            uint bps = 16;
+            uint headerSize = 0x2C;
+            uint loopStart = (sample.LoopStart * 4u - 4u) * 2u;
+            uint loopLength = sample.LoopLength * 8u;
+            uint sampleCount = loopStart + loopLength;
+            uint waveSize = sampleCount * bps / 8 + headerSize;
+            uint decodedSize = sampleCount * (bps / 8);
+            string path = Path.Combine(Paths.Export, "_SFX");
+            Directory.CreateDirectory(path);
+            path = Path.Combine(path, $"{id}.wav");
+            using FileStream file = File.OpenWrite(path);
+            using var writer = new BinaryWriter(file);
+            writer.WriteC("RIFF");
+            writer.Write4(waveSize - 8);
+            writer.WriteC("WAVE");
+            writer.WriteC("fmt ");
+            writer.Write4(16);
+            writer.Write2(1);
+            writer.Write2(1);
+            writer.Write4(sample.SampleRate);
+            writer.Write4(sample.SampleRate * (bps / 8));
+            writer.Write2(bps / 8);
+            writer.Write2(bps);
+            writer.WriteC("data");
+            writer.Write4(decodedSize);
+            ReadOnlySpan<byte> data = sample.CreateSpan();
+            int transferred = 0;
+            bool low = false;
+            int sampleValue = 0;
+            int stepIndex = 0;
+            if (sample.Format == WaveFormat.ADPCM)
+            {
+                low = true;
+                sampleValue = BitConverter.ToInt16(data.Slice(0, 2));
+                stepIndex = BitConverter.ToInt16(data.Slice(2, 2));
+                transferred += 4;
+            }
+            for (int i = 0; i < sampleCount; i++)
+            {
+                //int index = i * ((int)bps / 8);
+                byte value = data[transferred];
+                if (!low)
+                {
+                    value >>= 4;
+                    transferred++;
+                }
+                value &= 0x0F;
+                int step = Metadata.AdpcmTable[stepIndex];
+                int diff = step >> 3;
+                if ((value & 1) != 0)
+                {
+                    diff += step >> 2;
+                }
+                if ((value & 2) != 0)
+                {
+                    diff += step >> 1;
+                }
+                if ((value & 4) != 0)
+                {
+                    diff += step;
+                }
+                if (adpcmRoundingError)
+                {
+                    if ((value & 8) != 0)
+                    {
+                        sampleValue -= diff;
+                        if (sampleValue < -32767)
+                        {
+                            sampleValue = -32767;
+                        }
+                    }
+                    else
+                    {
+                        sampleValue += diff;
+                        if (sampleValue > 32767)
+                        {
+                            sampleValue = 32767;
+                        }
+                    }
+                }
+                else
+                {
+                    if ((value & 8) != 0)
+                    {
+                        sampleValue -= diff;
+                    }
+                    else
+                    {
+                        sampleValue += diff;
+                    }
+                    if (sampleValue < -32768)
+                    {
+                        sampleValue = -32768;
+                    }
+                    if (sampleValue > 32767)
+                    {
+                        sampleValue = 32767;
+                    }
+                }
+                stepIndex += Metadata.ImaIndexTable[value];
+                if (stepIndex < 0)
+                {
+                    stepIndex = 0;
+                }
+                else if (stepIndex > 88)
+                {
+                    stepIndex = 88;
+                }
+                writer.Write2(sampleValue);
+                low = !low;
+            }
+            Nop();
+        }
+
         public static IReadOnlyList<SoundSample> ReadSoundSamples()
         {
             return ReadSoundSamples("SNDSAMPLES.DAT");
@@ -31,11 +179,12 @@ namespace MphRead.Formats.Sound
             Debug.Assert(count > 0);
             IReadOnlyList<uint> offsets = Read.DoOffsets<uint>(bytes, 4, count);
             var samples = new List<SoundSample>();
+            uint id = 0;
             foreach (uint offset in offsets)
             {
                 if (offset == 0)
                 {
-                    samples.Add(SoundSample.CreateNull());
+                    samples.Add(SoundSample.CreateNull(id));
                 }
                 else
                 {
@@ -43,8 +192,9 @@ namespace MphRead.Formats.Sound
                     long start = offset + Marshal.SizeOf<SoundSampleHeader>();
                     // todo: what are these? and what are the bytes?
                     uint size = (header.LoopStart + header.LoopLength) * 4;
-                    samples.Add(new SoundSample(offset, header, bytes.Slice(start, size)));
+                    samples.Add(new SoundSample(id, offset, header, bytes.Slice(start, size)));
                 }
+                id++;
             }
             return samples;
         }
@@ -170,6 +320,8 @@ namespace MphRead.Formats.Sound
             }
             return files;
         }
+
+        public static void Nop() { }
     }
 
     // size: 12
@@ -185,6 +337,7 @@ namespace MphRead.Formats.Sound
 
     public class SoundSample
     {
+        public uint Id { get; }
         public uint Offset { get; }
         public WaveFormat Format { get; }
         public bool Loop { get; }
@@ -192,14 +345,17 @@ namespace MphRead.Formats.Sound
         public ushort Timer { get; }
         public ushort LoopStart { get; }
         public uint LoopLength { get; }
-        public IReadOnlyList<byte> Data { get; }
 
-        public SoundSample(uint offset, SoundSampleHeader header, ReadOnlySpan<byte> data)
+        private readonly byte[] _data;
+        public IReadOnlyList<byte> Data => _data;
+
+        public SoundSample(uint id, uint offset, SoundSampleHeader header, ReadOnlySpan<byte> data)
         {
             if (header.Format < 0 || header.Format > 2)
             {
                 throw new ProgramException($"Invalid wave format {header.Format}.");
             }
+            Id = id;
             Offset = offset;
             Format = (WaveFormat)header.Format;
             Loop = header.LoopFlag != 0;
@@ -207,18 +363,24 @@ namespace MphRead.Formats.Sound
             Timer = header.Timer;
             LoopStart = header.LoopStart;
             LoopLength = header.LoopLength;
-            Data = data.ToArray();
+            _data = data.ToArray();
         }
 
-        private SoundSample()
+        private SoundSample(uint id)
         {
+            Id = id;
             Format = WaveFormat.None;
-            Data = new List<byte>();
+            _data = new byte[0];
         }
 
-        public static SoundSample CreateNull()
+        public static SoundSample CreateNull(uint id)
         {
-            return new SoundSample();
+            return new SoundSample(id);
+        }
+
+        public ReadOnlySpan<byte> CreateSpan()
+        {
+            return new ReadOnlySpan<byte>(_data);
         }
     }
 
@@ -457,5 +619,61 @@ namespace MphRead.Formats.Sound
         public readonly uint StrmOffset;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 24)]
         public readonly byte[] Reserved;
+    }
+
+    public class WaveExportException : ProgramException
+    {
+        public WaveExportException(string message) : base(message) { }
+    }
+
+    public static class BinaryWriterExtensions
+    {
+        public static void WriteC(this BinaryWriter writer, string chars)
+        {
+            foreach (char character in chars)
+            {
+                writer.Write(character);
+            }
+        }
+
+        public static void Write2(this BinaryWriter writer, int value)
+        {
+            writer.Write((ushort)(uint)value);
+        }
+
+        public static void Write2(this BinaryWriter writer, uint value)
+        {
+            writer.Write((ushort)value);
+        }
+
+        public static void Write2(this BinaryWriter writer, short value)
+        {
+            writer.Write(value);
+        }
+
+        public static void Write2(this BinaryWriter writer, ushort value)
+        {
+            writer.Write(value);
+        }
+
+        public static void Write4(this BinaryWriter writer, int value)
+        {
+            writer.Write(value);
+        }
+
+        public static void Write4(this BinaryWriter writer, uint value)
+        {
+            writer.Write(value);
+        }
+
+        public static void Write4(this BinaryWriter writer, short value)
+        {
+            writer.Write((uint)value);
+        }
+
+        public static void Write4(this BinaryWriter writer, ushort value)
+        {
+            writer.Write((uint)value);
+        }
     }
 }
