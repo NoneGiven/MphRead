@@ -451,7 +451,71 @@ namespace MphRead
             -1, -1, -1, -1, 2, 4, 6, 8
         };
 
-        public static ModelMetadata? GetEntityByName(string name)
+        public static readonly IReadOnlyList<string> MusicSeqs = new List<string>()
+        {
+            "SEQ_BRINSTAR",
+            "SEQ_MP1",
+            "SEQ_MP2",
+            "SEQ_PARASITE",
+            "SEQ_SHIP",
+            "SEQ_YELLOW",
+            "SEQ_RESULTS",
+            "SEQ_TIMEOUT",
+            "SEQ_WIN",
+            "SEQ_GARLIC",
+            "SEQ_MP2_X",
+            "SEQ_PARASITE_X",
+            "SEQ_RED",
+            "SEQ_BLUE",
+            "SEQ_AMBIENT_1",
+            "SEQ_TELEPORT",
+            "SEQ_DRONE",
+            "SEQ_MENU1",
+            "SEQ_GREY",
+            "SEQ_SAFFRON",
+            "SEQ_GUMBO",
+            "SEQ_INTRO_SYLUX",
+            "SEQ_INTRO_TRACE",
+            "SEQ_INTRO_NOXUS",
+            "SEQ_INTRO_WEAVEL",
+            "SEQ_INTRO_KANDEN",
+            "SEQ_INTRO_SPIRE",
+            "SEQ_FLY_IN_2",
+            "SEQ_FLY_IN_1",
+            "SEQ_FLY_IN_3",
+            "SEQ_FLY_IN_4",
+            "SEQ_SHIP_LAND1",
+            "SEQ_SHIP_LAND2",
+            "SEQ_SHIP_LAND3",
+            "SEQ_SHIP_LAND4",
+            "SEQ_GET_WEAPON",
+            "SEQ_GET_OCTOLITH",
+            "SEQ_NEW_GAME",
+            "SEQ_BEAT_HUNTER1",
+            "SEQ_INTRO_GUARDIAN",
+            "SEQ_GUARDIAN",
+            "SEQ_BEAT_CYLBOSS1",
+            "SEQ_GREEN",
+            "SEQ_CHUTNEY",
+            "SEQ_DILL",
+            "SEQ_GOREA_1",
+            "SEQ_ENEMY_1",
+            "SEQ_GOREA_2",
+            "SEQ_PEPPER",
+            "SEQ_SINGLE_CART_MENU",
+            "SEQ_SINGLE_CART_INGAME",
+            "SEQ_SINGLE_CART_TIMEOUT",
+            "SEQ_OREGANO",
+            "SEQ_ENEMY_2",
+            "SEQ_WHITE",
+            "SEQ_ENERGY_TIMER",
+            "SEQ_BLACK",
+            "SEQ_INDIGO",
+            "SEQ_CREDITS",
+            "SEQ_FLY_IN_GOREA"
+        };
+
+        public static ModelMetadata? GetModelByName(string name)
         {
             if (ModelMetadata.TryGetValue(name, out ModelMetadata? metadata))
             {
@@ -460,7 +524,7 @@ namespace MphRead
             return null;
         }
 
-        public static ModelMetadata? GetFirstHuntEntityByName(string name)
+        public static ModelMetadata? GetFirstHuntModelByName(string name)
         {
             if (FirstHuntModels.TryGetValue(name, out ModelMetadata? metadata))
             {

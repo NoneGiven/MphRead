@@ -270,7 +270,13 @@ namespace MphRead.Formats.Sound
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             uint count = Read.SpanReadUint(bytes, 0);
             Debug.Assert(count > 0);
-            return Read.DoOffsets<MusicTrack>(bytes, 4, count);
+            var tracks = new List<MusicTrack>(0);
+            uint id = 0;
+            foreach (RawMusicTrack track in Read.DoOffsets<RawMusicTrack>(bytes, 4, count))
+            {
+                tracks.Add(new MusicTrack(id++, track));
+            }
+            return tracks;
         }
 
         public static IReadOnlyList<SfxScriptFile> ReadSfxScriptFiles()
@@ -426,6 +432,7 @@ namespace MphRead.Formats.Sound
     // size: 12
     public readonly struct RawSoundTableEntry
     {
+        // sktodo: SFX fields
         public readonly ushort Field0;
         public readonly byte CategoryId;
         public readonly byte Field3;
@@ -482,12 +489,30 @@ namespace MphRead.Formats.Sound
     }
 
     // size: 8
-    public readonly struct MusicTrack
+    public readonly struct RawMusicTrack
     {
         public readonly ushort SeqId;
         public readonly ushort Field2;
-        public readonly ushort Field4;
+        public readonly ushort Tracks;
         public readonly ushort Field6;
+    }
+
+    public class MusicTrack
+    {
+        public uint Id { get; }
+        public ushort SeqId { get; }
+        public ushort Field2 { get; }
+        public ushort Tracks { get; }
+        public ushort Field6 { get; }
+
+        public MusicTrack(uint id, RawMusicTrack raw)
+        {
+            Id = id;
+            SeqId = raw.SeqId;
+            Field2 = raw.Field2;
+            Tracks = raw.Tracks;
+            Field6 = raw.Field6;
+        }
     }
 
     // size: 8

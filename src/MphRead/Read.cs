@@ -21,20 +21,20 @@ namespace MphRead
 
         public static Model GetModelByName(string name, int defaultRecolor = 0, bool firstHunt = false)
         {
-            ModelMetadata? entityMeta;
+            ModelMetadata? modelMeta;
             if (firstHunt)
             {
-                entityMeta = Metadata.GetFirstHuntEntityByName(name);
+                modelMeta = Metadata.GetFirstHuntModelByName(name);
             }
             else
             {
-                entityMeta = Metadata.GetEntityByName(name);
+                modelMeta = Metadata.GetModelByName(name);
             }
-            if (entityMeta == null)
+            if (modelMeta == null)
             {
-                throw new ProgramException("No entity with this name is known. Please provide metadata for a custom entity.");
+                throw new ProgramException("No model with this name is known.");
             }
-            return GetModel(entityMeta, defaultRecolor);
+            return GetModel(modelMeta, defaultRecolor);
         }
 
         public static Model GetModelByPath(string path, bool externalTexture = false)
@@ -51,7 +51,7 @@ namespace MphRead
             (RoomMetadata? roomMeta, _) = Metadata.GetRoomByName(name);
             if (roomMeta == null)
             {
-                throw new ProgramException("No room with this name is known. Please provide metadata for a custom room.");
+                throw new ProgramException("No room with this name is known.");
             }
             return GetRoom(roomMeta);
         }
@@ -584,7 +584,7 @@ namespace MphRead
             int end = start + Marshal.SizeOf<T>();
             return new Entity<T>(entry, (EntityType)(header.Type + 100), header.EntityId, ReadStruct<T>(bytes[start..end]), header);
         }
-        
+
         // todo: should return a CameraSequence class (flags etc.)
         public static IReadOnlyList<CameraSequenceFrame> ReadCameraSequence(string name)
         {
@@ -814,7 +814,7 @@ namespace MphRead
             }
             return strings;
         }
-        
+
         public static void ExtractArchive(string name)
         {
             string input = Path.Combine(Paths.FileSystem, "archives", $"{name}.arc");
