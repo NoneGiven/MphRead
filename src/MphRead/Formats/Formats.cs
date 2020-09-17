@@ -395,16 +395,12 @@ namespace MphRead
             {
                 Node node = Nodes[i];
                 NodeAnimationGroup? group = AnimationGroups.NodeGroup;
-                Matrix4 transform = Matrix4.Identity;
+                Matrix4 transform = node.Transform;
                 if (group != null && group.Animations.TryGetValue(node.Name, out NodeAnimation animation))
                 {
                     // todo: move this and other stuff
                     transform = RenderWindow.AnimateNode(group, animation, Scale);
-                    if (node.ParentIndex == UInt16.MaxValue)
-                    {
-                        transform *= node.Transform.ClearScale();
-                    }
-                    else
+                    if (node.ParentIndex != UInt16.MaxValue)
                     {
                         transform *= Nodes[node.ParentIndex].Animation;
                     }
