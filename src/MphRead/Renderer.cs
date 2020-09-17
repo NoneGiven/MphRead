@@ -2007,6 +2007,7 @@ namespace MphRead
             {
                 if (e.Alt)
                 {
+                    // todo: select other animation types, and enable playing in reverse
                     if (_selectionMode == SelectionMode.Model && _modelMap.TryGetValue(_selectedModelId, out Model? model))
                     {
                         int id = model.Animations.NodeGroupId + 1;

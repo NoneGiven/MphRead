@@ -152,13 +152,13 @@ namespace MphRead
             {
                 suffix = "";
             }
-            if (animation)
+            if (animationPath != null)
             {
-                if (animationPath != null)
-                {
-                    AnimationPath = animationPath;
-                }
-                else if (archive != null)
+                AnimationPath = animationPath;
+            }
+            else if (animation)
+            {
+                if (archive != null)
                 {
                     AnimationPath = $@"_archives\{archive}\{name}_Anim.bin";
                 }
