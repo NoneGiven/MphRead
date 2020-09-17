@@ -246,7 +246,7 @@ namespace MphRead
         public readonly byte Active; // boolean
         public readonly byte Field26; // always 0, 1, or 255
     }
-    
+
     // size: 44
     public readonly struct FhPlayerSpawnEntityData
     {

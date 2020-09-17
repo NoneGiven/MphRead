@@ -79,7 +79,7 @@ namespace MphRead
 
         private static Model GetModel(ModelMetadata meta, int defaultRecolor)
         {
-             Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.Recolors, defaultRecolor, meta.UseLightSources);
+            Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.Recolors, defaultRecolor, meta.UseLightSources);
             return model;
         }
 
