@@ -2591,7 +2591,7 @@ namespace MphRead
                 $" Textures {model.Textures.Count}, Palettes {model.Palettes.Count}", guid);
             AnimationInfo a = model.Animations;
             await Output.Write($"Anim: Node {a.NodeGroupId} / {a.NodeGroups.Count}, Material {a.MaterialGroupId} / {a.MaterialGroups.Count}," +
-                $" Texcoord {a.TexcoordGroupId} / {a.TexcoordGroups.Count}, Texture {a.TextureGroupId} / {a.TextureGroups.Count},", guid);
+                $" Texcoord {a.TexcoordGroupId} / {a.TexcoordGroups.Count}, Texture {a.TextureGroupId} / {a.TextureGroups.Count}", guid);
             await Output.Write(guid);
         }
 
