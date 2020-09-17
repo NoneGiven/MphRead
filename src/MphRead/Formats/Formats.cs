@@ -134,7 +134,7 @@ namespace MphRead
         // refers to the untransformed model's axis
         public Vector3 SpinAxis { get; set; } = Vector3.UnitY;
 
-        public AnimationInfo AnimationGroups { get; }
+        public AnimationInfo Animations { get; }
 
         public IReadOnlyList<Recolor> Recolors { get; }
 
@@ -187,7 +187,7 @@ namespace MphRead
             Materials = materials.Select(m => new Material(m)).ToList();
             DisplayLists = dlists;
             RenderInstructionLists = renderInstructions;
-            AnimationGroups = new AnimationInfo(nodeGroups, materialGroups, texcoordGroups, textureGroups);
+            Animations = new AnimationInfo(nodeGroups, materialGroups, texcoordGroups, textureGroups);
             TextureMatrices = textureMatrices;
             Recolors = recolors;
             CurrentRecolor = defaultRecolor;
@@ -383,7 +383,7 @@ namespace MphRead
                 }
                 ExtraTransform = transform * ExtraTransform;
             }
-            if (Nodes.Count > 0 && AnimationGroups.NodeGroups.Count > 0)
+            if (Nodes.Count > 0 && Animations.NodeGroups.Count > 0)
             {
                 AnimateNodes(0);
             }
@@ -394,7 +394,7 @@ namespace MphRead
             for (int i = index; i != UInt16.MaxValue;)
             {
                 Node node = Nodes[i];
-                NodeAnimationGroup? group = AnimationGroups.NodeGroup;
+                NodeAnimationGroup? group = Animations.NodeGroup;
                 Matrix4 transform = node.Transform;
                 if (group != null && group.Animations.TryGetValue(node.Name, out NodeAnimation animation))
                 {
@@ -416,25 +416,25 @@ namespace MphRead
 
         private void UpdateAnimationFrames()
         {
-            if (AnimationGroups.MaterialGroupId != -1)
+            if (Animations.MaterialGroupId != -1)
             {
-                AnimationGroups.MaterialGroup!.CurrentFrame++;
-                AnimationGroups.MaterialGroup.CurrentFrame %= AnimationGroups.MaterialGroup.FrameCount;
+                Animations.MaterialGroup!.CurrentFrame++;
+                Animations.MaterialGroup.CurrentFrame %= Animations.MaterialGroup.FrameCount;
             }
-            if (AnimationGroups.TexcoordGroupId != -1)
+            if (Animations.TexcoordGroupId != -1)
             {
-                AnimationGroups.TexcoordGroup!.CurrentFrame++;
-                AnimationGroups.TexcoordGroup.CurrentFrame %= AnimationGroups.TexcoordGroup.FrameCount;
+                Animations.TexcoordGroup!.CurrentFrame++;
+                Animations.TexcoordGroup.CurrentFrame %= Animations.TexcoordGroup.FrameCount;
             }
-            if (AnimationGroups.TextureGroupId != -1)
+            if (Animations.TextureGroupId != -1)
             {
-                AnimationGroups.TextureGroup!.CurrentFrame++;
-                AnimationGroups.TextureGroup.CurrentFrame %= AnimationGroups.TextureGroup.FrameCount;
+                Animations.TextureGroup!.CurrentFrame++;
+                Animations.TextureGroup.CurrentFrame %= Animations.TextureGroup.FrameCount;
             }
-            if (AnimationGroups.NodeGroupId != -1)
+            if (Animations.NodeGroupId != -1)
             {
-                AnimationGroups.NodeGroup!.CurrentFrame++;
-                AnimationGroups.NodeGroup.CurrentFrame %= AnimationGroups.NodeGroup.FrameCount;
+                Animations.NodeGroup!.CurrentFrame++;
+                Animations.NodeGroup.CurrentFrame %= Animations.NodeGroup.FrameCount;
             }
         }
     }
@@ -561,6 +561,7 @@ namespace MphRead
                 else
                 {
                     NodeGroup = NodeGroups[_nodeGroupId];
+                    NodeGroup.CurrentFrame = 0;
                 }
             }
         }
@@ -581,6 +582,7 @@ namespace MphRead
                 else
                 {
                     MaterialGroup = MaterialGroups[_materialGroupId];
+                    MaterialGroup.CurrentFrame = 0;
                 }
             }
         }
@@ -601,6 +603,7 @@ namespace MphRead
                 else
                 {
                     TexcoordGroup = TexcoordGroups[_texcoordGroupId];
+                    TexcoordGroup.CurrentFrame = 0;
                 }
             }
         }
@@ -621,6 +624,7 @@ namespace MphRead
                 else
                 {
                     TextureGroup = TextureGroups[_textureGroupId];
+                    TextureGroup.CurrentFrame = 0;
                 }
             }
         }
