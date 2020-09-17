@@ -625,6 +625,17 @@ namespace MphRead
             }
         }
 
+        // in-game, animations other than node are all set together
+        public int TexUvMatId
+        {
+            set
+            {
+                MaterialGroupId = value;
+                TexcoordGroupId = value;
+                TextureGroupId = value;
+            }
+        }
+
         public AnimationInfo(IReadOnlyList<NodeAnimationGroup> nodes, IReadOnlyList<MaterialAnimationGroup> materials,
             IReadOnlyList<TexcoordAnimationGroup> texcoords, IReadOnlyList<TextureAnimationGroup> textures)
         {
