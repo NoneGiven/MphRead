@@ -662,7 +662,7 @@ namespace MphRead
             }
             if (TextureGroups.Count > 0)
             {
-                TexcoordGroupId = 0;
+                TextureGroupId = 0;
             }
         }
     }
