@@ -795,18 +795,14 @@ namespace MphRead
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             model.Entity = entity;
-            model.Rotating = true;
-            // todo: "real" method of determining starting spin
-            model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
             if (data.ModelId >= 8)
             {
+                model.Rotating = true;
+                // todo: "real" method of determining starting spin
+                model.Spin = _random.Next(0x8000) / (float)0x7FFF * 360;
                 model.SpinSpeed = 0.25f;
                 // todo: this (and some other entity setup stuff) should be applied no matter how the model is loaded
                 model.UseLightOverride = true;
-            }
-            else
-            {
-                model.SpinSpeed = 0.5f;
             }
             models.Add(model);
             if (data.HasBase != 0)

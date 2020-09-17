@@ -183,9 +183,9 @@ namespace MphRead
             UseLightSources = useLightSources;
         }
 
-        public ModelMetadata(string name, bool animation = true, bool collision = false,
-            bool texture = false, string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None,
-            string? archive = null, string? addToAnim = null, bool firstHunt = false)
+        public ModelMetadata(string name, bool animation = true, bool collision = false, bool texture = false,
+            string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None, string? archive = null,
+            string? addToAnim = null, bool firstHunt = false, string? animationPath = null)
         {
             Name = name;
             string path;
@@ -213,7 +213,7 @@ namespace MphRead
             }
             if (animation)
             {
-                AnimationPath = $@"{path}\{name}{addToAnim}{suffix}_Anim.bin";
+                AnimationPath = animationPath == null ? $@"{path}\{name}{addToAnim}{suffix}_Anim.bin" : animationPath;
             }
             if (collision)
             {
@@ -5158,56 +5158,56 @@ namespace MphRead
                     "Artifact01",
                     new ModelMetadata("Artifact01",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animation: false,
+                        animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact02",
                     new ModelMetadata("Artifact02",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animation: false,
+                        animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact03",
                     new ModelMetadata("Artifact03",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animation: false,
+                        animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact04",
                     new ModelMetadata("Artifact04",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animation: false,
+                        animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact05",
                     new ModelMetadata("Artifact05",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animation: false,
+                        animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact06",
                     new ModelMetadata("Artifact06",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animation: false,
+                        animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact07",
                     new ModelMetadata("Artifact07",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animation: false,
+                        animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact08",
                     new ModelMetadata("Artifact08",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animation: false,
+                        animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
@@ -5243,19 +5243,19 @@ namespace MphRead
                 },
                 {
                     "BigEyeSynapse_01",
-                    new ModelMetadata("BigEyeSynapse_01", animationPath: @"models\BigEyeSynapse_Anim.bin")
+                    new ModelMetadata("BigEyeSynapse_01", animation: true, animationPath: @"models\BigEyeSynapse_Anim.bin")
                 },
                 {
                     "BigEyeSynapse_02",
-                    new ModelMetadata("BigEyeSynapse_02", animationPath: @"models\BigEyeSynapse_Anim.bin")
+                    new ModelMetadata("BigEyeSynapse_02", animation: true, animationPath: @"models\BigEyeSynapse_Anim.bin")
                 },
                 {
                     "BigEyeSynapse_03",
-                    new ModelMetadata("BigEyeSynapse_03", animationPath: @"models\BigEyeSynapse_Anim.bin")
+                    new ModelMetadata("BigEyeSynapse_03", animation: true, animationPath: @"models\BigEyeSynapse_Anim.bin")
                 },
                 {
                     "BigEyeSynapse_04",
-                    new ModelMetadata("BigEyeSynapse_04", animationPath: @"models\BigEyeSynapse_Anim.bin")
+                    new ModelMetadata("BigEyeSynapse_04", animation: true, animationPath: @"models\BigEyeSynapse_Anim.bin")
                 },
                 {
                     "BigEyeTurret",

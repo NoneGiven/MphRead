@@ -402,7 +402,7 @@ namespace MphRead
                     transform = RenderWindow.AnimateNode(group, animation, Scale);
                     if (node.ParentIndex == UInt16.MaxValue)
                     {
-                        transform *= node.Transform;
+                        transform *= node.Transform.ClearScale();
                     }
                     else
                     {
