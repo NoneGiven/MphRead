@@ -5127,6 +5127,10 @@ namespace MphRead
                         }, useLightSources: true)
                 },
                 {
+                    "arcWelder",
+                    new ModelMetadata("arcWelder", animation: false, archive: "common")
+                },
+                {
                     "arcWelder1",
                     new ModelMetadata("arcWelder1", animation: false)
                 },
@@ -6924,10 +6928,6 @@ namespace MphRead
                 //    new ModelMetadata("doubleDamage_img", animation: false, archive: "common")
                 //},
                 // todo?: seemingly 2D images only, no polygons render even though they have a mesh/dlist
-                {
-                    "arcWelder",
-                    new ModelMetadata("arcWelder", animation: false, archive: "common")
-                },
                 {
                     "electroTrail",
                     new ModelMetadata("electroTrail", animation: false, archive: "common")
