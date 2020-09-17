@@ -1,20 +1,17 @@
 # MphRead
-This project is a reader and viewer for file formats used in the Nintendo DS game Metroid Prime Hunters. It is a console application written in C# which includes a model viewer using OpenGL via the [OpenTK](https://github.com/opentk/opentk) library.
-
-The renderer is a work in progress. A much more impressive C implementation with more features can be found here:
-- **[mph-viewer by hackyourlife](https://github.com/hackyourlife/mph-viewer)**
+This project is a model viewer, scene renderer, and general parser for file formats used in the Nintendo DS game Metroid Prime Hunters. The renderer is implemented using OpenGL via the [OpenTK](https://github.com/opentk/opentk) library. Documentation of various game features can be found in the [wiki](https://github.com/NoneGiven/MphRead/wiki).
 
 ## Features
-- Parses model file metadata to CLR types
-- Reads image data and OpenGL display list instructions
-- Exports images to PNG and models to COLLADA
-- Generates Python scripts to import model metadata to Blender
-- Renders models, and allows inspecting and manipulating them
+- Renders individual models or complete game scenes with room entities
+- Exports models to COLLADA, textures to PNG, and sound effects to WAV
+- Generates Python scripts to import additional model metadata into Blender
+- Contains game metadata and parses many more file types
 
 ## Planned
-- Parse animation and collision files
-- Support rendering the full range of effects found in MPH models
-- Full map rendering with entities
+- Parse and render collision data
+- Implement particle effects
+- Music and SFX playback
+- Export model animations
 
 ## Usage
 
@@ -48,7 +45,9 @@ If the target archive is LZ10-compressed, it will be decompressed.
 The export target may be a model or room name.
 ```
 
-See [this page](https://github.com/NoneGiven/MphRead/wiki) for a list of room and model names.
+See these wiki pages for model and room names:
+* [Models](https://github.com/NoneGiven/MphRead/wiki/Models)
+* [Rooms](https://github.com/NoneGiven/MphRead/wiki/Rooms)
 
 ## Building
 
@@ -68,8 +67,12 @@ With a recent version of [Visual Studio 2019](https://visualstudio.microsoft.com
 A significant portion of this project's code was based on the file format information or source code from several other projects.
 
 - **dsgraph** - The original MPH model viewer, on which all other projects are built.
-- **[Chemical's model format](https://gitlab.com/ch-mcl/metroid-prime-hunters-file-document/-/blob/master/Model/BinModel.md)** - Significant documentation of the model format.
-- **[McKay42's model viewer](https://github.com/McKay42/mph-model-viewer)** - Rendering information and COLLADA export method.
-- **[McKay42's ARC extractor](https://github.com/McKay42/mph-arc-extractor)** - ARC file format information.
+- **[Chemical's model format](https://gitlab.com/ch-mcl/metroid-prime-hunters-file-document/-/blob/master/Model/BinModel.md)** - Documentation of the model format.
+- **[McKay42's mph-model-viewer](https://github.com/McKay42/mph-model-viewer)** - COLLADA export method.
+- **[McKay42's mph-arc-extractor](https://github.com/McKay42/mph-arc-extractor)** - ARC file format information.
 - **[Barubary's dsdecmp](https://github.com/Barubary/dsdecmp)** - LZ10 compression routines.
-- **[hackyourlife's model viewer](https://github.com/hackyourlife/mph-viewer)** - Advanced model format and rendering information and much more.
+- **[loveemu's swav2wav](https://github.com/loveemu/loveemu-lab)** - SWAV conversion function.
+
+## Special Thanks
+
+This project is an ongoing reverse engineering effort developed parallel to **[hackyourlife's mph-viewer](https://github.com/hackyourlife/mph-viewer)**, a model viewer implementation in C. Major features such as the transparency rendering implementation are dervied from its source code.
