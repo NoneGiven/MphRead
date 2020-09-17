@@ -582,7 +582,7 @@ namespace MphRead
             public ushort FieldE;
             public ushort Field10;
             public ushort Field12;
-            public byte ShowCooldown;
+            public byte ShotCooldown;
             public byte Field15; // related to shot cooldown
             public byte AmmoType;
             public byte Field17;
