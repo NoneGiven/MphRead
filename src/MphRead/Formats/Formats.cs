@@ -689,18 +689,18 @@ namespace MphRead
         public int FrameCount { get; }
         public int CurrentFrame { get; set; }
         public int Count { get; }
-        public IReadOnlyList<Fixed> Fixed32s { get; }
-        public IReadOnlyList<ushort> UInt16s { get; }
-        public IReadOnlyList<int> Int32s { get; }
+        public IReadOnlyList<float> Scales { get; }
+        public IReadOnlyList<float> Rotations { get; }
+        public IReadOnlyList<float> Translations { get; }
         public IReadOnlyDictionary<string, NodeAnimation> Animations { get; }
 
-        public NodeAnimationGroup(RawNodeAnimationGroup raw, IReadOnlyList<Fixed> fixed32s, IReadOnlyList<ushort> uint16s,
-            IReadOnlyList<int> int32s, IReadOnlyDictionary<string, NodeAnimation> animations)
+        public NodeAnimationGroup(RawNodeAnimationGroup raw, IReadOnlyList<float> scales, IReadOnlyList<float> rotations,
+            IReadOnlyList<float> translations, IReadOnlyDictionary<string, NodeAnimation> animations)
         {
             FrameCount = (int)raw.FrameCount;
-            Fixed32s = fixed32s;
-            UInt16s = uint16s;
-            Int32s = int32s;
+            Scales = scales;
+            Rotations = rotations;
+            Translations = translations;
             Animations = animations;
             Count = Animations.Count;
         }

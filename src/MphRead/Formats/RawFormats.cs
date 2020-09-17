@@ -127,9 +127,9 @@ namespace MphRead
     public readonly struct RawNodeAnimationGroup
     {
         public readonly uint FrameCount;
-        public readonly uint Fixed32Pointer;
-        public readonly uint UInt16Pointer;
-        public readonly uint Int32Pointer;
+        public readonly uint ScaleLutOffset;
+        public readonly uint RotateLutOffset;
+        public readonly uint TranslateLutOffset;
         public readonly uint AnimationOffset;
     }
 
@@ -220,36 +220,36 @@ namespace MphRead
     // size: 48
     public readonly struct NodeAnimation
     {
-        public readonly byte Field0;
-        public readonly byte Field1;
-        public readonly byte Field2;
+        public readonly byte ScaleBlendX;
+        public readonly byte ScaleBlendY;
+        public readonly byte ScaleBlendZ;
         public readonly byte Flags;
-        public readonly ushort Field4;
-        public readonly ushort Field6;
-        public readonly ushort Field8;
-        public readonly ushort FieldA;
-        public readonly ushort FieldC;
-        public readonly ushort FieldE;
-        public readonly byte Field10;
-        public readonly byte Field11;
-        public readonly byte Field12;
-        public readonly byte Field13;
-        public readonly ushort Field14;
-        public readonly ushort Field16;
-        public readonly ushort Field18;
-        public readonly ushort Field1A;
-        public readonly ushort Field1C;
-        public readonly ushort Field1E;
-        public readonly byte Field20;
-        public readonly byte Field21;
-        public readonly byte Field22;
-        public readonly byte Field23;
-        public readonly ushort Field24;
-        public readonly ushort Field26;
-        public readonly ushort Field28;
-        public readonly ushort Field2A;
-        public readonly ushort Field2C;
-        public readonly ushort Field2E;
+        public readonly ushort ScaleLutLengthX;
+        public readonly ushort ScaleLutLengthY;
+        public readonly ushort ScaleLutLengthZ;
+        public readonly ushort ScaleLutIndexX;
+        public readonly ushort ScaleLutIndexY;
+        public readonly ushort ScaleLutIndexZ;
+        public readonly byte RotateBlendX;
+        public readonly byte RotateBlendY;
+        public readonly byte RotateBlendZ;
+        public readonly byte Field13; // padding?
+        public readonly ushort RotateLutLengthX;
+        public readonly ushort RotateLutLengthY;
+        public readonly ushort RotateLutLengthZ;
+        public readonly ushort RotateLutIndexX;
+        public readonly ushort RotateLutIndexY;
+        public readonly ushort RotateLutIndexZ;
+        public readonly byte TranslateBlendX;
+        public readonly byte TranslateBlendY;
+        public readonly byte TranslateBlendZ;
+        public readonly byte Field23; // padding?
+        public readonly ushort TranslateLutLengthX;
+        public readonly ushort TranslateLutLengthY;
+        public readonly ushort TranslateLutLengthZ;
+        public readonly ushort TranslateLutIndexX;
+        public readonly ushort TranslateLutIndexY;
+        public readonly ushort TranslateLutIndexZ;
     }
 
     // size: 40

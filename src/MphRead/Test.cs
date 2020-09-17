@@ -196,10 +196,6 @@ namespace MphRead
         {
             foreach (Model model in GetAllModels())
             {
-                if (model.Header.TextureMatrixCount > 1)
-                {
-                    Console.WriteLine($"{model.Header.TextureMatrixCount} - {model.Name}");
-                }
             }
         }
 
