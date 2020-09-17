@@ -75,4 +75,4 @@ A significant portion of this project's code was based on the file format inform
 
 ## Special Thanks
 
-This project is an ongoing reverse engineering effort developed parallel to **[hackyourlife's mph-viewer](https://github.com/hackyourlife/mph-viewer)**, a model viewer implementation in C. Major features such as the transparency rendering implementation are dervied from its source code.
+This project is an ongoing reverse engineering effort developed parallel to **[hackyourlife's mph-viewer](https://github.com/hackyourlife/mph-viewer)**, a model viewer implementation in C. Major features such as the transparency rendering implementation are derived from its source code.
