@@ -266,7 +266,7 @@ namespace MphRead
                     maxScale = Math.Max(maxScale, animation.ScaleLutIndexX + animation.ScaleLutLengthX);
                     maxScale = Math.Max(maxScale, animation.ScaleLutIndexY + animation.ScaleLutLengthY);
                     maxScale = Math.Max(maxScale, animation.ScaleLutIndexZ + animation.ScaleLutLengthZ);
-                    maxRotation = Math.Max(maxRotation, animation.RotateLutIndexX + animation.RotateLutLengthZ);
+                    maxRotation = Math.Max(maxRotation, animation.RotateLutIndexX + animation.RotateLutLengthX);
                     maxRotation = Math.Max(maxRotation, animation.RotateLutIndexY + animation.RotateLutLengthY);
                     maxRotation = Math.Max(maxRotation, animation.RotateLutIndexZ + animation.RotateLutLengthZ);
                     maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexX + animation.TranslateLutLengthX);
