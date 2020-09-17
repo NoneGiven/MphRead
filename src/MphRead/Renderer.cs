@@ -1252,8 +1252,8 @@ namespace MphRead
                         Matrix4 product = node.Transform.Keep3x3();
                         // todo: this may not be exactly equivalent to the game checking the node animation pointer
                         // note: in-game, this also uses the some_flag CModel field or constant 0,
-                        // byt none of the models with normal texgen seem to set bit 0 of that flag, so we can ignore it
-                        // --> also, Dialanche sets it pointed to 0 while attacking, but that doesn't seem to chnage its appearance
+                        // but none of the models with normal texgen seem to set bit 0 of that flag, so we can ignore it
+                        // --> also, Dialanche sets its pointer to 0 while attacking, but that doesn't seem to change its appearance
                         // (at least from the controlling player's camera), so we're ignoring that too
                         if (!model.AnimationGroups.NodeGroups.Any(n => n.Animations.Any()))
                         {
