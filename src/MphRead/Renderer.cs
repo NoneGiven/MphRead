@@ -1019,10 +1019,9 @@ namespace MphRead
                 UpdateLightSources(model.Position);
             }
             Node node = item.Node;
-            Matrix4 nodeTransform = node.Transform;
+            Matrix4 nodeTransform = node.Animation;
             if (model.Type == ModelType.Room && !_transformRoomNodes)
             {
-                // todo: this is unlikely to matter, but should we pass this for texgen purposes?
                 nodeTransform = Matrix4.Identity;
             }
             _modelMatrix = nodeTransform * _modelMatrix;
@@ -1050,7 +1049,7 @@ namespace MphRead
             }
         }
 
-        private float InterpolateAnimation(IReadOnlyList<float> values, int start, int frame, int blend, int lutLength, int frameCount,
+        private static float InterpolateAnimation(IReadOnlyList<float> values, int start, int frame, int blend, int lutLength, int frameCount,
             bool isRotation = false)
         {
             if (lutLength == 1)
@@ -1086,6 +1085,32 @@ namespace MphRead
             }
             float factor = 1.0f / blend * remainder;
             return first + (second - first) * factor;
+        }
+
+        public static Matrix4 AnimateNode(NodeAnimationGroup group, NodeAnimation animation, Vector3 modelScale)
+        {
+            float scaleX = InterpolateAnimation(group.Scales, animation.ScaleLutIndexX, group.CurrentFrame,
+                animation.ScaleBlendX, animation.ScaleLutLengthX, group.FrameCount);
+            float scaleY = InterpolateAnimation(group.Scales, animation.ScaleLutIndexY, group.CurrentFrame,
+                animation.ScaleBlendY, animation.ScaleLutLengthY, group.FrameCount);
+            float scaleZ = InterpolateAnimation(group.Scales, animation.ScaleLutIndexZ, group.CurrentFrame,
+                animation.ScaleBlendZ, animation.ScaleLutLengthZ, group.FrameCount);
+            float rotateX = InterpolateAnimation(group.Rotations, animation.RotateLutIndexX, group.CurrentFrame,
+                animation.RotateBlendX, animation.RotateLutLengthX, group.FrameCount, isRotation: true);
+            float rotateY = InterpolateAnimation(group.Rotations, animation.RotateLutIndexY, group.CurrentFrame,
+                animation.RotateBlendY, animation.RotateLutLengthY, group.FrameCount, isRotation: true);
+            float rotateZ = InterpolateAnimation(group.Rotations, animation.RotateLutIndexZ, group.CurrentFrame,
+                animation.RotateBlendZ, animation.RotateLutLengthZ, group.FrameCount, isRotation: true);
+            float translateX = InterpolateAnimation(group.Translations, animation.TranslateLutIndexX, group.CurrentFrame,
+                animation.TranslateBlendX, animation.TranslateLutLengthX, group.FrameCount);
+            float translateY = InterpolateAnimation(group.Translations, animation.TranslateLutIndexY, group.CurrentFrame,
+                animation.TranslateBlendY, animation.TranslateLutLengthY, group.FrameCount);
+            float translateZ = InterpolateAnimation(group.Translations, animation.TranslateLutIndexZ, group.CurrentFrame,
+                animation.TranslateBlendZ, animation.TranslateLutLengthZ, group.FrameCount);
+            var nodeMatrix = Matrix4.CreateTranslation(translateX / modelScale.X, translateY / modelScale.Y, translateZ / modelScale.Z);
+            nodeMatrix = Matrix4.CreateRotationX(rotateX) * Matrix4.CreateRotationY(rotateY) * Matrix4.CreateRotationZ(rotateZ) * nodeMatrix;
+            nodeMatrix = Matrix4.CreateScale(scaleX, scaleY, scaleZ) * nodeMatrix;
+            return nodeMatrix;
         }
 
         private Matrix4 AnimateTexcoords(TexcoordAnimationGroup group, TexcoordAnimation animation)

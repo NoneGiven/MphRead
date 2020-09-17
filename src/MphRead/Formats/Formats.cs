@@ -383,6 +383,39 @@ namespace MphRead
                 }
                 ExtraTransform = transform * ExtraTransform;
             }
+            if (Nodes.Count > 0)
+            {
+                AnimateNodes(0);
+            }
+        }
+
+        private void AnimateNodes(int index)
+        {
+            for (int i = index; i != UInt16.MaxValue;)
+            {
+                Node node = Nodes[i];
+                NodeAnimationGroup? group = AnimationGroups.NodeGroup;
+                Matrix4 transform = Matrix4.Identity;
+                if (group != null && group.Animations.TryGetValue(node.Name, out NodeAnimation animation))
+                {
+                    // todo: move this and other stuff
+                    transform = RenderWindow.AnimateNode(group, animation, Scale);
+                    if (node.ParentIndex == UInt16.MaxValue)
+                    {
+                        transform *= node.Transform;
+                    }
+                    else
+                    {
+                        transform *= Nodes[node.ParentIndex].Animation;
+                    }
+                }
+                node.Animation = transform;
+                if (node.ChildIndex != UInt16.MaxValue)
+                {
+                    AnimateNodes(node.ChildIndex);
+                }
+                i = node.NextIndex;
+            }
         }
 
         private void UpdateAnimationFrames()
@@ -642,6 +675,7 @@ namespace MphRead
         public Vector3 Vector2 { get; }
         public bool Billboard { get; }
         public Matrix4 Transform { get; set; } = Matrix4.Identity;
+        public Matrix4 Animation { get; set; } = Matrix4.Identity;
 
         public IEnumerable<int> GetMeshIds()
         {
