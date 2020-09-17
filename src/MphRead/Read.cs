@@ -213,7 +213,6 @@ namespace MphRead
             public List<TextureAnimationGroup> TextureAnimationGroups { get; } = new List<TextureAnimationGroup>();
         }
 
-        // todo: parse node animations, figure out group indexing
         private static AnimationResults LoadAnimation(string? path, IReadOnlyList<RawNode> nodes)
         {
             var results = new AnimationResults();
@@ -254,7 +253,6 @@ namespace MphRead
                 int maxRotation = 0;
                 int maxTranslation = 0;
                 RawNodeAnimationGroup rawGroup = DoOffset<RawNodeAnimationGroup>(bytes, offset);
-                // there doesn't seem to be an animation count, so we have to assume it from the space between offsets
                 Debug.Assert(offset > rawGroup.AnimationOffset);
                 Debug.Assert((offset - rawGroup.AnimationOffset) % Sizes.NodeAnimation == 0);
                 IReadOnlyList<NodeAnimation> rawAnimations
@@ -266,7 +264,7 @@ namespace MphRead
                     maxScale = Math.Max(maxScale, animation.ScaleLutIndexX + animation.ScaleLutLengthX);
                     maxScale = Math.Max(maxScale, animation.ScaleLutIndexY + animation.ScaleLutLengthY);
                     maxScale = Math.Max(maxScale, animation.ScaleLutIndexZ + animation.ScaleLutLengthZ);
-                    maxRotation = Math.Max(maxRotation, animation.RotateLutIndexX + animation.RotateLutLengthZ);
+                    maxRotation = Math.Max(maxRotation, animation.RotateLutIndexX + animation.RotateLutLengthX);
                     maxRotation = Math.Max(maxRotation, animation.RotateLutIndexY + animation.RotateLutLengthY);
                     maxRotation = Math.Max(maxRotation, animation.RotateLutIndexZ + animation.RotateLutLengthZ);
                     maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexX + animation.TranslateLutLengthX);
