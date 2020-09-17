@@ -10,6 +10,33 @@ namespace MphRead
 {
     public static class Test
     {
+        public const int HW_CPU_CLOCK_ARM7 = 33513982;
+        public const int HW_CPU_CLOCK_ARM9 = 67027964;
+        public const int SND_TIMER_CLOCK = HW_CPU_CLOCK_ARM7 / 2;
+
+        public static uint Rng { get; private set; }
+
+        public static uint GetRandomInt(uint value)
+        {
+            Rng *= 0x7FF8A3ED;
+            Rng += 0x2AA01D31;
+            return (uint)((Rng >> 16) * value / 0x10000L);
+        }
+
+        //public static int GetSfxIndex(string query)
+        //{
+        //    IReadOnlyList<SoundSample> samples = SoundRead.ReadSoundSamples();
+        //    string[] split = query.Split(", ");
+        //    var num = split.Select(s => s.StartsWith("0x") ? UInt32.Parse(s.Replace("0x", ""), NumberStyles.HexNumber) : UInt32.Parse(s)).ToList();
+        //    var results = samples.Where(s => s.Header.Field0 == num[0] && s.Header.Field4 == num[1]
+        //        && s.Header.Field6 == num[2] && s.Header.Field8 == num[3] && s.Header.FieldA == num[4]).ToList();
+        //    if (results.Count != 1)
+        //    {
+        //        Debugger.Break();
+        //    }
+        //    return samples.IndexOf(s => s == results[0]);
+        //}
+
         public static void TestCameraSequences()
         {
             // todo: metadata for this
@@ -169,10 +196,6 @@ namespace MphRead
         {
             foreach (Model model in GetAllModels())
             {
-                if (model.Header.TextureMatrixCount > 1)
-                {
-                    Console.WriteLine($"{model.Header.TextureMatrixCount} - {model.Name}");
-                }
             }
         }
 
@@ -546,12 +569,12 @@ namespace MphRead
         //[StructLayout(LayoutKind.Sequential, Pack = 1)]
         public struct WeaponInfo
         {
-            public byte Id;
-            public byte Field1; // same as Id
+            public byte BeamId;
+            public byte WeaponId; // same as BeamId except for platform beams, which have a value of 9
             public ushort Field2;
             public ushort Field4;
             public ushort Field6;
-            public byte Priority;
+            public byte Flags;
             public byte Field9;
             public byte FieldA;
             public byte FieldB;
@@ -559,15 +582,16 @@ namespace MphRead
             public ushort FieldE;
             public ushort Field10;
             public ushort Field12;
-            public byte Field14;
-            public byte Field15;
+            public byte ShotCooldown;
+            public byte Field15; // related to shot cooldown
             public byte AmmoType;
             public byte Field17;
             public byte Field18;
             public byte Field19;
             public byte Field1A;
             public byte Field1B;
-            public ushort Field1C;
+            public byte Field1C;
+            public byte Field1D;
             public ushort Field1E;
             public ushort Field20;
             public ushort FullCharge;
@@ -674,7 +698,7 @@ namespace MphRead
             public ushort FieldEC;
             public ushort FieldEE;
 
-            public string Name => _weaponNames[Id];
+            public string Name => _weaponNames[BeamId];
         }
 
         public static void TestWeaponInfo()

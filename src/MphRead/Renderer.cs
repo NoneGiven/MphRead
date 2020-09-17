@@ -340,7 +340,7 @@ namespace MphRead
                     material.RenderMode = RenderMode.Normal;
                 }
             }
-            foreach (TextureAnimationGroup group in model.TextureAnimationGroups)
+            foreach (TextureAnimationGroup group in model.AnimationGroups.TextureGroups)
             {
                 foreach (TextureAnimation animation in group.Animations.Values)
                 {
@@ -739,12 +739,7 @@ namespace MphRead
                 Model model = _models[i];
                 if (!_frameAdvanceOn || _advanceOneFrame)
                 {
-                    // todo: FPS stuff
-                    if (_frameCount != 0 && _frameCount % 2 == 0)
-                    {
-                        UpdateAnimationFrames(model);
-                    }
-                    model.Process(elapsedTime);
+                    model.Process(elapsedTime, _frameCount);
                 }
                 if (!model.Visible || (model.Type == ModelType.Placeholder && !_showInvisible) || (model.ScanVisorOnly && !_scanVisor))
                 {
@@ -959,20 +954,16 @@ namespace MphRead
                     continue;
                 }
                 int paletteId = material.CurrentPaletteId;
-                // todo: group indexing
-                if (model.TextureAnimationGroups.Count > 0)
+                TextureAnimationGroup? group = model.AnimationGroups.TextureGroup;
+                if (group != null && group.Animations.TryGetValue(material.Name, out TextureAnimation animation))
                 {
-                    TextureAnimationGroup group = model.TextureAnimationGroups[0];
-                    if (group.Animations.TryGetValue(material.Name, out TextureAnimation animation))
+                    for (int j = animation.StartIndex; j < animation.StartIndex + animation.Count; j++)
                     {
-                        for (int j = animation.StartIndex; j < animation.StartIndex + animation.Count; j++)
+                        if (group.FrameIndices[j] == group.CurrentFrame)
                         {
-                            if (group.FrameIndices[j] == group.CurrentFrame)
-                            {
-                                textureId = group.TextureIds[j];
-                                paletteId = group.PaletteIds[j];
-                                break;
-                            }
+                            textureId = group.TextureIds[j];
+                            paletteId = group.PaletteIds[j];
+                            break;
                         }
                     }
                 }
@@ -1028,10 +1019,9 @@ namespace MphRead
                 UpdateLightSources(model.Position);
             }
             Node node = item.Node;
-            Matrix4 nodeTransform = node.Transform;
+            Matrix4 nodeTransform = node.Animation;
             if (model.Type == ModelType.Room && !_transformRoomNodes)
             {
-                // todo: this is unlikely to matter, but should we pass this for texgen purposes?
                 nodeTransform = Matrix4.Identity;
             }
             _modelMatrix = nodeTransform * _modelMatrix;
@@ -1059,26 +1049,7 @@ namespace MphRead
             }
         }
 
-        private void UpdateAnimationFrames(Model model)
-        {
-            foreach (TexcoordAnimationGroup group in model.TexcoordAnimationGroups)
-            {
-                group.CurrentFrame++;
-                group.CurrentFrame %= group.FrameCount;
-            }
-            foreach (TextureAnimationGroup group in model.TextureAnimationGroups)
-            {
-                group.CurrentFrame++;
-                group.CurrentFrame %= group.FrameCount;
-            }
-            foreach (MaterialAnimationGroup group in model.MaterialAnimationGroups)
-            {
-                group.CurrentFrame++;
-                group.CurrentFrame %= group.FrameCount;
-            }
-        }
-
-        private float InterpolateAnimation(IReadOnlyList<float> values, int start, int frame, int blend, int lutLength, int frameCount,
+        private static float InterpolateAnimation(IReadOnlyList<float> values, int start, int frame, int blend, int lutLength, int frameCount,
             bool isRotation = false)
         {
             if (lutLength == 1)
@@ -1114,6 +1085,32 @@ namespace MphRead
             }
             float factor = 1.0f / blend * remainder;
             return first + (second - first) * factor;
+        }
+
+        public static Matrix4 AnimateNode(NodeAnimationGroup group, NodeAnimation animation, Vector3 modelScale)
+        {
+            float scaleX = InterpolateAnimation(group.Scales, animation.ScaleLutIndexX, group.CurrentFrame,
+                animation.ScaleBlendX, animation.ScaleLutLengthX, group.FrameCount);
+            float scaleY = InterpolateAnimation(group.Scales, animation.ScaleLutIndexY, group.CurrentFrame,
+                animation.ScaleBlendY, animation.ScaleLutLengthY, group.FrameCount);
+            float scaleZ = InterpolateAnimation(group.Scales, animation.ScaleLutIndexZ, group.CurrentFrame,
+                animation.ScaleBlendZ, animation.ScaleLutLengthZ, group.FrameCount);
+            float rotateX = InterpolateAnimation(group.Rotations, animation.RotateLutIndexX, group.CurrentFrame,
+                animation.RotateBlendX, animation.RotateLutLengthX, group.FrameCount, isRotation: true);
+            float rotateY = InterpolateAnimation(group.Rotations, animation.RotateLutIndexY, group.CurrentFrame,
+                animation.RotateBlendY, animation.RotateLutLengthY, group.FrameCount, isRotation: true);
+            float rotateZ = InterpolateAnimation(group.Rotations, animation.RotateLutIndexZ, group.CurrentFrame,
+                animation.RotateBlendZ, animation.RotateLutLengthZ, group.FrameCount, isRotation: true);
+            float translateX = InterpolateAnimation(group.Translations, animation.TranslateLutIndexX, group.CurrentFrame,
+                animation.TranslateBlendX, animation.TranslateLutLengthX, group.FrameCount);
+            float translateY = InterpolateAnimation(group.Translations, animation.TranslateLutIndexY, group.CurrentFrame,
+                animation.TranslateBlendY, animation.TranslateLutLengthY, group.FrameCount);
+            float translateZ = InterpolateAnimation(group.Translations, animation.TranslateLutIndexZ, group.CurrentFrame,
+                animation.TranslateBlendZ, animation.TranslateLutLengthZ, group.FrameCount);
+            var nodeMatrix = Matrix4.CreateTranslation(translateX / modelScale.X, translateY / modelScale.Y, translateZ / modelScale.Z);
+            nodeMatrix = Matrix4.CreateRotationX(rotateX) * Matrix4.CreateRotationY(rotateY) * Matrix4.CreateRotationZ(rotateZ) * nodeMatrix;
+            nodeMatrix = Matrix4.CreateScale(scaleX, scaleY, scaleZ) * nodeMatrix;
+            return nodeMatrix;
         }
 
         private Matrix4 AnimateTexcoords(TexcoordAnimationGroup group, TexcoordAnimation animation)
@@ -1210,11 +1207,10 @@ namespace MphRead
                 TexcoordAnimationGroup? group = null;
                 TexcoordAnimation? animation = null;
                 // todo: was there a reason animation couldn't be put inside the texgen condition?
-                if (model.TexcoordAnimationGroups.Count > 0 && textureId != UInt16.MaxValue)
+                if (textureId != UInt16.MaxValue)
                 {
-                    // todo: this is essentially just always using the first group now
-                    group = model.TexcoordAnimationGroups[material.TexcoordAnimationId];
-                    if (group.Animations.TryGetValue(material.Name, out TexcoordAnimation result))
+                    group = model.AnimationGroups.TexcoordGroup;
+                    if (group != null && group.Animations.TryGetValue(material.Name, out TexcoordAnimation result))
                     {
                         animation = result;
                     }
@@ -1256,10 +1252,10 @@ namespace MphRead
                         Matrix4 product = node.Transform.Keep3x3();
                         // todo: this may not be exactly equivalent to the game checking the node animation pointer
                         // note: in-game, this also uses the some_flag CModel field or constant 0,
-                        // byt none of the models with normal texgen seem to set bit 0 of that flag, so we can ignore it
-                        // --> also, Dialanche sets it pointed to 0 while attacking, but that doesn't seem to chnage its appearance
+                        // but none of the models with normal texgen seem to set bit 0 of that flag, so we can ignore it
+                        // --> also, Dialanche sets its pointer to 0 while attacking, but that doesn't seem to change its appearance
                         // (at least from the controlling player's camera), so we're ignoring that too
-                        if (!model.NodeAnimationGroups.Any(n => n.Animations.Any()))
+                        if (!model.AnimationGroups.NodeGroups.Any(n => n.Animations.Any()))
                         {
                             var currentTextureMatrix = new Matrix4x3(
                                 model.ExtraTransform.Row0.Xyz,
@@ -1336,7 +1332,7 @@ namespace MphRead
 
         private void DoMaterial(Model model, Material material)
         {
-            // todo: control animations so everything isn't playing at once, and remove this temporary line
+            // todo: remove this line once animations are being selected properly
             material.AnimationFlags = AnimationFlags.DisableAlpha;
             if (_lighting && material.Lighting != 0)
             {
@@ -1350,10 +1346,8 @@ namespace MphRead
             Vector3 ambient = material.CurrentAmbient;
             Vector3 specular = material.CurrentSpecular;
             float alpha = material.CurrentAlpha;
-            // todo: group indexing
-            MaterialAnimationGroup group;
-            if (model.MaterialAnimationGroups.Count > 0
-                && (group = model.MaterialAnimationGroups[0]).Animations.TryGetValue(material.Name, out MaterialAnimation animation))
+            MaterialAnimationGroup? group = model.AnimationGroups.MaterialGroup;
+            if (group != null && group.Animations.TryGetValue(material.Name, out MaterialAnimation animation))
             {
                 if (!material.AnimationFlags.HasFlag(AnimationFlags.DisableColor))
                 {
@@ -2285,7 +2279,7 @@ namespace MphRead
                 _targetTypes.Add(EntityType.Object);
             }
         }
-        
+
         private void OnKeyHeld()
         {
             if ((KeyboardState.IsKeyDown(Key.AltLeft) || KeyboardState.IsKeyDown(Key.AltRight))

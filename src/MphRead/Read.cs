@@ -21,20 +21,20 @@ namespace MphRead
 
         public static Model GetModelByName(string name, int defaultRecolor = 0, bool firstHunt = false)
         {
-            ModelMetadata? entityMeta;
+            ModelMetadata? modelMeta;
             if (firstHunt)
             {
-                entityMeta = Metadata.GetFirstHuntEntityByName(name);
+                modelMeta = Metadata.GetFirstHuntModelByName(name);
             }
             else
             {
-                entityMeta = Metadata.GetEntityByName(name);
+                modelMeta = Metadata.GetModelByName(name);
             }
-            if (entityMeta == null)
+            if (modelMeta == null)
             {
-                throw new ProgramException("No entity with this name is known. Please provide metadata for a custom entity.");
+                throw new ProgramException("No model with this name is known.");
             }
-            return GetModel(entityMeta, defaultRecolor);
+            return GetModel(modelMeta, defaultRecolor);
         }
 
         public static Model GetModelByPath(string path, bool externalTexture = false)
@@ -51,7 +51,7 @@ namespace MphRead
             (RoomMetadata? roomMeta, _) = Metadata.GetRoomByName(name);
             if (roomMeta == null)
             {
-                throw new ProgramException("No room with this name is known. Please provide metadata for a custom room.");
+                throw new ProgramException("No room with this name is known.");
             }
             return GetRoom(roomMeta);
         }
@@ -199,7 +199,7 @@ namespace MphRead
             count /= 4;
             IReadOnlyList<uint> nodeIds = DoOffsets<uint>(initialBytes, (uint)Sizes.Header, count);
             IReadOnlyList<uint> weightIds = DoOffsets<uint>(initialBytes, header.UnknownAnimationCount, count);
-            AnimationResults animations = LoadAnimation(animationPath);
+            AnimationResults animations = LoadAnimation(animationPath, nodes);
             return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
                 textureMatrices, recolors, defaultRecolor, useLightSources, nodeIds, weightIds);
@@ -214,7 +214,7 @@ namespace MphRead
         }
 
         // todo: parse node animations, figure out group indexing
-        private static AnimationResults LoadAnimation(string? path)
+        private static AnimationResults LoadAnimation(string? path, IReadOnlyList<RawNode> nodes)
         {
             var results = new AnimationResults();
             if (path == null)
@@ -250,34 +250,39 @@ namespace MphRead
                 {
                     continue;
                 }
+                int maxScale = 0;
+                int maxRotation = 0;
+                int maxTranslation = 0;
                 RawNodeAnimationGroup rawGroup = DoOffset<RawNodeAnimationGroup>(bytes, offset);
                 // there doesn't seem to be an animation count, so we have to assume it from the space between offsets
                 Debug.Assert(offset > rawGroup.AnimationOffset);
                 Debug.Assert((offset - rawGroup.AnimationOffset) % Sizes.NodeAnimation == 0);
-                int animationCount = (int)((offset - rawGroup.AnimationOffset) / Sizes.NodeAnimation);
                 IReadOnlyList<NodeAnimation> rawAnimations
-                    = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, animationCount);
+                    = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, nodes.Count);
                 var animations = new Dictionary<string, NodeAnimation>();
                 int i = 0;
                 foreach (NodeAnimation animation in rawAnimations)
                 {
-                    animations.Add($"{offset}-{i++}", animation);
+                    maxScale = Math.Max(maxScale, animation.ScaleLutIndexX + animation.ScaleLutLengthX);
+                    maxScale = Math.Max(maxScale, animation.ScaleLutIndexY + animation.ScaleLutLengthY);
+                    maxScale = Math.Max(maxScale, animation.ScaleLutIndexZ + animation.ScaleLutLengthZ);
+                    maxRotation = Math.Max(maxRotation, animation.RotateLutIndexX + animation.RotateLutLengthZ);
+                    maxRotation = Math.Max(maxRotation, animation.RotateLutIndexY + animation.RotateLutLengthY);
+                    maxRotation = Math.Max(maxRotation, animation.RotateLutIndexZ + animation.RotateLutLengthZ);
+                    maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexX + animation.TranslateLutLengthX);
+                    maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexY + animation.TranslateLutLengthY);
+                    maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexZ + animation.TranslateLutLengthZ);
+                    animations.Add(nodes[i++].Name, animation);
                 }
-                // todo: do the animation have counts like the others, or do we have to just assume the layout?
-                Debug.Assert(rawGroup.UInt16Pointer > rawGroup.Fixed32Pointer);
-                Debug.Assert(rawGroup.Int32Pointer > rawGroup.UInt16Pointer);
-                Debug.Assert(rawGroup.AnimationOffset > rawGroup.Int32Pointer);
-                Debug.Assert((rawGroup.UInt16Pointer - rawGroup.Fixed32Pointer) % sizeof(int) == 0);
-                Debug.Assert((rawGroup.Int32Pointer - rawGroup.UInt16Pointer) % sizeof(ushort) == 0);
-                Debug.Assert((rawGroup.AnimationOffset - rawGroup.Int32Pointer) % sizeof(int) == 0);
-                int maxFixed32 = (int)((rawGroup.UInt16Pointer - rawGroup.Fixed32Pointer) / sizeof(int));
-                int maxUInt16 = (int)((rawGroup.Int32Pointer - rawGroup.UInt16Pointer) / sizeof(ushort));
-                int maxInt32 = (int)((rawGroup.AnimationOffset - rawGroup.Int32Pointer) / sizeof(int));
-                // todo: what are these?
-                var fixed32s = DoOffsets<Fixed>(bytes, rawGroup.Fixed32Pointer, maxFixed32).ToList();
-                var uint16s = DoOffsets<ushort>(bytes, rawGroup.UInt16Pointer, maxUInt16).ToList();
-                var int32s = DoOffsets<int>(bytes, rawGroup.Int32Pointer, maxInt32).ToList();
-                results.NodeAnimationGroups.Add(new NodeAnimationGroup(rawGroup, fixed32s, uint16s, int32s, animations));
+                var scales = DoOffsets<Fixed>(bytes, rawGroup.ScaleLutOffset, maxScale).Select(f => f.FloatValue).ToList();
+                var rotations = new List<float>();
+                foreach (ushort value in DoOffsets<ushort>(bytes, rawGroup.RotateLutOffset, maxRotation))
+                {
+                    long radians = (0x6487FL * value + 0x80000) >> 20;
+                    rotations.Add(Fixed.ToFloat(radians));
+                }
+                var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, maxTranslation).Select(f => f.FloatValue).ToList();
+                results.NodeAnimationGroups.Add(new NodeAnimationGroup(rawGroup, scales, rotations, translations, animations));
             }
             foreach (uint offset in materialGroupOffsets)
             {
@@ -584,7 +589,7 @@ namespace MphRead
             int end = start + Marshal.SizeOf<T>();
             return new Entity<T>(entry, (EntityType)(header.Type + 100), header.EntityId, ReadStruct<T>(bytes[start..end]), header);
         }
-        
+
         // todo: should return a CameraSequence class (flags etc.)
         public static IReadOnlyList<CameraSequenceFrame> ReadCameraSequence(string name)
         {
@@ -775,6 +780,16 @@ namespace MphRead
             return Encoding.ASCII.GetString(bytes[offset..end]);
         }
 
+        public static IReadOnlyList<string> ReadStrings(ReadOnlySpan<byte> bytes, long offset, int count)
+        {
+            return ReadStrings(bytes, (int)offset, count);
+        }
+
+        public static IReadOnlyList<string> ReadStrings(ReadOnlySpan<byte> bytes, long offset, uint count)
+        {
+            return ReadStrings(bytes, (int)offset, (int)count);
+        }
+
         public static IReadOnlyList<string> ReadStrings(ReadOnlySpan<byte> bytes, uint offset, uint count)
         {
             return ReadStrings(bytes, (int)offset, (int)count);
@@ -804,7 +819,7 @@ namespace MphRead
             }
             return strings;
         }
-        
+
         public static void ExtractArchive(string name)
         {
             string input = Path.Combine(Paths.FileSystem, "archives", $"{name}.arc");

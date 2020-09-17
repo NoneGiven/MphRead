@@ -184,4 +184,12 @@ namespace MphRead
         Japanese,
         Spanish
     }
+
+    public enum WaveFormat
+    {
+        None = -1,
+        PCM8 = 0,
+        PCM16 = 1,
+        ADPCM = 2,
+    }
 }

@@ -134,11 +134,7 @@ namespace MphRead
         // refers to the untransformed model's axis
         public Vector3 SpinAxis { get; set; } = Vector3.UnitY;
 
-        public int AnimationCount { get; set; }
-        public IReadOnlyList<NodeAnimationGroup> NodeAnimationGroups { get; }
-        public IReadOnlyList<MaterialAnimationGroup> MaterialAnimationGroups { get; }
-        public IReadOnlyList<TexcoordAnimationGroup> TexcoordAnimationGroups { get; }
-        public IReadOnlyList<TextureAnimationGroup> TextureAnimationGroups { get; }
+        public AnimationInfo AnimationGroups { get; }
 
         public IReadOnlyList<Recolor> Recolors { get; }
 
@@ -191,10 +187,7 @@ namespace MphRead
             Materials = materials.Select(m => new Material(m)).ToList();
             DisplayLists = dlists;
             RenderInstructionLists = renderInstructions;
-            NodeAnimationGroups = nodeGroups;
-            MaterialAnimationGroups = materialGroups;
-            TexcoordAnimationGroups = texcoordGroups;
-            TextureAnimationGroups = textureGroups;
+            AnimationGroups = new AnimationInfo(nodeGroups, materialGroups, texcoordGroups, textureGroups);
             TextureMatrices = textureMatrices;
             Recolors = recolors;
             CurrentRecolor = defaultRecolor;
@@ -366,8 +359,13 @@ namespace MphRead
 
         public Matrix4 ExtraTransform { get; private set; } = Matrix4.Identity;
 
-        public void Process(double elapsedTime)
+        public void Process(double elapsedTime, long frameCount)
         {
+            // todo: FPS stuff
+            if (frameCount != 0 && frameCount % 2 == 0)
+            {
+                UpdateAnimationFrames();
+            }
             // for Morph Ball/Dialanche, the extra transform holds model-level rotation
             ExtraTransform = Transform;
             // for items, the extra transform holds the rotation and position for spinning and floating
@@ -384,6 +382,59 @@ namespace MphRead
                     transform.M42 += (MathF.Sin(Spin / 180 * MathF.PI) + 1) / 8f;
                 }
                 ExtraTransform = transform * ExtraTransform;
+            }
+            if (Nodes.Count > 0)
+            {
+                AnimateNodes(0);
+            }
+        }
+
+        private void AnimateNodes(int index)
+        {
+            for (int i = index; i != UInt16.MaxValue;)
+            {
+                Node node = Nodes[i];
+                NodeAnimationGroup? group = AnimationGroups.NodeGroup;
+                Matrix4 transform = node.Transform;
+                if (group != null && group.Animations.TryGetValue(node.Name, out NodeAnimation animation))
+                {
+                    // todo: move this and other stuff
+                    transform = RenderWindow.AnimateNode(group, animation, Scale);
+                    if (node.ParentIndex != UInt16.MaxValue)
+                    {
+                        transform *= Nodes[node.ParentIndex].Animation;
+                    }
+                }
+                node.Animation = transform;
+                if (node.ChildIndex != UInt16.MaxValue)
+                {
+                    AnimateNodes(node.ChildIndex);
+                }
+                i = node.NextIndex;
+            }
+        }
+
+        private void UpdateAnimationFrames()
+        {
+            if (AnimationGroups.MaterialGroupId != -1)
+            {
+                AnimationGroups.MaterialGroup!.CurrentFrame++;
+                AnimationGroups.MaterialGroup.CurrentFrame %= AnimationGroups.MaterialGroup.FrameCount;
+            }
+            if (AnimationGroups.TexcoordGroupId != -1)
+            {
+                AnimationGroups.TexcoordGroup!.CurrentFrame++;
+                AnimationGroups.TexcoordGroup.CurrentFrame %= AnimationGroups.TexcoordGroup.FrameCount;
+            }
+            if (AnimationGroups.TextureGroupId != -1)
+            {
+                AnimationGroups.TextureGroup!.CurrentFrame++;
+                AnimationGroups.TextureGroup.CurrentFrame %= AnimationGroups.TextureGroup.FrameCount;
+            }
+            if (AnimationGroups.NodeGroupId != -1)
+            {
+                AnimationGroups.NodeGroup!.CurrentFrame++;
+                AnimationGroups.NodeGroup.CurrentFrame %= AnimationGroups.NodeGroup.FrameCount;
             }
         }
     }
@@ -477,6 +528,141 @@ namespace MphRead
         }
     }
 
+    public class AnimationInfo
+    {
+        public IReadOnlyList<NodeAnimationGroup> NodeGroups { get; }
+        public IReadOnlyList<MaterialAnimationGroup> MaterialGroups { get; }
+        public IReadOnlyList<TexcoordAnimationGroup> TexcoordGroups { get; }
+        public IReadOnlyList<TextureAnimationGroup> TextureGroups { get; }
+
+        public NodeAnimationGroup? NodeGroup { get; private set; }
+        public MaterialAnimationGroup? MaterialGroup { get; private set; }
+        public TexcoordAnimationGroup? TexcoordGroup { get; private set; }
+        public TextureAnimationGroup? TextureGroup { get; private set; }
+
+        private int _nodeGroupId = -1;
+        private int _materialGroupId = -1;
+        private int _texcoordGroupId = -1;
+        private int _textureGroupId = -1;
+
+        public int NodeGroupId
+        {
+            get
+            {
+                return _nodeGroupId;
+            }
+            set
+            {
+                _nodeGroupId = value;
+                if (_nodeGroupId == -1)
+                {
+                    NodeGroup = null;
+                }
+                else
+                {
+                    NodeGroup = NodeGroups[_nodeGroupId];
+                }
+            }
+        }
+
+        public int MaterialGroupId
+        {
+            get
+            {
+                return _materialGroupId;
+            }
+            set
+            {
+                _materialGroupId = value;
+                if (_materialGroupId == -1)
+                {
+                    MaterialGroup = null;
+                }
+                else
+                {
+                    MaterialGroup = MaterialGroups[_materialGroupId];
+                }
+            }
+        }
+
+        public int TexcoordGroupId
+        {
+            get
+            {
+                return _texcoordGroupId;
+            }
+            set
+            {
+                _texcoordGroupId = value;
+                if (_texcoordGroupId == -1)
+                {
+                    TexcoordGroup = null;
+                }
+                else
+                {
+                    TexcoordGroup = TexcoordGroups[_texcoordGroupId];
+                }
+            }
+        }
+
+        public int TextureGroupId
+        {
+            get
+            {
+                return _textureGroupId;
+            }
+            set
+            {
+                _textureGroupId = value;
+                if (_textureGroupId == -1)
+                {
+                    TextureGroup = null;
+                }
+                else
+                {
+                    TextureGroup = TextureGroups[_textureGroupId];
+                }
+            }
+        }
+
+        // in-game, animations other than node are all set together
+        public int TexUvMatId
+        {
+            set
+            {
+                MaterialGroupId = value;
+                TexcoordGroupId = value;
+                TextureGroupId = value;
+            }
+        }
+
+        public AnimationInfo(IReadOnlyList<NodeAnimationGroup> nodes, IReadOnlyList<MaterialAnimationGroup> materials,
+            IReadOnlyList<TexcoordAnimationGroup> texcoords, IReadOnlyList<TextureAnimationGroup> textures)
+        {
+            NodeGroups = nodes;
+            MaterialGroups = materials;
+            TexcoordGroups = texcoords;
+            TextureGroups = textures;
+            // todo: proper animation selection
+            if (NodeGroups.Count > 0)
+            {
+                NodeGroupId = 0;
+            }
+            if (MaterialGroups.Count > 0)
+            {
+                MaterialGroupId = 0;
+            }
+            if (TexcoordGroups.Count > 0)
+            {
+                TexcoordGroupId = 0;
+            }
+            if (TextureGroups.Count > 0)
+            {
+                TexcoordGroupId = 0;
+            }
+        }
+    }
+
     // todo: look at and use more fields from the raw struct (same for Material)
     public class Node
     {
@@ -496,6 +682,7 @@ namespace MphRead
         public Vector3 Vector2 { get; }
         public bool Billboard { get; }
         public Matrix4 Transform { get; set; } = Matrix4.Identity;
+        public Matrix4 Animation { get; set; } = Matrix4.Identity;
 
         public IEnumerable<int> GetMeshIds()
         {
@@ -689,18 +876,18 @@ namespace MphRead
         public int FrameCount { get; }
         public int CurrentFrame { get; set; }
         public int Count { get; }
-        public IReadOnlyList<Fixed> Fixed32s { get; }
-        public IReadOnlyList<ushort> UInt16s { get; }
-        public IReadOnlyList<int> Int32s { get; }
+        public IReadOnlyList<float> Scales { get; }
+        public IReadOnlyList<float> Rotations { get; }
+        public IReadOnlyList<float> Translations { get; }
         public IReadOnlyDictionary<string, NodeAnimation> Animations { get; }
 
-        public NodeAnimationGroup(RawNodeAnimationGroup raw, IReadOnlyList<Fixed> fixed32s, IReadOnlyList<ushort> uint16s,
-            IReadOnlyList<int> int32s, IReadOnlyDictionary<string, NodeAnimation> animations)
+        public NodeAnimationGroup(RawNodeAnimationGroup raw, IReadOnlyList<float> scales, IReadOnlyList<float> rotations,
+            IReadOnlyList<float> translations, IReadOnlyDictionary<string, NodeAnimation> animations)
         {
             FrameCount = (int)raw.FrameCount;
-            Fixed32s = fixed32s;
-            UInt16s = uint16s;
-            Int32s = int32s;
+            Scales = scales;
+            Rotations = rotations;
+            Translations = translations;
             Animations = animations;
             Count = Animations.Count;
         }
@@ -1366,6 +1553,36 @@ namespace MphRead
 
     public static class CollectionExtensions
     {
+        public static ReadOnlySpan<T> Slice<T>(this ReadOnlySpan<T> source, uint start)
+        {
+            return source[(int)start..];
+        }
+
+        public static ReadOnlySpan<T> Slice<T>(this ReadOnlySpan<T> source, uint start, uint length)
+        {
+            return source.Slice((int)start, (int)length);
+        }
+
+        public static ReadOnlySpan<T> Slice<T>(this ReadOnlySpan<T> source, int start, uint length)
+        {
+            return source.Slice(start, (int)length);
+        }
+
+        public static ReadOnlySpan<T> Slice<T>(this ReadOnlySpan<T> source, uint start, int length)
+        {
+            return source.Slice((int)start, length);
+        }
+
+        public static ReadOnlySpan<T> Slice<T>(this ReadOnlySpan<T> source, long start, int length)
+        {
+            return source.Slice((int)start, length);
+        }
+
+        public static ReadOnlySpan<T> Slice<T>(this ReadOnlySpan<T> source, long start, uint length)
+        {
+            return source.Slice((int)start, (int)length);
+        }
+
         public static int IndexOf<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate)
         {
             int index = 0;

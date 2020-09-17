@@ -56,7 +56,7 @@ namespace MphRead
             }
             return " ";
         }
-        
+
         private static string GetFolder(Language language)
         {
             string folder = "stringTables";

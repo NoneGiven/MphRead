@@ -112,7 +112,7 @@ namespace MphRead
         public readonly uint Field188;
         public readonly Vector3Fx Field18C;
         public readonly Vector3Fx Field198;
-        public readonly uint SomeSfxIndex;
+        public readonly uint BeamIndex;
         public readonly uint Field1A8;
         public readonly uint Field1AC;
         public readonly uint Field1B0;
@@ -246,7 +246,7 @@ namespace MphRead
         public readonly byte Active; // boolean
         public readonly byte Field26; // always 0, 1, or 255
     }
-    
+
     // size: 44
     public readonly struct FhPlayerSpawnEntityData
     {
@@ -325,7 +325,9 @@ namespace MphRead
         public readonly uint HunterWeapon;
         public readonly ushort Health;
         public readonly ushort HealthMax;
-        public readonly uint Field38;
+        public readonly ushort Field38;
+        public readonly byte Field3A;
+        public readonly byte SpawnChance;
         public readonly uint Field3C;
         public readonly uint Field40;
         public readonly uint Field44;

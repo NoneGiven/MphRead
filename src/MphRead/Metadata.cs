@@ -183,9 +183,9 @@ namespace MphRead
             UseLightSources = useLightSources;
         }
 
-        public ModelMetadata(string name, bool animation = true, bool collision = false,
-            bool texture = false, string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None,
-            string? archive = null, string? addToAnim = null, bool firstHunt = false)
+        public ModelMetadata(string name, bool animation = true, bool collision = false, bool texture = false,
+            string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None, string? archive = null,
+            string? addToAnim = null, bool firstHunt = false, string? animationPath = null)
         {
             Name = name;
             string path;
@@ -213,7 +213,7 @@ namespace MphRead
             }
             if (animation)
             {
-                AnimationPath = $@"{path}\{name}{addToAnim}{suffix}_Anim.bin";
+                AnimationPath = animationPath == null ? $@"{path}\{name}{addToAnim}{suffix}_Anim.bin" : animationPath;
             }
             if (collision)
             {
@@ -429,7 +429,93 @@ namespace MphRead
             return new Vector3(r / 31.0f, g / 31.0f, b / 31.0f);
         }
 
-        public static ModelMetadata? GetEntityByName(string name)
+        public static readonly IReadOnlyList<int> AdpcmTable = new List<int>()
+        {
+            7, 8, 9, 10, 11, 12, 13, 14,
+            16, 17, 19, 21, 23, 25, 28, 31,
+            34, 37, 41, 45, 50, 55, 60, 66,
+            73, 80, 88, 97, 107, 118, 130, 143,
+            157, 173, 190, 209, 230, 253, 279, 307,
+            337, 371, 408, 449, 494, 544, 598, 658,
+            724, 796, 876, 963, 1060, 1166, 1282, 1411,
+            1552, 1707, 1878, 2066, 2272, 2499, 2749, 3024,
+            3327, 3660, 4026, 4428, 4871, 5358, 5894, 6484,
+            7132, 7845, 8630, 9493, 10442, 11487, 12635, 13899,
+            15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794,
+            32767
+        };
+
+        public static readonly IReadOnlyList<int> ImaIndexTable = new List<int>()
+        {
+            -1, -1, -1, -1, 2, 4, 6, 8,
+            -1, -1, -1, -1, 2, 4, 6, 8
+        };
+
+        public static readonly IReadOnlyList<string> MusicSeqs = new List<string>()
+        {
+            "SEQ_BRINSTAR",
+            "SEQ_MP1",
+            "SEQ_MP2",
+            "SEQ_PARASITE",
+            "SEQ_SHIP",
+            "SEQ_YELLOW",
+            "SEQ_RESULTS",
+            "SEQ_TIMEOUT",
+            "SEQ_WIN",
+            "SEQ_GARLIC",
+            "SEQ_MP2_X",
+            "SEQ_PARASITE_X",
+            "SEQ_RED",
+            "SEQ_BLUE",
+            "SEQ_AMBIENT_1",
+            "SEQ_TELEPORT",
+            "SEQ_DRONE",
+            "SEQ_MENU1",
+            "SEQ_GREY",
+            "SEQ_SAFFRON",
+            "SEQ_GUMBO",
+            "SEQ_INTRO_SYLUX",
+            "SEQ_INTRO_TRACE",
+            "SEQ_INTRO_NOXUS",
+            "SEQ_INTRO_WEAVEL",
+            "SEQ_INTRO_KANDEN",
+            "SEQ_INTRO_SPIRE",
+            "SEQ_FLY_IN_2",
+            "SEQ_FLY_IN_1",
+            "SEQ_FLY_IN_3",
+            "SEQ_FLY_IN_4",
+            "SEQ_SHIP_LAND1",
+            "SEQ_SHIP_LAND2",
+            "SEQ_SHIP_LAND3",
+            "SEQ_SHIP_LAND4",
+            "SEQ_GET_WEAPON",
+            "SEQ_GET_OCTOLITH",
+            "SEQ_NEW_GAME",
+            "SEQ_BEAT_HUNTER1",
+            "SEQ_INTRO_GUARDIAN",
+            "SEQ_GUARDIAN",
+            "SEQ_BEAT_CYLBOSS1",
+            "SEQ_GREEN",
+            "SEQ_CHUTNEY",
+            "SEQ_DILL",
+            "SEQ_GOREA_1",
+            "SEQ_ENEMY_1",
+            "SEQ_GOREA_2",
+            "SEQ_PEPPER",
+            "SEQ_SINGLE_CART_MENU",
+            "SEQ_SINGLE_CART_INGAME",
+            "SEQ_SINGLE_CART_TIMEOUT",
+            "SEQ_OREGANO",
+            "SEQ_ENEMY_2",
+            "SEQ_WHITE",
+            "SEQ_ENERGY_TIMER",
+            "SEQ_BLACK",
+            "SEQ_INDIGO",
+            "SEQ_CREDITS",
+            "SEQ_FLY_IN_GOREA"
+        };
+
+        public static ModelMetadata? GetModelByName(string name)
         {
             if (ModelMetadata.TryGetValue(name, out ModelMetadata? metadata))
             {
@@ -438,7 +524,7 @@ namespace MphRead
             return null;
         }
 
-        public static ModelMetadata? GetFirstHuntEntityByName(string name)
+        public static ModelMetadata? GetFirstHuntModelByName(string name)
         {
             if (FirstHuntModels.TryGetValue(name, out ModelMetadata? metadata))
             {
@@ -5072,56 +5158,56 @@ namespace MphRead
                     "Artifact01",
                     new ModelMetadata("Artifact01",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animation: false,
+                        animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact02",
                     new ModelMetadata("Artifact02",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animation: false,
+                        animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact03",
                     new ModelMetadata("Artifact03",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animation: false,
+                        animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact04",
                     new ModelMetadata("Artifact04",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animation: false,
+                        animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact05",
                     new ModelMetadata("Artifact05",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animation: false,
+                        animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact06",
                     new ModelMetadata("Artifact06",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animation: false,
+                        animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact07",
                     new ModelMetadata("Artifact07",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animation: false,
+                        animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact08",
                     new ModelMetadata("Artifact08",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animation: false,
+                        animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
@@ -5157,19 +5243,19 @@ namespace MphRead
                 },
                 {
                     "BigEyeSynapse_01",
-                    new ModelMetadata("BigEyeSynapse_01", animationPath: @"models\BigEyeSynapse_Anim.bin")
+                    new ModelMetadata("BigEyeSynapse_01", animation: true, animationPath: @"models\BigEyeSynapse_Anim.bin")
                 },
                 {
                     "BigEyeSynapse_02",
-                    new ModelMetadata("BigEyeSynapse_02", animationPath: @"models\BigEyeSynapse_Anim.bin")
+                    new ModelMetadata("BigEyeSynapse_02", animation: true, animationPath: @"models\BigEyeSynapse_Anim.bin")
                 },
                 {
                     "BigEyeSynapse_03",
-                    new ModelMetadata("BigEyeSynapse_03", animationPath: @"models\BigEyeSynapse_Anim.bin")
+                    new ModelMetadata("BigEyeSynapse_03", animation: true, animationPath: @"models\BigEyeSynapse_Anim.bin")
                 },
                 {
                     "BigEyeSynapse_04",
-                    new ModelMetadata("BigEyeSynapse_04", animationPath: @"models\BigEyeSynapse_Anim.bin")
+                    new ModelMetadata("BigEyeSynapse_04", animation: true, animationPath: @"models\BigEyeSynapse_Anim.bin")
                 },
                 {
                     "BigEyeTurret",
