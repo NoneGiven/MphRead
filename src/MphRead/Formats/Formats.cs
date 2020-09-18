@@ -383,9 +383,17 @@ namespace MphRead
                 }
                 ExtraTransform = transform * ExtraTransform;
             }
-            if (Nodes.Count > 0 && Animations.NodeGroups.Count > 0)
+            if (Nodes.Count > 0)
             {
-                AnimateNodes(0);
+                if (Animations.NodeGroups.Count > 0)
+                {
+                    AnimateNodes(0);
+                }
+                for (int i = 0; i < Nodes.Count; i++)
+                {
+                    Node node = Nodes[i];
+                    node.Animation = node.Transform;
+                }
             }
         }
 
