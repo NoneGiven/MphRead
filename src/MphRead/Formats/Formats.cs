@@ -389,10 +389,13 @@ namespace MphRead
                 {
                     AnimateNodes(0);
                 }
-                for (int i = 0; i < Nodes.Count; i++)
+                else
                 {
-                    Node node = Nodes[i];
-                    node.Animation = node.Transform;
+                    for (int i = 0; i < Nodes.Count; i++)
+                    {
+                        Node node = Nodes[i];
+                        node.Animation = node.Transform;
+                    }
                 }
             }
         }
