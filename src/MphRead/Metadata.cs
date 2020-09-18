@@ -5231,7 +5231,8 @@ namespace MphRead
                             "img_02",
                             "img_03"
                         },
-                        mdlSuffix: MdlSuffix.Model)
+                        mdlSuffix: MdlSuffix.Model,
+                        animationPath: @"models\warWasp_Anim.bin")
                 },
                 {
                     "BigEyeBall",
@@ -5567,6 +5568,7 @@ namespace MphRead
                         },
                         texture: true,
                         archive: "Guardian",
+                        animationPath: @"_archives\Guardian\Guardian_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -5578,6 +5580,7 @@ namespace MphRead
                             "pal_01"
                         },
                         texture: true,
+                        animationPath: @"_archives\Guardian\Guardian_Anim.bin",
                         useLightSources: true)
                 },
                 // next two not part of the game's files, edited to allow choosing the unused recolors
