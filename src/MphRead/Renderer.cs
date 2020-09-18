@@ -340,7 +340,7 @@ namespace MphRead
                     material.RenderMode = RenderMode.Normal;
                 }
             }
-            foreach (TextureAnimationGroup group in model.AnimationGroups.TextureGroups)
+            foreach (TextureAnimationGroup group in model.Animations.TextureGroups)
             {
                 foreach (TextureAnimation animation in group.Animations.Values)
                 {
@@ -954,7 +954,7 @@ namespace MphRead
                     continue;
                 }
                 int paletteId = material.CurrentPaletteId;
-                TextureAnimationGroup? group = model.AnimationGroups.TextureGroup;
+                TextureAnimationGroup? group = model.Animations.TextureGroup;
                 if (group != null && group.Animations.TryGetValue(material.Name, out TextureAnimation animation))
                 {
                     for (int j = animation.StartIndex; j < animation.StartIndex + animation.Count; j++)
@@ -1209,7 +1209,7 @@ namespace MphRead
                 // todo: was there a reason animation couldn't be put inside the texgen condition?
                 if (textureId != UInt16.MaxValue)
                 {
-                    group = model.AnimationGroups.TexcoordGroup;
+                    group = model.Animations.TexcoordGroup;
                     if (group != null && group.Animations.TryGetValue(material.Name, out TexcoordAnimation result))
                     {
                         animation = result;
@@ -1255,7 +1255,7 @@ namespace MphRead
                         // but none of the models with normal texgen seem to set bit 0 of that flag, so we can ignore it
                         // --> also, Dialanche sets its pointer to 0 while attacking, but that doesn't seem to change its appearance
                         // (at least from the controlling player's camera), so we're ignoring that too
-                        if (!model.AnimationGroups.NodeGroups.Any(n => n.Animations.Any()))
+                        if (!model.Animations.NodeGroups.Any(n => n.Animations.Any()))
                         {
                             var currentTextureMatrix = new Matrix4x3(
                                 model.ExtraTransform.Row0.Xyz,
@@ -1346,7 +1346,7 @@ namespace MphRead
             Vector3 ambient = material.CurrentAmbient;
             Vector3 specular = material.CurrentSpecular;
             float alpha = material.CurrentAlpha;
-            MaterialAnimationGroup? group = model.AnimationGroups.MaterialGroup;
+            MaterialAnimationGroup? group = model.Animations.MaterialGroup;
             if (group != null && group.Animations.TryGetValue(material.Name, out MaterialAnimation animation))
             {
                 if (!material.AnimationFlags.HasFlag(AnimationFlags.DisableColor))
@@ -2005,11 +2005,44 @@ namespace MphRead
             }
             else if (e.Key == Key.Plus || e.Key == Key.KeypadPlus)
             {
-                await SelectNextModel(e.Shift);
+                if (e.Alt)
+                {
+                    // todo: select other animation types, and enable playing in reverse
+                    if (_selectionMode == SelectionMode.Model && _modelMap.TryGetValue(_selectedModelId, out Model? model))
+                    {
+                        int id = model.Animations.NodeGroupId + 1;
+                        if (id >= model.Animations.NodeGroups.Count)
+                        {
+                            id = -1;
+                        }
+                        model.Animations.NodeGroupId = id;
+                        await PrintOutput();
+                    }
+                }
+                else
+                {
+                    await SelectNextModel(e.Shift);
+                }
             }
             else if (e.Key == Key.Minus || e.Key == Key.KeypadMinus)
             {
-                await SelectPreviousModel(e.Shift);
+                if (e.Alt)
+                {
+                    if (_selectionMode == SelectionMode.Model && _modelMap.TryGetValue(_selectedModelId, out Model? model))
+                    {
+                        int id = model.Animations.NodeGroupId - 1;
+                        if (id < -1)
+                        {
+                            id = model.Animations.NodeGroups.Count - 1;
+                        }
+                        model.Animations.NodeGroupId = id;
+                        await PrintOutput();
+                    }
+                }
+                else
+                {
+                    await SelectPreviousModel(e.Shift);
+                }
             }
             else if (e.Key == Key.X)
             {
@@ -2551,12 +2584,14 @@ namespace MphRead
                 }
             }
             await Output.Write(type, guid);
-            // todo: pickup rotation shows up, but the floating height change does not, would be nice to be consistent
             await Output.Write($"Position ({model.Position.X}, {model.Position.Y}, {model.Position.Z})", guid);
             await Output.Write($"Rotation ({model.Rotation.X}, {model.Rotation.Y}, {model.Rotation.Z})", guid);
             await Output.Write($"   Scale ({model.Scale.X}, {model.Scale.Y}, {model.Scale.Z})", guid);
-            await Output.Write($"Nodes {model.Nodes.Count}, Meshes {model.Meshes.Count}, Materials {model.Materials.Count}, " +
-                $"Textures {model.Textures.Count}, Palettes {model.Palettes.Count}", guid);
+            await Output.Write($"Nodes {model.Nodes.Count}, Meshes {model.Meshes.Count}, Materials {model.Materials.Count}," +
+                $" Textures {model.Textures.Count}, Palettes {model.Palettes.Count}", guid);
+            AnimationInfo a = model.Animations;
+            await Output.Write($"Anim: Node {a.NodeGroupId} / {a.NodeGroups.Count}, Material {a.MaterialGroupId} / {a.MaterialGroups.Count}," +
+                $" Texcoord {a.TexcoordGroupId} / {a.TexcoordGroups.Count}, Texture {a.TextureGroupId} / {a.TextureGroups.Count}", guid);
             await Output.Write(guid);
         }
 

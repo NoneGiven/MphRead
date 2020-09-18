@@ -152,13 +152,13 @@ namespace MphRead
             {
                 suffix = "";
             }
-            if (animation)
+            if (animationPath != null)
             {
-                if (animationPath != null)
-                {
-                    AnimationPath = animationPath;
-                }
-                else if (archive != null)
+                AnimationPath = animationPath;
+            }
+            else if (animation)
+            {
+                if (archive != null)
                 {
                     AnimationPath = $@"_archives\{archive}\{name}_Anim.bin";
                 }
@@ -5127,6 +5127,10 @@ namespace MphRead
                         }, useLightSources: true)
                 },
                 {
+                    "arcWelder",
+                    new ModelMetadata("arcWelder", animation: false, archive: "common")
+                },
+                {
                     "arcWelder1",
                     new ModelMetadata("arcWelder1", animation: false)
                 },
@@ -5227,7 +5231,8 @@ namespace MphRead
                             "img_02",
                             "img_03"
                         },
-                        mdlSuffix: MdlSuffix.Model)
+                        mdlSuffix: MdlSuffix.Model,
+                        animationPath: @"models\warWasp_Anim.bin")
                 },
                 {
                     "BigEyeBall",
@@ -5563,6 +5568,7 @@ namespace MphRead
                         },
                         texture: true,
                         archive: "Guardian",
+                        animationPath: @"_archives\Guardian\Guardian_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -5574,6 +5580,7 @@ namespace MphRead
                             "pal_01"
                         },
                         texture: true,
+                        animationPath: @"_archives\Guardian\Guardian_Anim.bin",
                         useLightSources: true)
                 },
                 // next two not part of the game's files, edited to allow choosing the unused recolors
@@ -6924,10 +6931,6 @@ namespace MphRead
                 //    new ModelMetadata("doubleDamage_img", animation: false, archive: "common")
                 //},
                 // todo?: seemingly 2D images only, no polygons render even though they have a mesh/dlist
-                {
-                    "arcWelder",
-                    new ModelMetadata("arcWelder", animation: false, archive: "common")
-                },
                 {
                     "electroTrail",
                     new ModelMetadata("electroTrail", animation: false, archive: "common")
