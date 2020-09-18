@@ -133,8 +133,12 @@ void main()
             col.a *= override_color.a;
         }
     }
+    else if (use_override) {
+        col = override_color;
+    }
     else {
-        col = use_override ? override_color : (mat_mode == 2 ? toon_color(color) : color);
+        col = mat_mode == 2 ? toon_color(color) : color;
+        col.a *= mat_alpha;
     }
     if (fog_enable) {
         float ndcDepth = (2.0 * gl_FragCoord.z - gl_DepthRange.near - gl_DepthRange.far) / (gl_DepthRange.far - gl_DepthRange.near);
