@@ -337,7 +337,7 @@ namespace MphRead
         public readonly Fixed CullRadius;
         public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
-        public readonly byte Billboard;
+        public readonly BillboardMode BillboardMode;
         public readonly byte Field8D;
         public readonly ushort Field8E;
         public readonly Matrix43Fx Transform; // scratch space

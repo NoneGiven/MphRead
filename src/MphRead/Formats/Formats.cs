@@ -695,7 +695,7 @@ namespace MphRead
         public Fixed CullRadius { get; }
         public Vector3 Vector1 { get; }
         public Vector3 Vector2 { get; }
-        public bool Billboard { get; }
+        public BillboardMode BillboardMode { get; }
         public Matrix4 Transform { get; set; } = Matrix4.Identity;
         public Matrix4 Animation { get; set; } = Matrix4.Identity;
 
@@ -729,8 +729,7 @@ namespace MphRead
             CullRadius = raw.CullRadius;
             Vector1 = raw.Vector1.ToFloatVector();
             Vector2 = raw.Vector2.ToFloatVector();
-            // todo: implement billboard = 2 (cylindrical)
-            Billboard = raw.Billboard == 1;
+            BillboardMode = raw.BillboardMode;
             IsRoomNode = Name.StartsWith("rm");
         }
     }

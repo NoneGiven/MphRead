@@ -72,7 +72,8 @@ namespace MphRead.Export
             }
             foreach (Node node in model.Nodes)
             {
-                if (node.Billboard)
+                // todo: implement this for cylinders
+                if (node.BillboardMode == BillboardMode.Sphere)
                 {
                     AppendIndent();
                     sb.AppendLine($"set_billboard('{node.Name}')");

@@ -69,6 +69,13 @@ namespace MphRead
         JumpPadBeam
     }
 
+    public enum BillboardMode : byte
+    {
+        None = 0,
+        Sphere = 1,
+        Cylinder = 2
+    }
+
     public enum PolygonMode : uint
     {
         Modulate = 0,

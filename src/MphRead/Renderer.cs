@@ -589,18 +589,20 @@ namespace MphRead
 
         private Matrix4 _viewMatrix = Matrix4.Identity;
         private Matrix4 _viewInvRotMatrix = Matrix4.Identity;
+        private Matrix4 _viewInvRotYMatrix = Matrix4.Identity;
 
         private void TransformCamera()
         {
             // todo: only update this when the camera position changes
             _viewMatrix = Matrix4.Identity;
             _viewInvRotMatrix = Matrix4.Identity;
+            _viewInvRotYMatrix = Matrix4.Identity;
             if (_cameraMode == CameraMode.Pivot)
             {
                 _viewMatrix = Matrix4.CreateTranslation(new Vector3(0, 0, _distance * -1));
                 _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
-                _viewInvRotMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _angleY));
+                _viewInvRotMatrix = _viewInvRotYMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _angleY));
                 _viewInvRotMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-1 * _angleX)) * _viewInvRotMatrix;
             }
             else if (_cameraMode == CameraMode.Roam)
@@ -608,7 +610,7 @@ namespace MphRead
                 _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX));
                 _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateTranslation(_cameraPosition) * _viewMatrix;
-                _viewInvRotMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _angleY));
+                _viewInvRotMatrix = _viewInvRotYMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _angleY));
                 _viewInvRotMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-1 * _angleX)) * _viewInvRotMatrix;
             }
             GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref _viewMatrix);
@@ -995,16 +997,19 @@ namespace MphRead
         {
             Model model = item.Model;
             _modelMatrix = model.ExtraTransform;
-            if (item.Node.Billboard)
+            if (item.Node.BillboardMode == BillboardMode.Sphere)
             {
                 _modelMatrix = _viewInvRotMatrix * _modelMatrix.ClearRotation();
+            }
+            else if (item.Node.BillboardMode == BillboardMode.Cylinder)
+            {
+                _modelMatrix = _viewInvRotYMatrix * _modelMatrix.ClearRotation();
             }
             UseRoomLights();
             if (model.UseLightOverride)
             {
-                // todo: could add a height offset to really match the player position vs. the camera
-                Vector3 player = _cameraPosition * -1;
-                var vector1 = new Vector3(0, 1, 0); // Octolith's up vector
+                Vector3 player = _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1);
+                var vector1 = new Vector3(0, 1, 0);
                 Vector3 vector2 = new Vector3(player.X - model.Position.X, 0, player.Z - model.Position.Z).Normalized();
                 Matrix3 lightTransform = SceneSetup.GetTransformMatrix(vector2, vector1);
                 Vector3 lightVector = (Metadata.OctolithLight1Vector * lightTransform).Normalized();
@@ -2519,7 +2524,8 @@ namespace MphRead
                 header = "No room loaded";
             }
             await Output.Write(header, guid);
-            await Output.Write($"Camera ({_cameraPosition.X * -1}, {_cameraPosition.Y * -1}, {_cameraPosition.Z * -1})", guid);
+            Vector3 cam = _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1);
+            await Output.Write($"Camera ({cam.X}, {cam.Y}, {cam.Z})", guid);
             await Output.Write(guid);
             await Output.Write($"Model: {model.Name} [{model.SceneId}] {(model.Visible ? "On " : "Off")} - " +
                 $"Color {model.CurrentRecolor} / {model.Recolors.Count - 1}", guid);
@@ -2618,7 +2624,7 @@ namespace MphRead
                 mesh += $" ({meshIds.First()} - {meshIds.Last()})";
             }
             string enabled = node.Enabled ? (SelectedModel.NodeParentsEnabled(node) ? "On " : "On*") : "Off";
-            string billboard = node.Billboard ? " - Billboard" : "";
+            string billboard = node.BillboardMode != BillboardMode.None ? $" - {node.BillboardMode} Billboard" : "";
             await Output.Write($"Node: {node.Name} [{_selectedNodeId}] {enabled}{mesh}{billboard}", guid);
             await Output.Write($"Parent {FormatNode(node.ParentIndex)}", guid);
             await Output.Write($" Child {FormatNode(node.ChildIndex)}", guid);
