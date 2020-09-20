@@ -1335,8 +1335,11 @@ namespace MphRead
                 /* 136 */ "FH_E3"
             };
 
-        // unused: unit3_rm5_Ent.bin
-        // unused: bigeyeroom_Ent.bin, cylinderroom_Ent.bin, Cylinder_C1_Ent.bin
+        // todo: unused?
+        // unit3_rm5_Ent.bin
+        // unit2_CX_Ent.bin, unit2_CZ_Ent.bin, unit3_CX_Ent.bin, unit3_CZ_Ent.bin
+        // bigeyeroom_Ent.bin, cylinderroom_Ent.bin, Cylinder_C1_Ent.bin
+        // FH leftovers: morphBall_Ent.bin, regulator_Ent.bin, survivor_Ent.bin
         public static readonly IReadOnlyDictionary<string, RoomMetadata> RoomMetadata
             = new Dictionary<string, RoomMetadata>()
             {

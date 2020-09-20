@@ -2560,7 +2560,9 @@ namespace MphRead
                 else if (model.Entity is Entity<AreaVolumeEntityData> area)
                 {
                     type += Environment.NewLine + $"Entry: {area.Data.InsideEvent}";
+                    type += $", Param1: {area.Data.InsideEventParam1}, Param2: {area.Data.InsideEventParam1}";
                     type += Environment.NewLine + $" Exit: {area.Data.ExitEvent}";
+                    type += $", Param1: {area.Data.ExitEventParam1}, Param2: {area.Data.ExitEventParam2}";
                     if (TryGetByEntityId(area.Data.ParentId, out Model? parent))
                     {
                         type += Environment.NewLine + $"Target: {parent.Entity?.Type} ({area.Data.ParentId})";
@@ -2573,6 +2575,10 @@ namespace MphRead
                 else if (model.Entity is Entity<TriggerVolumeEntityData> trigger)
                 {
                     type += $" ({trigger.Data.Type})";
+                    if (trigger.Data.Type == TriggerType.Threshold)
+                    {
+                        type += $" x{trigger.Data.TriggerThreshold}";
+                    }
                     type += Environment.NewLine + $"Parent: {trigger.Data.ParentEvent}";
                     if (TryGetByEntityId(trigger.Data.ParentId, out Model? parent))
                     {
@@ -2582,6 +2588,7 @@ namespace MphRead
                     {
                         type += ", Target: None";
                     }
+                    type += $", Param1: {trigger.Data.ParentEventParam1}, Param2: {trigger.Data.ParentEventParam2}";
                     type += Environment.NewLine + $" Child: {trigger.Data.ChildEvent}";
                     if (TryGetByEntityId(trigger.Data.ChildId, out Model? child))
                     {
@@ -2591,6 +2598,7 @@ namespace MphRead
                     {
                         type += ", Target: None";
                     }
+                    type += $", Param1: {trigger.Data.ChildEventParam1}, Param2: {trigger.Data.ChildEventParam2}";
                 }
             }
             await Output.Write(type, guid);
