@@ -519,7 +519,7 @@ namespace MphRead
                 EntityType.AreaVolume => ReadEntity<AreaVolumeEntityData>(bytes, entry, header),
                 EntityType.JumpPad => ReadEntity<JumpPadEntityData>(bytes, entry, header),
                 EntityType.PointModule => ReadEntity<PointModuleEntityData>(bytes, entry, header),
-                EntityType.CameraPosition => ReadEntity<CameraPositionEntityData>(bytes, entry, header),
+                EntityType.MorphCamera => ReadEntity<MorphCameraEntityData>(bytes, entry, header),
                 EntityType.OctolithFlag => ReadEntity<OctolithFlagEntityData>(bytes, entry, header),
                 EntityType.FlagBase => ReadEntity<FlagBaseEntityData>(bytes, entry, header),
                 EntityType.Teleporter => ReadEntity<TeleporterEntityData>(bytes, entry, header),
@@ -575,7 +575,7 @@ namespace MphRead
                 EntityType.FhPlatform => ReadFirstHuntEntity<FhPlatformEntityData>(bytes, entry, header),
                 EntityType.FhJumpPad => ReadFirstHuntEntity<FhJumpPadEntityData>(bytes, entry, header),
                 EntityType.FhPointModule => ReadFirstHuntEntity<PointModuleEntityData>(bytes, entry, header),
-                EntityType.FhCameraPosition => ReadFirstHuntEntity<FhCameraPositionEntityData>(bytes, entry, header),
+                EntityType.FhMorphCamera => ReadFirstHuntEntity<FhMorphCameraEntityData>(bytes, entry, header),
                 _ => throw new ProgramException($"Invalid entity type {type}")
             };
         }
