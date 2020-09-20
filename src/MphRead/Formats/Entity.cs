@@ -242,17 +242,9 @@ namespace MphRead
     public readonly struct PlayerSpawnEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly byte Field24; // boolean
+        public readonly byte Initial; // boolean - whether
         public readonly byte Active; // boolean
-        public readonly byte Field26; // always 0, 1, or 255
-    }
-
-    // size: 44
-    public readonly struct FhPlayerSpawnEntityData
-    {
-        public readonly EntityDataHeader Header;
-        public readonly ushort Field24;
-        public readonly ushort Field26;
+        public readonly sbyte TeamIndex; // always 0, 1, or 255
     }
 
     // size: 104
@@ -568,7 +560,7 @@ namespace MphRead
     }
 
     // size: 272
-    public readonly struct FhUnknown9EntityData
+    public readonly struct FhTriggerVolumeEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly uint Field24;
@@ -632,7 +624,7 @@ namespace MphRead
     }
 
     // size: 260
-    public readonly struct FhUnknown10EntityData
+    public readonly struct FhAreaVolumeEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly uint Field24;

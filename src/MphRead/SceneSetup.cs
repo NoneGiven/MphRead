@@ -308,14 +308,12 @@ namespace MphRead
                         models.Add(LoadObject(objectEntity));
                     }
                 }
-                else if (entity.Type == EntityType.PlayerSpawn)
+                else if (entity.Type == EntityType.PlayerSpawn || entity.Type == EntityType.FhPlayerSpawn)
                 {
                     // todo: compute model matrices for placeholders to show e.g. player spawn angle
                     models.Add(LoadEntityPlaceholder((Entity<PlayerSpawnEntityData>)entity));
-                }
-                else if (entity.Type == EntityType.FhPlayerSpawn)
-                {
-                    models.Add(LoadEntityPlaceholder((Entity<FhPlayerSpawnEntityData>)entity));
+                    var ent = (Entity<PlayerSpawnEntityData>)entity;
+                    Console.WriteLine($"{ent.NodeName}, {ent.Position}, {ent.LayerMask}, {ent.EntityId}, {ent.Data.Active}, {ent.Data.Initial}, {ent.Data.TeamIndex}");
                 }
                 else if (entity.Type == EntityType.Door)
                 {
@@ -345,17 +343,17 @@ namespace MphRead
                 {
                     models.Add(LoadEntityPlaceholder((Entity<TriggerVolumeEntityData>)entity));
                 }
-                else if (entity.Type == EntityType.FhUnknown9)
+                else if (entity.Type == EntityType.FhTriggerVolume)
                 {
-                    models.Add(LoadEntityPlaceholder((Entity<FhUnknown9EntityData>)entity));
+                    models.Add(LoadEntityPlaceholder((Entity<FhTriggerVolumeEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.AreaVolume)
                 {
                     models.Add(LoadEntityPlaceholder((Entity<AreaVolumeEntityData>)entity));
                 }
-                else if (entity.Type == EntityType.FhUnknown10)
+                else if (entity.Type == EntityType.FhAreaVolume)
                 {
-                    models.Add(LoadEntityPlaceholder((Entity<FhUnknown10EntityData>)entity));
+                    models.Add(LoadEntityPlaceholder((Entity<FhAreaVolumeEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.JumpPad)
                 {
@@ -859,9 +857,9 @@ namespace MphRead
             { EntityType.Enemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.FhEnemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.TriggerVolume, new ColorRgb(0xFF, 0x8C, 0x00) },
-            { EntityType.FhUnknown9, new ColorRgb(0xFF, 0x8C, 0x00) },
+            { EntityType.FhTriggerVolume, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.AreaVolume, new ColorRgb(0xFF, 0xFF, 0x00) },
-            { EntityType.FhUnknown10, new ColorRgb(0xFF, 0xFF, 0x00) },
+            { EntityType.FhAreaVolume, new ColorRgb(0xFF, 0xFF, 0x00) },
             // "permanent" placeholders
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.FhPlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },

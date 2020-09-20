@@ -566,12 +566,12 @@ namespace MphRead
             var type = (EntityType)(header.Type + 100);
             return type switch
             {
-                EntityType.FhPlayerSpawn => ReadFirstHuntEntity<FhPlayerSpawnEntityData>(bytes, entry, header),
+                EntityType.FhPlayerSpawn => ReadFirstHuntEntity<PlayerSpawnEntityData>(bytes, entry, header),
                 EntityType.FhDoor => ReadFirstHuntEntity<FhDoorEntityData>(bytes, entry, header),
                 EntityType.FhItem => ReadFirstHuntEntity<FhItemEntityData>(bytes, entry, header),
                 EntityType.FhEnemy => ReadFirstHuntEntity<FhEnemyEntityData>(bytes, entry, header),
-                EntityType.FhUnknown9 => ReadFirstHuntEntity<FhUnknown9EntityData>(bytes, entry, header),
-                EntityType.FhUnknown10 => ReadFirstHuntEntity<FhUnknown10EntityData>(bytes, entry, header),
+                EntityType.FhTriggerVolume => ReadFirstHuntEntity<FhTriggerVolumeEntityData>(bytes, entry, header),
+                EntityType.FhAreaVolume => ReadFirstHuntEntity<FhAreaVolumeEntityData>(bytes, entry, header),
                 EntityType.FhPlatform => ReadFirstHuntEntity<FhPlatformEntityData>(bytes, entry, header),
                 EntityType.FhJumpPad => ReadFirstHuntEntity<FhJumpPadEntityData>(bytes, entry, header),
                 EntityType.FhPointModule => ReadFirstHuntEntity<PointModuleEntityData>(bytes, entry, header),
