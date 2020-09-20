@@ -4666,7 +4666,7 @@ namespace MphRead
                         "mp2_Anim.bin",
                         "mp2_Collision.bin",
                         null,
-                        @"survivor_Ent.bin", // survivor_Ent.bin
+                        @"_fh\survivor_Ent.bin", // survivor_Ent.bin
                         @"_fh\survivor_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
