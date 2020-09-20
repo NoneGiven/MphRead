@@ -780,17 +780,6 @@ namespace MphRead
         public readonly EntityDataHeader Header;
         public readonly ushort Field24; // previous/next?
         public readonly ushort Field26;
-        public readonly byte Active; // boolean - always 0 in MPH
-    }
-
-    // todo: might be interchangeable with the MPH version
-    // size: 45
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public readonly struct FhPointModuleEntityData
-    {
-        public readonly EntityDataHeader Header;
-        public readonly ushort Field24;
-        public readonly ushort Field26;
         public readonly byte Active; // boolean
     }
 

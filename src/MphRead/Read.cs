@@ -574,7 +574,7 @@ namespace MphRead
                 EntityType.FhUnknown10 => ReadFirstHuntEntity<FhUnknown10EntityData>(bytes, entry, header),
                 EntityType.FhPlatform => ReadFirstHuntEntity<FhPlatformEntityData>(bytes, entry, header),
                 EntityType.FhJumpPad => ReadFirstHuntEntity<FhJumpPadEntityData>(bytes, entry, header),
-                EntityType.FhPointModule => ReadFirstHuntEntity<FhPointModuleEntityData>(bytes, entry, header),
+                EntityType.FhPointModule => ReadFirstHuntEntity<PointModuleEntityData>(bytes, entry, header),
                 EntityType.FhCameraPosition => ReadFirstHuntEntity<FhCameraPositionEntityData>(bytes, entry, header),
                 _ => throw new ProgramException($"Invalid entity type {type}")
             };

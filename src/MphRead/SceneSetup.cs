@@ -368,13 +368,9 @@ namespace MphRead
                 {
                     models.AddRange(LoadJumpPad((Entity<FhJumpPadEntityData>)entity));
                 }
-                else if (entity.Type == EntityType.PointModule)
+                else if (entity.Type == EntityType.PointModule || entity.Type == EntityType.FhPointModule)
                 {
                     models.Add(LoadPointModule((Entity<PointModuleEntityData>)entity));
-                }
-                else if (entity.Type == EntityType.FhPointModule)
-                {
-                    models.Add(LoadPointModule((Entity<FhPointModuleEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.CameraPosition)
                 {
@@ -730,9 +726,10 @@ namespace MphRead
             return models;
         }
 
-        private static Model LoadPointModule(Entity entity)
+        private static Model LoadPointModule(Entity<PointModuleEntityData> entity)
         {
             // todo: not all of these are visible at once -- some may not be visible ever?
+            // --> but it's not simply using the Active property
             Model model = Read.GetModelByName("pick_morphball", firstHunt: true);
             model.Position = entity.Position;
             ComputeNodeMatrices(model, index: 0);
