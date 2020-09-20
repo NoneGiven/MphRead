@@ -1254,7 +1254,11 @@ namespace MphRead
                         // the nodeTransform * currentTextureMatrix multiplication is between two 4x3 into a 4x4,
                         // but only reads/writes the upper-left 3x3 of all three matrices
                         // todo: billboard node transforms need to work as they do in-game
-                        Matrix4 product = node.Transform.Keep3x3();
+                        Matrix4 product = node.Animation.Keep3x3();
+                        if (model.ExtraTexgenTransform)
+                        {
+                            product = model.ExtraTransform * product;
+                        }
                         // todo: this may not be exactly equivalent to the game checking the node animation pointer
                         // note: in-game, this also uses the some_flag CModel field or constant 0,
                         // but none of the models with normal texgen seem to set bit 0 of that flag, so we can ignore it

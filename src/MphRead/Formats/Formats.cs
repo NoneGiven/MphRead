@@ -201,6 +201,11 @@ namespace MphRead
             {
                 Flags |= 1;
             }
+            // unlike Morph Ball, Dialanche applies its rotation to the root node transform
+            if (Name == "SpireAlt_lod0")
+            {
+                ExtraTexgenTransform = true;
+            }
         }
 
         public IEnumerable<ColorRgba> GetPixels(int textureId, int paletteId)
@@ -358,6 +363,7 @@ namespace MphRead
         }
 
         public Matrix4 ExtraTransform { get; private set; } = Matrix4.Identity;
+        public bool ExtraTexgenTransform { get; }
 
         public void Process(double elapsedTime, long frameCount)
         {
