@@ -1289,13 +1289,13 @@ namespace MphRead
 
     public class MorphCameraDisplay : DisplayVolume
     {
-        public MorphCameraDisplay(Entity<CameraPositionEntityData> entity)
+        public MorphCameraDisplay(Entity<MorphCameraEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
             Color1 = new Vector3(1, 1, 0);
         }
 
-        public MorphCameraDisplay(Entity<FhCameraPositionEntityData> entity)
+        public MorphCameraDisplay(Entity<FhMorphCameraEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
             Color1 = new Vector3(1, 1, 0);

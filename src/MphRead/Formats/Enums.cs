@@ -13,7 +13,7 @@ namespace MphRead
         AreaVolume = 8,
         JumpPad = 9,
         PointModule = 10, // FH leftovers only
-        CameraPosition = 11,
+        MorphCamera = 11,
         OctolithFlag = 12,
         FlagBase = 13,
         Teleporter = 14,
@@ -40,7 +40,7 @@ namespace MphRead
         FhPlatform = 111,
         FhJumpPad = 112,
         FhPointModule = 113,
-        FhCameraPosition = 114
+        FhMorphCamera = 114
     }
 
     public enum VolumeType : uint
@@ -52,10 +52,9 @@ namespace MphRead
 
     public enum FhVolumeType : uint
     {
-        Unknown0 = 0,
+        Sphere = 0,
         Box = 1,
-        Unknown2 = 2,
-        Unknown3 = 3
+        Cylinder = 2
     }
 
     public enum ModelType

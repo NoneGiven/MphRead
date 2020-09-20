@@ -370,13 +370,13 @@ namespace MphRead
                 {
                     models.Add(LoadPointModule((Entity<PointModuleEntityData>)entity));
                 }
-                else if (entity.Type == EntityType.CameraPosition)
+                else if (entity.Type == EntityType.MorphCamera)
                 {
-                    models.Add(LoadEntityPlaceholder((Entity<CameraPositionEntityData>)entity));
+                    models.Add(LoadEntityPlaceholder((Entity<MorphCameraEntityData>)entity));
                 }
-                else if (entity.Type == EntityType.FhCameraPosition)
+                else if (entity.Type == EntityType.FhMorphCamera)
                 {
-                    models.Add(LoadEntityPlaceholder((Entity<FhCameraPositionEntityData>)entity));
+                    models.Add(LoadEntityPlaceholder((Entity<FhMorphCameraEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.OctolithFlag)
                 {
@@ -863,8 +863,8 @@ namespace MphRead
             // "permanent" placeholders
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.FhPlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
-            { EntityType.CameraPosition, new ColorRgb(0x00, 0xFF, 0x00) },
-            { EntityType.FhCameraPosition, new ColorRgb(0x00, 0xFF, 0x00) },
+            { EntityType.MorphCamera, new ColorRgb(0x00, 0xFF, 0x00) },
+            { EntityType.FhMorphCamera, new ColorRgb(0x00, 0xFF, 0x00) },
             { EntityType.Teleporter, new ColorRgb(0xFF, 0xFF, 0xFF) }, // used for invisible teleporters
             { EntityType.LightSource, new ColorRgb(0xFF, 0xDE, 0xAD) },
             { EntityType.CameraSequence, new ColorRgb(0xFF, 0x69, 0xB4) }

@@ -534,6 +534,25 @@ namespace MphRead
         public readonly uint ChildEventParam2;
     }
 
+    // size: 272
+    public readonly struct FhTriggerVolumeEntityData
+    {
+        public readonly EntityDataHeader Header;
+        public readonly uint VolumeId; // 0 - none, 1/2/3 - box/sphere/cylinder
+        public readonly FhRawCollisionVolume Box;
+        public readonly FhRawCollisionVolume Sphere;
+        public readonly FhRawCollisionVolume Cylinder;
+        public readonly uint FieldE8;
+        public readonly uint FieldEC;
+        public readonly uint FieldF0;
+        public readonly uint FieldF4;
+        public readonly uint FieldF8;
+        public readonly uint FieldFC;
+        public readonly uint Field100;
+        public readonly uint Field104;
+        public readonly uint Field108;
+    }
+
     // size: 152
     public readonly struct AreaVolumeEntityData
     {
@@ -559,123 +578,14 @@ namespace MphRead
         public readonly uint Flags; // 0x200 = affects biped, 0x400 = affects alt
     }
 
-    // size: 272
-    public readonly struct FhTriggerVolumeEntityData
-    {
-        public readonly EntityDataHeader Header;
-        public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
-        public readonly uint Field58;
-        public readonly uint Field5C;
-        public readonly uint Field60;
-        public readonly uint Field64;
-        public readonly uint Field68;
-        public readonly uint Field6C;
-        public readonly uint Field70;
-        public readonly uint Field74;
-        public readonly uint Field78;
-        public readonly uint Field7C;
-        public readonly uint Field80;
-        public readonly uint Field84;
-        public readonly uint Field88;
-        public readonly uint Field8C;
-        public readonly uint Field90;
-        public readonly uint Field94;
-        public readonly uint Field98;
-        public readonly uint Field9C;
-        public readonly uint FieldA0;
-        public readonly uint FieldA4;
-        public readonly uint FieldA8;
-        public readonly uint FieldAC;
-        public readonly uint FieldB0;
-        public readonly uint FieldB4;
-        public readonly uint FieldB8;
-        public readonly uint FieldBC;
-        public readonly uint FieldC0;
-        public readonly uint FieldC4;
-        public readonly uint FieldC8;
-        public readonly uint FieldCC;
-        public readonly uint FieldD0;
-        public readonly uint FieldD4;
-        public readonly uint FieldD8;
-        public readonly uint FieldDC;
-        public readonly uint FieldE0;
-        public readonly uint FieldE4;
-        public readonly uint FieldE8;
-        public readonly uint FieldEC;
-        public readonly uint FieldF0;
-        public readonly uint FieldF4;
-        public readonly uint FieldF8;
-        public readonly uint FieldFC;
-        public readonly uint Field100;
-        public readonly uint Field104;
-        public readonly uint Field108;
-    }
-
     // size: 260
     public readonly struct FhAreaVolumeEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
-        public readonly uint Field58;
-        public readonly uint Field5C;
-        public readonly uint Field60;
-        public readonly uint Field64;
-        public readonly uint Field68;
-        public readonly uint Field6C;
-        public readonly uint Field70;
-        public readonly uint Field74;
-        public readonly uint Field78;
-        public readonly uint Field7C;
-        public readonly uint Field80;
-        public readonly uint Field84;
-        public readonly uint Field88;
-        public readonly uint Field8C;
-        public readonly uint Field90;
-        public readonly uint Field94;
-        public readonly uint Field98;
-        public readonly uint Field9C;
-        public readonly uint FieldA0;
-        public readonly uint FieldA4;
-        public readonly uint FieldA8;
-        public readonly uint FieldAC;
-        public readonly uint FieldB0;
-        public readonly uint FieldB4;
-        public readonly uint FieldB8;
-        public readonly uint FieldBC;
-        public readonly uint FieldC0;
-        public readonly uint FieldC4;
-        public readonly uint FieldC8;
-        public readonly uint FieldCC;
-        public readonly uint FieldD0;
-        public readonly uint FieldD4;
-        public readonly uint FieldD8;
-        public readonly uint FieldDC;
-        public readonly uint FieldE0;
-        public readonly uint FieldE4;
+        public readonly uint VolumeId; // 0 - none, 1/2/3 - box/sphere/cylinder
+        public readonly FhRawCollisionVolume Box;
+        public readonly FhRawCollisionVolume Sphere;
+        public readonly FhRawCollisionVolume Cylinder;
         public readonly uint FieldE8;
         public readonly uint FieldEC;
         public readonly uint FieldF0;
@@ -775,17 +685,15 @@ namespace MphRead
         public readonly byte Active; // boolean
     }
 
-    // todo: rename to MorphCamera if it isn't used for anything else
     // size: 104
-    public readonly struct CameraPositionEntityData
+    public readonly struct MorphCameraEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly RawCollisionVolume Volume;
     }
 
-    // todo: looks interchangeable with the MPH version, but the volume struct doesn't match
     // size: 104
-    public readonly struct FhCameraPositionEntityData
+    public readonly struct FhMorphCameraEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly FhRawCollisionVolume Volume;

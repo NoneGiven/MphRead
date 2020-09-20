@@ -187,11 +187,11 @@ namespace MphRead
                 {
                     _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(unknown8));
                 }
-                else if (entity.Entity is Entity<CameraPositionEntityData> morphCamera)
+                else if (entity.Entity is Entity<MorphCameraEntityData> morphCamera)
                 {
                     _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(morphCamera));
                 }
-                else if (entity.Entity is Entity<FhCameraPositionEntityData> fhMorphCamera)
+                else if (entity.Entity is Entity<FhMorphCameraEntityData> fhMorphCamera)
                 {
                     _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(fhMorphCamera));
                 }
@@ -2309,8 +2309,8 @@ namespace MphRead
             }
             else if (_showVolumes == 7)
             {
-                _targetTypes.Add(EntityType.CameraPosition);
-                _targetTypes.Add(EntityType.FhCameraPosition);
+                _targetTypes.Add(EntityType.MorphCamera);
+                _targetTypes.Add(EntityType.FhMorphCamera);
             }
             else if (_showVolumes == 8)
             {
