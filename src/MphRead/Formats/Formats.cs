@@ -1375,6 +1375,8 @@ namespace MphRead
             : base(entity.Data.Header.Position, entity.Data.ActiveVolume)
         {
             // sktodo
+            Color1 = new Vector3(1, 0, 0);
+            Color2 = new Vector3(0, 0, 1);
             //Color1 = Metadata.GetEventColor(entity.Data.ParentEvent);
             //Color2 = Metadata.GetEventColor(entity.Data.ChildEvent);
         }
@@ -1406,6 +1408,8 @@ namespace MphRead
             : base(entity.Data.Header.Position, entity.Data.ActiveVolume)
         {
             // sktodo
+            Color1 = new Vector3(1, 0, 0);
+            Color2 = new Vector3(0, 0, 1);
             //Color1 = Metadata.GetEventColor(entity.Data.InsideEvent);
             //Color2 = Metadata.GetEventColor(entity.Data.ExitEvent);
         }

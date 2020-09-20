@@ -562,11 +562,11 @@ namespace MphRead
                 }
                 if (VolumeId == 2)
                 {
-                    return Sphere;
+                    return Cylinder;
                 }
                 if (VolumeId == 3)
                 {
-                    return Cylinder;
+                    return Sphere;
                 }
                 return default;
             }
@@ -623,11 +623,11 @@ namespace MphRead
                 }
                 if (VolumeId == 2)
                 {
-                    return Sphere;
+                    return Cylinder;
                 }
                 if (VolumeId == 3)
                 {
-                    return Cylinder;
+                    return Sphere;
                 }
                 return default;
             }
