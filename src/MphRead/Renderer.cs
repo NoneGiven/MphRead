@@ -179,13 +179,27 @@ namespace MphRead
                     _displayVolumes.Add(entity.SceneId, display);
                     _lightSources.Add(entity.SceneId, display);
                 }
-                else if (entity.Entity is Entity<TriggerVolumeEntityData> unknown7)
+                else if (entity.Entity is Entity<TriggerVolumeEntityData> trigger)
                 {
-                    _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(unknown7));
+                    _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(trigger));
                 }
-                else if (entity.Entity is Entity<AreaVolumeEntityData> unknown8)
+                else if (entity.Entity is Entity<FhTriggerVolumeEntityData> fhTrigger)
                 {
-                    _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(unknown8));
+                    if (fhTrigger.Data.VolumeId != 0)
+                    {
+                        _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(fhTrigger));
+                    }
+                }
+                else if (entity.Entity is Entity<AreaVolumeEntityData> area)
+                {
+                    _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(area));
+                }
+                else if (entity.Entity is Entity<FhAreaVolumeEntityData> fhArea)
+                {
+                    if (fhArea.Data.VolumeId != 0)
+                    {
+                        _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(fhArea));
+                    }
                 }
                 else if (entity.Entity is Entity<MorphCameraEntityData> morphCamera)
                 {
@@ -2302,10 +2316,12 @@ namespace MphRead
             else if (_showVolumes == 3 || _showVolumes == 4)
             {
                 _targetTypes.Add(EntityType.TriggerVolume);
+                _targetTypes.Add(EntityType.FhTriggerVolume);
             }
             else if (_showVolumes == 5 || _showVolumes == 6)
             {
                 _targetTypes.Add(EntityType.AreaVolume);
+                _targetTypes.Add(EntityType.FhAreaVolume);
             }
             else if (_showVolumes == 7)
             {

@@ -551,6 +551,26 @@ namespace MphRead
         public readonly uint Field100;
         public readonly uint Field104;
         public readonly uint Field108;
+
+        public FhRawCollisionVolume ActiveVolume
+        {
+            get
+            {
+                if (VolumeId == 1)
+                {
+                    return Box;
+                }
+                if (VolumeId == 2)
+                {
+                    return Sphere;
+                }
+                if (VolumeId == 3)
+                {
+                    return Cylinder;
+                }
+                return default;
+            }
+        }
     }
 
     // size: 152
@@ -592,6 +612,26 @@ namespace MphRead
         public readonly uint FieldF4;
         public readonly uint FieldF8;
         public readonly uint FieldFC;
+
+        public FhRawCollisionVolume ActiveVolume
+        {
+            get
+            {
+                if (VolumeId == 1)
+                {
+                    return Box;
+                }
+                if (VolumeId == 2)
+                {
+                    return Sphere;
+                }
+                if (VolumeId == 3)
+                {
+                    return Cylinder;
+                }
+                return default;
+            }
+        }
     }
 
     // size: 148

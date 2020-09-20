@@ -1199,14 +1199,21 @@ namespace MphRead
 
         public CollisionVolume(FhRawCollisionVolume raw)
         {
-            // todo: confirm FH collision union for cylinder and sphere
             if (raw.Type == FhVolumeType.Box)
             {
                 Type = VolumeType.Box;
             }
+            else if (raw.Type == FhVolumeType.Sphere)
+            {
+                Type = VolumeType.Sphere;
+            }
+            else if (raw.Type == FhVolumeType.Cylinder)
+            {
+                Type = VolumeType.Cylinder;
+            }
             else
             {
-                throw new ProgramException("Invalid volume type.");
+                throw new ProgramException($"Invalid volume type {raw.Type}.");
             }
             BoxVector1 = raw.BoxVector1.ToFloatVector();
             BoxVector2 = raw.BoxVector2.ToFloatVector();
@@ -1364,6 +1371,14 @@ namespace MphRead
             Color2 = Metadata.GetEventColor(entity.Data.ChildEvent);
         }
 
+        public TriggerVolumeDisplay(Entity<FhTriggerVolumeEntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.ActiveVolume)
+        {
+            // sktodo
+            //Color1 = Metadata.GetEventColor(entity.Data.ParentEvent);
+            //Color2 = Metadata.GetEventColor(entity.Data.ChildEvent);
+        }
+
         public override Vector3? GetColor(int index)
         {
             if (index == 3)
@@ -1380,18 +1395,19 @@ namespace MphRead
 
     public class AreaVolumeDisplay : DisplayVolume
     {
-        public Message InsideEvent { get; }
-        public Message ExitEvent { get; }
-        public uint Flags { get; }
-
         public AreaVolumeDisplay(Entity<AreaVolumeEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
-            InsideEvent = entity.Data.InsideEvent;
-            ExitEvent = entity.Data.ExitEvent;
-            Flags = entity.Data.Flags;
-            Color1 = Metadata.GetEventColor(InsideEvent);
-            Color2 = Metadata.GetEventColor(ExitEvent);
+            Color1 = Metadata.GetEventColor(entity.Data.InsideEvent);
+            Color2 = Metadata.GetEventColor(entity.Data.ExitEvent);
+        }
+
+        public AreaVolumeDisplay(Entity<FhAreaVolumeEntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.ActiveVolume)
+        {
+            // sktodo
+            //Color1 = Metadata.GetEventColor(entity.Data.InsideEvent);
+            //Color2 = Metadata.GetEventColor(entity.Data.ExitEvent);
         }
 
         public override Vector3? GetColor(int index)
