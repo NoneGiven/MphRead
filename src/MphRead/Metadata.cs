@@ -22,7 +22,7 @@ namespace MphRead
         public short PointLimit { get; }
         public short NodeLayer { get; }
         public ushort FogEnabled { get; }
-        public ushort Fog { get; }
+        public ushort ClearFog { get; }
         public ushort FogColor { get; }
         public uint FogSlope { get; }
         public uint FogOffset { get; }
@@ -36,7 +36,7 @@ namespace MphRead
         public RoomMetadata(string name, string? inGameName, string pathName, string modelPath,
             string animationPath, string collisionPath, string? texturePath, string? entityPath, string? nodePath,
             string? roomNodeName, uint battleTimeLimit, uint timeLimit, short pointLimit, short nodeLayer, ushort fogEnabled,
-            ushort fog, ushort fogColor, uint fogSlope, uint fogOffset, ColorRgb light1Color,
+            ushort clearFog, ushort fogColor, uint fogSlope, uint fogOffset, ColorRgb light1Color,
             Vector3 light1Vector, ColorRgb light2Color, Vector3 light2Vector, Vector3 roomSize, bool multiplayer = false)
         {
             Name = name;
@@ -54,14 +54,14 @@ namespace MphRead
             PointLimit = pointLimit;
             NodeLayer = nodeLayer;
             FogEnabled = fogEnabled;
-            Fog = fog;
+            ClearFog = clearFog;
             FogColor = fogColor;
             FogSlope = fogSlope;
             FogOffset = fogOffset;
             Light1Color = light1Color;
-            Light1Vector = light1Vector;
+            Light1Vector = light1Vector.Normalized();
             Light2Color = light2Color;
-            Light2Vector = light2Vector;
+            Light2Vector = light2Vector.Normalized();
             RoomSize = roomSize;
             Multiplayer = multiplayer;
         }
@@ -4679,15 +4679,15 @@ namespace MphRead
                         TimeLimit(2, 0, 0),
                         0x0,
                         0x0,
-                        0,
-                        0x0,
-                        0,
-                        0,
-                        0,
+                        1,
+                        0x1,
+                        FogColor(31, 31, 31),
+                        0x2,
+                        65152,
                         new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f),
                         multiplayer: true)
                 },
@@ -4708,15 +4708,15 @@ namespace MphRead
                         TimeLimit(2, 0, 0),
                         0x0,
                         0x0,
-                        0,
-                        0x0,
-                        0,
-                        0,
-                        0,
+                        1,
+                        0x1,
+                        FogColor(6, 12, 11),
+                        0x5,
+                        64900,
                         new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f),
                         multiplayer: true)
                 },
@@ -4737,15 +4737,15 @@ namespace MphRead
                         TimeLimit(2, 0, 0),
                         0x0,
                         0x0,
-                        0,
+                        1,
                         0x0,
-                        0,
-                        0,
-                        0,
+                        FogColor(29, 26, 20),
+                        0x4,
+                        65152,
                         new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f),
                         multiplayer: true)
                 },
@@ -4766,15 +4766,15 @@ namespace MphRead
                         TimeLimit(2, 0, 0),
                         0x0,
                         0x0,
-                        0,
+                        1,
                         0x0,
-                        0,
-                        0,
-                        0,
+                        FogColor(8, 16, 31),
+                        0x5,
+                        65152,
                         new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4796,13 +4796,13 @@ namespace MphRead
                         0x0,
                         0,
                         0x0,
-                        0,
-                        0,
-                        0,
+                        FogColor(8, 16, 31),
+                        0x5,
+                        65152,
                         new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4822,15 +4822,15 @@ namespace MphRead
                         TimeLimit(2, 0, 0),
                         0x0,
                         0x0,
-                        0,
-                        0x0,
-                        0,
-                        0,
-                        0,
+                        1,
+                        0x1,
+                        FogColor(1, 6, 5),
+                        0x5,
+                        64900,
                         new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4850,15 +4850,15 @@ namespace MphRead
                         TimeLimit(2, 0, 0),
                         0x0,
                         0x0,
-                        0,
+                        1,
                         0x0,
-                        0,
-                        0,
-                        0,
+                        FogColor(8, 16, 31),
+                        0x5,
+                        65152,
                         new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
@@ -4878,15 +4878,15 @@ namespace MphRead
                         TimeLimit(2, 0, 0),
                         0x0,
                         0x0,
-                        0,
+                        1,
                         0x0,
-                        0,
-                        0,
-                        0,
+                        FogColor(8, 16, 31),
+                        0x5,
+                        65152,
                         new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f),
                         multiplayer: true)
                 },
@@ -4907,15 +4907,15 @@ namespace MphRead
                         TimeLimit(2, 0, 0),
                         0x0,
                         0x0,
-                        0,
+                        1,
                         0x0,
-                        0,
-                        0,
-                        0,
+                        FogColor(8, 16, 31),
+                        0x5,
+                        65152,
                         new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f),
                         multiplayer: true)
                 }
