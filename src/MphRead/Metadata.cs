@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using OpenToolkit.Mathematics;
+using OpenTK.Mathematics;
 
 namespace MphRead
 {
@@ -22,7 +22,7 @@ namespace MphRead
         public short PointLimit { get; }
         public short NodeLayer { get; }
         public ushort FogEnabled { get; }
-        public ushort Fog { get; }
+        public ushort ClearFog { get; }
         public ushort FogColor { get; }
         public uint FogSlope { get; }
         public uint FogOffset { get; }
@@ -36,7 +36,7 @@ namespace MphRead
         public RoomMetadata(string name, string? inGameName, string pathName, string modelPath,
             string animationPath, string collisionPath, string? texturePath, string? entityPath, string? nodePath,
             string? roomNodeName, uint battleTimeLimit, uint timeLimit, short pointLimit, short nodeLayer, ushort fogEnabled,
-            ushort fog, ushort fogColor, uint fogSlope, uint fogOffset, ColorRgb light1Color,
+            ushort clearFog, ushort fogColor, uint fogSlope, uint fogOffset, ColorRgb light1Color,
             Vector3 light1Vector, ColorRgb light2Color, Vector3 light2Vector, Vector3 roomSize, bool multiplayer = false)
         {
             Name = name;
@@ -54,14 +54,14 @@ namespace MphRead
             PointLimit = pointLimit;
             NodeLayer = nodeLayer;
             FogEnabled = fogEnabled;
-            Fog = fog;
+            ClearFog = clearFog;
             FogColor = fogColor;
             FogSlope = fogSlope;
             FogOffset = fogOffset;
             Light1Color = light1Color;
-            Light1Vector = light1Vector;
+            Light1Vector = light1Vector.Normalized();
             Light2Color = light2Color;
-            Light2Vector = light2Vector;
+            Light2Vector = light2Vector.Normalized();
             RoomSize = roomSize;
             Multiplayer = multiplayer;
         }
@@ -213,7 +213,7 @@ namespace MphRead
             }
             if (animation)
             {
-                AnimationPath = animationPath == null ? $@"{path}\{name}{addToAnim}{suffix}_Anim.bin" : animationPath;
+                AnimationPath = animationPath ?? $@"{path}\{name}{addToAnim}{suffix}_Anim.bin";
             }
             if (collision)
             {
@@ -551,6 +551,13 @@ namespace MphRead
             /* 3 */ new DoorMetadata("AlimbicThinDoor", "ThinDoorLock", 1.39990234f)
         };
 
+        public static readonly IReadOnlyList<string> FhDoors = new List<string>()
+        {
+            /* 0 */ "door",
+            /* 1 */ "door2",
+            /* 2 */ "door2_holo"
+        };
+
         // 0-7 are for beam doors, 8 is unused?, 9 is for regular doors
         // (only a few rooms use index 0, since the usual thing is to use index 9)
         public static readonly IReadOnlyList<int> DoorPalettes = new List<int>()
@@ -862,6 +869,32 @@ namespace MphRead
             if (eventId == Message.Unknown61) // sky blue
             {
                 return new Vector3(0.165f, 0.816f, 0.894f);
+            }
+            // unknown - white (no other IDs are used by trigger/area volumes)
+            return new Vector3(1, 1, 1);
+        }
+
+        public static Vector3 GetEventColor(FhMessage eventId)
+        {
+            if (eventId == FhMessage.None) // black
+            {
+                return new Vector3(0, 0, 0);
+            }
+            if (eventId == FhMessage.Unknown5) // green
+            {
+                return new Vector3(0, 1, 0);
+            }
+            if (eventId == FhMessage.Unlock) // navy blue
+            {
+                return new Vector3(0.094f, 0.094f, 0.557f);
+            }
+            if (eventId == FhMessage.SetActive) // purple
+            {
+                return new Vector3(0.615f, 0, 0.909f);
+            }
+            if (eventId == FhMessage.Death) // dark blue
+            {
+                return new Vector3(0f, 0f, 0.858f);
             }
             // unknown - white (no other IDs are used by trigger/area volumes)
             return new Vector3(1, 1, 1);
@@ -1324,19 +1357,23 @@ namespace MphRead
                 /* 126 */ "biodefense chamber 04",
                 /* 127 */ "biodefense chamber 07",
                 // First Hunt
-                /* 128 */ "FH_MP1",
-                /* 129 */ "FH_SURVIVOR",
-                /* 130 */ "FH_MP2",
-                /* 131 */ "FH_MP3",
-                /* 132 */ "FH_MP5",
-                /* 133 */ "FH_TEST",
-                /* 134 */ "FH_REGULATOR",
-                /* 135 */ "FH_MORPHBALL",
-                /* 136 */ "FH_E3"
+                /* 128, 0 */ "FH_MP1",
+                /* 129, 1 */ "FH_MP2",
+                /* 130, 2 */ "FH_MP3",
+                /* 131, 3 */ "FH_MORPHBALL",
+                /* 132, 4 */ "FH_REGULATOR",
+                /* 133, 5 */ "FH_SURVIVOR",
+                /* 134, 6 */ "FH_TEST",
+                /* 135, 7 */ "FH_MP5",
+                /* 136, 8 */ "FH_MP1", // todo
+                /* 137, 9 */ "FH_E3"
             };
 
-        // unused: unit3_rm5_Ent.bin
-        // unused: bigeyeroom_Ent.bin, cylinderroom_Ent.bin, Cylinder_C1_Ent.bin
+        // todo: unused?
+        // unit3_rm5_Ent.bin
+        // unit2_CX_Ent.bin, unit2_CZ_Ent.bin, unit3_CX_Ent.bin, unit3_CZ_Ent.bin
+        // bigeyeroom_Ent.bin, cylinderroom_Ent.bin, Cylinder_C1_Ent.bin
+        // FH leftovers: morphBall_Ent.bin, regulator_Ent.bin, survivor_Ent.bin
         public static readonly IReadOnlyDictionary<string, RoomMetadata> RoomMetadata
             = new Dictionary<string, RoomMetadata>()
             {
@@ -4623,11 +4660,12 @@ namespace MphRead
                         new Vector3(-300f, 300f, -300f),
                         multiplayer: true)
                 },
+                // todo: room ID 8 has the same files as MP1, but a few different parameters
                 // First Hunt
                 {
                     "FH_MP1",
                     new RoomMetadata(
-                        "FH_MP1",
+                        "Level MP1",
                         "Trooper Module",
                         @"_fh\mp1",
                         "mp1_Model.bin",
@@ -4641,50 +4679,22 @@ namespace MphRead
                         TimeLimit(2, 0, 0),
                         0x0,
                         0x0,
-                        0,
-                        0x0,
-                        0,
-                        0,
-                        0,
+                        1,
+                        0x1,
+                        FogColor(31, 31, 31),
+                        0x2,
+                        65152,
                         new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f),
                         multiplayer: true)
                 },
                 {
-                    "FH_SURVIVOR",
-                    new RoomMetadata(
-                        "FH_SURVIVOR",
-                        "Survivor",
-                        @"_fh\mp2",
-                        "mp2_Model.bin",
-                        "mp2_Anim.bin",
-                        "mp2_Collision.bin",
-                        null,
-                        @"_fh\survivor_Ent.bin", // survivor_Ent.bin
-                        @"_fh\survivor_Node.bin",
-                        null,
-                        TimeLimit(10, 0, 0),
-                        TimeLimit(2, 0, 0),
-                        0x0,
-                        0x0,
-                        0,
-                        0x0,
-                        0,
-                        0,
-                        0,
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
-                        new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
-                        new Vector3(-300f, 300f, -300f))
-                },
-                {
                     "FH_MP2",
                     new RoomMetadata(
-                        "FH_MP2",
+                        "Level MP2",
                         "Assault Cradle",
                         @"_fh\mp2",
                         "mp2_Model.bin",
@@ -4698,22 +4708,22 @@ namespace MphRead
                         TimeLimit(2, 0, 0),
                         0x0,
                         0x0,
-                        0,
-                        0x0,
-                        0,
-                        0,
-                        0,
+                        1,
+                        0x1,
+                        FogColor(6, 12, 11),
+                        0x5,
+                        64900,
                         new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f),
                         multiplayer: true)
                 },
                 {
                     "FH_MP3",
                     new RoomMetadata(
-                        "FH_MP3",
+                        "Level MP3",
                         "Ancient Vestige",
                         @"_fh\mp3",
                         "mp3_Model.bin",
@@ -4727,79 +4737,50 @@ namespace MphRead
                         TimeLimit(2, 0, 0),
                         0x0,
                         0x0,
-                        0,
+                        1,
                         0x0,
-                        0,
-                        0,
-                        0,
+                        FogColor(29, 26, 20),
+                        0x4,
+                        65152,
                         new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f),
                         multiplayer: true)
                 },
                 {
-                    "FH_MP5",
+                    "FH_MORPHBALL",
                     new RoomMetadata(
-                        "FH_MP5",
-                        "Early Head Shot (First Hunt)",
-                        @"_fh\mp5",
-                        "mp5_Model.bin",
-                        "mp5_Anim.bin",
-                        "mp5_Collision.bin",
+                        "Level SP Morphball",
+                        "Morph Ball",
+                        @"_fh\e3Level",
+                        "e3Level_Model.bin",
+                        "e3Level_Anim.bin",
+                        "e3Level_Collision.bin",
                         null,
-                        @"_fh\mp5_Ent.bin",
-                        @"_fh\mp5_Node.bin",
+                        @"_fh\morphBall_Ent.bin", // morphBall_Ent.bin
+                        @"_fh\morphBall_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
                         TimeLimit(2, 0, 0),
                         0x0,
                         0x0,
-                        0,
+                        1,
                         0x0,
-                        0,
-                        0,
-                        0,
+                        FogColor(8, 16, 31),
+                        0x5,
+                        65152,
                         new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
-                        new Vector3(-300f, 300f, -300f),
-                        multiplayer: true)
-                },
-                {
-                    "FH_TEST",
-                    new RoomMetadata(
-                        "FH_TEST",
-                        "Test Level (First Hunt)",
-                        @"_fh\testLevel",
-                        "testLevel_Model.bin",
-                        "testlevel_Anim.bin",
-                        "testlevel_Collision.bin",
-                        null,
-                        @"_fh\testlevel_Ent.bin",
-                        @"_fh\testLevel_Node.bin",
-                        null,
-                        TimeLimit(10, 0, 0),
-                        TimeLimit(2, 0, 0),
-                        0x0,
-                        0x0,
-                        0,
-                        0x0,
-                        0,
-                        0,
-                        0,
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
-                        new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
                     "FH_REGULATOR",
                     new RoomMetadata(
-                        "FH_REGULATOR",
+                        "Level SP Regulator",
                         "Regulator",
                         @"_fh\blueRoom",
                         "blueRoom_Model.bin",
@@ -4815,47 +4796,104 @@ namespace MphRead
                         0x0,
                         0,
                         0x0,
-                        0,
-                        0,
-                        0,
+                        FogColor(8, 16, 31),
+                        0x5,
+                        65152,
                         new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f))
                 },
                 {
-                    "FH_MORPHBALL",
+                    "FH_SURVIVOR",
                     new RoomMetadata(
-                        "FH_MORPHBALL",
-                        "Morph Ball",
-                        @"_fh\e3Level",
-                        "e3Level_Model.bin",
-                        "e3Level_Anim.bin",
-                        "e3Level_Collision.bin",
+                        "Level SP Survivor",
+                        "Survivor",
+                        @"_fh\mp2",
+                        "mp2_Model.bin",
+                        "mp2_Anim.bin",
+                        "mp2_Collision.bin",
                         null,
-                        @"_fh\morphBall_Ent.bin", // morphBall_Ent.bin
-                        @"_fh\morphBall_Node.bin",
+                        @"_fh\survivor_Ent.bin", // survivor_Ent.bin
+                        @"_fh\survivor_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
                         TimeLimit(2, 0, 0),
                         0x0,
                         0x0,
-                        0,
-                        0x0,
-                        0,
-                        0,
-                        0,
+                        1,
+                        0x1,
+                        FogColor(1, 6, 5),
+                        0x5,
+                        64900,
                         new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f))
+                },
+                {
+                    "FH_TEST",
+                    new RoomMetadata(
+                        "Level TestLevel",
+                        "Test Level (First Hunt)",
+                        @"_fh\testLevel",
+                        "testLevel_Model.bin",
+                        "testlevel_Anim.bin",
+                        "testlevel_Collision.bin",
+                        null,
+                        @"_fh\testlevel_Ent.bin",
+                        @"_fh\testLevel_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(8, 16, 31),
+                        0x5,
+                        65152,
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(0.25f, -0.5f, -0.25f),
+                        new ColorRgb(4, 4, 16),
+                        new Vector3(0, 1, -0.25f),
+                        new Vector3(-300f, 300f, -300f))
+                },
+                {
+                    "FH_MP5",
+                    new RoomMetadata(
+                        "Level MP5",
+                        "Early Head Shot (First Hunt)",
+                        @"_fh\mp5",
+                        "mp5_Model.bin",
+                        "mp5_Anim.bin",
+                        "mp5_Collision.bin",
+                        null,
+                        @"_fh\mp5_Ent.bin",
+                        @"_fh\mp5_Node.bin",
+                        null,
+                        TimeLimit(10, 0, 0),
+                        TimeLimit(2, 0, 0),
+                        0x0,
+                        0x0,
+                        1,
+                        0x0,
+                        FogColor(8, 16, 31),
+                        0x5,
+                        65152,
+                        new ColorRgb(31, 31, 31),
+                        new Vector3(0.25f, -0.5f, -0.25f),
+                        new ColorRgb(4, 4, 16),
+                        new Vector3(0, 1, -0.25f),
+                        new Vector3(-300f, 300f, -300f),
+                        multiplayer: true)
                 },
                 {
                     "FH_E3",
                     new RoomMetadata(
-                        "FH_E3",
+                        "E3 level",
                         "Stasis Bunker (First Hunt)",
                         @"_fh\e3Level",
                         "e3Level_Model.bin",
@@ -4869,15 +4907,15 @@ namespace MphRead
                         TimeLimit(2, 0, 0),
                         0x0,
                         0x0,
-                        0,
+                        1,
                         0x0,
-                        0,
-                        0,
-                        0,
+                        FogColor(8, 16, 31),
+                        0x5,
+                        65152,
                         new ColorRgb(31, 31, 31),
-                        new Vector3(0.4082031f, -0.8164063f, -0.4082031f),
+                        new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
-                        new Vector3(0.0f, 0.96875f, -0.2441406f),
+                        new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f),
                         multiplayer: true)
                 }

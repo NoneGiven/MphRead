@@ -1,5 +1,5 @@
 using System;
-using OpenToolkit.Mathematics;
+using OpenTK.Mathematics;
 
 namespace MphRead
 {
@@ -200,6 +200,21 @@ namespace MphRead
         public static Vector3 WithZ(this Vector3 vector, float z)
         {
             return new Vector3(vector.X, vector.Y, z);
+        }
+
+        public static Vector3 AddX(this Vector3 vector, float x)
+        {
+            return new Vector3(vector.X + x, vector.Y, vector.Z);
+        }
+
+        public static Vector3 AddY(this Vector3 vector, float y)
+        {
+            return new Vector3(vector.X, vector.Y + y, vector.Z);
+        }
+
+        public static Vector3 AddZ(this Vector3 vector, float z)
+        {
+            return new Vector3(vector.X, vector.Y, vector.Z + z);
         }
 
         public static Matrix3 AsMatrix3(this Matrix4x3 matrix)

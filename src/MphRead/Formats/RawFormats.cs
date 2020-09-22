@@ -337,7 +337,7 @@ namespace MphRead
         public readonly Fixed CullRadius;
         public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
-        public readonly byte Billboard;
+        public readonly BillboardMode BillboardMode;
         public readonly byte Field8D;
         public readonly ushort Field8E;
         public readonly Matrix43Fx Transform; // scratch space
@@ -413,16 +413,16 @@ namespace MphRead
         public readonly Fixed BoxDot2;
         [FieldOffset(60)]
         public readonly Fixed BoxDot3;
-        // todo: cylinder
+        // cylinder
         [FieldOffset(4)]
-        public readonly Vector3Fx CylinderVector;
-        [FieldOffset(16)]
         public readonly Vector3Fx CylinderPosition;
+        [FieldOffset(16)]
+        public readonly Vector3Fx CylinderVector;
         [FieldOffset(28)]
-        public readonly Fixed CylinderRadius;
-        [FieldOffset(32)]
         public readonly Fixed CylinderDot;
-        // todo: sphere
+        [FieldOffset(32)]
+        public readonly Fixed CylinderRadius;
+        // sphere
         [FieldOffset(4)]
         public readonly Vector3Fx SpherePosition;
         [FieldOffset(16)]

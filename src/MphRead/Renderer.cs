@@ -6,11 +6,11 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using MphRead.Export;
-using OpenToolkit.Graphics.OpenGL;
-using OpenToolkit.Mathematics;
-using OpenToolkit.Windowing.Common;
-using OpenToolkit.Windowing.Common.Input;
-using OpenToolkit.Windowing.Desktop;
+using OpenTK.Graphics.OpenGL;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Common.Input;
+using OpenTK.Windowing.Desktop;
 
 namespace MphRead
 {
@@ -179,25 +179,43 @@ namespace MphRead
                     _displayVolumes.Add(entity.SceneId, display);
                     _lightSources.Add(entity.SceneId, display);
                 }
-                else if (entity.Entity is Entity<TriggerVolumeEntityData> unknown7)
+                else if (entity.Entity is Entity<TriggerVolumeEntityData> trigger)
                 {
-                    _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(unknown7));
+                    _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(trigger));
                 }
-                else if (entity.Entity is Entity<AreaVolumeEntityData> unknown8)
+                else if (entity.Entity is Entity<FhTriggerVolumeEntityData> fhTrigger)
                 {
-                    _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(unknown8));
+                    if (fhTrigger.Data.Subtype != 0)
+                    {
+                        _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(fhTrigger));
+                    }
                 }
-                else if (entity.Entity is Entity<CameraPositionEntityData> morphCamera)
+                else if (entity.Entity is Entity<AreaVolumeEntityData> area)
+                {
+                    _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(area));
+                }
+                else if (entity.Entity is Entity<FhAreaVolumeEntityData> fhArea)
+                {
+                    if (fhArea.Data.Subtype != 0)
+                    {
+                        _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(fhArea));
+                    }
+                }
+                else if (entity.Entity is Entity<MorphCameraEntityData> morphCamera)
                 {
                     _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(morphCamera));
                 }
-                else if (entity.Entity is Entity<FhCameraPositionEntityData> fhMorphCamera)
+                else if (entity.Entity is Entity<FhMorphCameraEntityData> fhMorphCamera)
                 {
                     _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(fhMorphCamera));
                 }
                 else if (entity.Entity is Entity<JumpPadEntityData> jumpPad)
                 {
                     _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(jumpPad));
+                }
+                else if (entity.Entity is Entity<FhJumpPadEntityData> fhJumpPad)
+                {
+                    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(fhJumpPad));
                 }
                 else if (entity.Entity is Entity<ObjectEntityData> obj)
                 {
@@ -238,7 +256,6 @@ namespace MphRead
 
         protected override async void OnLoad()
         {
-            MakeCurrent();
             await Output.Begin();
             GL.ClearColor(_clearColor);
 
@@ -589,18 +606,20 @@ namespace MphRead
 
         private Matrix4 _viewMatrix = Matrix4.Identity;
         private Matrix4 _viewInvRotMatrix = Matrix4.Identity;
+        private Matrix4 _viewInvRotYMatrix = Matrix4.Identity;
 
         private void TransformCamera()
         {
             // todo: only update this when the camera position changes
             _viewMatrix = Matrix4.Identity;
             _viewInvRotMatrix = Matrix4.Identity;
+            _viewInvRotYMatrix = Matrix4.Identity;
             if (_cameraMode == CameraMode.Pivot)
             {
                 _viewMatrix = Matrix4.CreateTranslation(new Vector3(0, 0, _distance * -1));
                 _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
-                _viewInvRotMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _angleY));
+                _viewInvRotMatrix = _viewInvRotYMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _angleY));
                 _viewInvRotMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-1 * _angleX)) * _viewInvRotMatrix;
             }
             else if (_cameraMode == CameraMode.Roam)
@@ -608,7 +627,7 @@ namespace MphRead
                 _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX));
                 _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateTranslation(_cameraPosition) * _viewMatrix;
-                _viewInvRotMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _angleY));
+                _viewInvRotMatrix = _viewInvRotYMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _angleY));
                 _viewInvRotMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-1 * _angleX)) * _viewInvRotMatrix;
             }
             GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref _viewMatrix);
@@ -884,11 +903,11 @@ namespace MphRead
                 {
                     if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
                     {
-                        GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
+                        GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
                         RenderDisplayVolume(kvp.Value);
                         if (_volumeEdges)
                         {
-                            GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Line);
+                            GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Line);
                             RenderDisplayVolume(kvp.Value);
                         }
                     }
@@ -995,16 +1014,19 @@ namespace MphRead
         {
             Model model = item.Model;
             _modelMatrix = model.ExtraTransform;
-            if (item.Node.Billboard)
+            if (item.Node.BillboardMode == BillboardMode.Sphere)
             {
                 _modelMatrix = _viewInvRotMatrix * _modelMatrix.ClearRotation();
+            }
+            else if (item.Node.BillboardMode == BillboardMode.Cylinder)
+            {
+                _modelMatrix = _viewInvRotYMatrix * _modelMatrix.ClearRotation();
             }
             UseRoomLights();
             if (model.UseLightOverride)
             {
-                // todo: could add a height offset to really match the player position vs. the camera
-                Vector3 player = _cameraPosition * -1;
-                var vector1 = new Vector3(0, 1, 0); // Octolith's up vector
+                Vector3 player = _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1);
+                var vector1 = new Vector3(0, 1, 0);
                 Vector3 vector2 = new Vector3(player.X - model.Position.X, 0, player.Z - model.Position.Z).Normalized();
                 Matrix3 lightTransform = SceneSetup.GetTransformMatrix(vector2, vector1);
                 Vector3 lightVector = (Metadata.OctolithLight1Vector * lightTransform).Normalized();
@@ -1158,8 +1180,8 @@ namespace MphRead
             }
             GL.PolygonMode(MaterialFace.FrontAndBack,
                 _wireframe || material.Wireframe != 0
-                ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
-                : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
+                ? OpenTK.Graphics.OpenGL.PolygonMode.Line
+                : OpenTK.Graphics.OpenGL.PolygonMode.Fill);
             GL.CallList(mesh.ListId);
         }
 
@@ -1249,7 +1271,11 @@ namespace MphRead
                         // the nodeTransform * currentTextureMatrix multiplication is between two 4x3 into a 4x4,
                         // but only reads/writes the upper-left 3x3 of all three matrices
                         // todo: billboard node transforms need to work as they do in-game
-                        Matrix4 product = node.Transform.Keep3x3();
+                        Matrix4 product = node.Animation.Keep3x3();
+                        if (model.ExtraTexgenTransform)
+                        {
+                            product = model.ExtraTransform * product;
+                        }
                         // todo: this may not be exactly equivalent to the game checking the node animation pointer
                         // note: in-game, this also uses the some_flag CModel field or constant 0,
                         // but none of the models with normal texgen seem to set bit 0 of that flag, so we can ignore it
@@ -2293,15 +2319,17 @@ namespace MphRead
             else if (_showVolumes == 3 || _showVolumes == 4)
             {
                 _targetTypes.Add(EntityType.TriggerVolume);
+                _targetTypes.Add(EntityType.FhTriggerVolume);
             }
             else if (_showVolumes == 5 || _showVolumes == 6)
             {
                 _targetTypes.Add(EntityType.AreaVolume);
+                _targetTypes.Add(EntityType.FhAreaVolume);
             }
             else if (_showVolumes == 7)
             {
-                _targetTypes.Add(EntityType.CameraPosition);
-                _targetTypes.Add(EntityType.FhCameraPosition);
+                _targetTypes.Add(EntityType.MorphCamera);
+                _targetTypes.Add(EntityType.FhMorphCamera);
             }
             else if (_showVolumes == 8)
             {
@@ -2519,7 +2547,8 @@ namespace MphRead
                 header = "No room loaded";
             }
             await Output.Write(header, guid);
-            await Output.Write($"Camera ({_cameraPosition.X * -1}, {_cameraPosition.Y * -1}, {_cameraPosition.Z * -1})", guid);
+            Vector3 cam = _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1);
+            await Output.Write($"Camera ({cam.X}, {cam.Y}, {cam.Z})", guid);
             await Output.Write(guid);
             await Output.Write($"Model: {model.Name} [{model.SceneId}] {(model.Visible ? "On " : "Off")} - " +
                 $"Color {model.CurrentRecolor} / {model.Recolors.Count - 1}", guid);
@@ -2550,7 +2579,9 @@ namespace MphRead
                 else if (model.Entity is Entity<AreaVolumeEntityData> area)
                 {
                     type += Environment.NewLine + $"Entry: {area.Data.InsideEvent}";
+                    type += $", Param1: {area.Data.InsideEventParam1}, Param2: {area.Data.InsideEventParam1}";
                     type += Environment.NewLine + $" Exit: {area.Data.ExitEvent}";
+                    type += $", Param1: {area.Data.ExitEventParam1}, Param2: {area.Data.ExitEventParam2}";
                     if (TryGetByEntityId(area.Data.ParentId, out Model? parent))
                     {
                         type += Environment.NewLine + $"Target: {parent.Entity?.Type} ({area.Data.ParentId})";
@@ -2560,11 +2591,23 @@ namespace MphRead
                         type += Environment.NewLine + "Target: None";
                     }
                 }
+                else if (model.Entity is Entity<FhAreaVolumeEntityData> fhArea)
+                {
+                    type += Environment.NewLine + $"Entry: {fhArea.Data.InsideEvent}";
+                    type += $", Param1: {fhArea.Data.InsideParam1}, Param2: 0";
+                    type += Environment.NewLine + $" Exit: {fhArea.Data.ExitEvent}";
+                    type += $", Param1: {fhArea.Data.ExitParam1}, Param2: 0";
+                    type += Environment.NewLine + "Target: None";
+                }
                 else if (model.Entity is Entity<TriggerVolumeEntityData> trigger)
                 {
                     type += $" ({trigger.Data.Type})";
+                    if (trigger.Data.Type == TriggerType.Threshold)
+                    {
+                        type += $" x{trigger.Data.TriggerThreshold}";
+                    }
                     type += Environment.NewLine + $"Parent: {trigger.Data.ParentEvent}";
-                    if (TryGetByEntityId(trigger.Data.ParentId, out Model? parent))
+                    if (trigger.Data.ParentEvent != Message.None && TryGetByEntityId(trigger.Data.ParentId, out Model? parent))
                     {
                         type += $", Target: {parent.Entity?.Type} ({trigger.Data.ParentId})";
                     }
@@ -2572,8 +2615,9 @@ namespace MphRead
                     {
                         type += ", Target: None";
                     }
+                    type += $", Param1: {trigger.Data.ParentEventParam1}, Param2: {trigger.Data.ParentEventParam2}";
                     type += Environment.NewLine + $" Child: {trigger.Data.ChildEvent}";
-                    if (TryGetByEntityId(trigger.Data.ChildId, out Model? child))
+                    if (trigger.Data.ChildEvent != Message.None && TryGetByEntityId(trigger.Data.ChildId, out Model? child))
                     {
                         type += $", Target: {child.Entity?.Type} ({trigger.Data.ChildId})";
                     }
@@ -2581,6 +2625,35 @@ namespace MphRead
                     {
                         type += ", Target: None";
                     }
+                    type += $", Param1: {trigger.Data.ChildEventParam1}, Param2: {trigger.Data.ChildEventParam2}";
+                }
+                else if (model.Entity is Entity<FhTriggerVolumeEntityData> fhTrigger)
+                {
+                    type += $" ({fhTrigger.Data.Subtype})";
+                    if (fhTrigger.Data.Subtype == 3)
+                    {
+                        type += $" x{fhTrigger.Data.Threshold}";
+                    }
+                    type += Environment.NewLine + $"Parent: {fhTrigger.Data.ParentEvent}";
+                    if (fhTrigger.Data.ParentEvent != FhMessage.None && TryGetByEntityId(fhTrigger.Data.ParentId, out Model? parent))
+                    {
+                        type += $", Target: {parent.Entity?.Type} ({fhTrigger.Data.ParentId})";
+                    }
+                    else
+                    {
+                        type += ", Target: None";
+                    }
+                    type += $", Param1: {fhTrigger.Data.ParentParam1}, Param2: 0";
+                    type += Environment.NewLine + $" Child: {fhTrigger.Data.ChildEvent}";
+                    if (fhTrigger.Data.ChildEvent != FhMessage.None && TryGetByEntityId(fhTrigger.Data.ChildId, out Model? child))
+                    {
+                        type += $", Target: {child.Entity?.Type} ({fhTrigger.Data.ChildId})";
+                    }
+                    else
+                    {
+                        type += ", Target: None";
+                    }
+                    type += $", Param1: {fhTrigger.Data.ChildParam1}, Param2: 0";
                 }
             }
             await Output.Write(type, guid);
@@ -2618,7 +2691,7 @@ namespace MphRead
                 mesh += $" ({meshIds.First()} - {meshIds.Last()})";
             }
             string enabled = node.Enabled ? (SelectedModel.NodeParentsEnabled(node) ? "On " : "On*") : "Off";
-            string billboard = node.Billboard ? " - Billboard" : "";
+            string billboard = node.BillboardMode != BillboardMode.None ? $" - {node.BillboardMode} Billboard" : "";
             await Output.Write($"Node: {node.Name} [{_selectedNodeId}] {enabled}{mesh}{billboard}", guid);
             await Output.Write($"Parent {FormatNode(node.ParentIndex)}", guid);
             await Output.Write($" Child {FormatNode(node.ChildIndex)}", guid);

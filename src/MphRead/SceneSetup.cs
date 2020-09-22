@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using OpenToolkit.Mathematics;
+using OpenTK.Mathematics;
 
 namespace MphRead
 {
@@ -308,14 +308,12 @@ namespace MphRead
                         models.Add(LoadObject(objectEntity));
                     }
                 }
-                else if (entity.Type == EntityType.PlayerSpawn)
+                else if (entity.Type == EntityType.PlayerSpawn || entity.Type == EntityType.FhPlayerSpawn)
                 {
                     // todo: compute model matrices for placeholders to show e.g. player spawn angle
                     models.Add(LoadEntityPlaceholder((Entity<PlayerSpawnEntityData>)entity));
-                }
-                else if (entity.Type == EntityType.FhPlayerSpawn)
-                {
-                    models.Add(LoadEntityPlaceholder((Entity<FhPlayerSpawnEntityData>)entity));
+                    var ent = (Entity<PlayerSpawnEntityData>)entity;
+                    Console.WriteLine($"{ent.NodeName}, {ent.Position}, {ent.LayerMask}, {ent.EntityId}, {ent.Data.Active}, {ent.Data.Initial}, {ent.Data.TeamIndex}");
                 }
                 else if (entity.Type == EntityType.Door)
                 {
@@ -345,17 +343,17 @@ namespace MphRead
                 {
                     models.Add(LoadEntityPlaceholder((Entity<TriggerVolumeEntityData>)entity));
                 }
-                else if (entity.Type == EntityType.FhUnknown9)
+                else if (entity.Type == EntityType.FhTriggerVolume)
                 {
-                    models.Add(LoadEntityPlaceholder((Entity<FhUnknown9EntityData>)entity));
+                    models.Add(LoadEntityPlaceholder((Entity<FhTriggerVolumeEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.AreaVolume)
                 {
                     models.Add(LoadEntityPlaceholder((Entity<AreaVolumeEntityData>)entity));
                 }
-                else if (entity.Type == EntityType.FhUnknown10)
+                else if (entity.Type == EntityType.FhAreaVolume)
                 {
-                    models.Add(LoadEntityPlaceholder((Entity<FhUnknown10EntityData>)entity));
+                    models.Add(LoadEntityPlaceholder((Entity<FhAreaVolumeEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.JumpPad)
                 {
@@ -368,21 +366,17 @@ namespace MphRead
                 {
                     models.AddRange(LoadJumpPad((Entity<FhJumpPadEntityData>)entity));
                 }
-                else if (entity.Type == EntityType.PointModule)
+                else if (entity.Type == EntityType.PointModule || entity.Type == EntityType.FhPointModule)
                 {
                     models.Add(LoadPointModule((Entity<PointModuleEntityData>)entity));
                 }
-                else if (entity.Type == EntityType.FhPointModule)
+                else if (entity.Type == EntityType.MorphCamera)
                 {
-                    models.Add(LoadPointModule((Entity<FhPointModuleEntityData>)entity));
+                    models.Add(LoadEntityPlaceholder((Entity<MorphCameraEntityData>)entity));
                 }
-                else if (entity.Type == EntityType.CameraPosition)
+                else if (entity.Type == EntityType.FhMorphCamera)
                 {
-                    models.Add(LoadEntityPlaceholder((Entity<CameraPositionEntityData>)entity));
-                }
-                else if (entity.Type == EntityType.FhCameraPosition)
-                {
-                    models.Add(LoadEntityPlaceholder((Entity<FhCameraPositionEntityData>)entity));
+                    models.Add(LoadEntityPlaceholder((Entity<FhMorphCameraEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.OctolithFlag)
                 {
@@ -626,7 +620,9 @@ namespace MphRead
             FhItemEntityData data = entity.Data;
             string name = Metadata.FhItems[(int)data.ModelId];
             Model model = Read.GetModelByName(name, firstHunt: true);
-            model.Position = data.Header.Position.ToFloatVector();
+            // note: the actual height at creation is 1.0f greater than the spawner's,
+            // but 0.5f is subtracted when drawing (after the floating calculation)
+            model.Position = data.Header.Position.ToFloatVector().AddY(0.5f);
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Item;
             model.Entity = entity;
@@ -730,9 +726,10 @@ namespace MphRead
             return models;
         }
 
-        private static Model LoadPointModule(Entity entity)
+        private static Model LoadPointModule(Entity<PointModuleEntityData> entity)
         {
             // todo: not all of these are visible at once -- some may not be visible ever?
+            // --> but it's not simply using the Active property
             Model model = Read.GetModelByName("pick_morphball", firstHunt: true);
             model.Position = entity.Position;
             ComputeNodeMatrices(model, index: 0);
@@ -766,11 +763,10 @@ namespace MphRead
             return model;
         }
 
-        // todo: confirm that only the normal door is used
         private static Model LoadDoor(Entity<FhDoorEntityData> entity)
         {
             FhDoorEntityData data = entity.Data;
-            Model model = Read.GetModelByName("door", firstHunt: true);
+            Model model = Read.GetModelByName(Metadata.FhDoors[(int)data.ModelId], firstHunt: true);
             model.Position = data.Header.Position.ToFloatVector();
             ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
@@ -862,14 +858,14 @@ namespace MphRead
             { EntityType.Enemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.FhEnemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.TriggerVolume, new ColorRgb(0xFF, 0x8C, 0x00) },
-            { EntityType.FhUnknown9, new ColorRgb(0xFF, 0x8C, 0x00) },
+            { EntityType.FhTriggerVolume, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.AreaVolume, new ColorRgb(0xFF, 0xFF, 0x00) },
-            { EntityType.FhUnknown10, new ColorRgb(0xFF, 0xFF, 0x00) },
+            { EntityType.FhAreaVolume, new ColorRgb(0xFF, 0xFF, 0x00) },
             // "permanent" placeholders
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.FhPlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
-            { EntityType.CameraPosition, new ColorRgb(0x00, 0xFF, 0x00) },
-            { EntityType.FhCameraPosition, new ColorRgb(0x00, 0xFF, 0x00) },
+            { EntityType.MorphCamera, new ColorRgb(0x00, 0xFF, 0x00) },
+            { EntityType.FhMorphCamera, new ColorRgb(0x00, 0xFF, 0x00) },
             { EntityType.Teleporter, new ColorRgb(0xFF, 0xFF, 0xFF) }, // used for invisible teleporters
             { EntityType.LightSource, new ColorRgb(0xFF, 0xDE, 0xAD) },
             { EntityType.CameraSequence, new ColorRgb(0xFF, 0x69, 0xB4) }

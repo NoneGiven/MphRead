@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using OpenToolkit.Mathematics;
+using OpenTK.Mathematics;
 
 namespace MphRead
 {
@@ -201,6 +201,11 @@ namespace MphRead
             {
                 Flags |= 1;
             }
+            // unlike Morph Ball, Dialanche applies its rotation to the root node transform
+            if (Name == "SpireAlt_lod0")
+            {
+                ExtraTexgenTransform = true;
+            }
         }
 
         public IEnumerable<ColorRgba> GetPixels(int textureId, int paletteId)
@@ -358,6 +363,7 @@ namespace MphRead
         }
 
         public Matrix4 ExtraTransform { get; private set; } = Matrix4.Identity;
+        public bool ExtraTexgenTransform { get; }
 
         public void Process(double elapsedTime, long frameCount)
         {
@@ -372,11 +378,15 @@ namespace MphRead
             if (Rotating)
             {
                 Spin = (float)(Spin + elapsedTime * 360 * SpinSpeed) % 360;
-                Matrix4 transform = SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
-                    MathHelper.DegreesToRadians(SpinAxis.X * Spin),
-                    MathHelper.DegreesToRadians(SpinAxis.Y * Spin),
-                    MathHelper.DegreesToRadians(SpinAxis.Z * Spin)),
-                    Vector3.Zero);
+                Matrix4 transform = Matrix4.Identity;
+                if (Animations.NodeGroupId == -1)
+                {
+                    transform = SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
+                        MathHelper.DegreesToRadians(SpinAxis.X * Spin),
+                        MathHelper.DegreesToRadians(SpinAxis.Y * Spin),
+                        MathHelper.DegreesToRadians(SpinAxis.Z * Spin)),
+                        Vector3.Zero);
+                }
                 if (Floating)
                 {
                     transform.M42 += (MathF.Sin(Spin / 180 * MathF.PI) + 1) / 8f;
@@ -695,7 +705,7 @@ namespace MphRead
         public Fixed CullRadius { get; }
         public Vector3 Vector1 { get; }
         public Vector3 Vector2 { get; }
-        public bool Billboard { get; }
+        public BillboardMode BillboardMode { get; }
         public Matrix4 Transform { get; set; } = Matrix4.Identity;
         public Matrix4 Animation { get; set; } = Matrix4.Identity;
 
@@ -729,8 +739,7 @@ namespace MphRead
             CullRadius = raw.CullRadius;
             Vector1 = raw.Vector1.ToFloatVector();
             Vector2 = raw.Vector2.ToFloatVector();
-            // todo: implement billboard = 2 (cylindrical)
-            Billboard = raw.Billboard == 1;
+            BillboardMode = raw.BillboardMode;
             IsRoomNode = Name.StartsWith("rm");
         }
     }
@@ -1126,6 +1135,7 @@ namespace MphRead
             Data = data;
         }
 
+        // sktodo: item and enemy spawners
         public override ushort GetParentId()
         {
             if (Data is TriggerVolumeEntityData triggerData)
@@ -1135,6 +1145,18 @@ namespace MphRead
             if (Data is AreaVolumeEntityData areaData)
             {
                 return areaData.ParentId;
+            }
+            if (Data is FhTriggerVolumeEntityData fhTiggerData)
+            {
+                return fhTiggerData.ParentId;
+            }
+            if (Data is PointModuleEntityData pointModule)
+            {
+                if (pointModule.PrevId == pointModule.Header.EntityId)
+                {
+                    return UInt16.MaxValue;
+                }
+                return pointModule.PrevId;
             }
             return base.GetParentId();
         }
@@ -1148,6 +1170,18 @@ namespace MphRead
             if (Data is AreaVolumeEntityData areaData)
             {
                 return areaData.ChildId;
+            }
+            if (Data is FhTriggerVolumeEntityData fhTiggerData)
+            {
+                return fhTiggerData.ChildId;
+            }
+            if (Data is PointModuleEntityData pointModule)
+            {
+                if (pointModule.NextId == pointModule.Header.EntityId)
+                {
+                    return UInt16.MaxValue;
+                }
+                return pointModule.NextId;
             }
             return base.GetChildId();
         }
@@ -1190,14 +1224,21 @@ namespace MphRead
 
         public CollisionVolume(FhRawCollisionVolume raw)
         {
-            // todo: confirm FH collision union for cylinder and sphere
             if (raw.Type == FhVolumeType.Box)
             {
                 Type = VolumeType.Box;
             }
+            else if (raw.Type == FhVolumeType.Sphere)
+            {
+                Type = VolumeType.Sphere;
+            }
+            else if (raw.Type == FhVolumeType.Cylinder)
+            {
+                Type = VolumeType.Cylinder;
+            }
             else
             {
-                throw new ProgramException("Invalid volume type.");
+                throw new ProgramException($"Invalid volume type {raw.Type}.");
             }
             BoxVector1 = raw.BoxVector1.ToFloatVector();
             BoxVector2 = raw.BoxVector2.ToFloatVector();
@@ -1280,13 +1321,13 @@ namespace MphRead
 
     public class MorphCameraDisplay : DisplayVolume
     {
-        public MorphCameraDisplay(Entity<CameraPositionEntityData> entity)
+        public MorphCameraDisplay(Entity<MorphCameraEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
             Color1 = new Vector3(1, 1, 0);
         }
 
-        public MorphCameraDisplay(Entity<FhCameraPositionEntityData> entity)
+        public MorphCameraDisplay(Entity<FhMorphCameraEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
             Color1 = new Vector3(1, 1, 0);
@@ -1314,6 +1355,15 @@ namespace MphRead
             Vector = entity.Data.BeamVector.ToFloatVector();
             Speed = entity.Data.Speed.FloatValue;
             Active = entity.Data.Active != 0;
+            Color1 = new Vector3(0, 1, 0);
+        }
+
+        public JumpPadDisplay(Entity<FhJumpPadEntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.ActiveVolume)
+        {
+            Vector = entity.Data.BeamVector.ToFloatVector();
+            Speed = entity.Data.Speed.FloatValue;
+            Active = true;
             Color1 = new Vector3(0, 1, 0);
         }
 
@@ -1355,6 +1405,13 @@ namespace MphRead
             Color2 = Metadata.GetEventColor(entity.Data.ChildEvent);
         }
 
+        public TriggerVolumeDisplay(Entity<FhTriggerVolumeEntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.ActiveVolume)
+        {
+            Color1 = Metadata.GetEventColor(entity.Data.ParentEvent);
+            Color2 = Metadata.GetEventColor(entity.Data.ChildEvent);
+        }
+
         public override Vector3? GetColor(int index)
         {
             if (index == 3)
@@ -1371,18 +1428,18 @@ namespace MphRead
 
     public class AreaVolumeDisplay : DisplayVolume
     {
-        public Message InsideEvent { get; }
-        public Message ExitEvent { get; }
-        public uint Flags { get; }
-
         public AreaVolumeDisplay(Entity<AreaVolumeEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.Volume)
         {
-            InsideEvent = entity.Data.InsideEvent;
-            ExitEvent = entity.Data.ExitEvent;
-            Flags = entity.Data.Flags;
-            Color1 = Metadata.GetEventColor(InsideEvent);
-            Color2 = Metadata.GetEventColor(ExitEvent);
+            Color1 = Metadata.GetEventColor(entity.Data.InsideEvent);
+            Color2 = Metadata.GetEventColor(entity.Data.ExitEvent);
+        }
+
+        public AreaVolumeDisplay(Entity<FhAreaVolumeEntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.ActiveVolume)
+        {
+            Color1 = Metadata.GetEventColor(entity.Data.InsideEvent);
+            Color2 = Metadata.GetEventColor(entity.Data.ExitEvent);
         }
 
         public override Vector3? GetColor(int index)

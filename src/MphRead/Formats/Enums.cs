@@ -13,7 +13,7 @@ namespace MphRead
         AreaVolume = 8,
         JumpPad = 9,
         PointModule = 10, // FH leftovers only
-        CameraPosition = 11,
+        MorphCamera = 11,
         OctolithFlag = 12,
         FlagBase = 13,
         Teleporter = 14,
@@ -31,16 +31,25 @@ namespace MphRead
         BeamProjectile = 26,
         // 27 = entity list header
         // First Hunt
+        FhUnknown0 = 100,
         FhPlayerSpawn = 101,
+        FhUnknown2 = 102,
         FhDoor = 103,
         FhItem = 104,
+        FhItemInstance = 105,
         FhEnemy = 106,
-        FhUnknown9 = 109,
-        FhUnknown10 = 110,
+        FhBeamEffect = 107,
+        FhBomb = 108,
+        FhTriggerVolume = 109,
+        FhAreaVolume = 110,
         FhPlatform = 111,
         FhJumpPad = 112,
         FhPointModule = 113,
-        FhCameraPosition = 114
+        FhMorphCamera = 114,
+        FhEnemyInstance = 115,
+        FhPlayer = 116
+        // 117 = missing?
+        // 118 = entity list header
     }
 
     public enum VolumeType : uint
@@ -52,10 +61,9 @@ namespace MphRead
 
     public enum FhVolumeType : uint
     {
-        Unknown0 = 0,
+        Sphere = 0,
         Box = 1,
-        Unknown2 = 2,
-        Unknown3 = 3
+        Cylinder = 2
     }
 
     public enum ModelType
@@ -67,6 +75,13 @@ namespace MphRead
         Placeholder,
         JumpPad,
         JumpPadBeam
+    }
+
+    public enum BillboardMode : byte
+    {
+        None = 0,
+        Sphere = 1,
+        Cylinder = 2
     }
 
     public enum PolygonMode : uint
@@ -173,6 +188,22 @@ namespace MphRead
         Unknown59 = 59,
         Unknown60 = 60,
         Unknown61 = 61 // also starts escape sequence?
+    }
+
+    public enum FhMessage : uint
+    {
+        None = 0,
+        Unknown5 = 5,
+        Destroyed = 6,
+        Damage = 7,
+        Unknown9 = 9,
+        Unknown15 = 15,
+        Unlock = 16,
+        SetActive = 17,
+        Complete = 18,
+        Unknown19 = 19,
+        Death = 20,
+        Unknown21 = 21
     }
 
     public enum Language

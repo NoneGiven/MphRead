@@ -5,7 +5,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using OpenToolkit.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL;
 
 namespace MphRead.Export
 {
@@ -16,7 +16,7 @@ namespace MphRead.Export
             using var bitmap = new Bitmap(width, height);
             var rectangle = new Rectangle(0, 0, width, height);
             BitmapData data = bitmap.LockBits(rectangle, ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-            GL.ReadPixels(0, 0, width, height, OpenToolkit.Graphics.OpenGL.PixelFormat.Bgr, PixelType.UnsignedByte, data.Scan0);
+            GL.ReadPixels(0, 0, width, height, OpenTK.Graphics.OpenGL.PixelFormat.Bgr, PixelType.UnsignedByte, data.Scan0);
             bitmap.UnlockBits(data);
             bitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
             string path = Path.Combine(Paths.Export, "_screenshots");
