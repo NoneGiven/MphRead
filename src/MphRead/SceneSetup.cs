@@ -620,7 +620,9 @@ namespace MphRead
             FhItemEntityData data = entity.Data;
             string name = Metadata.FhItems[(int)data.ModelId];
             Model model = Read.GetModelByName(name, firstHunt: true);
-            model.Position = data.Header.Position.ToFloatVector();
+            // note: the actual height at creation is 1.0f greater than the spawner's,
+            // but 0.5f is subtracted when drawing (after the floating calculation)
+            model.Position = data.Header.Position.ToFloatVector().AddY(0.5f);
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Item;
             model.Entity = entity;

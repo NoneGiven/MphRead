@@ -202,6 +202,21 @@ namespace MphRead
             return new Vector3(vector.X, vector.Y, z);
         }
 
+        public static Vector3 AddX(this Vector3 vector, float x)
+        {
+            return new Vector3(vector.X + x, vector.Y, vector.Z);
+        }
+
+        public static Vector3 AddY(this Vector3 vector, float y)
+        {
+            return new Vector3(vector.X, vector.Y + y, vector.Z);
+        }
+
+        public static Vector3 AddZ(this Vector3 vector, float z)
+        {
+            return new Vector3(vector.X, vector.Y, vector.Z + z);
+        }
+
         public static Matrix3 AsMatrix3(this Matrix4x3 matrix)
         {
             return new Matrix3(matrix.Row0, matrix.Row1, matrix.Row2);
