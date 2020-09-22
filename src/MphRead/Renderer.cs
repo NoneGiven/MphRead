@@ -185,7 +185,7 @@ namespace MphRead
                 }
                 else if (entity.Entity is Entity<FhTriggerVolumeEntityData> fhTrigger)
                 {
-                    if (fhTrigger.Data.VolumeId != 0)
+                    if (fhTrigger.Data.Subtype != 0)
                     {
                         _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(fhTrigger));
                     }
@@ -196,7 +196,7 @@ namespace MphRead
                 }
                 else if (entity.Entity is Entity<FhAreaVolumeEntityData> fhArea)
                 {
-                    if (fhArea.Data.VolumeId != 0)
+                    if (fhArea.Data.Subtype != 0)
                     {
                         _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(fhArea));
                     }
@@ -212,6 +212,10 @@ namespace MphRead
                 else if (entity.Entity is Entity<JumpPadEntityData> jumpPad)
                 {
                     _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(jumpPad));
+                }
+                else if (entity.Entity is Entity<FhJumpPadEntityData> fhJumpPad)
+                {
+                    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(fhJumpPad));
                 }
                 else if (entity.Entity is Entity<ObjectEntityData> obj)
                 {

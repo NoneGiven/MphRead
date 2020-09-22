@@ -1333,6 +1333,15 @@ namespace MphRead
             Color1 = new Vector3(0, 1, 0);
         }
 
+        public JumpPadDisplay(Entity<FhJumpPadEntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.ActiveVolume)
+        {
+            Vector = entity.Data.BeamVector.ToFloatVector();
+            Speed = entity.Data.Speed.FloatValue;
+            Active = true;
+            Color1 = new Vector3(0, 1, 0);
+        }
+
         public override Vector3? GetColor(int index)
         {
             if (index == 8)
@@ -1374,11 +1383,8 @@ namespace MphRead
         public TriggerVolumeDisplay(Entity<FhTriggerVolumeEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.ActiveVolume)
         {
-            // sktodo
-            Color1 = new Vector3(1, 0, 0);
-            Color2 = new Vector3(0, 0, 1);
-            //Color1 = Metadata.GetEventColor(entity.Data.ParentEvent);
-            //Color2 = Metadata.GetEventColor(entity.Data.ChildEvent);
+            Color1 = Metadata.GetEventColor(entity.Data.ParentEvent);
+            Color2 = Metadata.GetEventColor(entity.Data.ChildEvent);
         }
 
         public override Vector3? GetColor(int index)
@@ -1407,11 +1413,8 @@ namespace MphRead
         public AreaVolumeDisplay(Entity<FhAreaVolumeEntityData> entity)
             : base(entity.Data.Header.Position, entity.Data.ActiveVolume)
         {
-            // sktodo
-            Color1 = new Vector3(1, 0, 0);
-            Color2 = new Vector3(0, 0, 1);
-            //Color1 = Metadata.GetEventColor(entity.Data.InsideEvent);
-            //Color2 = Metadata.GetEventColor(entity.Data.ExitEvent);
+            Color1 = Metadata.GetEventColor(entity.Data.InsideEvent);
+            Color2 = Metadata.GetEventColor(entity.Data.ExitEvent);
         }
 
         public override Vector3? GetColor(int index)

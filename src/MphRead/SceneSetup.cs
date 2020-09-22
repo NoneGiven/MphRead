@@ -761,11 +761,10 @@ namespace MphRead
             return model;
         }
 
-        // todo: confirm that only the normal door is used
         private static Model LoadDoor(Entity<FhDoorEntityData> entity)
         {
             FhDoorEntityData data = entity.Data;
-            Model model = Read.GetModelByName("door", firstHunt: true);
+            Model model = Read.GetModelByName(Metadata.FhDoors[(int)data.ModelId], firstHunt: true);
             model.Position = data.Header.Position.ToFloatVector();
             ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);

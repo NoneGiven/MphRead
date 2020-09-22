@@ -31,16 +31,25 @@ namespace MphRead
         BeamProjectile = 26,
         // 27 = entity list header
         // First Hunt
+        FhUnknown0 = 100,
         FhPlayerSpawn = 101,
+        FhUnknown2 = 102,
         FhDoor = 103,
         FhItem = 104,
+        FhItemInstance = 105,
         FhEnemy = 106,
+        FhBeamEffect = 107,
+        FhBomb = 108,
         FhTriggerVolume = 109,
         FhAreaVolume = 110,
         FhPlatform = 111,
         FhJumpPad = 112,
         FhPointModule = 113,
-        FhMorphCamera = 114
+        FhMorphCamera = 114,
+        FhEnemyInstance = 115,
+        FhPlayer = 116
+        // 117 = missing?
+        // 118 = entity list header
     }
 
     public enum VolumeType : uint
@@ -179,6 +188,20 @@ namespace MphRead
         Unknown59 = 59,
         Unknown60 = 60,
         Unknown61 = 61 // also starts escape sequence?
+    }
+
+    public enum FhMessage : uint
+    {
+        None = 0,
+        Unknown5 = 5,
+        Damage = 7,
+        Unknown9 = 9,
+        Unknown15 = 15,
+        Unlock = 16,
+        SetActive = 17,
+        Unknown19 = 19,
+        Death = 20,
+        Unknown21 = 21
     }
 
     public enum Language

@@ -213,7 +213,7 @@ namespace MphRead
             }
             if (animation)
             {
-                AnimationPath = animationPath == null ? $@"{path}\{name}{addToAnim}{suffix}_Anim.bin" : animationPath;
+                AnimationPath = animationPath ?? $@"{path}\{name}{addToAnim}{suffix}_Anim.bin";
             }
             if (collision)
             {
@@ -551,6 +551,13 @@ namespace MphRead
             /* 3 */ new DoorMetadata("AlimbicThinDoor", "ThinDoorLock", 1.39990234f)
         };
 
+        public static readonly IReadOnlyList<string> FhDoors = new List<string>()
+        {
+            /* 0 */ "door",
+            /* 1 */ "door2",
+            /* 2 */ "door2_holo"
+        };
+
         // 0-7 are for beam doors, 8 is unused?, 9 is for regular doors
         // (only a few rooms use index 0, since the usual thing is to use index 9)
         public static readonly IReadOnlyList<int> DoorPalettes = new List<int>()
@@ -862,6 +869,32 @@ namespace MphRead
             if (eventId == Message.Unknown61) // sky blue
             {
                 return new Vector3(0.165f, 0.816f, 0.894f);
+            }
+            // unknown - white (no other IDs are used by trigger/area volumes)
+            return new Vector3(1, 1, 1);
+        }
+
+        public static Vector3 GetEventColor(FhMessage eventId)
+        {
+            if (eventId == FhMessage.None) // black
+            {
+                return new Vector3(0, 0, 0);
+            }
+            if (eventId == FhMessage.Unknown5) // green
+            {
+                return new Vector3(0, 1, 0);
+            }
+            if (eventId == FhMessage.Unlock) // navy blue
+            {
+                return new Vector3(0.094f, 0.094f, 0.557f);
+            }
+            if (eventId == FhMessage.SetActive) // purple
+            {
+                return new Vector3(0.615f, 0, 0.909f);
+            }
+            if (eventId == FhMessage.Death) // dark blue
+            {
+                return new Vector3(0f, 0f, 0.858f);
             }
             // unknown - white (no other IDs are used by trigger/area volumes)
             return new Vector3(1, 1, 1);
@@ -4626,11 +4659,12 @@ namespace MphRead
                         new Vector3(-300f, 300f, -300f),
                         multiplayer: true)
                 },
+                // todo: room ID 8 has the same files as MP1, but a few different parameters
                 // First Hunt
                 {
                     "FH_MP1",
                     new RoomMetadata(
-                        "FH_MP1",
+                        "Level MP1",
                         "Trooper Module",
                         @"_fh\mp1",
                         "mp1_Model.bin",
@@ -4659,7 +4693,7 @@ namespace MphRead
                 {
                     "FH_SURVIVOR",
                     new RoomMetadata(
-                        "FH_SURVIVOR",
+                        "Level SP Survivor",
                         "Survivor",
                         @"_fh\mp2",
                         "mp2_Model.bin",
@@ -4687,7 +4721,7 @@ namespace MphRead
                 {
                     "FH_MP2",
                     new RoomMetadata(
-                        "FH_MP2",
+                        "Level MP2",
                         "Assault Cradle",
                         @"_fh\mp2",
                         "mp2_Model.bin",
@@ -4716,7 +4750,7 @@ namespace MphRead
                 {
                     "FH_MP3",
                     new RoomMetadata(
-                        "FH_MP3",
+                        "Level MP3",
                         "Ancient Vestige",
                         @"_fh\mp3",
                         "mp3_Model.bin",
@@ -4745,7 +4779,7 @@ namespace MphRead
                 {
                     "FH_MP5",
                     new RoomMetadata(
-                        "FH_MP5",
+                        "Level MP5",
                         "Early Head Shot (First Hunt)",
                         @"_fh\mp5",
                         "mp5_Model.bin",
@@ -4774,7 +4808,7 @@ namespace MphRead
                 {
                     "FH_TEST",
                     new RoomMetadata(
-                        "FH_TEST",
+                        "Level TestLevel",
                         "Test Level (First Hunt)",
                         @"_fh\testLevel",
                         "testLevel_Model.bin",
@@ -4830,7 +4864,7 @@ namespace MphRead
                 {
                     "FH_MORPHBALL",
                     new RoomMetadata(
-                        "FH_MORPHBALL",
+                        "Level SP Morphball",
                         "Morph Ball",
                         @"_fh\e3Level",
                         "e3Level_Model.bin",
@@ -4858,7 +4892,7 @@ namespace MphRead
                 {
                     "FH_E3",
                     new RoomMetadata(
-                        "FH_E3",
+                        "E3 level",
                         "Stasis Bunker (First Hunt)",
                         @"_fh\e3Level",
                         "e3Level_Model.bin",

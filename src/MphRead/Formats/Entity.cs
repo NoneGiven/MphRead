@@ -165,10 +165,12 @@ namespace MphRead
     public readonly struct FhPlatformEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Field24;
+        public readonly uint NoPortal;
         public readonly uint Field28;
         public readonly uint Field2C;
-        public readonly uint Field30;
+        public readonly byte Field30;
+        public readonly byte Field31;
+        public readonly ushort Field32;
         public readonly uint Field34;
         public readonly uint Field38;
         public readonly uint Field3C;
@@ -210,10 +212,8 @@ namespace MphRead
         public readonly uint FieldCC;
         public readonly uint FieldD0;
         public readonly uint FieldD4;
-        public readonly uint FieldD8;
-        public readonly uint FieldDC;
-        public readonly uint FieldE0;
-        public readonly uint FieldE4;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
+        public readonly string PortalName;
     }
 
     // size: 152
@@ -270,12 +270,10 @@ namespace MphRead
     public readonly struct FhDoorEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly uint Field38;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
+        public readonly string RoomName;
+        public readonly uint Flags;
+        public readonly uint ModelId;
     }
 
     // size: 72
@@ -303,7 +301,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly uint ModelId;
-        public readonly uint Field28;
+        public readonly ushort SpawnLimit;
+        public readonly ushort CooldownTime;
         public readonly ushort Field2C;
     }
 
@@ -494,14 +493,17 @@ namespace MphRead
         public readonly uint FieldD8;
         public readonly uint FieldDC;
         public readonly uint FieldE0;
-        public readonly uint FieldE4;
-        public readonly uint FieldE8;
-        public readonly uint FieldEC;
-        public readonly uint FieldF0;
-        public readonly uint FieldF4;
-        public readonly uint FieldF8;
-        public readonly uint FieldFC;
-        public readonly uint Field100;
+        public readonly uint EnemyType;
+        public readonly byte FieldE8;
+        public readonly byte SpawnLimit;
+        public readonly byte SpawnCount;
+        public readonly byte FieldEB;
+        public readonly ushort Cooldown;
+        public readonly ushort FieldEE;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
+        public readonly string NodeName;
+        public readonly ushort ParentId;
+        public readonly ushort Field102;
         public readonly uint Field104;
     }
 
@@ -538,35 +540,38 @@ namespace MphRead
     public readonly struct FhTriggerVolumeEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint VolumeId; // 0 - none, 1/2/3 - box/sphere/cylinder
+        public readonly uint Subtype; // 0/1/2 - sphere/box/cylinder, 3 - threshold
         public readonly FhRawCollisionVolume Box;
         public readonly FhRawCollisionVolume Sphere;
         public readonly FhRawCollisionVolume Cylinder;
-        public readonly uint FieldE8;
-        public readonly uint FieldEC;
-        public readonly uint FieldF0;
-        public readonly uint FieldF4;
-        public readonly uint FieldF8;
-        public readonly uint FieldFC;
-        public readonly uint Field100;
-        public readonly uint Field104;
-        public readonly uint Field108;
+        public readonly ushort OneUse;
+        public readonly ushort Cooldown;
+        public readonly uint Flags;
+        public readonly uint Threshold;
+        public readonly ushort ParentId;
+        public readonly ushort PaddingF6;
+        public readonly FhMessage ParentEvent;
+        public readonly ushort ParentParam1;
+        public readonly ushort ChildId;
+        public readonly ushort Padding102;
+        public readonly FhMessage ChildEvent;
+        public readonly uint ChildParam1;
 
         public FhRawCollisionVolume ActiveVolume
         {
             get
             {
-                if (VolumeId == 1)
+                if (Subtype == 0)
+                {
+                    return Sphere;
+                }
+                if (Subtype == 1)
                 {
                     return Box;
                 }
-                if (VolumeId == 2)
+                if (Subtype == 2)
                 {
                     return Cylinder;
-                }
-                if (VolumeId == 3)
-                {
-                    return Sphere;
                 }
                 return default;
             }
@@ -602,32 +607,29 @@ namespace MphRead
     public readonly struct FhAreaVolumeEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint VolumeId; // 0 - none, 1/2/3 - box/sphere/cylinder
+        public readonly uint Subtype; // 0 - sphere, 1/2 - box
         public readonly FhRawCollisionVolume Box;
         public readonly FhRawCollisionVolume Sphere;
         public readonly FhRawCollisionVolume Cylinder;
-        public readonly uint FieldE8;
+        public readonly FhMessage InsideEvent;
         public readonly uint FieldEC;
-        public readonly uint FieldF0;
+        public readonly FhMessage ExitEvent;
         public readonly uint FieldF4;
-        public readonly uint FieldF8;
-        public readonly uint FieldFC;
+        public readonly ushort Cooldown;
+        public readonly ushort PaddingFA;
+        public readonly uint Flags;
 
         public FhRawCollisionVolume ActiveVolume
         {
             get
             {
-                if (VolumeId == 1)
-                {
-                    return Box;
-                }
-                if (VolumeId == 2)
-                {
-                    return Cylinder;
-                }
-                if (VolumeId == 3)
+                if (Subtype == 0)
                 {
                     return Sphere;
+                }
+                if (Subtype == 1 || Subtype == 2)
+                {
+                    return Box;
                 }
                 return default;
             }
@@ -657,62 +659,37 @@ namespace MphRead
     public readonly struct FhJumpPadEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
-        public readonly uint Field58;
-        public readonly uint Field5C;
-        public readonly uint Field60;
-        public readonly uint Field64;
-        public readonly uint Field68;
-        public readonly uint Field6C;
-        public readonly uint Field70;
-        public readonly uint Field74;
-        public readonly uint Field78;
-        public readonly uint Field7C;
-        public readonly uint Field80;
-        public readonly uint Field84;
-        public readonly uint Field88;
-        public readonly uint Field8C;
-        public readonly uint Field90;
-        public readonly uint Field94;
-        public readonly uint Field98;
-        public readonly uint Field9C;
-        public readonly uint FieldA0;
-        public readonly uint FieldA4;
-        public readonly uint FieldA8;
-        public readonly uint FieldAC;
-        public readonly uint FieldB0;
-        public readonly uint FieldB4;
-        public readonly uint FieldB8;
-        public readonly uint FieldBC;
-        public readonly uint FieldC0;
-        public readonly uint FieldC4;
-        public readonly uint FieldC8;
-        public readonly uint FieldCC;
-        public readonly uint FieldD0;
-        public readonly uint FieldD4;
-        public readonly uint FieldD8;
-        public readonly uint FieldDC;
-        public readonly uint FieldE0;
-        public readonly uint FieldE4;
-        public readonly uint FieldE8;
+        public readonly uint VolumeId;
+        public readonly FhRawCollisionVolume Box;
+        public readonly FhRawCollisionVolume Sphere;
+        public readonly FhRawCollisionVolume Cylinder;
+        public readonly uint CooldownTime;
         public readonly Vector3Fx BeamVector;
         public readonly Fixed Speed;
         public readonly uint FieldFC;
         public readonly uint ModelId;
         public readonly uint BeamType;
-        public readonly uint Field108;
+        public readonly uint Flags;
+
+        public FhRawCollisionVolume ActiveVolume
+        {
+            get
+            {
+                if (VolumeId == 0)
+                {
+                    return Sphere;
+                }
+                if (VolumeId == 1)
+                {
+                    return Box;
+                }
+                if (VolumeId == 2)
+                {
+                    return Cylinder;
+                }
+                return default;
+            }
+        }
     }
 
     // size: 45
@@ -720,8 +697,8 @@ namespace MphRead
     public readonly struct PointModuleEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly ushort Field24; // previous/next?
-        public readonly ushort Field26;
+        public readonly ushort PrevId;
+        public readonly ushort NextId;
         public readonly byte Active; // boolean
     }
 
