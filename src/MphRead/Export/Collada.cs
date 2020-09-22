@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using OpenToolkit.Mathematics;
+using OpenTK.Mathematics;
 
 namespace MphRead.Export
 {

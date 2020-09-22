@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using OpenToolkit.Mathematics;
+using OpenTK.Mathematics;
 
 namespace MphRead
 {

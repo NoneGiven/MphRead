@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using MphRead.Archive;
 using MphRead.Export;
-using OpenToolkit.Mathematics;
+using OpenTK.Mathematics;
 
 namespace MphRead
 {

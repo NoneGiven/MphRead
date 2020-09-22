@@ -6,11 +6,11 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using MphRead.Export;
-using OpenToolkit.Graphics.OpenGL;
-using OpenToolkit.Mathematics;
-using OpenToolkit.Windowing.Common;
-using OpenToolkit.Windowing.Common.Input;
-using OpenToolkit.Windowing.Desktop;
+using OpenTK.Graphics.OpenGL;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Common.Input;
+using OpenTK.Windowing.Desktop;
 
 namespace MphRead
 {
@@ -256,7 +256,6 @@ namespace MphRead
 
         protected override async void OnLoad()
         {
-            MakeCurrent();
             await Output.Begin();
             GL.ClearColor(_clearColor);
 
@@ -904,11 +903,11 @@ namespace MphRead
                 {
                     if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
                     {
-                        GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
+                        GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
                         RenderDisplayVolume(kvp.Value);
                         if (_volumeEdges)
                         {
-                            GL.PolygonMode(MaterialFace.FrontAndBack, OpenToolkit.Graphics.OpenGL.PolygonMode.Line);
+                            GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Line);
                             RenderDisplayVolume(kvp.Value);
                         }
                     }
@@ -1181,8 +1180,8 @@ namespace MphRead
             }
             GL.PolygonMode(MaterialFace.FrontAndBack,
                 _wireframe || material.Wireframe != 0
-                ? OpenToolkit.Graphics.OpenGL.PolygonMode.Line
-                : OpenToolkit.Graphics.OpenGL.PolygonMode.Fill);
+                ? OpenTK.Graphics.OpenGL.PolygonMode.Line
+                : OpenTK.Graphics.OpenGL.PolygonMode.Fill);
             GL.CallList(mesh.ListId);
         }
 
