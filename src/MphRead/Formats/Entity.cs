@@ -551,7 +551,7 @@ namespace MphRead
         public readonly ushort ParentId;
         public readonly ushort PaddingF6;
         public readonly FhMessage ParentEvent;
-        public readonly ushort ParentParam1;
+        public readonly uint ParentParam1;
         public readonly ushort ChildId;
         public readonly ushort Padding102;
         public readonly FhMessage ChildEvent;
@@ -612,9 +612,9 @@ namespace MphRead
         public readonly FhRawCollisionVolume Sphere;
         public readonly FhRawCollisionVolume Cylinder;
         public readonly FhMessage InsideEvent;
-        public readonly uint FieldEC;
+        public readonly uint InsideParam1;
         public readonly FhMessage ExitEvent;
-        public readonly uint FieldF4;
+        public readonly uint ExitParam1;
         public readonly ushort Cooldown;
         public readonly ushort PaddingFA;
         public readonly uint Flags;

@@ -2592,6 +2592,14 @@ namespace MphRead
                         type += Environment.NewLine + "Target: None";
                     }
                 }
+                else if (model.Entity is Entity<FhAreaVolumeEntityData> fhArea)
+                {
+                    type += Environment.NewLine + $"Entry: {fhArea.Data.InsideEvent}";
+                    type += $", Param1: {fhArea.Data.InsideParam1}, Param2: 0";
+                    type += Environment.NewLine + $" Exit: {fhArea.Data.ExitEvent}";
+                    type += $", Param1: {fhArea.Data.ExitParam1}, Param2: 0";
+                    type += Environment.NewLine + "Target: None";
+                }
                 else if (model.Entity is Entity<TriggerVolumeEntityData> trigger)
                 {
                     type += $" ({trigger.Data.Type})";
@@ -2600,7 +2608,7 @@ namespace MphRead
                         type += $" x{trigger.Data.TriggerThreshold}";
                     }
                     type += Environment.NewLine + $"Parent: {trigger.Data.ParentEvent}";
-                    if (TryGetByEntityId(trigger.Data.ParentId, out Model? parent))
+                    if (trigger.Data.ParentEvent != Message.None && TryGetByEntityId(trigger.Data.ParentId, out Model? parent))
                     {
                         type += $", Target: {parent.Entity?.Type} ({trigger.Data.ParentId})";
                     }
@@ -2610,7 +2618,7 @@ namespace MphRead
                     }
                     type += $", Param1: {trigger.Data.ParentEventParam1}, Param2: {trigger.Data.ParentEventParam2}";
                     type += Environment.NewLine + $" Child: {trigger.Data.ChildEvent}";
-                    if (TryGetByEntityId(trigger.Data.ChildId, out Model? child))
+                    if (trigger.Data.ChildEvent != Message.None && TryGetByEntityId(trigger.Data.ChildId, out Model? child))
                     {
                         type += $", Target: {child.Entity?.Type} ({trigger.Data.ChildId})";
                     }
@@ -2619,6 +2627,34 @@ namespace MphRead
                         type += ", Target: None";
                     }
                     type += $", Param1: {trigger.Data.ChildEventParam1}, Param2: {trigger.Data.ChildEventParam2}";
+                }
+                else if (model.Entity is Entity<FhTriggerVolumeEntityData> fhTrigger)
+                {
+                    type += $" ({fhTrigger.Data.Subtype})";
+                    if (fhTrigger.Data.Subtype == 3)
+                    {
+                        type += $" x{fhTrigger.Data.Threshold}";
+                    }
+                    type += Environment.NewLine + $"Parent: {fhTrigger.Data.ParentEvent}";
+                    if (fhTrigger.Data.ParentEvent != FhMessage.None && TryGetByEntityId(fhTrigger.Data.ParentId, out Model? parent))
+                    {
+                        type += $", Target: {parent.Entity?.Type} ({fhTrigger.Data.ParentId})";
+                    }
+                    else
+                    {
+                        type += ", Target: None";
+                    }
+                    type += $", Param1: {fhTrigger.Data.ParentParam1}, Param2: 0";
+                    type += Environment.NewLine + $" Child: {fhTrigger.Data.ChildEvent}";
+                    if (fhTrigger.Data.ChildEvent != FhMessage.None && TryGetByEntityId(fhTrigger.Data.ChildId, out Model? child))
+                    {
+                        type += $", Target: {child.Entity?.Type} ({fhTrigger.Data.ChildId})";
+                    }
+                    else
+                    {
+                        type += ", Target: None";
+                    }
+                    type += $", Param1: {fhTrigger.Data.ChildParam1}, Param2: 0";
                 }
             }
             await Output.Write(type, guid);

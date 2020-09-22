@@ -1135,6 +1135,7 @@ namespace MphRead
             Data = data;
         }
 
+        // sktodo: item and enemy spawners
         public override ushort GetParentId()
         {
             if (Data is TriggerVolumeEntityData triggerData)
@@ -1144,6 +1145,14 @@ namespace MphRead
             if (Data is AreaVolumeEntityData areaData)
             {
                 return areaData.ParentId;
+            }
+            if (Data is FhTriggerVolumeEntityData fhTiggerData)
+            {
+                return fhTiggerData.ParentId;
+            }
+            if (Data is PointModuleEntityData pointModule)
+            {
+                return pointModule.PrevId;
             }
             return base.GetParentId();
         }
@@ -1157,6 +1166,14 @@ namespace MphRead
             if (Data is AreaVolumeEntityData areaData)
             {
                 return areaData.ChildId;
+            }
+            if (Data is FhTriggerVolumeEntityData fhTiggerData)
+            {
+                return fhTiggerData.ChildId;
+            }
+            if (Data is PointModuleEntityData pointModule)
+            {
+                return pointModule.NextId;
             }
             return base.GetChildId();
         }
