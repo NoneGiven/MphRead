@@ -22,7 +22,7 @@ namespace MphRead
         public short PointLimit { get; }
         public short NodeLayer { get; }
         public ushort FogEnabled { get; }
-        public ushort ClearFog { get; }
+        public ushort ClearFog { get; } // todo: implement this?
         public ushort FogColor { get; }
         public uint FogSlope { get; }
         public uint FogOffset { get; }
