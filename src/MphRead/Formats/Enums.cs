@@ -194,11 +194,13 @@ namespace MphRead
     {
         None = 0,
         Unknown5 = 5,
+        Destroyed = 6,
         Damage = 7,
         Unknown9 = 9,
         Unknown15 = 15,
         Unlock = 16,
         SetActive = 17,
+        Complete = 18,
         Unknown19 = 19,
         Death = 20,
         Unknown21 = 21
