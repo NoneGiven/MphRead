@@ -1152,6 +1152,10 @@ namespace MphRead
             }
             if (Data is PointModuleEntityData pointModule)
             {
+                if (pointModule.PrevId == pointModule.Header.EntityId)
+                {
+                    return UInt16.MaxValue;
+                }
                 return pointModule.PrevId;
             }
             return base.GetParentId();
@@ -1173,6 +1177,10 @@ namespace MphRead
             }
             if (Data is PointModuleEntityData pointModule)
             {
+                if (pointModule.NextId == pointModule.Header.EntityId)
+                {
+                    return UInt16.MaxValue;
+                }
                 return pointModule.NextId;
             }
             return base.GetChildId();

@@ -4836,7 +4836,7 @@ namespace MphRead
                 {
                     "FH_REGULATOR",
                     new RoomMetadata(
-                        "FH_REGULATOR",
+                        "Level SP Regulator",
                         "Regulator",
                         @"_fh\blueRoom",
                         "blueRoom_Model.bin",
