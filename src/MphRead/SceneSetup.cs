@@ -408,7 +408,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.ForceField)
                 {
-                    models.Add(LoadForceField((Entity<ForceFieldEntityData>)entity));
+                    models.AddRange(LoadForceField((Entity<ForceFieldEntityData>)entity));
                 }
                 else
                 {
@@ -818,18 +818,36 @@ namespace MphRead
         }
 
         // todo: fade in/out "animation"
-        private static Model LoadForceField(Entity<ForceFieldEntityData> entity)
+        private static IEnumerable<Model> LoadForceField(Entity<ForceFieldEntityData> entity)
         {
+            var models = new List<Model>();
             ForceFieldEntityData data = entity.Data;
-            Model model = Read.GetModelByName("ForceField", Metadata.DoorPalettes[(int)data.Type]);
+            int recolor = Metadata.DoorPalettes[(int)data.Type];
+            Model model = Read.GetModelByName("ForceField", recolor);
             model.Position = data.Header.Position.ToFloatVector();
             model.Scale = new Vector3(data.Width.FloatValue, data.Height.FloatValue, 1.0f);
-            ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
+            Vector3 vec2 = data.Header.RightVector.ToFloatVector();
+            ComputeModelMatrices(model, vec2, data.Header.UpVector.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Visible = data.Active != 0;
             model.Type = ModelType.Object;
             model.Entity = entity;
-            return model;
+            models.Add(model);
+            if (data.Active != 0 && data.Type != 9)
+            {
+                Model enemy = Read.GetModelByName("ForceFieldLock", recolor);
+                Vector3 position = model.Position;
+                position.X += Fixed.ToFloat(409) * vec2.X;
+                position.Y += Fixed.ToFloat(409) * vec2.Y;
+                position.Z += Fixed.ToFloat(409) * vec2.Z;
+                enemy.Position = position;
+                ComputeModelMatrices(enemy, vec2, data.Header.UpVector.ToFloatVector());
+                ComputeNodeMatrices(enemy, index: 0);
+                enemy.Type = ModelType.Object;
+                enemy.Entity = entity;
+                models.Add(enemy);
+            }
+            return models;
         }
 
         private static float GetItemHeightOffset(Fixed value)
