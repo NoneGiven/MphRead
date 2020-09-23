@@ -317,7 +317,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Door)
                 {
-                    models.Add(LoadDoor((Entity<DoorEntityData>)entity));
+                    models.AddRange(LoadDoor((Entity<DoorEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.FhDoor)
                 {
@@ -738,9 +738,9 @@ namespace MphRead
             return model;
         }
 
-        // sktodo: enable drawing door lock, also use "flags" to determine lock/color state
-        private static Model LoadDoor(Entity<DoorEntityData> entity)
+        private static IEnumerable<Model> LoadDoor(Entity<DoorEntityData> entity)
         {
+            var models = new List<Model>();
             DoorEntityData data = entity.Data;
             DoorMetadata meta = Metadata.Doors[(int)data.ModelId];
             int recolorId = 0;
@@ -754,13 +754,27 @@ namespace MphRead
             // - morph ball = 0
             // - boss = 0
             // - thin = 0, 7
+            Vector3 vec1 = data.Header.UpVector.ToFloatVector();
             Model model = Read.GetModelByName(meta.Name, recolorId);
             model.Position = data.Header.Position.ToFloatVector();
-            ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
+            ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), vec1);
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             model.Entity = entity;
-            return model;
+            models.Add(model);
+            Model doorLock = Read.GetModelByName(meta.LockName);
+            Vector3 position = model.Position;
+            position.X += meta.LockOffset * vec1.X;
+            position.Y += meta.LockOffset * vec1.Y;
+            position.Z += meta.LockOffset * vec1.Z;
+            doorLock.Position = position;
+            ComputeModelMatrices(doorLock, data.Header.RightVector.ToFloatVector(), vec1);
+            ComputeNodeMatrices(doorLock, index: 0);
+            doorLock.Type = ModelType.Generic;
+            doorLock.Entity = entity;
+            doorLock.Visible = false; // todo: use flags to determine lock/color state
+            models.Add(doorLock);
+            return models;
         }
 
         private static Model LoadDoor(Entity<FhDoorEntityData> entity)
