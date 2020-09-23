@@ -219,12 +219,13 @@ namespace MphRead
             return Recolors[CurrentRecolor].GetPixels(textureId, paletteId);
         }
 
-        // sktodo: room subclass
-        public void SetUpCollision(RoomMetadata meta, CollisionInfo collision)
+        // todo: room subclass
+        public void SetUpCollision(RoomMetadata meta, CollisionInfo collision, int nodeLayerMask)
         {
-            if (collision.Portals.Count > 0)
+            var portals = collision.Portals.Where(p => (p.LayerMask & 4) != 0 || (p.LayerMask & nodeLayerMask) != 0).ToList();
+            if (portals.Count > 0)
             {
-                IEnumerable<string> parts = collision.Portals.Select(p => p.NodeName1).Concat(collision.Portals.Select(p => p.NodeName2)).Distinct();
+                IEnumerable<string> parts = portals.Select(p => p.NodeName1).Concat(portals.Select(p => p.NodeName2)).Distinct();
                 foreach (Node node in Nodes)
                 {
                     if (parts.Contains(node.Name))
@@ -1327,6 +1328,30 @@ namespace MphRead
             CylinderDot = raw.CylinderDot.FloatValue;
             SpherePosition = raw.SpherePosition.ToFloatVector();
             SphereRadius = raw.SphereRadius.FloatValue;
+        }
+    }
+
+    public class DisplayPlane
+    {
+        public Vector3 Point1 { get; }
+        public Vector3 Point2 { get; }
+        public Vector3 Point3 { get; }
+        public Vector3 Point4 { get; }
+        public bool ForceField { get; }
+        public Vector3 Position { get; }
+
+        public DisplayPlane(Vector3 point1, Vector3 point2, Vector3 point3, Vector3 point4, bool forceField)
+        {
+            Point1 = point1;
+            Point2 = point2;
+            Point3 = point3;
+            Point4 = point4;
+            ForceField = forceField;
+            Vector3 position = Vector3.Zero;
+            position.X = (point1.X + point2.X + point3.X + point4.X) * 0.25f;
+            position.Y = (point1.Y + point2.Y + point3.Y + point4.Y) * 0.25f;
+            position.Z = (point1.Z + point2.Z + point3.Z + point4.Z) * 0.25f;
+            Position = position;
         }
     }
 

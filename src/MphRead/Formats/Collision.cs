@@ -28,6 +28,7 @@ namespace MphRead.Formats.Collision
             var enabledIndices = new Dictionary<uint, IReadOnlyList<ushort>>();
             foreach (CollisionEntry entry in entries.Where(e => e.Count > 0))
             {
+                // todo: use the layer mask to actually filter the returned items (indices, entries, data, portals, etc.)
                 Debug.Assert(entry.Count < 512);
                 var enabled = new List<ushort>();
                 for (int i = 0; i < entry.Count; i++)

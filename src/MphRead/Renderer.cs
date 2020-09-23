@@ -97,6 +97,7 @@ namespace MphRead
         // light sources need to be processed in entity ID order
         private readonly List<LightSource> _lightSources = new List<LightSource>();
         private readonly Dictionary<int, DisplayVolume> _displayVolumes = new Dictionary<int, DisplayVolume>();
+        private readonly List<DisplayPlane> _displayPlanes = new List<DisplayPlane>();
 
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
@@ -256,7 +257,22 @@ namespace MphRead
             );
             _fogOffset = (int)roomMeta.FogOffset;
             CollisionInfo collision = Collision.ReadCollision(roomMeta.CollisionPath, nodeLayerMask);
-            room.SetUpCollision(roomMeta, collision);
+            // todo: once ReadCollision is filering things, we don't need to pass nodeLayerMask here or test it below
+            room.SetUpCollision(roomMeta, collision, nodeLayerMask);
+            foreach (CollisionPortal portal in collision.Portals)
+            {
+                if ((portal.LayerMask & 4) != 0 || (portal.LayerMask & nodeLayerMask) != 0)
+                {
+                    Debug.Assert(portal.VectorCount == 4);
+                    _displayPlanes.Add(new DisplayPlane(
+                        portal.Vector1.ToFloatVector(),
+                        portal.Vector2.ToFloatVector(),
+                        portal.Vector3.ToFloatVector(),
+                        portal.Vector4.ToFloatVector(),
+                        forceField: portal.Name.StartsWith("pmag")
+                    ));
+                }
+            }
             _cameraMode = CameraMode.Roam;
         }
 
@@ -921,7 +937,12 @@ namespace MphRead
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
-            if (_showVolumes > 0 && _displayVolumes.Count > 0)
+            RenderDisplayVolumes();
+        }
+
+        private void RenderDisplayVolumes()
+        {
+            if (_showVolumes > 0 && (_displayVolumes.Count > 0 || _displayPlanes.Count > 0))
             {
                 GL.Uniform1(_shaderLocations.UseLight, 0);
                 GL.Uniform1(_shaderLocations.UseFog, 0);
@@ -930,8 +951,6 @@ namespace MphRead
                 GL.Enable(EnableCap.Blend);
                 GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                 GL.Enable(EnableCap.CullFace);
-                // alternative if the depth buffer can't handle the above:
-                //GL.Disable(EnableCap.CullFace);
                 foreach (KeyValuePair<int, DisplayVolume> kvp in _displayVolumes)
                 {
                     if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
@@ -945,8 +964,27 @@ namespace MphRead
                         }
                     }
                 }
+                if (_showVolumes == 10)
+                {
+                    GL.Disable(EnableCap.CullFace);
+                    GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
+                    Matrix4 transform = Matrix4.Identity;
+                    GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
+                    foreach (DisplayPlane plane in _displayPlanes)
+                    {
+                        RenderDisplayPlane(plane);
+                        if (_volumeEdges)
+                        {
+                            RenderDisplayLines(plane);
+                        }
+                    }
+                }
                 GL.Disable(EnableCap.Blend);
-                if (!_faceCulling)
+                if (_faceCulling)
+                {
+                    GL.Enable(EnableCap.CullFace);
+                }
+                else
                 {
                     GL.Disable(EnableCap.CullFace);
                 }
@@ -964,6 +1002,39 @@ namespace MphRead
                 GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(color.Value, 0.5f));
                 RenderVolume(volume.Volume);
             }
+        }
+
+        private void RenderDisplayPlane(DisplayPlane plane)
+        {
+            float between = (plane.Position - _cameraPosition * -1).Length;
+            float alpha = MathF.Min(between / 8, 1);
+            Vector4 color;
+            if (plane.ForceField)
+            {
+                color = new Vector4(16 / 31f, 16 / 31f, 1f, alpha);
+            }
+            else
+            {
+                color = new Vector4(16 / 31f, 1f, 16 / 31f, alpha);
+            }
+            GL.Uniform4(_shaderLocations.OverrideColor, color);
+            GL.Begin(PrimitiveType.TriangleStrip);
+            GL.Vertex3(plane.Point1);
+            GL.Vertex3(plane.Point4);
+            GL.Vertex3(plane.Point2);
+            GL.Vertex3(plane.Point3);
+            GL.End();
+        }
+
+        private void RenderDisplayLines(DisplayPlane plane)
+        {
+            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(1f, 0f, 0f, 1f));
+            GL.Begin(PrimitiveType.LineLoop);
+            GL.Vertex3(plane.Point1);
+            GL.Vertex3(plane.Point2);
+            GL.Vertex3(plane.Point3);
+            GL.Vertex3(plane.Point4);
+            GL.End();
         }
 
         private void UpdateUniforms()
@@ -1101,7 +1172,7 @@ namespace MphRead
                 return current + _colorStep * frames;
             }
             bool hasLight1 = false;
-            bool hasLight2 = false; 
+            bool hasLight2 = false;
             Vector3 light1Color = model.Light1Color;
             Vector3 light1Vector = model.Light1Vector;
             Vector3 light2Color = model.Light2Color;
@@ -1979,7 +2050,7 @@ namespace MphRead
                     _showVolumes--;
                     if (_showVolumes < 0)
                     {
-                        _showVolumes = 9;
+                        _showVolumes = 10;
                     }
                     if (_selectionMode == SelectionMode.Model)
                     {
@@ -1991,7 +2062,7 @@ namespace MphRead
                 else
                 {
                     _showVolumes++;
-                    if (_showVolumes > 9)
+                    if (_showVolumes > 10)
                     {
                         _showVolumes = 0;
                     }
