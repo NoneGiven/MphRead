@@ -217,6 +217,42 @@ namespace MphRead
             return Recolors[CurrentRecolor].GetPixels(textureId, paletteId);
         }
 
+        public IEnumerable<Node> GetDrawNodes()
+        {
+            // todo: partial room rendering with toggle
+            // --> should also have a toggle to show etags, etc.
+            if (Type == ModelType.Room && false) // sktodo: temporary
+            {
+                for (int i = 0; i < Nodes.Count; i++)
+                {
+                    Node node = Nodes[i];
+                    if (node.IsRoomNode)
+                    {
+                        int childIndex = node.ChildIndex;
+                        if (childIndex != UInt16.MaxValue)
+                        {
+                            node = Nodes[childIndex];
+                            yield return node;
+                            int nextIndex = node.NextIndex;
+                            while (nextIndex != UInt16.MaxValue)
+                            {
+                                node = Nodes[nextIndex];
+                                yield return node;
+                                nextIndex = node.NextIndex;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < Nodes.Count; i++)
+                {
+                    yield return Nodes[i];
+                }
+            }
+        }
+
         public IEnumerable<Mesh> GetNodeMeshes(int nodeId)
         {
             return GetNodeMeshes(Nodes[nodeId]);

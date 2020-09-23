@@ -794,14 +794,13 @@ namespace MphRead
                     continue;
                 }
                 int modelPolygonId = model.Type == ModelType.Room ? 0 : polygonId++;
-                for (int j = 0; j < model.Nodes.Count; j++)
+                foreach (Node node in model.GetDrawNodes())
                 {
-                    Node node = model.Nodes[j];
                     if (node.MeshCount == 0 || !node.Enabled || !model.NodeParentsEnabled(node))
                     {
                         continue;
                     }
-                    foreach (Mesh mesh in model.GetNodeMeshes(j))
+                    foreach (Mesh mesh in model.GetNodeMeshes(node))
                     {
                         if (!mesh.Visible)
                         {
@@ -840,6 +839,7 @@ namespace MphRead
                     }
                 }
             }
+            // sktodo: draw force fields
             UpdateUniforms();
             // pass 1: opaque
             GL.ColorMask(true, true, true, true);
