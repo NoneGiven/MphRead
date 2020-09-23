@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using MphRead.Export;
+using MphRead.Formats.Collision;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -163,8 +164,9 @@ namespace MphRead
                 throw new InvalidOperationException();
             }
             _roomLoaded = true;
-            (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities)
+            (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities, int updatedMask)
                 = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
+            nodeLayerMask = updatedMask;
             if (roomMeta.InGameName != null)
             {
                 Title = roomMeta.InGameName;
@@ -253,6 +255,8 @@ namespace MphRead
                 1.0f
             );
             _fogOffset = (int)roomMeta.FogOffset;
+            CollisionInfo collision = Collision.ReadCollision(roomMeta.CollisionPath, nodeLayerMask);
+            room.SetUpCollision(roomMeta, collision);
             _cameraMode = CameraMode.Roam;
         }
 
@@ -2297,7 +2301,7 @@ namespace MphRead
                     int nodeIndex;
                     if (shift)
                     {
-                        nodeIndex = model.GetNextRoomNodeId(_selectedNodeId);
+                        nodeIndex = model.GetNextRoomPartId(_selectedNodeId);
                     }
                     else
                     {
@@ -2365,7 +2369,7 @@ namespace MphRead
                     int nodeIndex;
                     if (shift)
                     {
-                        nodeIndex = model.GetPreviousRoomNodeId(_selectedNodeId);
+                        nodeIndex = model.GetPrevRoomPartId(_selectedNodeId);
                     }
                     else
                     {
@@ -2655,7 +2659,7 @@ namespace MphRead
             }
             if (model.Type == ModelType.Room)
             {
-                type += $" ({model.Nodes.Count(n => n.IsRoomNode)})";
+                type += $" ({model.Nodes.Count(n => n.IsRoomPartNode)})";
             }
             else if (model.Type == ModelType.Placeholder)
             {

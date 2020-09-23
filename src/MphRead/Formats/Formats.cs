@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
 namespace MphRead
@@ -217,16 +219,49 @@ namespace MphRead
             return Recolors[CurrentRecolor].GetPixels(textureId, paletteId);
         }
 
+        // sktodo: room subclass
+        public void SetUpCollision(RoomMetadata meta, CollisionInfo collision)
+        {
+            if (collision.Portals.Count > 0)
+            {
+                IEnumerable<string> parts = collision.Portals.Select(p => p.NodeName1).Concat(collision.Portals.Select(p => p.NodeName2)).Distinct();
+                foreach (Node node in Nodes)
+                {
+                    if (parts.Contains(node.Name))
+                    {
+                        node.IsRoomPartNode = true;
+                    }
+                }
+            }
+            else if (meta.RoomNodeName != null
+                && Nodes.TryFind(n => n.Name == meta.RoomNodeName && n.ChildIndex != UInt16.MaxValue, out Node? roomNode))
+            {
+                roomNode.IsRoomPartNode = true;
+            }
+            else
+            {
+                foreach (Node node in Nodes)
+                {
+                    if (node.Name.StartsWith("rm"))
+                    {
+                        node.IsRoomPartNode = true;
+                        break;
+                    }
+                }
+            }
+            Debug.Assert(Nodes.Any(n => n.IsRoomPartNode));
+        }
+
         public IEnumerable<Node> GetDrawNodes()
         {
             // todo: partial room rendering with toggle
             // --> should also have a toggle to show etags, etc.
-            if (Type == ModelType.Room && false) // sktodo: temporary
+            if (Type == ModelType.Room)
             {
                 for (int i = 0; i < Nodes.Count; i++)
                 {
                     Node node = Nodes[i];
-                    if (node.IsRoomNode)
+                    if (node.IsRoomPartNode)
                     {
                         int childIndex = node.ChildIndex;
                         if (childIndex != UInt16.MaxValue)
@@ -281,7 +316,7 @@ namespace MphRead
             return true;
         }
 
-        public int GetNextRoomNodeId(int nodeId)
+        public int GetNextRoomPartId(int nodeId)
         {
             int i = nodeId + 1;
             while (true)
@@ -294,7 +329,7 @@ namespace MphRead
                 {
                     break;
                 }
-                if (Nodes[i].IsRoomNode)
+                if (Nodes[i].IsRoomPartNode)
                 {
                     return i;
                 }
@@ -303,7 +338,7 @@ namespace MphRead
             return nodeId;
         }
 
-        public int GetPreviousRoomNodeId(int nodeId)
+        public int GetPrevRoomPartId(int nodeId)
         {
             int i = nodeId - 1;
             while (true)
@@ -316,7 +351,7 @@ namespace MphRead
                 {
                     break;
                 }
-                if (Nodes[i].IsRoomNode)
+                if (Nodes[i].IsRoomPartNode)
                 {
                     return i;
                 }
@@ -758,7 +793,7 @@ namespace MphRead
             }
         }
 
-        public bool IsRoomNode { get; private set; }
+        public bool IsRoomPartNode { get; set; }
 
         public Node(RawNode raw)
         {
@@ -780,7 +815,6 @@ namespace MphRead
             Vector1 = raw.Vector1.ToFloatVector();
             Vector2 = raw.Vector2.ToFloatVector();
             BillboardMode = raw.BillboardMode;
-            IsRoomNode = Name.StartsWith("rm");
         }
     }
 
@@ -1707,6 +1741,17 @@ namespace MphRead
                 index++;
             }
             return -1;
+        }
+
+        public static bool TryFind<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate,
+            [NotNullWhen(true)] out TSource? result) where TSource : class
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+            result = source.FirstOrDefault(s => predicate.Invoke(s));
+            return result != null;
         }
     }
 }

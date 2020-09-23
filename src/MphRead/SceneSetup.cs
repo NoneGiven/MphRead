@@ -11,7 +11,7 @@ namespace MphRead
         private static readonly Random _random = new Random();
 
         // todo: artifact flags
-        public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, GameMode mode = GameMode.None,
+        public static (Model, RoomMetadata, IReadOnlyList<Model>, int) LoadRoom(string name, GameMode mode = GameMode.None,
             int playerCount = 0, BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
         {
             (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
@@ -91,7 +91,7 @@ namespace MphRead
             IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
             // todo?: area ID/portals
             room.Type = ModelType.Room;
-            return (room, metadata, entities);
+            return (room, metadata, entities, nodeLayerMask);
         }
 
         private static void FilterNodes(Model model, int layerMask)

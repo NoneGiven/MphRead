@@ -75,7 +75,7 @@ namespace MphRead
             {
                 if (!meta.CollisionPath.Contains("_fh") && !meta.CollisionPath.Contains("testLevel_"))
                 {
-                    CollisionInfo collision = Collision.ReadCollision(Path.Combine(Paths.FileSystem, meta.CollisionPath));
+                    CollisionInfo collision = Collision.ReadCollision(meta.CollisionPath);
                     Model room = Read.GetRoomByName(meta.Name);
                     if (collision.Portals.Count == 0 && room.Nodes.Count(n => n.Name.StartsWith("rm")) > 1)
                     {
