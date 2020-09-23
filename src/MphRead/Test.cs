@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
 namespace MphRead
@@ -70,21 +71,18 @@ namespace MphRead
 
         public static void TestCollision()
         {
-            ushort headerSize = 0;
-            var sizes = new List<(int, ushort, string)>();
-            string modelPath = Paths.FileSystem;
-            foreach (string path in Directory.EnumerateFiles(modelPath, "", SearchOption.AllDirectories))
+            foreach (RoomMetadata meta in Metadata.RoomMetadata.Values)
             {
-                if (path.ToLower().Contains("_collision.bin"))
+                if (!meta.CollisionPath.Contains("_fh") && !meta.CollisionPath.Contains("testLevel_"))
                 {
-                    var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
-                    ushort eight = BitConverter.ToUInt16(bytes[0x04..0x06]);
-                    sizes.Add((bytes.Length - headerSize, eight, path.Replace(Paths.FileSystem + "\\", "")));
+                    CollisionInfo collision = Collision.ReadCollision(Path.Combine(Paths.FileSystem, meta.CollisionPath));
+                    Model room = Read.GetRoomByName(meta.Name);
+                    if (collision.Portals.Count == 0 && room.Nodes.Count(n => n.Name.StartsWith("rm")) > 1)
+                    {
+                        Debugger.Break();
+                    }
+                    Nop();
                 }
-            }
-            foreach ((int size, int eight, string name) in sizes.OrderBy(s => s.Item1))
-            {
-                Console.WriteLine($"{size,6} {eight,4} - {name.Replace("_archive", "archive")}");
             }
             Nop();
         }

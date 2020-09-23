@@ -10,7 +10,7 @@ namespace MphRead.Formats.Collision
 {
     public static class Collision
     {
-        public static void ReadCollision(string path, int roomLayerMask = -1)
+        public static CollisionInfo ReadCollision(string path, int roomLayerMask = -1)
         {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             CollisionHeader header = Read.ReadStruct<CollisionHeader>(bytes);
@@ -25,24 +25,26 @@ namespace MphRead.Formats.Collision
             IReadOnlyList<ushort> indices = Read.DoOffsets<ushort>(bytes, header.IndexOffset, header.IndexCount);
             IReadOnlyList<CollisionEntry> entries = Read.DoOffsets<CollisionEntry>(bytes, header.EntryOffset, header.EntryCount);
             IReadOnlyList<CollisionPortal> portals = Read.DoOffsets<CollisionPortal>(bytes, header.PortalOffset, header.PortalCount);
+            var enabledIndices = new Dictionary<uint, IReadOnlyList<ushort>>();
             foreach (CollisionEntry entry in entries.Where(e => e.Count > 0))
             {
                 Debug.Assert(entry.Count < 512);
-                var enabledIndices = new List<ushort>();
+                var enabled = new List<ushort>();
                 for (int i = 0; i < entry.Count; i++)
                 {
                     ushort index = indices[entry.StartIndex + i];
                     ushort layerMask = data[index].LayerMask;
                     if ((layerMask & 4) != 0 || roomLayerMask == -1 || (layerMask & roomLayerMask) != 0)
                     {
-                        enabledIndices.Add(index);
+                        enabled.Add(index);
                     }
                 }
+                Debug.Assert(!enabledIndices.ContainsKey(entry.StartIndex));
+                enabledIndices.Add(entry.StartIndex, enabled);
             }
-            Nop();
+            string name = Path.GetFileNameWithoutExtension(path).Replace("_collision", "").Replace("_Collision", "");
+            return new CollisionInfo(name, header, vectors, planes, shorts, data, indices, entries, portals, enabledIndices);
         }
-
-        private static void Nop() { }
     }
 
     // size: 84
@@ -125,5 +127,35 @@ namespace MphRead.Formats.Collision
         public readonly ushort LayerMask;
         public readonly ushort VectorCount;
         public readonly ushort FieldDE;
+    }
+
+    public class CollisionInfo
+    {
+        public string Name { get; }
+        public CollisionHeader Header { get; }
+        public IReadOnlyList<Vector3Fx> Vectors { get; }
+        public IReadOnlyList<CollisionPlane> Planes { get; }
+        public IReadOnlyList<ushort> Shorts { get; }
+        public IReadOnlyList<CollisionData> Data { get; }
+        public IReadOnlyList<ushort> Indices { get; }
+        public IReadOnlyList<CollisionEntry> Entries { get; }
+        public IReadOnlyList<CollisionPortal> Portals { get; }
+        // todo: update classes based on usage
+        public IReadOnlyDictionary<uint, IReadOnlyList<ushort>> EnabledIndices { get; }
+
+        public CollisionInfo(string name, CollisionHeader header, IReadOnlyList<Vector3Fx> vectors, IReadOnlyList<CollisionPlane> planes,
+            IReadOnlyList<ushort> shorts, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> indices, IReadOnlyList<CollisionEntry> entries, IReadOnlyList<CollisionPortal> portals, IReadOnlyDictionary<uint, IReadOnlyList<ushort>> enabledIndices)
+        {
+            Name = name;
+            Header = header;
+            Vectors = vectors;
+            Planes = planes;
+            Shorts = shorts;
+            Data = data;
+            Indices = indices;
+            Entries = entries;
+            Portals = portals;
+            EnabledIndices = enabledIndices;
+        }
     }
 }
