@@ -817,7 +817,7 @@ namespace MphRead
             return models;
         }
 
-        // todo: load lock, fade in/out "animation" --> 216A180 for lock palette stuff
+        // todo: fade in/out "animation"
         private static Model LoadForceField(Entity<ForceFieldEntityData> entity)
         {
             ForceFieldEntityData data = entity.Data;

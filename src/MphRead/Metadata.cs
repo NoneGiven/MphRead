@@ -238,6 +238,7 @@ namespace MphRead
         public string ModelPath { get; }
         public string TexturePath { get; }
         public string PalettePath { get; }
+        public string? ReplacePath { get; }
         public bool SeparatePaletteHeader { get; }
         private readonly Dictionary<int, IEnumerable<int>> _replaceIds = new Dictionary<int, IEnumerable<int>>();
         public IReadOnlyDictionary<int, IEnumerable<int>> ReplaceIds => _replaceIds;
@@ -259,12 +260,20 @@ namespace MphRead
         }
 
         public RecolorMetadata(string name, string modelPath, string texturePath, string palettePath,
-            bool separatePaletteHeader = false, Dictionary<int, IEnumerable<int>>? replaceIds = null)
+            bool separatePaletteHeader = false, Dictionary<int, IEnumerable<int>>? replaceIds = null, bool separateReplace = false)
         {
             Name = name;
             ModelPath = modelPath;
             TexturePath = texturePath;
-            PalettePath = palettePath;
+            if (separateReplace)
+            {
+                PalettePath = texturePath;
+                ReplacePath = palettePath;
+            }
+            else
+            {
+                PalettePath = palettePath;
+            }
             SeparatePaletteHeader = separatePaletteHeader;
             if (replaceIds != null)
             {
@@ -5405,6 +5414,7 @@ namespace MphRead
                         animation: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
+                // todo: confirm all texture shares with load_object
                 {
                     "ForceField",
                     new ModelMetadata("ForceField",
@@ -5463,13 +5473,71 @@ namespace MphRead
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 0 } } })
                         })
                 },
-                // todo: these probably also use AlimbicPalettes
-                // todo: confirm texture shares with load_object
                 {
                     "ForceFieldLock",
                     new ModelMetadata("ForceFieldLock",
-                        share: @"models\AlimbicTextureShare_img_Model.bin",
-                        mdlSuffix: MdlSuffix.All)
+                        modelPath: @"models\ForceFieldLock_mdl_Model.bin",
+                        animationPath: @"models\ForceFieldLock_mdl_Anim.bin",
+                        collisionPath: null,
+                        new List<RecolorMetadata>()
+                        {
+                            new RecolorMetadata("pal_01",
+                                modelPath: @"models\AlimbicTextureShare_img_Model.bin",
+                                texturePath: @"models\AlimbicTextureShare_img_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                separateReplace: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 3 } } }),
+                            new RecolorMetadata("pal_02",
+                                modelPath: @"models\AlimbicTextureShare_img_Model.bin",
+                                texturePath: @"models\AlimbicTextureShare_img_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                separateReplace: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 3 } } }),
+                            new RecolorMetadata("pal_03",
+                                modelPath: @"models\AlimbicTextureShare_img_Model.bin",
+                                texturePath: @"models\AlimbicTextureShare_img_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                separateReplace: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 3 } } }),
+                            new RecolorMetadata("pal_04",
+                                modelPath: @"models\AlimbicTextureShare_img_Model.bin",
+                                texturePath: @"models\AlimbicTextureShare_img_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                separateReplace: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 3 } } }),
+                            new RecolorMetadata("pal_05",
+                                modelPath: @"models\AlimbicTextureShare_img_Model.bin",
+                                texturePath: @"models\AlimbicTextureShare_img_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                separateReplace: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 3 } } }),
+                            new RecolorMetadata("pal_06",
+                                modelPath: @"models\AlimbicTextureShare_img_Model.bin",
+                                texturePath: @"models\AlimbicTextureShare_img_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                separateReplace: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 3 } } }),
+                            new RecolorMetadata("pal_07",
+                                modelPath: @"models\AlimbicTextureShare_img_Model.bin",
+                                texturePath: @"models\AlimbicTextureShare_img_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                separateReplace: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 3 } } }),
+                            new RecolorMetadata("pal_08",
+                                modelPath: @"models\AlimbicTextureShare_img_Model.bin",
+                                texturePath: @"models\AlimbicTextureShare_img_Model.bin",
+                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                separatePaletteHeader: true,
+                                separateReplace: true,
+                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 3 } } })
+                        })
                 },
                 {
                     "furlEffect",
