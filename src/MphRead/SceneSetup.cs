@@ -519,10 +519,21 @@ namespace MphRead
             {
                 model.ScanVisorOnly = true;
             }
+            // temporary
+            if (meta.Name == "AlimbicCapsule")
+            {
+                model.Animations.NodeGroupId = -1;
+                model.Animations.MaterialGroupId = -1;
+            }
+            else if (meta.Name == "WallSwitch")
+            {
+                model.Animations.NodeGroupId = -1;
+                model.Animations.MaterialGroupId = -1;
+            }
             return model;
         }
 
-        // todo: use more properties
+        // todo: use more properties (item, movement, linked entities)
         private static Model LoadPlatform(Entity<PlatformEntityData> entity)
         {
             PlatformEntityData data = entity.Data;
@@ -537,6 +548,15 @@ namespace MphRead
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             model.Entity = entity;
+            // temporary
+            if (meta.Name == "SamusShip")
+            {
+                model.Animations.NodeGroupId = 1;
+            }
+            else if (meta.Name == "SyluxTurret")
+            {
+                model.Animations.NodeGroupId = -1;
+            }
             return model;
         }
 
@@ -761,6 +781,9 @@ namespace MphRead
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             model.Entity = entity;
+            // todo: remove temporary code like this once animations are being selected properly
+            model.Animations.NodeGroupId = -1;
+            model.Animations.MaterialGroupId = -1;
             models.Add(model);
             Model doorLock = Read.GetModelByName(meta.LockName);
             Vector3 position = model.Position;
@@ -786,6 +809,9 @@ namespace MphRead
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             model.Entity = entity;
+            // temporary
+            model.Animations.NodeGroupId = -1;
+            model.Animations.MaterialGroupId = -1;
             return model;
         }
 

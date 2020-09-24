@@ -1536,8 +1536,6 @@ namespace MphRead
 
         private void DoMaterial(Model model, Material material, float alphaScale)
         {
-            // todo: remove this line once animations are being selected properly
-            material.AnimationFlags = AnimationFlags.DisableAlpha;
             if (_lighting && material.Lighting != 0)
             {
                 GL.Uniform1(_shaderLocations.UseLight, 1);

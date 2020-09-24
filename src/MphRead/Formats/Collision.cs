@@ -175,9 +175,9 @@ namespace MphRead.Formats.Collision
             Point3 = raw.Vector3.ToFloatVector();
             Point4 = raw.Vector4.ToFloatVector();
             Vector3 position = Vector3.Zero;
-            position.X = (Point1.X + Point1.X + Point1.X + Point1.X) * 0.25f;
-            position.Y = (Point1.Y + Point1.Y + Point1.Y + Point1.Y) * 0.25f;
-            position.Z = (Point1.Z + Point1.Z + Point1.Z + Point1.Z) * 0.25f;
+            position.X = (Point1.X + Point2.X + Point3.X + Point4.X) * 0.25f;
+            position.Y = (Point1.Y + Point2.Y + Point3.Y + Point4.Y) * 0.25f;
+            position.Z = (Point1.Z + Point2.Z + Point3.Z + Point4.Z) * 0.25f;
             Position = position;
         }
 
