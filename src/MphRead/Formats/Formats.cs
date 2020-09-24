@@ -219,18 +219,44 @@ namespace MphRead
             return Recolors[CurrentRecolor].GetPixels(textureId, paletteId);
         }
 
+        private readonly struct ForceFieldNodeRef
+        {
+            public readonly CollisionPortal Portal;
+            public readonly int NodeIndex;
+
+            public ForceFieldNodeRef(CollisionPortal portal, int nodeIndex)
+            {
+                Portal = portal;
+                NodeIndex = nodeIndex;
+            }
+        }
+
+        private readonly List<CollisionPortal> _portals = new List<CollisionPortal>();
+        private readonly List<ForceFieldNodeRef> _forceFields = new List<ForceFieldNodeRef>();
+
         // todo: room subclass
         public void SetUpCollision(RoomMetadata meta, CollisionInfo collision, int nodeLayerMask)
         {
-            var portals = collision.Portals.Where(p => (p.LayerMask & 4) != 0 || (p.LayerMask & nodeLayerMask) != 0).ToList();
-            if (portals.Count > 0)
+            _portals.AddRange(collision.Portals.Where(p => (p.LayerMask & 4) != 0 || (p.LayerMask & nodeLayerMask) != 0));
+            if (_portals.Count > 0)
             {
-                IEnumerable<string> parts = portals.Select(p => p.NodeName1).Concat(portals.Select(p => p.NodeName2)).Distinct();
+                IEnumerable<string> parts = _portals.Select(p => p.NodeName1).Concat(_portals.Select(p => p.NodeName2)).Distinct();
                 foreach (Node node in Nodes)
                 {
                     if (parts.Contains(node.Name))
                     {
                         node.IsRoomPartNode = true;
+                    }
+                }
+                foreach (CollisionPortal portal in _portals.Where(p => p.Name.StartsWith("pmag")))
+                {
+                    for (int i = 0; i < Nodes.Count; i++)
+                    {
+                        if (Nodes[i].Name == $"geo{portal.Name[1..]}")
+                        {
+                            _forceFields.Add(new ForceFieldNodeRef(portal, i));
+                            break;
+                        }
                     }
                 }
             }
@@ -253,7 +279,7 @@ namespace MphRead
             Debug.Assert(Nodes.Any(n => n.IsRoomPartNode));
         }
 
-        public IEnumerable<Node> GetDrawNodes()
+        public IEnumerable<Node> GetDrawNodes(bool includeForceFields)
         {
             // todo: partial room rendering with toggle
             // --> should also have a toggle to show etags, etc.
@@ -264,18 +290,20 @@ namespace MphRead
                     Node node = Nodes[i];
                     if (node.IsRoomPartNode)
                     {
-                        int childIndex = node.ChildIndex;
-                        if (childIndex != UInt16.MaxValue)
+                        foreach (Node leaf in GetNodeTree(node))
                         {
-                            node = Nodes[childIndex];
-                            yield return node;
-                            int nextIndex = node.NextIndex;
-                            while (nextIndex != UInt16.MaxValue)
-                            {
-                                node = Nodes[nextIndex];
-                                yield return node;
-                                nextIndex = node.NextIndex;
-                            }
+                            yield return leaf;
+                        }
+                    }
+                }
+                if (includeForceFields)
+                {
+                    for (int i = 0; i < _forceFields.Count; i++)
+                    {
+                        // sktodo: return force field node and portal position
+                        foreach (Node leaf in GetNodeTree(Nodes[_forceFields[i].NodeIndex]))
+                        {
+                            yield return leaf;
                         }
                     }
                 }
@@ -285,6 +313,23 @@ namespace MphRead
                 for (int i = 0; i < Nodes.Count; i++)
                 {
                     yield return Nodes[i];
+                }
+            }
+        }
+
+        private IEnumerable<Node> GetNodeTree(Node node)
+        {
+            int childIndex = node.ChildIndex;
+            if (childIndex != UInt16.MaxValue)
+            {
+                node = Nodes[childIndex];
+                yield return node;
+                int nextIndex = node.NextIndex;
+                while (nextIndex != UInt16.MaxValue)
+                {
+                    node = Nodes[nextIndex];
+                    yield return node;
+                    nextIndex = node.NextIndex;
                 }
             }
         }

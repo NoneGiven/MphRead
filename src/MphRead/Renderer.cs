@@ -814,7 +814,7 @@ namespace MphRead
                     continue;
                 }
                 int modelPolygonId = model.Type == ModelType.Room ? 0 : polygonId++;
-                foreach (Node node in model.GetDrawNodes())
+                foreach (Node node in model.GetDrawNodes(includeForceFields: _showVolumes != 10))
                 {
                     if (node.MeshCount == 0 || !node.Enabled || !model.NodeParentsEnabled(node))
                     {
