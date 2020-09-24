@@ -165,7 +165,7 @@ namespace MphRead
                 throw new InvalidOperationException();
             }
             _roomLoaded = true;
-            (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities, int updatedMask)
+            (Model room, RoomMetadata roomMeta, CollisionInfo collision, IReadOnlyList<Model> entities, int updatedMask)
                 = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
             nodeLayerMask = updatedMask;
             if (roomMeta.InGameName != null)
@@ -256,12 +256,9 @@ namespace MphRead
                 1.0f
             );
             _fogOffset = (int)roomMeta.FogOffset;
-            CollisionInfo collision = Collision.ReadCollision(roomMeta.CollisionPath, nodeLayerMask);
-            // todo: once ReadCollision is filering things, we don't need to pass nodeLayerMask here or test it below
-            room.SetUpCollision(roomMeta, collision, nodeLayerMask);
             foreach (CollisionPortal portal in collision.Portals)
             {
-                if ((portal.LayerMask & 4) != 0 || (portal.LayerMask & nodeLayerMask) != 0)
+                if ((portal.LayerMask & 4) != 0 || (portal.LayerMask & updatedMask) != 0)
                 {
                     _displayPlanes.Add(portal);
                 }

@@ -71,14 +71,11 @@ namespace MphRead
 
         public static void TestCollision()
         {
-            foreach (RoomMetadata meta in Metadata.RoomMetadata.Values)
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
-                if (!meta.CollisionPath.Contains("_fh") && !meta.CollisionPath.Contains("testLevel_"))
-                {
-                    CollisionInfo collision = Collision.ReadCollision(meta.CollisionPath);
-                    Model room = Read.GetRoomByName(meta.Name);
-                    Nop();
-                }
+                CollisionInfo collision = Collision.ReadCollision(meta.Value.CollisionPath);
+                Model room = Read.GetRoomByName(meta.Key);
+                Nop();
             }
             Nop();
         }

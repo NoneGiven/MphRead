@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using MphRead.Archive;
 using MphRead.Export;
+using MphRead.Models;
 using OpenTK.Mathematics;
 
 namespace MphRead
@@ -73,8 +74,7 @@ namespace MphRead
                 new RecolorMetadata("default", meta.ModelPath, meta.TexturePath ?? meta.ModelPath)
             };
             Model room = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, recolors, defaultRecolor: 0, useLightSources: false);
-            room.Type = ModelType.Room;
-            return room;
+            return new RoomModel(room);
         }
 
         private static Model GetModel(ModelMetadata meta, int defaultRecolor)

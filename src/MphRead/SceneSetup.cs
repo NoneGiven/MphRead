@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using MphRead.Formats.Collision;
+using MphRead.Models;
 using OpenTK.Mathematics;
 
 namespace MphRead
@@ -11,8 +13,9 @@ namespace MphRead
         private static readonly Random _random = new Random();
 
         // todo: artifact flags
-        public static (Model, RoomMetadata, IReadOnlyList<Model>, int) LoadRoom(string name, GameMode mode = GameMode.None,
-            int playerCount = 0, BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
+        public static (Model, RoomMetadata, CollisionInfo, IReadOnlyList<Model>, int) LoadRoom(string name,
+            GameMode mode = GameMode.None, int playerCount = 0, BossFlags bossFlags = BossFlags.None,
+            int nodeLayerMask = 0, int entityLayerId = -1)
         {
             (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
             int areaId = Metadata.GetAreaInfo(roomId);
@@ -74,24 +77,13 @@ namespace MphRead
                     }
                 }
             }
-            Model room = Read.GetRoomByName(name);
-            // todo?: do whatever with NodePosition/NodeInitialPosition
-            // todo?: use this name and ID
-            string nodeName = "rmMain";
-            int nodeId = -1;
-            int nodeIndex = room.Nodes.IndexOf(b => b.Name.StartsWith("rm"));
-            if (nodeIndex != -1)
-            {
-                nodeName = room.Nodes[nodeIndex].Name;
-                nodeId = room.Nodes[nodeIndex].ChildIndex;
-            }
-            FilterNodes(room, nodeLayerMask);
-            // todo?: scene min/max coordinates
-            ComputeNodeMatrices(room, index: 0);
             IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
-            // todo?: area ID/portals
-            room.Type = ModelType.Room;
-            return (room, metadata, entities, nodeLayerMask);
+            CollisionInfo collision = Collision.ReadCollision(metadata.CollisionPath, nodeLayerMask);
+            // todo: once ReadCollision is filering things, we don't need to pass nodeLayerMask here or return it
+            var room = new RoomModel(Read.GetRoomByName(name), metadata, collision, nodeLayerMask);
+            FilterNodes(room, nodeLayerMask);
+            ComputeNodeMatrices(room, index: 0);
+            return (room, metadata, collision, entities, nodeLayerMask);
         }
 
         private static void FilterNodes(Model model, int layerMask)
@@ -174,7 +166,6 @@ namespace MphRead
                 {
                     ComputeNodeMatrices(model, node.ChildIndex);
                 }
-                // todo?: do whatever with NodePosition/NodeInitialPosition
                 i = node.NextIndex;
             }
         }
@@ -245,10 +236,10 @@ namespace MphRead
             return transform;
         }
 
-        public static void ComputeModelMatrices(Model model, Vector3 vector1, Vector3 vector2)
+        public static void ComputeModelMatrices(Model model, Vector3 vector2, Vector3 vector1)
         {
-            Vector3 up = Vector3.Cross(vector2, vector1).Normalized();
-            var direction = Vector3.Cross(vector1, up);
+            Vector3 up = Vector3.Cross(vector1, vector2).Normalized();
+            var direction = Vector3.Cross(vector2, up);
 
             Matrix4 transform = default;
 
@@ -262,9 +253,9 @@ namespace MphRead
             transform.M23 = direction.Z;
             transform.M24 = 0;
 
-            transform.M31 = vector1.X;
-            transform.M32 = vector1.Y;
-            transform.M33 = vector1.Z;
+            transform.M31 = vector2.X;
+            transform.M32 = vector2.Y;
+            transform.M33 = vector2.Z;
             transform.M34 = 0;
 
             transform.M41 = model.Position.X;
@@ -866,8 +857,9 @@ namespace MphRead
             Model model = Read.GetModelByName("ForceField", recolor);
             model.Position = data.Header.Position.ToFloatVector();
             model.Scale = new Vector3(data.Width.FloatValue, data.Height.FloatValue, 1.0f);
+            Vector3 vec1 = data.Header.UpVector.ToFloatVector();
             Vector3 vec2 = data.Header.RightVector.ToFloatVector();
-            ComputeModelMatrices(model, vec2, data.Header.UpVector.ToFloatVector());
+            ComputeModelMatrices(model, vec2, vec1);
             ComputeNodeMatrices(model, index: 0);
             model.Visible = data.Active != 0;
             model.Type = ModelType.Object;
@@ -880,8 +872,10 @@ namespace MphRead
                 position.X += Fixed.ToFloat(409) * vec2.X;
                 position.Y += Fixed.ToFloat(409) * vec2.Y;
                 position.Z += Fixed.ToFloat(409) * vec2.Z;
-                enemy.Position = position;
-                ComputeModelMatrices(enemy, vec2, data.Header.UpVector.ToFloatVector());
+                enemy.Position = enemy.InitialPosition = position;
+                enemy.Vector1 = vec1;
+                enemy.Vector2 = vec2;
+                ComputeModelMatrices(enemy, vec2, vec1);
                 ComputeNodeMatrices(enemy, index: 0);
                 enemy.Type = ModelType.Object;
                 enemy.Entity = entity;
