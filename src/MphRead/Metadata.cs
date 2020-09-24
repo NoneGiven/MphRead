@@ -5378,6 +5378,10 @@ namespace MphRead
                     new ModelMetadata("ElectroField1", collision: true)
                 },
                 {
+                    "electroTrail",
+                    new ModelMetadata("electroTrail", animation: false, archive: "common")
+                },
+                {
                     "Elevator",
                     new ModelMetadata("Elevator", animation: false, collision: true)
                 },
@@ -7031,16 +7035,6 @@ namespace MphRead
                     "particles2",
                     new ModelMetadata("particles2", animation: false, texture: true, archive: "effectsBase")
                 },
-                // 2D images only, no mesh/dlist, probably just swapped in for other textures on models
-                //{
-                //    "doubleDamage_img",
-                //    new ModelMetadata("doubleDamage_img", animation: false, archive: "common")
-                //},
-                // todo?: seemingly 2D images only, no polygons render even though they have a mesh/dlist
-                {
-                    "electroTrail",
-                    new ModelMetadata("electroTrail", animation: false, archive: "common")
-                }
             };
 
         public static readonly IReadOnlyDictionary<string, ModelMetadata> FirstHuntModels
