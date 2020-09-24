@@ -506,7 +506,8 @@ namespace MphRead
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Object;
             model.Entity = entity;
-            if (modelId == 0)
+            // AlimbicGhost_01, GhostSwitch
+            if (modelId == 0 || modelId == 41)
             {
                 model.ScanVisorOnly = true;
             }
