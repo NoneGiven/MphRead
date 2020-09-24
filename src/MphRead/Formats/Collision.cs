@@ -16,7 +16,7 @@ namespace MphRead.Formats.Collision
             CollisionHeader header = Read.ReadStruct<CollisionHeader>(bytes);
             if (new string(header.Type) != "wc01")
             {
-                throw new ProgramException("Invalid collision format.");
+                return ReadFhCollision(path, bytes);
             }
             IReadOnlyList<Vector3Fx> vectors = Read.DoOffsets<Vector3Fx>(bytes, header.VectorOffset, header.VectorCount);
             IReadOnlyList<CollisionPlane> planes = Read.DoOffsets<CollisionPlane>(bytes, header.PlaneOffset, header.PlaneCount);
@@ -49,6 +49,21 @@ namespace MphRead.Formats.Collision
             }
             string name = Path.GetFileNameWithoutExtension(path).Replace("_collision", "").Replace("_Collision", "");
             return new CollisionInfo(name, header, vectors, planes, shorts, data, indices, entries, portals, enabledIndices);
+        }
+
+        private static CollisionInfo ReadFhCollision(string path, ReadOnlySpan<byte> bytes)
+        {
+            // sktodo: read and return the rest of the data
+            FhCollisionHeader header = Read.ReadStruct<FhCollisionHeader>(bytes);
+            IReadOnlyList<Vector3Fx> vectors = Read.DoOffsets<Vector3Fx>(bytes, header.VectorOffset, header.VectorCount);
+            var portals = new List<CollisionPortal>();
+            foreach (FhCollisionPortal portal in Read.DoOffsets<FhCollisionPortal>(bytes, header.PortalOffset, header.PortalCount))
+            {
+                portals.Add(new CollisionPortal(portal));
+            }
+            string name = Path.GetFileNameWithoutExtension(path).Replace("_collision", "").Replace("_Collision", "");
+            return new CollisionInfo(name, default, vectors, new List<CollisionPlane>(), new List<ushort>(), new List<CollisionData>(),
+                new List<ushort>(), new List<CollisionEntry>(), portals, new Dictionary<uint, IReadOnlyList<ushort>>());
         }
     }
 
@@ -165,6 +180,21 @@ namespace MphRead.Formats.Collision
             position.Z = (Point1.Z + Point1.Z + Point1.Z + Point1.Z) * 0.25f;
             Position = position;
         }
+
+        // sktodo: temporary
+        public CollisionPortal(FhCollisionPortal raw)
+        {
+            Name = raw.Name;
+            NodeName1 = raw.NodeName1;
+            NodeName2 = raw.NodeName2;
+            LayerMask = 4;
+            IsForceField = raw.Name.StartsWith("pmag");
+            Point1 = Vector3.Zero;
+            Point2 = Vector3.Zero;
+            Point3 = Vector3.Zero;
+            Point4 = Vector3.Zero;
+            Position = Vector3.Zero;
+        }
     }
 
     public class CollisionInfo
@@ -195,5 +225,51 @@ namespace MphRead.Formats.Collision
             Portals = portals;
             EnabledIndices = enabledIndices;
         }
+    }
+
+    // size: 96
+    public readonly struct FhCollisionPortal
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 24)]
+        public readonly string Name;
+        public readonly uint Field18;
+        public readonly uint Field1C;
+        public readonly uint Field20;
+        public readonly uint Field24;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
+        public readonly string NodeName1; // side 0 room node
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
+        public readonly string NodeName2; // side 1 room node
+        public readonly uint Field48;
+        public readonly uint Field4C;
+        public readonly uint Field50;
+        public readonly uint Field54;
+        public readonly uint Field58;
+        public readonly byte Field5C;
+        public readonly byte Field5D;
+        public readonly ushort Field5E;
+    }
+
+    // size: 72
+    public readonly struct FhCollisionHeader
+    {
+        public readonly uint VectorCount;
+        public readonly uint VectorOffset;
+        public readonly uint Count2; // size: 16
+        public readonly uint Offset2;
+        public readonly uint Count3; // size: 6
+        public readonly uint Offset3;
+        public readonly uint Count4; // size: 6
+        public readonly uint Offset4;
+        public readonly uint ShortCount;
+        public readonly uint ShortOffset;
+        public readonly uint Count6; // size: 28
+        public readonly uint Offset6;
+        public readonly uint IntCount;
+        public readonly uint IntOffset;
+        public readonly uint Count8; // size: 28
+        public readonly uint Offset8;
+        public readonly uint PortalCount;
+        public readonly uint PortalOffset;
     }
 }

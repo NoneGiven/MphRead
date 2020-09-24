@@ -1032,6 +1032,7 @@ namespace MphRead
             GL.End();
         }
 
+        // todo: use this for volume outlines too
         private void RenderDisplayLines(CollisionPortal plane)
         {
             GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(1f, 0f, 0f, 1f));
