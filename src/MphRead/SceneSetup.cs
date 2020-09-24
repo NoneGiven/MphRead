@@ -526,6 +526,11 @@ namespace MphRead
             {
                 model.Animations.NodeGroupId = -1;
             }
+            else if (meta.Name == "SecretSwitch")
+            {
+                model.Animations.NodeGroupId = -1;
+                model.Animations.MaterialGroupId = -1;
+            }
             return model;
         }
 
