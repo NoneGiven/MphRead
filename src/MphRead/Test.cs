@@ -77,10 +77,6 @@ namespace MphRead
                 {
                     CollisionInfo collision = Collision.ReadCollision(meta.CollisionPath);
                     Model room = Read.GetRoomByName(meta.Name);
-                    if (collision.Portals.Any(p => p.VectorCount != 4))
-                    {
-                        Debugger.Break();
-                    }
                     Nop();
                 }
             }

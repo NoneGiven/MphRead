@@ -97,7 +97,7 @@ namespace MphRead
         // light sources need to be processed in entity ID order
         private readonly List<LightSource> _lightSources = new List<LightSource>();
         private readonly Dictionary<int, DisplayVolume> _displayVolumes = new Dictionary<int, DisplayVolume>();
-        private readonly List<DisplayPlane> _displayPlanes = new List<DisplayPlane>();
+        private readonly List<CollisionPortal> _displayPlanes = new List<CollisionPortal>();
 
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
@@ -263,14 +263,7 @@ namespace MphRead
             {
                 if ((portal.LayerMask & 4) != 0 || (portal.LayerMask & nodeLayerMask) != 0)
                 {
-                    Debug.Assert(portal.VectorCount == 4);
-                    _displayPlanes.Add(new DisplayPlane(
-                        portal.Vector1.ToFloatVector(),
-                        portal.Vector2.ToFloatVector(),
-                        portal.Vector3.ToFloatVector(),
-                        portal.Vector4.ToFloatVector(),
-                        forceField: portal.Name.StartsWith("pmag")
-                    ));
+                    _displayPlanes.Add(portal);
                 }
             }
             _cameraMode = CameraMode.Roam;
@@ -771,14 +764,16 @@ namespace MphRead
             public readonly Mesh Mesh;
             public readonly Material Material;
             public readonly int PolygonId;
+            public readonly float Alpha;
 
-            public MeshInfo(Model model, Node node, Mesh mesh, Material material, int polygonId)
+            public MeshInfo(Model model, Node node, Mesh mesh, Material material, int polygonId, float alpha)
             {
                 Model = model;
                 Node = node;
                 Mesh = mesh;
                 Material = material;
                 PolygonId = polygonId;
+                Alpha = alpha;
             }
         }
 
@@ -814,8 +809,9 @@ namespace MphRead
                     continue;
                 }
                 int modelPolygonId = model.Type == ModelType.Room ? 0 : polygonId++;
-                foreach (Node node in model.GetDrawNodes(includeForceFields: _showVolumes != 10))
+                foreach (NodeInfo nodeInfo in model.GetDrawNodes(includeForceFields: _showVolumes != 10))
                 {
+                    Node node = nodeInfo.Node;
                     if (node.MeshCount == 0 || !node.Enabled || !model.NodeParentsEnabled(node))
                     {
                         continue;
@@ -826,11 +822,17 @@ namespace MphRead
                         {
                             continue;
                         }
+                        float alpha = 1f;
                         Material material = model.Materials[mesh.MaterialId];
                         int meshPolygonId;
                         if (model.Type == ModelType.Room)
                         {
-                            if (material.RenderMode == RenderMode.Translucent)
+                            if (nodeInfo.Portal != null)
+                            {
+                                meshPolygonId = UInt16.MaxValue;
+                                alpha = GetPortalAlpha(nodeInfo.Portal.Position);
+                            }
+                            else if (material.RenderMode == RenderMode.Translucent)
                             {
                                 meshPolygonId = polygonId++;
                             }
@@ -843,7 +845,7 @@ namespace MphRead
                         {
                             meshPolygonId = modelPolygonId;
                         }
-                        var meshInfo = new MeshInfo(model, node, mesh, material, meshPolygonId);
+                        var meshInfo = new MeshInfo(model, node, mesh, material, meshPolygonId, alpha);
                         if (material.RenderMode != RenderMode.Decal)
                         {
                             _nonDecalMeshes.Add(meshInfo);
@@ -852,14 +854,13 @@ namespace MphRead
                         {
                             _decalMeshes.Add(meshInfo);
                         }
-                        if (material.RenderMode == RenderMode.Translucent)
+                        if (material.RenderMode == RenderMode.Translucent || alpha < 1f)
                         {
                             _translucentMeshes.Add(meshInfo);
                         }
                     }
                 }
             }
-            // sktodo: draw force fields
             UpdateUniforms();
             // pass 1: opaque
             GL.ColorMask(true, true, true, true);
@@ -970,7 +971,7 @@ namespace MphRead
                     GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
                     Matrix4 transform = Matrix4.Identity;
                     GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
-                    foreach (DisplayPlane plane in _displayPlanes)
+                    foreach (CollisionPortal plane in _displayPlanes)
                     {
                         RenderDisplayPlane(plane);
                         if (_volumeEdges)
@@ -1004,12 +1005,17 @@ namespace MphRead
             }
         }
 
-        private void RenderDisplayPlane(DisplayPlane plane)
+        private float GetPortalAlpha(Vector3 position)
         {
-            float between = (plane.Position - _cameraPosition * -1).Length;
-            float alpha = MathF.Min(between / 8, 1);
+            float between = (position - _cameraPosition * -1).Length;
+            return MathF.Min(between / 8, 1);
+        }
+
+        private void RenderDisplayPlane(CollisionPortal plane)
+        {
+            float alpha = GetPortalAlpha(plane.Position);
             Vector4 color;
-            if (plane.ForceField)
+            if (plane.IsForceField)
             {
                 color = new Vector4(16 / 31f, 16 / 31f, 1f, alpha);
             }
@@ -1026,7 +1032,7 @@ namespace MphRead
             GL.End();
         }
 
-        private void RenderDisplayLines(DisplayPlane plane)
+        private void RenderDisplayLines(CollisionPortal plane)
         {
             GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(1f, 0f, 0f, 1f));
             GL.Begin(PrimitiveType.LineLoop);
@@ -1140,7 +1146,7 @@ namespace MphRead
             }
             _modelMatrix = nodeTransform * _modelMatrix;
             GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref _modelMatrix);
-            RenderMesh(model, node, item.Mesh, item.Material);
+            RenderMesh(model, node, item.Mesh, item.Material, item.Alpha);
         }
 
         private const float _colorStep = 8 / 255f;
@@ -1329,9 +1335,9 @@ namespace MphRead
             return textureMatrix;
         }
 
-        private void RenderMesh(Model model, Node node, Mesh mesh, Material material)
+        private void RenderMesh(Model model, Node node, Mesh mesh, Material material, float alpha)
         {
-            DoMaterial(model, material);
+            DoMaterial(model, material, alpha);
             DoTexture(model, node, mesh, material);
             if (_faceCulling)
             {
@@ -1527,7 +1533,7 @@ namespace MphRead
             }
         }
 
-        private void DoMaterial(Model model, Material material)
+        private void DoMaterial(Model model, Material material, float alphaScale)
         {
             // todo: remove this line once animations are being selected properly
             material.AnimationFlags = AnimationFlags.DisableAlpha;
@@ -1584,7 +1590,7 @@ namespace MphRead
             GL.Uniform3(_shaderLocations.Diffuse, diffuse);
             GL.Uniform3(_shaderLocations.Ambient, ambient);
             GL.Uniform3(_shaderLocations.Specular, specular);
-            GL.Uniform1(_shaderLocations.MaterialAlpha, alpha);
+            GL.Uniform1(_shaderLocations.MaterialAlpha, alpha * alphaScale);
             GL.Uniform1(_shaderLocations.MaterialMode, (int)material.PolygonMode);
             material.CurrentAlpha = alpha;
             UpdateMaterials(model);

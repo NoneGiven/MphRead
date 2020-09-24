@@ -279,7 +279,7 @@ namespace MphRead
             Debug.Assert(Nodes.Any(n => n.IsRoomPartNode));
         }
 
-        public IEnumerable<Node> GetDrawNodes(bool includeForceFields)
+        public IEnumerable<NodeInfo> GetDrawNodes(bool includeForceFields)
         {
             // todo: partial room rendering with toggle
             // --> should also have a toggle to show etags, etc.
@@ -292,7 +292,7 @@ namespace MphRead
                     {
                         foreach (Node leaf in GetNodeTree(node))
                         {
-                            yield return leaf;
+                            yield return new NodeInfo(leaf);
                         }
                     }
                 }
@@ -300,10 +300,10 @@ namespace MphRead
                 {
                     for (int i = 0; i < _forceFields.Count; i++)
                     {
-                        // sktodo: return force field node and portal position
-                        foreach (Node leaf in GetNodeTree(Nodes[_forceFields[i].NodeIndex]))
+                        ForceFieldNodeRef forceField = _forceFields[i];
+                        foreach (Node node in GetNodeTree(Nodes[forceField.NodeIndex]))
                         {
-                            yield return leaf;
+                            yield return new NodeInfo(node, forceField.Portal);
                         }
                     }
                 }
@@ -312,7 +312,7 @@ namespace MphRead
             {
                 for (int i = 0; i < Nodes.Count; i++)
                 {
-                    yield return Nodes[i];
+                    yield return new NodeInfo(Nodes[i]);
                 }
             }
         }
@@ -578,6 +578,24 @@ namespace MphRead
                 Animations.NodeGroup!.CurrentFrame++;
                 Animations.NodeGroup.CurrentFrame %= Animations.NodeGroup.FrameCount;
             }
+        }
+    }
+
+    public readonly struct NodeInfo
+    {
+        public readonly Node Node;
+        public readonly CollisionPortal? Portal;
+
+        public NodeInfo(Node node)
+        {
+            Node = node;
+            Portal = null;
+        }
+
+        public NodeInfo(Node node, CollisionPortal portal)
+        {
+            Node = node;
+            Portal = portal;
         }
     }
 
@@ -1373,30 +1391,6 @@ namespace MphRead
             CylinderDot = raw.CylinderDot.FloatValue;
             SpherePosition = raw.SpherePosition.ToFloatVector();
             SphereRadius = raw.SphereRadius.FloatValue;
-        }
-    }
-
-    public class DisplayPlane
-    {
-        public Vector3 Point1 { get; }
-        public Vector3 Point2 { get; }
-        public Vector3 Point3 { get; }
-        public Vector3 Point4 { get; }
-        public bool ForceField { get; }
-        public Vector3 Position { get; }
-
-        public DisplayPlane(Vector3 point1, Vector3 point2, Vector3 point3, Vector3 point4, bool forceField)
-        {
-            Point1 = point1;
-            Point2 = point2;
-            Point3 = point3;
-            Point4 = point4;
-            ForceField = forceField;
-            Vector3 position = Vector3.Zero;
-            position.X = (point1.X + point2.X + point3.X + point4.X) * 0.25f;
-            position.Y = (point1.Y + point2.Y + point3.Y + point4.Y) * 0.25f;
-            position.Z = (point1.Z + point2.Z + point3.Z + point4.Z) * 0.25f;
-            Position = position;
         }
     }
 

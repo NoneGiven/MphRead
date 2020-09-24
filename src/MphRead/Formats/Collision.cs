@@ -24,7 +24,11 @@ namespace MphRead.Formats.Collision
             IReadOnlyList<CollisionData> data = Read.DoOffsets<CollisionData>(bytes, header.DataOffset, header.DataCount);
             IReadOnlyList<ushort> indices = Read.DoOffsets<ushort>(bytes, header.IndexOffset, header.IndexCount);
             IReadOnlyList<CollisionEntry> entries = Read.DoOffsets<CollisionEntry>(bytes, header.EntryOffset, header.EntryCount);
-            IReadOnlyList<CollisionPortal> portals = Read.DoOffsets<CollisionPortal>(bytes, header.PortalOffset, header.PortalCount);
+            var portals = new List<CollisionPortal>();
+            foreach (RawCollisionPortal portal in Read.DoOffsets<RawCollisionPortal>(bytes, header.PortalOffset, header.PortalCount))
+            {
+                portals.Add(new CollisionPortal(portal));
+            }
             var enabledIndices = new Dictionary<uint, IReadOnlyList<ushort>>();
             foreach (CollisionEntry entry in entries.Where(e => e.Count > 0))
             {
@@ -98,7 +102,7 @@ namespace MphRead.Formats.Collision
     }
 
     // size: 224
-    public readonly struct CollisionPortal
+    public readonly struct RawCollisionPortal
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 24)]
         public readonly string Name;
@@ -128,6 +132,39 @@ namespace MphRead.Formats.Collision
         public readonly ushort LayerMask;
         public readonly ushort VectorCount;
         public readonly ushort FieldDE;
+    }
+
+    public class CollisionPortal
+    {
+        public string Name { get; }
+        public string NodeName1 { get; }
+        public string NodeName2 { get; }
+        public ushort LayerMask { get; }
+        public bool IsForceField { get; }
+        public Vector3 Point1 { get; }
+        public Vector3 Point2 { get; }
+        public Vector3 Point3 { get; }
+        public Vector3 Point4 { get; }
+        public Vector3 Position { get; }
+
+        public CollisionPortal(RawCollisionPortal raw)
+        {
+            Debug.Assert(raw.VectorCount == 4);
+            Name = raw.Name;
+            NodeName1 = raw.NodeName1;
+            NodeName2 = raw.NodeName2;
+            LayerMask = raw.LayerMask;
+            IsForceField = raw.Name.StartsWith("pmag");
+            Point1 = raw.Vector1.ToFloatVector();
+            Point2 = raw.Vector2.ToFloatVector();
+            Point3 = raw.Vector3.ToFloatVector();
+            Point4 = raw.Vector4.ToFloatVector();
+            Vector3 position = Vector3.Zero;
+            position.X = (Point1.X + Point1.X + Point1.X + Point1.X) * 0.25f;
+            position.Y = (Point1.Y + Point1.Y + Point1.Y + Point1.Y) * 0.25f;
+            position.Z = (Point1.Z + Point1.Z + Point1.Z + Point1.Z) * 0.25f;
+            Position = position;
+        }
     }
 
     public class CollisionInfo
