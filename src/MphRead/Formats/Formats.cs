@@ -282,7 +282,7 @@ namespace MphRead
         public IEnumerable<NodeInfo> GetDrawNodes(bool includeForceFields)
         {
             // todo: partial room rendering with toggle
-            // --> should also have a toggle to show etags, etc.
+            // --> should also have a toggle to show etags, gray triangle, etc.
             if (Type == ModelType.Room)
             {
                 for (int i = 0; i < Nodes.Count; i++)
