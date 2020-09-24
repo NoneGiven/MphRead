@@ -71,7 +71,7 @@ namespace MphRead.Formats.Collision
     public readonly struct CollisionHeader
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public readonly char[] Type; // wc01 - no terminator
+        public readonly char[] Type; // wc01
         public readonly uint VectorCount;
         public readonly uint VectorOffset;
         public readonly uint PlaneCount;
@@ -119,16 +119,14 @@ namespace MphRead.Formats.Collision
     // size: 224
     public readonly struct RawCollisionPortal
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 24)]
-        public readonly string Name;
-        public readonly uint Field18;
-        public readonly uint Field1C;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        public readonly char[] Name;
         public readonly uint Field20;
         public readonly uint Field24;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 24)]
-        public readonly string NodeName1; // side 0 room node
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 24)]
-        public readonly string NodeName2; // side 1 room node
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 24)]
+        public readonly char[] NodeName1; // side 0 room node
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 24)]
+        public readonly char[] NodeName2; // side 1 room node
         public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
         public readonly Vector3Fx Vector3;
@@ -165,11 +163,11 @@ namespace MphRead.Formats.Collision
         public CollisionPortal(RawCollisionPortal raw)
         {
             Debug.Assert(raw.VectorCount == 4);
-            Name = raw.Name;
-            NodeName1 = raw.NodeName1;
-            NodeName2 = raw.NodeName2;
+            Name = new string(raw.Name).TrimEnd('\0');
+            NodeName1 = new string(raw.NodeName1).TrimEnd('\0');
+            NodeName2 = new string(raw.NodeName2).TrimEnd('\0');
             LayerMask = raw.LayerMask;
-            IsForceField = raw.Name.StartsWith("pmag");
+            IsForceField = Name.StartsWith("pmag");
             Point1 = raw.Vector1.ToFloatVector();
             Point2 = raw.Vector2.ToFloatVector();
             Point3 = raw.Vector3.ToFloatVector();

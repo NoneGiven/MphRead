@@ -33,7 +33,8 @@ namespace MphRead.Models
                         node.IsRoomPartNode = true;
                     }
                 }
-                foreach (CollisionPortal portal in portals.Where(p => p.Name.StartsWith("pmag")))
+                IEnumerable<CollisionPortal> pmags = portals.Where(p => p.Name.StartsWith("pmag"));
+                foreach (CollisionPortal portal in pmags)
                 {
                     for (int i = 0; i < Nodes.Count; i++)
                     {
@@ -44,6 +45,7 @@ namespace MphRead.Models
                         }
                     }
                 }
+                Debug.Assert(forceFields.Count == pmags.Count());
             }
             else if (meta.RoomNodeName != null
                 && Nodes.TryFind(n => n.Name == meta.RoomNodeName && n.ChildIndex != UInt16.MaxValue, out Node? roomNode))
