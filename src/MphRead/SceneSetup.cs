@@ -867,7 +867,7 @@ namespace MphRead
             models.Add(model);
             if (data.Active != 0 && data.Type != 9)
             {
-                Model enemy = Read.GetModelByName("ForceFieldLock", recolor);
+                Model enemy = new ForceFieldLockModel(Read.GetModelByName("ForceFieldLock", recolor));
                 Vector3 position = model.Position;
                 position.X += Fixed.ToFloat(409) * vec2.X;
                 position.Y += Fixed.ToFloat(409) * vec2.Y;

@@ -74,7 +74,9 @@ namespace MphRead
         Object,
         Placeholder,
         JumpPad,
-        JumpPadBeam
+        JumpPadBeam,
+        Enemy,
+        Player
     }
 
     public enum BillboardMode : byte

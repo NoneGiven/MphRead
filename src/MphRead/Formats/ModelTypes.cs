@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using MphRead.Formats.Collision;
+using OpenTK.Mathematics;
 
 namespace MphRead.Models
 {
@@ -119,6 +120,29 @@ namespace MphRead.Models
             {
                 Portal = portal;
                 NodeIndex = nodeIndex;
+            }
+        }
+    }
+
+    public class ForceFieldLockModel : Model
+    {
+        public ForceFieldLockModel(Model model) : base(model)
+        {
+            Type = ModelType.Enemy;
+        }
+
+        public override void Process(double elapsedTime, long frameCount, Vector3 cameraPosition)
+        {
+            base.Process(elapsedTime, frameCount, cameraPosition);
+            if (Vector3.Dot(cameraPosition - InitialPosition, Vector2) < 0)
+            {
+                Vector2 *= -1;
+                Vector3 position = InitialPosition;
+                position.X += Fixed.ToFloat(409) * Vector2.X;
+                position.Y += Fixed.ToFloat(409) * Vector2.Y;
+                position.Z += Fixed.ToFloat(409) * Vector2.Z;
+                Position = position;
+                SceneSetup.ComputeModelMatrices(this, Vector2, Vector1);
             }
         }
     }

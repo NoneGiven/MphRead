@@ -406,7 +406,7 @@ namespace MphRead
         public Matrix4 ExtraTransform { get; private set; } = Matrix4.Identity;
         public bool ExtraTexgenTransform { get; }
 
-        public virtual void Process(double elapsedTime, long frameCount)
+        public virtual void Process(double elapsedTime, long frameCount, Vector3 cameraPosition)
         {
             // todo: FPS stuff
             if (frameCount != 0 && frameCount % 2 == 0)
