@@ -156,9 +156,10 @@ namespace MphRead
                 {
                     paletteData.Add(GetPaletteData(palette, paletteBytes));
                 }
-                if (meta.PalettePath != meta.TexturePath && meta.ReplaceIds.Count > 0)
+                string replacePath = meta.ReplacePath ?? meta.PalettePath;
+                if (replacePath != meta.TexturePath && meta.ReplaceIds.Count > 0)
                 {
-                    paletteBytes = ReadBytes(meta.PalettePath);
+                    paletteBytes = ReadBytes(replacePath);
                     Header paletteHeader = ReadStruct<Header>(paletteBytes[0..Sizes.Header]);
                     IReadOnlyList<Palette> replacePalettes
                         = DoOffsets<Palette>(paletteBytes, paletteHeader.PaletteOffset, paletteHeader.PaletteCount);

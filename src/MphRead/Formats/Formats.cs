@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
 namespace MphRead
@@ -13,6 +15,10 @@ namespace MphRead
         public bool ScanVisorOnly { get; set; }
         public bool UseLightSources { get; }
         public bool UseLightOverride { get; set; } // for Octoliths
+        public Vector3 Light1Color { get; set; }
+        public Vector3 Light1Vector { get; set; }
+        public Vector3 Light2Color { get; set; }
+        public Vector3 Light2Vector { get; set; }
         public ModelType Type { get; set; }
         public EntityType EntityType { get; set; }
         public ushort EntityLayer { get; set; } = UInt16.MaxValue;
@@ -213,6 +219,121 @@ namespace MphRead
             return Recolors[CurrentRecolor].GetPixels(textureId, paletteId);
         }
 
+        private readonly struct ForceFieldNodeRef
+        {
+            public readonly CollisionPortal Portal;
+            public readonly int NodeIndex;
+
+            public ForceFieldNodeRef(CollisionPortal portal, int nodeIndex)
+            {
+                Portal = portal;
+                NodeIndex = nodeIndex;
+            }
+        }
+
+        private readonly List<CollisionPortal> _portals = new List<CollisionPortal>();
+        private readonly List<ForceFieldNodeRef> _forceFields = new List<ForceFieldNodeRef>();
+
+        // todo: room subclass
+        public void SetUpCollision(RoomMetadata meta, CollisionInfo collision, int nodeLayerMask)
+        {
+            _portals.AddRange(collision.Portals.Where(p => (p.LayerMask & 4) != 0 || (p.LayerMask & nodeLayerMask) != 0));
+            if (_portals.Count > 0)
+            {
+                IEnumerable<string> parts = _portals.Select(p => p.NodeName1).Concat(_portals.Select(p => p.NodeName2)).Distinct();
+                foreach (Node node in Nodes)
+                {
+                    if (parts.Contains(node.Name))
+                    {
+                        node.IsRoomPartNode = true;
+                    }
+                }
+                foreach (CollisionPortal portal in _portals.Where(p => p.Name.StartsWith("pmag")))
+                {
+                    for (int i = 0; i < Nodes.Count; i++)
+                    {
+                        if (Nodes[i].Name == $"geo{portal.Name[1..]}")
+                        {
+                            _forceFields.Add(new ForceFieldNodeRef(portal, i));
+                            break;
+                        }
+                    }
+                }
+            }
+            else if (meta.RoomNodeName != null
+                && Nodes.TryFind(n => n.Name == meta.RoomNodeName && n.ChildIndex != UInt16.MaxValue, out Node? roomNode))
+            {
+                roomNode.IsRoomPartNode = true;
+            }
+            else
+            {
+                foreach (Node node in Nodes)
+                {
+                    if (node.Name.StartsWith("rm"))
+                    {
+                        node.IsRoomPartNode = true;
+                        break;
+                    }
+                }
+            }
+            Debug.Assert(Nodes.Any(n => n.IsRoomPartNode));
+        }
+
+        public IEnumerable<NodeInfo> GetDrawNodes(bool includeForceFields)
+        {
+            // todo: partial room rendering with toggle
+            // --> should also have a toggle to show etags, gray triangle, etc.
+            if (Type == ModelType.Room)
+            {
+                for (int i = 0; i < Nodes.Count; i++)
+                {
+                    Node node = Nodes[i];
+                    if (node.IsRoomPartNode)
+                    {
+                        foreach (Node leaf in GetNodeTree(node))
+                        {
+                            yield return new NodeInfo(leaf);
+                        }
+                    }
+                }
+                if (includeForceFields)
+                {
+                    for (int i = 0; i < _forceFields.Count; i++)
+                    {
+                        ForceFieldNodeRef forceField = _forceFields[i];
+                        foreach (Node node in GetNodeTree(Nodes[forceField.NodeIndex]))
+                        {
+                            yield return new NodeInfo(node, forceField.Portal);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < Nodes.Count; i++)
+                {
+                    yield return new NodeInfo(Nodes[i]);
+                }
+            }
+        }
+
+        private IEnumerable<Node> GetNodeTree(Node node)
+        {
+            int childIndex = node.ChildIndex;
+            if (childIndex != UInt16.MaxValue)
+            {
+                node = Nodes[childIndex];
+                yield return node;
+                int nextIndex = node.NextIndex;
+                while (nextIndex != UInt16.MaxValue)
+                {
+                    node = Nodes[nextIndex];
+                    yield return node;
+                    nextIndex = node.NextIndex;
+                }
+            }
+        }
+
         public IEnumerable<Mesh> GetNodeMeshes(int nodeId)
         {
             return GetNodeMeshes(Nodes[nodeId]);
@@ -241,7 +362,7 @@ namespace MphRead
             return true;
         }
 
-        public int GetNextRoomNodeId(int nodeId)
+        public int GetNextRoomPartId(int nodeId)
         {
             int i = nodeId + 1;
             while (true)
@@ -254,7 +375,7 @@ namespace MphRead
                 {
                     break;
                 }
-                if (Nodes[i].IsRoomNode)
+                if (Nodes[i].IsRoomPartNode)
                 {
                     return i;
                 }
@@ -263,7 +384,7 @@ namespace MphRead
             return nodeId;
         }
 
-        public int GetPreviousRoomNodeId(int nodeId)
+        public int GetPrevRoomPartId(int nodeId)
         {
             int i = nodeId - 1;
             while (true)
@@ -276,7 +397,7 @@ namespace MphRead
                 {
                     break;
                 }
-                if (Nodes[i].IsRoomNode)
+                if (Nodes[i].IsRoomPartNode)
                 {
                     return i;
                 }
@@ -457,6 +578,24 @@ namespace MphRead
                 Animations.NodeGroup!.CurrentFrame++;
                 Animations.NodeGroup.CurrentFrame %= Animations.NodeGroup.FrameCount;
             }
+        }
+    }
+
+    public readonly struct NodeInfo
+    {
+        public readonly Node Node;
+        public readonly CollisionPortal? Portal;
+
+        public NodeInfo(Node node)
+        {
+            Node = node;
+            Portal = null;
+        }
+
+        public NodeInfo(Node node, CollisionPortal portal)
+        {
+            Node = node;
+            Portal = portal;
         }
     }
 
@@ -718,7 +857,7 @@ namespace MphRead
             }
         }
 
-        public bool IsRoomNode { get; private set; }
+        public bool IsRoomPartNode { get; set; }
 
         public Node(RawNode raw)
         {
@@ -740,7 +879,6 @@ namespace MphRead
             Vector1 = raw.Vector1.ToFloatVector();
             Vector2 = raw.Vector2.ToFloatVector();
             BillboardMode = raw.BillboardMode;
-            IsRoomNode = Name.StartsWith("rm");
         }
     }
 
@@ -1667,6 +1805,17 @@ namespace MphRead
                 index++;
             }
             return -1;
+        }
+
+        public static bool TryFind<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate,
+            [NotNullWhen(true)] out TSource? result) where TSource : class
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+            result = source.FirstOrDefault(s => predicate.Invoke(s));
+            return result != null;
         }
     }
 }

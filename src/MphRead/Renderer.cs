@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using MphRead.Export;
+using MphRead.Formats.Collision;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -92,8 +93,11 @@ namespace MphRead
         private readonly Dictionary<int, Model> _modelMap = new Dictionary<int, Model>();
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
-        private readonly Dictionary<int, LightSource> _lightSources = new Dictionary<int, LightSource>();
+        private readonly Dictionary<int, LightSource> _lightSourceMap = new Dictionary<int, LightSource>();
+        // light sources need to be processed in entity ID order
+        private readonly List<LightSource> _lightSources = new List<LightSource>();
         private readonly Dictionary<int, DisplayVolume> _displayVolumes = new Dictionary<int, DisplayVolume>();
+        private readonly List<CollisionPortal> _displayPlanes = new List<CollisionPortal>();
 
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
@@ -161,11 +165,19 @@ namespace MphRead
                 throw new InvalidOperationException();
             }
             _roomLoaded = true;
-            (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities)
+            (Model room, RoomMetadata roomMeta, IReadOnlyList<Model> entities, int updatedMask)
                 = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
+            nodeLayerMask = updatedMask;
             if (roomMeta.InGameName != null)
             {
                 Title = roomMeta.InGameName;
+            }
+            foreach (Model model in _models.Where(m => m.UseLightOverride))
+            {
+                model.Light1Color = _light1Color;
+                model.Light1Vector = _light1Vector;
+                model.Light2Color = _light2Color;
+                model.Light2Vector = _light2Vector;
             }
             _models.Insert(0, room);
             _models.AddRange(entities);
@@ -177,7 +189,8 @@ namespace MphRead
                 {
                     var display = new LightSource(lightSource);
                     _displayVolumes.Add(entity.SceneId, display);
-                    _lightSources.Add(entity.SceneId, display);
+                    _lightSourceMap.Add(entity.SceneId, display);
+                    _lightSources.Add(display);
                 }
                 else if (entity.Entity is Entity<TriggerVolumeEntityData> trigger)
                 {
@@ -243,6 +256,16 @@ namespace MphRead
                 1.0f
             );
             _fogOffset = (int)roomMeta.FogOffset;
+            CollisionInfo collision = Collision.ReadCollision(roomMeta.CollisionPath, nodeLayerMask);
+            // todo: once ReadCollision is filering things, we don't need to pass nodeLayerMask here or test it below
+            room.SetUpCollision(roomMeta, collision, nodeLayerMask);
+            foreach (CollisionPortal portal in collision.Portals)
+            {
+                if ((portal.LayerMask & 4) != 0 || (portal.LayerMask & nodeLayerMask) != 0)
+                {
+                    _displayPlanes.Add(portal);
+                }
+            }
             _cameraMode = CameraMode.Roam;
         }
 
@@ -250,6 +273,13 @@ namespace MphRead
         {
             Model model = Read.GetModelByName(name, recolor, firstHunt);
             SceneSetup.ComputeNodeMatrices(model, index: 0);
+            if (_roomLoaded && model.UseLightSources)
+            {
+                model.Light1Color = _light1Color;
+                model.Light1Vector = _light1Vector;
+                model.Light2Color = _light2Color;
+                model.Light2Vector = _light2Vector;
+            }
             _models.Add(model);
             _modelMap.Add(model.SceneId, model);
         }
@@ -430,7 +460,11 @@ namespace MphRead
                 DeleteTextures(model.SceneId);
                 _models.Remove(model);
                 _modelMap.Remove(model.SceneId);
-                _lightSources.Remove(model.SceneId);
+                if (_lightSourceMap.TryGetValue(model.SceneId, out LightSource? lightSource))
+                {
+                    _lightSources.Remove(lightSource);
+                    _lightSourceMap.Remove(model.SceneId);
+                }
                 _displayVolumes.Remove(model.SceneId);
                 _updateLists = true;
                 await PrintOutput();
@@ -730,14 +764,16 @@ namespace MphRead
             public readonly Mesh Mesh;
             public readonly Material Material;
             public readonly int PolygonId;
+            public readonly float Alpha;
 
-            public MeshInfo(Model model, Node node, Mesh mesh, Material material, int polygonId)
+            public MeshInfo(Model model, Node node, Mesh mesh, Material material, int polygonId, float alpha)
             {
                 Model = model;
                 Node = node;
                 Mesh = mesh;
                 Material = material;
                 PolygonId = polygonId;
+                Alpha = alpha;
             }
         }
 
@@ -760,29 +796,43 @@ namespace MphRead
                 {
                     model.Process(elapsedTime, _frameCount);
                 }
+                if (model.UseLightSources)
+                {
+                    UpdateLightSources(model, elapsedTime);
+                }
+                else if (model.UseLightOverride)
+                {
+                    UpdateLightOverride(model);
+                }
                 if (!model.Visible || (model.Type == ModelType.Placeholder && !_showInvisible) || (model.ScanVisorOnly && !_scanVisor))
                 {
                     continue;
                 }
                 int modelPolygonId = model.Type == ModelType.Room ? 0 : polygonId++;
-                for (int j = 0; j < model.Nodes.Count; j++)
+                foreach (NodeInfo nodeInfo in model.GetDrawNodes(includeForceFields: _showVolumes != 10))
                 {
-                    Node node = model.Nodes[j];
+                    Node node = nodeInfo.Node;
                     if (node.MeshCount == 0 || !node.Enabled || !model.NodeParentsEnabled(node))
                     {
                         continue;
                     }
-                    foreach (Mesh mesh in model.GetNodeMeshes(j))
+                    foreach (Mesh mesh in model.GetNodeMeshes(node))
                     {
                         if (!mesh.Visible)
                         {
                             continue;
                         }
+                        float alpha = 1f;
                         Material material = model.Materials[mesh.MaterialId];
                         int meshPolygonId;
                         if (model.Type == ModelType.Room)
                         {
-                            if (material.RenderMode == RenderMode.Translucent)
+                            if (nodeInfo.Portal != null)
+                            {
+                                meshPolygonId = UInt16.MaxValue;
+                                alpha = GetPortalAlpha(nodeInfo.Portal.Position);
+                            }
+                            else if (material.RenderMode == RenderMode.Translucent)
                             {
                                 meshPolygonId = polygonId++;
                             }
@@ -795,7 +845,7 @@ namespace MphRead
                         {
                             meshPolygonId = modelPolygonId;
                         }
-                        var meshInfo = new MeshInfo(model, node, mesh, material, meshPolygonId);
+                        var meshInfo = new MeshInfo(model, node, mesh, material, meshPolygonId, alpha);
                         if (material.RenderMode != RenderMode.Decal)
                         {
                             _nonDecalMeshes.Add(meshInfo);
@@ -804,7 +854,7 @@ namespace MphRead
                         {
                             _decalMeshes.Add(meshInfo);
                         }
-                        if (material.RenderMode == RenderMode.Translucent)
+                        if (material.RenderMode == RenderMode.Translucent || alpha < 1f)
                         {
                             _translucentMeshes.Add(meshInfo);
                         }
@@ -888,7 +938,12 @@ namespace MphRead
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
-            if (_showVolumes > 0 && _displayVolumes.Count > 0)
+            RenderDisplayVolumes();
+        }
+
+        private void RenderDisplayVolumes()
+        {
+            if (_showVolumes > 0 && (_displayVolumes.Count > 0 || _displayPlanes.Count > 0))
             {
                 GL.Uniform1(_shaderLocations.UseLight, 0);
                 GL.Uniform1(_shaderLocations.UseFog, 0);
@@ -897,8 +952,6 @@ namespace MphRead
                 GL.Enable(EnableCap.Blend);
                 GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                 GL.Enable(EnableCap.CullFace);
-                // alternative if the depth buffer can't handle the above:
-                //GL.Disable(EnableCap.CullFace);
                 foreach (KeyValuePair<int, DisplayVolume> kvp in _displayVolumes)
                 {
                     if (_selectionMode == SelectionMode.None || _selectedModelId == kvp.Key)
@@ -912,8 +965,27 @@ namespace MphRead
                         }
                     }
                 }
+                if (_showVolumes == 10)
+                {
+                    GL.Disable(EnableCap.CullFace);
+                    GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
+                    Matrix4 transform = Matrix4.Identity;
+                    GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
+                    foreach (CollisionPortal plane in _displayPlanes)
+                    {
+                        RenderDisplayPlane(plane);
+                        if (_volumeEdges)
+                        {
+                            RenderDisplayLines(plane);
+                        }
+                    }
+                }
                 GL.Disable(EnableCap.Blend);
-                if (!_faceCulling)
+                if (_faceCulling)
+                {
+                    GL.Enable(EnableCap.CullFace);
+                }
+                else
                 {
                     GL.Disable(EnableCap.CullFace);
                 }
@@ -931,6 +1003,45 @@ namespace MphRead
                 GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(color.Value, 0.5f));
                 RenderVolume(volume.Volume);
             }
+        }
+
+        private float GetPortalAlpha(Vector3 position)
+        {
+            float between = (position - _cameraPosition * -1).Length;
+            return MathF.Min(between / 8, 1);
+        }
+
+        private void RenderDisplayPlane(CollisionPortal plane)
+        {
+            float alpha = GetPortalAlpha(plane.Position);
+            Vector4 color;
+            if (plane.IsForceField)
+            {
+                color = new Vector4(16 / 31f, 16 / 31f, 1f, alpha);
+            }
+            else
+            {
+                color = new Vector4(16 / 31f, 1f, 16 / 31f, alpha);
+            }
+            GL.Uniform4(_shaderLocations.OverrideColor, color);
+            GL.Begin(PrimitiveType.TriangleStrip);
+            GL.Vertex3(plane.Point1);
+            GL.Vertex3(plane.Point4);
+            GL.Vertex3(plane.Point2);
+            GL.Vertex3(plane.Point3);
+            GL.End();
+        }
+
+        // todo: use this for volume outlines too
+        private void RenderDisplayLines(CollisionPortal plane)
+        {
+            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(1f, 0f, 0f, 1f));
+            GL.Begin(PrimitiveType.LineLoop);
+            GL.Vertex3(plane.Point1);
+            GL.Vertex3(plane.Point2);
+            GL.Vertex3(plane.Point3);
+            GL.Vertex3(plane.Point4);
+            GL.End();
         }
 
         private void UpdateUniforms()
@@ -1023,22 +1134,10 @@ namespace MphRead
                 _modelMatrix = _viewInvRotYMatrix * _modelMatrix.ClearRotation();
             }
             UseRoomLights();
-            if (model.UseLightOverride)
+            if (model.UseLightSources || model.UseLightOverride)
             {
-                Vector3 player = _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1);
-                var vector1 = new Vector3(0, 1, 0);
-                Vector3 vector2 = new Vector3(player.X - model.Position.X, 0, player.Z - model.Position.Z).Normalized();
-                Matrix3 lightTransform = SceneSetup.GetTransformMatrix(vector2, vector1);
-                Vector3 lightVector = (Metadata.OctolithLight1Vector * lightTransform).Normalized();
-                GL.Uniform3(_shaderLocations.Light1Vector, lightVector);
-                GL.Uniform3(_shaderLocations.Light1Color, Metadata.OctolithLightColor);
-                lightVector = (Metadata.OctolithLight2Vector * lightTransform).Normalized();
-                GL.Uniform3(_shaderLocations.Light2Vector, lightVector);
-                GL.Uniform3(_shaderLocations.Light2Color, Metadata.OctolithLightColor);
-            }
-            else if (model.UseLightSources)
-            {
-                UpdateLightSources(model.Position);
+                UseLight1(model.Light1Vector, model.Light1Color);
+                UseLight2(model.Light2Vector, model.Light2Color);
             }
             Node node = item.Node;
             Matrix4 nodeTransform = node.Animation;
@@ -1048,27 +1147,106 @@ namespace MphRead
             }
             _modelMatrix = nodeTransform * _modelMatrix;
             GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref _modelMatrix);
-            RenderMesh(model, node, item.Mesh, item.Material);
+            RenderMesh(model, node, item.Mesh, item.Material, item.Alpha);
         }
 
-        // todo: handle overlapping light sources and fade in/out
-        private void UpdateLightSources(Vector3 position)
+        private const float _colorStep = 8 / 255f;
+
+        private void UpdateLightSources(Model model, double elapsedTime)
         {
-            foreach (LightSource lightSource in _lightSources.Values)
+            static float UpdateChannel(float current, float source, float frames)
             {
-                if (lightSource.TestPoint(position))
+                float diff = source - current;
+                if (MathF.Abs(diff) < _colorStep)
+                {
+                    return source;
+                }
+                int factor;
+                if (current > source)
+                {
+                    factor = (int)MathF.Truncate((diff + _colorStep) / (8 * _colorStep));
+                    if (factor <= -1)
+                    {
+                        return current + (factor - 1) * _colorStep * frames;
+                    }
+                    return current - _colorStep * frames;
+                }
+                factor = (int)MathF.Truncate(diff / (8 * _colorStep));
+                if (factor >= 1)
+                {
+                    return current + factor * _colorStep * frames;
+                }
+                return current + _colorStep * frames;
+            }
+            bool hasLight1 = false;
+            bool hasLight2 = false;
+            Vector3 light1Color = model.Light1Color;
+            Vector3 light1Vector = model.Light1Vector;
+            Vector3 light2Color = model.Light2Color;
+            Vector3 light2Vector = model.Light2Vector;
+            float frames = (float)elapsedTime * 30;
+            foreach (LightSource lightSource in _lightSources)
+            {
+                if (lightSource.TestPoint(model.Position))
                 {
                     if (lightSource.Light1Enabled)
                     {
-                        UseLight1(lightSource.Light1Vector, lightSource.Color1);
+                        hasLight1 = true;
+                        light1Vector.X += (lightSource.Light1Vector.X - light1Vector.X) / 8f * frames;
+                        light1Vector.Y += (lightSource.Light1Vector.Y - light1Vector.Y) / 8f * frames;
+                        light1Vector.Z += (lightSource.Light1Vector.Z - light1Vector.Z) / 8f * frames;
+                        light1Color.X = UpdateChannel(light1Color.X, lightSource.Color1.X, frames);
+                        light1Color.Y = UpdateChannel(light1Color.Y, lightSource.Color1.Y, frames);
+                        light1Color.Z = UpdateChannel(light1Color.Z, lightSource.Color1.Z, frames);
                     }
                     if (lightSource.Light2Enabled)
                     {
-                        UseLight2(lightSource.Light2Vector, lightSource.Color2);
+                        hasLight2 = true;
+                        light2Vector.X += (lightSource.Light2Vector.X - light2Vector.X) / 8f * frames;
+                        light2Vector.Y += (lightSource.Light2Vector.Y - light2Vector.Y) / 8f * frames;
+                        light2Vector.Z += (lightSource.Light2Vector.Z - light2Vector.Z) / 8f * frames;
+                        light2Color.X = UpdateChannel(light2Color.X, lightSource.Color2.X, frames);
+                        light2Color.Y = UpdateChannel(light2Color.Y, lightSource.Color2.Y, frames);
+                        light2Color.Z = UpdateChannel(light2Color.Z, lightSource.Color2.Z, frames);
                     }
-                    break;
                 }
             }
+            if (!hasLight1)
+            {
+                light1Vector.X += (_light1Vector.X - light1Vector.X) / 8f * frames;
+                light1Vector.Y += (_light1Vector.Y - light1Vector.Y) / 8f * frames;
+                light1Vector.Z += (_light1Vector.Z - light1Vector.Z) / 8f * frames;
+                light1Color.X = UpdateChannel(light1Color.X, _light1Color.X, frames);
+                light1Color.Y = UpdateChannel(light1Color.Y, _light1Color.Y, frames);
+                light1Color.Z = UpdateChannel(light1Color.Z, _light1Color.Z, frames);
+            }
+            if (!hasLight2)
+            {
+                light2Vector.X += (_light2Vector.X - light2Vector.X) / 8f * frames;
+                light2Vector.Y += (_light2Vector.Y - light2Vector.Y) / 8f * frames;
+                light2Vector.Z += (_light2Vector.Z - light2Vector.Z) / 8f * frames;
+                light2Color.X = UpdateChannel(light2Color.X, _light2Color.X, frames);
+                light2Color.Y = UpdateChannel(light2Color.Y, _light2Color.Y, frames);
+                light2Color.Z = UpdateChannel(light2Color.Z, _light2Color.Z, frames);
+            }
+            model.Light1Color = light1Color;
+            model.Light1Vector = light1Vector.Normalized();
+            model.Light2Color = light2Color;
+            model.Light2Vector = light2Vector.Normalized();
+            UseLight1(model.Light1Vector, model.Light1Color);
+            UseLight2(model.Light2Vector, model.Light2Color);
+        }
+
+        private void UpdateLightOverride(Model model)
+        {
+            Vector3 player = _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1);
+            var vector1 = new Vector3(0, 1, 0);
+            Vector3 vector2 = new Vector3(player.X - model.Position.X, 0, player.Z - model.Position.Z).Normalized();
+            Matrix3 lightTransform = SceneSetup.GetTransformMatrix(vector2, vector1);
+            model.Light1Vector = (Metadata.OctolithLight1Vector * lightTransform).Normalized();
+            model.Light1Color = Metadata.OctolithLightColor;
+            model.Light2Vector = (Metadata.OctolithLight2Vector * lightTransform).Normalized();
+            model.Light2Color = Metadata.OctolithLightColor;
         }
 
         private static float InterpolateAnimation(IReadOnlyList<float> values, int start, int frame, int blend, int lutLength, int frameCount,
@@ -1158,9 +1336,9 @@ namespace MphRead
             return textureMatrix;
         }
 
-        private void RenderMesh(Model model, Node node, Mesh mesh, Material material)
+        private void RenderMesh(Model model, Node node, Mesh mesh, Material material, float alpha)
         {
-            DoMaterial(model, material);
+            DoMaterial(model, material, alpha);
             DoTexture(model, node, mesh, material);
             if (_faceCulling)
             {
@@ -1356,10 +1534,8 @@ namespace MphRead
             }
         }
 
-        private void DoMaterial(Model model, Material material)
+        private void DoMaterial(Model model, Material material, float alphaScale)
         {
-            // todo: remove this line once animations are being selected properly
-            material.AnimationFlags = AnimationFlags.DisableAlpha;
             if (_lighting && material.Lighting != 0)
             {
                 GL.Uniform1(_shaderLocations.UseLight, 1);
@@ -1413,7 +1589,7 @@ namespace MphRead
             GL.Uniform3(_shaderLocations.Diffuse, diffuse);
             GL.Uniform3(_shaderLocations.Ambient, ambient);
             GL.Uniform3(_shaderLocations.Specular, specular);
-            GL.Uniform1(_shaderLocations.MaterialAlpha, alpha);
+            GL.Uniform1(_shaderLocations.MaterialAlpha, alpha * alphaScale);
             GL.Uniform1(_shaderLocations.MaterialMode, (int)material.PolygonMode);
             material.CurrentAlpha = alpha;
             UpdateMaterials(model);
@@ -1879,7 +2055,7 @@ namespace MphRead
                     _showVolumes--;
                     if (_showVolumes < 0)
                     {
-                        _showVolumes = 9;
+                        _showVolumes = 10;
                     }
                     if (_selectionMode == SelectionMode.Model)
                     {
@@ -1891,7 +2067,7 @@ namespace MphRead
                 else
                 {
                     _showVolumes++;
-                    if (_showVolumes > 9)
+                    if (_showVolumes > 10)
                     {
                         _showVolumes = 0;
                     }
@@ -2201,7 +2377,7 @@ namespace MphRead
                     int nodeIndex;
                     if (shift)
                     {
-                        nodeIndex = model.GetNextRoomNodeId(_selectedNodeId);
+                        nodeIndex = model.GetNextRoomPartId(_selectedNodeId);
                     }
                     else
                     {
@@ -2269,7 +2445,7 @@ namespace MphRead
                     int nodeIndex;
                     if (shift)
                     {
-                        nodeIndex = model.GetPreviousRoomNodeId(_selectedNodeId);
+                        nodeIndex = model.GetPrevRoomPartId(_selectedNodeId);
                     }
                     else
                     {
@@ -2559,7 +2735,7 @@ namespace MphRead
             }
             if (model.Type == ModelType.Room)
             {
-                type += $" ({model.Nodes.Count(n => n.IsRoomNode)})";
+                type += $" ({model.Nodes.Count(n => n.IsRoomPartNode)})";
             }
             else if (model.Type == ModelType.Placeholder)
             {

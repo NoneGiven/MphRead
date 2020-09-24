@@ -242,9 +242,9 @@ namespace MphRead
     public readonly struct PlayerSpawnEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly byte Initial; // boolean - whether
+        public readonly byte Initial; // boolean - whether this is available to spawn at when frame count is 0
         public readonly byte Active; // boolean
-        public readonly sbyte TeamIndex; // always 0, 1, or 255
+        public readonly sbyte TeamIndex; // 0, 1, or -1
     }
 
     // size: 104

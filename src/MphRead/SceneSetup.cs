@@ -11,7 +11,7 @@ namespace MphRead
         private static readonly Random _random = new Random();
 
         // todo: artifact flags
-        public static (Model, RoomMetadata, IReadOnlyList<Model>) LoadRoom(string name, GameMode mode = GameMode.None,
+        public static (Model, RoomMetadata, IReadOnlyList<Model>, int) LoadRoom(string name, GameMode mode = GameMode.None,
             int playerCount = 0, BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
         {
             (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
@@ -91,7 +91,7 @@ namespace MphRead
             IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
             // todo?: area ID/portals
             room.Type = ModelType.Room;
-            return (room, metadata, entities);
+            return (room, metadata, entities, nodeLayerMask);
         }
 
         private static void FilterNodes(Model model, int layerMask)
@@ -317,7 +317,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Door)
                 {
-                    models.Add(LoadDoor((Entity<DoorEntityData>)entity));
+                    models.AddRange(LoadDoor((Entity<DoorEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.FhDoor)
                 {
@@ -408,7 +408,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.ForceField)
                 {
-                    models.Add(LoadForceField((Entity<ForceFieldEntityData>)entity));
+                    models.AddRange(LoadForceField((Entity<ForceFieldEntityData>)entity));
                 }
                 else
                 {
@@ -519,10 +519,21 @@ namespace MphRead
             {
                 model.ScanVisorOnly = true;
             }
+            // temporary
+            if (meta.Name == "AlimbicCapsule")
+            {
+                model.Animations.NodeGroupId = -1;
+                model.Animations.MaterialGroupId = -1;
+            }
+            else if (meta.Name == "WallSwitch")
+            {
+                model.Animations.NodeGroupId = -1;
+                model.Animations.MaterialGroupId = -1;
+            }
             return model;
         }
 
-        // todo: use more properties
+        // todo: use more properties (item, movement, linked entities)
         private static Model LoadPlatform(Entity<PlatformEntityData> entity)
         {
             PlatformEntityData data = entity.Data;
@@ -537,6 +548,15 @@ namespace MphRead
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             model.Entity = entity;
+            // temporary
+            if (meta.Name == "SamusShip")
+            {
+                model.Animations.NodeGroupId = 1;
+            }
+            else if (meta.Name == "SyluxTurret")
+            {
+                model.Animations.NodeGroupId = -1;
+            }
             return model;
         }
 
@@ -738,9 +758,9 @@ namespace MphRead
             return model;
         }
 
-        // sktodo: enable drawing door lock, also use "flags" to determine lock/color state
-        private static Model LoadDoor(Entity<DoorEntityData> entity)
+        private static IEnumerable<Model> LoadDoor(Entity<DoorEntityData> entity)
         {
+            var models = new List<Model>();
             DoorEntityData data = entity.Data;
             DoorMetadata meta = Metadata.Doors[(int)data.ModelId];
             int recolorId = 0;
@@ -754,13 +774,30 @@ namespace MphRead
             // - morph ball = 0
             // - boss = 0
             // - thin = 0, 7
+            Vector3 vec1 = data.Header.UpVector.ToFloatVector();
             Model model = Read.GetModelByName(meta.Name, recolorId);
             model.Position = data.Header.Position.ToFloatVector();
-            ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
+            ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), vec1);
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             model.Entity = entity;
-            return model;
+            // todo: remove temporary code like this once animations are being selected properly
+            model.Animations.NodeGroupId = -1;
+            model.Animations.MaterialGroupId = -1;
+            models.Add(model);
+            Model doorLock = Read.GetModelByName(meta.LockName);
+            Vector3 position = model.Position;
+            position.X += meta.LockOffset * vec1.X;
+            position.Y += meta.LockOffset * vec1.Y;
+            position.Z += meta.LockOffset * vec1.Z;
+            doorLock.Position = position;
+            ComputeModelMatrices(doorLock, data.Header.RightVector.ToFloatVector(), vec1);
+            ComputeNodeMatrices(doorLock, index: 0);
+            doorLock.Type = ModelType.Generic;
+            doorLock.Entity = entity;
+            doorLock.Visible = false; // todo: use flags to determine lock/color state
+            models.Add(doorLock);
+            return models;
         }
 
         private static Model LoadDoor(Entity<FhDoorEntityData> entity)
@@ -772,6 +809,9 @@ namespace MphRead
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
             model.Entity = entity;
+            // temporary
+            model.Animations.NodeGroupId = -1;
+            model.Animations.MaterialGroupId = -1;
             return model;
         }
 
@@ -817,19 +857,37 @@ namespace MphRead
             return models;
         }
 
-        // todo: load lock, fade in/out "animation" --> 216A180 for lock palette stuff
-        private static Model LoadForceField(Entity<ForceFieldEntityData> entity)
+        // todo: fade in/out "animation"
+        private static IEnumerable<Model> LoadForceField(Entity<ForceFieldEntityData> entity)
         {
+            var models = new List<Model>();
             ForceFieldEntityData data = entity.Data;
-            Model model = Read.GetModelByName("ForceField", Metadata.DoorPalettes[(int)data.Type]);
+            int recolor = Metadata.DoorPalettes[(int)data.Type];
+            Model model = Read.GetModelByName("ForceField", recolor);
             model.Position = data.Header.Position.ToFloatVector();
             model.Scale = new Vector3(data.Width.FloatValue, data.Height.FloatValue, 1.0f);
-            ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
+            Vector3 vec2 = data.Header.RightVector.ToFloatVector();
+            ComputeModelMatrices(model, vec2, data.Header.UpVector.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Visible = data.Active != 0;
             model.Type = ModelType.Object;
             model.Entity = entity;
-            return model;
+            models.Add(model);
+            if (data.Active != 0 && data.Type != 9)
+            {
+                Model enemy = Read.GetModelByName("ForceFieldLock", recolor);
+                Vector3 position = model.Position;
+                position.X += Fixed.ToFloat(409) * vec2.X;
+                position.Y += Fixed.ToFloat(409) * vec2.Y;
+                position.Z += Fixed.ToFloat(409) * vec2.Z;
+                enemy.Position = position;
+                ComputeModelMatrices(enemy, vec2, data.Header.UpVector.ToFloatVector());
+                ComputeNodeMatrices(enemy, index: 0);
+                enemy.Type = ModelType.Object;
+                enemy.Entity = entity;
+                models.Add(enemy);
+            }
+            return models;
         }
 
         private static float GetItemHeightOffset(Fixed value)
