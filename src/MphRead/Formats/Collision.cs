@@ -182,11 +182,11 @@ namespace MphRead.Formats.Collision
         // sktodo: temporary
         public CollisionPortal(FhCollisionPortal raw)
         {
-            Name = raw.Name;
-            NodeName1 = raw.NodeName1;
-            NodeName2 = raw.NodeName2;
+            Name = new string(raw.Name).TrimEnd('\0');
+            NodeName1 = new string(raw.NodeName1).TrimEnd('\0');
+            NodeName2 = new string(raw.NodeName2).TrimEnd('\0');
             LayerMask = 4;
-            IsForceField = raw.Name.StartsWith("pmag");
+            IsForceField = Name.StartsWith("pmag");
             Point1 = Vector3.Zero;
             Point2 = Vector3.Zero;
             Point3 = Vector3.Zero;
@@ -228,16 +228,14 @@ namespace MphRead.Formats.Collision
     // size: 96
     public readonly struct FhCollisionPortal
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 24)]
-        public readonly string Name;
-        public readonly uint Field18;
-        public readonly uint Field1C;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        public readonly char[] Name;
         public readonly uint Field20;
         public readonly uint Field24;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string NodeName1; // side 0 room node
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string NodeName2; // side 1 room node
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly char[] NodeName1; // side 0 room node
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly char[] NodeName2; // side 1 room node
         public readonly uint Field48;
         public readonly uint Field4C;
         public readonly uint Field50;

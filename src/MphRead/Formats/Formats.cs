@@ -41,7 +41,7 @@ namespace MphRead
 
         public Node(RawNode raw)
         {
-            Name = raw.Name;
+            Name = new string(raw.Name).TrimEnd('\0');
             ParentIndex = raw.ParentId;
             ChildIndex = raw.ChildId;
             NextIndex = raw.NextId;
@@ -161,7 +161,7 @@ namespace MphRead
 
         public Material(RawMaterial raw)
         {
-            Name = raw.Name;
+            Name = new string(raw.Name).TrimEnd('\0');
             Lighting = raw.Lighting;
             Culling = raw.Culling;
             Alpha = raw.Alpha;
@@ -342,8 +342,8 @@ namespace MphRead
 
         public EffectElement(RawEffectElement raw, IReadOnlyList<string> particles, IReadOnlyList<uint> someList)
         {
-            Name = raw.Name;
-            ModelName = raw.ModelName;
+            Name = new string(raw.Name).TrimEnd('\0');
+            ModelName = new string(raw.ModelName).TrimEnd('\0');
             Flags = raw.Flags;
             Field4C = raw.Field4C;
             Field50 = raw.Field50;
@@ -396,7 +396,7 @@ namespace MphRead
 
         public Entity(EntityEntry entry, EntityType type, ushort entityId, EntityDataHeader header)
         {
-            NodeName = entry.NodeName;
+            NodeName = new string(entry.NodeName).TrimEnd('\0');
             LayerMask = entry.LayerMask;
             Length = entry.Length;
             if (!Enum.IsDefined(typeof(EntityType), type))
@@ -413,7 +413,7 @@ namespace MphRead
 
         public Entity(FhEntityEntry entry, EntityType type, ushort entityId, EntityDataHeader header)
         {
-            NodeName = entry.NodeName;
+            NodeName = new string(entry.NodeName).TrimEnd('\0');
             if (!Enum.IsDefined(typeof(EntityType), type))
             {
                 throw new ProgramException($"Invalid entity type {type}");

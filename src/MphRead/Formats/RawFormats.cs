@@ -35,8 +35,8 @@ namespace MphRead
     // size: 132
     public readonly struct RawMaterial
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
-        public readonly string Name;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
+        public readonly char[] Name;
         public readonly byte Lighting;
         public readonly CullingMode Culling;
         public readonly byte Alpha;
@@ -136,8 +136,8 @@ namespace MphRead
     // size: 140
     public readonly struct MaterialAnimation
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
-        public readonly string Name;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
+        public readonly char[] Name;
         public readonly uint Field40;
         public readonly byte DiffuseBlendFactorR;
         public readonly byte DiffuseBlendFactorG;
@@ -183,8 +183,8 @@ namespace MphRead
     // size: 44
     public readonly struct TextureAnimation
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-        public readonly string Name;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        public readonly char[] Name;
         public readonly ushort Count;
         public readonly ushort StartIndex;
         public readonly ushort MinimumPaletteId; // todo: do these need to be used?
@@ -196,8 +196,8 @@ namespace MphRead
     // size: 60
     public readonly struct TexcoordAnimation
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-        public readonly string Name;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        public readonly char[] Name;
         public readonly byte ScaleBlendS;
         public readonly byte ScaleBlendT;
         public readonly ushort ScaleLutLengthS;
@@ -319,8 +319,8 @@ namespace MphRead
     // size: 240
     public readonly struct RawNode
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
-        public readonly string Name;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
+        public readonly char[] Name;
         public readonly ushort ParentId;
         public readonly ushort ChildId;
         public readonly ushort NextId;
@@ -469,8 +469,8 @@ namespace MphRead
         public readonly Fixed Field48; // might be a Vector3Fx around this
         public readonly uint Field4C;
         public readonly uint Field50;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string NodeName; // actually "NodeNameOrRef" union
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly char[] NodeName; // actually "NodeNameOrRef" union
     }
 
     // size: 28
@@ -488,10 +488,10 @@ namespace MphRead
     // size: 116
     public readonly struct RawEffectElement
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] // todo: do these work if all 32 characters are used?
-        public readonly string Name;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-        public readonly string ModelName;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        public readonly char[] Name;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        public readonly char[] ModelName;
         public readonly uint ParticleCount;
         public readonly uint ParticleOffset;
         public readonly uint Flags;
