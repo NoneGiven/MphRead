@@ -2055,14 +2055,18 @@ namespace MphRead
             else if (e.Key == Key.Z)
             {
                 // todo: this needs to be organized
-                if (e.Shift)
+                if (e.Control)
+                {
+                    _showVolumes = 0;
+                }
+                else if (e.Shift)
                 {
                     _showVolumes--;
                     if (_showVolumes < 0)
                     {
                         _showVolumes = 10;
                     }
-                    if (_selectionMode == SelectionMode.Model)
+                    if (_showVolumes != 0 && _selectionMode == SelectionMode.Model)
                     {
                         Deselect();
                         _selectedModelId = 0;
@@ -2076,7 +2080,7 @@ namespace MphRead
                     {
                         _showVolumes = 0;
                     }
-                    if (_selectionMode == SelectionMode.Model)
+                    if (_showVolumes != 0 && _selectionMode == SelectionMode.Model)
                     {
                         Deselect();
                         _selectedModelId = 0;
