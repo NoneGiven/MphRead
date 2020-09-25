@@ -11,50 +11,60 @@ namespace MphRead.Archive
     // size: 32
     public readonly struct ArchiveHeader
     {
+        // this is actaully 7 characters and a terminator, so we can use a string
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 8)]
         public readonly string MagicString;
         public readonly uint FileCount;
         public readonly uint TotalSize;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string Padding;
+        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U4, SizeConst = 4)]
+        public readonly uint[] Padding;
 
-        public ArchiveHeader(string magicString, uint fileCount, uint totalSize, string padding)
+        public ArchiveHeader(string magicString, uint fileCount, uint totalSize)
         {
             MagicString = magicString;
             FileCount = fileCount;
             TotalSize = totalSize;
-            Padding = padding;
+            Padding = new uint[] { 0, 0, 0, 0 };
         }
 
         public ArchiveHeader SwapBytes()
         {
-            return new ArchiveHeader(MagicString, FileCount.SwapBytes(), TotalSize.SwapBytes(), Padding);
+            return new ArchiveHeader(MagicString, FileCount.SwapBytes(), TotalSize.SwapBytes());
         }
     }
 
     // size: 64
     public readonly struct FileHeader
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-        public readonly string Filename;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        public readonly char[] Filename;
         public readonly uint Offset;
         public readonly uint PaddedFileSize;
         public readonly uint TargetFileSize;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 20)]
-        public readonly string Padding;
+        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U4, SizeConst = 5)]
+        public readonly uint[] Padding;
 
-        public FileHeader(string filename, uint offset, uint paddedFileSize, uint targetFileSize, string padding)
+        public FileHeader(char[] filename, uint offset, uint paddedFileSize, uint targetFileSize)
         {
             Filename = filename;
             Offset = offset;
             PaddedFileSize = paddedFileSize;
             TargetFileSize = targetFileSize;
-            Padding = padding;
+            Padding = new uint[] { 0, 0, 0, 0, 0 };
+        }
+
+        public FileHeader(string filename, uint offset, uint paddedFileSize, uint targetFileSize)
+        {
+            Filename = filename.PadRight(32, '\0').ToCharArray();
+            Offset = offset;
+            PaddedFileSize = paddedFileSize;
+            TargetFileSize = targetFileSize;
+            Padding = new uint[] { 0, 0, 0, 0, 0 };
         }
 
         public FileHeader SwapBytes()
         {
-            return new FileHeader(Filename, Offset.SwapBytes(), PaddedFileSize.SwapBytes(), TargetFileSize.SwapBytes(), Padding);
+            return new FileHeader(Filename, Offset.SwapBytes(), PaddedFileSize.SwapBytes(), TargetFileSize.SwapBytes());
         }
     }
 
@@ -90,7 +100,8 @@ namespace MphRead.Archive
             foreach (FileHeader swap in Read.DoOffsets<FileHeader>(bytes, (uint)ArchiveSizes.ArchiveHeader, (int)header.FileCount))
             {
                 FileHeader file = swap.SwapBytes();
-                if (file.Filename == "" || file.PaddedFileSize == 0 || file.TargetFileSize == 0
+                string filename = file.Filename.MarshalString();
+                if (filename == "" || file.PaddedFileSize == 0 || file.TargetFileSize == 0
                     || file.Offset > header.TotalSize || file.Offset < ArchiveSizes.ArchiveHeader
                     || file.PaddedFileSize > header.TotalSize || file.TargetFileSize > header.TotalSize
                     || file.PaddedFileSize < file.TargetFileSize || NearestMultiple(file.TargetFileSize, 32) != file.PaddedFileSize
@@ -108,9 +119,10 @@ namespace MphRead.Archive
             int filesWritten = 0;
             foreach (FileHeader file in files)
             {
+                string filename = file.Filename.MarshalString();
                 int start = (int)file.Offset;
                 int end = start + (int)file.TargetFileSize;
-                string output = Path.Combine(destination!, file.Filename);
+                string output = Path.Combine(destination!, filename);
                 File.WriteAllBytes(output, bytes[start..end].ToArray());
                 filesWritten++;
             }
@@ -139,13 +151,12 @@ namespace MphRead.Archive
                     filename,
                     pointer,
                     NearestMultiple((uint)file.Length, 32),
-                    (uint)file.Length,
-                    ""
+                    (uint)file.Length
                 );
                 entries.Add(entry);
                 pointer += entry.PaddedFileSize;
             }
-            var header = new ArchiveHeader(MagicString, (uint)filePaths.Count(), pointer, "");
+            var header = new ArchiveHeader(MagicString, (uint)filePaths.Count(), pointer);
             using var writer = new BinaryWriter(File.Open(destinationPath, FileMode.Create));
             writer.Write($"{MagicString}\0".ToCharArray());
             writer.Write(header.FileCount.SwapBytes());
@@ -156,11 +167,7 @@ namespace MphRead.Archive
             }
             foreach (FileHeader entry in entries)
             {
-                writer.Write(entry.Filename.ToCharArray());
-                for (int i = 0; i < 32 - entry.Filename.Length; i++)
-                {
-                    writer.Write('\0');
-                }
+                writer.Write(entry.Filename);
                 writer.Write(entry.Offset.SwapBytes());
                 writer.Write(entry.PaddedFileSize.SwapBytes());
                 writer.Write(entry.TargetFileSize.SwapBytes());

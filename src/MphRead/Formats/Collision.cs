@@ -14,7 +14,7 @@ namespace MphRead.Formats.Collision
         {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
             CollisionHeader header = Read.ReadStruct<CollisionHeader>(bytes);
-            if (new string(header.Type) != "wc01")
+            if (header.Type.MarshalString() != "wc01")
             {
                 return ReadFhCollision(path, bytes);
             }
@@ -71,7 +71,7 @@ namespace MphRead.Formats.Collision
     public readonly struct CollisionHeader
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public readonly char[] Type; // wc01 - no terminator
+        public readonly char[] Type; // wc01
         public readonly uint VectorCount;
         public readonly uint VectorOffset;
         public readonly uint PlaneCount;
@@ -119,16 +119,14 @@ namespace MphRead.Formats.Collision
     // size: 224
     public readonly struct RawCollisionPortal
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 24)]
-        public readonly string Name;
-        public readonly uint Field18;
-        public readonly uint Field1C;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        public readonly char[] Name;
         public readonly uint Field20;
         public readonly uint Field24;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 24)]
-        public readonly string NodeName1; // side 0 room node
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 24)]
-        public readonly string NodeName2; // side 1 room node
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 24)]
+        public readonly char[] NodeName1; // side 0 room node
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 24)]
+        public readonly char[] NodeName2; // side 1 room node
         public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
         public readonly Vector3Fx Vector3;
@@ -165,11 +163,11 @@ namespace MphRead.Formats.Collision
         public CollisionPortal(RawCollisionPortal raw)
         {
             Debug.Assert(raw.VectorCount == 4);
-            Name = raw.Name;
-            NodeName1 = raw.NodeName1;
-            NodeName2 = raw.NodeName2;
+            Name = raw.Name.MarshalString();
+            NodeName1 = raw.NodeName1.MarshalString();
+            NodeName2 = raw.NodeName2.MarshalString();
             LayerMask = raw.LayerMask;
-            IsForceField = raw.Name.StartsWith("pmag");
+            IsForceField = Name.StartsWith("pmag");
             Point1 = raw.Vector1.ToFloatVector();
             Point2 = raw.Vector2.ToFloatVector();
             Point3 = raw.Vector3.ToFloatVector();
@@ -184,11 +182,11 @@ namespace MphRead.Formats.Collision
         // sktodo: temporary
         public CollisionPortal(FhCollisionPortal raw)
         {
-            Name = raw.Name;
-            NodeName1 = raw.NodeName1;
-            NodeName2 = raw.NodeName2;
+            Name = raw.Name.MarshalString();
+            NodeName1 = raw.NodeName1.MarshalString();
+            NodeName2 = raw.NodeName2.MarshalString();
             LayerMask = 4;
-            IsForceField = raw.Name.StartsWith("pmag");
+            IsForceField = Name.StartsWith("pmag");
             Point1 = Vector3.Zero;
             Point2 = Vector3.Zero;
             Point3 = Vector3.Zero;
@@ -230,16 +228,14 @@ namespace MphRead.Formats.Collision
     // size: 96
     public readonly struct FhCollisionPortal
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 24)]
-        public readonly string Name;
-        public readonly uint Field18;
-        public readonly uint Field1C;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        public readonly char[] Name;
         public readonly uint Field20;
         public readonly uint Field24;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string NodeName1; // side 0 room node
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string NodeName2; // side 1 room node
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly char[] NodeName1; // side 0 room node
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly char[] NodeName2; // side 1 room node
         public readonly uint Field48;
         public readonly uint Field4C;
         public readonly uint Field50;

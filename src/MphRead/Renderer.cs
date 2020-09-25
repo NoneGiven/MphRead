@@ -1124,14 +1124,6 @@ namespace MphRead
         {
             Model model = item.Model;
             _modelMatrix = model.ExtraTransform;
-            if (item.Node.BillboardMode == BillboardMode.Sphere)
-            {
-                _modelMatrix = _viewInvRotMatrix * _modelMatrix.ClearRotation();
-            }
-            else if (item.Node.BillboardMode == BillboardMode.Cylinder)
-            {
-                _modelMatrix = _viewInvRotYMatrix * _modelMatrix.ClearRotation();
-            }
             UseRoomLights();
             if (model.UseLightSources || model.UseLightOverride)
             {
@@ -1145,6 +1137,14 @@ namespace MphRead
                 nodeTransform = Matrix4.Identity;
             }
             _modelMatrix = nodeTransform * _modelMatrix;
+            if (item.Node.BillboardMode == BillboardMode.Sphere)
+            {
+                _modelMatrix = _viewInvRotMatrix * _modelMatrix.ClearRotation();
+            }
+            else if (item.Node.BillboardMode == BillboardMode.Cylinder)
+            {
+                _modelMatrix = _viewInvRotYMatrix * _modelMatrix.ClearRotation();
+            }
             GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref _modelMatrix);
             RenderMesh(model, node, item.Mesh, item.Material, item.Alpha);
         }
@@ -2647,29 +2647,33 @@ namespace MphRead
             {
                 SelectedModel.Position = SelectedModel.Position.WithX(SelectedModel.Position.X + step);
             }
+            // todo: some transforms (sniper targets in UNIT4_RM2) aren't consistent when first changing the rotation
             step = 2.5f;
             Vector3 rotation = SelectedModel.Rotation;
             if (KeyboardState.IsKeyDown(Key.Up)) // rotate up
             {
                 rotation.X += step;
                 rotation.X %= 360f;
+                SelectedModel.Rotation = rotation;
             }
             else if (KeyboardState.IsKeyDown(Key.Down)) // rotate down
             {
                 rotation.X -= step;
                 rotation.X %= 360f;
+                SelectedModel.Rotation = rotation;
             }
             if (KeyboardState.IsKeyDown(Key.Left)) // rotate left
             {
                 rotation.Y += step;
                 rotation.Y %= 360f;
+                SelectedModel.Rotation = rotation;
             }
             else if (KeyboardState.IsKeyDown(Key.Right)) // rotate right
             {
                 rotation.Y -= step;
                 rotation.Y %= 360f;
+                SelectedModel.Rotation = rotation;
             }
-            SelectedModel.Rotation = rotation;
         }
 
         private enum CameraMode

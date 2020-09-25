@@ -506,7 +506,8 @@ namespace MphRead
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Object;
             model.Entity = entity;
-            if (modelId == 0)
+            // AlimbicGhost_01, GhostSwitch
+            if (modelId == 0 || modelId == 41)
             {
                 model.ScanVisorOnly = true;
             }
@@ -517,6 +518,15 @@ namespace MphRead
                 model.Animations.MaterialGroupId = -1;
             }
             else if (meta.Name == "WallSwitch")
+            {
+                model.Animations.NodeGroupId = -1;
+                model.Animations.MaterialGroupId = -1;
+            }
+            else if (meta.Name == "SniperTarget")
+            {
+                model.Animations.NodeGroupId = -1;
+            }
+            else if (meta.Name == "SecretSwitch")
             {
                 model.Animations.NodeGroupId = -1;
                 model.Animations.MaterialGroupId = -1;

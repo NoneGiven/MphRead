@@ -14,8 +14,8 @@ namespace MphRead
     // size: 24
     public readonly struct EntityEntry
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string NodeName; // todo: use this for partial room visibility
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly char[] NodeName; // todo: use this for partial room visibility
         public readonly ushort LayerMask;
         public readonly ushort Length;
         public readonly uint DataOffset;
@@ -24,8 +24,8 @@ namespace MphRead
     // size: 20
     public readonly struct FhEntityEntry
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string NodeName; // todo: same as above
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly char[] NodeName; // todo: same as above
         public readonly uint DataOffset;
     }
 
@@ -103,8 +103,8 @@ namespace MphRead
         public readonly uint Field15C;
         public readonly uint Field160;
         public readonly uint Field164;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string PortalName;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly char[] PortalName;
         public readonly uint Field178;
         public readonly uint Field17C;
         public readonly uint Field180;
@@ -212,8 +212,8 @@ namespace MphRead
         public readonly uint FieldCC;
         public readonly uint FieldD0;
         public readonly uint FieldD4;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string PortalName;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly char[] PortalName;
     }
 
     // size: 152
@@ -251,8 +251,8 @@ namespace MphRead
     public readonly struct DoorEntityData
     {
         public readonly EntityDataHeader Header;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string NodeName;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly char[] NodeName;
         public readonly uint PaletteId;
         public readonly uint ModelId;
         public readonly uint TargetRoomId;
@@ -260,18 +260,18 @@ namespace MphRead
         public readonly byte Flags; // bit 0 - locked
         public readonly byte Field42;
         public readonly byte Field43;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string EntityFilename;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string RoomName;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly char[] EntityFilename;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly char[] RoomName;
     }
 
     // size: 64
     public readonly struct FhDoorEntityData
     {
         public readonly EntityDataHeader Header;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string RoomName;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly char[] RoomName;
         public readonly uint Flags;
         public readonly uint ModelId;
     }
@@ -427,8 +427,8 @@ namespace MphRead
         public readonly ushort Padding1C6;
         public readonly uint Field1C8;
         public readonly uint Field1CC;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string NodeName;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly char[] NodeName;
         public readonly ushort EntityId1;
         public readonly ushort Field1E2;
         public readonly uint MessageId1;
@@ -500,8 +500,8 @@ namespace MphRead
         public readonly byte FieldEB;
         public readonly ushort Cooldown;
         public readonly ushort FieldEE;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string NodeName;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly char[] NodeName;
         public readonly ushort ParentId;
         public readonly ushort Field102;
         public readonly uint Field104;
@@ -756,12 +756,12 @@ namespace MphRead
         public readonly byte ArtifactId;
         public readonly byte Active;
         public readonly byte Invisible;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 15)]
-        public readonly string TargetRoom;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 15)]
+        public readonly char[] TargetRoom;
         public readonly uint Field38;
         public readonly Vector3Fx Field3C;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
-        public readonly string NodeName;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly char[] NodeName;
     }
 
     // size: 104

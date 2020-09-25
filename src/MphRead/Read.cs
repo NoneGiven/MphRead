@@ -271,7 +271,7 @@ namespace MphRead
                     maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexX + animation.TranslateLutLengthX);
                     maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexY + animation.TranslateLutLengthY);
                     maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexZ + animation.TranslateLutLengthZ);
-                    animations.Add(nodes[i++].Name, animation);
+                    animations.Add(nodes[i++].Name.MarshalString(), animation);
                 }
                 var scales = DoOffsets<Fixed>(bytes, rawGroup.ScaleLutOffset, maxScale).Select(f => f.FloatValue).ToList();
                 var rotations = new List<float>();
@@ -306,7 +306,7 @@ namespace MphRead
                     maxColor = Math.Max(maxColor, animation.SpecularLutStartIndexG + animation.SpecularLutLengthG);
                     maxColor = Math.Max(maxColor, animation.SpecularLutStartIndexB + animation.SpecularLutLengthB);
                     maxColor = Math.Max(maxColor, animation.AlphaLutStartIndex + animation.AlphaLutLength);
-                    animations.Add(animation.Name, animation);
+                    animations.Add(animation.Name.MarshalString(), animation);
                 }
                 var colors = DoOffsets<byte>(bytes, rawGroup.ColorLutOffset, maxColor).Select(b => (float)b).ToList();
                 results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup, colors, animations));
@@ -331,7 +331,7 @@ namespace MphRead
                     maxRotation = Math.Max(maxRotation, animation.RotateLutIndexZ + animation.RotateLutLengthZ);
                     maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexS + animation.TranslateLutLengthS);
                     maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexT + animation.TranslateLutLengthT);
-                    animations.Add(animation.Name, animation);
+                    animations.Add(animation.Name.MarshalString(), animation);
                 }
                 var scales = DoOffsets<Fixed>(bytes, rawGroup.ScaleLutOffset, maxScale).Select(f => f.FloatValue).ToList();
                 var rotations = new List<float>();
@@ -355,7 +355,7 @@ namespace MphRead
                 var animations = new Dictionary<string, TextureAnimation>();
                 foreach (TextureAnimation animation in rawAnimations)
                 {
-                    animations.Add(animation.Name, animation);
+                    animations.Add(animation.Name.MarshalString(), animation);
                 }
                 IReadOnlyList<ushort> frameIndices = DoOffsets<ushort>(bytes, rawGroup.FrameIndexOffset, rawGroup.FrameIndexCount);
                 IReadOnlyList<ushort> textureIds = DoOffsets<ushort>(bytes, rawGroup.TextureIdOffset, rawGroup.TextureIdCount);
