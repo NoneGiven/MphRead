@@ -252,4 +252,22 @@ namespace MphRead
             );
         }
     }
+
+    public static class MarshalExtensions
+    {
+        public static string MarshalString(this char[] array)
+        {
+            if (array == null)
+            {
+                throw new ArgumentNullException(nameof(array));
+            }
+            string result = new string(array);
+            int index = result.IndexOf('\0');
+            if (index != -1)
+            {
+                return result.Substring(0, index);
+            }
+            return result;
+        }
+    }
 }

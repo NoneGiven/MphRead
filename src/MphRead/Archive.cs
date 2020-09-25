@@ -100,7 +100,7 @@ namespace MphRead.Archive
             foreach (FileHeader swap in Read.DoOffsets<FileHeader>(bytes, (uint)ArchiveSizes.ArchiveHeader, (int)header.FileCount))
             {
                 FileHeader file = swap.SwapBytes();
-                string filename = new string(file.Filename).TrimEnd('\0');
+                string filename = file.Filename.MarshalString();
                 if (filename == "" || file.PaddedFileSize == 0 || file.TargetFileSize == 0
                     || file.Offset > header.TotalSize || file.Offset < ArchiveSizes.ArchiveHeader
                     || file.PaddedFileSize > header.TotalSize || file.TargetFileSize > header.TotalSize
@@ -119,7 +119,7 @@ namespace MphRead.Archive
             int filesWritten = 0;
             foreach (FileHeader file in files)
             {
-                string filename = new string(file.Filename).TrimEnd('\0');
+                string filename = file.Filename.MarshalString();
                 int start = (int)file.Offset;
                 int end = start + (int)file.TargetFileSize;
                 string output = Path.Combine(destination!, filename);

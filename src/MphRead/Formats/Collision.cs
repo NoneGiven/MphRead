@@ -14,7 +14,7 @@ namespace MphRead.Formats.Collision
         {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
             CollisionHeader header = Read.ReadStruct<CollisionHeader>(bytes);
-            if (new string(header.Type) != "wc01")
+            if (header.Type.MarshalString() != "wc01")
             {
                 return ReadFhCollision(path, bytes);
             }
@@ -163,9 +163,9 @@ namespace MphRead.Formats.Collision
         public CollisionPortal(RawCollisionPortal raw)
         {
             Debug.Assert(raw.VectorCount == 4);
-            Name = new string(raw.Name).TrimEnd('\0');
-            NodeName1 = new string(raw.NodeName1).TrimEnd('\0');
-            NodeName2 = new string(raw.NodeName2).TrimEnd('\0');
+            Name = raw.Name.MarshalString();
+            NodeName1 = raw.NodeName1.MarshalString();
+            NodeName2 = raw.NodeName2.MarshalString();
             LayerMask = raw.LayerMask;
             IsForceField = Name.StartsWith("pmag");
             Point1 = raw.Vector1.ToFloatVector();
@@ -182,9 +182,9 @@ namespace MphRead.Formats.Collision
         // sktodo: temporary
         public CollisionPortal(FhCollisionPortal raw)
         {
-            Name = new string(raw.Name).TrimEnd('\0');
-            NodeName1 = new string(raw.NodeName1).TrimEnd('\0');
-            NodeName2 = new string(raw.NodeName2).TrimEnd('\0');
+            Name = raw.Name.MarshalString();
+            NodeName1 = raw.NodeName1.MarshalString();
+            NodeName2 = raw.NodeName2.MarshalString();
             LayerMask = 4;
             IsForceField = Name.StartsWith("pmag");
             Point1 = Vector3.Zero;

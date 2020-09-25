@@ -41,7 +41,7 @@ namespace MphRead
 
         public Node(RawNode raw)
         {
-            Name = new string(raw.Name).TrimEnd('\0');
+            Name = raw.Name.MarshalString();
             ParentIndex = raw.ParentId;
             ChildIndex = raw.ChildId;
             NextIndex = raw.NextId;
@@ -161,7 +161,7 @@ namespace MphRead
 
         public Material(RawMaterial raw)
         {
-            Name = new string(raw.Name).TrimEnd('\0');
+            Name = raw.Name.MarshalString();
             Lighting = raw.Lighting;
             Culling = raw.Culling;
             Alpha = raw.Alpha;
@@ -342,8 +342,8 @@ namespace MphRead
 
         public EffectElement(RawEffectElement raw, IReadOnlyList<string> particles, IReadOnlyList<uint> someList)
         {
-            Name = new string(raw.Name).TrimEnd('\0');
-            ModelName = new string(raw.ModelName).TrimEnd('\0');
+            Name = raw.Name.MarshalString();
+            ModelName = raw.ModelName.MarshalString();
             Flags = raw.Flags;
             Field4C = raw.Field4C;
             Field50 = raw.Field50;
@@ -374,7 +374,7 @@ namespace MphRead
 
         public StringTableEntry(RawStringTableEntry raw, string value)
         {
-            Id = new string(raw.Id.Reverse().ToArray());
+            Id = raw.Id.Reverse().ToArray().MarshalString();
             Speed = raw.Speed;
             Category = raw.Category;
             Value = value;
@@ -396,7 +396,7 @@ namespace MphRead
 
         public Entity(EntityEntry entry, EntityType type, ushort entityId, EntityDataHeader header)
         {
-            NodeName = new string(entry.NodeName).TrimEnd('\0');
+            NodeName = entry.NodeName.MarshalString();
             LayerMask = entry.LayerMask;
             Length = entry.Length;
             if (!Enum.IsDefined(typeof(EntityType), type))
@@ -413,7 +413,7 @@ namespace MphRead
 
         public Entity(FhEntityEntry entry, EntityType type, ushort entityId, EntityDataHeader header)
         {
-            NodeName = new string(entry.NodeName).TrimEnd('\0');
+            NodeName = entry.NodeName.MarshalString();
             if (!Enum.IsDefined(typeof(EntityType), type))
             {
                 throw new ProgramException($"Invalid entity type {type}");
