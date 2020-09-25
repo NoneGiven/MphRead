@@ -2927,6 +2927,20 @@ namespace MphRead
             {
                 await Output.Write(" - Use WASD, Space, and V to move", guid);
             }
+            string volume = _showVolumes switch
+            {
+                1 => "light sources, color 1",
+                2 => "light sources, color 2",
+                3 => "trigger volumes, parent event",
+                4 => "trigger volumes, child event",
+                5 => "area volumes, inside event",
+                6 => "area volumes, exit event",
+                7 => "morph cameras",
+                8 => "jump pads",
+                9 => "objects",
+                10 => "portals",
+                _ => "off"
+            };
             await Output.Write(" - Hold left mouse button or use arrow keys to rotate", guid);
             await Output.Write(" - Hold Shift to move the camera faster", guid);
             await Output.Write($" - T toggles texturing ({FormatOnOff(_showTextures)})", guid);
@@ -2938,6 +2952,7 @@ namespace MphRead
             await Output.Write($" - G toggles fog ({FormatOnOff(_showFog)})", guid);
             await Output.Write($" - E toggles Scan Visor ({FormatOnOff(_scanVisor)})", guid);
             await Output.Write($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})", guid);
+            await Output.Write($" - Z toggles volume display ({volume})", guid);
             await Output.Write($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})", guid);
             await Output.Write(" - R resets the camera", guid);
             await Output.Write(" - Ctrl+O then enter \"model_name [recolor]\" to load", guid);
