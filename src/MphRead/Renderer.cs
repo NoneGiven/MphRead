@@ -132,7 +132,7 @@ namespace MphRead
         private int _showVolumes = 0;
         private bool _transformRoomNodes = false; // undocumented
 
-        private static readonly Color4 _clearColor = new Color4(0, 0, 0, 1);
+        private Color4 _clearColor = new Color4(0, 0, 0, 1);
 
         private Vector3 _light1Vector = default;
         private Vector3 _light1Color = default;
@@ -256,6 +256,12 @@ namespace MphRead
                 1.0f
             );
             _fogOffset = (int)roomMeta.FogOffset;
+            // todo?: only FH sets the clear color based on this, but should the setting itself have some effect?
+            // MPH also has it enabled for a few rooms, but there doesn't seem to be any visual difference
+            if (roomMeta.ClearFog != 0 && roomMeta.FirstHunt)
+            {
+                _clearColor = new Color4(_fogColor.X, _fogColor.Y, _fogColor.Z, _fogColor.W);
+            }
             foreach (CollisionPortal portal in collision.Portals)
             {
                 if ((portal.LayerMask & 4) != 0 || (portal.LayerMask & updatedMask) != 0)

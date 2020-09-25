@@ -32,12 +32,14 @@ namespace MphRead
         public Vector3 Light2Vector { get; }
         public Vector3 RoomSize { get; }
         public bool Multiplayer { get; }
+        public bool FirstHunt { get; }
 
         public RoomMetadata(string name, string? inGameName, string pathName, string modelPath,
             string animationPath, string collisionPath, string? texturePath, string? entityPath, string? nodePath,
             string? roomNodeName, uint battleTimeLimit, uint timeLimit, short pointLimit, short nodeLayer, ushort fogEnabled,
             ushort clearFog, ushort fogColor, uint fogSlope, uint fogOffset, ColorRgb light1Color,
-            Vector3 light1Vector, ColorRgb light2Color, Vector3 light2Vector, Vector3 roomSize, bool multiplayer = false)
+            Vector3 light1Vector, ColorRgb light2Color, Vector3 light2Vector, Vector3 roomSize,
+            bool multiplayer = false, bool firstHunt = false)
         {
             Name = name;
             InGameName = inGameName;
@@ -64,6 +66,7 @@ namespace MphRead
             Light2Vector = light2Vector.Normalized();
             RoomSize = roomSize;
             Multiplayer = multiplayer;
+            FirstHunt = firstHunt;
         }
     }
 
@@ -4698,7 +4701,8 @@ namespace MphRead
                         new ColorRgb(4, 4, 16),
                         new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f),
-                        multiplayer: true)
+                        multiplayer: true,
+                        firstHunt: true)
                 },
                 {
                     "FH_MP2",
@@ -4727,7 +4731,8 @@ namespace MphRead
                         new ColorRgb(4, 4, 16),
                         new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f),
-                        multiplayer: true)
+                        multiplayer: true,
+                        firstHunt: true)
                 },
                 {
                     "FH_MP3",
@@ -4756,7 +4761,8 @@ namespace MphRead
                         new ColorRgb(4, 4, 16),
                         new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f),
-                        multiplayer: true)
+                        multiplayer: true,
+                        firstHunt: true)
                 },
                 {
                     "FH_MORPHBALL",
@@ -4784,7 +4790,8 @@ namespace MphRead
                         new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
                         new Vector3(0, 1, -0.25f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        firstHunt: true)
                 },
                 {
                     "FH_REGULATOR",
@@ -4812,7 +4819,8 @@ namespace MphRead
                         new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
                         new Vector3(0, 1, -0.25f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        firstHunt: true)
                 },
                 {
                     "FH_SURVIVOR",
@@ -4840,7 +4848,8 @@ namespace MphRead
                         new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
                         new Vector3(0, 1, -0.25f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        firstHunt: true)
                 },
                 {
                     "FH_TEST",
@@ -4868,7 +4877,8 @@ namespace MphRead
                         new Vector3(0.25f, -0.5f, -0.25f),
                         new ColorRgb(4, 4, 16),
                         new Vector3(0, 1, -0.25f),
-                        new Vector3(-300f, 300f, -300f))
+                        new Vector3(-300f, 300f, -300f),
+                        firstHunt: true)
                 },
                 {
                     "FH_MP5",
@@ -4897,7 +4907,8 @@ namespace MphRead
                         new ColorRgb(4, 4, 16),
                         new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f),
-                        multiplayer: true)
+                        multiplayer: true,
+                        firstHunt: true)
                 },
                 {
                     "FH_E3",
@@ -4926,7 +4937,8 @@ namespace MphRead
                         new ColorRgb(4, 4, 16),
                         new Vector3(0, 1, -0.25f),
                         new Vector3(-300f, 300f, -300f),
-                        multiplayer: true)
+                        multiplayer: true,
+                        firstHunt: true)
                 }
             };
 
