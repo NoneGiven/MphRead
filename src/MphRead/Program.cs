@@ -11,7 +11,6 @@ namespace MphRead
 
         private static void Main(string[] args)
         {
-            //Utility.Parser.MainLoop();
             ConsoleColor.Setup();
             IReadOnlyList<Argument> arguments = ParseArguments(args);
             if (arguments.Count == 0)
