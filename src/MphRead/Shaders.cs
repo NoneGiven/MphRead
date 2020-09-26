@@ -152,7 +152,7 @@ void main()
             // MPH fog table has min 0 and max 124
             density = (depth - fog_min) / (fog_max - fog_min) * 124.0 / 128.0;
         }
-        gl_FragColor = (col * (1.0 - density) + fog_color * density);
+        gl_FragColor = vec4((col * (1.0 - density) + fog_color * density).xyz, col.a);
     }
     else {
         gl_FragColor = col;
