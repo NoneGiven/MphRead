@@ -10,6 +10,11 @@ namespace MphRead
 
         public float FloatValue => ToFloat(Value);
 
+        public Fixed(int value)
+        {
+            Value = value;
+        }
+
         public static float ToFloat(long value)
         {
             return value / (float)(1 << 12);
@@ -37,6 +42,13 @@ namespace MphRead
         public readonly Fixed X;
         public readonly Fixed Y;
         public readonly Fixed Z;
+
+        public Vector3Fx(int x, int y, int z)
+        {
+            X = new Fixed(x);
+            Y = new Fixed(y);
+            Z = new Fixed(z);
+        }
 
         public Vector3 ToFloatVector()
         {
