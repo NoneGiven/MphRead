@@ -139,7 +139,7 @@ namespace MphRead
     {
         Normal = 0,
         Threshold = 1,
-        Splitter = 2,
+        Relay = 2,
         Automatic = 3,
         Unknown4 = 4
     }

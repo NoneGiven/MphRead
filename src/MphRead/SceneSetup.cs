@@ -304,7 +304,6 @@ namespace MphRead
                     // todo: compute model matrices for placeholders to show e.g. player spawn angle
                     models.Add(LoadEntityPlaceholder((Entity<PlayerSpawnEntityData>)entity));
                     var ent = (Entity<PlayerSpawnEntityData>)entity;
-                    Console.WriteLine($"{ent.NodeName}, {ent.Position}, {ent.LayerMask}, {ent.EntityId}, {ent.Data.Active}, {ent.Data.Initial}, {ent.Data.TeamIndex}");
                 }
                 else if (entity.Type == EntityType.Door)
                 {

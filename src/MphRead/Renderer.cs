@@ -132,7 +132,8 @@ namespace MphRead
         private int _showVolumes = 0;
         private bool _transformRoomNodes = false; // undocumented
 
-        private static readonly Color4 _clearColor = new Color4(0, 0, 0, 1);
+        private Color4 _clearColor = new Color4(0, 0, 0, 1);
+        private float _farClip = 10000f;
 
         private Vector3 _light1Vector = default;
         private Vector3 _light1Color = default;
@@ -248,14 +249,19 @@ namespace MphRead
                 roomMeta.Light2Color.Blue / 31.0f
             );
             _lighting = true;
-            _hasFog = roomMeta.FogEnabled != 0;
+            _hasFog = roomMeta.FogEnabled;
             _fogColor = new Vector4(
-                ((roomMeta.FogColor) & 0x1F) / (float)0x1F,
-                (((roomMeta.FogColor) >> 5) & 0x1F) / (float)0x1F,
-                (((roomMeta.FogColor) >> 10) & 0x1F) / (float)0x1F,
+                roomMeta.FogColor.Red / 31f,
+                roomMeta.FogColor.Green / 31f,
+                roomMeta.FogColor.Blue / 31f,
                 1.0f
             );
-            _fogOffset = (int)roomMeta.FogOffset;
+            _fogOffset = roomMeta.FogOffset;
+            if (roomMeta.ClearFog && roomMeta.FirstHunt)
+            {
+                _clearColor = new Color4(_fogColor.X, _fogColor.Y, _fogColor.Z, _fogColor.W);
+            }
+            _farClip = roomMeta.FarClip;
             foreach (CollisionPortal portal in collision.Portals)
             {
                 if ((portal.LayerMask & 4) != 0 || (portal.LayerMask & updatedMask) != 0)
@@ -478,11 +484,11 @@ namespace MphRead
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
             GL.ClearStencil(0);
 
-            // todo: calculate this in the resize event
+            // todo: confirm fov and calculate this in the resize event
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
             float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
             float fov = MathHelper.DegreesToRadians(80.0f);
-            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.001f, 10000.0f);
+            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.0625f, _farClip);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref perspectiveMatrix);
 
             TransformCamera();
@@ -2049,14 +2055,18 @@ namespace MphRead
             else if (e.Key == Key.Z)
             {
                 // todo: this needs to be organized
-                if (e.Shift)
+                if (e.Control)
+                {
+                    _showVolumes = 0;
+                }
+                else if (e.Shift)
                 {
                     _showVolumes--;
                     if (_showVolumes < 0)
                     {
                         _showVolumes = 10;
                     }
-                    if (_selectionMode == SelectionMode.Model)
+                    if (_showVolumes != 0 && _selectionMode == SelectionMode.Model)
                     {
                         Deselect();
                         _selectedModelId = 0;
@@ -2070,7 +2080,7 @@ namespace MphRead
                     {
                         _showVolumes = 0;
                     }
-                    if (_selectionMode == SelectionMode.Model)
+                    if (_showVolumes != 0 && _selectionMode == SelectionMode.Model)
                     {
                         Deselect();
                         _selectedModelId = 0;
@@ -2917,6 +2927,20 @@ namespace MphRead
             {
                 await Output.Write(" - Use WASD, Space, and V to move", guid);
             }
+            string volume = _showVolumes switch
+            {
+                1 => "light sources, color 1",
+                2 => "light sources, color 2",
+                3 => "trigger volumes, parent event",
+                4 => "trigger volumes, child event",
+                5 => "area volumes, inside event",
+                6 => "area volumes, exit event",
+                7 => "morph cameras",
+                8 => "jump pads",
+                9 => "objects",
+                10 => "portals",
+                _ => "off"
+            };
             await Output.Write(" - Hold left mouse button or use arrow keys to rotate", guid);
             await Output.Write(" - Hold Shift to move the camera faster", guid);
             await Output.Write($" - T toggles texturing ({FormatOnOff(_showTextures)})", guid);
@@ -2928,6 +2952,7 @@ namespace MphRead
             await Output.Write($" - G toggles fog ({FormatOnOff(_showFog)})", guid);
             await Output.Write($" - E toggles Scan Visor ({FormatOnOff(_scanVisor)})", guid);
             await Output.Write($" - I toggles invisible entities ({FormatOnOff(_showInvisible)})", guid);
+            await Output.Write($" - Z toggles volume display ({volume})", guid);
             await Output.Write($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})", guid);
             await Output.Write(" - R resets the camera", guid);
             await Output.Write(" - Ctrl+O then enter \"model_name [recolor]\" to load", guid);
