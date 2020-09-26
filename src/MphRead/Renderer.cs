@@ -133,6 +133,7 @@ namespace MphRead
         private bool _transformRoomNodes = false; // undocumented
 
         private Color4 _clearColor = new Color4(0, 0, 0, 1);
+        private float _farClip = 10000f;
 
         private Vector3 _light1Vector = default;
         private Vector3 _light1Color = default;
@@ -262,6 +263,7 @@ namespace MphRead
             {
                 _clearColor = new Color4(_fogColor.X, _fogColor.Y, _fogColor.Z, _fogColor.W);
             }
+            _farClip = roomMeta.FarClip;
             foreach (CollisionPortal portal in collision.Portals)
             {
                 if ((portal.LayerMask & 4) != 0 || (portal.LayerMask & updatedMask) != 0)
@@ -488,7 +490,7 @@ namespace MphRead
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
             float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
             float fov = MathHelper.DegreesToRadians(80.0f);
-            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.0625f, 0x15E000 / 4096f);
+            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.0625f, _farClip);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref perspectiveMatrix);
 
             TransformCamera();
