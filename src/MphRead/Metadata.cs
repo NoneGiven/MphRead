@@ -1,83 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using OpenTK.Mathematics;
 
 namespace MphRead
 {
-    // size: 112
-    public class RoomDescription
-    {
-        public readonly string Name;
-        public readonly string ModelPath;
-        public readonly string AnimationPath;
-        public readonly string? TexturePath;
-        public readonly string CollisionPath;
-        public readonly string? EntityPath;
-        public readonly string? NodeDataPath;
-        public readonly string? RoomNodeName;
-        public readonly uint BattleTimeLimit;
-        public readonly uint TimeLimit;
-        public readonly ushort PointLimit;
-        public readonly ushort LayerId;
-        public readonly uint FarClipDistance;
-        public readonly ushort FogEnabled;
-        public readonly ushort ClearFog;
-        public readonly ushort FogColor;
-        public readonly ushort Padding36;
-        public readonly uint FogSlope;
-        public readonly uint FogOffset;
-        public readonly ColorRgb Light1Color;
-        public readonly byte Padding43;
-        public readonly Vector3Fx Light1Vector;
-        public readonly ColorRgb Light2Color;
-        public readonly byte Padding53;
-        public readonly Vector3Fx Light2Vector;
-        public readonly string InternalName;
-        public readonly string ArchivePath;
-        public readonly uint Field68;
-        public readonly uint Field6C;
-
-        public RoomDescription(string name, string modelPath, string animationPath, string? texturePath, string collisionPath,
-            string? entityPath, string? nodeDataPath, string? roomNodeName, uint battleTimeLimit, uint timeLimit, ushort pointLimit,
-            ushort layerId, uint farClipDistance, ushort fogEnabled, ushort clearFog, ushort fogColor, ushort padding36, uint fogSlope,
-            uint fogOffset, ColorRgb light1Color, byte padding43, Vector3Fx light1Vector, ColorRgb light2Color, byte padding53,
-            Vector3Fx light2Vector, string internalName, string archivePath, uint field68, uint field6C)
-        {
-            Name = name;
-            ModelPath = modelPath;
-            AnimationPath = animationPath;
-            TexturePath = texturePath;
-            CollisionPath = collisionPath;
-            EntityPath = entityPath;
-            NodeDataPath = nodeDataPath;
-            RoomNodeName = roomNodeName;
-            BattleTimeLimit = battleTimeLimit;
-            TimeLimit = timeLimit;
-            PointLimit = pointLimit;
-            LayerId = layerId;
-            FarClipDistance = farClipDistance;
-            FogEnabled = fogEnabled;
-            ClearFog = clearFog;
-            FogColor = fogColor;
-            Padding36 = padding36;
-            FogSlope = fogSlope;
-            FogOffset = fogOffset;
-            Light1Color = light1Color;
-            Padding43 = padding43;
-            Light1Vector = light1Vector;
-            Light2Color = light2Color;
-            Padding53 = padding53;
-            Light2Vector = light2Vector;
-            InternalName = internalName;
-            ArchivePath = archivePath;
-            Field68 = field68;
-            Field6C = field6C;
-        }
-    }
-
     public class RoomMetadata
     {
         public string Name { get; }
