@@ -256,9 +256,7 @@ namespace MphRead
                 roomMeta.FogColor.Blue / 31f,
                 1.0f
             );
-            _fogOffset = (int)roomMeta.FogOffset;
-            // todo?: only FH sets the clear color based on this, but should the setting itself have some effect?
-            // MPH also has it enabled for a few rooms, but there doesn't seem to be any visual difference
+            _fogOffset = roomMeta.FogOffset;
             if (roomMeta.ClearFog && roomMeta.FirstHunt)
             {
                 _clearColor = new Color4(_fogColor.X, _fogColor.Y, _fogColor.Z, _fogColor.W);
