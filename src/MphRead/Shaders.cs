@@ -89,7 +89,9 @@ void main()
 uniform bool use_texture;
 uniform bool fog_enable;
 uniform vec4 fog_color;
-uniform int fog_offset;
+uniform float fog_min;
+uniform float fog_max;
+uniform float far_dist;
 uniform sampler2D tex;
 uniform bool use_override;
 uniform vec4 override_color;
@@ -141,16 +143,16 @@ void main()
         col.a *= mat_alpha;
     }
     if (fog_enable) {
-        float ndcDepth = (2.0 * gl_FragCoord.z - gl_DepthRange.near - gl_DepthRange.far) / (gl_DepthRange.far - gl_DepthRange.near);
-        float clipDepth = ndcDepth / gl_FragCoord.w;
-        float depth = clamp(clipDepth / 128.0, 0.0, 1.0);
-        float density = depth - (1.0 - float(fog_offset) / 65536.0);
-        if (density < 0.0) {
-            density = 0.0;
+        float depth = gl_FragCoord.z;
+        float density = 0.0;
+        if (depth >= fog_max) {
+            density = 1.0;
         }
-        // adjust fog slope
-        density = sqrt(density / 32.0);
-        gl_FragColor = vec4((col * (1.0 - density) + fog_color * density).xyz, col.a);
+        else if (depth > fog_min) {
+            // MPH fog table has min 0 and max 124
+            density = (depth - fog_min) / (fog_max - fog_min) * 124.0 / 128.0;
+        }
+        gl_FragColor = (col * (1.0 - density) + fog_color * density);
     }
     else {
         gl_FragColor = col;
@@ -173,7 +175,9 @@ void main()
         public int Specular { get; set; }
         public int UseFog { get; set; }
         public int FogColor { get; set; }
-        public int FogOffset { get; set; }
+        public int FogMinDistance { get; set; }
+        public int FogMaxDistance { get; set; }
+        public int FarDistance { get; set; }
         public int UseOverride { get; set; }
         public int OverrideColor { get; set; }
         public int MaterialAlpha { get; set; }

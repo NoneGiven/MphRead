@@ -24,7 +24,7 @@ namespace MphRead
         public bool ClearFog { get; }
         public ColorRgb FogColor { get; }
         public int FogSlope { get; }
-        public ushort FogOffset { get; }
+        public int FogOffset { get; }
         public float FarClip { get; }
         public int FarClipInt { get; }
         public ColorRgb Light1Color { get; }
@@ -60,7 +60,7 @@ namespace MphRead
             ClearFog = clearFog;
             FogColor = fogColor;
             FogSlope = fogSlope;
-            FogOffset = fogOffset;
+            FogOffset = fogOffset & 0x7FFF;
             Light1Color = light1Color;
             Light1Vector = light1Vector.Normalized();
             Light2Color = light2Color;
