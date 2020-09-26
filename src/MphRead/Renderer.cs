@@ -248,17 +248,17 @@ namespace MphRead
                 roomMeta.Light2Color.Blue / 31.0f
             );
             _lighting = true;
-            _hasFog = roomMeta.FogEnabled != 0;
+            _hasFog = roomMeta.FogEnabled;
             _fogColor = new Vector4(
-                ((roomMeta.FogColor) & 0x1F) / (float)0x1F,
-                (((roomMeta.FogColor) >> 5) & 0x1F) / (float)0x1F,
-                (((roomMeta.FogColor) >> 10) & 0x1F) / (float)0x1F,
+                roomMeta.FogColor.Red / 31f,
+                roomMeta.FogColor.Green / 31f,
+                roomMeta.FogColor.Blue / 31f,
                 1.0f
             );
             _fogOffset = (int)roomMeta.FogOffset;
             // todo?: only FH sets the clear color based on this, but should the setting itself have some effect?
             // MPH also has it enabled for a few rooms, but there doesn't seem to be any visual difference
-            if (roomMeta.ClearFog != 0 && roomMeta.FirstHunt)
+            if (roomMeta.ClearFog && roomMeta.FirstHunt)
             {
                 _clearColor = new Color4(_fogColor.X, _fogColor.Y, _fogColor.Z, _fogColor.W);
             }
