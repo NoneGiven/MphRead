@@ -91,7 +91,6 @@ uniform bool fog_enable;
 uniform vec4 fog_color;
 uniform float fog_min;
 uniform float fog_max;
-uniform float far_dist;
 uniform sampler2D tex;
 uniform bool use_override;
 uniform vec4 override_color;
@@ -177,7 +176,6 @@ void main()
         public int FogColor { get; set; }
         public int FogMinDistance { get; set; }
         public int FogMaxDistance { get; set; }
-        public int FarDistance { get; set; }
         public int UseOverride { get; set; }
         public int OverrideColor { get; set; }
         public int MaterialAlpha { get; set; }

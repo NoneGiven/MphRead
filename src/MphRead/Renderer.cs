@@ -353,7 +353,6 @@ namespace MphRead
             _shaderLocations.FogColor = GL.GetUniformLocation(_shaderProgramId, "fog_color");
             _shaderLocations.FogMinDistance = GL.GetUniformLocation(_shaderProgramId, "fog_min");
             _shaderLocations.FogMaxDistance = GL.GetUniformLocation(_shaderProgramId, "fog_max");
-            _shaderLocations.FarDistance = GL.GetUniformLocation(_shaderProgramId, "far_dist");
 
             _shaderLocations.UseOverride = GL.GetUniformLocation(_shaderProgramId, "use_override");
             _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
@@ -382,7 +381,6 @@ namespace MphRead
             GL.Uniform4(_shaderLocations.FogColor, _fogColor);
             GL.Uniform1(_shaderLocations.FogMinDistance, fogMin);
             GL.Uniform1(_shaderLocations.FogMaxDistance, fogMax);
-            GL.Uniform1(_shaderLocations.FarDistance, _farClip);
         }
 
         private void InitTextures(Model model)
