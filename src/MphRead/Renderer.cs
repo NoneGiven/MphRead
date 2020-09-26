@@ -142,7 +142,8 @@ namespace MphRead
         private bool _hasFog = false;
         private bool _showFog = true;
         private Vector4 _fogColor = default;
-        private int _fogOffset = default;
+        private int _fogOffset = 0;
+        private int _fogSlope = 0;
         private bool _frameAdvanceOn = false;
         private bool _advanceOneFrame = false;
 
@@ -257,6 +258,7 @@ namespace MphRead
                 1.0f
             );
             _fogOffset = roomMeta.FogOffset;
+            _fogSlope = roomMeta.FogSlope;
             if (roomMeta.ClearFog && roomMeta.FirstHunt)
             {
                 _clearColor = new Color4(_fogColor.X, _fogColor.Y, _fogColor.Z, _fogColor.W);
@@ -349,7 +351,8 @@ namespace MphRead
             _shaderLocations.Specular = GL.GetUniformLocation(_shaderProgramId, "specular");
             _shaderLocations.UseFog = GL.GetUniformLocation(_shaderProgramId, "fog_enable");
             _shaderLocations.FogColor = GL.GetUniformLocation(_shaderProgramId, "fog_color");
-            _shaderLocations.FogOffset = GL.GetUniformLocation(_shaderProgramId, "fog_offset");
+            _shaderLocations.FogMinDistance = GL.GetUniformLocation(_shaderProgramId, "fog_min");
+            _shaderLocations.FogMaxDistance = GL.GetUniformLocation(_shaderProgramId, "fog_max");
 
             _shaderLocations.UseOverride = GL.GetUniformLocation(_shaderProgramId, "use_override");
             _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
@@ -372,6 +375,12 @@ namespace MphRead
                 floats.Add(vector.Z);
             }
             GL.Uniform3(_shaderLocations.ToonTable, Metadata.ToonTable.Count, floats.ToArray());
+
+            float fogMin = _fogOffset / (float)0x7FFF;
+            float fogMax = (_fogOffset + 32 * (0x400 >> _fogSlope)) / (float)0x7FFF;
+            GL.Uniform4(_shaderLocations.FogColor, _fogColor);
+            GL.Uniform1(_shaderLocations.FogMinDistance, fogMin);
+            GL.Uniform1(_shaderLocations.FogMaxDistance, fogMax);
         }
 
         private void InitTextures(Model model)
@@ -484,7 +493,7 @@ namespace MphRead
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
             GL.ClearStencil(0);
 
-            // todo: confirm fov and calculate this in the resize event
+            // todo: confirm fov and recalculate this only in the resize event
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
             float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
             float fov = MathHelper.DegreesToRadians(80.0f);
@@ -1053,8 +1062,6 @@ namespace MphRead
         {
             UseRoomLights();
             GL.Uniform1(_shaderLocations.UseFog, _hasFog && _showFog ? 1 : 0);
-            GL.Uniform4(_shaderLocations.FogColor, _fogColor);
-            GL.Uniform1(_shaderLocations.FogOffset, _fogOffset);
             GL.Uniform1(_shaderLocations.ShowColors, _showColors ? 1 : 0);
         }
 

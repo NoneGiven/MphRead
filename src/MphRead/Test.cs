@@ -190,6 +190,18 @@ namespace MphRead
             }
         }
 
+        public static void TestAllRooms()
+        {
+            var ignore = new HashSet<int>() { 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 23, 26 };
+            for (int i = 0; i < 122; i++)
+            {
+                if (!ignore.Contains(i))
+                {
+                    RoomMetadata meta = Metadata.GetRoomById(i)!;
+                }
+            }
+        }
+
         public static void TestMatrices()
         {
             // 0x020DB528 (passed to draw_animated_model from CModel_draw from draw_player)
