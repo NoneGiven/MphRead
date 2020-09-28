@@ -47,8 +47,8 @@ namespace MphRead
         FhPointModule = 113,
         FhMorphCamera = 114,
         FhEnemyInstance = 115,
-        FhPlayer = 116
-        // 117 = missing?
+        FhPlayer = 116,
+        FhBeamProjectile = 117
         // 118 = entity list header
     }
 

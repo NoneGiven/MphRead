@@ -692,7 +692,7 @@ namespace MphRead
             return SpanReadUint(bytes, ref offset);
         }
 
-        private static ushort SpanReadUshort(ReadOnlySpan<byte> bytes, int offset)
+        public static ushort SpanReadUshort(ReadOnlySpan<byte> bytes, int offset)
         {
             return SpanReadUshort(bytes, ref offset);
         }
