@@ -73,7 +73,7 @@ namespace MphRead
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
-                CollisionInfo collision = Collision.ReadCollision(meta.Value.CollisionPath, meta.Value.FirstHunt);
+                CollisionInfo collision = Collision.ReadCollision(meta.Value.CollisionPath, meta.Value.FirstHunt || meta.Value.Hybrid);
                 Model room = Read.GetRoomByName(meta.Key);
                 Nop();
             }

@@ -78,7 +78,7 @@ namespace MphRead
                 }
             }
             IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
-            CollisionInfo collision = Collision.ReadCollision(metadata.CollisionPath, metadata.FirstHunt, nodeLayerMask);
+            CollisionInfo collision = Collision.ReadCollision(metadata.CollisionPath, metadata.FirstHunt || metadata.Hybrid, nodeLayerMask);
             // todo: once ReadCollision is filering things, we don't need to pass nodeLayerMask here or return it
             var room = new RoomModel(Read.GetRoomByName(name), metadata, collision, nodeLayerMask);
             FilterNodes(room, nodeLayerMask);
@@ -274,6 +274,7 @@ namespace MphRead
             {
                 return models;
             }
+            // only FirstHunt is passed here, not Hybrid -- model/anim/col should be loaded from FH, and ent/node from MPH
             IReadOnlyList<Entity> entities = Read.GetEntities(metadata.EntityPath, layerId, metadata.FirstHunt);
             foreach (Entity entity in entities)
             {

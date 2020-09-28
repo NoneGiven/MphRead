@@ -65,7 +65,7 @@ namespace MphRead
                 new RecolorMetadata("default", meta.ModelPath, meta.TexturePath ?? meta.ModelPath)
             };
             Model room = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, recolors,
-                defaultRecolor: 0, useLightSources: false, firstHunt: meta.FirstHunt);
+                defaultRecolor: 0, useLightSources: false, firstHunt: meta.FirstHunt || meta.Hybrid);
             return new RoomModel(room);
         }
 
@@ -198,7 +198,7 @@ namespace MphRead
             {
                 return results;
             }
-            path = Path.Combine(firstHunt? Paths.FhFileSystem : Paths.FileSystem, path);
+            path = Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path);
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             AnimationHeader header = ReadStruct<AnimationHeader>(bytes);
             var nodeGroupOffsets = new List<uint>();

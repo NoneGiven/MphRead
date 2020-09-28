@@ -35,17 +35,18 @@ namespace MphRead
         public uint Field6C { get; }
         public bool Multiplayer { get; }
         public bool FirstHunt { get; }
+        public bool Hybrid { get; }
 
         public RoomMetadata(string name, string? inGameName, string archive, string modelPath, string animationPath, string collisionPath,
             string? texturePath, string? entityPath, string? nodePath, string? roomNodeName, uint battleTimeLimit, uint timeLimit,
             short pointLimit, short nodeLayer, bool fogEnabled, bool clearFog, ColorRgb fogColor, int fogSlope, ushort fogOffset,
             ColorRgb light1Color, Vector3 light1Vector, ColorRgb light2Color, Vector3 light2Vector, int farClip, uint field68,
-            uint field6C, bool multiplayer = false, bool firstHunt = false)
+            uint field6C, bool multiplayer = false, bool firstHunt = false, bool hybrid = false)
         {
             Name = name;
             InGameName = inGameName;
             Archive = archive;
-            if (firstHunt)
+            if (firstHunt || hybrid)
             {
                 ModelPath = $@"levels\models\{modelPath}";
                 AnimationPath = $@"levels\models\{animationPath}";
@@ -80,6 +81,7 @@ namespace MphRead
             Field68 = field68;
             Field6C = field6C;
             FirstHunt = firstHunt;
+            Hybrid = hybrid;
         }
     }
 
@@ -3512,7 +3514,7 @@ namespace MphRead
                     new RoomMetadata(
                         name: "Level TestLevel",
                         inGameName: "Test Level",
-                        archive: @"_fh\testLevel",
+                        archive: "testLevel",
                         modelPath: "testLevel_Model.bin",
                         animationPath: "testlevel_Anim.bin",
                         collisionPath: "testlevel_Collision.bin",
@@ -3535,14 +3537,15 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         field68: 0xFFFE2000,
-                        field6C: 0x6)
+                        field6C: 0x6,
+                        hybrid: true)
                 },
                 {
                     "Level AbeTest",
                     new RoomMetadata(
                         name: "Level AbeTest",
                         inGameName: "Abe Test Level",
-                        archive: @"_fh\testLevel",
+                        archive: "testLevel",
                         modelPath: "testLevel_Model.bin",
                         animationPath: "testlevel_Anim.bin",
                         collisionPath: "testlevel_Collision.bin",
@@ -3565,7 +3568,8 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         field68: 0xFFFE2000,
-                        field6C: 0x6)
+                        field6C: 0x6,
+                        hybrid: true)
                 },
                 // these levels are unused/unreferenced in the game, so some values are guesses
                 {
