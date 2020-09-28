@@ -29,9 +29,9 @@ namespace MphRead.Formats.Sound
                 {
                     ExportSample(sample, adpcmRoundingError);
                 }
-                catch (WaveExportException ex)
+                catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    Console.WriteLine($"[{sample.Id}] {ex.GetType().Name}: {ex.Message}");
                 }
             }
         }
@@ -48,7 +48,8 @@ namespace MphRead.Formats.Sound
             ExportSample(samples[id], adpcmRoundingError);
         }
 
-        // todo: support PCM8 and PCM16, even though MPH doesn't use them
+        // MPH uses ADPCM, FH uses ADPCM and PCM8
+        // future?: support PCM16 anyway
         private static void ExportSample(SoundSample sample, bool adpcmRoundingError = false)
         {
             string id = sample.Id.ToString().PadLeft(3, '0');
@@ -56,7 +57,7 @@ namespace MphRead.Formats.Sound
             {
                 throw new WaveExportException($"Sample {id} contains no data.");
             }
-            if (sample.Format != WaveFormat.ADPCM)
+            if (sample.Format != WaveFormat.ADPCM && sample.Format != WaveFormat.PCM8)
             {
                 throw new WaveExportException($"Format {sample.Format} is unsupported.");
             }
@@ -362,7 +363,7 @@ namespace MphRead.Formats.Sound
         public WaveFormat Format { get; }
         public bool Loop { get; }
         public ushort SampleRate { get; }
-        public ushort LoopStart { get; }
+        public uint LoopStart { get; }
         public uint LoopLength { get; }
 
         private readonly byte[] _data;
@@ -388,11 +389,33 @@ namespace MphRead.Formats.Sound
         {
             Id = id;
             Offset = offset;
-            Format = WaveFormat.ADPCM;
-            Loop = false;
             SampleRate = header.SampleRate;
-            LoopStart = 1;
-            LoopLength = (uint)data.Length / 4 - 1;
+            if (header.FieldF == 4)
+            {
+                Format = WaveFormat.ADPCM;
+                Loop = header.LoopStart > 1;
+                LoopStart = header.LoopStart;
+                if (header.LoopEnd * 4 > data.Length)
+                {
+                    // a few FH sounds seem to have the length off by one
+                    LoopLength = (header.LoopEnd - header.LoopStart - 1);
+                }
+                else
+                {
+                    LoopLength = (header.LoopEnd - header.LoopStart);
+                }
+            }
+            else if (header.FieldF == 0)
+            {
+                Format = WaveFormat.PCM8;
+                Loop = header.LoopStart > 0;
+                LoopStart = header.LoopStart;
+                LoopLength = header.LoopEnd - header.LoopStart;
+            }
+            else
+            {
+                throw new ProgramException($"Unexpected FH sound header value: {header.FieldF}");
+            }
             _data = data.ToArray();
         }
 

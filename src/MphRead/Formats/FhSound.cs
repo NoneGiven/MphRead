@@ -18,7 +18,17 @@ namespace MphRead.Formats.Sound
             ExportSamples(ReadFhBgm(), adpcmRoundingError);
         }
 
-        // sktodo: MENUSFXDATA, GLOBALSFXDATA -- also need an FH file path
+        public static void ExportFhMenuSfx(bool adpcmRoundingError = false)
+        {
+            ExportSamples(ReadFhMenuSfx(), adpcmRoundingError);
+        }
+
+        public static void ExportFhGlobalSfx(bool adpcmRoundingError = false)
+        {
+            ExportSamples(ReadFhGlobalSfx(), adpcmRoundingError);
+        }
+
+        // sktodo: need an FH file path
         public static IReadOnlyList<SoundSample> ReadFhSfx()
         {
             return ReadFhSoundFile(@"D:\Cdrv\MPH\_FS\firsthunt\root\data\sound\SFXDATA.BIN");
@@ -27,6 +37,16 @@ namespace MphRead.Formats.Sound
         public static IReadOnlyList<SoundSample> ReadFhBgm()
         {
             return ReadFhSoundFile(@"D:\Cdrv\MPH\_FS\firsthunt\root\data\sound\BGMDATA.BIN");
+        }
+
+        public static IReadOnlyList<SoundSample> ReadFhMenuSfx()
+        {
+            return ReadFhSoundFile(@"D:\Cdrv\MPH\_FS\firsthunt\root\data\sound\MENUSFXDATA.BIN");
+        }
+
+        public static IReadOnlyList<SoundSample> ReadFhGlobalSfx()
+        {
+            return ReadFhSoundFile(@"D:\Cdrv\MPH\_FS\firsthunt\root\data\sound\GLOBALSFXDATA.BIN");
         }
 
         public static IReadOnlyList<SoundSample> ReadFhSoundFile(string path)
@@ -39,7 +59,7 @@ namespace MphRead.Formats.Sound
             foreach (uint offset in offsets)
             {
                 FhSoundSampleHeader header = Read.DoOffset<FhSoundSampleHeader>(bytes, offset);
-                if (header.PaddingA != 0)
+                if (header.PaddingA != 0 || header.FieldE != 0)
                 {
                     Debugger.Break();
                 }
@@ -49,7 +69,6 @@ namespace MphRead.Formats.Sound
                 }
                 else
                 {
-                    // sktodo: looping
                     long start = offset + Marshal.SizeOf<FhSoundSampleHeader>();
                     uint size = header.DataSize;
                     samples.Add(new SoundSample(id, offset, header, bytes.Slice(start, size)));
@@ -70,7 +89,7 @@ namespace MphRead.Formats.Sound
         public readonly ushort Volume;
         public readonly byte FieldE;
         public readonly byte FieldF;
-        public readonly uint Field10;
-        public readonly uint Field14;
+        public readonly uint LoopStart;
+        public readonly uint LoopEnd;
     }
 }
