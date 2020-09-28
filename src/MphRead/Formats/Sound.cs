@@ -9,11 +9,20 @@ namespace MphRead.Formats.Sound
 {
     // todo: are any bytes not being read in SFXSCRIPTFILES or DGNFILES?
     // (we know there are in sound_data, and we know there aren't in the rest of the current ones)
-    public static class SoundRead
+    public static partial class SoundRead
     {
         public static void ExportSamples(bool adpcmRoundingError = false)
         {
-            IReadOnlyList<SoundSample> samples = ReadWfsSoundSamples();
+            ExportSamples(ReadSoundSamples(), adpcmRoundingError);
+        }
+
+        public static void ExportWfsSamples(bool adpcmRoundingError = false)
+        {
+            ExportSamples(ReadWfsSoundSamples(), adpcmRoundingError);
+        }
+
+        private static void ExportSamples(IReadOnlyList<SoundSample> samples, bool adpcmRoundingError)
+        {
             foreach (SoundSample sample in samples)
             {
                 try
@@ -33,8 +42,14 @@ namespace MphRead.Formats.Sound
             ExportSample(samples[id], adpcmRoundingError);
         }
 
+        public static void ExportWfsSample(int id, bool adpcmRoundingError = false)
+        {
+            IReadOnlyList<SoundSample> samples = ReadWfsSoundSamples();
+            ExportSample(samples[id], adpcmRoundingError);
+        }
+
         // todo: support PCM8 and PCM16, even though MPH doesn't use them
-        public static void ExportSample(SoundSample sample, bool adpcmRoundingError = false)
+        private static void ExportSample(SoundSample sample, bool adpcmRoundingError = false)
         {
             string id = sample.Id.ToString().PadLeft(3, '0');
             if (sample.Data.Count == 0)
@@ -190,7 +205,6 @@ namespace MphRead.Formats.Sound
                 {
                     SoundSampleHeader header = Read.DoOffset<SoundSampleHeader>(bytes, offset);
                     long start = offset + Marshal.SizeOf<SoundSampleHeader>();
-                    // todo: what are these? and what are the bytes?
                     uint size = (header.LoopStart + header.LoopLength) * 4;
                     samples.Add(new SoundSample(id, offset, header, bytes.Slice(start, size)));
                 }
@@ -348,7 +362,6 @@ namespace MphRead.Formats.Sound
         public WaveFormat Format { get; }
         public bool Loop { get; }
         public ushort SampleRate { get; }
-        public ushort Timer { get; }
         public ushort LoopStart { get; }
         public uint LoopLength { get; }
 
@@ -366,9 +379,20 @@ namespace MphRead.Formats.Sound
             Format = (WaveFormat)header.Format;
             Loop = header.LoopFlag != 0;
             SampleRate = header.SampleRate;
-            Timer = header.Timer;
             LoopStart = header.LoopStart;
             LoopLength = header.LoopLength;
+            _data = data.ToArray();
+        }
+
+        public SoundSample(uint id, uint offset, FhSoundSampleHeader header, ReadOnlySpan<byte> data)
+        {
+            Id = id;
+            Offset = offset;
+            Format = WaveFormat.ADPCM;
+            Loop = false;
+            SampleRate = header.SampleRate;
+            LoopStart = 1;
+            LoopLength = (uint)data.Length / 4 - 1;
             _data = data.ToArray();
         }
 
