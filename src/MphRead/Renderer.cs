@@ -91,6 +91,7 @@ namespace MphRead
         private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
         private readonly Dictionary<int, Model> _modelMap = new Dictionary<int, Model>();
+        private readonly List<Model> _entities = new List<Model>();
         private readonly ConcurrentQueue<Model> _loadQueue = new ConcurrentQueue<Model>();
         private readonly ConcurrentQueue<Model> _unloadQueue = new ConcurrentQueue<Model>();
         private readonly Dictionary<int, LightSource> _lightSourceMap = new Dictionary<int, LightSource>();
@@ -108,6 +109,8 @@ namespace MphRead
         private int _selectedMeshId = 0;
         private int _selectedNodeId = 0;
         private bool _showSelection = true;
+        private int _lastPointModule = -1;
+        private int _endPointModule = -1;
 
         private Model SelectedModel => _modelMap[_selectedModelId];
 
@@ -134,6 +137,7 @@ namespace MphRead
 
         private Color4 _clearColor = new Color4(0, 0, 0, 1);
         private float _farClip = 10000f;
+        private bool _useClip = true;
 
         private Vector3 _light1Vector = default;
         private Vector3 _light1Color = default;
@@ -236,7 +240,32 @@ namespace MphRead
                 {
                     _displayVolumes.Add(entity.SceneId, new ObjectDisplay(obj));
                 }
+                else if (entity.Entity is Entity<PointModuleEntityData> module)
+                {
+                    if (_lastPointModule == -1)
+                    {
+                        _lastPointModule = entity.Entity.EntityId;
+                    }
+                    if (module.Data.NextId == 0)
+                    {
+                        _endPointModule = entity.Entity.EntityId;
+                    }
+                    // hack to allow easily toggling all
+                    entity.ScanVisorOnly = true;
+                }
             }
+            // todo: some mutable entity class state is starting to be necessary
+            if (_lastPointModule != -1)
+            {
+                ushort nextId = entities[_lastPointModule].Entity!.GetChildId();
+                for (int i = 0; i < 5; i++)
+                {
+                    Model model = entities[nextId];
+                    model.ScanVisorOnly = false;
+                    nextId = model.Entity!.GetChildId();
+                }
+            }
+            _entities.AddRange(entities);
             _light1Vector = roomMeta.Light1Vector;
             _light1Color = new Vector3(
                 roomMeta.Light1Color.Red / 31.0f,
@@ -497,7 +526,7 @@ namespace MphRead
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
             float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
             float fov = MathHelper.DegreesToRadians(80.0f);
-            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.0625f, _farClip);
+            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.0625f, _useClip ? _farClip : 10000f);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref perspectiveMatrix);
 
             TransformCamera();
@@ -2098,7 +2127,15 @@ namespace MphRead
             }
             else if (e.Key == Key.G)
             {
-                _showFog = !_showFog;
+                if (e.Alt)
+                {
+                    // undocumented
+                    _useClip = !_useClip;
+                }
+                else
+                {
+                    _showFog = !_showFog;
+                }
                 await PrintOutput();
             }
             else if (e.Key == Key.N)
@@ -2135,16 +2172,24 @@ namespace MphRead
             }
             else if (e.Key == Key.P)
             {
-                if (_cameraMode == CameraMode.Pivot)
+                if (e.Alt)
                 {
-                    _cameraMode = CameraMode.Roam;
+                    // undocumented
+                    UpdatePointModule();
                 }
                 else
                 {
-                    _cameraMode = CameraMode.Pivot;
+                    if (_cameraMode == CameraMode.Pivot)
+                    {
+                        _cameraMode = CameraMode.Roam;
+                    }
+                    else
+                    {
+                        _cameraMode = CameraMode.Pivot;
+                    }
+                    ResetCamera();
+                    await PrintOutput();
                 }
-                ResetCamera();
-                await PrintOutput();
             }
             else if (e.Key == Key.Enter)
             {
@@ -2530,6 +2575,37 @@ namespace MphRead
             else if (_showVolumes == 9)
             {
                 _targetTypes.Add(EntityType.Object);
+            }
+        }
+
+        private void UpdatePointModule(bool reset = false)
+        {
+            if (_lastPointModule != -1)
+            {
+                Model current = _entities[_lastPointModule];
+                current.ScanVisorOnly = true;
+                ushort nextId = current.Entity!.GetChildId();
+                if (!reset)
+                {
+                    _lastPointModule = nextId;
+                }
+                int count = reset ? 5 : 6;
+                for (int i = 0; i < count; i++)
+                {
+                    Model next = _entities[nextId];
+                    next.ScanVisorOnly = i == 0 && !reset;
+                    nextId = next.Entity!.GetChildId();
+                    if (nextId == UInt16.MaxValue)
+                    {
+                        break;
+                    }
+                }
+                if (!reset && _lastPointModule == _endPointModule)
+                {
+                    Model first = _entities.First(e => e.EntityType == EntityType.PointModule || e.EntityType == EntityType.FhPointModule);
+                    _lastPointModule = first.Entity!.EntityId;
+                    UpdatePointModule(reset: true);
+                }
             }
         }
 

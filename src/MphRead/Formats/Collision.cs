@@ -10,9 +10,9 @@ namespace MphRead.Formats.Collision
 {
     public static class Collision
     {
-        public static CollisionInfo ReadCollision(string path, int roomLayerMask = -1)
+        public static CollisionInfo ReadCollision(string path, bool firstHunt, int roomLayerMask = -1)
         {
-            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path)));
             CollisionHeader header = Read.ReadStruct<CollisionHeader>(bytes);
             if (header.Type.MarshalString() != "wc01")
             {

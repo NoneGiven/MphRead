@@ -927,17 +927,21 @@ namespace MphRead
     public static class Paths
     {
         public static string FileSystem => _paths.Value.FileSystem;
+        public static string FhFileSystem => _paths.Value.FhFileSystem;
         public static string Export => _paths.Value.Export;
 
-        private static readonly Lazy<(string FileSystem, string Export)> _paths
-            = new Lazy<(string, string)>(() =>
+        private static readonly Lazy<(string FileSystem, string FhFileSystem, string Export)> _paths
+            = new Lazy<(string, string, string)>(() =>
         {
             if (File.Exists("paths.txt"))
             {
                 string[] lines = File.ReadAllLines("paths.txt");
-                return (lines[0], lines[1]);
+                return (
+                    lines.Length > 0 ? lines[0] : "",
+                    lines.Length > 1 ? lines[1] : "",
+                    lines.Length > 2 ? lines[2] : "");
             }
-            return ("", "");
+            return ("", "", "");
         });
     }
 

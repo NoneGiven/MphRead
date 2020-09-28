@@ -38,15 +38,6 @@ namespace MphRead
             return GetModel(modelMeta, defaultRecolor);
         }
 
-        public static Model GetModelByPath(string path, bool externalTexture = false)
-        {
-            var recolors = new List<RecolorMetadata>()
-            {
-                new RecolorMetadata("default", path, externalTexture ? path.Replace("_Model", "_Tex") : path)
-            };
-            return GetModel("model", path, null, recolors, defaultRecolor: 0, useLightSources: false);
-        }
-
         public static Model GetRoomByName(string name)
         {
             (RoomMetadata? roomMeta, _) = Metadata.GetRoomByName(name);
@@ -73,42 +64,28 @@ namespace MphRead
             {
                 new RecolorMetadata("default", meta.ModelPath, meta.TexturePath ?? meta.ModelPath)
             };
-            Model room = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, recolors, defaultRecolor: 0, useLightSources: false);
+            Model room = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, recolors,
+                defaultRecolor: 0, useLightSources: false, firstHunt: meta.FirstHunt || meta.Hybrid);
             return new RoomModel(room);
         }
 
         private static Model GetModel(ModelMetadata meta, int defaultRecolor)
         {
-            Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.Recolors, defaultRecolor, meta.UseLightSources);
+            Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.Recolors, defaultRecolor,
+                meta.UseLightSources, firstHunt: meta.FirstHunt);
             return model;
         }
 
-        public static Model GetModelDirect(string path)
-        {
-            string name = Path.GetFileNameWithoutExtension(path);
-            var recolors = new List<RecolorMetadata>()
-            {
-                new RecolorMetadata("default", path)
-            };
-            return GetModel(name, path, null, recolors, defaultRecolor: 0, useLightSources: false);
-        }
-
-        public static Header GetHeader(string path)
-        {
-            path = Path.Combine(Paths.FileSystem, path);
-            ReadOnlySpan<byte> bytes = ReadBytes(path);
-            return ReadStruct<Header>(bytes[0..Sizes.Header]);
-        }
-
-        private static Model GetModel(string name, string modelPath, string? animationPath,
-            IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor, bool useLightSources)
+        private static Model GetModel(string name, string modelPath, string? animationPath, IReadOnlyList<RecolorMetadata> recolorMeta,
+            int defaultRecolor, bool useLightSources, bool firstHunt)
         {
             if (defaultRecolor < 0 || defaultRecolor > recolorMeta.Count - 1)
             {
                 throw new ProgramException("The specified recolor index is invalid for this entity.");
             }
-            string path = Path.Combine(Paths.FileSystem, modelPath);
-            ReadOnlySpan<byte> initialBytes = ReadBytes(path);
+            string root = firstHunt ? Paths.FhFileSystem : Paths.FileSystem;
+            string path = Path.Combine(root, modelPath);
+            ReadOnlySpan<byte> initialBytes = ReadBytes(path, firstHunt);
             Header header = ReadStruct<Header>(initialBytes[0..Sizes.Header]);
             IReadOnlyList<RawNode> nodes = DoOffsets<RawNode>(initialBytes, header.NodeOffset, header.NodeCount);
             IReadOnlyList<RawMesh> meshes = DoOffsets<RawMesh>(initialBytes, header.MeshOffset, header.MeshCount);
@@ -124,9 +101,9 @@ namespace MphRead
             {
                 ReadOnlySpan<byte> modelBytes = initialBytes;
                 Header modelHeader = header;
-                if (Path.Combine(Paths.FileSystem, meta.ModelPath) != path)
+                if (Path.Combine(root, meta.ModelPath) != path)
                 {
-                    modelBytes = ReadBytes(meta.ModelPath);
+                    modelBytes = ReadBytes(meta.ModelPath, firstHunt);
                     modelHeader = ReadStruct<Header>(modelBytes[0..Sizes.Header]);
                 }
                 IReadOnlyList<Texture> textures = DoOffsets<Texture>(modelBytes, modelHeader.TextureOffset, modelHeader.TextureCount);
@@ -134,12 +111,12 @@ namespace MphRead
                 ReadOnlySpan<byte> textureBytes = modelBytes;
                 if (meta.TexturePath != meta.ModelPath)
                 {
-                    textureBytes = ReadBytes(meta.TexturePath);
+                    textureBytes = ReadBytes(meta.TexturePath, firstHunt);
                 }
                 ReadOnlySpan<byte> paletteBytes = textureBytes;
                 if (meta.PalettePath != meta.TexturePath && meta.ReplaceIds.Count == 0)
                 {
-                    paletteBytes = ReadBytes(meta.PalettePath);
+                    paletteBytes = ReadBytes(meta.PalettePath, firstHunt);
                     if (meta.SeparatePaletteHeader)
                     {
                         Header paletteHeader = ReadStruct<Header>(paletteBytes[0..Sizes.Header]);
@@ -159,7 +136,7 @@ namespace MphRead
                 string replacePath = meta.ReplacePath ?? meta.PalettePath;
                 if (replacePath != meta.TexturePath && meta.ReplaceIds.Count > 0)
                 {
-                    paletteBytes = ReadBytes(replacePath);
+                    paletteBytes = ReadBytes(replacePath, firstHunt);
                     Header paletteHeader = ReadStruct<Header>(paletteBytes[0..Sizes.Header]);
                     IReadOnlyList<Palette> replacePalettes
                         = DoOffsets<Palette>(paletteBytes, paletteHeader.PaletteOffset, paletteHeader.PaletteCount);
@@ -200,7 +177,7 @@ namespace MphRead
             count /= 4;
             IReadOnlyList<uint> nodeIds = DoOffsets<uint>(initialBytes, (uint)Sizes.Header, count);
             IReadOnlyList<uint> weightIds = DoOffsets<uint>(initialBytes, header.UnknownAnimationCount, count);
-            AnimationResults animations = LoadAnimation(animationPath, nodes);
+            AnimationResults animations = LoadAnimation(animationPath, nodes, firstHunt);
             return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
                 textureMatrices, recolors, defaultRecolor, useLightSources, nodeIds, weightIds);
@@ -214,14 +191,14 @@ namespace MphRead
             public List<TextureAnimationGroup> TextureAnimationGroups { get; } = new List<TextureAnimationGroup>();
         }
 
-        private static AnimationResults LoadAnimation(string? path, IReadOnlyList<RawNode> nodes)
+        private static AnimationResults LoadAnimation(string? path, IReadOnlyList<RawNode> nodes, bool firstHunt)
         {
             var results = new AnimationResults();
             if (path == null)
             {
                 return results;
             }
-            path = Path.Combine(Paths.FileSystem, path);
+            path = Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path);
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             AnimationHeader header = ReadStruct<AnimationHeader>(bytes);
             var nodeGroupOffsets = new List<uint>();
@@ -365,9 +342,9 @@ namespace MphRead
             return results;
         }
 
-        private static ReadOnlySpan<byte> ReadBytes(string path)
+        private static ReadOnlySpan<byte> ReadBytes(string path, bool firstHunt)
         {
-            return new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
+            return new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path)));
         }
 
         private static IReadOnlyList<TextureData> GetTextureData(Texture texture, ReadOnlySpan<byte> textureBytes)
@@ -469,10 +446,10 @@ namespace MphRead
 
         private static byte AlphaFromA3I5(byte value) => (byte)((value >> 5) / 7.0f * 255.0f);
 
-        public static IReadOnlyList<Entity> GetEntities(string path, int layerId)
+        public static IReadOnlyList<Entity> GetEntities(string path, int layerId, bool firstHunt)
         {
-            path = Path.Combine(Paths.FileSystem, path);
-            ReadOnlySpan<byte> bytes = ReadBytes(path);
+            path = Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path);
+            ReadOnlySpan<byte> bytes = ReadBytes(path, firstHunt);
             uint version = BitConverter.ToUInt32(bytes[0..4]);
             if (version == 1)
             {
@@ -692,7 +669,7 @@ namespace MphRead
             return SpanReadUint(bytes, ref offset);
         }
 
-        private static ushort SpanReadUshort(ReadOnlySpan<byte> bytes, int offset)
+        public static ushort SpanReadUshort(ReadOnlySpan<byte> bytes, int offset)
         {
             return SpanReadUshort(bytes, ref offset);
         }

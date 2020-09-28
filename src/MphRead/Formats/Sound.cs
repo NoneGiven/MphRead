@@ -9,11 +9,20 @@ namespace MphRead.Formats.Sound
 {
     // todo: are any bytes not being read in SFXSCRIPTFILES or DGNFILES?
     // (we know there are in sound_data, and we know there aren't in the rest of the current ones)
-    public static class SoundRead
+    public static partial class SoundRead
     {
         public static void ExportSamples(bool adpcmRoundingError = false)
         {
-            IReadOnlyList<SoundSample> samples = ReadWfsSoundSamples();
+            ExportSamples(ReadSoundSamples(), adpcmRoundingError);
+        }
+
+        public static void ExportWfsSamples(bool adpcmRoundingError = false)
+        {
+            ExportSamples(ReadWfsSoundSamples(), adpcmRoundingError);
+        }
+
+        private static void ExportSamples(IReadOnlyList<SoundSample> samples, bool adpcmRoundingError)
+        {
             foreach (SoundSample sample in samples)
             {
                 try
@@ -22,7 +31,7 @@ namespace MphRead.Formats.Sound
                 }
                 catch (WaveExportException ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    Console.WriteLine($"[{sample.Id}] {ex.GetType().Name}: {ex.Message}");
                 }
             }
         }
@@ -33,22 +42,39 @@ namespace MphRead.Formats.Sound
             ExportSample(samples[id], adpcmRoundingError);
         }
 
-        // todo: support PCM8 and PCM16, even though MPH doesn't use them
-        public static void ExportSample(SoundSample sample, bool adpcmRoundingError = false)
+        public static void ExportWfsSample(int id, bool adpcmRoundingError = false)
+        {
+            IReadOnlyList<SoundSample> samples = ReadWfsSoundSamples();
+            ExportSample(samples[id], adpcmRoundingError);
+        }
+
+        // MPH uses ADPCM, FH uses ADPCM and PCM8
+        private static void ExportSample(SoundSample sample, bool adpcmRoundingError = false)
         {
             string id = sample.Id.ToString().PadLeft(3, '0');
             if (sample.Data.Count == 0)
             {
                 throw new WaveExportException($"Sample {id} contains no data.");
             }
-            if (sample.Format != WaveFormat.ADPCM)
+            if (sample.Format != WaveFormat.ADPCM && sample.Format != WaveFormat.PCM8)
             {
                 throw new WaveExportException($"Format {sample.Format} is unsupported.");
             }
-            uint bps = 16;
+            uint bps = sample.Format == WaveFormat.PCM8 ? 8u : 16u;
             uint headerSize = 0x2C;
-            uint loopStart = (sample.LoopStart * 4u - 4u) * 2u;
-            uint loopLength = sample.LoopLength * 8u;
+            uint loopStart;
+            uint loopLength;
+            if (sample.Format == WaveFormat.ADPCM)
+            {
+                loopStart = (sample.LoopStart * 4u - 4u) * 2u;
+                loopLength = sample.LoopLength * 8u;
+            }
+            else
+            {
+                // this is valid for FH's header format only
+                loopStart = sample.LoopStart;
+                loopLength = sample.LoopLength;
+            }
             uint sampleCount = loopStart + loopLength;
             uint waveSize = sampleCount * bps / 8 + headerSize;
             uint decodedSize = sampleCount * (bps / 8);
@@ -71,90 +97,93 @@ namespace MphRead.Formats.Sound
             writer.WriteC("data");
             writer.Write4(decodedSize);
             ReadOnlySpan<byte> data = sample.CreateSpan();
-            int transferred = 0;
-            bool low = false;
-            int sampleValue = 0;
-            int stepIndex = 0;
             if (sample.Format == WaveFormat.ADPCM)
             {
-                low = true;
-                sampleValue = BitConverter.ToInt16(data.Slice(0, 2));
-                stepIndex = BitConverter.ToInt16(data.Slice(2, 2));
+                int transferred = 0;
+                bool low = true;
+                int sampleValue = BitConverter.ToInt16(data.Slice(0, 2));
+                int stepIndex = BitConverter.ToInt16(data.Slice(2, 2));
                 transferred += 4;
-            }
-            for (int i = 0; i < sampleCount; i++)
-            {
-                //int index = i * ((int)bps / 8);
-                byte value = data[transferred];
-                if (!low)
+                for (int i = 0; i < sampleCount; i++)
                 {
-                    value >>= 4;
-                    transferred++;
-                }
-                value &= 0x0F;
-                int step = Metadata.AdpcmTable[stepIndex];
-                int diff = step >> 3;
-                if ((value & 1) != 0)
-                {
-                    diff += step >> 2;
-                }
-                if ((value & 2) != 0)
-                {
-                    diff += step >> 1;
-                }
-                if ((value & 4) != 0)
-                {
-                    diff += step;
-                }
-                if (adpcmRoundingError)
-                {
-                    if ((value & 8) != 0)
+                    byte value = data[transferred];
+                    if (!low)
                     {
-                        sampleValue -= diff;
-                        if (sampleValue < -32767)
+                        value >>= 4;
+                        transferred++;
+                    }
+                    value &= 0x0F;
+                    int step = Metadata.AdpcmTable[stepIndex];
+                    int diff = step >> 3;
+                    if ((value & 1) != 0)
+                    {
+                        diff += step >> 2;
+                    }
+                    if ((value & 2) != 0)
+                    {
+                        diff += step >> 1;
+                    }
+                    if ((value & 4) != 0)
+                    {
+                        diff += step;
+                    }
+                    if (adpcmRoundingError)
+                    {
+                        if ((value & 8) != 0)
                         {
-                            sampleValue = -32767;
+                            sampleValue -= diff;
+                            if (sampleValue < -32767)
+                            {
+                                sampleValue = -32767;
+                            }
+                        }
+                        else
+                        {
+                            sampleValue += diff;
+                            if (sampleValue > 32767)
+                            {
+                                sampleValue = 32767;
+                            }
                         }
                     }
                     else
                     {
-                        sampleValue += diff;
+                        if ((value & 8) != 0)
+                        {
+                            sampleValue -= diff;
+                        }
+                        else
+                        {
+                            sampleValue += diff;
+                        }
+                        if (sampleValue < -32768)
+                        {
+                            sampleValue = -32768;
+                        }
                         if (sampleValue > 32767)
                         {
                             sampleValue = 32767;
                         }
                     }
+                    stepIndex += Metadata.ImaIndexTable[value];
+                    if (stepIndex < 0)
+                    {
+                        stepIndex = 0;
+                    }
+                    else if (stepIndex > 88)
+                    {
+                        stepIndex = 88;
+                    }
+                    writer.Write2(sampleValue);
+                    low = !low;
                 }
-                else
+            }
+            else
+            {
+                for (int i = 0; i < sampleCount; i++)
                 {
-                    if ((value & 8) != 0)
-                    {
-                        sampleValue -= diff;
-                    }
-                    else
-                    {
-                        sampleValue += diff;
-                    }
-                    if (sampleValue < -32768)
-                    {
-                        sampleValue = -32768;
-                    }
-                    if (sampleValue > 32767)
-                    {
-                        sampleValue = 32767;
-                    }
+                    writer.Write((byte)(data[i] ^ 0x80));
                 }
-                stepIndex += Metadata.ImaIndexTable[value];
-                if (stepIndex < 0)
-                {
-                    stepIndex = 0;
-                }
-                else if (stepIndex > 88)
-                {
-                    stepIndex = 88;
-                }
-                writer.Write2(sampleValue);
-                low = !low;
             }
             Nop();
         }
@@ -190,7 +219,6 @@ namespace MphRead.Formats.Sound
                 {
                     SoundSampleHeader header = Read.DoOffset<SoundSampleHeader>(bytes, offset);
                     long start = offset + Marshal.SizeOf<SoundSampleHeader>();
-                    // todo: what are these? and what are the bytes?
                     uint size = (header.LoopStart + header.LoopLength) * 4;
                     samples.Add(new SoundSample(id, offset, header, bytes.Slice(start, size)));
                 }
@@ -348,8 +376,7 @@ namespace MphRead.Formats.Sound
         public WaveFormat Format { get; }
         public bool Loop { get; }
         public ushort SampleRate { get; }
-        public ushort Timer { get; }
-        public ushort LoopStart { get; }
+        public uint LoopStart { get; }
         public uint LoopLength { get; }
 
         private readonly byte[] _data;
@@ -366,9 +393,42 @@ namespace MphRead.Formats.Sound
             Format = (WaveFormat)header.Format;
             Loop = header.LoopFlag != 0;
             SampleRate = header.SampleRate;
-            Timer = header.Timer;
             LoopStart = header.LoopStart;
             LoopLength = header.LoopLength;
+            _data = data.ToArray();
+        }
+
+        public SoundSample(uint id, uint offset, FhSoundSampleHeader header, ReadOnlySpan<byte> data)
+        {
+            Id = id;
+            Offset = offset;
+            SampleRate = header.SampleRate;
+            if (header.Format == 4)
+            {
+                Format = WaveFormat.ADPCM;
+                Loop = header.LoopStart > 1;
+                LoopStart = header.LoopStart;
+                if (header.LoopEnd * 4 > data.Length)
+                {
+                    // a few FH sounds seem to have the length off by one
+                    LoopLength = (header.LoopEnd - header.LoopStart - 1);
+                }
+                else
+                {
+                    LoopLength = (header.LoopEnd - header.LoopStart);
+                }
+            }
+            else if (header.Format == 0)
+            {
+                Format = WaveFormat.PCM8;
+                Loop = header.LoopStart > 0;
+                LoopStart = header.LoopStart;
+                LoopLength = header.LoopEnd - header.LoopStart;
+            }
+            else
+            {
+                throw new ProgramException($"Unexpected FH sound header value: {header.Format}");
+            }
             _data = data.ToArray();
         }
 

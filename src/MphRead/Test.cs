@@ -73,7 +73,7 @@ namespace MphRead
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
-                CollisionInfo collision = Collision.ReadCollision(meta.Value.CollisionPath);
+                CollisionInfo collision = Collision.ReadCollision(meta.Value.CollisionPath, meta.Value.FirstHunt || meta.Value.Hybrid);
                 Model room = Read.GetRoomByName(meta.Key);
                 Nop();
             }
@@ -952,7 +952,7 @@ namespace MphRead
             {
                 if (meta.Value.EntityPath != null)
                 {
-                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
+                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
                     foreach (Entity entity in entities)
                     {
                         if (entity.Type == EntityType.Platform)
@@ -971,7 +971,7 @@ namespace MphRead
             {
                 if (meta.Value.EntityPath != null)
                 {
-                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
+                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
                     foreach (Entity entity in entities)
                     {
                         if (entity.Type == EntityType.TriggerVolume)
@@ -990,7 +990,7 @@ namespace MphRead
             {
                 if (meta.Value.EntityPath != null)
                 {
-                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1);
+                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
                     foreach (Entity entity in entities)
                     {
                         if (entity.Type == EntityType.AreaVolume)

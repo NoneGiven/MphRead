@@ -21,6 +21,7 @@ namespace MphRead
         public string? CollisionPath { get; }
         public IReadOnlyList<RecolorMetadata> Recolors { get; }
         public bool UseLightSources { get; }
+        public bool FirstHunt { get; }
 
         public ModelMetadata(string name, string modelPath, string? animationPath, string? collisionPath,
             IReadOnlyList<RecolorMetadata> recolors, bool useLightSources = false)
@@ -48,7 +49,7 @@ namespace MphRead
             string? animationPath = null, bool collision = false, bool firstHunt = false)
         {
             Name = name;
-            string directory = firstHunt ? @"models\_fh" : "models";
+            string directory = "models";
             ModelPath = $@"{directory}\{name}_Model.bin";
             string removed = name.Replace(remove, "");
             if (animation)
@@ -63,6 +64,7 @@ namespace MphRead
             {
                 new RecolorMetadata("default", ModelPath)
             };
+            FirstHunt = firstHunt;
         }
 
         public ModelMetadata(string name, IEnumerable<string> recolors, string? remove = null,
@@ -132,10 +134,6 @@ namespace MphRead
             {
                 path = $@"_archives\{archive}";
             }
-            else if (firstHunt)
-            {
-                path = @"models\_fh";
-            }
             else
             {
                 path = "models";
@@ -168,6 +166,7 @@ namespace MphRead
             {
                 new RecolorMetadata("default", recolorModel, texture ? $@"models\{name}{suffix}_Tex.bin" : recolorModel)
             };
+            FirstHunt = firstHunt;
         }
     }
 
