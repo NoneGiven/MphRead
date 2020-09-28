@@ -29,7 +29,7 @@ namespace MphRead.Formats.Sound
                 {
                     ExportSample(sample, adpcmRoundingError);
                 }
-                catch (Exception ex)
+                catch (WaveExportException ex)
                 {
                     Console.WriteLine($"[{sample.Id}] {ex.GetType().Name}: {ex.Message}");
                 }
@@ -49,7 +49,6 @@ namespace MphRead.Formats.Sound
         }
 
         // MPH uses ADPCM, FH uses ADPCM and PCM8
-        // future?: support PCM16 anyway
         private static void ExportSample(SoundSample sample, bool adpcmRoundingError = false)
         {
             string id = sample.Id.ToString().PadLeft(3, '0');
@@ -61,10 +60,21 @@ namespace MphRead.Formats.Sound
             {
                 throw new WaveExportException($"Format {sample.Format} is unsupported.");
             }
-            uint bps = 16;
+            uint bps = sample.Format == WaveFormat.PCM8 ? 8u : 16u;
             uint headerSize = 0x2C;
-            uint loopStart = (sample.LoopStart * 4u - 4u) * 2u;
-            uint loopLength = sample.LoopLength * 8u;
+            uint loopStart;
+            uint loopLength;
+            if (sample.Format == WaveFormat.ADPCM)
+            {
+                loopStart = (sample.LoopStart * 4u - 4u) * 2u;
+                loopLength = sample.LoopLength * 8u;
+            }
+            else
+            {
+                // this is valid for FH's header format only
+                loopStart = sample.LoopStart;
+                loopLength = sample.LoopLength;
+            }
             uint sampleCount = loopStart + loopLength;
             uint waveSize = sampleCount * bps / 8 + headerSize;
             uint decodedSize = sampleCount * (bps / 8);
@@ -87,90 +97,93 @@ namespace MphRead.Formats.Sound
             writer.WriteC("data");
             writer.Write4(decodedSize);
             ReadOnlySpan<byte> data = sample.CreateSpan();
-            int transferred = 0;
-            bool low = false;
-            int sampleValue = 0;
-            int stepIndex = 0;
             if (sample.Format == WaveFormat.ADPCM)
             {
-                low = true;
-                sampleValue = BitConverter.ToInt16(data.Slice(0, 2));
-                stepIndex = BitConverter.ToInt16(data.Slice(2, 2));
+                int transferred = 0;
+                bool low = true;
+                int sampleValue = BitConverter.ToInt16(data.Slice(0, 2));
+                int stepIndex = BitConverter.ToInt16(data.Slice(2, 2));
                 transferred += 4;
-            }
-            for (int i = 0; i < sampleCount; i++)
-            {
-                //int index = i * ((int)bps / 8);
-                byte value = data[transferred];
-                if (!low)
+                for (int i = 0; i < sampleCount; i++)
                 {
-                    value >>= 4;
-                    transferred++;
-                }
-                value &= 0x0F;
-                int step = Metadata.AdpcmTable[stepIndex];
-                int diff = step >> 3;
-                if ((value & 1) != 0)
-                {
-                    diff += step >> 2;
-                }
-                if ((value & 2) != 0)
-                {
-                    diff += step >> 1;
-                }
-                if ((value & 4) != 0)
-                {
-                    diff += step;
-                }
-                if (adpcmRoundingError)
-                {
-                    if ((value & 8) != 0)
+                    byte value = data[transferred];
+                    if (!low)
                     {
-                        sampleValue -= diff;
-                        if (sampleValue < -32767)
+                        value >>= 4;
+                        transferred++;
+                    }
+                    value &= 0x0F;
+                    int step = Metadata.AdpcmTable[stepIndex];
+                    int diff = step >> 3;
+                    if ((value & 1) != 0)
+                    {
+                        diff += step >> 2;
+                    }
+                    if ((value & 2) != 0)
+                    {
+                        diff += step >> 1;
+                    }
+                    if ((value & 4) != 0)
+                    {
+                        diff += step;
+                    }
+                    if (adpcmRoundingError)
+                    {
+                        if ((value & 8) != 0)
                         {
-                            sampleValue = -32767;
+                            sampleValue -= diff;
+                            if (sampleValue < -32767)
+                            {
+                                sampleValue = -32767;
+                            }
+                        }
+                        else
+                        {
+                            sampleValue += diff;
+                            if (sampleValue > 32767)
+                            {
+                                sampleValue = 32767;
+                            }
                         }
                     }
                     else
                     {
-                        sampleValue += diff;
+                        if ((value & 8) != 0)
+                        {
+                            sampleValue -= diff;
+                        }
+                        else
+                        {
+                            sampleValue += diff;
+                        }
+                        if (sampleValue < -32768)
+                        {
+                            sampleValue = -32768;
+                        }
                         if (sampleValue > 32767)
                         {
                             sampleValue = 32767;
                         }
                     }
+                    stepIndex += Metadata.ImaIndexTable[value];
+                    if (stepIndex < 0)
+                    {
+                        stepIndex = 0;
+                    }
+                    else if (stepIndex > 88)
+                    {
+                        stepIndex = 88;
+                    }
+                    writer.Write2(sampleValue);
+                    low = !low;
                 }
-                else
+            }
+            else
+            {
+                for (int i = 0; i < sampleCount; i++)
                 {
-                    if ((value & 8) != 0)
-                    {
-                        sampleValue -= diff;
-                    }
-                    else
-                    {
-                        sampleValue += diff;
-                    }
-                    if (sampleValue < -32768)
-                    {
-                        sampleValue = -32768;
-                    }
-                    if (sampleValue > 32767)
-                    {
-                        sampleValue = 32767;
-                    }
+                    writer.Write((byte)(data[i] ^ 0x80));
                 }
-                stepIndex += Metadata.ImaIndexTable[value];
-                if (stepIndex < 0)
-                {
-                    stepIndex = 0;
-                }
-                else if (stepIndex > 88)
-                {
-                    stepIndex = 88;
-                }
-                writer.Write2(sampleValue);
-                low = !low;
             }
             Nop();
         }
@@ -390,7 +403,7 @@ namespace MphRead.Formats.Sound
             Id = id;
             Offset = offset;
             SampleRate = header.SampleRate;
-            if (header.FieldF == 4)
+            if (header.Format == 4)
             {
                 Format = WaveFormat.ADPCM;
                 Loop = header.LoopStart > 1;
@@ -405,7 +418,7 @@ namespace MphRead.Formats.Sound
                     LoopLength = (header.LoopEnd - header.LoopStart);
                 }
             }
-            else if (header.FieldF == 0)
+            else if (header.Format == 0)
             {
                 Format = WaveFormat.PCM8;
                 Loop = header.LoopStart > 0;
@@ -414,7 +427,7 @@ namespace MphRead.Formats.Sound
             }
             else
             {
-                throw new ProgramException($"Unexpected FH sound header value: {header.FieldF}");
+                throw new ProgramException($"Unexpected FH sound header value: {header.Format}");
             }
             _data = data.ToArray();
         }
