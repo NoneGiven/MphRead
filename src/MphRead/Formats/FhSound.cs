@@ -8,17 +8,29 @@ namespace MphRead.Formats.Sound
 {
     public static partial class SoundRead
     {
-        public static void ExportFhSamples(bool adpcmRoundingError = false)
+        public static void ExportFhSfx(bool adpcmRoundingError = false)
         {
-            ExportSamples(ReadFhSoundSamples(), adpcmRoundingError);
+            ExportSamples(ReadFhSfx(), adpcmRoundingError);
         }
 
-        public static IReadOnlyList<SoundSample> ReadFhSoundSamples()
+        public static void ExportFhBgm(bool adpcmRoundingError = false)
         {
-            string path = @"D:\Cdrv\MPH\_FS\firsthunt\root\data\sound\BGMDATA.BIN";
-            //string path = @"D:\Cdrv\MPH\_FS\firsthunt\root\data\sound\GLOBALSFXDATA.BIN";
-            //string path = @"D:\Cdrv\MPH\_FS\firsthunt\root\data\sound\MENUSFXDATA.BIN";
-            //string path = @"D:\Cdrv\MPH\_FS\firsthunt\root\data\sound\SFXDATA.BIN";
+            ExportSamples(ReadFhBgm(), adpcmRoundingError);
+        }
+
+        // sktodo: MENUSFXDATA, GLOBALSFXDATA -- also need an FH file path
+        public static IReadOnlyList<SoundSample> ReadFhSfx()
+        {
+            return ReadFhSoundFile(@"D:\Cdrv\MPH\_FS\firsthunt\root\data\sound\SFXDATA.BIN");
+        }
+
+        public static IReadOnlyList<SoundSample> ReadFhBgm()
+        {
+            return ReadFhSoundFile(@"D:\Cdrv\MPH\_FS\firsthunt\root\data\sound\BGMDATA.BIN");
+        }
+
+        public static IReadOnlyList<SoundSample> ReadFhSoundFile(string path)
+        {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             uint count = Read.SpanReadUint(bytes, 0);
             var samples = new List<SoundSample>();
