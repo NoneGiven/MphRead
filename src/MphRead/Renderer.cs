@@ -137,6 +137,7 @@ namespace MphRead
 
         private Color4 _clearColor = new Color4(0, 0, 0, 1);
         private float _farClip = 10000f;
+        private bool _useClip = true;
 
         private Vector3 _light1Vector = default;
         private Vector3 _light1Color = default;
@@ -525,7 +526,7 @@ namespace MphRead
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
             float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
             float fov = MathHelper.DegreesToRadians(80.0f);
-            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.0625f, _farClip);
+            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.0625f, _useClip ? _farClip : 10000f);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref perspectiveMatrix);
 
             TransformCamera();
@@ -2126,7 +2127,15 @@ namespace MphRead
             }
             else if (e.Key == Key.G)
             {
-                _showFog = !_showFog;
+                if (e.Alt)
+                {
+                    // undocumented
+                    _useClip = !_useClip;
+                }
+                else
+                {
+                    _showFog = !_showFog;
+                }
                 await PrintOutput();
             }
             else if (e.Key == Key.N)

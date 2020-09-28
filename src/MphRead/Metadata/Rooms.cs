@@ -45,9 +45,18 @@ namespace MphRead
             Name = name;
             InGameName = inGameName;
             Archive = archive;
-            ModelPath = $@"_archives\{archive}\{modelPath}";
-            AnimationPath = $@"_archives\{archive}\{animationPath}";
-            CollisionPath = $@"_archives\{archive}\{collisionPath}";
+            if (firstHunt)
+            {
+                ModelPath = $@"levels\models\{modelPath}";
+                AnimationPath = $@"levels\models\{animationPath}";
+                CollisionPath = $@"levels\collision\{collisionPath}";
+            }
+            else
+            {
+                ModelPath = $@"_archives\{archive}\{modelPath}";
+                AnimationPath = $@"_archives\{archive}\{animationPath}";
+                CollisionPath = $@"_archives\{archive}\{collisionPath}";
+            }
             TexturePath = texturePath == null ? null : $@"levels\textures\{texturePath}";
             EntityPath = entityPath == null ? null : $@"levels\entities\{entityPath}";
             NodePath = nodePath == null ? null : $@"levels\nodeData\{nodePath}";
@@ -3752,13 +3761,13 @@ namespace MphRead
                     new RoomMetadata(
                         "Level MP1",
                         "Trooper Module",
-                        @"_fh\mp1",
+                        "mp1",
                         "mp1_Model.bin",
                         "mp1_Anim.bin",
                         "mp1_Collision.bin",
                         null,
-                        @"_fh\mp1_Ent.bin",
-                        @"_fh\mp1_Node.bin",
+                        "mp1_Ent.bin",
+                        "mp1_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
                         TimeLimit(2, 0, 0),
@@ -3784,13 +3793,13 @@ namespace MphRead
                     new RoomMetadata(
                         "Level MP2",
                         "Assault Cradle",
-                        @"_fh\mp2",
+                        "mp2",
                         "mp2_Model.bin",
                         "mp2_Anim.bin",
                         "mp2_Collision.bin",
                         null,
-                        @"_fh\mp2_Ent.bin",
-                        @"_fh\mp2_Node.bin",
+                        "mp2_Ent.bin",
+                        "mp2_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
                         TimeLimit(2, 0, 0),
@@ -3816,13 +3825,13 @@ namespace MphRead
                     new RoomMetadata(
                         "Level MP3",
                         "Ancient Vestige",
-                        @"_fh\mp3",
+                        "mp3",
                         "mp3_Model.bin",
                         "mp3_Anim.bin",
                         "mp3_Collision.bin",
                         null,
-                        @"_fh\mp3_Ent.bin",
-                        @"_fh\mp3_Node.bin",
+                        "mp3_Ent.bin",
+                        "mp3_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
                         TimeLimit(2, 0, 0),
@@ -3848,13 +3857,13 @@ namespace MphRead
                     new RoomMetadata(
                         "Level SP Morphball",
                         "Morph Ball",
-                        @"_fh\e3Level",
+                        "e3Level",
                         "e3Level_Model.bin",
                         "e3Level_Anim.bin",
                         "e3Level_Collision.bin",
                         null,
-                        @"_fh\morphBall_Ent.bin", // morphBall_Ent.bin
-                        @"_fh\morphBall_Node.bin",
+                        "morphBall_Ent.bin", // MPH: morphBall_Ent.bin
+                        "morphBall_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
                         TimeLimit(2, 0, 0),
@@ -3879,13 +3888,13 @@ namespace MphRead
                     new RoomMetadata(
                         "Level SP Regulator",
                         "Regulator",
-                        @"_fh\blueRoom",
+                        "blueRoom",
                         "blueRoom_Model.bin",
                         "blueRoom_Anim.bin",
                         "blueRoom_Collision.bin",
                         null,
-                        @"_fh\regulator_Ent.bin", // regulator_Ent.bin
-                        @"_fh\regulator_Node.bin",
+                        "regulator_Ent.bin", // MPH: regulator_Ent.bin
+                        "regulator_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
                         TimeLimit(2, 0, 0),
@@ -3910,13 +3919,13 @@ namespace MphRead
                     new RoomMetadata(
                         "Level SP Survivor",
                         "Survivor",
-                        @"_fh\mp2",
+                        "mp2",
                         "mp2_Model.bin",
                         "mp2_Anim.bin",
                         "mp2_Collision.bin",
                         null,
-                        @"_fh\survivor_Ent.bin", // survivor_Ent.bin
-                        @"_fh\survivor_Node.bin",
+                        "survivor_Ent.bin", // MPH: survivor_Ent.bin
+                        "survivor_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
                         TimeLimit(2, 0, 0),
@@ -3941,13 +3950,13 @@ namespace MphRead
                     new RoomMetadata(
                         "Level TestLevel",
                         "Test Level (First Hunt)",
-                        @"_fh\testLevel",
+                        "testLevel",
                         "testLevel_Model.bin",
                         "testlevel_Anim.bin",
                         "testlevel_Collision.bin",
                         null,
-                        @"_fh\testlevel_Ent.bin",
-                        @"_fh\testLevel_Node.bin",
+                        "testlevel_Ent.bin",
+                        "testLevel_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
                         TimeLimit(2, 0, 0),
@@ -3972,13 +3981,13 @@ namespace MphRead
                     new RoomMetadata(
                         "Level MP5",
                         "Early Head Shot (First Hunt)",
-                        @"_fh\mp5",
+                        "mp5",
                         "mp5_Model.bin",
                         "mp5_Anim.bin",
                         "mp5_Collision.bin",
                         null,
-                        @"_fh\mp5_Ent.bin",
-                        @"_fh\mp5_Node.bin",
+                        "mp5_Ent.bin",
+                        "mp5_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
                         TimeLimit(2, 0, 0),
@@ -4004,13 +4013,13 @@ namespace MphRead
                     new RoomMetadata(
                         "E3 level",
                         "Stasis Bunker (First Hunt)",
-                        @"_fh\e3Level",
+                        "e3Level",
                         "e3Level_Model.bin",
                         "e3Level_Anim.bin",
                         "e3Level_Collision.bin",
                         null,
-                        @"_fh\e3Level_Ent.bin",
-                        @"_fh\e3Level_Node.bin",
+                        "e3Level_Ent.bin",
+                        "e3Level_Node.bin",
                         null,
                         TimeLimit(10, 0, 0),
                         TimeLimit(2, 0, 0),
