@@ -697,8 +697,8 @@ namespace MphRead
     public readonly struct PointModuleEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly ushort PrevId;
         public readonly ushort NextId;
+        public readonly ushort PrevId;
         public readonly byte Active; // boolean
     }
 

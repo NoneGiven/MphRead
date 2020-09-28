@@ -748,8 +748,6 @@ namespace MphRead
 
         private static Model LoadPointModule(Entity<PointModuleEntityData> entity)
         {
-            // todo: not all of these are visible at once -- some may not be visible ever?
-            // --> but it's not simply using the Active property
             Model model = Read.GetModelByName("pick_morphball", firstHunt: true);
             model.Position = entity.Position;
             ComputeNodeMatrices(model, index: 0);
@@ -914,15 +912,14 @@ namespace MphRead
 
         private static readonly Dictionary<EntityType, ColorRgb> _colorOverrides = new Dictionary<EntityType, ColorRgb>()
         {
-            { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) }, // currently used for ID 2
-            { EntityType.Object, new ColorRgb(0x22, 0x8B, 0x22) }, // currently used for ID -1
+            { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) }, // used for ID 2 (energyBeam, arcWelder)
+            { EntityType.Object, new ColorRgb(0x22, 0x8B, 0x22) }, // used for ID -1 (scan point, effect spawner)
             { EntityType.Enemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.FhEnemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.TriggerVolume, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.FhTriggerVolume, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.AreaVolume, new ColorRgb(0xFF, 0xFF, 0x00) },
             { EntityType.FhAreaVolume, new ColorRgb(0xFF, 0xFF, 0x00) },
-            // "permanent" placeholders
             { EntityType.PlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.FhPlayerSpawn, new ColorRgb(0x7F, 0x00, 0x00) },
             { EntityType.MorphCamera, new ColorRgb(0x00, 0xFF, 0x00) },
@@ -946,7 +943,7 @@ namespace MphRead
             model.EntityType = entity.Type;
             model.Type = ModelType.Placeholder;
             model.Entity = entity;
-            ComputeNodeMatrices(model, index: 0);
+            ComputeModelMatrices(model, entity.RightVector, entity.UpVector);
             return model;
         }
     }
