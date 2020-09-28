@@ -15,11 +15,17 @@ This project is a model viewer, scene renderer, and general parser for file form
 
 ## Usage
 
-Ensure there is a `paths.txt` file in the same location as the `MphRead` binary.
-- The first line of the file must be the path to the directory which contains your MPH files.
-  - This directory must follow the structure of the MPH file system, with the root being equivalent to the `root` directory of the ROM.
-  - For the viewer to work, there must also be an `_archives` folder in the root which contains one folder for each archive, with the extracted files for that archive inside. This is not necessary for the exporter.
-- The second line of the file should be the path where you want your exported files to be placed.
+Ensure there is a `paths.txt` file in the same location as the `MphRead` binary. The contents should be as follows:
+
+```
+MPH file path
+FH file path
+Export path
+```
+
+The file paths must follow the structure of the games' file systems, with each root being equivalent to the `root` directory of the ROM; for example, `<MPH file path>\models\Trace_lod1_Model.bin` should be a valid path. Additionally, for the viewer to work, there must also be an `_archives` folder in the root which contains one folder for each archive, with the extracted files for that archive inside. This is not necessary for the exporter.
+
+If you don't have First Hunt files or don't need an export path, those lines can be left blank. Paths can be absolute or relative, so a blank line can also be used to point the directory where the `MphRead` binary is located.
 
 ```
 MphRead usage:
@@ -46,8 +52,8 @@ The export target may be a model or room name.
 ```
 
 See these wiki pages for model and room names:
-* [Models](https://github.com/NoneGiven/MphRead/wiki/Models)
-* [Rooms](https://github.com/NoneGiven/MphRead/wiki/Rooms)
+* [Models (MPH)](https://github.com/NoneGiven/MphRead/wiki/Models) / [Models (FH)](https://github.com/NoneGiven/MphRead/wiki/Models-(First-Hunt))
+* [Rooms (MPH)](https://github.com/NoneGiven/MphRead/wiki/Rooms) / [Rooms (FH)](https://github.com/NoneGiven/MphRead/wiki/Rooms-(First-Hunt))
 
 ## Building
 
