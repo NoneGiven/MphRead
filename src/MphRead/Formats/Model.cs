@@ -67,11 +67,11 @@ namespace MphRead
             set
             {
                 _damageState = value;
-                if (_damageState == 1)
+                if (value == 1)
                 {
                     PaletteOverride = Metadata.RedPalette;
                 }
-                else if (_damageState == 2)
+                else if (value == 2)
                 {
                     PaletteOverride = Metadata.WhitePalette;
                 }
