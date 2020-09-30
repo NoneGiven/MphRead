@@ -16,7 +16,7 @@ namespace MphRead
             if (arguments.Count == 0)
             {
                 using var renderer = new Renderer();
-                renderer.AddRoom("MP3 PROVING GROUND");
+                renderer.AddRoom("Gorea Prison");
                 //renderer.AddModel("Crate01");
                 Nop();
                 renderer.Run();

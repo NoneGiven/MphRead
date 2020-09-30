@@ -133,11 +133,13 @@ namespace MphRead
         private bool _scanVisor = false;
         private bool _showInvisible = false;
         private int _showVolumes = 0;
+        private bool _showKillPlane = false; // undocumented
         private bool _transformRoomNodes = false; // undocumented
 
         private Color4 _clearColor = new Color4(0, 0, 0, 1);
         private float _farClip = 10000f;
-        private bool _useClip = true;
+        private bool _useClip = true; // undocumented
+        private float _killHeight = 0f;
 
         private Vector3 _light1Vector = default;
         private Vector3 _light1Color = default;
@@ -292,6 +294,7 @@ namespace MphRead
             {
                 _clearColor = new Color4(_fogColor.X, _fogColor.Y, _fogColor.Z, _fogColor.W);
             }
+            _killHeight = roomMeta.KillHeight;
             _farClip = roomMeta.FarClip;
             foreach (CollisionPortal portal in collision.Portals)
             {
@@ -986,7 +989,7 @@ namespace MphRead
 
         private void RenderDisplayVolumes()
         {
-            if (_showVolumes > 0 && (_displayVolumes.Count > 0 || _displayPlanes.Count > 0))
+            if ((_showVolumes > 0 && (_displayVolumes.Count > 0 || _displayPlanes.Count > 0)) || _showKillPlane)
             {
                 GL.Uniform1(_shaderLocations.UseLight, 0);
                 GL.Uniform1(_shaderLocations.UseFog, 0);
@@ -1022,6 +1025,14 @@ namespace MphRead
                             RenderDisplayLines(plane);
                         }
                     }
+                }
+                if (_showKillPlane)
+                {
+                    GL.Disable(EnableCap.CullFace);
+                    GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
+                    Matrix4 transform = Matrix4.Identity;
+                    GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
+                    RenderKillPlane();
                 }
                 GL.Disable(EnableCap.Blend);
                 if (_faceCulling)
@@ -1072,6 +1083,18 @@ namespace MphRead
             GL.Vertex3(plane.Point4);
             GL.Vertex3(plane.Point2);
             GL.Vertex3(plane.Point3);
+            GL.End();
+        }
+
+        private void RenderKillPlane()
+        {
+            var color = new Vector4(1f, 0f, 1f, 0.5f);
+            GL.Uniform4(_shaderLocations.OverrideColor, color);
+            GL.Begin(PrimitiveType.TriangleStrip);
+            GL.Vertex3(10000f, _killHeight, 10000f);
+            GL.Vertex3(-10000f, _killHeight, 10000f);
+            GL.Vertex3(10000f, _killHeight, -10000f);
+            GL.Vertex3(-10000f, _killHeight, -10000f);
             GL.End();
         }
 
@@ -2129,7 +2152,6 @@ namespace MphRead
             {
                 if (e.Alt)
                 {
-                    // undocumented
                     _useClip = !_useClip;
                 }
                 else
@@ -2145,7 +2167,14 @@ namespace MphRead
             }
             else if (e.Key == Key.H)
             {
-                _showSelection = !_showSelection;
+                if (e.Alt)
+                {
+                    _showKillPlane = !_showKillPlane;
+                }
+                else
+                {
+                    _showSelection = !_showSelection;
+                }
             }
             else if (e.Key == Key.I)
             {
