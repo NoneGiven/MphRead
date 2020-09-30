@@ -44,6 +44,11 @@ namespace MphRead
             return " ";
         }
 
+        public static string GetMessage(char type, int id, string table, Language language = Language.English)
+        {
+            return GetMessage(type, (uint)id, table, language);
+        }
+
         public static string GetMessage(char type, uint id, string table, Language language = Language.English)
         {
             string fullId = type + id.ToString().PadLeft(3, '0');
