@@ -1170,6 +1170,10 @@ namespace MphRead
             return areaId;
         }
 
+        public static readonly Vector4 RedPalette = new Vector4(189 / 255f, 66 / 255f, 0f, 1f);
+        
+        public static readonly Vector4 WhitePalette = new Vector4(1f, 1f, 1f, 1f); 
+
         // todo: e.g. lod1 in the model folder should have the animation files from the lod0 archive
         public static readonly IReadOnlyDictionary<string, ModelMetadata> ModelMetadata
             = new Dictionary<string, ModelMetadata>()

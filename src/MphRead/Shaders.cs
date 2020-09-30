@@ -94,6 +94,8 @@ uniform float fog_max;
 uniform sampler2D tex;
 uniform bool use_override;
 uniform vec4 override_color;
+uniform bool use_pal_override;
+uniform vec4 pal_override_color;
 uniform float mat_alpha;
 uniform int mat_mode;
 uniform vec3[32] toon_table;
@@ -111,7 +113,7 @@ void main()
     // mat_mode: 0 - modulate, 1 - decal, 2 - toon
     vec4 col;
     if (use_texture) {
-        vec4 texcolor = texture2D(tex, texcoord);
+        vec4 texcolor = use_pal_override ? pal_override_color : texture2D(tex, texcoord);
         if (mat_mode == 1) {
             col = vec4(
                 (texcolor.r * texcolor.a + color.r * (1 - texcolor.a)),
@@ -178,6 +180,8 @@ void main()
         public int FogMaxDistance { get; set; }
         public int UseOverride { get; set; }
         public int OverrideColor { get; set; }
+        public int UsePaletteOverride { get; set; }
+        public int PaletteOverrideColor { get; set; }
         public int MaterialAlpha { get; set; }
         public int MaterialMode { get; set; }
         public int ModelMatrix { get; set; }

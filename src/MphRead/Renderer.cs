@@ -396,6 +396,8 @@ namespace MphRead
 
             _shaderLocations.UseOverride = GL.GetUniformLocation(_shaderProgramId, "use_override");
             _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
+            _shaderLocations.UsePaletteOverride = GL.GetUniformLocation(_shaderProgramId, "use_pal_override");
+            _shaderLocations.PaletteOverrideColor = GL.GetUniformLocation(_shaderProgramId, "pal_override_color");
             _shaderLocations.MaterialAlpha = GL.GetUniformLocation(_shaderProgramId, "mat_alpha");
             _shaderLocations.MaterialMode = GL.GetUniformLocation(_shaderProgramId, "mat_mode");
             _shaderLocations.ModelMatrix = GL.GetUniformLocation(_shaderProgramId, "model_mtx");
@@ -1603,6 +1605,16 @@ namespace MphRead
             else
             {
                 GL.Uniform1(_shaderLocations.UseOverride, 0);
+            }
+            if (model.PaletteOverride != null)
+            {
+                Vector4 overrideColorValue = model.PaletteOverride.Value;
+                GL.Uniform1(_shaderLocations.UsePaletteOverride, 1);
+                GL.Uniform4(_shaderLocations.PaletteOverrideColor, ref overrideColorValue);
+            }
+            else
+            {
+                GL.Uniform1(_shaderLocations.UsePaletteOverride, 0);
             }
         }
 

@@ -55,6 +55,33 @@ namespace MphRead
             }
         }
 
+        public Vector4? PaletteOverride { get; set; }
+
+        private uint _damageState = 0;
+        public uint DamageState
+        {
+            get
+            {
+                return _damageState;
+            }
+            set
+            {
+                _damageState = value;
+                if (_damageState == 1)
+                {
+                    PaletteOverride = Metadata.RedPalette;
+                }
+                else if (_damageState == 2)
+                {
+                    PaletteOverride = Metadata.WhitePalette;
+                }
+                else
+                {
+                    PaletteOverride = null;
+                }
+            }
+        }
+
         // todo: update these as with the other transform properties
         public Vector3 Vector1 = Vector3.UnitY;
         public Vector3 Vector2 = Vector3.UnitZ;
