@@ -754,11 +754,12 @@ namespace MphRead
             return pixels;
         }
 
+        // todo: just return float color early
         private ColorRgba ColorFromShort(uint value, byte alpha)
         {
-            byte red = (byte)(((value >> 0) & 0x1F) << 3);
-            byte green = (byte)(((value >> 5) & 0x1F) << 3);
-            byte blue = (byte)(((value >> 10) & 0x1F) << 3);
+            byte red = (byte)MathF.Round(((value >> 0) & 0x1F) / 31f * 255f);
+            byte green = (byte)MathF.Round(((value >> 5) & 0x1F) / 31f * 255f);
+            byte blue = (byte)MathF.Round(((value >> 10) & 0x1F) / 31f * 255f);
             return new ColorRgba(red, green, blue, alpha);
         }
 
