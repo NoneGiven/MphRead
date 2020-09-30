@@ -242,6 +242,14 @@ namespace MphRead
                 {
                     _displayVolumes.Add(entity.SceneId, new ObjectDisplay(obj));
                 }
+                else if (entity.Entity is Entity<FlagBaseEntityData> flag)
+                {
+                    _displayVolumes.Add(entity.SceneId, new FlagBaseDisplay(flag));
+                }
+                else if (entity.Entity is Entity<NodeDefenseEntityData> defense)
+                {
+                    _displayVolumes.Add(entity.SceneId, new NodeDefenseDisplay(defense));
+                }
                 else if (entity.Entity is Entity<PointModuleEntityData> module)
                 {
                     if (_lastPointModule == -1)
@@ -855,7 +863,7 @@ namespace MphRead
                     continue;
                 }
                 int modelPolygonId = model.Type == ModelType.Room ? 0 : polygonId++;
-                foreach (NodeInfo nodeInfo in model.GetDrawNodes(includeForceFields: _showVolumes != 10))
+                foreach (NodeInfo nodeInfo in model.GetDrawNodes(includeForceFields: _showVolumes != 12))
                 {
                     Node node = nodeInfo.Node;
                     if (node.MeshCount == 0 || !node.Enabled || !model.NodeParentsEnabled(node))
@@ -1011,7 +1019,7 @@ namespace MphRead
                         }
                     }
                 }
-                if (_showVolumes == 10)
+                if (_showVolumes == 12)
                 {
                     GL.Disable(EnableCap.CullFace);
                     GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
@@ -2123,7 +2131,7 @@ namespace MphRead
                     _showVolumes--;
                     if (_showVolumes < 0)
                     {
-                        _showVolumes = 10;
+                        _showVolumes = 12;
                     }
                     if (_showVolumes != 0 && _selectionMode == SelectionMode.Model)
                     {
@@ -2135,7 +2143,7 @@ namespace MphRead
                 else
                 {
                     _showVolumes++;
-                    if (_showVolumes > 10)
+                    if (_showVolumes > 12)
                     {
                         _showVolumes = 0;
                     }
@@ -2604,6 +2612,14 @@ namespace MphRead
             else if (_showVolumes == 9)
             {
                 _targetTypes.Add(EntityType.Object);
+            }
+            else if (_showVolumes == 10)
+            {
+                _targetTypes.Add(EntityType.FlagBase);
+            }
+            else if (_showVolumes == 11)
+            {
+                _targetTypes.Add(EntityType.NodeDefense);
             }
         }
 

@@ -729,7 +729,7 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly uint TeamId;
-        public readonly RawCollisionVolume Volume; // sktodo: display volume
+        public readonly RawCollisionVolume Volume;
     }
 
     // size: 92
@@ -753,7 +753,7 @@ namespace MphRead
     public readonly struct NodeDefenseEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly RawCollisionVolume Volume; // sktodo: display volume
+        public readonly RawCollisionVolume Volume;
     }
 
     // size: 136
