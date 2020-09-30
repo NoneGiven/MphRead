@@ -31,7 +31,7 @@ namespace MphRead
         public Vector3 Light1Vector { get; }
         public ColorRgb Light2Color { get; }
         public Vector3 Light2Vector { get; }
-        public uint Field68 { get; }
+        public float KillHeight { get; }
         public uint Field6C { get; }
         public bool Multiplayer { get; }
         public bool FirstHunt { get; }
@@ -40,7 +40,7 @@ namespace MphRead
         public RoomMetadata(string name, string? inGameName, string archive, string modelPath, string animationPath, string collisionPath,
             string? texturePath, string? entityPath, string? nodePath, string? roomNodeName, uint battleTimeLimit, uint timeLimit,
             short pointLimit, short nodeLayer, bool fogEnabled, bool clearFog, ColorRgb fogColor, int fogSlope, ushort fogOffset,
-            ColorRgb light1Color, Vector3 light1Vector, ColorRgb light2Color, Vector3 light2Vector, int farClip, uint field68,
+            ColorRgb light1Color, Vector3 light1Vector, ColorRgb light2Color, Vector3 light2Vector, int farClip, int killHeight,
             uint field6C, bool multiplayer = false, bool firstHunt = false, bool hybrid = false)
         {
             Name = name;
@@ -78,7 +78,7 @@ namespace MphRead
             Multiplayer = multiplayer;
             FarClip = Fixed.ToFloat(farClip);
             FarClipInt = farClip;
-            Field68 = field68;
+            KillHeight = Fixed.ToFloat(killHeight);
             Field6C = field6C;
             FirstHunt = firstHunt;
             Hybrid = hybrid;
@@ -269,7 +269,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x0)
                 },
                 {
@@ -299,7 +299,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x0)
                 },
                 {
@@ -329,7 +329,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 6, 4),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x0)
                 },
                 {
@@ -359,7 +359,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x0)
                 },
                 {
@@ -389,7 +389,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x0)
                 },
                 {
@@ -419,7 +419,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x0)
                 },
                 {
@@ -449,7 +449,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x0)
                 },
                 {
@@ -479,7 +479,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x0)
                 },
                 {
@@ -509,7 +509,7 @@ namespace MphRead
                         light2Color: new ColorRgb(8, 8, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x0)
                 },
                 {
@@ -539,7 +539,7 @@ namespace MphRead
                         light2Color: new ColorRgb(8, 8, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x0)
                 },
                 {
@@ -569,7 +569,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 6, 12),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x0)
                 },
                 {
@@ -599,7 +599,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 6, 12),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x0)
                 },
                 {
@@ -629,7 +629,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x0)
                 },
                 {
@@ -659,7 +659,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 6, 12),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x0)
                 },
                 {
@@ -689,7 +689,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x0)
                 },
                 {
@@ -719,7 +719,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 6553600,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -749,7 +749,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -779,7 +779,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -809,7 +809,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -839,7 +839,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -869,7 +869,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 6, 12),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -899,7 +899,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -929,7 +929,7 @@ namespace MphRead
                         light2Color: new ColorRgb(20, 8, 8),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -959,7 +959,7 @@ namespace MphRead
                         light2Color: new ColorRgb(31, 25, 21),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -989,7 +989,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1019,7 +1019,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1049,7 +1049,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 9, 4),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1079,7 +1079,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1109,7 +1109,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1139,7 +1139,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 6, 4),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1169,7 +1169,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1199,7 +1199,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 6, 12),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1229,7 +1229,7 @@ namespace MphRead
                         light2Color: new ColorRgb(31, 25, 21),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1259,7 +1259,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 6553600,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1289,7 +1289,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 6553600,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1319,7 +1319,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1349,7 +1349,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1379,7 +1379,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1409,7 +1409,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1439,7 +1439,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1469,7 +1469,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1499,7 +1499,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1529,7 +1529,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 6, 12),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1559,7 +1559,7 @@ namespace MphRead
                         light2Color: new ColorRgb(31, 25, 21),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1589,7 +1589,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 16384000,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1619,7 +1619,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 16384000,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1649,7 +1649,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1679,7 +1679,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1709,7 +1709,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1739,7 +1739,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1769,7 +1769,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1799,7 +1799,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 6, 12),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1829,7 +1829,7 @@ namespace MphRead
                         light2Color: new ColorRgb(31, 25, 21),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1859,7 +1859,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 6553600,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1889,7 +1889,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1919,7 +1919,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1949,7 +1949,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -1979,7 +1979,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2009,7 +2009,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 6, 12),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2039,7 +2039,7 @@ namespace MphRead
                         light2Color: new ColorRgb(31, 25, 21),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2069,7 +2069,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2099,7 +2099,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 2457600,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2129,7 +2129,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2159,7 +2159,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 6, 12),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2189,7 +2189,7 @@ namespace MphRead
                         light2Color: new ColorRgb(31, 25, 21),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2219,7 +2219,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 4, 8),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2249,7 +2249,7 @@ namespace MphRead
                         light2Color: new ColorRgb(8, 8, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 327680,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2279,7 +2279,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 4, 8),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2309,7 +2309,7 @@ namespace MphRead
                         light2Color: new ColorRgb(8, 8, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2339,7 +2339,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 6, 12),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2369,7 +2369,7 @@ namespace MphRead
                         light2Color: new ColorRgb(31, 25, 21),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2399,7 +2399,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 4, 8),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2429,7 +2429,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 4, 8),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2459,7 +2459,7 @@ namespace MphRead
                         light2Color: new ColorRgb(8, 8, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 327680,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2489,7 +2489,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 4, 8),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2519,7 +2519,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 6, 12),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2549,7 +2549,7 @@ namespace MphRead
                         light2Color: new ColorRgb(31, 25, 21),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2579,7 +2579,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 6, 12),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2609,7 +2609,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 6, 12),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFBA000,
+                        killHeight: -286720,
                         field6C: 0x6)
                 },
                 {
@@ -2639,7 +2639,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 18, 24),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6)
                 },
                 {
@@ -2669,7 +2669,7 @@ namespace MphRead
                         light2Color: new ColorRgb(27, 18, 9),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFBA000,
+                        killHeight: -286720,
                         field6C: 0x6)
                 },
                 {
@@ -2699,7 +2699,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 368640,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x3,
                         multiplayer: true)
                 },
@@ -2730,7 +2730,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 11, 6),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 3072000,
-                        field68: 0x1000,
+                        killHeight: 4096,
                         field6C: 0x4,
                         multiplayer: true)
                 },
@@ -2761,7 +2761,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(409, -4096, 0).ToFloatVector(),
                         farClip: 1433600,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x2,
                         multiplayer: true)
                 },
@@ -2792,7 +2792,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1687552,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x4,
                         multiplayer: true)
                 },
@@ -2823,7 +2823,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1740800,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x3,
                         multiplayer: true)
                 },
@@ -2854,7 +2854,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x2,
                         multiplayer: true)
                 },
@@ -2885,7 +2885,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 5734400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x4,
                         multiplayer: true)
                 },
@@ -2916,7 +2916,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 6, 4),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x2,
                         multiplayer: true)
                 },
@@ -2947,7 +2947,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 4096000,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x4,
                         multiplayer: true)
                 },
@@ -2978,7 +2978,7 @@ namespace MphRead
                         light2Color: new ColorRgb(8, 8, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 327680,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x3,
                         multiplayer: true)
                 },
@@ -3009,7 +3009,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 409600,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x2,
                         multiplayer: true)
                 },
@@ -3040,7 +3040,7 @@ namespace MphRead
                         light2Color: new ColorRgb(8, 8, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 409600,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x2,
                         multiplayer: true)
                 },
@@ -3071,7 +3071,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 4, 8),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x3,
                         multiplayer: true)
                 },
@@ -3102,7 +3102,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x4,
                         multiplayer: true)
                 },
@@ -3133,7 +3133,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 4915200,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x3,
                         multiplayer: true)
                 },
@@ -3164,7 +3164,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 4, 8),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x4,
                         multiplayer: true)
                 },
@@ -3195,7 +3195,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 4, 8),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x3,
                         multiplayer: true)
                 },
@@ -3226,7 +3226,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 5734400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x4,
                         multiplayer: true)
                 },
@@ -3257,7 +3257,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 3276800,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x3,
                         multiplayer: true)
                 },
@@ -3288,7 +3288,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x4,
                         multiplayer: true)
                 },
@@ -3319,7 +3319,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x4,
                         multiplayer: true)
                 },
@@ -3350,7 +3350,7 @@ namespace MphRead
                         light2Color: new ColorRgb(13, 12, 7),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 4915200,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x4,
                         multiplayer: true)
                 },
@@ -3381,7 +3381,7 @@ namespace MphRead
                         light2Color: new ColorRgb(7, 11, 15),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 5734400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x3,
                         multiplayer: true)
                 },
@@ -3412,7 +3412,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x4,
                         multiplayer: true)
                 },
@@ -3443,7 +3443,7 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 4, 8),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x4,
                         multiplayer: true)
                 },
@@ -3474,7 +3474,7 @@ namespace MphRead
                         light2Color: new ColorRgb(27, 18, 9),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFBA000,
+                        killHeight: -286720,
                         field6C: 0x4,
                         multiplayer: true)
                 },
@@ -3505,7 +3505,7 @@ namespace MphRead
                         light2Color: new ColorRgb(9, 8, 14),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x3,
                         multiplayer: true)
                 },
@@ -3536,7 +3536,7 @@ namespace MphRead
                         light2Color: new ColorRgb(10, 10, 31),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6,
                         hybrid: true)
                 },
@@ -3567,7 +3567,7 @@ namespace MphRead
                         light2Color: new ColorRgb(10, 10, 31),
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
-                        field68: 0xFFFE2000,
+                        killHeight: -122880,
                         field6C: 0x6,
                         hybrid: true)
                 },
@@ -3575,187 +3575,187 @@ namespace MphRead
                 {
                     "biodefense chamber 06",
                     new RoomMetadata(
-                        "biodefense chamber 06",
-                        "Early Processor Core",
-                        "unit1_b2",
-                        "unit1_b2_Model.bin",
-                        "unit1_b2_Anim.bin",
-                        "unit1_b2_Collision.bin",
-                        null,
-                        null, // Unit1_b2_Ent is used in Cretaphid boss room
-                        "unit1_b2_node.bin", // todo?
-                        null,
-                        TimeLimit(10, 0, 0),
-                        TimeLimit(2, 0, 0),
-                        0x0,
-                        0x0,
-                        false,
-                        false,
-                        new ColorRgb(0, 0, 0),
-                        0,
-                        0,
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(0f, -1f, 0f),
-                        1638400,
-                        0x0,
-                        0x0,
+                        name: "biodefense chamber 06",
+                        inGameName: "Early Processor Core",
+                        archive: "unit1_b2",
+                        modelPath: "unit1_b2_Model.bin",
+                        animationPath: "unit1_b2_Anim.bin",
+                        collisionPath: "unit1_b2_Collision.bin",
+                        texturePath: null,
+                        entityPath: null, // Unit1_b2_Ent is used in Cretaphid boss room
+                        nodePath: "unit1_b2_node.bin", // todo?
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: false,
+                        clearFog: false,
+                        fogColor: new ColorRgb(0, 0, 0),
+                        fogSlope: 0,
+                        fogOffset: 0,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(1f, 0f, 0f),
+                        light2Color: new ColorRgb(31, 31, 31),
+                        light2Vector: new Vector3(0f, -1f, 0f),
+                        farClip: 1638400,
+                        killHeight: -122880,
+                        field6C: 0x0,
                         multiplayer: true)
                 },
                 {
                     "biodefense chamber 05",
                     new RoomMetadata(
-                        "biodefense chamber 05",
-                        "Early Stasis Bunker",
-                        "unit2_b2",
-                        "unit2_b2_Model.bin",
-                        "unit2_b2_Anim.bin",
-                        "unit2_b2_Collision.bin",
-                        null,
-                        null, // Unit2_b2_Ent is used in Slench boss room
-                        null, // unit2_b2_node is used in Slench boos room
-                        null,
-                        TimeLimit(10, 0, 0),
-                        TimeLimit(2, 0, 0),
-                        0x0,
-                        0x0,
-                        false,
-                        false,
-                        new ColorRgb(0, 0, 0),
-                        0,
-                        0,
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(0f, -1f, 0f),
-                        1638400,
-                        0x0,
-                        0x0,
+                        name: "biodefense chamber 05",
+                        inGameName: "Early Stasis Bunker",
+                        archive: "unit2_b2",
+                        modelPath: "unit2_b2_Model.bin",
+                        animationPath: "unit2_b2_Anim.bin",
+                        collisionPath: "unit2_b2_Collision.bin",
+                        texturePath: null,
+                        entityPath: null, // Unit2_b2_Ent is used in Slench boss room
+                        nodePath: null, // unit2_b2_node is used in Slench boos room
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: false,
+                        clearFog: false,
+                        fogColor: new ColorRgb(0, 0, 0),
+                        fogSlope: 0,
+                        fogOffset: 0,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(1f, 0f, 0f),
+                        light2Color: new ColorRgb(31, 31, 31),
+                        light2Vector: new Vector3(0f, -1f, 0f),
+                        farClip: 1638400,
+                        killHeight: -122880,
+                        field6C: 0x0,
                         multiplayer: true)
                 },
                 {
                     "biodefense chamber 03",
                     new RoomMetadata(
-                        "biodefense chamber 03",
-                        "Early Head Shot",
-                        "unit3_b1",
-                        "unit3_b1_Model.bin",
-                        "unit3_b1_Anim.bin",
-                        "unit3_b1_Collision.bin",
-                        null,
-                        null, // Unit3_b1_Ent is used in Cretaphid boss room
-                        "unit3_b1_node.bin", // todo?
-                        null,
-                        TimeLimit(10, 0, 0),
-                        TimeLimit(2, 0, 0),
-                        0x0,
-                        0x0,
-                        false,
-                        false,
-                        new ColorRgb(0, 0, 0),
-                        0,
-                        0,
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(0f, -1f, 0f),
-                        1638400,
-                        0x0,
-                        0x0,
+                        name: "biodefense chamber 03",
+                        inGameName: "Early Head Shot",
+                        archive: "unit3_b1",
+                        modelPath: "unit3_b1_Model.bin",
+                        animationPath: "unit3_b1_Anim.bin",
+                        collisionPath: "unit3_b1_Collision.bin",
+                        texturePath: null,
+                        entityPath: null, // Unit3_b1_Ent is used in Cretaphid boss room
+                        nodePath: "unit3_b1_node.bin", // todo?
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: false,
+                        clearFog: false,
+                        fogColor: new ColorRgb(0, 0, 0),
+                        fogSlope: 0,
+                        fogOffset: 0,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(1f, 0f, 0f),
+                        light2Color: new ColorRgb(31, 31, 31),
+                        light2Vector: new Vector3(0f, -1f, 0f),
+                        farClip: 1638400,
+                        killHeight: -122880,
+                        field6C: 0x0,
                         multiplayer: true)
                 },
                 {
                     "biodefense chamber 08",
                     new RoomMetadata(
-                        "biodefense chamber 08",
-                        "Early Fuel Stack",
-                        "unit3_b2",
-                        "unit3_b2_Model.bin",
-                        "unit3_b2_Anim.bin",
-                        "unit3_b2_Collision.bin",
-                        null,
-                        null, // Unit3_b2_Ent is used in Slench boss room
-                        "unit3_b2_node.bin", // todo?
-                        null,
-                        TimeLimit(10, 0, 0),
-                        TimeLimit(2, 0, 0),
-                        0x0,
-                        0x0,
-                        false,
-                        false,
-                        new ColorRgb(0, 0, 0),
-                        0,
-                        0,
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(0f, -1f, 0f),
-                        1638400,
-                        0x0,
-                        0x0,
+                        name: "biodefense chamber 08",
+                        inGameName: "Early Fuel Stack",
+                        archive: "unit3_b2",
+                        modelPath: "unit3_b2_Model.bin",
+                        animationPath: "unit3_b2_Anim.bin",
+                        collisionPath: "unit3_b2_Collision.bin",
+                        texturePath: null,
+                        entityPath: null, // Unit3_b2_Ent is used in Slench boss room
+                        nodePath: "unit3_b2_node.bin", // todo?
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: false,
+                        clearFog: false,
+                        fogColor: new ColorRgb(0, 0, 0),
+                        fogSlope: 0,
+                        fogOffset: 0,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(1f, 0f, 0f),
+                        light2Color: new ColorRgb(31, 31, 31),
+                        light2Vector: new Vector3(0f, -1f, 0f),
+                        farClip: 1638400,
+                        killHeight: -122880,
+                        field6C: 0x0,
                         multiplayer: true)
                 },
                 {
                     "biodefense chamber 04",
                     new RoomMetadata(
-                        "biodefense chamber 04",
-                        "Early Sanctorus",
-                        "unit4_b1",
-                        "unit4_b1_Model.bin",
-                        "unit4_b1_Anim.bin",
-                        "unit4_b1_Collision.bin",
-                        null,
-                        null, // unit4_b1_Ent is used in Slench boss room
-                        "unit4_b1_Node.bin", // todo: ?
-                        null,
-                        TimeLimit(10, 0, 0),
-                        TimeLimit(2, 0, 0),
-                        0x0,
-                        0x0,
-                        false,
-                        false,
-                        new ColorRgb(0, 0, 0),
-                        0,
-                        0,
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(0f, -1f, 0f),
-                        1638400,
-                        0x0,
-                        0x0,
+                        name: "biodefense chamber 04",
+                        inGameName: "Early Sanctorus",
+                        archive: "unit4_b1",
+                        modelPath: "unit4_b1_Model.bin",
+                        animationPath: "unit4_b1_Anim.bin",
+                        collisionPath: "unit4_b1_Collision.bin",
+                        texturePath: null,
+                        entityPath: null, // unit4_b1_Ent is used in Slench boss room
+                        nodePath: "unit4_b1_Node.bin", // todo: ?
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: false,
+                        clearFog: false,
+                        fogColor: new ColorRgb(0, 0, 0),
+                        fogSlope: 0,
+                        fogOffset: 0,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(1f, 0f, 0f),
+                        light2Color: new ColorRgb(31, 31, 31),
+                        light2Vector: new Vector3(0f, -1f, 0f),
+                        farClip: 1638400,
+                        killHeight: -122880,
+                        field6C: 0x0,
                         multiplayer: true)
                 },
                 {
                     "biodefense chamber 07",
                     new RoomMetadata(
-                        "biodefense chamber 07",
-                        "Early Sic Transit",
-                        "unit4_b2",
-                        "unit4_b2_Model.bin",
-                        "unit4_b2_Anim.bin",
-                        "unit4_b2_Collision.bin",
-                        null,
-                        null, // unit4_b2_Ent is used in Cretaphid boss room
-                        "unit4_b2_Node.bin", // todo: ?
-                        null,
-                        TimeLimit(10, 0, 0),
-                        TimeLimit(2, 0, 0),
-                        0x0,
-                        0x0,
-                        false,
-                        false,
-                        new ColorRgb(0, 0, 0),
-                        0,
-                        0,
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(1f, 0f, 0f),
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(0f, -1f, 0f),
-                        1638400,
-                        0x0,
-                        0x0,
+                        name: "biodefense chamber 07",
+                        inGameName: "Early Sic Transit",
+                        archive: "unit4_b2",
+                        modelPath: "unit4_b2_Model.bin",
+                        animationPath: "unit4_b2_Anim.bin",
+                        collisionPath: "unit4_b2_Collision.bin",
+                        texturePath: null,
+                        entityPath: null, // unit4_b2_Ent is used in Cretaphid boss room
+                        nodePath: "unit4_b2_Node.bin", // todo: ?
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: false,
+                        clearFog: false,
+                        fogColor: new ColorRgb(0, 0, 0),
+                        fogSlope: 0,
+                        fogOffset: 0,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(1f, 0f, 0f),
+                        light2Color: new ColorRgb(31, 31, 31),
+                        light2Vector: new Vector3(0f, -1f, 0f),
+                        farClip: 1638400,
+                        killHeight: -122880,
+                        field6C: 0x0,
                         multiplayer: true)
                 },
                 // todo: room ID 8 has the same files as MP1, but a few different parameters
@@ -3763,284 +3763,284 @@ namespace MphRead
                 {
                     "FH_MP1",
                     new RoomMetadata(
-                        "Level MP1",
-                        "Trooper Module",
-                        "mp1",
-                        "mp1_Model.bin",
-                        "mp1_Anim.bin",
-                        "mp1_Collision.bin",
-                        null,
-                        "mp1_Ent.bin",
-                        "mp1_Node.bin",
-                        null,
-                        TimeLimit(10, 0, 0),
-                        TimeLimit(2, 0, 0),
-                        0x0,
-                        0x0,
-                        true,
-                        true,
-                        new ColorRgb(31, 31, 31),
-                        0x2,
-                        65152,
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(0.25f, -0.5f, -0.25f),
-                        new ColorRgb(4, 4, 16),
-                        new Vector3(0, 1, -0.25f),
-                        368640,
-                        0x0,
-                        0x0,
+                        name: "Level MP1",
+                        inGameName: "Trooper Module",
+                        archive: "mp1",
+                        modelPath: "mp1_Model.bin",
+                        animationPath: "mp1_Anim.bin",
+                        collisionPath: "mp1_Collision.bin",
+                        texturePath: null,
+                        entityPath: "mp1_Ent.bin",
+                        nodePath: "mp1_Node.bin",
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: true,
+                        clearFog: true,
+                        fogColor: new ColorRgb(31, 31, 31),
+                        fogSlope: 2,
+                        fogOffset: 65152,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(0.25f, -0.5f, -0.25f),
+                        light2Color: new ColorRgb(4, 4, 16),
+                        light2Vector: new Vector3(0, 1, -0.25f),
+                        farClip: 368640,
+                        killHeight: 0,
+                        field6C: 0x0,
                         multiplayer: true,
                         firstHunt: true)
                 },
                 {
                     "FH_MP2",
                     new RoomMetadata(
-                        "Level MP2",
-                        "Assault Cradle",
-                        "mp2",
-                        "mp2_Model.bin",
-                        "mp2_Anim.bin",
-                        "mp2_Collision.bin",
-                        null,
-                        "mp2_Ent.bin",
-                        "mp2_Node.bin",
-                        null,
-                        TimeLimit(10, 0, 0),
-                        TimeLimit(2, 0, 0),
-                        0x0,
-                        0x0,
-                        true,
-                        true,
-                        new ColorRgb(6, 12, 11),
-                        0x5,
-                        64900,
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(0.25f, -0.5f, -0.25f),
-                        new ColorRgb(4, 4, 16),
-                        new Vector3(0, 1, -0.25f),
-                        245760,
-                        0x0,
-                        0x0,
+                        name: "Level MP2",
+                        inGameName: "Assault Cradle",
+                        archive: "mp2",
+                        modelPath: "mp2_Model.bin",
+                        animationPath: "mp2_Anim.bin",
+                        collisionPath: "mp2_Collision.bin",
+                        texturePath: null,
+                        entityPath: "mp2_Ent.bin",
+                        nodePath: "mp2_Node.bin",
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: true,
+                        clearFog: true,
+                        fogColor: new ColorRgb(6, 12, 11),
+                        fogSlope: 5,
+                        fogOffset: 64900,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(0.25f, -0.5f, -0.25f),
+                        light2Color: new ColorRgb(4, 4, 16),
+                        light2Vector: new Vector3(0, 1, -0.25f),
+                        farClip: 245760,
+                        killHeight: 0,
+                        field6C: 0x0,
                         multiplayer: true,
                         firstHunt: true)
                 },
                 {
                     "FH_MP3",
                     new RoomMetadata(
-                        "Level MP3",
-                        "Ancient Vestige",
-                        "mp3",
-                        "mp3_Model.bin",
-                        "mp3_Anim.bin",
-                        "mp3_Collision.bin",
-                        null,
-                        "mp3_Ent.bin",
-                        "mp3_Node.bin",
-                        null,
-                        TimeLimit(10, 0, 0),
-                        TimeLimit(2, 0, 0),
-                        0x0,
-                        0x0,
-                        true,
-                        false,
-                        new ColorRgb(29, 26, 20),
-                        0x4,
-                        65152,
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(0.25f, -0.5f, -0.25f),
-                        new ColorRgb(4, 4, 16),
-                        new Vector3(0, 1, -0.25f),
-                        81920000,
-                        0x0,
-                        0x0,
+                        name: "Level MP3",
+                        inGameName: "Ancient Vestige",
+                        archive: "mp3",
+                        modelPath: "mp3_Model.bin",
+                        animationPath: "mp3_Anim.bin",
+                        collisionPath: "mp3_Collision.bin",
+                        texturePath: null,
+                        entityPath: "mp3_Ent.bin",
+                        nodePath: "mp3_Node.bin",
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: true,
+                        clearFog: false,
+                        fogColor: new ColorRgb(29, 26, 20),
+                        fogSlope: 4,
+                        fogOffset: 65152,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(0.25f, -0.5f, -0.25f),
+                        light2Color: new ColorRgb(4, 4, 16),
+                        light2Vector: new Vector3(0, 1, -0.25f),
+                        farClip: 81920000,
+                        killHeight: 0,
+                        field6C: 0x0,
                         multiplayer: true,
                         firstHunt: true)
                 },
                 {
                     "FH_MORPHBALL",
                     new RoomMetadata(
-                        "Level SP Morphball",
-                        "Morph Ball",
-                        "e3Level",
-                        "e3Level_Model.bin",
-                        "e3Level_Anim.bin",
-                        "e3Level_Collision.bin",
-                        null,
-                        "morphBall_Ent.bin", // MPH: morphBall_Ent.bin
-                        "morphBall_Node.bin",
-                        null,
-                        TimeLimit(10, 0, 0),
-                        TimeLimit(2, 0, 0),
-                        0x0,
-                        0x0,
-                        true,
-                        false,
-                        new ColorRgb(8, 16, 31),
-                        0x5,
-                        65152,
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(0.25f, -0.5f, -0.25f),
-                        new ColorRgb(4, 4, 16),
-                        new Vector3(0, 1, -0.25f),
-                        245760,
-                        0x0,
-                        0x0,
+                        name: "Level SP Morphball",
+                        inGameName: "Morph Ball",
+                        archive: "e3Level",
+                        modelPath: "e3Level_Model.bin",
+                        animationPath: "e3Level_Anim.bin",
+                        collisionPath: "e3Level_Collision.bin",
+                        texturePath: null,
+                        entityPath: "morphBall_Ent.bin", // MPH: morphBall_Ent.bin
+                        nodePath: "morphBall_Node.bin",
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: true,
+                        clearFog: false,
+                        fogColor: new ColorRgb(8, 16, 31),
+                        fogSlope: 5,
+                        fogOffset: 65152,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(0.25f, -0.5f, -0.25f),
+                        light2Color: new ColorRgb(4, 4, 16),
+                        light2Vector: new Vector3(0, 1, -0.25f),
+                        farClip: 245760,
+                        killHeight: 0,
+                        field6C: 0x0,
                         firstHunt: true)
                 },
                 {
                     "FH_REGULATOR",
                     new RoomMetadata(
-                        "Level SP Regulator",
-                        "Regulator",
-                        "blueRoom",
-                        "blueRoom_Model.bin",
-                        "blueRoom_Anim.bin",
-                        "blueRoom_Collision.bin",
-                        null,
-                        "regulator_Ent.bin", // MPH: regulator_Ent.bin
-                        "regulator_Node.bin",
-                        null,
-                        TimeLimit(10, 0, 0),
-                        TimeLimit(2, 0, 0),
-                        0x0,
-                        0x0,
-                        false,
-                        false,
-                        new ColorRgb(8, 16, 31),
-                        0x5,
-                        65152,
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(0.25f, -0.5f, -0.25f),
-                        new ColorRgb(4, 4, 16),
-                        new Vector3(0, 1, -0.25f),
-                        245760,
-                        0x0,
-                        0x0,
+                        name: "Level SP Regulator",
+                        inGameName: "Regulator",
+                        archive: "blueRoom",
+                        modelPath: "blueRoom_Model.bin",
+                        animationPath: "blueRoom_Anim.bin",
+                        collisionPath: "blueRoom_Collision.bin",
+                        texturePath: null,
+                        entityPath: "regulator_Ent.bin", // MPH: regulator_Ent.bin
+                        nodePath: "regulator_Node.bin",
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: false,
+                        clearFog: false,
+                        fogColor: new ColorRgb(8, 16, 31),
+                        fogSlope: 5,
+                        fogOffset: 65152,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(0.25f, -0.5f, -0.25f),
+                        light2Color: new ColorRgb(4, 4, 16),
+                        light2Vector: new Vector3(0, 1, -0.25f),
+                        farClip: 245760,
+                        killHeight: 0,
+                        field6C: 0x0,
                         firstHunt: true)
                 },
                 {
                     "FH_SURVIVOR",
                     new RoomMetadata(
-                        "Level SP Survivor",
-                        "Survivor",
-                        "mp2",
-                        "mp2_Model.bin",
-                        "mp2_Anim.bin",
-                        "mp2_Collision.bin",
-                        null,
-                        "survivor_Ent.bin", // MPH: survivor_Ent.bin
-                        "survivor_Node.bin",
-                        null,
-                        TimeLimit(10, 0, 0),
-                        TimeLimit(2, 0, 0),
-                        0x0,
-                        0x0,
-                        true,
-                        true,
-                        new ColorRgb(1, 6, 5),
-                        0x5,
-                        64900,
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(0.25f, -0.5f, -0.25f),
-                        new ColorRgb(4, 4, 16),
-                        new Vector3(0, 1, -0.25f),
-                        245760,
-                        0x0,
-                        0x0,
+                        name: "Level SP Survivor",
+                        inGameName: "Survivor",
+                        archive: "mp2",
+                        modelPath: "mp2_Model.bin",
+                        animationPath: "mp2_Anim.bin",
+                        collisionPath: "mp2_Collision.bin",
+                        texturePath: null,
+                        entityPath: "survivor_Ent.bin", // MPH: survivor_Ent.bin
+                        nodePath: "survivor_Node.bin",
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: true,
+                        clearFog: true,
+                        fogColor: new ColorRgb(1, 6, 5),
+                        fogSlope: 5,
+                        fogOffset: 64900,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(0.25f, -0.5f, -0.25f),
+                        light2Color: new ColorRgb(4, 4, 16),
+                        light2Vector: new Vector3(0, 1, -0.25f),
+                        farClip: 245760,
+                        killHeight: 0,
+                        field6C: 0x0,
                         firstHunt: true)
                 },
                 {
                     "FH_TEST",
                     new RoomMetadata(
-                        "Level TestLevel",
-                        "Test Level (First Hunt)",
-                        "testLevel",
-                        "testLevel_Model.bin",
-                        "testlevel_Anim.bin",
-                        "testlevel_Collision.bin",
-                        null,
-                        "testlevel_Ent.bin",
-                        "testLevel_Node.bin",
-                        null,
-                        TimeLimit(10, 0, 0),
-                        TimeLimit(2, 0, 0),
-                        0x0,
-                        0x0,
-                        true,
-                        false,
-                        new ColorRgb(8, 16, 31),
-                        0x5,
-                        65152,
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(0.25f, -0.5f, -0.25f),
-                        new ColorRgb(4, 4, 16),
-                        new Vector3(0, 1, -0.25f),
-                        245760,
-                        0x0,
-                        0x0,
+                        name: "Level TestLevel",
+                        inGameName: "Test Level (First Hunt)",
+                        archive: "testLevel",
+                        modelPath: "testLevel_Model.bin",
+                        animationPath: "testlevel_Anim.bin",
+                        collisionPath: "testlevel_Collision.bin",
+                        texturePath: null,
+                        entityPath: "testlevel_Ent.bin",
+                        nodePath: "testLevel_Node.bin",
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: true,
+                        clearFog: false,
+                        fogColor: new ColorRgb(8, 16, 31),
+                        fogSlope: 5,
+                        fogOffset: 65152,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(0.25f, -0.5f, -0.25f),
+                        light2Color: new ColorRgb(4, 4, 16),
+                        light2Vector: new Vector3(0, 1, -0.25f),
+                        farClip: 245760,
+                        killHeight: 0,
+                        field6C: 0x0,
                         firstHunt: true)
                 },
                 {
                     "FH_MP5",
                     new RoomMetadata(
-                        "Level MP5",
-                        "Early Head Shot (First Hunt)",
-                        "mp5",
-                        "mp5_Model.bin",
-                        "mp5_Anim.bin",
-                        "mp5_Collision.bin",
-                        null,
-                        "mp5_Ent.bin",
-                        "mp5_Node.bin",
-                        null,
-                        TimeLimit(10, 0, 0),
-                        TimeLimit(2, 0, 0),
-                        0x0,
-                        0x0,
-                        true,
-                        false,
-                        new ColorRgb(8, 16, 31),
-                        0x5,
-                        65152,
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(0.25f, -0.5f, -0.25f),
-                        new ColorRgb(4, 4, 16),
-                        new Vector3(0, 1, -0.25f),
-                        245760,
-                        0x0,
-                        0x0,
+                        name: "Level MP5",
+                        inGameName: "Early Head Shot (First Hunt)",
+                        archive: "mp5",
+                        modelPath: "mp5_Model.bin",
+                        animationPath: "mp5_Anim.bin",
+                        collisionPath: "mp5_Collision.bin",
+                        texturePath: null,
+                        entityPath: "mp5_Ent.bin",
+                        nodePath: "mp5_Node.bin",
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: true,
+                        clearFog: false,
+                        fogColor: new ColorRgb(8, 16, 31),
+                        fogSlope: 5,
+                        fogOffset: 65152,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(0.25f, -0.5f, -0.25f),
+                        light2Color:  new ColorRgb(4, 4, 16),
+                        light2Vector: new Vector3(0, 1, -0.25f),
+                        farClip: 245760,
+                        killHeight: 0,
+                        field6C: 0x0,
                         multiplayer: true,
                         firstHunt: true)
                 },
                 {
                     "FH_E3",
                     new RoomMetadata(
-                        "E3 level",
-                        "Stasis Bunker (First Hunt)",
-                        "e3Level",
-                        "e3Level_Model.bin",
-                        "e3Level_Anim.bin",
-                        "e3Level_Collision.bin",
-                        null,
-                        "e3Level_Ent.bin",
-                        "e3Level_Node.bin",
-                        null,
-                        TimeLimit(10, 0, 0),
-                        TimeLimit(2, 0, 0),
-                        0x0,
-                        0x0,
-                        true,
-                        false,
-                        new ColorRgb(8, 16, 31),
-                        0x5,
-                        65152,
-                        new ColorRgb(31, 31, 31),
-                        new Vector3(0.25f, -0.5f, -0.25f),
-                        new ColorRgb(4, 4, 16),
-                        new Vector3(0, 1, -0.25f),
-                        245760,
-                        0x0,
-                        0x0,
+                        name: "E3 level",
+                        inGameName: "Stasis Bunker (First Hunt)",
+                        archive: "e3Level",
+                        modelPath: "e3Level_Model.bin",
+                        animationPath: "e3Level_Anim.bin",
+                        collisionPath: "e3Level_Collision.bin",
+                        texturePath: null,
+                        entityPath: "e3Level_Ent.bin",
+                        nodePath: "e3Level_Node.bin",
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: true,
+                        clearFog: false,
+                        fogColor: new ColorRgb(8, 16, 31),
+                        fogSlope: 5,
+                        fogOffset: 65152,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(0.25f, -0.5f, -0.25f),
+                        light2Color: new ColorRgb(4, 4, 16),
+                        light2Vector: new Vector3(0, 1, -0.25f),
+                        farClip: 245760,
+                        killHeight: 0,
+                        field6C: 0x0,
                         multiplayer: true,
                         firstHunt: true)
                 }

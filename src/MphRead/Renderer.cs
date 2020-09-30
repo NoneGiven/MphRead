@@ -133,11 +133,13 @@ namespace MphRead
         private bool _scanVisor = false;
         private bool _showInvisible = false;
         private int _showVolumes = 0;
+        private bool _showKillPlane = false; // undocumented
         private bool _transformRoomNodes = false; // undocumented
 
         private Color4 _clearColor = new Color4(0, 0, 0, 1);
         private float _farClip = 10000f;
-        private bool _useClip = true;
+        private bool _useClip = true; // undocumented
+        private float _killHeight = 0f;
 
         private Vector3 _light1Vector = default;
         private Vector3 _light1Color = default;
@@ -240,6 +242,14 @@ namespace MphRead
                 {
                     _displayVolumes.Add(entity.SceneId, new ObjectDisplay(obj));
                 }
+                else if (entity.Entity is Entity<FlagBaseEntityData> flag)
+                {
+                    _displayVolumes.Add(entity.SceneId, new FlagBaseDisplay(flag));
+                }
+                else if (entity.Entity is Entity<NodeDefenseEntityData> defense)
+                {
+                    _displayVolumes.Add(entity.SceneId, new NodeDefenseDisplay(defense));
+                }
                 else if (entity.Entity is Entity<PointModuleEntityData> module)
                 {
                     if (_lastPointModule == -1)
@@ -292,6 +302,7 @@ namespace MphRead
             {
                 _clearColor = new Color4(_fogColor.X, _fogColor.Y, _fogColor.Z, _fogColor.W);
             }
+            _killHeight = roomMeta.KillHeight;
             _farClip = roomMeta.FarClip;
             foreach (CollisionPortal portal in collision.Portals)
             {
@@ -385,6 +396,8 @@ namespace MphRead
 
             _shaderLocations.UseOverride = GL.GetUniformLocation(_shaderProgramId, "use_override");
             _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
+            _shaderLocations.UsePaletteOverride = GL.GetUniformLocation(_shaderProgramId, "use_pal_override");
+            _shaderLocations.PaletteOverrideColor = GL.GetUniformLocation(_shaderProgramId, "pal_override_color");
             _shaderLocations.MaterialAlpha = GL.GetUniformLocation(_shaderProgramId, "mat_alpha");
             _shaderLocations.MaterialMode = GL.GetUniformLocation(_shaderProgramId, "mat_mode");
             _shaderLocations.ModelMatrix = GL.GetUniformLocation(_shaderProgramId, "model_mtx");
@@ -852,7 +865,7 @@ namespace MphRead
                     continue;
                 }
                 int modelPolygonId = model.Type == ModelType.Room ? 0 : polygonId++;
-                foreach (NodeInfo nodeInfo in model.GetDrawNodes(includeForceFields: _showVolumes != 10))
+                foreach (NodeInfo nodeInfo in model.GetDrawNodes(includeForceFields: _showVolumes != 12))
                 {
                     Node node = nodeInfo.Node;
                     if (node.MeshCount == 0 || !node.Enabled || !model.NodeParentsEnabled(node))
@@ -986,7 +999,7 @@ namespace MphRead
 
         private void RenderDisplayVolumes()
         {
-            if (_showVolumes > 0 && (_displayVolumes.Count > 0 || _displayPlanes.Count > 0))
+            if ((_showVolumes > 0 && (_displayVolumes.Count > 0 || _displayPlanes.Count > 0)) || _showKillPlane)
             {
                 GL.Uniform1(_shaderLocations.UseLight, 0);
                 GL.Uniform1(_shaderLocations.UseFog, 0);
@@ -1008,7 +1021,7 @@ namespace MphRead
                         }
                     }
                 }
-                if (_showVolumes == 10)
+                if (_showVolumes == 12)
                 {
                     GL.Disable(EnableCap.CullFace);
                     GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
@@ -1022,6 +1035,14 @@ namespace MphRead
                             RenderDisplayLines(plane);
                         }
                     }
+                }
+                if (_showKillPlane)
+                {
+                    GL.Disable(EnableCap.CullFace);
+                    GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
+                    Matrix4 transform = Matrix4.Identity;
+                    GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
+                    RenderKillPlane();
                 }
                 GL.Disable(EnableCap.Blend);
                 if (_faceCulling)
@@ -1072,6 +1093,18 @@ namespace MphRead
             GL.Vertex3(plane.Point4);
             GL.Vertex3(plane.Point2);
             GL.Vertex3(plane.Point3);
+            GL.End();
+        }
+
+        private void RenderKillPlane()
+        {
+            var color = new Vector4(1f, 0f, 1f, 0.5f);
+            GL.Uniform4(_shaderLocations.OverrideColor, color);
+            GL.Begin(PrimitiveType.TriangleStrip);
+            GL.Vertex3(10000f, _killHeight, 10000f);
+            GL.Vertex3(-10000f, _killHeight, 10000f);
+            GL.Vertex3(10000f, _killHeight, -10000f);
+            GL.Vertex3(-10000f, _killHeight, -10000f);
             GL.End();
         }
 
@@ -1572,6 +1605,16 @@ namespace MphRead
             else
             {
                 GL.Uniform1(_shaderLocations.UseOverride, 0);
+            }
+            if (model.PaletteOverride != null)
+            {
+                Vector4 overrideColorValue = model.PaletteOverride.Value;
+                GL.Uniform1(_shaderLocations.UsePaletteOverride, 1);
+                GL.Uniform4(_shaderLocations.PaletteOverrideColor, ref overrideColorValue);
+            }
+            else
+            {
+                GL.Uniform1(_shaderLocations.UsePaletteOverride, 0);
             }
         }
 
@@ -2100,7 +2143,7 @@ namespace MphRead
                     _showVolumes--;
                     if (_showVolumes < 0)
                     {
-                        _showVolumes = 10;
+                        _showVolumes = 12;
                     }
                     if (_showVolumes != 0 && _selectionMode == SelectionMode.Model)
                     {
@@ -2112,7 +2155,7 @@ namespace MphRead
                 else
                 {
                     _showVolumes++;
-                    if (_showVolumes > 10)
+                    if (_showVolumes > 12)
                     {
                         _showVolumes = 0;
                     }
@@ -2129,7 +2172,6 @@ namespace MphRead
             {
                 if (e.Alt)
                 {
-                    // undocumented
                     _useClip = !_useClip;
                 }
                 else
@@ -2145,7 +2187,14 @@ namespace MphRead
             }
             else if (e.Key == Key.H)
             {
-                _showSelection = !_showSelection;
+                if (e.Alt)
+                {
+                    _showKillPlane = !_showKillPlane;
+                }
+                else
+                {
+                    _showSelection = !_showSelection;
+                }
             }
             else if (e.Key == Key.I)
             {
@@ -2575,6 +2624,14 @@ namespace MphRead
             else if (_showVolumes == 9)
             {
                 _targetTypes.Add(EntityType.Object);
+            }
+            else if (_showVolumes == 10)
+            {
+                _targetTypes.Add(EntityType.FlagBase);
+            }
+            else if (_showVolumes == 11)
+            {
+                _targetTypes.Add(EntityType.NodeDefense);
             }
         }
 

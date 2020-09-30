@@ -631,6 +631,11 @@ namespace MphRead
             return _objects[id];
         }
 
+        public static ObjectMetadata GetObjectById(uint id)
+        {
+            return GetObjectById((int)id);
+        }
+
         private static readonly IReadOnlyList<PlatformMetadata?> _platforms = new List<PlatformMetadata?>()
         {
             /*  0 */ new PlatformMetadata("platform"),
@@ -1164,6 +1169,10 @@ namespace MphRead
             //bool multiplayer = roomId >= 93 && roomId <= 119;
             return areaId;
         }
+
+        public static readonly Vector4 RedPalette = new Vector4(189 / 255f, 66 / 255f, 0f, 1f);
+
+        public static readonly Vector4 WhitePalette = new Vector4(1f, 1f, 1f, 1f);
 
         // todo: e.g. lod1 in the model folder should have the animation files from the lod0 archive
         public static readonly IReadOnlyDictionary<string, ModelMetadata> ModelMetadata

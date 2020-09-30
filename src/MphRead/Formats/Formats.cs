@@ -713,6 +713,42 @@ namespace MphRead
         }
     }
 
+    public class FlagBaseDisplay : DisplayVolume
+    {
+        public FlagBaseDisplay(Entity<FlagBaseEntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.Volume)
+        {
+            Color1 = new Vector3(1, 1, 1);
+        }
+
+        public override Vector3? GetColor(int index)
+        {
+            if (index == 10)
+            {
+                return Color1;
+            }
+            return null;
+        }
+    }
+
+    public class NodeDefenseDisplay : DisplayVolume
+    {
+        public NodeDefenseDisplay(Entity<NodeDefenseEntityData> entity)
+            : base(entity.Data.Header.Position, entity.Data.Volume)
+        {
+            Color1 = new Vector3(1, 1, 1);
+        }
+
+        public override Vector3? GetColor(int index)
+        {
+            if (index == 11)
+            {
+                return Color1;
+            }
+            return null;
+        }
+    }
+
     // todo: some subtypes might not use their volume? if so, don't render them (confirm that all AreaVolumes do, also)
     public class TriggerVolumeDisplay : DisplayVolume
     {

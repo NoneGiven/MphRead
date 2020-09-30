@@ -432,19 +432,12 @@ namespace MphRead
             return data;
         }
 
-        private static ColorRgba ColorFromShort(ushort value, byte alpha)
-        {
-            byte red = (byte)(((value >> 0) & 0x1F) << 3);
-            byte green = (byte)(((value >> 5) & 0x1F) << 3);
-            byte blue = (byte)(((value >> 10) & 0x1F) << 3);
-            return new ColorRgba(red, green, blue, alpha);
-        }
-
+        // todo: might as well just convert to float early
         private static byte AlphaFromShort(ushort value) => (value & 0x8000) == 0 ? (byte)0 : (byte)255;
 
-        private static byte AlphaFromA5I3(byte value) => (byte)((value >> 3) / 31.0f * 255.0f);
+        private static byte AlphaFromA5I3(byte value) => (byte)MathF.Round((value >> 3) / 31.0f * 255.0f);
 
-        private static byte AlphaFromA3I5(byte value) => (byte)((value >> 5) / 7.0f * 255.0f);
+        private static byte AlphaFromA3I5(byte value) => (byte)MathF.Round((value >> 5) / 7.0f * 255.0f);
 
         public static IReadOnlyList<Entity> GetEntities(string path, int layerId, bool firstHunt)
         {

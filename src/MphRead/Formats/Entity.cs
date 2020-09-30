@@ -310,7 +310,7 @@ namespace MphRead
     public readonly struct EnemyEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Type;
+        public readonly EnemyType Type;
         public readonly uint Subtype;
         public readonly uint TextureId;
         public readonly uint HunterWeapon;
@@ -421,7 +421,7 @@ namespace MphRead
         public readonly byte Active;
         public readonly byte AlwaysActive;
         public readonly byte ItemChance;
-        public readonly ushort Field1C0;
+        public readonly ushort SpawnerModel;
         public readonly ushort CooldownTime;
         public readonly ushort InitialCooldown;
         public readonly ushort Padding1C6;
@@ -729,22 +729,7 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly uint TeamId;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
-        public readonly uint Field58;
-        public readonly uint Field5C;
-        public readonly uint Field60;
-        public readonly uint Field64;
+        public readonly RawCollisionVolume Volume;
     }
 
     // size: 92
@@ -768,22 +753,7 @@ namespace MphRead
     public readonly struct NodeDefenseEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly Fixed Scale;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
-        public readonly uint Field58;
-        public readonly uint Field5C;
-        public readonly uint Field60;
+        public readonly RawCollisionVolume Volume;
     }
 
     // size: 136

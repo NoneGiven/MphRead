@@ -324,7 +324,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Enemy)
                 {
-                    models.Add(LoadEntityPlaceholder((Entity<EnemyEntityData>)entity));
+                    models.AddRange(LoadEnemy((Entity<EnemyEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.FhEnemy)
                 {
@@ -663,6 +663,51 @@ namespace MphRead
             return rotation;
         }
 
+        // todo: load more enemies (and FH enemies)
+        private static IEnumerable<Model> LoadEnemy(Entity<EnemyEntityData> entity)
+        {
+            var models = new List<Model>();
+            EnemyEntityData data = entity.Data;
+            if (entity.Data.Type == EnemyType.CarnivorousPlant)
+            {
+                ObjectMetadata meta = Metadata.GetObjectById(data.TextureId);
+                Model enemy = Read.GetModelByName(meta.Name, meta.RecolorId);
+                enemy.Position = data.Header.Position.ToFloatVector();
+                ComputeModelMatrices(enemy, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
+                ComputeNodeMatrices(enemy, index: 0);
+                enemy.Type = ModelType.Object;
+                enemy.Entity = entity;
+                models.Add(enemy);
+            }
+            if (entity.Data.SpawnerModel != 0)
+            {
+                string spawner = "EnemySpawner";
+                if (entity.Data.Type == EnemyType.WarWasp || entity.Data.Type == EnemyType.BarbedWarWasp)
+                {
+                    spawner = "PlantCarnivarous_Pod";
+                }
+                Model model = Read.GetModelByName(spawner, 0);
+                model.Position = data.Header.Position.ToFloatVector();
+                ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
+                ComputeNodeMatrices(model, index: 0);
+                model.Type = ModelType.Object;
+                model.Entity = entity;
+                // temporary
+                if (spawner == "EnemySpawner")
+                {
+                    model.Animations.NodeGroupId = -1;
+                    model.Animations.MaterialGroupId = -1;
+                    model.Animations.TexcoordGroupId = 1;
+                }
+                models.Add(model);
+            }
+            else
+            {
+                models.Add(LoadEntityPlaceholder(entity));
+            }
+            return models;
+        }
+
         private static IEnumerable<Model> LoadOctolithFlag(Entity<OctolithFlagEntityData> entity, GameMode mode)
         {
             OctolithFlagEntityData data = entity.Data;
@@ -670,10 +715,9 @@ namespace MphRead
             if (mode == GameMode.Capture || mode == GameMode.Bounty)
             {
                 Model octolith = Read.GetModelByName("octolith_ctf", mode == GameMode.Capture ? data.TeamId : 2);
-                // sktodo: exact height offset
                 octolith.Position = new Vector3(
                     data.Header.Position.X.FloatValue,
-                    data.Header.Position.Y.FloatValue + 1.15f,
+                    data.Header.Position.Y.FloatValue + 1.25f,
                     data.Header.Position.Z.FloatValue
                 );
                 ComputeModelMatrices(octolith, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
@@ -681,6 +725,8 @@ namespace MphRead
                 octolith.Type = ModelType.Generic;
                 octolith.Entity = entity;
                 models.Add(octolith);
+                // note: in-game, the flag is responsible for drawing its own base in Capture mode as well,
+                // but we have that implemented in the flag base entity (which is used in Capture mode, but is invisible)
                 if (mode == GameMode.Bounty)
                 {
                     Model flagBase = Read.GetModelByName("flagbase_bounty");
@@ -729,15 +775,15 @@ namespace MphRead
                 node.Type = ModelType.Generic;
                 node.Entity = entity;
                 models.Add(node);
-                // todo: spinning when active
-                // sktodo: exact height offset
+                // todo: spinning + changing color when active
                 Model circle = Read.GetModelByName("koth_terminal");
                 circle.Position = new Vector3(
                     data.Header.Position.X.FloatValue,
-                    data.Header.Position.Y.FloatValue + 0.5f,
+                    data.Header.Position.Y.FloatValue + 0.7f, // 0xB33 = 0.6999512
                     data.Header.Position.Z.FloatValue
                 );
-                circle.Scale = new Vector3(data.Scale.FloatValue, data.Scale.FloatValue, data.Scale.FloatValue);
+                float scale = data.Volume.CylinderRadius.FloatValue;
+                circle.Scale = new Vector3(scale, scale, scale);
                 ComputeModelMatrices(circle, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
                 ComputeNodeMatrices(circle, index: 0);
                 circle.Type = ModelType.Generic;

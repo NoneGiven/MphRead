@@ -49,7 +49,7 @@ namespace MphRead.Formats.Sound
 
         public static IReadOnlyList<SoundSample> ReadFhSoundFile(string filename)
         {
-            string path = Path.Combine(Paths.FhFileSystem, "data", "sound", filename);
+            string path = Path.Combine(Paths.FhFileSystem, "sound", filename);
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             uint count = Read.SpanReadUint(bytes, 0);
             var samples = new List<SoundSample>();

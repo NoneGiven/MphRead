@@ -55,6 +55,33 @@ namespace MphRead
             }
         }
 
+        public Vector4? PaletteOverride { get; set; }
+
+        private uint _damageState = 0;
+        public uint DamageState
+        {
+            get
+            {
+                return _damageState;
+            }
+            set
+            {
+                _damageState = value;
+                if (value == 1)
+                {
+                    PaletteOverride = Metadata.RedPalette;
+                }
+                else if (value == 2)
+                {
+                    PaletteOverride = Metadata.WhitePalette;
+                }
+                else
+                {
+                    PaletteOverride = null;
+                }
+            }
+        }
+
         // todo: update these as with the other transform properties
         public Vector3 Vector1 = Vector3.UnitY;
         public Vector3 Vector2 = Vector3.UnitZ;
@@ -727,11 +754,12 @@ namespace MphRead
             return pixels;
         }
 
+        // todo: just return float color early
         private ColorRgba ColorFromShort(uint value, byte alpha)
         {
-            byte red = (byte)(((value >> 0) & 0x1F) << 3);
-            byte green = (byte)(((value >> 5) & 0x1F) << 3);
-            byte blue = (byte)(((value >> 10) & 0x1F) << 3);
+            byte red = (byte)MathF.Round(((value >> 0) & 0x1F) / 31f * 255f);
+            byte green = (byte)MathF.Round(((value >> 5) & 0x1F) / 31f * 255f);
+            byte blue = (byte)MathF.Round(((value >> 10) & 0x1F) / 31f * 255f);
             return new ColorRgba(red, green, blue, alpha);
         }
 
