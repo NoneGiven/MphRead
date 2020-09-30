@@ -324,7 +324,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Enemy)
                 {
-                    models.Add(LoadEntityPlaceholder((Entity<EnemyEntityData>)entity));
+                    models.AddRange(LoadEnemy((Entity<EnemyEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.FhEnemy)
                 {
@@ -661,6 +661,51 @@ namespace MphRead
             float rotation = _itemRotation / (float)(UInt16.MaxValue + 1) * 360f;
             _itemRotation += 0x2000;
             return rotation;
+        }
+
+        // todo: load more enemies (and FH enemies)
+        private static IEnumerable<Model> LoadEnemy(Entity<EnemyEntityData> entity)
+        {
+            var models = new List<Model>();
+            EnemyEntityData data = entity.Data;
+            if (entity.Data.Type == EnemyType.CarnivorousPlant)
+            {
+                ObjectMetadata meta = Metadata.GetObjectById(data.TextureId);
+                Model enemy = Read.GetModelByName(meta.Name, meta.RecolorId);
+                enemy.Position = data.Header.Position.ToFloatVector();
+                ComputeModelMatrices(enemy, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
+                ComputeNodeMatrices(enemy, index: 0);
+                enemy.Type = ModelType.Object;
+                enemy.Entity = entity;
+                models.Add(enemy);
+            }
+            if (entity.Data.SpawnerModel != 0)
+            {
+                string spawner = "EnemySpawner";
+                if (entity.Data.Type == EnemyType.WarWasp || entity.Data.Type == EnemyType.BarbedWarWasp)
+                {
+                    spawner = "PlantCarnivarous_Pod";
+                }
+                Model model = Read.GetModelByName(spawner, 0);
+                model.Position = data.Header.Position.ToFloatVector();
+                ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
+                ComputeNodeMatrices(model, index: 0);
+                model.Type = ModelType.Object;
+                model.Entity = entity;
+                // temporary
+                if (spawner == "EnemySpawner")
+                {
+                    model.Animations.NodeGroupId = -1;
+                    model.Animations.MaterialGroupId = -1;
+                    model.Animations.TexcoordGroupId = 1;
+                }
+                models.Add(model);
+            }
+            else
+            {
+                models.Add(LoadEntityPlaceholder(entity));
+            }
+            return models;
         }
 
         private static IEnumerable<Model> LoadOctolithFlag(Entity<OctolithFlagEntityData> entity, GameMode mode)

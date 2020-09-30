@@ -310,7 +310,7 @@ namespace MphRead
     public readonly struct EnemyEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Type;
+        public readonly EnemyType Type;
         public readonly uint Subtype;
         public readonly uint TextureId;
         public readonly uint HunterWeapon;
@@ -421,7 +421,7 @@ namespace MphRead
         public readonly byte Active;
         public readonly byte AlwaysActive;
         public readonly byte ItemChance;
-        public readonly ushort Field1C0;
+        public readonly ushort SpawnerModel;
         public readonly ushort CooldownTime;
         public readonly ushort InitialCooldown;
         public readonly ushort Padding1C6;

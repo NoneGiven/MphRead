@@ -631,6 +631,11 @@ namespace MphRead
             return _objects[id];
         }
 
+        public static ObjectMetadata GetObjectById(uint id)
+        {
+            return GetObjectById((int)id);
+        }
+
         private static readonly IReadOnlyList<PlatformMetadata?> _platforms = new List<PlatformMetadata?>()
         {
             /*  0 */ new PlatformMetadata("platform"),
