@@ -715,10 +715,9 @@ namespace MphRead
             if (mode == GameMode.Capture || mode == GameMode.Bounty)
             {
                 Model octolith = Read.GetModelByName("octolith_ctf", mode == GameMode.Capture ? data.TeamId : 2);
-                // sktodo: exact height offset
                 octolith.Position = new Vector3(
                     data.Header.Position.X.FloatValue,
-                    data.Header.Position.Y.FloatValue + 1.15f,
+                    data.Header.Position.Y.FloatValue + 1.25f,
                     data.Header.Position.Z.FloatValue
                 );
                 ComputeModelMatrices(octolith, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
@@ -726,6 +725,8 @@ namespace MphRead
                 octolith.Type = ModelType.Generic;
                 octolith.Entity = entity;
                 models.Add(octolith);
+                // note: in-game, the flag is responsible for drawing its own base in Capture mode as well,
+                // but we have that implemented in the flag base entity (which is used in Capture mode, but is invisible)
                 if (mode == GameMode.Bounty)
                 {
                     Model flagBase = Read.GetModelByName("flagbase_bounty");
@@ -774,15 +775,15 @@ namespace MphRead
                 node.Type = ModelType.Generic;
                 node.Entity = entity;
                 models.Add(node);
-                // todo: spinning when active
-                // sktodo: exact height offset
+                // todo: spinning + changing color when active
                 Model circle = Read.GetModelByName("koth_terminal");
                 circle.Position = new Vector3(
                     data.Header.Position.X.FloatValue,
-                    data.Header.Position.Y.FloatValue + 0.5f,
+                    data.Header.Position.Y.FloatValue + 0.7f, // 0xB33 = 0.6999512
                     data.Header.Position.Z.FloatValue
                 );
-                circle.Scale = new Vector3(data.Scale.FloatValue, data.Scale.FloatValue, data.Scale.FloatValue);
+                float scale = data.Volume.CylinderRadius.FloatValue;
+                circle.Scale = new Vector3(scale, scale, scale);
                 ComputeModelMatrices(circle, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
                 ComputeNodeMatrices(circle, index: 0);
                 circle.Type = ModelType.Generic;
