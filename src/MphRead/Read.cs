@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
 using MphRead.Archive;
 using MphRead.Export;
 using MphRead.Models;
