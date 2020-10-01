@@ -855,7 +855,7 @@ namespace MphRead
         // todo: files not referenced by this list: powerBeamNoSplatMP_PS.bin, sparksDown_PS.bin
         public static readonly IReadOnlyList<string> Effects = new List<string>()
         {
-            /*   0 */ "", // unused?
+            /*   0 */ "", // no effect
             /*   1 */ "_archives/effects/powerBeam_PS.bin",
             /*   2 */ "_archives/effects/powerBeamNoSplat_PS.bin",
             /*   3 */ "effects/blastCapHit_PS.bin",

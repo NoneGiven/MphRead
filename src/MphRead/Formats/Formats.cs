@@ -303,20 +303,32 @@ namespace MphRead
         }
     }
 
+    public class FxFuncInfo
+    {
+        public uint FuncId { get; }
+        public IReadOnlyList<int> Parameters { get; }
+
+        public FxFuncInfo(uint funcId, IReadOnlyList<int> parameters)
+        {
+            FuncId = funcId;
+            Parameters = parameters;
+        }
+    }
+
     public class Effect
     {
         public string Name { get; }
         public uint Field0 { get; }
-        public IReadOnlyList<uint> List1 { get; }
+        public IReadOnlyList<FxFuncInfo> Funcs { get; }
         public IReadOnlyList<uint> List2 { get; }
         public IReadOnlyList<EffectElement> Elements { get; }
 
-        public Effect(RawEffect raw, IReadOnlyList<uint> list1, IReadOnlyList<uint> list2,
+        public Effect(RawEffect raw, IReadOnlyList<FxFuncInfo> funcs, IReadOnlyList<uint> list2,
             IReadOnlyList<EffectElement> elements, string name)
         {
             Name = Path.GetFileNameWithoutExtension(name).Replace("_PS", "");
             Field0 = raw.Field0;
-            List1 = list1;
+            Funcs = funcs;
             List2 = list2;
             Elements = elements;
         }

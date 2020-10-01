@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using MphRead.Archive;
 using MphRead.Export;
 using MphRead.Models;
@@ -585,13 +586,21 @@ namespace MphRead
         {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, name)));
             RawEffect effect = ReadStruct<RawEffect>(bytes);
-            IReadOnlyList<uint> list1 = DoOffsets<uint>(bytes, effect.Offset1, effect.Count1);
+            var funcs = new List<FxFuncInfo>();
+            foreach (uint offset in DoOffsets<uint>(bytes, effect.FuncOffset, effect.FuncCount))
+            {
+                uint funcId = SpanReadUint(bytes, offset);
+                uint paramOffset = SpanReadUint(bytes, offset + 4);
+                // sktodo: assert that the layout and param count match assumptions
+                uint paramCount = (offset - paramOffset) / 4;
+                IReadOnlyList<int> parameters = DoOffsets<int>(bytes, paramOffset, paramCount);
+                funcs.Add(new FxFuncInfo(funcId, parameters));
+            }
             IReadOnlyList<uint> list2 = DoOffsets<uint>(bytes, effect.Offset2, effect.Count2);
             IReadOnlyList<uint> elementOffsets = DoOffsets<uint>(bytes, effect.ElementOffset, effect.ElementCount);
             var elements = new List<EffectElement>();
             foreach (uint offset in elementOffsets)
             {
-                // sktodo: what's in between the particle name offsets and the next element?
                 RawEffectElement element = DoOffset<RawEffectElement>(bytes, offset);
                 var particles = new List<string>();
                 foreach (uint nameOffset in DoOffsets<uint>(bytes, element.ParticleOffset, element.ParticleCount))
@@ -601,7 +610,7 @@ namespace MphRead
                 IReadOnlyList<uint> someList = DoOffsets<uint>(bytes, element.SomeOffset, 2 * element.SomeCount);
                 elements.Add(new EffectElement(element, particles, someList));
             }
-            return new Effect(effect, list1, list2, elements, name);
+            return new Effect(effect, funcs, list2, elements, name);
         }
 
         private static void Nop() { }
