@@ -171,16 +171,12 @@ namespace MphRead
                 textureMatrix.M32 = Fixed.ToFloat(-3891);
                 textureMatrices.Add(textureMatrix);
             }
-            //  todo: when the counts/offsets are zero, these values should probably be skipped, even though they are always present
-            int count = (int)header.UnknownAnimationCount - Sizes.Header;
-            Debug.Assert(count >= sizeof(uint) && count % sizeof(uint) == 0);
-            count /= 4;
-            IReadOnlyList<uint> nodeIds = DoOffsets<uint>(initialBytes, (uint)Sizes.Header, count);
-            IReadOnlyList<uint> weightIds = DoOffsets<uint>(initialBytes, header.UnknownAnimationCount, count);
+            // sktodo: naming (and comments about all the stuff we're not reading)
+            IReadOnlyList<int> nodeMatrixIds = DoOffsets<int>(initialBytes, header.UnknownNodeId, header.NodeAnimationCount);
             AnimationResults animations = LoadAnimation(animationPath, nodes, firstHunt);
             return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                textureMatrices, recolors, defaultRecolor, useLightSources, nodeIds, weightIds);
+                textureMatrices, recolors, defaultRecolor, useLightSources, nodeMatrixIds);
         }
 
         private class AnimationResults

@@ -118,9 +118,8 @@ namespace MphRead
         private float _angleY = 0.0f;
         private float _angleX = 0.0f;
         private float _distance = 5.0f;
-        // todo: somehow the axes are reversed from the model coordinates
+        // note: the axes are reversed from the model coordinates
         private Vector3 _cameraPosition = new Vector3(0, 0, 0);
-        private Matrix4 _modelMatrix = Matrix4.Identity;
         private bool _leftMouse = false;
 
         private bool _showTextures = true;
@@ -400,11 +399,11 @@ namespace MphRead
             _shaderLocations.PaletteOverrideColor = GL.GetUniformLocation(_shaderProgramId, "pal_override_color");
             _shaderLocations.MaterialAlpha = GL.GetUniformLocation(_shaderProgramId, "mat_alpha");
             _shaderLocations.MaterialMode = GL.GetUniformLocation(_shaderProgramId, "mat_mode");
-            _shaderLocations.ModelMatrix = GL.GetUniformLocation(_shaderProgramId, "model_mtx");
             _shaderLocations.ViewMatrix = GL.GetUniformLocation(_shaderProgramId, "view_mtx");
             _shaderLocations.ProjectionMatrix = GL.GetUniformLocation(_shaderProgramId, "proj_mtx");
             _shaderLocations.TextureMatrix = GL.GetUniformLocation(_shaderProgramId, "tex_mtx");
             _shaderLocations.TexgenMode = GL.GetUniformLocation(_shaderProgramId, "texgen_mode");
+            _shaderLocations.MatrixStack = GL.GetUniformLocation(_shaderProgramId, "mtx_stack");
             _shaderLocations.ToonTable = GL.GetUniformLocation(_shaderProgramId, "toon_table");
 
             GL.UseProgram(_shaderProgramId);
@@ -755,31 +754,32 @@ namespace MphRead
                 GL.DeleteLists(i, 1);
             }
             _maxListId = 0;
-            for (int i = 0; i < _models.Count; i++)
+            foreach (Model model in _models)
             {
                 _listIds.Clear();
-                Model model = _models[i];
-                for (int j = 0; j < model.Meshes.Count; j++)
+                for (int j = 0; j < model.Nodes.Count; j++)
                 {
-                    Mesh mesh = model.Meshes[j];
-                    if (!_listIds.TryGetValue(mesh.DlistId, out int listId))
+                    foreach (Mesh mesh in model.GetNodeMeshes(j))
                     {
-                        int textureWidth = 0;
-                        int textureHeight = 0;
-                        Material material = model.Materials[mesh.MaterialId];
-                        if (material.TextureId != UInt16.MaxValue)
+                        if (!_listIds.TryGetValue(mesh.DlistId, out int listId))
                         {
-                            Texture texture = model.Textures[material.TextureId];
-                            textureWidth = texture.Width;
-                            textureHeight = texture.Height;
+                            int textureWidth = 0;
+                            int textureHeight = 0;
+                            Material material = model.Materials[mesh.MaterialId];
+                            if (material.TextureId != UInt16.MaxValue)
+                            {
+                                Texture texture = model.Textures[material.TextureId];
+                                textureWidth = texture.Width;
+                                textureHeight = texture.Height;
+                            }
+                            listId = GL.GenLists(1);
+                            GL.NewList(listId, ListMode.Compile);
+                            DoDlist(model, mesh, textureWidth, textureHeight);
+                            GL.EndList();
+                            _maxListId = Math.Max(listId, _maxListId);
                         }
-                        listId = GL.GenLists(1);
-                        GL.NewList(listId, ListMode.Compile);
-                        DoDlist(model, mesh, textureWidth, textureHeight);
-                        GL.EndList();
-                        _maxListId = Math.Max(listId, _maxListId);
+                        mesh.ListId = listId;
                     }
-                    mesh.ListId = listId;
                 }
             }
         }
@@ -850,7 +850,8 @@ namespace MphRead
                 Model model = _models[i];
                 if (!_frameAdvanceOn || _advanceOneFrame)
                 {
-                    model.Process(elapsedTime, _frameCount, cameraPosition);
+                    bool useTransform = _transformRoomNodes || model.Type != ModelType.Room;
+                    model.Process(elapsedTime, _frameCount, cameraPosition, _viewInvRotMatrix, _viewInvRotYMatrix, useTransform);
                 }
                 if (model.UseLightSources)
                 {
@@ -1026,7 +1027,7 @@ namespace MphRead
                     GL.Disable(EnableCap.CullFace);
                     GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
                     Matrix4 transform = Matrix4.Identity;
-                    GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
+                    GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
                     foreach (CollisionPortal plane in _displayPlanes)
                     {
                         RenderDisplayPlane(plane);
@@ -1041,7 +1042,7 @@ namespace MphRead
                     GL.Disable(EnableCap.CullFace);
                     GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
                     Matrix4 transform = Matrix4.Identity;
-                    GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
+                    GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
                     RenderKillPlane();
                 }
                 GL.Disable(EnableCap.Blend);
@@ -1063,7 +1064,7 @@ namespace MphRead
             {
                 GL.CullFace(volume.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
                 var transform = Matrix4.CreateTranslation(volume.Position);
-                GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
+                GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
                 GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(color.Value, 0.5f));
                 RenderVolume(volume.Volume);
             }
@@ -1198,30 +1199,45 @@ namespace MphRead
         private void RenderMesh(MeshInfo item)
         {
             Model model = item.Model;
-            _modelMatrix = model.ExtraTransform;
             UseRoomLights();
             if (model.UseLightSources || model.UseLightOverride)
             {
                 UseLight1(model.Light1Vector, model.Light1Color);
                 UseLight2(model.Light2Vector, model.Light2Color);
             }
-            Node node = item.Node;
-            Matrix4 nodeTransform = node.Animation;
-            if (model.Type == ModelType.Room && !_transformRoomNodes)
+            if (model.NodeMatrixIds.Count == 0)
             {
-                nodeTransform = Matrix4.Identity;
+                Matrix4 transform = item.Node.Animation;
+                GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
             }
-            _modelMatrix = nodeTransform * _modelMatrix;
-            if (item.Node.BillboardMode == BillboardMode.Sphere)
+            else
             {
-                _modelMatrix = _viewInvRotMatrix * _modelMatrix.ClearRotation();
+                GL.UniformMatrix4(_shaderLocations.MatrixStack, model.NodeMatrixIds.Count, transpose: false, model.MatrixStackValues);
             }
-            else if (item.Node.BillboardMode == BillboardMode.Cylinder)
+            DoMaterial(model, item.Material, item.Alpha);
+            // sktodo: this needs to change for texgen (pass transform instead)
+            DoTexture(model, item.Node, item.Mesh, item.Material);
+            if (_faceCulling)
             {
-                _modelMatrix = _viewInvRotYMatrix * _modelMatrix.ClearRotation();
+                GL.Enable(EnableCap.CullFace);
+                if (item.Material.Culling == CullingMode.Neither)
+                {
+                    GL.Disable(EnableCap.CullFace);
+                }
+                else if (item.Material.Culling == CullingMode.Back)
+                {
+                    GL.CullFace(CullFaceMode.Back);
+                }
+                else if (item.Material.Culling == CullingMode.Front)
+                {
+                    GL.CullFace(CullFaceMode.Front);
+                }
             }
-            GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref _modelMatrix);
-            RenderMesh(model, node, item.Mesh, item.Material, item.Alpha);
+            GL.PolygonMode(MaterialFace.FrontAndBack,
+                _wireframe || item.Material.Wireframe != 0
+                ? OpenTK.Graphics.OpenGL.PolygonMode.Line
+                : OpenTK.Graphics.OpenGL.PolygonMode.Fill);
+            GL.CallList(item.Mesh.ListId);
         }
 
         private const float _colorStep = 8 / 255f;
@@ -1408,33 +1424,6 @@ namespace MphRead
             }
             textureMatrix = Matrix4.CreateScale(scaleS, scaleT, 1) * textureMatrix;
             return textureMatrix;
-        }
-
-        private void RenderMesh(Model model, Node node, Mesh mesh, Material material, float alpha)
-        {
-            DoMaterial(model, material, alpha);
-            DoTexture(model, node, mesh, material);
-            if (_faceCulling)
-            {
-                GL.Enable(EnableCap.CullFace);
-                if (material.Culling == CullingMode.Neither)
-                {
-                    GL.Disable(EnableCap.CullFace);
-                }
-                else if (material.Culling == CullingMode.Back)
-                {
-                    GL.CullFace(CullFaceMode.Back);
-                }
-                else if (material.Culling == CullingMode.Front)
-                {
-                    GL.CullFace(CullFaceMode.Front);
-                }
-            }
-            GL.PolygonMode(MaterialFace.FrontAndBack,
-                _wireframe || material.Wireframe != 0
-                ? OpenTK.Graphics.OpenGL.PolygonMode.Line
-                : OpenTK.Graphics.OpenGL.PolygonMode.Fill);
-            GL.CallList(mesh.ListId);
         }
 
         private void DoTexture(Model model, Node node, Mesh mesh, Material material)
@@ -1685,8 +1674,9 @@ namespace MphRead
             float vtxX = 0;
             float vtxY = 0;
             float vtxZ = 0;
-            // note: calling this every frame will have some overhead,
-            // but baking it in on load would prevent e.g. vertex color toggle
+            float texX = 0;
+            float texY = 0;
+            uint matrixId = 0;
             for (int i = 0; i < list.Count; i++)
             {
                 RenderInstruction instruction = list[i];
@@ -1784,7 +1774,9 @@ namespace MphRead
                         {
                             t = (int)(t | 0xFFFF0000);
                         }
-                        GL.TexCoord2(s / 16.0f / textureWidth, t / 16.0f / textureHeight);
+                        texX = s / 16.0f / textureWidth;
+                        texY = t / 16.0f / textureHeight;
+                        GL.TexCoord3(texX, texY, matrixId);
                     }
                     break;
                 case InstructionCode.VTX_16:
@@ -1917,12 +1909,21 @@ namespace MphRead
                     GL.End();
                     break;
                 case InstructionCode.MTX_RESTORE:
+                    // in order to allow toggling room node transforms, keep the matrix ID at 0
+                    if (model.Type != ModelType.Room)
+                    {
+                        matrixId = instruction.Arguments[0];
+                    }
+                    GL.TexCoord3(texX, texY, matrixId);
+                    break;
                 case InstructionCode.NOP:
                     break;
                 default:
                     throw new ProgramException("Unknown opcode");
                 }
             }
+            // leave the ID at 0 in case the next thing we draw doesn't use the stack
+            GL.TexCoord3(0f, 0f, 0f);
         }
 
         private async Task UnloadModel()
