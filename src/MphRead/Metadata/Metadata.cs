@@ -1897,7 +1897,8 @@ namespace MphRead
                             "img_03",
                             "img_04"
                         },
-                        animationPath: @"models\GuardBot01_Anim.bin",
+                        animation: false, // sktodo: this animation file fails to parse
+                        //animationPath: @"models\GuardBot01_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
