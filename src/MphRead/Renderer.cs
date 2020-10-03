@@ -1216,7 +1216,7 @@ namespace MphRead
                 GL.UniformMatrix4(_shaderLocations.MatrixStack, model.NodeMatrixIds.Count, transpose: false, model.MatrixStackValues);
             }
             DoMaterial(model, item.Material, item.Alpha);
-            // sktodo: this needs to change for texgen (pass transform instead)
+            // texgen actually uses the transform from the current node, not the matrix stack
             DoTexture(model, item.Node, item.Mesh, item.Material);
             if (_faceCulling)
             {
