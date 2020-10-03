@@ -493,31 +493,40 @@ namespace MphRead
             }
             if (Nodes.Count > 0)
             {
-                AnimateNodes(0, viewInvRot, viewInvRotY, useTransform);
+                AnimateNodes(0, useTransform);
                 for (int i = 0; i < NodeMatrixIds.Count; i++)
                 {
                     Node node = Nodes[NodeMatrixIds[i]];
-                    MatrixStackValues[0 + 16 * i] = node.Animation.M11;
-                    MatrixStackValues[1 + 16 * i] = node.Animation.M12;
-                    MatrixStackValues[2 + 16 * i] = node.Animation.M13;
-                    MatrixStackValues[3 + 16 * i] = node.Animation.M14;
-                    MatrixStackValues[4 + 16 * i] = node.Animation.M21;
-                    MatrixStackValues[5 + 16 * i] = node.Animation.M22;
-                    MatrixStackValues[6 + 16 * i] = node.Animation.M23;
-                    MatrixStackValues[7 + 16 * i] = node.Animation.M24;
-                    MatrixStackValues[8 + 16 * i] = node.Animation.M31;
-                    MatrixStackValues[9 + 16 * i] = node.Animation.M32;
-                    MatrixStackValues[10 + 16 * i] = node.Animation.M33;
-                    MatrixStackValues[11 + 16 * i] = node.Animation.M34;
-                    MatrixStackValues[12 + 16 * i] = node.Animation.M41;
-                    MatrixStackValues[13 + 16 * i] = node.Animation.M42;
-                    MatrixStackValues[14 + 16 * i] = node.Animation.M43;
-                    MatrixStackValues[15 + 16 * i] = node.Animation.M44;
+                    Matrix4 transform = node.Animation;
+                    if (node.BillboardMode == BillboardMode.Sphere)
+                    {
+                        transform = viewInvRot * transform.ClearRotation();
+                    }
+                    else if (node.BillboardMode == BillboardMode.Cylinder)
+                    {
+                        transform = viewInvRotY * transform.ClearRotation();
+                    }
+                    MatrixStackValues[0 + 16 * i] = transform.M11;
+                    MatrixStackValues[1 + 16 * i] = transform.M12;
+                    MatrixStackValues[2 + 16 * i] = transform.M13;
+                    MatrixStackValues[3 + 16 * i] = transform.M14;
+                    MatrixStackValues[4 + 16 * i] = transform.M21;
+                    MatrixStackValues[5 + 16 * i] = transform.M22;
+                    MatrixStackValues[6 + 16 * i] = transform.M23;
+                    MatrixStackValues[7 + 16 * i] = transform.M24;
+                    MatrixStackValues[8 + 16 * i] = transform.M31;
+                    MatrixStackValues[9 + 16 * i] = transform.M32;
+                    MatrixStackValues[10 + 16 * i] = transform.M33;
+                    MatrixStackValues[11 + 16 * i] = transform.M34;
+                    MatrixStackValues[12 + 16 * i] = transform.M41;
+                    MatrixStackValues[13 + 16 * i] = transform.M42;
+                    MatrixStackValues[14 + 16 * i] = transform.M43;
+                    MatrixStackValues[15 + 16 * i] = transform.M44;
                 }
             }
         }
 
-        private void AnimateNodes(int index, Matrix4 viewInvRot, Matrix4 viewInvRotY, bool useTransform)
+        private void AnimateNodes(int index, bool useTransform)
         {
             for (int i = index; i != UInt16.MaxValue;)
             {
@@ -536,17 +545,9 @@ namespace MphRead
                 node.Animation = transform;
                 if (node.ChildIndex != UInt16.MaxValue)
                 {
-                    AnimateNodes(node.ChildIndex, viewInvRot, viewInvRotY, useTransform);
+                    AnimateNodes(node.ChildIndex, useTransform);
                 }
                 node.Animation *= ExtraTransform;
-                if (node.BillboardMode == BillboardMode.Sphere)
-                {
-                    node.Animation = viewInvRot * node.Animation.ClearRotation();
-                }
-                else if (node.BillboardMode == BillboardMode.Cylinder)
-                {
-                    node.Animation = viewInvRotY * node.Animation.ClearRotation();
-                }
                 i = node.NextIndex;
             }
         }
