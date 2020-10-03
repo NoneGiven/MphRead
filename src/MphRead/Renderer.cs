@@ -2292,13 +2292,26 @@ namespace MphRead
                     // todo: select other animation types, and enable playing in reverse
                     if (_selectionMode == SelectionMode.Model && _modelMap.TryGetValue(_selectedModelId, out Model? model))
                     {
-                        int id = model.Animations.NodeGroupId + 1;
-                        if (id >= model.Animations.NodeGroups.Count)
+                        if (e.Control)
                         {
-                            id = -1;
+                            int id = model.Animations.MaterialGroupId + 1;
+                            if (id >= model.Animations.MaterialGroups.Count)
+                            {
+                                id = -1;
+                            }
+                            model.Animations.MaterialGroupId = id;
+                            await PrintOutput();
                         }
-                        model.Animations.NodeGroupId = id;
-                        await PrintOutput();
+                        else
+                        {
+                            int id = model.Animations.NodeGroupId + 1;
+                            if (id >= model.Animations.NodeGroups.Count)
+                            {
+                                id = -1;
+                            }
+                            model.Animations.NodeGroupId = id;
+                            await PrintOutput();
+                        }
                     }
                 }
                 else
@@ -2312,13 +2325,26 @@ namespace MphRead
                 {
                     if (_selectionMode == SelectionMode.Model && _modelMap.TryGetValue(_selectedModelId, out Model? model))
                     {
-                        int id = model.Animations.NodeGroupId - 1;
-                        if (id < -1)
+                        if (e.Control)
                         {
-                            id = model.Animations.NodeGroups.Count - 1;
+                            int id = model.Animations.MaterialGroupId - 1;
+                            if (id < -1)
+                            {
+                                id = model.Animations.MaterialGroups.Count - 1;
+                            }
+                            model.Animations.MaterialGroupId = id;
+                            await PrintOutput();
                         }
-                        model.Animations.NodeGroupId = id;
-                        await PrintOutput();
+                        else
+                        {
+                            int id = model.Animations.NodeGroupId - 1;
+                            if (id < -1)
+                            {
+                                id = model.Animations.NodeGroups.Count - 1;
+                            }
+                            model.Animations.NodeGroupId = id;
+                            await PrintOutput();
+                        } 
                     }
                 }
                 else
