@@ -2344,7 +2344,7 @@ namespace MphRead
                             }
                             model.Animations.NodeGroupId = id;
                             await PrintOutput();
-                        } 
+                        }
                     }
                 }
                 else

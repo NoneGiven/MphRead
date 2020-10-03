@@ -87,10 +87,9 @@ namespace MphRead
 
     public static partial class Metadata
     {
-
         private static readonly IReadOnlyList<string> _roomIds
-                = new List<string>()
-                {
+            = new List<string>()
+            {
                 /*   0 */ "UNIT1_CX",
                 /*   1 */ "UNIT1_CX",
                 /*   2 */ "UNIT1_CZ",
@@ -232,7 +231,7 @@ namespace MphRead
                 /* 135, 7 */ "FH_MP5",
                 /* 136, 8 */ "FH_MP1", // todo
                 /* 137, 9 */ "FH_E3"
-                };
+            };
 
         // todo: unused?
         // unit3_rm5_Ent.bin
