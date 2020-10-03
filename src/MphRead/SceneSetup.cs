@@ -631,7 +631,6 @@ namespace MphRead
             return models;
         }
 
-        // todo: do these have height offsets?
         private static Model LoadItem(Entity<FhItemEntityData> entity)
         {
             FhItemEntityData data = entity.Data;
