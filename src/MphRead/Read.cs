@@ -171,12 +171,11 @@ namespace MphRead
                 textureMatrix.M32 = Fixed.ToFloat(-3891);
                 textureMatrices.Add(textureMatrix);
             }
-            // sktodo: naming (and comments about all the stuff we're not reading)
-            IReadOnlyList<int> nodeMatrixIds = DoOffsets<int>(initialBytes, header.UnknownNodeId, header.NodeAnimationCount);
+            IReadOnlyList<int> nodeWeights = DoOffsets<int>(initialBytes, header.NodeWeightOffset, header.NodeWeightCount);
             AnimationResults animations = LoadAnimation(animationPath, nodes, firstHunt);
             return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                textureMatrices, recolors, defaultRecolor, useLightSources, nodeMatrixIds);
+                textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights);
         }
 
         private class AnimationResults

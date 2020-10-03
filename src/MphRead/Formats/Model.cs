@@ -215,7 +215,7 @@ namespace MphRead
             IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
             IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
             IReadOnlyList<Matrix4> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor, bool useLightSources,
-            IReadOnlyList<int> nodeMatrixIds)
+            IReadOnlyList<int> nodeWeights)
         {
             ThrowIfInvalidEnums(materials);
             Name = name;
@@ -232,15 +232,13 @@ namespace MphRead
             float scale = Header.ScaleBase.FloatValue * (1 << (int)Header.ScaleFactor);
             Scale = new Vector3(scale, scale, scale);
             UseLightSources = useLightSources;
-            // sktodo: field and property naming
-            // todo: could assert more about any MTX_RESTORE calls in the dlists (see test method)
-            Debug.Assert(header.NodeAnimationCount == nodeMatrixIds.Count);
-            NodeMatrixIds = nodeMatrixIds;
-            if (header.NodeAnimationCount > 0)
+            Debug.Assert(header.NodeWeightCount == nodeWeights.Count);
+            NodeMatrixIds = nodeWeights;
+            if (header.NodeWeightCount > 0)
             {
                 var values = new List<float>();
                 Matrix4 identity = Matrix4.Identity;
-                for (int i = 0; i < header.NodeAnimationCount; i++)
+                for (int i = 0; i < header.NodeWeightCount; i++)
                 {
                     values.Add(identity.M11);
                     values.Add(identity.M12);

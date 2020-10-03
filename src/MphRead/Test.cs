@@ -219,6 +219,38 @@ namespace MphRead
             }
         }
 
+        public static void TestMtxRestore()
+        {
+            foreach (Model model in GetAllModels())
+            {
+                int count = 0;
+                int most = -1;
+                foreach (IReadOnlyList<RenderInstruction> list in model.RenderInstructionLists)
+                {
+                    foreach (RenderInstruction inst in list)
+                    {
+                        if (inst.Code == InstructionCode.MTX_RESTORE)
+                        {
+                            count++;
+                            most = Math.Max(most, (int)inst.Arguments[0]);
+                        }
+                    }
+                }
+                if (model.Header.NodeWeightCount == 0)
+                {
+                    if (most != 0 || count != model.RenderInstructionLists.Count)
+                    {
+                        Debugger.Break();
+                    }
+                }
+                else if (most != model.Header.NodeWeightCount - 1)
+                {
+                    Debugger.Break();
+                }
+            }
+            Nop();
+        }
+
         public static void TestAllRooms()
         {
             var ignore = new HashSet<int>() { 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 23, 26 };
