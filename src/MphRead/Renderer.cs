@@ -10,8 +10,8 @@ using MphRead.Formats.Collision;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
-using OpenTK.Windowing.Common.Input;
 using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace MphRead
 {
@@ -2053,24 +2053,24 @@ namespace MphRead
 
         protected override async void OnKeyDown(KeyboardKeyEventArgs e)
         {
-            if (e.Key == Key.Number5)
+            if (e.Key == Keys.D5)
             {
                 if (!_recording)
                 {
                     Images.Screenshot(Size.X, Size.Y);
                 }
             }
-            else if (e.Key == Key.T)
+            else if (e.Key == Keys.T)
             {
                 _showTextures = !_showTextures;
                 await PrintOutput();
             }
-            else if (e.Key == Key.C)
+            else if (e.Key == Keys.C)
             {
                 _showColors = !_showColors;
                 await PrintOutput();
             }
-            else if (e.Key == Key.Q)
+            else if (e.Key == Keys.Q)
             {
                 if (_showVolumes > 0)
                 {
@@ -2082,7 +2082,7 @@ namespace MphRead
                 }
                 await PrintOutput();
             }
-            else if (e.Key == Key.B)
+            else if (e.Key == Keys.B)
             {
                 _faceCulling = !_faceCulling;
                 if (!_faceCulling)
@@ -2091,17 +2091,17 @@ namespace MphRead
                 }
                 await PrintOutput();
             }
-            else if (e.Key == Key.F)
+            else if (e.Key == Keys.F)
             {
                 _textureFiltering = !_textureFiltering;
                 await PrintOutput();
             }
-            else if (e.Key == Key.L)
+            else if (e.Key == Keys.L)
             {
                 _lighting = !_lighting;
                 await PrintOutput();
             }
-            else if (e.Key == Key.Z)
+            else if (e.Key == Keys.Z)
             {
                 // todo: this needs to be organized
                 if (e.Control)
@@ -2138,7 +2138,7 @@ namespace MphRead
                 }
                 await PrintOutput();
             }
-            else if (e.Key == Key.G)
+            else if (e.Key == Keys.G)
             {
                 if (e.Alt)
                 {
@@ -2150,12 +2150,12 @@ namespace MphRead
                 }
                 await PrintOutput();
             }
-            else if (e.Key == Key.N)
+            else if (e.Key == Keys.N)
             {
                 _transformRoomNodes = !_transformRoomNodes;
                 await PrintOutput();
             }
-            else if (e.Key == Key.H)
+            else if (e.Key == Keys.H)
             {
                 if (e.Alt)
                 {
@@ -2166,17 +2166,17 @@ namespace MphRead
                     _showSelection = !_showSelection;
                 }
             }
-            else if (e.Key == Key.I)
+            else if (e.Key == Keys.I)
             {
                 _showInvisible = !_showInvisible;
                 await PrintOutput();
             }
-            else if (e.Key == Key.E)
+            else if (e.Key == Keys.E)
             {
                 _scanVisor = !_scanVisor;
                 await PrintOutput();
             }
-            else if (e.Key == Key.R)
+            else if (e.Key == Keys.R)
             {
                 if (e.Control && e.Shift)
                 {
@@ -2189,7 +2189,7 @@ namespace MphRead
                 }
                 await PrintOutput();
             }
-            else if (e.Key == Key.P)
+            else if (e.Key == Keys.P)
             {
                 if (e.Alt)
                 {
@@ -2210,26 +2210,26 @@ namespace MphRead
                     await PrintOutput();
                 }
             }
-            else if (e.Key == Key.Enter)
+            else if (e.Key == Keys.Enter)
             {
                 _frameAdvanceOn = !_frameAdvanceOn;
             }
-            else if (e.Key == Key.Period)
+            else if (e.Key == Keys.Period)
             {
                 if (_frameAdvanceOn)
                 {
                     _advanceOneFrame = true;
                 }
             }
-            else if (e.Control && e.Key == Key.O)
+            else if (e.Control && e.Key == Keys.O)
             {
                 await LoadModel();
             }
-            else if (e.Control && e.Key == Key.U)
+            else if (e.Control && e.Key == Keys.U)
             {
                 await UnloadModel();
             }
-            else if (e.Key == Key.M)
+            else if (e.Key == Keys.M)
             {
                 if (_models.Any(m => m.Meshes.Count > 0))
                 {
@@ -2285,7 +2285,7 @@ namespace MphRead
                     }
                 }
             }
-            else if (e.Key == Key.Plus || e.Key == Key.KeypadPlus)
+            else if (e.Key == Keys.Equal || e.Key == Keys.KeyPadEqual)
             {
                 if (e.Alt)
                 {
@@ -2319,7 +2319,7 @@ namespace MphRead
                     await SelectNextModel(e.Shift);
                 }
             }
-            else if (e.Key == Key.Minus || e.Key == Key.KeypadMinus)
+            else if (e.Key == Keys.Minus || e.Key == Keys.KeyPadSubtract)
             {
                 if (e.Alt)
                 {
@@ -2352,7 +2352,7 @@ namespace MphRead
                     await SelectPreviousModel(e.Shift);
                 }
             }
-            else if (e.Key == Key.X)
+            else if (e.Key == Keys.X)
             {
                 if (_selectionMode == SelectionMode.Model)
                 {
@@ -2391,7 +2391,7 @@ namespace MphRead
                     LookAt(SelectedModel.Nodes[_selectedNodeId].Position);
                 }
             }
-            else if (e.Key == Key.Number0 || e.Key == Key.Keypad0)
+            else if (e.Key == Keys.D0 || e.Key == Keys.KeyPad0)
             {
                 if (_selectionMode == SelectionMode.Model)
                 {
@@ -2409,7 +2409,7 @@ namespace MphRead
                     await PrintOutput();
                 }
             }
-            else if (e.Key == Key.Number1 || e.Key == Key.Keypad1)
+            else if (e.Key == Keys.D1 || e.Key == Keys.KeyPad1)
             {
                 if (_selectionMode == SelectionMode.Model && SelectedModel.Recolors.Count > 1)
                 {
@@ -2424,7 +2424,7 @@ namespace MphRead
                     await PrintOutput();
                 }
             }
-            else if (e.Key == Key.Number2 || e.Key == Key.Keypad2)
+            else if (e.Key == Keys.D2 || e.Key == Keys.KeyPad2)
             {
                 if (_selectionMode == SelectionMode.Model && SelectedModel.Recolors.Count > 1)
                 {
@@ -2439,7 +2439,7 @@ namespace MphRead
                     await PrintOutput();
                 }
             }
-            else if (e.Key == Key.Escape)
+            else if (e.Key == Keys.Escape)
             {
                 await Output.End();
                 Close();
@@ -2664,17 +2664,17 @@ namespace MphRead
 
         private void OnKeyHeld()
         {
-            if ((KeyboardState.IsKeyDown(Key.AltLeft) || KeyboardState.IsKeyDown(Key.AltRight))
+            if ((KeyboardState.IsKeyDown(Keys.LeftAlt) || KeyboardState.IsKeyDown(Keys.RightAlt))
                 && _selectionMode == SelectionMode.Model)
             {
                 MoveModel();
                 return;
             }
             // sprint
-            float step = KeyboardState.IsKeyDown(Key.ShiftLeft) || KeyboardState.IsKeyDown(Key.ShiftRight) ? 5 : 1;
+            float step = KeyboardState.IsKeyDown(Keys.LeftShift) || KeyboardState.IsKeyDown(Keys.RightShift) ? 5 : 1;
             if (_cameraMode == CameraMode.Roam)
             {
-                if (KeyboardState.IsKeyDown(Key.W)) // move forward
+                if (KeyboardState.IsKeyDown(Keys.W)) // move forward
                 {
                     _cameraPosition = new Vector3(
                         _cameraPosition.X +
@@ -2687,7 +2687,7 @@ namespace MphRead
                             * MathF.Cos(MathHelper.DegreesToRadians(_angleX)) * 0.1f
                     );
                 }
-                else if (KeyboardState.IsKeyDown(Key.S)) // move backward
+                else if (KeyboardState.IsKeyDown(Keys.S)) // move backward
                 {
                     _cameraPosition = new Vector3(
                         _cameraPosition.X -
@@ -2700,15 +2700,15 @@ namespace MphRead
                             * MathF.Cos(MathHelper.DegreesToRadians(_angleX)) * 0.1f
                     );
                 }
-                if (KeyboardState.IsKeyDown(Key.Space)) // move up
+                if (KeyboardState.IsKeyDown(Keys.Space)) // move up
                 {
                     _cameraPosition = new Vector3(_cameraPosition.X, _cameraPosition.Y - step * 0.1f, _cameraPosition.Z);
                 }
-                else if (KeyboardState.IsKeyDown(Key.V)) // move down
+                else if (KeyboardState.IsKeyDown(Keys.V)) // move down
                 {
                     _cameraPosition = new Vector3(_cameraPosition.X, _cameraPosition.Y + step * 0.1f, _cameraPosition.Z);
                 }
-                if (KeyboardState.IsKeyDown(Key.A)) // move left
+                if (KeyboardState.IsKeyDown(Keys.A)) // move left
                 {
                     float angleX = _angleY - 90;
                     if (angleX < 0)
@@ -2725,7 +2725,7 @@ namespace MphRead
                             * 0.1f
                     );
                 }
-                else if (KeyboardState.IsKeyDown(Key.D)) // move right
+                else if (KeyboardState.IsKeyDown(Keys.D)) // move right
                 {
                     float angleX = _angleY + 90;
                     if (angleX > 360)
@@ -2742,24 +2742,24 @@ namespace MphRead
                             * 0.1f
                     );
                 }
-                step = KeyboardState.IsKeyDown(Key.ShiftLeft) ? -3 : -1.5f;
+                step = KeyboardState.IsKeyDown(Keys.LeftShift) || KeyboardState.IsKeyDown(Keys.RightShift) ? -3 : -1.5f;
             }
-            if (KeyboardState.IsKeyDown(Key.Up)) // rotate up
+            if (KeyboardState.IsKeyDown(Keys.Up)) // rotate up
             {
                 _angleX += step;
                 _angleX = Math.Clamp(_angleX, -90.0f, 90.0f);
             }
-            else if (KeyboardState.IsKeyDown(Key.Down)) // rotate down
+            else if (KeyboardState.IsKeyDown(Keys.Down)) // rotate down
             {
                 _angleX -= step;
                 _angleX = Math.Clamp(_angleX, -90.0f, 90.0f);
             }
-            if (KeyboardState.IsKeyDown(Key.Left)) // rotate left
+            if (KeyboardState.IsKeyDown(Keys.Left)) // rotate left
             {
                 _angleY += step;
                 _angleY %= 360f;
             }
-            else if (KeyboardState.IsKeyDown(Key.Right)) // rotate right
+            else if (KeyboardState.IsKeyDown(Keys.Right)) // rotate right
             {
                 _angleY -= step;
                 _angleY %= 360f;
@@ -2769,52 +2769,52 @@ namespace MphRead
         private void MoveModel()
         {
             float step = 0.1f;
-            if (KeyboardState.IsKeyDown(Key.W)) // move Z-
+            if (KeyboardState.IsKeyDown(Keys.W)) // move Z-
             {
                 SelectedModel.Position = SelectedModel.Position.WithZ(SelectedModel.Position.Z - step);
             }
-            else if (KeyboardState.IsKeyDown(Key.S)) // move Z+
+            else if (KeyboardState.IsKeyDown(Keys.S)) // move Z+
             {
                 SelectedModel.Position = SelectedModel.Position.WithZ(SelectedModel.Position.Z + step);
             }
-            if (KeyboardState.IsKeyDown(Key.Space)) // move Y+
+            if (KeyboardState.IsKeyDown(Keys.Space)) // move Y+
             {
                 SelectedModel.Position = SelectedModel.Position.WithY(SelectedModel.Position.Y + step);
             }
-            else if (KeyboardState.IsKeyDown(Key.V)) // move Y-
+            else if (KeyboardState.IsKeyDown(Keys.V)) // move Y-
             {
                 SelectedModel.Position = SelectedModel.Position.WithY(SelectedModel.Position.Y - step);
             }
-            if (KeyboardState.IsKeyDown(Key.A)) // move X-
+            if (KeyboardState.IsKeyDown(Keys.A)) // move X-
             {
                 SelectedModel.Position = SelectedModel.Position.WithX(SelectedModel.Position.X - step);
             }
-            else if (KeyboardState.IsKeyDown(Key.D)) // move X+
+            else if (KeyboardState.IsKeyDown(Keys.D)) // move X+
             {
                 SelectedModel.Position = SelectedModel.Position.WithX(SelectedModel.Position.X + step);
             }
             // todo: some transforms (sniper targets in UNIT4_RM2) aren't consistent when first changing the rotation
             step = 2.5f;
             Vector3 rotation = SelectedModel.Rotation;
-            if (KeyboardState.IsKeyDown(Key.Up)) // rotate up
+            if (KeyboardState.IsKeyDown(Keys.Up)) // rotate up
             {
                 rotation.X += step;
                 rotation.X %= 360f;
                 SelectedModel.Rotation = rotation;
             }
-            else if (KeyboardState.IsKeyDown(Key.Down)) // rotate down
+            else if (KeyboardState.IsKeyDown(Keys.Down)) // rotate down
             {
                 rotation.X -= step;
                 rotation.X %= 360f;
                 SelectedModel.Rotation = rotation;
             }
-            if (KeyboardState.IsKeyDown(Key.Left)) // rotate left
+            if (KeyboardState.IsKeyDown(Keys.Left)) // rotate left
             {
                 rotation.Y += step;
                 rotation.Y %= 360f;
                 SelectedModel.Rotation = rotation;
             }
-            else if (KeyboardState.IsKeyDown(Key.Right)) // rotate right
+            else if (KeyboardState.IsKeyDown(Keys.Right)) // rotate right
             {
                 rotation.Y -= step;
                 rotation.Y %= 360f;
