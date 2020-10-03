@@ -774,7 +774,8 @@ namespace MphRead
                             }
                             listId = GL.GenLists(1);
                             GL.NewList(listId, ListMode.Compile);
-                            DoDlist(model, mesh, textureWidth, textureHeight);
+                            bool texgen = material.TexgenMode == TexgenMode.Normal;
+                            DoDlist(model, mesh, textureWidth, textureHeight, texgen);
                             GL.EndList();
                             _maxListId = Math.Max(listId, _maxListId);
                         }
@@ -1509,59 +1510,27 @@ namespace MphRead
                     {
                         Texture texture = model.Textures[material.TextureId];
                         Debug.Assert(texture.Width == texture.Height && texture.Width > 0 && texture.Width % 2 == 0);
-                        // the nodeTransform * currentTextureMatrix multiplication is between two 4x3 into a 4x4,
-                        // but only reads/writes the upper-left 3x3 of all three matrices
-                        // todo: billboard node transforms need to work as they do in-game
                         Matrix4 product = node.Animation.Keep3x3();
-                        if (model.ExtraTexgenTransform)
+                        Matrix4 texgenMatrix = Matrix4.Identity;
+                        // in-game, there's only one uniform scale factor for models
+                        if (model.Scale.X != 1 || model.Scale.Y != 1 || model.Scale.Z != 1)
                         {
-                            product = model.ExtraTransform * product;
+                            texgenMatrix = Matrix4.CreateScale(model.Scale) * texgenMatrix;
                         }
-                        // todo: this may not be exactly equivalent to the game checking the node animation pointer
-                        // note: in-game, this also uses the some_flag CModel field or constant 0,
-                        // but none of the models with normal texgen seem to set bit 0 of that flag, so we can ignore it
-                        // --> also, Dialanche sets its pointer to 0 while attacking, but that doesn't seem to change its appearance
-                        // (at least from the controlling player's camera), so we're ignoring that too
-                        if (!model.Animations.NodeGroups.Any(n => n.Animations.Any()))
+                        if ((model.Flags & 1) > 0)
                         {
-                            var currentTextureMatrix = new Matrix4x3(
-                                model.ExtraTransform.Row0.Xyz,
-                                model.ExtraTransform.Row1.Xyz,
-                                model.ExtraTransform.Row2.Xyz,
-                                model.ExtraTransform.Row3.Xyz
-                            );
-                            // in-game, there's only one uniform scale factor for models
-                            if (model.Scale.X != 1 || model.Scale.Y != 1 || model.Scale.Z != 1)
-                            {
-                                Matrix4x3 scaleMatrix = Matrix4x3.Zero;
-                                scaleMatrix.M11 = model.Scale.X;
-                                scaleMatrix.M22 = model.Scale.Y;
-                                scaleMatrix.M33 = model.Scale.Z;
-                                currentTextureMatrix = Matrix.Concat43(scaleMatrix, currentTextureMatrix);
-                            }
-                            if ((model.Flags & 1) > 0)
-                            {
-                                var cameraMatrix = new Matrix4x3(
-                                    _viewMatrix.Row0.Xyz,
-                                    _viewMatrix.Row1.Xyz,
-                                    _viewMatrix.Row2.Xyz,
-                                    _viewMatrix.Row3.Xyz
-                                );
-                                currentTextureMatrix = Matrix.Concat43(currentTextureMatrix, cameraMatrix);
-                            }
-                            product *= currentTextureMatrix.Keep3x3();
+                            texgenMatrix = _viewMatrix * texgenMatrix;
                         }
+                        product *= texgenMatrix;
                         product.M12 *= -1;
                         product.M13 *= -1;
                         product.M22 *= -1;
                         product.M23 *= -1;
                         product.M32 *= -1;
                         product.M33 *= -1;
-                        // the texenv * modelTextureMatrix multiplications are between two 4x4 into a 4x4,
-                        // but only reads the upper 3x3 of the first matrix and upper 3x2 of the second,
-                        // and only writes the upper 3x3 of the destination
-                        product = Matrix.Multiply44(product, materialMatrix);
-                        product = Matrix.Multiply44(product, texcoordMatrix) * (1.0f / (texture.Width / 2));
+                        product *= materialMatrix;
+                        product *= texcoordMatrix;
+                        product *= (1.0f / (texture.Width / 2));
                         texcoordMatrix = new Matrix4(
                             product.Row0 * 16.0f,
                             product.Row1 * 16.0f,
@@ -1569,7 +1538,6 @@ namespace MphRead
                             product.Row3
                         );
                         texcoordMatrix.Transpose();
-                        GL.TexCoord2(0.5f, 0.5f); // this may be changed by the dlist
                     }
                 }
                 GL.Uniform1(_shaderLocations.TexgenMode, (int)material.TexgenMode);
@@ -1668,15 +1636,16 @@ namespace MphRead
             UpdateMaterials(model);
         }
 
-        private void DoDlist(Model model, Mesh mesh, int textureWidth, int textureHeight)
+        private void DoDlist(Model model, Mesh mesh, int textureWidth, int textureHeight, bool texgen)
         {
             IReadOnlyList<RenderInstruction> list = model.RenderInstructionLists[mesh.DlistId];
             float vtxX = 0;
             float vtxY = 0;
             float vtxZ = 0;
-            float texX = 0;
-            float texY = 0;
+            float texX = texgen ? 0.5f : 0f;
+            float texY = texgen ? 0.5f : 0f;
             uint matrixId = 0;
+            GL.TexCoord3(texX, texY, 0f);
             for (int i = 0; i < list.Count; i++)
             {
                 RenderInstruction instruction = list[i];
