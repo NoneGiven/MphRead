@@ -54,12 +54,41 @@ namespace MphRead
 
         public static void TestEffects()
         {
+            var funcs = new Dictionary<uint, HashSet<int>>();
+            using var file = new StreamWriter(File.OpenWrite("temp.txt"));
             foreach (string path in Metadata.Effects)
             {
                 if (path != "" && path != "effects/sparksFall_PS.bin" && path != "effects/mortarSecondary_PS.bin"
                     && path != "effects/powerBeamChargeNoSplatMP_PS.bin")
                 {
                     Effect effect = Read.ReadEffect(path);
+                    //Effect effect = Read.ReadEffect("effects/powerBeamNoSplatMP_PS.bin");
+                    foreach (FxFuncInfo func in effect.Funcs.Where(f => f.FuncId == 41))
+                    {
+                        int last = Int32.MinValue;
+                        for (int i = 0; i < func.Parameters.Count; i++)
+                        {
+                            int parameter = func.Parameters[i];
+                            if (i % 2 == 0 && parameter < 0 && parameter != Int32.MinValue)
+                            {
+                                Debugger.Break();
+                            }
+                            if (i == func.Parameters.Count - 1)
+                            {
+                                Debugger.Break();
+                            }
+                            if (parameter == Int32.MinValue)
+                            {
+                                Debug.Assert(func.Parameters[i + 1] == 0);
+                                break;
+                            }
+                            if (i % 2 == 0)
+                            {
+                                Debug.Assert(parameter > last);
+                                last = parameter;
+                            }
+                        }
+                    }
                     foreach (EffectElement element in effect.Elements)
                     {
                         Nop();
@@ -188,6 +217,38 @@ namespace MphRead
             foreach (Model model in GetAllModels())
             {
             }
+        }
+
+        public static void TestMtxRestore()
+        {
+            foreach (Model model in GetAllModels())
+            {
+                int count = 0;
+                int most = -1;
+                foreach (IReadOnlyList<RenderInstruction> list in model.RenderInstructionLists)
+                {
+                    foreach (RenderInstruction inst in list)
+                    {
+                        if (inst.Code == InstructionCode.MTX_RESTORE)
+                        {
+                            count++;
+                            most = Math.Max(most, (int)inst.Arguments[0]);
+                        }
+                    }
+                }
+                if (model.Header.NodeWeightCount == 0)
+                {
+                    if (most != 0 || count != model.RenderInstructionLists.Count)
+                    {
+                        Debugger.Break();
+                    }
+                }
+                else if (most != model.Header.NodeWeightCount - 1)
+                {
+                    Debugger.Break();
+                }
+            }
+            Nop();
         }
 
         public static void TestAllRooms()

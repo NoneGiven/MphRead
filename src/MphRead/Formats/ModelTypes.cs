@@ -135,9 +135,10 @@ namespace MphRead.Models
             Type = ModelType.Enemy;
         }
 
-        public override void Process(double elapsedTime, long frameCount, Vector3 cameraPosition)
+        public override void Process(double elapsedTime, long frameCount, Vector3 cameraPosition,
+            Matrix4 viewInvRot, Matrix4 viewInvRotY, bool useTransform)
         {
-            base.Process(elapsedTime, frameCount, cameraPosition);
+            base.Process(elapsedTime, frameCount, cameraPosition, viewInvRot, viewInvRotY, useTransform);
             if (Vector3.Dot(cameraPosition - InitialPosition, Vector2) < 0)
             {
                 Vector2 *= -1;

@@ -446,24 +446,24 @@ namespace MphRead
             JumpPadEntityData data = entity.Data;
             var list = new List<Model>();
             string modelName = Metadata.JumpPads[(int)data.ModelId];
-            Model model1 = Read.GetModelByName(modelName);
-            model1.Position = data.Header.Position.ToFloatVector();
-            ComputeModelMatrices(model1, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
-            model1.Type = ModelType.JumpPad;
-            model1.Entity = entity;
-            list.Add(model1);
-            Model model2 = Read.GetModelByName("JumpPad_Beam");
-            model2.Position = new Vector3(model1.Position.X, model1.Position.Y + 0.25f, model1.Position.Z);
-            ComputeJumpPadBeamTransform(model2, data.BeamVector, model1.Transform);
-            ComputeNodeMatrices(model2, index: 0);
-            model2.Type = ModelType.JumpPadBeam;
-            model2.Entity = entity;
+            Model baseModel = Read.GetModelByName(modelName);
+            baseModel.Position = data.Header.Position.ToFloatVector();
+            ComputeModelMatrices(baseModel, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
+            baseModel.Type = ModelType.JumpPad;
+            baseModel.Entity = entity;
+            list.Add(baseModel);
+            Model beamModel = Read.GetModelByName("JumpPad_Beam");
+            beamModel.Position = baseModel.Position.AddY(0.25f);
+            ComputeJumpPadBeamTransform(beamModel, data.BeamVector, baseModel.Transform);
+            ComputeNodeMatrices(beamModel, index: 0);
+            beamModel.Type = ModelType.JumpPadBeam;
+            beamModel.Entity = entity;
             // todo: room state
             if (data.Active == 0)
             {
-                model2.Visible = false;
+                beamModel.Visible = false;
             }
-            list.Add(model2);
+            list.Add(beamModel);
             return list;
         }
 
@@ -472,26 +472,26 @@ namespace MphRead
             FhJumpPadEntityData data = entity.Data;
             var list = new List<Model>();
             string name = data.ModelId == 1 ? "balljump" : "jumppad_base";
-            Model model1 = Read.GetModelByName(name, firstHunt: true);
-            model1.Position = data.Header.Position.ToFloatVector();
-            ComputeModelMatrices(model1, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
-            model1.Type = ModelType.JumpPad;
-            model1.Entity = entity;
-            list.Add(model1);
+            Model baseModel = Read.GetModelByName(name, firstHunt: true);
+            baseModel.Position = data.Header.Position.ToFloatVector();
+            ComputeModelMatrices(baseModel, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
+            baseModel.Type = ModelType.JumpPad;
+            baseModel.Entity = entity;
+            list.Add(baseModel);
             name = data.ModelId == 1 ? "balljump_ray" : "jumppad_ray";
-            Model model2 = Read.GetModelByName(name, firstHunt: true);
-            model2.Position = new Vector3(model1.Position.X, model1.Position.Y + 0.25f, model1.Position.Z);
-            ComputeJumpPadBeamTransform(model2, data.BeamVector, Matrix4.Identity);
-            ComputeNodeMatrices(model2, index: 0);
-            model2.Type = ModelType.JumpPadBeam;
-            model2.Entity = entity;
+            Model beamModel = Read.GetModelByName(name, firstHunt: true);
+            beamModel.Position = baseModel.Position.AddY(0.25f);
+            ComputeJumpPadBeamTransform(beamModel, data.BeamVector, Matrix4.Identity);
+            ComputeNodeMatrices(beamModel, index: 0);
+            beamModel.Type = ModelType.JumpPadBeam;
+            beamModel.Entity = entity;
             if (data.ModelId == 0)
             {
-                model2.Rotating = true;
-                model2.SpinAxis = Vector3.UnitZ;
-                model2.SpinSpeed = 0.35f;
+                beamModel.Rotating = true;
+                beamModel.SpinAxis = Vector3.UnitZ;
+                beamModel.SpinSpeed = 0.35f;
             }
-            list.Add(model2);
+            list.Add(beamModel);
             return list;
         }
 
@@ -608,11 +608,7 @@ namespace MphRead
             if (data.Enabled != 0)
             {
                 model = Read.GetModelByName(Metadata.Items[(int)data.ModelId]);
-                model.Position = new Vector3(
-                    data.Header.Position.X.FloatValue,
-                    data.Header.Position.Y.FloatValue + GetItemHeightOffset(data.Header.Position.Y),
-                    data.Header.Position.Z.FloatValue
-                );
+                model.Position = data.Header.Position.ToFloatVector().AddY(0.65f);
                 ComputeNodeMatrices(model, index: 0);
                 model.Type = ModelType.Item;
                 model.Entity = entity;
@@ -635,7 +631,6 @@ namespace MphRead
             return models;
         }
 
-        // todo: do these have height offsets?
         private static Model LoadItem(Entity<FhItemEntityData> entity)
         {
             FhItemEntityData data = entity.Data;
@@ -715,11 +710,7 @@ namespace MphRead
             if (mode == GameMode.Capture || mode == GameMode.Bounty)
             {
                 Model octolith = Read.GetModelByName("octolith_ctf", mode == GameMode.Capture ? data.TeamId : 2);
-                octolith.Position = new Vector3(
-                    data.Header.Position.X.FloatValue,
-                    data.Header.Position.Y.FloatValue + 1.25f,
-                    data.Header.Position.Z.FloatValue
-                );
+                octolith.Position = data.Header.Position.ToFloatVector().AddY(1.25f);
                 ComputeModelMatrices(octolith, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
                 ComputeNodeMatrices(octolith, index: 0);
                 octolith.Type = ModelType.Generic;
@@ -777,11 +768,7 @@ namespace MphRead
                 models.Add(node);
                 // todo: spinning + changing color when active
                 Model circle = Read.GetModelByName("koth_terminal");
-                circle.Position = new Vector3(
-                    data.Header.Position.X.FloatValue,
-                    data.Header.Position.Y.FloatValue + 0.7f, // 0xB33 = 0.6999512
-                    data.Header.Position.Z.FloatValue
-                );
+                circle.Position = data.Header.Position.ToFloatVector().AddY(0.7f);
                 float scale = data.Volume.CylinderRadius.FloatValue;
                 circle.Scale = new Vector3(scale, scale, scale);
                 ComputeModelMatrices(circle, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
@@ -866,12 +853,8 @@ namespace MphRead
             var models = new List<Model>();
             string name = data.ModelId >= 8 ? "Octolith" : $"Artifact0{data.ModelId + 1}";
             Model model = Read.GetModelByName(name);
-            float offset = data.ModelId >= 8 ? GetOctolithHeightOffset() : model.Nodes[0].CullRadius.FloatValue;
-            model.Position = new Vector3(
-                data.Header.Position.X.FloatValue,
-                data.Header.Position.Y.FloatValue + offset,
-                data.Header.Position.Z.FloatValue
-            );
+            float offset = data.ModelId >= 8 ? 1.75f : model.Nodes[0].CullRadius;
+            model.Position = data.Header.Position.ToFloatVector().AddY(offset);
             ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Generic;
@@ -887,12 +870,7 @@ namespace MphRead
             if (data.HasBase != 0)
             {
                 Model baseModel = Read.GetModelByName("ArtifactBase");
-                offset = GetArtifactBaseHeightOffset(data.Header.Position.Y.Value + model.Nodes[0].CullRadius.Value);
-                baseModel.Position = new Vector3(
-                    data.Header.Position.X.FloatValue,
-                    model.Position.Y + offset,
-                    data.Header.Position.Z.FloatValue
-                );
+                baseModel.Position = data.Header.Position.ToFloatVector().AddY(-0.2f);
                 ComputeModelMatrices(baseModel, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
                 ComputeNodeMatrices(baseModel, index: 0);
                 baseModel.Type = ModelType.Generic;
@@ -936,25 +914,6 @@ namespace MphRead
                 models.Add(enemy);
             }
             return models;
-        }
-
-        private static float GetItemHeightOffset(Fixed value)
-        {
-            return value.Value <= -2663
-                ? Fixed.ToFloat(2663)
-                : value.Value == 6393
-                    ? Fixed.ToFloat(2812)
-                    : Fixed.ToFloat(2662);
-        }
-
-        private static float GetOctolithHeightOffset()
-        {
-            return Fixed.ToFloat(7168);
-        }
-
-        private static float GetArtifactBaseHeightOffset(int value)
-        {
-            return value <= 3116 ? Fixed.ToFloat(-3116) : Fixed.ToFloat(-3117);
         }
 
         private static readonly Dictionary<EntityType, ColorRgb> _colorOverrides = new Dictionary<EntityType, ColorRgb>()

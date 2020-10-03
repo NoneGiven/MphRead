@@ -164,7 +164,7 @@ namespace MphRead
         Unknown25 = 25,
         Unknown26 = 26, // UI message-related?
         Unknown27 = 27, // UI message-related?
-        Unknown28 = 28, // UI message-related?
+        Unknown28 = 28, // UI message-related? // todo: show warning, CBeamProjectile_check_collision has an example of params
         Unknown29 = 29, // spawn item here?
         Unknown30 = 30,
         Unknown31 = 31, // platform collision?

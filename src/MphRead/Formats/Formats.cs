@@ -20,8 +20,7 @@ namespace MphRead
         public Vector3 Scale { get; set; }
         public Vector3 Angle { get; set; }
         public Vector3 Position { get; set; }
-        // need to keep this as fixed to potentially pass to the magic height offset function later
-        public Fixed CullRadius { get; }
+        public float CullRadius { get; }
         public Vector3 Vector1 { get; }
         public Vector3 Vector2 { get; }
         public BillboardMode BillboardMode { get; }
@@ -55,7 +54,7 @@ namespace MphRead
                 raw.AngleZ / 65536.0f * 2.0f * MathF.PI
             );
             Position = raw.Position.ToFloatVector();
-            CullRadius = raw.CullRadius;
+            CullRadius = raw.CullRadius.FloatValue;
             Vector1 = raw.Vector1.ToFloatVector();
             Vector2 = raw.Vector2.ToFloatVector();
             BillboardMode = raw.BillboardMode;
@@ -303,20 +302,32 @@ namespace MphRead
         }
     }
 
+    public class FxFuncInfo
+    {
+        public uint FuncId { get; }
+        public IReadOnlyList<int> Parameters { get; }
+
+        public FxFuncInfo(uint funcId, IReadOnlyList<int> parameters)
+        {
+            FuncId = funcId;
+            Parameters = parameters;
+        }
+    }
+
     public class Effect
     {
         public string Name { get; }
         public uint Field0 { get; }
-        public IReadOnlyList<uint> List1 { get; }
+        public IReadOnlyList<FxFuncInfo> Funcs { get; }
         public IReadOnlyList<uint> List2 { get; }
         public IReadOnlyList<EffectElement> Elements { get; }
 
-        public Effect(RawEffect raw, IReadOnlyList<uint> list1, IReadOnlyList<uint> list2,
+        public Effect(RawEffect raw, IReadOnlyList<FxFuncInfo> funcs, IReadOnlyList<uint> list2,
             IReadOnlyList<EffectElement> elements, string name)
         {
             Name = Path.GetFileNameWithoutExtension(name).Replace("_PS", "");
             Field0 = raw.Field0;
-            List1 = list1;
+            Funcs = funcs;
             List2 = list2;
             Elements = elements;
         }

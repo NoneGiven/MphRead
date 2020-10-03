@@ -19,9 +19,9 @@ uniform vec4 fog_color;
 uniform float far_plane;
 uniform mat4 proj_mtx;
 uniform mat4 view_mtx;
-uniform mat4 model_mtx;
 uniform mat4 tex_mtx;
 uniform int texgen_mode;
+uniform mat4[32] mtx_stack;
 
 varying vec2 texcoord;
 varying vec4 color;
@@ -41,6 +41,7 @@ vec3 light_calc(vec3 light_vec, vec3 light_col, vec3 normal_vec, vec3 dif_col, v
 
 void main()
 {
+    mat4 model_mtx = mtx_stack[int(gl_MultiTexCoord0.z)];
     gl_Position = proj_mtx * view_mtx * model_mtx * gl_Vertex;
     vec4 vtx_color = show_colors ? gl_Color : vec4(1.0);
     vec3 normal = normalize(mat3(model_mtx) * gl_Normal);
@@ -63,7 +64,7 @@ void main()
     if (use_texture) {
         // texgen mode: 0 - none, 1 - texcoord, 2 - normal, 3 - vertex
         if (texgen_mode == 0 || texgen_mode == 1) {
-            texcoord = vec2(tex_mtx * gl_MultiTexCoord0);
+            texcoord = vec2(tex_mtx * vec4(gl_MultiTexCoord0.xy, 0, 1));
         }
         else if (texgen_mode == 2 || texgen_mode == 3) {
             mat2x4 texgen_mtx = mat2x4(
@@ -184,11 +185,11 @@ void main()
         public int PaletteOverrideColor { get; set; }
         public int MaterialAlpha { get; set; }
         public int MaterialMode { get; set; }
-        public int ModelMatrix { get; set; }
         public int ViewMatrix { get; set; }
         public int ProjectionMatrix { get; set; }
         public int TextureMatrix { get; set; }
         public int TexgenMode { get; set; }
+        public int MatrixStack { get; set; }
         public int ToonTable { get; set; }
     }
 }

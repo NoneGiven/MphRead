@@ -69,7 +69,7 @@ namespace MphRead
 
         public ModelMetadata(string name, IEnumerable<string> recolors, string? remove = null,
             bool animation = false, string? animationPath = null, bool texture = false, MdlSuffix mdlSuffix = MdlSuffix.None,
-            string? archive = null, string? recolorName = null, bool useLightSources = false)
+            string? archive = null, string? recolorName = null, bool useLightSources = false, bool firstHunt = false)
         {
             Name = name;
             string suffix = "";
@@ -122,6 +122,7 @@ namespace MphRead
             }
             Recolors = recolorList;
             UseLightSources = useLightSources;
+            FirstHunt = firstHunt;
         }
 
         public ModelMetadata(string name, bool animation = true, bool collision = false, bool texture = false,
@@ -855,7 +856,7 @@ namespace MphRead
         // todo: files not referenced by this list: powerBeamNoSplatMP_PS.bin, sparksDown_PS.bin
         public static readonly IReadOnlyList<string> Effects = new List<string>()
         {
-            /*   0 */ "", // unused?
+            /*   0 */ "", // no effect
             /*   1 */ "_archives/effects/powerBeam_PS.bin",
             /*   2 */ "_archives/effects/powerBeamNoSplat_PS.bin",
             /*   3 */ "effects/blastCapHit_PS.bin",
@@ -3440,7 +3441,16 @@ namespace MphRead
                 },
                 {
                     "morphBall",
-                    new ModelMetadata("morphBall", animation: false, firstHunt: true)
+                    new ModelMetadata("morphBall",
+                        recolors: new List<string>()
+                        {
+                            "*morphBall",
+                            "Green",
+                            "White",
+                            "Blue"
+                        },
+                        animation: false,
+                        firstHunt: true)
                 },
                 {
                     "morphBall_Blue",
@@ -3499,6 +3509,34 @@ namespace MphRead
                     new ModelMetadata("platform", animation: false, collision: true, firstHunt: true)
                 },
                 {
+                    "samus_hi_yellow",
+                    new ModelMetadata("samus_hi_yellow",
+                        recolors: new List<string>()
+                        {
+                            "*samus_hi_yellow",
+                            "hi_green",
+                            "hi_white",
+                            "hi_blue"
+                        },
+                        animationPath: @"models\samus_Anim.bin",
+                        remove: "_hi_yellow",
+                        firstHunt: true)
+                },
+                {
+                    "samus_low_yellow",
+                    new ModelMetadata("samus_low_yellow",
+                        recolors: new List<string>()
+                        {
+                            "*samus_low_yellow",
+                            "hi_green",
+                            "hi_white",
+                            "hi_blue"
+                        },
+                        animationPath: @"models\samus_Anim.bin",
+                        remove: "_low_yellow",
+                        firstHunt: true)
+                },
+                {
                     "samus_hi_blue",
                     new ModelMetadata("samus_hi_blue", remove: "_hi_blue", firstHunt: true)
                 },
@@ -3509,14 +3547,6 @@ namespace MphRead
                 {
                     "samus_hi_white",
                     new ModelMetadata("samus_hi_white", remove: "_hi_white", firstHunt: true)
-                },
-                {
-                    "samus_hi_yellow",
-                    new ModelMetadata("samus_hi_yellow", remove: "_hi_yellow", firstHunt: true)
-                },
-                {
-                    "samus_low_yellow",
-                    new ModelMetadata("samus_low_yellow", remove: "_low_yellow", firstHunt: true)
                 },
                 {
                     "spawnEffect",

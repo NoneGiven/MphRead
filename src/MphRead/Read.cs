@@ -171,16 +171,11 @@ namespace MphRead
                 textureMatrix.M32 = Fixed.ToFloat(-3891);
                 textureMatrices.Add(textureMatrix);
             }
-            //  todo: when the counts/offsets are zero, these values should probably be skipped, even though they are always present
-            int count = (int)header.UnknownAnimationCount - Sizes.Header;
-            Debug.Assert(count >= sizeof(uint) && count % sizeof(uint) == 0);
-            count /= 4;
-            IReadOnlyList<uint> nodeIds = DoOffsets<uint>(initialBytes, (uint)Sizes.Header, count);
-            IReadOnlyList<uint> weightIds = DoOffsets<uint>(initialBytes, header.UnknownAnimationCount, count);
-            AnimationResults animations = LoadAnimation(animationPath, nodes, firstHunt);
+            IReadOnlyList<int> nodeWeights = DoOffsets<int>(initialBytes, header.NodeWeightOffset, header.NodeWeightCount);
+            AnimationResults animations = LoadAnimation(name, animationPath, nodes, firstHunt);
             return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                textureMatrices, recolors, defaultRecolor, useLightSources, nodeIds, weightIds);
+                textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights);
         }
 
         private class AnimationResults
@@ -191,7 +186,7 @@ namespace MphRead
             public List<TextureAnimationGroup> TextureAnimationGroups { get; } = new List<TextureAnimationGroup>();
         }
 
-        private static AnimationResults LoadAnimation(string? path, IReadOnlyList<RawNode> nodes, bool firstHunt)
+        private static AnimationResults LoadAnimation(string model, string? path, IReadOnlyList<RawNode> nodes, bool firstHunt)
         {
             var results = new AnimationResults();
             if (path == null)
@@ -233,8 +228,15 @@ namespace MphRead
                 RawNodeAnimationGroup rawGroup = DoOffset<RawNodeAnimationGroup>(bytes, offset);
                 Debug.Assert(offset > rawGroup.AnimationOffset);
                 Debug.Assert((offset - rawGroup.AnimationOffset) % Sizes.NodeAnimation == 0);
+                int count = nodes.Count;
+                // this group has one less animation than the model has nodes
+                // todo: figure out if this is necessary
+                if (model == "GuardBot1" && offset == 2300)
+                {
+                    count--;
+                }
                 IReadOnlyList<NodeAnimation> rawAnimations
-                    = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, nodes.Count);
+                    = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, count);
                 var animations = new Dictionary<string, NodeAnimation>();
                 int i = 0;
                 foreach (NodeAnimation animation in rawAnimations)
@@ -585,13 +587,21 @@ namespace MphRead
         {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, name)));
             RawEffect effect = ReadStruct<RawEffect>(bytes);
-            IReadOnlyList<uint> list1 = DoOffsets<uint>(bytes, effect.Offset1, effect.Count1);
+            var funcs = new List<FxFuncInfo>();
+            foreach (uint offset in DoOffsets<uint>(bytes, effect.FuncOffset, effect.FuncCount))
+            {
+                uint funcId = SpanReadUint(bytes, offset);
+                uint paramOffset = SpanReadUint(bytes, offset + 4);
+                // sktodo: assert that the layout and param count match assumptions
+                uint paramCount = (offset - paramOffset) / 4;
+                IReadOnlyList<int> parameters = DoOffsets<int>(bytes, paramOffset, paramCount);
+                funcs.Add(new FxFuncInfo(funcId, parameters));
+            }
             IReadOnlyList<uint> list2 = DoOffsets<uint>(bytes, effect.Offset2, effect.Count2);
             IReadOnlyList<uint> elementOffsets = DoOffsets<uint>(bytes, effect.ElementOffset, effect.ElementCount);
             var elements = new List<EffectElement>();
             foreach (uint offset in elementOffsets)
             {
-                // sktodo: what's in between the particle name offsets and the next element?
                 RawEffectElement element = DoOffset<RawEffectElement>(bytes, offset);
                 var particles = new List<string>();
                 foreach (uint nameOffset in DoOffsets<uint>(bytes, element.ParticleOffset, element.ParticleCount))
@@ -601,7 +611,7 @@ namespace MphRead
                 IReadOnlyList<uint> someList = DoOffsets<uint>(bytes, element.SomeOffset, 2 * element.SomeCount);
                 elements.Add(new EffectElement(element, particles, someList));
             }
-            return new Effect(effect, list1, list2, elements, name);
+            return new Effect(effect, funcs, list2, elements, name);
         }
 
         private static void Nop() { }

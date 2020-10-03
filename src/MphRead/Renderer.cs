@@ -10,8 +10,8 @@ using MphRead.Formats.Collision;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
-using OpenTK.Windowing.Common.Input;
 using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace MphRead
 {
@@ -118,9 +118,8 @@ namespace MphRead
         private float _angleY = 0.0f;
         private float _angleX = 0.0f;
         private float _distance = 5.0f;
-        // todo: somehow the axes are reversed from the model coordinates
+        // note: the axes are reversed from the model coordinates
         private Vector3 _cameraPosition = new Vector3(0, 0, 0);
-        private Matrix4 _modelMatrix = Matrix4.Identity;
         private bool _leftMouse = false;
 
         private bool _showTextures = true;
@@ -400,11 +399,11 @@ namespace MphRead
             _shaderLocations.PaletteOverrideColor = GL.GetUniformLocation(_shaderProgramId, "pal_override_color");
             _shaderLocations.MaterialAlpha = GL.GetUniformLocation(_shaderProgramId, "mat_alpha");
             _shaderLocations.MaterialMode = GL.GetUniformLocation(_shaderProgramId, "mat_mode");
-            _shaderLocations.ModelMatrix = GL.GetUniformLocation(_shaderProgramId, "model_mtx");
             _shaderLocations.ViewMatrix = GL.GetUniformLocation(_shaderProgramId, "view_mtx");
             _shaderLocations.ProjectionMatrix = GL.GetUniformLocation(_shaderProgramId, "proj_mtx");
             _shaderLocations.TextureMatrix = GL.GetUniformLocation(_shaderProgramId, "tex_mtx");
             _shaderLocations.TexgenMode = GL.GetUniformLocation(_shaderProgramId, "texgen_mode");
+            _shaderLocations.MatrixStack = GL.GetUniformLocation(_shaderProgramId, "mtx_stack");
             _shaderLocations.ToonTable = GL.GetUniformLocation(_shaderProgramId, "toon_table");
 
             GL.UseProgram(_shaderProgramId);
@@ -755,31 +754,33 @@ namespace MphRead
                 GL.DeleteLists(i, 1);
             }
             _maxListId = 0;
-            for (int i = 0; i < _models.Count; i++)
+            foreach (Model model in _models)
             {
                 _listIds.Clear();
-                Model model = _models[i];
-                for (int j = 0; j < model.Meshes.Count; j++)
+                for (int j = 0; j < model.Nodes.Count; j++)
                 {
-                    Mesh mesh = model.Meshes[j];
-                    if (!_listIds.TryGetValue(mesh.DlistId, out int listId))
+                    foreach (Mesh mesh in model.GetNodeMeshes(j))
                     {
-                        int textureWidth = 0;
-                        int textureHeight = 0;
-                        Material material = model.Materials[mesh.MaterialId];
-                        if (material.TextureId != UInt16.MaxValue)
+                        if (!_listIds.TryGetValue(mesh.DlistId, out int listId))
                         {
-                            Texture texture = model.Textures[material.TextureId];
-                            textureWidth = texture.Width;
-                            textureHeight = texture.Height;
+                            int textureWidth = 0;
+                            int textureHeight = 0;
+                            Material material = model.Materials[mesh.MaterialId];
+                            if (material.TextureId != UInt16.MaxValue)
+                            {
+                                Texture texture = model.Textures[material.TextureId];
+                                textureWidth = texture.Width;
+                                textureHeight = texture.Height;
+                            }
+                            listId = GL.GenLists(1);
+                            GL.NewList(listId, ListMode.Compile);
+                            bool texgen = material.TexgenMode == TexgenMode.Normal;
+                            DoDlist(model, mesh, textureWidth, textureHeight, texgen);
+                            GL.EndList();
+                            _maxListId = Math.Max(listId, _maxListId);
                         }
-                        listId = GL.GenLists(1);
-                        GL.NewList(listId, ListMode.Compile);
-                        DoDlist(model, mesh, textureWidth, textureHeight);
-                        GL.EndList();
-                        _maxListId = Math.Max(listId, _maxListId);
+                        mesh.ListId = listId;
                     }
-                    mesh.ListId = listId;
                 }
             }
         }
@@ -850,7 +851,8 @@ namespace MphRead
                 Model model = _models[i];
                 if (!_frameAdvanceOn || _advanceOneFrame)
                 {
-                    model.Process(elapsedTime, _frameCount, cameraPosition);
+                    bool useTransform = _transformRoomNodes || model.Type != ModelType.Room;
+                    model.Process(elapsedTime, _frameCount, cameraPosition, _viewInvRotMatrix, _viewInvRotYMatrix, useTransform);
                 }
                 if (model.UseLightSources)
                 {
@@ -1026,7 +1028,7 @@ namespace MphRead
                     GL.Disable(EnableCap.CullFace);
                     GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
                     Matrix4 transform = Matrix4.Identity;
-                    GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
+                    GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
                     foreach (CollisionPortal plane in _displayPlanes)
                     {
                         RenderDisplayPlane(plane);
@@ -1041,7 +1043,7 @@ namespace MphRead
                     GL.Disable(EnableCap.CullFace);
                     GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
                     Matrix4 transform = Matrix4.Identity;
-                    GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
+                    GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
                     RenderKillPlane();
                 }
                 GL.Disable(EnableCap.Blend);
@@ -1063,7 +1065,7 @@ namespace MphRead
             {
                 GL.CullFace(volume.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
                 var transform = Matrix4.CreateTranslation(volume.Position);
-                GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref transform);
+                GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
                 GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(color.Value, 0.5f));
                 RenderVolume(volume.Volume);
             }
@@ -1198,30 +1200,45 @@ namespace MphRead
         private void RenderMesh(MeshInfo item)
         {
             Model model = item.Model;
-            _modelMatrix = model.ExtraTransform;
             UseRoomLights();
             if (model.UseLightSources || model.UseLightOverride)
             {
                 UseLight1(model.Light1Vector, model.Light1Color);
                 UseLight2(model.Light2Vector, model.Light2Color);
             }
-            Node node = item.Node;
-            Matrix4 nodeTransform = node.Animation;
-            if (model.Type == ModelType.Room && !_transformRoomNodes)
+            if (model.NodeMatrixIds.Count == 0)
             {
-                nodeTransform = Matrix4.Identity;
+                Matrix4 transform = item.Node.Animation;
+                GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
             }
-            _modelMatrix = nodeTransform * _modelMatrix;
-            if (item.Node.BillboardMode == BillboardMode.Sphere)
+            else
             {
-                _modelMatrix = _viewInvRotMatrix * _modelMatrix.ClearRotation();
+                GL.UniformMatrix4(_shaderLocations.MatrixStack, model.NodeMatrixIds.Count, transpose: false, model.MatrixStackValues);
             }
-            else if (item.Node.BillboardMode == BillboardMode.Cylinder)
+            DoMaterial(model, item.Material, item.Alpha);
+            // texgen actually uses the transform from the current node, not the matrix stack
+            DoTexture(model, item.Node, item.Mesh, item.Material);
+            if (_faceCulling)
             {
-                _modelMatrix = _viewInvRotYMatrix * _modelMatrix.ClearRotation();
+                GL.Enable(EnableCap.CullFace);
+                if (item.Material.Culling == CullingMode.Neither)
+                {
+                    GL.Disable(EnableCap.CullFace);
+                }
+                else if (item.Material.Culling == CullingMode.Back)
+                {
+                    GL.CullFace(CullFaceMode.Back);
+                }
+                else if (item.Material.Culling == CullingMode.Front)
+                {
+                    GL.CullFace(CullFaceMode.Front);
+                }
             }
-            GL.UniformMatrix4(_shaderLocations.ModelMatrix, transpose: false, ref _modelMatrix);
-            RenderMesh(model, node, item.Mesh, item.Material, item.Alpha);
+            GL.PolygonMode(MaterialFace.FrontAndBack,
+                _wireframe || item.Material.Wireframe != 0
+                ? OpenTK.Graphics.OpenGL.PolygonMode.Line
+                : OpenTK.Graphics.OpenGL.PolygonMode.Fill);
+            GL.CallList(item.Mesh.ListId);
         }
 
         private const float _colorStep = 8 / 255f;
@@ -1410,33 +1427,6 @@ namespace MphRead
             return textureMatrix;
         }
 
-        private void RenderMesh(Model model, Node node, Mesh mesh, Material material, float alpha)
-        {
-            DoMaterial(model, material, alpha);
-            DoTexture(model, node, mesh, material);
-            if (_faceCulling)
-            {
-                GL.Enable(EnableCap.CullFace);
-                if (material.Culling == CullingMode.Neither)
-                {
-                    GL.Disable(EnableCap.CullFace);
-                }
-                else if (material.Culling == CullingMode.Back)
-                {
-                    GL.CullFace(CullFaceMode.Back);
-                }
-                else if (material.Culling == CullingMode.Front)
-                {
-                    GL.CullFace(CullFaceMode.Front);
-                }
-            }
-            GL.PolygonMode(MaterialFace.FrontAndBack,
-                _wireframe || material.Wireframe != 0
-                ? OpenTK.Graphics.OpenGL.PolygonMode.Line
-                : OpenTK.Graphics.OpenGL.PolygonMode.Fill);
-            GL.CallList(mesh.ListId);
-        }
-
         private void DoTexture(Model model, Node node, Mesh mesh, Material material)
         {
             int textureId = material.CurrentTextureId;
@@ -1520,59 +1510,27 @@ namespace MphRead
                     {
                         Texture texture = model.Textures[material.TextureId];
                         Debug.Assert(texture.Width == texture.Height && texture.Width > 0 && texture.Width % 2 == 0);
-                        // the nodeTransform * currentTextureMatrix multiplication is between two 4x3 into a 4x4,
-                        // but only reads/writes the upper-left 3x3 of all three matrices
-                        // todo: billboard node transforms need to work as they do in-game
                         Matrix4 product = node.Animation.Keep3x3();
-                        if (model.ExtraTexgenTransform)
+                        Matrix4 texgenMatrix = Matrix4.Identity;
+                        // in-game, there's only one uniform scale factor for models
+                        if (model.Scale.X != 1 || model.Scale.Y != 1 || model.Scale.Z != 1)
                         {
-                            product = model.ExtraTransform * product;
+                            texgenMatrix = Matrix4.CreateScale(model.Scale) * texgenMatrix;
                         }
-                        // todo: this may not be exactly equivalent to the game checking the node animation pointer
-                        // note: in-game, this also uses the some_flag CModel field or constant 0,
-                        // but none of the models with normal texgen seem to set bit 0 of that flag, so we can ignore it
-                        // --> also, Dialanche sets its pointer to 0 while attacking, but that doesn't seem to change its appearance
-                        // (at least from the controlling player's camera), so we're ignoring that too
-                        if (!model.Animations.NodeGroups.Any(n => n.Animations.Any()))
+                        if ((model.Flags & 1) > 0)
                         {
-                            var currentTextureMatrix = new Matrix4x3(
-                                model.ExtraTransform.Row0.Xyz,
-                                model.ExtraTransform.Row1.Xyz,
-                                model.ExtraTransform.Row2.Xyz,
-                                model.ExtraTransform.Row3.Xyz
-                            );
-                            // in-game, there's only one uniform scale factor for models
-                            if (model.Scale.X != 1 || model.Scale.Y != 1 || model.Scale.Z != 1)
-                            {
-                                Matrix4x3 scaleMatrix = Matrix4x3.Zero;
-                                scaleMatrix.M11 = model.Scale.X;
-                                scaleMatrix.M22 = model.Scale.Y;
-                                scaleMatrix.M33 = model.Scale.Z;
-                                currentTextureMatrix = Matrix.Concat43(scaleMatrix, currentTextureMatrix);
-                            }
-                            if ((model.Flags & 1) > 0)
-                            {
-                                var cameraMatrix = new Matrix4x3(
-                                    _viewMatrix.Row0.Xyz,
-                                    _viewMatrix.Row1.Xyz,
-                                    _viewMatrix.Row2.Xyz,
-                                    _viewMatrix.Row3.Xyz
-                                );
-                                currentTextureMatrix = Matrix.Concat43(currentTextureMatrix, cameraMatrix);
-                            }
-                            product *= currentTextureMatrix.Keep3x3();
+                            texgenMatrix = _viewMatrix * texgenMatrix;
                         }
+                        product *= texgenMatrix;
                         product.M12 *= -1;
                         product.M13 *= -1;
                         product.M22 *= -1;
                         product.M23 *= -1;
                         product.M32 *= -1;
                         product.M33 *= -1;
-                        // the texenv * modelTextureMatrix multiplications are between two 4x4 into a 4x4,
-                        // but only reads the upper 3x3 of the first matrix and upper 3x2 of the second,
-                        // and only writes the upper 3x3 of the destination
-                        product = Matrix.Multiply44(product, materialMatrix);
-                        product = Matrix.Multiply44(product, texcoordMatrix) * (1.0f / (texture.Width / 2));
+                        product *= materialMatrix;
+                        product *= texcoordMatrix;
+                        product *= (1.0f / (texture.Width / 2));
                         texcoordMatrix = new Matrix4(
                             product.Row0 * 16.0f,
                             product.Row1 * 16.0f,
@@ -1580,7 +1538,6 @@ namespace MphRead
                             product.Row3
                         );
                         texcoordMatrix.Transpose();
-                        GL.TexCoord2(0.5f, 0.5f); // this may be changed by the dlist
                     }
                 }
                 GL.Uniform1(_shaderLocations.TexgenMode, (int)material.TexgenMode);
@@ -1679,14 +1636,16 @@ namespace MphRead
             UpdateMaterials(model);
         }
 
-        private void DoDlist(Model model, Mesh mesh, int textureWidth, int textureHeight)
+        private void DoDlist(Model model, Mesh mesh, int textureWidth, int textureHeight, bool texgen)
         {
             IReadOnlyList<RenderInstruction> list = model.RenderInstructionLists[mesh.DlistId];
             float vtxX = 0;
             float vtxY = 0;
             float vtxZ = 0;
-            // note: calling this every frame will have some overhead,
-            // but baking it in on load would prevent e.g. vertex color toggle
+            float texX = texgen ? 0.5f : 0f;
+            float texY = texgen ? 0.5f : 0f;
+            uint matrixId = 0;
+            GL.TexCoord3(texX, texY, 0f);
             for (int i = 0; i < list.Count; i++)
             {
                 RenderInstruction instruction = list[i];
@@ -1784,7 +1743,9 @@ namespace MphRead
                         {
                             t = (int)(t | 0xFFFF0000);
                         }
-                        GL.TexCoord2(s / 16.0f / textureWidth, t / 16.0f / textureHeight);
+                        texX = s / 16.0f / textureWidth;
+                        texY = t / 16.0f / textureHeight;
+                        GL.TexCoord3(texX, texY, matrixId);
                     }
                     break;
                 case InstructionCode.VTX_16:
@@ -1917,12 +1878,21 @@ namespace MphRead
                     GL.End();
                     break;
                 case InstructionCode.MTX_RESTORE:
+                    // in order to allow toggling room node transforms, keep the matrix ID at 0
+                    if (model.Type != ModelType.Room)
+                    {
+                        matrixId = instruction.Arguments[0];
+                    }
+                    GL.TexCoord3(texX, texY, matrixId);
+                    break;
                 case InstructionCode.NOP:
                     break;
                 default:
                     throw new ProgramException("Unknown opcode");
                 }
             }
+            // leave the ID at 0 in case the next thing we draw doesn't use the stack
+            GL.TexCoord3(0f, 0f, 0f);
         }
 
         private async Task UnloadModel()
@@ -2083,24 +2053,24 @@ namespace MphRead
 
         protected override async void OnKeyDown(KeyboardKeyEventArgs e)
         {
-            if (e.Key == Key.Number5)
+            if (e.Key == Keys.D5)
             {
                 if (!_recording)
                 {
                     Images.Screenshot(Size.X, Size.Y);
                 }
             }
-            else if (e.Key == Key.T)
+            else if (e.Key == Keys.T)
             {
                 _showTextures = !_showTextures;
                 await PrintOutput();
             }
-            else if (e.Key == Key.C)
+            else if (e.Key == Keys.C)
             {
                 _showColors = !_showColors;
                 await PrintOutput();
             }
-            else if (e.Key == Key.Q)
+            else if (e.Key == Keys.Q)
             {
                 if (_showVolumes > 0)
                 {
@@ -2112,7 +2082,7 @@ namespace MphRead
                 }
                 await PrintOutput();
             }
-            else if (e.Key == Key.B)
+            else if (e.Key == Keys.B)
             {
                 _faceCulling = !_faceCulling;
                 if (!_faceCulling)
@@ -2121,17 +2091,17 @@ namespace MphRead
                 }
                 await PrintOutput();
             }
-            else if (e.Key == Key.F)
+            else if (e.Key == Keys.F)
             {
                 _textureFiltering = !_textureFiltering;
                 await PrintOutput();
             }
-            else if (e.Key == Key.L)
+            else if (e.Key == Keys.L)
             {
                 _lighting = !_lighting;
                 await PrintOutput();
             }
-            else if (e.Key == Key.Z)
+            else if (e.Key == Keys.Z)
             {
                 // todo: this needs to be organized
                 if (e.Control)
@@ -2168,7 +2138,7 @@ namespace MphRead
                 }
                 await PrintOutput();
             }
-            else if (e.Key == Key.G)
+            else if (e.Key == Keys.G)
             {
                 if (e.Alt)
                 {
@@ -2180,12 +2150,12 @@ namespace MphRead
                 }
                 await PrintOutput();
             }
-            else if (e.Key == Key.N)
+            else if (e.Key == Keys.N)
             {
                 _transformRoomNodes = !_transformRoomNodes;
                 await PrintOutput();
             }
-            else if (e.Key == Key.H)
+            else if (e.Key == Keys.H)
             {
                 if (e.Alt)
                 {
@@ -2196,17 +2166,17 @@ namespace MphRead
                     _showSelection = !_showSelection;
                 }
             }
-            else if (e.Key == Key.I)
+            else if (e.Key == Keys.I)
             {
                 _showInvisible = !_showInvisible;
                 await PrintOutput();
             }
-            else if (e.Key == Key.E)
+            else if (e.Key == Keys.E)
             {
                 _scanVisor = !_scanVisor;
                 await PrintOutput();
             }
-            else if (e.Key == Key.R)
+            else if (e.Key == Keys.R)
             {
                 if (e.Control && e.Shift)
                 {
@@ -2219,7 +2189,7 @@ namespace MphRead
                 }
                 await PrintOutput();
             }
-            else if (e.Key == Key.P)
+            else if (e.Key == Keys.P)
             {
                 if (e.Alt)
                 {
@@ -2240,26 +2210,26 @@ namespace MphRead
                     await PrintOutput();
                 }
             }
-            else if (e.Key == Key.Enter)
+            else if (e.Key == Keys.Enter)
             {
                 _frameAdvanceOn = !_frameAdvanceOn;
             }
-            else if (e.Key == Key.Period)
+            else if (e.Key == Keys.Period)
             {
                 if (_frameAdvanceOn)
                 {
                     _advanceOneFrame = true;
                 }
             }
-            else if (e.Control && e.Key == Key.O)
+            else if (e.Control && e.Key == Keys.O)
             {
                 await LoadModel();
             }
-            else if (e.Control && e.Key == Key.U)
+            else if (e.Control && e.Key == Keys.U)
             {
                 await UnloadModel();
             }
-            else if (e.Key == Key.M)
+            else if (e.Key == Keys.M)
             {
                 if (_models.Any(m => m.Meshes.Count > 0))
                 {
@@ -2315,20 +2285,33 @@ namespace MphRead
                     }
                 }
             }
-            else if (e.Key == Key.Plus || e.Key == Key.KeypadPlus)
+            else if (e.Key == Keys.Equal || e.Key == Keys.KeyPadEqual)
             {
                 if (e.Alt)
                 {
                     // todo: select other animation types, and enable playing in reverse
                     if (_selectionMode == SelectionMode.Model && _modelMap.TryGetValue(_selectedModelId, out Model? model))
                     {
-                        int id = model.Animations.NodeGroupId + 1;
-                        if (id >= model.Animations.NodeGroups.Count)
+                        if (e.Control)
                         {
-                            id = -1;
+                            int id = model.Animations.MaterialGroupId + 1;
+                            if (id >= model.Animations.MaterialGroups.Count)
+                            {
+                                id = -1;
+                            }
+                            model.Animations.MaterialGroupId = id;
+                            await PrintOutput();
                         }
-                        model.Animations.NodeGroupId = id;
-                        await PrintOutput();
+                        else
+                        {
+                            int id = model.Animations.NodeGroupId + 1;
+                            if (id >= model.Animations.NodeGroups.Count)
+                            {
+                                id = -1;
+                            }
+                            model.Animations.NodeGroupId = id;
+                            await PrintOutput();
+                        }
                     }
                 }
                 else
@@ -2336,19 +2319,32 @@ namespace MphRead
                     await SelectNextModel(e.Shift);
                 }
             }
-            else if (e.Key == Key.Minus || e.Key == Key.KeypadMinus)
+            else if (e.Key == Keys.Minus || e.Key == Keys.KeyPadSubtract)
             {
                 if (e.Alt)
                 {
                     if (_selectionMode == SelectionMode.Model && _modelMap.TryGetValue(_selectedModelId, out Model? model))
                     {
-                        int id = model.Animations.NodeGroupId - 1;
-                        if (id < -1)
+                        if (e.Control)
                         {
-                            id = model.Animations.NodeGroups.Count - 1;
+                            int id = model.Animations.MaterialGroupId - 1;
+                            if (id < -1)
+                            {
+                                id = model.Animations.MaterialGroups.Count - 1;
+                            }
+                            model.Animations.MaterialGroupId = id;
+                            await PrintOutput();
                         }
-                        model.Animations.NodeGroupId = id;
-                        await PrintOutput();
+                        else
+                        {
+                            int id = model.Animations.NodeGroupId - 1;
+                            if (id < -1)
+                            {
+                                id = model.Animations.NodeGroups.Count - 1;
+                            }
+                            model.Animations.NodeGroupId = id;
+                            await PrintOutput();
+                        }
                     }
                 }
                 else
@@ -2356,7 +2352,7 @@ namespace MphRead
                     await SelectPreviousModel(e.Shift);
                 }
             }
-            else if (e.Key == Key.X)
+            else if (e.Key == Keys.X)
             {
                 if (_selectionMode == SelectionMode.Model)
                 {
@@ -2395,7 +2391,7 @@ namespace MphRead
                     LookAt(SelectedModel.Nodes[_selectedNodeId].Position);
                 }
             }
-            else if (e.Key == Key.Number0 || e.Key == Key.Keypad0)
+            else if (e.Key == Keys.D0 || e.Key == Keys.KeyPad0)
             {
                 if (_selectionMode == SelectionMode.Model)
                 {
@@ -2413,7 +2409,7 @@ namespace MphRead
                     await PrintOutput();
                 }
             }
-            else if (e.Key == Key.Number1 || e.Key == Key.Keypad1)
+            else if (e.Key == Keys.D1 || e.Key == Keys.KeyPad1)
             {
                 if (_selectionMode == SelectionMode.Model && SelectedModel.Recolors.Count > 1)
                 {
@@ -2428,7 +2424,7 @@ namespace MphRead
                     await PrintOutput();
                 }
             }
-            else if (e.Key == Key.Number2 || e.Key == Key.Keypad2)
+            else if (e.Key == Keys.D2 || e.Key == Keys.KeyPad2)
             {
                 if (_selectionMode == SelectionMode.Model && SelectedModel.Recolors.Count > 1)
                 {
@@ -2443,7 +2439,7 @@ namespace MphRead
                     await PrintOutput();
                 }
             }
-            else if (e.Key == Key.Escape)
+            else if (e.Key == Keys.Escape)
             {
                 await Output.End();
                 Close();
@@ -2668,17 +2664,17 @@ namespace MphRead
 
         private void OnKeyHeld()
         {
-            if ((KeyboardState.IsKeyDown(Key.AltLeft) || KeyboardState.IsKeyDown(Key.AltRight))
+            if ((KeyboardState.IsKeyDown(Keys.LeftAlt) || KeyboardState.IsKeyDown(Keys.RightAlt))
                 && _selectionMode == SelectionMode.Model)
             {
                 MoveModel();
                 return;
             }
             // sprint
-            float step = KeyboardState.IsKeyDown(Key.ShiftLeft) || KeyboardState.IsKeyDown(Key.ShiftRight) ? 5 : 1;
+            float step = KeyboardState.IsKeyDown(Keys.LeftShift) || KeyboardState.IsKeyDown(Keys.RightShift) ? 5 : 1;
             if (_cameraMode == CameraMode.Roam)
             {
-                if (KeyboardState.IsKeyDown(Key.W)) // move forward
+                if (KeyboardState.IsKeyDown(Keys.W)) // move forward
                 {
                     _cameraPosition = new Vector3(
                         _cameraPosition.X +
@@ -2691,7 +2687,7 @@ namespace MphRead
                             * MathF.Cos(MathHelper.DegreesToRadians(_angleX)) * 0.1f
                     );
                 }
-                else if (KeyboardState.IsKeyDown(Key.S)) // move backward
+                else if (KeyboardState.IsKeyDown(Keys.S)) // move backward
                 {
                     _cameraPosition = new Vector3(
                         _cameraPosition.X -
@@ -2704,15 +2700,15 @@ namespace MphRead
                             * MathF.Cos(MathHelper.DegreesToRadians(_angleX)) * 0.1f
                     );
                 }
-                if (KeyboardState.IsKeyDown(Key.Space)) // move up
+                if (KeyboardState.IsKeyDown(Keys.Space)) // move up
                 {
                     _cameraPosition = new Vector3(_cameraPosition.X, _cameraPosition.Y - step * 0.1f, _cameraPosition.Z);
                 }
-                else if (KeyboardState.IsKeyDown(Key.V)) // move down
+                else if (KeyboardState.IsKeyDown(Keys.V)) // move down
                 {
                     _cameraPosition = new Vector3(_cameraPosition.X, _cameraPosition.Y + step * 0.1f, _cameraPosition.Z);
                 }
-                if (KeyboardState.IsKeyDown(Key.A)) // move left
+                if (KeyboardState.IsKeyDown(Keys.A)) // move left
                 {
                     float angleX = _angleY - 90;
                     if (angleX < 0)
@@ -2729,7 +2725,7 @@ namespace MphRead
                             * 0.1f
                     );
                 }
-                else if (KeyboardState.IsKeyDown(Key.D)) // move right
+                else if (KeyboardState.IsKeyDown(Keys.D)) // move right
                 {
                     float angleX = _angleY + 90;
                     if (angleX > 360)
@@ -2746,24 +2742,24 @@ namespace MphRead
                             * 0.1f
                     );
                 }
-                step = KeyboardState.IsKeyDown(Key.ShiftLeft) ? -3 : -1.5f;
+                step = KeyboardState.IsKeyDown(Keys.LeftShift) || KeyboardState.IsKeyDown(Keys.RightShift) ? -3 : -1.5f;
             }
-            if (KeyboardState.IsKeyDown(Key.Up)) // rotate up
+            if (KeyboardState.IsKeyDown(Keys.Up)) // rotate up
             {
                 _angleX += step;
                 _angleX = Math.Clamp(_angleX, -90.0f, 90.0f);
             }
-            else if (KeyboardState.IsKeyDown(Key.Down)) // rotate down
+            else if (KeyboardState.IsKeyDown(Keys.Down)) // rotate down
             {
                 _angleX -= step;
                 _angleX = Math.Clamp(_angleX, -90.0f, 90.0f);
             }
-            if (KeyboardState.IsKeyDown(Key.Left)) // rotate left
+            if (KeyboardState.IsKeyDown(Keys.Left)) // rotate left
             {
                 _angleY += step;
                 _angleY %= 360f;
             }
-            else if (KeyboardState.IsKeyDown(Key.Right)) // rotate right
+            else if (KeyboardState.IsKeyDown(Keys.Right)) // rotate right
             {
                 _angleY -= step;
                 _angleY %= 360f;
@@ -2773,52 +2769,52 @@ namespace MphRead
         private void MoveModel()
         {
             float step = 0.1f;
-            if (KeyboardState.IsKeyDown(Key.W)) // move Z-
+            if (KeyboardState.IsKeyDown(Keys.W)) // move Z-
             {
                 SelectedModel.Position = SelectedModel.Position.WithZ(SelectedModel.Position.Z - step);
             }
-            else if (KeyboardState.IsKeyDown(Key.S)) // move Z+
+            else if (KeyboardState.IsKeyDown(Keys.S)) // move Z+
             {
                 SelectedModel.Position = SelectedModel.Position.WithZ(SelectedModel.Position.Z + step);
             }
-            if (KeyboardState.IsKeyDown(Key.Space)) // move Y+
+            if (KeyboardState.IsKeyDown(Keys.Space)) // move Y+
             {
                 SelectedModel.Position = SelectedModel.Position.WithY(SelectedModel.Position.Y + step);
             }
-            else if (KeyboardState.IsKeyDown(Key.V)) // move Y-
+            else if (KeyboardState.IsKeyDown(Keys.V)) // move Y-
             {
                 SelectedModel.Position = SelectedModel.Position.WithY(SelectedModel.Position.Y - step);
             }
-            if (KeyboardState.IsKeyDown(Key.A)) // move X-
+            if (KeyboardState.IsKeyDown(Keys.A)) // move X-
             {
                 SelectedModel.Position = SelectedModel.Position.WithX(SelectedModel.Position.X - step);
             }
-            else if (KeyboardState.IsKeyDown(Key.D)) // move X+
+            else if (KeyboardState.IsKeyDown(Keys.D)) // move X+
             {
                 SelectedModel.Position = SelectedModel.Position.WithX(SelectedModel.Position.X + step);
             }
             // todo: some transforms (sniper targets in UNIT4_RM2) aren't consistent when first changing the rotation
             step = 2.5f;
             Vector3 rotation = SelectedModel.Rotation;
-            if (KeyboardState.IsKeyDown(Key.Up)) // rotate up
+            if (KeyboardState.IsKeyDown(Keys.Up)) // rotate up
             {
                 rotation.X += step;
                 rotation.X %= 360f;
                 SelectedModel.Rotation = rotation;
             }
-            else if (KeyboardState.IsKeyDown(Key.Down)) // rotate down
+            else if (KeyboardState.IsKeyDown(Keys.Down)) // rotate down
             {
                 rotation.X -= step;
                 rotation.X %= 360f;
                 SelectedModel.Rotation = rotation;
             }
-            if (KeyboardState.IsKeyDown(Key.Left)) // rotate left
+            if (KeyboardState.IsKeyDown(Keys.Left)) // rotate left
             {
                 rotation.Y += step;
                 rotation.Y %= 360f;
                 SelectedModel.Rotation = rotation;
             }
-            else if (KeyboardState.IsKeyDown(Key.Right)) // rotate right
+            else if (KeyboardState.IsKeyDown(Keys.Right)) // rotate right
             {
                 rotation.Y -= step;
                 rotation.Y %= 360f;

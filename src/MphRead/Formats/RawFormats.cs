@@ -290,10 +290,10 @@ namespace MphRead
         public readonly uint MaterialOffset;
         public readonly uint DlistOffset;
         public readonly uint NodeOffset;
-        public readonly ushort NodeAnimationCount;
+        public readonly ushort NodeWeightCount;
         public readonly byte Flags; // always 0 in the file
         public readonly byte Field1F;
-        public readonly uint UnknownNodeId;
+        public readonly uint NodeWeightOffset;
         public readonly uint MeshOffset;
         public readonly ushort TextureCount;
         public readonly ushort Field2A;
@@ -476,9 +476,9 @@ namespace MphRead
     // size: 28
     public readonly struct RawEffect
     {
-        public readonly uint Field0; // always garbage in the file
-        public readonly uint Count1;
-        public readonly uint Offset1;
+        public readonly uint Field0; // always 0xCCCCCCCC in the file
+        public readonly uint FuncCount;
+        public readonly uint FuncOffset;
         public readonly uint Count2;
         public readonly uint Offset2;
         public readonly uint ElementCount;
@@ -494,6 +494,8 @@ namespace MphRead
         public readonly char[] ModelName;
         public readonly uint ParticleCount;
         public readonly uint ParticleOffset;
+        // note: sparksDown_PS.bin (unused) has an element struct of 112 bytes
+        // which is probably missing Flags, Field4C, Field50, or Field54
         public readonly uint Flags;
         public readonly uint Field4C;
         public readonly uint Field50;

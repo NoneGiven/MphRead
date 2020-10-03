@@ -176,8 +176,8 @@ namespace MphRead
 
         public IReadOnlyList<Recolor> Recolors { get; }
 
-        public IReadOnlyList<uint> NodeIds { get; }
-        public IReadOnlyList<uint> WeightIds { get; }
+        public IReadOnlyList<int> NodeMatrixIds { get; }
+        public float[] MatrixStackValues { get; }
 
         // todo: refactor model vs. entity abstraction
         private Entity? _entity = null;
@@ -215,7 +215,7 @@ namespace MphRead
             IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
             IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
             IReadOnlyList<Matrix4> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor, bool useLightSources,
-            IReadOnlyList<uint> nodeIds, IReadOnlyList<uint> weightIds)
+            IReadOnlyList<int> nodeWeights)
         {
             ThrowIfInvalidEnums(materials);
             Name = name;
@@ -232,17 +232,46 @@ namespace MphRead
             float scale = Header.ScaleBase.FloatValue * (1 << (int)Header.ScaleFactor);
             Scale = new Vector3(scale, scale, scale);
             UseLightSources = useLightSources;
-            NodeIds = nodeIds;
-            WeightIds = weightIds;
+            Debug.Assert(header.NodeWeightCount == nodeWeights.Count);
+            NodeMatrixIds = nodeWeights;
+            if (header.NodeWeightCount > 0)
+            {
+                var values = new List<float>();
+                Matrix4 identity = Matrix4.Identity;
+                for (int i = 0; i < header.NodeWeightCount; i++)
+                {
+                    values.Add(identity.M11);
+                    values.Add(identity.M12);
+                    values.Add(identity.M13);
+                    values.Add(identity.M14);
+                    values.Add(identity.M21);
+                    values.Add(identity.M22);
+                    values.Add(identity.M23);
+                    values.Add(identity.M24);
+                    values.Add(identity.M31);
+                    values.Add(identity.M32);
+                    values.Add(identity.M33);
+                    values.Add(identity.M34);
+                    values.Add(identity.M41);
+                    values.Add(identity.M42);
+                    values.Add(identity.M43);
+                    values.Add(identity.M44);
+                }
+                MatrixStackValues = values.ToArray();
+            }
+            else
+            {
+                MatrixStackValues = new float[] { };
+            }
             Flags = header.Flags;
             if (materials.Any(m => m.Lighting > 0))
             {
                 Flags |= 1;
             }
-            // unlike Morph Ball, Dialanche applies its rotation to the root node transform
-            if (Name == "SpireAlt_lod0")
+            // manually disable a decal that isn't rendered in-game because it's not on a surface
+            if (Name == "UNIT2_C6")
             {
-                ExtraTexgenTransform = true;
+                Nodes[46].Enabled = false;
             }
         }
 
@@ -261,10 +290,9 @@ namespace MphRead
             CurrentRecolor = other.CurrentRecolor;
             Scale = other.Scale;
             UseLightSources = other.UseLightSources;
-            NodeIds = other.NodeIds;
-            WeightIds = other.WeightIds;
+            NodeMatrixIds = other.NodeMatrixIds;
+            MatrixStackValues = other.MatrixStackValues;
             Flags = other.Flags;
-            ExtraTexgenTransform = other.ExtraTexgenTransform;
         }
 
         public IEnumerable<ColorRgba> GetPixels(int textureId, int paletteId)
@@ -431,9 +459,9 @@ namespace MphRead
         }
 
         public Matrix4 ExtraTransform { get; private set; } = Matrix4.Identity;
-        public bool ExtraTexgenTransform { get; }
 
-        public virtual void Process(double elapsedTime, long frameCount, Vector3 cameraPosition)
+        public virtual void Process(double elapsedTime, long frameCount, Vector3 cameraPosition,
+            Matrix4 viewInvRot, Matrix4 viewInvRotY, bool useTransform)
         {
             // todo: FPS stuff
             if (frameCount != 0 && frameCount % 2 == 0)
@@ -463,28 +491,46 @@ namespace MphRead
             }
             if (Nodes.Count > 0)
             {
-                if (Animations.NodeGroups.Count > 0)
+                AnimateNodes(0, useTransform);
+                for (int i = 0; i < NodeMatrixIds.Count; i++)
                 {
-                    AnimateNodes(0);
-                }
-                else
-                {
-                    for (int i = 0; i < Nodes.Count; i++)
+                    Node node = Nodes[NodeMatrixIds[i]];
+                    Matrix4 transform = node.Animation;
+                    if (node.BillboardMode == BillboardMode.Sphere)
                     {
-                        Node node = Nodes[i];
-                        node.Animation = node.Transform;
+                        transform = viewInvRot * transform.ClearRotation();
                     }
+                    else if (node.BillboardMode == BillboardMode.Cylinder)
+                    {
+                        transform = viewInvRotY * transform.ClearRotation();
+                    }
+                    MatrixStackValues[0 + 16 * i] = transform.M11;
+                    MatrixStackValues[1 + 16 * i] = transform.M12;
+                    MatrixStackValues[2 + 16 * i] = transform.M13;
+                    MatrixStackValues[3 + 16 * i] = transform.M14;
+                    MatrixStackValues[4 + 16 * i] = transform.M21;
+                    MatrixStackValues[5 + 16 * i] = transform.M22;
+                    MatrixStackValues[6 + 16 * i] = transform.M23;
+                    MatrixStackValues[7 + 16 * i] = transform.M24;
+                    MatrixStackValues[8 + 16 * i] = transform.M31;
+                    MatrixStackValues[9 + 16 * i] = transform.M32;
+                    MatrixStackValues[10 + 16 * i] = transform.M33;
+                    MatrixStackValues[11 + 16 * i] = transform.M34;
+                    MatrixStackValues[12 + 16 * i] = transform.M41;
+                    MatrixStackValues[13 + 16 * i] = transform.M42;
+                    MatrixStackValues[14 + 16 * i] = transform.M43;
+                    MatrixStackValues[15 + 16 * i] = transform.M44;
                 }
             }
         }
 
-        private void AnimateNodes(int index)
+        private void AnimateNodes(int index, bool useTransform)
         {
             for (int i = index; i != UInt16.MaxValue;)
             {
                 Node node = Nodes[i];
                 NodeAnimationGroup? group = Animations.NodeGroup;
-                Matrix4 transform = node.Transform;
+                Matrix4 transform = useTransform ? node.Transform : Matrix4.Identity;
                 if (group != null && group.Animations.TryGetValue(node.Name, out NodeAnimation animation))
                 {
                     // todo: move this and other stuff
@@ -497,8 +543,9 @@ namespace MphRead
                 node.Animation = transform;
                 if (node.ChildIndex != UInt16.MaxValue)
                 {
-                    AnimateNodes(node.ChildIndex);
+                    AnimateNodes(node.ChildIndex, useTransform);
                 }
+                node.Animation *= ExtraTransform;
                 i = node.NextIndex;
             }
         }
