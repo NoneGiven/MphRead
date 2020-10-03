@@ -64,20 +64,20 @@ namespace MphRead
             {
                 new RecolorMetadata("default", meta.ModelPath, meta.TexturePath ?? meta.ModelPath)
             };
-            Model room = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, recolors,
-                defaultRecolor: 0, useLightSources: false, firstHunt: meta.FirstHunt || meta.Hybrid);
+            Model room = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, animationShare: null,
+                recolors, defaultRecolor: 0, useLightSources: false, firstHunt: meta.FirstHunt || meta.Hybrid);
             return new RoomModel(room);
         }
 
         private static Model GetModel(ModelMetadata meta, int defaultRecolor)
         {
-            Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.Recolors, defaultRecolor,
-                meta.UseLightSources, firstHunt: meta.FirstHunt);
+            Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.AnimationShare, meta.Recolors,
+                defaultRecolor, meta.UseLightSources, firstHunt: meta.FirstHunt);
             return model;
         }
 
-        private static Model GetModel(string name, string modelPath, string? animationPath, IReadOnlyList<RecolorMetadata> recolorMeta,
-            int defaultRecolor, bool useLightSources, bool firstHunt)
+        private static Model GetModel(string name, string modelPath, string? animationPath, string? animationShare,
+            IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor, bool useLightSources, bool firstHunt)
         {
             if (defaultRecolor < 0 || defaultRecolor > recolorMeta.Count - 1)
             {
@@ -173,6 +173,15 @@ namespace MphRead
             }
             IReadOnlyList<int> nodeWeights = DoOffsets<int>(initialBytes, header.NodeWeightOffset, header.NodeWeightCount);
             AnimationResults animations = LoadAnimation(name, animationPath, nodes, firstHunt);
+            if (animationShare != null)
+            {
+                AnimationResults shared = LoadAnimation(name, animationShare, nodes, firstHunt);
+                shared.NodeAnimationGroups.AddRange(animations.NodeAnimationGroups);
+                shared.MaterialAnimationGroups.AddRange(animations.MaterialAnimationGroups);
+                shared.TexcoordAnimationGroups.AddRange(animations.TexcoordAnimationGroups);
+                shared.TextureAnimationGroups.AddRange(animations.TextureAnimationGroups);
+                animations = shared;
+            }
             return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
                 textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights);

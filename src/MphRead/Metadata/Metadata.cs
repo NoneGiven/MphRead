@@ -18,13 +18,14 @@ namespace MphRead
         public string Name { get; }
         public string ModelPath { get; }
         public string? AnimationPath { get; }
+        public string? AnimationShare { get; }
         public string? CollisionPath { get; }
         public IReadOnlyList<RecolorMetadata> Recolors { get; }
         public bool UseLightSources { get; }
         public bool FirstHunt { get; }
 
         public ModelMetadata(string name, string modelPath, string? animationPath, string? collisionPath,
-            IReadOnlyList<RecolorMetadata> recolors, bool useLightSources = false)
+            IReadOnlyList<RecolorMetadata> recolors, string? animationShare = null, bool useLightSources = false)
         {
             Name = name;
             ModelPath = modelPath;
@@ -32,6 +33,10 @@ namespace MphRead
             CollisionPath = collisionPath;
             Recolors = recolors;
             UseLightSources = useLightSources;
+            if (animationShare != null)
+            {
+                AnimationShare = animationShare;
+            }
         }
 
         public ModelMetadata(string name, string? animationPath, string? texturePath = null)
@@ -67,9 +72,9 @@ namespace MphRead
             FirstHunt = firstHunt;
         }
 
-        public ModelMetadata(string name, IEnumerable<string> recolors, string? remove = null,
-            bool animation = false, string? animationPath = null, bool texture = false, MdlSuffix mdlSuffix = MdlSuffix.None,
-            string? archive = null, string? recolorName = null, bool useLightSources = false, bool firstHunt = false)
+        public ModelMetadata(string name, IEnumerable<string> recolors, string? remove = null, bool animation = false,
+            string? animationPath = null, bool texture = false, MdlSuffix mdlSuffix = MdlSuffix.None, string? archive = null,
+            string? recolorName = null, string? animationShare = null, bool useLightSources = false, bool firstHunt = false)
         {
             Name = name;
             string suffix = "";
@@ -107,6 +112,10 @@ namespace MphRead
                 {
                     AnimationPath = $@"models\{name}{suffix}_Anim.bin";
                 }
+            }
+            if (animationShare != null)
+            {
+                AnimationShare = animationShare;
             }
             var recolorList = new List<RecolorMetadata>();
             foreach (string recolor in recolors)
@@ -1924,6 +1933,7 @@ namespace MphRead
                         texture: true,
                         archive: "Guardian",
                         animationPath: @"_archives\Guardian\Guardian_Anim.bin",
+                        animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -1936,6 +1946,7 @@ namespace MphRead
                         },
                         texture: true,
                         animationPath: @"_archives\Guardian\Guardian_Anim.bin",
+                        animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 // next two not part of the game's files, edited to allow choosing the unused recolors
@@ -1971,7 +1982,9 @@ namespace MphRead
                                 modelPath: @"models\GuardianR_pal_Team02_Model.bin",
                                 texturePath: @"models\GuardianR_pal_Team02_Tex.bin",
                                 palettePath: @"models\GuardianR_pal_Team02_Tex.bin")
-                        }, useLightSources: true)
+                        },
+                        animationShare: @"models\SamusSharedAnim_Anim.bin",
+                        useLightSources: true)
                 },
                 {
                     "GuardianR_lod1",
@@ -2005,7 +2018,9 @@ namespace MphRead
                                 modelPath: @"models\GuardianR_pal_Team02_Model.bin",
                                 texturePath: @"models\GuardianR_pal_Team02_Tex.bin",
                                 palettePath: @"models\GuardianR_pal_Team02_Tex.bin")
-                        }, useLightSources: true)
+                        },
+                        animationShare: @"models\SamusSharedAnim_Anim.bin",
+                        useLightSources: true)
                 },
                 {
                     "Guardian_Stasis",
@@ -2104,7 +2119,8 @@ namespace MphRead
                         animation: true,
                         texture: true,
                         archive: "Kanden",
-                        useLightSources: true) // todo: confirm lod0 vs. lod1 for using light sources
+                        animationShare: @"models\SamusSharedAnim_Anim.bin",
+                        useLightSources: true)
                 },
                 {
                     "Kanden_lod1",
@@ -2122,6 +2138,7 @@ namespace MphRead
                         animation: true,
                         animationPath: $@"_archives\Kanden\Kanden_Anim.bin",
                         texture: true,
+                        animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2258,6 +2275,7 @@ namespace MphRead
                         animation: true,
                         texture: true,
                         archive: "Nox",
+                        animationShare: @"models\NoxSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2276,6 +2294,7 @@ namespace MphRead
                         animation: true,
                         animationPath: $@"_archives\Nox\Nox_Anim.bin",
                         texture: true,
+                        animationShare: @"models\NoxSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2543,6 +2562,7 @@ namespace MphRead
                         animation: true,
                         texture: true,
                         archive: "Samus",
+                        animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2561,6 +2581,7 @@ namespace MphRead
                         animation: true,
                         animationPath: $@"_archives\Samus\Samus_Anim.bin",
                         texture: true,
+                        animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2715,6 +2736,7 @@ namespace MphRead
                         animation: true,
                         animationPath: $@"_archives\Spire\Spire_Anim.bin",
                         texture: true,
+                        animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2734,6 +2756,7 @@ namespace MphRead
                         texture: true,
                         archive: "Spire",
                         recolorName: "Spire",
+                        animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2780,6 +2803,7 @@ namespace MphRead
                         animation: true,
                         texture: true,
                         archive: "Sylux",
+                        animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2798,6 +2822,7 @@ namespace MphRead
                         animation: true,
                         animationPath: $@"_archives\Sylux\Sylux_Anim.bin",
                         texture: true,
+                        animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2988,6 +3013,7 @@ namespace MphRead
                         animation: true,
                         texture: true,
                         archive: "Trace",
+                        animationShare: @"models\NoxSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -3006,6 +3032,7 @@ namespace MphRead
                         animation: true,
                         animationPath: $@"_archives\Trace\Trace_Anim.bin",
                         texture: true,
+                        animationShare: @"models\NoxSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -3184,6 +3211,7 @@ namespace MphRead
                         animation: true,
                         texture: true,
                         archive: "Weavel",
+                        animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -3202,6 +3230,7 @@ namespace MphRead
                         animation: true,
                         animationPath: $@"_archives\Weavel\Weavel_Anim.bin",
                         texture: true,
+                        animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
