@@ -172,7 +172,7 @@ namespace MphRead
                 textureMatrices.Add(textureMatrix);
             }
             IReadOnlyList<int> nodeWeights = DoOffsets<int>(initialBytes, header.NodeWeightOffset, header.NodeWeightCount);
-            AnimationResults animations = LoadAnimation(animationPath, nodes, firstHunt);
+            AnimationResults animations = LoadAnimation(name, animationPath, nodes, firstHunt);
             return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
                 textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights);
@@ -186,7 +186,7 @@ namespace MphRead
             public List<TextureAnimationGroup> TextureAnimationGroups { get; } = new List<TextureAnimationGroup>();
         }
 
-        private static AnimationResults LoadAnimation(string? path, IReadOnlyList<RawNode> nodes, bool firstHunt)
+        private static AnimationResults LoadAnimation(string model, string? path, IReadOnlyList<RawNode> nodes, bool firstHunt)
         {
             var results = new AnimationResults();
             if (path == null)
@@ -228,8 +228,15 @@ namespace MphRead
                 RawNodeAnimationGroup rawGroup = DoOffset<RawNodeAnimationGroup>(bytes, offset);
                 Debug.Assert(offset > rawGroup.AnimationOffset);
                 Debug.Assert((offset - rawGroup.AnimationOffset) % Sizes.NodeAnimation == 0);
+                int count = nodes.Count;
+                // this group has one less animation than the model has nodes
+                // todo: figure out if this is necessary
+                if (model == "GuardBot1" && offset == 2300)
+                {
+                    count--;
+                }
                 IReadOnlyList<NodeAnimation> rawAnimations
-                    = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, nodes.Count);
+                    = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, count);
                 var animations = new Dictionary<string, NodeAnimation>();
                 int i = 0;
                 foreach (NodeAnimation animation in rawAnimations)
