@@ -268,10 +268,10 @@ namespace MphRead
             {
                 Flags |= 1;
             }
-            // unlike Morph Ball, Dialanche applies its rotation to the root node transform
-            if (Name == "SpireAlt_lod0")
+            // manually disable a decal that isn't rendered in-game because it's not on a surface
+            if (Name == "UNIT2_C6")
             {
-                ExtraTexgenTransform = true;
+                Nodes[46].Enabled = false;
             }
         }
 
@@ -293,7 +293,6 @@ namespace MphRead
             NodeMatrixIds = other.NodeMatrixIds;
             MatrixStackValues = other.MatrixStackValues;
             Flags = other.Flags;
-            ExtraTexgenTransform = other.ExtraTexgenTransform;
         }
 
         public IEnumerable<ColorRgba> GetPixels(int textureId, int paletteId)
@@ -460,7 +459,6 @@ namespace MphRead
         }
 
         public Matrix4 ExtraTransform { get; private set; } = Matrix4.Identity;
-        public bool ExtraTexgenTransform { get; }
 
         public virtual void Process(double elapsedTime, long frameCount, Vector3 cameraPosition,
             Matrix4 viewInvRot, Matrix4 viewInvRotY, bool useTransform)
