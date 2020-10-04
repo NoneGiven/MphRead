@@ -650,7 +650,7 @@ namespace MphRead
         {
             /*  0 */ new PlatformMetadata("platform"),
             /*  1 */ null, // duplicate of 0
-            /*  2 */ null, // todo: figure out what this "platform" is
+            /*  2 */ null, // arcWelder or energyBeam
             /*  3 */ new PlatformMetadata("Elevator"),
             /*  4 */ new PlatformMetadata("smasher"),
             /*  5 */ new PlatformMetadata("Platform_Unit4_C1", someFlag: 1),
