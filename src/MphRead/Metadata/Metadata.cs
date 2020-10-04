@@ -2718,6 +2718,7 @@ namespace MphRead
                         animation: true,
                         texture: true,
                         archive: "Spire",
+                        animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2756,7 +2757,6 @@ namespace MphRead
                         texture: true,
                         archive: "Spire",
                         recolorName: "Spire",
-                        animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
