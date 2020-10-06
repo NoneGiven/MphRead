@@ -145,7 +145,7 @@ def set_back_culling(name):
 def invert_normals(name):
     if (bpy.context.object.mode != 'OBJECT'):
         bpy.ops.object.mode_set(mode = 'OBJECT')
-    bpy.ops.object.select_all(action=  'DESELECT')
+    bpy.ops.object.select_all(action = 'DESELECT')
     bpy.context.active_object.select_set(False)
     for obj in bpy.context.selected_objects:
         bpy.context.view_layer.objects.active = None

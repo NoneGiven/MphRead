@@ -1397,6 +1397,7 @@ namespace MphRead
                 animation.TranslateBlendY, animation.TranslateLutLengthY, group.FrameCount);
             float translateZ = InterpolateAnimation(group.Translations, animation.TranslateLutIndexZ, group.CurrentFrame,
                 animation.TranslateBlendZ, animation.TranslateLutLengthZ, group.FrameCount);
+            // todo: hunter scale factors/any others?
             var nodeMatrix = Matrix4.CreateTranslation(translateX / modelScale.X, translateY / modelScale.Y, translateZ / modelScale.Z);
             nodeMatrix = Matrix4.CreateRotationX(rotateX) * Matrix4.CreateRotationY(rotateY) * Matrix4.CreateRotationZ(rotateZ) * nodeMatrix;
             nodeMatrix = Matrix4.CreateScale(scaleX, scaleY, scaleZ) * nodeMatrix;
