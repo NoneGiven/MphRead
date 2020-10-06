@@ -558,7 +558,6 @@ namespace MphRead
             }
             if (_advanceOneFrame)
             {
-                await PrintOutput();
                 _advanceOneFrame = false;
             }
             base.OnRenderFrame(args);
