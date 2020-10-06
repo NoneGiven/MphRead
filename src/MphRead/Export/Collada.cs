@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using OpenTK.Mathematics;
 
@@ -9,12 +10,22 @@ namespace MphRead.Export
 {
     public static class Collada
     {
-        private struct Vertex
+        private readonly struct Vertex
         {
-            public Vector3 Position { get; set; }
-            public Vector3 Normal { get; set; }
-            public Vector3 Color { get; set; }
-            public Vector2 Uv { get; set; }
+            public readonly Vector3 Position;
+            public readonly Vector3 Normal;
+            public readonly Vector3 Color;
+            public readonly Vector2 Uv;
+            public readonly int MatrixId;
+
+            public Vertex(Vector3 position, Vector3 normal, Vector3 color, Vector2 uv, int matrixId)
+            {
+                Position = position;
+                Normal = normal;
+                Color = color;
+                Uv = uv;
+                MatrixId = matrixId;
+            }
         }
 
         private static string FloatFormat(Vector3 vector)
@@ -43,14 +54,22 @@ namespace MphRead.Export
         {
             string exportPath = Path.Combine(Paths.Export, model.Name);
             Directory.CreateDirectory(exportPath);
+            var lists = new List<IReadOnlyList<Vertex>>();
             for (int i = 0; i < model.Recolors.Count; i++)
             {
-                ExportRecolor(model, transformRoom, i);
+                lists.Add(ExportRecolor(model, transformRoom, i));
+            }
+            for (int i = 1; i < lists.Count; i++)
+            {
+                if (!Enumerable.SequenceEqual(lists[i], lists[i - 1]))
+                {
+                    throw new ProgramException("Export failed due to mismatching vertices in recolors.");
+                }
             }
             File.WriteAllText(Path.Combine(exportPath, $"import_{model.Name}.py"), Scripting.GenerateScript(model));
         }
 
-        private static void ExportRecolor(Model model, bool transformRoom, int recolorIndex)
+        private static IReadOnlyList<Vertex> ExportRecolor(Model model, bool transformRoom, int recolorIndex)
         {
             Recolor recolor = model.Recolors[recolorIndex];
             var sb = new StringBuilder();
@@ -304,13 +323,7 @@ namespace MphRead.Export
                         {
                             newUv = new Vector2(newUv.X, MathHelper.Clamp(newUv.Y, 0f, 1f));
                         }
-                        var newVert = new Vertex()
-                        {
-                            Position = vert.Position,
-                            Color = vert.Color,
-                            Normal = vert.Normal,
-                            Uv = newUv
-                        };
+                        var newVert = new Vertex(vert.Position, vert.Color, vert.Normal, newUv, vert.MatrixId);
                         string texCoord = $"{FloatFormat(newVert.Uv.X)} {FloatFormat(1 - newVert.Uv.Y)} ";
                         sb.Append(texCoord);
                         meshVerts.RemoveAt(i);
@@ -487,6 +500,7 @@ namespace MphRead.Export
 
             string exportPath = Path.Combine(Paths.Export, model.Name);
             File.WriteAllText(Path.Combine(exportPath, $"{model.Name}_{recolor.Name}.dae"), sb.ToString());
+            return meshVerts;
         }
 
         private static void ExportNodes(Model model, int parentId, StringBuilder sb, int indent, bool transformRoom)
@@ -580,14 +594,18 @@ namespace MphRead.Export
             float[] nrm_state = { 0.0f, 0.0f, 0.0f };
             float[] uv_state = { 0.0f, 0.0f };
             float[] col_state = { 1.0f, 1.0f, 1.0f };
+            int mtx_state = 0;
             int curMeshType = 0;
             bool curMeshActive = false;
             IReadOnlyList<RenderInstruction> list = model.RenderInstructionLists[dlistId];
-            // todo: DIF_AMB, at least
+            // todo: support DIF_AMB somehow
             foreach (RenderInstruction instruction in list)
             {
                 switch (instruction.Code)
                 {
+                case InstructionCode.MTX_RESTORE:
+                    mtx_state = (int)instruction.Arguments[0];
+                    break;
                 case InstructionCode.BEGIN_VTXS:
                     if (instruction.Arguments[0] < 0 || instruction.Arguments[0] > 3)
                     {
@@ -671,7 +689,7 @@ namespace MphRead.Export
                         vtx_state[2] = Fixed.ToFloat(z);
                         if (curMeshActive)
                         {
-                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state));
+                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state, mtx_state));
                         }
                     }
                     break;
@@ -698,7 +716,7 @@ namespace MphRead.Export
                         vtx_state[2] = z / 64.0f;
                         if (curMeshActive)
                         {
-                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state));
+                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state, mtx_state));
                         }
                     }
                     break;
@@ -719,7 +737,7 @@ namespace MphRead.Export
                         vtx_state[1] = Fixed.ToFloat(y);
                         if (curMeshActive)
                         {
-                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state));
+                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state, mtx_state));
                         }
                     }
                     break;
@@ -740,7 +758,7 @@ namespace MphRead.Export
                         vtx_state[2] = Fixed.ToFloat(z);
                         if (curMeshActive)
                         {
-                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state));
+                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state, mtx_state));
                         }
                     }
                     break;
@@ -761,7 +779,7 @@ namespace MphRead.Export
                         vtx_state[2] = Fixed.ToFloat(z);
                         if (curMeshActive)
                         {
-                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state));
+                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state, mtx_state));
                         }
                     }
                     break;
@@ -788,7 +806,7 @@ namespace MphRead.Export
                         vtx_state[2] += Fixed.ToFloat(z);
                         if (curMeshActive)
                         {
-                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state));
+                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state, mtx_state));
                         }
                     }
                     break;
@@ -878,7 +896,6 @@ namespace MphRead.Export
                         meshVerts.Clear();
                     }
                     break;
-                case InstructionCode.MTX_RESTORE:
                 case InstructionCode.DIF_AMB:
                 case InstructionCode.NOP:
                     break;
@@ -888,15 +905,15 @@ namespace MphRead.Export
             }
         }
 
-        private static Vertex GetCurrentExportTri(float[] vtx_state, float[] nrm_state, float[] uv_state, float[] col_state)
+        private static Vertex GetCurrentExportTri(float[] vtx_state, float[] nrm_state, float[] uv_state, float[] col_state, int mtx_state)
         {
-            return new Vertex()
-            {
-                Position = new Vector3(vtx_state[0], vtx_state[1], vtx_state[2]),
-                Normal = new Vector3(nrm_state[0], nrm_state[1], nrm_state[2]),
-                Color = new Vector3(col_state[0], col_state[1], col_state[2]),
-                Uv = new Vector2(uv_state[0], uv_state[1])
-            };
+            return new Vertex(
+                position: new Vector3(vtx_state[0], vtx_state[1], vtx_state[2]),
+                normal: new Vector3(nrm_state[0], nrm_state[1], nrm_state[2]),
+                color: new Vector3(col_state[0], col_state[1], col_state[2]),
+                uv: new Vector2(uv_state[0], uv_state[1]),
+                matrixId: mtx_state
+            );
         }
     }
 }
