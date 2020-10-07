@@ -30,6 +30,7 @@ namespace MphRead.Export
             sb.AppendLine("import mathutils");
             sb.AppendLine("from mph_common import *");
             sb.AppendLine();
+            sb.AppendLine($"expected_version = '{Program.Version}'");
             sb.AppendLine($"# recolors: {String.Join(", ", model.Recolors.Select(r => r.Name))}");
             sb.AppendLine($"recolor = '{model.Recolors.First().Name}'");
             sb.AppendLine();
@@ -87,30 +88,26 @@ namespace MphRead.Export
             }
             foreach (Node node in model.Nodes)
             {
-                if (node.BillboardMode == BillboardMode.Sphere || node.BillboardMode == BillboardMode.Cylinder)
+                foreach (int meshId in node.GetMeshIds().Where(m => invertMeshIds.Contains(m)))
                 {
                     AppendIndent();
-                    sb.AppendLine($"set_billboard('{node.Name}', {(int)node.BillboardMode})");
-                }
-                foreach (int meshId in node.GetMeshIds())
-                {
-                    if (invertMeshIds.Contains(meshId))
-                    {
-                        AppendIndent();
-                        if (node.MeshCount == 1)
-                        {
-                            sb.AppendLine($"invert_normals('{node.Name}')");
-                        }
-                        else
-                        {
-                            sb.AppendLine($"invert_normals('geom{meshId + 1}_obj')");
-                        }
-                    }
+                    sb.AppendLine($"invert_normals('geom{meshId + 1}_obj')");
                 }
             }
             if (model.NodeMatrixIds.Count > 0)
             {
                 AppendWithIndent("bone_setup()");
+            }
+            foreach (Node node in model.Nodes.Where(n => n.BillboardMode != BillboardMode.None))
+            {
+                foreach (int meshId in node.GetMeshIds())
+                {
+                    AppendIndent();
+                    sb.AppendLine($"set_billboard('geom{meshId + 1}_obj', {(int)node.BillboardMode})");
+                }
+            }
+            if (model.NodeMatrixIds.Count > 0)
+            {
                 sb.AppendLine();
                 sb.AppendLine("def bone_setup():");
                 AppendWithIndent(@"
@@ -191,6 +188,10 @@ bpy.ops.object.parent_set(type='ARMATURE_NAME')");
             }
             sb.AppendLine();
             sb.AppendLine("if __name__ == '__main__':");
+            AppendWithIndent("version = get_common_version()");
+            AppendWithIndent("if expected_version != version:");
+            AppendIndent();
+            AppendWithIndent("raise Exception(f'Expected mph_common version {expected_version} but found {version} instead.')");
             AppendWithIndent($"import_dae(recolor)");
             return sb.ToString();
         }

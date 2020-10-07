@@ -513,7 +513,7 @@ namespace MphRead.Export
             }
             else
             {
-                ExportObjects(model, sb, 3);
+                ExportMeshes(model, sb, 3);
             }
             sb.Append("\t\t</visual_scene>");
             sb.Append("\n\t</library_visual_scenes>");
@@ -524,18 +524,6 @@ namespace MphRead.Export
             string exportPath = Path.Combine(Paths.Export, model.Name);
             File.WriteAllText(Path.Combine(exportPath, $"{model.Name}_{recolor.Name}.dae"), sb.ToString());
             return results;
-        }
-
-        private static void ExportObjects(Model model, StringBuilder sb, int indent)
-        {
-            for (int i = 0; i < model.Meshes.Count; i++)
-            {
-                sb.Append('\t', indent);
-                sb.Append($"<node id=\"geom{i + 1}_obj\" type=\"NODE\">\n");
-                ExportMesh(model, i, sb, indent + 1);
-                sb.Append('\t', indent);
-                sb.Append($"</node>\n");
-            }
         }
 
         private static void ExportRoomNodes(Model model, int parentId, StringBuilder sb, int indent, bool transformRoom)
@@ -574,7 +562,7 @@ namespace MphRead.Export
                     sb.Append($"<scale>{FloatFormat(scale)}</scale>\n");
                     sb.Append('\t', indent + 1);
                     sb.Append($"<translate>{FloatFormat(position)}</translate>\n");
-                    ExportNodeMeshes(model, i, node.MeshCount == 1, sb, indent + 1);
+                    ExportNodeMeshes(model, i, sb, indent + 1);
                     if (node.ChildIndex != UInt16.MaxValue)
                     {
                         ExportRoomNodes(model, i, sb, indent + 1, transformRoom);
@@ -585,21 +573,27 @@ namespace MphRead.Export
             }
         }
 
-        private static void ExportNodeMeshes(Model model, int nodeId, bool single, StringBuilder sb, int indent)
+        private static void ExportNodeMeshes(Model model, int nodeId, StringBuilder sb, int indent)
         {
             foreach (int meshId in model.Nodes[nodeId].GetMeshIds())
             {
-                if (!single)
-                {
-                    sb.Append('\t', indent);
-                    sb.Append($"<node id=\"geom{meshId + 1}_obj\" type=\"NODE\">\n");
-                }
-                ExportMesh(model, meshId, sb, indent + (single ? 0 : 1));
-                if (!single)
-                {
-                    sb.Append('\t', indent);
-                    sb.Append($"</node>\n");
-                }
+                sb.Append('\t', indent);
+                sb.Append($"<node id=\"geom{meshId + 1}_obj\" type=\"NODE\">\n");
+                ExportMesh(model, meshId, sb, indent + 1);
+                sb.Append('\t', indent);
+                sb.Append($"</node>\n");
+            }
+        }
+
+        private static void ExportMeshes(Model model, StringBuilder sb, int indent)
+        {
+            for (int i = 0; i < model.Meshes.Count; i++)
+            {
+                sb.Append('\t', indent);
+                sb.Append($"<node id=\"geom{i + 1}_obj\" type=\"NODE\">\n");
+                ExportMesh(model, i, sb, indent + 1);
+                sb.Append('\t', indent);
+                sb.Append($"</node>\n");
             }
         }
 
