@@ -847,13 +847,13 @@ namespace MphRead
             }
         }
 
-        public static void ReadAndExport(string name)
+        public static void ReadAndExport(string name, bool firstHunt = false)
         {
             // todo: need non-throwing versions of these
             Model model;
             try
             {
-                model = GetModelByName(name);
+                model = GetModelByName(name, firstHunt: firstHunt);
             }
             catch
             {

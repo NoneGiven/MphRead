@@ -23,7 +23,8 @@ namespace MphRead
             }
             else if (TryGetString(arguments, "export", "e", out string? exportValue))
             {
-                Read.ReadAndExport(exportValue);
+                bool firstHunt = arguments.Any(a => a.Name == "fh");
+                Read.ReadAndExport(exportValue, firstHunt);
             }
             else if (TryGetString(arguments, "extract", "x", out string? extractValue))
             {
