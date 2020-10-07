@@ -413,7 +413,7 @@ namespace MphRead.Export
                 sb.Append("\n\t\t\t</mesh>");
                 sb.Append("\n\t\t</geometry>");
 
-                results.Add($"geom{meshCounter}_obj", meshVerts);
+                results.Add($"geom{meshCounter}_obj", meshVerts.ToList());
             }
             sb.Append("\n\t</library_geometries>");
 
@@ -526,30 +526,35 @@ namespace MphRead.Export
                 Node node = model.Nodes[i];
                 if (node.ParentIndex == parentId)
                 {
+                    Vector3 angle = Vector3.Zero;
+                    Vector3 scale = Vector3.One;
+                    Vector3 position = Vector3.Zero;
+                    if (transformRoom)
+                    {
+                        angle = new Vector3(
+                            MathHelper.RadiansToDegrees(node.Angle.X),
+                            MathHelper.RadiansToDegrees(node.Angle.Y),
+                            MathHelper.RadiansToDegrees(node.Angle.Z)
+                        );
+                        scale = node.Scale;
+                        if (i == 0)
+                        {
+                            scale *= model.Scale;
+                        }
+                        position = node.Position;
+                    }
                     sb.Append('\t', indent);
                     sb.Append($"<node id=\"{node.Name}\" type=\"NODE\">\n");
                     sb.Append('\t', indent + 1);
-                    sb.Append($"<rotate>1.0 0.0 0.0 {FloatFormat(MathHelper.RadiansToDegrees(node.Angle.X))}</rotate>\n");
+                    sb.Append($"<rotate>1.0 0.0 0.0 {angle.X}</rotate>\n");
                     sb.Append('\t', indent + 1);
-                    sb.Append($"<rotate>0.0 1.0 0.0 {FloatFormat(MathHelper.RadiansToDegrees(node.Angle.Y))}</rotate>\n");
+                    sb.Append($"<rotate>0.0 1.0 0.0 {angle.Y}</rotate>\n");
                     sb.Append('\t', indent + 1);
-                    sb.Append($"<rotate>0.0 0.0 1.0 {FloatFormat(MathHelper.RadiansToDegrees(node.Angle.Z))}</rotate>\n");
-                    Vector3 scale = node.Scale;
-                    if (i == 0)
-                    {
-                        scale *= model.Scale;
-                    }
+                    sb.Append($"<rotate>0.0 0.0 1.0 {angle.Z}</rotate>\n");
                     sb.Append('\t', indent + 1);
                     sb.Append($"<scale>{FloatFormat(scale)}</scale>\n");
                     sb.Append('\t', indent + 1);
-                    if (model.Type != ModelType.Room || transformRoom)
-                    {
-                        sb.Append($"<translate>{FloatFormat(node.Position)}</translate>\n");
-                    }
-                    else
-                    {
-                        sb.Append($"<translate>0.0 0.0 0.0</translate>\n");
-                    }
+                    sb.Append($"<translate>{FloatFormat(position)}</translate>\n");
                     ExportNodeMeshes(model, i, node.MeshCount == 1, sb, indent + 1);
                     if (node.ChildIndex != UInt16.MaxValue)
                     {
