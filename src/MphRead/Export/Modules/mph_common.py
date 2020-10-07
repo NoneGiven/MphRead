@@ -1,7 +1,7 @@
 import bpy
 
 def get_common_version():
-    return '0.10.1.0'
+    return '0.11.0.0'
 
 def get_object(name):
     try:
