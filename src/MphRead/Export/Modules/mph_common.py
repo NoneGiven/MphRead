@@ -127,16 +127,17 @@ def set_texture_alpha(name, materialAlpha, textureAlpha):
             'Principled BSDF', 'Alpha'
         )
         
-def set_billboard(name):
+def set_billboard(name, mode):
     obj = get_object(name)
     constraint = obj.constraints.new('LOCKED_TRACK')
     constraint.target = bpy.data.objects['Camera']
     constraint.track_axis = 'TRACK_Z'
     constraint.lock_axis = 'LOCK_Y'
-    constraint = obj.constraints.new('LOCKED_TRACK')
-    constraint.target = bpy.data.objects['Camera']
-    constraint.track_axis = 'TRACK_Z'
-    constraint.lock_axis = 'LOCK_X'
+    if (mode == 1):
+        constraint = obj.constraints.new('LOCKED_TRACK')
+        constraint.target = bpy.data.objects['Camera']
+        constraint.track_axis = 'TRACK_Z'
+        constraint.lock_axis = 'LOCK_X'
     
 def set_back_culling(name):
     material = get_material(name)
