@@ -10,7 +10,7 @@ namespace MphRead.Export
 {
     public static class Collada
     {
-        private readonly struct Vertex
+        public readonly struct Vertex
         {
             public readonly Vector3 Position;
             public readonly Vector3 Normal;
@@ -54,23 +54,37 @@ namespace MphRead.Export
         {
             string exportPath = Path.Combine(Paths.Export, model.Name);
             Directory.CreateDirectory(exportPath);
-            var lists = new List<IReadOnlyList<Vertex>>();
+            var lists = new List<Dictionary<string, IReadOnlyList<Vertex>>>();
             for (int i = 0; i < model.Recolors.Count; i++)
             {
                 lists.Add(ExportRecolor(model, transformRoom, i));
             }
+            if (lists.Count == 0)
+            {
+                throw new ProgramException("Export failed due to missing recolor.");
+            }
             for (int i = 1; i < lists.Count; i++)
             {
-                if (!Enumerable.SequenceEqual(lists[i], lists[i - 1]))
+                Dictionary<string, IReadOnlyList<Vertex>> current = lists[i];
+                Dictionary<string, IReadOnlyList<Vertex>> previous = lists[i - 1];
+                if (!Enumerable.SequenceEqual(current.Keys, previous.Keys))
                 {
-                    throw new ProgramException("Export failed due to mismatching vertices in recolors.");
+                    throw new ProgramException("Export failed due to mismatching objects.");
+                }
+                foreach (KeyValuePair<string, IReadOnlyList<Vertex>> kvp in current)
+                {
+                    if (!Enumerable.SequenceEqual(kvp.Value, previous[kvp.Key]))
+                    {
+                        throw new ProgramException("Export failed due to mismatching vertices.");
+                    }
                 }
             }
-            File.WriteAllText(Path.Combine(exportPath, $"import_{model.Name}.py"), Scripting.GenerateScript(model));
+            File.WriteAllText(Path.Combine(exportPath, $"import_{model.Name}.py"), Scripting.GenerateScript(model, lists.First()));
         }
 
-        private static IReadOnlyList<Vertex> ExportRecolor(Model model, bool transformRoom, int recolorIndex)
+        private static Dictionary<string, IReadOnlyList<Vertex>> ExportRecolor(Model model, bool transformRoom, int recolorIndex)
         {
+            var results = new Dictionary<string, IReadOnlyList<Vertex>>();
             Recolor recolor = model.Recolors[recolorIndex];
             var sb = new StringBuilder();
 
@@ -398,6 +412,8 @@ namespace MphRead.Export
                 sb.Append("\n\t\t\t\t</triangles>");
                 sb.Append("\n\t\t\t</mesh>");
                 sb.Append("\n\t\t</geometry>");
+
+                results.Add($"geom{meshCounter}_obj", meshVerts);
             }
             sb.Append("\n\t</library_geometries>");
 
@@ -500,7 +516,7 @@ namespace MphRead.Export
 
             string exportPath = Path.Combine(Paths.Export, model.Name);
             File.WriteAllText(Path.Combine(exportPath, $"{model.Name}_{recolor.Name}.dae"), sb.ToString());
-            return meshVerts;
+            return results;
         }
 
         private static void ExportNodes(Model model, int parentId, StringBuilder sb, int indent, bool transformRoom)
