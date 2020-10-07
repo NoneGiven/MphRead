@@ -544,11 +544,11 @@ namespace MphRead.Export
                             MathHelper.RadiansToDegrees(node.Angle.Z)
                         );
                         scale = node.Scale;
-                        if (i == 0)
-                        {
-                            scale *= model.Scale;
-                        }
                         position = node.Position;
+                    }
+                    if (i == 0)
+                    {
+                        scale *= model.Scale;
                     }
                     sb.Append('\t', indent);
                     sb.Append($"<node id=\"{node.Name}\" type=\"NODE\">\n");
