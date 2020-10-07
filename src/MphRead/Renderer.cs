@@ -3074,7 +3074,9 @@ namespace MphRead
                 7 => "morph cameras",
                 8 => "jump pads",
                 9 => "objects",
-                10 => "portals",
+                10 => "flag bases",
+                11 => "defense nodes",
+                12 => "portals",
                 _ => "off"
             };
             await Output.Write(" - Hold left mouse button or use arrow keys to rotate", guid);
