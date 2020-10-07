@@ -507,7 +507,14 @@ namespace MphRead.Export
             // scene
             sb.Append("\n\t<library_visual_scenes>");
             sb.Append("\n\t\t<visual_scene id=\"Scene\" name=\"Scene\">\n");
-            ExportNodes(model, UInt16.MaxValue, sb, 3, transformRoom);
+            if (model.Type == ModelType.Room)
+            {
+                ExportRoomNodes(model, UInt16.MaxValue, sb, 3, transformRoom);
+            }
+            else
+            {
+                ExportObjects(model, sb, 3);
+            }
             sb.Append("\t\t</visual_scene>");
             sb.Append("\n\t</library_visual_scenes>");
 
@@ -519,7 +526,19 @@ namespace MphRead.Export
             return results;
         }
 
-        private static void ExportNodes(Model model, int parentId, StringBuilder sb, int indent, bool transformRoom)
+        private static void ExportObjects(Model model, StringBuilder sb, int indent)
+        {
+            for (int i = 0; i < model.Meshes.Count; i++)
+            {
+                sb.Append('\t', indent);
+                sb.Append($"<node id=\"geom{i + 1}_obj\" type=\"NODE\">\n");
+                ExportMesh(model, i, sb, indent + 1);
+                sb.Append('\t', indent);
+                sb.Append($"</node>\n");
+            }
+        }
+
+        private static void ExportRoomNodes(Model model, int parentId, StringBuilder sb, int indent, bool transformRoom)
         {
             for (int i = 0; i < model.Nodes.Count; i++)
             {
@@ -558,7 +577,7 @@ namespace MphRead.Export
                     ExportNodeMeshes(model, i, node.MeshCount == 1, sb, indent + 1);
                     if (node.ChildIndex != UInt16.MaxValue)
                     {
-                        ExportNodes(model, i, sb, indent + 1, transformRoom);
+                        ExportRoomNodes(model, i, sb, indent + 1, transformRoom);
                     }
                     sb.Append('\t', indent);
                     sb.Append($"</node>\n");
