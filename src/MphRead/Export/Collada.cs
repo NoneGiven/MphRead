@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using OpenTK.Mathematics;
 
@@ -9,12 +10,22 @@ namespace MphRead.Export
 {
     public static class Collada
     {
-        private struct Vertex
+        public readonly struct Vertex
         {
-            public Vector3 Position { get; set; }
-            public Vector3 Normal { get; set; }
-            public Vector3 Color { get; set; }
-            public Vector2 Uv { get; set; }
+            public readonly Vector3 Position;
+            public readonly Vector3 Normal;
+            public readonly Vector3 Color;
+            public readonly Vector2 Uv;
+            public readonly int MatrixId;
+
+            public Vertex(Vector3 position, Vector3 normal, Vector3 color, Vector2 uv, int matrixId)
+            {
+                Position = position;
+                Normal = normal;
+                Color = color;
+                Uv = uv;
+                MatrixId = matrixId;
+            }
         }
 
         private static string FloatFormat(Vector3 vector)
@@ -43,15 +54,37 @@ namespace MphRead.Export
         {
             string exportPath = Path.Combine(Paths.Export, model.Name);
             Directory.CreateDirectory(exportPath);
+            var lists = new List<Dictionary<string, IReadOnlyList<Vertex>>>();
             for (int i = 0; i < model.Recolors.Count; i++)
             {
-                ExportRecolor(model, transformRoom, i);
+                lists.Add(ExportRecolor(model, transformRoom, i));
             }
-            File.WriteAllText(Path.Combine(exportPath, $"import_{model.Name}.py"), Scripting.GenerateScript(model));
+            if (lists.Count == 0)
+            {
+                throw new ProgramException("Export failed due to missing recolor.");
+            }
+            for (int i = 1; i < lists.Count; i++)
+            {
+                Dictionary<string, IReadOnlyList<Vertex>> current = lists[i];
+                Dictionary<string, IReadOnlyList<Vertex>> previous = lists[i - 1];
+                if (!Enumerable.SequenceEqual(current.Keys, previous.Keys))
+                {
+                    throw new ProgramException("Export failed due to mismatching objects.");
+                }
+                foreach (KeyValuePair<string, IReadOnlyList<Vertex>> kvp in current)
+                {
+                    if (!Enumerable.SequenceEqual(kvp.Value, previous[kvp.Key]))
+                    {
+                        throw new ProgramException("Export failed due to mismatching vertices.");
+                    }
+                }
+            }
+            File.WriteAllText(Path.Combine(exportPath, $"import_{model.Name}.py"), Scripting.GenerateScript(model, lists.First()));
         }
 
-        private static void ExportRecolor(Model model, bool transformRoom, int recolorIndex)
+        private static Dictionary<string, IReadOnlyList<Vertex>> ExportRecolor(Model model, bool transformRoom, int recolorIndex)
         {
+            var results = new Dictionary<string, IReadOnlyList<Vertex>>();
             Recolor recolor = model.Recolors[recolorIndex];
             var sb = new StringBuilder();
 
@@ -304,13 +337,7 @@ namespace MphRead.Export
                         {
                             newUv = new Vector2(newUv.X, MathHelper.Clamp(newUv.Y, 0f, 1f));
                         }
-                        var newVert = new Vertex()
-                        {
-                            Position = vert.Position,
-                            Color = vert.Color,
-                            Normal = vert.Normal,
-                            Uv = newUv
-                        };
+                        var newVert = new Vertex(vert.Position, vert.Color, vert.Normal, newUv, vert.MatrixId);
                         string texCoord = $"{FloatFormat(newVert.Uv.X)} {FloatFormat(1 - newVert.Uv.Y)} ";
                         sb.Append(texCoord);
                         meshVerts.RemoveAt(i);
@@ -385,6 +412,8 @@ namespace MphRead.Export
                 sb.Append("\n\t\t\t\t</triangles>");
                 sb.Append("\n\t\t\t</mesh>");
                 sb.Append("\n\t\t</geometry>");
+
+                results.Add($"geom{meshCounter}_obj", meshVerts.ToList());
             }
             sb.Append("\n\t</library_geometries>");
 
@@ -478,7 +507,14 @@ namespace MphRead.Export
             // scene
             sb.Append("\n\t<library_visual_scenes>");
             sb.Append("\n\t\t<visual_scene id=\"Scene\" name=\"Scene\">\n");
-            ExportNodes(model, UInt16.MaxValue, sb, 3, transformRoom);
+            if (model.Type == ModelType.Room)
+            {
+                ExportRoomNodes(model, UInt16.MaxValue, sb, 3, transformRoom);
+            }
+            else
+            {
+                ExportMeshes(model, sb, 3);
+            }
             sb.Append("\t\t</visual_scene>");
             sb.Append("\n\t</library_visual_scenes>");
 
@@ -487,43 +523,49 @@ namespace MphRead.Export
 
             string exportPath = Path.Combine(Paths.Export, model.Name);
             File.WriteAllText(Path.Combine(exportPath, $"{model.Name}_{recolor.Name}.dae"), sb.ToString());
+            return results;
         }
 
-        private static void ExportNodes(Model model, int parentId, StringBuilder sb, int indent, bool transformRoom)
+        private static void ExportRoomNodes(Model model, int parentId, StringBuilder sb, int indent, bool transformRoom)
         {
             for (int i = 0; i < model.Nodes.Count; i++)
             {
                 Node node = model.Nodes[i];
                 if (node.ParentIndex == parentId)
                 {
-                    sb.Append('\t', indent);
-                    sb.Append($"<node id=\"{node.Name}\" type=\"NODE\">\n");
-                    sb.Append('\t', indent + 1);
-                    sb.Append($"<rotate>1.0 0.0 0.0 {FloatFormat(MathHelper.RadiansToDegrees(node.Angle.X))}</rotate>\n");
-                    sb.Append('\t', indent + 1);
-                    sb.Append($"<rotate>0.0 1.0 0.0 {FloatFormat(MathHelper.RadiansToDegrees(node.Angle.Y))}</rotate>\n");
-                    sb.Append('\t', indent + 1);
-                    sb.Append($"<rotate>0.0 0.0 1.0 {FloatFormat(MathHelper.RadiansToDegrees(node.Angle.Z))}</rotate>\n");
-                    Vector3 scale = node.Scale;
+                    Vector3 angle = Vector3.Zero;
+                    Vector3 scale = Vector3.One;
+                    Vector3 position = Vector3.Zero;
+                    if (transformRoom)
+                    {
+                        angle = new Vector3(
+                            MathHelper.RadiansToDegrees(node.Angle.X),
+                            MathHelper.RadiansToDegrees(node.Angle.Y),
+                            MathHelper.RadiansToDegrees(node.Angle.Z)
+                        );
+                        scale = node.Scale;
+                        position = node.Position;
+                    }
                     if (i == 0)
                     {
                         scale *= model.Scale;
                     }
+                    sb.Append('\t', indent);
+                    sb.Append($"<node id=\"{node.Name}\" type=\"NODE\">\n");
+                    sb.Append('\t', indent + 1);
+                    sb.Append($"<rotate>1.0 0.0 0.0 {angle.X}</rotate>\n");
+                    sb.Append('\t', indent + 1);
+                    sb.Append($"<rotate>0.0 1.0 0.0 {angle.Y}</rotate>\n");
+                    sb.Append('\t', indent + 1);
+                    sb.Append($"<rotate>0.0 0.0 1.0 {angle.Z}</rotate>\n");
                     sb.Append('\t', indent + 1);
                     sb.Append($"<scale>{FloatFormat(scale)}</scale>\n");
                     sb.Append('\t', indent + 1);
-                    if (model.Type != ModelType.Room || transformRoom)
-                    {
-                        sb.Append($"<translate>{FloatFormat(node.Position)}</translate>\n");
-                    }
-                    else
-                    {
-                        sb.Append($"<translate>0.0 0.0 0.0</translate>\n");
-                    }
-                    ExportNodeMeshes(model, i, node.MeshCount == 1, sb, indent + 1);
+                    sb.Append($"<translate>{FloatFormat(position)}</translate>\n");
+                    ExportNodeMeshes(model, i, sb, indent + 1);
                     if (node.ChildIndex != UInt16.MaxValue)
                     {
-                        ExportNodes(model, i, sb, indent + 1, transformRoom);
+                        ExportRoomNodes(model, i, sb, indent + 1, transformRoom);
                     }
                     sb.Append('\t', indent);
                     sb.Append($"</node>\n");
@@ -531,21 +573,27 @@ namespace MphRead.Export
             }
         }
 
-        private static void ExportNodeMeshes(Model model, int nodeId, bool single, StringBuilder sb, int indent)
+        private static void ExportNodeMeshes(Model model, int nodeId, StringBuilder sb, int indent)
         {
             foreach (int meshId in model.Nodes[nodeId].GetMeshIds())
             {
-                if (!single)
-                {
-                    sb.Append('\t', indent);
-                    sb.Append($"<node id=\"geom{meshId + 1}_obj\" type=\"NODE\">\n");
-                }
-                ExportMesh(model, meshId, sb, indent + (single ? 0 : 1));
-                if (!single)
-                {
-                    sb.Append('\t', indent);
-                    sb.Append($"</node>\n");
-                }
+                sb.Append('\t', indent);
+                sb.Append($"<node id=\"geom{meshId + 1}_obj\" type=\"NODE\">\n");
+                ExportMesh(model, meshId, sb, indent + 1);
+                sb.Append('\t', indent);
+                sb.Append($"</node>\n");
+            }
+        }
+
+        private static void ExportMeshes(Model model, StringBuilder sb, int indent)
+        {
+            for (int i = 0; i < model.Meshes.Count; i++)
+            {
+                sb.Append('\t', indent);
+                sb.Append($"<node id=\"geom{i + 1}_obj\" type=\"NODE\">\n");
+                ExportMesh(model, i, sb, indent + 1);
+                sb.Append('\t', indent);
+                sb.Append($"</node>\n");
             }
         }
 
@@ -580,14 +628,18 @@ namespace MphRead.Export
             float[] nrm_state = { 0.0f, 0.0f, 0.0f };
             float[] uv_state = { 0.0f, 0.0f };
             float[] col_state = { 1.0f, 1.0f, 1.0f };
+            int mtx_state = 0;
             int curMeshType = 0;
             bool curMeshActive = false;
             IReadOnlyList<RenderInstruction> list = model.RenderInstructionLists[dlistId];
-            // todo: DIF_AMB, at least
+            // todo: support DIF_AMB somehow
             foreach (RenderInstruction instruction in list)
             {
                 switch (instruction.Code)
                 {
+                case InstructionCode.MTX_RESTORE:
+                    mtx_state = (int)instruction.Arguments[0];
+                    break;
                 case InstructionCode.BEGIN_VTXS:
                     if (instruction.Arguments[0] < 0 || instruction.Arguments[0] > 3)
                     {
@@ -671,7 +723,7 @@ namespace MphRead.Export
                         vtx_state[2] = Fixed.ToFloat(z);
                         if (curMeshActive)
                         {
-                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state));
+                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state, mtx_state));
                         }
                     }
                     break;
@@ -698,7 +750,7 @@ namespace MphRead.Export
                         vtx_state[2] = z / 64.0f;
                         if (curMeshActive)
                         {
-                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state));
+                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state, mtx_state));
                         }
                     }
                     break;
@@ -719,7 +771,7 @@ namespace MphRead.Export
                         vtx_state[1] = Fixed.ToFloat(y);
                         if (curMeshActive)
                         {
-                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state));
+                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state, mtx_state));
                         }
                     }
                     break;
@@ -740,7 +792,7 @@ namespace MphRead.Export
                         vtx_state[2] = Fixed.ToFloat(z);
                         if (curMeshActive)
                         {
-                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state));
+                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state, mtx_state));
                         }
                     }
                     break;
@@ -761,7 +813,7 @@ namespace MphRead.Export
                         vtx_state[2] = Fixed.ToFloat(z);
                         if (curMeshActive)
                         {
-                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state));
+                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state, mtx_state));
                         }
                     }
                     break;
@@ -788,7 +840,7 @@ namespace MphRead.Export
                         vtx_state[2] += Fixed.ToFloat(z);
                         if (curMeshActive)
                         {
-                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state));
+                            meshVerts.Add(GetCurrentExportTri(vtx_state, nrm_state, uv_state, col_state, mtx_state));
                         }
                     }
                     break;
@@ -878,7 +930,6 @@ namespace MphRead.Export
                         meshVerts.Clear();
                     }
                     break;
-                case InstructionCode.MTX_RESTORE:
                 case InstructionCode.DIF_AMB:
                 case InstructionCode.NOP:
                     break;
@@ -888,15 +939,15 @@ namespace MphRead.Export
             }
         }
 
-        private static Vertex GetCurrentExportTri(float[] vtx_state, float[] nrm_state, float[] uv_state, float[] col_state)
+        private static Vertex GetCurrentExportTri(float[] vtx_state, float[] nrm_state, float[] uv_state, float[] col_state, int mtx_state)
         {
-            return new Vertex()
-            {
-                Position = new Vector3(vtx_state[0], vtx_state[1], vtx_state[2]),
-                Normal = new Vector3(nrm_state[0], nrm_state[1], nrm_state[2]),
-                Color = new Vector3(col_state[0], col_state[1], col_state[2]),
-                Uv = new Vector2(uv_state[0], uv_state[1])
-            };
+            return new Vertex(
+                position: new Vector3(vtx_state[0], vtx_state[1], vtx_state[2]),
+                normal: new Vector3(nrm_state[0], nrm_state[1], nrm_state[2]),
+                color: new Vector3(col_state[0], col_state[1], col_state[2]),
+                uv: new Vector2(uv_state[0], uv_state[1]),
+                matrixId: mtx_state
+            );
         }
     }
 }

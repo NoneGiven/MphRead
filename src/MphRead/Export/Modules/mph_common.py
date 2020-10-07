@@ -1,5 +1,8 @@
 import bpy
 
+def get_common_version():
+    return '0.10.1.0'
+
 def get_object(name):
     try:
         return bpy.data.objects[name]
@@ -127,16 +130,17 @@ def set_texture_alpha(name, materialAlpha, textureAlpha):
             'Principled BSDF', 'Alpha'
         )
         
-def set_billboard(name):
+def set_billboard(name, mode):
     obj = get_object(name)
     constraint = obj.constraints.new('LOCKED_TRACK')
     constraint.target = bpy.data.objects['Camera']
     constraint.track_axis = 'TRACK_Z'
     constraint.lock_axis = 'LOCK_Y'
-    constraint = obj.constraints.new('LOCKED_TRACK')
-    constraint.target = bpy.data.objects['Camera']
-    constraint.track_axis = 'TRACK_Z'
-    constraint.lock_axis = 'LOCK_X'
+    if (mode == 1):
+        constraint = obj.constraints.new('LOCKED_TRACK')
+        constraint.target = bpy.data.objects['Camera']
+        constraint.track_axis = 'TRACK_Z'
+        constraint.lock_axis = 'LOCK_X'
     
 def set_back_culling(name):
     material = get_material(name)
@@ -145,7 +149,7 @@ def set_back_culling(name):
 def invert_normals(name):
     if (bpy.context.object.mode != 'OBJECT'):
         bpy.ops.object.mode_set(mode = 'OBJECT')
-    bpy.ops.object.select_all(action=  'DESELECT')
+    bpy.ops.object.select_all(action = 'DESELECT')
     bpy.context.active_object.select_set(False)
     for obj in bpy.context.selected_objects:
         bpy.context.view_layer.objects.active = None
