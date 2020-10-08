@@ -1199,7 +1199,7 @@ namespace MphRead
                     new ModelMetadata("AlimbicBossDoor")
                 },
                 {
-                    // todo: is AlmbCapsuleShld_Collision used?
+                    // todo: AlmbCapsuleShld_Collision is also used
                     "AlimbicCapsule",
                     new ModelMetadata("AlimbicCapsule", collision: true)
                 },
