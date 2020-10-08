@@ -506,6 +506,13 @@ namespace MphRead
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Object;
             model.Entity = entity;
+            if (meta.AnimationIds[0] == 0xFF)
+            {
+                model.Animations.NodeGroupId = -1;
+                model.Animations.MaterialGroupId = -1;
+                model.Animations.TexcoordGroupId = -1;
+                model.Animations.TextureGroupId = -1;
+            }
             // AlimbicGhost_01, GhostSwitch
             if (modelId == 0 || modelId == 41)
             {
