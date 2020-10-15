@@ -50,13 +50,13 @@ def material_link_nodes(self, source, output, target, input):
         target.inputs[input]
     )
 
-bpy.types.Node.get_input = node_get_input;
-bpy.types.Node.get_output = node_get_output;
-bpy.types.Material.get_node = material_get_node;
-bpy.types.Material.get_bsdf = material_get_bsdf;
-bpy.types.Material.get_bsdf_input = material_get_bsdf_input;
-bpy.types.Material.link_nodes = material_link_nodes;
-bpy.types.Material.add_node = material_add_node;
+bpy.types.Node.get_input = node_get_input
+bpy.types.Node.get_output = node_get_output
+bpy.types.Material.get_node = material_get_node
+bpy.types.Material.get_bsdf = material_get_bsdf
+bpy.types.Material.get_bsdf_input = material_get_bsdf_input
+bpy.types.Material.link_nodes = material_link_nodes
+bpy.types.Material.add_node = material_add_node
 
 def cleanup():
     removed = get_material('Dots Stroke')
@@ -210,3 +210,31 @@ def set_mirror(name, x, y):
         combine, 'Vector',
         'Image Texture', 'Vector'
     )
+
+def set_uv_anims(anims):
+    for obj in bpy.data.objects:
+        if obj.type == 'MESH':
+            obj.modifiers.new('UVWarp', 'UV_WARP')
+    bpy.context.scene.frame_start = 0
+    for name, anim in anims.items():
+        for obj in bpy.data.objects:
+            if obj.type == 'MESH' and obj.active_material.name == name + '_mat':
+                set_uv_anim(obj, anim)
+                for fcurve in obj.animation_data.action.fcurves:
+                    for kf in fcurve.keyframe_points:
+                        kf.interpolation = 'CONSTANT'
+    bpy.context.scene.frame_set(0)
+
+def set_uv_anim(obj, anim):
+    mod = obj.modifiers['UVWarp']
+    for i, frame in enumerate(anim):
+        bpy.context.scene.frame_set(i)
+        mod.scale[0] = frame[0]
+        mod.scale[1] = frame[1]
+        mod.rotation = frame[2]
+        mod.offset[0] = frame[3]
+        mod.offset[1] = frame[4]
+        obj.keyframe_insert('modifiers["UVWarp"].scale')
+        obj.keyframe_insert('modifiers["UVWarp"].rotation')
+        obj.keyframe_insert('modifiers["UVWarp"].offset')
+    bpy.context.scene.frame_end = i

@@ -1339,7 +1339,7 @@ namespace MphRead
             model.Light2Color = Metadata.OctolithLightColor;
         }
 
-        private static float InterpolateAnimation(IReadOnlyList<float> values, int start, int frame, int blend, int lutLength, int frameCount,
+        public static float InterpolateAnimation(IReadOnlyList<float> values, int start, int frame, int blend, int lutLength, int frameCount,
             bool isRotation = false)
         {
             if (lutLength == 1)
