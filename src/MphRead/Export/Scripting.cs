@@ -96,6 +96,7 @@ namespace MphRead.Export
                 }
                 else if (material.Alpha < 31)
                 {
+                    // sktodo: alpha blend
                     sb.AppendIndent();
                     sb.AppendLine($"set_material_alpha('{material.Name}_mat', {material.Alpha})");
                 }
@@ -114,6 +115,36 @@ namespace MphRead.Export
                             }
                         }
                     }
+                }
+                var withColor = new List<int>();
+                var noColor = new List<int>();
+                for (int j = 0; j < model.Meshes.Count; j++)
+                {
+                    Mesh mesh = model.Meshes[j];
+                    if (mesh.MaterialId == i)
+                    {
+                        if (model.RenderInstructionLists[mesh.DlistId].Any(i => i.Code == InstructionCode.COLOR))
+                        {
+                            withColor.Add(j);
+                        }
+                        else
+                        {
+                            noColor.Add(j);
+                        }
+                    }
+                }
+                if (noColor.Count > 0)
+                {
+                    string color = $"{material.Diffuse.Red / 31.0f}, {material.Diffuse.Green / 31.0f}, {material.Diffuse.Blue / 31.0f}";
+                    if (withColor.Count > 0)
+                    {
+                        string objects = String.Join("', '", noColor.Select(c => $"geom{c}_obj"));
+                        sb.AppendIndent($"set_mat_color('{material.Name}_mat', {color}, True, ['{objects}'])");
+                    }
+                    else
+                    {
+                        sb.AppendIndent($"set_mat_color('{material.Name}_mat', {color}, False, [])");
+                    } 
                 }
             }
             foreach (Node node in model.Nodes)

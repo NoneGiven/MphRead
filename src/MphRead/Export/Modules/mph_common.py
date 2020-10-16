@@ -40,6 +40,11 @@ def material_get_bsdf_input(self, name):
 def material_add_node(self, kind):
     return self.node_tree.nodes.new(kind)
 
+def material_delete_node(self, name):
+    node = self.get_node(name)
+    if node:
+        self.node_tree.nodes.remove(node)
+
 def material_link_nodes(self, source, output, target, input):
     if (isinstance(source, str)):
         source = self.get_node(source)
@@ -57,6 +62,7 @@ bpy.types.Material.get_bsdf = material_get_bsdf
 bpy.types.Material.get_bsdf_input = material_get_bsdf_input
 bpy.types.Material.link_nodes = material_link_nodes
 bpy.types.Material.add_node = material_add_node
+bpy.types.Material.delete_node = material_delete_node
 
 def cleanup():
     removed = get_material('Dots Stroke')
@@ -238,3 +244,25 @@ def set_uv_anim(obj, anim):
         obj.keyframe_insert('modifiers["UVWarp"].rotation')
         obj.keyframe_insert('modifiers["UVWarp"].offset')
     bpy.context.scene.frame_end = i
+
+def set_mat_color(name, r, g, b, duplicate, objects):
+    mat = get_material(name)
+    mat_name = mat.name + '__nc'
+    if duplicate:
+        mat = mat.copy()
+        for obj_name in objects:
+            obj = get_object(obj_name)
+            obj.active_material = mat
+    mat.name = mat_name
+    mat.delete_node('Vertex Color')
+    mat.delete_node('RGB')
+    mat.delete_node('RGB')
+    rgb = mat.add_node('ShaderNodeRGB')
+    color = rgb.get_output('Color')
+    color.default_value[0] = r
+    color.default_value[1] = g
+    color.default_value[2] = b
+    mat.link_nodes(
+        'RGB', 'Color',
+        'Mix', 'Color1'
+    )
