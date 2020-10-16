@@ -19,12 +19,12 @@ namespace MphRead.Export
                 foreach (KeyValuePair<string, TexcoordAnimation> kvp in group.Animations)
                 {
                     TexcoordAnimation anim = kvp.Value;
-                    sb.AppendIndent($"\"{kvp.Key}\":", indent + 2);
+                    sb.AppendIndent($"'{kvp.Key}':", indent + 2);
                     sb.AppendIndent("[", indent + 2);
                     for (int frame = 0; frame < group.FrameCount; frame++)
                     {
                         float scaleS = RenderWindow.InterpolateAnimation(group.Scales, anim.ScaleLutIndexS, frame,
-                        anim.ScaleBlendS, anim.ScaleLutLengthS, group.FrameCount);
+                            anim.ScaleBlendS, anim.ScaleLutLengthS, group.FrameCount);
                         float scaleT = RenderWindow.InterpolateAnimation(group.Scales, anim.ScaleLutIndexT, frame,
                             anim.ScaleBlendT, anim.ScaleLutLengthT, group.FrameCount);
                         float rotate = RenderWindow.InterpolateAnimation(group.Rotations, anim.RotateLutIndexZ, frame,
@@ -34,6 +34,33 @@ namespace MphRead.Export
                         float translateT = RenderWindow.InterpolateAnimation(group.Translations, anim.TranslateLutIndexT, frame,
                             anim.TranslateBlendT, anim.TranslateLutLengthT, group.FrameCount);
                         sb.AppendIndent($"[{scaleS}, {scaleT}, {rotate}, {translateS}, {translateT}],", indent + 3);
+                    }
+                    sb.AppendIndent("],", indent + 2);
+                }
+                sb.AppendIndent("},", indent + 1);
+            }
+            sb.AppendIndent("]", indent);
+            sb.AppendIndent("mat_anims = [", indent);
+            foreach (MaterialAnimationGroup group in model.Animations.MaterialGroups)
+            {
+                sb.AppendIndent("{", indent + 1);
+                foreach (KeyValuePair<string, MaterialAnimation> kvp in group.Animations)
+                {
+                    MaterialAnimation anim = kvp.Value;
+                    sb.AppendIndent($"'{kvp.Key}_mat':", indent + 2);
+                    sb.AppendIndent("[", indent + 2);
+                    for (int frame = 0; frame < group.FrameCount; frame++)
+                    {
+                        // todo: animate diffuse/ambient/specular light colors
+                        float red = RenderWindow.InterpolateAnimation(group.Colors, anim.DiffuseLutIndexR, frame,
+                            anim.DiffuseBlendR, anim.DiffuseLutLengthR, group.FrameCount);
+                        float green = RenderWindow.InterpolateAnimation(group.Colors, anim.DiffuseLutIndexG, frame,
+                            anim.DiffuseBlendG, anim.DiffuseLutLengthG, group.FrameCount);
+                        float blue = RenderWindow.InterpolateAnimation(group.Colors, anim.DiffuseLutIndexB, frame,
+                            anim.DiffuseBlendB, anim.DiffuseLutLengthB, group.FrameCount);
+                        float alpha = RenderWindow.InterpolateAnimation(group.Colors, anim.AlphaLutIndex, frame,
+                            anim.AlphaBlend, anim.AlphaLutLength, group.FrameCount);
+                        sb.AppendIndent($"[{red / 31.0f}, {green / 31.0f}, {blue / 31.0f}, {alpha / 31.0f}],", indent + 3);
                     }
                     sb.AppendIndent("],", indent + 2);
                 }
@@ -257,12 +284,15 @@ bpy.ops.object.parent_set(type='ARMATURE_NAME')");
             sb.AppendIndent("bpy.context.scene.render.fps = 30");
             sb.AppendIndent();
             sb.AppendIndent("set_uv_anims(uv_anims[uv_index])");
-            //sb.AppendIndent("if mat_index >= 0:");
-            //sb.AppendIndent("    set_mat_anims(mat_anims[mat_index])");
+            sb.AppendIndent("if mat_index >= 0:");
+            sb.AppendIndent();
+            sb.AppendIndent("set_mat_anims(mat_anims[mat_index])");
             //sb.AppendIndent("if node_index >= 0:");
-            //sb.AppendIndent("    set_node_anims(node_anims[node_index])");
+            //sb.AppendIndent();
+            //sb.AppendIndent("set_node_anims(node_anims[node_index])");
             //sb.AppendIndent("if tex_index >= 0:");
-            //sb.AppendIndent("    set_tex_anims(tex_anims[tex_index])");
+            //sb.AppendIndent();
+            //sb.AppendIndent("set_tex_anims(tex_anims[tex_index])");
             sb.AppendLine();
             sb.AppendLine("if __name__ == '__main__':");
             sb.AppendIndent("version = get_common_version()");

@@ -224,11 +224,13 @@ def set_uv_anims(anims):
     bpy.context.scene.frame_start = 0
     for name, anim in anims.items():
         for obj in bpy.data.objects:
-            if obj.type == 'MESH' and obj.active_material.name == name + '_mat':
-                set_uv_anim(obj, anim)
-                for fcurve in obj.animation_data.action.fcurves:
-                    for kf in fcurve.keyframe_points:
-                        kf.interpolation = 'CONSTANT'
+            if obj.type == 'MESH':
+                mat_name = obj.active_material.name
+                if mat_name == name + '_mat' or mat_name == name + '_mat_mc':
+                    set_uv_anim(obj, anim)
+                    for fcurve in obj.animation_data.action.fcurves:
+                        for kf in fcurve.keyframe_points:
+                            kf.interpolation = 'CONSTANT'
     bpy.context.scene.frame_set(0)
 
 def set_uv_anim(obj, anim):
@@ -247,7 +249,7 @@ def set_uv_anim(obj, anim):
 
 def set_mat_color(name, r, g, b, duplicate, objects):
     mat = get_material(name)
-    mat_name = mat.name + '__nc'
+    mat_name = mat.name + '_mc'
     if duplicate:
         mat = mat.copy()
         for obj_name in objects:
@@ -265,3 +267,29 @@ def set_mat_color(name, r, g, b, duplicate, objects):
         'RGB', 'Color',
         'Mix', 'Color1'
     )
+
+def set_mat_anims(anims):
+    bpy.context.scene.frame_start = 0
+    for name, anim in anims.items():
+        for mat in get_materials():
+            if mat.name == name or mat.name == name + '_mc':
+                set_mat_anim(mat, anim)
+                for fcurve in mat.node_tree.animation_data.action.fcurves:
+                    for kf in fcurve.keyframe_points:
+                        kf.interpolation = 'CONSTANT'
+    bpy.context.scene.frame_set(0)
+
+def set_mat_anim(mat, anim):
+    for i, frame in enumerate(anim):
+        bpy.context.scene.frame_set(i)
+        rgb = mat.get_node('RGB')
+        if rgb:
+            color = rgb.get_output('Color')
+            color.default_value[0] = frame[0]
+            color.default_value[1] = frame[1]
+            color.default_value[2] = frame[2]
+            color.keyframe_insert('default_value')
+        alpha = mat.get_node('Math')
+        alpha.inputs[1].default_value = frame[3]
+        alpha.inputs[1].keyframe_insert('default_value')
+    bpy.context.scene.frame_end = i

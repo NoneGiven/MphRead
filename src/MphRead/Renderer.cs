@@ -1594,32 +1594,32 @@ namespace MphRead
             {
                 if (!material.AnimationFlags.HasFlag(AnimationFlags.DisableColor))
                 {
-                    float diffuseR = InterpolateAnimation(group.Colors, animation.DiffuseLutStartIndexR, group.CurrentFrame,
-                        animation.DiffuseBlendFactorR, animation.DiffuseLutLengthR, group.FrameCount);
-                    float diffuseG = InterpolateAnimation(group.Colors, animation.DiffuseLutStartIndexG, group.CurrentFrame,
-                        animation.DiffuseBlendFactorG, animation.DiffuseLutLengthG, group.FrameCount);
-                    float diffuseB = InterpolateAnimation(group.Colors, animation.DiffuseLutStartIndexB, group.CurrentFrame,
-                        animation.DiffuseBlendFactorB, animation.DiffuseLutLengthB, group.FrameCount);
-                    float ambientR = InterpolateAnimation(group.Colors, animation.AmbientLutStartIndexR, group.CurrentFrame,
-                        animation.AmbientBlendFactorR, animation.AmbientLutLengthR, group.FrameCount);
-                    float ambientG = InterpolateAnimation(group.Colors, animation.AmbientLutStartIndexG, group.CurrentFrame,
-                        animation.AmbientBlendFactorG, animation.AmbientLutLengthG, group.FrameCount);
-                    float ambientB = InterpolateAnimation(group.Colors, animation.AmbientLutStartIndexB, group.CurrentFrame,
-                        animation.AmbientBlendFactorB, animation.AmbientLutLengthB, group.FrameCount);
-                    float specularR = InterpolateAnimation(group.Colors, animation.SpecularLutStartIndexR, group.CurrentFrame,
-                        animation.SpecularBlendFactorR, animation.SpecularLutLengthR, group.FrameCount);
-                    float specularG = InterpolateAnimation(group.Colors, animation.SpecularLutStartIndexG, group.CurrentFrame,
-                        animation.SpecularBlendFactorG, animation.SpecularLutLengthG, group.FrameCount);
-                    float specularB = InterpolateAnimation(group.Colors, animation.SpecularLutStartIndexB, group.CurrentFrame,
-                        animation.SpecularBlendFactorB, animation.SpecularLutLengthB, group.FrameCount);
+                    float diffuseR = InterpolateAnimation(group.Colors, animation.DiffuseLutIndexR, group.CurrentFrame,
+                        animation.DiffuseBlendR, animation.DiffuseLutLengthR, group.FrameCount);
+                    float diffuseG = InterpolateAnimation(group.Colors, animation.DiffuseLutIndexG, group.CurrentFrame,
+                        animation.DiffuseBlendG, animation.DiffuseLutLengthG, group.FrameCount);
+                    float diffuseB = InterpolateAnimation(group.Colors, animation.DiffuseLutIndexB, group.CurrentFrame,
+                        animation.DiffuseBlendB, animation.DiffuseLutLengthB, group.FrameCount);
+                    float ambientR = InterpolateAnimation(group.Colors, animation.AmbientLutIndexR, group.CurrentFrame,
+                        animation.AmbientBlendR, animation.AmbientLutLengthR, group.FrameCount);
+                    float ambientG = InterpolateAnimation(group.Colors, animation.AmbientLutIndexG, group.CurrentFrame,
+                        animation.AmbientBlendG, animation.AmbientLutLengthG, group.FrameCount);
+                    float ambientB = InterpolateAnimation(group.Colors, animation.AmbientLutIndexB, group.CurrentFrame,
+                        animation.AmbientBlendB, animation.AmbientLutLengthB, group.FrameCount);
+                    float specularR = InterpolateAnimation(group.Colors, animation.SpecularLutIndexR, group.CurrentFrame,
+                        animation.SpecularBlendR, animation.SpecularLutLengthR, group.FrameCount);
+                    float specularG = InterpolateAnimation(group.Colors, animation.SpecularLutIndexG, group.CurrentFrame,
+                        animation.SpecularBlendG, animation.SpecularLutLengthG, group.FrameCount);
+                    float specularB = InterpolateAnimation(group.Colors, animation.SpecularLutIndexB, group.CurrentFrame,
+                        animation.SpecularBlendB, animation.SpecularLutLengthB, group.FrameCount);
                     diffuse = new Vector3(diffuseR / 31.0f, diffuseG / 31.0f, diffuseB / 31.0f);
                     ambient = new Vector3(ambientR / 31.0f, ambientG / 31.0f, ambientB / 31.0f);
                     specular = new Vector3(specularR / 31.0f, specularG / 31.0f, specularB / 31.0f);
                 }
                 if (!material.AnimationFlags.HasFlag(AnimationFlags.DisableAlpha))
                 {
-                    alpha = InterpolateAnimation(group.Colors, animation.AlphaLutStartIndex, group.CurrentFrame,
-                    animation.AlphaBlendFactor, animation.AlphaLutLength, group.FrameCount);
+                    alpha = InterpolateAnimation(group.Colors, animation.AlphaLutIndex, group.CurrentFrame,
+                    animation.AlphaBlend, animation.AlphaLutLength, group.FrameCount);
                     alpha /= 31.0f;
                 }
             }
