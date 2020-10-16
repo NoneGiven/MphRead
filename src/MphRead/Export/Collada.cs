@@ -100,28 +100,33 @@ namespace MphRead.Export
 
             // images
             sb.Append("\n\t<library_images>");
-            var imagesInLibrary = new HashSet<int>();
-            // image export is skipped for untextured materials, but other stuff is still being exported that references this
-            // --> when importing, can probably just add a dummy white image and reference that in the library for the material
+            var imagesInLibrary = new HashSet<(int, int)>();
+
+            void AddLibraryImage(int textureId, int paletteId, string name)
+            {
+                if (textureId != UInt16.MaxValue && !imagesInLibrary.Contains((textureId, paletteId)))
+                {
+                    imagesInLibrary.Add((textureId, paletteId));
+                    sb.Append($"\n\t\t<image id=\"{name}\" name=\"{name}\">");
+                    sb.Append("\n\t\t\t<init_from>");
+                    sb.Append($@"{recolor.Name}\{textureId}-{paletteId}.png");
+                    sb.Append("</init_from>\n\t\t</image>");
+                }
+            }
+
             foreach (Material material in model.Materials)
             {
-                if (material.TextureId == UInt16.MaxValue || imagesInLibrary.Contains(material.TextureId))
+                AddLibraryImage(material.TextureId, material.PaletteId, material.Name);
+            }
+            foreach (TextureAnimationGroup group in model.Animations.TextureGroups)
+            {
+                foreach (TextureAnimation animation in group.Animations.Values)
                 {
-                    continue;
+                    for (int i = animation.StartIndex; i < animation.StartIndex + animation.Count; i++)
+                    {
+                        AddLibraryImage(group.TextureIds[i], group.PaletteIds[i], $"anim__{group.TextureIds[i]}-{group.PaletteIds[i]}");
+                    }
                 }
-                imagesInLibrary.Add(material.TextureId);
-                string textureName = String.IsNullOrEmpty(material.Name) ? "null" : material.Name;
-                string imageTag = "\n\t\t<image id=\"";
-                imageTag += textureName;
-                imageTag += "\" name=\"";
-                imageTag += textureName;
-                imageTag += "\">";
-                sb.Append(imageTag);
-                string initTag = "\n\t\t\t<init_from>";
-                initTag += $@"{recolor.Name}\{material.TextureId}-{material.PaletteId}.png";
-                initTag += "</init_from>";
-                sb.Append(initTag);
-                sb.Append("\n\t\t</image>");
             }
             sb.Append("\n\t</library_images>");
 
