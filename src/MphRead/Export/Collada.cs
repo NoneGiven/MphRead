@@ -100,8 +100,8 @@ namespace MphRead.Export
 
             // images
             sb.Append("\n\t<library_images>");
+            int id = -1;
             var imagesInLibrary = new HashSet<(int, int)>();
-
             void AddLibraryImage(int textureId, int paletteId, string name)
             {
                 if (textureId != UInt16.MaxValue && !imagesInLibrary.Contains((textureId, paletteId)))
@@ -109,7 +109,14 @@ namespace MphRead.Export
                     imagesInLibrary.Add((textureId, paletteId));
                     sb.Append($"\n\t\t<image id=\"{name}\" name=\"{name}\">");
                     sb.Append("\n\t\t\t<init_from>");
-                    sb.Append($@"{recolor.Name}\{textureId}-{paletteId}.png");
+                    if (id < 0)
+                    {
+                        sb.Append($@"{recolor.Name}\{textureId}-{paletteId}.png");
+                    }
+                    else
+                    {
+                        sb.Append($@"{recolor.Name}\anim__{id.ToString().PadLeft(3, '0')}.png");
+                    } 
                     sb.Append("</init_from>\n\t\t</image>");
                 }
             }
@@ -118,6 +125,8 @@ namespace MphRead.Export
             {
                 AddLibraryImage(material.TextureId, material.PaletteId, material.Name);
             }
+            id = 0;
+            imagesInLibrary.Clear();
             foreach (TextureAnimationGroup group in model.Animations.TextureGroups)
             {
                 foreach (TextureAnimation animation in group.Animations.Values)
@@ -125,6 +134,7 @@ namespace MphRead.Export
                     for (int i = animation.StartIndex; i < animation.StartIndex + animation.Count; i++)
                     {
                         AddLibraryImage(group.TextureIds[i], group.PaletteIds[i], $"anim__{group.TextureIds[i]}-{group.PaletteIds[i]}");
+                        id++;
                     }
                 }
             }

@@ -33,10 +33,12 @@ namespace MphRead.Export
                 string colorPath = Path.Combine(exportPath, recolor.Name);
                 Directory.CreateDirectory(colorPath);
                 var usedTextures = new HashSet<int>();
+                int id = -1;
+                var usedCombos = new HashSet<(int, int)>();
 
                 void DoTexture(int textureId, int paletteId)
                 {
-                    if (textureId == UInt16.MaxValue)
+                    if (textureId == UInt16.MaxValue || usedCombos.Contains((textureId, paletteId)))
                     {
                         return;
                     }
@@ -48,7 +50,12 @@ namespace MphRead.Export
                     }
                     Debug.Assert(texture.Width * texture.Height == pixels.Count);
                     usedTextures.Add(textureId);
+                    usedCombos.Add((textureId, paletteId));
                     string filename = $"{textureId}-{paletteId}";
+                    if (id >= 0)
+                    {
+                        filename = $"anim__{id.ToString().PadLeft(3, '0')}";
+                    }
                     SaveTexture(colorPath, filename, texture.Width, texture.Height, pixels);
                 }
 
@@ -56,6 +63,8 @@ namespace MphRead.Export
                 {
                     DoTexture(material.TextureId, material.PaletteId);
                 }
+                id = 0;
+                usedCombos.Clear();
                 foreach (TextureAnimationGroup group in model.Animations.TextureGroups)
                 {
                     foreach (TextureAnimation animation in group.Animations.Values)
@@ -63,6 +72,7 @@ namespace MphRead.Export
                         for (int i = animation.StartIndex; i < animation.StartIndex + animation.Count; i++)
                         {
                             DoTexture(group.TextureIds[i], group.PaletteIds[i]);
+                            id++;
                         }
                     }
                 }
