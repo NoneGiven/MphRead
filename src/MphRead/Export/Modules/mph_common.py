@@ -111,30 +111,30 @@ def set_material_alpha(name, materialAlpha):
     material = get_material(name)
     material.blend_method = 'BLEND'
     material.show_transparent_back = False
-    material.get_bsdf_input('Alpha').default_value = materialAlpha / 31
+    math = material.add_node('ShaderNodeMath')
+    math.operation = 'MULTIPLY'
+    math.inputs[0].default_value = 1.0
+    math.inputs[1].default_value = materialAlpha / 31
+    material.link_nodes(
+        'Math', 'Value',
+        'Principled BSDF', 'Alpha'
+    )
     
 def set_texture_alpha(name, materialAlpha, textureAlpha):
     material = get_material(name)
-    if (materialAlpha < 31 or textureAlpha):
-        material.blend_method = 'BLEND'
-        material.show_transparent_back = False
-    if (materialAlpha == 31):
-        material.link_nodes(
-            'Image Texture', 'Alpha',
-            'Principled BSDF', 'Alpha'
-        )
-    else:
-        math = material.add_node('ShaderNodeMath')
-        math.operation = 'MULTIPLY'
-        math.inputs[1].default_value = materialAlpha / 31
-        material.link_nodes(
-            'Image Texture', 'Alpha',
-            'Math', 0
-        )
-        material.link_nodes(
-            'Math', 'Value',
-            'Principled BSDF', 'Alpha'
-        )
+    material.blend_method = 'BLEND'
+    material.show_transparent_back = False
+    math = material.add_node('ShaderNodeMath')
+    math.operation = 'MULTIPLY'
+    math.inputs[1].default_value = materialAlpha / 31
+    material.link_nodes(
+        'Image Texture', 'Alpha',
+        'Math', 0
+    )
+    material.link_nodes(
+        'Math', 'Value',
+        'Principled BSDF', 'Alpha'
+    )
         
 def set_billboard(name, mode):
     obj = get_object(name)
@@ -255,7 +255,6 @@ def set_mat_color(name, r, g, b, duplicate, objects):
             obj.active_material = mat
     mat.name = mat_name
     mat.delete_node('Vertex Color')
-    mat.delete_node('RGB')
     mat.delete_node('RGB')
     rgb = mat.add_node('ShaderNodeRGB')
     color = rgb.get_output('Color')

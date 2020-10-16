@@ -94,9 +94,8 @@ namespace MphRead.Export
                         sb.AppendLine($"set_mirror('{material.Name}_mat', {(mirrorX ? "True" : "False")}, {(mirrorY ? "True" : "False")})");
                     }
                 }
-                else if (material.Alpha < 31)
+                else
                 {
-                    // sktodo: alpha blend
                     sb.AppendIndent();
                     sb.AppendLine($"set_material_alpha('{material.Name}_mat', {material.Alpha})");
                 }
