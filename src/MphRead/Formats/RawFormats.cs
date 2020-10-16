@@ -139,44 +139,44 @@ namespace MphRead
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
         public readonly char[] Name;
         public readonly uint Field40;
-        public readonly byte DiffuseBlendFactorR;
-        public readonly byte DiffuseBlendFactorG;
-        public readonly byte DiffuseBlendFactorB;
+        public readonly byte DiffuseBlendR;
+        public readonly byte DiffuseBlendG;
+        public readonly byte DiffuseBlendB;
         public readonly byte Field47; // todo: use more properties (this one is always 0 or 255)
         public readonly ushort DiffuseLutLengthR;
         public readonly ushort DiffuseLutLengthG;
         public readonly ushort DiffuseLutLengthB;
-        public readonly ushort DiffuseLutStartIndexR;
-        public readonly ushort DiffuseLutStartIndexG;
-        public readonly ushort DiffuseLutStartIndexB;
-        public readonly byte AmbientBlendFactorR;
-        public readonly byte AmbientBlendFactorG;
-        public readonly byte AmbientBlendFactorB;
+        public readonly ushort DiffuseLutIndexR;
+        public readonly ushort DiffuseLutIndexG;
+        public readonly ushort DiffuseLutIndexB;
+        public readonly byte AmbientBlendR;
+        public readonly byte AmbientBlendG;
+        public readonly byte AmbientBlendB;
         public readonly byte Field57; // same as 47
         public readonly ushort AmbientLutLengthR;
         public readonly ushort AmbientLutLengthG;
         public readonly ushort AmbientLutLengthB;
-        public readonly ushort AmbientLutStartIndexR;
-        public readonly ushort AmbientLutStartIndexG;
-        public readonly ushort AmbientLutStartIndexB;
-        public readonly byte SpecularBlendFactorR;
-        public readonly byte SpecularBlendFactorG;
-        public readonly byte SpecularBlendFactorB;
+        public readonly ushort AmbientLutIndexR;
+        public readonly ushort AmbientLutIndexG;
+        public readonly ushort AmbientLutIndexB;
+        public readonly byte SpecularBlendR;
+        public readonly byte SpecularBlendG;
+        public readonly byte SpecularBlendB;
         public readonly byte Field67; // same as 47
         public readonly ushort SpecularLutLengthR;
         public readonly ushort SpecularLutLengthG;
         public readonly ushort SpecularLutLengthB;
-        public readonly ushort SpecularLutStartIndexR;
-        public readonly ushort SpecularLutStartIndexG;
-        public readonly ushort SpecularLutStartIndexB;
+        public readonly ushort SpecularLutIndexR;
+        public readonly ushort SpecularLutIndexG;
+        public readonly ushort SpecularLutIndexB;
         public readonly uint Field74;
         public readonly uint Field78;
         public readonly uint Field7C;
         public readonly uint Field80;
-        public readonly byte AlphaBlendFactor;
+        public readonly byte AlphaBlend;
         public readonly byte Field85;
         public readonly ushort AlphaLutLength;
-        public readonly ushort AlphaLutStartIndex;
+        public readonly ushort AlphaLutIndex;
         public readonly ushort MaterialId;
     }
 

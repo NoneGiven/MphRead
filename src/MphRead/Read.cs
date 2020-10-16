@@ -284,16 +284,16 @@ namespace MphRead
                 var animations = new Dictionary<string, MaterialAnimation>();
                 foreach (MaterialAnimation animation in rawAnimations)
                 {
-                    maxColor = Math.Max(maxColor, animation.DiffuseLutStartIndexR + animation.DiffuseLutLengthR);
-                    maxColor = Math.Max(maxColor, animation.DiffuseLutStartIndexG + animation.DiffuseLutLengthG);
-                    maxColor = Math.Max(maxColor, animation.DiffuseLutStartIndexB + animation.DiffuseLutLengthB);
-                    maxColor = Math.Max(maxColor, animation.AmbientLutStartIndexR + animation.AmbientLutLengthR);
-                    maxColor = Math.Max(maxColor, animation.AmbientLutStartIndexG + animation.AmbientLutLengthG);
-                    maxColor = Math.Max(maxColor, animation.AmbientLutStartIndexB + animation.AmbientLutLengthB);
-                    maxColor = Math.Max(maxColor, animation.SpecularLutStartIndexR + animation.SpecularLutLengthR);
-                    maxColor = Math.Max(maxColor, animation.SpecularLutStartIndexG + animation.SpecularLutLengthG);
-                    maxColor = Math.Max(maxColor, animation.SpecularLutStartIndexB + animation.SpecularLutLengthB);
-                    maxColor = Math.Max(maxColor, animation.AlphaLutStartIndex + animation.AlphaLutLength);
+                    maxColor = Math.Max(maxColor, animation.DiffuseLutIndexR + animation.DiffuseLutLengthR);
+                    maxColor = Math.Max(maxColor, animation.DiffuseLutIndexG + animation.DiffuseLutLengthG);
+                    maxColor = Math.Max(maxColor, animation.DiffuseLutIndexB + animation.DiffuseLutLengthB);
+                    maxColor = Math.Max(maxColor, animation.AmbientLutIndexR + animation.AmbientLutLengthR);
+                    maxColor = Math.Max(maxColor, animation.AmbientLutIndexG + animation.AmbientLutLengthG);
+                    maxColor = Math.Max(maxColor, animation.AmbientLutIndexB + animation.AmbientLutLengthB);
+                    maxColor = Math.Max(maxColor, animation.SpecularLutIndexR + animation.SpecularLutLengthR);
+                    maxColor = Math.Max(maxColor, animation.SpecularLutIndexG + animation.SpecularLutLengthG);
+                    maxColor = Math.Max(maxColor, animation.SpecularLutIndexB + animation.SpecularLutLengthB);
+                    maxColor = Math.Max(maxColor, animation.AlphaLutIndex + animation.AlphaLutLength);
                     animations.Add(animation.Name.MarshalString(), animation);
                 }
                 var colors = DoOffsets<byte>(bytes, rawGroup.ColorLutOffset, maxColor).Select(b => (float)b).ToList();
@@ -847,13 +847,13 @@ namespace MphRead
             }
         }
 
-        public static void ReadAndExport(string name)
+        public static void ReadAndExport(string name, bool firstHunt = false)
         {
             // todo: need non-throwing versions of these
             Model model;
             try
             {
-                model = GetModelByName(name);
+                model = GetModelByName(name, firstHunt: firstHunt);
             }
             catch
             {

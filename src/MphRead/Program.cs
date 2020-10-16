@@ -7,7 +7,7 @@ namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 10, 1, 0);
+        public static Version Version { get; } = new Version(0, 11, 0, 0);
 
         private static void Main(string[] args)
         {
@@ -23,7 +23,8 @@ namespace MphRead
             }
             else if (TryGetString(arguments, "export", "e", out string? exportValue))
             {
-                Read.ReadAndExport(exportValue);
+                bool firstHunt = arguments.Any(a => a.Name == "fh");
+                Read.ReadAndExport(exportValue, firstHunt);
             }
             else if (TryGetString(arguments, "extract", "x", out string? extractValue))
             {

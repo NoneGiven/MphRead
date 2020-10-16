@@ -692,7 +692,7 @@ namespace MphRead
             /* 41 */ new PlatformMetadata("piston_gorealand"),
             /* 42 */ new PlatformMetadata("unit4_tp2_artifact_wo"),
             /* 43 */ new PlatformMetadata("unit4_tp1_artifact_wo"),
-            // todo: what's the difference between this and 23?
+            // this version is used in Gorea_Land
             /* 44 */ new PlatformMetadata("SamusShip", animationIds: new List<uint>() { 1, 0, 2, 4 }, field20: 0, field24: 0)
         };
 
@@ -1199,6 +1199,7 @@ namespace MphRead
                     new ModelMetadata("AlimbicBossDoor")
                 },
                 {
+                    // todo: AlmbCapsuleShld_Collision is also used
                     "AlimbicCapsule",
                     new ModelMetadata("AlimbicCapsule", collision: true)
                 },

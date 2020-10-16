@@ -33,22 +33,48 @@ namespace MphRead.Export
                 string colorPath = Path.Combine(exportPath, recolor.Name);
                 Directory.CreateDirectory(colorPath);
                 var usedTextures = new HashSet<int>();
-                foreach (Material material in model.Materials.OrderBy(m => m.TextureId).ThenBy(m => m.PaletteId))
+                int id = 0;
+                var usedCombos = new HashSet<(int, int)>();
+
+                void DoTexture(int textureId, int paletteId)
                 {
-                    if (material.TextureId == UInt16.MaxValue)
+                    if (textureId == UInt16.MaxValue || usedCombos.Contains((textureId, paletteId)))
                     {
-                        continue;
+                        return;
                     }
-                    Texture texture = recolor.Textures[material.TextureId];
-                    IReadOnlyList<ColorRgba> pixels = recolor.GetPixels(material.TextureId, material.PaletteId);
+                    Texture texture = recolor.Textures[textureId];
+                    IReadOnlyList<ColorRgba> pixels = recolor.GetPixels(textureId, paletteId);
                     if (texture.Width == 0 || texture.Height == 0 || pixels.Count == 0)
                     {
-                        continue;
+                        return;
                     }
                     Debug.Assert(texture.Width * texture.Height == pixels.Count);
-                    usedTextures.Add(material.TextureId);
-                    string filename = $"{material.TextureId}-{material.PaletteId}";
+                    usedTextures.Add(textureId);
+                    usedCombos.Add((textureId, paletteId));
+                    string filename = $"{textureId}-{paletteId}";
+                    if (id > 0)
+                    {
+                        filename = $"anim__{id.ToString().PadLeft(3, '0')}";
+                    }
                     SaveTexture(colorPath, filename, texture.Width, texture.Height, pixels);
+                }
+
+                foreach (Material material in model.Materials.OrderBy(m => m.TextureId).ThenBy(m => m.PaletteId))
+                {
+                    DoTexture(material.TextureId, material.PaletteId);
+                }
+                id = 1;
+                usedCombos.Clear();
+                foreach (TextureAnimationGroup group in model.Animations.TextureGroups)
+                {
+                    foreach (TextureAnimation animation in group.Animations.Values)
+                    {
+                        for (int i = animation.StartIndex; i < animation.StartIndex + animation.Count; i++)
+                        {
+                            DoTexture(group.TextureIds[i], group.PaletteIds[i]);
+                            id++;
+                        }
+                    }
                 }
                 if (usedTextures.Count != recolor.Textures.Count)
                 {
