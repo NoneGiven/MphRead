@@ -236,15 +236,14 @@ def set_uv_anims(anims):
 def set_uv_anim(obj, anim):
     mod = obj.modifiers['UVWarp']
     for i, frame in enumerate(anim):
-        bpy.context.scene.frame_set(i)
         mod.scale[0] = frame[0]
         mod.scale[1] = frame[1]
         mod.rotation = frame[2]
         mod.offset[0] = frame[3]
         mod.offset[1] = frame[4]
-        obj.keyframe_insert('modifiers["UVWarp"].scale')
-        obj.keyframe_insert('modifiers["UVWarp"].rotation')
-        obj.keyframe_insert('modifiers["UVWarp"].offset')
+        obj.keyframe_insert('modifiers["UVWarp"].scale', frame = i)
+        obj.keyframe_insert('modifiers["UVWarp"].rotation', frame = i)
+        obj.keyframe_insert('modifiers["UVWarp"].offset', frame = i)
     bpy.context.scene.frame_end = i
 
 def set_mat_color(name, r, g, b, duplicate, objects):
@@ -281,15 +280,14 @@ def set_mat_anims(anims):
 
 def set_mat_anim(mat, anim):
     for i, frame in enumerate(anim):
-        bpy.context.scene.frame_set(i)
         rgb = mat.get_node('RGB')
         if rgb:
             color = rgb.get_output('Color')
             color.default_value[0] = frame[0]
             color.default_value[1] = frame[1]
             color.default_value[2] = frame[2]
-            color.keyframe_insert('default_value')
+            color.keyframe_insert('default_value', frame = i)
         alpha = mat.get_node('Math')
         alpha.inputs[1].default_value = frame[3]
-        alpha.inputs[1].keyframe_insert('default_value')
+        alpha.inputs[1].keyframe_insert('default_value', frame = i)
     bpy.context.scene.frame_end = i
