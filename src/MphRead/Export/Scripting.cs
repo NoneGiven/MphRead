@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -61,6 +62,43 @@ namespace MphRead.Export
                         float alpha = RenderWindow.InterpolateAnimation(group.Colors, anim.AlphaLutIndex, frame,
                             anim.AlphaBlend, anim.AlphaLutLength, group.FrameCount);
                         sb.AppendIndent($"[{red / 31.0f}, {green / 31.0f}, {blue / 31.0f}, {alpha / 31.0f}],", indent + 3);
+                    }
+                    sb.AppendIndent("],", indent + 2);
+                }
+                sb.AppendIndent("},", indent + 1);
+            }
+            sb.AppendIndent("]", indent);
+
+            sb.AppendIndent("tex_anims = [", indent);
+            var combos = new List<(int, int)>();
+            foreach (TextureAnimationGroup group in model.Animations.TextureGroups)
+            {
+                foreach (KeyValuePair<string, TextureAnimation> kvp in group.Animations)
+                {
+                    for (int i = kvp.Value.StartIndex; i < kvp.Value.StartIndex + kvp.Value.Count; i++)
+                    {
+                        (int, int) pair = (group.TextureIds[i], group.PaletteIds[i]);
+                        if (!combos.Contains(pair))
+                        {
+                            combos.Add(pair);
+                        }
+                    }
+                }
+            }
+            foreach (TextureAnimationGroup group in model.Animations.TextureGroups)
+            {
+                sb.AppendIndent("{", indent + 1);
+                foreach (KeyValuePair<string, TextureAnimation> kvp in group.Animations)
+                {
+                    TextureAnimation anim = kvp.Value;
+                    sb.AppendIndent($"'{kvp.Key}_mat':", indent + 2);
+                    sb.AppendIndent("[", indent + 2);
+                    for (int i = kvp.Value.StartIndex; i < kvp.Value.StartIndex + kvp.Value.Count; i++)
+                    {
+                        int frame = group.FrameIndices[i];
+                        int index = combos.IndexOf((group.TextureIds[i], group.PaletteIds[i]));
+                        Debug.Assert(index != -1);
+                        sb.AppendIndent($"[{frame}, {index}],", indent + 3);
                     }
                     sb.AppendIndent("],", indent + 2);
                 }
@@ -284,9 +322,9 @@ bpy.ops.object.parent_set(type='ARMATURE_NAME')");
             sb.AppendIndent("bpy.context.scene.render.fps = 30");
             sb.AppendIndent();
             sb.AppendIndent("set_uv_anims(uv_anims[uv_index])");
-            //sb.AppendIndent("if tex_index >= 0:");
-            //sb.AppendIndent();
-            //sb.AppendIndent("set_tex_anims(tex_anims[tex_index])");
+            sb.AppendIndent("if tex_index >= 0:");
+            sb.AppendIndent();
+            sb.AppendIndent("set_tex_anims(tex_anims[tex_index])");
             //sb.AppendIndent("if node_index >= 0:");
             //sb.AppendIndent();
             //sb.AppendIndent("set_node_anims(node_anims[node_index])");

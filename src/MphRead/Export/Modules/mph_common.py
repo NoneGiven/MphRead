@@ -291,3 +291,26 @@ def set_mat_anim(mat, anim):
         alpha.inputs[1].default_value = frame[3]
         alpha.inputs[1].keyframe_insert('default_value', frame = i)
     bpy.context.scene.frame_end = i
+
+def set_tex_anims(anims):
+    bpy.context.scene.frame_start = 0
+    for name, anim in anims.items():
+        for mat in get_materials():
+            if mat.name == name or mat.name == name + '_mc':
+                set_tex_anim(mat, anim)
+#                for fcurve in mat.node_tree.animation_data.action.fcurves:
+#                    for kf in fcurve.keyframe_points:
+#                        kf.interpolation = 'CONSTANT'
+    bpy.context.scene.frame_set(0)
+
+def set_tex_anim(mat, anim):
+    tex = mat.get_node('Image Texture')
+    tex.image = bpy.data.images['anim__001.png']
+    tex.image.source = 'SEQUENCE'
+    tex.image_user.frame_duration = 1
+    tex.image_user.frame_start = 1
+    tex.image_user.use_cyclic = True
+    tex.image_user.use_auto_refresh = True
+    for frame in anim:
+        tex.image_user.frame_offset = frame[1]
+        tex.image_user.keyframe_insert('frame_offset', frame = frame[0])

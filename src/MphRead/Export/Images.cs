@@ -33,7 +33,7 @@ namespace MphRead.Export
                 string colorPath = Path.Combine(exportPath, recolor.Name);
                 Directory.CreateDirectory(colorPath);
                 var usedTextures = new HashSet<int>();
-                int id = -1;
+                int id = 0;
                 var usedCombos = new HashSet<(int, int)>();
 
                 void DoTexture(int textureId, int paletteId)
@@ -52,7 +52,7 @@ namespace MphRead.Export
                     usedTextures.Add(textureId);
                     usedCombos.Add((textureId, paletteId));
                     string filename = $"{textureId}-{paletteId}";
-                    if (id >= 0)
+                    if (id > 0)
                     {
                         filename = $"anim__{id.ToString().PadLeft(3, '0')}";
                     }
@@ -63,7 +63,7 @@ namespace MphRead.Export
                 {
                     DoTexture(material.TextureId, material.PaletteId);
                 }
-                id = 0;
+                id = 1;
                 usedCombos.Clear();
                 foreach (TextureAnimationGroup group in model.Animations.TextureGroups)
                 {

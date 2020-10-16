@@ -100,7 +100,7 @@ namespace MphRead.Export
 
             // images
             sb.Append("\n\t<library_images>");
-            int id = -1;
+            int id = 0;
             var imagesInLibrary = new HashSet<(int, int)>();
             void AddLibraryImage(int textureId, int paletteId, string name)
             {
@@ -109,7 +109,7 @@ namespace MphRead.Export
                     imagesInLibrary.Add((textureId, paletteId));
                     sb.Append($"\n\t\t<image id=\"{name}\" name=\"{name}\">");
                     sb.Append("\n\t\t\t<init_from>");
-                    if (id < 0)
+                    if (id <= 0)
                     {
                         sb.Append($@"{recolor.Name}\{textureId}-{paletteId}.png");
                     }
@@ -125,7 +125,7 @@ namespace MphRead.Export
             {
                 AddLibraryImage(material.TextureId, material.PaletteId, material.Name);
             }
-            id = 0;
+            id = 1;
             imagesInLibrary.Clear();
             foreach (TextureAnimationGroup group in model.Animations.TextureGroups)
             {
