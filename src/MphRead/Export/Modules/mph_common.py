@@ -298,14 +298,11 @@ def set_tex_anims(anims):
         for mat in get_materials():
             if mat.name == name or mat.name == name + '_mc':
                 set_tex_anim(mat, anim)
-#                for fcurve in mat.node_tree.animation_data.action.fcurves:
-#                    for kf in fcurve.keyframe_points:
-#                        kf.interpolation = 'CONSTANT'
     bpy.context.scene.frame_set(0)
 
 def set_tex_anim(mat, anim):
     tex = mat.get_node('Image Texture')
-    tex.image = bpy.data.images['anim__001.png']
+    tex.image = bpy.data.images['anim__001.png'].copy()
     tex.image.source = 'SEQUENCE'
     tex.image_user.frame_duration = 1
     tex.image_user.frame_start = 1
