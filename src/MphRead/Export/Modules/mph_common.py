@@ -1,4 +1,5 @@
 import bpy
+import mathutils
 
 def get_common_version():
     return '0.11.0.0'
@@ -301,6 +302,7 @@ def set_tex_anims(anims):
     bpy.context.scene.frame_set(0)
 
 def set_tex_anim(mat, anim):
+    max_frame = 0
     tex = mat.get_node('Image Texture')
     tex.image = bpy.data.images['anim__001.png'].copy()
     tex.image.source = 'SEQUENCE'
@@ -311,3 +313,26 @@ def set_tex_anim(mat, anim):
     for frame in anim:
         tex.image_user.frame_offset = frame[1]
         tex.image_user.keyframe_insert('frame_offset', frame = frame[0])
+        if frame[0] > max_frame:
+            max_frame = frame[0]
+    bpy.context.scene.frame_end = max_frame
+
+def set_node_anims(anims):
+    bpy.context.scene.frame_start = 0
+    for name, anim in anims.items():
+        bone = bpy.data.objects['Armature'].pose.bones[name]
+        set_node_anim(bone, anim)
+    for fcurve in bpy.data.objects['Armature'].animation_data.action.fcurves:
+        for kf in fcurve.keyframe_points:
+            kf.interpolation = 'CONSTANT'
+    bpy.context.scene.frame_set(0)
+
+def set_node_anim(bone, anim):
+    for i, frame in enumerate(anim):
+        bone.scale = mathutils.Vector((frame[0], frame[1], frame[2]))
+        bone.rotation_euler = mathutils.Vector((frame[3], frame[4], frame[5]))
+        bone.location = mathutils.Vector((frame[6], frame[7], frame[8]))
+        bone.keyframe_insert('scale', frame = i)
+        bone.keyframe_insert('rotation_euler', frame = i)
+        bone.keyframe_insert('location', frame = i)
+    bpy.context.scene.frame_end = i

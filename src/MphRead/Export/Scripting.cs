@@ -105,6 +105,45 @@ namespace MphRead.Export
                 sb.AppendIndent("},", indent + 1);
             }
             sb.AppendIndent("]", indent);
+
+
+            sb.AppendIndent("node_anims = [", indent);
+            foreach (NodeAnimationGroup group in model.Animations.NodeGroups)
+            {
+                sb.AppendIndent("{", indent + 1);
+                foreach (KeyValuePair<string, NodeAnimation> kvp in group.Animations)
+                {
+                    NodeAnimation anim = kvp.Value;
+                    sb.AppendIndent($"'{kvp.Key}':", indent + 2);
+                    sb.AppendIndent("[", indent + 2);
+                    for (int frame = 0; frame < group.FrameCount; frame++)
+                    {
+                        float scaleX = RenderWindow.InterpolateAnimation(group.Scales, anim.ScaleLutIndexX, frame,
+                            anim.ScaleBlendX, anim.ScaleLutLengthX, group.FrameCount);
+                        float scaleY = RenderWindow.InterpolateAnimation(group.Scales, anim.ScaleLutIndexY, frame,
+                            anim.ScaleBlendY, anim.ScaleLutLengthY, group.FrameCount);
+                        float scaleZ = RenderWindow.InterpolateAnimation(group.Scales, anim.ScaleLutIndexZ, frame,
+                            anim.ScaleBlendZ, anim.ScaleLutLengthZ, group.FrameCount);
+                        float rotateX = RenderWindow.InterpolateAnimation(group.Rotations, anim.RotateLutIndexX, frame,
+                            anim.RotateBlendX, anim.RotateLutLengthX, group.FrameCount, isRotation: true);
+                        float rotateY = RenderWindow.InterpolateAnimation(group.Rotations, anim.RotateLutIndexY, frame,
+                            anim.RotateBlendY, anim.RotateLutLengthY, group.FrameCount, isRotation: true);
+                        float rotateZ = RenderWindow.InterpolateAnimation(group.Rotations, anim.RotateLutIndexZ, frame,
+                            anim.RotateBlendZ, anim.RotateLutLengthZ, group.FrameCount, isRotation: true);
+                        float translateX = RenderWindow.InterpolateAnimation(group.Translations, anim.TranslateLutIndexX, frame,
+                            anim.TranslateBlendX, anim.TranslateLutLengthX, group.FrameCount);
+                        float translateY = RenderWindow.InterpolateAnimation(group.Translations, anim.TranslateLutIndexY, frame,
+                            anim.TranslateBlendY, anim.TranslateLutLengthY, group.FrameCount);
+                        float translateZ = RenderWindow.InterpolateAnimation(group.Translations, anim.TranslateLutIndexZ, frame,
+                            anim.TranslateBlendZ, anim.TranslateLutLengthZ, group.FrameCount);
+                        sb.AppendIndent($"[{scaleX}, {scaleY}, {scaleZ}, {rotateX}, {rotateY}, {rotateZ}," +
+                            $" {translateX}, {translateY}, {translateZ}],", indent + 3);
+                    }
+                    sb.AppendIndent("],", indent + 2);
+                }
+                sb.AppendIndent("},", indent + 1);
+            }
+            sb.AppendIndent("]", indent);
         }
 
         public static string GenerateScript(Model model, Dictionary<string, IReadOnlyList<Collada.Vertex>> lists)
@@ -291,21 +330,20 @@ bpy.ops.object.parent_set(type='ARMATURE_NAME')");
                     }
                 }
 
-                foreach (Node node in model.Nodes.Where(n => n.Scale != Vector3.One || n.Angle != Vector3.Zero || n.Position != Vector3.Zero))
+                foreach (Node node in model.Nodes)
                 {
                     sb.AppendIndent($"bone = bpy.data.objects['Armature'].pose.bones['{node.Name}']");
+                    sb.AppendIndent("bone.rotation_mode = 'XYZ'");
                     if (node.Scale != Vector3.One)
                     {
                         sb.AppendIndent($"bone.scale = mathutils.Vector(({node.Scale.X}, {node.Scale.Y}, {node.Scale.Z}))");
                     }
                     if (node.Angle != Vector3.Zero)
                     {
-                        sb.AppendIndent("bone.rotation_mode = 'XYZ'");
                         float x = node.Angle.X;
                         float y = node.Angle.Y;
                         float z = node.Angle.Z;
                         sb.AppendIndent($"bone.rotation_euler = mathutils.Vector(({x}, {y}, {z}))");
-                        sb.AppendIndent("bone.rotation_mode = 'QUATERNION'");
                     }
                     if (node.Position != Vector3.Zero)
                     {
@@ -317,17 +355,16 @@ bpy.ops.object.parent_set(type='ARMATURE_NAME')");
             // todo: make sure active_material doesn't cause problems with untextured meshes
             sb.AppendLine("def anim_setup():");
             PrintAnimations(model, sb);
-            sb.AppendIndent("if uv_index >= 0:");
-            sb.AppendIndent();
             sb.AppendIndent("bpy.context.scene.render.fps = 30");
+            sb.AppendIndent("if uv_index >= 0:");
             sb.AppendIndent();
             sb.AppendIndent("set_uv_anims(uv_anims[uv_index])");
             sb.AppendIndent("if tex_index >= 0:");
             sb.AppendIndent();
             sb.AppendIndent("set_tex_anims(tex_anims[tex_index])");
-            //sb.AppendIndent("if node_index >= 0:");
-            //sb.AppendIndent();
-            //sb.AppendIndent("set_node_anims(node_anims[node_index])");
+            sb.AppendIndent("if node_index >= 0:");
+            sb.AppendIndent();
+            sb.AppendIndent("set_node_anims(node_anims[node_index])");
             sb.AppendIndent("if mat_index >= 0:");
             sb.AppendIndent();
             sb.AppendIndent("set_mat_anims(mat_anims[mat_index])");
