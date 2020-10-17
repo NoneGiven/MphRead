@@ -247,7 +247,7 @@ namespace MphRead.Export
                     else
                     {
                         sb.AppendIndent($"set_mat_color('{material.Name}_mat', {color}, False, [])");
-                    } 
+                    }
                 }
             }
             foreach (Node node in model.Nodes)
