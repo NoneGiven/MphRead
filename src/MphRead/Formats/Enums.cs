@@ -79,6 +79,13 @@ namespace MphRead
         Player
     }
 
+    public enum Team
+    {
+        None,
+        Orange,
+        Green
+    }
+
     public enum BillboardMode : byte
     {
         None = 0,

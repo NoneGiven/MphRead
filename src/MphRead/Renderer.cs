@@ -388,6 +388,7 @@ namespace MphRead
             _shaderLocations.Diffuse = GL.GetUniformLocation(_shaderProgramId, "diffuse");
             _shaderLocations.Ambient = GL.GetUniformLocation(_shaderProgramId, "ambient");
             _shaderLocations.Specular = GL.GetUniformLocation(_shaderProgramId, "specular");
+            _shaderLocations.Emission = GL.GetUniformLocation(_shaderProgramId, "emission");
             _shaderLocations.UseFog = GL.GetUniformLocation(_shaderProgramId, "fog_enable");
             _shaderLocations.FogColor = GL.GetUniformLocation(_shaderProgramId, "fog_color");
             _shaderLocations.FogMinDistance = GL.GetUniformLocation(_shaderProgramId, "fog_min");
@@ -902,6 +903,7 @@ namespace MphRead
                         {
                             meshPolygonId = modelPolygonId;
                         }
+                        alpha *= model.Alpha;
                         var meshInfo = new MeshInfo(model, node, mesh, material, meshPolygonId, alpha);
                         if (material.RenderMode != RenderMode.Decal)
                         {
@@ -1626,10 +1628,21 @@ namespace MphRead
             // MPH applies the material colors initially by calling DIF_AMB with bit 15 set,
             // so the diffuse color is always set as the vertex color to start
             // (the emission color is set to white if lighting is disabled or black if lighting is enabled; we can just ignore that)
+            // --> ...except for hunter models with teams enabled
             GL.Color3(diffuse);
             GL.Uniform3(_shaderLocations.Diffuse, diffuse);
             GL.Uniform3(_shaderLocations.Ambient, ambient);
             GL.Uniform3(_shaderLocations.Specular, specular);
+            Vector3 emission = Vector3.Zero;
+            if (model.Team == Team.Orange)
+            {
+                emission = Metadata.EmissionOrange;
+            }
+            else if (model.Team == Team.Green)
+            {
+                emission = Metadata.EmissionGreen;
+            }
+            GL.Uniform3(_shaderLocations.Emission, emission);
             GL.Uniform1(_shaderLocations.MaterialAlpha, alpha * alphaScale);
             GL.Uniform1(_shaderLocations.MaterialMode, (int)material.PolygonMode);
             material.CurrentAlpha = alpha;
@@ -1674,7 +1687,6 @@ namespace MphRead
                     }
                     break;
                 case InstructionCode.COLOR:
-                    // shader - if (_showColors && (mesh.OverrideColor == null || !_showSelection))
                     {
                         uint rgb = instruction.Arguments[0];
                         uint r = (rgb >> 0) & 0x1F;

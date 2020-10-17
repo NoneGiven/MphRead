@@ -11,6 +11,7 @@ namespace MphRead
     {
         public bool Visible { get; set; } = true;
         public bool ScanVisorOnly { get; set; }
+        public float Alpha { get; set; } = 1.0f;
         public bool UseLightSources { get; }
         public bool UseLightOverride { get; set; } // for Octoliths
         public Vector3 Light1Color { get; set; }
@@ -21,6 +22,7 @@ namespace MphRead
         public EntityType EntityType { get; set; }
         public ushort EntityLayer { get; set; } = UInt16.MaxValue;
         public byte Flags { get; set; } // todo: enum for model flags
+        public Team Team { get; } = Team.None;
 
         public string Name { get; }
         public Header Header { get; }

@@ -336,6 +336,9 @@ namespace MphRead
             return list[playerCount == 3 ? 1 : (playerCount == 4 ? 2 : 0)];
         }
 
+        public static readonly Vector3 EmissionOrange = GetColor(0x14F0);
+        public static readonly Vector3 EmissionGreen = GetColor(0x1565);
+
         public static readonly Vector3 OctolithLight1Vector = new Vector3(0, 0.3005371f, -0.5f);
         public static readonly Vector3 OctolithLight2Vector = new Vector3(0, 0, -0.5f);
         public static readonly Vector3 OctolithLightColor = new Vector3(1, 1, 1);
@@ -343,42 +346,42 @@ namespace MphRead
         // this is only set/used by Octolith
         public static readonly IReadOnlyList<Vector3> ToonTable = new List<Vector3>()
         {
-            GetTableColor(0x2000),
-            GetTableColor(0x2000),
-            GetTableColor(0x2020),
-            GetTableColor(0x2021),
-            GetTableColor(0x2021),
-            GetTableColor(0x2041),
-            GetTableColor(0x2441),
-            GetTableColor(0x2461),
-            GetTableColor(0x2461),
-            GetTableColor(0x2462),
-            GetTableColor(0x2482),
-            GetTableColor(0x2482),
-            GetTableColor(0x28C3),
-            GetTableColor(0x2CE4),
-            GetTableColor(0x3105),
-            GetTableColor(0x3546),
-            GetTableColor(0x3967),
-            GetTableColor(0x3D88),
-            GetTableColor(0x41C9),
-            GetTableColor(0x45EA),
-            GetTableColor(0x4A0B),
-            GetTableColor(0x4E4B),
-            GetTableColor(0x526C),
-            GetTableColor(0x568D),
-            GetTableColor(0x5ACE),
-            GetTableColor(0x5EEF),
-            GetTableColor(0x6310),
-            GetTableColor(0x6751),
-            GetTableColor(0x6B72),
-            GetTableColor(0x6F93),
-            GetTableColor(0x73D4),
-            GetTableColor(0x77F5)
+            GetColor(0x2000),
+            GetColor(0x2000),
+            GetColor(0x2020),
+            GetColor(0x2021),
+            GetColor(0x2021),
+            GetColor(0x2041),
+            GetColor(0x2441),
+            GetColor(0x2461),
+            GetColor(0x2461),
+            GetColor(0x2462),
+            GetColor(0x2482),
+            GetColor(0x2482),
+            GetColor(0x28C3),
+            GetColor(0x2CE4),
+            GetColor(0x3105),
+            GetColor(0x3546),
+            GetColor(0x3967),
+            GetColor(0x3D88),
+            GetColor(0x41C9),
+            GetColor(0x45EA),
+            GetColor(0x4A0B),
+            GetColor(0x4E4B),
+            GetColor(0x526C),
+            GetColor(0x568D),
+            GetColor(0x5ACE),
+            GetColor(0x5EEF),
+            GetColor(0x6310),
+            GetColor(0x6751),
+            GetColor(0x6B72),
+            GetColor(0x6F93),
+            GetColor(0x73D4),
+            GetColor(0x77F5)
         };
 
         // todo: consolidate stuff like this
-        private static Vector3 GetTableColor(ushort value)
+        private static Vector3 GetColor(ushort value)
         {
             int r = (value >> 0) & 0x1F;
             int g = (value >> 5) & 0x1F;
