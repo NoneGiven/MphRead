@@ -139,6 +139,7 @@ namespace MphRead
         private float _farClip = 10000f;
         private bool _useClip = true; // undocumented
         private float _killHeight = 0f;
+        private int _dblDmgBindingId = -1;
 
         private Vector3 _light1Vector = default;
         private Vector3 _light1Color = default;
@@ -311,6 +312,9 @@ namespace MphRead
                 }
             }
             _cameraMode = CameraMode.Roam;
+            Model dblDmgModel = Read.GetModelByName("doubleDamage_img");
+            BindTexture(dblDmgModel, 0, 0);
+            _dblDmgBindingId = _textureCount;
         }
 
         public void AddModel(string name, int recolor, bool firstHunt)
@@ -456,30 +460,36 @@ namespace MphRead
                 var map = new TextureMap();
                 foreach ((int textureId, int paletteId) in combos)
                 {
-                    _textureCount++;
-                    bool onlyOpaque = true;
-                    var pixels = new List<uint>();
-                    foreach (ColorRgba pixel in model.GetPixels(textureId, paletteId))
-                    {
-                        uint red = pixel.Red;
-                        uint green = pixel.Green;
-                        uint blue = pixel.Blue;
-                        uint alpha = pixel.Alpha;
-                        pixels.Add((red << 0) | (green << 8) | (blue << 16) | (alpha << 24));
-                        if (alpha < 255)
-                        {
-                            onlyOpaque = false;
-                        }
-                    }
-                    Texture texture = model.Textures[textureId];
-                    GL.BindTexture(TextureTarget.Texture2D, _textureCount);
-                    GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, texture.Width, texture.Height, 0,
-                        PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
-                    GL.BindTexture(TextureTarget.Texture2D, 0);
+                    bool onlyOpaque = BindTexture(model, textureId, paletteId);
                     map.Add(textureId, paletteId, _textureCount, onlyOpaque);
                 }
                 _texPalMap.Add(model.SceneId, map);
             }
+        }
+
+        private bool BindTexture(Model model, int textureId, int paletteId)
+        {
+            _textureCount++;
+            bool onlyOpaque = true;
+            var pixels = new List<uint>();
+            foreach (ColorRgba pixel in model.GetPixels(textureId, paletteId))
+            {
+                uint red = pixel.Red;
+                uint green = pixel.Green;
+                uint blue = pixel.Blue;
+                uint alpha = pixel.Alpha;
+                pixels.Add((red << 0) | (green << 8) | (blue << 16) | (alpha << 24));
+                if (alpha < 255)
+                {
+                    onlyOpaque = false;
+                }
+            }
+            Texture texture = model.Textures[textureId];
+            GL.BindTexture(TextureTarget.Texture2D, _textureCount);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, texture.Width, texture.Height, 0,
+                PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            return onlyOpaque;
         }
 
         private void DeleteTextures(int sceneId)
@@ -1216,7 +1226,7 @@ namespace MphRead
             {
                 GL.UniformMatrix4(_shaderLocations.MatrixStack, model.NodeMatrixIds.Count, transpose: false, model.MatrixStackValues);
             }
-            DoMaterial(model, item.Material, item.Alpha);
+            DoMaterial(model, item.Material, item.Node, item.Alpha);
             // texgen actually uses the transform from the current node, not the matrix stack
             DoTexture(model, item.Node, item.Mesh, item.Material);
             if (_faceCulling)
@@ -1431,15 +1441,27 @@ namespace MphRead
 
         private void DoTexture(Model model, Node node, Mesh mesh, Material material)
         {
+            TexgenMode texgenMode = material.TexgenMode;
+            RepeatMode xRepeat = material.XRepeat;
+            RepeatMode yRepeat = material.YRepeat;
+            int bindingId = material.TextureBindingId;
+            if (model.DoubleDamage && !model.DoubleDamageSkipMaterials.Contains(material)
+                && material.Lighting > 0 && node.BillboardMode == BillboardMode.None)
+            {
+                texgenMode = TexgenMode.Normal;
+                xRepeat = RepeatMode.Mirror;
+                yRepeat = RepeatMode.Mirror;
+                bindingId = _dblDmgBindingId;
+            }
             int textureId = material.CurrentTextureId;
             if (textureId != UInt16.MaxValue)
             {
-                GL.BindTexture(TextureTarget.Texture2D, material.TextureBindingId);
+                GL.BindTexture(TextureTarget.Texture2D, bindingId);
                 int minParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMinFilter.Nearest;
                 int magParameter = _textureFiltering ? (int)TextureMagFilter.Linear : (int)TextureMagFilter.Nearest;
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
-                switch (material.XRepeat)
+                switch (xRepeat)
                 {
                 case RepeatMode.Clamp:
                     GL.TexParameter(TextureTarget.Texture2D,
@@ -1454,7 +1476,7 @@ namespace MphRead
                         TextureParameterName.TextureWrapS, (int)TextureWrapMode.MirroredRepeat);
                     break;
                 }
-                switch (material.YRepeat)
+                switch (yRepeat)
                 {
                 case RepeatMode.Clamp:
                     GL.TexParameter(TextureTarget.Texture2D,
@@ -1485,7 +1507,7 @@ namespace MphRead
                 {
                     texcoordMatrix = AnimateTexcoords(group, animation.Value);
                 }
-                if (material.TexgenMode != TexgenMode.None)
+                if (texgenMode != TexgenMode.None)
                 {
                     Matrix4 materialMatrix;
                     // in-game, this is a list of precomputed matrices that we compute on the fly in the next block;
@@ -1508,10 +1530,9 @@ namespace MphRead
                     {
                         texcoordMatrix = materialMatrix;
                     }
-                    if (material.TexgenMode == TexgenMode.Normal)
+                    if (texgenMode == TexgenMode.Normal)
                     {
                         Texture texture = model.Textures[material.TextureId];
-                        Debug.Assert(texture.Width == texture.Height && texture.Width > 0 && texture.Width % 2 == 0);
                         Matrix4 product = node.Animation.Keep3x3();
                         Matrix4 texgenMatrix = Matrix4.Identity;
                         // in-game, there's only one uniform scale factor for models
@@ -1530,8 +1551,21 @@ namespace MphRead
                         product.M23 *= -1;
                         product.M32 *= -1;
                         product.M33 *= -1;
-                        product *= materialMatrix;
-                        product *= texcoordMatrix;
+                        if (model.DoubleDamage && !model.DoubleDamageSkipMaterials.Contains(material)
+                            && material.Lighting > 0 && node.BillboardMode == BillboardMode.None)
+                        {
+                            long frame = _frameCount / 2;
+                            float rotZ = ((int)(16 * ((781874935307L * (ulong)(53248 * frame) >> 32) + 2048)) >> 20) * (360 / 4096f);
+                            float rotY = ((int)(16 * ((781874935307L * (ulong)(26624 * frame) + 0x80000000000) >> 32)) >> 20) * (360 / 4096f);
+                            var rot = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(rotZ));
+                            rot *= Matrix4.CreateRotationY(MathHelper.DegreesToRadians(rotY));
+                            product = rot * product;
+                        }
+                        else
+                        {
+                            product *= materialMatrix;
+                            product *= texcoordMatrix;
+                        }
                         product *= (1.0f / (texture.Width / 2));
                         texcoordMatrix = new Matrix4(
                             product.Row0 * 16.0f,
@@ -1542,7 +1576,7 @@ namespace MphRead
                         texcoordMatrix.Transpose();
                     }
                 }
-                GL.Uniform1(_shaderLocations.TexgenMode, (int)material.TexgenMode);
+                GL.Uniform1(_shaderLocations.TexgenMode, (int)texgenMode);
                 GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref texcoordMatrix);
             }
             GL.Uniform1(_shaderLocations.UseTexture, textureId != UInt16.MaxValue && _showTextures ? 1 : 0);
@@ -1577,7 +1611,7 @@ namespace MphRead
             }
         }
 
-        private void DoMaterial(Model model, Material material, float alphaScale)
+        private void DoMaterial(Model model, Material material, Node node, float alphaScale)
         {
             if (_lighting && material.Lighting != 0)
             {
@@ -1636,7 +1670,10 @@ namespace MphRead
             Vector3 emission = Vector3.Zero;
             if (model.DoubleDamage && !model.DoubleDamageSkipMaterials.Contains(material))
             {
-                emission = Metadata.EmissionGray;
+                if (material.Lighting > 0 && node.BillboardMode == BillboardMode.None)
+                {
+                    emission = Metadata.EmissionGray;
+                }
             }
             else if (model.Team == Team.Orange)
             {

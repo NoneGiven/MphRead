@@ -316,7 +316,6 @@ namespace MphRead
             Rotating = other.Rotating;
             Scale = other.Scale;
             ScanVisorOnly = other.ScanVisorOnly;
-            SceneId = other.SceneId;
             SpinAxis = other.SpinAxis;
             SpinSpeed = other.SpinSpeed;
             Team = other.Team;
