@@ -1625,6 +1625,10 @@ namespace MphRead
                     new ModelMetadata("Door_Unit4_RM1", animation: false, collision: true)
                 },
                 {
+                    "doubleDamage_img",
+                    new ModelMetadata("doubleDamage_img", animation: false, archive: "common")
+                },
+                {
                     "DripStank_lod0",
                     new ModelMetadata("DripStank_lod0", remove: "_lod0")
                 },
