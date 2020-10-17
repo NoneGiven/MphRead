@@ -232,7 +232,7 @@ namespace MphRead
             float scale = Header.ScaleBase.FloatValue * (1 << (int)Header.ScaleFactor);
             Scale = new Vector3(scale, scale, scale);
             UseLightSources = useLightSources;
-            Debug.Assert(header.NodeWeightCount == nodeWeights.Count);
+            Debug.Assert(header.NodeWeightCount == nodeWeights.Count || name == "doubleDamage_img");
             NodeMatrixIds = nodeWeights;
             if (header.NodeWeightCount > 0)
             {
