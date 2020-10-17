@@ -338,6 +338,7 @@ namespace MphRead
 
         public static readonly Vector3 EmissionOrange = GetColor(0x14F0);
         public static readonly Vector3 EmissionGreen = GetColor(0x1565);
+        public static readonly Vector3 EmissionGray = GetColor(0x35AD);
 
         public static readonly Vector3 OctolithLight1Vector = new Vector3(0, 0.3005371f, -0.5f);
         public static readonly Vector3 OctolithLight2Vector = new Vector3(0, 0, -0.5f);

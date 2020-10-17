@@ -1634,7 +1634,11 @@ namespace MphRead
             GL.Uniform3(_shaderLocations.Ambient, ambient);
             GL.Uniform3(_shaderLocations.Specular, specular);
             Vector3 emission = Vector3.Zero;
-            if (model.Team == Team.Orange)
+            if (model.DoubleDamage && !model.DoubleDamageSkipMaterials.Contains(material))
+            {
+                emission = Metadata.EmissionGray;
+            }
+            else if (model.Team == Team.Orange)
             {
                 emission = Metadata.EmissionOrange;
             }

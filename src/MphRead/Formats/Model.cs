@@ -84,6 +84,9 @@ namespace MphRead
             }
         }
 
+        public bool DoubleDamage { get; set; }
+        public IReadOnlyList<Material> DoubleDamageSkipMaterials { get; }
+
         // todo: update these as with the other transform properties
         public Vector3 Vector1 = Vector3.UnitY;
         public Vector3 Vector2 = Vector3.UnitZ;
@@ -270,31 +273,59 @@ namespace MphRead
             {
                 Flags |= 1;
             }
+            var skipMaterials = new List<Material>();
             // manually disable a decal that isn't rendered in-game because it's not on a surface
             if (Name == "UNIT2_C6")
             {
                 Nodes[46].Enabled = false;
             }
+            else if (Name == "SpireGun")
+            {
+                skipMaterials.Add(Materials[0]);
+            }
+            DoubleDamageSkipMaterials = skipMaterials;
         }
 
         public Model(Model other)
         {
-            Name = other.Name;
-            Header = other.Header;
-            Nodes = other.Nodes;
-            Meshes = other.Meshes;
-            Materials = other.Materials;
-            DisplayLists = other.DisplayLists;
-            RenderInstructionLists = other.RenderInstructionLists;
             Animations = other.Animations;
-            TextureMatrices = other.TextureMatrices;
-            Recolors = other.Recolors;
-            CurrentRecolor = other.CurrentRecolor;
-            Scale = other.Scale;
-            UseLightSources = other.UseLightSources;
-            NodeMatrixIds = other.NodeMatrixIds;
-            MatrixStackValues = other.MatrixStackValues;
+            ChildId = other.ChildId;
+            DisplayLists = other.DisplayLists;
+            DoubleDamageSkipMaterials = other.DoubleDamageSkipMaterials;
+            Entity = other.Entity;
+            EntityLayer = other.EntityLayer;
+            EntityType = other.EntityType;
             Flags = other.Flags;
+            Floating = other.Floating;
+            Header = other.Header;
+            InitialPosition = other.InitialPosition;
+            Light1Color = other.Light1Color;
+            Light1Vector = other.Light1Vector;
+            Light2Color = other.Light2Color;
+            Light2Vector = other.Light2Vector;
+            Materials = other.Materials;
+            MatrixStackValues = other.MatrixStackValues;
+            Meshes = other.Meshes;
+            Name = other.Name;
+            NodeMatrixIds = other.NodeMatrixIds;
+            Nodes = other.Nodes;
+            PaletteOverride = other.PaletteOverride;
+            ParentId = other.ParentId;
+            Recolors = other.Recolors;
+            RenderInstructionLists = other.RenderInstructionLists;
+            Rotating = other.Rotating;
+            Scale = other.Scale;
+            ScanVisorOnly = other.ScanVisorOnly;
+            SceneId = other.SceneId;
+            SpinAxis = other.SpinAxis;
+            SpinSpeed = other.SpinSpeed;
+            Team = other.Team;
+            TextureMatrices = other.TextureMatrices;
+            Type = other.Type;
+            UseLightOverride = other.UseLightOverride;
+            UseLightSources = other.UseLightSources;
+            Visible = other.Visible;
+            CurrentRecolor = other.CurrentRecolor;
         }
 
         public IEnumerable<ColorRgba> GetPixels(int textureId, int paletteId)
