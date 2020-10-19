@@ -596,16 +596,17 @@ namespace MphRead
         {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, name)));
             RawEffect effect = ReadStruct<RawEffect>(bytes);
-            var funcs = new List<FxFuncInfo>();
+            var funcs = new Dictionary<uint, FxFuncInfo>();
             foreach (uint offset in DoOffsets<uint>(bytes, effect.FuncOffset, effect.FuncCount))
             {
+                // sktodo: assert that the layout and param count match assumptions
                 uint funcId = SpanReadUint(bytes, offset);
                 uint paramOffset = SpanReadUint(bytes, offset + 4);
-                // sktodo: assert that the layout and param count match assumptions
                 uint paramCount = (offset - paramOffset) / 4;
                 IReadOnlyList<int> parameters = DoOffsets<int>(bytes, paramOffset, paramCount);
-                funcs.Add(new FxFuncInfo(funcId, parameters));
+                funcs.Add(offset, new FxFuncInfo(funcId, parameters));
             }
+            // todo: these are also offsets into the func/param arrays; what are they used for?
             IReadOnlyList<uint> list2 = DoOffsets<uint>(bytes, effect.Offset2, effect.Count2);
             IReadOnlyList<uint> elementOffsets = DoOffsets<uint>(bytes, effect.ElementOffset, effect.ElementCount);
             var elements = new List<EffectElement>();
@@ -617,8 +618,19 @@ namespace MphRead
                 {
                     particles.Add(ReadString(bytes, nameOffset, 16));
                 }
-                IReadOnlyList<uint> someList = DoOffsets<uint>(bytes, element.SomeOffset, 2 * element.SomeCount);
-                elements.Add(new EffectElement(element, particles, someList));
+                var elemFuncs = new Dictionary<uint, FxFuncInfo>();
+                IReadOnlyList<uint> elemFuncMeta = DoOffsets<uint>(bytes, element.SomeOffset, 2 * element.SomeCount);
+                for (int i = 0; i < elemFuncMeta.Count; i += 2)
+                {
+                    uint index = elemFuncMeta[i];
+                    uint funcOffset = elemFuncMeta[i + 1];
+                    if (funcOffset != 0)
+                    {
+                        // the main list always includes the offsets referenced by elements
+                        elemFuncs.Add(index, funcs[funcOffset]);
+                    }
+                }
+                elements.Add(new EffectElement(element, particles, elemFuncs));
             }
             return new Effect(effect, funcs, list2, elements, name);
         }
