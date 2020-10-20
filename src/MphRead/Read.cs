@@ -644,9 +644,9 @@ namespace MphRead
             {
                 paramCount = (funcOffset - paramOffset) / 4;
             }
-            if (funcId == 1 || funcId == 5 || funcId == 8 || funcId == 9 || funcId == 11 || funcId == 22 || funcId == 23 || funcId == 24
-                || funcId == 25 || funcId == 26 || funcId == 29 || funcId == 31 || funcId == 32 || funcId == 35 || funcId == 43
-                || funcId == 44 || funcId == 45)
+            if (funcId == 1 || funcId == 5 || funcId == 8 || funcId == 9 || funcId == 11 || funcId == 22 || funcId == 23
+                || funcId == 24 || funcId == 25 || funcId == 26 || funcId == 29 || funcId == 31 || funcId == 32 || funcId == 35
+                || funcId == 43 || funcId == 44 || funcId == 45)
             {
                 Debug.Assert(paramCount == 0);
             }
