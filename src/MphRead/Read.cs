@@ -599,9 +599,9 @@ namespace MphRead
             var funcs = new Dictionary<uint, FxFuncInfo>();
             foreach (uint offset in DoOffsets<uint>(bytes, effect.FuncOffset, effect.FuncCount))
             {
-                // sktodo: assert that the layout and param count match assumptions
                 uint funcId = SpanReadUint(bytes, offset);
                 uint paramOffset = SpanReadUint(bytes, offset + 4);
+                DebugValidateParams(funcId, offset, paramOffset);
                 uint paramCount = (offset - paramOffset) / 4;
                 IReadOnlyList<int> parameters = DoOffsets<int>(bytes, paramOffset, paramCount);
                 funcs.Add(offset, new FxFuncInfo(funcId, parameters));
@@ -633,6 +633,48 @@ namespace MphRead
                 elements.Add(new EffectElement(element, particles, elemFuncs));
             }
             return new Effect(effect, funcs, list2, elements, name);
+        }
+
+        [Conditional("DEBUG")]
+        private static void DebugValidateParams(uint funcId, uint funcOffset, uint paramOffset)
+        {
+            Debug.Assert(paramOffset == 0 || paramOffset < funcOffset);
+            uint paramCount = 0;
+            if (paramOffset != 0)
+            {
+                paramCount = (funcOffset - paramOffset) / 4;
+            }
+            if (funcId == 1 || funcId == 5 || funcId == 8 || funcId == 9 || funcId == 11 || funcId == 22 || funcId == 23 || funcId == 24
+                || funcId == 25 || funcId == 26 || funcId == 29 || funcId == 31 || funcId == 32 || funcId == 35 || funcId == 43
+                || funcId == 44 || funcId == 45)
+            {
+                Debug.Assert(paramCount == 0);
+            }
+            else if (funcId == 39 || funcId == 42)
+            {
+                Debug.Assert(paramCount == 1);
+            }
+            else if (funcId == 13 || funcId == 14 || funcId == 15 || funcId == 16 || funcId == 17 || funcId == 19 || funcId == 20
+                || funcId == 46 || funcId == 47 || funcId == 48)
+            {
+                Debug.Assert(paramCount == 2);
+            }
+            else if (funcId == 4 || funcId == 40)
+            {
+                Debug.Assert(paramCount == 3);
+            }
+            else if (funcId == 49)
+            {
+                Debug.Assert(paramCount == 4);
+            }
+            else if (funcId == 41)
+            {
+                Debug.Assert(paramCount >= 4);
+            }
+            else
+            {
+                Debug.Assert(false, funcId.ToString());
+            }
         }
 
         private static void Nop() { }
