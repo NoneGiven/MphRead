@@ -504,7 +504,7 @@ namespace MphRead
         public readonly uint Field5C;
         public readonly uint Field60;
         public readonly uint Field64;
-        public readonly uint Field68;
+        public readonly int Field68;
         public readonly uint SomeCount;
         public readonly uint SomeOffset;
     }

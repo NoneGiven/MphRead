@@ -348,7 +348,7 @@ namespace MphRead
         public uint Field5C { get; }
         public uint Field60 { get; }
         public uint Field64 { get; }
-        public uint Field68 { get; }
+        public int Field68 { get; }
         // the key is the "operation index" (todo: make an enum) e.g. set red, green, or blue
         public IReadOnlyDictionary<uint, FxFuncInfo> Funcs { get; }
 

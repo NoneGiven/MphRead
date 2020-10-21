@@ -15,13 +15,21 @@ namespace MphRead
         public const int HW_CPU_CLOCK_ARM9 = 67027964;
         public const int SND_TIMER_CLOCK = HW_CPU_CLOCK_ARM7 / 2;
 
-        public static uint Rng { get; private set; }
+        public static uint Rng1 { get; private set; }
+        public static uint Rng2 { get; private set; }
 
-        public static uint GetRandomInt(uint value)
+        public static uint GetRandomInt1(uint value)
         {
-            Rng *= 0x7FF8A3ED;
-            Rng += 0x2AA01D31;
-            return (uint)((Rng >> 16) * value / 0x10000L);
+            Rng1 *= 0x7FF8A3ED;
+            Rng1 += 0x2AA01D31;
+            return (uint)((Rng1 >> 16) * value / 0x10000L);
+        }
+
+        public static uint GetRandomInt2(uint value)
+        {
+            Rng2 *= 0x7FF8A3ED;
+            Rng2 += 0x2AA01D31;
+            return (uint)((Rng2 >> 16) * value / 0x10000L);
         }
 
         //public static int GetSfxIndex(string query)
