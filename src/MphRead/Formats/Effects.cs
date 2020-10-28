@@ -175,14 +175,15 @@ namespace MphRead.Formats
             {
                 return Fixed.ToFloat(param[1]);
             }
-            for (int i = 0; ; i += 2)
-            {
-                float cur1 = Fixed.ToFloat(param[i]);
-                float cur2 = Fixed.ToFloat(param[i + 1]);
-                float next1 = Fixed.ToFloat(param[i + 2]);
-                float next2 = Fixed.ToFloat(param[i + 3]);
-            }
+            //for (int i = 0; ; i += 2)
+            //{
+            //    float cur1 = Fixed.ToFloat(param[i]);
+            //    float cur2 = Fixed.ToFloat(param[i + 1]);
+            //    float next1 = Fixed.ToFloat(param[i + 2]);
+            //    float next2 = Fixed.ToFloat(param[i + 3]);
+            //}
             //return (C2 - B2) * ((v4 - B1) / (C1 - B1)) + B2
+            return 0;
         }
 
         private static float FxFunc42(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
