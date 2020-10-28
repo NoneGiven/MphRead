@@ -20,6 +20,11 @@ namespace MphRead
             return value / (float)(1 << 12);
         }
 
+        public static float ToFloat(uint value)
+        {
+            return (int)value / (float)(1 << 12);
+        }
+
         public static float ToFloat(int value)
         {
             return value / (float)(1 << 12);
