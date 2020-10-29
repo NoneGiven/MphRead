@@ -15,6 +15,7 @@ uniform vec3 light2col;
 uniform vec3 diffuse;
 uniform vec3 ambient;
 uniform vec3 specular;
+uniform vec3 emission;
 uniform vec4 fog_color;
 uniform float far_plane;
 uniform mat4 proj_mtx;
@@ -55,7 +56,7 @@ void main()
         }
         vec3 col1 = light_calc(light1vec, light1col, normal, dif_current, amb_current, specular);
         vec3 col2 = light_calc(light2vec, light2col, normal, dif_current, amb_current, specular);
-        color = vec4(min((col1 + col2), vec3(1.0, 1.0, 1.0)), 1.0);
+        color = vec4(min((col1 + col2 + emission), vec3(1.0, 1.0, 1.0)), 1.0);
     }
     else {
         // alpha will only be less than 1.0 here if DIF_AMB is used but lighting is disabled
@@ -175,6 +176,7 @@ void main()
         public int Diffuse { get; set; }
         public int Ambient { get; set; }
         public int Specular { get; set; }
+        public int Emission { get; set; }
         public int UseFog { get; set; }
         public int FogColor { get; set; }
         public int FogMinDistance { get; set; }

@@ -596,16 +596,17 @@ namespace MphRead
         {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, name)));
             RawEffect effect = ReadStruct<RawEffect>(bytes);
-            var funcs = new List<FxFuncInfo>();
+            var funcs = new Dictionary<uint, FxFuncInfo>();
             foreach (uint offset in DoOffsets<uint>(bytes, effect.FuncOffset, effect.FuncCount))
             {
                 uint funcId = SpanReadUint(bytes, offset);
                 uint paramOffset = SpanReadUint(bytes, offset + 4);
-                // sktodo: assert that the layout and param count match assumptions
+                DebugValidateParams(funcId, offset, paramOffset);
                 uint paramCount = (offset - paramOffset) / 4;
                 IReadOnlyList<int> parameters = DoOffsets<int>(bytes, paramOffset, paramCount);
-                funcs.Add(new FxFuncInfo(funcId, parameters));
+                funcs.Add(offset, new FxFuncInfo(funcId, parameters));
             }
+            // todo: these are also offsets into the func/param arrays; what are they used for?
             IReadOnlyList<uint> list2 = DoOffsets<uint>(bytes, effect.Offset2, effect.Count2);
             IReadOnlyList<uint> elementOffsets = DoOffsets<uint>(bytes, effect.ElementOffset, effect.ElementCount);
             var elements = new List<EffectElement>();
@@ -617,10 +618,63 @@ namespace MphRead
                 {
                     particles.Add(ReadString(bytes, nameOffset, 16));
                 }
-                IReadOnlyList<uint> someList = DoOffsets<uint>(bytes, element.SomeOffset, 2 * element.SomeCount);
-                elements.Add(new EffectElement(element, particles, someList));
+                var elemFuncs = new Dictionary<uint, FxFuncInfo>();
+                IReadOnlyList<uint> elemFuncMeta = DoOffsets<uint>(bytes, element.SomeOffset, 2 * element.SomeCount);
+                for (int i = 0; i < elemFuncMeta.Count; i += 2)
+                {
+                    uint index = elemFuncMeta[i];
+                    uint funcOffset = elemFuncMeta[i + 1];
+                    if (funcOffset != 0)
+                    {
+                        // the main list always includes the offsets referenced by elements
+                        elemFuncs.Add(index, funcs[funcOffset]);
+                    }
+                }
+                elements.Add(new EffectElement(element, particles, elemFuncs));
             }
             return new Effect(effect, funcs, list2, elements, name);
+        }
+
+        [Conditional("DEBUG")]
+        private static void DebugValidateParams(uint funcId, uint funcOffset, uint paramOffset)
+        {
+            Debug.Assert(paramOffset == 0 || paramOffset < funcOffset);
+            uint paramCount = 0;
+            if (paramOffset != 0)
+            {
+                paramCount = (funcOffset - paramOffset) / 4;
+            }
+            if (funcId == 1 || funcId == 5 || funcId == 8 || funcId == 9 || funcId == 11 || funcId == 22 || funcId == 23
+                || funcId == 24 || funcId == 25 || funcId == 26 || funcId == 29 || funcId == 31 || funcId == 32 || funcId == 35
+                || funcId == 43 || funcId == 44 || funcId == 45)
+            {
+                Debug.Assert(paramCount == 0);
+            }
+            else if (funcId == 39 || funcId == 42)
+            {
+                Debug.Assert(paramCount == 1);
+            }
+            else if (funcId == 13 || funcId == 14 || funcId == 15 || funcId == 16 || funcId == 17 || funcId == 19 || funcId == 20
+                || funcId == 46 || funcId == 47 || funcId == 48)
+            {
+                Debug.Assert(paramCount == 2);
+            }
+            else if (funcId == 4 || funcId == 40)
+            {
+                Debug.Assert(paramCount == 3);
+            }
+            else if (funcId == 49)
+            {
+                Debug.Assert(paramCount == 4);
+            }
+            else if (funcId == 41)
+            {
+                Debug.Assert(paramCount >= 4);
+            }
+            else
+            {
+                Debug.Assert(false, funcId.ToString());
+            }
         }
 
         private static void Nop() { }

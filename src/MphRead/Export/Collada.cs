@@ -116,7 +116,7 @@ namespace MphRead.Export
                     else
                     {
                         sb.Append($@"{recolor.Name}\anim__{id.ToString().PadLeft(3, '0')}.png");
-                    } 
+                    }
                     sb.Append("</init_from>\n\t\t</image>");
                 }
             }

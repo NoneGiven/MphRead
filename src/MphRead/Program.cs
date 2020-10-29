@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 
 namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 11, 0, 0);
+        public static Version Version { get; } = new Version(0, 10, 2, 0);
 
         private static void Main(string[] args)
         {
@@ -20,6 +21,13 @@ namespace MphRead
                 //renderer.AddModel("Crate01");
                 Nop();
                 renderer.Run();
+            }
+            else if (arguments.Any(a => a.Name == "setup"))
+            {
+                foreach (string path in Directory.EnumerateFiles(Path.Combine(Paths.FileSystem, "archives")))
+                {
+                    Read.ExtractArchive(Path.GetFileNameWithoutExtension(path));
+                }
             }
             else if (TryGetString(arguments, "export", "e", out string? exportValue))
             {

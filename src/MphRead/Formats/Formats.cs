@@ -309,6 +309,7 @@ namespace MphRead
 
         public FxFuncInfo(uint funcId, IReadOnlyList<int> parameters)
         {
+            Debug.Assert(funcId > 0);
             FuncId = funcId;
             Parameters = parameters;
         }
@@ -318,11 +319,12 @@ namespace MphRead
     {
         public string Name { get; }
         public uint Field0 { get; }
-        public IReadOnlyList<FxFuncInfo> Funcs { get; }
+        // the key is the file offset, which we need to keep around because e.g. fx15's parameters are themselves function pointers
+        public IReadOnlyDictionary<uint, FxFuncInfo> Funcs { get; }
         public IReadOnlyList<uint> List2 { get; }
         public IReadOnlyList<EffectElement> Elements { get; }
 
-        public Effect(RawEffect raw, IReadOnlyList<FxFuncInfo> funcs, IReadOnlyList<uint> list2,
+        public Effect(RawEffect raw, IReadOnlyDictionary<uint, FxFuncInfo> funcs, IReadOnlyList<uint> list2,
             IReadOnlyList<EffectElement> elements, string name)
         {
             Name = Path.GetFileNameWithoutExtension(name).Replace("_PS", "");
@@ -346,12 +348,13 @@ namespace MphRead
         public uint Field5C { get; }
         public uint Field60 { get; }
         public uint Field64 { get; }
-        public uint Field68 { get; }
-        public IReadOnlyList<(uint, uint)> SomeList { get; }
+        public int Field68 { get; }
+        // the key is the "operation index" (todo: make an enum) e.g. set red, green, or blue
+        public IReadOnlyDictionary<uint, FxFuncInfo> Funcs { get; }
 
         public string ChildEffect => Metadata.Effects[(int)ChildEffectId];
 
-        public EffectElement(RawEffectElement raw, IReadOnlyList<string> particles, IReadOnlyList<uint> someList)
+        public EffectElement(RawEffectElement raw, IReadOnlyList<string> particles, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
         {
             Name = raw.Name.MarshalString();
             ModelName = raw.ModelName.MarshalString();
@@ -365,14 +368,7 @@ namespace MphRead
             Field64 = raw.Field64;
             Field68 = raw.Field68;
             Particles = particles;
-            Debug.Assert(someList.Count % 2 == 0);
-            Debug.Assert(someList.Count == raw.SomeCount * 2);
-            var pairList = new List<(uint, uint)>();
-            for (int i = 0; i < someList.Count; i += 2)
-            {
-                pairList.Add((someList[i], someList[i + 1]));
-            }
-            SomeList = pairList;
+            Funcs = funcs;
         }
     }
 

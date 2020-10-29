@@ -15,13 +15,21 @@ namespace MphRead
         public const int HW_CPU_CLOCK_ARM9 = 67027964;
         public const int SND_TIMER_CLOCK = HW_CPU_CLOCK_ARM7 / 2;
 
-        public static uint Rng { get; private set; }
+        public static uint Rng1 { get; private set; }
+        public static uint Rng2 { get; private set; }
 
-        public static uint GetRandomInt(uint value)
+        public static uint GetRandomInt1(uint value)
         {
-            Rng *= 0x7FF8A3ED;
-            Rng += 0x2AA01D31;
-            return (uint)((Rng >> 16) * value / 0x10000L);
+            Rng1 *= 0x7FF8A3ED;
+            Rng1 += 0x2AA01D31;
+            return (uint)((Rng1 >> 16) * value / 0x10000L);
+        }
+
+        public static uint GetRandomInt2(uint value)
+        {
+            Rng2 *= 0x7FF8A3ED;
+            Rng2 += 0x2AA01D31;
+            return (uint)((Rng2 >> 16) * value / 0x10000L);
         }
 
         //public static int GetSfxIndex(string query)
@@ -54,7 +62,12 @@ namespace MphRead
 
         public static void TestEffects()
         {
-            var funcs = new Dictionary<uint, HashSet<int>>();
+            var funcs = new Dictionary<int, HashSet<uint>>();
+            var ids = new List<int>() { 9, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 };
+            foreach (int id in ids)
+            {
+                funcs.Add(id, new HashSet<uint>());
+            }
             using var file = new StreamWriter(File.OpenWrite("temp.txt"));
             foreach (string path in Metadata.Effects)
             {
@@ -62,36 +75,15 @@ namespace MphRead
                     && path != "effects/powerBeamChargeNoSplatMP_PS.bin")
                 {
                     Effect effect = Read.ReadEffect(path);
-                    //Effect effect = Read.ReadEffect("effects/powerBeamNoSplatMP_PS.bin");
-                    foreach (FxFuncInfo func in effect.Funcs.Where(f => f.FuncId == 41))
-                    {
-                        int last = Int32.MinValue;
-                        for (int i = 0; i < func.Parameters.Count; i++)
-                        {
-                            int parameter = func.Parameters[i];
-                            if (i % 2 == 0 && parameter < 0 && parameter != Int32.MinValue)
-                            {
-                                Debugger.Break();
-                            }
-                            if (i == func.Parameters.Count - 1)
-                            {
-                                Debugger.Break();
-                            }
-                            if (parameter == Int32.MinValue)
-                            {
-                                Debug.Assert(func.Parameters[i + 1] == 0);
-                                break;
-                            }
-                            if (i % 2 == 0)
-                            {
-                                Debug.Assert(parameter > last);
-                                last = parameter;
-                            }
-                        }
-                    }
                     foreach (EffectElement element in effect.Elements)
                     {
-                        Nop();
+                        foreach (int id in ids)
+                        {
+                            foreach (KeyValuePair<uint, FxFuncInfo> func in element.Funcs.Where(f => f.Key == id))
+                            {
+                                funcs[id].Add(func.Value.FuncId);
+                            }
+                        }
                     }
                 }
             }
