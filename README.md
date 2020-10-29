@@ -55,6 +55,9 @@ See these wiki pages for model and room names:
 * [Models (MPH)](https://github.com/NoneGiven/MphRead/wiki/Models) / [Models (FH)](https://github.com/NoneGiven/MphRead/wiki/Models-(First-Hunt))
 * [Rooms (MPH)](https://github.com/NoneGiven/MphRead/wiki/Rooms) / [Rooms (FH)](https://github.com/NoneGiven/MphRead/wiki/Rooms-(First-Hunt))
 
+See also:
+* [Full setup and export guide](https://github.com/NoneGiven/MphRead/wiki/Setup-&-Export-Guide)
+
 ## Building
 
 If you do not want to build from source, simply download and run the latest [release](https://github.com/NoneGiven/MphRead/releases).
