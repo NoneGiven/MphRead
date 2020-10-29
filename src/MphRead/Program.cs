@@ -14,7 +14,6 @@ namespace MphRead
         {
             ConsoleColor.Setup();
             IReadOnlyList<Argument> arguments = ParseArguments(args);
-            arguments = new List<Argument>() { new Argument("setup", null) };
             if (arguments.Count == 0)
             {
                 using var renderer = new Renderer();
