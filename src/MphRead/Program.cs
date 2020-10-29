@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 
 namespace MphRead
@@ -13,6 +14,7 @@ namespace MphRead
         {
             ConsoleColor.Setup();
             IReadOnlyList<Argument> arguments = ParseArguments(args);
+            arguments = new List<Argument>() { new Argument("setup", null) };
             if (arguments.Count == 0)
             {
                 using var renderer = new Renderer();
@@ -20,6 +22,13 @@ namespace MphRead
                 //renderer.AddModel("Crate01");
                 Nop();
                 renderer.Run();
+            }
+            else if (arguments.Any(a => a.Name == "setup"))
+            {
+                foreach (string path in Directory.EnumerateFiles(Path.Combine(Paths.FileSystem, "archives")))
+                {
+                    Read.ExtractArchive(Path.GetFileNameWithoutExtension(path));
+                }
             }
             else if (TryGetString(arguments, "export", "e", out string? exportValue))
             {
