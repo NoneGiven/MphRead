@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -54,7 +55,11 @@ namespace MphRead
                 _items = new List<QueueItem>();
                 _input = new List<QueueInput>();
                 _cts = new CancellationTokenSource();
-                _ = Task.Run(async () => await Run(_cts.Token));
+                _ = Task.Run(async () =>
+                {
+                    CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+                    await Run(_cts.Token);
+                });
             }
             _lock.Release();
         }

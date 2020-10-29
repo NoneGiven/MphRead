@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -8,14 +9,16 @@ namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 10, 2, 1);
+        public static Version Version { get; } = new Version(0, 10, 2, 2);
 
         private static void Main(string[] args)
         {
+            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
             ConsoleColor.Setup();
             IReadOnlyList<Argument> arguments = ParseArguments(args);
             if (arguments.Count == 0)
             {
+                Read.ReadAndExport("SpireGun");
                 using var renderer = new Renderer();
                 renderer.AddRoom("MP3 PROVING GROUND");
                 //renderer.AddModel("Crate01");
