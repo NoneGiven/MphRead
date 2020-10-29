@@ -16,7 +16,6 @@ namespace MphRead
             IReadOnlyList<Argument> arguments = ParseArguments(args);
             if (arguments.Count == 0)
             {
-                Read.ReadAndExport("pick_wpn_gorea");
                 using var renderer = new Renderer();
                 renderer.AddRoom("MP3 PROVING GROUND");
                 //renderer.AddModel("Crate01");
