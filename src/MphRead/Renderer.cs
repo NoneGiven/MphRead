@@ -2085,9 +2085,9 @@ namespace MphRead
         {
             if (_leftMouse)
             {
-                _angleX -= e.DeltaY / 1.5f;
+                _angleX += e.DeltaY / 1.5f;
                 _angleX = Math.Clamp(_angleX, -90.0f, 90.0f);
-                _angleY -= e.DeltaX / 1.5f;
+                _angleY += e.DeltaX / 1.5f;
                 _angleY %= 360f;
             }
             base.OnMouseMove(e);
