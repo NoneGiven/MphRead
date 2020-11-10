@@ -109,7 +109,7 @@ namespace MphRead.Utility
                 Console.Clear();
                 Console.WriteLine("1: POLYGON_ATTR\r\nx: quit");
                 string? type = null;
-                string input = Console.ReadLine();
+                string? input = Console.ReadLine();
                 if (input == "x" || input == "X")
                 {
                     break;
@@ -131,12 +131,12 @@ namespace MphRead.Utility
                             output = null;
                         }
                         Console.Write("Value: ");
-                        string value = Console.ReadLine();
+                        string? value = Console.ReadLine();
                         if (value == "x" || value == "X")
                         {
                             break;
                         }
-                        if (value.Length <= 8 && Int32.TryParse(value, NumberStyles.HexNumber, provider: null, out int result))
+                        if (value != null && value.Length <= 8 && Int32.TryParse(value, NumberStyles.HexNumber, provider: null, out int result))
                         {
                             output = Convert.ToString(result, 2).PadLeft(32, '0');
                             foreach (Thing thing in _things[type])

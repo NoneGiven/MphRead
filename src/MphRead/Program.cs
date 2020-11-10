@@ -122,9 +122,8 @@ namespace MphRead
         {
             foreach (Argument argument in arguments.Where(a => a.Name == fullName || a.Name == shortName))
             {
-                if (argument.ValueOne != null)
+                if (argument.ValueOne != null && Int32.TryParse(argument.ValueTwo, out int valueTwo))
                 {
-                    Int32.TryParse(argument.ValueTwo, out int valueTwo);
                     yield return (argument.ValueOne, valueTwo);
                 }
             }

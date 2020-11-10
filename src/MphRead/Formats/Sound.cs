@@ -315,7 +315,7 @@ namespace MphRead.Formats.Sound
             Debug.Assert(fileCount > 0);
             var files = new List<SfxScriptFile>();
             IReadOnlyList<SfxScriptHeader> headers = Read.DoOffsets<SfxScriptHeader>(bytes, 4, fileCount);
-            IReadOnlyList<string> names = Read.ReadStrings(bytes, headers.Last().Offset + headers.Last().Size, fileCount);
+            IReadOnlyList<string> names = Read.ReadStrings(bytes, headers[headers.Count - 1].Offset + headers[headers.Count - 1].Size, fileCount);
             for (int i = 0; i < headers.Count; i++)
             {
                 SfxScriptHeader header = headers[i];
@@ -333,7 +333,7 @@ namespace MphRead.Formats.Sound
             Debug.Assert(fileCount > 0);
             var files = new List<DgnFile>();
             IReadOnlyList<DgnHeader> headers = Read.DoOffsets<DgnHeader>(bytes, 4, fileCount);
-            IReadOnlyList<string> names = Read.ReadStrings(bytes, headers.Last().Offset + headers.Last().Size, fileCount);
+            IReadOnlyList<string> names = Read.ReadStrings(bytes, headers[headers.Count - 1].Offset + headers[headers.Count - 1].Size, fileCount);
             for (int i = 0; i < headers.Count; i++)
             {
                 DgnHeader header = headers[i];
@@ -436,7 +436,7 @@ namespace MphRead.Formats.Sound
         {
             Id = id;
             Format = WaveFormat.None;
-            _data = new byte[0];
+            _data = Array.Empty<byte>();
         }
 
         public static SoundSample CreateNull(uint id)

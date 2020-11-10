@@ -266,7 +266,7 @@ namespace MphRead
             }
             else
             {
-                MatrixStackValues = new float[] { };
+                MatrixStackValues = Array.Empty<float>();
             }
             Flags = header.Flags;
             if (materials.Any(m => m.Lighting > 0))
@@ -465,7 +465,7 @@ namespace MphRead
             }
         }
 
-        private ColorRgba ColorOnBlackBackground(ColorRgba color)
+        private static ColorRgba ColorOnBlackBackground(ColorRgba color)
         {
             float alpha = color.Alpha / 255f;
             return new ColorRgba((byte)(color.Red * alpha), (byte)(color.Green * alpha), (byte)(color.Blue * alpha), 255);
@@ -834,7 +834,7 @@ namespace MphRead
         }
 
         // todo: just return float color early
-        private ColorRgba ColorFromShort(uint value, byte alpha)
+        private static ColorRgba ColorFromShort(uint value, byte alpha)
         {
             byte red = (byte)MathF.Round(((value >> 0) & 0x1F) / 31f * 255f);
             byte green = (byte)MathF.Round(((value >> 5) & 0x1F) / 31f * 255f);

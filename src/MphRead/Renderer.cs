@@ -15,7 +15,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace MphRead
 {
-    public class Renderer : IDisposable
+    public sealed class Renderer : IDisposable
     {
         private readonly RenderWindow _window;
 
@@ -669,7 +669,7 @@ namespace MphRead
             }
         }
 
-        private bool FloatEqual(float one, float two)
+        private static bool FloatEqual(float one, float two)
         {
             return MathF.Abs(one - two) < 0.001f;
         }
@@ -1192,7 +1192,7 @@ namespace MphRead
             }
         }
 
-        private void UpdateMaterial(Material material, bool onlyOpaque)
+        private static void UpdateMaterial(Material material, bool onlyOpaque)
         {
             if (material.CurrentAlpha < 1.0f)
             {
@@ -1416,7 +1416,7 @@ namespace MphRead
             return nodeMatrix;
         }
 
-        private Matrix4 AnimateTexcoords(TexcoordAnimationGroup group, TexcoordAnimation animation)
+        private static Matrix4 AnimateTexcoords(TexcoordAnimationGroup group, TexcoordAnimation animation)
         {
             float scaleS = InterpolateAnimation(group.Scales, animation.ScaleLutIndexS, group.CurrentFrame,
                 animation.ScaleBlendS, animation.ScaleLutLengthS, group.FrameCount);
@@ -1690,7 +1690,7 @@ namespace MphRead
             UpdateMaterials(model);
         }
 
-        private void DoDlist(Model model, Mesh mesh, int textureWidth, int textureHeight, bool texgen)
+        private static void DoDlist(Model model, Mesh mesh, int textureWidth, int textureHeight, bool texgen)
         {
             IReadOnlyList<RenderInstruction> list = model.RenderInstructionLists[mesh.DlistId];
             float vtxX = 0;
@@ -3101,7 +3101,7 @@ namespace MphRead
             await Output.Write(guid);
         }
 
-        private string FormatOnOff(bool setting)
+        private static string FormatOnOff(bool setting)
         {
             return setting ? "on" : "off";
         }
@@ -3160,7 +3160,7 @@ namespace MphRead
             }
         }
 
-        private Vector3 GetDiscVertices(float radius, int index)
+        private static Vector3 GetDiscVertices(float radius, int index)
         {
             return new Vector3(
                 radius * MathF.Cos(2f * MathF.PI * index / 16f),
