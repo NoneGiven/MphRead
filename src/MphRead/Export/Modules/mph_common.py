@@ -263,10 +263,16 @@ def set_mat_color(name, r, g, b, duplicate, objects):
     color.default_value[0] = r
     color.default_value[1] = g
     color.default_value[2] = b
-    mat.link_nodes(
-        'RGB', 'Color',
-        'Mix', 'Color1'
-    )
+    if mat.get_node('Mix'):
+        mat.link_nodes(
+            'RGB', 'Color',
+            'Mix', 'Color1'
+        )
+    else:
+        mat.link_nodes(
+            'RGB', 'Color',
+            'Principled BSDF', 'Base Color'
+        )
 
 def set_mat_anims(anims):
     bpy.context.scene.frame_start = 0
