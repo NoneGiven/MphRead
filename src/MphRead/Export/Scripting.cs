@@ -219,6 +219,9 @@ namespace MphRead.Export
                         }
                     }
                 }
+                // if any meshes using this material don't call COLOR in their dlist, we need to set the material diffuse as the base color
+                // (and might need to duplicate the material, if other meshes sharing the material do call COLOR)
+                // --> also, when dlists contain COLOR commands, one always precedes the VTX commands, so we don't have to worry about that
                 var withColor = new List<int>();
                 var noColor = new List<int>();
                 for (int j = 0; j < model.Meshes.Count; j++)
