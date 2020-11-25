@@ -296,6 +296,11 @@ namespace MphRead
                     maxColor = Math.Max(maxColor, animation.AlphaLutIndex + animation.AlphaLutLength);
                     animations.Add(animation.Name.MarshalString(), animation);
                 }
+                // the lambert3 LUT has one too few values for the diffuse blue channel's animation, so we need to read an extra byte
+                if (model == "NoxGun" && offset == 48688)
+                {
+                    maxColor++;
+                }
                 var colors = DoOffsets<byte>(bytes, rawGroup.ColorLutOffset, maxColor).Select(b => (float)b).ToList();
                 results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup, colors, animations));
             }
