@@ -2,7 +2,7 @@ import bpy
 import mathutils
 
 def get_common_version():
-    return '0.11.0.0'
+    return '0.10.4.0'
 
 def get_object(name):
     try:
@@ -219,32 +219,63 @@ def set_mirror(name, x, y):
     )
 
 def set_uv_anims(anims):
-    for obj in bpy.data.objects:
-        if obj.type == 'MESH':
-            obj.modifiers.new('UVWarp', 'UV_WARP')
     bpy.context.scene.frame_start = 0
     for name, anim in anims.items():
-        for obj in bpy.data.objects:
-            if obj.type == 'MESH':
-                mat_name = obj.active_material.name
-                if mat_name == name + '_mat' or mat_name == name + '_mat_mc':
-                    set_uv_anim(obj, anim)
-                    for fcurve in obj.animation_data.action.fcurves:
-                        for kf in fcurve.keyframe_points:
-                            kf.interpolation = 'CONSTANT'
+        for mat in get_materials():
+            if mat.name == name + '_mat' or mat.name == name + '_mat_mc':
+                set_uv_anim(mat, anim)
+                for fcurve in mat.node_tree.animation_data.action.fcurves:
+                    for kf in fcurve.keyframe_points:
+                        kf.interpolation = 'CONSTANT'
     bpy.context.scene.frame_set(0)
 
-def set_uv_anim(obj, anim):
-    mod = obj.modifiers['UVWarp']
+def set_uv_anim(mat, anim):
+    mat.delete_node('UV Map')
+    uvs = mat.add_node('ShaderNodeUVMap')
+    rotate = mat.add_node('ShaderNodeVectorRotate')
+    translate = mat.add_node('ShaderNodeVectorMath')
+    scale = mat.add_node('ShaderNodeVectorMath')
+    rotate.rotation_type = 'EULER_XYZ'
+    translate.operation = 'ADD'
+    scale.operation = 'MULTIPLY'
+    rot_center = rotate.get_input('Center')
+    rot_center.default_value[0] = 0.5
+    rot_center.default_value[1] = 0.5
+    rot_input = rotate.get_input('Rotation')
+    translate_input = translate.inputs[1]
+    scale_input = scale.inputs[1]
+    scale_input.default_value[2] = 1.0
+    mat.link_nodes(
+        uvs, 'UV',
+        rotate, 'Vector'
+    )
+    mat.link_nodes(
+        rotate, 'Vector',
+        translate, 'Vector'
+    )
+    mat.link_nodes(
+        translate, 'Vector',
+        scale, 'Vector'
+    )
+    if mat.get_node('Separate XYZ'):
+        mat.link_nodes(
+            scale, 'Vector',
+            'Separate XYZ', 'Vector'
+        )
+    else:
+        mat.link_nodes(
+            scale, 'Vector',
+            'Image Texture', 'Vector'
+        )
     for i, frame in enumerate(anim):
-        mod.scale[0] = frame[0]
-        mod.scale[1] = frame[1]
-        mod.rotation = frame[2]
-        mod.offset[0] = frame[3]
-        mod.offset[1] = frame[4]
-        obj.keyframe_insert('modifiers["UVWarp"].scale', frame = i)
-        obj.keyframe_insert('modifiers["UVWarp"].rotation', frame = i)
-        obj.keyframe_insert('modifiers["UVWarp"].offset', frame = i)
+        scale_input.default_value[0] = frame[0]
+        scale_input.default_value[1] = frame[1]
+        rot_input.default_value[2] = frame[2] * -1.0
+        translate_input.default_value[0] = frame[3]
+        translate_input.default_value[1] = frame[4] * -1.0
+        scale_input.keyframe_insert('default_value', frame = i)
+        rot_input.keyframe_insert('default_value', frame = i)
+        translate_input.keyframe_insert('default_value', frame = i)
     bpy.context.scene.frame_end = i
 
 def set_mat_color(name, r, g, b, duplicate, objects):
