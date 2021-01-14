@@ -3318,6 +3318,20 @@ namespace MphRead
                     "particles2",
                     new ModelMetadata("particles2", animation: false, texture: true, archive: "effectsBase")
                 },
+                // todo: can't parse some out of bounds texture/palette offsets from this
+                {
+                    "icons",
+                    new ModelMetadata("icons",
+                        modelPath: @"hud\icons_Model.bin",
+                        animationPath: null,
+                        collisionPath: null,
+                        new List<RecolorMetadata>()
+                        {
+                            new RecolorMetadata("default",
+                                modelPath: @"hud\icons_Model.bin")
+                        }
+                    )
+                }
             };
 
         public static readonly IReadOnlyDictionary<string, ModelMetadata> FirstHuntModels

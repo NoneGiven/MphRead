@@ -339,37 +339,77 @@ namespace MphRead
     {
         public string Name { get; }
         public string ModelName { get; }
-        public IReadOnlyList<string> Particles { get; }
+        public IReadOnlyList<Particle> Particles { get; }
         public uint Flags { get; }
-        public uint Field4C { get; }
-        public uint Field50 { get; }
-        public uint Field54 { get; }
+        public Vector3 Acceleration { get; }
         public uint ChildEffectId { get; }
-        public uint Field5C { get; }
-        public uint Field60 { get; }
-        public uint Field64 { get; }
+        public float Lifespan { get; }
+        public float DrainTime { get; }
+        public float BufferTime { get; }
         public int Field68 { get; }
         // the key is the "operation index" (todo: make an enum) e.g. set red, green, or blue
-        public IReadOnlyDictionary<uint, FxFuncInfo> Funcs { get; }
+        public IReadOnlyDictionary<FuncAction, FxFuncInfo> Funcs { get; }
 
         public string ChildEffect => Metadata.Effects[(int)ChildEffectId];
 
-        public EffectElement(RawEffectElement raw, IReadOnlyList<string> particles, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        public EffectElement(RawEffectElement raw, IReadOnlyList<Particle> particles, IReadOnlyDictionary<FuncAction, FxFuncInfo> funcs)
         {
             Name = raw.Name.MarshalString();
             ModelName = raw.ModelName.MarshalString();
             Flags = raw.Flags;
-            Field4C = raw.Field4C;
-            Field50 = raw.Field50;
-            Field54 = raw.Field54;
+            // todo: needs frame time scaling
+            // notes:
+            // - y accel is set to -34 when entry is initialized, but this is always overwritten by the element value
+            // - this is only added to the speed if flag bit 1 is set
+            Acceleration = raw.Acceleration.ToFloatVector();
             ChildEffectId = raw.ChildEffectId;
-            Field5C = raw.Field5C;
-            Field60 = raw.Field60;
-            Field64 = raw.Field64;
+            Lifespan = raw.Lifespan.FloatValue;
+            DrainTime = raw.DrainTime.FloatValue;
+            BufferTime = raw.BufferTime.FloatValue;
             Field68 = raw.Field68;
             Particles = particles;
             Funcs = funcs;
         }
+    }
+
+    public class Particle
+    {
+        public string Name { get; }
+        public Model Model { get; }
+        public Node Node { get; }
+        public int MaterialId { get; }
+
+        public Particle (string name, Model model, Node node, int materialId)
+        {
+            Name = name;
+            Model = model;
+            Node = node;
+            MaterialId = materialId;
+        }
+    }
+
+    public enum FuncAction
+    {
+        SetParticleId = 9,
+        IncreaseParticleAmount = 14,
+        SetNewParticleSpeed = 15,
+        SetNewParticlePosition = 16,
+        SetNewParticleLifespan = 17,
+        UpdateParticleSpeed = 18,
+        SetParticleAlpha = 19,
+        SetParticleRed = 20,
+        SetParticleGreen = 21,
+        SetParticleBlue = 22,
+        SetParticleField24 = 23, // 198
+        SetParticleField28 = 24, // 19C
+        SetParticleField44 = 25, // 1A0
+        SetParticleField48 = 26, // 1A4
+        SetParticleField4C = 27, // 1A8
+        SetParticleField50 = 28, // 1AC
+        SetParticleField54 = 29, // 1B0
+        SetParticleField58 = 30, // 1B4
+        SetParticleField5C = 31, // 1B8
+        SetParticleField60 = 32  // 1BC
     }
 
     public class StringTableEntry

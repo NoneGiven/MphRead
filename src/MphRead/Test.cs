@@ -4,7 +4,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using MphRead.Formats.Collision;
+using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 
 namespace MphRead
@@ -30,6 +32,179 @@ namespace MphRead
             Rng2 *= 0x7FF8A3ED;
             Rng2 += 0x2AA01D31;
             return (uint)((Rng2 >> 16) * value / 0x10000L);
+        }
+
+        private static Random _random = new Random();
+
+        public static void TestEffectMath()
+        {
+            while (true)
+            {
+                uint v5 = GetRandomInt1(0x168000);
+                int index1 = (int)(2 * ((16 * (((0xB60B60B60B * v5) >> 32) + 2048)) >> 20));
+                int index3 = (int)(2 * ((((((0xB60B60B60B * v5) >> 32) + 2048) >> 12) + 0x4000) >> 4));
+                int index2 = (int)(2 * ((16 * (((0xB60B60B60B * v5) >> 32) + 2048)) >> 20) + 1);
+                int index4 = (int)(2 * ((((((0xB60B60B60B * v5) >> 32) + 2048) >> 12) + 0x4000) >> 4) + 1);
+                Debug.Assert(index1 % 2 == 0);
+                Debug.Assert(index3 % 2 == 0);
+                Debug.Assert(index1 + 1 == index2);
+                Debug.Assert(index3 + 1 == index4);
+                Debug.Assert(index1 + 2048 == index3);
+                //Console.WriteLine($"v5: {v5} ({v5 / 4096f} deg)");
+                //Console.WriteLine($"i1: {index1} ({index1 / 2 * (360 / 4096f)} deg)");
+                //Console.WriteLine($"i3: {index3} ({index3 / 2 * (360 / 4096f)} deg)");
+                Nop();
+            }
+        }
+
+        public static void TestEffectMathFloat()
+        {
+            // angle value comes from field28
+            float angle1 = _random.Next(0x168000) / 4096f;
+            float angle2 = angle1 - 90;
+            if (angle2 >= 360)
+            {
+                angle2 -= 360;
+            }
+            float cos1 = MathF.Cos(angle1);
+            float sin1 = MathF.Sin(angle1);
+            float cos2 = MathF.Cos(angle2);
+            float sin2 = MathF.Sin(angle2);
+        }
+
+        public static void TestEffects()
+        {
+            var funcs = new Dictionary<FuncAction, HashSet<uint>>();
+            var ids = new List<FuncAction>()
+            {
+                FuncAction.SetParticleId,
+                FuncAction.IncreaseParticleAmount,
+                FuncAction.SetNewParticleSpeed,
+                FuncAction.SetNewParticlePosition,
+                FuncAction.SetNewParticleLifespan,
+                FuncAction.UpdateParticleSpeed,
+                FuncAction.SetParticleAlpha,
+                FuncAction.SetParticleRed,
+                FuncAction.SetParticleGreen,
+                FuncAction.SetParticleBlue,
+                FuncAction.SetParticleField24,
+                FuncAction.SetParticleField28,
+                FuncAction.SetParticleField44,
+                FuncAction.SetParticleField48,
+                FuncAction.SetParticleField4C,
+                FuncAction.SetParticleField50,
+                FuncAction.SetParticleField54,
+                FuncAction.SetParticleField58,
+                FuncAction.SetParticleField5C,
+                FuncAction.SetParticleField60
+            };
+            foreach (FuncAction id in ids)
+            {
+                funcs.Add(id, new HashSet<uint>());
+            }
+            using var file = new StreamWriter(File.OpenWrite("temp.txt"));
+            foreach (string path in Metadata.Effects)
+            {
+                if (path != "" && path != "effects/sparksFall_PS.bin" && path != "effects/mortarSecondary_PS.bin"
+                    && path != "effects/powerBeamChargeNoSplatMP_PS.bin")
+                {
+                    Effect effect = Read.ReadEffect(path);
+                    foreach (EffectElement element in effect.Elements)
+                    {
+                        foreach (FuncAction id in ids)
+                        {
+                            foreach (KeyValuePair<FuncAction, FxFuncInfo> func in element.Funcs.Where(f => f.Key == id))
+                            {
+                                funcs[id].Add(func.Value.FuncId);
+                            }
+                        }
+                        foreach (KeyValuePair<FuncAction, FxFuncInfo> func in element.Funcs.Where(f => f.Value.FuncId == 41))
+                        {
+                            IReadOnlyList<int> param = func.Value.Parameters;
+                            int i = 0;
+                            do
+                            {
+                                float pct = MathF.Round(param[i] / 4096f * 100, 1);
+                                Console.WriteLine($"{param[i],4} ({pct,5}%): {param[i + 1],4} ({param[i + 1] / 4096f})");
+                                i += 2;
+                            }
+                            while (param[i] != Int32.MinValue);
+                            Console.WriteLine();
+                            for (int j = 0; j <= 4096; j += 256)
+                            {
+                                int result = TestFx41(param, j);
+                                float pct = MathF.Round(j / 4096f * 100, 1);
+                                var elapsed = new Fixed((int)(j / 4096f * 15 * 4096));
+                                float res = Effects.Effects.FxFunc41(param.Select(s => new Fixed(s)).ToList(), elapsed, null!);
+                                float resultf = result / 4096f;
+                                //Debug.Assert(MathF.Abs(res - resultf) <= 0.001);
+                                if (MathF.Abs(res - resultf) >= 0.005)
+                                {
+                                    Debugger.Break();
+                                }
+                                Console.WriteLine($"{j,4} ({pct,5}%): {result,4} ({result / 4096f} == {res})");
+                            }
+                            Console.WriteLine();
+                            Console.WriteLine("---------------------------------------------------------------");
+                            Console.WriteLine();
+                        }
+                    }
+                }
+            }
+            Nop();
+        }
+
+        public static int FxDiv(int a, int b)
+        {
+            return (int)(((long)a << 12) / b);
+        }
+
+        public static int TestFx41(IReadOnlyList<int> parameters, int percent)
+        {
+            int result;
+            int next;
+            int index1 = -1;
+            int index2 = 0;
+            //int percent = FxDiv(elapsed, lifespan);
+            if ( percent < parameters[index2 + 0] )
+            {
+                return parameters[index2 + 1];
+            }
+            if (parameters[index2 + 0] != Int32.MinValue)
+            {
+                do
+                {
+                    if (parameters[index2 + 0] > percent)
+                    {
+                        break;
+                    }
+                    index1 = index2;
+                    next = parameters[index2 + 2];
+                    index2 += 2;
+                }
+                while ( next != Int32.MinValue );
+            }
+            if (index1 == -1)
+            {
+                return 0;
+            }
+            int v7 = parameters[index1 + 2];
+            if (v7 == Int32.MinValue)
+            {
+                result = parameters[index1 + 1];
+            }
+            else
+            {
+                result = parameters[index1 + 1] + (int)(((parameters[index1 + 3] - parameters[index1 + 1])
+                    * (long)FxDiv(percent - parameters[index1 + 0], v7 - parameters[index1 + 0]) + 2048) >> 12);
+                int left = (parameters[index1 + 3] - parameters[index1 + 1]);
+                int right = FxDiv(percent - parameters[index1 + 0], v7 - parameters[index1 + 0]);
+                int prod = (left * right + 2048) >> 12;
+                int parm = parameters[index1 + 1];
+                int final = parm + prod;
+                Nop();
+            }
+            return result;
         }
 
         //public static int GetSfxIndex(string query)
@@ -58,36 +233,6 @@ namespace MphRead
                     Nop();
                 }
             }
-        }
-
-        public static void TestEffects()
-        {
-            var funcs = new Dictionary<int, HashSet<uint>>();
-            var ids = new List<int>() { 9, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 };
-            foreach (int id in ids)
-            {
-                funcs.Add(id, new HashSet<uint>());
-            }
-            using var file = new StreamWriter(File.OpenWrite("temp.txt"));
-            foreach (string path in Metadata.Effects)
-            {
-                if (path != "" && path != "effects/sparksFall_PS.bin" && path != "effects/mortarSecondary_PS.bin"
-                    && path != "effects/powerBeamChargeNoSplatMP_PS.bin")
-                {
-                    Effect effect = Read.ReadEffect(path);
-                    foreach (EffectElement element in effect.Elements)
-                    {
-                        foreach (int id in ids)
-                        {
-                            foreach (KeyValuePair<uint, FxFuncInfo> func in element.Funcs.Where(f => f.Key == id))
-                            {
-                                funcs[id].Add(func.Value.FuncId);
-                            }
-                        }
-                    }
-                }
-            }
-            Nop();
         }
 
         public static void TestCollision()

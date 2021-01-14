@@ -596,7 +596,7 @@ namespace MphRead
             return frames;
         }
 
-        // todo: should this load child effects automatically?
+        // todo: load child effects
         public static Effect ReadEffect(string name)
         {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, name)));
@@ -618,13 +618,13 @@ namespace MphRead
             foreach (uint offset in elementOffsets)
             {
                 RawEffectElement element = DoOffset<RawEffectElement>(bytes, offset);
-                var particles = new List<string>();
+                var particles = new List<Particle>();
                 foreach (uint nameOffset in DoOffsets<uint>(bytes, element.ParticleOffset, element.ParticleCount))
                 {
-                    particles.Add(ReadString(bytes, nameOffset, 16));
+                    particles.Add(GetParticle(element.ModelName.MarshalString(), ReadString(bytes, nameOffset, 16)));
                 }
-                var elemFuncs = new Dictionary<uint, FxFuncInfo>();
-                IReadOnlyList<uint> elemFuncMeta = DoOffsets<uint>(bytes, element.SomeOffset, 2 * element.SomeCount);
+                var elemFuncs = new Dictionary<FuncAction, FxFuncInfo>();
+                IReadOnlyList<uint> elemFuncMeta = DoOffsets<uint>(bytes, element.FuncOffset, 2 * element.FuncCount);
                 for (int i = 0; i < elemFuncMeta.Count; i += 2)
                 {
                     uint index = elemFuncMeta[i];
@@ -632,12 +632,30 @@ namespace MphRead
                     if (funcOffset != 0)
                     {
                         // the main list always includes the offsets referenced by elements
-                        elemFuncs.Add(index, funcs[funcOffset]);
+                        elemFuncs.Add((FuncAction)index, funcs[funcOffset]);
                     }
                 }
                 elements.Add(new EffectElement(element, particles, elemFuncs));
             }
             return new Effect(effect, funcs, list2, elements, name);
+        }
+
+        // todo: these results (and the models themselves) should be shared
+        private static Particle GetParticle(string modelName, string particleName)
+        {
+            Model model = GetModelByName(modelName);
+            Node? node = model.Nodes.FirstOrDefault(n => n.Name == particleName);
+            // todo: see what the game does here; gib3/gib4 nodes are probably meant to be used for these
+            if (modelName == "geo1" && particleName == "gib")
+            {
+                node = model.Nodes.First(n => n.Name == "gib3");
+            }
+            if (node != null && node.MeshCount > 0)
+            {
+                int materialId = model.Meshes[node.MeshId / 2].MaterialId;
+                return new Particle(particleName, model, node, materialId);
+            }
+            throw new ProgramException("Could not get particle.");
         }
 
         [Conditional("DEBUG")]

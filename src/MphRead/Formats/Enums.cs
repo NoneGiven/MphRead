@@ -168,6 +168,7 @@ namespace MphRead
         Death = 21,
         Unknown22 = 22,
         SavePoint = 23,
+        Unknown24 = 24,
         Unknown25 = 25,
         Unknown26 = 26, // UI message-related?
         Unknown27 = 27, // UI message-related?
@@ -257,7 +258,7 @@ namespace MphRead
         Quadtroid = 37,
         CrashPillar = 38,
         FireSpawn = 39,
-        Unknown40 = 40,
+        Spawner = 40,
         Slench = 41,
         Unknown42 = 42,
         SlenchNest = 43,

@@ -226,7 +226,7 @@ namespace MphRead
         public readonly uint ModelId;
         public readonly ushort LinkedEntity;
         public readonly ushort ScanId;
-        public readonly ushort Field34;
+        public readonly ushort ScanEventTargetId;
         public readonly ushort Field36;
         public readonly uint ScanEventId;
         public readonly uint EffectId;
@@ -426,7 +426,7 @@ namespace MphRead
         public readonly ushort CooldownTime;
         public readonly ushort InitialCooldown;
         public readonly ushort Padding1C6;
-        public readonly uint Field1C8;
+        public readonly uint ActiveDistance; // sktodo: display sphere
         public readonly uint Field1CC;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;

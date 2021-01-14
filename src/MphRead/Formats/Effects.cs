@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using OpenTK.Mathematics;
 
-namespace MphRead.Formats
+namespace MphRead.Effects
 {
+    // todo: set_vecs and draw functions
     public static class Effects
     {
+        // todo: create "eff4" class
+        // todo: pass "cur_*" stuff as params and remove globals
         [NotNull]
         [DisallowNull]
         public static EffectElement? CurrentElement { get; set; }
@@ -165,25 +168,39 @@ namespace MphRead.Formats
             return Fixed.ToFloat(param[2]);
         }
 
-        private static float FxFunc41(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        // todo: use Fixed everywhere instead of int
+        public static float FxFunc41(IReadOnlyList<Fixed> param, Fixed elapsed, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
         {
-            // todo: eff_div_something
-            float effDivSomething = Fixed.ToFloat(0x2000);
-            float value = Fixed.ToFloat(a2) / effDivSomething;
-            Debug.Assert(param.Count % 2 == 0);
-            if (value < Fixed.ToFloat(param[0]))
+            // todo: pass the lifespan
+            float lifespan = 15;
+            float percent = elapsed.FloatValue / lifespan;
+            if (percent < param[0].FloatValue)
             {
-                return Fixed.ToFloat(param[1]);
+                return param[1].FloatValue;
             }
-            //for (int i = 0; ; i += 2)
-            //{
-            //    float cur1 = Fixed.ToFloat(param[i]);
-            //    float cur2 = Fixed.ToFloat(param[i + 1]);
-            //    float next1 = Fixed.ToFloat(param[i + 2]);
-            //    float next2 = Fixed.ToFloat(param[i + 3]);
-            //}
-            //return (C2 - B2) * ((v4 - B1) / (C1 - B1)) + B2
-            return 0;
+            bool none = true;
+            int i = 0;
+            do
+            {
+                if (param[i].FloatValue > percent)
+                {
+                    break;
+                }
+                none = false;
+                i += 2;
+            }
+            while (param[i].Value != Int32.MinValue);
+            if (none)
+            {
+                return 0;
+            }
+            i -= 2;
+            if (param[i + 2].Value == Int32.MinValue)
+            {
+                return param[i + 1].FloatValue;
+            }
+            return param[i + 1].FloatValue + (param[i + 3].FloatValue - param[i + 1].FloatValue)
+                * ((percent - param[i].FloatValue) / (param[i + 2].FloatValue - param[i].FloatValue));
         }
 
         private static float FxFunc42(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
@@ -196,6 +213,7 @@ namespace MphRead.Formats
             return Fixed.ToFloat(Test.GetRandomInt1(4096));
         }
 
+        // get random angle [0-360) in fx32
         private static float FxFunc45(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
         {
             return Fixed.ToFloat(Test.GetRandomInt1(0x168000));
@@ -233,31 +251,31 @@ namespace MphRead.Formats
                 FxFunc4(info.Parameters, a2, ref vec, funcs);
                 break;
             case 8:
-                FxFunc4(info.Parameters, a2, ref vec, funcs);
+                FxFunc8(info.Parameters, a2, ref vec, funcs);
                 break;
             case 9:
-                FxFunc4(info.Parameters, a2, ref vec, funcs);
+                FxFunc9(info.Parameters, a2, ref vec, funcs);
                 break;
             case 11:
-                FxFunc4(info.Parameters, a2, ref vec, funcs);
+                FxFunc11(info.Parameters, a2, ref vec, funcs);
                 break;
             case 14:
-                FxFunc4(info.Parameters, a2, ref vec, funcs);
+                FxFunc14(info.Parameters, a2, ref vec, funcs);
                 break;
             case 15:
-                FxFunc4(info.Parameters, a2, ref vec, funcs);
+                FxFunc15(info.Parameters, a2, ref vec, funcs);
                 break;
             case 16:
-                FxFunc4(info.Parameters, a2, ref vec, funcs);
+                FxFunc16(info.Parameters, a2, ref vec, funcs);
                 break;
             case 17:
-                FxFunc4(info.Parameters, a2, ref vec, funcs);
+                FxFunc17(info.Parameters, a2, ref vec, funcs);
                 break;
             case 19:
-                FxFunc4(info.Parameters, a2, ref vec, funcs);
+                FxFunc19(info.Parameters, a2, ref vec, funcs);
                 break;
             case 20:
-                FxFunc4(info.Parameters, a2, ref vec, funcs);
+                FxFunc20(info.Parameters, a2, ref vec, funcs);
                 break;
             default:
                 throw new ProgramException("Invalid effect func.");
@@ -277,7 +295,7 @@ namespace MphRead.Formats
                 32 => FxFunc32(info.Parameters, a2, funcs),
                 35 => FxFunc35(info.Parameters, a2, funcs),
                 40 => FxFunc40(info.Parameters, a2, funcs),
-                41 => FxFunc41(info.Parameters, a2, funcs),
+                41 => FxFunc41(info.Parameters.Select(s => new Fixed(s)).ToList(), new Fixed(a2), funcs),
                 42 => FxFunc42(info.Parameters, a2, funcs),
                 43 => FxFunc43(info.Parameters, a2, funcs),
                 45 => FxFunc45(info.Parameters, a2, funcs),
