@@ -87,6 +87,7 @@ namespace MphRead
             Mesh
         }
 
+        private float _elapsedTime = 0;
         private long _frameCount = -1;
         private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
@@ -849,6 +850,7 @@ namespace MphRead
 
         private void RenderScene(double elapsedTime)
         {
+            _elapsedTime += (float)elapsedTime;
             _decalMeshes.Clear();
             _nonDecalMeshes.Clear();
             _translucentMeshes.Clear();
@@ -1015,7 +1017,6 @@ namespace MphRead
             if ((_showVolumes > 0 && (_displayVolumes.Count > 0 || _displayPlanes.Count > 0)) || _showKillPlane)
             {
                 GL.Uniform1(_shaderLocations.UseLight, 0);
-                GL.Uniform1(_shaderLocations.UseFog, 0);
                 GL.Uniform1(_shaderLocations.UseTexture, 0);
                 GL.Uniform1(_shaderLocations.UseOverride, 1);
                 GL.Enable(EnableCap.Blend);
@@ -2170,9 +2171,15 @@ namespace MphRead
                     }
                     if (_showVolumes != 0 && _selectionMode == SelectionMode.Model)
                     {
+                        int previousSelection = _selectedModelId;
                         Deselect();
                         _selectedModelId = 0;
                         await SelectNextModel();
+                        if (!_modelMap.ContainsKey(_selectedModelId))
+                        {
+                            _selectedModelId = previousSelection;
+                            SetSelectedModel(previousSelection);
+                        }
                     }
                 }
                 else
@@ -2184,9 +2191,15 @@ namespace MphRead
                     }
                     if (_showVolumes != 0 && _selectionMode == SelectionMode.Model)
                     {
+                        int previousSelection = _selectedModelId;
                         Deselect();
                         _selectedModelId = 0;
                         await SelectNextModel();
+                        if (!_modelMap.ContainsKey(_selectedModelId))
+                        {
+                            _selectedModelId = previousSelection;
+                            SetSelectedModel(previousSelection);
+                        }
                     }
                 }
                 await PrintOutput();
