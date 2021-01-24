@@ -486,6 +486,7 @@ namespace MphRead
     }
 
     // size: 116
+    // note: sparksDown_PS.bin (unused) has an element struct of 112 bytes
     public readonly struct RawEffectElement
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
@@ -494,14 +495,13 @@ namespace MphRead
         public readonly char[] ModelName;
         public readonly uint ParticleCount;
         public readonly uint ParticleOffset;
-        // note: sparksDown_PS.bin (unused) has an element struct of 112 bytes (maybe missing Field68?)
         public readonly uint Flags;
         public readonly Vector3Fx Acceleration;
         public readonly uint ChildEffectId;
         public readonly Fixed Lifespan;
         public readonly Fixed DrainTime;
         public readonly Fixed BufferTime;
-        public readonly int Field68;
+        public readonly int DrawType;
         public readonly uint FuncCount;
         public readonly uint FuncOffset;
     }

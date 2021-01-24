@@ -366,7 +366,7 @@ namespace MphRead
             Lifespan = raw.Lifespan.FloatValue;
             DrainTime = raw.DrainTime.FloatValue;
             BufferTime = raw.BufferTime.FloatValue;
-            Field68 = raw.Field68;
+            Field68 = raw.DrawType;
             Particles = particles;
             Funcs = funcs;
         }
@@ -400,16 +400,16 @@ namespace MphRead
         SetParticleRed = 20,
         SetParticleGreen = 21,
         SetParticleBlue = 22,
-        SetParticleField24 = 23, // 198
-        SetParticleField28 = 24, // 19C
-        SetParticleField44 = 25, // 1A0
-        SetParticleField48 = 26, // 1A4
-        SetParticleField4C = 27, // 1A8
-        SetParticleField50 = 28, // 1AC
-        SetParticleField54 = 29, // 1B0
-        SetParticleField58 = 30, // 1B4
-        SetParticleField5C = 31, // 1B8
-        SetParticleField60 = 32  // 1BC
+        SetParticleScale = 23,
+        SetParticleRotation = 24,
+        SetParticleRoField1 = 25,
+        SetParticleRoField2 = 26,
+        SetParticleRoField3 = 27,
+        SetParticleRoField4 = 28,
+        SetParticleRwField1 = 29,
+        SetParticleRwField2 = 30,
+        SetParticleRwField3 = 31,
+        SetParticleRwField4 = 32
     }
 
     public class StringTableEntry

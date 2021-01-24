@@ -1,52 +1,168 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
+using System.Diagnostics;
+using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 
 namespace MphRead.Effects
 {
-    // todo: set_vecs and draw functions
-    public static class Effects
+    public struct TimeValues
     {
-        // todo: create "eff4" class
-        // todo: pass "cur_*" stuff as params and remove globals
-        [NotNull]
-        [DisallowNull]
-        public static EffectElement? CurrentElement { get; set; }
+        // global elapsed time
+        public float Global;
+        // time since the current EffectElementEntry or EffectParticle was created
+        public float Elapsed;
+        // lifespan of the current EffectElementEntry or EffectParticle
+        public float Lifespan;
+    }
 
-        private static void FxFunc4(IReadOnlyList<int> param, int a2, ref Vector3 vec, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+    public class EffectElementEntry
+    {
+        public float CreationTime { get; set; }
+        public float ExpirationTime { get; set; }
+        public float DrainTime { get; set; }
+        public float BufferTime { get; set; }
+        public bool Func39Called { get; set; }
+        public uint Flags { get; set; }
+        public float Lifespan { get; set; }
+        public int DrawType { get; set; }
+        public Vector3 Position { get; set; }
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter")]
+    public class EffectParticle
+    {
+        public float CreationTime { get; set; }
+        public float ExpirationTime { get; set; }
+        public float Lifespan { get; set; }
+        public Vector3 Position { get; set; }
+        public Vector3 Speed { get; set; }
+        public float Scale { get; set; }
+        public float Rotation { get; set; }
+        public float Red { get; set; }
+        public float Green { get; set; }
+        public float Blue { get; set; }
+        public float Alpha { get; set; }
+        public int ParticleId { get; set; }
+        public float PortionTotal { get; set; }
+        public float RoField1 { get; set; } // 4 general-purpose fields set once upon particle creation
+        public float RoField2 { get; set; }
+        public float RoField3 { get; set; }
+        public float RoField4 { get; set; }
+        public float RwField1 { get; set; } // 4 general-purpose fields updated every frame
+        public float RwField2 { get; set; }
+        public float RwField3 { get; set; }
+        public float RwField4 { get; set; }
+
+        public EffectElementEntry Owner { get; }
+        public IReadOnlyDictionary<uint, FxFuncInfo> Funcs { get; }
+        public int SetVecsId { get; set; }
+        public int DrawId { get; set; }
+        public Vector3 EffectVec1 { get; set; }
+        public Vector3 EffectVec2 { get; set; }
+        public Vector3 EffectVec3 { get; set; }
+
+        public EffectParticle(EffectElementEntry owner, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        {
+            Owner = owner;
+            Funcs = funcs;
+        }
+
+        private void FxFunc01(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        {
+            vec.X = Position.X;
+            vec.Y = Position.Y;
+            vec.Z = Position.Z;
+        }
+
+        private void FxFunc03(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        {
+            vec.X = Speed.X;
+            vec.Y = Speed.Y;
+            vec.Z = Speed.Z;
+        }
+
+        private void FxFunc04(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             vec.X = param[0];
             vec.Y = param[1];
             vec.Z = param[2];
         }
 
-        private static void FxFunc8(IReadOnlyList<int> param, int a2, ref Vector3 vec, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private void FxFunc05(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
-            vec.X = Fixed.ToFloat(Test.GetRandomInt1(4096) - 2048);
-            vec.Y = Fixed.ToFloat(Test.GetRandomInt1(4096) - 2048);
-            vec.Z = Fixed.ToFloat(Test.GetRandomInt1(4096) - 2048);
+            vec.X = Fixed.ToFloat(Test.GetRandomInt1(4096));
+            vec.Y = Fixed.ToFloat(Test.GetRandomInt1(4096));
+            vec.Z = Fixed.ToFloat(Test.GetRandomInt1(4096));
         }
 
-        private static void FxFunc9(IReadOnlyList<int> param, int a2, ref Vector3 vec, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private void FxFunc06(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
-            vec.X = Fixed.ToFloat(Test.GetRandomInt1(4096) - 2048);
+            vec.X = Fixed.ToFloat(Test.GetRandomInt1(4096));
             vec.Y = 0;
-            vec.Z = Fixed.ToFloat(Test.GetRandomInt1(4096) - 2048);
+            vec.Z = Fixed.ToFloat(Test.GetRandomInt1(4096));
         }
 
-        private static void FxFunc11(IReadOnlyList<int> param, int a2, ref Vector3 vec, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private void FxFunc07(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
-            // todo: sin/cos stuff with dword_2123DE8
+            vec.X = Fixed.ToFloat(Test.GetRandomInt1(4096));
+            vec.Y = 1;
+            vec.Z = Fixed.ToFloat(Test.GetRandomInt1(4096));
         }
 
-        private static void FxFunc14(IReadOnlyList<int> param, int a2, ref Vector3 vec, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private void FxFunc08(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        {
+            vec.X = Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f;
+            vec.Y = Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f;
+            vec.Z = Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f;
+        }
+
+        private void FxFunc09(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        {
+            vec.X = Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f;
+            vec.Y = 0;
+            vec.Z = Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f;
+        }
+
+        private void FxFunc10(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        {
+            vec.X = Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f;
+            vec.Y = 1;
+            vec.Z = Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f;
+        }
+
+        private void FxFunc11(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        {
+            float angle = MathHelper.DegreesToRadians(360 * PortionTotal);
+            vec.X = MathF.Cos(angle);
+            vec.Y = 0;
+            vec.Z = MathF.Sin(angle);
+        }
+
+        private void FxFunc13(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        {
+            Debug.Assert(false, "FxFunc13 was called");
+            // note: some weirdness with the param list -- params[1] instead of *(*params + 4) -- but this function is unused
+            FxFuncInfo funcInfo = Funcs[(uint)param[0]];
+            FxFuncInfo paramInfo = Funcs[(uint)param[1]];
+            float value = InvokeFloatFunc(funcInfo.FuncId, paramInfo.Parameters, times);
+            float percent = times.Elapsed / value;
+            if (value < 0)
+            {
+                percent *= -1;
+            }
+            float angle = MathHelper.DegreesToRadians(360 * percent);
+            vec.X = MathF.Cos(angle);
+            vec.Y = 0;
+            vec.Z = MathF.Sin(angle);
+        }
+
+        private void FxFunc14(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             Vector3 temp = Vector3.Zero;
-            InvokeVecFunc(funcs[(uint)param[0]], a2, ref temp, funcs);
-            float value = InvokeFloatFunc(funcs[(uint)param[1]], a2, funcs);
-            float div = Fixed.ToFloat(a2) / value;
+            InvokeVecFunc(Funcs[(uint)param[0]], times, ref temp);
+            float value = InvokeFloatFunc(Funcs[(uint)param[1]], times);
+            float div = times.Elapsed / value;
             if (value < 0)
             {
                 div *= -1;
@@ -56,255 +172,541 @@ namespace MphRead.Effects
             vec.Z = temp.Z * div;
         }
 
-        private static void FxFunc15(IReadOnlyList<int> param, int a2, ref Vector3 vec, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private void FxFunc15(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
-            float value1 = InvokeFloatFunc(funcs[(uint)param[0]], a2, funcs);
-            float value2 = InvokeFloatFunc(funcs[(uint)param[1]], a2, funcs);
-            float angle = 2 * (Test.GetRandomInt1(0xFFFF) >> 4) * (360 / 4096f);
-            vec.X = MathF.Sin(angle) * value1;
+            float value1 = InvokeFloatFunc(Funcs[(uint)param[0]], times);
+            float value2 = InvokeFloatFunc(Funcs[(uint)param[1]], times);
+            float angle = MathHelper.DegreesToRadians(2 * (Test.GetRandomInt1(0xFFFF) >> 4) * (360 / 4096f));
+            vec.X = MathF.Cos(angle) * value1;
             vec.Y = value2;
-            vec.Z = MathF.Cos(angle) * value1;
+            vec.Z = MathF.Sin(angle) * value1;
         }
 
-        private static void FxFunc16(IReadOnlyList<int> param, int a2, ref Vector3 vec, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private void FxFunc16(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
-            float value1 = InvokeFloatFunc(funcs[(uint)param[0]], a2, funcs);
-            float value2 = InvokeFloatFunc(funcs[(uint)param[1]], a2, funcs);
-            value1 = Fixed.ToFloat(Test.GetRandomInt1(4096) - 2048) * value1;
-            value2 = Fixed.ToFloat(Test.GetRandomInt1(4096) - 2048) * value2;
-            vec.X = value1 / 4f;
+            float value1 = InvokeFloatFunc(Funcs[(uint)param[0]], times);
+            float value2 = InvokeFloatFunc(Funcs[(uint)param[1]], times);
+            vec.X = (Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f) * value1;
             vec.Y = 0;
-            vec.X = value2 / 4f;
+            vec.Z = (Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f) * value2;
         }
 
-        private static void FxFunc17(IReadOnlyList<int> param, int a2, ref Vector3 vec, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private void FxFunc17(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             Vector3 temp1 = Vector3.Zero;
             Vector3 temp2 = Vector3.Zero;
-            InvokeVecFunc(funcs[(uint)param[0]], a2, ref temp1, funcs);
-            InvokeVecFunc(funcs[(uint)param[1]], a2, ref temp2, funcs);
+            InvokeVecFunc(Funcs[(uint)param[0]], times, ref temp1);
+            InvokeVecFunc(Funcs[(uint)param[1]], times, ref temp2);
             vec.X = temp1.X + temp2.X;
             vec.Y = temp1.Y + temp2.Y;
             vec.Z = temp1.Z + temp2.Z;
         }
 
-        private static void FxFunc19(IReadOnlyList<int> param, int a2, ref Vector3 vec, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private void FxFunc18(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             Vector3 temp1 = Vector3.Zero;
             Vector3 temp2 = Vector3.Zero;
-            InvokeVecFunc(funcs[(uint)param[0]], a2, ref temp1, funcs);
-            InvokeVecFunc(funcs[(uint)param[1]], a2, ref temp2, funcs);
-            vec.X = temp1.X * temp2.X / 4096f;
-            vec.Y = temp1.Y * temp2.Y / 4096f;
-            vec.Z = temp1.Z * temp2.Z / 4096f;
+            InvokeVecFunc(Funcs[(uint)param[0]], times, ref temp1);
+            InvokeVecFunc(Funcs[(uint)param[1]], times, ref temp2);
+            vec.X = temp1.X - temp2.X;
+            vec.Y = temp1.Y - temp2.Y;
+            vec.Z = temp1.Z - temp2.Z;
         }
 
-        private static void FxFunc20(IReadOnlyList<int> param, int a2, ref Vector3 vec, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private void FxFunc19(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        {
+            Vector3 temp1 = Vector3.Zero;
+            Vector3 temp2 = Vector3.Zero;
+            InvokeVecFunc(Funcs[(uint)param[0]], times, ref temp1);
+            InvokeVecFunc(Funcs[(uint)param[1]], times, ref temp2);
+            vec.X = temp1.X / temp2.X;
+            vec.Y = temp1.Y / temp2.Y;
+            vec.Z = temp1.Z / temp2.Z;
+        }
+
+        private void FxFunc20(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             Vector3 temp = Vector3.Zero;
-            float value = InvokeFloatFunc(funcs[(uint)param[0]], a2, funcs);
-            InvokeVecFunc(funcs[(uint)param[1]], a2, ref temp, funcs);
+            float value = InvokeFloatFunc(Funcs[(uint)param[0]], times);
+            InvokeVecFunc(Funcs[(uint)param[1]], times, ref temp);
             vec.X = temp.X * value;
             vec.Y = temp.Y * value;
             vec.Z = temp.Z * value;
         }
 
-        private static float FxFunc22(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private float FxFunc21(IReadOnlyList<int> param, TimeValues times)
         {
-            // todo: return cur_effect_elem->field_74;
             return 0;
         }
 
-        private static float FxFunc24(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private float FxFunc22(IReadOnlyList<int> param, TimeValues times)
         {
-            // todo: return cur_effect_elem->alpha;
-            return 0;
+            return Owner.Lifespan;
         }
 
-        private static float FxFunc25(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private float FxFunc23(IReadOnlyList<int> param, TimeValues times)
         {
-            // todo: return cur_effect_elem->red;
-            return 0;
+            return times.Global - Owner.CreationTime;
         }
 
-        private static float FxFunc26(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private float FxFunc24(IReadOnlyList<int> param, TimeValues times)
         {
-            // todo: return cur_effect_elem->green;
-            return 0;
+            return Alpha;
         }
 
-        private static float FxFunc29(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private float FxFunc25(IReadOnlyList<int> param, TimeValues times)
         {
-            // todo: return cur_effect_elem->blue;
-            return 0;
+            return Red;
         }
 
-        private static float FxFunc31(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private float FxFunc26(IReadOnlyList<int> param, TimeValues times)
         {
-            // todo: return cur_effect_elem->field_44;
-            return 0;
+            return Green;
         }
 
-        private static float FxFunc32(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private float FxFunc27(IReadOnlyList<int> param, TimeValues times)
         {
-            // todo: return cur_effect_elem->field_48;
-            return 0;
+            return Blue;
         }
 
-        private static float FxFunc35(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private float FxFunc29(IReadOnlyList<int> param, TimeValues times)
         {
-            // todo: return cur_effect_elem->field_54;
-            return 0;
+            return Scale;
         }
 
-        private static float FxFunc40(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private float FxFunc30(IReadOnlyList<int> param, TimeValues times)
         {
-            // todo: eff_div_something
-            float effDivSomething = Fixed.ToFloat(0x2000);
-            if (Fixed.ToFloat(a2) / effDivSomething <= Fixed.ToFloat(param[0]))
+            return Rotation;
+        }
+
+        private float FxFunc31(IReadOnlyList<int> param, TimeValues times)
+        {
+            return RoField1;
+        }
+
+        private float FxFunc32(IReadOnlyList<int> param, TimeValues times)
+        {
+            return RoField2;
+        }
+
+        private float FxFunc33(IReadOnlyList<int> param, TimeValues times)
+        {
+            return RoField3;
+        }
+
+        private float FxFunc34(IReadOnlyList<int> param, TimeValues times)
+        {
+            return RoField4;
+        }
+
+        private float FxFunc35(IReadOnlyList<int> param, TimeValues times)
+        {
+            return RwField1;
+        }
+
+        private float FxFunc36(IReadOnlyList<int> param, TimeValues times)
+        {
+            return RwField2;
+        }
+
+        private float FxFunc37(IReadOnlyList<int> param, TimeValues times)
+        {
+            return RwField3;
+        }
+
+        private float FxFunc38(IReadOnlyList<int> param, TimeValues times)
+        {
+            return RwField4;
+        }
+
+        private float FxFunc39(IReadOnlyList<int> param, TimeValues times)
+        {
+            if (Owner.Func39Called)
+            {
+                return 0;
+            }
+            Owner.Func39Called = true;
+            return Fixed.ToFloat(param[0]);
+        }
+
+        private float FxFunc40(IReadOnlyList<int> param, TimeValues times)
+        {
+            if (times.Elapsed / times.Lifespan <= Fixed.ToFloat(param[0]))
             {
                 return Fixed.ToFloat(param[1]);
             }
             return Fixed.ToFloat(param[2]);
         }
 
-        // todo: use Fixed everywhere instead of int
-        public static float FxFunc41(IReadOnlyList<Fixed> param, Fixed elapsed, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        // todo: private
+        public float FxFunc41(IReadOnlyList<int> param, TimeValues times)
         {
-            // todo: pass the lifespan
-            float lifespan = 15;
-            float percent = elapsed.FloatValue / lifespan;
-            if (percent < param[0].FloatValue)
+            float percent = times.Elapsed / times.Lifespan;
+            if (percent < Fixed.ToFloat(param[0]))
             {
-                return param[1].FloatValue;
+                return Fixed.ToFloat(param[1]);
             }
             bool none = true;
             int i = 0;
             do
             {
-                if (param[i].FloatValue > percent)
+                if (Fixed.ToFloat(param[i]) > percent)
                 {
                     break;
                 }
                 none = false;
                 i += 2;
             }
-            while (param[i].Value != Int32.MinValue);
+            while (param[i] != Int32.MinValue);
             if (none)
             {
                 return 0;
             }
             i -= 2;
-            if (param[i + 2].Value == Int32.MinValue)
+            if (param[i + 2] == Int32.MinValue)
             {
-                return param[i + 1].FloatValue;
+                return Fixed.ToFloat(param[i + 1]);
             }
-            return param[i + 1].FloatValue + (param[i + 3].FloatValue - param[i + 1].FloatValue)
-                * ((percent - param[i].FloatValue) / (param[i + 2].FloatValue - param[i].FloatValue));
+            return Fixed.ToFloat(param[i + 1]) + (Fixed.ToFloat(param[i + 3]) - Fixed.ToFloat(param[i + 1]))
+                * ((percent - Fixed.ToFloat(param[i])) / (Fixed.ToFloat(param[i + 2]) - Fixed.ToFloat(param[i])));
         }
 
-        private static float FxFunc42(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private float FxFunc42(IReadOnlyList<int> param, TimeValues times)
         {
             return Fixed.ToFloat(param[0]);
         }
 
-        private static float FxFunc43(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private float FxFunc43(IReadOnlyList<int> param, TimeValues times)
         {
             return Fixed.ToFloat(Test.GetRandomInt1(4096));
         }
 
+        private float FxFunc44(IReadOnlyList<int> param, TimeValues times)
+        {
+            return Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f;
+        }
+
         // get random angle [0-360) in fx32
-        private static float FxFunc45(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private float FxFunc45(IReadOnlyList<int> param, TimeValues times)
         {
             return Fixed.ToFloat(Test.GetRandomInt1(0x168000));
         }
 
-        private static float FxFunc46(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private float FxFunc46(IReadOnlyList<int> param, TimeValues times)
         {
-            return InvokeFloatFunc(funcs[(uint)param[0]], a2, funcs) + InvokeFloatFunc(funcs[(uint)param[1]], a2, funcs);
+            return InvokeFloatFunc(Funcs[(uint)param[0]], times) + InvokeFloatFunc(Funcs[(uint)param[1]], times);
         }
 
-        private static float FxFunc47(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private float FxFunc47(IReadOnlyList<int> param, TimeValues times)
         {
-            return InvokeFloatFunc(funcs[(uint)param[0]], a2, funcs) - InvokeFloatFunc(funcs[(uint)param[1]], a2, funcs);
+            return InvokeFloatFunc(Funcs[(uint)param[0]], times) - InvokeFloatFunc(Funcs[(uint)param[1]], times);
         }
 
-        private static float FxFunc48(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private float FxFunc48(IReadOnlyList<int> param, TimeValues times)
         {
-            return InvokeFloatFunc(funcs[(uint)param[0]], a2, funcs) * InvokeFloatFunc(funcs[(uint)param[1]], a2, funcs);
+            return InvokeFloatFunc(Funcs[(uint)param[0]], times) * InvokeFloatFunc(Funcs[(uint)param[1]], times);
         }
 
-        private static float FxFunc49(IReadOnlyList<int> param, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        private float FxFunc49(IReadOnlyList<int> param, TimeValues times)
         {
-            if (InvokeFloatFunc(funcs[(uint)param[0]], a2, funcs) >= InvokeFloatFunc(funcs[(uint)param[1]], a2, funcs))
+            if (InvokeFloatFunc(Funcs[(uint)param[0]], times) >= InvokeFloatFunc(Funcs[(uint)param[1]], times))
             {
-                return InvokeFloatFunc(funcs[(uint)param[2]], a2, funcs);
+                return InvokeFloatFunc(Funcs[(uint)param[2]], times);
             }
-            return InvokeFloatFunc(funcs[(uint)param[3]], a2, funcs);
+            return InvokeFloatFunc(Funcs[(uint)param[3]], times);
         }
 
-        public static void InvokeVecFunc(FxFuncInfo info, int a2, ref Vector3 vec, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        public void InvokeVecFunc(FxFuncInfo info, TimeValues times, ref Vector3 vec)
         {
             switch (info.FuncId)
             {
+            case 1:
+            case 2:
+                FxFunc01(info.Parameters, times, ref vec);
+                break;
+            case 3:
+                FxFunc03(info.Parameters, times, ref vec);
+                break;
             case 4:
-                FxFunc4(info.Parameters, a2, ref vec, funcs);
+                FxFunc04(info.Parameters, times, ref vec);
+                break;
+            case 5:
+                FxFunc05(info.Parameters, times, ref vec);
+                break;
+            case 6:
+                FxFunc06(info.Parameters, times, ref vec);
+                break;
+            case 7:
+                FxFunc07(info.Parameters, times, ref vec);
                 break;
             case 8:
-                FxFunc8(info.Parameters, a2, ref vec, funcs);
+                FxFunc08(info.Parameters, times, ref vec);
                 break;
             case 9:
-                FxFunc9(info.Parameters, a2, ref vec, funcs);
+                FxFunc09(info.Parameters, times, ref vec);
+                break;
+            case 10:
+                FxFunc10(info.Parameters, times, ref vec);
                 break;
             case 11:
-                FxFunc11(info.Parameters, a2, ref vec, funcs);
+                FxFunc11(info.Parameters, times, ref vec);
+                break;
+            case 13:
+                FxFunc13(info.Parameters, times, ref vec);
                 break;
             case 14:
-                FxFunc14(info.Parameters, a2, ref vec, funcs);
+                FxFunc14(info.Parameters, times, ref vec);
                 break;
             case 15:
-                FxFunc15(info.Parameters, a2, ref vec, funcs);
+                FxFunc15(info.Parameters, times, ref vec);
                 break;
             case 16:
-                FxFunc16(info.Parameters, a2, ref vec, funcs);
+                FxFunc16(info.Parameters, times, ref vec);
                 break;
             case 17:
-                FxFunc17(info.Parameters, a2, ref vec, funcs);
+                FxFunc17(info.Parameters, times, ref vec);
+                break;
+            case 18:
+                FxFunc18(info.Parameters, times, ref vec);
                 break;
             case 19:
-                FxFunc19(info.Parameters, a2, ref vec, funcs);
+                FxFunc19(info.Parameters, times, ref vec);
                 break;
             case 20:
-                FxFunc20(info.Parameters, a2, ref vec, funcs);
+                FxFunc20(info.Parameters, times, ref vec);
                 break;
             default:
                 throw new ProgramException("Invalid effect func.");
             }
         }
 
-        public static float InvokeFloatFunc(FxFuncInfo info, int a2, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        public float InvokeFloatFunc(FxFuncInfo info, TimeValues times)
         {
-            return info.FuncId switch
+            return InvokeFloatFunc(info.FuncId, info.Parameters, times);
+        }
+
+        private float InvokeFloatFunc(uint funcId, IReadOnlyList<int> parameters, TimeValues times)
+        {
+            return funcId switch
             {
-                22 => FxFunc22(info.Parameters, a2, funcs),
-                24 => FxFunc24(info.Parameters, a2, funcs),
-                25 => FxFunc25(info.Parameters, a2, funcs),
-                26 => FxFunc26(info.Parameters, a2, funcs),
-                29 => FxFunc29(info.Parameters, a2, funcs),
-                31 => FxFunc31(info.Parameters, a2, funcs),
-                32 => FxFunc32(info.Parameters, a2, funcs),
-                35 => FxFunc35(info.Parameters, a2, funcs),
-                40 => FxFunc40(info.Parameters, a2, funcs),
-                41 => FxFunc41(info.Parameters.Select(s => new Fixed(s)).ToList(), new Fixed(a2), funcs),
-                42 => FxFunc42(info.Parameters, a2, funcs),
-                43 => FxFunc43(info.Parameters, a2, funcs),
-                45 => FxFunc45(info.Parameters, a2, funcs),
-                46 => FxFunc46(info.Parameters, a2, funcs),
-                47 => FxFunc47(info.Parameters, a2, funcs),
-                48 => FxFunc48(info.Parameters, a2, funcs),
-                49 => FxFunc49(info.Parameters, a2, funcs),
+                28 => FxFunc21(parameters, times),
+                21 => FxFunc21(parameters, times),
+                22 => FxFunc22(parameters, times),
+                23 => FxFunc23(parameters, times),
+                24 => FxFunc24(parameters, times),
+                25 => FxFunc25(parameters, times),
+                26 => FxFunc26(parameters, times),
+                27 => FxFunc27(parameters, times),
+                29 => FxFunc29(parameters, times),
+                30 => FxFunc30(parameters, times),
+                31 => FxFunc31(parameters, times),
+                32 => FxFunc32(parameters, times),
+                33 => FxFunc33(parameters, times),
+                34 => FxFunc34(parameters, times),
+                35 => FxFunc35(parameters, times),
+                36 => FxFunc36(parameters, times),
+                37 => FxFunc37(parameters, times),
+                38 => FxFunc38(parameters, times),
+                39 => FxFunc39(parameters, times),
+                40 => FxFunc40(parameters, times),
+                41 => FxFunc41(parameters, times),
+                42 => FxFunc42(parameters, times),
+                43 => FxFunc43(parameters, times),
+                44 => FxFunc44(parameters, times),
+                45 => FxFunc45(parameters, times),
+                46 => FxFunc46(parameters, times),
+                47 => FxFunc47(parameters, times),
+                48 => FxFunc48(parameters, times),
+                49 => FxFunc49(parameters, times),
                 _ => throw new ProgramException("Invalid effect func.")
             };
+        }
+
+        // sktodo: confirm the first matrix is always the identity matrix,
+        // and that we can use the bottom row of the view matrix instead of cam info,
+        // and that we can use our view matrix the same way as the in-game one is used in these functions
+        private void SetVecsB0(Matrix4 viewMatrix)
+        {
+            var vec1 = new Vector3(viewMatrix.M11, viewMatrix.M21, viewMatrix.M31);
+            var vec2 = new Vector3(-viewMatrix.M12, -viewMatrix.M22, -viewMatrix.M32);
+            EffectVec1 = vec1;
+            EffectVec2 = vec2;
+        }
+
+        private void SetVecsBC(Matrix4 viewMatrix)
+        {
+            Matrix3 identity = Matrix3.Identity;
+            var vec1 = new Vector3(identity.M11, identity.M21, identity.M31);
+            var vec2 = new Vector3(identity.M13, identity.M23, identity.M33);
+            EffectVec1 = vec1;
+            EffectVec2 = vec2;
+        }
+
+        private void SetVecsC0(Matrix4 viewMatrix)
+        {
+            Matrix3 identity = Matrix3.Identity;
+            var vec1 = new Vector3(-identity.M12, -identity.M22, -identity.M32);
+            var vec2 = new Vector3(viewMatrix.M13, viewMatrix.M23, viewMatrix.M33);
+            EffectVec1 = vec1;
+            EffectVec2 = vec2;
+        }
+
+        private void SetVecsD4(Matrix4 viewMatrix)
+        {
+            var vec1 = Vector3.Normalize(Speed);
+            var vec2 = new Vector3(viewMatrix.M13, viewMatrix.M23, viewMatrix.M33);
+            var vec3 = Vector3.Cross(vec2, vec1);
+            if (vec3.LengthSquared < Fixed.ToFloat(64))
+            {
+                vec2 = new Vector3(viewMatrix.M11, viewMatrix.M21, viewMatrix.M31);
+                vec3 = Vector3.Cross(vec2, vec1);
+            }
+            vec3 = Vector3.Normalize(vec3);
+            vec1 = Vector3.Cross(vec3, vec2);
+            EffectVec1 = vec1;
+            EffectVec2 = vec2;
+            EffectVec3 = vec3;
+        }
+
+        private void SetVecsD8(Matrix4 viewMatrix)
+        {
+            Vector3 vec3;
+            if ((Owner.Flags & 1) != 0 )
+            {
+                vec3 = new Vector3(
+                    viewMatrix.Row3.X - (Position.X + Owner.Position.X),
+                    viewMatrix.Row3.Y - (Position.Y + Owner.Position.Y),
+                    viewMatrix.Row3.Z - (Position.Z + Owner.Position.Z)
+                );
+            }
+            else
+            {
+                vec3 = new Vector3(
+                    viewMatrix.Row3.X - Position.X,
+                    viewMatrix.Row3.Y - Position.Y,
+                    viewMatrix.Row3.Z - Position.Z
+                );
+            }
+            vec3 = Vector3.Normalize(vec3);
+            var vec2 = new Vector3(viewMatrix.Row1);
+            var vec1 = Vector3.Cross(vec3, vec2);
+            if (vec1.LengthSquared < Fixed.ToFloat(64))
+            {
+                vec2 = new Vector3(viewMatrix.Row2);
+                vec1 = Vector3.Cross(vec3, vec2);
+            }
+            vec1 = Vector3.Normalize(vec1);
+            vec2 = Vector3.Cross(vec3, vec1);
+            EffectVec1 = vec1;
+            EffectVec2 = vec2;
+            EffectVec3 = vec3;
+        }
+
+        public void InvokeSetVecsFunc(Matrix4 viewMatrix)
+        {
+            switch (SetVecsId)
+            {
+            case 1:
+                SetVecsB0(viewMatrix);
+                break;
+            case 2:
+                SetVecsBC(viewMatrix);
+                break;
+            case 3:
+                SetVecsC0(viewMatrix);
+                break;
+            case 4:
+                SetVecsD4(viewMatrix);
+                break;
+            case 5:
+                SetVecsD8(viewMatrix);
+                break;
+            default:
+                throw new ProgramException("Invalid set vecs func.");
+            }
+        }
+
+        private void DrawB4()
+        {
+            // todo
+        }
+
+        private void DrawB8()
+        {
+            // todo
+        }
+
+        private void DrawC4()
+        {
+            // todo
+        }
+
+        private void DrawC8()
+        {
+            // todo
+        }
+
+        private void DrawCC()
+        {
+            if (Alpha > 0)
+            {
+                float angle1 = MathHelper.DegreesToRadians(Rotation);
+                float angle2 = MathHelper.DegreesToRadians(Rotation + 90);
+                float cos1 = MathF.Cos(angle1);
+                float sin1 = MathF.Sin(angle1);
+                float cos2 = MathF.Cos(angle2);
+                float sin2 = MathF.Sin(angle2);
+                // sktodo: polygon ID (RenderScene), double-sided (RenderMesh), alpha + modulate (DoMaterial)
+                // -- can probably insert particle "meshes" as mesh info in RenderScene, but they need to take different paths to set uniforms etc.
+                // (and obviously they need to have their vertex and other data directly in them instead of references to dlists/materials/etc.)
+                // --> need to make sure effect base textures are set up and we can reference them by index (also eff_tex_width/height)
+                var color = new Vector3(Red, Green, Blue);
+            }
+        }
+        
+        private void DrawD0()
+        {
+            // todo
+        }
+
+        private void DrawDC()
+        {
+            // todo
+        }
+
+        private void DrawShared(bool skipIfZeroSpeed)
+        {
+            // todo
+        }
+
+        public void InvokeDrawFunc()
+        {
+            switch (SetVecsId)
+            {
+            case 1:
+                DrawB4();
+                break;
+            case 2:
+                DrawB8();
+                break;
+            case 3:
+                DrawC4();
+                break;
+            case 4:
+                DrawC8();
+                break;
+            case 5:
+                DrawCC();
+                break;
+            case 6:
+                DrawD0();
+                break;
+            case 7:
+                DrawDC();
+                break;
+            default:
+                throw new ProgramException("Invalid draw func.");
+            }
         }
     }
 }

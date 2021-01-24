@@ -42,30 +42,39 @@ namespace MphRead
             {
                 uint v5 = GetRandomInt1(0x168000);
                 int index1 = (int)(2 * ((16 * (((0xB60B60B60B * v5) >> 32) + 2048)) >> 20));
-                int index3 = (int)(2 * ((((((0xB60B60B60B * v5) >> 32) + 2048) >> 12) + 0x4000) >> 4));
                 int index2 = (int)(2 * ((16 * (((0xB60B60B60B * v5) >> 32) + 2048)) >> 20) + 1);
+                int index3 = (int)(2 * ((((((0xB60B60B60B * v5) >> 32) + 2048) >> 12) + 0x4000) >> 4));
                 int index4 = (int)(2 * ((((((0xB60B60B60B * v5) >> 32) + 2048) >> 12) + 0x4000) >> 4) + 1);
+                float angle1 = index1 / 2 * (360 / 4096f);
+                float angle2 = index3 / 2 * (360 / 4096f);
                 Debug.Assert(index1 % 2 == 0);
                 Debug.Assert(index3 % 2 == 0);
                 Debug.Assert(index1 + 1 == index2);
                 Debug.Assert(index3 + 1 == index4);
                 Debug.Assert(index1 + 2048 == index3);
+                Debug.Assert(angle1 >= 0 && angle1 < 360);
+                Debug.Assert(angle2 >= 0 && angle2 < 360);
+                float test = angle1 + 90;
+                if (test >= 360)
+                {
+                    test -= 360;
+                }
+                Debug.Assert(test == angle2);
                 //Console.WriteLine($"v5: {v5} ({v5 / 4096f} deg)");
-                //Console.WriteLine($"i1: {index1} ({index1 / 2 * (360 / 4096f)} deg)");
-                //Console.WriteLine($"i3: {index3} ({index3 / 2 * (360 / 4096f)} deg)");
+                //Console.WriteLine($"i1: {index1} ({angle1} deg)");
+                //Console.WriteLine($"i3: {index3} ({angle2} deg)");
                 Nop();
             }
         }
 
         public static void TestEffectMathFloat()
         {
-            // angle value comes from field28
-            float angle1 = _random.Next(0x168000) / 4096f;
-            float angle2 = angle1 - 90;
-            if (angle2 >= 360)
-            {
-                angle2 -= 360;
-            }
+            // random angle value comes from rot_z (originally rw_field_1)
+            // note: in the original fixed math, neither angle will be >= 360 because of the way the division(?) works
+            // -- but also, in this case, we don't need to worry about it since we're just doing trig
+            float angle = _random.Next(0x168000) / 4096f;
+            float angle1 = MathHelper.DegreesToRadians(angle);
+            float angle2 = MathHelper.DegreesToRadians(angle + 90);
             float cos1 = MathF.Cos(angle1);
             float sin1 = MathF.Sin(angle1);
             float cos2 = MathF.Cos(angle2);
@@ -87,16 +96,16 @@ namespace MphRead
                 FuncAction.SetParticleRed,
                 FuncAction.SetParticleGreen,
                 FuncAction.SetParticleBlue,
-                FuncAction.SetParticleField24,
-                FuncAction.SetParticleField28,
-                FuncAction.SetParticleField44,
-                FuncAction.SetParticleField48,
-                FuncAction.SetParticleField4C,
-                FuncAction.SetParticleField50,
-                FuncAction.SetParticleField54,
-                FuncAction.SetParticleField58,
-                FuncAction.SetParticleField5C,
-                FuncAction.SetParticleField60
+                FuncAction.SetParticleScale,
+                FuncAction.SetParticleRotation,
+                FuncAction.SetParticleRoField1,
+                FuncAction.SetParticleRoField2,
+                FuncAction.SetParticleRoField3,
+                FuncAction.SetParticleRoField4,
+                FuncAction.SetParticleRwField1,
+                FuncAction.SetParticleRwField2,
+                FuncAction.SetParticleRwField3,
+                FuncAction.SetParticleRwField4
             };
             foreach (FuncAction id in ids)
             {
@@ -118,35 +127,12 @@ namespace MphRead
                                 funcs[id].Add(func.Value.FuncId);
                             }
                         }
-                        foreach (KeyValuePair<FuncAction, FxFuncInfo> func in element.Funcs.Where(f => f.Value.FuncId == 41))
+                        foreach (KeyValuePair<FuncAction, FxFuncInfo> func in element.Funcs.Where(f => f.Key == FuncAction.SetNewParticleLifespan))
                         {
-                            IReadOnlyList<int> param = func.Value.Parameters;
-                            int i = 0;
-                            do
+                            if (func.Value.FuncId == 40 || func.Value.FuncId == 41)
                             {
-                                float pct = MathF.Round(param[i] / 4096f * 100, 1);
-                                Console.WriteLine($"{param[i],4} ({pct,5}%): {param[i + 1],4} ({param[i + 1] / 4096f})");
-                                i += 2;
+                                Debugger.Break();
                             }
-                            while (param[i] != Int32.MinValue);
-                            Console.WriteLine();
-                            for (int j = 0; j <= 4096; j += 256)
-                            {
-                                int result = TestFx41(param, j);
-                                float pct = MathF.Round(j / 4096f * 100, 1);
-                                var elapsed = new Fixed((int)(j / 4096f * 15 * 4096));
-                                float res = Effects.Effects.FxFunc41(param.Select(s => new Fixed(s)).ToList(), elapsed, null!);
-                                float resultf = result / 4096f;
-                                //Debug.Assert(MathF.Abs(res - resultf) <= 0.001);
-                                if (MathF.Abs(res - resultf) >= 0.005)
-                                {
-                                    Debugger.Break();
-                                }
-                                Console.WriteLine($"{j,4} ({pct,5}%): {result,4} ({result / 4096f} == {res})");
-                            }
-                            Console.WriteLine();
-                            Console.WriteLine("---------------------------------------------------------------");
-                            Console.WriteLine();
                         }
                     }
                 }
