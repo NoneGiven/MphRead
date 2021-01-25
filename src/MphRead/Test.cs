@@ -4,9 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading;
 using MphRead.Formats.Collision;
-using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 
 namespace MphRead
@@ -131,9 +129,38 @@ namespace MphRead
                         {
                             if (func.Value.FuncId == 40 || func.Value.FuncId == 41)
                             {
-                                Debugger.Break();
+                                //Debugger.Break();
                             }
                         }
+                    }
+                }
+            }
+            Nop();
+        }
+
+        public static void TestEffectBases()
+        {
+            var names = new List<string>() { "deathParticle", "geo1", "particles", "particles2" };
+            foreach (string name in names)
+            {
+                Model model = Read.GetModelByName(name);
+                foreach (Material material in model.Materials)
+                {
+                    if (material.XRepeat == RepeatMode.Mirror || material.YRepeat == RepeatMode.Mirror)
+                    {
+                        Console.WriteLine($"{name} - {material.Name} ({material.TextureId}, {material.PaletteId})");
+                    }
+                    if (material.XRepeat == RepeatMode.Mirror)
+                    {
+                        Console.WriteLine($"S: {material.ScaleS}");
+                    }
+                    if (material.YRepeat == RepeatMode.Mirror)
+                    {
+                        Console.WriteLine($"T: {material.ScaleT}");
+                    }
+                    if (material.XRepeat == RepeatMode.Mirror || material.YRepeat == RepeatMode.Mirror)
+                    {
+                        Console.WriteLine();
                     }
                 }
             }
@@ -152,7 +179,7 @@ namespace MphRead
             int index1 = -1;
             int index2 = 0;
             //int percent = FxDiv(elapsed, lifespan);
-            if ( percent < parameters[index2 + 0] )
+            if (percent < parameters[index2 + 0])
             {
                 return parameters[index2 + 1];
             }
@@ -168,7 +195,7 @@ namespace MphRead
                     next = parameters[index2 + 2];
                     index2 += 2;
                 }
-                while ( next != Int32.MinValue );
+                while (next != Int32.MinValue);
             }
             if (index1 == -1)
             {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -127,12 +128,27 @@ namespace MphRead.Utility
         private static readonly uint _fileOffset = 0x2000000;
         private static readonly uint _elemList = 0x1242AC;
         private static readonly uint _elapsedGlobal = 0x123E00;
+        private static readonly uint _viewMatrix = 0xDA430;
+        private static readonly uint _effVec1 = 0x123EEC;
+        private static readonly uint _effVec2 = 0x123E8C;
+        private static readonly uint _effVec3 = 0x123E98;
 
-        public static void ReadThing()
+        public static Dictionary<EffectElementEntry, List<EffectParticle>> ReadThing()
         {
             var entries = new List<EffectElementEntry>();
             var effElems = new Dictionary<EffectElementEntry, RawEffectElement>();
             var effParts = new Dictionary<EffectElementEntry, List<EffectParticle>>();
+            var matrixBytes = new ReadOnlySpan<byte>(File.ReadAllBytes(@"D:\Cdrv\MPH\Disassembly\mtx.bin"));
+            Matrix43Fx viewMatrix = Read.DoOffset<Matrix43Fx>(matrixBytes, _viewMatrix);
+            Vector3Fx effVec1 = Read.DoOffset<Vector3Fx>(matrixBytes, _effVec1);
+            Vector3Fx effVec2 = Read.DoOffset<Vector3Fx>(matrixBytes, _effVec2);
+            Vector3Fx effVec3 = Read.DoOffset<Vector3Fx>(matrixBytes, _effVec3);
+            Debug.Assert(effVec1.X.Value == viewMatrix.One.X.Value);
+            Debug.Assert(effVec1.Y.Value == viewMatrix.Two.X.Value);
+            Debug.Assert(effVec1.Z.Value == viewMatrix.Three.X.Value);
+            Debug.Assert(effVec2.X.Value == -viewMatrix.One.Y.Value);
+            Debug.Assert(effVec2.Y.Value == -viewMatrix.Two.Y.Value);
+            Debug.Assert(effVec2.Z.Value == -viewMatrix.Three.Y.Value);
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(@"D:\Cdrv\MPH\Disassembly\dump.bin"));
             uint elapsed = Read.SpanReadUint(bytes, _elapsedGlobal);
             float time = elapsed / 4096f;
@@ -166,6 +182,8 @@ namespace MphRead.Utility
             Console.WriteLine();
             foreach (EffectElementEntry entry in entries)
             {
+                Console.WriteLine($"{entry.Position.X.FloatValue}, {entry.Position.Y.FloatValue}, {entry.Position.Z.FloatValue}");
+                Console.WriteLine();
                 foreach (EffectParticle particle in effParts[entry])
                 {
                     float creation = particle.CreationTime.FloatValue;
@@ -174,10 +192,16 @@ namespace MphRead.Utility
                     float lifespan = expiration - creation;
                     float percent = age / lifespan;
                     Console.WriteLine($"{MathF.Round(percent * 100, 3)}%");
+                    Console.WriteLine($"{particle.Position.X.FloatValue}, {particle.Position.Y.FloatValue}, {particle.Position.Z.FloatValue}");
+                    Console.WriteLine(particle.Scale.FloatValue);
+                    Console.WriteLine(particle.Rotation.FloatValue);
+                    Console.WriteLine();
                 }
+                Console.WriteLine("-----------------------------------");
                 Console.WriteLine();
             }
             Nop();
+            return effParts;
         }
 
         private static void Nop() { }

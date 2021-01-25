@@ -5,8 +5,10 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
+using MphRead.Effects;
 using MphRead.Export;
 using MphRead.Formats.Collision;
+using MphRead.Utility;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -66,7 +68,7 @@ namespace MphRead
 
     public class TextureMap : Dictionary<(int TextureId, int PaletteId), (int BindingId, bool OnlyOpaque)>
     {
-        public (int, bool) Get(int textureId, int paletteId)
+        public (int BindingId, bool OnlyOpaque) Get(int textureId, int paletteId)
         {
             return this[(textureId, paletteId)];
         }
@@ -825,10 +827,12 @@ namespace MphRead
 
         private readonly struct MeshInfo
         {
+            public readonly bool IsParticle;
             public readonly Model Model;
             public readonly Node Node;
             public readonly Mesh Mesh;
             public readonly Material Material;
+            public readonly EffectParticle Particle;
             public readonly int PolygonId;
             public readonly float Alpha;
 
@@ -840,6 +844,89 @@ namespace MphRead
                 Material = material;
                 PolygonId = polygonId;
                 Alpha = alpha;
+                IsParticle = false;
+                Particle = null!;
+            }
+
+            public MeshInfo(EffectParticle particle, Material material, int polygonId, float alpha)
+            {
+                Particle = particle;
+                Material = material;
+                PolygonId = polygonId;
+                Alpha = alpha;
+                IsParticle = true;
+                Model = null!;
+                Node = null!;
+                Mesh = null!;
+            }
+        }
+
+        // sktodo: particle pipeline
+        private bool _setupDone = false;
+        private EffectElementEntry? _effEntry1;
+        private EffectElementEntry? _effEntry2;
+        private readonly List<EffectParticle> _particles = new List<EffectParticle>();
+
+        private void ParticleSetup()
+        {
+            Dictionary<Analyzer.EffectElementEntry, List<Analyzer.EffectParticle>> data = Analyzer.ReadThing();
+            Effect effect = Read.ReadEffect(@"effects\jetFlameBlue_PS.bin");
+            Model model1 = Read.GetModelByName(effect.Elements[0].ModelName);
+            InitTextures(model1);
+            Material material1 = model1.Materials[effect.Elements[0].Particles[0].MaterialId];
+            int textureId1 = material1.TextureId;
+            int paletteId1 = material1.PaletteId;
+            _effEntry1 = new EffectElementEntry(model1, material1, effect.Funcs)
+            {
+                Position = new Vector3(0, 0.532959f, 0),
+                TextureBindingId = _texPalMap[model1.SceneId].Get(textureId1, paletteId1).BindingId,
+            };
+
+            Model model2 = Read.GetModelByName(effect.Elements[1].ModelName);
+            InitTextures(model2);
+            Material material2 = model2.Materials[effect.Elements[1].Particles[0].MaterialId];
+            int textureId2 = material2.TextureId;
+            int paletteId2 = material2.PaletteId;
+            _effEntry2 = new EffectElementEntry(model2, material2, effect.Funcs)
+            {
+                Position = new Vector3(0, 0.532959f, 0),
+                TextureBindingId = _texPalMap[model2.SceneId].Get(textureId2, paletteId2).BindingId,
+            };
+
+            // ptodo: need to keep track of which effects/models have been loaded and share them
+            // (and remember, we're also alreayd raeding the models in Read.ReadEffect!)
+            foreach (KeyValuePair<Analyzer.EffectElementEntry, List<Analyzer.EffectParticle>> entry in data)
+            {
+                EffectElementEntry? owner = entry.Key.Element == 0x227D964 ? _effEntry1 : _effEntry2;
+                foreach (Analyzer.EffectParticle particle in entry.Value)
+                {
+                    _particles.Add(new EffectParticle(owner!)
+                    {
+                        Alpha = particle.Alpha.FloatValue,
+                        Red = particle.Red.FloatValue,
+                        Green = particle.Green.FloatValue,
+                        Blue = particle.Blue.FloatValue,
+                        DrawId = 5,
+                        SetVecsId = 1,
+                        Position = particle.Position.ToFloatVector(),
+                        Speed = particle.Speed.ToFloatVector(),
+                        CreationTime = particle.CreationTime.FloatValue,
+                        ExpirationTime = particle.ExpirationTime.FloatValue,
+                        Lifespan = particle.Lifespan.FloatValue,
+                        ParticleId = particle.ParticleId,
+                        RoField1 = Fixed.ToFloat(particle.RoField1),
+                        RoField2 = Fixed.ToFloat(particle.RoField2),
+                        RoField3 = Fixed.ToFloat(particle.RoField3),
+                        RoField4 = Fixed.ToFloat(particle.RoField4),
+                        RwField1 = Fixed.ToFloat(particle.RwField1),
+                        RwField2 = Fixed.ToFloat(particle.RwField2),
+                        RwField3 = Fixed.ToFloat(particle.RwField3),
+                        RwField4 = Fixed.ToFloat(particle.RwField4),
+                        PortionTotal = particle.PortionTotal.FloatValue,
+                        Rotation = particle.Rotation.FloatValue,
+                        Scale = particle.Scale.FloatValue
+                    });
+                }
             }
         }
 
@@ -850,6 +937,11 @@ namespace MphRead
 
         private void RenderScene(double elapsedTime)
         {
+            if (!_setupDone)
+            {
+                ParticleSetup();
+                _setupDone = true;
+            }
             _elapsedTime += (float)elapsedTime;
             _decalMeshes.Clear();
             _nonDecalMeshes.Clear();
@@ -932,6 +1024,22 @@ namespace MphRead
                     }
                 }
             }
+
+            // ptodo: process effects
+            foreach (EffectParticle particle in _particles)
+            {
+                // ptodo: update particle ID if func exists, other stuff
+                particle.InvokeSetVecsFunc(_viewMatrix);
+                // sktodo: confirm we actually don't need the scale factor (and is it the same for the "3" case?)
+                particle.InvokeDrawFunc(1);
+                if (particle.ShouldDraw)
+                {
+                    var meshInfo = new MeshInfo(particle, particle.Owner.Material, polygonId++, particle.Alpha);
+                    _nonDecalMeshes.Add(meshInfo);
+                    _translucentMeshes.Add(meshInfo);
+                }
+            }
+
             UpdateUniforms();
             // pass 1: opaque
             GL.ColorMask(true, true, true, true);
@@ -946,7 +1054,7 @@ namespace MphRead
             for (int i = 0; i < _nonDecalMeshes.Count; i++)
             {
                 MeshInfo item = _nonDecalMeshes[i];
-                RenderMesh(item);
+                RenderItem(item);
             }
             GL.Disable(EnableCap.AlphaTest);
             // pass 2: decal
@@ -960,7 +1068,7 @@ namespace MphRead
             for (int i = 0; i < _decalMeshes.Count; i++)
             {
                 MeshInfo item = _decalMeshes[i];
-                RenderMesh(item);
+                RenderItem(item);
             }
             GL.PolygonOffset(0, 0);
             GL.Disable(EnableCap.PolygonOffsetFill);
@@ -973,7 +1081,7 @@ namespace MphRead
             {
                 MeshInfo item = _translucentMeshes[i];
                 GL.StencilFunc(StencilFunction.Greater, item.PolygonId, 0xFF);
-                RenderMesh(item);
+                RenderItem(item);
             }
             // pass 4: rebuild depth buffer
             GL.Clear(ClearBufferMask.DepthBufferBit);
@@ -983,7 +1091,7 @@ namespace MphRead
             for (int i = 0; i < _nonDecalMeshes.Count; i++)
             {
                 MeshInfo item = _nonDecalMeshes[i];
-                RenderMesh(item);
+                RenderItem(item);
             }
             // pass 5: translucent (behind)
             GL.AlphaFunc(AlphaFunction.Less, 1.0f);
@@ -995,7 +1103,7 @@ namespace MphRead
             {
                 MeshInfo item = _translucentMeshes[i];
                 GL.StencilFunc(StencilFunction.Notequal, item.PolygonId, 0xFF);
-                RenderMesh(item);
+                RenderItem(item);
             }
             // pass 6: translucent (before)
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
@@ -1003,7 +1111,7 @@ namespace MphRead
             {
                 MeshInfo item = _translucentMeshes[i];
                 GL.StencilFunc(StencilFunction.Equal, item.PolygonId, 0xFF);
-                RenderMesh(item);
+                RenderItem(item);
             }
             GL.DepthMask(true);
             GL.Disable(EnableCap.Blend);
@@ -1207,6 +1315,107 @@ namespace MphRead
             {
                 material.RenderMode = RenderMode.Translucent;
             }
+        }
+
+        private void RenderItem(MeshInfo info)
+        {
+            if (info.IsParticle)
+            {
+                RenderParticle(info);
+            }
+            else
+            {
+                RenderMesh(info);
+            }
+        }
+
+        private void RenderParticle(MeshInfo item)
+        {
+            Matrix4 transform = Matrix4.Identity;
+            GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
+
+            GL.Uniform1(_shaderLocations.UseLight, 0);
+            GL.Color3(item.Particle.Color);
+            GL.Uniform1(_shaderLocations.MaterialAlpha, item.Alpha);
+            GL.Uniform1(_shaderLocations.MaterialMode, (int)PolygonMode.Modulate);
+
+            int bindingId = item.Particle.Owner.TextureBindingId; // ptodo: this should be on the particle, not the owner
+            int textureId = item.Material.TextureId;
+            RepeatMode xRepeat = item.Material.XRepeat;
+            RepeatMode yRepeat = item.Material.YRepeat;
+            if (textureId != UInt16.MaxValue)
+            {
+                GL.BindTexture(TextureTarget.Texture2D, bindingId);
+                int minParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMinFilter.Nearest;
+                int magParameter = _textureFiltering ? (int)TextureMagFilter.Linear : (int)TextureMagFilter.Nearest;
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+                switch (xRepeat)
+                {
+                case RepeatMode.Clamp:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+                    break;
+                case RepeatMode.Repeat:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+                    break;
+                case RepeatMode.Mirror:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.MirroredRepeat);
+                    break;
+                }
+                switch (yRepeat)
+                {
+                case RepeatMode.Clamp:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+                    break;
+                case RepeatMode.Repeat:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+                    break;
+                case RepeatMode.Mirror:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat);
+                    break;
+                }
+                Matrix4 texcoordMatrix = Matrix4.Identity;
+                GL.Uniform1(_shaderLocations.TexgenMode, (int)TexgenMode.None);
+                GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref texcoordMatrix);
+            }
+            GL.Uniform1(_shaderLocations.UseTexture, textureId != UInt16.MaxValue && _showTextures ? 1 : 0);
+            GL.Uniform1(_shaderLocations.UseOverride, 0);
+            GL.Uniform1(_shaderLocations.UsePaletteOverride, 0);
+
+            GL.Disable(EnableCap.CullFace);
+            GL.PolygonMode(MaterialFace.FrontAndBack,
+                _wireframe || item.Material.Wireframe != 0
+                ? OpenTK.Graphics.OpenGL.PolygonMode.Line
+                : OpenTK.Graphics.OpenGL.PolygonMode.Fill);
+
+            // todo: confirm this works for the other draw functions (i.e., they also just use eff_tex_w/h)
+            // ptodo: need to confirm that all the draw types actually have 4 verts, and that the texcoord/order are always the same, etc.
+            float scaleS = 1;
+            float scaleT = 1;
+            if (item.Material.XRepeat == RepeatMode.Mirror)
+            {
+                scaleS = item.Material.ScaleS;
+            }
+            if (item.Material.YRepeat == RepeatMode.Mirror)
+            {
+                scaleT = item.Material.ScaleT;
+            }
+            GL.Begin(PrimitiveType.Quads);
+            GL.TexCoord3(item.Particle.Texcoord0.X * scaleS, item.Particle.Texcoord0.Y * scaleT, 0f);
+            GL.Vertex3(item.Particle.Vertex0);
+            GL.TexCoord3(item.Particle.Texcoord1.X * scaleS, item.Particle.Texcoord1.Y * scaleT, 0f);
+            GL.Vertex3(item.Particle.Vertex1);
+            GL.TexCoord3(item.Particle.Texcoord2.X * scaleS, item.Particle.Texcoord2.Y * scaleT, 0f);
+            GL.Vertex3(item.Particle.Vertex2);
+            GL.TexCoord3(item.Particle.Texcoord3.X * scaleS, item.Particle.Texcoord3.Y * scaleT, 0f);
+            GL.Vertex3(item.Particle.Vertex3);
+            GL.End();
         }
 
         private void RenderMesh(MeshInfo item)
@@ -1493,16 +1702,12 @@ namespace MphRead
                     break;
                 }
                 Matrix4 texcoordMatrix = Matrix4.Identity;
-                TexcoordAnimationGroup? group = null;
-                TexcoordAnimation? animation = null;
                 // todo: was there a reason animation couldn't be put inside the texgen condition?
-                if (textureId != UInt16.MaxValue)
+                TexcoordAnimationGroup? group = model.Animations.TexcoordGroup;
+                TexcoordAnimation? animation = null;
+                if (group != null && group.Animations.TryGetValue(material.Name, out TexcoordAnimation result))
                 {
-                    group = model.Animations.TexcoordGroup;
-                    if (group != null && group.Animations.TryGetValue(material.Name, out TexcoordAnimation result))
-                    {
-                        animation = result;
-                    }
+                    animation = result;
                 }
                 if (group != null && animation != null)
                 {

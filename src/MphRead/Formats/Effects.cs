@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 
 namespace MphRead.Effects
@@ -27,6 +26,19 @@ namespace MphRead.Effects
         public float Lifespan { get; set; }
         public int DrawType { get; set; }
         public Vector3 Position { get; set; }
+
+        public int TextureBindingId { get; set; }
+        public Model Model { get; }
+        public Material Material { get; }
+
+        public IReadOnlyDictionary<uint, FxFuncInfo> Funcs { get; }
+
+        public EffectElementEntry(Model model, Material material, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        {
+            Model = model;
+            Material = material;
+            Funcs = funcs;
+        }
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter")]
@@ -55,17 +67,27 @@ namespace MphRead.Effects
         public float RwField4 { get; set; }
 
         public EffectElementEntry Owner { get; }
-        public IReadOnlyDictionary<uint, FxFuncInfo> Funcs { get; }
+        public IReadOnlyDictionary<uint, FxFuncInfo> Funcs => Owner.Funcs;
         public int SetVecsId { get; set; }
         public int DrawId { get; set; }
-        public Vector3 EffectVec1 { get; set; }
-        public Vector3 EffectVec2 { get; set; }
-        public Vector3 EffectVec3 { get; set; }
+        public Vector3 EffectVec1 { get; private set; }
+        public Vector3 EffectVec2 { get; private set; }
+        public Vector3 EffectVec3 { get; private set; }
 
-        public EffectParticle(EffectElementEntry owner, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        public bool ShouldDraw { get; private set; }
+        public Vector3 Color { get; private set; }
+        public Vector2 Texcoord0 { get; private set; }
+        public Vector3 Vertex0 { get; private set; }
+        public Vector2 Texcoord1 { get; private set; }
+        public Vector3 Vertex1 { get; private set; }
+        public Vector2 Texcoord2 { get; private set; }
+        public Vector3 Vertex2 { get; private set; }
+        public Vector2 Texcoord3 { get; private set; }
+        public Vector3 Vertex3 { get; private set; }
+
+        public EffectParticle(EffectElementEntry owner)
         {
             Owner = owner;
-            Funcs = funcs;
         }
 
         private void FxFunc01(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
@@ -522,9 +544,6 @@ namespace MphRead.Effects
             };
         }
 
-        // sktodo: confirm the first matrix is always the identity matrix,
-        // and that we can use the bottom row of the view matrix instead of cam info,
-        // and that we can use our view matrix the same way as the in-game one is used in these functions
         private void SetVecsB0(Matrix4 viewMatrix)
         {
             var vec1 = new Vector3(viewMatrix.M11, viewMatrix.M21, viewMatrix.M31);
@@ -571,7 +590,7 @@ namespace MphRead.Effects
         private void SetVecsD8(Matrix4 viewMatrix)
         {
             Vector3 vec3;
-            if ((Owner.Flags & 1) != 0 )
+            if ((Owner.Flags & 1) != 0)
             {
                 vec3 = new Vector3(
                     viewMatrix.Row3.X - (Position.X + Owner.Position.X),
@@ -626,83 +645,137 @@ namespace MphRead.Effects
             }
         }
 
-        private void DrawB4()
+        private void DrawB4(float scaleFactor)
         {
             // todo
         }
 
-        private void DrawB8()
+        private void DrawB8(float scaleFactor)
         {
             // todo
         }
 
-        private void DrawC4()
+        private void DrawC4(float scaleFactor)
         {
-            // todo
+            ShouldDraw = false;
+            if (Speed.LengthSquared > Fixed.ToFloat(128))
+            {
+                ShouldDraw = true;
+                EffectVec1 = Vector3.Normalize(Speed);
+                DrawShared(scaleFactor, skipIfZeroSpeed: true);
+            }
         }
 
-        private void DrawC8()
+        private void DrawC8(float scaleFactor)
         {
-            // todo
+            // todo: draw_single_node for geo1 effects -- need model/node references
         }
 
-        private void DrawCC()
+        private void DrawCC(float scaleFactor)
         {
+            ShouldDraw = false;
             if (Alpha > 0)
             {
-                float angle1 = MathHelper.DegreesToRadians(Rotation);
-                float angle2 = MathHelper.DegreesToRadians(Rotation + 90);
+                ShouldDraw = true;
+                Color = new Vector3(Red, Green, Blue);
+                // todo?: xyz
+                float angle1 = MathHelper.DegreesToRadians(-Rotation);
+                float angle2 = MathHelper.DegreesToRadians(-Rotation + 90);
                 float cos1 = MathF.Cos(angle1);
                 float sin1 = MathF.Sin(angle1);
                 float cos2 = MathF.Cos(angle2);
                 float sin2 = MathF.Sin(angle2);
-                // sktodo: polygon ID (RenderScene), double-sided (RenderMesh), alpha + modulate (DoMaterial)
-                // -- can probably insert particle "meshes" as mesh info in RenderScene, but they need to take different paths to set uniforms etc.
-                // (and obviously they need to have their vertex and other data directly in them instead of references to dlists/materials/etc.)
-                // --> need to make sure effect base textures are set up and we can reference them by index (also eff_tex_width/height)
-                var color = new Vector3(Red, Green, Blue);
+
+                float v20 = (EffectVec1.X * cos2 + EffectVec2.X * sin2) * Scale;
+                float v24 = (EffectVec1.Y * cos2 + EffectVec2.Y * sin2) * Scale;
+                float v25 = (EffectVec1.Z * cos2 + EffectVec2.Z * sin2) * Scale;
+
+                float v26 = (EffectVec1.X * cos1 + EffectVec2.X * sin1) * Scale;
+                float v28 = (EffectVec1.Y * cos1 + EffectVec2.Y * sin1) * Scale;
+                float v29 = (EffectVec1.Z * cos1 + EffectVec2.Z * sin1) * Scale;
+
+                float v27 = Position.X + (-v20 / 2) + (v26 / 2);
+                float v30 = Position.Y + (-v24 / 2) + (v28 / 2);
+                float v31 = Position.Z + (-v25 / 2) + (v29 / 2);
+
+                // top left
+                float x = v27 / scaleFactor;
+                float y = v30 / scaleFactor;
+                float z = v31 / scaleFactor;
+                Vertex2 = new Vector3(x, y, z);
+                Texcoord0 = new Vector2(0, 1);
+
+                // top right
+                float v39 = v27 + v20;
+                float v38 = v30 + v24;
+                float v33 = v31 + v25;
+                x = v39 / scaleFactor;
+                y = v38 / scaleFactor;
+                z = v33 / scaleFactor;
+                Vertex1 = new Vector3(x, y, z);
+                Texcoord1 = new Vector2(1, 1);
+
+                // bottom right
+                float v40 = v27 + v20 - v26;
+                float v41 = v38 - v28;
+                float v35 = v33 - v29;
+                x = v40 / scaleFactor;
+                y = v41 / scaleFactor;
+                z = v35 / scaleFactor;
+                Vertex0 = new Vector3(x, y, z);
+                Texcoord2 = new Vector2(1, 0);
+
+                // bottom left
+                float v42 = v40 - v20;
+                float v43 = v41 - v24;
+                float v36 = v33 - v29 - v25;
+                x = v42 / scaleFactor;
+                y = v43 / scaleFactor;
+                z = v36 / scaleFactor;
+                Vertex3 = new Vector3(x, y, z);
+                Texcoord3 = new Vector2(0, 0);
             }
         }
-        
-        private void DrawD0()
+
+        private void DrawD0(float scaleFactor)
+        {
+            DrawShared(scaleFactor, skipIfZeroSpeed: false);
+        }
+
+        private void DrawDC(float scaleFactor)
         {
             // todo
         }
 
-        private void DrawDC()
+        private void DrawShared(float scaleFactor, bool skipIfZeroSpeed)
         {
             // todo
         }
 
-        private void DrawShared(bool skipIfZeroSpeed)
+        public void InvokeDrawFunc(float scaleFactor)
         {
-            // todo
-        }
-
-        public void InvokeDrawFunc()
-        {
-            switch (SetVecsId)
+            switch (DrawId)
             {
             case 1:
-                DrawB4();
+                DrawB4(scaleFactor);
                 break;
             case 2:
-                DrawB8();
+                DrawB8(scaleFactor);
                 break;
             case 3:
-                DrawC4();
+                DrawC4(scaleFactor);
                 break;
             case 4:
-                DrawC8();
+                DrawC8(scaleFactor);
                 break;
             case 5:
-                DrawCC();
+                DrawCC(scaleFactor);
                 break;
             case 6:
-                DrawD0();
+                DrawD0(scaleFactor);
                 break;
             case 7:
-                DrawDC();
+                DrawDC(scaleFactor);
                 break;
             default:
                 throw new ProgramException("Invalid draw func.");
