@@ -19,13 +19,8 @@ namespace MphRead
             IReadOnlyList<Argument> arguments = ParseArguments(args);
             if (arguments.Count == 0)
             {
-                //Test.TestAllEntities();
-                //Effect eff = Read.ReadEffect(@"effects\jetFlameBlue_PS.bin");
-                //Test.TestEffectBases();
-                //Test.TestEffects();
-                //Analyzer.ReadThing();
                 using var renderer = new Renderer();
-                renderer.AddRoom("UNIT3_C0");
+                renderer.AddRoom("MP3 PROVING GROUND");
                 //renderer.AddModel("Crate01");
                 Nop();
                 renderer.Run();
