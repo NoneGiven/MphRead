@@ -887,7 +887,7 @@ namespace MphRead
         {
             EffectElementEntry entry = _inactiveElements.Dequeue();
             entry.BufferTime = element.BufferTime;
-            // todo: if created during effect processing, increase creation time by one frame
+            // todo: if created during effect processing (child effect), increase creation time by one frame
             entry.CreationTime = _elapsedTime;
             entry.DrainTime = element.DrainTime;
             entry.DrawType = element.DrawType;
@@ -898,7 +898,6 @@ namespace MphRead
             entry.Func39Called = false;
             entry.Funcs = element.Funcs;
             entry.Actions = element.Actions;
-            // todo: element spawn transform (also mtx ptr)
             entry.Position = Vector3.Zero;
             entry.Transform = Matrix4.Identity;
             entry.ParticleAmount = 0;
