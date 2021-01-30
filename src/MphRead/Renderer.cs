@@ -197,60 +197,60 @@ namespace MphRead
                 _modelMap.Add(entity.SceneId, entity);
                 if (entity.Entity is Entity<LightSourceEntityData> lightSource)
                 {
-                    var display = new LightSource(lightSource);
+                    var display = new LightSource(lightSource, entity.Transform);
                     _displayVolumes.Add(entity.SceneId, display);
                     _lightSourceMap.Add(entity.SceneId, display);
                     _lightSources.Add(display);
                 }
                 else if (entity.Entity is Entity<TriggerVolumeEntityData> trigger)
                 {
-                    _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(trigger));
+                    _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(trigger, entity.Transform));
                 }
                 else if (entity.Entity is Entity<FhTriggerVolumeEntityData> fhTrigger)
                 {
                     if (fhTrigger.Data.Subtype != 0)
                     {
-                        _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(fhTrigger));
+                        _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(fhTrigger, entity.Transform));
                     }
                 }
                 else if (entity.Entity is Entity<AreaVolumeEntityData> area)
                 {
-                    _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(area));
+                    _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(area, entity.Transform));
                 }
                 else if (entity.Entity is Entity<FhAreaVolumeEntityData> fhArea)
                 {
                     if (fhArea.Data.Subtype != 0)
                     {
-                        _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(fhArea));
+                        _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(fhArea, entity.Transform));
                     }
                 }
                 else if (entity.Entity is Entity<MorphCameraEntityData> morphCamera)
                 {
-                    _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(morphCamera));
+                    _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(morphCamera, entity.Transform));
                 }
                 else if (entity.Entity is Entity<FhMorphCameraEntityData> fhMorphCamera)
                 {
-                    _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(fhMorphCamera));
+                    _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(fhMorphCamera, entity.Transform));
                 }
-                else if (entity.Entity is Entity<JumpPadEntityData> jumpPad)
+                else if (entity.Entity is Entity<JumpPadEntityData> jumpPad && entity.Name != "JumpPad_Beam")
                 {
-                    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(jumpPad));
+                    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(jumpPad, entity.Transform));
                 }
                 else if (entity.Entity is Entity<FhJumpPadEntityData> fhJumpPad)
                 {
-                    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(fhJumpPad));
+                    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(fhJumpPad, entity.Transform));
                 }
-                else if (entity.Entity is Entity<ObjectEntityData> obj)
+                else if (entity.Entity is Entity<ObjectEntityData> obj && obj.Data.EffectId > 0)
                 {
-                    _displayVolumes.Add(entity.SceneId, new ObjectDisplay(obj));
+                    _displayVolumes.Add(entity.SceneId, new ObjectDisplay(obj, entity.Transform));
                 }
                 else if (entity.Entity is Entity<FlagBaseEntityData> flag)
                 {
-                    _displayVolumes.Add(entity.SceneId, new FlagBaseDisplay(flag));
+                    _displayVolumes.Add(entity.SceneId, new FlagBaseDisplay(flag, entity.Transform));
                 }
                 else if (entity.Entity is Entity<NodeDefenseEntityData> defense)
                 {
-                    _displayVolumes.Add(entity.SceneId, new NodeDefenseDisplay(defense));
+                    _displayVolumes.Add(entity.SceneId, new NodeDefenseDisplay(defense, entity.Transform));
                 }
                 else if (entity.Entity is Entity<PointModuleEntityData> module)
                 {
@@ -1469,7 +1469,7 @@ namespace MphRead
             if (color != null)
             {
                 GL.CullFace(volume.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
-                var transform = Matrix4.CreateTranslation(volume.Position);
+                Matrix4 transform = Matrix4.Identity;
                 GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
                 GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(color.Value, 0.5f));
                 RenderVolume(volume.Volume);

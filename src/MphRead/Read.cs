@@ -22,6 +22,11 @@ namespace MphRead
 
         public static Model GetModelByName(string name, int defaultRecolor = 0, bool firstHunt = false)
         {
+            return GetModelByName<Model>(name, defaultRecolor, firstHunt);
+        }
+
+        public static T GetModelByName<T>(string name, int defaultRecolor = 0, bool firstHunt = false) where T : Model
+        {
             ModelMetadata? modelMeta;
             if (firstHunt)
             {
@@ -35,10 +40,10 @@ namespace MphRead
             {
                 throw new ProgramException("No model with this name is known.");
             }
-            return GetModel(modelMeta, defaultRecolor);
+            return GetModel<T>(modelMeta, defaultRecolor);
         }
 
-        public static Model GetRoomByName(string name)
+        public static RoomModel GetRoomByName(string name)
         {
             (RoomMetadata? roomMeta, _) = Metadata.GetRoomByName(name);
             if (roomMeta == null)
@@ -48,7 +53,7 @@ namespace MphRead
             return GetRoom(roomMeta);
         }
 
-        public static Model GetRoomById(int id)
+        public static RoomModel GetRoomById(int id)
         {
             RoomMetadata? roomMeta = Metadata.GetRoomById(id);
             if (roomMeta == null)
@@ -58,26 +63,24 @@ namespace MphRead
             return GetRoom(roomMeta);
         }
 
-        private static Model GetRoom(RoomMetadata meta)
+        private static RoomModel GetRoom(RoomMetadata meta)
         {
             var recolors = new List<RecolorMetadata>()
             {
                 new RecolorMetadata("default", meta.ModelPath, meta.TexturePath ?? meta.ModelPath)
             };
-            Model room = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, animationShare: null,
+            return GetModel<RoomModel>(meta.Name, meta.ModelPath, meta.AnimationPath, animationShare: null,
                 recolors, defaultRecolor: 0, useLightSources: false, firstHunt: meta.FirstHunt || meta.Hybrid);
-            return new RoomModel(room);
         }
 
-        private static Model GetModel(ModelMetadata meta, int defaultRecolor)
+        private static T GetModel<T>(ModelMetadata meta, int defaultRecolor) where T : Model
         {
-            Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.AnimationShare, meta.Recolors,
+            return GetModel<T>(meta.Name, meta.ModelPath, meta.AnimationPath, meta.AnimationShare, meta.Recolors,
                 defaultRecolor, meta.UseLightSources, firstHunt: meta.FirstHunt);
-            return model;
         }
 
-        private static Model GetModel(string name, string modelPath, string? animationPath, string? animationShare,
-            IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor, bool useLightSources, bool firstHunt)
+        private static T GetModel<T>(string name, string modelPath, string? animationPath, string? animationShare,
+            IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor, bool useLightSources, bool firstHunt) where T : Model
         {
             if (defaultRecolor < 0 || defaultRecolor > recolorMeta.Count - 1)
             {
@@ -182,9 +185,27 @@ namespace MphRead
                 shared.TextureAnimationGroups.AddRange(animations.TextureAnimationGroups);
                 animations = shared;
             }
-            return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+            if (typeof(T) == typeof(RoomModel))
+            {
+                return (new RoomModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+                    animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
+                    textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
+            }
+            if (typeof(T) == typeof(ObjectModel))
+            {
+                return (new ObjectModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+                    animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
+                    textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
+            }
+            if (typeof(T) == typeof(RoomModel))
+            {
+                return (new ForceFieldLockModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+                    animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
+                    textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
+            }
+            return (new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights);
+                textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
         }
 
         private class AnimationResults
