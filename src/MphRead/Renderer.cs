@@ -860,8 +860,7 @@ namespace MphRead
             }
         }
 
-        // ptodo: have "CObject_process" spawn the element according to whatever rules -- should move towards the OO/inheritence entity pattern
-
+        private bool _effectSetupDone = false;
         // ptodo: effect limits
         // in-game: 64 effects, 96 elements, 200 particles
         private static readonly int _effectElementMax = 96;
@@ -942,66 +941,30 @@ namespace MphRead
             _inactiveParticles.Enqueue(particle);
         }
 
-        private float _nextSpawn = 5;
-        private bool _setupDone = false;
-        private Effect _effTest = null!;
-        private Model _modelOne = null!;
-        private Model _modelTwo = null!;
-
-        // ptodo: need to keep track of which effects/models have been loaded and share them
-        // (and remember, we're also already raeding the models in Read.ReadEffect!)
-        private void ParticleSetup()
+        public void SpawnEffect(int effectId, Matrix4 transform)
         {
-            Effect effect = Read.ReadEffect(@"effects\jetFlameBlue_PS.bin");
-            _effTest = effect;
-
-            Model model = Read.GetModelByName(effect.Elements[0].ModelName);
-            _modelOne = model;
-            InitTextures(model);
-            EffectElementEntry element = InitEffectElement(effect.Elements[0]);
-            element.Model = model;
-            element.Position = new Vector3(0, 0.532959f, 0);
-            element.Transform = Matrix4.CreateTranslation(element.Position);
-            foreach (Particle definition in effect.Elements[0].Particles)
+            Effect effect = Read.LoadEffect(effectId);
+            var position = new Vector3(transform.Row3);
+            foreach (EffectElement elementDef in effect.Elements)
             {
-                Material material = model.Materials[definition.MaterialId];
-                element.TextureBindingIds.Add(_texPalMap[model.SceneId].Get(material.TextureId, material.PaletteId).BindingId);
-            }
-
-            model = Read.GetModelByName(effect.Elements[1].ModelName);
-            _modelTwo = model;
-            InitTextures(model);
-            element = InitEffectElement(effect.Elements[1]);
-            element.Model = model;
-            element.Position = new Vector3(0, 0.532959f, 0);
-            element.Transform = Matrix4.CreateTranslation(element.Position);
-            foreach (Particle definition in effect.Elements[1].Particles)
-            {
-                Material material = model.Materials[definition.MaterialId];
-                element.TextureBindingIds.Add(_texPalMap[model.SceneId].Get(material.TextureId, material.PaletteId).BindingId);
-            }
-        }
-
-        private void ParticleRespawn()
-        {
-            EffectElementEntry element = InitEffectElement(_effTest.Elements[0]);
-            element.Model = _modelOne;
-            element.Position = new Vector3(0, 0.532959f, 0);
-            element.Transform = Matrix4.CreateTranslation(element.Position);
-            foreach (Particle definition in _effTest.Elements[0].Particles)
-            {
-                Material material = _modelOne.Materials[definition.MaterialId];
-                element.TextureBindingIds.Add(_texPalMap[_modelOne.SceneId].Get(material.TextureId, material.PaletteId).BindingId);
-            }
-
-            element = InitEffectElement(_effTest.Elements[1]);
-            element.Model = _modelTwo;
-            element.Position = new Vector3(0, 0.532959f, 0);
-            element.Transform = Matrix4.CreateTranslation(element.Position);
-            foreach (Particle definition in _effTest.Elements[1].Particles)
-            {
-                Material material = _modelTwo.Materials[definition.MaterialId];
-                element.TextureBindingIds.Add(_texPalMap[_modelTwo.SceneId].Get(material.TextureId, material.PaletteId).BindingId);
+                EffectElementEntry element = InitEffectElement(elementDef);
+                // todo: flags and unit vector stuff
+                element.Position = position;
+                element.Transform = transform;
+                for (int i = 0; i < elementDef.Particles.Count; i++)
+                {
+                    Particle particleDef = elementDef.Particles[i];
+                    if (i == 0)
+                    {
+                        if (!_texPalMap.ContainsKey(particleDef.Model.SceneId))
+                        {
+                            InitTextures(particleDef.Model);
+                        }
+                        element.Model = particleDef.Model;
+                    }
+                    Material material = particleDef.Model.Materials[particleDef.MaterialId];
+                    element.TextureBindingIds.Add(_texPalMap[particleDef.Model.SceneId].Get(material.TextureId, material.PaletteId).BindingId);
+                }
             }
         }
 
@@ -1209,21 +1172,14 @@ namespace MphRead
 
         private void RenderScene(double elapsedTime)
         {
-            if (!_setupDone)
+            if (!_effectSetupDone)
             {
                 AllocateEffects();
-                ParticleSetup();
-                _setupDone = true;
+                _effectSetupDone = true;
             }
             if (!_frameAdvanceOn || _advanceOneFrame)
             {
                 _elapsedTime += 1 / 60f;
-                // sktodo: remove debug code
-                if (_elapsedTime > _nextSpawn)
-                {
-                    _nextSpawn += 5;
-                    ParticleRespawn();
-                }
             }
             _decalMeshes.Clear();
             _nonDecalMeshes.Clear();
@@ -1238,7 +1194,7 @@ namespace MphRead
                 if (!_frameAdvanceOn || _advanceOneFrame)
                 {
                     bool useTransform = _transformRoomNodes || model.Type != ModelType.Room;
-                    model.Process(elapsedTime, _frameCount, cameraPosition, _viewInvRotMatrix, _viewInvRotYMatrix, useTransform);
+                    model.Process(this, elapsedTime, _frameCount, cameraPosition, _viewInvRotMatrix, _viewInvRotYMatrix, useTransform);
                 }
                 if (model.UseLightSources)
                 {

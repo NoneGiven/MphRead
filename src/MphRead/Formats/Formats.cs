@@ -350,8 +350,6 @@ namespace MphRead
         public IReadOnlyDictionary<FuncAction, FxFuncInfo> Actions { get; }
         public IReadOnlyDictionary<uint, FxFuncInfo> Funcs { get; }
 
-        public string ChildEffect => Metadata.Effects[(int)ChildEffectId];
-
         public EffectElement(RawEffectElement raw, IReadOnlyList<Particle> particles,
             IReadOnlyDictionary<uint, FxFuncInfo> funcs, IReadOnlyDictionary<FuncAction, FxFuncInfo> actions)
         {

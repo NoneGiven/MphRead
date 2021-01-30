@@ -617,10 +617,40 @@ namespace MphRead
             return frames;
         }
 
-        // todo: load child effects
-        public static Effect ReadEffect(string name)
+        public static Effect LoadEffect(int id)
         {
-            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, name)));
+            if (id < 1 || id > Metadata.Effects.Count)
+            {
+                throw new ProgramException("Could not get particle.");
+            }
+            (string name, string? archive) = Metadata.Effects[id];
+            return LoadEffect(name, archive);
+        }
+
+        public static Effect LoadEffect(string name, string? archive)
+        {
+            string path;
+            if (archive == null)
+            {
+                path = $"effects/{name}_PS.bin";
+            }
+            else
+            {
+                path = $"_archives/{archive}/{name}_PS.bin";
+            }
+            return LoadEffect(path);
+        }
+
+        private static readonly Dictionary<string, Effect> _effects = new Dictionary<string, Effect>();
+
+        // todo: load child effects
+        public static Effect LoadEffect(string path)
+        {
+            if (_effects.TryGetValue(path, out Effect? cached))
+            {
+                return cached;
+            }
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
             RawEffect effect = ReadStruct<RawEffect>(bytes);
             var funcs = new Dictionary<uint, FxFuncInfo>();
             foreach (uint offset in DoOffsets<uint>(bytes, effect.FuncOffset, effect.FuncCount))
@@ -658,13 +688,25 @@ namespace MphRead
                 }
                 elements.Add(new EffectElement(element, particles, funcs, elemFuncs));
             }
-            return new Effect(effect, funcs, list2, elements, name);
+            var newEffect = new Effect(effect, funcs, list2, elements, path);
+            _effects.Add(path, newEffect);
+            return newEffect;
         }
 
-        // todo: these results (and the models themselves) should be shared
+        private static readonly Dictionary<string, Model> _effectModels = new Dictionary<string, Model>();
+        private static readonly Dictionary<(string, string), Particle> _particleDefs = new Dictionary<(string, string), Particle>();
+
         private static Particle GetParticle(string modelName, string particleName)
         {
-            Model model = GetModelByName(modelName);
+            if (_particleDefs.TryGetValue((modelName, particleName), out Particle? particle))
+            {
+                return particle;
+            }
+            if (!_effectModels.TryGetValue(modelName, out Model? model))
+            {
+                model = GetModelByName(modelName);
+                _effectModels.Add(modelName, model);
+            }
             Node? node = model.Nodes.FirstOrDefault(n => n.Name == particleName);
             // todo: see what the game does here; gib3/gib4 nodes are probably meant to be used for these
             if (modelName == "geo1" && particleName == "gib")
@@ -674,7 +716,9 @@ namespace MphRead
             if (node != null && node.MeshCount > 0)
             {
                 int materialId = model.Meshes[node.MeshId / 2].MaterialId;
-                return new Particle(particleName, model, node, materialId);
+                var newParticle = new Particle(particleName, model, node, materialId);
+                _particleDefs.Add((modelName, particleName), newParticle);
+                return newParticle;
             }
             throw new ProgramException("Could not get particle.");
         }

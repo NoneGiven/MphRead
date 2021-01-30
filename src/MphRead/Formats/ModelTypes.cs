@@ -138,6 +138,11 @@ namespace MphRead.Models
     public class ObjectModel : Model
     {
         public CollisionVolume EffectVolume { get; set; }
+        private Entity<ObjectEntityData>? _entity = null;
+        private uint _flags = 0;
+        private int _effectIntervalTimer = 0;
+        private int _effectIntervalIndex = 0;
+        private bool _effectProcessing = false;
 
         public ObjectModel(string name, Header header, IReadOnlyList<RawNode> nodes,
             IReadOnlyList<RawMesh> meshes, IReadOnlyList<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
@@ -151,11 +156,84 @@ namespace MphRead.Models
             Type = ModelType.Object;
         }
 
-        public override void Process(double elapsedTime, long frameCount, Vector3 cameraPosition,
+        private void Initialize()
+        {
+            _entity = (Entity<ObjectEntityData>)Entity!;
+            _flags = _entity.Data.Flags;
+            // todo: bits 0 and 1 should be cleared if entity ID is -1 (and they should also be affected by room state otherwise)
+            _flags &= 0xFB;
+            _flags &= 0xF7;
+            _flags &= 0xEF;
+            if (_entity.Data.ModelId == UInt32.MaxValue)
+            {
+                // todo: this also applies for other models depending on the anim ID
+                _flags |= 4;
+                // todo: this should get cleared if there's an effect ID and "is_visible" returns false
+                _flags |= 0x10;
+            }
+        }
+
+        public override void Process(RenderWindow renderer, double elapsedTime, long frameCount, Vector3 cameraPosition,
             Matrix4 viewInvRot, Matrix4 viewInvRotY, bool useTransform)
         {
-            base.Process(elapsedTime, frameCount, cameraPosition, viewInvRot, viewInvRotY, useTransform);
-            // ptodo: effect SFX stuff
+            base.Process(renderer, elapsedTime, frameCount, cameraPosition, viewInvRot, viewInvRotY, useTransform);
+            // todo: not this
+            if (_entity == null)
+            {
+                Initialize();
+            }
+            // todo: FPS stuff
+            if (_entity!.Data.EffectId != 0 && frameCount % 2 == 0)
+            {
+                bool processEffect = false;
+                if ((_entity.Data.EffectFlags & 0x40) != 0)
+                {
+                    processEffect = true;
+                }
+                else if ((_flags & 0x10) != 0)
+                {
+                    if ((_entity.Data.EffectFlags & 1) != 0)
+                    {
+                        processEffect = true; // todo: check if camera is inside volume
+                    }
+                    else
+                    {
+                        processEffect = (_flags & 3) != 0;
+                    }
+                }
+                if (processEffect)
+                {
+                    if (!_effectProcessing)
+                    {
+                        _effectIntervalTimer = 0;
+                        _effectIntervalIndex = 15;
+                    }
+                    if (--_effectIntervalTimer > 0)
+                    {
+                        // todo: lots of SFX stuff
+                    }
+                    else
+                    {
+                        _effectIntervalIndex++;
+                        _effectIntervalIndex %= 16;
+                        if ((_entity.Data.EffectFlags & 0x10) != 0)
+                        {
+                            // todo: attached effect code path
+                        }
+                        else if ((_entity.Data.EffectOnIntervals & (1 << _effectIntervalIndex)) != 0)
+                        {
+                            // todo: mtxptr stuff
+                            if ((_entity.Data.EffectFlags & 2) != 0)
+                            {
+                                // todo: random position offset stuff
+                            }
+                            renderer.SpawnEffect((int)_entity.Data.EffectId, Transform);
+                        }
+                        _effectIntervalTimer = (int)_entity.Data.EffectInterval;
+                    }
+                }
+                _effectProcessing = processEffect;
+            }
         }
     }
 
@@ -173,10 +251,10 @@ namespace MphRead.Models
             Type = ModelType.Enemy;
         }
 
-        public override void Process(double elapsedTime, long frameCount, Vector3 cameraPosition,
+        public override void Process(RenderWindow renderer, double elapsedTime, long frameCount, Vector3 cameraPosition,
             Matrix4 viewInvRot, Matrix4 viewInvRotY, bool useTransform)
         {
-            base.Process(elapsedTime, frameCount, cameraPosition, viewInvRot, viewInvRotY, useTransform);
+            base.Process(renderer, elapsedTime, frameCount, cameraPosition, viewInvRot, viewInvRotY, useTransform);
             if (Vector3.Dot(cameraPosition - InitialPosition, Vector2) < 0)
             {
                 Vector2 *= -1;

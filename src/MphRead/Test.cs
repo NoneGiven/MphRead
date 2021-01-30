@@ -110,12 +110,20 @@ namespace MphRead
                 funcs.Add(id, new HashSet<uint>());
             }
             using var file = new StreamWriter(File.OpenWrite("temp.txt"));
-            foreach (string path in Metadata.Effects)
+            foreach ((string name, string? archive) in Metadata.Effects)
             {
-                if (path != "" && path != "effects/sparksFall_PS.bin" && path != "effects/mortarSecondary_PS.bin"
-                    && path != "effects/powerBeamChargeNoSplatMP_PS.bin")
+                if (name != "" && name != "sparksFall" && name != "mortarSecondary" && name != "powerBeamChargeNoSplatMP")
                 {
-                    Effect effect = Read.ReadEffect(path);
+                    string path;
+                    if (archive == null)
+                    {
+                        path = "";
+                    }
+                    else
+                    {
+                        path = "";
+                    }
+                    Effect effect = Read.LoadEffect(path);
                     foreach (EffectElement element in effect.Elements)
                     {
                         foreach (FuncAction id in ids)
