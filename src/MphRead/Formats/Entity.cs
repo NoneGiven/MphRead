@@ -227,14 +227,12 @@ namespace MphRead
         public readonly ushort LinkedEntity;
         public readonly ushort ScanId;
         public readonly ushort ScanEventTargetId;
-        public readonly ushort Field36;
+        public readonly ushort Padding36;
         public readonly uint ScanEventId;
         public readonly uint EffectId;
-        public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
+        public readonly uint EffectInterval;
+        public readonly uint EffectOnIntervals; // 16 bits are used
+        public readonly Vector3Fx EffectPositionOffset; // maximum value for random offset
         public readonly RawCollisionVolume Volume;
     }
 

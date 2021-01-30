@@ -1166,9 +1166,9 @@ namespace MphRead
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
                     foreach (Entity entity in entities)
                     {
-                        if (entity.Type == EntityType.Enemy)
+                        if (entity.Type == EntityType.Object)
                         {
-                            EnemyEntityData data = ((Entity<EnemyEntityData>)entity).Data;
+                            ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
                         }
                     }
                 }
