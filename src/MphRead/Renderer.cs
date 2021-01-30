@@ -23,8 +23,8 @@ namespace MphRead
         public Renderer(string? title = null)
         {
             GameWindowSettings settings = GameWindowSettings.Default;
-            settings.RenderFrequency = 30;
-            settings.UpdateFrequency = 30;
+            settings.RenderFrequency = 60;
+            settings.UpdateFrequency = 60;
             NativeWindowSettings native = NativeWindowSettings.Default;
             native.Size = new Vector2i(800, 600);
             native.Title = title ?? "Render";
@@ -942,15 +942,21 @@ namespace MphRead
             _inactiveParticles.Enqueue(particle);
         }
 
+        private float _nextSpawn = 5;
         private bool _setupDone = false;
+        private Effect _effTest = null!;
+        private Model _modelOne = null!;
+        private Model _modelTwo = null!;
 
         // ptodo: need to keep track of which effects/models have been loaded and share them
         // (and remember, we're also already raeding the models in Read.ReadEffect!)
         private void ParticleSetup()
         {
             Effect effect = Read.ReadEffect(@"effects\jetFlameBlue_PS.bin");
+            _effTest = effect;
 
             Model model = Read.GetModelByName(effect.Elements[0].ModelName);
+            _modelOne = model;
             InitTextures(model);
             EffectElementEntry element = InitEffectElement(effect.Elements[0]);
             element.Model = model;
@@ -962,9 +968,8 @@ namespace MphRead
                 element.TextureBindingIds.Add(_texPalMap[model.SceneId].Get(material.TextureId, material.PaletteId).BindingId);
             }
 
-            EffectElementEntry elem1 = element;
-
             model = Read.GetModelByName(effect.Elements[1].ModelName);
+            _modelTwo = model;
             InitTextures(model);
             element = InitEffectElement(effect.Elements[1]);
             element.Model = model;
@@ -977,6 +982,29 @@ namespace MphRead
             }
         }
 
+        private void ParticleRespawn()
+        {
+            EffectElementEntry element = InitEffectElement(_effTest.Elements[0]);
+            element.Model = _modelOne;
+            element.Position = new Vector3(0, 0.532959f, 0);
+            element.Transform = Matrix4.CreateTranslation(element.Position);
+            foreach (Particle definition in _effTest.Elements[0].Particles)
+            {
+                Material material = _modelOne.Materials[definition.MaterialId];
+                element.TextureBindingIds.Add(_texPalMap[_modelOne.SceneId].Get(material.TextureId, material.PaletteId).BindingId);
+            }
+
+            element = InitEffectElement(_effTest.Elements[1]);
+            element.Model = _modelTwo;
+            element.Position = new Vector3(0, 0.532959f, 0);
+            element.Transform = Matrix4.CreateTranslation(element.Position);
+            foreach (Particle definition in _effTest.Elements[1].Particles)
+            {
+                Material material = _modelTwo.Materials[definition.MaterialId];
+                element.TextureBindingIds.Add(_texPalMap[_modelTwo.SceneId].Get(material.TextureId, material.PaletteId).BindingId);
+            }
+        }
+
         private void ProcessEffects()
         {
             for (int i = 0; i < _activeElements.Count; i++)
@@ -985,6 +1013,18 @@ namespace MphRead
                 EffectElementEntry element = _activeElements[i];
                 if (_elapsedTime > element.ExpirationTime)
                 {
+                    UnlinkEffectElement(element);
+                    // sktodo: not this
+                    for (int j = 0; j < _activeParticles.Count; j++)
+                    {
+                        EffectParticle particle = _activeParticles[j];
+                        if (particle.Owner == element)
+                        {
+                            UnlinkEffectParticle(particle);
+                            j--;
+                        }
+                    }
+                    i--;
                     continue;
                 }
                 var times = new TimeValues(_elapsedTime, _elapsedTime - element.CreationTime, element.Lifespan);
@@ -1178,6 +1218,12 @@ namespace MphRead
             if (!_frameAdvanceOn || _advanceOneFrame)
             {
                 _elapsedTime += 1 / 60f;
+                // sktodo: remove debug code
+                if (_elapsedTime > _nextSpawn)
+                {
+                    _nextSpawn += 5;
+                    ParticleRespawn();
+                }
             }
             _decalMeshes.Clear();
             _nonDecalMeshes.Clear();
