@@ -346,13 +346,14 @@ namespace MphRead
         public float Lifespan { get; }
         public float DrainTime { get; }
         public float BufferTime { get; }
-        public int Field68 { get; }
-        // the key is the "operation index" (todo: make an enum) e.g. set red, green, or blue
-        public IReadOnlyDictionary<FuncAction, FxFuncInfo> Funcs { get; }
+        public int DrawType { get; }
+        public IReadOnlyDictionary<FuncAction, FxFuncInfo> Actions { get; }
+        public IReadOnlyDictionary<uint, FxFuncInfo> Funcs { get; }
 
         public string ChildEffect => Metadata.Effects[(int)ChildEffectId];
 
-        public EffectElement(RawEffectElement raw, IReadOnlyList<Particle> particles, IReadOnlyDictionary<FuncAction, FxFuncInfo> funcs)
+        public EffectElement(RawEffectElement raw, IReadOnlyList<Particle> particles,
+            IReadOnlyDictionary<uint, FxFuncInfo> funcs, IReadOnlyDictionary<FuncAction, FxFuncInfo> actions)
         {
             Name = raw.Name.MarshalString();
             ModelName = raw.ModelName.MarshalString();
@@ -366,9 +367,10 @@ namespace MphRead
             Lifespan = raw.Lifespan.FloatValue;
             DrainTime = raw.DrainTime.FloatValue;
             BufferTime = raw.BufferTime.FloatValue;
-            Field68 = raw.DrawType;
+            DrawType = raw.DrawType;
             Particles = particles;
             Funcs = funcs;
+            Actions = actions;
         }
     }
 

@@ -1,167 +1,92 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Mathematics;
 
 namespace MphRead.Effects
 {
-    public struct TimeValues
+    public readonly struct TimeValues
     {
         // global elapsed time
-        public float Global;
+        public readonly float Global;
         // time since the current EffectElementEntry or EffectParticle was created
-        public float Elapsed;
+        public readonly float Elapsed;
         // lifespan of the current EffectElementEntry or EffectParticle
-        public float Lifespan;
-    }
+        public readonly float Lifespan;
 
-    public class EffectElementEntry
-    {
-        public float CreationTime { get; set; }
-        public float ExpirationTime { get; set; }
-        public float DrainTime { get; set; }
-        public float BufferTime { get; set; }
-        public bool Func39Called { get; set; }
-        public uint Flags { get; set; }
-        public float Lifespan { get; set; }
-        public int DrawType { get; set; }
-        public Vector3 Position { get; set; }
-
-        public int TextureBindingId { get; set; }
-        public Model Model { get; }
-        public Material Material { get; }
-
-        public IReadOnlyDictionary<uint, FxFuncInfo> Funcs { get; }
-
-        public EffectElementEntry(Model model, Material material, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        public TimeValues(float global, float elapsed, float lifespan)
         {
-            Model = model;
-            Material = material;
-            Funcs = funcs;
+            Global = global;
+            Elapsed = elapsed;
+            Lifespan = lifespan;
         }
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter")]
-    public class EffectParticle
+    [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
+    public abstract class EffectFuncBase
     {
-        public float CreationTime { get; set; }
-        public float ExpirationTime { get; set; }
-        public float Lifespan { get; set; }
-        public Vector3 Position { get; set; }
-        public Vector3 Speed { get; set; }
-        public float Scale { get; set; }
-        public float Rotation { get; set; }
-        public float Red { get; set; }
-        public float Green { get; set; }
-        public float Blue { get; set; }
-        public float Alpha { get; set; }
-        public int ParticleId { get; set; }
-        public float PortionTotal { get; set; }
-        public float RoField1 { get; set; } // 4 general-purpose fields set once upon particle creation
-        public float RoField2 { get; set; }
-        public float RoField3 { get; set; }
-        public float RoField4 { get; set; }
-        public float RwField1 { get; set; } // 4 general-purpose fields updated every frame
-        public float RwField2 { get; set; }
-        public float RwField3 { get; set; }
-        public float RwField4 { get; set; }
+        [NotNull, DisallowNull]
+        public virtual IReadOnlyDictionary<FuncAction, FxFuncInfo>? Actions { get; set; }
+        [NotNull, DisallowNull]
+        public virtual IReadOnlyDictionary<uint, FxFuncInfo>? Funcs { get; set; }
 
-        public EffectElementEntry Owner { get; }
-        public IReadOnlyDictionary<uint, FxFuncInfo> Funcs => Owner.Funcs;
-        public int SetVecsId { get; set; }
-        public int DrawId { get; set; }
-        public Vector3 EffectVec1 { get; private set; }
-        public Vector3 EffectVec2 { get; private set; }
-        public Vector3 EffectVec3 { get; private set; }
+        protected abstract void FxFunc01(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec);
 
-        public bool ShouldDraw { get; private set; }
-        public Vector3 Color { get; private set; }
-        public Vector2 Texcoord0 { get; private set; }
-        public Vector3 Vertex0 { get; private set; }
-        public Vector2 Texcoord1 { get; private set; }
-        public Vector3 Vertex1 { get; private set; }
-        public Vector2 Texcoord2 { get; private set; }
-        public Vector3 Vertex2 { get; private set; }
-        public Vector2 Texcoord3 { get; private set; }
-        public Vector3 Vertex3 { get; private set; }
+        protected abstract void FxFunc03(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec);
 
-        public EffectParticle(EffectElementEntry owner)
-        {
-            Owner = owner;
-        }
-
-        private void FxFunc01(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
-        {
-            vec.X = Position.X;
-            vec.Y = Position.Y;
-            vec.Z = Position.Z;
-        }
-
-        private void FxFunc03(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
-        {
-            vec.X = Speed.X;
-            vec.Y = Speed.Y;
-            vec.Z = Speed.Z;
-        }
-
-        private void FxFunc04(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        protected void FxFunc04(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             vec.X = param[0];
             vec.Y = param[1];
             vec.Z = param[2];
         }
 
-        private void FxFunc05(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        protected void FxFunc05(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             vec.X = Fixed.ToFloat(Test.GetRandomInt1(4096));
             vec.Y = Fixed.ToFloat(Test.GetRandomInt1(4096));
             vec.Z = Fixed.ToFloat(Test.GetRandomInt1(4096));
         }
 
-        private void FxFunc06(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        protected void FxFunc06(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             vec.X = Fixed.ToFloat(Test.GetRandomInt1(4096));
             vec.Y = 0;
             vec.Z = Fixed.ToFloat(Test.GetRandomInt1(4096));
         }
 
-        private void FxFunc07(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        protected void FxFunc07(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             vec.X = Fixed.ToFloat(Test.GetRandomInt1(4096));
             vec.Y = 1;
             vec.Z = Fixed.ToFloat(Test.GetRandomInt1(4096));
         }
 
-        private void FxFunc08(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        protected void FxFunc08(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             vec.X = Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f;
             vec.Y = Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f;
             vec.Z = Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f;
         }
 
-        private void FxFunc09(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        protected void FxFunc09(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             vec.X = Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f;
             vec.Y = 0;
             vec.Z = Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f;
         }
 
-        private void FxFunc10(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        protected void FxFunc10(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             vec.X = Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f;
             vec.Y = 1;
             vec.Z = Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f;
         }
 
-        private void FxFunc11(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
-        {
-            float angle = MathHelper.DegreesToRadians(360 * PortionTotal);
-            vec.X = MathF.Cos(angle);
-            vec.Y = 0;
-            vec.Z = MathF.Sin(angle);
-        }
+        protected abstract void FxFunc11(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec);
 
-        private void FxFunc13(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        protected void FxFunc13(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             Debug.Assert(false, "FxFunc13 was called");
             // note: some weirdness with the param list -- params[1] instead of *(*params + 4) -- but this function is unused
@@ -179,7 +104,7 @@ namespace MphRead.Effects
             vec.Z = MathF.Sin(angle);
         }
 
-        private void FxFunc14(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        protected void FxFunc14(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             Vector3 temp = Vector3.Zero;
             InvokeVecFunc(Funcs[(uint)param[0]], times, ref temp);
@@ -194,7 +119,7 @@ namespace MphRead.Effects
             vec.Z = temp.Z * div;
         }
 
-        private void FxFunc15(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        protected void FxFunc15(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             float value1 = InvokeFloatFunc(Funcs[(uint)param[0]], times);
             float value2 = InvokeFloatFunc(Funcs[(uint)param[1]], times);
@@ -204,7 +129,7 @@ namespace MphRead.Effects
             vec.Z = MathF.Sin(angle) * value1;
         }
 
-        private void FxFunc16(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        protected void FxFunc16(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             float value1 = InvokeFloatFunc(Funcs[(uint)param[0]], times);
             float value2 = InvokeFloatFunc(Funcs[(uint)param[1]], times);
@@ -213,7 +138,7 @@ namespace MphRead.Effects
             vec.Z = (Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f) * value2;
         }
 
-        private void FxFunc17(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        protected void FxFunc17(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             Vector3 temp1 = Vector3.Zero;
             Vector3 temp2 = Vector3.Zero;
@@ -224,7 +149,7 @@ namespace MphRead.Effects
             vec.Z = temp1.Z + temp2.Z;
         }
 
-        private void FxFunc18(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        protected void FxFunc18(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             Vector3 temp1 = Vector3.Zero;
             Vector3 temp2 = Vector3.Zero;
@@ -235,7 +160,7 @@ namespace MphRead.Effects
             vec.Z = temp1.Z - temp2.Z;
         }
 
-        private void FxFunc19(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        protected void FxFunc19(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             Vector3 temp1 = Vector3.Zero;
             Vector3 temp2 = Vector3.Zero;
@@ -246,7 +171,7 @@ namespace MphRead.Effects
             vec.Z = temp1.Z / temp2.Z;
         }
 
-        private void FxFunc20(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        protected void FxFunc20(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             Vector3 temp = Vector3.Zero;
             float value = InvokeFloatFunc(Funcs[(uint)param[0]], times);
@@ -256,102 +181,46 @@ namespace MphRead.Effects
             vec.Z = temp.Z * value;
         }
 
-        private float FxFunc21(IReadOnlyList<int> param, TimeValues times)
+        protected float FxFunc21(IReadOnlyList<int> param, TimeValues times)
         {
             return 0;
         }
 
-        private float FxFunc22(IReadOnlyList<int> param, TimeValues times)
-        {
-            return Owner.Lifespan;
-        }
+        protected abstract float FxFunc22(IReadOnlyList<int> param, TimeValues times);
 
-        private float FxFunc23(IReadOnlyList<int> param, TimeValues times)
-        {
-            return times.Global - Owner.CreationTime;
-        }
+        protected abstract float FxFunc23(IReadOnlyList<int> param, TimeValues times);
 
-        private float FxFunc24(IReadOnlyList<int> param, TimeValues times)
-        {
-            return Alpha;
-        }
+        protected abstract float FxFunc24(IReadOnlyList<int> param, TimeValues times);
 
-        private float FxFunc25(IReadOnlyList<int> param, TimeValues times)
-        {
-            return Red;
-        }
+        protected abstract float FxFunc25(IReadOnlyList<int> param, TimeValues times);
 
-        private float FxFunc26(IReadOnlyList<int> param, TimeValues times)
-        {
-            return Green;
-        }
+        protected abstract float FxFunc26(IReadOnlyList<int> param, TimeValues times);
 
-        private float FxFunc27(IReadOnlyList<int> param, TimeValues times)
-        {
-            return Blue;
-        }
+        protected abstract float FxFunc27(IReadOnlyList<int> param, TimeValues times);
 
-        private float FxFunc29(IReadOnlyList<int> param, TimeValues times)
-        {
-            return Scale;
-        }
+        protected abstract float FxFunc29(IReadOnlyList<int> param, TimeValues times);
 
-        private float FxFunc30(IReadOnlyList<int> param, TimeValues times)
-        {
-            return Rotation;
-        }
+        protected abstract float FxFunc30(IReadOnlyList<int> param, TimeValues times);
 
-        private float FxFunc31(IReadOnlyList<int> param, TimeValues times)
-        {
-            return RoField1;
-        }
+        protected abstract float FxFunc31(IReadOnlyList<int> param, TimeValues times);
 
-        private float FxFunc32(IReadOnlyList<int> param, TimeValues times)
-        {
-            return RoField2;
-        }
+        protected abstract float FxFunc32(IReadOnlyList<int> param, TimeValues times);
 
-        private float FxFunc33(IReadOnlyList<int> param, TimeValues times)
-        {
-            return RoField3;
-        }
+        protected abstract float FxFunc33(IReadOnlyList<int> param, TimeValues times);
 
-        private float FxFunc34(IReadOnlyList<int> param, TimeValues times)
-        {
-            return RoField4;
-        }
+        protected abstract float FxFunc34(IReadOnlyList<int> param, TimeValues times);
 
-        private float FxFunc35(IReadOnlyList<int> param, TimeValues times)
-        {
-            return RwField1;
-        }
+        protected abstract float FxFunc35(IReadOnlyList<int> param, TimeValues times);
 
-        private float FxFunc36(IReadOnlyList<int> param, TimeValues times)
-        {
-            return RwField2;
-        }
+        protected abstract float FxFunc36(IReadOnlyList<int> param, TimeValues times);
 
-        private float FxFunc37(IReadOnlyList<int> param, TimeValues times)
-        {
-            return RwField3;
-        }
+        protected abstract float FxFunc37(IReadOnlyList<int> param, TimeValues times);
 
-        private float FxFunc38(IReadOnlyList<int> param, TimeValues times)
-        {
-            return RwField4;
-        }
+        protected abstract float FxFunc38(IReadOnlyList<int> param, TimeValues times);
 
-        private float FxFunc39(IReadOnlyList<int> param, TimeValues times)
-        {
-            if (Owner.Func39Called)
-            {
-                return 0;
-            }
-            Owner.Func39Called = true;
-            return Fixed.ToFloat(param[0]);
-        }
+        protected abstract float FxFunc39(IReadOnlyList<int> param, TimeValues times);
 
-        private float FxFunc40(IReadOnlyList<int> param, TimeValues times)
+        protected float FxFunc40(IReadOnlyList<int> param, TimeValues times)
         {
             if (times.Elapsed / times.Lifespan <= Fixed.ToFloat(param[0]))
             {
@@ -360,8 +229,7 @@ namespace MphRead.Effects
             return Fixed.ToFloat(param[2]);
         }
 
-        // todo: private
-        public float FxFunc41(IReadOnlyList<int> param, TimeValues times)
+        protected float FxFunc41(IReadOnlyList<int> param, TimeValues times)
         {
             float percent = times.Elapsed / times.Lifespan;
             if (percent < Fixed.ToFloat(param[0]))
@@ -393,43 +261,43 @@ namespace MphRead.Effects
                 * ((percent - Fixed.ToFloat(param[i])) / (Fixed.ToFloat(param[i + 2]) - Fixed.ToFloat(param[i])));
         }
 
-        private float FxFunc42(IReadOnlyList<int> param, TimeValues times)
+        protected float FxFunc42(IReadOnlyList<int> param, TimeValues times)
         {
             return Fixed.ToFloat(param[0]);
         }
 
-        private float FxFunc43(IReadOnlyList<int> param, TimeValues times)
+        protected float FxFunc43(IReadOnlyList<int> param, TimeValues times)
         {
             return Fixed.ToFloat(Test.GetRandomInt1(4096));
         }
 
-        private float FxFunc44(IReadOnlyList<int> param, TimeValues times)
+        protected float FxFunc44(IReadOnlyList<int> param, TimeValues times)
         {
             return Fixed.ToFloat(Test.GetRandomInt1(4096)) - 0.5f;
         }
 
         // get random angle [0-360) in fx32
-        private float FxFunc45(IReadOnlyList<int> param, TimeValues times)
+        protected float FxFunc45(IReadOnlyList<int> param, TimeValues times)
         {
             return Fixed.ToFloat(Test.GetRandomInt1(0x168000));
         }
 
-        private float FxFunc46(IReadOnlyList<int> param, TimeValues times)
+        protected float FxFunc46(IReadOnlyList<int> param, TimeValues times)
         {
             return InvokeFloatFunc(Funcs[(uint)param[0]], times) + InvokeFloatFunc(Funcs[(uint)param[1]], times);
         }
 
-        private float FxFunc47(IReadOnlyList<int> param, TimeValues times)
+        protected float FxFunc47(IReadOnlyList<int> param, TimeValues times)
         {
             return InvokeFloatFunc(Funcs[(uint)param[0]], times) - InvokeFloatFunc(Funcs[(uint)param[1]], times);
         }
 
-        private float FxFunc48(IReadOnlyList<int> param, TimeValues times)
+        protected float FxFunc48(IReadOnlyList<int> param, TimeValues times)
         {
             return InvokeFloatFunc(Funcs[(uint)param[0]], times) * InvokeFloatFunc(Funcs[(uint)param[1]], times);
         }
 
-        private float FxFunc49(IReadOnlyList<int> param, TimeValues times)
+        protected float FxFunc49(IReadOnlyList<int> param, TimeValues times)
         {
             if (InvokeFloatFunc(Funcs[(uint)param[0]], times) >= InvokeFloatFunc(Funcs[(uint)param[1]], times))
             {
@@ -542,6 +410,323 @@ namespace MphRead.Effects
                 49 => FxFunc49(parameters, times),
                 _ => throw new ProgramException("Invalid effect func.")
             };
+        }
+    }
+
+    public class EffectElementEntry : EffectFuncBase
+    {
+        public float CreationTime { get; set; }
+        public float ExpirationTime { get; set; }
+        public float DrainTime { get; set; }
+        public float BufferTime { get; set; }
+        public float Lifespan { get; set; }
+        public uint Flags { get; set; }
+        public int DrawType { get; set; }
+        public Vector3 Position { get; set; }
+        public Matrix4 Transform { get; set; }
+        public Vector3 Acceleration { get; set; } // ptodo: frame time scaling when this is set
+        public bool Func39Called { get; set; }
+        public float ParticleAmount { get; set; }
+
+        public List<Particle> ParticleDefinitions { get; } = new List<Particle>();
+        public List<int> TextureBindingIds { get; } = new List<int>();
+
+        [NotNull, DisallowNull]
+        public Model? Model { get; set; }
+
+        protected override void FxFunc01(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        {
+            vec.X = Position.X;
+            vec.Y = Position.Y;
+            vec.Z = Position.Z;
+        }
+
+        protected override void FxFunc03(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        {
+            // element doesn't have the Speed property
+            throw new NotImplementedException();
+        }
+
+        protected override void FxFunc11(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        {
+            // element doesn't have the PortionTotal property
+            throw new NotImplementedException();
+        }
+
+        protected override float FxFunc22(IReadOnlyList<int> param, TimeValues times)
+        {
+            return Lifespan;
+        }
+
+        protected override float FxFunc23(IReadOnlyList<int> param, TimeValues times)
+        {
+            return times.Global - CreationTime;
+        }
+
+        protected override float FxFunc24(IReadOnlyList<int> param, TimeValues times)
+        {
+            // element doesn't have the Alpha property
+            throw new NotImplementedException();
+        }
+
+        protected override float FxFunc25(IReadOnlyList<int> param, TimeValues times)
+        {
+            // element doesn't have the Red property
+            throw new NotImplementedException();
+        }
+
+        protected override float FxFunc26(IReadOnlyList<int> param, TimeValues times)
+        {
+            // element doesn't have the Green property
+            throw new NotImplementedException();
+        }
+
+        protected override float FxFunc27(IReadOnlyList<int> param, TimeValues times)
+        {
+            // element doesn't have the Blue property
+            throw new NotImplementedException();
+        }
+
+        protected override float FxFunc29(IReadOnlyList<int> param, TimeValues times)
+        {
+            // element doesn't have the Scale property
+            throw new NotImplementedException();
+        }
+
+        protected override float FxFunc30(IReadOnlyList<int> param, TimeValues times)
+        {
+            // element doesn't have the Rotation property
+            throw new NotImplementedException();
+        }
+
+        protected override float FxFunc31(IReadOnlyList<int> param, TimeValues times)
+        {
+            // element doesn't have the RoField1 property
+            throw new NotImplementedException();
+        }
+
+        protected override float FxFunc32(IReadOnlyList<int> param, TimeValues times)
+        {
+            // element doesn't have the RoField2 property
+            throw new NotImplementedException();
+        }
+
+        protected override float FxFunc33(IReadOnlyList<int> param, TimeValues times)
+        {
+            // element doesn't have the RoField3 property
+            throw new NotImplementedException();
+        }
+
+        protected override float FxFunc34(IReadOnlyList<int> param, TimeValues times)
+        {
+            // element doesn't have the RoField4 property
+            throw new NotImplementedException();
+        }
+
+        protected override float FxFunc35(IReadOnlyList<int> param, TimeValues times)
+        {
+            // element doesn't have the RwField1 property
+            throw new NotImplementedException();
+        }
+
+        protected override float FxFunc36(IReadOnlyList<int> param, TimeValues times)
+        {
+            // element doesn't have the RwField2 property
+            throw new NotImplementedException();
+        }
+
+        protected override float FxFunc37(IReadOnlyList<int> param, TimeValues times)
+        {
+            // element doesn't have the RwField3 property
+            throw new NotImplementedException();
+        }
+
+        protected override float FxFunc38(IReadOnlyList<int> param, TimeValues times)
+        {
+            // element doesn't have the RwField4 property
+            throw new NotImplementedException();
+        }
+
+        protected override float FxFunc39(IReadOnlyList<int> param, TimeValues times)
+        {
+            if (Func39Called)
+            {
+                return 0;
+            }
+            Func39Called = true;
+            return Fixed.ToFloat(param[0]);
+        }
+    }
+
+    [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
+    public class EffectParticle : EffectFuncBase
+    {
+        public float CreationTime { get; set; }
+        public float ExpirationTime { get; set; }
+        public float Lifespan { get; set; }
+        public Vector3 Position { get; set; }
+        public Vector3 Speed { get; set; }
+        public float Scale { get; set; }
+        public float Rotation { get; set; }
+        public float Red { get; set; }
+        public float Green { get; set; }
+        public float Blue { get; set; }
+        public float Alpha { get; set; }
+        public int ParticleId { get; set; }
+        public float PortionTotal { get; set; }
+        public float RoField1 { get; set; } // 4 general-purpose fields set once upon particle creation
+        public float RoField2 { get; set; }
+        public float RoField3 { get; set; }
+        public float RoField4 { get; set; }
+        public float RwField1 { get; set; } // 4 general-purpose fields updated every frame
+        public float RwField2 { get; set; }
+        public float RwField3 { get; set; }
+        public float RwField4 { get; set; }
+
+        [NotNull, DisallowNull]
+        public EffectElementEntry? Owner { get; set; }
+        public int MaterialId { get; set; }
+        public int SetVecsId { get; set; }
+        public int DrawId { get; set; }
+        public Vector3 EffectVec1 { get; private set; }
+        public Vector3 EffectVec2 { get; private set; }
+        public Vector3 EffectVec3 { get; private set; }
+
+        public bool ShouldDraw { get; private set; }
+        public Vector3 Color { get; private set; }
+        public Vector2 Texcoord0 { get; private set; }
+        public Vector3 Vertex0 { get; private set; }
+        public Vector2 Texcoord1 { get; private set; }
+        public Vector3 Vertex1 { get; private set; }
+        public Vector2 Texcoord2 { get; private set; }
+        public Vector3 Vertex2 { get; private set; }
+        public Vector2 Texcoord3 { get; private set; }
+        public Vector3 Vertex3 { get; private set; }
+
+        [NotNull, DisallowNull]
+        public override IReadOnlyDictionary<uint, FxFuncInfo>? Funcs
+        {
+            get => Owner.Funcs;
+            set => Owner.Funcs = value;
+        }
+
+        [NotNull, DisallowNull]
+        public override IReadOnlyDictionary<FuncAction, FxFuncInfo>? Actions
+        {
+            get => Owner.Actions;
+            set => Owner.Actions = value;
+        }
+
+        protected override void FxFunc01(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        {
+            vec.X = Position.X;
+            vec.Y = Position.Y;
+            vec.Z = Position.Z;
+        }
+
+        protected override void FxFunc03(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        {
+            vec.X = Speed.X;
+            vec.Y = Speed.Y;
+            vec.Z = Speed.Z;
+        }
+
+        protected override void FxFunc11(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
+        {
+            float angle = MathHelper.DegreesToRadians(360 * PortionTotal);
+            vec.X = MathF.Cos(angle);
+            vec.Y = 0;
+            vec.Z = MathF.Sin(angle);
+        }
+
+        protected override float FxFunc22(IReadOnlyList<int> param, TimeValues times)
+        {
+            return Owner.Lifespan;
+        }
+
+        protected override float FxFunc23(IReadOnlyList<int> param, TimeValues times)
+        {
+            return times.Global - Owner.CreationTime;
+        }
+
+        protected override float FxFunc24(IReadOnlyList<int> param, TimeValues times)
+        {
+            return Alpha;
+        }
+
+        protected override float FxFunc25(IReadOnlyList<int> param, TimeValues times)
+        {
+            return Red;
+        }
+
+        protected override float FxFunc26(IReadOnlyList<int> param, TimeValues times)
+        {
+            return Green;
+        }
+
+        protected override float FxFunc27(IReadOnlyList<int> param, TimeValues times)
+        {
+            return Blue;
+        }
+
+        protected override float FxFunc29(IReadOnlyList<int> param, TimeValues times)
+        {
+            return Scale;
+        }
+
+        protected override float FxFunc30(IReadOnlyList<int> param, TimeValues times)
+        {
+            return Rotation;
+        }
+
+        protected override float FxFunc31(IReadOnlyList<int> param, TimeValues times)
+        {
+            return RoField1;
+        }
+
+        protected override float FxFunc32(IReadOnlyList<int> param, TimeValues times)
+        {
+            return RoField2;
+        }
+
+        protected override float FxFunc33(IReadOnlyList<int> param, TimeValues times)
+        {
+            return RoField3;
+        }
+
+        protected override float FxFunc34(IReadOnlyList<int> param, TimeValues times)
+        {
+            return RoField4;
+        }
+
+        protected override float FxFunc35(IReadOnlyList<int> param, TimeValues times)
+        {
+            return RwField1;
+        }
+
+        protected override float FxFunc36(IReadOnlyList<int> param, TimeValues times)
+        {
+            return RwField2;
+        }
+
+        protected override float FxFunc37(IReadOnlyList<int> param, TimeValues times)
+        {
+            return RwField3;
+        }
+
+        protected override float FxFunc38(IReadOnlyList<int> param, TimeValues times)
+        {
+            return RwField4;
+        }
+
+        protected override float FxFunc39(IReadOnlyList<int> param, TimeValues times)
+        {
+            if (Owner.Func39Called)
+            {
+                return 0;
+            }
+            Owner.Func39Called = true;
+            return Fixed.ToFloat(param[0]);
         }
 
         private void SetVecsB0(Matrix4 viewMatrix)
@@ -678,7 +863,8 @@ namespace MphRead.Effects
             {
                 ShouldDraw = true;
                 Color = new Vector3(Red, Green, Blue);
-                // todo?: xyz
+                // todo?: presumably the reason we have to negate the angle and change the vertex order is because of an axis difference,
+                // like the ones seen in other cases with the camera, and if we could fix that then this function could be updated
                 float angle1 = MathHelper.DegreesToRadians(-Rotation);
                 float angle2 = MathHelper.DegreesToRadians(-Rotation + 90);
                 float cos1 = MathF.Cos(angle1);
@@ -779,6 +965,75 @@ namespace MphRead.Effects
                 break;
             default:
                 throw new ProgramException("Invalid draw func.");
+            }
+        }
+
+        public void SetFuncIds()
+        {
+            if ((Owner.Flags & 4) != 0)
+            {
+                DrawId = 7;
+                SetVecsId = (Owner.DrawType == 3 ? 4 : 5);
+            }
+            else
+            {
+                switch (Owner.DrawType)
+                {
+                case 1:
+                    SetVecsId = 1;
+                    if ((Owner.Flags & 1) != 0)
+                    {
+                        DrawId = 1;
+                    }
+                    else
+                    {
+                        DrawId = 2;
+                    }
+                    break;
+                case 2:
+                    SetVecsId = 2;
+                    if ((Owner.Flags & 1) != 0)
+                    {
+                        DrawId = 1;
+                    }
+                    else
+                    {
+                        DrawId = 2;
+                    }
+                    break;
+                case 3:
+                    SetVecsId = 3;
+                    DrawId = 3;
+                    break;
+                case 4:
+                    SetVecsId = 1;
+                    if ((Owner.Flags & 1) != 0)
+                    {
+                        DrawId = 4;
+                    }
+                    else
+                    {
+                        DrawId = 5;
+                    }
+                    break;
+                case 5:
+                    SetVecsId = 2;
+                    if ((Owner.Flags & 1) != 0)
+                    {
+                        DrawId = 4;
+                    }
+                    else
+                    {
+                        DrawId = 5;
+                    }
+                    break;
+                case 6:
+                    SetVecsId = 3;
+                    DrawId = 6;
+                    break;
+                default:
+                    throw new ProgramException("Invalid draw type.");
+                }
             }
         }
     }

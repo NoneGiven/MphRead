@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using MphRead.Effects;
 using MphRead.Export;
 using MphRead.Formats.Collision;
-using MphRead.Utility;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -24,8 +23,8 @@ namespace MphRead
         public Renderer(string? title = null)
         {
             GameWindowSettings settings = GameWindowSettings.Default;
-            settings.RenderFrequency = 60;
-            settings.UpdateFrequency = 60;
+            settings.RenderFrequency = 30;
+            settings.UpdateFrequency = 30;
             NativeWindowSettings native = NativeWindowSettings.Default;
             native.Size = new Vector2i(800, 600);
             native.Title = title ?? "Render";
@@ -727,6 +726,14 @@ namespace MphRead
                 _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX));
                 _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateTranslation(_cameraPosition) * _viewMatrix;
+
+                //_viewMatrix = new Matrix4(
+                //    -0.9934082f, 0.0222167969f, 0.111816406f, 0,
+                //    0, 0.9807129f, -0.194824219f, 0,
+                //    -0.114013672f, -0.193603516f, -0.974365234f, 0,
+                //    -0.176513672f, -2.02539063f, -3.01147461f, 1
+                //);
+
                 _viewInvRotMatrix = _viewInvRotYMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _angleY));
                 _viewInvRotMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-1 * _angleX)) * _viewInvRotMatrix;
             }
@@ -862,70 +869,308 @@ namespace MphRead
         }
 
         // sktodo: particle pipeline
-        private bool _setupDone = false;
-        private EffectElementEntry? _effEntry1;
-        private EffectElementEntry? _effEntry2;
-        private readonly List<EffectParticle> _particles = new List<EffectParticle>();
+        // --> start by just creating the EffectElementEntry manually with the right properties, then write the processing function (and spawn particles)
+        // later, we can have "CObject_process" spawn the element according to whatever rules -- should move towards the OO/inheritence entity pattern
+        //private bool _setupDone = false;
+        //private EffectElementEntry? _effEntry1;
+        //private EffectElementEntry? _effEntry2;
 
+        // todo: effect limits
+        // in-game: 64 effects, 96 elements, 200 particles
+        private static readonly int _effectElementMax = 96;
+        private static readonly int _effectParticleMax = 200;
+
+        private readonly Queue<EffectElementEntry> _inactiveElements = new Queue<EffectElementEntry>(_effectElementMax);
+        private readonly List<EffectElementEntry> _activeElements = new List<EffectElementEntry>(_effectElementMax);
+        private readonly Queue<EffectParticle> _inactiveParticles = new Queue<EffectParticle>(_effectParticleMax);
+        private readonly List<EffectParticle> _activeParticles = new List<EffectParticle>(_effectParticleMax);
+
+        private void AllocateEffects()
+        {
+            for (int i = 0; i < _effectElementMax; i++)
+            {
+                _inactiveElements.Enqueue(new EffectElementEntry());
+            }
+            for (int i = 0; i < _effectParticleMax; i++)
+            {
+                _inactiveParticles.Enqueue(new EffectParticle());
+            }
+        }
+
+        private EffectElementEntry InitEffectElement(EffectElement element)
+        {
+            EffectElementEntry entry = _inactiveElements.Dequeue();
+            entry.BufferTime = element.BufferTime;
+            // todo: if created during effect processing, increase creation time by one frame
+            entry.CreationTime = _elapsedTime;
+            entry.DrainTime = element.DrainTime;
+            entry.DrawType = element.DrawType;
+            entry.Lifespan = element.Lifespan;
+            entry.ExpirationTime = entry.CreationTime + entry.Lifespan;
+            entry.Flags = element.Flags;
+            entry.Flags |= 0x100000; // set bit 20 (draw enabled)
+            entry.Func39Called = false;
+            entry.Funcs = element.Funcs;
+            entry.Actions = element.Actions;
+            // todo: element spawn transform (also mtx ptr)
+            entry.Position = Vector3.Zero;
+            entry.Transform = Matrix4.Identity;
+            entry.ParticleAmount = 0;
+            entry.ParticleDefinitions.AddRange(element.Particles);
+            _activeElements.Add(entry);
+            return entry;
+        }
+
+        private void UnlinkEffectElement(EffectElementEntry element)
+        {
+            _activeElements.Remove(element);
+            element.Model = null!;
+            element.ParticleDefinitions.Clear();
+            element.TextureBindingIds.Clear();
+            _inactiveElements.Enqueue(element);
+        }
+
+        private EffectParticle InitEffectParticle()
+        {
+            EffectParticle particle = _inactiveParticles.Dequeue();
+            particle.Position = Vector3.Zero;
+            particle.Speed = Vector3.Zero;
+            particle.ParticleId = 0;
+            particle.RoField1 = 0;
+            particle.RoField2 = 0;
+            particle.RoField3 = 0;
+            particle.RoField4 = 0;
+            particle.RwField1 = 0;
+            particle.RwField2 = 0;
+            particle.RwField3 = 0;
+            particle.RwField4 = 0;
+            particle.CreationTime = _elapsedTime;
+            _activeParticles.Add(particle);
+            return particle;
+        }
+
+        private void UnlinkEffectParticle(EffectParticle particle)
+        {
+            _activeParticles.Remove(particle);
+            _inactiveParticles.Enqueue(particle);
+        }
+
+        private bool _setupDone = false;
+
+        // ptodo: need to keep track of which effects/models have been loaded and share them
+        // (and remember, we're also already raeding the models in Read.ReadEffect!)
         private void ParticleSetup()
         {
-            Dictionary<Analyzer.EffectElementEntry, List<Analyzer.EffectParticle>> data = Analyzer.ReadThing();
             Effect effect = Read.ReadEffect(@"effects\jetFlameBlue_PS.bin");
-            Model model1 = Read.GetModelByName(effect.Elements[0].ModelName);
-            InitTextures(model1);
-            Material material1 = model1.Materials[effect.Elements[0].Particles[0].MaterialId];
-            int textureId1 = material1.TextureId;
-            int paletteId1 = material1.PaletteId;
-            _effEntry1 = new EffectElementEntry(model1, material1, effect.Funcs)
-            {
-                Position = new Vector3(0, 0.532959f, 0),
-                TextureBindingId = _texPalMap[model1.SceneId].Get(textureId1, paletteId1).BindingId,
-            };
 
-            Model model2 = Read.GetModelByName(effect.Elements[1].ModelName);
-            InitTextures(model2);
-            Material material2 = model2.Materials[effect.Elements[1].Particles[0].MaterialId];
-            int textureId2 = material2.TextureId;
-            int paletteId2 = material2.PaletteId;
-            _effEntry2 = new EffectElementEntry(model2, material2, effect.Funcs)
+            Model model = Read.GetModelByName(effect.Elements[0].ModelName);
+            InitTextures(model);
+            EffectElementEntry element = InitEffectElement(effect.Elements[0]);
+            element.Model = model;
+            element.Position = new Vector3(0, 0.532959f, 0);
+            element.Transform = Matrix4.CreateTranslation(element.Position);
+            foreach (Particle definition in effect.Elements[0].Particles)
             {
-                Position = new Vector3(0, 0.532959f, 0),
-                TextureBindingId = _texPalMap[model2.SceneId].Get(textureId2, paletteId2).BindingId,
-            };
+                Material material = model.Materials[definition.MaterialId];
+                element.TextureBindingIds.Add(_texPalMap[model.SceneId].Get(material.TextureId, material.PaletteId).BindingId);
+            }
 
-            // ptodo: need to keep track of which effects/models have been loaded and share them
-            // (and remember, we're also alreayd raeding the models in Read.ReadEffect!)
-            foreach (KeyValuePair<Analyzer.EffectElementEntry, List<Analyzer.EffectParticle>> entry in data)
+            EffectElementEntry elem1 = element;
+
+            model = Read.GetModelByName(effect.Elements[1].ModelName);
+            InitTextures(model);
+            element = InitEffectElement(effect.Elements[1]);
+            element.Model = model;
+            element.Position = new Vector3(0, 0.532959f, 0);
+            element.Transform = Matrix4.CreateTranslation(element.Position);
+            foreach (Particle definition in effect.Elements[1].Particles)
             {
-                EffectElementEntry? owner = entry.Key.Element == 0x227D964 ? _effEntry1 : _effEntry2;
-                foreach (Analyzer.EffectParticle particle in entry.Value)
+                Material material = model.Materials[definition.MaterialId];
+                element.TextureBindingIds.Add(_texPalMap[model.SceneId].Get(material.TextureId, material.PaletteId).BindingId);
+            }
+        }
+
+        private void ProcessEffects()
+        {
+            for (int i = 0; i < _activeElements.Count; i++)
+            {
+                // ptodo: lifespan/state stuff
+                EffectElementEntry element = _activeElements[i];
+                if (_elapsedTime > element.ExpirationTime)
                 {
-                    _particles.Add(new EffectParticle(owner!)
+                    continue;
+                }
+                var times = new TimeValues(_elapsedTime, _elapsedTime - element.CreationTime, element.Lifespan);
+                if (element.Actions.TryGetValue(FuncAction.IncreaseParticleAmount, out FxFuncInfo? info))
+                {
+                    // ptodo: frame time scaling
+                    element.ParticleAmount += element.InvokeFloatFunc(info, times) / 2;
+                }
+                int spawnCount = (int)MathF.Floor(element.ParticleAmount);
+                element.ParticleAmount -= spawnCount;
+                float portionTotal = 0;
+                for (int j = 0; j < spawnCount; j++)
+                {
+                    Vector3 temp = Vector3.Zero;
+                    EffectParticle particle = InitEffectParticle();
+                    particle.Owner = element;
+                    particle.SetFuncIds();
+                    particle.PortionTotal = portionTotal;
+                    particle.MaterialId = element.ParticleDefinitions[0].MaterialId;
+                    if (element.Actions.TryGetValue(FuncAction.SetNewParticlePosition, out info))
                     {
-                        Alpha = particle.Alpha.FloatValue,
-                        Red = particle.Red.FloatValue,
-                        Green = particle.Green.FloatValue,
-                        Blue = particle.Blue.FloatValue,
-                        DrawId = 5,
-                        SetVecsId = 1,
-                        Position = particle.Position.ToFloatVector(),
-                        Speed = particle.Speed.ToFloatVector(),
-                        CreationTime = particle.CreationTime.FloatValue,
-                        ExpirationTime = particle.ExpirationTime.FloatValue,
-                        Lifespan = particle.Lifespan.FloatValue,
-                        ParticleId = particle.ParticleId,
-                        RoField1 = Fixed.ToFloat(particle.RoField1),
-                        RoField2 = Fixed.ToFloat(particle.RoField2),
-                        RoField3 = Fixed.ToFloat(particle.RoField3),
-                        RoField4 = Fixed.ToFloat(particle.RoField4),
-                        RwField1 = Fixed.ToFloat(particle.RwField1),
-                        RwField2 = Fixed.ToFloat(particle.RwField2),
-                        RwField3 = Fixed.ToFloat(particle.RwField3),
-                        RwField4 = Fixed.ToFloat(particle.RwField4),
-                        PortionTotal = particle.PortionTotal.FloatValue,
-                        Rotation = particle.Rotation.FloatValue,
-                        Scale = particle.Scale.FloatValue
-                    });
+                        particle.InvokeVecFunc(info, times, ref temp);
+                        particle.Position = temp;
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetNewParticleSpeed, out info))
+                    {
+                        particle.InvokeVecFunc(info, times, ref temp);
+                        particle.Speed = temp;
+                    }
+                    // todo: need to handle this bit being set
+                    if ((element.Flags & 1) == 0)
+                    {
+                        particle.Position = Matrix.Vec3MultMtx4(particle.Position, element.Transform);
+                        particle.Speed = Matrix.Vec3MultMtx3(particle.Speed, element.Transform);
+                    }
+                    // todo: these should really just be FxFuncInfo properties instead of a dictionary
+                    // --> still need the dictionary for the offset lookups, though
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleRoField1, out info))
+                    {
+                        particle.RoField1 = particle.InvokeFloatFunc(info, times);
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleRoField2, out info))
+                    {
+                        particle.RoField2 = particle.InvokeFloatFunc(info, times);
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleRoField3, out info))
+                    {
+                        particle.RoField3 = particle.InvokeFloatFunc(info, times);
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleRoField4, out info))
+                    {
+                        particle.RoField4 = particle.InvokeFloatFunc(info, times);
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleRwField1, out info))
+                    {
+                        particle.RwField1 = particle.InvokeFloatFunc(info, times);
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleRwField2, out info))
+                    {
+                        particle.RwField2 = particle.InvokeFloatFunc(info, times);
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleRwField3, out info))
+                    {
+                        particle.RwField3 = particle.InvokeFloatFunc(info, times);
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleRwField4, out info))
+                    {
+                        particle.RwField4 = particle.InvokeFloatFunc(info, times);
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetNewParticleLifespan, out info))
+                    {
+                        var tempTimes = new TimeValues(_elapsedTime, 1.0f, element.Lifespan);
+                        particle.Lifespan = particle.InvokeFloatFunc(info, tempTimes);
+                        particle.ExpirationTime = particle.CreationTime + particle.Lifespan;
+                    }
+                    else
+                    {
+                        particle.Lifespan = element.Lifespan;
+                        particle.ExpirationTime = element.ExpirationTime;
+                    }
+                    portionTotal += 1f / spawnCount;
+                }
+            }
+            // ptodo: structure stuff (map out the goto)
+            for (int i = 0; i < _activeParticles.Count; i++)
+            {
+                // ptodo: lifespan/state stuff
+                EffectParticle particle = _activeParticles[i];
+                EffectElementEntry element = particle.Owner;
+                if (_elapsedTime < particle.ExpirationTime)
+                {
+                    var times = new TimeValues(_elapsedTime, _elapsedTime - particle.CreationTime, particle.Lifespan);
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleRwField1, out FxFuncInfo? info))
+                    {
+                        particle.RwField1 = particle.InvokeFloatFunc(info, times);
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleRwField2, out info))
+                    {
+                        particle.RwField2 = particle.InvokeFloatFunc(info, times);
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleRwField3, out info))
+                    {
+                        particle.RwField3 = particle.InvokeFloatFunc(info, times);
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleRwField4, out info))
+                    {
+                        particle.RwField4 = particle.InvokeFloatFunc(info, times);
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleId, out info))
+                    {
+                        particle.ParticleId = (int)particle.InvokeFloatFunc(info, times);
+                        if (particle.ParticleId >= element.ParticleDefinitions.Count)
+                        {
+                            particle.ParticleId = element.ParticleDefinitions.Count - 1;
+                        }
+                        particle.MaterialId = element.ParticleDefinitions[particle.ParticleId].MaterialId;
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleRed, out info))
+                    {
+                        particle.Red = particle.InvokeFloatFunc(info, times);
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleGreen, out info))
+                    {
+                        particle.Green = particle.InvokeFloatFunc(info, times);
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleBlue, out info))
+                    {
+                        particle.Blue = particle.InvokeFloatFunc(info, times);
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleAlpha, out info))
+                    {
+                        particle.Alpha = particle.InvokeFloatFunc(info, times);
+                        if (particle.Alpha < 0)
+                        {
+                            particle.Alpha = 0;
+                        }
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleScale, out info))
+                    {
+                        particle.Scale = particle.InvokeFloatFunc(info, times);
+                    }
+                    if (element.Actions.TryGetValue(FuncAction.SetParticleRotation, out info))
+                    {
+                        particle.Rotation = particle.InvokeFloatFunc(info, times);
+                    }
+                    if ((element.Flags & 2) != 0)
+                    {
+                        particle.Speed = new Vector3(
+                            particle.Speed.X + element.Acceleration.X,
+                            particle.Speed.Y + element.Acceleration.Y,
+                            particle.Speed.Z + element.Acceleration.Z
+                        );
+                    }
+                    Vector3 prevPos = particle.Position;
+                    // ptodo: frame time scaling
+                    particle.Position = new Vector3(
+                        particle.Position.X + particle.Speed.X * (1 / 60f),
+                        particle.Position.Y + particle.Speed.Y * (1 / 60f),
+                        particle.Position.Z + particle.Speed.Z * (1 / 60f)
+                    );
+                    if ((element.Flags & 0x40) != 0)
+                    {
+                        // ptodo: collision check between previous and new positions
+                    }
+                }
+                else
+                {
+                    if ((element.Flags & 0x80) != 0)
+                    {
+                        // ptodo: spawn child effect
+                    }
+                    UnlinkEffectParticle(particle);
+                    i--;
                 }
             }
         }
@@ -939,10 +1184,14 @@ namespace MphRead
         {
             if (!_setupDone)
             {
+                AllocateEffects();
                 ParticleSetup();
                 _setupDone = true;
             }
-            _elapsedTime += (float)elapsedTime;
+            if (!_frameAdvanceOn || _advanceOneFrame)
+            {
+                _elapsedTime += 1 / 60f;
+            }
             _decalMeshes.Clear();
             _nonDecalMeshes.Clear();
             _translucentMeshes.Clear();
@@ -1025,16 +1274,19 @@ namespace MphRead
                 }
             }
 
-            // ptodo: process effects
-            foreach (EffectParticle particle in _particles)
+            if (!_frameAdvanceOn || _advanceOneFrame)
             {
-                // ptodo: update particle ID if func exists, other stuff
+                ProcessEffects();
+            }
+            for (int i = 0; i < _activeParticles.Count; i++)
+            {
+                EffectParticle particle = _activeParticles[i];
                 particle.InvokeSetVecsFunc(_viewMatrix);
                 // sktodo: confirm we actually don't need the scale factor (and is it the same for the "3" case?)
                 particle.InvokeDrawFunc(1);
                 if (particle.ShouldDraw)
                 {
-                    var meshInfo = new MeshInfo(particle, particle.Owner.Material, polygonId++, particle.Alpha);
+                    var meshInfo = new MeshInfo(particle, particle.Owner.Model.Materials[particle.MaterialId], polygonId++, particle.Alpha);
                     _nonDecalMeshes.Add(meshInfo);
                     _translucentMeshes.Add(meshInfo);
                 }
@@ -1339,7 +1591,7 @@ namespace MphRead
             GL.Uniform1(_shaderLocations.MaterialAlpha, item.Alpha);
             GL.Uniform1(_shaderLocations.MaterialMode, (int)PolygonMode.Modulate);
 
-            int bindingId = item.Particle.Owner.TextureBindingId; // ptodo: this should be on the particle, not the owner
+            int bindingId = item.Particle.Owner.TextureBindingIds[item.Particle.ParticleId];
             int textureId = item.Material.TextureId;
             RepeatMode xRepeat = item.Material.XRepeat;
             RepeatMode yRepeat = item.Material.YRepeat;

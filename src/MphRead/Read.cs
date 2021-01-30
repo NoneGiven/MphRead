@@ -635,7 +635,7 @@ namespace MphRead
                         elemFuncs.Add((FuncAction)index, funcs[funcOffset]);
                     }
                 }
-                elements.Add(new EffectElement(element, particles, elemFuncs));
+                elements.Add(new EffectElement(element, particles, funcs, elemFuncs));
             }
             return new Effect(effect, funcs, list2, elements, name);
         }

@@ -15,21 +15,21 @@ namespace MphRead
         public const int HW_CPU_CLOCK_ARM9 = 67027964;
         public const int SND_TIMER_CLOCK = HW_CPU_CLOCK_ARM7 / 2;
 
-        public static uint Rng1 { get; private set; }
+        public static uint Rng1 { get; private set; } = UInt32.Parse("3DE9179B", System.Globalization.NumberStyles.HexNumber);
         public static uint Rng2 { get; private set; }
 
         public static uint GetRandomInt1(uint value)
         {
             Rng1 *= 0x7FF8A3ED;
             Rng1 += 0x2AA01D31;
-            return (uint)((Rng1 >> 16) * value / 0x10000L);
+            return (uint)((Rng1 >> 16) * (long)value / 0x10000L);
         }
 
         public static uint GetRandomInt2(uint value)
         {
             Rng2 *= 0x7FF8A3ED;
             Rng2 += 0x2AA01D31;
-            return (uint)((Rng2 >> 16) * value / 0x10000L);
+            return (uint)((Rng2 >> 16) * (long)value / 0x10000L);
         }
 
         private static Random _random = new Random();
@@ -120,16 +120,16 @@ namespace MphRead
                     {
                         foreach (FuncAction id in ids)
                         {
-                            foreach (KeyValuePair<FuncAction, FxFuncInfo> func in element.Funcs.Where(f => f.Key == id))
+                            foreach (KeyValuePair<FuncAction, FxFuncInfo> func in element.Actions.Where(f => f.Key == id))
                             {
                                 funcs[id].Add(func.Value.FuncId);
                             }
                         }
-                        foreach (KeyValuePair<FuncAction, FxFuncInfo> func in element.Funcs.Where(f => f.Key == FuncAction.SetNewParticleLifespan))
+                        foreach (KeyValuePair<FuncAction, FxFuncInfo> func in element.Actions.Where(f => f.Key == FuncAction.IncreaseParticleAmount))
                         {
-                            if (func.Value.FuncId == 40 || func.Value.FuncId == 41)
+                            if (func.Value.FuncId == 49)
                             {
-                                //Debugger.Break();
+                                Debugger.Break();
                             }
                         }
                     }
