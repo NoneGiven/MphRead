@@ -726,14 +726,6 @@ namespace MphRead
                 _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX));
                 _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
                 _viewMatrix = Matrix4.CreateTranslation(_cameraPosition) * _viewMatrix;
-
-                //_viewMatrix = new Matrix4(
-                //    -0.9934082f, 0.0222167969f, 0.111816406f, 0,
-                //    0, 0.9807129f, -0.194824219f, 0,
-                //    -0.114013672f, -0.193603516f, -0.974365234f, 0,
-                //    -0.176513672f, -2.02539063f, -3.01147461f, 1
-                //);
-
                 _viewInvRotMatrix = _viewInvRotYMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _angleY));
                 _viewInvRotMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-1 * _angleX)) * _viewInvRotMatrix;
             }
@@ -868,14 +860,9 @@ namespace MphRead
             }
         }
 
-        // sktodo: particle pipeline
-        // --> start by just creating the EffectElementEntry manually with the right properties, then write the processing function (and spawn particles)
-        // later, we can have "CObject_process" spawn the element according to whatever rules -- should move towards the OO/inheritence entity pattern
-        //private bool _setupDone = false;
-        //private EffectElementEntry? _effEntry1;
-        //private EffectElementEntry? _effEntry2;
+        // ptodo: have "CObject_process" spawn the element according to whatever rules -- should move towards the OO/inheritence entity pattern
 
-        // todo: effect limits
+        // ptodo: effect limits
         // in-game: 64 effects, 96 elements, 200 particles
         private static readonly int _effectElementMax = 96;
         private static readonly int _effectParticleMax = 200;
