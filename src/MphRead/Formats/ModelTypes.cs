@@ -9,15 +9,22 @@ namespace MphRead.Models
 {
     public class RoomModel : Model
     {
-        private readonly IReadOnlyList<CollisionPortal> _portals = new List<CollisionPortal>();
-        private readonly IReadOnlyList<ForceFieldNodeRef> _forceFields = new List<ForceFieldNodeRef>();
+        private readonly List<CollisionPortal> _portals = new List<CollisionPortal>();
+        private readonly List<ForceFieldNodeRef> _forceFields = new List<ForceFieldNodeRef>();
 
-        public RoomModel(Model model) : base(model)
+        public RoomModel(string name, Header header, IReadOnlyList<RawNode> nodes,
+            IReadOnlyList<RawMesh> meshes, IReadOnlyList<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
+            IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
+            IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
+            IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
+            IReadOnlyList<Matrix4> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor, bool useLightSources,
+            IReadOnlyList<int> nodeWeights) : base(name, header, nodes, meshes, materials, dlists, renderInstructions, nodeGroups,
+                materialGroups, texcoordGroups, textureGroups, textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights)
         {
             Type = ModelType.Room;
         }
 
-        public RoomModel(Model model, RoomMetadata meta, CollisionInfo collision, int layerMask) : base(model)
+        public void Setup(RoomMetadata meta, CollisionInfo collision, int layerMask)
         {
             Type = ModelType.Room;
             var portals = new List<CollisionPortal>();
@@ -47,7 +54,7 @@ namespace MphRead.Models
                 }
                 // biodefense chamber 04 and 07 don't have the red portal geometry nodes
                 Debug.Assert(forceFields.Count == pmags.Count()
-                    || model.Name == "biodefense chamber 04" || model.Name == "biodefense chamber 07");
+                    || Name == "biodefense chamber 04" || Name == "biodefense chamber 07");
             }
             else if (meta.RoomNodeName != null
                 && Nodes.TryFind(n => n.Name == meta.RoomNodeName && n.ChildIndex != UInt16.MaxValue, out Node? roomNode))
@@ -66,8 +73,8 @@ namespace MphRead.Models
                 }
             }
             Debug.Assert(Nodes.Any(n => n.IsRoomPartNode));
-            _portals = portals;
-            _forceFields = forceFields;
+            _portals.AddRange(portals);
+            _forceFields.AddRange(forceFields);
         }
 
         // todo: partial room rendering with toggle
@@ -128,9 +135,40 @@ namespace MphRead.Models
         }
     }
 
+    public class ObjectModel : Model
+    {
+        public CollisionVolume EffectVolume { get; set; }
+
+        public ObjectModel(string name, Header header, IReadOnlyList<RawNode> nodes,
+            IReadOnlyList<RawMesh> meshes, IReadOnlyList<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
+            IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
+            IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
+            IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
+            IReadOnlyList<Matrix4> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor, bool useLightSources,
+            IReadOnlyList<int> nodeWeights) : base(name, header, nodes, meshes, materials, dlists, renderInstructions, nodeGroups,
+                materialGroups, texcoordGroups, textureGroups, textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights)
+        {
+            Type = ModelType.Object;
+        }
+
+        public override void Process(double elapsedTime, long frameCount, Vector3 cameraPosition,
+            Matrix4 viewInvRot, Matrix4 viewInvRotY, bool useTransform)
+        {
+            base.Process(elapsedTime, frameCount, cameraPosition, viewInvRot, viewInvRotY, useTransform);
+            // ptodo: effect SFX stuff
+        }
+    }
+
     public class ForceFieldLockModel : Model
     {
-        public ForceFieldLockModel(Model model) : base(model)
+        public ForceFieldLockModel(string name, Header header, IReadOnlyList<RawNode> nodes,
+            IReadOnlyList<RawMesh> meshes, IReadOnlyList<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
+            IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
+            IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
+            IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
+            IReadOnlyList<Matrix4> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor, bool useLightSources,
+            IReadOnlyList<int> nodeWeights) : base(name, header, nodes, meshes, materials, dlists, renderInstructions, nodeGroups,
+                materialGroups, texcoordGroups, textureGroups, textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights)
         {
             Type = ModelType.Enemy;
         }

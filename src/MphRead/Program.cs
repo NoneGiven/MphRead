@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using MphRead.Utility;
 
 namespace MphRead
 {
@@ -18,8 +19,13 @@ namespace MphRead
             IReadOnlyList<Argument> arguments = ParseArguments(args);
             if (arguments.Count == 0)
             {
+                //Test.TestAllEntities();
+                //Effect eff = Read.ReadEffect(@"effects\jetFlameBlue_PS.bin");
+                //Test.TestEffectBases();
+                //Test.TestEffects();
+                //Analyzer.ReadThing();
                 using var renderer = new Renderer();
-                renderer.AddRoom("MP3 PROVING GROUND");
+                renderer.AddRoom("UNIT3_C0");
                 //renderer.AddModel("Crate01");
                 Nop();
                 renderer.Run();
