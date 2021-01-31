@@ -995,7 +995,13 @@ namespace MphRead
                 if (element.Actions.TryGetValue(FuncAction.IncreaseParticleAmount, out FxFuncInfo? info))
                 {
                     // ptodo: frame time scaling
-                    element.ParticleAmount += element.InvokeFloatFunc(info, times) / 2;
+                    float amount = element.InvokeFloatFunc(info, times);
+                    // ptodo: confirm this hack works ("first frame spawn")
+                    if (info.FuncId != 40)
+                    {
+                        amount /= 2;
+                    }
+                    element.ParticleAmount += amount;
                 }
                 int spawnCount = (int)MathF.Floor(element.ParticleAmount);
                 element.ParticleAmount -= spawnCount;
@@ -1277,8 +1283,13 @@ namespace MphRead
             for (int i = 0; i < _activeParticles.Count; i++)
             {
                 EffectParticle particle = _activeParticles[i];
-                particle.InvokeSetVecsFunc(_viewMatrix);
-                // sktodo: confirm we actually don't need the scale factor (and is it the same for the "3" case?)
+                Matrix4 matrix = _viewMatrix;
+                if ((particle.Owner.Flags & 1) != 0)
+                {
+                    matrix = particle.Owner.Transform * matrix;
+                }
+                particle.InvokeSetVecsFunc(matrix);
+                // ptodo: confirm we actually don't need the scale factor (and is it the same for the "3" case?)
                 particle.InvokeDrawFunc(1);
                 if (particle.ShouldDraw)
                 {
@@ -1580,6 +1591,11 @@ namespace MphRead
         private void RenderParticle(MeshInfo item)
         {
             Matrix4 transform = Matrix4.Identity;
+            if ((item.Particle.Owner.Flags & 1) != 0)
+            {
+                // ptodo: confirm this works (i.e. rotation)
+                transform = item.Particle.Owner.Transform;
+            }
             GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
 
             GL.Uniform1(_shaderLocations.UseLight, 0);

@@ -930,18 +930,14 @@ namespace MphRead.Effects
         {
             switch (DrawId)
             {
-            case 1:
-                DrawB8(scaleFactor: 3);
-                break;
+            case 1: // B4
             case 2:
                 DrawB8(scaleFactor);
                 break;
             case 3:
                 DrawC4(scaleFactor);
                 break;
-            case 4:
-                DrawCC(scaleFactor: 3);
-                break;
+            case 4: // C8
             case 5:
                 DrawCC(scaleFactor);
                 break;

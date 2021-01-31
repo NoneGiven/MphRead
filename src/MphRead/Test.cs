@@ -81,14 +81,49 @@ namespace MphRead
 
         public static void TestEffects()
         {
+            var set = new Dictionary<Effect, List<EffectElement>>();
+            var cleared = new Dictionary<Effect, List<EffectElement>>();
             foreach ((string name, string? archive) in Metadata.Effects)
             {
                 if (name != "" && name != "sparksFall" && name != "mortarSecondary" && name != "powerBeamChargeNoSplatMP")
                 {
                     Effect effect = Read.LoadEffect(name, archive);
+                    if (!effect.Elements.Any(e => e.DrawType != 4)
+                        && effect.Elements.Any(e => (e.Flags & 1) == 0 && (e.Flags & 4) == 0)
+                        && effect.Elements.Any(e => (e.Flags & 1) != 0 && (e.Flags & 4) == 0))
+                    {
+                        Console.WriteLine(effect.Name);
+                    }
                     foreach (EffectElement element in effect.Elements)
                     {
+                        if (element.DrawType == 4)
+                        {
+                            if ((element.Flags & 1) != 0)
+                            {
+                                if (!set.ContainsKey(effect))
+                                {
+                                    set.Add(effect, new List<EffectElement>());
+                                }
+                                set[effect].Add(element);
+                            }
+                            else
+                            {
+                                if (!cleared.ContainsKey(effect))
+                                {
+                                    cleared.Add(effect, new List<EffectElement>());
+                                }
+                                cleared[effect].Add(element);
+                            }
+                        }
                     }
+                }
+            }
+            Console.WriteLine();
+            foreach (Effect effect in set.Keys)
+            {
+                if (cleared.ContainsKey(effect))
+                {
+                    Console.WriteLine(effect.Name);
                 }
             }
             Nop();
