@@ -760,7 +760,7 @@ namespace MphRead
             {
                 return new Vector3(0.596f, 0.658f, 0.964f);
             }
-            if (eventId == Message.Unknown56) // salmon
+            if (eventId == Message.UnlockOubliette) // salmon
             {
                 return new Vector3(0.964f, 0.596f, 0.596f);
             }
@@ -788,15 +788,15 @@ namespace MphRead
             {
                 return new Vector3(0.647f, 0.663f, 0.169f);
             }
-            if (eventId == Message.Unknown26) // dark green
+            if (eventId == Message.ShowPrompt) // dark green
             {
                 return new Vector3(0.118f, 0.588f, 0.118f);
             }
-            if (eventId == Message.Unknown27) // light purple
+            if (eventId == Message.ShowWarning) // light purple
             {
                 return new Vector3(0.784f, 0.325f, 1f);
             }
-            if (eventId == Message.Unknown28) // orange
+            if (eventId == Message.ShowOverlay) // orange
             {
                 return new Vector3(1f, 0.612f, 0.153f);
             }
@@ -832,7 +832,7 @@ namespace MphRead
             {
                 return new Vector3(1f, 0.765f, 0.49f);
             }
-            if (eventId == Message.Unknown61) // sky blue
+            if (eventId == Message.EscapeCancel) // sky blue
             {
                 return new Vector3(0.165f, 0.816f, 0.894f);
             }
