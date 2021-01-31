@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using MphRead.Effects;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
@@ -143,6 +144,7 @@ namespace MphRead.Models
         private int _effectIntervalTimer = 0;
         private int _effectIntervalIndex = 0;
         private bool _effectProcessing = false;
+        private EffectEntry? _effectEntry = null;
 
         public ObjectModel(string name, Header header, IReadOnlyList<RawNode> nodes,
             IReadOnlyList<RawMesh> meshes, IReadOnlyList<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
@@ -172,6 +174,9 @@ namespace MphRead.Models
                 _flags |= 0x10;
             }
         }
+
+        // sktodo: remove debug code
+        private bool _once = false;
 
         public override void Process(RenderWindow renderer, double elapsedTime, long frameCount, Vector3 cameraPosition,
             Matrix4 viewInvRot, Matrix4 viewInvRotY, bool useTransform)
@@ -227,12 +232,29 @@ namespace MphRead.Models
                             {
                                 // todo: random position offset stuff
                             }
-                            renderer.SpawnEffect((int)_entity.Data.EffectId, Transform);
+                            //renderer.SpawnEffect((int)_entity.Data.EffectId, Transform);
+                            if (!_once)
+                            {
+                                _once = true;
+                                _effectEntry = renderer.SpawnEffectGetEntry(181, Transform);
+                                foreach (EffectElementEntry element in _effectEntry.Elements)
+                                {
+                                    element.Flags |= 0x80000;
+                                }
+                            }
                         }
                         _effectIntervalTimer = (int)_entity.Data.EffectInterval;
                     }
                 }
                 _effectProcessing = processEffect;
+            }
+            if (_effectEntry != null)
+            {
+                foreach (EffectElementEntry element in _effectEntry.Elements)
+                {
+                    element.Position = Position;
+                    element.Transform = Transform;
+                }
             }
         }
     }

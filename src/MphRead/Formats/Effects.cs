@@ -415,7 +415,8 @@ namespace MphRead.Effects
 
     public class EffectEntry
     {
-        // sktodo
+        public int EffectId { get; set; }
+        public List<EffectElementEntry> Elements { get; } = new List<EffectElementEntry>(); // todo: pre-size?
     }
 
     public class EffectElementEntry : EffectFuncBase

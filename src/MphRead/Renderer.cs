@@ -863,15 +863,21 @@ namespace MphRead
         private bool _effectSetupDone = false;
         // ptodo: effect limits
         // in-game: 64 effects, 96 elements, 200 particles
+        private static readonly int _effectEntryMax = 100;
         private static readonly int _effectElementMax = 200;
         private static readonly int _effectParticleMax = 2000;
 
+        private readonly Queue<EffectEntry> _inactiveEffects = new Queue<EffectEntry>(_effectEntryMax);
         private readonly Queue<EffectElementEntry> _inactiveElements = new Queue<EffectElementEntry>(_effectElementMax);
         private readonly List<EffectElementEntry> _activeElements = new List<EffectElementEntry>(_effectElementMax);
         private readonly Queue<EffectParticle> _inactiveParticles = new Queue<EffectParticle>(_effectParticleMax);
 
         private void AllocateEffects()
         {
+            for (int i = 0; i < _effectEntryMax; i++)
+            {
+                _inactiveEffects.Enqueue(new EffectEntry());
+            }
             for (int i = 0; i < _effectElementMax; i++)
             {
                 _inactiveElements.Enqueue(new EffectElementEntry());
@@ -880,6 +886,20 @@ namespace MphRead
             {
                 _inactiveParticles.Enqueue(new EffectParticle());
             }
+        }
+
+        private EffectEntry InitEffectEntry()
+        {
+            EffectEntry entry = _inactiveEffects.Dequeue();
+            entry.EffectId = 0;
+            Debug.Assert(entry.Elements.Count == 0);
+            return entry;
+        }
+
+        public void UnlinkEffectEntry(EffectEntry entry)
+        {
+            // ptodo: this should actually be responsible for unlinking the elements and particles
+            _inactiveEffects.Enqueue(entry);
         }
 
         private EffectElementEntry InitEffectElement(EffectElement element)
@@ -913,6 +933,7 @@ namespace MphRead
             element.Model = null!;
             element.ParticleDefinitions.Clear();
             element.TextureBindingIds.Clear();
+            Debug.Assert(element.Particles.Count == 0);
             _inactiveElements.Enqueue(element);
         }
 
@@ -939,7 +960,15 @@ namespace MphRead
             _inactiveParticles.Enqueue(particle);
         }
 
-        public void SpawnEffect(int effectId, Matrix4 transform)
+        public EffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform)
+        {
+            EffectEntry entry = InitEffectEntry();
+            entry.EffectId = effectId;
+            SpawnEffect(effectId, transform, entry);
+            return entry;
+        }
+
+        public void SpawnEffect(int effectId, Matrix4 transform, EffectEntry? entry = null)
         {
             // todo: this should be loaded when the object/whatever is loaded, not when the effect is first spawned
             Effect effect = Read.LoadEffect(effectId);
@@ -947,6 +976,11 @@ namespace MphRead
             foreach (EffectElement elementDef in effect.Elements)
             {
                 EffectElementEntry element = InitEffectElement(elementDef);
+                if (entry != null)
+                {
+                    element.EffectEntry = entry;
+                    entry.Elements.Add(element);
+                }
                 // todo: flags and unit vector stuff
                 element.Position = position;
                 element.Transform = transform;
@@ -976,13 +1010,13 @@ namespace MphRead
                 {
                     if (element.EffectEntry == null && (element.Flags & 0x10) == 0)
                     {
-                        UnlinkEffectElement(element);
                         while (element.Particles.Count > 0)
                         {
                             EffectParticle particle = element.Particles[0];
                             element.Particles.Remove(particle);
                             UnlinkEffectParticle(particle);
                         }
+                        UnlinkEffectElement(element);
                         i--;
                         continue;
                     }
