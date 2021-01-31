@@ -221,14 +221,14 @@ namespace MphRead.Models
                         _effectIntervalIndex %= 16;
                         if ((_entity.Data.EffectFlags & 0x10) != 0)
                         {
-                            // todo: attached effect code path
+                            // ptodo: attached effect code path
                         }
                         else if ((_entity.Data.EffectOnIntervals & (1 << _effectIntervalIndex)) != 0)
                         {
-                            // todo: mtxptr stuff
+                            // ptodo: mtxptr stuff
                             if ((_entity.Data.EffectFlags & 2) != 0)
                             {
-                                // todo: random position offset stuff
+                                // ptodo: random position offset stuff
                             }
                             renderer.SpawnEffect((int)_entity.Data.EffectId, Transform);
                             // sktodo: remove debug code

@@ -335,6 +335,7 @@ namespace MphRead
         }
     }
 
+    // todo: this class is basically duplicated, should just go from raw struct to entry? or also make this a readonly struct?
     public class EffectElement
     {
         public string Name { get; }
@@ -356,10 +357,6 @@ namespace MphRead
             Name = raw.Name.MarshalString();
             ModelName = raw.ModelName.MarshalString();
             Flags = raw.Flags;
-            // todo: needs frame time scaling
-            // notes:
-            // - y accel is set to -34 when entry is initialized, but this is always overwritten by the element value
-            // - this is only added to the speed if flag bit 1 is set
             Acceleration = raw.Acceleration.ToFloatVector();
             ChildEffectId = raw.ChildEffectId;
             Lifespan = raw.Lifespan.FloatValue;
@@ -710,7 +707,6 @@ namespace MphRead
         }
     }
 
-    // todo: volumes should already be transformed by the entities, so we won't need to do it here
     public abstract class DisplayVolume
     {
         public CollisionVolume Volume { get; }

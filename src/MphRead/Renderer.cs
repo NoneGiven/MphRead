@@ -266,7 +266,7 @@ namespace MphRead
                     entity.ScanVisorOnly = true;
                 }
             }
-            // todo: some mutable entity class state is starting to be necessary
+            // todo: move more stuff to mutable class state
             if (_lastPointModule != -1)
             {
                 ushort nextId = entities[_lastPointModule].Entity!.GetChildId();
@@ -970,7 +970,7 @@ namespace MphRead
 
         public void SpawnEffect(int effectId, Matrix4 transform, EffectEntry? entry = null)
         {
-            // todo: this should be loaded when the object/whatever is loaded, not when the effect is first spawned
+            // ptodo: this should be loaded when the object/whatever is loaded, not when the effect is first spawned
             Effect effect = Read.LoadEffect(effectId);
             var position = new Vector3(transform.Row3);
             foreach (EffectElement elementDef in effect.Elements)
@@ -981,7 +981,7 @@ namespace MphRead
                     element.EffectEntry = entry;
                     entry.Elements.Add(element);
                 }
-                // todo: flags and unit vector stuff
+                // ptodo: flags and unit vector stuff
                 element.Position = position;
                 element.Transform = transform;
                 for (int i = 0; i < elementDef.Particles.Count; i++)
@@ -1552,7 +1552,6 @@ namespace MphRead
             GL.End();
         }
 
-        // todo: use this for volume outlines too
         private void RenderDisplayLines(CollisionPortal plane)
         {
             GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(1f, 0f, 0f, 1f));
@@ -1722,6 +1721,7 @@ namespace MphRead
                 : OpenTK.Graphics.OpenGL.PolygonMode.Fill);
 
             // ptodo: confirm this works for the other draw functions (i.e., they also just use eff_tex_w/h)
+            // --> if not, this could just be applied within the draw functions that need it
             // ptodo: need to confirm that all the draw types actually have 4 verts, and that the texcoord/order are always the same, etc.
             float scaleS = 1;
             float scaleT = 1;
@@ -2029,7 +2029,6 @@ namespace MphRead
                     break;
                 }
                 Matrix4 texcoordMatrix = Matrix4.Identity;
-                // todo: was there a reason animation couldn't be put inside the texgen condition?
                 TexcoordAnimationGroup? group = model.Animations.TexcoordGroup;
                 TexcoordAnimation? animation = null;
                 if (group != null && group.Animations.TryGetValue(material.Name, out TexcoordAnimation result))
@@ -2985,7 +2984,6 @@ namespace MphRead
                 }
                 else if (_selectionMode == SelectionMode.Node || _selectionMode == SelectionMode.Mesh)
                 {
-                    // todo: could keep track of vertex positions during rendering and use them here to locate the mesh
                     LookAt(SelectedModel.Nodes[_selectedNodeId].Position);
                 }
             }

@@ -91,7 +91,6 @@ namespace MphRead
         {
             foreach (Node node in model.Nodes)
             {
-                // todo: there's probably some node or mesh property that hides these things
                 if (node.Name.Contains("etag"))
                 {
                     node.Enabled = false;
@@ -291,7 +290,6 @@ namespace MphRead
                 else if (entity.Type == EntityType.Object)
                 {
                     var objectEntity = (Entity<ObjectEntityData>)entity;
-                    // todo: handle "-1" objects (scan points?)
                     ObjectModel model;
                     if (objectEntity.Data.ModelId == UInt32.MaxValue)
                     {
@@ -922,6 +920,7 @@ namespace MphRead
                 model.Rotating = true;
                 model.SpinSpeed = 0.25f;
                 // todo: this (and some other entity setup stuff) should be applied no matter how the model is loaded
+                // (init method of entity class, rather than reading model then applying stuff to it here)
                 model.UseLightOverride = true;
             }
             models.Add(model);
