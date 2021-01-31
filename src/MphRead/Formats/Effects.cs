@@ -863,22 +863,20 @@ namespace MphRead.Effects
             {
                 ShouldDraw = true;
                 Color = new Vector3(Red, Green, Blue);
-                // todo?: presumably the reason we have to negate the angle and change the vertex order is because of an axis difference,
-                // like the ones seen in other cases with the camera, and if we could fix that then this function could be updated
-                float angle1 = MathHelper.DegreesToRadians(-Rotation);
-                float angle2 = MathHelper.DegreesToRadians(-Rotation + 90);
-                float cos1 = MathF.Cos(angle1);
+                float angle1 = MathHelper.DegreesToRadians(Rotation);
+                float angle2 = MathHelper.DegreesToRadians(Rotation + 90);
                 float sin1 = MathF.Sin(angle1);
-                float cos2 = MathF.Cos(angle2);
+                float cos1 = MathF.Cos(angle1);
                 float sin2 = MathF.Sin(angle2);
+                float cos2 = MathF.Cos(angle2);
 
-                float v20 = (EffectVec1.X * cos2 + EffectVec2.X * sin2) * Scale;
-                float v24 = (EffectVec1.Y * cos2 + EffectVec2.Y * sin2) * Scale;
-                float v25 = (EffectVec1.Z * cos2 + EffectVec2.Z * sin2) * Scale;
+                float v20 = (EffectVec1.X * sin2 + EffectVec2.X * cos2) * Scale;
+                float v24 = (EffectVec1.Y * sin2 + EffectVec2.Y * cos2) * Scale;
+                float v25 = (EffectVec1.Z * sin2 + EffectVec2.Z * cos2) * Scale;
 
-                float v26 = (EffectVec1.X * cos1 + EffectVec2.X * sin1) * Scale;
-                float v28 = (EffectVec1.Y * cos1 + EffectVec2.Y * sin1) * Scale;
-                float v29 = (EffectVec1.Z * cos1 + EffectVec2.Z * sin1) * Scale;
+                float v26 = (EffectVec1.X * sin1 + EffectVec2.X * cos1) * Scale;
+                float v28 = (EffectVec1.Y * sin1 + EffectVec2.Y * cos1) * Scale;
+                float v29 = (EffectVec1.Z * sin1 + EffectVec2.Z * cos1) * Scale;
 
                 float v27 = Position.X + (-v20 / 2) + (v26 / 2);
                 float v30 = Position.Y + (-v24 / 2) + (v28 / 2);
@@ -888,7 +886,7 @@ namespace MphRead.Effects
                 float x = v27 / scaleFactor;
                 float y = v30 / scaleFactor;
                 float z = v31 / scaleFactor;
-                Vertex2 = new Vector3(x, y, z);
+                Vertex0 = new Vector3(x, y, z);
                 Texcoord0 = new Vector2(0, 1);
 
                 // top right
@@ -908,7 +906,7 @@ namespace MphRead.Effects
                 x = v40 / scaleFactor;
                 y = v41 / scaleFactor;
                 z = v35 / scaleFactor;
-                Vertex0 = new Vector3(x, y, z);
+                Vertex2 = new Vector3(x, y, z);
                 Texcoord2 = new Vector2(1, 0);
 
                 // bottom left
