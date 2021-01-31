@@ -32,7 +32,7 @@ namespace MphRead
             return (uint)((Rng2 >> 16) * (long)value / 0x10000L);
         }
 
-        private static Random _random = new Random();
+        private static readonly Random _random = new Random();
 
         public static void TestEffectMath()
         {
@@ -114,16 +114,7 @@ namespace MphRead
             {
                 if (name != "" && name != "sparksFall" && name != "mortarSecondary" && name != "powerBeamChargeNoSplatMP")
                 {
-                    string path;
-                    if (archive == null)
-                    {
-                        path = "";
-                    }
-                    else
-                    {
-                        path = "";
-                    }
-                    Effect effect = Read.LoadEffect(path);
+                    Effect effect = Read.LoadEffect(name, archive);
                     foreach (EffectElement element in effect.Elements)
                     {
                         foreach (FuncAction id in ids)
@@ -1167,6 +1158,34 @@ namespace MphRead
 
         public static void TestAllEntities()
         {
+            var matches = new Dictionary<int, Effect>();
+            for (int i = 0; i < Metadata.Effects.Count; i++)
+            {
+                (string name, string? archive) = Metadata.Effects[i];
+                if (name != "" && name != "sparksFall" && name != "mortarSecondary"
+                    && name != "powerBeamChargeNoSplatMP")
+                {
+                    bool match = true;
+                    Effect effect = Read.LoadEffect(name, archive);
+                    foreach (EffectElement element in effect.Elements)
+                    {
+                        if (element.DrawType != 4 || (element.Flags & 1) != 0)
+                        {
+                            match = false;
+                        }
+                    }
+                    if (match)
+                    {
+                        matches.Add(i, effect);
+                    }
+                }
+            }
+            var always = new List<(RoomMetadata, ObjectEntityData)>();
+            var volume = new List<(RoomMetadata, ObjectEntityData)>();
+            var animid = new List<(RoomMetadata, ObjectEntityData)>();
+            var toggle = new List<(RoomMetadata, ObjectEntityData)>();
+            var mtxptr = new List<(RoomMetadata, ObjectEntityData)>();
+            var offset = new List<(RoomMetadata, ObjectEntityData)>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 if (meta.Value.EntityPath != null)
@@ -1177,7 +1196,70 @@ namespace MphRead
                         if (entity.Type == EntityType.Object)
                         {
                             ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
+                            if (data.EffectId != 0)
+                            {
+                                if ((data.EffectFlags & 0x40) != 0)
+                                {
+                                    always.Add((meta.Value, data));
+                                }
+                                else if ((data.EffectFlags & 1) != 0)
+                                {
+                                    volume.Add((meta.Value, data));
+                                }
+                                else
+                                {
+                                    animid.Add((meta.Value, data));
+                                }
+                                if ((data.EffectFlags & 0x10) != 0)
+                                {
+                                    toggle.Add((meta.Value, data));
+                                }
+                                if (data.LinkedEntity != UInt16.MaxValue)
+                                {
+                                    mtxptr.Add((meta.Value, data));
+                                }
+                                if ((data.EffectFlags & 2) != 0)
+                                {
+                                    offset.Add((meta.Value, data));
+                                }
+                            }
                         }
+                    }
+                }
+            }
+            //var always = new List<ObjectEntityData>();
+            //var volume = new List<ObjectEntityData>();
+            //var animid = new List<ObjectEntityData>();
+            //var toggle = new List<ObjectEntityData>();
+            //var mtxptr = new List<ObjectEntityData>();
+            //var offset = new List<ObjectEntityData>();
+            foreach ((RoomMetadata meta, ObjectEntityData obj) in always)
+            {
+                string name = Metadata.Effects[(int)obj.EffectId].Name;
+                if (!toggle.Contains((meta, obj)) && !mtxptr.Contains((meta, obj)) && matches.ContainsKey((int)obj.EffectId))
+                {
+                    if (offset.Contains((meta, obj)))
+                    {
+                        Console.WriteLine($"{meta.Name} -{name} - Always, offset");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"{meta.Name} - {name} - Always");
+                    }
+                }
+            }
+            foreach ((RoomMetadata meta, ObjectEntityData obj) in volume)
+            {
+                string name = Metadata.Effects[(int)obj.EffectId].Name;
+                if (!toggle.Contains((meta, obj)) && !mtxptr.Contains((meta, obj)) && matches.ContainsKey((int)obj.EffectId))
+                {
+                    if (offset.Contains((meta, obj)))
+                    {
+                        Console.WriteLine($"{meta.Name} - {name} - Volume, offset");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"{meta.Name} - {name} - Volume");
                     }
                 }
             }

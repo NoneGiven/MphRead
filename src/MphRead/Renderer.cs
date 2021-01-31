@@ -863,8 +863,8 @@ namespace MphRead
         private bool _effectSetupDone = false;
         // ptodo: effect limits
         // in-game: 64 effects, 96 elements, 200 particles
-        private static readonly int _effectElementMax = 96;
-        private static readonly int _effectParticleMax = 200;
+        private static readonly int _effectElementMax = 200;
+        private static readonly int _effectParticleMax = 2000;
 
         private readonly Queue<EffectElementEntry> _inactiveElements = new Queue<EffectElementEntry>(_effectElementMax);
         private readonly List<EffectElementEntry> _activeElements = new List<EffectElementEntry>(_effectElementMax);
@@ -901,6 +901,7 @@ namespace MphRead
             entry.Position = Vector3.Zero;
             entry.Transform = Matrix4.Identity;
             entry.ParticleAmount = 0;
+            entry.Acceleration = element.Acceleration;
             entry.ParticleDefinitions.AddRange(element.Particles);
             _activeElements.Add(entry);
             return entry;
@@ -942,6 +943,7 @@ namespace MphRead
 
         public void SpawnEffect(int effectId, Matrix4 transform)
         {
+            // todo: this should be loaded when the object/whatever is loaded, not when the effect is first spawned
             Effect effect = Read.LoadEffect(effectId);
             var position = new Vector3(transform.Row3);
             foreach (EffectElement elementDef in effect.Elements)
@@ -1104,6 +1106,12 @@ namespace MphRead
                         }
                         particle.MaterialId = element.ParticleDefinitions[particle.ParticleId].MaterialId;
                     }
+                    if (element.Actions.TryGetValue(FuncAction.UpdateParticleSpeed, out info))
+                    {
+                        Vector3 temp = particle.Speed;
+                        particle.InvokeVecFunc(info, times, ref temp);
+                        particle.Speed = temp;
+                    }
                     if (element.Actions.TryGetValue(FuncAction.SetParticleRed, out info))
                     {
                         particle.Red = particle.InvokeFloatFunc(info, times);
@@ -1132,16 +1140,16 @@ namespace MphRead
                     {
                         particle.Rotation = particle.InvokeFloatFunc(info, times);
                     }
+                    // ptodo: frame time scaling for speed/accel
                     if ((element.Flags & 2) != 0)
                     {
                         particle.Speed = new Vector3(
-                            particle.Speed.X + element.Acceleration.X,
-                            particle.Speed.Y + element.Acceleration.Y,
-                            particle.Speed.Z + element.Acceleration.Z
+                            particle.Speed.X + element.Acceleration.X * (1 / 60f),
+                            particle.Speed.Y + element.Acceleration.Y * (1 / 60f),
+                            particle.Speed.Z + element.Acceleration.Z * (1 / 60f)
                         );
                     }
                     Vector3 prevPos = particle.Position;
-                    // ptodo: frame time scaling
                     particle.Position = new Vector3(
                         particle.Position.X + particle.Speed.X * (1 / 60f),
                         particle.Position.Y + particle.Speed.Y * (1 / 60f),
@@ -1634,7 +1642,7 @@ namespace MphRead
                 ? OpenTK.Graphics.OpenGL.PolygonMode.Line
                 : OpenTK.Graphics.OpenGL.PolygonMode.Fill);
 
-            // todo: confirm this works for the other draw functions (i.e., they also just use eff_tex_w/h)
+            // ptodo: confirm this works for the other draw functions (i.e., they also just use eff_tex_w/h)
             // ptodo: need to confirm that all the draw types actually have 4 verts, and that the texcoord/order are always the same, etc.
             float scaleS = 1;
             float scaleT = 1;

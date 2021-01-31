@@ -37,9 +37,9 @@ namespace MphRead.Effects
 
         protected void FxFunc04(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
-            vec.X = param[0];
-            vec.Y = param[1];
-            vec.Z = param[2];
+            vec.X = Fixed.ToFloat(param[0]);
+            vec.Y = Fixed.ToFloat(param[1]);
+            vec.Z = Fixed.ToFloat(param[2]);
         }
 
         protected void FxFunc05(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
@@ -99,9 +99,9 @@ namespace MphRead.Effects
                 percent *= -1;
             }
             float angle = MathHelper.DegreesToRadians(360 * percent);
-            vec.X = MathF.Cos(angle);
+            vec.X = MathF.Sin(angle);
             vec.Y = 0;
-            vec.Z = MathF.Sin(angle);
+            vec.Z = MathF.Cos(angle);
         }
 
         protected void FxFunc14(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
@@ -123,10 +123,10 @@ namespace MphRead.Effects
         {
             float value1 = InvokeFloatFunc(Funcs[(uint)param[0]], times);
             float value2 = InvokeFloatFunc(Funcs[(uint)param[1]], times);
-            float angle = MathHelper.DegreesToRadians(2 * (Test.GetRandomInt1(0xFFFF) >> 4) * (360 / 4096f));
-            vec.X = MathF.Cos(angle) * value1;
+            float angle = MathHelper.DegreesToRadians((Test.GetRandomInt1(0xFFFF) >> 4) * (360 / 4096f));
+            vec.X = MathF.Sin(angle) * value1;
             vec.Y = value2;
-            vec.Z = MathF.Sin(angle) * value1;
+            vec.Z = MathF.Cos(angle) * value1;
         }
 
         protected void FxFunc16(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
@@ -424,7 +424,7 @@ namespace MphRead.Effects
         public int DrawType { get; set; }
         public Vector3 Position { get; set; }
         public Matrix4 Transform { get; set; }
-        public Vector3 Acceleration { get; set; } // ptodo: frame time scaling when this is set
+        public Vector3 Acceleration { get; set; }
         public bool Func39Called { get; set; }
         public float ParticleAmount { get; set; }
 
@@ -634,9 +634,9 @@ namespace MphRead.Effects
         protected override void FxFunc11(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
             float angle = MathHelper.DegreesToRadians(360 * PortionTotal);
-            vec.X = MathF.Cos(angle);
+            vec.X = MathF.Sin(angle);
             vec.Y = 0;
-            vec.Z = MathF.Sin(angle);
+            vec.Z = MathF.Cos(angle);
         }
 
         protected override float FxFunc22(IReadOnlyList<int> param, TimeValues times)
