@@ -869,7 +869,6 @@ namespace MphRead
         private readonly Queue<EffectElementEntry> _inactiveElements = new Queue<EffectElementEntry>(_effectElementMax);
         private readonly List<EffectElementEntry> _activeElements = new List<EffectElementEntry>(_effectElementMax);
         private readonly Queue<EffectParticle> _inactiveParticles = new Queue<EffectParticle>(_effectParticleMax);
-        private readonly List<EffectParticle> _activeParticles = new List<EffectParticle>(_effectParticleMax);
 
         private void AllocateEffects()
         {
@@ -901,6 +900,7 @@ namespace MphRead
             entry.Position = Vector3.Zero;
             entry.Transform = Matrix4.Identity;
             entry.ParticleAmount = 0;
+            entry.Expired = false;
             entry.Acceleration = element.Acceleration;
             entry.ParticleDefinitions.AddRange(element.Particles);
             _activeElements.Add(entry);
@@ -931,13 +931,11 @@ namespace MphRead
             particle.RwField3 = 0;
             particle.RwField4 = 0;
             particle.CreationTime = _elapsedTime;
-            _activeParticles.Add(particle);
             return particle;
         }
 
         private void UnlinkEffectParticle(EffectParticle particle)
         {
-            _activeParticles.Remove(particle);
             _inactiveParticles.Enqueue(particle);
         }
 
@@ -975,18 +973,14 @@ namespace MphRead
             {
                 // ptodo: lifespan/state stuff
                 EffectElementEntry element = _activeElements[i];
-                if (_elapsedTime > element.ExpirationTime)
+                if (!element.Expired && _elapsedTime > element.ExpirationTime)
                 {
                     UnlinkEffectElement(element);
-                    // sktodo: not this
-                    for (int j = 0; j < _activeParticles.Count; j++)
+                    while (element.Particles.Count > 0)
                     {
-                        EffectParticle particle = _activeParticles[j];
-                        if (particle.Owner == element)
-                        {
-                            UnlinkEffectParticle(particle);
-                            j--;
-                        }
+                        EffectParticle particle = element.Particles[0];
+                        element.Particles.Remove(particle);
+                        UnlinkEffectParticle(particle);
                     }
                     i--;
                     continue;
@@ -1010,6 +1004,7 @@ namespace MphRead
                 {
                     Vector3 temp = Vector3.Zero;
                     EffectParticle particle = InitEffectParticle();
+                    element.Particles.Add(particle);
                     particle.Owner = element;
                     particle.SetFuncIds();
                     particle.PortionTotal = portionTotal;
@@ -1077,103 +1072,102 @@ namespace MphRead
                     }
                     portionTotal += 1f / spawnCount;
                 }
-            }
-            // ptodo: structure stuff (map out the goto)
-            for (int i = 0; i < _activeParticles.Count; i++)
-            {
-                // ptodo: lifespan/state stuff
-                EffectParticle particle = _activeParticles[i];
-                EffectElementEntry element = particle.Owner;
-                if (_elapsedTime < particle.ExpirationTime)
+                for (int j = 0; j < element.Particles.Count; j++)
                 {
-                    var times = new TimeValues(_elapsedTime, _elapsedTime - particle.CreationTime, particle.Lifespan);
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleRwField1, out FxFuncInfo? info))
+                    // ptodo: lifespan/state stuff
+                    EffectParticle particle = element.Particles[j];
+                    if (_elapsedTime < particle.ExpirationTime)
                     {
-                        particle.RwField1 = particle.InvokeFloatFunc(info, times);
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleRwField2, out info))
-                    {
-                        particle.RwField2 = particle.InvokeFloatFunc(info, times);
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleRwField3, out info))
-                    {
-                        particle.RwField3 = particle.InvokeFloatFunc(info, times);
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleRwField4, out info))
-                    {
-                        particle.RwField4 = particle.InvokeFloatFunc(info, times);
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleId, out info))
-                    {
-                        particle.ParticleId = (int)particle.InvokeFloatFunc(info, times);
-                        if (particle.ParticleId >= element.ParticleDefinitions.Count)
+                        times = new TimeValues(_elapsedTime, _elapsedTime - particle.CreationTime, particle.Lifespan);
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField1, out info))
                         {
-                            particle.ParticleId = element.ParticleDefinitions.Count - 1;
+                            particle.RwField1 = particle.InvokeFloatFunc(info, times);
                         }
-                        particle.MaterialId = element.ParticleDefinitions[particle.ParticleId].MaterialId;
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.UpdateParticleSpeed, out info))
-                    {
-                        Vector3 temp = particle.Speed;
-                        particle.InvokeVecFunc(info, times, ref temp);
-                        particle.Speed = temp;
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleRed, out info))
-                    {
-                        particle.Red = particle.InvokeFloatFunc(info, times);
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleGreen, out info))
-                    {
-                        particle.Green = particle.InvokeFloatFunc(info, times);
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleBlue, out info))
-                    {
-                        particle.Blue = particle.InvokeFloatFunc(info, times);
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleAlpha, out info))
-                    {
-                        particle.Alpha = particle.InvokeFloatFunc(info, times);
-                        if (particle.Alpha < 0)
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField2, out info))
                         {
-                            particle.Alpha = 0;
+                            particle.RwField2 = particle.InvokeFloatFunc(info, times);
                         }
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleScale, out info))
-                    {
-                        particle.Scale = particle.InvokeFloatFunc(info, times);
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleRotation, out info))
-                    {
-                        particle.Rotation = particle.InvokeFloatFunc(info, times);
-                    }
-                    // ptodo: frame time scaling for speed/accel
-                    if ((element.Flags & 2) != 0)
-                    {
-                        particle.Speed = new Vector3(
-                            particle.Speed.X + element.Acceleration.X * (1 / 60f),
-                            particle.Speed.Y + element.Acceleration.Y * (1 / 60f),
-                            particle.Speed.Z + element.Acceleration.Z * (1 / 60f)
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField3, out info))
+                        {
+                            particle.RwField3 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField4, out info))
+                        {
+                            particle.RwField4 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleId, out info))
+                        {
+                            particle.ParticleId = (int)particle.InvokeFloatFunc(info, times);
+                            if (particle.ParticleId >= element.ParticleDefinitions.Count)
+                            {
+                                particle.ParticleId = element.ParticleDefinitions.Count - 1;
+                            }
+                            particle.MaterialId = element.ParticleDefinitions[particle.ParticleId].MaterialId;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.UpdateParticleSpeed, out info))
+                        {
+                            Vector3 temp = particle.Speed;
+                            particle.InvokeVecFunc(info, times, ref temp);
+                            particle.Speed = temp;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRed, out info))
+                        {
+                            particle.Red = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleGreen, out info))
+                        {
+                            particle.Green = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleBlue, out info))
+                        {
+                            particle.Blue = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleAlpha, out info))
+                        {
+                            particle.Alpha = particle.InvokeFloatFunc(info, times);
+                            if (particle.Alpha < 0)
+                            {
+                                particle.Alpha = 0;
+                            }
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleScale, out info))
+                        {
+                            particle.Scale = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRotation, out info))
+                        {
+                            particle.Rotation = particle.InvokeFloatFunc(info, times);
+                        }
+                        // ptodo: frame time scaling for speed/accel
+                        if ((element.Flags & 2) != 0)
+                        {
+                            particle.Speed = new Vector3(
+                                particle.Speed.X + element.Acceleration.X * (1 / 60f),
+                                particle.Speed.Y + element.Acceleration.Y * (1 / 60f),
+                                particle.Speed.Z + element.Acceleration.Z * (1 / 60f)
+                            );
+                        }
+                        Vector3 prevPos = particle.Position;
+                        particle.Position = new Vector3(
+                            particle.Position.X + particle.Speed.X * (1 / 60f),
+                            particle.Position.Y + particle.Speed.Y * (1 / 60f),
+                            particle.Position.Z + particle.Speed.Z * (1 / 60f)
                         );
+                        if ((element.Flags & 0x40) != 0)
+                        {
+                            // ptodo: collision check between previous and new positions
+                        }
                     }
-                    Vector3 prevPos = particle.Position;
-                    particle.Position = new Vector3(
-                        particle.Position.X + particle.Speed.X * (1 / 60f),
-                        particle.Position.Y + particle.Speed.Y * (1 / 60f),
-                        particle.Position.Z + particle.Speed.Z * (1 / 60f)
-                    );
-                    if ((element.Flags & 0x40) != 0)
+                    else
                     {
-                        // ptodo: collision check between previous and new positions
+                        if ((element.Flags & 0x80) != 0)
+                        {
+                            // ptodo: spawn child effect
+                        }
+                        element.Particles.Remove(particle);
+                        UnlinkEffectParticle(particle);
+                        j--;
                     }
-                }
-                else
-                {
-                    if ((element.Flags & 0x80) != 0)
-                    {
-                        // ptodo: spawn child effect
-                    }
-                    UnlinkEffectParticle(particle);
-                    i--;
                 }
             }
         }
@@ -1280,22 +1274,26 @@ namespace MphRead
             {
                 ProcessEffects();
             }
-            for (int i = 0; i < _activeParticles.Count; i++)
+            for (int i = 0; i < _activeElements.Count; i++)
             {
-                EffectParticle particle = _activeParticles[i];
-                Matrix4 matrix = _viewMatrix;
-                if ((particle.Owner.Flags & 1) != 0)
+                EffectElementEntry element = _activeElements[i];
+                for (int j = 0; j < element.Particles.Count; j++)
                 {
-                    matrix = particle.Owner.Transform * matrix;
-                }
-                particle.InvokeSetVecsFunc(matrix);
-                // ptodo: confirm we actually don't need the scale factor (and is it the same for the "3" case?)
-                particle.InvokeDrawFunc(1);
-                if (particle.ShouldDraw)
-                {
-                    var meshInfo = new MeshInfo(particle, particle.Owner.Model.Materials[particle.MaterialId], polygonId++, particle.Alpha);
-                    _nonDecalMeshes.Add(meshInfo);
-                    _translucentMeshes.Add(meshInfo);
+                    EffectParticle particle = element.Particles[j];
+                    Matrix4 matrix = _viewMatrix;
+                    if ((particle.Owner.Flags & 1) != 0)
+                    {
+                        matrix = particle.Owner.Transform * matrix;
+                    }
+                    particle.InvokeSetVecsFunc(matrix);
+                    // ptodo: confirm we actually don't need the scale factor (and is it the same for the "3" case?)
+                    particle.InvokeDrawFunc(1);
+                    if (particle.ShouldDraw)
+                    {
+                        var meshInfo = new MeshInfo(particle, particle.Owner.Model.Materials[particle.MaterialId], polygonId++, particle.Alpha);
+                        _nonDecalMeshes.Add(meshInfo);
+                        _translucentMeshes.Add(meshInfo);
+                    }
                 }
             }
 

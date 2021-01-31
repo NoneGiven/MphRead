@@ -413,6 +413,11 @@ namespace MphRead.Effects
         }
     }
 
+    public class EffectEntry
+    {
+        // sktodo
+    }
+
     public class EffectElementEntry : EffectFuncBase
     {
         public float CreationTime { get; set; }
@@ -427,10 +432,13 @@ namespace MphRead.Effects
         public Vector3 Acceleration { get; set; }
         public bool Func39Called { get; set; }
         public float ParticleAmount { get; set; }
+        public bool Expired { get; set; }
 
         public List<Particle> ParticleDefinitions { get; } = new List<Particle>();
         public List<int> TextureBindingIds { get; } = new List<int>();
+        public List<EffectParticle> Particles { get; } = new List<EffectParticle>(); // todo: pre-size?
 
+        public EffectEntry? EffectEntry { get; set; }
         [NotNull, DisallowNull]
         public Model? Model { get; set; }
 
