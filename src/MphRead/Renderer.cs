@@ -971,115 +971,146 @@ namespace MphRead
         {
             for (int i = 0; i < _activeElements.Count; i++)
             {
-                // ptodo: lifespan/state stuff
                 EffectElementEntry element = _activeElements[i];
                 if (!element.Expired && _elapsedTime > element.ExpirationTime)
                 {
-                    UnlinkEffectElement(element);
-                    while (element.Particles.Count > 0)
+                    if (element.EffectEntry == null && (element.Flags & 0x10) == 0)
                     {
-                        EffectParticle particle = element.Particles[0];
-                        element.Particles.Remove(particle);
-                        UnlinkEffectParticle(particle);
+                        UnlinkEffectElement(element);
+                        while (element.Particles.Count > 0)
+                        {
+                            EffectParticle particle = element.Particles[0];
+                            element.Particles.Remove(particle);
+                            UnlinkEffectParticle(particle);
+                        }
+                        i--;
+                        continue;
                     }
-                    i--;
-                    continue;
+                    element.Expired = true;
                 }
-                var times = new TimeValues(_elapsedTime, _elapsedTime - element.CreationTime, element.Lifespan);
-                if (element.Actions.TryGetValue(FuncAction.IncreaseParticleAmount, out FxFuncInfo? info))
+                if (element.Expired)
                 {
-                    // ptodo: frame time scaling
-                    float amount = element.InvokeFloatFunc(info, times);
-                    // ptodo: confirm this hack works ("first frame spawn")
-                    if (info.FuncId != 40)
+                    // if EffectEntry is non-null, keep the element alive indefinitely;
+                    // else (if bit 4 of Flags is set), keep the element alive until its particles have all expired
+                    if (element.EffectEntry == null && element.Particles.Count == 0)
                     {
-                        amount /= 2;
+                        UnlinkEffectElement(element);
+                        i--;
+                        continue;
                     }
-                    element.ParticleAmount += amount;
                 }
-                int spawnCount = (int)MathF.Floor(element.ParticleAmount);
-                element.ParticleAmount -= spawnCount;
-                float portionTotal = 0;
-                for (int j = 0; j < spawnCount; j++)
+                else
                 {
-                    Vector3 temp = Vector3.Zero;
-                    EffectParticle particle = InitEffectParticle();
-                    element.Particles.Add(particle);
-                    particle.Owner = element;
-                    particle.SetFuncIds();
-                    particle.PortionTotal = portionTotal;
-                    particle.MaterialId = element.ParticleDefinitions[0].MaterialId;
-                    if (element.Actions.TryGetValue(FuncAction.SetNewParticlePosition, out info))
+                    if ((element.Flags & 0x80000) != 0)
                     {
-                        particle.InvokeVecFunc(info, times, ref temp);
-                        particle.Position = temp;
+                        if (_elapsedTime - element.CreationTime > element.BufferTime)
+                        {
+                            element.CreationTime += element.BufferTime - element.DrainTime;
+                            element.ExpirationTime += element.BufferTime - element.DrainTime;
+                        }
                     }
-                    if (element.Actions.TryGetValue(FuncAction.SetNewParticleSpeed, out info))
+                    var times = new TimeValues(_elapsedTime, _elapsedTime - element.CreationTime, element.Lifespan);
+                    // ptodo: mtxptr stuff
+                    if (element.Actions.TryGetValue(FuncAction.IncreaseParticleAmount, out FxFuncInfo? info))
                     {
-                        particle.InvokeVecFunc(info, times, ref temp);
-                        particle.Speed = temp;
+                        // ptodo: confirm this hack works ("first frame spawn")
+                        float amount = element.InvokeFloatFunc(info, times);
+                        if (info.FuncId != 40)
+                        {
+                            amount /= 2;
+                        }
+                        element.ParticleAmount += amount;
                     }
-                    // todo: need to handle this bit being set
-                    if ((element.Flags & 1) == 0)
+                    int spawnCount = (int)MathF.Floor(element.ParticleAmount);
+                    element.ParticleAmount -= spawnCount;
+                    float portionTotal = 0;
+                    for (int j = 0; j < spawnCount; j++)
                     {
-                        particle.Position = Matrix.Vec3MultMtx4(particle.Position, element.Transform);
-                        particle.Speed = Matrix.Vec3MultMtx3(particle.Speed, element.Transform);
+                        Vector3 temp = Vector3.Zero;
+                        EffectParticle particle = InitEffectParticle();
+                        element.Particles.Add(particle);
+                        particle.Owner = element;
+                        particle.SetFuncIds();
+                        particle.PortionTotal = portionTotal;
+                        particle.MaterialId = element.ParticleDefinitions[0].MaterialId;
+                        if (element.Actions.TryGetValue(FuncAction.SetNewParticlePosition, out info))
+                        {
+                            particle.InvokeVecFunc(info, times, ref temp);
+                            particle.Position = temp;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetNewParticleSpeed, out info))
+                        {
+                            particle.InvokeVecFunc(info, times, ref temp);
+                            particle.Speed = temp;
+                        }
+                        if ((element.Flags & 1) == 0)
+                        {
+                            particle.Position = Matrix.Vec3MultMtx4(particle.Position, element.Transform);
+                            particle.Speed = Matrix.Vec3MultMtx3(particle.Speed, element.Transform);
+                        }
+                        // todo: these should really just be FxFuncInfo properties instead of a dictionary
+                        // --> still need the dictionary for the offset lookups, though
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRoField1, out info))
+                        {
+                            particle.RoField1 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRoField2, out info))
+                        {
+                            particle.RoField2 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRoField3, out info))
+                        {
+                            particle.RoField3 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRoField4, out info))
+                        {
+                            particle.RoField4 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField1, out info))
+                        {
+                            particle.RwField1 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField2, out info))
+                        {
+                            particle.RwField2 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField3, out info))
+                        {
+                            particle.RwField3 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField4, out info))
+                        {
+                            particle.RwField4 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetNewParticleLifespan, out info))
+                        {
+                            var tempTimes = new TimeValues(_elapsedTime, 1.0f, element.Lifespan);
+                            particle.Lifespan = particle.InvokeFloatFunc(info, tempTimes);
+                            particle.ExpirationTime = particle.CreationTime + particle.Lifespan;
+                        }
+                        else
+                        {
+                            particle.Lifespan = element.Lifespan;
+                            particle.ExpirationTime = element.ExpirationTime;
+                        }
+                        portionTotal += 1f / spawnCount;
                     }
-                    // todo: these should really just be FxFuncInfo properties instead of a dictionary
-                    // --> still need the dictionary for the offset lookups, though
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleRoField1, out info))
-                    {
-                        particle.RoField1 = particle.InvokeFloatFunc(info, times);
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleRoField2, out info))
-                    {
-                        particle.RoField2 = particle.InvokeFloatFunc(info, times);
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleRoField3, out info))
-                    {
-                        particle.RoField3 = particle.InvokeFloatFunc(info, times);
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleRoField4, out info))
-                    {
-                        particle.RoField4 = particle.InvokeFloatFunc(info, times);
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleRwField1, out info))
-                    {
-                        particle.RwField1 = particle.InvokeFloatFunc(info, times);
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleRwField2, out info))
-                    {
-                        particle.RwField2 = particle.InvokeFloatFunc(info, times);
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleRwField3, out info))
-                    {
-                        particle.RwField3 = particle.InvokeFloatFunc(info, times);
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetParticleRwField4, out info))
-                    {
-                        particle.RwField4 = particle.InvokeFloatFunc(info, times);
-                    }
-                    if (element.Actions.TryGetValue(FuncAction.SetNewParticleLifespan, out info))
-                    {
-                        var tempTimes = new TimeValues(_elapsedTime, 1.0f, element.Lifespan);
-                        particle.Lifespan = particle.InvokeFloatFunc(info, tempTimes);
-                        particle.ExpirationTime = particle.CreationTime + particle.Lifespan;
-                    }
-                    else
-                    {
-                        particle.Lifespan = element.Lifespan;
-                        particle.ExpirationTime = element.ExpirationTime;
-                    }
-                    portionTotal += 1f / spawnCount;
                 }
                 for (int j = 0; j < element.Particles.Count; j++)
                 {
-                    // ptodo: lifespan/state stuff
                     EffectParticle particle = element.Particles[j];
+                    if ((element.Flags & 0x80000) != 0 && (element.Flags & 0x20) != 0)
+                    {
+                        if (_elapsedTime - particle.CreationTime > element.BufferTime)
+                        {
+                            particle.CreationTime += element.BufferTime - element.DrainTime;
+                            particle.ExpirationTime += element.BufferTime - element.DrainTime;
+                        }
+                    }
                     if (_elapsedTime < particle.ExpirationTime)
                     {
-                        times = new TimeValues(_elapsedTime, _elapsedTime - particle.CreationTime, particle.Lifespan);
-                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField1, out info))
+                        var times = new TimeValues(_elapsedTime, _elapsedTime - particle.CreationTime, particle.Lifespan);
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField1, out FxFuncInfo? info))
                         {
                             particle.RwField1 = particle.InvokeFloatFunc(info, times);
                         }
