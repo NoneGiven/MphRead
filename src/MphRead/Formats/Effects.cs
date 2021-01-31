@@ -830,11 +830,6 @@ namespace MphRead.Effects
             }
         }
 
-        private void DrawB4(float scaleFactor)
-        {
-            // todo
-        }
-
         private void DrawB8(float scaleFactor)
         {
             // todo
@@ -849,11 +844,6 @@ namespace MphRead.Effects
                 EffectVec1 = Vector3.Normalize(Speed);
                 DrawShared(scaleFactor, skipIfZeroSpeed: true);
             }
-        }
-
-        private void DrawC8(float scaleFactor)
-        {
-            // todo: draw_single_node for geo1 effects -- need model/node references
         }
 
         private void DrawCC(float scaleFactor)
@@ -928,7 +918,7 @@ namespace MphRead.Effects
 
         private void DrawDC(float scaleFactor)
         {
-            // todo
+            // todo: draw_single_node for geo1 effects -- need model/node references
         }
 
         private void DrawShared(float scaleFactor, bool skipIfZeroSpeed)
@@ -941,7 +931,7 @@ namespace MphRead.Effects
             switch (DrawId)
             {
             case 1:
-                DrawB4(scaleFactor);
+                DrawB8(scaleFactor: 3);
                 break;
             case 2:
                 DrawB8(scaleFactor);
@@ -950,7 +940,7 @@ namespace MphRead.Effects
                 DrawC4(scaleFactor);
                 break;
             case 4:
-                DrawC8(scaleFactor);
+                DrawCC(scaleFactor: 3);
                 break;
             case 5:
                 DrawCC(scaleFactor);

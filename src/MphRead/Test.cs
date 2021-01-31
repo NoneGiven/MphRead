@@ -81,35 +81,6 @@ namespace MphRead
 
         public static void TestEffects()
         {
-            var funcs = new Dictionary<FuncAction, HashSet<uint>>();
-            var ids = new List<FuncAction>()
-            {
-                FuncAction.SetParticleId,
-                FuncAction.IncreaseParticleAmount,
-                FuncAction.SetNewParticleSpeed,
-                FuncAction.SetNewParticlePosition,
-                FuncAction.SetNewParticleLifespan,
-                FuncAction.UpdateParticleSpeed,
-                FuncAction.SetParticleAlpha,
-                FuncAction.SetParticleRed,
-                FuncAction.SetParticleGreen,
-                FuncAction.SetParticleBlue,
-                FuncAction.SetParticleScale,
-                FuncAction.SetParticleRotation,
-                FuncAction.SetParticleRoField1,
-                FuncAction.SetParticleRoField2,
-                FuncAction.SetParticleRoField3,
-                FuncAction.SetParticleRoField4,
-                FuncAction.SetParticleRwField1,
-                FuncAction.SetParticleRwField2,
-                FuncAction.SetParticleRwField3,
-                FuncAction.SetParticleRwField4
-            };
-            foreach (FuncAction id in ids)
-            {
-                funcs.Add(id, new HashSet<uint>());
-            }
-            using var file = new StreamWriter(File.OpenWrite("temp.txt"));
             foreach ((string name, string? archive) in Metadata.Effects)
             {
                 if (name != "" && name != "sparksFall" && name != "mortarSecondary" && name != "powerBeamChargeNoSplatMP")
@@ -117,20 +88,6 @@ namespace MphRead
                     Effect effect = Read.LoadEffect(name, archive);
                     foreach (EffectElement element in effect.Elements)
                     {
-                        foreach (FuncAction id in ids)
-                        {
-                            foreach (KeyValuePair<FuncAction, FxFuncInfo> func in element.Actions.Where(f => f.Key == id))
-                            {
-                                funcs[id].Add(func.Value.FuncId);
-                            }
-                        }
-                        foreach (KeyValuePair<FuncAction, FxFuncInfo> func in element.Actions.Where(f => f.Key == FuncAction.IncreaseParticleAmount))
-                        {
-                            if (func.Value.FuncId == 49)
-                            {
-                                Debugger.Break();
-                            }
-                        }
                     }
                 }
             }
@@ -1158,6 +1115,25 @@ namespace MphRead
 
         public static void TestAllEntities()
         {
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                if (meta.Value.EntityPath != null)
+                {
+                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
+                    foreach (Entity entity in entities)
+                    {
+                        if (entity.Type == EntityType.Object)
+                        {
+                            ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
+                        }
+                    }
+                }
+            }
+            Nop();
+        }
+
+        public static void TestEntityEffects()
+        {
             var matches = new Dictionary<int, Effect>();
             for (int i = 0; i < Metadata.Effects.Count; i++)
             {
@@ -1227,12 +1203,6 @@ namespace MphRead
                     }
                 }
             }
-            //var always = new List<ObjectEntityData>();
-            //var volume = new List<ObjectEntityData>();
-            //var animid = new List<ObjectEntityData>();
-            //var toggle = new List<ObjectEntityData>();
-            //var mtxptr = new List<ObjectEntityData>();
-            //var offset = new List<ObjectEntityData>();
             foreach ((RoomMetadata meta, ObjectEntityData obj) in always)
             {
                 string name = Metadata.Effects[(int)obj.EffectId].Name;
