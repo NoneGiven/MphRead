@@ -175,9 +175,6 @@ namespace MphRead.Models
             }
         }
 
-        // sktodo: remove debug code
-        private bool _once = false;
-
         public override void Process(RenderWindow renderer, double elapsedTime, long frameCount, Vector3 cameraPosition,
             Matrix4 viewInvRot, Matrix4 viewInvRotY, bool useTransform)
         {
@@ -199,7 +196,8 @@ namespace MphRead.Models
                 {
                     if ((_entity.Data.EffectFlags & 1) != 0)
                     {
-                        processEffect = true; // todo: check if camera is inside volume
+                        // todo: add an option to disable this check
+                        processEffect = EffectVolume.TestPoint(cameraPosition);
                     }
                     else
                     {
@@ -232,16 +230,17 @@ namespace MphRead.Models
                             {
                                 // todo: random position offset stuff
                             }
-                            //renderer.SpawnEffect((int)_entity.Data.EffectId, Transform);
-                            if (!_once)
-                            {
-                                _once = true;
-                                _effectEntry = renderer.SpawnEffectGetEntry(181, Transform);
-                                foreach (EffectElementEntry element in _effectEntry.Elements)
-                                {
-                                    element.Flags |= 0x80000;
-                                }
-                            }
+                            renderer.SpawnEffect((int)_entity.Data.EffectId, Transform);
+                            // sktodo: remove debug code
+                            //if (!_once)
+                            //{
+                            //    _once = true;
+                            //    _effectEntry = renderer.SpawnEffectGetEntry(181, Transform);
+                            //    foreach (EffectElementEntry element in _effectEntry.Elements)
+                            //    {
+                            //        element.Flags |= 0x80000;
+                            //    }
+                            //}
                         }
                         _effectIntervalTimer = (int)_entity.Data.EffectInterval;
                     }
@@ -257,6 +256,8 @@ namespace MphRead.Models
                 }
             }
         }
+
+        private bool _once = false;
     }
 
     public class ForceFieldLockModel : Model

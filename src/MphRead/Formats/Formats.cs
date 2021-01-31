@@ -673,6 +673,41 @@ namespace MphRead
             SpherePosition = pos;
             SphereRadius = rad;
         }
+
+        public bool TestPoint(Vector3 point)
+        {
+            if (Type == VolumeType.Box)
+            {
+                Vector3 difference = point - BoxPosition;
+                float dot1 = Vector3.Dot(BoxVector1, difference);
+                if (dot1 >= 0 && dot1 <= BoxDot1)
+                {
+                    float dot2 = Vector3.Dot(BoxVector2, difference);
+                    if (dot2 >= 0 && dot2 <= BoxDot2)
+                    {
+                        float dot3 = Vector3.Dot(BoxVector3, difference);
+                        return dot3 >= 0 && dot3 <= BoxDot3;
+                    }
+                }
+            }
+            else if (Type == VolumeType.Cylinder)
+            {
+                Vector3 bottom = CylinderPosition;
+                Vector3 top = bottom + CylinderVector * CylinderDot;
+                if (Vector3.Dot(point - bottom, top - bottom) >= 0)
+                {
+                    if (Vector3.Dot(point - top, top - bottom) <= 0)
+                    {
+                        return Vector3.Cross(point - bottom, top - bottom).Length / (top - bottom).Length <= CylinderRadius;
+                    }
+                }
+            }
+            else if (Type == VolumeType.Sphere)
+            {
+                return Vector3.Distance(SpherePosition, point) <= SphereRadius;
+            }
+            return false;
+        }
     }
 
     // todo: volumes should already be transformed by the entities, so we won't need to do it here
@@ -698,41 +733,6 @@ namespace MphRead
         }
 
         public abstract Vector3? GetColor(int index);
-
-        public bool TestPoint(Vector3 point)
-        {
-            if (Volume.Type == VolumeType.Box)
-            {
-                Vector3 difference = point - Volume.BoxPosition;
-                float dot1 = Vector3.Dot(Volume.BoxVector1, difference);
-                if (dot1 >= 0 && dot1 <= Volume.BoxDot1)
-                {
-                    float dot2 = Vector3.Dot(Volume.BoxVector2, difference);
-                    if (dot2 >= 0 && dot2 <= Volume.BoxDot2)
-                    {
-                        float dot3 = Vector3.Dot(Volume.BoxVector3, difference);
-                        return dot3 >= 0 && dot3 <= Volume.BoxDot3;
-                    }
-                }
-            }
-            else if (Volume.Type == VolumeType.Cylinder)
-            {
-                Vector3 bottom = Volume.CylinderPosition;
-                Vector3 top = bottom + Volume.CylinderVector * Volume.CylinderDot;
-                if (Vector3.Dot(point - bottom, top - bottom) >= 0)
-                {
-                    if (Vector3.Dot(point - top, top - bottom) <= 0)
-                    {
-                        return Vector3.Cross(point - bottom, top - bottom).Length / (top - bottom).Length <= Volume.CylinderRadius;
-                    }
-                }
-            }
-            else if (Volume.Type == VolumeType.Sphere)
-            {
-                return Vector3.Distance(Volume.SpherePosition, point) <= Volume.SphereRadius;
-            }
-            return false;
-        }
     }
 
     public class MorphCameraDisplay : DisplayVolume

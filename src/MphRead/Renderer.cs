@@ -1505,7 +1505,7 @@ namespace MphRead
             Vector3? color = volume.GetColor(_showVolumes);
             if (color != null)
             {
-                GL.CullFace(volume.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
+                GL.CullFace(volume.Volume.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
                 Matrix4 transform = Matrix4.Identity;
                 GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
                 GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(color.Value, 0.5f));
@@ -1826,7 +1826,7 @@ namespace MphRead
             float frames = (float)elapsedTime * 30;
             foreach (LightSource lightSource in _lightSources)
             {
-                if (lightSource.TestPoint(model.Position))
+                if (lightSource.Volume.TestPoint(model.Position))
                 {
                     if (lightSource.Light1Enabled)
                     {
