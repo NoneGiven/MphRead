@@ -981,9 +981,23 @@ namespace MphRead
                     element.EffectEntry = entry;
                     entry.Elements.Add(element);
                 }
-                // ptodo: flags and unit vector stuff
                 element.Position = position;
-                element.Transform = transform;
+                if ((element.Flags & 8) != 0)
+                {
+                    Vector3 vec1 = Vector3.UnitY;
+                    Vector3 vec2 = Vector3.UnitX;
+                    Matrix3 temp = SceneSetup.GetTransformMatrix(vec2, vec1);
+                    transform = new Matrix4(
+                        new Vector4(temp.Row0),
+                        new Vector4(temp.Row1),
+                        new Vector4(temp.Row2),
+                        new Vector4(position, 1)
+                    );
+                }
+                else
+                {
+                    element.Transform = transform;
+                }
                 for (int i = 0; i < elementDef.Particles.Count; i++)
                 {
                     Particle particleDef = elementDef.Particles[i];

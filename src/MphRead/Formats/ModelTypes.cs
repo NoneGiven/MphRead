@@ -226,16 +226,27 @@ namespace MphRead.Models
                         else if ((_entity.Data.EffectOnIntervals & (1 << _effectIntervalIndex)) != 0)
                         {
                             // ptodo: mtxptr stuff
+                            Matrix4 spawnTransform = Transform;
                             if ((_entity.Data.EffectFlags & 2) != 0)
                             {
-                                // ptodo: random position offset stuff
+                                Vector3 offset = _entity.Data.EffectPositionOffset.ToFloatVector();
+                                offset.X *= Fixed.ToFloat(2 * (Test.GetRandomInt1(0x1000u) - 2048));
+                                offset.Y *= Fixed.ToFloat(2 * (Test.GetRandomInt1(0x1000u) - 2048));
+                                offset.Z *= Fixed.ToFloat(2 * (Test.GetRandomInt1(0x1000u) - 2048));
+                                offset = Matrix.Vec3MultMtx3(offset, Transform.ClearScale());
+                                spawnTransform = new Matrix4(
+                                    spawnTransform.Row0,
+                                    spawnTransform.Row1,
+                                    spawnTransform.Row2,
+                                    new Vector4(offset) + spawnTransform.Row3
+                                );
                             }
-                            renderer.SpawnEffect((int)_entity.Data.EffectId, Transform);
+                            renderer.SpawnEffect((int)_entity.Data.EffectId, spawnTransform);
                             // sktodo: remove debug code
                             //if (!_once)
                             //{
                             //    _once = true;
-                            //    _effectEntry = renderer.SpawnEffectGetEntry(181, Transform);
+                            //    _effectEntry = renderer.SpawnEffectGetEntry(181, spawnTransform);
                             //    foreach (EffectElementEntry element in _effectEntry.Elements)
                             //    {
                             //        element.Flags |= 0x80000;
