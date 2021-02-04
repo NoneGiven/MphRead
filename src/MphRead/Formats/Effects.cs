@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using OpenTK.Mathematics;
 
@@ -88,11 +87,14 @@ namespace MphRead.Effects
 
         protected void FxFunc13(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
-            Debug.Assert(false, "FxFunc13 was called");
-            // note: some weirdness with the param list -- params[1] instead of *(*params + 4) -- but this function is unused
-            FxFuncInfo funcInfo = Funcs[(uint)param[0]];
-            FxFuncInfo paramInfo = Funcs[(uint)param[1]];
-            float value = InvokeFloatFunc(funcInfo.FuncId, paramInfo.Parameters, times);
+            // todo: revisit this hack
+            // --> storing the param offsets seems like overkill since only this function needs it, but this isn't great either
+            uint offset = (uint)param[1];
+            while (!Funcs.ContainsKey(offset))
+            {
+                offset += 4;
+            }
+            float value = InvokeFloatFunc((uint)param[0], Funcs[offset].Parameters, times);
             float percent = times.Elapsed / value;
             if (value < 0)
             {
@@ -411,6 +413,78 @@ namespace MphRead.Effects
                 _ => throw new ProgramException("Invalid effect func.")
             };
         }
+
+        public static (int, int) GetFuncIds(uint flags, int drawType)
+        {
+            int drawId;
+            int setVecsId;
+            if ((flags & 4) != 0)
+            {
+                drawId = 7;
+                setVecsId = (drawType == 3 ? 4 : 5);
+            }
+            else
+            {
+                switch (drawType)
+                {
+                case 1:
+                    setVecsId = 1;
+                    if ((flags & 1) != 0)
+                    {
+                        drawId = 1;
+                    }
+                    else
+                    {
+                        drawId = 2;
+                    }
+                    break;
+                case 2:
+                    setVecsId = 2;
+                    if ((flags & 1) != 0)
+                    {
+                        drawId = 1;
+                    }
+                    else
+                    {
+                        drawId = 2;
+                    }
+                    break;
+                case 3:
+                    setVecsId = 3;
+                    drawId = 3;
+                    break;
+                case 4:
+                    setVecsId = 1;
+                    if ((flags & 1) != 0)
+                    {
+                        drawId = 4;
+                    }
+                    else
+                    {
+                        drawId = 5;
+                    }
+                    break;
+                case 5:
+                    setVecsId = 2;
+                    if ((flags & 1) != 0)
+                    {
+                        drawId = 4;
+                    }
+                    else
+                    {
+                        drawId = 5;
+                    }
+                    break;
+                case 6:
+                    setVecsId = 3;
+                    drawId = 6;
+                    break;
+                default:
+                    throw new ProgramException("Invalid draw type.");
+                }
+            }
+            return (setVecsId, drawId);
+        }
     }
 
     public class EffectEntry
@@ -421,6 +495,8 @@ namespace MphRead.Effects
 
     public class EffectElementEntry : EffectFuncBase
     {
+        public string EffectName { get; set; } = "";
+        public string ElementName { get; set; } = "";
         public float CreationTime { get; set; }
         public float ExpirationTime { get; set; }
         public float DrainTime { get; set; }
@@ -963,71 +1039,7 @@ namespace MphRead.Effects
 
         public void SetFuncIds()
         {
-            if ((Owner.Flags & 4) != 0)
-            {
-                DrawId = 7;
-                SetVecsId = (Owner.DrawType == 3 ? 4 : 5);
-            }
-            else
-            {
-                switch (Owner.DrawType)
-                {
-                case 1:
-                    SetVecsId = 1;
-                    if ((Owner.Flags & 1) != 0)
-                    {
-                        DrawId = 1;
-                    }
-                    else
-                    {
-                        DrawId = 2;
-                    }
-                    break;
-                case 2:
-                    SetVecsId = 2;
-                    if ((Owner.Flags & 1) != 0)
-                    {
-                        DrawId = 1;
-                    }
-                    else
-                    {
-                        DrawId = 2;
-                    }
-                    break;
-                case 3:
-                    SetVecsId = 3;
-                    DrawId = 3;
-                    break;
-                case 4:
-                    SetVecsId = 1;
-                    if ((Owner.Flags & 1) != 0)
-                    {
-                        DrawId = 4;
-                    }
-                    else
-                    {
-                        DrawId = 5;
-                    }
-                    break;
-                case 5:
-                    SetVecsId = 2;
-                    if ((Owner.Flags & 1) != 0)
-                    {
-                        DrawId = 4;
-                    }
-                    else
-                    {
-                        DrawId = 5;
-                    }
-                    break;
-                case 6:
-                    SetVecsId = 3;
-                    DrawId = 6;
-                    break;
-                default:
-                    throw new ProgramException("Invalid draw type.");
-                }
-            }
+            (SetVecsId, DrawId) = GetFuncIds(Owner.Flags, Owner.DrawType);
         }
     }
 }
