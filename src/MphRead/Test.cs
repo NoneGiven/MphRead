@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using MphRead.Effects;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
@@ -81,49 +82,23 @@ namespace MphRead
 
         public static void TestEffects()
         {
-            var set = new Dictionary<Effect, List<EffectElement>>();
-            var cleared = new Dictionary<Effect, List<EffectElement>>();
             foreach ((string name, string? archive) in Metadata.Effects)
             {
                 if (name != "" && name != "sparksFall" && name != "mortarSecondary" && name != "powerBeamChargeNoSplatMP")
                 {
                     Effect effect = Read.LoadEffect(name, archive);
-                    if (!effect.Elements.Any(e => e.DrawType != 4)
-                        && effect.Elements.Any(e => (e.Flags & 1) == 0 && (e.Flags & 4) == 0)
-                        && effect.Elements.Any(e => (e.Flags & 1) != 0 && (e.Flags & 4) == 0))
-                    {
-                        Console.WriteLine(effect.Name);
-                    }
                     foreach (EffectElement element in effect.Elements)
                     {
-                        if (element.DrawType == 4)
+                        var nodes = new HashSet<Node>();
+                        foreach (Particle particle in element.Particles)
                         {
-                            if ((element.Flags & 1) != 0)
-                            {
-                                if (!set.ContainsKey(effect))
-                                {
-                                    set.Add(effect, new List<EffectElement>());
-                                }
-                                set[effect].Add(element);
-                            }
-                            else
-                            {
-                                if (!cleared.ContainsKey(effect))
-                                {
-                                    cleared.Add(effect, new List<EffectElement>());
-                                }
-                                cleared[effect].Add(element);
-                            }
+                            nodes.Add(particle.Node);
+                        }
+                        if (nodes.Count != 1)
+                        {
+                            Debugger.Break();
                         }
                     }
-                }
-            }
-            Console.WriteLine();
-            foreach (Effect effect in set.Keys)
-            {
-                if (cleared.ContainsKey(effect))
-                {
-                    Console.WriteLine(effect.Name);
                 }
             }
             Nop();
@@ -1169,36 +1144,19 @@ namespace MphRead
 
         public static void TestEntityEffects()
         {
-            var matches = new Dictionary<int, Effect>();
+            var effects = new Dictionary<int, Effect>();
             for (int i = 0; i < Metadata.Effects.Count; i++)
             {
                 (string name, string? archive) = Metadata.Effects[i];
                 if (name != "" && name != "sparksFall" && name != "mortarSecondary"
                     && name != "powerBeamChargeNoSplatMP")
                 {
-                    bool match = true;
-                    Effect effect = Read.LoadEffect(name, archive);
-                    foreach (EffectElement element in effect.Elements)
-                    {
-                        if (element.DrawType != 4 || (element.Flags & 1) != 0)
-                        {
-                            match = false;
-                        }
-                    }
-                    if (match)
-                    {
-                        matches.Add(i, effect);
-                    }
+                    effects.Add(i, Read.LoadEffect(name, archive));
                 }
             }
-            var always = new List<(RoomMetadata, ObjectEntityData)>();
-            var volume = new List<(RoomMetadata, ObjectEntityData)>();
-            var animid = new List<(RoomMetadata, ObjectEntityData)>();
-            var toggle = new List<(RoomMetadata, ObjectEntityData)>();
-            var mtxptr = new List<(RoomMetadata, ObjectEntityData)>();
-            var offset = new List<(RoomMetadata, ObjectEntityData)>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
+                bool printed = false;
                 if (meta.Value.EntityPath != null)
                 {
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
@@ -1209,62 +1167,61 @@ namespace MphRead
                             ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
                             if (data.EffectId != 0)
                             {
+                                if (!printed)
+                                {
+                                    Console.WriteLine("--------------------------------------------------------------------------------------");
+                                    Console.WriteLine();
+                                    Console.WriteLine($"{meta.Key} ({meta.Value.InGameName})");
+                                    Console.WriteLine();
+                                    printed = true;
+                                }
+                                Effect effect = effects[(int)data.EffectId];
+                                Console.WriteLine($"[ ] Entity {entity.EntityId}, Effect {data.EffectId} ({effect.Name})");
+                                var elems = new List<string>();
+                                foreach (EffectElement element in effect.Elements)
+                                {
+                                    (int setVecsId, int drawId) = EffectFuncBase.GetFuncIds(element.Flags, element.DrawType);
+                                    string vecs = setVecsId switch
+                                    {
+                                        1 => "B0",
+                                        2 => "BC",
+                                        3 => "C0",
+                                        4 => "D4",
+                                        5 => "D8",
+                                        _ => "XX"
+                                    };
+                                    string draw = drawId switch
+                                    {
+                                        1 => "B4",
+                                        2 => "B8",
+                                        3 => "C4",
+                                        4 => "C8",
+                                        5 => "CC",
+                                        6 => "D0",
+                                        7 => "DC",
+                                        _ => "XX"
+                                    };
+                                    elems.Add($"{element.Name} v:{vecs} d:{draw}");
+                                }
+                                Console.WriteLine(String.Join(", ", elems));
+                                Console.Write("Spawns: ");
                                 if ((data.EffectFlags & 0x40) != 0)
                                 {
-                                    always.Add((meta.Value, data));
+                                    Console.WriteLine("Always");
                                 }
                                 else if ((data.EffectFlags & 1) != 0)
                                 {
-                                    volume.Add((meta.Value, data));
+                                    Console.WriteLine("Volume");
                                 }
                                 else
                                 {
-                                    animid.Add((meta.Value, data));
+                                    Console.WriteLine("Anim ID");
                                 }
-                                if ((data.EffectFlags & 0x10) != 0)
-                                {
-                                    toggle.Add((meta.Value, data));
-                                }
-                                if (data.LinkedEntity != UInt16.MaxValue)
-                                {
-                                    mtxptr.Add((meta.Value, data));
-                                }
-                                if ((data.EffectFlags & 2) != 0)
-                                {
-                                    offset.Add((meta.Value, data));
-                                }
+                                Console.WriteLine($"Attach: {((data.EffectFlags & 0x10) != 0 ? "Yes" : "No")}");
+                                Console.WriteLine($"Linked: {((data.LinkedEntity != UInt16.MaxValue) ? data.LinkedEntity.ToString() : "No")}");
+                                Console.WriteLine();
                             }
                         }
-                    }
-                }
-            }
-            foreach ((RoomMetadata meta, ObjectEntityData obj) in always)
-            {
-                string name = Metadata.Effects[(int)obj.EffectId].Name;
-                if (!toggle.Contains((meta, obj)) && !mtxptr.Contains((meta, obj)) && matches.ContainsKey((int)obj.EffectId))
-                {
-                    if (offset.Contains((meta, obj)))
-                    {
-                        Console.WriteLine($"{meta.Name} -{name} - Always, offset");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"{meta.Name} - {name} - Always");
-                    }
-                }
-            }
-            foreach ((RoomMetadata meta, ObjectEntityData obj) in volume)
-            {
-                string name = Metadata.Effects[(int)obj.EffectId].Name;
-                if (!toggle.Contains((meta, obj)) && !mtxptr.Contains((meta, obj)) && matches.ContainsKey((int)obj.EffectId))
-                {
-                    if (offset.Contains((meta, obj)))
-                    {
-                        Console.WriteLine($"{meta.Name} - {name} - Volume, offset");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"{meta.Name} - {name} - Volume");
                     }
                 }
             }
