@@ -1732,7 +1732,14 @@ namespace MphRead
                 if (info.ParticleNode)
                 {
                     info.Material.CurrentDiffuse = info.Particle.Color;
-                    info.Node.Animation = info.Particle.NodeTransform;
+                    if (info.Particle.BillboardNode)
+                    {
+                        info.Node.Animation = _viewInvRotMatrix * info.Particle.NodeTransform;
+                    }
+                    else
+                    {
+                        info.Node.Animation = info.Particle.NodeTransform;
+                    }
                     RenderMesh(info);
                 }
                 else

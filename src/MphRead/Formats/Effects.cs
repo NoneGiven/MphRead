@@ -690,6 +690,7 @@ namespace MphRead.Effects
         public Vector2 Texcoord3 { get; private set; }
         public Vector3 Vertex3 { get; private set; }
         public bool DrawNode { get; private set; }
+        public bool BillboardNode { get; private set; }
         public Matrix4 NodeTransform { get; private set; }
 
         [NotNull, DisallowNull]
@@ -863,40 +864,12 @@ namespace MphRead.Effects
 
         private void SetVecsD8(Matrix4 viewMatrix)
         {
-            Vector3 vec3;
-            if ((Owner.Flags & 1) != 0)
-            {
-                vec3 = new Vector3(
-                    viewMatrix.Row3.X - (Position.X + Owner.Position.X),
-                    viewMatrix.Row3.Y - (Position.Y + Owner.Position.Y),
-                    viewMatrix.Row3.Z - (Position.Z + Owner.Position.Z)
-                );
-            }
-            else
-            {
-                vec3 = new Vector3(
-                    viewMatrix.Row3.X - Position.X,
-                    viewMatrix.Row3.Y - Position.Y,
-                    viewMatrix.Row3.Z - Position.Z
-                );
-            }
-            vec3 = Vector3.Normalize(vec3);
-            var vec2 = new Vector3(viewMatrix.Row1);
-            var vec1 = Vector3.Cross(vec3, vec2);
-            if (vec1.LengthSquared < Fixed.ToFloat(64))
-            {
-                vec2 = new Vector3(viewMatrix.Row2);
-                vec1 = Vector3.Cross(vec3, vec2);
-            }
-            vec1 = Vector3.Normalize(vec1);
-            vec2 = Vector3.Cross(vec3, vec1);
-            EffectVec1 = vec1;
-            EffectVec2 = vec2;
-            EffectVec3 = vec3;
+            BillboardNode = true;
         }
 
         public void InvokeSetVecsFunc(Matrix4 viewMatrix)
         {
+            BillboardNode = false;
             switch (SetVecsId)
             {
             case 1:
@@ -1056,9 +1029,6 @@ namespace MphRead.Effects
                 ShouldDraw = true;
                 DrawNode = true;
                 Color = new Vector3(Red, Green, Blue);
-                var ev1 = new Vector4(EffectVec1 * Scale);
-                var ev2 = new Vector4(EffectVec2 * Scale);
-                var ev3 = new Vector4(EffectVec3 * Scale);
                 Vector4 ev4;
                 if ((Owner.Flags & 1) != 0)
                 {
@@ -1068,7 +1038,17 @@ namespace MphRead.Effects
                 {
                     ev4 = new Vector4(Position, 1);
                 }
-                NodeTransform = new Matrix4(ev1, ev2, ev3, ev4);
+                if (BillboardNode)
+                {
+                    NodeTransform = Matrix4.CreateScale(Scale) * Matrix4.CreateTranslation(new Vector3(ev4));
+                }
+                else
+                {
+                    var ev1 = new Vector4(EffectVec1 * Scale);
+                    var ev2 = new Vector4(EffectVec2 * Scale);
+                    var ev3 = new Vector4(EffectVec3 * Scale);
+                    NodeTransform = new Matrix4(ev1, ev2, ev3, ev4);
+                }
             }
         }
 
