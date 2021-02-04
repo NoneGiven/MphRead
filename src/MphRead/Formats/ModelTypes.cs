@@ -145,6 +145,9 @@ namespace MphRead.Models
         private int _effectIntervalIndex = 0;
         private bool _effectProcessing = false;
         private EffectEntry? _effectEntry = null;
+        public bool _effectActive = false;
+
+        private bool ForceSpawnEffect { get; set; }
 
         public ObjectModel(string name, Header header, IReadOnlyList<RawNode> nodes,
             IReadOnlyList<RawMesh> meshes, IReadOnlyList<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
@@ -204,6 +207,11 @@ namespace MphRead.Models
                         processEffect = (_flags & 3) != 0;
                     }
                 }
+                if (ForceSpawnEffect)
+                {
+                    processEffect = true;
+                    ForceSpawnEffect = false;
+                }
                 if (processEffect)
                 {
                     if (!_effectProcessing)
@@ -221,7 +229,23 @@ namespace MphRead.Models
                         _effectIntervalIndex %= 16;
                         if ((_entity.Data.EffectFlags & 0x10) != 0)
                         {
-                            // ptodo: attached effect code path
+                            bool previouslyActive = _effectActive;
+                            _effectActive = (_entity.Data.EffectOnIntervals & (1 << _effectIntervalIndex)) != 0;
+                            if (_effectActive != previouslyActive)
+                            {
+                                if (!_effectActive)
+                                {
+                                    RemoveEffect(renderer);
+                                }
+                                else
+                                {
+                                    _effectEntry = renderer.SpawnEffectGetEntry((int)_entity.Data.EffectId, Transform);
+                                    foreach (EffectElementEntry element in _effectEntry.Elements)
+                                    {
+                                        element.Flags |= 0x80000; // set bit 19 (lifetime extension)
+                                    }
+                                }
+                            }
                         }
                         else if ((_entity.Data.EffectOnIntervals & (1 << _effectIntervalIndex)) != 0)
                         {
@@ -242,16 +266,6 @@ namespace MphRead.Models
                                 );
                             }
                             renderer.SpawnEffect((int)_entity.Data.EffectId, spawnTransform);
-                            // sktodo: remove debug code
-                            //if (!_once)
-                            //{
-                            //    _once = true;
-                            //    _effectEntry = renderer.SpawnEffectGetEntry(181, spawnTransform);
-                            //    foreach (EffectElementEntry element in _effectEntry.Elements)
-                            //    {
-                            //        element.Flags |= 0x80000;
-                            //    }
-                            //}
                         }
                         _effectIntervalTimer = (int)_entity.Data.EffectInterval;
                     }
@@ -268,7 +282,20 @@ namespace MphRead.Models
             }
         }
 
-        private bool _once = false;
+        private void RemoveEffect(RenderWindow renderer)
+        {
+            if (_effectEntry != null)
+            {
+                if ((_entity!.Data.EffectFlags & 0x20) != 0)
+                {
+                    renderer.UnlinkEffectEntry(_effectEntry);
+                }
+                else
+                {
+                    renderer.DetachEffectEntry(_effectEntry, setExpired: false);
+                }
+            }
+        }
     }
 
     public class ForceFieldLockModel : Model

@@ -898,8 +898,36 @@ namespace MphRead
 
         public void UnlinkEffectEntry(EffectEntry entry)
         {
-            // ptodo: this should actually be responsible for unlinking the elements and particles
+            for (int i = 0; i < entry.Elements.Count; i++)
+            {
+                EffectElementEntry element = entry.Elements[i];
+                UnlinkEffectElement(element);
+            }
             _inactiveEffects.Enqueue(entry);
+        }
+
+        public void DetachEffectEntry(EffectEntry entry, bool setExpired)
+        {
+            for (int i = 0; i < entry.Elements.Count; i++)
+            {
+                EffectElementEntry element = entry.Elements[i];
+                if ((element.Flags & 0x100) != 0)
+                {
+                    UnlinkEffectElement(element);
+                }
+                else
+                {
+                    element.Flags &= 0xFFF7FFFF; // clear bit 19 (lifetime extension)
+                    element.Flags |= 0x10; // set big 4 (keep alive until particles expire)
+                    element.EffectEntry = null;
+                    if (setExpired)
+                    {
+                        element.Expired = true;
+                    }
+                }
+            }
+            entry.Elements.Clear();
+            UnlinkEffectEntry(entry);
         }
 
         private EffectElementEntry InitEffectElement(EffectElement element)
@@ -929,6 +957,12 @@ namespace MphRead
 
         private void UnlinkEffectElement(EffectElementEntry element)
         {
+            while (element.Particles.Count > 0)
+            {
+                EffectParticle particle = element.Particles[0];
+                element.Particles.Remove(particle);
+                UnlinkEffectParticle(particle);
+            }
             _activeElements.Remove(element);
             element.Model = null!;
             element.ParticleDefinitions.Clear();
@@ -1024,12 +1058,6 @@ namespace MphRead
                 {
                     if (element.EffectEntry == null && (element.Flags & 0x10) == 0)
                     {
-                        while (element.Particles.Count > 0)
-                        {
-                            EffectParticle particle = element.Particles[0];
-                            element.Particles.Remove(particle);
-                            UnlinkEffectParticle(particle);
-                        }
                         UnlinkEffectElement(element);
                         i--;
                         continue;
