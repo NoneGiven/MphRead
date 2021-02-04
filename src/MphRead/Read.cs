@@ -638,13 +638,22 @@ namespace MphRead
             {
                 path = $"_archives/{archive}/{name}_PS.bin";
             }
-            return LoadEffect(path);
+            Effect effect = LoadEffect(path);
+            foreach (EffectElement element in effect.Elements)
+            {
+                if (element.ChildEffectId != 0)
+                {
+                    LoadEffect((int)element.ChildEffectId);
+                }
+            }
+            return effect;
         }
 
         private static readonly Dictionary<string, Effect> _effects = new Dictionary<string, Effect>();
+        public static Dictionary<string, Model> EffectModels { get; } = new Dictionary<string, Model>();
+        private static readonly Dictionary<(string, string), Particle> _particleDefs = new Dictionary<(string, string), Particle>();
 
-        // todo: load child effects
-        public static Effect LoadEffect(string path)
+        private static Effect LoadEffect(string path)
         {
             if (_effects.TryGetValue(path, out Effect? cached))
             {
@@ -693,9 +702,6 @@ namespace MphRead
             _effects.Add(path, newEffect);
             return newEffect;
         }
-
-        public static Dictionary<string, Model> EffectModels { get; } = new Dictionary<string, Model>();
-        private static readonly Dictionary<(string, string), Particle> _particleDefs = new Dictionary<(string, string), Particle>();
 
         private static Particle GetParticle(string modelName, string particleName)
         {
