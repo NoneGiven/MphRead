@@ -925,7 +925,6 @@ namespace MphRead.Effects
             ShouldDraw = false;
             if (Speed.LengthSquared > Fixed.ToFloat(128))
             {
-                ShouldDraw = true;
                 EffectVec1 = Vector3.Normalize(Speed);
                 DrawShared(scaleFactor, skipIfZeroSpeed: true);
             }
@@ -1008,7 +1007,55 @@ namespace MphRead.Effects
 
         private void DrawShared(float scaleFactor, bool skipIfZeroSpeed)
         {
-            // todo
+            ShouldDraw = false;
+            if (Alpha > 0 && (!skipIfZeroSpeed || Speed.LengthSquared > 0))
+            {
+                ShouldDraw = true;
+                Color = new Vector3(Red, Green, Blue);
+                Vector3 cross = Vector3.Cross(EffectVec1, EffectVec2).Normalized();
+                Vector3 ev1 = EffectVec1 * Scale;
+                cross *= Rotation;
+                float v20 = Position.X + -ev1.X / 2 + cross.X / 2;
+                float v21 = Position.Y + -ev1.Y / 2 + cross.Y / 2;
+                float v22 = Position.Z + -ev1.Z / 2 + cross.Z / 2;
+
+                // top left
+                float x = v20 / scaleFactor;
+                float y = v21 / scaleFactor;
+                float z = v22 / scaleFactor;
+                Vertex0 = new Vector3(x, y, z);
+                Texcoord0 = new Vector2(0, 1);
+
+                // top right
+                float v26 = v20 + ev1.X;
+                float v28 = v21 + ev1.Y;
+                float v27 = v22 + ev1.Z;
+                x = v26 / scaleFactor;
+                y = v28 / scaleFactor;
+                z = v27 / scaleFactor;
+                Vertex1 = new Vector3(x, y, z);
+                Texcoord1 = new Vector2(1, 1);
+
+                // bottom right
+                float v30 = v26 - cross.X;
+                float v32 = v28 - cross.Y;
+                float v34 = v27 - cross.Z;
+                x = v30 / scaleFactor;
+                y = v32 / scaleFactor;
+                z = v34 / scaleFactor;
+                Vertex2 = new Vector3(x, y, z);
+                Texcoord2 = new Vector2(1, 0);
+
+                // bottom left
+                float v35 = v30 - ev1.X;
+                float v37 = v32 - ev1.Y;
+                float v38 = v34 - ev1.Z;
+                x = v35 / scaleFactor;
+                y = v37 / scaleFactor;
+                z = v38 / scaleFactor;
+                Vertex3 = new Vector3(x, y, z);
+                Texcoord3 = new Vector2(0, 0);
+            }
         }
 
         public void InvokeDrawFunc(float scaleFactor)
