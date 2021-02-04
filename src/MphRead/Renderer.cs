@@ -866,7 +866,7 @@ namespace MphRead
         // in-game: 64 effects, 96 elements, 200 particles
         private static readonly int _effectEntryMax = 100;
         private static readonly int _effectElementMax = 200;
-        private static readonly int _effectParticleMax = 2000;
+        private static readonly int _effectParticleMax = 3000;
 
         private readonly Queue<EffectEntry> _inactiveEffects = new Queue<EffectEntry>(_effectEntryMax);
         private readonly Queue<EffectElementEntry> _inactiveElements = new Queue<EffectElementEntry>(_effectElementMax);
@@ -1012,8 +1012,9 @@ namespace MphRead
             // ptodo: this should be loaded when the object/whatever is loaded, not when the effect is first spawned
             Effect effect = Read.LoadEffect(effectId);
             var position = new Vector3(transform.Row3);
-            foreach (EffectElement elementDef in effect.Elements)
+            for (int i = 0; i < effect.Elements.Count; i++)
             {
+                EffectElement elementDef = effect.Elements[i];
                 EffectElementEntry element = InitEffectElement(effect, elementDef);
                 if (entry != null)
                 {
@@ -1033,14 +1034,11 @@ namespace MphRead
                         new Vector4(position, 1)
                     );
                 }
-                else
+                element.Transform = transform;
+                for (int j = 0; j < elementDef.Particles.Count; j++)
                 {
-                    element.Transform = transform;
-                }
-                for (int i = 0; i < elementDef.Particles.Count; i++)
-                {
-                    Particle particleDef = elementDef.Particles[i];
-                    if (i == 0)
+                    Particle particleDef = elementDef.Particles[j];
+                    if (j == 0)
                     {
                         if (!_texPalMap.ContainsKey(particleDef.Model.SceneId))
                         {
