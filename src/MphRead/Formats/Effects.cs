@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using OpenTK.Mathematics;
 
@@ -847,6 +848,7 @@ namespace MphRead.Effects
 
         private void SetVecsD4(Matrix4 viewMatrix)
         {
+            Debug.Assert(false, "SetVecsD4 was called");
             var vec1 = Vector3.Normalize(Speed);
             var vec2 = new Vector3(viewMatrix.M13, viewMatrix.M23, viewMatrix.M33);
             var vec3 = Vector3.Cross(vec2, vec1);
@@ -1044,6 +1046,7 @@ namespace MphRead.Effects
                 }
                 else
                 {
+                    Debug.Assert(false, "DrawDC was called with non-billboard");
                     var ev1 = new Vector4(EffectVec1 * Scale);
                     var ev2 = new Vector4(EffectVec2 * Scale);
                     var ev3 = new Vector4(EffectVec3 * Scale);
