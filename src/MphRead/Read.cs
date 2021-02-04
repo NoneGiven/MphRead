@@ -694,7 +694,7 @@ namespace MphRead
             return newEffect;
         }
 
-        private static readonly Dictionary<string, Model> _effectModels = new Dictionary<string, Model>();
+        public static Dictionary<string, Model> EffectModels { get; } = new Dictionary<string, Model>();
         private static readonly Dictionary<(string, string), Particle> _particleDefs = new Dictionary<(string, string), Particle>();
 
         private static Particle GetParticle(string modelName, string particleName)
@@ -703,10 +703,10 @@ namespace MphRead
             {
                 return particle;
             }
-            if (!_effectModels.TryGetValue(modelName, out Model? model))
+            if (!EffectModels.TryGetValue(modelName, out Model? model))
             {
                 model = GetModelByName(modelName);
-                _effectModels.Add(modelName, model);
+                EffectModels.Add(modelName, model);
             }
             Node? node = model.Nodes.FirstOrDefault(n => n.Name == particleName);
             // todo: see what the game does here; gib3/gib4 nodes are probably meant to be used for these
