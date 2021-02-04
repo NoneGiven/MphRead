@@ -828,6 +828,7 @@ namespace MphRead
         private readonly struct MeshInfo
         {
             public readonly bool IsParticle;
+            public readonly bool ParticleNode;
             public readonly Model Model;
             public readonly Node Node;
             public readonly Mesh Mesh;
@@ -845,6 +846,7 @@ namespace MphRead
                 PolygonId = polygonId;
                 Alpha = alpha;
                 IsParticle = false;
+                ParticleNode = false;
                 Particle = null!;
             }
 
@@ -855,9 +857,23 @@ namespace MphRead
                 PolygonId = polygonId;
                 Alpha = alpha;
                 IsParticle = true;
+                ParticleNode = false;
                 Model = null!;
                 Node = null!;
                 Mesh = null!;
+            }
+
+            public MeshInfo(EffectParticle particle, Model model, Node node, Mesh mesh, Material material, int polygonId, float alpha)
+            {
+                Particle = particle;
+                Material = material;
+                PolygonId = polygonId;
+                Alpha = alpha;
+                IsParticle = true;
+                ParticleNode = true;
+                Model = model;
+                Node = node;
+                Mesh = mesh;
             }
         }
 
@@ -969,6 +985,7 @@ namespace MphRead
             }
             _activeElements.Remove(element);
             element.Model = null!;
+            element.Nodes.Clear();
             element.EffectName = "";
             element.ElementName = "";
             element.ParticleDefinitions.Clear();
@@ -1047,6 +1064,7 @@ namespace MphRead
                         }
                         element.Model = particleDef.Model;
                     }
+                    element.Nodes.Add(particleDef.Node);
                     Material material = particleDef.Model.Materials[particleDef.MaterialId];
                     element.TextureBindingIds.Add(_texPalMap[particleDef.Model.SceneId].Get(material.TextureId, material.PaletteId).BindingId);
                 }
@@ -1390,16 +1408,27 @@ namespace MphRead
                 {
                     EffectParticle particle = element.Particles[j];
                     Matrix4 matrix = _viewMatrix;
-                    if ((particle.Owner.Flags & 1) != 0)
+                    if ((particle.Owner.Flags & 1) != 0 && (particle.Owner.Flags & 4) == 0)
                     {
                         matrix = particle.Owner.Transform * matrix;
                     }
                     particle.InvokeSetVecsFunc(matrix);
-                    // ptodo: confirm we actually don't need the scale factor (and is it the same for the "3" case?)
                     particle.InvokeDrawFunc(1);
                     if (particle.ShouldDraw)
                     {
-                        var meshInfo = new MeshInfo(particle, particle.Owner.Model.Materials[particle.MaterialId], polygonId++, particle.Alpha);
+                        Material material = particle.Owner.Model.Materials[particle.MaterialId];
+                        MeshInfo meshInfo;
+                        if (particle.DrawNode)
+                        {
+                            Model model = particle.Owner.Model;
+                            Node node = particle.Owner.Nodes[particle.ParticleId];
+                            Mesh mesh = particle.Owner.Model.Meshes[node.MeshId / 2];
+                            meshInfo = new MeshInfo(particle, model, node, mesh, material, polygonId++, particle.Alpha);
+                        }
+                        else
+                        {
+                            meshInfo = new MeshInfo(particle, material, polygonId++, particle.Alpha);
+                        }
                         _nonDecalMeshes.Add(meshInfo);
                         _translucentMeshes.Add(meshInfo);
                     }
@@ -1686,7 +1715,16 @@ namespace MphRead
         {
             if (info.IsParticle)
             {
-                RenderParticle(info);
+                if (info.ParticleNode)
+                {
+                    info.Material.CurrentDiffuse = info.Particle.Color;
+                    info.Node.Animation = info.Particle.NodeTransform;
+                    RenderMesh(info);
+                }
+                else
+                {
+                    RenderParticle(info);
+                }
             }
             else
             {
@@ -1764,9 +1802,6 @@ namespace MphRead
                 ? OpenTK.Graphics.OpenGL.PolygonMode.Line
                 : OpenTK.Graphics.OpenGL.PolygonMode.Fill);
 
-            // ptodo: confirm this works for the other draw functions (i.e., they also just use eff_tex_w/h)
-            // --> if not, this could just be applied within the draw functions that need it
-            // ptodo: need to confirm that all the draw types actually have 4 verts, and that the texcoord/order are always the same, etc.
             float scaleS = 1;
             float scaleT = 1;
             if (item.Material.XRepeat == RepeatMode.Mirror)

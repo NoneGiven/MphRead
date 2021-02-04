@@ -672,6 +672,7 @@ namespace MphRead
                 var particles = new List<Particle>();
                 foreach (uint nameOffset in DoOffsets<uint>(bytes, element.ParticleOffset, element.ParticleCount))
                 {
+                    // todo: move the model reference to the element instead of the particle definitions
                     particles.Add(GetParticle(element.ModelName.MarshalString(), ReadString(bytes, nameOffset, 16)));
                 }
                 var elemFuncs = new Dictionary<FuncAction, FxFuncInfo>();

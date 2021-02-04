@@ -519,6 +519,7 @@ namespace MphRead.Effects
         public EffectEntry? EffectEntry { get; set; }
         [NotNull, DisallowNull]
         public Model? Model { get; set; }
+        public List<Node> Nodes { get; } = new List<Node>(); // todo: pre-size?
 
         protected override void FxFunc01(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
@@ -688,6 +689,8 @@ namespace MphRead.Effects
         public Vector3 Vertex2 { get; private set; }
         public Vector2 Texcoord3 { get; private set; }
         public Vector3 Vertex3 { get; private set; }
+        public bool DrawNode { get; private set; }
+        public Matrix4 NodeTransform { get; private set; }
 
         [NotNull, DisallowNull]
         public override IReadOnlyDictionary<uint, FxFuncInfo>? Funcs
@@ -918,7 +921,6 @@ namespace MphRead.Effects
 
         private void DrawB8(float scaleFactor)
         {
-            ShouldDraw = false;
             if (Alpha > 0)
             {
                 ShouldDraw = true;
@@ -971,7 +973,6 @@ namespace MphRead.Effects
 
         private void DrawC4(float scaleFactor)
         {
-            ShouldDraw = false;
             if (Speed.LengthSquared > Fixed.ToFloat(128))
             {
                 EffectVec1 = Vector3.Normalize(Speed);
@@ -981,7 +982,6 @@ namespace MphRead.Effects
 
         private void DrawCC(float scaleFactor)
         {
-            ShouldDraw = false;
             if (Alpha > 0)
             {
                 ShouldDraw = true;
@@ -1051,12 +1051,29 @@ namespace MphRead.Effects
 
         private void DrawDC(float scaleFactor)
         {
-            // todo: draw_single_node for geo1 effects -- need model/node references
+            if (Alpha > 0)
+            {
+                ShouldDraw = true;
+                DrawNode = true;
+                Color = new Vector3(Red, Green, Blue);
+                var ev1 = new Vector4(EffectVec1 * Scale);
+                var ev2 = new Vector4(EffectVec2 * Scale);
+                var ev3 = new Vector4(EffectVec3 * Scale);
+                Vector4 ev4;
+                if ((Owner.Flags & 1) != 0)
+                {
+                    ev4 = new Vector4(Position + Owner.Position, 1);
+                }
+                else
+                {
+                    ev4 = new Vector4(Position, 1);
+                }
+                NodeTransform = new Matrix4(ev1, ev2, ev3, ev4);
+            }
         }
 
         private void DrawShared(float scaleFactor, bool skipIfZeroSpeed)
         {
-            ShouldDraw = false;
             if (Alpha > 0 && (!skipIfZeroSpeed || Speed.LengthSquared > 0))
             {
                 ShouldDraw = true;
@@ -1109,6 +1126,8 @@ namespace MphRead.Effects
 
         public void InvokeDrawFunc(float scaleFactor)
         {
+            ShouldDraw = false;
+            DrawNode = false;
             switch (DrawId)
             {
             case 1: // B4
