@@ -168,9 +168,9 @@ namespace MphRead.Effects
             Vector3 temp2 = Vector3.Zero;
             InvokeVecFunc(Funcs[(uint)param[0]], times, ref temp1);
             InvokeVecFunc(Funcs[(uint)param[1]], times, ref temp2);
-            vec.X = temp1.X / temp2.X;
-            vec.Y = temp1.Y / temp2.Y;
-            vec.Z = temp1.Z / temp2.Z;
+            vec.X = temp1.X * temp2.X;
+            vec.Y = temp1.Y * temp2.Y;
+            vec.Z = temp1.Z * temp2.Z;
         }
 
         protected void FxFunc20(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)

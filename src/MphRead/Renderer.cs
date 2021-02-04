@@ -1126,7 +1126,7 @@ namespace MphRead
                     if (_frameCount % 2 == element.Parity
                         && element.Actions.TryGetValue(FuncAction.IncreaseParticleAmount, out FxFuncInfo? info))
                     {
-                        // todo: maybe revisit this fram time hack
+                        // todo: maybe revisit this frame time hack
                         // --> halving the amount doesn't work because it breaks one-time return values of 1.0
                         float amount = element.InvokeFloatFunc(info, times);
                         element.ParticleAmount += amount;
