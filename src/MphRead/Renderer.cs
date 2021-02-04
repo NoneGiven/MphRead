@@ -1309,7 +1309,7 @@ namespace MphRead
                         );
                         if ((element.Flags & 0x40) != 0)
                         {
-                            // todo: collision check between previous and new positions
+                            // ptodo: collision check between previous and new positions
                             // --> set position to intersection point
                             //particle.ExpirationTime = _elapsedTime;
                         }
