@@ -168,10 +168,11 @@ namespace MphRead
         Death = 21,
         Unknown22 = 22,
         SavePoint = 23,
+        Unknown24 = 24,
         Unknown25 = 25,
-        Unknown26 = 26, // UI message-related?
-        Unknown27 = 27, // UI message-related?
-        Unknown28 = 28, // UI message-related? // todo: show warning, CBeamProjectile_check_collision has an example of params
+        ShowPrompt = 26,
+        ShowWarning = 27,
+        ShowOverlay = 28,
         Unknown29 = 29, // spawn item here?
         Unknown30 = 30,
         Unknown31 = 31, // platform collision?
@@ -191,12 +192,12 @@ namespace MphRead
         Unknown53 = 53,
         Unknown54 = 54,
         Unknown55 = 55,
-        Unknown56 = 56,
+        UnlockOubliette = 56,
         Checkpoint = 57,
         EscapeStart = 58,
         Unknown59 = 59,
         Unknown60 = 60,
-        Unknown61 = 61 // also starts escape sequence?
+        EscapeCancel = 61
     }
 
     public enum FhMessage : uint
@@ -257,7 +258,7 @@ namespace MphRead
         Quadtroid = 37,
         CrashPillar = 38,
         FireSpawn = 39,
-        Unknown40 = 40,
+        Spawner = 40,
         Slench = 41,
         Unknown42 = 42,
         SlenchNest = 43,

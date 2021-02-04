@@ -80,7 +80,8 @@ namespace MphRead
             IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
             CollisionInfo collision = Collision.ReadCollision(metadata.CollisionPath, metadata.FirstHunt || metadata.Hybrid, nodeLayerMask);
             // todo: once ReadCollision is filering things, we don't need to pass nodeLayerMask here or return it
-            var room = new RoomModel(Read.GetRoomByName(name), metadata, collision, nodeLayerMask);
+            RoomModel room = Read.GetRoomByName(name);
+            room.Setup(metadata, collision, nodeLayerMask);
             FilterNodes(room, nodeLayerMask);
             ComputeNodeMatrices(room, index: 0);
             return (room, metadata, collision, entities, nodeLayerMask);
@@ -90,7 +91,6 @@ namespace MphRead
         {
             foreach (Node node in model.Nodes)
             {
-                // todo: there's probably some node or mesh property that hides these things
                 if (node.Name.Contains("etag"))
                 {
                     node.Enabled = false;
@@ -290,15 +290,20 @@ namespace MphRead
                 else if (entity.Type == EntityType.Object)
                 {
                     var objectEntity = (Entity<ObjectEntityData>)entity;
-                    // todo: handle "-1" objects (scan points?)
+                    ObjectModel model;
                     if (objectEntity.Data.ModelId == UInt32.MaxValue)
                     {
-                        models.Add(LoadEntityPlaceholder(objectEntity));
+                        model = LoadEntityPlaceholder<ObjectModel>(objectEntity);
                     }
                     else
                     {
-                        models.Add(LoadObject(objectEntity));
+                        model = LoadObject(objectEntity);
                     }
+                    if (objectEntity.Data.EffectId > 0)
+                    {
+                        model.EffectVolume = TransformVolume(objectEntity.Data.Volume, model.Transform);
+                    }
+                    models.Add(model);
                 }
                 else if (entity.Type == EntityType.PlayerSpawn || entity.Type == EntityType.FhPlayerSpawn)
                 {
@@ -415,6 +420,50 @@ namespace MphRead
             return models;
         }
 
+        public static CollisionVolume TransformVolume(CollisionVolume vol, Matrix4 transform)
+        {
+            if (vol.Type == VolumeType.Box)
+            {
+                return new CollisionVolume(
+                    Matrix.Vec3MultMtx3(vol.BoxVector1, transform),
+                    Matrix.Vec3MultMtx3(vol.BoxVector2, transform),
+                    Matrix.Vec3MultMtx3(vol.BoxVector3, transform),
+                    Matrix.Vec3MultMtx4(vol.BoxPosition, transform),
+                    vol.BoxDot1,
+                    vol.BoxDot2,
+                    vol.BoxDot3
+                );
+            }
+            if (vol.Type == VolumeType.Cylinder)
+            {
+                return new CollisionVolume(
+                    Matrix.Vec3MultMtx3(vol.CylinderVector, transform),
+                    Matrix.Vec3MultMtx4(vol.CylinderPosition, transform),
+                    vol.CylinderRadius,
+                    vol.CylinderDot
+                );
+            }
+            if (vol.Type == VolumeType.Sphere)
+            {
+                return new CollisionVolume(
+                    Matrix.Vec3MultMtx4(vol.SpherePosition, transform),
+                    vol.SphereRadius
+                );
+            }
+            throw new ProgramException($"Invalid volume type {vol.Type}.");
+        }
+
+        public static CollisionVolume TransformVolume(RawCollisionVolume vol, Matrix4 transform)
+        {
+            return TransformVolume(new CollisionVolume(vol), transform);
+        }
+
+        public static CollisionVolume TransformVolume(FhRawCollisionVolume vol, Matrix4 transform)
+        {
+            return TransformVolume(new CollisionVolume(vol), transform);
+        }
+
+        // todo: this is duplicated
         private static Vector3 Vector3ByMatrix4(Vector3 vector, Matrix4 matrix)
         {
             return new Vector3(
@@ -495,12 +544,12 @@ namespace MphRead
             return list;
         }
 
-        private static Model LoadObject(Entity<ObjectEntityData> entity)
+        private static ObjectModel LoadObject(Entity<ObjectEntityData> entity)
         {
             ObjectEntityData data = entity.Data;
             int modelId = (int)data.ModelId;
             ObjectMetadata meta = Metadata.GetObjectById(modelId);
-            Model model = Read.GetModelByName(meta.Name, meta.RecolorId);
+            ObjectModel model = Read.GetModelByName<ObjectModel>(meta.Name, meta.RecolorId);
             model.Position = data.Header.Position.ToFloatVector();
             ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
@@ -871,6 +920,7 @@ namespace MphRead
                 model.Rotating = true;
                 model.SpinSpeed = 0.25f;
                 // todo: this (and some other entity setup stuff) should be applied no matter how the model is loaded
+                // (init method of entity class, rather than reading model then applying stuff to it here)
                 model.UseLightOverride = true;
             }
             models.Add(model);
@@ -906,7 +956,7 @@ namespace MphRead
             models.Add(model);
             if (data.Active != 0 && data.Type != 9)
             {
-                Model enemy = new ForceFieldLockModel(Read.GetModelByName("ForceFieldLock", recolor));
+                Model enemy = Read.GetModelByName<ForceFieldLockModel>("ForceFieldLock", recolor);
                 Vector3 position = model.Position;
                 position.X += Fixed.ToFloat(409) * vec2.X;
                 position.Y += Fixed.ToFloat(409) * vec2.Y;
@@ -944,7 +994,12 @@ namespace MphRead
 
         private static Model LoadEntityPlaceholder(Entity entity)
         {
-            Model model = Read.GetModelByName("pick_wpn_missile");
+            return LoadEntityPlaceholder<Model>(entity);
+        }
+
+        private static T LoadEntityPlaceholder<T>(Entity entity) where T : Model
+        {
+            T model = Read.GetModelByName<T>("pick_wpn_missile");
             if (_colorOverrides.ContainsKey(entity.Type))
             {
                 foreach (Mesh mesh in model.Meshes)

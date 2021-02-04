@@ -286,47 +286,6 @@ namespace MphRead
             DoubleDamageSkipMaterials = skipMaterials;
         }
 
-        public Model(Model other)
-        {
-            Animations = other.Animations;
-            ChildId = other.ChildId;
-            DisplayLists = other.DisplayLists;
-            DoubleDamageSkipMaterials = other.DoubleDamageSkipMaterials;
-            Entity = other.Entity;
-            EntityLayer = other.EntityLayer;
-            EntityType = other.EntityType;
-            Flags = other.Flags;
-            Floating = other.Floating;
-            Header = other.Header;
-            InitialPosition = other.InitialPosition;
-            Light1Color = other.Light1Color;
-            Light1Vector = other.Light1Vector;
-            Light2Color = other.Light2Color;
-            Light2Vector = other.Light2Vector;
-            Materials = other.Materials;
-            MatrixStackValues = other.MatrixStackValues;
-            Meshes = other.Meshes;
-            Name = other.Name;
-            NodeMatrixIds = other.NodeMatrixIds;
-            Nodes = other.Nodes;
-            PaletteOverride = other.PaletteOverride;
-            ParentId = other.ParentId;
-            Recolors = other.Recolors;
-            RenderInstructionLists = other.RenderInstructionLists;
-            Rotating = other.Rotating;
-            Scale = other.Scale;
-            ScanVisorOnly = other.ScanVisorOnly;
-            SpinAxis = other.SpinAxis;
-            SpinSpeed = other.SpinSpeed;
-            Team = other.Team;
-            TextureMatrices = other.TextureMatrices;
-            Type = other.Type;
-            UseLightOverride = other.UseLightOverride;
-            UseLightSources = other.UseLightSources;
-            Visible = other.Visible;
-            CurrentRecolor = other.CurrentRecolor;
-        }
-
         public IEnumerable<ColorRgba> GetPixels(int textureId, int paletteId)
         {
             return Recolors[CurrentRecolor].GetPixels(textureId, paletteId);
@@ -492,7 +451,11 @@ namespace MphRead
 
         public Matrix4 ExtraTransform { get; private set; } = Matrix4.Identity;
 
-        public virtual void Process(double elapsedTime, long frameCount, Vector3 cameraPosition,
+        public virtual void Initialize(RenderWindow renderer)
+        {
+        }
+
+        public virtual void Process(RenderWindow renderer, double elapsedTime, long frameCount, Vector3 cameraPosition,
             Matrix4 viewInvRot, Matrix4 viewInvRotY, bool useTransform)
         {
             // todo: FPS stuff

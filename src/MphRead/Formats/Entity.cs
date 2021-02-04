@@ -226,15 +226,13 @@ namespace MphRead
         public readonly uint ModelId;
         public readonly ushort LinkedEntity;
         public readonly ushort ScanId;
-        public readonly ushort Field34;
-        public readonly ushort Field36;
+        public readonly ushort ScanEventTargetId;
+        public readonly ushort Padding36;
         public readonly uint ScanEventId;
         public readonly uint EffectId;
-        public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
+        public readonly uint EffectInterval;
+        public readonly uint EffectOnIntervals; // 16 bits are used
+        public readonly Vector3Fx EffectPositionOffset; // maximum value for random offset
         public readonly RawCollisionVolume Volume;
     }
 
@@ -426,7 +424,7 @@ namespace MphRead
         public readonly ushort CooldownTime;
         public readonly ushort InitialCooldown;
         public readonly ushort Padding1C6;
-        public readonly uint Field1C8;
+        public readonly uint ActiveDistance; // sktodo: display sphere
         public readonly uint Field1CC;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;
