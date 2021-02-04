@@ -188,7 +188,7 @@ namespace MphRead.Models
                 Initialize();
             }
             // todo: FPS stuff
-            if (_entity!.Data.EffectId == 200 && frameCount % 2 == 0)
+            if (_entity!.Data.EffectId != 0 && frameCount % 2 == 0)
             {
                 bool processEffect = false;
                 if ((_entity.Data.EffectFlags & 0x40) != 0)
