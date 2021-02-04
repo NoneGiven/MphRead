@@ -209,7 +209,10 @@ namespace MphRead.Models
                 }
                 if (ForceSpawnEffect)
                 {
-                    processEffect = true;
+                    if (_effectEntry == null)
+                    {
+                        processEffect = true;
+                    }
                     ForceSpawnEffect = false;
                 }
                 if (processEffect)
