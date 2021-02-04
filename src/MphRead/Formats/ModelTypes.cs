@@ -136,6 +136,99 @@ namespace MphRead.Models
         }
     }
 
+    public class PlatformModel : Model
+    {
+        private Entity<PlatformEntityData>? _entity = null;
+        private uint _flags = 0;
+        private readonly List<int> _effectNodeIds = new List<int>() { -1, -1, -1, -1 };
+        private readonly List<EffectEntry?> _effects = new List<EffectEntry?>() { null, null, null, null };
+
+        private const int _effectId = 182; // nozzleJet
+
+        public PlatformModel(string name, Header header, IReadOnlyList<RawNode> nodes,
+            IReadOnlyList<RawMesh> meshes, IReadOnlyList<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
+            IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
+            IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
+            IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
+            IReadOnlyList<Matrix4> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor, bool useLightSources,
+            IReadOnlyList<int> nodeWeights) : base(name, header, nodes, meshes, materials, dlists, renderInstructions, nodeGroups,
+                materialGroups, texcoordGroups, textureGroups, textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights)
+        {
+            Type = ModelType.Platform;
+        }
+
+        public override void Initialize(RenderWindow renderer)
+        {
+            base.Initialize(renderer);
+            _entity = (Entity<PlatformEntityData>)Entity!;
+            _flags = _entity.Data.Flags;
+            if ((_flags & 0x80000) != 0)
+            {
+                for (int i = 0; i < Nodes.Count; i++)
+                {
+                    Node node = Nodes[i];
+                    if (node.Name == "R_Turret")
+                    {
+                        _effectNodeIds[0] = i;
+                    }
+                    else if (node.Name == "R_Turret1")
+                    {
+                        _effectNodeIds[1] = i;
+                    }
+                    else if (node.Name == "R_Turret2")
+                    {
+                        _effectNodeIds[2] = i;
+                    }
+                    else if (node.Name == "R_Turret3")
+                    {
+                        _effectNodeIds[3] = i;
+                    }
+                }
+                if (_effectNodeIds[0] != -1 || _effectNodeIds[1] != -1 || _effectNodeIds[2] != -1 || _effectNodeIds[3] != -1)
+                {
+                    renderer.LoadEffect(_effectId);
+                }
+            }
+        }
+
+        public override void Process(RenderWindow renderer, double elapsedTime, long frameCount, Vector3 cameraPosition,
+            Matrix4 viewInvRot, Matrix4 viewInvRotY, bool useTransform)
+        {
+            base.Process(renderer, elapsedTime, frameCount, cameraPosition, viewInvRot, viewInvRotY, useTransform);
+            // todo: if "is_visible" returns false (and other conditions), don't draw the effects
+            for (int i = 0; i < 4; i++)
+            {
+                if (_effectNodeIds[i] >= 0 && _effects[i] == null)
+                {
+                    var transform = new Matrix4(SceneSetup.GetTransformMatrix(Vector3.UnitX, Vector3.UnitY));
+                    transform.M32 = 2;
+                    transform.M34 = 1;
+                    _effects[i] = renderer.SpawnEffectGetEntry(_effectId, transform);
+                    foreach (EffectElementEntry element in _effects[i]!.Elements)
+                    {
+                        element.Flags |= 0x80000; // set bit 19 (lifetime extension)
+                    }
+                }
+                if (_effects[i] != null)
+                {
+                    Matrix4 transform = Nodes[_effectNodeIds[i]].Animation;
+                    var position = new Vector3(
+                        transform.M31 * 1.5f + transform.M41,
+                        transform.M32 * 1.5f + transform.M42,
+                        transform.M33 * 1.5f + transform.M43
+                    );
+                    transform = new Matrix4(SceneSetup.GetTransformMatrix(new Vector3(transform.Row1), new Vector3(transform.Row2)));
+                    transform.Row3 = new Vector4(position, 1);
+                    foreach (EffectElementEntry element in _effects[i]!.Elements)
+                    {
+                        element.Position = position;
+                        element.Transform = transform;
+                    }
+                }
+            }
+        }
+    }
+
     public class ObjectModel : Model
     {
         public CollisionVolume EffectVolume { get; set; }

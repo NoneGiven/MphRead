@@ -76,7 +76,8 @@ namespace MphRead
         JumpPad,
         JumpPadBeam,
         Enemy,
-        Player
+        Player,
+        Platform
     }
 
     public enum Team

@@ -289,21 +289,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Object)
                 {
-                    var objectEntity = (Entity<ObjectEntityData>)entity;
-                    ObjectModel model;
-                    if (objectEntity.Data.ModelId == UInt32.MaxValue)
-                    {
-                        model = LoadEntityPlaceholder<ObjectModel>(objectEntity);
-                    }
-                    else
-                    {
-                        model = LoadObject(objectEntity);
-                    }
-                    if (objectEntity.Data.EffectId > 0)
-                    {
-                        model.EffectVolume = TransformVolume(objectEntity.Data.Volume, model.Transform);
-                    }
-                    models.Add(model);
+                    models.Add(LoadObject((Entity<ObjectEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.PlayerSpawn || entity.Type == EntityType.FhPlayerSpawn)
                 {
@@ -547,15 +533,23 @@ namespace MphRead
         private static ObjectModel LoadObject(Entity<ObjectEntityData> entity)
         {
             ObjectEntityData data = entity.Data;
+            if (data.ModelId == UInt32.MaxValue)
+            {
+                return LoadEntityPlaceholder<ObjectModel>(entity);
+            }
             int modelId = (int)data.ModelId;
             ObjectMetadata meta = Metadata.GetObjectById(modelId);
             ObjectModel model = Read.GetModelByName<ObjectModel>(meta.Name, meta.RecolorId);
+            if (data.EffectId > 0)
+            {
+                model.EffectVolume = TransformVolume(data.Volume, model.Transform);
+            }
             model.Position = data.Header.Position.ToFloatVector();
             ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);
             model.Type = ModelType.Object;
             model.Entity = entity;
-            if (meta.AnimationIds[0] == 0xFF)
+            if (meta != null && meta.AnimationIds[0] == 0xFF)
             {
                 model.Animations.NodeGroupId = -1;
                 model.Animations.MaterialGroupId = -1;
@@ -568,21 +562,21 @@ namespace MphRead
                 model.ScanVisorOnly = true;
             }
             // temporary
-            if (meta.Name == "AlimbicCapsule")
+            if (model.Name == "AlimbicCapsule")
             {
                 model.Animations.NodeGroupId = -1;
                 model.Animations.MaterialGroupId = -1;
             }
-            else if (meta.Name == "WallSwitch")
+            else if (model.Name == "WallSwitch")
             {
                 model.Animations.NodeGroupId = -1;
                 model.Animations.MaterialGroupId = -1;
             }
-            else if (meta.Name == "SniperTarget")
+            else if (model.Name == "SniperTarget")
             {
                 model.Animations.NodeGroupId = -1;
             }
-            else if (meta.Name == "SecretSwitch")
+            else if (model.Name == "SecretSwitch")
             {
                 model.Animations.NodeGroupId = -1;
                 model.Animations.MaterialGroupId = -1;
@@ -591,15 +585,15 @@ namespace MphRead
         }
 
         // todo: use more properties (item, movement, linked entities)
-        private static Model LoadPlatform(Entity<PlatformEntityData> entity)
+        private static PlatformModel LoadPlatform(Entity<PlatformEntityData> entity)
         {
             PlatformEntityData data = entity.Data;
             PlatformMetadata? meta = Metadata.GetPlatformById((int)data.ModelId);
             if (meta == null)
             {
-                return LoadEntityPlaceholder(entity);
+                return LoadEntityPlaceholder<PlatformModel>(entity);
             }
-            Model model = Read.GetModelByName(meta.Name);
+            PlatformModel model = Read.GetModelByName<PlatformModel>(meta.Name);
             model.Position = data.Header.Position.ToFloatVector();
             ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());
             ComputeNodeMatrices(model, index: 0);

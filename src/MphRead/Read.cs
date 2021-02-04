@@ -191,6 +191,12 @@ namespace MphRead
                     animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
                     textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
             }
+            if (typeof(T) == typeof(PlatformModel))
+            {
+                return (new PlatformModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+                    animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
+                    textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
+            }
             if (typeof(T) == typeof(ObjectModel))
             {
                 return (new ObjectModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
