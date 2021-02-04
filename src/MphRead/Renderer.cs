@@ -240,7 +240,7 @@ namespace MphRead
                 {
                     _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(fhJumpPad, entity.Transform));
                 }
-                else if (entity.Entity is Entity<ObjectEntityData> obj && obj.Data.EffectId > 0)
+                else if (entity.Entity is Entity<ObjectEntityData> obj && obj.Data.EffectId > 0 && (obj.Data.EffectFlags & 1) != 0)
                 {
                     _displayVolumes.Add(entity.SceneId, new ObjectDisplay(obj, entity.Transform));
                 }
@@ -3589,6 +3589,13 @@ namespace MphRead
                         type += ", Target: None";
                     }
                     type += $", Param1: {fhTrigger.Data.ChildParam1}, Param2: 0";
+                }
+                else if (model.Entity is Entity<ObjectEntityData> obj)
+                {
+                    if (obj.Data.EffectId != 0)
+                    {
+                        type += $" ({obj.Data.EffectId}, {Metadata.Effects[(int)obj.Data.EffectId].Name})";
+                    }
                 }
             }
             await Output.Write(type, guid);
