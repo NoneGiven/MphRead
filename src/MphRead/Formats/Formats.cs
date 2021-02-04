@@ -376,7 +376,7 @@ namespace MphRead
         public Node Node { get; }
         public int MaterialId { get; }
 
-        public Particle (string name, Model model, Node node, int materialId)
+        public Particle(string name, Model model, Node node, int materialId)
         {
             Name = name;
             Model = model;
