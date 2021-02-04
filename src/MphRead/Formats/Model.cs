@@ -451,6 +451,10 @@ namespace MphRead
 
         public Matrix4 ExtraTransform { get; private set; } = Matrix4.Identity;
 
+        public virtual void Initialize(RenderWindow renderer)
+        {
+        }
+
         public virtual void Process(RenderWindow renderer, double elapsedTime, long frameCount, Vector3 cameraPosition,
             Matrix4 viewInvRot, Matrix4 viewInvRotY, bool useTransform)
         {

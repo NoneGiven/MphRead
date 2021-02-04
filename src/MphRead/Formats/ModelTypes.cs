@@ -161,8 +161,9 @@ namespace MphRead.Models
             Type = ModelType.Object;
         }
 
-        private void Initialize()
+        public override void Initialize(RenderWindow renderer)
         {
+            base.Initialize(renderer);
             _entity = (Entity<ObjectEntityData>)Entity!;
             _flags = _entity.Data.Flags;
             // todo: bits 0 and 1 should be cleared if entity ID is -1 (and they should also be affected by room state otherwise)
@@ -176,17 +177,16 @@ namespace MphRead.Models
                 // todo: this should get cleared if there's an effect ID and "is_visible" returns false
                 _flags |= 0x10;
             }
+            if (_entity.Data.EffectId != 0)
+            {
+                renderer.LoadEffect((int)_entity.Data.EffectId);
+            }
         }
 
         public override void Process(RenderWindow renderer, double elapsedTime, long frameCount, Vector3 cameraPosition,
             Matrix4 viewInvRot, Matrix4 viewInvRotY, bool useTransform)
         {
             base.Process(renderer, elapsedTime, frameCount, cameraPosition, viewInvRot, viewInvRotY, useTransform);
-            // todo: not this
-            if (_entity == null)
-            {
-                Initialize();
-            }
             // todo: FPS stuff
             if (_entity!.Data.EffectId != 0 && frameCount % 2 == 0)
             {

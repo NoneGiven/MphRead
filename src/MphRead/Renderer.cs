@@ -266,6 +266,7 @@ namespace MphRead
                     // hack to allow easily toggling all
                     entity.ScanVisorOnly = true;
                 }
+                entity.Initialize(this);
             }
             // todo: move more stuff to mutable class state
             if (_lastPointModule != -1)
@@ -520,6 +521,7 @@ namespace MphRead
             }
             while (_unloadQueue.TryDequeue(out Model? model))
             {
+                // todo: should delete attached effects, etc.
                 Deselect();
                 _selectedModelId = 0;
                 _selectedMeshId = 0;
@@ -759,6 +761,7 @@ namespace MphRead
         private bool _updateLists = true;
         private int _maxListId = 0;
         private readonly Dictionary<int, int> _tempListIds = new Dictionary<int, int>();
+        private readonly HashSet<string> _effectModels = new HashSet<string>();
 
         private void UpdateLists()
         {
@@ -771,13 +774,15 @@ namespace MphRead
             {
                 GenerateLists(model);
             }
+            _effectModels.Clear();
             foreach (Model model in Read.EffectModels.Values)
             {
+                _effectModels.Add(model.Name);
                 GenerateLists(model);
             }
         }
 
-        private void GenerateLists(Model model)
+        public void GenerateLists(Model model)
         {
             _tempListIds.Clear();
             for (int j = 0; j < model.Nodes.Count; j++)
@@ -887,7 +892,7 @@ namespace MphRead
         }
 
         private bool _effectSetupDone = false;
-        // ptodo: effect limits
+        // todo: effect limits for beam effects
         // in-game: 64 effects, 96 elements, 200 particles
         private static readonly int _effectEntryMax = 100;
         private static readonly int _effectElementMax = 200;
@@ -1034,10 +1039,22 @@ namespace MphRead
             return entry;
         }
 
+        public void LoadEffect(int effectId)
+        {
+            Effect effect = Read.LoadEffect(effectId);
+            foreach (EffectElement element in effect.Elements)
+            {
+                if (!_effectModels.Contains(element.ModelName))
+                {
+                    GenerateLists(Read.EffectModels[element.ModelName]);
+                    _effectModels.Add(element.ModelName);
+                }
+            }
+        }
+
         public void SpawnEffect(int effectId, Matrix4 transform, EffectEntry? entry = null)
         {
-            // ptodo: this should be loaded when the object/whatever is loaded, not when the effect is first spawned
-            Effect effect = Read.LoadEffect(effectId);
+            Effect effect = Read.LoadEffect(effectId); // should already be loaded
             var position = new Vector3(transform.Row3);
             for (int i = 0; i < effect.Elements.Count; i++)
             {
@@ -1072,11 +1089,6 @@ namespace MphRead
                             InitTextures(particleDef.Model);
                         }
                         element.Model = particleDef.Model;
-                        // ptodo: see above (effect loading)
-                        if (element.Model.Meshes.Count > 0 && element.Model.Meshes[0].ListId == 0)
-                        {
-                            GenerateLists(element.Model);
-                        }
                     }
                     element.Nodes.Add(particleDef.Node);
                     Material material = particleDef.Model.Materials[particleDef.MaterialId];
@@ -1279,7 +1291,7 @@ namespace MphRead
                         {
                             particle.Rotation = particle.InvokeFloatFunc(info, times);
                         }
-                        // ptodo: frame time scaling for speed/accel
+                        // todo: frame time scaling for speed/accel
                         if ((element.Flags & 2) != 0)
                         {
                             particle.Speed = new Vector3(
@@ -1296,7 +1308,7 @@ namespace MphRead
                         );
                         if ((element.Flags & 0x40) != 0)
                         {
-                            // ptodo: collision check between previous and new positions
+                            // todo: collision check between previous and new positions
                         }
                     }
                     else
@@ -1758,7 +1770,6 @@ namespace MphRead
             Matrix4 transform = Matrix4.Identity;
             if ((item.Particle.Owner.Flags & 1) != 0)
             {
-                // ptodo: confirm this works (i.e. rotation)
                 transform = item.Particle.Owner.Transform;
             }
             GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
