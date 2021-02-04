@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using MphRead.Effects;
 using MphRead.Export;
 using MphRead.Formats.Collision;
+using MphRead.Models;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -930,9 +931,11 @@ namespace MphRead
             UnlinkEffectEntry(entry);
         }
 
-        private EffectElementEntry InitEffectElement(EffectElement element)
+        private EffectElementEntry InitEffectElement(Effect effect, EffectElement element)
         {
             EffectElementEntry entry = _inactiveElements.Dequeue();
+            entry.EffectName = effect.Name;
+            entry.ElementName = element.Name;
             entry.BufferTime = element.BufferTime;
             // todo: if created during effect processing (child effect), increase creation time by one frame
             entry.CreationTime = _elapsedTime;
@@ -965,6 +968,8 @@ namespace MphRead
             }
             _activeElements.Remove(element);
             element.Model = null!;
+            element.EffectName = "";
+            element.ElementName = "";
             element.ParticleDefinitions.Clear();
             element.TextureBindingIds.Clear();
             Debug.Assert(element.Particles.Count == 0);
@@ -1009,7 +1014,7 @@ namespace MphRead
             var position = new Vector3(transform.Row3);
             foreach (EffectElement elementDef in effect.Elements)
             {
-                EffectElementEntry element = InitEffectElement(elementDef);
+                EffectElementEntry element = InitEffectElement(effect, elementDef);
                 if (entry != null)
                 {
                     element.EffectEntry = entry;
@@ -2812,8 +2817,20 @@ namespace MphRead
             }
             else if (e.Key == Keys.E)
             {
-                _scanVisor = !_scanVisor;
-                await PrintOutput();
+                if (e.Alt)
+                {
+                    // undocumented -- might not be needed once we have an animation index setter
+                    if (_selectionMode == SelectionMode.Model
+                        && SelectedModel.Entity is Entity<ObjectEntityData> obj && obj.Data.EffectId != 0)
+                    {
+                        ((ObjectModel)SelectedModel).ForceSpawnEffect = true;
+                    }
+                }
+                else
+                {
+                    _scanVisor = !_scanVisor;
+                    await PrintOutput();
+                }
             }
             else if (e.Key == Keys.R)
             {
