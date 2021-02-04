@@ -1316,7 +1316,20 @@ namespace MphRead
                     {
                         if ((element.Flags & 0x80) != 0 && element.ChildEffectId != 0)
                         {
-                            // ptodo: spawn child effect
+                            Vector3 vec1 = (-particle.Speed).Normalized();
+                            Vector3 vec2;
+                            if (vec1.Z <= Fixed.ToFloat(-3686) || vec1.Z >= Fixed.ToFloat(3686))
+                            {
+                                vec2 = Vector3.UnitX;
+                            }
+                            else
+                            {
+                                vec2 = Vector3.UnitZ;
+                            }
+                            vec2 = Vector3.Cross(vec1, vec2).Normalized();
+                            var transform = new Matrix4(SceneSetup.GetTransformMatrix(vec2, vec1));
+                            transform.Row3 = new Vector4(particle.Position, 1);
+                            SpawnEffect(element.ChildEffectId, transform);
                         }
                         element.Particles.Remove(particle);
                         UnlinkEffectParticle(particle);
