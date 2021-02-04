@@ -758,7 +758,7 @@ namespace MphRead
 
         private bool _updateLists = true;
         private int _maxListId = 0;
-        private readonly Dictionary<int, int> _listIds = new Dictionary<int, int>();
+        private readonly Dictionary<int, int> _tempListIds = new Dictionary<int, int>();
 
         private void UpdateLists()
         {
@@ -769,31 +769,40 @@ namespace MphRead
             _maxListId = 0;
             foreach (Model model in _models)
             {
-                _listIds.Clear();
-                for (int j = 0; j < model.Nodes.Count; j++)
+                GenerateLists(model);
+            }
+            foreach (Model model in Read.EffectModels.Values)
+            {
+                GenerateLists(model);
+            }
+        }
+
+        private void GenerateLists(Model model)
+        {
+            _tempListIds.Clear();
+            for (int j = 0; j < model.Nodes.Count; j++)
+            {
+                foreach (Mesh mesh in model.GetNodeMeshes(j))
                 {
-                    foreach (Mesh mesh in model.GetNodeMeshes(j))
+                    if (!_tempListIds.TryGetValue(mesh.DlistId, out int listId))
                     {
-                        if (!_listIds.TryGetValue(mesh.DlistId, out int listId))
+                        int textureWidth = 0;
+                        int textureHeight = 0;
+                        Material material = model.Materials[mesh.MaterialId];
+                        if (material.TextureId != UInt16.MaxValue)
                         {
-                            int textureWidth = 0;
-                            int textureHeight = 0;
-                            Material material = model.Materials[mesh.MaterialId];
-                            if (material.TextureId != UInt16.MaxValue)
-                            {
-                                Texture texture = model.Textures[material.TextureId];
-                                textureWidth = texture.Width;
-                                textureHeight = texture.Height;
-                            }
-                            listId = GL.GenLists(1);
-                            GL.NewList(listId, ListMode.Compile);
-                            bool texgen = material.TexgenMode == TexgenMode.Normal;
-                            DoDlist(model, mesh, textureWidth, textureHeight, texgen);
-                            GL.EndList();
-                            _maxListId = Math.Max(listId, _maxListId);
+                            Texture texture = model.Textures[material.TextureId];
+                            textureWidth = texture.Width;
+                            textureHeight = texture.Height;
                         }
-                        mesh.ListId = listId;
+                        listId = GL.GenLists(1);
+                        GL.NewList(listId, ListMode.Compile);
+                        bool texgen = material.TexgenMode == TexgenMode.Normal;
+                        DoDlist(model, mesh, textureWidth, textureHeight, texgen);
+                        GL.EndList();
+                        _maxListId = Math.Max(listId, _maxListId);
                     }
+                    mesh.ListId = listId;
                 }
             }
         }
@@ -1063,6 +1072,11 @@ namespace MphRead
                             InitTextures(particleDef.Model);
                         }
                         element.Model = particleDef.Model;
+                        // ptodo: see above (effect loading)
+                        if (element.Model.Meshes.Count > 0 && element.Model.Meshes[0].ListId == 0)
+                        {
+                            GenerateLists(element.Model);
+                        }
                     }
                     element.Nodes.Add(particleDef.Node);
                     Material material = particleDef.Model.Materials[particleDef.MaterialId];
