@@ -89,15 +89,6 @@ namespace MphRead
                     Effect effect = Read.LoadEffect(name, archive);
                     foreach (EffectElement element in effect.Elements)
                     {
-                        var nodes = new HashSet<Node>();
-                        foreach (Particle particle in element.Particles)
-                        {
-                            nodes.Add(particle.Node);
-                        }
-                        if (nodes.Count != 1)
-                        {
-                            Debugger.Break();
-                        }
                     }
                 }
             }

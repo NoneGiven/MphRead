@@ -982,6 +982,7 @@ namespace MphRead
             entry.Transform = Matrix4.Identity;
             entry.ParticleAmount = 0;
             entry.Expired = false;
+            entry.ChildEffectId = (int)element.ChildEffectId;
             entry.Acceleration = element.Acceleration;
             entry.ParticleDefinitions.AddRange(element.Particles);
             entry.Parity = (int)(_frameCount % 2);
@@ -1313,7 +1314,7 @@ namespace MphRead
                     }
                     else
                     {
-                        if ((element.Flags & 0x80) != 0)
+                        if ((element.Flags & 0x80) != 0 && element.ChildEffectId != 0)
                         {
                             // ptodo: spawn child effect
                         }

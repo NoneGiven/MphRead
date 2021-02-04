@@ -511,6 +511,7 @@ namespace MphRead.Effects
         public bool Func39Called { get; set; }
         public float ParticleAmount { get; set; }
         public bool Expired { get; set; }
+        public int ChildEffectId { get; set; }
 
         public int Parity { get; set; }
         public List<Particle> ParticleDefinitions { get; } = new List<Particle>();
