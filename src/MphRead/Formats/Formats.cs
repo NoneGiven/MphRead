@@ -335,41 +335,78 @@ namespace MphRead
         }
     }
 
+    // todo: this class is basically duplicated, should just go from raw struct to entry? or also make this a readonly struct?
     public class EffectElement
     {
         public string Name { get; }
         public string ModelName { get; }
-        public IReadOnlyList<string> Particles { get; }
+        public IReadOnlyList<Particle> Particles { get; }
         public uint Flags { get; }
-        public uint Field4C { get; }
-        public uint Field50 { get; }
-        public uint Field54 { get; }
+        public Vector3 Acceleration { get; }
         public uint ChildEffectId { get; }
-        public uint Field5C { get; }
-        public uint Field60 { get; }
-        public uint Field64 { get; }
-        public int Field68 { get; }
-        // the key is the "operation index" (todo: make an enum) e.g. set red, green, or blue
+        public float Lifespan { get; }
+        public float DrainTime { get; }
+        public float BufferTime { get; }
+        public int DrawType { get; }
+        public IReadOnlyDictionary<FuncAction, FxFuncInfo> Actions { get; }
         public IReadOnlyDictionary<uint, FxFuncInfo> Funcs { get; }
 
-        public string ChildEffect => Metadata.Effects[(int)ChildEffectId];
-
-        public EffectElement(RawEffectElement raw, IReadOnlyList<string> particles, IReadOnlyDictionary<uint, FxFuncInfo> funcs)
+        public EffectElement(RawEffectElement raw, IReadOnlyList<Particle> particles,
+            IReadOnlyDictionary<uint, FxFuncInfo> funcs, IReadOnlyDictionary<FuncAction, FxFuncInfo> actions)
         {
             Name = raw.Name.MarshalString();
             ModelName = raw.ModelName.MarshalString();
             Flags = raw.Flags;
-            Field4C = raw.Field4C;
-            Field50 = raw.Field50;
-            Field54 = raw.Field54;
+            Acceleration = raw.Acceleration.ToFloatVector();
             ChildEffectId = raw.ChildEffectId;
-            Field5C = raw.Field5C;
-            Field60 = raw.Field60;
-            Field64 = raw.Field64;
-            Field68 = raw.Field68;
+            Lifespan = raw.Lifespan.FloatValue;
+            DrainTime = raw.DrainTime.FloatValue;
+            BufferTime = raw.BufferTime.FloatValue;
+            DrawType = raw.DrawType;
             Particles = particles;
             Funcs = funcs;
+            Actions = actions;
         }
+    }
+
+    public class Particle
+    {
+        public string Name { get; }
+        public Model Model { get; }
+        public Node Node { get; }
+        public int MaterialId { get; }
+
+        public Particle(string name, Model model, Node node, int materialId)
+        {
+            Name = name;
+            Model = model;
+            Node = node;
+            MaterialId = materialId;
+        }
+    }
+
+    public enum FuncAction
+    {
+        SetParticleId = 9,
+        IncreaseParticleAmount = 14,
+        SetNewParticleSpeed = 15,
+        SetNewParticlePosition = 16,
+        SetNewParticleLifespan = 17,
+        UpdateParticleSpeed = 18,
+        SetParticleAlpha = 19,
+        SetParticleRed = 20,
+        SetParticleGreen = 21,
+        SetParticleBlue = 22,
+        SetParticleScale = 23,
+        SetParticleRotation = 24,
+        SetParticleRoField1 = 25,
+        SetParticleRoField2 = 26,
+        SetParticleRoField3 = 27,
+        SetParticleRoField4 = 28,
+        SetParticleRwField1 = 29,
+        SetParticleRwField2 = 30,
+        SetParticleRwField3 = 31,
+        SetParticleRwField4 = 32
     }
 
     public class StringTableEntry
@@ -579,81 +616,131 @@ namespace MphRead
             SpherePosition = raw.SpherePosition.ToFloatVector();
             SphereRadius = raw.SphereRadius.FloatValue;
         }
-    }
 
-    public abstract class DisplayVolume
-    {
-        public Vector3 Position { get; }
-        public CollisionVolume Volume { get; }
-        public Vector3 Color1 { get; protected set; } = Vector3.Zero;
-        public Vector3 Color2 { get; protected set; } = Vector3.Zero;
-
-        public DisplayVolume(Vector3Fx position, RawCollisionVolume volume)
+        public CollisionVolume(Vector3 vec1, Vector3 vec2, Vector3 vec3, Vector3 pos, float dot1, float dot2, float dot3)
         {
-            Position = position.ToFloatVector();
-            Volume = new CollisionVolume(volume);
+            Type = VolumeType.Box;
+            BoxVector1 = vec1;
+            BoxVector2 = vec2;
+            BoxVector3 = vec3;
+            BoxPosition = pos;
+            BoxDot1 = dot1;
+            BoxDot2 = dot2;
+            BoxDot3 = dot3;
+            CylinderVector = Vector3.Zero;
+            CylinderPosition = Vector3.Zero;
+            CylinderRadius = 0;
+            CylinderDot = 0;
+            SpherePosition = Vector3.Zero;
+            SphereRadius = 0;
         }
 
-        public DisplayVolume(Vector3Fx position, FhRawCollisionVolume volume)
+        public CollisionVolume(Vector3 vec, Vector3 pos, float rad, float dot)
         {
-            Position = position.ToFloatVector();
-            Volume = new CollisionVolume(volume);
+            Type = VolumeType.Cylinder;
+            BoxVector1 = Vector3.Zero;
+            BoxVector2 = Vector3.Zero;
+            BoxVector3 = Vector3.Zero;
+            BoxPosition = Vector3.Zero;
+            BoxDot1 = 0;
+            BoxDot2 = 0;
+            BoxDot3 = 0;
+            CylinderVector = vec;
+            CylinderPosition = pos;
+            CylinderRadius = rad;
+            CylinderDot = dot;
+            SpherePosition = Vector3.Zero;
+            SphereRadius = 0;
         }
 
-        public DisplayVolume(Vector3 position, CollisionVolume volume)
+        public CollisionVolume(Vector3 pos, float rad)
         {
-            Position = position;
-            Volume = volume;
+            Type = VolumeType.Sphere;
+            BoxVector1 = Vector3.Zero;
+            BoxVector2 = Vector3.Zero;
+            BoxVector3 = Vector3.Zero;
+            BoxPosition = Vector3.Zero;
+            BoxDot1 = 0;
+            BoxDot2 = 0;
+            BoxDot3 = 0;
+            CylinderVector = Vector3.Zero;
+            CylinderPosition = Vector3.Zero;
+            CylinderRadius = 0;
+            CylinderDot = 0;
+            SpherePosition = pos;
+            SphereRadius = rad;
         }
-
-        public abstract Vector3? GetColor(int index);
 
         public bool TestPoint(Vector3 point)
         {
-            if (Volume.Type == VolumeType.Box)
+            if (Type == VolumeType.Box)
             {
-                Vector3 difference = point - (Volume.BoxPosition + Position);
-                float dot1 = Vector3.Dot(Volume.BoxVector1, difference);
-                if (dot1 >= 0 && dot1 <= Volume.BoxDot1)
+                Vector3 difference = point - BoxPosition;
+                float dot1 = Vector3.Dot(BoxVector1, difference);
+                if (dot1 >= 0 && dot1 <= BoxDot1)
                 {
-                    float dot2 = Vector3.Dot(Volume.BoxVector2, difference);
-                    if (dot2 >= 0 && dot2 <= Volume.BoxDot2)
+                    float dot2 = Vector3.Dot(BoxVector2, difference);
+                    if (dot2 >= 0 && dot2 <= BoxDot2)
                     {
-                        float dot3 = Vector3.Dot(Volume.BoxVector3, difference);
-                        return dot3 >= 0 && dot3 <= Volume.BoxDot3;
+                        float dot3 = Vector3.Dot(BoxVector3, difference);
+                        return dot3 >= 0 && dot3 <= BoxDot3;
                     }
                 }
             }
-            else if (Volume.Type == VolumeType.Cylinder)
+            else if (Type == VolumeType.Cylinder)
             {
-                Vector3 bottom = Volume.CylinderPosition + Position;
-                Vector3 top = bottom + Volume.CylinderVector * Volume.CylinderDot;
+                Vector3 bottom = CylinderPosition;
+                Vector3 top = bottom + CylinderVector * CylinderDot;
                 if (Vector3.Dot(point - bottom, top - bottom) >= 0)
                 {
                     if (Vector3.Dot(point - top, top - bottom) <= 0)
                     {
-                        return Vector3.Cross(point - bottom, top - bottom).Length / (top - bottom).Length <= Volume.CylinderRadius;
+                        return Vector3.Cross(point - bottom, top - bottom).Length / (top - bottom).Length <= CylinderRadius;
                     }
                 }
             }
-            else if (Volume.Type == VolumeType.Sphere)
+            else if (Type == VolumeType.Sphere)
             {
-                return Vector3.Distance(Volume.SpherePosition + Position, point) <= Volume.SphereRadius;
+                return Vector3.Distance(SpherePosition, point) <= SphereRadius;
             }
             return false;
         }
     }
 
+    public abstract class DisplayVolume
+    {
+        public CollisionVolume Volume { get; }
+        public Vector3 Color1 { get; protected set; } = Vector3.Zero;
+        public Vector3 Color2 { get; protected set; } = Vector3.Zero;
+
+        public DisplayVolume(RawCollisionVolume volume, Matrix4 transform)
+        {
+            Volume = SceneSetup.TransformVolume(volume, transform);
+        }
+
+        public DisplayVolume(FhRawCollisionVolume volume, Matrix4 transform)
+        {
+            Volume = SceneSetup.TransformVolume(volume, transform);
+        }
+
+        public DisplayVolume(CollisionVolume volume, Matrix4 transform)
+        {
+            Volume = SceneSetup.TransformVolume(volume, transform);
+        }
+
+        public abstract Vector3? GetColor(int index);
+    }
+
     public class MorphCameraDisplay : DisplayVolume
     {
-        public MorphCameraDisplay(Entity<MorphCameraEntityData> entity)
-            : base(entity.Data.Header.Position, entity.Data.Volume)
+        public MorphCameraDisplay(Entity<MorphCameraEntityData> entity, Matrix4 transform)
+            : base(entity.Data.Volume, transform)
         {
             Color1 = new Vector3(1, 1, 0);
         }
 
-        public MorphCameraDisplay(Entity<FhMorphCameraEntityData> entity)
-            : base(entity.Data.Header.Position, entity.Data.Volume)
+        public MorphCameraDisplay(Entity<FhMorphCameraEntityData> entity, Matrix4 transform)
+            : base(entity.Data.Volume, transform)
         {
             Color1 = new Vector3(1, 1, 0);
         }
@@ -674,8 +761,8 @@ namespace MphRead
         public float Speed { get; }
         public bool Active { get; }
 
-        public JumpPadDisplay(Entity<JumpPadEntityData> entity)
-            : base(entity.Data.Header.Position, entity.Data.Volume)
+        public JumpPadDisplay(Entity<JumpPadEntityData> entity, Matrix4 transform)
+            : base(entity.Data.Volume, transform)
         {
             Vector = entity.Data.BeamVector.ToFloatVector();
             Speed = entity.Data.Speed.FloatValue;
@@ -683,8 +770,8 @@ namespace MphRead
             Color1 = new Vector3(0, 1, 0);
         }
 
-        public JumpPadDisplay(Entity<FhJumpPadEntityData> entity)
-            : base(entity.Data.Header.Position, entity.Data.ActiveVolume)
+        public JumpPadDisplay(Entity<FhJumpPadEntityData> entity, Matrix4 transform)
+            : base(entity.Data.ActiveVolume, transform)
         {
             Vector = entity.Data.BeamVector.ToFloatVector();
             Speed = entity.Data.Speed.FloatValue;
@@ -704,8 +791,8 @@ namespace MphRead
 
     public class ObjectDisplay : DisplayVolume
     {
-        public ObjectDisplay(Entity<ObjectEntityData> entity)
-            : base(entity.Data.Header.Position, entity.Data.Volume)
+        public ObjectDisplay(Entity<ObjectEntityData> entity, Matrix4 transform)
+            : base(entity.Data.Volume, transform)
         {
             Color1 = new Vector3(1, 0, 0);
         }
@@ -722,8 +809,8 @@ namespace MphRead
 
     public class FlagBaseDisplay : DisplayVolume
     {
-        public FlagBaseDisplay(Entity<FlagBaseEntityData> entity)
-            : base(entity.Data.Header.Position, entity.Data.Volume)
+        public FlagBaseDisplay(Entity<FlagBaseEntityData> entity, Matrix4 transform)
+            : base(entity.Data.Volume, transform)
         {
             Color1 = new Vector3(1, 1, 1);
         }
@@ -740,8 +827,8 @@ namespace MphRead
 
     public class NodeDefenseDisplay : DisplayVolume
     {
-        public NodeDefenseDisplay(Entity<NodeDefenseEntityData> entity)
-            : base(entity.Data.Header.Position, entity.Data.Volume)
+        public NodeDefenseDisplay(Entity<NodeDefenseEntityData> entity, Matrix4 transform)
+            : base(entity.Data.Volume, transform)
         {
             Color1 = new Vector3(1, 1, 1);
         }
@@ -759,15 +846,15 @@ namespace MphRead
     // todo: some subtypes might not use their volume? if so, don't render them (confirm that all AreaVolumes do, also)
     public class TriggerVolumeDisplay : DisplayVolume
     {
-        public TriggerVolumeDisplay(Entity<TriggerVolumeEntityData> entity)
-            : base(entity.Data.Header.Position, entity.Data.Volume)
+        public TriggerVolumeDisplay(Entity<TriggerVolumeEntityData> entity, Matrix4 transform)
+            : base(entity.Data.Volume, transform)
         {
             Color1 = Metadata.GetEventColor(entity.Data.ParentEvent);
             Color2 = Metadata.GetEventColor(entity.Data.ChildEvent);
         }
 
-        public TriggerVolumeDisplay(Entity<FhTriggerVolumeEntityData> entity)
-            : base(entity.Data.Header.Position, entity.Data.ActiveVolume)
+        public TriggerVolumeDisplay(Entity<FhTriggerVolumeEntityData> entity, Matrix4 transform)
+            : base(entity.Data.ActiveVolume, transform)
         {
             Color1 = Metadata.GetEventColor(entity.Data.ParentEvent);
             Color2 = Metadata.GetEventColor(entity.Data.ChildEvent);
@@ -789,15 +876,15 @@ namespace MphRead
 
     public class AreaVolumeDisplay : DisplayVolume
     {
-        public AreaVolumeDisplay(Entity<AreaVolumeEntityData> entity)
-            : base(entity.Data.Header.Position, entity.Data.Volume)
+        public AreaVolumeDisplay(Entity<AreaVolumeEntityData> entity, Matrix4 transform)
+            : base(entity.Data.Volume, transform)
         {
             Color1 = Metadata.GetEventColor(entity.Data.InsideEvent);
             Color2 = Metadata.GetEventColor(entity.Data.ExitEvent);
         }
 
-        public AreaVolumeDisplay(Entity<FhAreaVolumeEntityData> entity)
-            : base(entity.Data.Header.Position, entity.Data.ActiveVolume)
+        public AreaVolumeDisplay(Entity<FhAreaVolumeEntityData> entity, Matrix4 transform)
+            : base(entity.Data.ActiveVolume, transform)
         {
             Color1 = Metadata.GetEventColor(entity.Data.InsideEvent);
             Color2 = Metadata.GetEventColor(entity.Data.ExitEvent);
@@ -824,8 +911,8 @@ namespace MphRead
         public bool Light2Enabled { get; }
         public Vector3 Light2Vector { get; }
 
-        public LightSource(Entity<LightSourceEntityData> entity)
-            : base(entity.Data.Header.Position, entity.Data.Volume)
+        public LightSource(Entity<LightSourceEntityData> entity, Matrix4 transform)
+            : base(entity.Data.Volume, transform)
         {
             Light1Enabled = entity.Data.Light1Enabled != 0;
             Color1 = entity.Data.Light1Color.AsVector3();

@@ -5,8 +5,10 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
+using MphRead.Effects;
 using MphRead.Export;
 using MphRead.Formats.Collision;
+using MphRead.Models;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -66,7 +68,7 @@ namespace MphRead
 
     public class TextureMap : Dictionary<(int TextureId, int PaletteId), (int BindingId, bool OnlyOpaque)>
     {
-        public (int, bool) Get(int textureId, int paletteId)
+        public (int BindingId, bool OnlyOpaque) Get(int textureId, int paletteId)
         {
             return this[(textureId, paletteId)];
         }
@@ -87,6 +89,7 @@ namespace MphRead
             Mesh
         }
 
+        private float _elapsedTime = 0;
         private long _frameCount = -1;
         private bool _roomLoaded = false;
         private readonly List<Model> _models = new List<Model>();
@@ -195,60 +198,60 @@ namespace MphRead
                 _modelMap.Add(entity.SceneId, entity);
                 if (entity.Entity is Entity<LightSourceEntityData> lightSource)
                 {
-                    var display = new LightSource(lightSource);
+                    var display = new LightSource(lightSource, entity.Transform);
                     _displayVolumes.Add(entity.SceneId, display);
                     _lightSourceMap.Add(entity.SceneId, display);
                     _lightSources.Add(display);
                 }
                 else if (entity.Entity is Entity<TriggerVolumeEntityData> trigger)
                 {
-                    _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(trigger));
+                    _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(trigger, entity.Transform));
                 }
                 else if (entity.Entity is Entity<FhTriggerVolumeEntityData> fhTrigger)
                 {
                     if (fhTrigger.Data.Subtype != 0)
                     {
-                        _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(fhTrigger));
+                        _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(fhTrigger, entity.Transform));
                     }
                 }
                 else if (entity.Entity is Entity<AreaVolumeEntityData> area)
                 {
-                    _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(area));
+                    _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(area, entity.Transform));
                 }
                 else if (entity.Entity is Entity<FhAreaVolumeEntityData> fhArea)
                 {
                     if (fhArea.Data.Subtype != 0)
                     {
-                        _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(fhArea));
+                        _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(fhArea, entity.Transform));
                     }
                 }
                 else if (entity.Entity is Entity<MorphCameraEntityData> morphCamera)
                 {
-                    _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(morphCamera));
+                    _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(morphCamera, entity.Transform));
                 }
                 else if (entity.Entity is Entity<FhMorphCameraEntityData> fhMorphCamera)
                 {
-                    _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(fhMorphCamera));
+                    _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(fhMorphCamera, entity.Transform));
                 }
-                else if (entity.Entity is Entity<JumpPadEntityData> jumpPad)
+                else if (entity.Entity is Entity<JumpPadEntityData> jumpPad && entity.Name != "JumpPad_Beam")
                 {
-                    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(jumpPad));
+                    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(jumpPad, entity.Transform));
                 }
                 else if (entity.Entity is Entity<FhJumpPadEntityData> fhJumpPad)
                 {
-                    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(fhJumpPad));
+                    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(fhJumpPad, entity.Transform));
                 }
-                else if (entity.Entity is Entity<ObjectEntityData> obj)
+                else if (entity.Entity is Entity<ObjectEntityData> obj && obj.Data.EffectId > 0 && (obj.Data.EffectFlags & 1) != 0)
                 {
-                    _displayVolumes.Add(entity.SceneId, new ObjectDisplay(obj));
+                    _displayVolumes.Add(entity.SceneId, new ObjectDisplay(obj, entity.Transform));
                 }
                 else if (entity.Entity is Entity<FlagBaseEntityData> flag)
                 {
-                    _displayVolumes.Add(entity.SceneId, new FlagBaseDisplay(flag));
+                    _displayVolumes.Add(entity.SceneId, new FlagBaseDisplay(flag, entity.Transform));
                 }
                 else if (entity.Entity is Entity<NodeDefenseEntityData> defense)
                 {
-                    _displayVolumes.Add(entity.SceneId, new NodeDefenseDisplay(defense));
+                    _displayVolumes.Add(entity.SceneId, new NodeDefenseDisplay(defense, entity.Transform));
                 }
                 else if (entity.Entity is Entity<PointModuleEntityData> module)
                 {
@@ -263,8 +266,9 @@ namespace MphRead
                     // hack to allow easily toggling all
                     entity.ScanVisorOnly = true;
                 }
+                entity.Initialize(this);
             }
-            // todo: some mutable entity class state is starting to be necessary
+            // todo: move more stuff to mutable class state
             if (_lastPointModule != -1)
             {
                 ushort nextId = entities[_lastPointModule].Entity!.GetChildId();
@@ -517,6 +521,7 @@ namespace MphRead
             }
             while (_unloadQueue.TryDequeue(out Model? model))
             {
+                // todo: should delete attached effects, etc.
                 Deselect();
                 _selectedModelId = 0;
                 _selectedMeshId = 0;
@@ -755,7 +760,8 @@ namespace MphRead
 
         private bool _updateLists = true;
         private int _maxListId = 0;
-        private readonly Dictionary<int, int> _listIds = new Dictionary<int, int>();
+        private readonly Dictionary<int, int> _tempListIds = new Dictionary<int, int>();
+        private readonly HashSet<string> _effectModels = new HashSet<string>();
 
         private void UpdateLists()
         {
@@ -766,31 +772,42 @@ namespace MphRead
             _maxListId = 0;
             foreach (Model model in _models)
             {
-                _listIds.Clear();
-                for (int j = 0; j < model.Nodes.Count; j++)
+                GenerateLists(model);
+            }
+            _effectModels.Clear();
+            foreach (Model model in Read.EffectModels.Values)
+            {
+                _effectModels.Add(model.Name);
+                GenerateLists(model);
+            }
+        }
+
+        public void GenerateLists(Model model)
+        {
+            _tempListIds.Clear();
+            for (int j = 0; j < model.Nodes.Count; j++)
+            {
+                foreach (Mesh mesh in model.GetNodeMeshes(j))
                 {
-                    foreach (Mesh mesh in model.GetNodeMeshes(j))
+                    if (!_tempListIds.TryGetValue(mesh.DlistId, out int listId))
                     {
-                        if (!_listIds.TryGetValue(mesh.DlistId, out int listId))
+                        int textureWidth = 0;
+                        int textureHeight = 0;
+                        Material material = model.Materials[mesh.MaterialId];
+                        if (material.TextureId != UInt16.MaxValue)
                         {
-                            int textureWidth = 0;
-                            int textureHeight = 0;
-                            Material material = model.Materials[mesh.MaterialId];
-                            if (material.TextureId != UInt16.MaxValue)
-                            {
-                                Texture texture = model.Textures[material.TextureId];
-                                textureWidth = texture.Width;
-                                textureHeight = texture.Height;
-                            }
-                            listId = GL.GenLists(1);
-                            GL.NewList(listId, ListMode.Compile);
-                            bool texgen = material.TexgenMode == TexgenMode.Normal;
-                            DoDlist(model, mesh, textureWidth, textureHeight, texgen);
-                            GL.EndList();
-                            _maxListId = Math.Max(listId, _maxListId);
+                            Texture texture = model.Textures[material.TextureId];
+                            textureWidth = texture.Width;
+                            textureHeight = texture.Height;
                         }
-                        mesh.ListId = listId;
+                        listId = GL.GenLists(1);
+                        GL.NewList(listId, ListMode.Compile);
+                        bool texgen = material.TexgenMode == TexgenMode.Normal;
+                        DoDlist(model, mesh, textureWidth, textureHeight, texgen);
+                        GL.EndList();
+                        _maxListId = Math.Max(listId, _maxListId);
                     }
+                    mesh.ListId = listId;
                 }
             }
         }
@@ -824,10 +841,13 @@ namespace MphRead
 
         private readonly struct MeshInfo
         {
+            public readonly bool IsParticle;
+            public readonly bool ParticleNode;
             public readonly Model Model;
             public readonly Node Node;
             public readonly Mesh Mesh;
             public readonly Material Material;
+            public readonly EffectParticle Particle;
             public readonly int PolygonId;
             public readonly float Alpha;
 
@@ -839,6 +859,485 @@ namespace MphRead
                 Material = material;
                 PolygonId = polygonId;
                 Alpha = alpha;
+                IsParticle = false;
+                ParticleNode = false;
+                Particle = null!;
+            }
+
+            public MeshInfo(EffectParticle particle, Material material, int polygonId, float alpha)
+            {
+                Particle = particle;
+                Material = material;
+                PolygonId = polygonId;
+                Alpha = alpha;
+                IsParticle = true;
+                ParticleNode = false;
+                Model = null!;
+                Node = null!;
+                Mesh = null!;
+            }
+
+            public MeshInfo(EffectParticle particle, Model model, Node node, Mesh mesh, Material material, int polygonId, float alpha)
+            {
+                Particle = particle;
+                Material = material;
+                PolygonId = polygonId;
+                Alpha = alpha;
+                IsParticle = true;
+                ParticleNode = true;
+                Model = model;
+                Node = node;
+                Mesh = mesh;
+            }
+        }
+
+        private bool _effectSetupDone = false;
+        // todo: effect limits for beam effects
+        // in-game: 64 effects, 96 elements, 200 particles
+        private static readonly int _effectEntryMax = 100;
+        private static readonly int _effectElementMax = 200;
+        private static readonly int _effectParticleMax = 3000;
+
+        private readonly Queue<EffectEntry> _inactiveEffects = new Queue<EffectEntry>(_effectEntryMax);
+        private readonly Queue<EffectElementEntry> _inactiveElements = new Queue<EffectElementEntry>(_effectElementMax);
+        private readonly List<EffectElementEntry> _activeElements = new List<EffectElementEntry>(_effectElementMax);
+        private readonly Queue<EffectParticle> _inactiveParticles = new Queue<EffectParticle>(_effectParticleMax);
+
+        private void AllocateEffects()
+        {
+            for (int i = 0; i < _effectEntryMax; i++)
+            {
+                _inactiveEffects.Enqueue(new EffectEntry());
+            }
+            for (int i = 0; i < _effectElementMax; i++)
+            {
+                _inactiveElements.Enqueue(new EffectElementEntry());
+            }
+            for (int i = 0; i < _effectParticleMax; i++)
+            {
+                _inactiveParticles.Enqueue(new EffectParticle());
+            }
+        }
+
+        private EffectEntry InitEffectEntry()
+        {
+            EffectEntry entry = _inactiveEffects.Dequeue();
+            entry.EffectId = 0;
+            Debug.Assert(entry.Elements.Count == 0);
+            return entry;
+        }
+
+        public void UnlinkEffectEntry(EffectEntry entry)
+        {
+            for (int i = 0; i < entry.Elements.Count; i++)
+            {
+                EffectElementEntry element = entry.Elements[i];
+                UnlinkEffectElement(element);
+            }
+            _inactiveEffects.Enqueue(entry);
+        }
+
+        public void DetachEffectEntry(EffectEntry entry, bool setExpired)
+        {
+            for (int i = 0; i < entry.Elements.Count; i++)
+            {
+                EffectElementEntry element = entry.Elements[i];
+                if ((element.Flags & 0x100) != 0)
+                {
+                    UnlinkEffectElement(element);
+                }
+                else
+                {
+                    element.Flags &= 0xFFF7FFFF; // clear bit 19 (lifetime extension)
+                    element.Flags |= 0x10; // set big 4 (keep alive until particles expire)
+                    element.EffectEntry = null;
+                    if (setExpired)
+                    {
+                        element.Expired = true;
+                    }
+                }
+            }
+            entry.Elements.Clear();
+            UnlinkEffectEntry(entry);
+        }
+
+        private EffectElementEntry InitEffectElement(Effect effect, EffectElement element)
+        {
+            EffectElementEntry entry = _inactiveElements.Dequeue();
+            entry.EffectName = effect.Name;
+            entry.ElementName = element.Name;
+            entry.BufferTime = element.BufferTime;
+            // todo: if created during effect processing (child effect), increase creation time by one frame
+            entry.CreationTime = _elapsedTime;
+            entry.DrainTime = element.DrainTime;
+            entry.DrawType = element.DrawType;
+            entry.Lifespan = element.Lifespan;
+            entry.ExpirationTime = entry.CreationTime + entry.Lifespan;
+            entry.Flags = element.Flags;
+            entry.Flags |= 0x100000; // set bit 20 (draw enabled)
+            entry.Func39Called = false;
+            entry.Funcs = element.Funcs;
+            entry.Actions = element.Actions;
+            entry.Position = Vector3.Zero;
+            entry.Transform = Matrix4.Identity;
+            entry.ParticleAmount = 0;
+            entry.Expired = false;
+            entry.ChildEffectId = (int)element.ChildEffectId;
+            entry.Acceleration = element.Acceleration;
+            entry.ParticleDefinitions.AddRange(element.Particles);
+            entry.Parity = (int)(_frameCount % 2);
+            _activeElements.Add(entry);
+            return entry;
+        }
+
+        private void UnlinkEffectElement(EffectElementEntry element)
+        {
+            while (element.Particles.Count > 0)
+            {
+                EffectParticle particle = element.Particles[0];
+                element.Particles.Remove(particle);
+                UnlinkEffectParticle(particle);
+            }
+            _activeElements.Remove(element);
+            element.Model = null!;
+            element.Nodes.Clear();
+            element.EffectName = "";
+            element.ElementName = "";
+            element.ParticleDefinitions.Clear();
+            element.TextureBindingIds.Clear();
+            Debug.Assert(element.Particles.Count == 0);
+            _inactiveElements.Enqueue(element);
+        }
+
+        private EffectParticle InitEffectParticle()
+        {
+            EffectParticle particle = _inactiveParticles.Dequeue();
+            particle.Position = Vector3.Zero;
+            particle.Speed = Vector3.Zero;
+            particle.ParticleId = 0;
+            particle.RoField1 = 0;
+            particle.RoField2 = 0;
+            particle.RoField3 = 0;
+            particle.RoField4 = 0;
+            particle.RwField1 = 0;
+            particle.RwField2 = 0;
+            particle.RwField3 = 0;
+            particle.RwField4 = 0;
+            particle.CreationTime = _elapsedTime;
+            return particle;
+        }
+
+        private void UnlinkEffectParticle(EffectParticle particle)
+        {
+            _inactiveParticles.Enqueue(particle);
+        }
+
+        public EffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform)
+        {
+            EffectEntry entry = InitEffectEntry();
+            entry.EffectId = effectId;
+            SpawnEffect(effectId, transform, entry);
+            return entry;
+        }
+
+        public void LoadEffect(int effectId)
+        {
+            Effect effect = Read.LoadEffect(effectId);
+            foreach (EffectElement element in effect.Elements)
+            {
+                if (!_effectModels.Contains(element.ModelName))
+                {
+                    GenerateLists(Read.EffectModels[element.ModelName]);
+                    _effectModels.Add(element.ModelName);
+                }
+            }
+        }
+
+        public void SpawnEffect(int effectId, Matrix4 transform, EffectEntry? entry = null)
+        {
+            Effect effect = Read.LoadEffect(effectId); // should already be loaded
+            var position = new Vector3(transform.Row3);
+            for (int i = 0; i < effect.Elements.Count; i++)
+            {
+                EffectElement elementDef = effect.Elements[i];
+                EffectElementEntry element = InitEffectElement(effect, elementDef);
+                if (entry != null)
+                {
+                    element.EffectEntry = entry;
+                    entry.Elements.Add(element);
+                }
+                element.Position = position;
+                if ((element.Flags & 8) != 0)
+                {
+                    Vector3 vec1 = Vector3.UnitY;
+                    Vector3 vec2 = Vector3.UnitX;
+                    Matrix3 temp = SceneSetup.GetTransformMatrix(vec2, vec1);
+                    transform = new Matrix4(
+                        new Vector4(temp.Row0),
+                        new Vector4(temp.Row1),
+                        new Vector4(temp.Row2),
+                        new Vector4(position, 1)
+                    );
+                }
+                element.Transform = transform;
+                for (int j = 0; j < elementDef.Particles.Count; j++)
+                {
+                    Particle particleDef = elementDef.Particles[j];
+                    if (j == 0)
+                    {
+                        if (!_texPalMap.ContainsKey(particleDef.Model.SceneId))
+                        {
+                            InitTextures(particleDef.Model);
+                        }
+                        element.Model = particleDef.Model;
+                    }
+                    element.Nodes.Add(particleDef.Node);
+                    Material material = particleDef.Model.Materials[particleDef.MaterialId];
+                    element.TextureBindingIds.Add(_texPalMap[particleDef.Model.SceneId].Get(material.TextureId, material.PaletteId).BindingId);
+                }
+            }
+        }
+
+        private void ProcessEffects()
+        {
+            for (int i = 0; i < _activeElements.Count; i++)
+            {
+                EffectElementEntry element = _activeElements[i];
+                if (!element.Expired && _elapsedTime > element.ExpirationTime)
+                {
+                    if (element.EffectEntry == null && (element.Flags & 0x10) == 0)
+                    {
+                        UnlinkEffectElement(element);
+                        i--;
+                        continue;
+                    }
+                    element.Expired = true;
+                }
+                if (element.Expired)
+                {
+                    // if EffectEntry is non-null, keep the element alive indefinitely;
+                    // else (if bit 4 of Flags is set), keep the element alive until its particles have all expired
+                    if (element.EffectEntry == null && element.Particles.Count == 0)
+                    {
+                        UnlinkEffectElement(element);
+                        i--;
+                        continue;
+                    }
+                }
+                else
+                {
+                    if ((element.Flags & 0x80000) != 0)
+                    {
+                        if (_elapsedTime - element.CreationTime > element.BufferTime)
+                        {
+                            element.CreationTime += element.BufferTime - element.DrainTime;
+                            element.ExpirationTime += element.BufferTime - element.DrainTime;
+                        }
+                    }
+                    var times = new TimeValues(_elapsedTime, _elapsedTime - element.CreationTime, element.Lifespan);
+                    // ptodo: mtxptr stuff
+                    if (_frameCount % 2 == element.Parity
+                        && element.Actions.TryGetValue(FuncAction.IncreaseParticleAmount, out FxFuncInfo? info))
+                    {
+                        // todo: maybe revisit this frame time hack
+                        // --> halving the amount doesn't work because it breaks one-time return values of 1.0
+                        float amount = element.InvokeFloatFunc(info, times);
+                        element.ParticleAmount += amount;
+                    }
+                    int spawnCount = (int)MathF.Floor(element.ParticleAmount);
+                    element.ParticleAmount -= spawnCount;
+                    float portionTotal = 0;
+                    for (int j = 0; j < spawnCount; j++)
+                    {
+                        Vector3 temp = Vector3.Zero;
+                        EffectParticle particle = InitEffectParticle();
+                        element.Particles.Add(particle);
+                        particle.Owner = element;
+                        particle.SetFuncIds();
+                        particle.PortionTotal = portionTotal;
+                        particle.MaterialId = element.ParticleDefinitions[0].MaterialId;
+                        if (element.Actions.TryGetValue(FuncAction.SetNewParticlePosition, out info))
+                        {
+                            particle.InvokeVecFunc(info, times, ref temp);
+                            particle.Position = temp;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetNewParticleSpeed, out info))
+                        {
+                            particle.InvokeVecFunc(info, times, ref temp);
+                            particle.Speed = temp;
+                        }
+                        if ((element.Flags & 1) == 0)
+                        {
+                            particle.Position = Matrix.Vec3MultMtx4(particle.Position, element.Transform);
+                            particle.Speed = Matrix.Vec3MultMtx3(particle.Speed, element.Transform);
+                        }
+                        // todo: these should really just be FxFuncInfo properties instead of a dictionary
+                        // --> still need the dictionary for the offset lookups, though
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRoField1, out info))
+                        {
+                            particle.RoField1 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRoField2, out info))
+                        {
+                            particle.RoField2 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRoField3, out info))
+                        {
+                            particle.RoField3 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRoField4, out info))
+                        {
+                            particle.RoField4 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField1, out info))
+                        {
+                            particle.RwField1 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField2, out info))
+                        {
+                            particle.RwField2 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField3, out info))
+                        {
+                            particle.RwField3 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField4, out info))
+                        {
+                            particle.RwField4 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetNewParticleLifespan, out info))
+                        {
+                            var tempTimes = new TimeValues(_elapsedTime, 1.0f, element.Lifespan);
+                            particle.Lifespan = particle.InvokeFloatFunc(info, tempTimes);
+                            particle.ExpirationTime = particle.CreationTime + particle.Lifespan;
+                        }
+                        else
+                        {
+                            particle.Lifespan = element.Lifespan;
+                            particle.ExpirationTime = element.ExpirationTime;
+                        }
+                        portionTotal += 1f / spawnCount;
+                    }
+                }
+                for (int j = 0; j < element.Particles.Count; j++)
+                {
+                    EffectParticle particle = element.Particles[j];
+                    if ((element.Flags & 0x80000) != 0 && (element.Flags & 0x20) != 0)
+                    {
+                        if (_elapsedTime - particle.CreationTime > element.BufferTime)
+                        {
+                            particle.CreationTime += element.BufferTime - element.DrainTime;
+                            particle.ExpirationTime += element.BufferTime - element.DrainTime;
+                        }
+                    }
+                    if (_elapsedTime < particle.ExpirationTime)
+                    {
+                        var times = new TimeValues(_elapsedTime, _elapsedTime - particle.CreationTime, particle.Lifespan);
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField1, out FxFuncInfo? info))
+                        {
+                            particle.RwField1 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField2, out info))
+                        {
+                            particle.RwField2 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField3, out info))
+                        {
+                            particle.RwField3 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRwField4, out info))
+                        {
+                            particle.RwField4 = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleId, out info))
+                        {
+                            particle.ParticleId = (int)particle.InvokeFloatFunc(info, times);
+                            if (particle.ParticleId >= element.ParticleDefinitions.Count)
+                            {
+                                particle.ParticleId = element.ParticleDefinitions.Count - 1;
+                            }
+                            particle.MaterialId = element.ParticleDefinitions[particle.ParticleId].MaterialId;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.UpdateParticleSpeed, out info))
+                        {
+                            Vector3 temp = particle.Speed;
+                            particle.InvokeVecFunc(info, times, ref temp);
+                            particle.Speed = temp;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRed, out info))
+                        {
+                            particle.Red = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleGreen, out info))
+                        {
+                            particle.Green = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleBlue, out info))
+                        {
+                            particle.Blue = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleAlpha, out info))
+                        {
+                            particle.Alpha = particle.InvokeFloatFunc(info, times);
+                            if (particle.Alpha < 0)
+                            {
+                                particle.Alpha = 0;
+                            }
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleScale, out info))
+                        {
+                            particle.Scale = particle.InvokeFloatFunc(info, times);
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRotation, out info))
+                        {
+                            particle.Rotation = particle.InvokeFloatFunc(info, times);
+                        }
+                        // todo: frame time scaling for speed/accel
+                        if ((element.Flags & 2) != 0)
+                        {
+                            particle.Speed = new Vector3(
+                                particle.Speed.X + element.Acceleration.X * (1 / 60f),
+                                particle.Speed.Y + element.Acceleration.Y * (1 / 60f),
+                                particle.Speed.Z + element.Acceleration.Z * (1 / 60f)
+                            );
+                        }
+                        Vector3 prevPos = particle.Position;
+                        particle.Position = new Vector3(
+                            particle.Position.X + particle.Speed.X * (1 / 60f),
+                            particle.Position.Y + particle.Speed.Y * (1 / 60f),
+                            particle.Position.Z + particle.Speed.Z * (1 / 60f)
+                        );
+                        if ((element.Flags & 0x40) != 0)
+                        {
+                            // ptodo: collision check between previous and new positions
+                            // --> set position to intersection point
+                            //particle.ExpirationTime = _elapsedTime;
+                        }
+                    }
+                    else
+                    {
+                        if ((element.Flags & 0x80) != 0 && element.ChildEffectId != 0)
+                        {
+                            Vector3 vec1 = (-particle.Speed).Normalized();
+                            Vector3 vec2;
+                            if (vec1.Z <= Fixed.ToFloat(-3686) || vec1.Z >= Fixed.ToFloat(3686))
+                            {
+                                vec2 = Vector3.UnitX;
+                            }
+                            else
+                            {
+                                vec2 = Vector3.UnitZ;
+                            }
+                            vec2 = Vector3.Cross(vec1, vec2).Normalized();
+                            var transform = new Matrix4(SceneSetup.GetTransformMatrix(vec2, vec1));
+                            transform.Row3 = new Vector4(particle.Position, 1);
+                            SpawnEffect(element.ChildEffectId, transform);
+                        }
+                        element.Particles.Remove(particle);
+                        UnlinkEffectParticle(particle);
+                        j--;
+                    }
+                }
             }
         }
 
@@ -849,6 +1348,15 @@ namespace MphRead
 
         private void RenderScene(double elapsedTime)
         {
+            if (!_effectSetupDone)
+            {
+                AllocateEffects();
+                _effectSetupDone = true;
+            }
+            if (!_frameAdvanceOn || _advanceOneFrame)
+            {
+                _elapsedTime += 1 / 60f;
+            }
             _decalMeshes.Clear();
             _nonDecalMeshes.Clear();
             _translucentMeshes.Clear();
@@ -862,7 +1370,7 @@ namespace MphRead
                 if (!_frameAdvanceOn || _advanceOneFrame)
                 {
                     bool useTransform = _transformRoomNodes || model.Type != ModelType.Room;
-                    model.Process(elapsedTime, _frameCount, cameraPosition, _viewInvRotMatrix, _viewInvRotYMatrix, useTransform);
+                    model.Process(this, elapsedTime, _frameCount, cameraPosition, _viewInvRotMatrix, _viewInvRotYMatrix, useTransform);
                 }
                 if (model.UseLightSources)
                 {
@@ -930,6 +1438,45 @@ namespace MphRead
                     }
                 }
             }
+
+            if (!_frameAdvanceOn || _advanceOneFrame)
+            {
+                ProcessEffects();
+            }
+            for (int i = 0; i < _activeElements.Count; i++)
+            {
+                EffectElementEntry element = _activeElements[i];
+                for (int j = 0; j < element.Particles.Count; j++)
+                {
+                    EffectParticle particle = element.Particles[j];
+                    Matrix4 matrix = _viewMatrix;
+                    if ((particle.Owner.Flags & 1) != 0 && (particle.Owner.Flags & 4) == 0)
+                    {
+                        matrix = particle.Owner.Transform * matrix;
+                    }
+                    particle.InvokeSetVecsFunc(matrix);
+                    particle.InvokeDrawFunc(1);
+                    if (particle.ShouldDraw)
+                    {
+                        Material material = particle.Owner.Model.Materials[particle.MaterialId];
+                        MeshInfo meshInfo;
+                        if (particle.DrawNode)
+                        {
+                            Model model = particle.Owner.Model;
+                            Node node = particle.Owner.Nodes[particle.ParticleId];
+                            Mesh mesh = particle.Owner.Model.Meshes[node.MeshId / 2];
+                            meshInfo = new MeshInfo(particle, model, node, mesh, material, polygonId++, particle.Alpha);
+                        }
+                        else
+                        {
+                            meshInfo = new MeshInfo(particle, material, polygonId++, particle.Alpha);
+                        }
+                        _nonDecalMeshes.Add(meshInfo);
+                        _translucentMeshes.Add(meshInfo);
+                    }
+                }
+            }
+
             UpdateUniforms();
             // pass 1: opaque
             GL.ColorMask(true, true, true, true);
@@ -944,7 +1491,7 @@ namespace MphRead
             for (int i = 0; i < _nonDecalMeshes.Count; i++)
             {
                 MeshInfo item = _nonDecalMeshes[i];
-                RenderMesh(item);
+                RenderItem(item);
             }
             GL.Disable(EnableCap.AlphaTest);
             // pass 2: decal
@@ -958,7 +1505,7 @@ namespace MphRead
             for (int i = 0; i < _decalMeshes.Count; i++)
             {
                 MeshInfo item = _decalMeshes[i];
-                RenderMesh(item);
+                RenderItem(item);
             }
             GL.PolygonOffset(0, 0);
             GL.Disable(EnableCap.PolygonOffsetFill);
@@ -971,7 +1518,7 @@ namespace MphRead
             {
                 MeshInfo item = _translucentMeshes[i];
                 GL.StencilFunc(StencilFunction.Greater, item.PolygonId, 0xFF);
-                RenderMesh(item);
+                RenderItem(item);
             }
             // pass 4: rebuild depth buffer
             GL.Clear(ClearBufferMask.DepthBufferBit);
@@ -981,7 +1528,7 @@ namespace MphRead
             for (int i = 0; i < _nonDecalMeshes.Count; i++)
             {
                 MeshInfo item = _nonDecalMeshes[i];
-                RenderMesh(item);
+                RenderItem(item);
             }
             // pass 5: translucent (behind)
             GL.AlphaFunc(AlphaFunction.Less, 1.0f);
@@ -993,7 +1540,7 @@ namespace MphRead
             {
                 MeshInfo item = _translucentMeshes[i];
                 GL.StencilFunc(StencilFunction.Notequal, item.PolygonId, 0xFF);
-                RenderMesh(item);
+                RenderItem(item);
             }
             // pass 6: translucent (before)
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
@@ -1001,7 +1548,7 @@ namespace MphRead
             {
                 MeshInfo item = _translucentMeshes[i];
                 GL.StencilFunc(StencilFunction.Equal, item.PolygonId, 0xFF);
-                RenderMesh(item);
+                RenderItem(item);
             }
             GL.DepthMask(true);
             GL.Disable(EnableCap.Blend);
@@ -1015,7 +1562,6 @@ namespace MphRead
             if ((_showVolumes > 0 && (_displayVolumes.Count > 0 || _displayPlanes.Count > 0)) || _showKillPlane)
             {
                 GL.Uniform1(_shaderLocations.UseLight, 0);
-                GL.Uniform1(_shaderLocations.UseFog, 0);
                 GL.Uniform1(_shaderLocations.UseTexture, 0);
                 GL.Uniform1(_shaderLocations.UseOverride, 1);
                 GL.Enable(EnableCap.Blend);
@@ -1074,8 +1620,8 @@ namespace MphRead
             Vector3? color = volume.GetColor(_showVolumes);
             if (color != null)
             {
-                GL.CullFace(volume.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
-                var transform = Matrix4.CreateTranslation(volume.Position);
+                GL.CullFace(volume.Volume.TestPoint(_cameraPosition * -1) ? CullFaceMode.Front : CullFaceMode.Back);
+                Matrix4 transform = Matrix4.Identity;
                 GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
                 GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(color.Value, 0.5f));
                 RenderVolume(volume.Volume);
@@ -1121,7 +1667,6 @@ namespace MphRead
             GL.End();
         }
 
-        // todo: use this for volume outlines too
         private void RenderDisplayLines(CollisionPortal plane)
         {
             GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(1f, 0f, 0f, 1f));
@@ -1208,6 +1753,125 @@ namespace MphRead
             }
         }
 
+        private void RenderItem(MeshInfo info)
+        {
+            if (info.IsParticle)
+            {
+                if (info.ParticleNode)
+                {
+                    info.Material.CurrentDiffuse = info.Particle.Color;
+                    if (info.Particle.BillboardNode)
+                    {
+                        info.Node.Animation = _viewInvRotMatrix * info.Particle.NodeTransform;
+                    }
+                    else
+                    {
+                        info.Node.Animation = info.Particle.NodeTransform;
+                    }
+                    RenderMesh(info);
+                }
+                else
+                {
+                    RenderParticle(info);
+                }
+            }
+            else
+            {
+                RenderMesh(info);
+            }
+        }
+
+        private void RenderParticle(MeshInfo item)
+        {
+            Matrix4 transform = Matrix4.Identity;
+            if ((item.Particle.Owner.Flags & 1) != 0)
+            {
+                transform = item.Particle.Owner.Transform;
+            }
+            GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
+
+            GL.Uniform1(_shaderLocations.UseLight, 0);
+            GL.Color3(item.Particle.Color);
+            GL.Uniform1(_shaderLocations.MaterialAlpha, item.Alpha);
+            GL.Uniform1(_shaderLocations.MaterialMode, (int)PolygonMode.Modulate);
+
+            int bindingId = item.Particle.Owner.TextureBindingIds[item.Particle.ParticleId];
+            int textureId = item.Material.TextureId;
+            RepeatMode xRepeat = item.Material.XRepeat;
+            RepeatMode yRepeat = item.Material.YRepeat;
+            if (textureId != UInt16.MaxValue)
+            {
+                GL.BindTexture(TextureTarget.Texture2D, bindingId);
+                int minParameter = _textureFiltering ? (int)TextureMinFilter.Linear : (int)TextureMinFilter.Nearest;
+                int magParameter = _textureFiltering ? (int)TextureMagFilter.Linear : (int)TextureMagFilter.Nearest;
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+                switch (xRepeat)
+                {
+                case RepeatMode.Clamp:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+                    break;
+                case RepeatMode.Repeat:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+                    break;
+                case RepeatMode.Mirror:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapS, (int)TextureWrapMode.MirroredRepeat);
+                    break;
+                }
+                switch (yRepeat)
+                {
+                case RepeatMode.Clamp:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+                    break;
+                case RepeatMode.Repeat:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+                    break;
+                case RepeatMode.Mirror:
+                    GL.TexParameter(TextureTarget.Texture2D,
+                        TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat);
+                    break;
+                }
+                Matrix4 texcoordMatrix = Matrix4.Identity;
+                GL.Uniform1(_shaderLocations.TexgenMode, (int)TexgenMode.None);
+                GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref texcoordMatrix);
+            }
+            GL.Uniform1(_shaderLocations.UseTexture, textureId != UInt16.MaxValue && _showTextures ? 1 : 0);
+            GL.Uniform1(_shaderLocations.UseOverride, 0);
+            GL.Uniform1(_shaderLocations.UsePaletteOverride, 0);
+
+            GL.Disable(EnableCap.CullFace);
+            GL.PolygonMode(MaterialFace.FrontAndBack,
+                _wireframe || item.Material.Wireframe != 0
+                ? OpenTK.Graphics.OpenGL.PolygonMode.Line
+                : OpenTK.Graphics.OpenGL.PolygonMode.Fill);
+
+            float scaleS = 1;
+            float scaleT = 1;
+            if (item.Material.XRepeat == RepeatMode.Mirror)
+            {
+                scaleS = item.Material.ScaleS;
+            }
+            if (item.Material.YRepeat == RepeatMode.Mirror)
+            {
+                scaleT = item.Material.ScaleT;
+            }
+            GL.Begin(PrimitiveType.Quads);
+            GL.TexCoord3(item.Particle.Texcoord0.X * scaleS, item.Particle.Texcoord0.Y * scaleT, 0f);
+            GL.Vertex3(item.Particle.Vertex0);
+            GL.TexCoord3(item.Particle.Texcoord1.X * scaleS, item.Particle.Texcoord1.Y * scaleT, 0f);
+            GL.Vertex3(item.Particle.Vertex1);
+            GL.TexCoord3(item.Particle.Texcoord2.X * scaleS, item.Particle.Texcoord2.Y * scaleT, 0f);
+            GL.Vertex3(item.Particle.Vertex2);
+            GL.TexCoord3(item.Particle.Texcoord3.X * scaleS, item.Particle.Texcoord3.Y * scaleT, 0f);
+            GL.Vertex3(item.Particle.Vertex3);
+            GL.End();
+        }
+
         private void RenderMesh(MeshInfo item)
         {
             Model model = item.Model;
@@ -1289,7 +1953,7 @@ namespace MphRead
             float frames = (float)elapsedTime * 30;
             foreach (LightSource lightSource in _lightSources)
             {
-                if (lightSource.TestPoint(model.Position))
+                if (lightSource.Volume.TestPoint(model.Position))
                 {
                     if (lightSource.Light1Enabled)
                     {
@@ -1492,16 +2156,11 @@ namespace MphRead
                     break;
                 }
                 Matrix4 texcoordMatrix = Matrix4.Identity;
-                TexcoordAnimationGroup? group = null;
+                TexcoordAnimationGroup? group = model.Animations.TexcoordGroup;
                 TexcoordAnimation? animation = null;
-                // todo: was there a reason animation couldn't be put inside the texgen condition?
-                if (textureId != UInt16.MaxValue)
+                if (group != null && group.Animations.TryGetValue(material.Name, out TexcoordAnimation result))
                 {
-                    group = model.Animations.TexcoordGroup;
-                    if (group != null && group.Animations.TryGetValue(material.Name, out TexcoordAnimation result))
-                    {
-                        animation = result;
-                    }
+                    animation = result;
                 }
                 if (group != null && animation != null)
                 {
@@ -2170,9 +2829,15 @@ namespace MphRead
                     }
                     if (_showVolumes != 0 && _selectionMode == SelectionMode.Model)
                     {
+                        int previousSelection = _selectedModelId;
                         Deselect();
                         _selectedModelId = 0;
                         await SelectNextModel();
+                        if (!_modelMap.ContainsKey(_selectedModelId))
+                        {
+                            _selectedModelId = previousSelection;
+                            SetSelectedModel(previousSelection);
+                        }
                     }
                 }
                 else
@@ -2184,9 +2849,15 @@ namespace MphRead
                     }
                     if (_showVolumes != 0 && _selectionMode == SelectionMode.Model)
                     {
+                        int previousSelection = _selectedModelId;
                         Deselect();
                         _selectedModelId = 0;
                         await SelectNextModel();
+                        if (!_modelMap.ContainsKey(_selectedModelId))
+                        {
+                            _selectedModelId = previousSelection;
+                            SetSelectedModel(previousSelection);
+                        }
                     }
                 }
                 await PrintOutput();
@@ -2226,8 +2897,20 @@ namespace MphRead
             }
             else if (e.Key == Keys.E)
             {
-                _scanVisor = !_scanVisor;
-                await PrintOutput();
+                if (e.Alt)
+                {
+                    // undocumented -- might not be needed once we have an animation index setter
+                    if (_selectionMode == SelectionMode.Model
+                        && SelectedModel.Entity is Entity<ObjectEntityData> obj && obj.Data.EffectId != 0)
+                    {
+                        ((ObjectModel)SelectedModel).ForceSpawnEffect = true;
+                    }
+                }
+                else
+                {
+                    _scanVisor = !_scanVisor;
+                    await PrintOutput();
+                }
             }
             else if (e.Key == Keys.R)
             {
@@ -2440,7 +3123,6 @@ namespace MphRead
                 }
                 else if (_selectionMode == SelectionMode.Node || _selectionMode == SelectionMode.Mesh)
                 {
-                    // todo: could keep track of vertex positions during rendering and use them here to locate the mesh
                     LookAt(SelectedModel.Nodes[_selectedNodeId].Position);
                 }
             }
@@ -3032,6 +3714,13 @@ namespace MphRead
                         type += ", Target: None";
                     }
                     type += $", Param1: {fhTrigger.Data.ChildParam1}, Param2: 0";
+                }
+                else if (model.Entity is Entity<ObjectEntityData> obj)
+                {
+                    if (obj.Data.EffectId != 0)
+                    {
+                        type += $" ({obj.Data.EffectId}, {Metadata.Effects[(int)obj.Data.EffectId].Name})";
+                    }
                 }
             }
             await Output.Write(type, guid);

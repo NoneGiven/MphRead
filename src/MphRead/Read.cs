@@ -22,6 +22,11 @@ namespace MphRead
 
         public static Model GetModelByName(string name, int defaultRecolor = 0, bool firstHunt = false)
         {
+            return GetModelByName<Model>(name, defaultRecolor, firstHunt);
+        }
+
+        public static T GetModelByName<T>(string name, int defaultRecolor = 0, bool firstHunt = false) where T : Model
+        {
             ModelMetadata? modelMeta;
             if (firstHunt)
             {
@@ -35,10 +40,10 @@ namespace MphRead
             {
                 throw new ProgramException("No model with this name is known.");
             }
-            return GetModel(modelMeta, defaultRecolor);
+            return GetModel<T>(modelMeta, defaultRecolor);
         }
 
-        public static Model GetRoomByName(string name)
+        public static RoomModel GetRoomByName(string name)
         {
             (RoomMetadata? roomMeta, _) = Metadata.GetRoomByName(name);
             if (roomMeta == null)
@@ -48,7 +53,7 @@ namespace MphRead
             return GetRoom(roomMeta);
         }
 
-        public static Model GetRoomById(int id)
+        public static RoomModel GetRoomById(int id)
         {
             RoomMetadata? roomMeta = Metadata.GetRoomById(id);
             if (roomMeta == null)
@@ -58,26 +63,24 @@ namespace MphRead
             return GetRoom(roomMeta);
         }
 
-        private static Model GetRoom(RoomMetadata meta)
+        private static RoomModel GetRoom(RoomMetadata meta)
         {
             var recolors = new List<RecolorMetadata>()
             {
                 new RecolorMetadata("default", meta.ModelPath, meta.TexturePath ?? meta.ModelPath)
             };
-            Model room = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, animationShare: null,
+            return GetModel<RoomModel>(meta.Name, meta.ModelPath, meta.AnimationPath, animationShare: null,
                 recolors, defaultRecolor: 0, useLightSources: false, firstHunt: meta.FirstHunt || meta.Hybrid);
-            return new RoomModel(room);
         }
 
-        private static Model GetModel(ModelMetadata meta, int defaultRecolor)
+        private static T GetModel<T>(ModelMetadata meta, int defaultRecolor) where T : Model
         {
-            Model model = GetModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.AnimationShare, meta.Recolors,
+            return GetModel<T>(meta.Name, meta.ModelPath, meta.AnimationPath, meta.AnimationShare, meta.Recolors,
                 defaultRecolor, meta.UseLightSources, firstHunt: meta.FirstHunt);
-            return model;
         }
 
-        private static Model GetModel(string name, string modelPath, string? animationPath, string? animationShare,
-            IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor, bool useLightSources, bool firstHunt)
+        private static T GetModel<T>(string name, string modelPath, string? animationPath, string? animationShare,
+            IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor, bool useLightSources, bool firstHunt) where T : Model
         {
             if (defaultRecolor < 0 || defaultRecolor > recolorMeta.Count - 1)
             {
@@ -182,9 +185,27 @@ namespace MphRead
                 shared.TextureAnimationGroups.AddRange(animations.TextureAnimationGroups);
                 animations = shared;
             }
-            return new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+            if (typeof(T) == typeof(RoomModel))
+            {
+                return (new RoomModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+                    animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
+                    textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
+            }
+            if (typeof(T) == typeof(ObjectModel))
+            {
+                return (new ObjectModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+                    animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
+                    textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
+            }
+            if (typeof(T) == typeof(ForceFieldLockModel))
+            {
+                return (new ForceFieldLockModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+                    animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
+                    textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
+            }
+            return (new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights);
+                textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
         }
 
         private class AnimationResults
@@ -596,10 +617,49 @@ namespace MphRead
             return frames;
         }
 
-        // todo: should this load child effects automatically?
-        public static Effect ReadEffect(string name)
+        public static Effect LoadEffect(int id)
         {
-            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, name)));
+            if (id < 1 || id > Metadata.Effects.Count)
+            {
+                throw new ProgramException("Could not get particle.");
+            }
+            (string name, string? archive) = Metadata.Effects[id];
+            return LoadEffect(name, archive);
+        }
+
+        public static Effect LoadEffect(string name, string? archive)
+        {
+            string path;
+            if (archive == null)
+            {
+                path = $"effects/{name}_PS.bin";
+            }
+            else
+            {
+                path = $"_archives/{archive}/{name}_PS.bin";
+            }
+            Effect effect = LoadEffect(path);
+            foreach (EffectElement element in effect.Elements)
+            {
+                if (element.ChildEffectId != 0)
+                {
+                    LoadEffect((int)element.ChildEffectId);
+                }
+            }
+            return effect;
+        }
+
+        private static readonly Dictionary<string, Effect> _effects = new Dictionary<string, Effect>();
+        public static Dictionary<string, Model> EffectModels { get; } = new Dictionary<string, Model>();
+        private static readonly Dictionary<(string, string), Particle> _particleDefs = new Dictionary<(string, string), Particle>();
+
+        private static Effect LoadEffect(string path)
+        {
+            if (_effects.TryGetValue(path, out Effect? cached))
+            {
+                return cached;
+            }
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
             RawEffect effect = ReadStruct<RawEffect>(bytes);
             var funcs = new Dictionary<uint, FxFuncInfo>();
             foreach (uint offset in DoOffsets<uint>(bytes, effect.FuncOffset, effect.FuncCount))
@@ -618,13 +678,14 @@ namespace MphRead
             foreach (uint offset in elementOffsets)
             {
                 RawEffectElement element = DoOffset<RawEffectElement>(bytes, offset);
-                var particles = new List<string>();
+                var particles = new List<Particle>();
                 foreach (uint nameOffset in DoOffsets<uint>(bytes, element.ParticleOffset, element.ParticleCount))
                 {
-                    particles.Add(ReadString(bytes, nameOffset, 16));
+                    // todo: move the model reference to the element instead of the particle definitions
+                    particles.Add(GetParticle(element.ModelName.MarshalString(), ReadString(bytes, nameOffset, 16)));
                 }
-                var elemFuncs = new Dictionary<uint, FxFuncInfo>();
-                IReadOnlyList<uint> elemFuncMeta = DoOffsets<uint>(bytes, element.SomeOffset, 2 * element.SomeCount);
+                var elemFuncs = new Dictionary<FuncAction, FxFuncInfo>();
+                IReadOnlyList<uint> elemFuncMeta = DoOffsets<uint>(bytes, element.FuncOffset, 2 * element.FuncCount);
                 for (int i = 0; i < elemFuncMeta.Count; i += 2)
                 {
                     uint index = elemFuncMeta[i];
@@ -632,12 +693,41 @@ namespace MphRead
                     if (funcOffset != 0)
                     {
                         // the main list always includes the offsets referenced by elements
-                        elemFuncs.Add(index, funcs[funcOffset]);
+                        elemFuncs.Add((FuncAction)index, funcs[funcOffset]);
                     }
                 }
-                elements.Add(new EffectElement(element, particles, elemFuncs));
+                elements.Add(new EffectElement(element, particles, funcs, elemFuncs));
             }
-            return new Effect(effect, funcs, list2, elements, name);
+            var newEffect = new Effect(effect, funcs, list2, elements, path);
+            _effects.Add(path, newEffect);
+            return newEffect;
+        }
+
+        private static Particle GetParticle(string modelName, string particleName)
+        {
+            if (_particleDefs.TryGetValue((modelName, particleName), out Particle? particle))
+            {
+                return particle;
+            }
+            if (!EffectModels.TryGetValue(modelName, out Model? model))
+            {
+                model = GetModelByName(modelName);
+                EffectModels.Add(modelName, model);
+            }
+            Node? node = model.Nodes.FirstOrDefault(n => n.Name == particleName);
+            // todo: see what the game does here; gib3/gib4 nodes are probably meant to be used for these
+            if (modelName == "geo1" && particleName == "gib")
+            {
+                node = model.Nodes.First(n => n.Name == "gib3");
+            }
+            if (node != null && node.MeshCount > 0)
+            {
+                int materialId = model.Meshes[node.MeshId / 2].MaterialId;
+                var newParticle = new Particle(particleName, model, node, materialId);
+                _particleDefs.Add((modelName, particleName), newParticle);
+                return newParticle;
+            }
+            throw new ProgramException("Could not get particle.");
         }
 
         [Conditional("DEBUG")]
@@ -716,6 +806,13 @@ namespace MphRead
             return list;
         }
 
+        private static int SpanReadInt(ReadOnlySpan<byte> bytes, ref int offset)
+        {
+            int result = MemoryMarshal.Read<int>(bytes[offset..(offset + sizeof(int))]);
+            offset += sizeof(int);
+            return result;
+        }
+
         private static uint SpanReadUint(ReadOnlySpan<byte> bytes, ref int offset)
         {
             uint result = MemoryMarshal.Read<uint>(bytes[offset..(offset + sizeof(uint))]);
@@ -728,6 +825,16 @@ namespace MphRead
             ushort result = MemoryMarshal.Read<ushort>(bytes[offset..(offset + sizeof(ushort))]);
             offset += sizeof(ushort);
             return result;
+        }
+
+        public static int SpanReadInt(ReadOnlySpan<byte> bytes, uint offset)
+        {
+            return SpanReadInt(bytes, (int)offset);
+        }
+
+        public static int SpanReadInt(ReadOnlySpan<byte> bytes, int offset)
+        {
+            return SpanReadInt(bytes, ref offset);
         }
 
         public static uint SpanReadUint(ReadOnlySpan<byte> bytes, uint offset)

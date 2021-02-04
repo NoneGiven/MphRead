@@ -100,6 +100,24 @@ namespace MphRead
 
     public static class Matrix
     {
+        public static Vector3 Vec3MultMtx4(Vector3 vec, Matrix4 mat)
+        {
+            Vector3 result = Vector3.Zero;
+            result.X = (vec.X * mat.Row0.X) + (vec.Y * mat.Row1.X) + (vec.Z * mat.Row2.X) + mat.Row3.X;
+            result.Y = (vec.X * mat.Row0.Y) + (vec.Y * mat.Row1.Y) + (vec.Z * mat.Row2.Y) + mat.Row3.Y;
+            result.Z = (vec.X * mat.Row0.Z) + (vec.Y * mat.Row1.Z) + (vec.Z * mat.Row2.Z) + mat.Row3.Z;
+            return result;
+        }
+
+        public static Vector3 Vec3MultMtx3(Vector3 vec, Matrix4 mat)
+        {
+            Vector3 result = Vector3.Zero;
+            result.X = (vec.X * mat.Row0.X) + (vec.Y * mat.Row1.X) + (vec.Z * mat.Row2.X);
+            result.Y = (vec.X * mat.Row0.Y) + (vec.Y * mat.Row1.Y) + (vec.Z * mat.Row2.Y);
+            result.Z = (vec.X * mat.Row0.Z) + (vec.Y * mat.Row1.Z) + (vec.Z * mat.Row2.Z);
+            return result;
+        }
+
         public static Matrix4x3 Concat43(Matrix4x3 first, Matrix4x3 second)
         {
             Matrix4x3 output = Matrix4x3.Zero;
