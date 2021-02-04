@@ -511,6 +511,7 @@ namespace MphRead.Effects
         public float ParticleAmount { get; set; }
         public bool Expired { get; set; }
 
+        public int Parity { get; set; }
         public List<Particle> ParticleDefinitions { get; } = new List<Particle>();
         public List<int> TextureBindingIds { get; } = new List<int>();
         public List<EffectParticle> Particles { get; } = new List<EffectParticle>(); // todo: pre-size?
@@ -917,7 +918,55 @@ namespace MphRead.Effects
 
         private void DrawB8(float scaleFactor)
         {
-            // todo
+            ShouldDraw = false;
+            if (Alpha > 0)
+            {
+                ShouldDraw = true;
+                Color = new Vector3(Red, Green, Blue);
+                Vector3 ev1 = EffectVec1 * Scale;
+                Vector3 ev2 = EffectVec2 * Scale;
+
+                float v19 = Position.X + (-ev1.X / 2) + (ev2.X / 2);
+                float v22 = Position.Y + (-ev1.Y / 2) + (ev2.Y / 2);
+                float v23 = Position.Z + (-ev1.Z / 2) + (ev2.Z / 2);
+
+                // top left
+                float x = v19 / scaleFactor;
+                float y = v22 / scaleFactor;
+                float z = v23 / scaleFactor;
+                Vertex0 = new Vector3(x, y, z);
+                Texcoord0 = new Vector2(0, 1);
+
+                // top right
+                float v24 = v19 + ev1.X;
+                float v26 = v22 + ev1.Y;
+                float v29 = v23 + ev1.Z;
+                x = v24 / scaleFactor;
+                y = v26 / scaleFactor;
+                z = v29 / scaleFactor;
+                Vertex1 = new Vector3(x, y, z);
+                Texcoord1 = new Vector2(1, 1);
+
+                // bottom right
+                float v25 = v19 + ev1.X - ev2.X;
+                float v27 = v22 + ev1.Y - ev2.Y;
+                float v30 = v23 + ev1.Z - ev2.Z;
+                x = v25 / scaleFactor;
+                y = v27 / scaleFactor;
+                z = v30 / scaleFactor;
+                Vertex2 = new Vector3(x, y, z);
+                Texcoord2 = new Vector2(1, 0);
+
+                // bottom left
+                float v34 = v25 - ev1.X;
+                float v28 = v27 - ev1.Y;
+                float v33 = v30 - ev1.Z;
+                x = v34 / scaleFactor;
+                y = v28 / scaleFactor;
+                z = v33 / scaleFactor;
+                Vertex3 = new Vector3(x, y, z);
+                Texcoord3 = new Vector2(0, 0);
+            }
         }
 
         private void DrawC4(float scaleFactor)

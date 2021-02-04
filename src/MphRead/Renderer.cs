@@ -954,6 +954,7 @@ namespace MphRead
             entry.Expired = false;
             entry.Acceleration = element.Acceleration;
             entry.ParticleDefinitions.AddRange(element.Particles);
+            entry.Parity = (int)(_frameCount % 2);
             _activeElements.Add(entry);
             return entry;
         }
@@ -1090,14 +1091,12 @@ namespace MphRead
                     }
                     var times = new TimeValues(_elapsedTime, _elapsedTime - element.CreationTime, element.Lifespan);
                     // ptodo: mtxptr stuff
-                    if (element.Actions.TryGetValue(FuncAction.IncreaseParticleAmount, out FxFuncInfo? info))
+                    if (_frameCount % 2 == element.Parity
+                        && element.Actions.TryGetValue(FuncAction.IncreaseParticleAmount, out FxFuncInfo? info))
                     {
-                        // ptodo: confirm this hack works ("first frame spawn")
+                        // todo: maybe revisit this fram time hack
+                        // --> halving the amount doesn't work because it breaks one-time return values of 1.0
                         float amount = element.InvokeFloatFunc(info, times);
-                        if (info.FuncId != 40)
-                        {
-                            amount /= 2;
-                        }
                         element.ParticleAmount += amount;
                     }
                     int spawnCount = (int)MathF.Floor(element.ParticleAmount);
