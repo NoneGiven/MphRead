@@ -321,7 +321,7 @@ namespace MphRead
             _dblDmgBindingId = _textureCount;
         }
 
-        public void AddModel(string name, int recolor, bool firstHunt)
+        public Model AddModel(string name, int recolor, bool firstHunt)
         {
             Model model = Read.GetModelByName(name, recolor, firstHunt);
             SceneSetup.ComputeNodeMatrices(model, index: 0);
@@ -334,6 +334,7 @@ namespace MphRead
             }
             _models.Add(model);
             _modelMap.Add(model.SceneId, model);
+            return model;
         }
 
         protected override async void OnLoad()
@@ -765,6 +766,7 @@ namespace MphRead
 
         private void UpdateLists()
         {
+            // todo: need a better strategy for managing these (right now, ice models will get cleared)
             for (int i = 1; i <= _maxListId; i++)
             {
                 GL.DeleteLists(i, 1);
@@ -779,6 +781,20 @@ namespace MphRead
             {
                 _effectModels.Add(model.Name);
                 GenerateLists(model);
+            }
+        }
+
+        public void InitModel(Model model)
+        {
+            InitTextures(model);
+            UpdateMaterials(model);
+            GenerateLists(model);
+            if (_roomLoaded && model.UseLightSources)
+            {
+                model.Light1Color = _light1Color;
+                model.Light1Vector = _light1Vector;
+                model.Light2Color = _light2Color;
+                model.Light2Vector = _light2Vector;
             }
         }
 
@@ -858,8 +874,12 @@ namespace MphRead
             public readonly SingleParticle Single;
             public readonly int PolygonId;
             public readonly float Alpha;
+            public readonly bool OverrideTransform;
+            public readonly Matrix4 Transform;
+            public readonly bool OverrideMatrixStack;
+            public readonly float[] MatrixStack;
 
-            public MeshInfo(Model model, Node node, Mesh mesh, Material material, int polygonId, float alpha)
+            public MeshInfo(Model model, Node node, Mesh mesh, Material material, int polygonId, float alpha, Matrix4? transform = null)
             {
                 Type = RenderType.Mesh;
                 Model = model;
@@ -870,6 +890,35 @@ namespace MphRead
                 Alpha = alpha;
                 Particle = null!;
                 Single = null!;
+                OverrideMatrixStack = false;
+                MatrixStack = null!;
+                if (transform.HasValue)
+                {
+                    OverrideTransform = true;
+                    Transform = transform.Value;
+                }
+                else
+                {
+                    OverrideTransform = false;
+                    Transform = Matrix4.Identity;
+                }
+            }
+
+            public MeshInfo(Model model, Node node, Mesh mesh, Material material, int polygonId, float alpha, float[] matrixStack)
+            {
+                Type = RenderType.Mesh;
+                Model = model;
+                Node = node;
+                Mesh = mesh;
+                Material = material;
+                PolygonId = polygonId;
+                Alpha = alpha;
+                Particle = null!;
+                Single = null!;
+                OverrideTransform = false;
+                Transform = Matrix4.Identity;
+                OverrideMatrixStack = true;
+                MatrixStack = matrixStack;
             }
 
             public MeshInfo(EffectParticle particle, Material material, int polygonId, float alpha)
@@ -883,6 +932,10 @@ namespace MphRead
                 Node = null!;
                 Mesh = null!;
                 Single = null!;
+                OverrideTransform = false;
+                Transform = Matrix4.Identity;
+                OverrideMatrixStack = false;
+                MatrixStack = null!;
             }
 
             public MeshInfo(EffectParticle particle, Model model, Node node, Mesh mesh, Material material, int polygonId, float alpha)
@@ -896,6 +949,10 @@ namespace MphRead
                 Node = node;
                 Mesh = mesh;
                 Single = null!;
+                OverrideTransform = false;
+                Transform = Matrix4.Identity;
+                OverrideMatrixStack = false;
+                MatrixStack = null!;
             }
 
             public MeshInfo(SingleParticle single, Model model, Node node, Mesh mesh, Material material, int polygonId, float alpha)
@@ -909,6 +966,10 @@ namespace MphRead
                 Node = node;
                 Mesh = mesh;
                 Particle = null!;
+                OverrideTransform = false;
+                Transform = Matrix4.Identity;
+                OverrideMatrixStack = false;
+                MatrixStack = null!;
             }
         }
 
@@ -1961,14 +2022,20 @@ namespace MphRead
                 UseLight1(model.Light1Vector, model.Light1Color);
                 UseLight2(model.Light2Vector, model.Light2Color);
             }
-            if (model.NodeMatrixIds.Count == 0)
+            if (item.OverrideTransform)
+            {
+                Matrix4 transform = item.Transform;
+                GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
+            }
+            else if (model.NodeMatrixIds.Count == 0)
             {
                 Matrix4 transform = item.Node.Animation;
                 GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
             }
             else
             {
-                GL.UniformMatrix4(_shaderLocations.MatrixStack, model.NodeMatrixIds.Count, transpose: false, model.MatrixStackValues);
+                float[] values = item.OverrideMatrixStack ? item.MatrixStack : model.MatrixStackValues;
+                GL.UniformMatrix4(_shaderLocations.MatrixStack, model.NodeMatrixIds.Count, transpose: false, values);
             }
             DoMaterial(model, item.Material, item.Node, item.Alpha);
             // texgen actually uses the transform from the current node, not the matrix stack
@@ -2153,7 +2220,6 @@ namespace MphRead
                 animation.TranslateBlendY, animation.TranslateLutLengthY, group.FrameCount);
             float translateZ = InterpolateAnimation(group.Translations, animation.TranslateLutIndexZ, group.CurrentFrame,
                 animation.TranslateBlendZ, animation.TranslateLutLengthZ, group.FrameCount);
-            // todo: hunter scale factors/any others?
             var nodeMatrix = Matrix4.CreateTranslation(translateX / modelScale.X, translateY / modelScale.Y, translateZ / modelScale.Z);
             nodeMatrix = Matrix4.CreateRotationX(rotateX) * Matrix4.CreateRotationY(rotateY) * Matrix4.CreateRotationZ(rotateZ) * nodeMatrix;
             nodeMatrix = Matrix4.CreateScale(scaleX, scaleY, scaleZ) * nodeMatrix;

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using MphRead.Effects;
 using MphRead.Formats.Collision;
@@ -427,6 +428,17 @@ namespace MphRead.Models
 
     public class PlayerModel : Model
     {
+        public Hunter Hunter { get; set; }
+        public bool AltForm { get; set; }
+        public bool Frozen { get; set; }
+        // todo: load/init/cache/etc.
+        [NotNull, DisallowNull]
+        private static Model? _altIceModel;
+        private static Model? _samusIceModel;
+        private static Model? _noxusIceModel;
+        [NotNull, DisallowNull]
+        private Model? _bipedIceModel;
+
         public PlayerModel(string name, Header header, IReadOnlyList<RawNode> nodes,
             IReadOnlyList<RawMesh> meshes, IReadOnlyList<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
@@ -439,7 +451,68 @@ namespace MphRead.Models
             Type = ModelType.Player;
         }
 
-        public override void Process(RenderWindow renderer, double elapsedTime, long frameCount, Vector3 cameraPosition, Matrix4 viewInvRot, Matrix4 viewInvRotY, bool useTransform)
+        public override void Initialize(RenderWindow renderer)
+        {
+            // todo: hunter scale
+            base.Initialize(renderer);
+            if (_altIceModel == null)
+            {
+                _altIceModel = renderer.AddModel("alt_ice", 0, firstHunt: false);
+                renderer.InitModel(_altIceModel);
+            }
+            if (_samusIceModel == null)
+            {
+                _samusIceModel = renderer.AddModel("samus_ice", 0, firstHunt: false);
+                renderer.InitModel(_samusIceModel);
+            }
+            if (_noxusIceModel == null)
+            {
+                _noxusIceModel = renderer.AddModel("nox_ice", 0, firstHunt: false);
+                renderer.InitModel(_noxusIceModel);
+            }
+            _bipedIceModel = Hunter == Hunter.Noxus || Hunter == Hunter.Trace ? _noxusIceModel : _samusIceModel;
+        }
+
+        private void GetFrozenDrawItems()
+        {
+            if (Frozen)
+            {
+                if (AltForm)
+                {
+                    // todo: collision radius scale, height offset
+                    Node node = _altIceModel.Nodes[0];
+                    Mesh mesh = _altIceModel.Meshes[node.MeshId / 2];
+                    Material material = _altIceModel.Materials[mesh.MaterialId];
+                    //var meshInfo = new MeshInfo(_altIceModel, node, mesh, material, polygonId++, 1, Transform);
+                    //_nonDecalMeshes.Add(meshInfo);
+                    //_translucentMeshes.Add(meshInfo);
+                }
+                else
+                {
+                    for (int j = 0; j < _bipedIceModel.Nodes.Count; j++)
+                    {
+                        _bipedIceModel.Nodes[j].Animation = Nodes[j].Animation;
+                    }
+                    // identity matrices are fine since the ice model doesn't have any billboard nodes
+                    _bipedIceModel.UpdateMatrixStack(Matrix4.Identity, Matrix4.Identity);
+                    float[] stack = _bipedIceModel.MatrixStackValues.ToArray(); // todo: allocations?
+                    for (int j = 0; j < _bipedIceModel.Nodes.Count; j++)
+                    {
+                        Node node = _bipedIceModel.Nodes[j];
+                        foreach (Mesh mesh in _bipedIceModel.GetNodeMeshes(node))
+                        {
+                            Material material = _bipedIceModel.Materials[mesh.MaterialId];
+                            //var meshInfo = new MeshInfo(_bipedIceModel, node, mesh, material, polygonId++, 1, stack);
+                            //_nonDecalMeshes.Add(meshInfo);
+                            //_translucentMeshes.Add(meshInfo);
+                        }
+                    }
+                }
+            }
+        }
+
+        public override void Process(RenderWindow renderer, double elapsedTime, long frameCount, Vector3 cameraPosition,
+            Matrix4 viewInvRot, Matrix4 viewInvRotY, bool useTransform)
         {
             base.Process(renderer, elapsedTime, frameCount, cameraPosition, viewInvRot, viewInvRotY, useTransform);
             // todo: test if dead, process respawn cooldown
