@@ -1412,8 +1412,7 @@ namespace MphRead
             _translucentMeshes.Clear();
             int polygonId = 1;
             _models.Sort(CompareModels);
-            // todo: consolidate this
-            Vector3 cameraPosition = _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1);
+            Vector3 cameraPosition = _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1); // todo: consolidate this
             for (int i = 0; i < _models.Count; i++)
             {
                 Model model = _models[i];
