@@ -445,6 +445,7 @@ namespace MphRead.Models
             // todo: test if dead, process respawn cooldown
             float timePct = 0.5f; // todo: time percent (0 --> 1)
             float scale = timePct / 2 + 0.1f;
+            // todo: the angle stuff could be removed
             float angle = MathF.Sin(MathHelper.DegreesToRadians(270 - 90 * timePct));
             float sin270 = MathF.Sin(MathHelper.DegreesToRadians(270));
             float sin180 = MathF.Sin(MathHelper.DegreesToRadians(180));
