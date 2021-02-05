@@ -23,6 +23,88 @@ namespace MphRead.Effects
         }
     }
 
+    public interface IDrawable
+    {
+        Vector3 Color { get; }
+        Vector2 Texcoord0 { get;  }
+        Vector3 Vertex0 { get;  }
+        Vector2 Texcoord1 { get; }
+        Vector3 Vertex1 { get; }
+        Vector2 Texcoord2 { get; }
+        Vector3 Vertex2 { get; }
+        Vector2 Texcoord3 { get;  }
+        Vector3 Vertex3 { get; }
+    }
+
+    public class SingleParticle : IDrawable
+    {
+        [NotNull, DisallowNull]
+        public Particle? ParticleDefinition { get; set; }
+        public Vector3 Position { get; set; }
+        public Vector3 Color { get; set; }
+        public float Alpha { get; set; }
+        public float Scale { get; set; }
+
+        public bool ShouldDraw { get; private set; }
+        public Vector2 Texcoord0 { get; private set; }
+        public Vector3 Vertex0 { get; private set; }
+        public Vector2 Texcoord1 { get; private set; }
+        public Vector3 Vertex1 { get; private set; }
+        public Vector2 Texcoord2 { get; private set; }
+        public Vector3 Vertex2 { get; private set; }
+        public Vector2 Texcoord3 { get; private set; }
+        public Vector3 Vertex3 { get; private set; }
+
+        public void Process(Vector3 vec1, Vector3 vec2, Vector3 vec3, float scaleFactor)
+        {
+            ShouldDraw = false;
+            if (Alpha > 0)
+            {
+                ShouldDraw = true;
+                float v24 = vec1.X + vec1.Y;
+                float v23 = vec2.X + vec2.Y;
+                float v27 = vec1.X - vec1.Y;
+                float v26 = vec2.X - vec2.Y;
+                float v19 = vec3.Y - vec3.X;
+                float v25 = vec3.X - vec3.Y;
+                float v30 = -(vec1.X + vec1.Y);
+                float v29 = -(vec2.X + vec2.Y);
+                float v28 = -(vec3.X + vec3.Y);
+                float v20 = vec2.Y - vec2.X;
+                float v21 = vec1.Y - vec1.X;
+                float v22 = vec3.X + vec3.Y;
+
+                // bottom left
+                float x = (Position.X + v21 * Scale) / scaleFactor;
+                float y = (Position.Y + v20 * Scale) / scaleFactor;
+                float z = (Position.Z + v19 * Scale) / scaleFactor;
+                Vertex0 = new Vector3(x, y, z);
+                Texcoord0 = new Vector2(0, 0);
+
+                // bottom right
+                x = (Position.X + v24 * Scale) / scaleFactor;
+                y = (Position.Y + v23 * Scale) / scaleFactor;
+                z = (Position.Z + v22 * Scale) / scaleFactor;
+                Vertex1 = new Vector3(x, y, z);
+                Texcoord1 = new Vector2(1, 0);
+
+                // top right
+                x = (Position.X + v27 * Scale) / scaleFactor;
+                y = (Position.Y + v26 * Scale) / scaleFactor;
+                z = (Position.Z + v25 * Scale) / scaleFactor;
+                Vertex2 = new Vector3(x, y, z);
+                Texcoord2 = new Vector2(1, 1);
+
+                // top left
+                x = (Position.X + v30 * Scale) / scaleFactor;
+                y = (Position.Y + v29 * Scale) / scaleFactor;
+                z = (Position.Z + v28 * Scale) / scaleFactor;
+                Vertex3 = new Vector3(x, y, z);
+                Texcoord3 = new Vector2(0, 1);
+            }
+        }
+    }
+
     [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
     public abstract class EffectFuncBase
     {
@@ -648,7 +730,7 @@ namespace MphRead.Effects
     }
 
     [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
-    public class EffectParticle : EffectFuncBase
+    public class EffectParticle : EffectFuncBase, IDrawable
     {
         public float CreationTime { get; set; }
         public float ExpirationTime { get; set; }

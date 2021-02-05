@@ -397,18 +397,6 @@ namespace MphRead
             Vector3 scale = trans.ExtractScale();
         }
 
-        public enum Hunter : byte
-        {
-            Samus = 0,
-            Kanden = 1,
-            Trace = 2,
-            Sylux = 3,
-            Noxus = 4,
-            Spire = 5,
-            Weavel = 6,
-            Guardian = 7
-        }
-
         // 4F4 update for alt forms in sub_201DCE4
         public static void TestLogic1()
         {

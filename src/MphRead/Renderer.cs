@@ -321,7 +321,7 @@ namespace MphRead
             _dblDmgBindingId = _textureCount;
         }
 
-        public void AddModel(string name, int recolor, bool firstHunt)
+        public Model AddModel(string name, int recolor, bool firstHunt)
         {
             Model model = Read.GetModelByName(name, recolor, firstHunt);
             SceneSetup.ComputeNodeMatrices(model, index: 0);
@@ -334,6 +334,7 @@ namespace MphRead
             }
             _models.Add(model);
             _modelMap.Add(model.SceneId, model);
+            return model;
         }
 
         protected override async void OnLoad()
@@ -765,6 +766,7 @@ namespace MphRead
 
         private void UpdateLists()
         {
+            // todo: need a better strategy for managing these (right now, ice models will get cleared)
             for (int i = 1; i <= _maxListId; i++)
             {
                 GL.DeleteLists(i, 1);
@@ -779,6 +781,20 @@ namespace MphRead
             {
                 _effectModels.Add(model.Name);
                 GenerateLists(model);
+            }
+        }
+
+        public void InitModel(Model model)
+        {
+            InitTextures(model);
+            UpdateMaterials(model);
+            GenerateLists(model);
+            if (_roomLoaded && model.UseLightSources)
+            {
+                model.Light1Color = _light1Color;
+                model.Light1Vector = _light1Vector;
+                model.Light2Color = _light2Color;
+                model.Light2Vector = _light2Vector;
             }
         }
 
@@ -839,55 +855,121 @@ namespace MphRead
             return -1;
         }
 
+        public enum RenderType
+        {
+            Mesh,
+            Particle,
+            ParticleNode,
+            SingleParticle
+        }
+
         private readonly struct MeshInfo
         {
-            public readonly bool IsParticle;
-            public readonly bool ParticleNode;
+            public readonly RenderType Type;
             public readonly Model Model;
             public readonly Node Node;
             public readonly Mesh Mesh;
             public readonly Material Material;
             public readonly EffectParticle Particle;
+            public readonly SingleParticle Single;
             public readonly int PolygonId;
             public readonly float Alpha;
+            public readonly bool OverrideTransform;
+            public readonly Matrix4 Transform;
+            public readonly bool OverrideMatrixStack;
+            public readonly float[] MatrixStack;
 
-            public MeshInfo(Model model, Node node, Mesh mesh, Material material, int polygonId, float alpha)
+            public MeshInfo(Model model, Node node, Mesh mesh, Material material, int polygonId, float alpha, Matrix4? transform = null)
             {
+                Type = RenderType.Mesh;
                 Model = model;
                 Node = node;
                 Mesh = mesh;
                 Material = material;
                 PolygonId = polygonId;
                 Alpha = alpha;
-                IsParticle = false;
-                ParticleNode = false;
                 Particle = null!;
+                Single = null!;
+                OverrideMatrixStack = false;
+                MatrixStack = null!;
+                if (transform.HasValue)
+                {
+                    OverrideTransform = true;
+                    Transform = transform.Value;
+                }
+                else
+                {
+                    OverrideTransform = false;
+                    Transform = Matrix4.Identity;
+                }
+            }
+
+            public MeshInfo(Model model, Node node, Mesh mesh, Material material, int polygonId, float alpha, float[] matrixStack)
+            {
+                Type = RenderType.Mesh;
+                Model = model;
+                Node = node;
+                Mesh = mesh;
+                Material = material;
+                PolygonId = polygonId;
+                Alpha = alpha;
+                Particle = null!;
+                Single = null!;
+                OverrideTransform = false;
+                Transform = Matrix4.Identity;
+                OverrideMatrixStack = true;
+                MatrixStack = matrixStack;
             }
 
             public MeshInfo(EffectParticle particle, Material material, int polygonId, float alpha)
             {
+                Type = RenderType.Particle;
                 Particle = particle;
                 Material = material;
                 PolygonId = polygonId;
                 Alpha = alpha;
-                IsParticle = true;
-                ParticleNode = false;
                 Model = null!;
                 Node = null!;
                 Mesh = null!;
+                Single = null!;
+                OverrideTransform = false;
+                Transform = Matrix4.Identity;
+                OverrideMatrixStack = false;
+                MatrixStack = null!;
             }
 
             public MeshInfo(EffectParticle particle, Model model, Node node, Mesh mesh, Material material, int polygonId, float alpha)
             {
+                Type = RenderType.ParticleNode;
                 Particle = particle;
                 Material = material;
                 PolygonId = polygonId;
                 Alpha = alpha;
-                IsParticle = true;
-                ParticleNode = true;
                 Model = model;
                 Node = node;
                 Mesh = mesh;
+                Single = null!;
+                OverrideTransform = false;
+                Transform = Matrix4.Identity;
+                OverrideMatrixStack = false;
+                MatrixStack = null!;
+            }
+
+            public MeshInfo(SingleParticle single, Model model, Node node, Mesh mesh, Material material, int polygonId, float alpha)
+            {
+                Type = RenderType.SingleParticle;
+                Single = single;
+                Material = material;
+                PolygonId = polygonId;
+                Alpha = alpha;
+                Model = model;
+                Node = node;
+                Mesh = mesh;
+                Particle = null!;
+                OverrideTransform = false;
+                Transform = Matrix4.Identity;
+                OverrideMatrixStack = false;
+                MatrixStack = null!;
             }
         }
 
@@ -897,11 +979,14 @@ namespace MphRead
         private static readonly int _effectEntryMax = 100;
         private static readonly int _effectElementMax = 200;
         private static readonly int _effectParticleMax = 3000;
+        private static readonly int _singleParticleMax = 1000;
 
         private readonly Queue<EffectEntry> _inactiveEffects = new Queue<EffectEntry>(_effectEntryMax);
         private readonly Queue<EffectElementEntry> _inactiveElements = new Queue<EffectElementEntry>(_effectElementMax);
         private readonly List<EffectElementEntry> _activeElements = new List<EffectElementEntry>(_effectElementMax);
         private readonly Queue<EffectParticle> _inactiveParticles = new Queue<EffectParticle>(_effectParticleMax);
+        private int _singleParticleCount = 0;
+        private readonly List<SingleParticle> _singleParticles = new List<SingleParticle>(_singleParticleMax);
 
         private void AllocateEffects()
         {
@@ -916,6 +1001,28 @@ namespace MphRead
             for (int i = 0; i < _effectParticleMax; i++)
             {
                 _inactiveParticles.Enqueue(new EffectParticle());
+            }
+            for (int i = 0; i < _singleParticleMax; i++)
+            {
+                _singleParticles.Add(new SingleParticle());
+            }
+        }
+
+        public void AddSingleParticle(SingleType type, Vector3 position, Vector3 color, float alpha, float scale)
+        {
+            // note: skipping the room size limit check; singles get cleared every frame anyway
+            if (_singleParticleCount < _singleParticleMax)
+            {
+                SingleParticle entry = _singleParticles[_singleParticleCount++];
+                entry.ParticleDefinition = Read.GetSingleParticle(type);
+                entry.Position = position;
+                entry.Color = color;
+                entry.Alpha = alpha;
+                entry.Scale = scale;
+                if (!_texPalMap.ContainsKey(entry.ParticleDefinition.Model.SceneId))
+                {
+                    InitTextures(entry.ParticleDefinition.Model);
+                }
             }
         }
 
@@ -1357,13 +1464,16 @@ namespace MphRead
             {
                 _elapsedTime += 1 / 60f;
             }
+            if (!_frameAdvanceOn || _advanceOneFrame)
+            {
+                _singleParticleCount = 0;
+            }
             _decalMeshes.Clear();
             _nonDecalMeshes.Clear();
             _translucentMeshes.Clear();
             int polygonId = 1;
             _models.Sort(CompareModels);
-            // todo: consolidate this
-            Vector3 cameraPosition = _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1);
+            Vector3 cameraPosition = _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1); // todo: consolidate this
             for (int i = 0; i < _models.Count; i++)
             {
                 Model model = _models[i];
@@ -1442,6 +1552,14 @@ namespace MphRead
             if (!_frameAdvanceOn || _advanceOneFrame)
             {
                 ProcessEffects();
+                var camVec1 = new Vector3(_viewMatrix.M11, _viewMatrix.M12, _viewMatrix.M13 * -1);
+                var camVec2 = new Vector3(_viewMatrix.M21, _viewMatrix.M22, _viewMatrix.M23 * -1);
+                var camVec3 = new Vector3(_viewMatrix.M31, _viewMatrix.M32, _viewMatrix.M33 * -1);
+                for (int i = 0; i < _singleParticleCount; i++)
+                {
+                    SingleParticle single = _singleParticles[i];
+                    single.Process(camVec1, camVec2, camVec3, 1);
+                }
             }
             for (int i = 0; i < _activeElements.Count; i++)
             {
@@ -1474,6 +1592,20 @@ namespace MphRead
                         _nonDecalMeshes.Add(meshInfo);
                         _translucentMeshes.Add(meshInfo);
                     }
+                }
+            }
+            for (int i = 0; i < _singleParticleCount; i++)
+            {
+                SingleParticle single = _singleParticles[i];
+                if (single.ShouldDraw)
+                {
+                    Model model = single.ParticleDefinition.Model;
+                    Node node = single.ParticleDefinition.Node;
+                    Mesh mesh = model.Meshes[node.MeshId / 2];
+                    Material material = model.Materials[single.ParticleDefinition.MaterialId];
+                    var meshInfo = new MeshInfo(single, model, node, mesh, material, polygonId++, single.Alpha);
+                    _nonDecalMeshes.Add(meshInfo);
+                    _translucentMeshes.Add(meshInfo);
                 }
             }
 
@@ -1755,28 +1887,25 @@ namespace MphRead
 
         private void RenderItem(MeshInfo info)
         {
-            if (info.IsParticle)
+            if (info.Type == RenderType.Mesh)
             {
-                if (info.ParticleNode)
+                RenderMesh(info);
+            }
+            else if (info.Type == RenderType.Particle || info.Type == RenderType.SingleParticle)
+            {
+                RenderParticle(info);
+            }
+            else if (info.Type == RenderType.ParticleNode)
+            {
+                info.Material.CurrentDiffuse = info.Particle.Color;
+                if (info.Particle.BillboardNode)
                 {
-                    info.Material.CurrentDiffuse = info.Particle.Color;
-                    if (info.Particle.BillboardNode)
-                    {
-                        info.Node.Animation = _viewInvRotMatrix * info.Particle.NodeTransform;
-                    }
-                    else
-                    {
-                        info.Node.Animation = info.Particle.NodeTransform;
-                    }
-                    RenderMesh(info);
+                    info.Node.Animation = _viewInvRotMatrix * info.Particle.NodeTransform;
                 }
                 else
                 {
-                    RenderParticle(info);
+                    info.Node.Animation = info.Particle.NodeTransform;
                 }
-            }
-            else
-            {
                 RenderMesh(info);
             }
         }
@@ -1784,18 +1913,30 @@ namespace MphRead
         private void RenderParticle(MeshInfo item)
         {
             Matrix4 transform = Matrix4.Identity;
-            if ((item.Particle.Owner.Flags & 1) != 0)
+            IDrawable particle;
+            int bindingId;
+            if (item.Type == RenderType.Particle)
             {
-                transform = item.Particle.Owner.Transform;
+                particle = item.Particle;
+                if ((item.Particle.Owner.Flags & 1) != 0)
+                {
+                    transform = item.Particle.Owner.Transform;
+                }
+                bindingId = item.Particle.Owner.TextureBindingIds[item.Particle.ParticleId];
+            }
+            else // item.Type == RenderType.SingleParticle
+            {
+                particle = item.Single;
+                UpdateMaterials(item.Model);
+                bindingId = item.Material.TextureBindingId;
             }
             GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
 
             GL.Uniform1(_shaderLocations.UseLight, 0);
-            GL.Color3(item.Particle.Color);
+            GL.Color3(particle.Color);
             GL.Uniform1(_shaderLocations.MaterialAlpha, item.Alpha);
             GL.Uniform1(_shaderLocations.MaterialMode, (int)PolygonMode.Modulate);
 
-            int bindingId = item.Particle.Owner.TextureBindingIds[item.Particle.ParticleId];
             int textureId = item.Material.TextureId;
             RepeatMode xRepeat = item.Material.XRepeat;
             RepeatMode yRepeat = item.Material.YRepeat;
@@ -1861,14 +2002,14 @@ namespace MphRead
                 scaleT = item.Material.ScaleT;
             }
             GL.Begin(PrimitiveType.Quads);
-            GL.TexCoord3(item.Particle.Texcoord0.X * scaleS, item.Particle.Texcoord0.Y * scaleT, 0f);
-            GL.Vertex3(item.Particle.Vertex0);
-            GL.TexCoord3(item.Particle.Texcoord1.X * scaleS, item.Particle.Texcoord1.Y * scaleT, 0f);
-            GL.Vertex3(item.Particle.Vertex1);
-            GL.TexCoord3(item.Particle.Texcoord2.X * scaleS, item.Particle.Texcoord2.Y * scaleT, 0f);
-            GL.Vertex3(item.Particle.Vertex2);
-            GL.TexCoord3(item.Particle.Texcoord3.X * scaleS, item.Particle.Texcoord3.Y * scaleT, 0f);
-            GL.Vertex3(item.Particle.Vertex3);
+            GL.TexCoord3(particle.Texcoord0.X * scaleS, particle.Texcoord0.Y * scaleT, 0f);
+            GL.Vertex3(particle.Vertex0);
+            GL.TexCoord3(particle.Texcoord1.X * scaleS, particle.Texcoord1.Y * scaleT, 0f);
+            GL.Vertex3(particle.Vertex1);
+            GL.TexCoord3(particle.Texcoord2.X * scaleS, particle.Texcoord2.Y * scaleT, 0f);
+            GL.Vertex3(particle.Vertex2);
+            GL.TexCoord3(particle.Texcoord3.X * scaleS, particle.Texcoord3.Y * scaleT, 0f);
+            GL.Vertex3(particle.Vertex3);
             GL.End();
         }
 
@@ -1881,14 +2022,20 @@ namespace MphRead
                 UseLight1(model.Light1Vector, model.Light1Color);
                 UseLight2(model.Light2Vector, model.Light2Color);
             }
-            if (model.NodeMatrixIds.Count == 0)
+            if (item.OverrideTransform)
+            {
+                Matrix4 transform = item.Transform;
+                GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
+            }
+            else if (model.NodeMatrixIds.Count == 0)
             {
                 Matrix4 transform = item.Node.Animation;
                 GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
             }
             else
             {
-                GL.UniformMatrix4(_shaderLocations.MatrixStack, model.NodeMatrixIds.Count, transpose: false, model.MatrixStackValues);
+                float[] values = item.OverrideMatrixStack ? item.MatrixStack : model.MatrixStackValues;
+                GL.UniformMatrix4(_shaderLocations.MatrixStack, model.NodeMatrixIds.Count, transpose: false, values);
             }
             DoMaterial(model, item.Material, item.Node, item.Alpha);
             // texgen actually uses the transform from the current node, not the matrix stack
@@ -2073,7 +2220,6 @@ namespace MphRead
                 animation.TranslateBlendY, animation.TranslateLutLengthY, group.FrameCount);
             float translateZ = InterpolateAnimation(group.Translations, animation.TranslateLutIndexZ, group.CurrentFrame,
                 animation.TranslateBlendZ, animation.TranslateLutLengthZ, group.FrameCount);
-            // todo: hunter scale factors/any others?
             var nodeMatrix = Matrix4.CreateTranslation(translateX / modelScale.X, translateY / modelScale.Y, translateZ / modelScale.Z);
             nodeMatrix = Matrix4.CreateRotationX(rotateX) * Matrix4.CreateRotationY(rotateY) * Matrix4.CreateRotationZ(rotateZ) * nodeMatrix;
             nodeMatrix = Matrix4.CreateScale(scaleX, scaleY, scaleZ) * nodeMatrix;
@@ -2752,11 +2898,15 @@ namespace MphRead
             base.OnMouseMove(e);
         }
 
+        private float _wheelOffset = 0;
+
         protected override void OnMouseWheel(MouseWheelEventArgs e)
         {
             if (_cameraMode == CameraMode.Pivot)
             {
-                _distance -= e.OffsetY / 1.5f;
+                float delta = _wheelOffset - e.OffsetY;
+                _distance += delta / 1.5f;
+                _wheelOffset = e.OffsetY;
             }
             base.OnMouseWheel(e);
         }

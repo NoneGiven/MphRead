@@ -191,6 +191,12 @@ namespace MphRead
                     animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
                     textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
             }
+            if (typeof(T) == typeof(PlatformModel))
+            {
+                return (new PlatformModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+                    animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
+                    textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
+            }
             if (typeof(T) == typeof(ObjectModel))
             {
                 return (new ObjectModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
@@ -701,6 +707,15 @@ namespace MphRead
             var newEffect = new Effect(effect, funcs, list2, elements, path);
             _effects.Add(path, newEffect);
             return newEffect;
+        }
+
+        public static Particle GetSingleParticle(SingleType type)
+        {
+            if (Metadata.SingleParticles.TryGetValue(type, out (string Model, string Particle) meta))
+            {
+                return GetParticle(meta.Model, meta.Particle);
+            }
+            throw new ProgramException("Could not get single particle.");
         }
 
         private static Particle GetParticle(string modelName, string particleName)
