@@ -1118,6 +1118,12 @@ namespace MphRead
             /* 246 */ ("enemyMortarProjectile", null)
         };
 
+        public static IReadOnlyDictionary<SingleType, (string Model, string Particle)> SingleParticles = new Dictionary<SingleType, (string, string)>()
+        {
+            { SingleType.Death, ("deathParticle", "death") },
+            { SingleType.Fuzzball, ("particles", "fuzzBall") }
+        };
+
         public static (RoomMetadata?, int) GetRoomByName(string name)
         {
             if (RoomMetadata.TryGetValue(name, out RoomMetadata? metadata))

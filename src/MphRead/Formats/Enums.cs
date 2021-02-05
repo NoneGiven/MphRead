@@ -290,4 +290,10 @@ namespace MphRead
         PCM16 = 1,
         ADPCM = 2,
     }
+
+    public enum SingleType
+    {
+        Death,
+        Fuzzball
+    }
 }

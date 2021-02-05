@@ -709,6 +709,15 @@ namespace MphRead
             return newEffect;
         }
 
+        public static Particle GetSingleParticle(SingleType type)
+        {
+            if (Metadata.SingleParticles.TryGetValue(type, out (string Model, string Particle) meta))
+            {
+                return GetParticle(meta.Model, meta.Particle);
+            }
+            throw new ProgramException("Could not get single particle.");
+        }
+
         private static Particle GetParticle(string modelName, string particleName)
         {
             if (_particleDefs.TryGetValue((modelName, particleName), out Particle? particle))

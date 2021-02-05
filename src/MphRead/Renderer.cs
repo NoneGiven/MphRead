@@ -839,55 +839,76 @@ namespace MphRead
             return -1;
         }
 
+        public enum RenderType
+        {
+            Mesh,
+            Particle,
+            ParticleNode,
+            SingleParticle
+        }
+
         private readonly struct MeshInfo
         {
-            public readonly bool IsParticle;
-            public readonly bool ParticleNode;
+            public readonly RenderType Type;
             public readonly Model Model;
             public readonly Node Node;
             public readonly Mesh Mesh;
             public readonly Material Material;
             public readonly EffectParticle Particle;
+            public readonly SingleParticle Single;
             public readonly int PolygonId;
             public readonly float Alpha;
 
             public MeshInfo(Model model, Node node, Mesh mesh, Material material, int polygonId, float alpha)
             {
+                Type = RenderType.Mesh;
                 Model = model;
                 Node = node;
                 Mesh = mesh;
                 Material = material;
                 PolygonId = polygonId;
                 Alpha = alpha;
-                IsParticle = false;
-                ParticleNode = false;
                 Particle = null!;
+                Single = null!;
             }
 
             public MeshInfo(EffectParticle particle, Material material, int polygonId, float alpha)
             {
+                Type = RenderType.Particle;
                 Particle = particle;
                 Material = material;
                 PolygonId = polygonId;
                 Alpha = alpha;
-                IsParticle = true;
-                ParticleNode = false;
                 Model = null!;
                 Node = null!;
                 Mesh = null!;
+                Single = null!;
             }
 
             public MeshInfo(EffectParticle particle, Model model, Node node, Mesh mesh, Material material, int polygonId, float alpha)
             {
+                Type = RenderType.ParticleNode;
                 Particle = particle;
                 Material = material;
                 PolygonId = polygonId;
                 Alpha = alpha;
-                IsParticle = true;
-                ParticleNode = true;
                 Model = model;
                 Node = node;
                 Mesh = mesh;
+                Single = null!;
+            }
+
+            public MeshInfo(SingleParticle single, Model model, Node node, Mesh mesh, Material material, int polygonId, float alpha)
+            {
+                Type = RenderType.SingleParticle;
+                Single = single;
+                Material = material;
+                PolygonId = polygonId;
+                Alpha = alpha;
+                Model = model;
+                Node = node;
+                Mesh = mesh;
+                Particle = null!;
             }
         }
 
@@ -897,11 +918,14 @@ namespace MphRead
         private static readonly int _effectEntryMax = 100;
         private static readonly int _effectElementMax = 200;
         private static readonly int _effectParticleMax = 3000;
+        private static readonly int _singleParticleMax = 1000;
 
         private readonly Queue<EffectEntry> _inactiveEffects = new Queue<EffectEntry>(_effectEntryMax);
         private readonly Queue<EffectElementEntry> _inactiveElements = new Queue<EffectElementEntry>(_effectElementMax);
         private readonly List<EffectElementEntry> _activeElements = new List<EffectElementEntry>(_effectElementMax);
         private readonly Queue<EffectParticle> _inactiveParticles = new Queue<EffectParticle>(_effectParticleMax);
+        private int _singleParticleCount = 0;
+        private readonly List<SingleParticle> _singleParticles = new List<SingleParticle>(_singleParticleMax);
 
         private void AllocateEffects()
         {
@@ -916,6 +940,28 @@ namespace MphRead
             for (int i = 0; i < _effectParticleMax; i++)
             {
                 _inactiveParticles.Enqueue(new EffectParticle());
+            }
+            for (int i = 0; i < _singleParticleMax; i++)
+            {
+                _singleParticles.Add(new SingleParticle());
+            }
+        }
+
+        public void AddSingleParticle(SingleType type, Vector3 position, Vector3 color, float alpha, float scale)
+        {
+            // note: skipping the room size limit check; singles get cleared every frame anyway
+            if (_singleParticleCount < _singleParticleMax)
+            {
+                SingleParticle entry = _singleParticles[_singleParticleCount++];
+                entry.ParticleDefinition = Read.GetSingleParticle(type);
+                entry.Position = position;
+                entry.Color = color;
+                entry.Alpha = alpha;
+                entry.Scale = scale;
+                if (!_texPalMap.ContainsKey(entry.ParticleDefinition.Model.SceneId))
+                {
+                    InitTextures(entry.ParticleDefinition.Model);
+                }
             }
         }
 
@@ -1357,6 +1403,10 @@ namespace MphRead
             {
                 _elapsedTime += 1 / 60f;
             }
+            if (!_frameAdvanceOn || _advanceOneFrame)
+            {
+                _singleParticleCount = 0;
+            }
             _decalMeshes.Clear();
             _nonDecalMeshes.Clear();
             _translucentMeshes.Clear();
@@ -1442,6 +1492,14 @@ namespace MphRead
             if (!_frameAdvanceOn || _advanceOneFrame)
             {
                 ProcessEffects();
+                var camVec1 = new Vector3(_viewMatrix.M11, _viewMatrix.M12, _viewMatrix.M13 * -1);
+                var camVec2 = new Vector3(_viewMatrix.M21, _viewMatrix.M22, _viewMatrix.M23 * -1);
+                var camVec3 = new Vector3(_viewMatrix.M31, _viewMatrix.M32, _viewMatrix.M33 * -1);
+                for (int i = 0; i < _singleParticleCount; i++)
+                {
+                    SingleParticle single = _singleParticles[i];
+                    single.Process(camVec1, camVec2, camVec3, 1);
+                }
             }
             for (int i = 0; i < _activeElements.Count; i++)
             {
@@ -1474,6 +1532,20 @@ namespace MphRead
                         _nonDecalMeshes.Add(meshInfo);
                         _translucentMeshes.Add(meshInfo);
                     }
+                }
+            }
+            for (int i = 0; i < _singleParticleCount; i++)
+            {
+                SingleParticle single = _singleParticles[i];
+                if (single.ShouldDraw)
+                {
+                    Model model = single.ParticleDefinition.Model;
+                    Node node = single.ParticleDefinition.Node;
+                    Mesh mesh = model.Meshes[node.MeshId / 2];
+                    Material material = model.Materials[single.ParticleDefinition.MaterialId];
+                    var meshInfo = new MeshInfo(single, model, node, mesh, material, polygonId++, single.Alpha);
+                    _nonDecalMeshes.Add(meshInfo);
+                    _translucentMeshes.Add(meshInfo);
                 }
             }
 
@@ -1755,28 +1827,25 @@ namespace MphRead
 
         private void RenderItem(MeshInfo info)
         {
-            if (info.IsParticle)
+            if (info.Type == RenderType.Mesh)
             {
-                if (info.ParticleNode)
+                RenderMesh(info);
+            }
+            else if (info.Type == RenderType.Particle || info.Type == RenderType.SingleParticle)
+            {
+                RenderParticle(info);
+            }
+            else if (info.Type == RenderType.ParticleNode)
+            {
+                info.Material.CurrentDiffuse = info.Particle.Color;
+                if (info.Particle.BillboardNode)
                 {
-                    info.Material.CurrentDiffuse = info.Particle.Color;
-                    if (info.Particle.BillboardNode)
-                    {
-                        info.Node.Animation = _viewInvRotMatrix * info.Particle.NodeTransform;
-                    }
-                    else
-                    {
-                        info.Node.Animation = info.Particle.NodeTransform;
-                    }
-                    RenderMesh(info);
+                    info.Node.Animation = _viewInvRotMatrix * info.Particle.NodeTransform;
                 }
                 else
                 {
-                    RenderParticle(info);
+                    info.Node.Animation = info.Particle.NodeTransform;
                 }
-            }
-            else
-            {
                 RenderMesh(info);
             }
         }
@@ -1784,18 +1853,30 @@ namespace MphRead
         private void RenderParticle(MeshInfo item)
         {
             Matrix4 transform = Matrix4.Identity;
-            if ((item.Particle.Owner.Flags & 1) != 0)
+            IDrawable particle;
+            int bindingId;
+            if (item.Type == RenderType.Particle)
             {
-                transform = item.Particle.Owner.Transform;
+                particle = item.Particle;
+                if ((item.Particle.Owner.Flags & 1) != 0)
+                {
+                    transform = item.Particle.Owner.Transform;
+                }
+                bindingId = item.Particle.Owner.TextureBindingIds[item.Particle.ParticleId];
+            }
+            else // item.Type == RenderType.SingleParticle
+            {
+                particle = item.Single;
+                UpdateMaterials(item.Model);
+                bindingId = item.Material.TextureBindingId;
             }
             GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
 
             GL.Uniform1(_shaderLocations.UseLight, 0);
-            GL.Color3(item.Particle.Color);
+            GL.Color3(particle.Color);
             GL.Uniform1(_shaderLocations.MaterialAlpha, item.Alpha);
             GL.Uniform1(_shaderLocations.MaterialMode, (int)PolygonMode.Modulate);
 
-            int bindingId = item.Particle.Owner.TextureBindingIds[item.Particle.ParticleId];
             int textureId = item.Material.TextureId;
             RepeatMode xRepeat = item.Material.XRepeat;
             RepeatMode yRepeat = item.Material.YRepeat;
@@ -1861,14 +1942,14 @@ namespace MphRead
                 scaleT = item.Material.ScaleT;
             }
             GL.Begin(PrimitiveType.Quads);
-            GL.TexCoord3(item.Particle.Texcoord0.X * scaleS, item.Particle.Texcoord0.Y * scaleT, 0f);
-            GL.Vertex3(item.Particle.Vertex0);
-            GL.TexCoord3(item.Particle.Texcoord1.X * scaleS, item.Particle.Texcoord1.Y * scaleT, 0f);
-            GL.Vertex3(item.Particle.Vertex1);
-            GL.TexCoord3(item.Particle.Texcoord2.X * scaleS, item.Particle.Texcoord2.Y * scaleT, 0f);
-            GL.Vertex3(item.Particle.Vertex2);
-            GL.TexCoord3(item.Particle.Texcoord3.X * scaleS, item.Particle.Texcoord3.Y * scaleT, 0f);
-            GL.Vertex3(item.Particle.Vertex3);
+            GL.TexCoord3(particle.Texcoord0.X * scaleS, particle.Texcoord0.Y * scaleT, 0f);
+            GL.Vertex3(particle.Vertex0);
+            GL.TexCoord3(particle.Texcoord1.X * scaleS, particle.Texcoord1.Y * scaleT, 0f);
+            GL.Vertex3(particle.Vertex1);
+            GL.TexCoord3(particle.Texcoord2.X * scaleS, particle.Texcoord2.Y * scaleT, 0f);
+            GL.Vertex3(particle.Vertex2);
+            GL.TexCoord3(particle.Texcoord3.X * scaleS, particle.Texcoord3.Y * scaleT, 0f);
+            GL.Vertex3(particle.Vertex3);
             GL.End();
         }
 
