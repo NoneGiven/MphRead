@@ -460,17 +460,20 @@ namespace MphRead.Models
                 _altIceModel = renderer.AddModel("alt_ice", 0, firstHunt: false);
                 renderer.InitModel(_altIceModel);
             }
-            if (_samusIceModel == null)
+            if (Hunter == Hunter.Noxus || Hunter == Hunter.Trace)
+            {
+                if (_noxusIceModel == null)
+                {
+                    _noxusIceModel = renderer.AddModel("nox_ice", 0, firstHunt: false);
+                    renderer.InitModel(_noxusIceModel);
+                }
+            }
+            else if (_samusIceModel == null)
             {
                 _samusIceModel = renderer.AddModel("samus_ice", 0, firstHunt: false);
                 renderer.InitModel(_samusIceModel);
             }
-            if (_noxusIceModel == null)
-            {
-                _noxusIceModel = renderer.AddModel("nox_ice", 0, firstHunt: false);
-                renderer.InitModel(_noxusIceModel);
-            }
-            _bipedIceModel = Hunter == Hunter.Noxus || Hunter == Hunter.Trace ? _noxusIceModel : _samusIceModel;
+            _bipedIceModel = Hunter == Hunter.Noxus || Hunter == Hunter.Trace ? _noxusIceModel! : _samusIceModel!;
         }
 
         private void GetFrozenDrawItems()
