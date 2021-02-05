@@ -390,6 +390,18 @@ namespace MphRead
             return new Vector3(r / 31.0f, g / 31.0f, b / 31.0f);
         }
 
+        public static IReadOnlyDictionary<Hunter, float> HunterScales = new Dictionary<Hunter, float>
+        {
+            { Hunter.Samus, 1.0f },
+            { Hunter.Kanden, Fixed.ToFloat(0x10F5) },
+            { Hunter.Trace, 1.0f },
+            { Hunter.Sylux, 1.0f },
+            { Hunter.Noxus, 1.0f },
+            { Hunter.Spire, Fixed.ToFloat(0x123D) },
+            { Hunter.Weavel, 1.0f },
+            { Hunter.Guardian, 1.0f }
+        };
+
         public static readonly IReadOnlyList<int> AdpcmTable = new List<int>()
         {
             7, 8, 9, 10, 11, 12, 13, 14,

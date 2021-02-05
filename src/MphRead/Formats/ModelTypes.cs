@@ -424,4 +424,71 @@ namespace MphRead.Models
             }
         }
     }
+
+    public class PlayerModel : Model
+    {
+        public PlayerModel(string name, Header header, IReadOnlyList<RawNode> nodes,
+            IReadOnlyList<RawMesh> meshes, IReadOnlyList<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
+            IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
+            IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
+            IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
+            IReadOnlyList<Matrix4> textureMatrices, IReadOnlyList<Recolor> recolors, int defaultRecolor, bool useLightSources,
+            IReadOnlyList<int> nodeWeights) : base(name, header, nodes, meshes, materials, dlists, renderInstructions, nodeGroups,
+                materialGroups, texcoordGroups, textureGroups, textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights)
+        {
+            Type = ModelType.Player;
+        }
+
+        public override void Process(RenderWindow renderer, double elapsedTime, long frameCount, Vector3 cameraPosition, Matrix4 viewInvRot, Matrix4 viewInvRotY, bool useTransform)
+        {
+            base.Process(renderer, elapsedTime, frameCount, cameraPosition, viewInvRot, viewInvRotY, useTransform);
+            // todo: test if dead, process respawn cooldown
+            float timePct = 0.5f; // todo: time percent (0 --> 1)
+            float scale = timePct / 2 + 0.1f;
+            float angle = MathF.Sin(MathHelper.DegreesToRadians(270 - 90 * timePct));
+            float sin270 = MathF.Sin(MathHelper.DegreesToRadians(270));
+            float sin180 = MathF.Sin(MathHelper.DegreesToRadians(180));
+            float offset = (angle - sin270) / (sin180 - sin270);
+            for (int j = 1; j < Nodes.Count; j++)
+            {
+                Node node = Nodes[j];
+                var nodePos = new Vector3(node.Animation.Row3);
+                nodePos.Y += offset;
+                if (node.ChildIndex != UInt16.MaxValue)
+                {
+                    Debug.Assert(node.ChildIndex > 0);
+                    var childPos = new Vector3(Nodes[node.ChildIndex].Animation.Row3);
+                    childPos.Y += offset;
+                    for (int k = 1; k < 5; k++)
+                    {
+                        var segPos = new Vector3(
+                            nodePos.X + k * (childPos.X - nodePos.X) / 5,
+                            nodePos.Y + k * (childPos.Y - nodePos.Y) / 5,
+                            nodePos.Z + k * (childPos.Z - nodePos.Z) / 5
+                        );
+                        segPos += (segPos - Position).Normalized() * offset;
+                        renderer.AddSingleParticle(SingleType.Death, segPos, Vector3.One, 1 - timePct, scale);
+                    }
+                }
+                if (node.NextIndex != UInt16.MaxValue)
+                {
+                    Debug.Assert(node.NextIndex > 0);
+                    var nextPos = new Vector3(Nodes[node.NextIndex].Animation.Row3);
+                    nextPos.Y += offset;
+                    for (int k = 1; k < 5; k++)
+                    {
+                        var segPos = new Vector3(
+                            nodePos.X + k * (nextPos.X - nodePos.X) / 5,
+                            nodePos.Y + k * (nextPos.Y - nodePos.Y) / 5,
+                            nodePos.Z + k * (nextPos.Z - nodePos.Z) / 5
+                        );
+                        segPos += (segPos - Position).Normalized() * offset;
+                        renderer.AddSingleParticle(SingleType.Death, segPos, Vector3.One, 1 - timePct, scale);
+                    }
+                }
+                nodePos += (nodePos - Position).Normalized() * offset;
+                renderer.AddSingleParticle(SingleType.Death, nodePos, Vector3.One, 1 - timePct, scale);
+            }
+        }
+    }
 }

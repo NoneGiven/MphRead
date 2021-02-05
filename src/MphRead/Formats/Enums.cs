@@ -273,6 +273,18 @@ namespace MphRead
         CarnivorousPlant = 51
     }
 
+    public enum Hunter : byte
+    {
+        Samus = 0,
+        Kanden = 1,
+        Trace = 2,
+        Sylux = 3,
+        Noxus = 4,
+        Spire = 5,
+        Weavel = 6,
+        Guardian = 7
+    }
+
     public enum Language
     {
         English,
