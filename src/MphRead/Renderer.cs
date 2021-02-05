@@ -2832,11 +2832,15 @@ namespace MphRead
             base.OnMouseMove(e);
         }
 
+        private float _wheelOffset = 0;
+
         protected override void OnMouseWheel(MouseWheelEventArgs e)
         {
             if (_cameraMode == CameraMode.Pivot)
             {
-                _distance -= e.OffsetY / 1.5f;
+                float delta = _wheelOffset - e.OffsetY;
+                _distance += delta / 1.5f;
+                _wheelOffset = e.OffsetY;
             }
             base.OnMouseWheel(e);
         }
