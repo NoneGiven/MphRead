@@ -3,15 +3,15 @@ This project is a model viewer, scene renderer, and general parser for file form
 
 ## Features
 - Renders individual models or complete game scenes with room entities
+- Processes and renders particle systems and effects
 - Exports models to COLLADA, textures to PNG, and sound effects to WAV
-- Generates Python scripts to import additional model metadata into Blender
+- Generates Python scripts to import model animations and more into Blender
 - Contains game metadata and parses many more file types
 
 ## Planned
-- Parse and render collision data
-- Implement particle effects
+- Parse and visualize collision data
 - Music and SFX playback
-- Export model animations
+- And more!
 
 ## Usage
 
