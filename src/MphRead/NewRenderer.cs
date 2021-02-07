@@ -269,7 +269,7 @@ namespace MphRead
             //AllocateEffects();
             for (int i = 0; i < _renderItemAlloc; i++)
             {
-                _freeItems.Enqueue(new RenderItem());
+                _freeRenderItems.Enqueue(new RenderItem());
             }
         }
 
@@ -863,18 +863,18 @@ namespace MphRead
         }
 
         private const int _renderItemAlloc = 200;
-        private readonly Queue<RenderItem> _freeItems = new Queue<RenderItem>(_renderItemAlloc);
-        private readonly Queue<RenderItem> _usedItems = new Queue<RenderItem>(_renderItemAlloc);
+        private readonly Queue<RenderItem> _freeRenderItems = new Queue<RenderItem>(_renderItemAlloc);
+        private readonly Queue<RenderItem> _usedRenderItems = new Queue<RenderItem>(_renderItemAlloc);
         // avoiding overhead by duplicating things in these lists
-        private readonly List<RenderItem> _decalMeshes = new List<RenderItem>();
-        private readonly List<RenderItem> _nonDecalMeshes = new List<RenderItem>();
-        private readonly List<RenderItem> _translucentMeshes = new List<RenderItem>();
+        private readonly List<RenderItem> _decalItems = new List<RenderItem>();
+        private readonly List<RenderItem> _nonDecalItems = new List<RenderItem>();
+        private readonly List<RenderItem> _translucentItems = new List<RenderItem>();
 
         private RenderItem GetRenderItem()
         {
-            if (_freeItems.Count > 0)
+            if (_freeRenderItems.Count > 0)
             {
-                return _freeItems.Dequeue();
+                return _freeRenderItems.Dequeue();
             }
             return new RenderItem();
         }
@@ -915,17 +915,17 @@ namespace MphRead
         {
             if (item.RenderMode == RenderMode.Decal)
             {
-                _decalMeshes.Add(item);
+                _decalItems.Add(item);
             }
             else
             {
-                _nonDecalMeshes.Add(item);
+                _nonDecalItems.Add(item);
             }
             if (item.RenderMode == RenderMode.Translucent || item.Alpha < 1)
             {
-                _translucentMeshes.Add(item);
+                _translucentItems.Add(item);
             }
-            _usedItems.Enqueue(item);
+            _usedRenderItems.Enqueue(item);
         }
 
         private int _nextPolygonId = 1;
@@ -942,12 +942,12 @@ namespace MphRead
                 _elapsedTime += 1 / 60f;
                 //_singleParticleCount = 0;
             }
-            _decalMeshes.Clear();
-            _nonDecalMeshes.Clear();
-            _translucentMeshes.Clear();
-            while (_usedItems.Count > 0)
+            _decalItems.Clear();
+            _nonDecalItems.Clear();
+            _translucentItems.Clear();
+            while (_usedRenderItems.Count > 0)
             {
-                _freeItems.Enqueue(_usedItems.Dequeue());
+                _freeRenderItems.Enqueue(_usedRenderItems.Dequeue());
             }
             _entities.Sort(CompareEntities);
             _nextPolygonId = 1;
@@ -1037,9 +1037,9 @@ namespace MphRead
             GL.StencilMask(0xFF);
             GL.StencilOp(StencilOp.Zero, StencilOp.Zero, StencilOp.Zero);
             GL.StencilFunc(StencilFunction.Always, 0, 0xFF);
-            for (int i = 0; i < _nonDecalMeshes.Count; i++)
+            for (int i = 0; i < _nonDecalItems.Count; i++)
             {
-                RenderItem item = _nonDecalMeshes[i];
+                RenderItem item = _nonDecalItems[i];
                 RenderItem(item);
             }
             GL.Disable(EnableCap.AlphaTest);
@@ -1051,9 +1051,9 @@ namespace MphRead
             GL.DepthFunc(DepthFunction.Lequal);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-            for (int i = 0; i < _decalMeshes.Count; i++)
+            for (int i = 0; i < _decalItems.Count; i++)
             {
-                RenderItem item = _decalMeshes[i];
+                RenderItem item = _decalItems[i];
                 RenderItem(item);
             }
             GL.PolygonOffset(0, 0);
@@ -1063,9 +1063,9 @@ namespace MphRead
             GL.AlphaFunc(AlphaFunction.Less, 1.0f);
             GL.ColorMask(false, false, false, false);
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
-            for (int i = 0; i < _translucentMeshes.Count; i++)
+            for (int i = 0; i < _translucentItems.Count; i++)
             {
-                RenderItem item = _translucentMeshes[i];
+                RenderItem item = _translucentItems[i];
                 GL.StencilFunc(StencilFunction.Greater, item.PolygonId, 0xFF);
                 RenderItem(item);
             }
@@ -1074,9 +1074,9 @@ namespace MphRead
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
             GL.StencilFunc(StencilFunction.Always, 0, 0xFF);
             GL.AlphaFunc(AlphaFunction.Equal, 1.0f);
-            for (int i = 0; i < _nonDecalMeshes.Count; i++)
+            for (int i = 0; i < _nonDecalItems.Count; i++)
             {
-                RenderItem item = _nonDecalMeshes[i];
+                RenderItem item = _nonDecalItems[i];
                 RenderItem(item);
             }
             // pass 5: translucent (behind)
@@ -1085,17 +1085,17 @@ namespace MphRead
             GL.DepthMask(false);
             GL.DepthFunc(DepthFunction.Lequal);
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
-            for (int i = 0; i < _translucentMeshes.Count; i++)
+            for (int i = 0; i < _translucentItems.Count; i++)
             {
-                RenderItem item = _translucentMeshes[i];
+                RenderItem item = _translucentItems[i];
                 GL.StencilFunc(StencilFunction.Notequal, item.PolygonId, 0xFF);
                 RenderItem(item);
             }
             // pass 6: translucent (before)
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
-            for (int i = 0; i < _translucentMeshes.Count; i++)
+            for (int i = 0; i < _translucentItems.Count; i++)
             {
-                RenderItem item = _translucentMeshes[i];
+                RenderItem item = _translucentItems[i];
                 GL.StencilFunc(StencilFunction.Equal, item.PolygonId, 0xFF);
                 RenderItem(item);
             }
