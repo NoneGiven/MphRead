@@ -3,6 +3,54 @@ using OpenTK.Mathematics;
 
 namespace MphRead
 {
+    public readonly struct RenderItem
+    {
+        public readonly int PolygonId;
+        public readonly float Alpha;
+        public readonly PolygonMode PolygonMode;
+        public readonly RenderMode RenderMode;
+        public readonly CullingMode CullingMode;
+        public readonly bool Wireframe;
+        public readonly bool Lighting;
+        public readonly Vector3 Diffuse;
+        public readonly Vector3 Ambient;
+        public readonly Vector3 Specular;
+        public readonly Vector3 Emission;
+        public readonly TexgenMode TexgenMode;
+        public readonly RepeatMode XRepeat;
+        public readonly RepeatMode YRepeat;
+        public readonly bool HasTexture;
+        public readonly int TextureBindingId;
+        public readonly Matrix4 TexcoordMatrix;
+        public readonly Matrix4 Transform;
+        public readonly int ListId;
+
+        public RenderItem(int polygonId, float alpha, PolygonMode polygonMode, RenderMode renderMode, CullingMode cullingMode, bool wireframe,
+            bool lighting, Vector3 diffuse, Vector3 ambient, Vector3 specular, Vector3 emission, TexgenMode texgenMode, RepeatMode xRepeat,
+            RepeatMode yRepeat, bool hasTexture, int textureBindingId, Matrix4 texcoordMatrix, Matrix4 transform, int listId)
+        {
+            PolygonId = polygonId;
+            Alpha = alpha;
+            PolygonMode = polygonMode;
+            RenderMode = renderMode;
+            CullingMode = cullingMode;
+            Wireframe = wireframe;
+            Lighting = lighting;
+            Diffuse = diffuse;
+            Ambient = ambient;
+            Specular = specular;
+            Emission = emission;
+            TexgenMode = texgenMode;
+            XRepeat = xRepeat;
+            YRepeat = yRepeat;
+            HasTexture = hasTexture;
+            TextureBindingId = textureBindingId;
+            TexcoordMatrix = texcoordMatrix;
+            Transform = transform;
+            ListId = listId;
+        }
+    }
+
     // size: 4
     public readonly struct Fixed
     {
@@ -214,9 +262,22 @@ namespace MphRead
             Alpha = alpha;
         }
 
+        public ColorRgba(uint value, byte alpha = 255)
+        {
+            Red = (byte)MathF.Round(((value >> 0) & 0x1F) / 31f * 255f);
+            Green = (byte)MathF.Round(((value >> 5) & 0x1F) / 31f * 255f);
+            Blue = (byte)MathF.Round(((value >> 10) & 0x1F) / 31f * 255f);
+            Alpha = alpha;
+        }
+
         public ColorRgba WithAlpha(byte alpha)
         {
             return new ColorRgba(Red, Green, Blue, alpha);
+        }
+
+        public uint ToUint()
+        {
+            return (uint)((Red << 0) | (Green << 8) | (Blue << 16) | (Alpha << 24));
         }
     }
 

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using MphRead.Archive;
+using MphRead.Entities;
 using MphRead.Export;
 using MphRead.Models;
 using OpenTK.Mathematics;
@@ -14,6 +15,162 @@ namespace MphRead
 {
     public static class Read
     {
+        private static readonly Dictionary<string, NewModel> _modelCache = new Dictionary<string, NewModel>();
+        private static readonly Dictionary<string, NewModel> _fhModelCache = new Dictionary<string, NewModel>();
+
+        public static NewModel GetNewModel(string name)
+        {
+            if (!_modelCache.TryGetValue(name, out NewModel? model))
+            {
+                model = GetNewModel(name, firstHunt: false);
+                if (model == null)
+                {
+                    throw new ProgramException("No model with this name is known.");
+                }
+                // mtodo: add to cache (once "CurrentAlpha" stuff is figured out)
+            }
+            return model;
+        }
+
+        public static NewModel GetFhNewModel(string name)
+        {
+            if (!_fhModelCache.TryGetValue(name, out NewModel? model))
+            {
+                model = GetNewModel(name, firstHunt: true);
+                if (model == null)
+                {
+                    throw new ProgramException("No model with this name is known.");
+                }
+                // mtodo: add to cache (once "CurrentAlpha" stuff is figured out)
+            }
+            return model;
+        }
+
+        private static NewModel? GetNewModel(string name, bool firstHunt)
+        {
+            ModelMetadata? meta;
+            if (firstHunt)
+            {
+                meta = Metadata.GetFirstHuntModelByName(name);
+            }
+            else
+            {
+                meta = Metadata.GetModelByName(name);
+            }
+            if (meta == null)
+            {
+                return null;
+            }
+            return GetNewModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.AnimationShare, meta.Recolors, meta.FirstHunt);
+        }
+
+        private static NewModel GetNewModel(string name, string modelPath, string? animationPath, string? animationShare,
+            IReadOnlyList<RecolorMetadata> recolorMeta, bool firstHunt)
+        {
+            string root = firstHunt ? Paths.FhFileSystem : Paths.FileSystem;
+            string path = Path.Combine(root, modelPath);
+            ReadOnlySpan<byte> initialBytes = ReadBytes(path, firstHunt);
+            Header header = ReadStruct<Header>(initialBytes[0..Sizes.Header]);
+            IReadOnlyList<RawNode> nodes = DoOffsets<RawNode>(initialBytes, header.NodeOffset, header.NodeCount);
+            IReadOnlyList<RawMesh> meshes = DoOffsets<RawMesh>(initialBytes, header.MeshOffset, header.MeshCount);
+            IReadOnlyList<DisplayList> dlists = DoOffsets<DisplayList>(initialBytes, header.DlistOffset, header.MeshCount);
+            var instructions = new List<IReadOnlyList<RenderInstruction>>();
+            foreach (DisplayList dlist in dlists)
+            {
+                instructions.Add(DoRenderInstructions(initialBytes, dlist));
+            }
+            IReadOnlyList<RawMaterial> materials = DoOffsets<RawMaterial>(initialBytes, header.MaterialOffset, header.MaterialCount);
+            var recolors = new List<Recolor>();
+            foreach (RecolorMetadata meta in recolorMeta)
+            {
+                ReadOnlySpan<byte> modelBytes = initialBytes;
+                Header modelHeader = header;
+                if (Path.Combine(root, meta.ModelPath) != path)
+                {
+                    modelBytes = ReadBytes(meta.ModelPath, firstHunt);
+                    modelHeader = ReadStruct<Header>(modelBytes[0..Sizes.Header]);
+                }
+                IReadOnlyList<Texture> textures = DoOffsets<Texture>(modelBytes, modelHeader.TextureOffset, modelHeader.TextureCount);
+                IReadOnlyList<Palette> palettes = DoOffsets<Palette>(modelBytes, modelHeader.PaletteOffset, modelHeader.PaletteCount);
+                ReadOnlySpan<byte> textureBytes = modelBytes;
+                if (meta.TexturePath != meta.ModelPath)
+                {
+                    textureBytes = ReadBytes(meta.TexturePath, firstHunt);
+                }
+                ReadOnlySpan<byte> paletteBytes = textureBytes;
+                if (meta.PalettePath != meta.TexturePath && meta.ReplaceIds.Count == 0)
+                {
+                    paletteBytes = ReadBytes(meta.PalettePath, firstHunt);
+                    if (meta.SeparatePaletteHeader)
+                    {
+                        Header paletteHeader = ReadStruct<Header>(paletteBytes[0..Sizes.Header]);
+                        palettes = DoOffsets<Palette>(paletteBytes, paletteHeader.PaletteOffset, paletteHeader.PaletteCount);
+                    }
+                }
+                var textureData = new List<IReadOnlyList<TextureData>>();
+                var paletteData = new List<IReadOnlyList<PaletteData>>();
+                foreach (Texture texture in textures)
+                {
+                    textureData.Add(GetTextureData(texture, textureBytes));
+                }
+                foreach (Palette palette in palettes)
+                {
+                    paletteData.Add(GetPaletteData(palette, paletteBytes));
+                }
+                string replacePath = meta.ReplacePath ?? meta.PalettePath;
+                if (replacePath != meta.TexturePath && meta.ReplaceIds.Count > 0)
+                {
+                    paletteBytes = ReadBytes(replacePath, firstHunt);
+                    Header paletteHeader = ReadStruct<Header>(paletteBytes[0..Sizes.Header]);
+                    IReadOnlyList<Palette> replacePalettes
+                        = DoOffsets<Palette>(paletteBytes, paletteHeader.PaletteOffset, paletteHeader.PaletteCount);
+                    var replacePaletteData = new List<IReadOnlyList<PaletteData>>();
+                    foreach (Palette palette in replacePalettes)
+                    {
+                        replacePaletteData.Add(GetPaletteData(palette, paletteBytes));
+                    }
+                    for (int i = 0; i < replacePaletteData.Count; i++)
+                    {
+                        if (meta.ReplaceIds.TryGetValue(i, out IEnumerable<int>? replaceIds))
+                        {
+                            // note: palette header is not being replaced
+                            foreach (int replaceId in replaceIds)
+                            {
+                                paletteData[replaceId] = replacePaletteData[i];
+                            }
+                        }
+                    }
+                }
+                recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
+            }
+            // note: in RAM, model texture matrices are 4x4, but only the leftmost 4x2 or 4x3 is set,
+            // and the rest is garbage data, and ultimately only the upper-left 3x2 is actually used
+            var textureMatrices = new List<Matrix4>();
+            if (name == "AlimbicCapsule")
+            {
+                Debug.Assert(header.TextureMatrixCount == 1);
+                Matrix4 textureMatrix = Matrix4.Zero;
+                textureMatrix.M21 = Fixed.ToFloat(-2048);
+                textureMatrix.M31 = Fixed.ToFloat(410);
+                textureMatrix.M32 = Fixed.ToFloat(-3891);
+                textureMatrices.Add(textureMatrix);
+            }
+            IReadOnlyList<int> nodeWeights = DoOffsets<int>(initialBytes, header.NodeWeightOffset, header.NodeWeightCount);
+            AnimationResults animations = LoadAnimation(name, animationPath, nodes, firstHunt);
+            if (animationShare != null)
+            {
+                AnimationResults shared = LoadAnimation(name, animationShare, nodes, firstHunt);
+                shared.NodeAnimationGroups.AddRange(animations.NodeAnimationGroups);
+                shared.MaterialAnimationGroups.AddRange(animations.MaterialAnimationGroups);
+                shared.TexcoordAnimationGroups.AddRange(animations.TexcoordAnimationGroups);
+                shared.TextureAnimationGroups.AddRange(animations.TextureAnimationGroups);
+                animations = shared;
+            }
+            return new NewModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+                animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
+                textureMatrices, recolors, nodeWeights);
+        }
+
         // NOTE: When _Texture file exists, the main _Model file header will list a non-zero number of textures/palettes,
         // but the texture/palette offset will be 0 (because they're located at the start of the _Texture file).
         // However, when recolor files are used (e.g. _pal01 or flagbase_ctf_mdl -> flagbase_ctf_green_img), the number
