@@ -336,8 +336,12 @@ namespace MphRead
             transform.M43 = model.Position.Z;
             transform.M44 = 1;
 
-            Matrix4 scaleMatrix = model.Transform.ClearTranslation().ClearRotation();
-            model.Transform = scaleMatrix * transform;
+            transform.ExtractRotation().ToEulerAngles(out Vector3 rotation);
+            model.Rotation = new Vector3(
+                MathHelper.RadiansToDegrees(rotation.X),
+                MathHelper.RadiansToDegrees(rotation.Y),
+                MathHelper.RadiansToDegrees(rotation.Z)
+            );
         }
 
         private static IReadOnlyList<Model> LoadEntities(RoomMetadata metadata, int areaId, int layerId, GameMode mode)
