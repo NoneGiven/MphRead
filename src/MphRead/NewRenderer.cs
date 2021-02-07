@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Entities;
 using MphRead.Export;
+using MphRead.Formats.Collision;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -43,9 +44,6 @@ namespace MphRead
         private bool _showKillPlane = false;
         private bool _transformRoomNodes = false;
 
-        public bool ShowInvisible => _showInvisible;
-        public bool TransformRoomNodes => _transformRoomNodes;
-
         private readonly List<IRenderable> _renderables = new List<IRenderable>();
         private readonly List<EntityBase> _entities = new List<EntityBase>();
         private readonly Dictionary<int, EntityBase> _entityMap = new Dictionary<int, EntityBase>();
@@ -71,13 +69,17 @@ namespace MphRead
 
         private float _elapsedTime = 0;
         private long _frameCount = -1;
-        public long FrameCount => _frameCount;
         private bool _frameAdvanceOn = false;
         private bool _advanceOneFrame = false;
         private bool _recording = false;
         private int _framesRecorded = 0;
+        private bool _roomLoaded = false;
 
         private readonly KeyboardState _keyboardState;
+
+        public bool ShowInvisible => _showInvisible;
+        public bool TransformRoomNodes => _transformRoomNodes;
+        public long FrameCount => _frameCount;
 
         public NewScene(Vector2i size, KeyboardState keyboardState)
         {
@@ -85,8 +87,21 @@ namespace MphRead
             _keyboardState = keyboardState;
         }
 
-        public void AddRoom(string name)
+        public void AddRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
+            BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
         {
+            if (_roomLoaded)
+            {
+                throw new ProgramException("Cannot load more than one room in a scene.");
+            }
+            _roomLoaded = true;
+            (NewModel model, RoomMetadata meta, CollisionInfo collision, IReadOnlyList<Model> entities, int updatedMask)
+                = SceneSetup.LoadNewRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
+            var entity = new RoomEntity(model);
+            _renderables.Add(entity);
+            _entities.Add(entity);
+            InitRenderable(entity);
+            _cameraMode = CameraMode.Roam;
         }
 
         public void AddEntity(string name)
@@ -1602,6 +1617,21 @@ namespace MphRead
         public NewRenderWindow() : base(_gameWindowSettings, _nativeWindowSettings)
         {
             Scene = new NewScene(Size, KeyboardState);
+        }
+
+        public void AddRoom(int id)
+        {
+            RoomMetadata? meta = Metadata.GetRoomById(id);
+            if (meta == null)
+            {
+                throw new ProgramException("No room with this ID is known.");
+            }
+            Scene.AddRoom(meta.Name);
+        }
+
+        public void AddRoom(string name)
+        {
+            Scene.AddRoom(name);
         }
 
         public void AddEntity(string name)

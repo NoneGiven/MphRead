@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using MphRead.Entities;
 using MphRead.Formats.Collision;
 using MphRead.Models;
 using OpenTK.Mathematics;
@@ -84,6 +85,81 @@ namespace MphRead
             room.Setup(metadata, collision, nodeLayerMask);
             FilterNodes(room, nodeLayerMask);
             ComputeNodeMatrices(room, index: 0);
+            return (room, metadata, collision, entities, nodeLayerMask);
+        }
+
+        public static (NewModel, RoomMetadata, CollisionInfo, IReadOnlyList<Model>, int) LoadNewRoom(string name,
+            GameMode mode = GameMode.None, int playerCount = 0, BossFlags bossFlags = BossFlags.None,
+            int nodeLayerMask = 0, int entityLayerId = -1)
+        {
+            (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
+            int areaId = Metadata.GetAreaInfo(roomId);
+            if (metadata == null)
+            {
+                throw new InvalidOperationException();
+            }
+            if (mode == GameMode.None)
+            {
+                mode = metadata.Multiplayer ? GameMode.Battle : GameMode.SinglePlayer;
+            }
+            if (playerCount < 1 || playerCount > 4)
+            {
+                if (mode == GameMode.SinglePlayer)
+                {
+                    playerCount = 1;
+                }
+                else
+                {
+                    playerCount = 2;
+                }
+            }
+            if (entityLayerId < 0 || entityLayerId > 15)
+            {
+                if (mode == GameMode.SinglePlayer)
+                {
+                    // todo: finer state changes for target layer ID (forced fights);
+                    // there are two doors with ID 3 in UNIT1_RM6, the rest are set in-game
+                    entityLayerId = ((int)bossFlags >> 2 * areaId) & 3;
+                }
+                else
+                {
+                    entityLayerId = Metadata.GetMultiplayerEntityLayer(mode, playerCount);
+                }
+            }
+            if (nodeLayerMask == 0)
+            {
+                if (mode == GameMode.SinglePlayer)
+                {
+                    if (metadata.NodeLayer > 0)
+                    {
+                        nodeLayerMask = nodeLayerMask & 0xC03F | (((1 << metadata.NodeLayer) & 0xFF) << 6);
+                    }
+                }
+                else
+                {
+                    nodeLayerMask |= (int)NodeLayer.MultiplayerU;
+                    if (playerCount <= 2)
+                    {
+                        nodeLayerMask |= (int)NodeLayer.MultiplayerLod0;
+                    }
+                    else
+                    {
+                        nodeLayerMask |= (int)NodeLayer.MultiplayerLod1;
+                    }
+                    if (mode == GameMode.Capture)
+                    {
+                        nodeLayerMask |= (int)NodeLayer.CaptureTheFlag;
+                    }
+                }
+            }
+            // mtodo: all this stuff
+            IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
+            CollisionInfo collision = Collision.ReadCollision(metadata.CollisionPath, metadata.FirstHunt || metadata.Hybrid, nodeLayerMask);
+            // todo: once ReadCollision is filering things, we don't need to pass nodeLayerMask here or return it
+            NewModel room = Read.GetNewRoom(name);
+            //room.Setup(metadata, collision, nodeLayerMask);
+            //FilterNodes(room, nodeLayerMask);
+            //ComputeNodeMatrices(room, index: 0);
             return (room, metadata, collision, entities, nodeLayerMask);
         }
 

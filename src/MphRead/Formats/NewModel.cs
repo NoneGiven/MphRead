@@ -22,6 +22,7 @@ namespace MphRead.Entities
         private readonly float[] _matrixStackValues;
         public IReadOnlyList<float> Test => _matrixStackValues;
         public AnimationInfo Animations { get; }
+        public Vector3 Scale { get; }
 
         private static int _nextId = 0;
         public int Id { get; } = _nextId++;
@@ -60,6 +61,8 @@ namespace MphRead.Entities
                 _matrixStackValues = Array.Empty<float>();
             }
             Animations = new AnimationInfo(nodeGroups, materialGroups, texcoordGroups, textureGroups);
+            float scale = Header.ScaleBase.FloatValue * (1 << (int)Header.ScaleFactor);
+            Scale = new Vector3(scale, scale, scale);
         }
 
         public void AnimateNodes(int index, bool useNodeTransform, Matrix4 parentTansform, Vector3 scale, int currentFrame)

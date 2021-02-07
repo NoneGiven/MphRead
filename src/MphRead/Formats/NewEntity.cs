@@ -56,7 +56,7 @@ namespace MphRead.Entities
 
         public Vector3 Position { get; set; }
 
-        public EntityBase(NewEntityType type)
+        protected EntityBase(NewEntityType type)
         {
             Type = type;
         }
@@ -94,7 +94,6 @@ namespace MphRead.Entities
     {
         public float Alpha { get; set; } = 1.0f;
         public new int Recolor { get; set; }
-        public Vector3 Scale { get; set; } = Vector3.One;
 
         protected readonly List<NewModel> _models = new List<NewModel>();
 
@@ -120,7 +119,7 @@ namespace MphRead.Entities
                     model.AnimateMaterials(_materialAnimCurFrame);
                     model.AnimateTextures(_textureAnimCurFrame);
                     // mtodo: parent transform (do we really need scale separately?)
-                    model.AnimateNodes(0, UseNodeTransform || scene.TransformRoomNodes, Matrix4.Identity, Scale, _nodeAnimCurFrame);
+                    model.AnimateNodes(0, UseNodeTransform || scene.TransformRoomNodes, Matrix4.Identity, model.Scale, _nodeAnimCurFrame);
                     model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
                     // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
                     scene.UpdateMaterials(model, Recolor);
@@ -163,10 +162,11 @@ namespace MphRead.Entities
                         Material material = model.Materials[mesh.MaterialId];
                         Matrix4 texcoordMatrix = GetTexcoordMatrix(model, material, node, scene);
                         // mtodo: main transform
+                        var transform = Matrix4.CreateScale(model.Scale);
                         var item = new RenderItem(polygonId, Alpha * material.CurrentAlpha, material.PolygonMode, material.RenderMode,
                             material.Culling, material.Wireframe != 0, material.Lighting != 0, material.CurrentDiffuse, material.CurrentAmbient,
                             material.CurrentSpecular, emission: Vector3.Zero, material.TexgenMode, material.XRepeat, material.YRepeat,
-                            material.TextureId != UInt16.MaxValue, material.TextureBindingId, texcoordMatrix, Matrix4.Identity, mesh.ListId);
+                            material.TextureId != UInt16.MaxValue, material.TextureBindingId, texcoordMatrix, transform, mesh.ListId);
                         scene.AddRenderItem(item);
                     }
                 }
@@ -215,9 +215,9 @@ namespace MphRead.Entities
                     Matrix4 product = node.Animation.Keep3x3();
                     Matrix4 texgenMatrix = Matrix4.Identity;
                     // in-game, there's only one uniform scale factor for models
-                    if (Scale.X != 1 || Scale.Y != 1 || Scale.Z != 1)
+                    if (model.Scale.X != 1 || model.Scale.Y != 1 || model.Scale.Z != 1)
                     {
-                        texgenMatrix = Matrix4.CreateScale(Scale) * texgenMatrix;
+                        texgenMatrix = Matrix4.CreateScale(model.Scale) * texgenMatrix;
                     }
                     // in-game, big 0 is set on creation if any materials have lighting enabled
                     if (_anyLighting || (model.Header.Flags & 1) > 0)
@@ -321,5 +321,15 @@ namespace MphRead.Entities
         //    yRepeat = RepeatMode.Mirror;
         //    bindingId = _dblDmgBindingId;
         //}
+    }
+
+    // mtodo: room class
+    public class RoomEntity : VisibleEntityBase
+    {
+        public RoomEntity(NewModel model) : base(NewEntityType.Room)
+        {
+            _models.Add(model);
+            _anyLighting = model.Materials.Any(m => m.Lighting != 0);
+        }
     }
 }

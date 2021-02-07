@@ -64,6 +64,27 @@ namespace MphRead
             return GetNewModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.AnimationShare, meta.Recolors, meta.FirstHunt);
         }
 
+        public static NewModel GetNewRoom(string name)
+        {
+            (RoomMetadata? meta, _) = Metadata.GetRoomByName(name);
+            if (meta == null)
+            {
+                throw new ProgramException("No room with this name is known.");
+            }
+            // mtodo: room cache?
+            return GetNewRoom(meta);
+        }
+
+        private static NewModel GetNewRoom(RoomMetadata meta)
+        {
+            var recolors = new List<RecolorMetadata>()
+            {
+                new RecolorMetadata("default", meta.ModelPath, meta.TexturePath ?? meta.ModelPath)
+            };
+            return GetNewModel(meta.Name, meta.ModelPath, meta.AnimationPath, animationShare: null, recolors,
+                firstHunt: meta.FirstHunt || meta.Hybrid);
+        }
+
         private static NewModel GetNewModel(string name, string modelPath, string? animationPath, string? animationShare,
             IReadOnlyList<RecolorMetadata> recolorMeta, bool firstHunt)
         {
