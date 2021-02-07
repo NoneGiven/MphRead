@@ -102,7 +102,7 @@ namespace MphRead.Entities
                 _transform = Matrix4.CreateScale(Scale) * Matrix4.CreateRotationZ(value.Z)
                     * Matrix4.CreateRotationY(value.Y) * Matrix4.CreateRotationX(value.X);
                 _transform.Row3.Xyz = Position;
-                _scale = value;
+                _rotation = value;
             }
         }
 
