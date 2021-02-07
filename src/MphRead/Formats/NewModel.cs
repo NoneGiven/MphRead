@@ -8,6 +8,10 @@ namespace MphRead.Entities
 {
     public class NewModel
     {
+        private static int _nextId = 0;
+        public int Id { get; } = _nextId++;
+        public bool Active { get; set; } = true;
+
         public string Name { get; }
         public Header Header { get; }
         public IReadOnlyList<Node> Nodes { get; }
@@ -18,15 +22,12 @@ namespace MphRead.Entities
         public IReadOnlyList<IReadOnlyList<RenderInstruction>> RenderInstructionLists { get; } // count and order match dlists
         public IReadOnlyList<Recolor> Recolors { get; }
         public IReadOnlyList<int> NodeMatrixIds { get; }
-
         private readonly float[] _matrixStackValues;
         public IReadOnlyList<float> MatrixStackValues => _matrixStackValues;
-        public AnimationInfo Animations { get; }
+        public AnimationInfo Animations { get; } // ntodo: remove mutable state for this (and review all mutable state in materials etc.)
+
         public Vector3 Scale { get; }
 
-        private static int _nextId = 0;
-        public int Id { get; } = _nextId++;
-        public bool Active { get; set; } = true;
 
         public NewModel(string name, Header header, IEnumerable<RawNode> nodes, IEnumerable<RawMesh> meshes,
             IEnumerable<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,

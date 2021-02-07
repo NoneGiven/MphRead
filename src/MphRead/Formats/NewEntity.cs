@@ -56,7 +56,68 @@ namespace MphRead.Entities
         public NewEntityType Type { get; }
         public bool ShouldDraw { get; set; } = true;
 
-        public Vector3 Position { get; set; }
+        protected Matrix4 _transform = Matrix4.Identity;
+        protected Vector3 _scale = new Vector3(1, 1, 1);
+        protected Vector3 _rotation = Vector3.Zero;
+        protected Vector3 _position = Vector3.Zero;
+
+        public Matrix4 Transform
+        {
+            get
+            {
+                return _transform;
+            }
+            set
+            {
+                _scale = value.ExtractScale();
+                value.ExtractRotation().ToEulerAngles(out _rotation);
+                _position = value.Row3.Xyz;
+                _transform = value;
+            }
+        }
+
+        public Vector3 Scale
+        {
+            get
+            {
+                return _scale;
+            }
+            set
+            {
+                _transform = Matrix4.CreateScale(value) * Matrix4.CreateRotationZ(Rotation.Z)
+                    * Matrix4.CreateRotationY(Rotation.Y) * Matrix4.CreateRotationX(Rotation.X);
+                _transform.Row3.Xyz = Position;
+                _scale = value;
+            }
+        }
+
+        public Vector3 Rotation
+        {
+            get
+            {
+                return _rotation;
+            }
+            set
+            {
+                _transform = Matrix4.CreateScale(Scale) * Matrix4.CreateRotationZ(value.Z)
+                    * Matrix4.CreateRotationY(value.Y) * Matrix4.CreateRotationX(value.X);
+                _transform.Row3.Xyz = Position;
+                _scale = value;
+            }
+        }
+
+        public Vector3 Position
+        {
+            get
+            {
+                return _position;
+            }
+            set
+            {
+                _transform.Row3.Xyz = value;
+                _position = value;
+            }
+        }
 
         protected EntityBase(NewEntityType type)
         {
@@ -97,11 +158,10 @@ namespace MphRead.Entities
         public float Alpha { get; set; } = 1.0f;
         public new int Recolor { get; set; }
 
+        protected bool _anyLighting = false;
         protected readonly List<NewModel> _models = new List<NewModel>();
 
         protected virtual bool UseNodeTransform => true;
-
-        protected bool _anyLighting = false;
 
         public VisibleEntityBase(NewEntityType type) : base(type)
         {
@@ -125,8 +185,7 @@ namespace MphRead.Entities
                         model.AnimateMaterials(_materialAnimCurFrame);
                         model.AnimateTextures(_textureAnimCurFrame);
                         model.ComputeNodeMatrices(index: 0);
-                        // mtodo: parent transform (QUATERNIONS)
-                        var transform = Matrix4.CreateScale(model.Scale);
+                        Matrix4 transform = Matrix4.CreateScale(model.Scale) * _transform;
                         model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, _nodeAnimCurFrame);
                         model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
                         // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
