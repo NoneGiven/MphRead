@@ -20,7 +20,7 @@ namespace MphRead
             {
                 using var renderer = new NewRenderWindow();
                 renderer.AddRoom("MP3 PROVING GROUND");
-                renderer.AddEntity("Crate01");
+                //renderer.AddEntity("Crate01");
                 renderer.Run();
             }
             else if (arguments.Any(a => a.Name == "setup"))
