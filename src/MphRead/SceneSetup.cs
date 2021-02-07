@@ -88,7 +88,7 @@ namespace MphRead
             return (room, metadata, collision, entities, nodeLayerMask);
         }
 
-        public static (RoomEntity, RoomMetadata, CollisionInfo, IReadOnlyList<Model>, int) LoadNewRoom(string name,
+        public static (RoomEntity, RoomMetadata, CollisionInfo, IReadOnlyList<EntityBase>, int) LoadNewRoom(string name,
             GameMode mode = GameMode.None, int playerCount = 0, BossFlags bossFlags = BossFlags.None,
             int nodeLayerMask = 0, int entityLayerId = -1)
         {
@@ -152,12 +152,149 @@ namespace MphRead
                     }
                 }
             }
-            // ntodo: load entities properly
-            IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
+            IReadOnlyList<EntityBase> entities = LoadNewEntities(metadata, areaId, entityLayerId, mode);
             CollisionInfo collision = Collision.ReadCollision(metadata.CollisionPath, metadata.FirstHunt || metadata.Hybrid, nodeLayerMask);
             // todo: once ReadCollision is filering things, we don't need to pass nodeLayerMask here or return it
             var room = new RoomEntity(Read.GetNewRoom(name), metadata, collision, nodeLayerMask);
             return (room, metadata, collision, entities, nodeLayerMask);
+        }
+
+        private static IReadOnlyList<EntityBase> LoadNewEntities(RoomMetadata metadata, int areaId, int layerId, GameMode mode)
+        {
+            var models = new List<EntityBase>();
+            if (metadata.EntityPath == null)
+            {
+                return models;
+            }
+            // only FirstHunt is passed here, not Hybrid -- model/anim/col should be loaded from FH, and ent/node from MPH
+            IReadOnlyList<Entity> entities = Read.GetEntities(metadata.EntityPath, layerId, metadata.FirstHunt); // mtodo: just return struct?
+            foreach (Entity entity in entities)
+            {
+                int count = models.Count;
+                if (entity.Type == EntityType.Platform)
+                {
+                    models.Add(new PlatformEntity(entity.EntityId, ((Entity<PlatformEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.FhPlatform)
+                {
+                    //models.Add(LoadFhPlatform((Entity<FhPlatformEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.Object)
+                {
+                    //models.Add(LoadObject((Entity<ObjectEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.PlayerSpawn || entity.Type == EntityType.FhPlayerSpawn)
+                {
+                    // todo: compute model matrices for placeholders to show e.g. player spawn angle
+//                    models.Add(LoadEntityPlaceholder((Entity<PlayerSpawnEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.Door)
+                {
+                    //models.AddRange(LoadDoor((Entity<DoorEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.FhDoor)
+                {
+                    //models.Add(LoadDoor((Entity<FhDoorEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.Item)
+                {
+                    //models.AddRange(LoadItem((Entity<ItemEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.FhItem)
+                {
+                    //models.Add(LoadItem((Entity<FhItemEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.Enemy)
+                {
+                    //models.AddRange(LoadEnemy((Entity<EnemyEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.FhEnemy)
+                {
+                    //models.Add(LoadEntityPlaceholder((Entity<FhEnemyEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.TriggerVolume)
+                {
+                    //models.Add(LoadEntityPlaceholder((Entity<TriggerVolumeEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.FhTriggerVolume)
+                {
+                    //models.Add(LoadEntityPlaceholder((Entity<FhTriggerVolumeEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.AreaVolume)
+                {
+                    //models.Add(LoadEntityPlaceholder((Entity<AreaVolumeEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.FhAreaVolume)
+                {
+                    //models.Add(LoadEntityPlaceholder((Entity<FhAreaVolumeEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.JumpPad)
+                {
+                    //IEnumerable<Model> model = LoadJumpPad((Entity<JumpPadEntityData>)entity);
+                    //Debug.Assert(model.Count() == 2);
+                    //model.First().Entity = entity;
+                    //models.AddRange(model);
+                }
+                else if (entity.Type == EntityType.FhJumpPad)
+                {
+                    //models.AddRange(LoadJumpPad((Entity<FhJumpPadEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.PointModule || entity.Type == EntityType.FhPointModule)
+                {
+                    //models.Add(LoadPointModule((Entity<PointModuleEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.MorphCamera)
+                {
+                    //models.Add(LoadEntityPlaceholder((Entity<MorphCameraEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.FhMorphCamera)
+                {
+                    //models.Add(LoadEntityPlaceholder((Entity<FhMorphCameraEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.OctolithFlag)
+                {
+                    //models.AddRange(LoadOctolithFlag((Entity<OctolithFlagEntityData>)entity, mode));
+                }
+                else if (entity.Type == EntityType.FlagBase)
+                {
+                    //models.AddRange(LoadFlagBase((Entity<FlagBaseEntityData>)entity, mode));
+                }
+                else if (entity.Type == EntityType.Teleporter)
+                {
+                    //models.Add(LoadTeleporter((Entity<TeleporterEntityData>)entity, areaId, mode != GameMode.SinglePlayer));
+                }
+                else if (entity.Type == EntityType.NodeDefense)
+                {
+                    //models.AddRange(LoadNodeDefense((Entity<NodeDefenseEntityData>)entity, mode));
+                }
+                else if (entity.Type == EntityType.LightSource)
+                {
+                    //models.Add(LoadEntityPlaceholder((Entity<LightSourceEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.Artifact)
+                {
+                    //models.AddRange(LoadArtifact((Entity<ArtifactEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.CameraSequence)
+                {
+                    //models.Add(LoadEntityPlaceholder((Entity<CameraSequenceEntityData>)entity));
+                }
+                else if (entity.Type == EntityType.ForceField)
+                {
+                    //models.AddRange(LoadForceField((Entity<ForceFieldEntityData>)entity));
+                }
+                else
+                {
+                    throw new ProgramException($"Invalid entity type {entity.Type}");
+                }
+                int added = models.Count - count;
+                for (int i = models.Count - added; i < models.Count; i++)
+                {
+                    //models[i].EntityLayer = entity.LayerMask;
+                    //models[i].EntityType = entity.Type;
+                }
+            }
+            return models;
         }
 
         private static void FilterNodes(Model model, int layerMask)
