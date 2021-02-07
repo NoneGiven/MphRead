@@ -862,7 +862,7 @@ namespace MphRead
             return -1;
         }
 
-        private const int _renderItemAlloc = 200;
+        private const int _renderItemAlloc = 200; // todo: revisit this (could allocate based on number of meshes on load)
         private readonly Queue<RenderItem> _freeRenderItems = new Queue<RenderItem>(_renderItemAlloc);
         private readonly Queue<RenderItem> _usedRenderItems = new Queue<RenderItem>(_renderItemAlloc);
         // avoiding overhead by duplicating things in these lists
