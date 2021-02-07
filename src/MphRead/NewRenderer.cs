@@ -1816,19 +1816,21 @@ namespace MphRead
             });
         }
 
-        public void AddRoom(int id)
+        public void AddRoom(int id, GameMode mode = GameMode.None, int playerCount = 0,
+            BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
         {
             RoomMetadata? meta = Metadata.GetRoomById(id);
             if (meta == null)
             {
                 throw new ProgramException("No room with this ID is known.");
             }
-            Scene.AddRoom(meta.Name);
+            Scene.AddRoom(meta.Name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
         }
 
-        public void AddRoom(string name)
+        public void AddRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
+            BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
         {
-            Scene.AddRoom(name);
+            Scene.AddRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
         }
 
         public void AddEntity(string name, int recolor = 0)
