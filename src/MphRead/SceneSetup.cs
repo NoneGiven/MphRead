@@ -199,11 +199,11 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Item)
                 {
-                    //models.AddRange(LoadItem((Entity<ItemEntityData>)entity));
+                    models.Add(new ItemEntity(((Entity<ItemEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhItem)
                 {
-                    //models.Add(LoadItem((Entity<FhItemEntityData>)entity));
+                    models.Add(new FhItemEntity(((Entity<FhItemEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.Enemy)
                 {

@@ -8,7 +8,7 @@ namespace MphRead.Entities
         private readonly DoorEntityData _data;
         private readonly Matrix4 _lockTransform;
 
-        public DoorEntity(DoorEntityData data) : base(NewEntityType.Platform)
+        public DoorEntity(DoorEntityData data) : base(NewEntityType.Door)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -38,13 +38,14 @@ namespace MphRead.Entities
             _anyLighting = model.Materials.Any(m => m.Lighting != 0) || doorLock.Materials.Any(m => m.Lighting != 0);
         }
 
-        protected override Matrix4 GetModelTransformBefore(NewModel model, int index)
+        protected override Matrix4 GetModelTransformBefore(NewModel model, int index, NewScene scene)
         {
+            Matrix4 transform = base.GetModelTransformBefore(model, index, scene);
             if (index == 1)
             {
-                return _lockTransform;
+                transform *= _lockTransform;
             }
-            return base.GetModelTransformBefore(model, index);
+            return transform;
         }
     }
 
@@ -52,7 +53,7 @@ namespace MphRead.Entities
     {
         private readonly FhDoorEntityData _data;
 
-        public FhDoorEntity(FhDoorEntityData data) : base(NewEntityType.Platform)
+        public FhDoorEntity(FhDoorEntityData data) : base(NewEntityType.Door)
         {
             _data = data;
             Id = data.Header.EntityId;

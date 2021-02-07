@@ -166,12 +166,12 @@ namespace MphRead.Entities
         {
         }
 
-        protected virtual Matrix4 GetModelTransformBefore(NewModel model, int index)
+        protected virtual Matrix4 GetModelTransformBefore(NewModel model, int index, NewScene scene)
         {
             return Matrix4.Identity;
         }
 
-        protected virtual Matrix4 GetModelTransformAfter(NewModel model, int index)
+        protected virtual Matrix4 GetModelTransformAfter(NewModel model, int index, NewScene scene)
         {
             return Matrix4.CreateScale(model.Scale);
         }
@@ -192,7 +192,7 @@ namespace MphRead.Entities
                         model.AnimateMaterials(_materialAnimCurFrame);
                         model.AnimateTextures(_textureAnimCurFrame);
                         model.ComputeNodeMatrices(index: 0);
-                        Matrix4 transform = GetModelTransformAfter(model, i) * _transform * GetModelTransformBefore(model, i);
+                        Matrix4 transform = GetModelTransformAfter(model, i, scene) * _transform * GetModelTransformBefore(model, i, scene);
                         model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, _nodeAnimCurFrame);
                         model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
                         // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)

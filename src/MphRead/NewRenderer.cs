@@ -65,6 +65,7 @@ namespace MphRead
         private bool _useClip = false;
         private float _killHeight = 0f;
 
+        private float _frameTime = 0;
         private float _elapsedTime = 0;
         private long _frameCount = -1;
         private bool _frameAdvanceOn = false;
@@ -79,6 +80,7 @@ namespace MphRead
         public Vector3 CameraPosition => _cameraPosition;
         public bool ShowInvisible => _showInvisible;
         public bool TransformRoomNodes => _transformRoomNodes;
+        public float FrameTime => _frameTime;
         public long FrameCount => _frameCount;
         public bool ShowForceFields => _showVolumes != 12;
         public bool ScanVisor => _scanVisor;
@@ -746,9 +748,10 @@ namespace MphRead
             }
         }
 
-        public void OnRenderFrame()
+        public void OnRenderFrame(double frameTime)
         {
             _frameCount++;
+            _frameTime = (float)frameTime;
             //LoadAndUnload();
             OnKeyHeld();
 
@@ -1851,7 +1854,7 @@ namespace MphRead
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            Scene.OnRenderFrame();
+            Scene.OnRenderFrame(args.Time);
             SwapBuffers();
             Scene.AfterRenderFrame();
             base.OnRenderFrame(args);
