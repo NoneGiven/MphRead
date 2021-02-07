@@ -10,9 +10,10 @@ namespace MphRead.Entities
     {
         private readonly PlatformEntityData _data;
 
-        public PlatformEntity(int id, PlatformEntityData data) : base(NewEntityType.Platform)
+        public PlatformEntity(PlatformEntityData data) : base(NewEntityType.Platform)
         {
-            Id = id;
+            Id = data.Header.EntityId;
+            ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             PlatformMetadata? meta = Metadata.GetPlatformById((int)data.ModelId);
             if (meta == null)
             {
@@ -23,7 +24,6 @@ namespace MphRead.Entities
                 NewModel model = Read.GetNewModel(meta.Name);
                 _models.Add(model);
                 _anyLighting = model.Materials.Any(m => m.Lighting != 0);
-                ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
                 // temporary
                 if (meta.Name == "SamusShip")
                 {

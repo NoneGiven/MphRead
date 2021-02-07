@@ -173,7 +173,7 @@ namespace MphRead
                 int count = models.Count;
                 if (entity.Type == EntityType.Platform)
                 {
-                    models.Add(new PlatformEntity(entity.EntityId, ((Entity<PlatformEntityData>)entity).Data));
+                    models.Add(new PlatformEntity(((Entity<PlatformEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhPlatform)
                 {
