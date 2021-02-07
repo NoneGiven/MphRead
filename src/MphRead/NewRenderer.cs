@@ -18,9 +18,6 @@ namespace MphRead
         private Matrix4 _viewMatrix = Matrix4.Identity;
         private Matrix4 _viewInvRotMatrix = Matrix4.Identity;
         private Matrix4 _viewInvRotYMatrix = Matrix4.Identity;
-        public Matrix4 ViewMatrix => _viewMatrix;
-        public Matrix4 ViewInvRotMatrix => _viewInvRotMatrix;
-        public Matrix4 ViewInvRotYMatrix => _viewInvRotYMatrix;
 
         private CameraMode _cameraMode = CameraMode.Pivot;
         private float _angleY = 0.0f;
@@ -77,9 +74,14 @@ namespace MphRead
 
         private readonly KeyboardState _keyboardState;
 
+        public Matrix4 ViewMatrix => _viewMatrix;
+        public Matrix4 ViewInvRotMatrix => _viewInvRotMatrix;
+        public Matrix4 ViewInvRotYMatrix => _viewInvRotYMatrix;
+        public Vector3 CameraPosition => _cameraPosition;
         public bool ShowInvisible => _showInvisible;
         public bool TransformRoomNodes => _transformRoomNodes;
         public long FrameCount => _frameCount;
+        public bool ShowForceFields => _showVolumes != 12;
 
         public NewScene(Vector2i size, KeyboardState keyboardState)
         {

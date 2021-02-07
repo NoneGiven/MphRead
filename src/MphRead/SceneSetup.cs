@@ -157,9 +157,6 @@ namespace MphRead
             CollisionInfo collision = Collision.ReadCollision(metadata.CollisionPath, metadata.FirstHunt || metadata.Hybrid, nodeLayerMask);
             // todo: once ReadCollision is filering things, we don't need to pass nodeLayerMask here or return it
             var room = new RoomEntity(Read.GetNewRoom(name), metadata, collision, nodeLayerMask);
-            //room.Setup(metadata, collision, nodeLayerMask);
-            //FilterNodes(room, nodeLayerMask);
-            //ComputeNodeMatrices(room, index: 0);
             return (room, metadata, collision, entities, nodeLayerMask);
         }
 

@@ -49,6 +49,30 @@ namespace MphRead
             Transform = transform;
             ListId = listId;
         }
+
+        public RenderItem(Material material, int polygonId, float alphaScale, Vector3 emission,
+            Matrix4 texcoordMatrix, Matrix4 transform, int listId)
+        {
+            PolygonId = polygonId;
+            Alpha = material.CurrentAlpha * alphaScale;
+            PolygonMode=  material.PolygonMode;
+            RenderMode = material.RenderMode;
+            CullingMode = material.Culling;
+            Wireframe = material.Wireframe != 0;
+            Lighting = material.Lighting != 0;
+            Diffuse = material.CurrentDiffuse; ;
+            Ambient = material.CurrentAmbient;
+            Specular = material.CurrentSpecular;
+            Emission = emission;
+            TexgenMode = material.TexgenMode;
+            XRepeat = material.XRepeat;
+            YRepeat = material.YRepeat;
+            HasTexture = material.TextureId != UInt16.MaxValue;
+            TextureBindingId = material.TextureBindingId;
+            TexcoordMatrix = texcoordMatrix;
+            Transform = transform;
+            ListId = listId;
+        }
     }
 
     // size: 4
