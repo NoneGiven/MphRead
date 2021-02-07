@@ -1669,7 +1669,7 @@ namespace MphRead
             else
             {
                 Scene.OnKeyDown(e);
-            } 
+            }
             base.OnKeyDown(e);
         }
     }

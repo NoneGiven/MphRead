@@ -65,7 +65,7 @@ namespace MphRead
             _window.Dispose();
         }
     }
-     
+
     public class TextureMap : Dictionary<(int TextureId, int PaletteId), (int BindingId, bool OnlyOpaque)>
     {
         public (int BindingId, bool OnlyOpaque) Get(int textureId, int paletteId)
