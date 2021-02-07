@@ -880,7 +880,7 @@ namespace MphRead
         }
 
         public void AddRenderItem(Material material, int polygonId, float alphaScale, Vector3 emission,
-            Matrix4 texcoordMatrix, Matrix4 transform, int listId)
+            Matrix4 texcoordMatrix, Matrix4 transform, int listId, int matrixStackCount, IReadOnlyList<float> matrixStack)
         {
             RenderItem item = GetRenderItem();
             item.PolygonId = polygonId;
@@ -902,6 +902,12 @@ namespace MphRead
             item.TexcoordMatrix = texcoordMatrix;
             item.Transform = transform;
             item.ListId = listId;
+            Debug.Assert(matrixStack.Count == 16 * matrixStackCount);
+            item.MatrixStackCount = matrixStackCount;
+            for (int i = 0; i < matrixStack.Count; i++)
+            {
+                item.MatrixStack[i] = matrixStack[i];
+            }
             AddRenderItem(item);
         }
 
@@ -1129,9 +1135,15 @@ namespace MphRead
             //    UseLight2(model.Light2Vector, model.Light2Color);
             //}
 
-            // mtodo: need to handle matrix stack values
-            Matrix4 transform = item.Transform;
-            GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
+            if (item.MatrixStackCount > 0)
+            {
+                GL.UniformMatrix4(_shaderLocations.MatrixStack, item.MatrixStackCount, transpose: false, item.MatrixStack);
+            }
+            else
+            {
+                Matrix4 transform = item.Transform;
+                GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
+            }
 
             DoMaterial(item);
             // texgen actually uses the transform from the current node, not the matrix stack

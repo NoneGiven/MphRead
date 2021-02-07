@@ -24,9 +24,12 @@ namespace MphRead
         public Matrix4 TexcoordMatrix { get; set; }
         public Matrix4 Transform { get; set; }
         public int ListId { get; set; }
+        public int MatrixStackCount { get; set; }
+        public float[] MatrixStack { get; }
 
         public RenderItem()
         {
+            MatrixStack = new float[16 * 31];
             //PolygonId = polygonId;
             //Alpha = alpha;
             //PolygonMode = polygonMode;
@@ -46,6 +49,7 @@ namespace MphRead
             //TexcoordMatrix = texcoordMatrix;
             //Transform = transform;
             //ListId = listId;
+            //MatrixStackCount = matrixStackCount;
         }
     }
 

@@ -20,7 +20,7 @@ namespace MphRead.Entities
         public IReadOnlyList<int> NodeMatrixIds { get; }
 
         private readonly float[] _matrixStackValues;
-        public IReadOnlyList<float> Test => _matrixStackValues;
+        public IReadOnlyList<float> MatrixStackValues => _matrixStackValues;
         public AnimationInfo Animations { get; }
         public Vector3 Scale { get; }
 
@@ -47,6 +47,7 @@ namespace MphRead.Entities
             TextureMatrices = textureMatrices;
             Recolors = recolors;
             Debug.Assert(header.NodeWeightCount == nodeWeights.Count || name == "doubleDamage_img");
+            Debug.Assert(nodeWeights.Count <= 31);
             NodeMatrixIds = nodeWeights;
             if (header.NodeWeightCount > 0)
             {
