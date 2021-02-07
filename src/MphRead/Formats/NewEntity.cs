@@ -109,27 +109,31 @@ namespace MphRead.Entities
 
         public override void Process(NewScene scene)
         {
-            for (int i = 0; i < _models.Count; i++)
+            ShouldDraw = false;
+            if (Alpha > 0)
             {
-                NewModel model = _models[i];
-                if (model.Active)
+                ShouldDraw = true;
+                for (int i = 0; i < _models.Count; i++)
                 {
-                    if (scene.FrameCount != 0 && scene.FrameCount % 2 == 0)
+                    NewModel model = _models[i];
+                    if (model.Active)
                     {
-                        UpdateAnimationFrames(model);
+                        if (scene.FrameCount != 0 && scene.FrameCount % 2 == 0)
+                        {
+                            UpdateAnimationFrames(model);
+                        }
+                        model.AnimateMaterials(_materialAnimCurFrame);
+                        model.AnimateTextures(_textureAnimCurFrame);
+                        model.ComputeNodeMatrices(index: 0);
+                        // mtodo: parent transform (QUATERNIONS)
+                        var transform = Matrix4.CreateScale(model.Scale);
+                        model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, _nodeAnimCurFrame);
+                        model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
+                        // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
+                        scene.UpdateMaterials(model, Recolor);
                     }
-                    model.AnimateMaterials(_materialAnimCurFrame);
-                    model.AnimateTextures(_textureAnimCurFrame);
-                    model.ComputeNodeMatrices(index: 0);
-                    // mtodo: parent transform (QUATERNIONS)
-                    var transform = Matrix4.CreateScale(model.Scale);
-                    model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, _nodeAnimCurFrame);
-                    model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
-                    // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
-                    scene.UpdateMaterials(model, Recolor);
                 }
             }
-            ShouldDraw = Alpha > 0;
         }
 
         public override IEnumerable<NewModel> GetModels()
