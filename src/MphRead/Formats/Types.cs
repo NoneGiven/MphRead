@@ -3,75 +3,49 @@ using OpenTK.Mathematics;
 
 namespace MphRead
 {
-    public readonly struct RenderItem
+    public class RenderItem
     {
-        public readonly int PolygonId;
-        public readonly float Alpha;
-        public readonly PolygonMode PolygonMode;
-        public readonly RenderMode RenderMode;
-        public readonly CullingMode CullingMode;
-        public readonly bool Wireframe;
-        public readonly bool Lighting;
-        public readonly Vector3 Diffuse;
-        public readonly Vector3 Ambient;
-        public readonly Vector3 Specular;
-        public readonly Vector3 Emission;
-        public readonly TexgenMode TexgenMode;
-        public readonly RepeatMode XRepeat;
-        public readonly RepeatMode YRepeat;
-        public readonly bool HasTexture;
-        public readonly int TextureBindingId;
-        public readonly Matrix4 TexcoordMatrix;
-        public readonly Matrix4 Transform;
-        public readonly int ListId;
+        public int PolygonId { get; set; }
+        public float Alpha { get; set; }
+        public PolygonMode PolygonMode { get; set; }
+        public RenderMode RenderMode { get; set; }
+        public CullingMode CullingMode { get; set; }
+        public bool Wireframe { get; set; }
+        public bool Lighting { get; set; }
+        public Vector3 Diffuse { get; set; }
+        public Vector3 Ambient { get; set; }
+        public Vector3 Specular { get; set; }
+        public Vector3 Emission { get; set; }
+        public TexgenMode TexgenMode { get; set; }
+        public RepeatMode XRepeat { get; set; }
+        public RepeatMode YRepeat { get; set; }
+        public bool HasTexture { get; set; }
+        public int TextureBindingId { get; set; }
+        public Matrix4 TexcoordMatrix { get; set; }
+        public Matrix4 Transform { get; set; }
+        public int ListId { get; set; }
 
-        public RenderItem(int polygonId, float alpha, PolygonMode polygonMode, RenderMode renderMode, CullingMode cullingMode, bool wireframe,
-            bool lighting, Vector3 diffuse, Vector3 ambient, Vector3 specular, Vector3 emission, TexgenMode texgenMode, RepeatMode xRepeat,
-            RepeatMode yRepeat, bool hasTexture, int textureBindingId, Matrix4 texcoordMatrix, Matrix4 transform, int listId)
+        public RenderItem()
         {
-            PolygonId = polygonId;
-            Alpha = alpha;
-            PolygonMode = polygonMode;
-            RenderMode = renderMode;
-            CullingMode = cullingMode;
-            Wireframe = wireframe;
-            Lighting = lighting;
-            Diffuse = diffuse;
-            Ambient = ambient;
-            Specular = specular;
-            Emission = emission;
-            TexgenMode = texgenMode;
-            XRepeat = xRepeat;
-            YRepeat = yRepeat;
-            HasTexture = hasTexture;
-            TextureBindingId = textureBindingId;
-            TexcoordMatrix = texcoordMatrix;
-            Transform = transform;
-            ListId = listId;
-        }
-
-        public RenderItem(Material material, int polygonId, float alphaScale, Vector3 emission,
-            Matrix4 texcoordMatrix, Matrix4 transform, int listId)
-        {
-            PolygonId = polygonId;
-            Alpha = material.CurrentAlpha * alphaScale;
-            PolygonMode=  material.PolygonMode;
-            RenderMode = material.RenderMode;
-            CullingMode = material.Culling;
-            Wireframe = material.Wireframe != 0;
-            Lighting = material.Lighting != 0;
-            Diffuse = material.CurrentDiffuse; ;
-            Ambient = material.CurrentAmbient;
-            Specular = material.CurrentSpecular;
-            Emission = emission;
-            TexgenMode = material.TexgenMode;
-            XRepeat = material.XRepeat;
-            YRepeat = material.YRepeat;
-            HasTexture = material.TextureId != UInt16.MaxValue;
-            TextureBindingId = material.TextureBindingId;
-            TexcoordMatrix = texcoordMatrix;
-            Transform = transform;
-            ListId = listId;
+            //PolygonId = polygonId;
+            //Alpha = alpha;
+            //PolygonMode = polygonMode;
+            //RenderMode = renderMode;
+            //CullingMode = cullingMode;
+            //Wireframe = wireframe;
+            //Lighting = lighting;
+            //Diffuse = diffuse;
+            //Ambient = ambient;
+            //Specular = specular;
+            //Emission = emission;
+            //TexgenMode = texgenMode;
+            //XRepeat = xRepeat;
+            //YRepeat = yRepeat;
+            //HasTexture = hasTexture;
+            //TextureBindingId = textureBindingId;
+            //TexcoordMatrix = texcoordMatrix;
+            //Transform = transform;
+            //ListId = listId;
         }
     }
 

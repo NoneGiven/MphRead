@@ -166,8 +166,7 @@ namespace MphRead.Entities
                         Matrix4 texcoordMatrix = GetTexcoordMatrix(model, material, node, scene);
                         // mtodo: main transform
                         var transform = Matrix4.CreateScale(model.Scale);
-                        var item = new RenderItem(material, polygonId, Alpha, emission: Vector3.Zero, texcoordMatrix, transform, mesh.ListId);
-                        scene.AddRenderItem(item);
+                        scene.AddRenderItem(material, polygonId, Alpha, emission: Vector3.Zero, texcoordMatrix, transform, mesh.ListId);
                     }
                 }
             }
@@ -477,8 +476,7 @@ namespace MphRead.Entities
                     }
                     Matrix4 texcoordMatrix = GetTexcoordMatrix(model, material, node, scene);
                     var transform = Matrix4.CreateScale(model.Scale);
-                    var item = new RenderItem(material, polygonId, alpha, emission: Vector3.Zero, texcoordMatrix, transform, mesh.ListId);
-                    scene.AddRenderItem(item);
+                    scene.AddRenderItem(material, polygonId, alpha, emission: Vector3.Zero, texcoordMatrix, transform, mesh.ListId);
                 }
             }
         }

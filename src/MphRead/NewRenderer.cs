@@ -266,6 +266,11 @@ namespace MphRead
             GL.Enable(EnableCap.Texture2D);
             GL.DepthFunc(DepthFunction.Lequal);
             InitShaders();
+            //AllocateEffects();
+            for (int i = 0; i < _renderItemAlloc; i++)
+            {
+                _freeItems.Enqueue(new RenderItem());
+            }
         }
 
         private void InitShaders()
@@ -857,19 +862,50 @@ namespace MphRead
             return -1;
         }
 
+        private const int _renderItemAlloc = 200;
+        private readonly Queue<RenderItem> _freeItems = new Queue<RenderItem>(_renderItemAlloc);
+        private readonly Queue<RenderItem> _usedItems = new Queue<RenderItem>(_renderItemAlloc);
         // avoiding overhead by duplicating things in these lists
         private readonly List<RenderItem> _decalMeshes = new List<RenderItem>();
         private readonly List<RenderItem> _nonDecalMeshes = new List<RenderItem>();
         private readonly List<RenderItem> _translucentMeshes = new List<RenderItem>();
 
-        private int _nextPolygonId = 1;
-
-        public int GetNextPolygonId()
+        private RenderItem GetRenderItem()
         {
-            return _nextPolygonId++;
+            if (_freeItems.Count > 0)
+            {
+                return _freeItems.Dequeue();
+            }
+            return new RenderItem();
         }
 
-        public void AddRenderItem(RenderItem item)
+        public void AddRenderItem(Material material, int polygonId, float alphaScale, Vector3 emission,
+            Matrix4 texcoordMatrix, Matrix4 transform, int listId)
+        {
+            RenderItem item = GetRenderItem();
+            item.PolygonId = polygonId;
+            item.Alpha = material.CurrentAlpha * alphaScale;
+            item.PolygonMode = material.PolygonMode;
+            item.RenderMode = material.RenderMode;
+            item.CullingMode = material.Culling;
+            item.Wireframe = material.Wireframe != 0;
+            item.Lighting = material.Lighting != 0;
+            item.Diffuse = material.CurrentDiffuse;
+            item.Ambient = material.CurrentAmbient;
+            item.Specular = material.CurrentSpecular;
+            item.Emission = emission;
+            item.TexgenMode = material.TexgenMode;
+            item.XRepeat = material.XRepeat;
+            item.YRepeat = material.YRepeat;
+            item.HasTexture = material.TextureId != UInt16.MaxValue;
+            item.TextureBindingId = material.TextureBindingId;
+            item.TexcoordMatrix = texcoordMatrix;
+            item.Transform = transform;
+            item.ListId = listId;
+            AddRenderItem(item);
+        }
+
+        private void AddRenderItem(RenderItem item)
         {
             if (item.RenderMode == RenderMode.Decal)
             {
@@ -883,15 +919,18 @@ namespace MphRead
             {
                 _translucentMeshes.Add(item);
             }
+            _usedItems.Enqueue(item);
+        }
+
+        private int _nextPolygonId = 1;
+
+        public int GetNextPolygonId()
+        {
+            return _nextPolygonId++;
         }
 
         private void RenderScene()
         {
-            //if (!_effectSetupDone)
-            //{
-            //    AllocateEffects();
-            //    _effectSetupDone = true;
-            //}
             if (_frameCount != 0 || !_frameAdvanceOn || _advanceOneFrame)
             {
                 _elapsedTime += 1 / 60f;
@@ -900,6 +939,10 @@ namespace MphRead
             _decalMeshes.Clear();
             _nonDecalMeshes.Clear();
             _translucentMeshes.Clear();
+            while (_usedItems.Count > 0)
+            {
+                _freeItems.Enqueue(_usedItems.Dequeue());
+            }
             _entities.Sort(CompareEntities);
             _nextPolygonId = 1;
 
