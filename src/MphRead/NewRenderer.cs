@@ -959,11 +959,10 @@ namespace MphRead
                 {
                     entity.Process(this);
                 }
-                if (!entity.ShouldDraw)
+                if (entity.ShouldDraw)
                 {
-                    continue;
+                    entity.GetDrawInfo(this);
                 }
-                entity.GetDrawInfo(this);
             }
 
             //if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
