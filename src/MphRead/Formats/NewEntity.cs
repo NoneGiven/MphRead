@@ -85,7 +85,7 @@ namespace MphRead.Entities
         {
         }
 
-        // mtodo: objects need to return false if scanvisor etc.
+        // ntodo: objects need to return false if scanvisor etc.
         public override void Process(NewScene scene)
         {
             ShouldDraw = scene.ShowInvisible;
@@ -120,7 +120,7 @@ namespace MphRead.Entities
                     }
                     model.AnimateMaterials(_materialAnimCurFrame);
                     model.AnimateTextures(_textureAnimCurFrame);
-                    model.ComputeNodeMatrices(index: 0); // mtodo: confirm this doesn't break anything
+                    model.ComputeNodeMatrices(index: 0);
                     // mtodo: parent transform (do we really need scale separately?)
                     model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, Matrix4.Identity, model.Scale, _nodeAnimCurFrame);
                     model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
@@ -186,7 +186,7 @@ namespace MphRead.Entities
             {
                 texcoordMatrix = model.AnimateTexcoords(group, animation.Value, _texcoordAnimCurFrame);
             }
-            if (material.TexgenMode != TexgenMode.None) // mtodo: texgen mode (among other things) can be overriden by double damage
+            if (material.TexgenMode != TexgenMode.None) // ntodo: texgen mode (among other things) can be overriden by double damage
             {
                 Matrix4 materialMatrix;
                 // in-game, this is a list of precomputed matrices that we compute on the fly in the next block;
@@ -261,7 +261,7 @@ namespace MphRead.Entities
         private int _textureAnimCurFrame = 0;
         private int _nodeAnimCurFrame = 0;
 
-        // mtodo: maybe remove CurrentFrame from these classes
+        // ntodo: maybe remove CurrentFrame from these classes
         private void UpdateAnimationFrames(NewModel model)
         {
             if (model.Animations.MaterialGroup != null)

@@ -27,7 +27,7 @@ namespace MphRead
                 {
                     throw new ProgramException("No model with this name is known.");
                 }
-                // mtodo: add to cache (once "CurrentAlpha" stuff is figured out)
+                _modelCache.Add(name, model);
             }
             return model;
         }
@@ -41,7 +41,7 @@ namespace MphRead
                 {
                     throw new ProgramException("No model with this name is known.");
                 }
-                // mtodo: add to cache (once "CurrentAlpha" stuff is figured out)
+                _modelCache.Add(name, model);
             }
             return model;
         }
@@ -71,7 +71,6 @@ namespace MphRead
             {
                 throw new ProgramException("No room with this name is known.");
             }
-            // mtodo: room cache?
             return GetNewRoom(meta);
         }
 

@@ -152,7 +152,7 @@ namespace MphRead
                     }
                 }
             }
-            // mtodo: all this stuff
+            // ntodo: load entities properly
             IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
             CollisionInfo collision = Collision.ReadCollision(metadata.CollisionPath, metadata.FirstHunt || metadata.Hybrid, nodeLayerMask);
             // todo: once ReadCollision is filering things, we don't need to pass nodeLayerMask here or return it

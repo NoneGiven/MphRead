@@ -106,12 +106,12 @@ namespace MphRead
             _entities.Add(entity);
             InitRenderable(entity);
             _cameraMode = CameraMode.Roam;
-            //nodeLayerMask = updatedMask; // mtodo: move this and the portal display stuff to the room class
+            //nodeLayerMask = updatedMask; // ntodo: move this and the portal display stuff to the room class
             if (meta.InGameName != null)
             {
                 _setTitle.Invoke(meta.InGameName);
             }
-            // mtodo: why did we need to do this on load?
+            // ntodo: light sources/overrides -- also, why did we need to do this assignment on load?
             //foreach (Model model in _models.Where(m => m.UseLightOverride))
             //{
             //    model.Light1Color = _light1Color;

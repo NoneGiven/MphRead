@@ -28,8 +28,6 @@ namespace MphRead.Entities
         public int Id { get; } = _nextId++;
         public bool Active { get; set; } = true;
 
-        // mtodo: if these instances are going to be fully shared, the MeshInfo instances can't have any references to them
-        // --> can we do that and still avoid copying e.g. matrix stack values? they're variable size and not everything needs them
         public NewModel(string name, Header header, IEnumerable<RawNode> nodes, IEnumerable<RawMesh> meshes,
             IEnumerable<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
