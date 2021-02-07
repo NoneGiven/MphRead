@@ -763,6 +763,7 @@ namespace MphRead
             _nonDecalMeshes.Clear();
             _translucentMeshes.Clear();
             _entities.Sort(CompareEntities);
+            _nextPolygonId = 1;
 
             for (int i = 0; i < _entities.Count; i++)
             {
