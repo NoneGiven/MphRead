@@ -288,8 +288,9 @@ namespace MphRead.Entities
 
     public class ModelEntity : VisibleEntityBase
     {
-        public ModelEntity(NewModel model) : base(NewEntityType.Model)
+        public ModelEntity(NewModel model, int recolor = 0) : base(NewEntityType.Model)
         {
+            Recolor = recolor;
             _models.Add(model);
             _anyLighting = model.Materials.Any(m => m.Lighting != 0);
         }

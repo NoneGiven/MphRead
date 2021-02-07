@@ -247,9 +247,9 @@ namespace MphRead
             //_dblDmgBindingId = _textureCount;
         }
 
-        public void AddEntity(string name)
+        public void AddEntity(string name, int recolor = 0)
         {
-            var entity = new ModelEntity(Read.GetNewModel(name));
+            var entity = new ModelEntity(Read.GetNewModel(name), recolor);
             _renderables.Add(entity);
             _entities.Add(entity);
             if (entity.Id != -1)
@@ -1777,9 +1777,9 @@ namespace MphRead
             Scene.AddRoom(name);
         }
 
-        public void AddEntity(string name)
+        public void AddEntity(string name, int recolor = 0)
         {
-            Scene.AddEntity(name);
+            Scene.AddEntity(name, recolor);
         }
 
         protected override void OnLoad()
