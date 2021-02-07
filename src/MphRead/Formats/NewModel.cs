@@ -65,6 +65,83 @@ namespace MphRead.Entities
             Scale = new Vector3(scale, scale, scale);
         }
 
+        public void ComputeNodeMatrices(int index)
+        {
+            if (Nodes.Count == 0 || index == UInt16.MaxValue)
+            {
+                return;
+            }
+            for (int i = index; i != UInt16.MaxValue;)
+            {
+                Node node = Nodes[i];
+                // the scale division isn't done by the game, which is why transforms on room nodes don't work,
+                // which is probably why they're disabled. they can be reenabled with a switch in the viewer
+                var position = new Vector3(
+                    node.Position.X / Scale.X,
+                    node.Position.Y / Scale.Y,
+                    node.Position.Z / Scale.Z
+                );
+                Matrix4 transform = ComputeNodeTransforms(node.Scale, node.Angle, position);
+                if (node.ParentIndex == UInt16.MaxValue)
+                {
+                    node.Transform = transform;
+                }
+                else
+                {
+                    node.Transform = transform * Nodes[node.ParentIndex].Transform;
+                }
+                if (node.ChildIndex != UInt16.MaxValue)
+                {
+                    ComputeNodeMatrices(node.ChildIndex);
+                }
+                i = node.NextIndex;
+            }
+        }
+
+        // todo: rename/relocate (and now also deduplicate)
+        private Matrix4 ComputeNodeTransforms(Vector3 scale, Vector3 angle, Vector3 position)
+        {
+            float sinAx = MathF.Sin(angle.X);
+            float sinAy = MathF.Sin(angle.Y);
+            float sinAz = MathF.Sin(angle.Z);
+            float cosAx = MathF.Cos(angle.X);
+            float cosAy = MathF.Cos(angle.Y);
+            float cosAz = MathF.Cos(angle.Z);
+
+            float v18 = cosAx * cosAz;
+            float v19 = cosAx * sinAz;
+            float v20 = cosAx * cosAy;
+
+            float v22 = sinAx * sinAy;
+
+            float v17 = v19 * sinAy;
+
+            Matrix4 transform = default;
+
+            transform.M11 = scale.X * cosAy * cosAz;
+            transform.M12 = scale.X * cosAy * sinAz;
+            transform.M13 = scale.X * -sinAy;
+
+            transform.M21 = scale.Y * ((v22 * cosAz) - v19);
+            transform.M22 = scale.Y * ((v22 * sinAz) + v18);
+            transform.M23 = scale.Y * sinAx * cosAy;
+
+            transform.M31 = scale.Z * (v18 * sinAy + sinAx * sinAz);
+            transform.M32 = scale.Z * (v17 + (v19 * sinAy) - (sinAx * cosAz));
+            transform.M33 = scale.Z * v20;
+
+            transform.M41 = position.X;
+            transform.M42 = position.Y;
+            transform.M43 = position.Z;
+
+            transform.M14 = 0;
+            transform.M24 = 0;
+            transform.M34 = 0;
+            transform.M44 = 1;
+
+            return transform;
+        }
+
         public void AnimateNodes(int index, bool useNodeTransform, Matrix4 parentTansform, Vector3 scale, int currentFrame)
         {
             for (int i = index; i != UInt16.MaxValue;)

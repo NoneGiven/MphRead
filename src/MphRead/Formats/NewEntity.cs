@@ -120,8 +120,9 @@ namespace MphRead.Entities
                     }
                     model.AnimateMaterials(_materialAnimCurFrame);
                     model.AnimateTextures(_textureAnimCurFrame);
+                    model.ComputeNodeMatrices(index: 0); // mtodo: confirm this doesn't break anything
                     // mtodo: parent transform (do we really need scale separately?)
-                    model.AnimateNodes(0, UseNodeTransform || scene.TransformRoomNodes, Matrix4.Identity, model.Scale, _nodeAnimCurFrame);
+                    model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, Matrix4.Identity, model.Scale, _nodeAnimCurFrame);
                     model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
                     // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
                     scene.UpdateMaterials(model, Recolor);
@@ -308,7 +309,6 @@ namespace MphRead.Entities
         {
             _models.Add(model);
             _anyLighting = model.Materials.Any(m => m.Lighting != 0);
-            // mtodo: ComputeNodeMatrices --> init method
             FilterNodes(layerMask);
             var portals = new List<CollisionPortal>();
             var forceFields = new List<ForceFieldNodeRef>();
