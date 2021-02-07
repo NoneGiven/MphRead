@@ -63,6 +63,7 @@ namespace MphRead
         private Color4 _clearColor = new Color4(0f, 0f, 0f, 1f);
         private float _farClip = 0;
         private bool _useClip = false;
+        private float _killHeight = 0f;
 
         private float _elapsedTime = 0;
         private long _frameCount = -1;
@@ -71,8 +72,6 @@ namespace MphRead
         private bool _recording = false;
         private int _framesRecorded = 0;
         private bool _roomLoaded = false;
-
-        private readonly KeyboardState _keyboardState;
 
         public Matrix4 ViewMatrix => _viewMatrix;
         public Matrix4 ViewInvRotMatrix => _viewInvRotMatrix;
@@ -83,10 +82,14 @@ namespace MphRead
         public long FrameCount => _frameCount;
         public bool ShowForceFields => _showVolumes != 12;
 
-        public NewScene(Vector2i size, KeyboardState keyboardState)
+        private readonly KeyboardState _keyboardState;
+        private readonly Action<string> _setTitle;
+
+        public NewScene(Vector2i size, KeyboardState keyboardState, Action<string> setTitle)
         {
             Size = size;
             _keyboardState = keyboardState;
+            _setTitle = setTitle;
         }
 
         public void AddRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
@@ -103,6 +106,145 @@ namespace MphRead
             _entities.Add(entity);
             InitRenderable(entity);
             _cameraMode = CameraMode.Roam;
+            //nodeLayerMask = updatedMask; // mtodo: move this and the portal display stuff to the room class
+            if (meta.InGameName != null)
+            {
+                _setTitle.Invoke(meta.InGameName);
+            }
+            // mtodo: why did we need to do this on load?
+            //foreach (Model model in _models.Where(m => m.UseLightOverride))
+            //{
+            //    model.Light1Color = _light1Color;
+            //    model.Light1Vector = _light1Vector;
+            //    model.Light2Color = _light2Color;
+            //    model.Light2Vector = _light2Vector;
+            //}
+            //foreach (Model entity in entities)
+            //{
+            //    _modelMap.Add(entity.SceneId, entity);
+            //    if (entity.Entity is Entity<LightSourceEntityData> lightSource)
+            //    {
+            //        var display = new LightSource(lightSource, entity.Transform);
+            //        _displayVolumes.Add(entity.SceneId, display);
+            //        _lightSourceMap.Add(entity.SceneId, display);
+            //        _lightSources.Add(display);
+            //    }
+            //    else if (entity.Entity is Entity<TriggerVolumeEntityData> trigger)
+            //    {
+            //        _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(trigger, entity.Transform));
+            //    }
+            //    else if (entity.Entity is Entity<FhTriggerVolumeEntityData> fhTrigger)
+            //    {
+            //        if (fhTrigger.Data.Subtype != 0)
+            //        {
+            //            _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(fhTrigger, entity.Transform));
+            //        }
+            //    }
+            //    else if (entity.Entity is Entity<AreaVolumeEntityData> area)
+            //    {
+            //        _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(area, entity.Transform));
+            //    }
+            //    else if (entity.Entity is Entity<FhAreaVolumeEntityData> fhArea)
+            //    {
+            //        if (fhArea.Data.Subtype != 0)
+            //        {
+            //            _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(fhArea, entity.Transform));
+            //        }
+            //    }
+            //    else if (entity.Entity is Entity<MorphCameraEntityData> morphCamera)
+            //    {
+            //        _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(morphCamera, entity.Transform));
+            //    }
+            //    else if (entity.Entity is Entity<FhMorphCameraEntityData> fhMorphCamera)
+            //    {
+            //        _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(fhMorphCamera, entity.Transform));
+            //    }
+            //    else if (entity.Entity is Entity<JumpPadEntityData> jumpPad && entity.Name != "JumpPad_Beam")
+            //    {
+            //        _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(jumpPad, entity.Transform));
+            //    }
+            //    else if (entity.Entity is Entity<FhJumpPadEntityData> fhJumpPad)
+            //    {
+            //        _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(fhJumpPad, entity.Transform));
+            //    }
+            //    else if (entity.Entity is Entity<ObjectEntityData> obj && obj.Data.EffectId > 0 && (obj.Data.EffectFlags & 1) != 0)
+            //    {
+            //        _displayVolumes.Add(entity.SceneId, new ObjectDisplay(obj, entity.Transform));
+            //    }
+            //    else if (entity.Entity is Entity<FlagBaseEntityData> flag)
+            //    {
+            //        _displayVolumes.Add(entity.SceneId, new FlagBaseDisplay(flag, entity.Transform));
+            //    }
+            //    else if (entity.Entity is Entity<NodeDefenseEntityData> defense)
+            //    {
+            //        _displayVolumes.Add(entity.SceneId, new NodeDefenseDisplay(defense, entity.Transform));
+            //    }
+            //    else if (entity.Entity is Entity<PointModuleEntityData> module)
+            //    {
+            //        if (_lastPointModule == -1)
+            //        {
+            //            _lastPointModule = entity.Entity.EntityId;
+            //        }
+            //        if (module.Data.NextId == 0)
+            //        {
+            //            _endPointModule = entity.Entity.EntityId;
+            //        }
+            //        // hack to allow easily toggling all
+            //        entity.ScanVisorOnly = true;
+            //    }
+            //    entity.Initialize(this);
+            //}
+            // todo: move more stuff to mutable class state
+            //if (_lastPointModule != -1)
+            //{
+            //    ushort nextId = entities[_lastPointModule].Entity!.GetChildId();
+            //    for (int i = 0; i < 5; i++)
+            //    {
+            //        Model model = entities[nextId];
+            //        model.ScanVisorOnly = false;
+            //        nextId = model.Entity!.GetChildId();
+            //    }
+            //}
+            //_entities.AddRange(entities);
+            _light1Vector = meta.Light1Vector;
+            _light1Color = new Vector3(
+                meta.Light1Color.Red / 31.0f,
+                meta.Light1Color.Green / 31.0f,
+                meta.Light1Color.Blue / 31.0f
+            );
+            _light2Vector = meta.Light2Vector;
+            _light2Color = new Vector3(
+                meta.Light2Color.Red / 31.0f,
+                meta.Light2Color.Green / 31.0f,
+                meta.Light2Color.Blue / 31.0f
+            );
+            _lighting = true;
+            _hasFog = meta.FogEnabled;
+            _fogColor = new Vector4(
+                meta.FogColor.Red / 31f,
+                meta.FogColor.Green / 31f,
+                meta.FogColor.Blue / 31f,
+                1.0f
+            );
+            _fogOffset = meta.FogOffset;
+            _fogSlope = meta.FogSlope;
+            if (meta.ClearFog && meta.FirstHunt)
+            {
+                _clearColor = new Color4(_fogColor.X, _fogColor.Y, _fogColor.Z, _fogColor.W);
+            }
+            _killHeight = meta.KillHeight;
+            _farClip = meta.FarClip;
+            //foreach (CollisionPortal portal in collision.Portals)
+            //{
+            //    if ((portal.LayerMask & 4) != 0 || (portal.LayerMask & updatedMask) != 0)
+            //    {
+            //        _displayPlanes.Add(portal);
+            //    }
+            //}
+            _cameraMode = CameraMode.Roam;
+            //Model dblDmgModel = Read.GetModelByName("doubleDamage_img");
+            //BindTexture(dblDmgModel, 0, 0);
+            //_dblDmgBindingId = _textureCount;
         }
 
         public void AddEntity(string name)
@@ -750,14 +892,11 @@ namespace MphRead
             //    AllocateEffects();
             //    _effectSetupDone = true;
             //}
-            if (!_frameAdvanceOn || _advanceOneFrame)
+            if (_frameCount != 0 || !_frameAdvanceOn || _advanceOneFrame)
             {
                 _elapsedTime += 1 / 60f;
+                //_singleParticleCount = 0;
             }
-            //if (!_frameAdvanceOn || _advanceOneFrame)
-            //{
-            //    _singleParticleCount = 0;
-            //}
             _decalMeshes.Clear();
             _nonDecalMeshes.Clear();
             _translucentMeshes.Clear();
@@ -767,7 +906,7 @@ namespace MphRead
             for (int i = 0; i < _entities.Count; i++)
             {
                 EntityBase entity = _entities[i];
-                if (!_frameAdvanceOn || _advanceOneFrame)
+                if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
                 {
                     entity.Process(this);
                 }
@@ -778,7 +917,7 @@ namespace MphRead
                 entity.GetDrawInfo(this);
             }
 
-            //if (!_frameAdvanceOn || _advanceOneFrame)
+            //if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
             //{
             //    ProcessEffects();
             //    var camVec1 = new Vector3(_viewMatrix.M11, _viewMatrix.M12, _viewMatrix.M13 * -1);
@@ -1617,7 +1756,10 @@ namespace MphRead
 
         public NewRenderWindow() : base(_gameWindowSettings, _nativeWindowSettings)
         {
-            Scene = new NewScene(Size, KeyboardState);
+            Scene = new NewScene(Size, KeyboardState, (string title) =>
+            {
+                Title = title;
+            });
         }
 
         public void AddRoom(int id)
