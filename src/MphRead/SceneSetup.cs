@@ -181,7 +181,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Object)
                 {
-                    //models.Add(LoadObject((Entity<ObjectEntityData>)entity));
+                    models.Add(new ObjectEntity(((Entity<ObjectEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.PlayerSpawn || entity.Type == EntityType.FhPlayerSpawn)
                 {

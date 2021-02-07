@@ -81,6 +81,7 @@ namespace MphRead
         public bool TransformRoomNodes => _transformRoomNodes;
         public long FrameCount => _frameCount;
         public bool ShowForceFields => _showVolumes != 12;
+        public bool ScanVisor => _scanVisor;
 
         private readonly KeyboardState _keyboardState;
         private readonly Action<string> _setTitle;

@@ -53,7 +53,7 @@ namespace MphRead.Entities
         public int Id { get; protected set; } = -1; // todo: use init
         public int Recolor { get; }
         public NewEntityType Type { get; }
-        public bool ShouldDraw { get; set; } = true;
+        public bool ShouldDraw { get; protected set; } = true;
 
         protected Matrix4 _transform = Matrix4.Identity;
         protected Vector3 _scale = new Vector3(1, 1, 1);
@@ -168,10 +168,8 @@ namespace MphRead.Entities
 
         public override void Process(NewScene scene)
         {
-            ShouldDraw = false;
-            if (Alpha > 0)
+            if (ShouldDraw && Alpha > 0)
             {
-                ShouldDraw = true;
                 for (int i = 0; i < _models.Count; i++)
                 {
                     NewModel model = _models[i];
