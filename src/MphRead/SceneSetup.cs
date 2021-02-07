@@ -185,16 +185,17 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.PlayerSpawn || entity.Type == EntityType.FhPlayerSpawn)
                 {
+                    // mtodo: entity placeholders
                     // todo: compute model matrices for placeholders to show e.g. player spawn angle
                     //models.Add(LoadEntityPlaceholder((Entity<PlayerSpawnEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.Door)
                 {
-                    //models.AddRange(LoadDoor((Entity<DoorEntityData>)entity));
+                    models.Add(new DoorEntity(((Entity<DoorEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhDoor)
                 {
-                    //models.Add(LoadDoor((Entity<FhDoorEntityData>)entity));
+                    models.Add(new FhDoorEntity(((Entity<FhDoorEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.Item)
                 {
