@@ -1,3 +1,4 @@
+using System.Linq;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -34,6 +35,7 @@ namespace MphRead.Entities
             _lockTransform = Matrix4.CreateTranslation(0, meta.LockOffset, 0);
             doorLock.Active = true; // todo: use flags to determine lock/color state
             _models.Add(doorLock);
+            _anyLighting = model.Materials.Any(m => m.Lighting != 0) || doorLock.Materials.Any(m => m.Lighting != 0);
         }
 
         protected override Matrix4 GetModelTransformBefore(NewModel model, int index)
@@ -57,6 +59,7 @@ namespace MphRead.Entities
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             NewModel model = Read.GetFhNewModel(Metadata.FhDoors[(int)data.ModelId]);
             _models.Add(model);
+            _anyLighting = model.Materials.Any(m => m.Lighting != 0);
             // temporary
             model.Animations.NodeGroupId = -1;
             model.Animations.MaterialGroupId = -1;

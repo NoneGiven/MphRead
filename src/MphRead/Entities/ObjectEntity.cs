@@ -39,6 +39,8 @@ namespace MphRead.Entities
                 {
                     _scanVisorOnly = true;
                 }
+                _models.Add(model);
+                _anyLighting = model.Materials.Any(m => m.Lighting != 0);
                 // temporary
                 if (model.Name == "AlimbicCapsule")
                 {
@@ -59,8 +61,6 @@ namespace MphRead.Entities
                     model.Animations.NodeGroupId = -1;
                     model.Animations.MaterialGroupId = -1;
                 }
-                _models.Add(model);
-                _anyLighting = model.Materials.Any(m => m.Lighting != 0);
             }
         }
 
