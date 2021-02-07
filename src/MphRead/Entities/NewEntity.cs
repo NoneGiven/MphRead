@@ -195,6 +195,11 @@ namespace MphRead.Entities
             }
         }
 
+        protected virtual int GetModelRecolor(NewModel model, int index)
+        {
+            return Recolor;
+        }
+
         public override void UpdateTransforms(NewScene scene)
         {
             if (ShouldDraw && Alpha > 0)
@@ -211,7 +216,7 @@ namespace MphRead.Entities
                         model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, _nodeAnimCurFrame);
                         model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
                         // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
-                        scene.UpdateMaterials(model, Recolor);
+                        scene.UpdateMaterials(model, GetModelRecolor(model, i));
                     }
                 }
             }

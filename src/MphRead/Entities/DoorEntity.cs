@@ -33,7 +33,7 @@ namespace MphRead.Entities
             model.Animations.MaterialGroupId = -1;
             NewModel doorLock = Read.GetNewModel(meta.LockName);
             _lockTransform = Matrix4.CreateTranslation(0, meta.LockOffset, 0);
-            doorLock.Active = true; // todo: use flags to determine lock/color state
+            doorLock.Active = false; // todo: use flags to determine lock/color state
             _models.Add(doorLock);
             _anyLighting = model.Materials.Any(m => m.Lighting != 0) || doorLock.Materials.Any(m => m.Lighting != 0);
         }
@@ -46,6 +46,15 @@ namespace MphRead.Entities
                 transform *= _lockTransform;
             }
             return transform;
+        }
+
+        protected override int GetModelRecolor(NewModel model, int index)
+        {
+            if (index == 1)
+            {
+                return 0;
+            }
+            return base.GetModelRecolor(model, index);
         }
     }
 

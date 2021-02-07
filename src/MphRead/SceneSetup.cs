@@ -207,26 +207,31 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Enemy)
                 {
-                    //models.AddRange(LoadEnemy((Entity<EnemyEntityData>)entity));
+                    models.Add(new EnemySpawnEntity(((Entity<EnemyEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhEnemy)
                 {
+                    // mtodo: entity placeholders
                     //models.Add(LoadEntityPlaceholder((Entity<FhEnemyEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.TriggerVolume)
                 {
+                    // mtodo: entity placeholders
                     //models.Add(LoadEntityPlaceholder((Entity<TriggerVolumeEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.FhTriggerVolume)
                 {
+                    // mtodo: entity placeholders
                     //models.Add(LoadEntityPlaceholder((Entity<FhTriggerVolumeEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.AreaVolume)
                 {
+                    // mtodo: entity placeholders
                     //models.Add(LoadEntityPlaceholder((Entity<AreaVolumeEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.FhAreaVolume)
                 {
+                    // mtodo: entity placeholders
                     //models.Add(LoadEntityPlaceholder((Entity<FhAreaVolumeEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.JumpPad)
@@ -246,10 +251,12 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.MorphCamera)
                 {
+                    // mtodo: entity placeholders
                     //models.Add(LoadEntityPlaceholder((Entity<MorphCameraEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.FhMorphCamera)
                 {
+                    // mtodo: entity placeholders
                     //models.Add(LoadEntityPlaceholder((Entity<FhMorphCameraEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.OctolithFlag)
@@ -270,6 +277,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.LightSource)
                 {
+                    // mtodo: entity placeholders
                     //models.Add(LoadEntityPlaceholder((Entity<LightSourceEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.Artifact)
@@ -278,6 +286,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.CameraSequence)
                 {
+                    // mtodo: entity placeholders
                     //models.Add(LoadEntityPlaceholder((Entity<CameraSequenceEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.ForceField)
