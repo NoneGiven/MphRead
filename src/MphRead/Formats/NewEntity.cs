@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -326,7 +327,7 @@ namespace MphRead.Entities
     // mtodo: room class
     public class RoomEntity : VisibleEntityBase
     {
-        public RoomEntity(NewModel model) : base(NewEntityType.Room)
+        public RoomEntity(NewModel model, RoomMetadata meta, CollisionInfo collision, int layerMask) : base(NewEntityType.Room)
         {
             _models.Add(model);
             _anyLighting = model.Materials.Any(m => m.Lighting != 0);

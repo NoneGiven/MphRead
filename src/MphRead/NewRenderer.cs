@@ -95,9 +95,8 @@ namespace MphRead
                 throw new ProgramException("Cannot load more than one room in a scene.");
             }
             _roomLoaded = true;
-            (NewModel model, RoomMetadata meta, CollisionInfo collision, IReadOnlyList<Model> entities, int updatedMask)
+            (RoomEntity entity, RoomMetadata meta, CollisionInfo collision, IReadOnlyList<Model> entities, int updatedMask)
                 = SceneSetup.LoadNewRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
-            var entity = new RoomEntity(model);
             _renderables.Add(entity);
             _entities.Add(entity);
             InitRenderable(entity);

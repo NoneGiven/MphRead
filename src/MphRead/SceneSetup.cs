@@ -88,7 +88,7 @@ namespace MphRead
             return (room, metadata, collision, entities, nodeLayerMask);
         }
 
-        public static (NewModel, RoomMetadata, CollisionInfo, IReadOnlyList<Model>, int) LoadNewRoom(string name,
+        public static (RoomEntity, RoomMetadata, CollisionInfo, IReadOnlyList<Model>, int) LoadNewRoom(string name,
             GameMode mode = GameMode.None, int playerCount = 0, BossFlags bossFlags = BossFlags.None,
             int nodeLayerMask = 0, int entityLayerId = -1)
         {
@@ -156,7 +156,7 @@ namespace MphRead
             IReadOnlyList<Model> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
             CollisionInfo collision = Collision.ReadCollision(metadata.CollisionPath, metadata.FirstHunt || metadata.Hybrid, nodeLayerMask);
             // todo: once ReadCollision is filering things, we don't need to pass nodeLayerMask here or return it
-            NewModel room = Read.GetNewRoom(name);
+            var room = new RoomEntity(Read.GetNewRoom(name), metadata, collision, nodeLayerMask);
             //room.Setup(metadata, collision, nodeLayerMask);
             //FilterNodes(room, nodeLayerMask);
             //ComputeNodeMatrices(room, index: 0);
