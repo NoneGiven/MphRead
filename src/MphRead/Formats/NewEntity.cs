@@ -121,8 +121,9 @@ namespace MphRead.Entities
                     model.AnimateMaterials(_materialAnimCurFrame);
                     model.AnimateTextures(_textureAnimCurFrame);
                     model.ComputeNodeMatrices(index: 0);
-                    // mtodo: parent transform (do we really need scale separately?)
-                    model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, Matrix4.Identity, model.Scale, _nodeAnimCurFrame);
+                    // mtodo: parent transform (QUATERNIONS)
+                    var transform = Matrix4.CreateScale(model.Scale);
+                    model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, _nodeAnimCurFrame);
                     model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
                     // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
                     scene.UpdateMaterials(model, Recolor);
@@ -146,7 +147,6 @@ namespace MphRead.Entities
                     continue;
                 }
                 int polygonId = scene.GetNextPolygonId();
-                // mtodo: follow the child/next stuff and avoid needing NodeParentsEnabled
                 for (int j = 0; j < model.Nodes.Count; j++)
                 {
                     Node node = model.Nodes[j];
@@ -164,10 +164,8 @@ namespace MphRead.Entities
                         }
                         Material material = model.Materials[mesh.MaterialId];
                         Matrix4 texcoordMatrix = GetTexcoordMatrix(model, material, node, scene);
-                        // mtodo: main transform
-                        var transform = Matrix4.CreateScale(model.Scale);
                         scene.AddRenderItem(material, polygonId, Alpha, emission: Vector3.Zero, texcoordMatrix,
-                            transform, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues);
+                            node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues);
                     }
                 }
             }
@@ -476,9 +474,8 @@ namespace MphRead.Entities
                         polygonId = scene.GetNextPolygonId();
                     }
                     Matrix4 texcoordMatrix = GetTexcoordMatrix(model, material, node, scene);
-                    var transform = Matrix4.CreateScale(model.Scale);
                     scene.AddRenderItem(material, polygonId, alpha, emission: Vector3.Zero, texcoordMatrix,
-                        transform, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues);
+                        node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues);
                 }
             }
         }
