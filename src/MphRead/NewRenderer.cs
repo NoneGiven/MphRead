@@ -969,6 +969,7 @@ namespace MphRead
                 }
                 if (entity.ShouldDraw)
                 {
+                    entity.UpdateTransforms(this);
                     entity.GetDrawInfo(this);
                 }
             }

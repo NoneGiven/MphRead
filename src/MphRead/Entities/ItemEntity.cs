@@ -24,12 +24,17 @@ namespace MphRead.Entities
             _floating = floating;
         }
 
-        protected override Matrix4 GetModelTransformAfter(NewModel model, int index, NewScene scene)
+        public override void Process(NewScene scene)
         {
-            Matrix4 transform = base.GetModelTransformBefore(model, index, scene);
+            _spin = (float)(_spin + scene.FrameTime * 360 * _spinSpeed) % 360;
+            base.Process(scene);
+        }
+
+        protected override Matrix4 GetModelTransformAfter(NewModel model, int index)
+        {
+            Matrix4 transform = base.GetModelTransformAfter(model, index);
             if (index == _modelIndex)
             {
-                _spin = (float)(_spin + scene.FrameTime * 360 * _spinSpeed) % 360;
                 if (model.Animations.NodeGroupId == -1)
                 {
                     transform *= SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(

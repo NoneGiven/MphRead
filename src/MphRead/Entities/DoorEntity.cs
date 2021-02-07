@@ -38,9 +38,9 @@ namespace MphRead.Entities
             _anyLighting = model.Materials.Any(m => m.Lighting != 0) || doorLock.Materials.Any(m => m.Lighting != 0);
         }
 
-        protected override Matrix4 GetModelTransformBefore(NewModel model, int index, NewScene scene)
+        protected override Matrix4 GetModelTransformBefore(NewModel model, int index)
         {
-            Matrix4 transform = base.GetModelTransformBefore(model, index, scene);
+            Matrix4 transform = base.GetModelTransformBefore(model, index);
             if (index == 1)
             {
                 transform *= _lockTransform;

@@ -127,6 +127,10 @@ namespace MphRead.Entities
         {
         }
 
+        public virtual void UpdateTransforms(NewScene scene)
+        {
+        }
+
         public virtual IEnumerable<NewModel> GetModels()
         {
             return Enumerable.Empty<NewModel>();
@@ -166,17 +170,32 @@ namespace MphRead.Entities
         {
         }
 
-        protected virtual Matrix4 GetModelTransformBefore(NewModel model, int index, NewScene scene)
+        protected virtual Matrix4 GetModelTransformBefore(NewModel model, int index)
         {
             return Matrix4.Identity;
         }
 
-        protected virtual Matrix4 GetModelTransformAfter(NewModel model, int index, NewScene scene)
+        protected virtual Matrix4 GetModelTransformAfter(NewModel model, int index)
         {
             return Matrix4.CreateScale(model.Scale);
         }
 
         public override void Process(NewScene scene)
+        {
+            for (int i = 0; i < _models.Count; i++)
+            {
+                NewModel model = _models[i];
+                if (model.Active)
+                {
+                    if (scene.FrameCount != 0 && scene.FrameCount % 2 == 0)
+                    {
+                        UpdateAnimationFrames(model);
+                    }
+                }
+            }
+        }
+
+        public override void UpdateTransforms(NewScene scene)
         {
             if (ShouldDraw && Alpha > 0)
             {
@@ -185,14 +204,10 @@ namespace MphRead.Entities
                     NewModel model = _models[i];
                     if (model.Active)
                     {
-                        if (scene.FrameCount != 0 && scene.FrameCount % 2 == 0)
-                        {
-                            UpdateAnimationFrames(model);
-                        }
                         model.AnimateMaterials(_materialAnimCurFrame);
                         model.AnimateTextures(_textureAnimCurFrame);
                         model.ComputeNodeMatrices(index: 0);
-                        Matrix4 transform = GetModelTransformAfter(model, i, scene) * _transform * GetModelTransformBefore(model, i, scene);
+                        Matrix4 transform = GetModelTransformAfter(model, i) * _transform * GetModelTransformBefore(model, i);
                         model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, _nodeAnimCurFrame);
                         model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
                         // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
