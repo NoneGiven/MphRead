@@ -205,7 +205,6 @@ namespace MphRead
             foreach (NewModel model in renderable.GetModels())
             {
                 InitTextures(model);
-                UpdateMaterials(model, renderable.Recolor);
                 GenerateLists(model, isRoom: renderable.Type == NewEntityType.Room);
             }
         }
@@ -550,7 +549,7 @@ namespace MphRead
             foreach (ColorRgba pixel in model.GetPixels(textureId, paletteId, recolorId))
             {
                 pixels.Add(pixel.ToUint());
-                onlyOpaque &= pixel.Alpha < 255;
+                onlyOpaque &= pixel.Alpha == 255;
             }
             Texture texture = model.Recolors[recolorId].Textures[textureId];
             GL.BindTexture(TextureTarget.Texture2D, _textureCount);
