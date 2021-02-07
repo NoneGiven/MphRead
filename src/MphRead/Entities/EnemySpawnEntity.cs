@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MphRead.Entities
 {
@@ -10,7 +6,7 @@ namespace MphRead.Entities
     {
         private readonly EnemyEntityData _data;
 
-        public EnemySpawnEntity(EnemyEntityData data) : base(NewEntityType.Platform)
+        public EnemySpawnEntity(EnemyEntityData data) : base(NewEntityType.Enemy)
         {
             _data = data;
             Id = data.Header.EntityId;

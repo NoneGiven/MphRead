@@ -236,14 +236,11 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.JumpPad)
                 {
-                    //IEnumerable<Model> model = LoadJumpPad((Entity<JumpPadEntityData>)entity);
-                    //Debug.Assert(model.Count() == 2);
-                    //model.First().Entity = entity;
-                    //models.AddRange(model);
+                    models.Add(new JumpPadEntity(((Entity<JumpPadEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhJumpPad)
                 {
-                    //models.AddRange(LoadJumpPad((Entity<FhJumpPadEntityData>)entity));
+                    models.Add(new FhJumpPadEntity(((Entity<FhJumpPadEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.PointModule || entity.Type == EntityType.FhPointModule)
                 {
@@ -744,12 +741,7 @@ namespace MphRead
             ComputeNodeMatrices(beamModel, index: 0);
             beamModel.Type = ModelType.JumpPadBeam;
             beamModel.Entity = entity;
-            if (data.ModelId == 0)
-            {
-                beamModel.Rotating = true;
-                beamModel.SpinAxis = Vector3.UnitZ;
-                beamModel.SpinSpeed = 0.35f;
-            }
+            beamModel.Animations.TexcoordGroupId = -1;
             list.Add(beamModel);
             return list;
         }

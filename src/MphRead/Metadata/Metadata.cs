@@ -3452,9 +3452,8 @@ namespace MphRead
                     new ModelMetadata("jumppad_base", animation: false, firstHunt: true)
                 },
                 {
-                    // this has an animation file (unlike jumpad_ray), but it is not used
                     "jumppad_ray",
-                    new ModelMetadata("jumppad_ray", animation: false, firstHunt: true)
+                    new ModelMetadata("jumppad_ray", firstHunt: true)
                 },
                 {
                     "lightningCol",

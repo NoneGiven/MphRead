@@ -10,18 +10,16 @@ namespace MphRead.Entities
         private readonly float _spinSpeed;
         private readonly Vector3 _spinAxis;
         private readonly int _modelIndex;
-        private readonly bool _floating;
 
         private static ushort _nextItemRotation = 0;
 
         public SpinningEntityBase(float spinSpeed, Vector3 spinAxis,
-            int modelIndex, bool floating, NewEntityType type) : base(type)
+            int modelIndex, NewEntityType type) : base(type)
         {
             _spin = GetItemRotation();
             _spinSpeed = spinSpeed;
             _spinAxis = spinAxis;
             _modelIndex = modelIndex;
-            _floating = floating;
         }
 
         public override void Process(NewScene scene)
@@ -30,23 +28,21 @@ namespace MphRead.Entities
             base.Process(scene);
         }
 
-        protected override Matrix4 GetModelTransformAfter(NewModel model, int index)
+        protected override Matrix4 GetModelTransform(NewModel model, int index)
         {
-            Matrix4 transform = base.GetModelTransformAfter(model, index);
+            var transform = Matrix4.CreateScale(model.Scale);
+            if (index == _modelIndex && model.Animations.NodeGroupId == -1)
+            {
+                transform *= SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
+                    MathHelper.DegreesToRadians(_spinAxis.X * _spin),
+                    MathHelper.DegreesToRadians(_spinAxis.Y * _spin),
+                    MathHelper.DegreesToRadians(_spinAxis.Z * _spin)),
+                    Vector3.Zero);
+            }
+            transform *= _transform;
             if (index == _modelIndex)
             {
-                if (model.Animations.NodeGroupId == -1)
-                {
-                    transform *= SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
-                        MathHelper.DegreesToRadians(_spinAxis.X * _spin),
-                        MathHelper.DegreesToRadians(_spinAxis.Y * _spin),
-                        MathHelper.DegreesToRadians(_spinAxis.Z * _spin)),
-                        Vector3.Zero);
-                }
-                if (_floating)
-                {
-                    transform.M42 += (MathF.Sin(_spin / 180 * MathF.PI) + 1) / 8f;
-                }
+                transform.M42 += (MathF.Sin(_spin / 180 * MathF.PI) + 1) / 8f;
             }
             return transform;
         }
@@ -63,7 +59,7 @@ namespace MphRead.Entities
     {
         private readonly ItemEntityData _data;
 
-        public ItemEntity(ItemEntityData data) : base(0.35f, Vector3.UnitY, 0, true, NewEntityType.Item)
+        public ItemEntity(ItemEntityData data) : base(0.35f, Vector3.UnitY, 0, NewEntityType.Item)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -87,7 +83,7 @@ namespace MphRead.Entities
     {
         private readonly FhItemEntityData _data;
 
-        public FhItemEntity(FhItemEntityData data) : base(0.35f, Vector3.UnitY, 0, true, NewEntityType.Item)
+        public FhItemEntity(FhItemEntityData data) : base(0.35f, Vector3.UnitY, 0, NewEntityType.Item)
         {
             _data = data;
             Id = data.Header.EntityId;
