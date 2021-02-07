@@ -147,13 +147,13 @@ namespace MphRead.Entities
                     continue;
                 }
                 int polygonId = scene.GetNextPolygonId();
-                for (int j = 0; j < model.Nodes.Count; j++)
+                GetItems(model, model.Nodes[0], polygonId);
+            }
+
+            void GetItems(NewModel model, Node node, int polygonId)
+            {
+                if (node.Enabled)
                 {
-                    Node node = model.Nodes[j];
-                    if (node.MeshCount == 0 || !node.Enabled/* || !model.NodeParentsEnabled(node)*/)
-                    {
-                        continue;
-                    }
                     int start = node.MeshId / 2;
                     for (int k = 0; k < node.MeshCount; k++)
                     {
@@ -167,6 +167,14 @@ namespace MphRead.Entities
                         scene.AddRenderItem(material, polygonId, Alpha, emission: Vector3.Zero, texcoordMatrix,
                             node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues);
                     }
+                    if (node.ChildIndex != UInt16.MaxValue)
+                    {
+                        GetItems(model, model.Nodes[node.ChildIndex], polygonId);
+                    }
+                }
+                if (node.NextIndex != UInt16.MaxValue)
+                {
+                    GetItems(model, model.Nodes[node.NextIndex], polygonId);
                 }
             }
         }
@@ -408,12 +416,13 @@ namespace MphRead.Entities
             for (int i = 0; i < Nodes.Count; i++)
             {
                 Node pnode = Nodes[i];
-                if (pnode.IsRoomPartNode)
+                if (pnode.IsRoomPartNode && pnode.Enabled)
                 {
                     int childIndex = pnode.ChildIndex;
                     if (childIndex != UInt16.MaxValue)
                     {
                         Node node = Nodes[childIndex];
+                        Debug.Assert(node.ChildIndex == UInt16.MaxValue);
                         GetItems(model, node);
                         int nextIndex = node.NextIndex;
                         while (nextIndex != UInt16.MaxValue)
@@ -431,10 +440,9 @@ namespace MphRead.Entities
                 {
                     ForceFieldNodeRef forceField = _forceFields[i];
                     Node pnode = Nodes[forceField.NodeIndex];
-                    int childIndex = pnode.ChildIndex;
-                    if (childIndex != UInt16.MaxValue)
+                    if (pnode.ChildIndex != UInt16.MaxValue)
                     {
-                        Node node = Nodes[childIndex];
+                        Node node = Nodes[pnode.ChildIndex];
                         GetItems(model, node, forceField.Portal);
                         int nextIndex = node.NextIndex;
                         while (nextIndex != UInt16.MaxValue)
