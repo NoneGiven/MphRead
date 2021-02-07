@@ -41,7 +41,7 @@ namespace MphRead
                 {
                     throw new ProgramException("No model with this name is known.");
                 }
-                _modelCache.Add(name, model);
+                _fhModelCache.Add(name, model);
             }
             return model;
         }

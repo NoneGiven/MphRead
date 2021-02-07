@@ -12,6 +12,7 @@ namespace MphRead.Entities
 
         public PlatformEntity(PlatformEntityData data) : base(NewEntityType.Platform)
         {
+            _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             PlatformMetadata? meta = Metadata.GetPlatformById((int)data.ModelId);
@@ -34,6 +35,21 @@ namespace MphRead.Entities
                     model.Animations.NodeGroupId = -1;
                 }
             }
+        }
+    }
+
+    public class FhPlatformEntity : VisibleEntityBase
+    {
+        private readonly FhPlatformEntityData _data;
+
+        public FhPlatformEntity(FhPlatformEntityData data) : base(NewEntityType.Platform)
+        {
+            _data = data;
+            Id = data.Header.EntityId;
+            ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            NewModel model = Read.GetFhNewModel("platform");
+            _models.Add(model);
+            _anyLighting = model.Materials.Any(m => m.Lighting != 0);
         }
     }
 }

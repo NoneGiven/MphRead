@@ -96,7 +96,7 @@ namespace MphRead
             int areaId = Metadata.GetAreaInfo(roomId);
             if (metadata == null)
             {
-                throw new InvalidOperationException();
+                throw new ProgramException("No room with this name is known.");
             }
             if (mode == GameMode.None)
             {
@@ -177,7 +177,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.FhPlatform)
                 {
-                    //models.Add(LoadFhPlatform((Entity<FhPlatformEntityData>)entity));
+                    models.Add(new FhPlatformEntity(((Entity<FhPlatformEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.Object)
                 {
@@ -186,7 +186,7 @@ namespace MphRead
                 else if (entity.Type == EntityType.PlayerSpawn || entity.Type == EntityType.FhPlayerSpawn)
                 {
                     // todo: compute model matrices for placeholders to show e.g. player spawn angle
-//                    models.Add(LoadEntityPlaceholder((Entity<PlayerSpawnEntityData>)entity));
+                    //models.Add(LoadEntityPlaceholder((Entity<PlayerSpawnEntityData>)entity));
                 }
                 else if (entity.Type == EntityType.Door)
                 {
