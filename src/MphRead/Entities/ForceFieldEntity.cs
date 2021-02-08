@@ -2,7 +2,6 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    // ntodo: enemy entities
     public class ForceFieldEntity : VisibleEntityBase
     {
         private readonly ForceFieldEntityData _data;

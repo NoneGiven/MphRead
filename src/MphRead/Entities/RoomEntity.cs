@@ -198,6 +198,7 @@ namespace MphRead.Entities
             return MathF.Min(between / 8, 1);
         }
 
+        // ntodo: display planes
         private readonly struct ForceFieldNodeRef
         {
             public readonly CollisionPortal Portal;

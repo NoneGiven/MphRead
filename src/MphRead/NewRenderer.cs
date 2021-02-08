@@ -113,7 +113,6 @@ namespace MphRead
             _entities.Add(room);
             InitRenderable(room);
             _cameraMode = CameraMode.Roam;
-            //nodeLayerMask = updatedMask; // ntodo: move this and the portal display stuff to the room class
             if (meta.InGameName != null)
             {
                 _setTitle.Invoke(meta.InGameName);
@@ -125,7 +124,6 @@ namespace MphRead
                 Debug.Assert(entity.Id != -1);
                 _entityMap.Add(entity.Id, entity);
                 InitRenderable(entity);
-                //_modelMap.Add(entity.SceneId, entity);
                 //if (entity.Entity is Entity<LightSourceEntityData> lightSource)
                 //{
                 //    var display = new LightSource(lightSource, entity.Transform);
@@ -237,13 +235,6 @@ namespace MphRead
             }
             _killHeight = meta.KillHeight;
             _farClip = meta.FarClip;
-            //foreach (CollisionPortal portal in collision.Portals)
-            //{
-            //    if ((portal.LayerMask & 4) != 0 || (portal.LayerMask & updatedMask) != 0)
-            //    {
-            //        _displayPlanes.Add(portal);
-            //    }
-            //}
             _cameraMode = CameraMode.Roam;
             //Model dblDmgModel = Read.GetModelByName("doubleDamage_img");
             //BindTexture(dblDmgModel, 0, 0);

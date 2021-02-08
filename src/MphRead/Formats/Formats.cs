@@ -425,6 +425,7 @@ namespace MphRead
         }
     }
 
+    // todo: review whether we still need this class after the entity refactor (entity classes aren't using it)
     public class Entity
     {
         public string NodeName { get; }
