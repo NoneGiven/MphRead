@@ -1,8 +1,13 @@
+using OpenTK.Mathematics;
+
 namespace MphRead.Entities
 {
     public class PlatformEntity : VisibleEntityBase
     {
         private readonly PlatformEntityData _data;
+
+        // used for ID 2 (energyBeam, arcWelder)
+        protected override Vector4? OverrideColor { get; } = new ColorRgb(0x2F, 0x4F, 0x4F).AsVector4();
 
         public PlatformEntity(PlatformEntityData data) : base(NewEntityType.Platform)
         {
@@ -12,7 +17,7 @@ namespace MphRead.Entities
             PlatformMetadata? meta = Metadata.GetPlatformById((int)data.ModelId);
             if (meta == null)
             {
-                // mtodo: entity placeholders
+                UsePlaceholderModel();
             }
             else
             {
