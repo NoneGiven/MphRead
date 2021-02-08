@@ -26,13 +26,13 @@ namespace MphRead.Effects
     public interface IDrawable
     {
         Vector3 Color { get; }
-        Vector2 Texcoord0 { get;  }
-        Vector3 Vertex0 { get;  }
+        Vector2 Texcoord0 { get; }
+        Vector3 Vertex0 { get; }
         Vector2 Texcoord1 { get; }
         Vector3 Vertex1 { get; }
         Vector2 Texcoord2 { get; }
         Vector3 Vertex2 { get; }
-        Vector2 Texcoord3 { get;  }
+        Vector2 Texcoord3 { get; }
         Vector3 Vertex3 { get; }
     }
 
