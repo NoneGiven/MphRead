@@ -2,12 +2,12 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class ArtifactEntity : VisibleEntityBase
+    public class ArtifactEntity : SpinningEntityBase
     {
         private readonly ArtifactEntityData _data;
         private readonly float _heightOffset;
 
-        public ArtifactEntity(ArtifactEntityData data) : base(NewEntityType.Artifact)
+        public ArtifactEntity(ArtifactEntityData data) : base(0.25f, Vector3.UnitY, NewEntityType.Artifact)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -17,9 +17,7 @@ namespace MphRead.Entities
             _heightOffset = data.ModelId >= 8 ? 1.75f : model.Nodes[0].CullRadius;
             if (data.ModelId >= 8)
             {
-                //model.Rotating = true;
-                //model.SpinSpeed = 0.25f;
-                //model.UseLightOverride = true;
+                _spinModelIndex = 0;
             }
             _models.Add(model);
             if (data.HasBase != 0)
