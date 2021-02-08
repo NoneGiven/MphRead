@@ -3,6 +3,22 @@ using OpenTK.Mathematics;
 
 namespace MphRead
 {
+    public readonly struct LightInfo
+    {
+        public readonly Vector3 Light1Vector;
+        public readonly Vector3 Light1Color;
+        public readonly Vector3 Light2Vector;
+        public readonly Vector3 Light2Color;
+
+        public LightInfo(Vector3 light1Vector, Vector3 light1Color, Vector3 light2Vector, Vector3 light2Color)
+        {
+            Light1Vector = light1Vector;
+            Light1Color = light1Color;
+            Light2Vector = light2Vector;
+            Light2Color = light2Color;
+        }
+    }
+
     public class RenderItem
     {
         public int PolygonId { get; set; }
@@ -16,6 +32,7 @@ namespace MphRead
         public Vector3 Ambient { get; set; }
         public Vector3 Specular { get; set; }
         public Vector3 Emission { get; set; }
+        public LightInfo LightInfo { get; set; }
         public TexgenMode TexgenMode { get; set; }
         public RepeatMode XRepeat { get; set; }
         public RepeatMode YRepeat { get; set; }
@@ -30,26 +47,6 @@ namespace MphRead
         public RenderItem()
         {
             MatrixStack = new float[16 * 31];
-            //PolygonId = polygonId;
-            //Alpha = alpha;
-            //PolygonMode = polygonMode;
-            //RenderMode = renderMode;
-            //CullingMode = cullingMode;
-            //Wireframe = wireframe;
-            //Lighting = lighting;
-            //Diffuse = diffuse;
-            //Ambient = ambient;
-            //Specular = specular;
-            //Emission = emission;
-            //TexgenMode = texgenMode;
-            //XRepeat = xRepeat;
-            //YRepeat = yRepeat;
-            //HasTexture = hasTexture;
-            //TextureBindingId = textureBindingId;
-            //TexcoordMatrix = texcoordMatrix;
-            //Transform = transform;
-            //ListId = listId;
-            //MatrixStackCount = matrixStackCount;
         }
     }
 

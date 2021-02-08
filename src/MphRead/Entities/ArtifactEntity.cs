@@ -29,6 +29,24 @@ namespace MphRead.Entities
             }
         }
 
+        public override LightInfo GetLightInfo(NewModel model, NewScene scene)
+        {
+            if (_data.ModelId >= 8)
+            {
+                Vector3 player = scene.CameraPosition;
+                var vector1 = new Vector3(0, 1, 0);
+                Vector3 vector2 = new Vector3(player.X - Position.X, 0, player.Z - Position.Z).Normalized();
+                Matrix3 lightTransform = SceneSetup.GetTransformMatrix(vector2, vector1);
+                return new LightInfo(
+                    (Metadata.OctolithLight1Vector * lightTransform).Normalized(),
+                    Metadata.OctolithLightColor,
+                    (Metadata.OctolithLight2Vector * lightTransform).Normalized(),
+                    Metadata.OctolithLightColor
+                );
+            }
+            return base.GetLightInfo(model, scene);
+        }
+
         protected override Matrix4 GetModelTransform(NewModel model, int index)
         {
             Matrix4 transform = base.GetModelTransform(model, index);

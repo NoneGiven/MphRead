@@ -77,13 +77,17 @@ namespace MphRead
         public Matrix4 ViewMatrix => _viewMatrix;
         public Matrix4 ViewInvRotMatrix => _viewInvRotMatrix;
         public Matrix4 ViewInvRotYMatrix => _viewInvRotYMatrix;
-        public Vector3 CameraPosition => _cameraPosition;
+        public Vector3 CameraPosition => _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1);
         public bool ShowInvisible => _showInvisible;
         public bool TransformRoomNodes => _transformRoomNodes;
         public float FrameTime => _frameTime;
         public long FrameCount => _frameCount;
         public bool ShowForceFields => _showVolumes != 12;
         public bool ScanVisor => _scanVisor;
+        public Vector3 Light1Vector => _light1Vector;
+        public Vector3 Light1Color => _light1Vector;
+        public Vector3 Light2Vector => _light1Vector;
+        public Vector3 Light2Color => _light1Vector;
 
         private readonly KeyboardState _keyboardState;
         private readonly Action<string> _setTitle;
@@ -114,14 +118,6 @@ namespace MphRead
             {
                 _setTitle.Invoke(meta.InGameName);
             }
-            // ntodo: light sources/overrides -- also, why did we need to do this assignment on load?
-            //foreach (Model model in _models.Where(m => m.UseLightOverride))
-            //{
-            //    model.Light1Color = _light1Color;
-            //    model.Light1Vector = _light1Vector;
-            //    model.Light2Color = _light2Color;
-            //    model.Light2Vector = _light2Vector;
-            //}
             foreach (EntityBase entity in entities)
             {
                 _renderables.Add(entity);
@@ -815,6 +811,7 @@ namespace MphRead
 
         private void UpdateCameraPosition()
         {
+            //  todo: position calculation is off -- doesn't work for portal alpha
             if (_cameraMode == CameraMode.Pivot)
             {
                 float angleX = _angleY + 90;
@@ -891,7 +888,7 @@ namespace MphRead
             return new RenderItem();
         }
 
-        public void AddRenderItem(Material material, int polygonId, float alphaScale, Vector3 emission,
+        public void AddRenderItem(Material material, int polygonId, float alphaScale, Vector3 emission, LightInfo lightInfo,
             Matrix4 texcoordMatrix, Matrix4 transform, int listId, int matrixStackCount, IReadOnlyList<float> matrixStack)
         {
             RenderItem item = GetRenderItem();
@@ -906,6 +903,7 @@ namespace MphRead
             item.Ambient = material.CurrentAmbient;
             item.Specular = material.CurrentSpecular;
             item.Emission = emission;
+            item.LightInfo = lightInfo;
             item.TexgenMode = material.TexgenMode;
             item.XRepeat = material.XRepeat;
             item.YRepeat = material.YRepeat;
@@ -1133,6 +1131,18 @@ namespace MphRead
             GL.Uniform3(_shaderLocations.Light2Color, _light2Color);
         }
 
+        private void UseLight1(Vector3 vector, Vector3 color)
+        {
+            GL.Uniform3(_shaderLocations.Light1Vector, vector);
+            GL.Uniform3(_shaderLocations.Light1Color, color);
+        }
+
+        private void UseLight2(Vector3 vector, Vector3 color)
+        {
+            GL.Uniform3(_shaderLocations.Light2Vector, vector);
+            GL.Uniform3(_shaderLocations.Light2Color, color);
+        }
+
         private void RenderItem(RenderItem item)
         {
             RenderMesh(item);
@@ -1140,12 +1150,8 @@ namespace MphRead
 
         private void RenderMesh(RenderItem item)
         {
-            UseRoomLights();
-            //if (model.UseLightSources || model.UseLightOverride)
-            //{
-            //    UseLight1(model.Light1Vector, model.Light1Color);
-            //    UseLight2(model.Light2Vector, model.Light2Color);
-            //}
+            UseLight1(item.LightInfo.Light1Vector, item.LightInfo.Light1Color);
+            UseLight2(item.LightInfo.Light2Vector, item.LightInfo.Light2Color);
 
             if (item.MatrixStackCount > 0)
             {

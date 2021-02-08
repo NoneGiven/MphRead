@@ -239,6 +239,11 @@ namespace MphRead.Entities
             return _models;
         }
 
+        public virtual LightInfo GetLightInfo(NewModel model, NewScene scene)
+        {
+            return new LightInfo(scene.Light1Vector, scene.Light1Color, scene.Light2Vector, scene.Light2Color);
+        }
+
         public override void GetDrawInfo(NewScene scene)
         {
             for (int i = 0; i < _models.Count; i++)
@@ -266,8 +271,8 @@ namespace MphRead.Entities
                         }
                         Material material = model.Materials[mesh.MaterialId];
                         Matrix4 texcoordMatrix = GetTexcoordMatrix(model, material, node, scene);
-                        scene.AddRenderItem(material, polygonId, Alpha, emission: Vector3.Zero, texcoordMatrix,
-                            node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues);
+                        scene.AddRenderItem(material, polygonId, Alpha, emission: Vector3.Zero, GetLightInfo(model, scene),
+                            texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues);
                     }
                     if (node.ChildIndex != UInt16.MaxValue)
                     {

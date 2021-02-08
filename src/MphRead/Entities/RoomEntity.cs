@@ -185,15 +185,15 @@ namespace MphRead.Entities
                         polygonId = scene.GetNextPolygonId();
                     }
                     Matrix4 texcoordMatrix = GetTexcoordMatrix(model, material, node, scene);
-                    scene.AddRenderItem(material, polygonId, alpha, emission: Vector3.Zero, texcoordMatrix,
-                        node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues);
+                    scene.AddRenderItem(material, polygonId, alpha, emission: Vector3.Zero, GetLightInfo(model, scene),
+                        texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues);
                 }
             }
         }
 
         private float GetPortalAlpha(Vector3 portalPosition, Vector3 cameraPosition)
         {
-            float between = (portalPosition - cameraPosition * -1).Length;
+            float between = (portalPosition - cameraPosition).Length;
             return MathF.Min(between / 8, 1);
         }
 
