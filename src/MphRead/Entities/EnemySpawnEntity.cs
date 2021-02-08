@@ -9,6 +9,7 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            // ntodo: enemy entities
             //if (data.Type == EnemyType.CarnivorousPlant)
             //{
             //    ObjectMetadata meta = Metadata.GetObjectById(data.TextureId);

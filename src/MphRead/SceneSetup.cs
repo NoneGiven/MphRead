@@ -161,27 +161,27 @@ namespace MphRead
 
         private static IReadOnlyList<EntityBase> LoadNewEntities(RoomMetadata metadata, int areaId, int layerId, GameMode mode)
         {
-            var models = new List<EntityBase>();
+            var results = new List<EntityBase>();
             if (metadata.EntityPath == null)
             {
-                return models;
+                return results;
             }
             // only FirstHunt is passed here, not Hybrid -- model/anim/col should be loaded from FH, and ent/node from MPH
             IReadOnlyList<Entity> entities = Read.GetEntities(metadata.EntityPath, layerId, metadata.FirstHunt); // mtodo: just return struct?
             foreach (Entity entity in entities)
             {
-                int count = models.Count;
+                int count = results.Count;
                 if (entity.Type == EntityType.Platform)
                 {
-                    models.Add(new PlatformEntity(((Entity<PlatformEntityData>)entity).Data));
+                    results.Add(new PlatformEntity(((Entity<PlatformEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhPlatform)
                 {
-                    models.Add(new FhPlatformEntity(((Entity<FhPlatformEntityData>)entity).Data));
+                    results.Add(new FhPlatformEntity(((Entity<FhPlatformEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.Object)
                 {
-                    models.Add(new ObjectEntity(((Entity<ObjectEntityData>)entity).Data));
+                    results.Add(new ObjectEntity(((Entity<ObjectEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.PlayerSpawn || entity.Type == EntityType.FhPlayerSpawn)
                 {
@@ -191,23 +191,23 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Door)
                 {
-                    models.Add(new DoorEntity(((Entity<DoorEntityData>)entity).Data));
+                    results.Add(new DoorEntity(((Entity<DoorEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhDoor)
                 {
-                    models.Add(new FhDoorEntity(((Entity<FhDoorEntityData>)entity).Data));
+                    results.Add(new FhDoorEntity(((Entity<FhDoorEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.Item)
                 {
-                    models.Add(new ItemEntity(((Entity<ItemEntityData>)entity).Data));
+                    results.Add(new ItemEntity(((Entity<ItemEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhItem)
                 {
-                    models.Add(new FhItemEntity(((Entity<FhItemEntityData>)entity).Data));
+                    results.Add(new FhItemEntity(((Entity<FhItemEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.Enemy)
                 {
-                    models.Add(new EnemySpawnEntity(((Entity<EnemyEntityData>)entity).Data));
+                    results.Add(new EnemySpawnEntity(((Entity<EnemyEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhEnemy)
                 {
@@ -236,15 +236,15 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.JumpPad)
                 {
-                    models.Add(new JumpPadEntity(((Entity<JumpPadEntityData>)entity).Data));
+                    results.Add(new JumpPadEntity(((Entity<JumpPadEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhJumpPad)
                 {
-                    models.Add(new FhJumpPadEntity(((Entity<FhJumpPadEntityData>)entity).Data));
+                    results.Add(new FhJumpPadEntity(((Entity<FhJumpPadEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.PointModule || entity.Type == EntityType.FhPointModule)
                 {
-                    models.Add(new PointModuleEntity(((Entity<PointModuleEntityData>)entity).Data));
+                    results.Add(new PointModuleEntity(((Entity<PointModuleEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.MorphCamera)
                 {
@@ -258,19 +258,19 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.OctolithFlag)
                 {
-                    models.Add(new OctolithFlagEntity(((Entity<OctolithFlagEntityData>)entity).Data, mode));
+                    results.Add(new OctolithFlagEntity(((Entity<OctolithFlagEntityData>)entity).Data, mode));
                 }
                 else if (entity.Type == EntityType.FlagBase)
                 {
-                    models.Add(new FlagBaseEntity(((Entity<FlagBaseEntityData>)entity).Data, mode));
+                    results.Add(new FlagBaseEntity(((Entity<FlagBaseEntityData>)entity).Data, mode));
                 }
                 else if (entity.Type == EntityType.Teleporter)
                 {
-                    models.Add(new TeleporterEntity(((Entity<TeleporterEntityData>)entity).Data, areaId, mode != GameMode.SinglePlayer));
+                    results.Add(new TeleporterEntity(((Entity<TeleporterEntityData>)entity).Data, areaId, mode != GameMode.SinglePlayer));
                 }
                 else if (entity.Type == EntityType.NodeDefense)
                 {
-                    models.Add(new NodeDefenseEntity(((Entity<NodeDefenseEntityData>)entity).Data, mode));
+                    results.Add(new NodeDefenseEntity(((Entity<NodeDefenseEntityData>)entity).Data, mode));
                 }
                 else if (entity.Type == EntityType.LightSource)
                 {
@@ -279,7 +279,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Artifact)
                 {
-                    models.Add(new ArtifactEntity(((Entity<ArtifactEntityData>)entity).Data));
+                    results.Add(new ArtifactEntity(((Entity<ArtifactEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.CameraSequence)
                 {
@@ -288,20 +288,14 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.ForceField)
                 {
-                    //models.AddRange(LoadForceField((Entity<ForceFieldEntityData>)entity));
+                    results.Add(new ForceFieldEntity(((Entity<ForceFieldEntityData>)entity).Data));
                 }
                 else
                 {
                     throw new ProgramException($"Invalid entity type {entity.Type}");
                 }
-                int added = models.Count - count;
-                for (int i = models.Count - added; i < models.Count; i++)
-                {
-                    //models[i].EntityLayer = entity.LayerMask;
-                    //models[i].EntityType = entity.Type;
-                }
             }
-            return models;
+            return results;
         }
 
         private static void FilterNodes(Model model, int layerMask)
