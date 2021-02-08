@@ -185,9 +185,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.PlayerSpawn || entity.Type == EntityType.FhPlayerSpawn)
                 {
-                    // mtodo: entity placeholders
-                    // todo: compute model matrices for placeholders to show e.g. player spawn angle
-                    //models.Add(LoadEntityPlaceholder((Entity<PlayerSpawnEntityData>)entity));
+                    results.Add(new PlayerSpawnEntity(((Entity<PlayerSpawnEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.Door)
                 {
@@ -211,28 +209,23 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.FhEnemy)
                 {
-                    // mtodo: entity placeholders
-                    //models.Add(LoadEntityPlaceholder((Entity<FhEnemyEntityData>)entity));
+                    results.Add(new FhEnemySpawnEntity(((Entity<FhEnemyEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.TriggerVolume)
                 {
-                    // mtodo: entity placeholders
-                    //models.Add(LoadEntityPlaceholder((Entity<TriggerVolumeEntityData>)entity));
+                    results.Add(new TriggerVolumeEntity(((Entity<TriggerVolumeEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhTriggerVolume)
                 {
-                    // mtodo: entity placeholders
-                    //models.Add(LoadEntityPlaceholder((Entity<FhTriggerVolumeEntityData>)entity));
+                    results.Add(new FhTriggerVolumeEntity(((Entity<FhTriggerVolumeEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.AreaVolume)
                 {
-                    // mtodo: entity placeholders
-                    //models.Add(LoadEntityPlaceholder((Entity<AreaVolumeEntityData>)entity));
+                    results.Add(new AreaVolumeEntity(((Entity<AreaVolumeEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhAreaVolume)
                 {
-                    // mtodo: entity placeholders
-                    //models.Add(LoadEntityPlaceholder((Entity<FhAreaVolumeEntityData>)entity));
+                    results.Add(new FhAreaVolumeEntity(((Entity<FhAreaVolumeEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.JumpPad)
                 {
@@ -248,13 +241,11 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.MorphCamera)
                 {
-                    // mtodo: entity placeholders
-                    //models.Add(LoadEntityPlaceholder((Entity<MorphCameraEntityData>)entity));
+                    results.Add(new MorphCameraEntity(((Entity<MorphCameraEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhMorphCamera)
                 {
-                    // mtodo: entity placeholders
-                    //models.Add(LoadEntityPlaceholder((Entity<FhMorphCameraEntityData>)entity));
+                    results.Add(new FhMorphCameraEntity(((Entity<FhMorphCameraEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.OctolithFlag)
                 {
@@ -274,8 +265,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.LightSource)
                 {
-                    // mtodo: entity placeholders
-                    //models.Add(LoadEntityPlaceholder((Entity<LightSourceEntityData>)entity));
+                    results.Add(new LightSourceEntity(((Entity<LightSourceEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.Artifact)
                 {
@@ -283,8 +273,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.CameraSequence)
                 {
-                    // mtodo: entity placeholders
-                    //models.Add(LoadEntityPlaceholder((Entity<CameraSequenceEntityData>)entity));
+                    results.Add(new CameraSequenceEntity(((Entity<CameraSequenceEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.ForceField)
                 {

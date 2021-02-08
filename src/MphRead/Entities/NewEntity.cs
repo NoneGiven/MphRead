@@ -145,6 +145,7 @@ namespace MphRead.Entities
         }
     }
 
+    // ntodo: do we need this, or can this just be the first base class?
     public abstract class VisibleEntityBase : EntityBase
     {
         public float Alpha { get; set; } = 1.0f;
