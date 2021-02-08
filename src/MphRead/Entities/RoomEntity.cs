@@ -186,7 +186,8 @@ namespace MphRead.Entities
                     }
                     Matrix4 texcoordMatrix = GetTexcoordMatrix(model, material, node, scene);
                     scene.AddRenderItem(material, polygonId, alpha, emission: Vector3.Zero, GetLightInfo(model, scene),
-                        texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues);
+                        texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
+                        overrideColor: null);
                 }
             }
         }

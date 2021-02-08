@@ -889,7 +889,8 @@ namespace MphRead
         }
 
         public void AddRenderItem(Material material, int polygonId, float alphaScale, Vector3 emission, LightInfo lightInfo,
-            Matrix4 texcoordMatrix, Matrix4 transform, int listId, int matrixStackCount, IReadOnlyList<float> matrixStack)
+            Matrix4 texcoordMatrix, Matrix4 transform, int listId, int matrixStackCount, IReadOnlyList<float> matrixStack,
+            Vector4? overrideColor)
         {
             RenderItem item = GetRenderItem();
             item.PolygonId = polygonId;
@@ -918,6 +919,7 @@ namespace MphRead
             {
                 item.MatrixStack[i] = matrixStack[i];
             }
+            item.OverrideColor = overrideColor;
             AddRenderItem(item);
         }
 
@@ -1249,26 +1251,25 @@ namespace MphRead
                 GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref texcoordMatrix);
             }
             GL.Uniform1(_shaderLocations.UseTexture, item.HasTexture && _showTextures ? 1 : 0);
-            //Vector4? overrideColor = null;
+            Vector4? overrideColor = null;
             //if (_showSelection)
             //{
             //    overrideColor = mesh.OverrideColor;
             //}
-            //if (overrideColor == null)
-            //{
-            //    overrideColor = mesh.PlaceholderColor;
-            //}
-            //if (overrideColor != null)
-            //{
-            //    Vector4 overrideColorValue = overrideColor.Value;
-            //    GL.Uniform1(_shaderLocations.UseOverride, 1);
-            //    GL.Uniform4(_shaderLocations.OverrideColor, ref overrideColorValue);
-            //}
-            //else
-            //{
-            //    GL.Uniform1(_shaderLocations.UseOverride, 0);
-            //}
-            GL.Uniform1(_shaderLocations.UseOverride, 0);
+            if (overrideColor == null)
+            {
+                overrideColor = item.OverrideColor;
+            }
+            if (overrideColor != null)
+            {
+                Vector4 overrideColorValue = overrideColor.Value;
+                GL.Uniform1(_shaderLocations.UseOverride, 1);
+                GL.Uniform4(_shaderLocations.OverrideColor, ref overrideColorValue);
+            }
+            else
+            {
+                GL.Uniform1(_shaderLocations.UseOverride, 0);
+            }
             //if (model.PaletteOverride != null)
             //{
             //    Vector4 overrideColorValue = model.PaletteOverride.Value;

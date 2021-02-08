@@ -145,21 +145,6 @@ namespace MphRead.Entities
         }
     }
 
-    public abstract class InvisibleEntityBase : EntityBase
-    {
-        public Vector3 PlaceholderColor { get; }
-
-        public InvisibleEntityBase(NewEntityType type) : base(type)
-        {
-        }
-
-        // ntodo: objects need to return false if scanvisor etc.
-        public override void Process(NewScene scene)
-        {
-            ShouldDraw = scene.ShowInvisible;
-        }
-    }
-
     public abstract class VisibleEntityBase : EntityBase
     {
         public float Alpha { get; set; } = 1.0f;
@@ -169,6 +154,7 @@ namespace MphRead.Entities
         protected readonly List<NewModel> _models = new List<NewModel>();
 
         protected virtual bool UseNodeTransform => true;
+        protected virtual Vector4? OverrideColor { get; } = null;
 
         public VisibleEntityBase(NewEntityType type) : base(type)
         {
@@ -239,6 +225,13 @@ namespace MphRead.Entities
             return _models;
         }
 
+        protected void UsePlaceholderModel()
+        {
+            NewModel model = Read.GetNewModel("pick_wpn_missile");
+            model.IsPlaceholder = true;
+            _models.Add(model);
+        }
+
         public virtual LightInfo GetLightInfo(NewModel model, NewScene scene)
         {
             return new LightInfo(scene.Light1Vector, scene.Light1Color, scene.Light2Vector, scene.Light2Color);
@@ -249,7 +242,7 @@ namespace MphRead.Entities
             for (int i = 0; i < _models.Count; i++)
             {
                 NewModel model = _models[i];
-                if (!model.Active)
+                if (!model.Active || (model.IsPlaceholder && !scene.ShowInvisible))
                 {
                     continue;
                 }
@@ -272,7 +265,8 @@ namespace MphRead.Entities
                         Material material = model.Materials[mesh.MaterialId];
                         Matrix4 texcoordMatrix = GetTexcoordMatrix(model, material, node, scene);
                         scene.AddRenderItem(material, polygonId, Alpha, emission: Vector3.Zero, GetLightInfo(model, scene),
-                            texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues);
+                            texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
+                            model.IsPlaceholder ? OverrideColor : null);
                     }
                     if (node.ChildIndex != UInt16.MaxValue)
                     {

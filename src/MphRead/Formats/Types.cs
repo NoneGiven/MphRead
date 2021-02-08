@@ -43,6 +43,7 @@ namespace MphRead
         public int ListId { get; set; }
         public int MatrixStackCount { get; set; }
         public float[] MatrixStack { get; }
+        public Vector4? OverrideColor { get; set; }
 
         public RenderItem()
         {

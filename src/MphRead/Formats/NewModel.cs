@@ -11,6 +11,7 @@ namespace MphRead.Entities
         private static int _nextId = 0;
         public int Id { get; } = _nextId++;
         public bool Active { get; set; } = true;
+        public bool IsPlaceholder { get; set; }
 
         public string Name { get; }
         public Header Header { get; }
@@ -27,7 +28,6 @@ namespace MphRead.Entities
         public AnimationInfo Animations { get; } // ntodo: remove mutable state for this (and review all mutable state in materials etc.)
 
         public Vector3 Scale { get; }
-
 
         public NewModel(string name, Header header, IEnumerable<RawNode> nodes, IEnumerable<RawMesh> meshes,
             IEnumerable<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
