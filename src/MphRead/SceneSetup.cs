@@ -279,7 +279,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Artifact)
                 {
-                    //models.AddRange(LoadArtifact((Entity<ArtifactEntityData>)entity));
+                    models.Add(new ArtifactEntity(((Entity<ArtifactEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.CameraSequence)
                 {
