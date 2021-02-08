@@ -244,7 +244,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.PointModule || entity.Type == EntityType.FhPointModule)
                 {
-                    //models.Add(LoadPointModule((Entity<PointModuleEntityData>)entity));
+                    models.Add(new PointModuleEntity(((Entity<PointModuleEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.MorphCamera)
                 {

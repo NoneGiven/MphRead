@@ -1916,6 +1916,10 @@ namespace MphRead
     {
         private int GetKey(int textureId, int paletteId, int recolorId)
         {
+            if (paletteId == UInt16.MaxValue)
+            {
+                paletteId = 4095;
+            }
             Debug.Assert(textureId >= 0 && textureId < 4096);
             Debug.Assert(paletteId >= 0 && paletteId < 4096);
             Debug.Assert(recolorId >= 0 && recolorId < 255);
