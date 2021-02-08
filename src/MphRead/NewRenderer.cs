@@ -85,9 +85,9 @@ namespace MphRead
         public bool ShowForceFields => _showVolumes != 12;
         public bool ScanVisor => _scanVisor;
         public Vector3 Light1Vector => _light1Vector;
-        public Vector3 Light1Color => _light1Vector;
-        public Vector3 Light2Vector => _light1Vector;
-        public Vector3 Light2Color => _light1Vector;
+        public Vector3 Light1Color => _light1Color;
+        public Vector3 Light2Vector => _light2Vector;
+        public Vector3 Light2Color => _light2Color;
 
         private readonly KeyboardState _keyboardState;
         private readonly Action<string> _setTitle;
