@@ -278,6 +278,10 @@ namespace MphRead
             {
                 _freeRenderItems.Enqueue(new RenderItem());
             }
+            for (int i = 0; i < _entities.Count; i++)
+            {
+                _entities[i].Init(this);
+            }
         }
 
         private void InitShaders()

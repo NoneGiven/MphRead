@@ -123,6 +123,10 @@ namespace MphRead.Entities
             Type = type;
         }
 
+        public virtual void Init(NewScene scene)
+        {
+        }
+
         public virtual void Process(NewScene scene)
         {
         }
@@ -170,6 +174,19 @@ namespace MphRead.Entities
         {
         }
 
+        public override void Init(NewScene scene)
+        {
+            _anyLighting = _models.Any(n => n.Materials.Any(m => m.Lighting != 0));
+            for (int i = 0; i < _models.Count; i++)
+            {
+                NewModel model = _models[i];
+                _materialAnimFrames.Add(model, 0);
+                _texcoordAnimFrames.Add(model, 0);
+                _textureAnimFrames.Add(model, 0);
+                _nodeAnimFrames.Add(model, 0);
+            }
+        }
+
         protected virtual Matrix4 GetModelTransform(NewModel model, int index)
         {
             return Matrix4.CreateScale(model.Scale) * _transform;
@@ -204,11 +221,11 @@ namespace MphRead.Entities
                     NewModel model = _models[i];
                     if (model.Active)
                     {
-                        model.AnimateMaterials(_materialAnimCurFrame);
-                        model.AnimateTextures(_textureAnimCurFrame);
+                        model.AnimateMaterials(_materialAnimFrames[model]);
+                        model.AnimateTextures(_textureAnimFrames[model]);
                         model.ComputeNodeMatrices(index: 0);
                         Matrix4 transform = GetModelTransform(model, i);
-                        model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, _nodeAnimCurFrame);
+                        model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, _nodeAnimFrames[model]);
                         model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
                         // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
                         scene.UpdateMaterials(model, GetModelRecolor(model, i));
@@ -275,7 +292,7 @@ namespace MphRead.Entities
             }
             if (group != null && animation != null)
             {
-                texcoordMatrix = model.AnimateTexcoords(group, animation.Value, _texcoordAnimCurFrame);
+                texcoordMatrix = model.AnimateTexcoords(group, animation.Value, _texcoordAnimFrames[model]);
             }
             if (material.TexgenMode != TexgenMode.None) // ntodo: texgen mode (among other things) can be overriden by double damage
             {
@@ -347,33 +364,41 @@ namespace MphRead.Entities
             return texcoordMatrix;
         }
 
-        private int _materialAnimCurFrame = 0;
-        private int _texcoordAnimCurFrame = 0;
-        private int _textureAnimCurFrame = 0;
-        private int _nodeAnimCurFrame = 0;
+        private readonly Dictionary<NewModel, int> _materialAnimFrames = new Dictionary<NewModel, int>();
+        private readonly Dictionary<NewModel, int> _texcoordAnimFrames = new Dictionary<NewModel, int>();
+        private readonly Dictionary<NewModel, int> _textureAnimFrames = new Dictionary<NewModel, int>();
+        private readonly Dictionary<NewModel, int> _nodeAnimFrames = new Dictionary<NewModel, int>();
 
         // ntodo: maybe remove CurrentFrame from these classes
         private void UpdateAnimationFrames(NewModel model)
         {
             if (model.Animations.MaterialGroup != null)
             {
-                _materialAnimCurFrame++;
-                _materialAnimCurFrame %= model.Animations.MaterialGroup.FrameCount;
+                int frame = _materialAnimFrames[model];
+                frame++;
+                frame %= model.Animations.MaterialGroup.FrameCount;
+                _materialAnimFrames[model] = frame;
             }
             if (model.Animations.TexcoordGroup != null)
             {
-                _texcoordAnimCurFrame++;
-                _texcoordAnimCurFrame %= model.Animations.TexcoordGroup.FrameCount;
+                int frame = _texcoordAnimFrames[model];
+                frame++;
+                frame %= model.Animations.TexcoordGroup.FrameCount;
+                _texcoordAnimFrames[model] = frame;
             }
             if (model.Animations.TextureGroup != null)
             {
-                _textureAnimCurFrame++;
-                _textureAnimCurFrame %= model.Animations.TextureGroup.FrameCount;
+                int frame = _textureAnimFrames[model];
+                frame++;
+                frame %= model.Animations.TextureGroup.FrameCount;
+                _textureAnimFrames[model] = frame;
             }
             if (model.Animations.NodeGroup != null)
             {
-                _nodeAnimCurFrame++;
-                _nodeAnimCurFrame %= model.Animations.NodeGroup.FrameCount;
+                int frame = _nodeAnimFrames[model];
+                frame++;
+                frame %= model.Animations.NodeGroup.FrameCount;
+                _nodeAnimFrames[model] = frame;
             }
         }
 
@@ -421,8 +446,6 @@ namespace MphRead.Entities
         {
             Recolor = recolor;
             _models.Add(model);
-            // mtodo: move to base class init
-            _anyLighting = model.Materials.Any(m => m.Lighting != 0);
         }
     }
 

@@ -40,7 +40,6 @@ namespace MphRead.Entities
                     _scanVisorOnly = true;
                 }
                 _models.Add(model);
-                _anyLighting = model.Materials.Any(m => m.Lighting != 0);
                 // temporary
                 if (model.Name == "AlimbicCapsule")
                 {

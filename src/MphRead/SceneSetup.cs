@@ -258,7 +258,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.OctolithFlag)
                 {
-                    //models.AddRange(LoadOctolithFlag((Entity<OctolithFlagEntityData>)entity, mode));
+                    models.Add(new OctolithFlagEntity(((Entity<OctolithFlagEntityData>)entity).Data, mode));
                 }
                 else if (entity.Type == EntityType.FlagBase)
                 {

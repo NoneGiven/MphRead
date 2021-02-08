@@ -75,7 +75,6 @@ namespace MphRead.Entities
             {
                 _models.Add(Read.GetNewModel("items_base"));
             }
-            _anyLighting = _models.Any(n => n.Materials.Any(m => m.Lighting != 0));
         }
     }
 
@@ -94,7 +93,6 @@ namespace MphRead.Entities
             string name = Metadata.FhItems[(int)data.ModelId];
             NewModel model = Read.GetFhNewModel(name);
             _models.Add(model);
-            _anyLighting = model.Materials.Any(m => m.Lighting != 0);
         }
     }
 }

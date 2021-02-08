@@ -38,7 +38,6 @@ namespace MphRead.Entities
             {
                 // mtodo: entity placeholders
             }
-            _anyLighting = _models.Any(n => n.Materials.Any(m => m.Lighting != 0));
         }
     }
 }

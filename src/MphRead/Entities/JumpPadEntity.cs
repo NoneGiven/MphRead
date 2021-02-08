@@ -26,7 +26,6 @@ namespace MphRead.Entities
                 beamModel.Active = false;
             }
             _models.Add(beamModel);
-            _anyLighting = _models.Any(n => n.Materials.Any(m => m.Lighting != 0));
         }
 
         protected override Matrix4 GetModelTransform(NewModel model, int index)
@@ -58,7 +57,6 @@ namespace MphRead.Entities
             _beamTransform = GetTransformMatrix(beamVector, beamVector.X != 0 || beamVector.Z != 0 ? Vector3.UnitY : Vector3.UnitX);
             beamModel.Animations.TexcoordGroupId = -1;
             _models.Add(beamModel);
-            _anyLighting = _models.Any(n => n.Materials.Any(m => m.Lighting != 0));
         }
 
         protected override Matrix4 GetModelTransform(NewModel model, int index)

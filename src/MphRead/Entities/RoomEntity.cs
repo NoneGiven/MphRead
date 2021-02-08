@@ -18,7 +18,6 @@ namespace MphRead.Entities
         public RoomEntity(NewModel model, RoomMetadata meta, CollisionInfo collision, int layerMask) : base(NewEntityType.Room)
         {
             _models.Add(model);
-            _anyLighting = model.Materials.Any(m => m.Lighting != 0);
             FilterNodes(layerMask);
             var portals = new List<CollisionPortal>();
             var forceFields = new List<ForceFieldNodeRef>();

@@ -13,7 +13,6 @@ namespace MphRead.Entities
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             NewModel model = Read.GetFhNewModel("pick_morphball");
             _models.Add(model);
-            _anyLighting = model.Materials.Any(m => m.Lighting != 0);
         }
     }
 }

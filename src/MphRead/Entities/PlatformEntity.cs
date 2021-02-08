@@ -20,7 +20,6 @@ namespace MphRead.Entities
             {
                 NewModel model = Read.GetNewModel(meta.Name);
                 _models.Add(model);
-                _anyLighting = model.Materials.Any(m => m.Lighting != 0);
                 // temporary
                 if (meta.Name == "SamusShip")
                 {
@@ -45,7 +44,6 @@ namespace MphRead.Entities
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             NewModel model = Read.GetFhNewModel("platform");
             _models.Add(model);
-            _anyLighting = model.Materials.Any(m => m.Lighting != 0);
         }
     }
 }
