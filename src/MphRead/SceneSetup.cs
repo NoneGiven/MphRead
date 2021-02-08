@@ -262,7 +262,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.FlagBase)
                 {
-                    //models.AddRange(LoadFlagBase((Entity<FlagBaseEntityData>)entity, mode));
+                    models.Add(new FlagBaseEntity(((Entity<FlagBaseEntityData>)entity).Data, mode));
                 }
                 else if (entity.Type == EntityType.Teleporter)
                 {
