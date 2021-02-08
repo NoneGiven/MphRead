@@ -266,7 +266,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Teleporter)
                 {
-                    //models.Add(LoadTeleporter((Entity<TeleporterEntityData>)entity, areaId, mode != GameMode.SinglePlayer));
+                    models.Add(new TeleporterEntity(((Entity<TeleporterEntityData>)entity).Data, areaId, mode != GameMode.SinglePlayer));
                 }
                 else if (entity.Type == EntityType.NodeDefense)
                 {
