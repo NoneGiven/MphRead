@@ -1,4 +1,3 @@
-using System.Linq;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities

@@ -1,5 +1,3 @@
-using System.Linq;
-
 namespace MphRead.Entities
 {
     public class EnemySpawnEntity : VisibleEntityBase
