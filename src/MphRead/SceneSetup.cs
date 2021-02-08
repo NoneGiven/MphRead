@@ -270,7 +270,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.NodeDefense)
                 {
-                    //models.AddRange(LoadNodeDefense((Entity<NodeDefenseEntityData>)entity, mode));
+                    models.Add(new NodeDefenseEntity(((Entity<NodeDefenseEntityData>)entity).Data, mode));
                 }
                 else if (entity.Type == EntityType.LightSource)
                 {
