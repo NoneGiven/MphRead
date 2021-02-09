@@ -49,7 +49,7 @@ namespace MphRead
         private bool _showTextures = true;
         private bool _showColors = true;
         private bool _wireframe = false;
-        private bool _portalEdges = false;
+        private bool _volumeEdges = false;
         private bool _faceCulling = true;
         private bool _textureFiltering = false;
         private bool _lighting = false;
@@ -1189,6 +1189,11 @@ namespace MphRead
             else if (item.Type == RenderItemType.Plane)
             {
                 RenderPlane(item.Vertices);
+                if (_volumeEdges)
+                {
+                    // todo: implement this for volumes as well
+                    RenderPlaneLines(item.Vertices);
+                }
             }
         }
 
@@ -1345,6 +1350,17 @@ namespace MphRead
             GL.End();
         }
 
+        private void RenderPlaneLines(Vector3[] verts)
+        {
+            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(1f, 0f, 0f, 1f));
+            GL.Begin(PrimitiveType.LineLoop);
+            GL.Vertex3(verts[0]);
+            GL.Vertex3(verts[1]);
+            GL.Vertex3(verts[2]);
+            GL.Vertex3(verts[3]);
+            GL.End();
+        }
+
         private void DoMaterial(RenderItem item)
         {
             GL.Uniform1(_shaderLocations.UseLight, _lighting && item.Lighting ? 1 : 0);
@@ -1484,7 +1500,7 @@ namespace MphRead
             {
                 if (_showVolumes == VolumeDisplay.Portal)
                 {
-                    _portalEdges = !_portalEdges;
+                    _volumeEdges = !_volumeEdges;
                 }
                 else
                 {
