@@ -12,8 +12,8 @@ namespace MphRead.Entities.Enemies
             var spawner = (ForceFieldEntity)data.Spawner;
             Vector3 position = data.Spawner.Position;
             _vec1 = spawner.Data.Header.UpVector.ToFloatVector();
-            _vec2 = spawner.Data.Header.RightVector.ToFloatVector() * Fixed.ToFloat(409);
-            position += _vec2;
+            _vec2 = spawner.Data.Header.RightVector.ToFloatVector();
+            position += _vec2 * Fixed.ToFloat(409);
             ComputeTransform(_vec2, _vec1, position);
             _initialPosition = Position;
             NewModel model = Read.GetNewModel("ForceFieldLock");
