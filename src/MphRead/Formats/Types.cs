@@ -10,6 +10,8 @@ namespace MphRead
         public readonly Vector3 Light2Vector;
         public readonly Vector3 Light2Color;
 
+        public static readonly LightInfo Zero = new LightInfo(Vector3.Zero, Vector3.Zero, Vector3.Zero, Vector3.Zero);
+
         public LightInfo(Vector3 light1Vector, Vector3 light1Color, Vector3 light2Vector, Vector3 light2Color)
         {
             Light1Vector = light1Vector;
@@ -19,8 +21,18 @@ namespace MphRead
         }
     }
 
+    public enum RenderItemType
+    {
+        Mesh = 0,
+        Box = 1,
+        Cylinder = 2,
+        Sphere = 3,
+        Particle =4
+    }
+
     public class RenderItem
     {
+        public RenderItemType Type { get; set; }
         public int PolygonId { get; set; }
         public float Alpha { get; set; }
         public PolygonMode PolygonMode { get; set; }
@@ -44,10 +56,13 @@ namespace MphRead
         public int MatrixStackCount { get; set; }
         public float[] MatrixStack { get; }
         public Vector4? OverrideColor { get; set; }
+        public Vector3[] Vertices { get; set; } // ntodo: texcoords
 
         public RenderItem()
         {
+            // todo: consider using ArrayPool
             MatrixStack = new float[16 * 31];
+            Vertices = Array.Empty<Vector3>();
         }
     }
 

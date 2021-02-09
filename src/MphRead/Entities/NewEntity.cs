@@ -143,6 +143,10 @@ namespace MphRead.Entities
         public virtual void GetDrawInfo(NewScene scene)
         {
         }
+
+        public virtual void GetDisplayVolumes(NewScene scene)
+        {
+        }
     }
 
     // ntodo: do we need this, or can this just be the first base class?

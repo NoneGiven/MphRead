@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Entities;
@@ -12,6 +13,23 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace MphRead
 {
+    public enum VolumeDisplay
+    {
+        None,
+        LightColor1,
+        LightColor2,
+        TriggerParent,
+        TriggerChild,
+        AreaInside,
+        AreaExit,
+        MorphCamera,
+        JumpPad,
+        Object,
+        FlagBase,
+        DefenseNode,
+        Portal
+    }
+
     public class NewScene
     {
         public Vector2i Size { get; set; }
@@ -31,13 +49,13 @@ namespace MphRead
         private bool _showTextures = true;
         private bool _showColors = true;
         private bool _wireframe = false;
-        private bool _volumeEdges = false;
+        private bool _portalEdges = false;
         private bool _faceCulling = true;
         private bool _textureFiltering = false;
         private bool _lighting = false;
         private bool _scanVisor = false;
         private bool _showInvisible = false;
-        private int _showVolumes = 0;
+        private VolumeDisplay _showVolumes = VolumeDisplay.None;
         private bool _showKillPlane = false;
         private bool _transformRoomNodes = false;
 
@@ -82,7 +100,8 @@ namespace MphRead
         public bool TransformRoomNodes => _transformRoomNodes;
         public float FrameTime => _frameTime;
         public long FrameCount => _frameCount;
-        public bool ShowForceFields => _showVolumes != 12;
+        public VolumeDisplay ShowVolumes => _showVolumes;
+        public bool ShowForceFields => _showVolumes != VolumeDisplay.Portal;
         public bool ScanVisor => _scanVisor;
         public Vector3 Light1Vector => _light1Vector;
         public Vector3 Light1Color => _light1Color;
@@ -124,77 +143,6 @@ namespace MphRead
                 Debug.Assert(entity.Id != -1);
                 _entityMap.Add(entity.Id, entity);
                 InitRenderable(entity);
-                //if (entity.Entity is Entity<LightSourceEntityData> lightSource)
-                //{
-                //    var display = new LightSource(lightSource, entity.Transform);
-                //    _displayVolumes.Add(entity.SceneId, display);
-                //    _lightSourceMap.Add(entity.SceneId, display);
-                //    _lightSources.Add(display);
-                //}
-                //else if (entity.Entity is Entity<TriggerVolumeEntityData> trigger)
-                //{
-                //    _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(trigger, entity.Transform));
-                //}
-                //else if (entity.Entity is Entity<FhTriggerVolumeEntityData> fhTrigger)
-                //{
-                //    if (fhTrigger.Data.Subtype != 0)
-                //    {
-                //        _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(fhTrigger, entity.Transform));
-                //    }
-                //}
-                //else if (entity.Entity is Entity<AreaVolumeEntityData> area)
-                //{
-                //    _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(area, entity.Transform));
-                //}
-                //else if (entity.Entity is Entity<FhAreaVolumeEntityData> fhArea)
-                //{
-                //    if (fhArea.Data.Subtype != 0)
-                //    {
-                //        _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(fhArea, entity.Transform));
-                //    }
-                //}
-                //else if (entity.Entity is Entity<MorphCameraEntityData> morphCamera)
-                //{
-                //    _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(morphCamera, entity.Transform));
-                //}
-                //else if (entity.Entity is Entity<FhMorphCameraEntityData> fhMorphCamera)
-                //{
-                //    _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(fhMorphCamera, entity.Transform));
-                //}
-                //else if (entity.Entity is Entity<JumpPadEntityData> jumpPad && entity.Name != "JumpPad_Beam")
-                //{
-                //    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(jumpPad, entity.Transform));
-                //}
-                //else if (entity.Entity is Entity<FhJumpPadEntityData> fhJumpPad)
-                //{
-                //    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(fhJumpPad, entity.Transform));
-                //}
-                //else if (entity.Entity is Entity<ObjectEntityData> obj && obj.Data.EffectId > 0 && (obj.Data.EffectFlags & 1) != 0)
-                //{
-                //    _displayVolumes.Add(entity.SceneId, new ObjectDisplay(obj, entity.Transform));
-                //}
-                //else if (entity.Entity is Entity<FlagBaseEntityData> flag)
-                //{
-                //    _displayVolumes.Add(entity.SceneId, new FlagBaseDisplay(flag, entity.Transform));
-                //}
-                //else if (entity.Entity is Entity<NodeDefenseEntityData> defense)
-                //{
-                //    _displayVolumes.Add(entity.SceneId, new NodeDefenseDisplay(defense, entity.Transform));
-                //}
-                //else if (entity.Entity is Entity<PointModuleEntityData> module)
-                //{
-                //    if (_lastPointModule == -1)
-                //    {
-                //        _lastPointModule = entity.Entity.EntityId;
-                //    }
-                //    if (module.Data.NextId == 0)
-                //    {
-                //        _endPointModule = entity.Entity.EntityId;
-                //    }
-                //    // hack to allow easily toggling all
-                //    entity.ScanVisorOnly = true;
-                //}
-                //entity.Initialize(this);
             }
             // todo: move more stuff to mutable class state
             //if (_lastPointModule != -1)
@@ -884,6 +832,7 @@ namespace MphRead
             Vector4? overrideColor)
         {
             RenderItem item = GetRenderItem();
+            item.Type = RenderItemType.Mesh;
             item.PolygonId = polygonId;
             item.Alpha = material.CurrentAlpha * alphaScale;
             item.PolygonMode = material.PolygonMode;
@@ -911,6 +860,37 @@ namespace MphRead
                 item.MatrixStack[i] = matrixStack[i];
             }
             item.OverrideColor = overrideColor;
+            item.Vertices = Array.Empty<Vector3>();
+            AddRenderItem(item);
+        }
+
+        public void AddRenderItem(CullingMode cullingMode, int polygonId, Vector3 overrideColor, VolumeType type, Vector3[] vertices)
+        {
+            RenderItem item = GetRenderItem();
+            item.Type = (RenderItemType)(type + 1);
+            item.PolygonId = polygonId;
+            item.Alpha = 1;
+            item.PolygonMode = PolygonMode.Modulate;
+            item.RenderMode = RenderMode.Translucent;
+            item.CullingMode = cullingMode;
+            item.Wireframe = false;
+            item.Lighting = false;
+            item.Diffuse = Vector3.Zero;
+            item.Ambient = Vector3.Zero;
+            item.Specular = Vector3.Zero;
+            item.Emission = Vector3.Zero;
+            item.LightInfo = LightInfo.Zero;
+            item.TexgenMode = TexgenMode.None;
+            item.XRepeat = RepeatMode.Clamp;
+            item.YRepeat = RepeatMode.Clamp;
+            item.HasTexture = false;
+            item.TextureBindingId = 0;
+            item.TexcoordMatrix = Matrix4.Identity;
+            item.Transform = Matrix4.Identity;
+            item.ListId = 0;
+            item.MatrixStackCount = 0;
+            item.OverrideColor = new Vector4(overrideColor, 0.5f);
+            item.Vertices = vertices;
             AddRenderItem(item);
         }
 
@@ -950,7 +930,12 @@ namespace MphRead
             _translucentItems.Clear();
             while (_usedRenderItems.Count > 0)
             {
-                _freeRenderItems.Enqueue(_usedRenderItems.Dequeue());
+                RenderItem item = _usedRenderItems.Dequeue();
+                if (item.Type != RenderItemType.Mesh)
+                {
+                    ArrayPool<Vector3>.Shared.Return(item.Vertices);
+                }
+                _freeRenderItems.Enqueue(item);
             }
             _entities.Sort(CompareEntities);
             _nextPolygonId = 1;
@@ -966,6 +951,10 @@ namespace MphRead
                 {
                     entity.UpdateTransforms(this);
                     entity.GetDrawInfo(this);
+                }
+                if (_showVolumes != VolumeDisplay.None)
+                {
+                    entity.GetDisplayVolumes(this);
                 }
             }
 
@@ -1106,7 +1095,6 @@ namespace MphRead
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
-            //RenderDisplayVolumes();
         }
 
         private void UpdateUniforms()
@@ -1179,7 +1167,45 @@ namespace MphRead
                 _wireframe || item.Wireframe
                 ? OpenTK.Graphics.OpenGL.PolygonMode.Line
                 : OpenTK.Graphics.OpenGL.PolygonMode.Fill);
-            GL.CallList(item.ListId);
+            if (item.Type == RenderItemType.Mesh)
+            {
+                GL.CallList(item.ListId);
+            }
+            else if (item.Type == RenderItemType.Box)
+            {
+                RenderBox(item.Vertices);
+            }
+        }
+
+        private void RenderBox(Vector3[] verts)
+        {
+            // sides
+            GL.Begin(PrimitiveType.TriangleStrip);
+            GL.Vertex3(verts[2]);
+            GL.Vertex3(verts[6]);
+            GL.Vertex3(verts[0]);
+            GL.Vertex3(verts[4]);
+            GL.Vertex3(verts[1]);
+            GL.Vertex3(verts[5]);
+            GL.Vertex3(verts[3]);
+            GL.Vertex3(verts[7]);
+            GL.Vertex3(verts[2]);
+            GL.Vertex3(verts[6]);
+            GL.End();
+            // top
+            GL.Begin(PrimitiveType.TriangleStrip);
+            GL.Vertex3(verts[5]);
+            GL.Vertex3(verts[4]);
+            GL.Vertex3(verts[7]);
+            GL.Vertex3(verts[6]);
+            GL.End();
+            // bottom
+            GL.Begin(PrimitiveType.TriangleStrip);
+            GL.Vertex3(verts[3]);
+            GL.Vertex3(verts[2]);
+            GL.Vertex3(verts[1]);
+            GL.Vertex3(verts[0]);
+            GL.End();
         }
 
         private void DoMaterial(RenderItem item)
@@ -1319,9 +1345,9 @@ namespace MphRead
             }
             else if (e.Key == Keys.Q)
             {
-                if (_showVolumes > 0)
+                if (_showVolumes == VolumeDisplay.Portal)
                 {
-                    _volumeEdges = !_volumeEdges;
+                    _portalEdges = !_portalEdges;
                 }
                 else
                 {
@@ -1349,14 +1375,14 @@ namespace MphRead
                 // todo: this needs to be organized
                 if (e.Control)
                 {
-                    _showVolumes = 0;
+                    _showVolumes = VolumeDisplay.None;
                 }
                 else if (e.Shift)
                 {
                     _showVolumes--;
-                    if (_showVolumes < 0)
+                    if (_showVolumes < VolumeDisplay.None)
                     {
-                        _showVolumes = 12;
+                        _showVolumes = VolumeDisplay.Portal;
                     }
                     //if (_showVolumes != 0 && _selectionMode == SelectionMode.Model)
                     //{
@@ -1374,9 +1400,9 @@ namespace MphRead
                 else
                 {
                     _showVolumes++;
-                    if (_showVolumes > 12)
+                    if (_showVolumes > VolumeDisplay.Portal)
                     {
-                        _showVolumes = 0;
+                        _showVolumes = VolumeDisplay.None;
                     }
                     //if (_showVolumes != 0 && _selectionMode == SelectionMode.Model)
                     //{
