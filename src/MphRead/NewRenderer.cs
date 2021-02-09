@@ -867,10 +867,10 @@ namespace MphRead
             AddRenderItem(item);
         }
 
-        public void AddRenderItem(CullingMode cullingMode, int polygonId, Vector3 overrideColor, VolumeType type, Vector3[] vertices)
+        public void AddRenderItem(CullingMode cullingMode, int polygonId, Vector4 overrideColor, RenderItemType type, Vector3[] vertices)
         {
             RenderItem item = GetRenderItem();
-            item.Type = (RenderItemType)(type + 1);
+            item.Type = type;
             item.PolygonId = polygonId;
             item.Alpha = 1;
             item.PolygonMode = PolygonMode.Modulate;
@@ -892,7 +892,7 @@ namespace MphRead
             item.Transform = Matrix4.Identity;
             item.ListId = 0;
             item.MatrixStackCount = 0;
-            item.OverrideColor = new Vector4(overrideColor, 0.5f);
+            item.OverrideColor = overrideColor;
             item.Vertices = vertices;
             AddRenderItem(item);
         }
@@ -1186,6 +1186,10 @@ namespace MphRead
             {
                 RenderSphere(item.Vertices);
             }
+            else if (item.Type == RenderItemType.Plane)
+            {
+                RenderPlane(item.Vertices);
+            }
         }
 
         private void RenderBox(Vector3[] verts)
@@ -1328,6 +1332,16 @@ namespace MphRead
                     }
                 }
             }
+            GL.End();
+        }
+
+        private void RenderPlane(Vector3[] verts)
+        {
+            GL.Begin(PrimitiveType.TriangleStrip);
+            GL.Vertex3(verts[0]);
+            GL.Vertex3(verts[3]);
+            GL.Vertex3(verts[1]);
+            GL.Vertex3(verts[2]);
             GL.End();
         }
 

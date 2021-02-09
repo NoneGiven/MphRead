@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace MphRead.Entities
     public class RoomEntity : VisibleEntityBase
     {
         private readonly IReadOnlyList<CollisionPortal> _portals = new List<CollisionPortal>();
-        private readonly IReadOnlyList<ForceFieldNodeRef> _forceFields = new List<ForceFieldNodeRef>();
+        private readonly IReadOnlyList<PortalNodeRef> _forceFields = new List<PortalNodeRef>();
         private IReadOnlyList<Node> Nodes => _models[0].Nodes;
 
         protected override bool UseNodeTransform => false; // default -- will use transform if setting is enabled
@@ -20,7 +21,7 @@ namespace MphRead.Entities
             _models.Add(model);
             FilterNodes(layerMask);
             var portals = new List<CollisionPortal>();
-            var forceFields = new List<ForceFieldNodeRef>();
+            var forceFields = new List<PortalNodeRef>();
             portals.AddRange(collision.Portals.Where(p => (p.LayerMask & 4) != 0 || (p.LayerMask & layerMask) != 0));
             if (portals.Count > 0)
             {
@@ -39,7 +40,7 @@ namespace MphRead.Entities
                     {
                         if (model.Nodes[i].Name == $"geo{portal.Name[1..]}")
                         {
-                            forceFields.Add(new ForceFieldNodeRef(portal, i));
+                            forceFields.Add(new PortalNodeRef(portal, i));
                             break;
                         }
                     }
@@ -141,7 +142,7 @@ namespace MphRead.Entities
             {
                 for (int i = 0; i < _forceFields.Count; i++)
                 {
-                    ForceFieldNodeRef forceField = _forceFields[i];
+                    PortalNodeRef forceField = _forceFields[i];
                     Node pnode = Nodes[forceField.NodeIndex];
                     if (pnode.ChildIndex != UInt16.MaxValue)
                     {
@@ -198,13 +199,34 @@ namespace MphRead.Entities
             return MathF.Min(between / 8, 1);
         }
 
+        public override void GetDisplayVolumes(NewScene scene)
+        {
+            if (scene.ShowVolumes == VolumeDisplay.Portal)
+            {
+                for (int i = 0; i < _portals.Count; i++)
+                {
+                    CollisionPortal portal = _portals[i];
+                    Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(4);
+                    verts[0] = portal.Point1;
+                    verts[1] = portal.Point2;
+                    verts[2] = portal.Point3;
+                    verts[3] = portal.Point4;
+                    float alpha = GetPortalAlpha(portal.Position, scene.CameraPosition);
+                    Vector4 color = portal.IsForceField
+                        ? new Vector4(16 / 31f, 16 / 31f, 1f, alpha)
+                        : new Vector4(16 / 31f, 1f, 16 / 31f, alpha);
+                    scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Plane, verts);
+                }
+            }
+        }
+
         // ntodo: display planes
-        private readonly struct ForceFieldNodeRef
+        private readonly struct PortalNodeRef
         {
             public readonly CollisionPortal Portal;
             public readonly int NodeIndex;
 
-            public ForceFieldNodeRef(CollisionPortal portal, int nodeIndex)
+            public PortalNodeRef(CollisionPortal portal, int nodeIndex)
             {
                 Portal = portal;
                 NodeIndex = nodeIndex;

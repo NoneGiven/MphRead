@@ -517,7 +517,7 @@ namespace MphRead.Entities
                 }
             }
             CullingMode cullingMode = volume.TestPoint(scene.CameraPosition) ? CullingMode.Front : CullingMode.Back;
-            scene.AddRenderItem(cullingMode, scene.GetNextPolygonId(), color, volume.Type, verts);
+            scene.AddRenderItem(cullingMode, scene.GetNextPolygonId(), new Vector4(color, 0.5f), (RenderItemType)(volume.Type + 1), verts);
         }
 
         private Vector3 GetDiscVertices(float radius, int index)
