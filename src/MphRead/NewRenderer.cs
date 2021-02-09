@@ -108,6 +108,9 @@ namespace MphRead
         public Vector3 Light2Vector => _light2Vector;
         public Vector3 Light2Color => _light2Color;
 
+        public const int DisplaySphereStacks = 16;
+        public const int DisplaySphereSectors = 24;
+
         private readonly KeyboardState _keyboardState;
         private readonly Action<string> _setTitle;
 
@@ -1175,6 +1178,14 @@ namespace MphRead
             {
                 RenderBox(item.Vertices);
             }
+            else if (item.Type == RenderItemType.Cylinder)
+            {
+                RenderCylinder(item.Vertices);
+            }
+            else if (item.Type == RenderItemType.Sphere)
+            {
+                RenderSphere(item.Vertices);
+            }
         }
 
         private void RenderBox(Vector3[] verts)
@@ -1205,6 +1216,118 @@ namespace MphRead
             GL.Vertex3(verts[2]);
             GL.Vertex3(verts[1]);
             GL.Vertex3(verts[0]);
+            GL.End();
+        }
+
+        private void RenderCylinder(Vector3[] verts)
+        {
+            // bottom
+            GL.Begin(PrimitiveType.TriangleFan);
+            GL.Vertex3(verts[32]);
+            GL.Vertex3(verts[0]);
+            GL.Vertex3(verts[1]);
+            GL.Vertex3(verts[2]);
+            GL.Vertex3(verts[3]);
+            GL.Vertex3(verts[4]);
+            GL.Vertex3(verts[5]);
+            GL.Vertex3(verts[6]);
+            GL.Vertex3(verts[7]);
+            GL.Vertex3(verts[8]);
+            GL.Vertex3(verts[9]);
+            GL.Vertex3(verts[10]);
+            GL.Vertex3(verts[11]);
+            GL.Vertex3(verts[12]);
+            GL.Vertex3(verts[13]);
+            GL.Vertex3(verts[14]);
+            GL.Vertex3(verts[15]);
+            GL.Vertex3(verts[0]);
+            GL.End();
+            // top
+            GL.Begin(PrimitiveType.TriangleFan);
+            GL.Vertex3(verts[33]);
+            GL.Vertex3(verts[31]);
+            GL.Vertex3(verts[30]);
+            GL.Vertex3(verts[29]);
+            GL.Vertex3(verts[28]);
+            GL.Vertex3(verts[27]);
+            GL.Vertex3(verts[26]);
+            GL.Vertex3(verts[25]);
+            GL.Vertex3(verts[24]);
+            GL.Vertex3(verts[23]);
+            GL.Vertex3(verts[22]);
+            GL.Vertex3(verts[21]);
+            GL.Vertex3(verts[20]);
+            GL.Vertex3(verts[19]);
+            GL.Vertex3(verts[18]);
+            GL.Vertex3(verts[17]);
+            GL.Vertex3(verts[16]);
+            GL.Vertex3(verts[31]);
+            GL.End();
+            // sides
+            GL.Begin(PrimitiveType.TriangleStrip);
+            GL.Vertex3(verts[0]);
+            GL.Vertex3(verts[16]);
+            GL.Vertex3(verts[1]);
+            GL.Vertex3(verts[17]);
+            GL.Vertex3(verts[2]);
+            GL.Vertex3(verts[18]);
+            GL.Vertex3(verts[3]);
+            GL.Vertex3(verts[19]);
+            GL.Vertex3(verts[4]);
+            GL.Vertex3(verts[20]);
+            GL.Vertex3(verts[5]);
+            GL.Vertex3(verts[21]);
+            GL.Vertex3(verts[6]);
+            GL.Vertex3(verts[22]);
+            GL.Vertex3(verts[7]);
+            GL.Vertex3(verts[23]);
+            GL.Vertex3(verts[8]);
+            GL.Vertex3(verts[24]);
+            GL.Vertex3(verts[9]);
+            GL.Vertex3(verts[25]);
+            GL.Vertex3(verts[10]);
+            GL.Vertex3(verts[26]);
+            GL.Vertex3(verts[11]);
+            GL.Vertex3(verts[27]);
+            GL.Vertex3(verts[12]);
+            GL.Vertex3(verts[28]);
+            GL.Vertex3(verts[13]);
+            GL.Vertex3(verts[29]);
+            GL.Vertex3(verts[14]);
+            GL.Vertex3(verts[30]);
+            GL.Vertex3(verts[15]);
+            GL.Vertex3(verts[31]);
+            GL.Vertex3(verts[0]);
+            GL.Vertex3(verts[16]);
+            GL.End();
+        }
+
+        private void RenderSphere(Vector3[] verts)
+        {
+            int stackCount = DisplaySphereStacks;
+            int sectorCount = DisplaySphereSectors;
+            GL.Begin(PrimitiveType.Triangles);
+            int k1, k2;
+            for (int i = 0; i < stackCount; i++)
+            {
+                k1 = i * (sectorCount + 1);
+                k2 = k1 + sectorCount + 1;
+                for (int j = 0; j < sectorCount; j++, k1++, k2++)
+                {
+                    if (i != 0)
+                    {
+                        GL.Vertex3(verts[k1 + 1]);
+                        GL.Vertex3(verts[k2]);
+                        GL.Vertex3(verts[k1]);
+                    }
+                    if (i != (stackCount - 1))
+                    {
+                        GL.Vertex3(verts[k2 + 1]);
+                        GL.Vertex3(verts[k2]);
+                        GL.Vertex3(verts[k1 + 1]);
+                    }
+                }
+            }
             GL.End();
         }
 

@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTK.Mathematics;
@@ -441,6 +442,91 @@ namespace MphRead.Entities
             transform.M43 = 0;
             transform.M44 = 1;
             return transform;
+        }
+
+        protected void AddVolumeItem(CollisionVolume volume, Vector3 color, NewScene scene)
+        {
+            Vector3[] verts = Array.Empty<Vector3>();
+            if (volume.Type == VolumeType.Box)
+            {
+                verts = ArrayPool<Vector3>.Shared.Rent(8);
+                Vector3 point0 = volume.BoxPosition;
+                Vector3 sideX = volume.BoxVector1 * volume.BoxDot1;
+                Vector3 sideY = volume.BoxVector2 * volume.BoxDot2;
+                Vector3 sideZ = volume.BoxVector3 * volume.BoxDot3;
+                verts[0] = point0;
+                verts[1] = point0 + sideZ;
+                verts[2] = point0 + sideX;
+                verts[3] = point0 + sideX + sideZ;
+                verts[4] = point0 + sideY;
+                verts[5] = point0 + sideY + sideZ;
+                verts[6] = point0 + sideX + sideY;
+                verts[7] = point0 + sideX + sideY + sideZ;
+            }
+            else if (volume.Type == VolumeType.Cylinder)
+            {
+                verts = ArrayPool<Vector3>.Shared.Rent(34);
+                Vector3 vector = volume.CylinderVector.Normalized();
+                float radius = volume.CylinderRadius;
+                Matrix3 rotation = Matrix.RotateAlign(Vector3.UnitY, vector);
+                Vector3 start;
+                Vector3 end;
+                // cylinder volumes are always axis-aligned, so we can use this hack to avoid normal issues
+                if (vector == Vector3.UnitX || vector == Vector3.UnitY || vector == Vector3.UnitZ)
+                {
+                    start = volume.CylinderPosition;
+                    end = volume.CylinderPosition + vector * volume.CylinderDot;
+                }
+                else
+                {
+                    start = volume.CylinderPosition + vector * volume.CylinderDot;
+                    end = volume.CylinderPosition;
+                }
+                for (int i = 0; i < 16; i++)
+                {
+                    verts[i] = GetDiscVertices(radius, i) * rotation + start;
+                }
+                for (int i = 0; i < 16; i++)
+                {
+                    verts[i + 16] = GetDiscVertices(radius, i) * rotation + end;
+                }
+                verts[32] = start;
+                verts[33] = end;
+            }
+            else if (volume.Type == VolumeType.Sphere)
+            {
+                int stackCount = NewScene.DisplaySphereStacks;
+                int sectorCount = NewScene.DisplaySphereSectors;
+                verts = ArrayPool<Vector3>.Shared.Rent(stackCount * sectorCount);
+                float radius = volume.SphereRadius;
+                float sectorStep = 2 * MathF.PI / sectorCount;
+                float stackStep = MathF.PI / stackCount;
+                float sectorAngle, stackAngle, x, y, z, xy;
+                for (int i = 0; i <= stackCount; i++)
+                {
+                    stackAngle = MathF.PI / 2 - i * stackStep;
+                    xy = radius * MathF.Cos(stackAngle);
+                    z = radius * MathF.Sin(stackAngle);
+                    for (int j = 0; j <= sectorCount; j++)
+                    {
+                        sectorAngle = j * sectorStep;
+                        x = xy * MathF.Cos(sectorAngle);
+                        y = xy * MathF.Sin(sectorAngle);
+                        verts[i * (sectorCount + 1) + j] = new Vector3(x, z, y) + volume.SpherePosition;
+                    }
+                }
+            }
+            CullingMode cullingMode = volume.TestPoint(scene.CameraPosition) ? CullingMode.Front : CullingMode.Back;
+            scene.AddRenderItem(cullingMode, scene.GetNextPolygonId(), color, volume.Type, verts);
+        }
+
+        private Vector3 GetDiscVertices(float radius, int index)
+        {
+            return new Vector3(
+                radius * MathF.Cos(2f * MathF.PI * index / 16f),
+                0.0f,
+                radius * MathF.Sin(2f * MathF.PI * index / 16f)
+            );
         }
     }
 
