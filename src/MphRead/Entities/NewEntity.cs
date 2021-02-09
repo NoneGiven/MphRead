@@ -51,8 +51,8 @@ namespace MphRead.Entities
 
     public abstract class EntityBase : IRenderable
     {
-        public int Id { get; protected set; } = -1; // todo: use init
-        public int Recolor { get; }
+        public int Id { get; protected set; } = -1; // todo: use init for Id and Recolor
+        public virtual int Recolor { get; protected set; }
         public NewEntityType Type { get; }
         public bool ShouldDraw { get; protected set; } = true;
 
@@ -154,7 +154,6 @@ namespace MphRead.Entities
     public abstract class VisibleEntityBase : EntityBase
     {
         public float Alpha { get; set; } = 1.0f;
-        public new int Recolor { get; set; }
 
         protected bool _anyLighting = false;
         protected readonly List<NewModel> _models = new List<NewModel>();
