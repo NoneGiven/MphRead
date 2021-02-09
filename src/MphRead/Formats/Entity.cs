@@ -1,5 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using MphRead.Entities;
+using OpenTK.Mathematics;
 
 namespace MphRead
 {
@@ -37,6 +40,25 @@ namespace MphRead
         public readonly Vector3Fx Position;
         public readonly Vector3Fx UpVector;
         public readonly Vector3Fx RightVector;
+    }
+
+    // size: 40
+    public readonly struct NewEntityDataHeader
+    {
+        public readonly ushort Type;
+        public readonly ushort EntityId;
+        public readonly Vector3 Position;
+        public readonly Vector3 UpVector;
+        public readonly Vector3 RightVector;
+
+        public NewEntityDataHeader(ushort type, ushort entityId, Vector3 position, Vector3 upVector, Vector3 rightVector)
+        {
+            Type = type;
+            EntityId = entityId;
+            Position = position;
+            UpVector = upVector;
+            RightVector = rightVector;
+        }
     }
 
     // size: 588

@@ -1,3 +1,4 @@
+using MphRead.Entities.Enemies;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -6,19 +7,15 @@ namespace MphRead.Entities
     {
         private readonly EnemyEntityData _data;
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x00, 0x00, 0x8B).AsVector4();
+        private bool _spawn = true;
+
+        public EnemyEntityData Data => _data;
 
         public EnemySpawnEntity(EnemyEntityData data) : base(NewEntityType.Enemy)
         {
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            // ntodo: enemy entities
-            //if (data.Type == EnemyType.CarnivorousPlant)
-            //{
-            //    ObjectMetadata meta = Metadata.GetObjectById(data.TextureId);
-            //    NewModel enemy = Read.GetNewModel(meta.Name); // meta.RecolorId
-            //    _models.Add(enemy);
-            //}
             if (data.SpawnerModel != 0)
             {
                 string spawner = "EnemySpawner";
@@ -40,6 +37,32 @@ namespace MphRead.Entities
             {
                 UsePlaceholderModel();
             }
+        }
+
+        public override void Process(NewScene scene)
+        {
+            // todo: enemy spawning logic
+            if (_spawn)
+            {
+                _spawn = false;
+                EnemyEntity? enemy = SpawnEnemy(this, _data.Type);
+                if (enemy != null)
+                {
+                    scene.AddEntity(enemy);
+                }
+            }
+            base.Process(scene);
+        }
+
+        // todo: entity node ref
+        public static EnemyEntity? SpawnEnemy(EnemySpawnEntity spawner, EnemyType type)
+        {
+            if (type == EnemyType.CarnivorousPlant)
+            {
+                return new Enemy51Entity(new EnemyInstanceEntityData(type, spawner));
+            }
+            //throw new ProgramException("Invalid enemy type."); // also make non-nullable
+            return null;
         }
     }
 

@@ -205,6 +205,18 @@ namespace MphRead
             InitRenderable(entity);
         }
 
+        public void AddEntity(EntityBase entity)
+        {
+            _renderables.Add(entity);
+            _entities.Add(entity);
+            if (entity.Id != -1)
+            {
+                _entityMap.Add(entity.Id, entity);
+            }
+            InitRenderable(entity);
+            entity.Init(this);
+        }
+
         public void OnLoad()
         {
             GL.ClearColor(_clearColor);

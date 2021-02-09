@@ -412,7 +412,7 @@ namespace MphRead.Entities
             ComputeTransform(vector2.ToFloatVector(), vector1.ToFloatVector(), position.ToFloatVector());
         }
 
-        private void ComputeTransform(Vector3 vector2, Vector3 vector1, Vector3 position)
+        protected void ComputeTransform(Vector3 vector2, Vector3 vector1, Vector3 position)
         {
             Matrix4 transform = GetTransformMatrix(vector2, vector1);
             transform.ExtractRotation().ToEulerAngles(out Vector3 rotation);
