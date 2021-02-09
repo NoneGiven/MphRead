@@ -218,6 +218,16 @@ namespace MphRead.Entities
                     scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Plane, verts);
                 }
             }
+            else if (scene.ShowVolumes == VolumeDisplay.KillPlane)
+            {
+                Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(4);
+                verts[0] = new Vector3(10000f, scene.KillHeight, 10000f);
+                verts[1] = new Vector3(10000f, scene.KillHeight, -10000f);
+                verts[2] = new Vector3(-10000f, scene.KillHeight, -10000f);
+                verts[3] = new Vector3(-10000f, scene.KillHeight, 10000f);
+                var color = new Vector4(1f, 0f, 1f, 0.5f);
+                scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Plane, verts);
+            }
         }
 
         // ntodo: display planes

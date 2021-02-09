@@ -27,6 +27,7 @@ namespace MphRead
         Object,
         FlagBase,
         DefenseNode,
+        KillPlane,
         Portal
     }
 
@@ -56,7 +57,6 @@ namespace MphRead
         private bool _scanVisor = false;
         private bool _showInvisible = false;
         private VolumeDisplay _showVolumes = VolumeDisplay.None;
-        private bool _showKillPlane = false;
         private bool _transformRoomNodes = false;
 
         private readonly List<IRenderable> _renderables = new List<IRenderable>();
@@ -102,6 +102,7 @@ namespace MphRead
         public long FrameCount => _frameCount;
         public VolumeDisplay ShowVolumes => _showVolumes;
         public bool ShowForceFields => _showVolumes != VolumeDisplay.Portal;
+        public float KillHeight => _killHeight;
         public bool ScanVisor => _scanVisor;
         public Vector3 Light1Vector => _light1Vector;
         public Vector3 Light1Color => _light1Color;
@@ -1588,14 +1589,7 @@ namespace MphRead
             }
             else if (e.Key == Keys.H)
             {
-                if (e.Alt)
-                {
-                    _showKillPlane = !_showKillPlane;
-                }
-                else
-                {
-                    //_showSelection = !_showSelection;
-                }
+                //_showSelection = !_showSelection;
             }
             else if (e.Key == Keys.I)
             {
