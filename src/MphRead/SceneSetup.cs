@@ -658,30 +658,15 @@ namespace MphRead
             if (vol.Type == VolumeType.Box)
             {
                 return new CollisionVolume(
-                    vol.BoxVector1 + position,
-                    vol.BoxVector2 + position,
-                    vol.BoxVector3 + position,
-                    vol.BoxPosition + position,
-                    vol.BoxDot1,
-                    vol.BoxDot2,
-                    vol.BoxDot3
-                );
+                    vol.BoxVector1, vol.BoxVector2, vol.BoxVector3, vol.BoxPosition + position, vol.BoxDot1, vol.BoxDot2, vol.BoxDot3);
             }
             if (vol.Type == VolumeType.Cylinder)
             {
-                return new CollisionVolume(
-                    vol.CylinderVector + position,
-                    vol.CylinderPosition + position,
-                    vol.CylinderRadius,
-                    vol.CylinderDot
-                );
+                return new CollisionVolume(vol.CylinderVector, vol.CylinderPosition + position, vol.CylinderRadius, vol.CylinderDot);
             }
             if (vol.Type == VolumeType.Sphere)
             {
-                return new CollisionVolume(
-                    vol.SpherePosition + position,
-                    vol.SphereRadius
-                );
+                return new CollisionVolume(vol.SpherePosition + position, vol.SphereRadius);
             }
             throw new ProgramException($"Invalid volume type {vol.Type}.");
         }
