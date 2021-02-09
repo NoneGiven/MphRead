@@ -2,6 +2,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using MphRead.Entities;
 using MphRead.Export;
 using MphRead.Formats.Collision;
@@ -212,6 +213,11 @@ namespace MphRead
             }
             InitRenderable(entity);
             entity.Init(this);
+        }
+
+        public bool TryGetEntity(int id, [NotNullWhen(true)] out EntityBase? entity)
+        {
+            return _entityMap.TryGetValue(id, out entity);
         }
 
         public void OnLoad()

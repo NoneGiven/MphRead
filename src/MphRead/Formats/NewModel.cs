@@ -10,7 +10,6 @@ namespace MphRead.Entities
     {
         private static int _nextId = 0;
         public int Id { get; } = _nextId++;
-        public bool Active { get; set; } = true;
         public bool IsPlaceholder { get; set; }
 
         public string Name { get; }

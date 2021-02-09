@@ -7,6 +7,8 @@ namespace MphRead.Entities
         private readonly DoorEntityData _data;
         private readonly Matrix4 _lockTransform;
 
+        private bool _locked;
+
         public DoorEntity(DoorEntityData data) : base(NewEntityType.Door)
         {
             _data = data;
@@ -32,7 +34,7 @@ namespace MphRead.Entities
             model.Animations.MaterialGroupId = -1;
             NewModel doorLock = Read.GetNewModel(meta.LockName);
             _lockTransform = Matrix4.CreateTranslation(0, meta.LockOffset, 0);
-            doorLock.Active = false; // todo: use flags and room state to determine lock/color state
+            _locked = false; // todo: use flags and room state to determine lock/color state
             _models.Add(doorLock);
         }
 
@@ -43,6 +45,15 @@ namespace MphRead.Entities
                 return Matrix4.CreateScale(model.Scale) * _transform * _lockTransform;
             }
             return base.GetModelTransform(model, index);
+        }
+
+        protected override bool GetModelActive(NewModel model, int index)
+        {
+            if (index == 1)
+            {
+                return _locked;
+            }
+            return base.GetModelActive(model, index);
         }
 
         protected override int GetModelRecolor(NewModel model, int index)

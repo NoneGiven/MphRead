@@ -23,10 +23,7 @@ namespace MphRead.Entities
             _beamTransform = GetTransformMatrix(beamVector, beamVector.X != 0 || beamVector.Z != 0 ? Vector3.UnitY : Vector3.UnitX);
             _beamTransform.Row3.Y = 0.25f;
             // todo: room state
-            if (data.Active == 0)
-            {
-                beamModel.Active = false;
-            }
+            Active = data.Active != 0;
             _models.Add(beamModel);
         }
 
@@ -37,6 +34,15 @@ namespace MphRead.Entities
                 return Matrix4.CreateScale(model.Scale) * _beamTransform * _transform;
             }
             return base.GetModelTransform(model, index);
+        }
+
+        protected override bool GetModelActive(NewModel model, int index)
+        {
+            if (index == 1)
+            {
+                return Active;
+            }
+            return base.GetModelActive(model, index);
         }
 
         public override void GetDisplayVolumes(NewScene scene)

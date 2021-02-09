@@ -55,6 +55,7 @@ namespace MphRead.Entities
         public virtual int Recolor { get; protected set; }
         public NewEntityType Type { get; }
         public bool ShouldDraw { get; protected set; } = true;
+        public bool Active { get; protected set; } = true;
 
         protected Matrix4 _transform = Matrix4.Identity;
         protected Vector3 _scale = new Vector3(1, 1, 1);
@@ -148,6 +149,11 @@ namespace MphRead.Entities
         public virtual void GetDisplayVolumes(NewScene scene)
         {
         }
+
+        public virtual void SetActive(bool active)
+        {
+            Active = active;
+        }
     }
 
     // ntodo: do we need this, or can this just be the first base class?
@@ -183,12 +189,17 @@ namespace MphRead.Entities
             return Matrix4.CreateScale(model.Scale) * _transform;
         }
 
+        protected virtual bool GetModelActive(NewModel model, int index)
+        {
+            return true;
+        }
+
         public override void Process(NewScene scene)
         {
             for (int i = 0; i < _models.Count; i++)
             {
                 NewModel model = _models[i];
-                if (model.Active)
+                if (GetModelActive(model, i))
                 {
                     if (scene.FrameCount != 0 && scene.FrameCount % 2 == 0)
                     {
@@ -210,7 +221,7 @@ namespace MphRead.Entities
                 for (int i = 0; i < _models.Count; i++)
                 {
                     NewModel model = _models[i];
-                    if (model.Active)
+                    if (GetModelActive(model, i))
                     {
                         model.AnimateMaterials(_materialAnimFrames[model]);
                         model.AnimateTextures(_textureAnimFrames[model]);
@@ -252,7 +263,7 @@ namespace MphRead.Entities
             for (int i = 0; i < _models.Count; i++)
             {
                 NewModel model = _models[i];
-                if (!model.Active || (model.IsPlaceholder && !scene.ShowInvisible))
+                if (!GetModelActive(model, i) || (model.IsPlaceholder && !scene.ShowInvisible))
                 {
                     continue;
                 }
