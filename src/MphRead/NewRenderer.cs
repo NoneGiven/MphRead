@@ -188,9 +188,6 @@ namespace MphRead
             _killHeight = meta.KillHeight;
             _farClip = meta.FarClip;
             _cameraMode = CameraMode.Roam;
-            //Model dblDmgModel = Read.GetModelByName("doubleDamage_img");
-            //BindTexture(dblDmgModel, 0, 0);
-            //_dblDmgBindingId = _textureCount;
         }
 
         public void AddEntity(string name, int recolor = 0)
