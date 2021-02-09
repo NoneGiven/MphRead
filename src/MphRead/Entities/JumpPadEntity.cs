@@ -7,11 +7,14 @@ namespace MphRead.Entities
         private readonly JumpPadEntityData _data;
         private readonly Matrix4 _beamTransform;
 
+        private readonly CollisionVolume _volume;
+
         public JumpPadEntity(JumpPadEntityData data) : base(NewEntityType.JumpPad)
         {
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            _volume = SceneSetup.MoveVolume(_data.Volume, Position);
             string modelName = Metadata.JumpPads[(int)data.ModelId];
             NewModel baseModel = Read.GetNewModel(modelName);
             _models.Add(baseModel);
@@ -35,6 +38,14 @@ namespace MphRead.Entities
             }
             return base.GetModelTransform(model, index);
         }
+
+        public override void GetDisplayVolumes(NewScene scene)
+        {
+            if (scene.ShowVolumes == VolumeDisplay.JumpPad)
+            {
+                AddVolumeItem(_volume, Vector3.UnitY, scene);
+            }
+        }
     }
 
     public class FhJumpPadEntity : VisibleEntityBase
@@ -42,11 +53,14 @@ namespace MphRead.Entities
         private readonly FhJumpPadEntityData _data;
         private readonly Matrix4 _beamTransform;
 
+        private readonly CollisionVolume _volume;
+
         public FhJumpPadEntity(FhJumpPadEntityData data) : base(NewEntityType.JumpPad)
         {
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            _volume = SceneSetup.MoveVolume(_data.ActiveVolume, Position);
             string name = data.ModelId == 1 ? "balljump" : "jumppad_base";
             NewModel baseModel = Read.GetFhNewModel(name);
             _models.Add(baseModel);
@@ -69,6 +83,14 @@ namespace MphRead.Entities
                 return transform;
             }
             return base.GetModelTransform(model, index);
+        }
+
+        public override void GetDisplayVolumes(NewScene scene)
+        {
+            if (scene.ShowVolumes == VolumeDisplay.JumpPad)
+            {
+                AddVolumeItem(_volume, Vector3.UnitY, scene);
+            }
         }
     }
 }
