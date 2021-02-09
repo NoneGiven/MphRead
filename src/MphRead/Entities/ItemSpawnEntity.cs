@@ -2,62 +2,71 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class ItemSpawnEntity : SpinningEntityBase
+    public class ItemSpawnEntity : VisibleEntityBase
     {
         private readonly ItemEntityData _data;
+        private bool _enabled;
+        private bool _spawn = true;
 
-        public ItemSpawnEntity(ItemEntityData data) : base(0.35f, Vector3.UnitY, 0, 0, NewEntityType.Item)
+        public ItemSpawnEntity(ItemEntityData data) : base(NewEntityType.Item)
         {
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            NewModel model = Read.GetNewModel(Metadata.Items[(int)data.ModelId]);
-            _models.Add(model);
-            if (data.Enabled == 0)
-            {
-                model.Active = false;
-            }
+            _enabled = data.Enabled != 0;
             if (data.HasBase != 0)
             {
                 _models.Add(Read.GetNewModel("items_base"));
             }
         }
 
-        protected override Matrix4 GetModelTransform(NewModel model, int index)
+        public override void Process(NewScene scene)
         {
-            Matrix4 transform = base.GetModelTransform(model, index);
-            if (index == 0)
+            // todo: item spawning logic
+            if (_enabled && _spawn)
             {
-                transform.Row3.Y += 0.65f;
+                ItemEntity item = SpawnItem(Position, (int)_data.ModelId);
+                scene.AddEntity(item);
+                _spawn = false;
             }
-            return transform;
+            base.Process(scene);
+        }
+
+        // todo: entity node ref
+        public static ItemEntity SpawnItem(Vector3 position, int itemType)
+        {
+            return new ItemEntity(new ItemInstanceEntityData(position, itemType));
         }
     }
 
-    public class FhItemSpawnEntity : SpinningEntityBase
+    public class FhItemSpawnEntity : VisibleEntityBase
     {
         private readonly FhItemEntityData _data;
+        private bool _spawn = true;
 
-        public FhItemSpawnEntity(FhItemEntityData data) : base(0.35f, Vector3.UnitY, 0, 0, NewEntityType.Item)
+        public FhItemSpawnEntity(FhItemEntityData data) : base(NewEntityType.Item)
         {
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            string name = Metadata.FhItems[(int)data.ModelId];
-            NewModel model = Read.GetFhNewModel(name);
-            _models.Add(model);
         }
 
-        protected override Matrix4 GetModelTransform(NewModel model, int index)
+        public override void Process(NewScene scene)
         {
-            Matrix4 transform = base.GetModelTransform(model, index);
-            if (index == 0)
+            // todo: FH item spawning logic
+            if (_spawn)
             {
-                // note: the actual height at creation is 1.0f greater than the spawner's,
-                // but 0.5f is subtracted when drawing (after the floating calculation)
-                transform.Row3.Y += 0.5f;
+                FhItemEntity item = SpawnItem(Position, (int)_data.ModelId);
+                scene.AddEntity(item);
+                _spawn = false;
             }
-            return transform;
+            base.Process(scene);
+        }
+
+        // todo: FH entity node ref
+        public static FhItemEntity SpawnItem(Vector3 position, int itemType)
+        {
+            return new FhItemEntity(new ItemInstanceEntityData(position, itemType));
         }
     }
 }

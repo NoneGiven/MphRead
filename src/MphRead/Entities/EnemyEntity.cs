@@ -2,7 +2,6 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    // size: 52
     public readonly struct EnemyInstanceEntityData
     {
         public readonly EnemyType Type;
