@@ -8,6 +8,9 @@ namespace MphRead.Entities
         private bool _enabled;
         private bool _spawn = true;
 
+        // used if there is no base model
+        protected override Vector4? OverrideColor { get; } = new ColorRgb(0xC8, 0x00, 0xC8).AsVector4();
+
         public ItemSpawnEntity(ItemEntityData data) : base(NewEntityType.Item)
         {
             _data = data;
@@ -17,6 +20,10 @@ namespace MphRead.Entities
             if (data.HasBase != 0)
             {
                 _models.Add(Read.GetNewModel("items_base"));
+            }
+            else
+            {
+                UsePlaceholderModel();
             }
         }
 
@@ -44,11 +51,14 @@ namespace MphRead.Entities
         private readonly FhItemEntityData _data;
         private bool _spawn = true;
 
+        protected override Vector4? OverrideColor { get; } = new ColorRgb(0xC8, 0x00, 0xC8).AsVector4();
+
         public FhItemSpawnEntity(FhItemEntityData data) : base(NewEntityType.Item)
         {
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            UsePlaceholderModel();
         }
 
         public override void Process(NewScene scene)
