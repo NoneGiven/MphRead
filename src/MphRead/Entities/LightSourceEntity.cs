@@ -23,7 +23,7 @@ namespace MphRead.Entities
             _light1Color = _data.Light1Color.AsVector3();
             _light2Vector = _data.Light2Vector.ToFloatVector();
             _light2Color = _data.Light2Color.AsVector3();
-            UsePlaceholderModel();
+            AddPlaceholderModel();
         }
 
         public override void GetDisplayVolumes(NewScene scene)

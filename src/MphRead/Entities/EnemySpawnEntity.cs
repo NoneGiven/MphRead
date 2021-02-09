@@ -35,7 +35,7 @@ namespace MphRead.Entities
             }
             else
             {
-                UsePlaceholderModel();
+                AddPlaceholderModel();
             }
         }
 
@@ -81,7 +81,7 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            UsePlaceholderModel();
+            AddPlaceholderModel();
         }
     }
 }

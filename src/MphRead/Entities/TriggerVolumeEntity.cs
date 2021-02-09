@@ -20,7 +20,7 @@ namespace MphRead.Entities
             _childEventColor = Metadata.GetEventColor(data.ChildEvent);
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             _volume = SceneSetup.MoveVolume(_data.Volume, Position);
-            UsePlaceholderModel();
+            AddPlaceholderModel();
         }
 
         public override void GetDisplayVolumes(NewScene scene)
@@ -50,7 +50,7 @@ namespace MphRead.Entities
             _childEventColor = Metadata.GetEventColor(data.ChildEvent);
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             _volume = SceneSetup.MoveVolume(_data.ActiveVolume, Position);
-            UsePlaceholderModel();
+            AddPlaceholderModel();
         }
 
         public override void GetDisplayVolumes(NewScene scene)

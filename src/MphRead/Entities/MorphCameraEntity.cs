@@ -16,7 +16,7 @@ namespace MphRead.Entities
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             _volume = SceneSetup.MoveVolume(_data.Volume, Position);
-            UsePlaceholderModel();
+            AddPlaceholderModel();
         }
 
         public override void GetDisplayVolumes(NewScene scene)
@@ -42,7 +42,7 @@ namespace MphRead.Entities
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             _volume = SceneSetup.MoveVolume(_data.Volume, Position);
-            UsePlaceholderModel();
+            AddPlaceholderModel();
         }
 
         public override void GetDisplayVolumes(NewScene scene)

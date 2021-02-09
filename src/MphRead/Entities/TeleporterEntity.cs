@@ -5,9 +5,12 @@ namespace MphRead.Entities
     public class TeleporterEntity : VisibleEntityBase
     {
         private readonly TeleporterEntityData _data;
+        private readonly Vector3 _targetPos = Vector3.Zero;
 
         // used for invisible teleporters
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0xFF, 0xFF).AsVector4();
+        // used for multiplayer teleporter destination -- todo: confirm 1P doesn't have any intra-room teleporters
+        private readonly Vector4 _overrideColor2 = new ColorRgb(0xAA, 0xAA, 0xAA).AsVector4();
 
         public TeleporterEntity(TeleporterEntityData data, int areaId, bool multiplayer) : base(NewEntityType.Teleporter)
         {
@@ -16,7 +19,7 @@ namespace MphRead.Entities
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             if (data.Invisible != 0)
             {
-                UsePlaceholderModel();
+                AddPlaceholderModel();
             }
             else
             {
@@ -35,6 +38,29 @@ namespace MphRead.Entities
                 NewModel model = Read.GetNewModel(modelName);
                 _models.Add(model);
             }
+            if (multiplayer)
+            {
+                AddPlaceholderModel(); // always at least the second model
+            }
+        }
+
+        protected override Matrix4 GetModelTransform(NewModel model, int index)
+        {
+            Matrix4 transform = base.GetModelTransform(model, index);
+            if (model.IsPlaceholder && index != 0)
+            {
+                transform.Row3.Xyz = _targetPos;
+            }
+            return transform;
+        }
+
+        protected override Vector4? GetOverrideColor(NewModel model, int index)
+        {
+            if (model.IsPlaceholder && index != 0)
+            {
+                return _overrideColor2;
+            }
+            return base.GetOverrideColor(model, index);
         }
     }
 }

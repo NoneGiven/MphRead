@@ -23,7 +23,7 @@ namespace MphRead.Entities
             }
             if (data.ModelId == UInt32.MaxValue)
             {
-                UsePlaceholderModel();
+                AddPlaceholderModel();
             }
             else
             {

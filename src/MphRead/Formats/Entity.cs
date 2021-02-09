@@ -765,7 +765,7 @@ namespace MphRead
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 15)]
         public readonly char[] TargetRoom;
         public readonly uint Field38;
-        public readonly Vector3Fx Field3C;
+        public readonly Vector3Fx TargetPosition;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;
     }

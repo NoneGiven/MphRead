@@ -17,7 +17,7 @@ namespace MphRead.Entities
             PlatformMetadata? meta = Metadata.GetPlatformById((int)data.ModelId);
             if (meta == null)
             {
-                UsePlaceholderModel();
+                AddPlaceholderModel();
             }
             else
             {

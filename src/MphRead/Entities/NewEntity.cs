@@ -230,11 +230,16 @@ namespace MphRead.Entities
             return _models;
         }
 
-        protected void UsePlaceholderModel()
+        protected void AddPlaceholderModel()
         {
             NewModel model = Read.GetNewModel("pick_wpn_missile");
             model.IsPlaceholder = true;
             _models.Add(model);
+        }
+
+        protected virtual Vector4? GetOverrideColor(NewModel model, int index)
+        {
+            return OverrideColor;
         }
 
         public virtual LightInfo GetLightInfo(NewModel model, NewScene scene)
@@ -252,10 +257,10 @@ namespace MphRead.Entities
                     continue;
                 }
                 int polygonId = scene.GetNextPolygonId();
-                GetItems(model, model.Nodes[0], polygonId);
+                GetItems(model, i, model.Nodes[0], polygonId);
             }
 
-            void GetItems(NewModel model, Node node, int polygonId)
+            void GetItems(NewModel model, int index, Node node, int polygonId)
             {
                 if (node.Enabled)
                 {
@@ -271,16 +276,16 @@ namespace MphRead.Entities
                         Matrix4 texcoordMatrix = GetTexcoordMatrix(model, material, node, scene);
                         scene.AddRenderItem(material, polygonId, Alpha, emission: Vector3.Zero, GetLightInfo(model, scene),
                             texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
-                            model.IsPlaceholder ? OverrideColor : null);
+                            model.IsPlaceholder ? GetOverrideColor(model, index) : null);
                     }
                     if (node.ChildIndex != UInt16.MaxValue)
                     {
-                        GetItems(model, model.Nodes[node.ChildIndex], polygonId);
+                        GetItems(model, index, model.Nodes[node.ChildIndex], polygonId);
                     }
                 }
                 if (node.NextIndex != UInt16.MaxValue)
                 {
-                    GetItems(model, model.Nodes[node.NextIndex], polygonId);
+                    GetItems(model, index, model.Nodes[node.NextIndex], polygonId);
                 }
             }
         }
