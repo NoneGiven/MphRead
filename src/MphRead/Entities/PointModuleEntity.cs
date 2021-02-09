@@ -4,7 +4,7 @@ namespace MphRead.Entities
     {
         private readonly PointModuleEntityData _data;
 
-        public PointModuleEntity(PointModuleEntityData data) : base(NewEntityType.Platform)
+        public PointModuleEntity(PointModuleEntityData data) : base(NewEntityType.PointModule)
         {
             _data = data;
             Id = data.Header.EntityId;

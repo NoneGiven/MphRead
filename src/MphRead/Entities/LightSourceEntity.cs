@@ -13,7 +13,7 @@ namespace MphRead.Entities
         private readonly Vector3 _light2Vector;
         private readonly Vector3 _light2Color;
 
-        public LightSourceEntity(LightSourceEntityData data) : base(NewEntityType.PlayerSpawn)
+        public LightSourceEntity(LightSourceEntityData data) : base(NewEntityType.LightSource)
         {
             _data = data;
             Id = data.Header.EntityId;
