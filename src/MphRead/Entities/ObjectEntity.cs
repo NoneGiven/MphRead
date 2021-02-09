@@ -17,6 +17,10 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            if (data.EffectId > 0)
+            {
+                _effectVolume = SceneSetup.TransformVolume(data.Volume, Transform); // ntodo: no public statics
+            }
             if (data.ModelId == UInt32.MaxValue)
             {
                 UsePlaceholderModel();
@@ -26,10 +30,6 @@ namespace MphRead.Entities
                 ObjectMetadata meta = Metadata.GetObjectById((int)data.ModelId);
                 Recolor = meta.RecolorId;
                 NewModel model = Read.GetNewModel(meta.Name);
-                if (data.EffectId > 0)
-                {
-                    _effectVolume = SceneSetup.TransformVolume(data.Volume, Transform); // ntodo: no public statics
-                }
                 if (meta != null && meta.AnimationIds[0] == 0xFF)
                 {
                     model.Animations.NodeGroupId = -1;
