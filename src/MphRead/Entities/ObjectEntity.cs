@@ -71,5 +71,13 @@ namespace MphRead.Entities
             ShouldDraw = !_scanVisorOnly || scene.ScanVisor;
             base.Process(scene);
         }
+
+        public override void GetDisplayVolumes(NewScene scene)
+        {
+            if (_data.EffectId > 0 && scene.ShowVolumes == VolumeDisplay.Object)
+            {
+                AddVolumeItem(_effectVolume, Vector3.UnitX, scene);
+            }
+        }
     }
 }
