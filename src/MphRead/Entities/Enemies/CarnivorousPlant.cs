@@ -4,7 +4,10 @@ namespace MphRead.Entities.Enemies
     {
         public Enemy51Entity(EnemyInstanceEntityData data) : base(data)
         {
-            ObjectMetadata meta = Metadata.GetObjectById(data.Spawner.Data.TextureId);
+            Transform = data.Spawner.Transform;
+            _initialPosition = Position;
+            var spawner = (EnemySpawnEntity)data.Spawner;
+            ObjectMetadata meta = Metadata.GetObjectById(spawner.Data.TextureId);
             NewModel enemy = Read.GetNewModel(meta.Name);
             _models.Add(enemy);
         }

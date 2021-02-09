@@ -55,9 +55,13 @@ namespace MphRead.Entities
         }
 
         // todo: entity node ref
-        public static EnemyEntity? SpawnEnemy(EnemySpawnEntity spawner, EnemyType type)
+        public static EnemyEntity? SpawnEnemy(EntityBase spawner, EnemyType type)
         {
-            if (type == EnemyType.CarnivorousPlant)
+            if (type == EnemyType.ForceFieldLock)
+            {
+                return new Enemy49Entity(new EnemyInstanceEntityData(type, spawner));
+            }
+            else if (type == EnemyType.CarnivorousPlant)
             {
                 return new Enemy51Entity(new EnemyInstanceEntityData(type, spawner));
             }

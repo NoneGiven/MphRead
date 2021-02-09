@@ -230,7 +230,6 @@ namespace MphRead.Entities
             }
         }
 
-        // ntodo: display planes
         private readonly struct PortalNodeRef
         {
             public readonly CollisionPortal Portal;

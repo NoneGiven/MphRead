@@ -6,9 +6,9 @@ namespace MphRead.Entities
     public readonly struct EnemyInstanceEntityData
     {
         public readonly EnemyType Type;
-        public readonly EnemySpawnEntity Spawner;
+        public readonly EntityBase Spawner;
 
-        public EnemyInstanceEntityData(EnemyType type, EnemySpawnEntity spawner)
+        public EnemyInstanceEntityData(EnemyType type, EntityBase spawner)
         {
             Type = type;
             Spawner = spawner;
@@ -18,13 +18,11 @@ namespace MphRead.Entities
     public class EnemyEntity : VisibleEntityBase
     {
         protected readonly EnemyInstanceEntityData _data;
-        protected readonly Vector3 _initialPosition;
+        protected Vector3 _initialPosition; // todo: use init
 
         public EnemyEntity(EnemyInstanceEntityData data) : base(NewEntityType.EnemyInstance)
         {
             _data = data;
-            Transform = data.Spawner.Transform;
-            _initialPosition = Position;
         }
     }
 }

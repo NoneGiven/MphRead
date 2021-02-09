@@ -5,7 +5,10 @@ namespace MphRead.Entities
     public class ForceFieldEntity : VisibleEntityBase
     {
         private readonly ForceFieldEntityData _data;
-        private readonly NewModel _enemyModel;
+        private bool _active;
+        private bool _lockSpawned = false;
+
+        public ForceFieldEntityData Data => _data;
 
         public ForceFieldEntity(ForceFieldEntityData data) : base(NewEntityType.ForceField)
         {
@@ -17,22 +20,22 @@ namespace MphRead.Entities
             NewModel model = Read.GetNewModel("ForceField");
             model.Active = data.Active != 0;
             _models.Add(model);
-            // ntodo: enemy entities
-            _enemyModel = Read.GetNewModel("ForceFieldLock");
-            //Vector3 position = model.Position;
-            //position.X += Fixed.ToFloat(409) * vec2.X;
-            //position.Y += Fixed.ToFloat(409) * vec2.Y;
-            //position.Z += Fixed.ToFloat(409) * vec2.Z;
-            //enemy.Position = enemy.InitialPosition = position;
-            //enemy.Vector1 = vec1;
-            //enemy.Vector2 = vec2;
-            //ComputeModelMatrices(enemy, vec2, vec1);
-            //ComputeNodeMatrices(enemy, index: 0);
-            //if (data.Active == 0 || data.Type == 9)
-            //{
-            //    enemy.Active = false;
-            //}
-            //_models.Add(enemy);
+            _active = data.Active != 0;
+        }
+
+        public override void Process(NewScene scene)
+        {
+            // todo: despawn when deactivated/destroyed
+            if (_active && _data.Type != 9 && !_lockSpawned)
+            {
+                EnemyEntity? enemy = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock);
+                if (enemy != null)
+                {
+                    scene.AddEntity(enemy);
+                    _lockSpawned = true;
+                }
+            }
+            base.Process(scene);
         }
     }
 }
