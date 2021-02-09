@@ -653,6 +653,49 @@ namespace MphRead
             return TransformVolume(new CollisionVolume(vol), transform);
         }
 
+        public static CollisionVolume MoveVolume(CollisionVolume vol, Vector3 position)
+        {
+            if (vol.Type == VolumeType.Box)
+            {
+                return new CollisionVolume(
+                    vol.BoxVector1 + position,
+                    vol.BoxVector2 + position,
+                    vol.BoxVector3 + position,
+                    vol.BoxPosition + position,
+                    vol.BoxDot1,
+                    vol.BoxDot2,
+                    vol.BoxDot3
+                );
+            }
+            if (vol.Type == VolumeType.Cylinder)
+            {
+                return new CollisionVolume(
+                    vol.CylinderVector + position,
+                    vol.CylinderPosition + position,
+                    vol.CylinderRadius,
+                    vol.CylinderDot
+                );
+            }
+            if (vol.Type == VolumeType.Sphere)
+            {
+                return new CollisionVolume(
+                    vol.SpherePosition + position,
+                    vol.SphereRadius
+                );
+            }
+            throw new ProgramException($"Invalid volume type {vol.Type}.");
+        }
+
+        public static CollisionVolume MoveVolume(RawCollisionVolume vol, Vector3 position)
+        {
+            return MoveVolume(new CollisionVolume(vol), position);
+        }
+
+        public static CollisionVolume MoveVolume(FhRawCollisionVolume vol, Vector3 position)
+        {
+            return MoveVolume(new CollisionVolume(vol), position);
+        }
+
         // todo: this is duplicated
         private static Vector3 Vector3ByMatrix4(Vector3 vector, Matrix4 matrix)
         {

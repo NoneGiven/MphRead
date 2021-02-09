@@ -19,7 +19,7 @@ namespace MphRead.Entities
             _parentEventColor = Metadata.GetEventColor(data.ParentEvent);
             _childEventColor = Metadata.GetEventColor(data.ChildEvent);
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            _volume = SceneSetup.TransformVolume(_data.Volume, Transform);
+            _volume = SceneSetup.MoveVolume(_data.Volume, Position);
             UsePlaceholderModel();
         }
 
@@ -49,7 +49,7 @@ namespace MphRead.Entities
             _parentEventColor = Metadata.GetEventColor(data.ParentEvent);
             _childEventColor = Metadata.GetEventColor(data.ChildEvent);
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            _volume = SceneSetup.TransformVolume(_data.ActiveVolume, Transform);
+            _volume = SceneSetup.MoveVolume(_data.ActiveVolume, Position);
             UsePlaceholderModel();
         }
 
