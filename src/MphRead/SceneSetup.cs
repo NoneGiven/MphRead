@@ -197,11 +197,11 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Item)
                 {
-                    results.Add(new ItemEntity(((Entity<ItemEntityData>)entity).Data));
+                    results.Add(new ItemSpawnEntity(((Entity<ItemEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhItem)
                 {
-                    results.Add(new FhItemEntity(((Entity<FhItemEntityData>)entity).Data));
+                    results.Add(new FhItemSpawnEntity(((Entity<FhItemEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.Enemy)
                 {
