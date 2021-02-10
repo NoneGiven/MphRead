@@ -2556,8 +2556,8 @@ namespace MphRead
                     {
                         module.SetCurrent();
                     }
-                } 
-            }  
+                }
+            }
         }
     }
 

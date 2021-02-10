@@ -84,6 +84,10 @@ namespace MphRead.Entities
         public override void Process(NewScene scene)
         {
             UpdateLightSources(scene);
+            if (_respawnTimer > 0)
+            {
+                _respawnTimer--;
+            }
             base.Process(scene);
         }
 
@@ -106,6 +110,10 @@ namespace MphRead.Entities
         {
             // get current percentage through the first 1/3 of the respawn cooldown
             float timePct = 1 - ((_respawnTimer - (2 / 3f * _respawnCooldown)) / (1 / 3f * _respawnCooldown));
+            if (timePct < 0 || timePct > 1)
+            {
+                return;
+            }
             float scale = timePct / 2 + 0.1f;
             // todo: the angle stuff could be removed
             float angle = MathF.Sin(MathHelper.DegreesToRadians(270 - 90 * timePct));
