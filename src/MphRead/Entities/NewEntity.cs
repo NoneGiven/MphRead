@@ -626,22 +626,4 @@ namespace MphRead.Entities
             _models.Add(model);
         }
     }
-
-    // todo: for player
-    //Vector3 emission = Vector3.Zero;
-    //if (model.DoubleDamage && !model.DoubleDamageSkipMaterials.Contains(material))
-    //{
-    //    if (material.Lighting > 0 && node.BillboardMode == BillboardMode.None)
-    //    {
-    //        emission = Metadata.EmissionGray;
-    //    }
-    //}
-    //else if (model.Team == Team.Orange)
-    //{
-    //    emission = Metadata.EmissionOrange;
-    //}
-    //else if (model.Team == Team.Green)
-    //{
-    //    emission = Metadata.EmissionGreen;
-    //}
 }

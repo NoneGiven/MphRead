@@ -7,6 +7,7 @@ namespace MphRead.Entities
     public class PlayerEntity : VisibleEntityBase
     {
         public Hunter Hunter { get; }
+        public Team Team { get; set; }
         private readonly NewModel _bipedModel = null!;
         private readonly NewModel _altModel = null!;
         private readonly NewModel _gunModel = null!;
@@ -90,6 +91,14 @@ namespace MphRead.Entities
             if (_doubleDamage && (Hunter != Hunter.Spire || !(model == _gunModel && index == 0)) && material.Lighting > 0)
             {
                 return Metadata.EmissionGray;
+            }
+            if (Team == Team.Orange)
+            {
+                return Metadata.EmissionOrange;
+            }
+            if (Team == Team.Green)
+            {
+                return Metadata.EmissionGreen;
             }
             return base.GetEmission(model, material, index);
         }
