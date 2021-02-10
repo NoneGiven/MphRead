@@ -1989,11 +1989,18 @@ namespace MphRead
             }
             else
             {
-                PointModuleEntity? entity = PointModuleEntity.Current.Next ?? PointModuleEntity.Current.Prev;
-                if (entity != null)
+                PointModuleEntity? next = PointModuleEntity.Current.Next ?? PointModuleEntity.Current.Prev;
+                if (next != null && next != PointModuleEntity.Current)
                 {
-                    entity.SetCurrent();
+                    next.SetCurrent();
                 }
+                else
+                {
+                    if (TryGetEntity(PointModuleEntity.StartId, out EntityBase? entity) && entity is PointModuleEntity module)
+                    {
+                        module.SetCurrent();
+                    }
+                } 
             }  
         }
     }

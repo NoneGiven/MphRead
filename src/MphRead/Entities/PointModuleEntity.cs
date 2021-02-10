@@ -34,7 +34,12 @@ namespace MphRead.Entities
             {
                 _prev = (PointModuleEntity)entity;
             }
-            if (Id == StartId)
+        }
+
+        public override void Process(NewScene scene)
+        {
+            base.Process(scene);
+            if (_current == null && Id == StartId)
             {
                 SetCurrent();
             }
@@ -56,7 +61,7 @@ namespace MphRead.Entities
             while (entity != null && i < 5)
             {
                 entity.SetActive(state);
-                entity = entity.Next ?? entity.Prev;
+                entity = entity.Next;
                 i++;
             }
         }
