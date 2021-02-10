@@ -9,6 +9,9 @@ namespace MphRead.Entities
         public PointModuleEntity? Prev => _prev;
 
         private static PointModuleEntity? _current;
+        public static PointModuleEntity? Current => _current;
+
+        public const int StartId = 50;
 
         public PointModuleEntity(PointModuleEntityData data) : base(NewEntityType.PointModule)
         {
@@ -31,7 +34,7 @@ namespace MphRead.Entities
             {
                 _prev = (PointModuleEntity)entity;
             }
-            if (Id == 50)
+            if (Id == StartId)
             {
                 SetCurrent();
             }
@@ -41,22 +44,20 @@ namespace MphRead.Entities
         {
             if (_current != this)
             {
-                int i = 0;
-                PointModuleEntity? entity = _current;
-                while (entity != null && i < 5)
-                {
-                    entity.SetActive(false);
-                    entity = entity.Next;
-                    i++;
-                }
-                i = 0;
-                entity = _current = this;
-                while (entity != null && i < 5)
-                {
-                    entity.SetActive(true);
-                    entity = entity.Next;
-                    i++;
-                }
+                UpdateChain(_current, false);
+                _current = this;
+                UpdateChain(_current, true);
+            }
+        }
+
+        private void UpdateChain(PointModuleEntity? entity, bool state)
+        {
+            int i = 0;
+            while (entity != null && i < 5)
+            {
+                entity.SetActive(state);
+                entity = entity.Next ?? entity.Prev;
+                i++;
             }
         }
 

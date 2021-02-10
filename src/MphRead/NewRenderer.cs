@@ -149,17 +149,6 @@ namespace MphRead
                 _entityMap.Add(entity.Id, entity);
                 InitRenderable(entity);
             }
-            // todo: move more stuff to mutable class state
-            //if (_lastPointModule != -1)
-            //{
-            //    ushort nextId = entities[_lastPointModule].Entity!.GetChildId();
-            //    for (int i = 0; i < 5; i++)
-            //    {
-            //        Model model = entities[nextId];
-            //        model.ScanVisorOnly = false;
-            //        nextId = model.Entity!.GetChildId();
-            //    }
-            //}
             _light1Vector = meta.Light1Vector;
             _light1Color = new Vector3(
                 meta.Light1Color.Red / 31.0f,
@@ -1642,7 +1631,7 @@ namespace MphRead
             {
                 if (e.Alt)
                 {
-                    //UpdatePointModule(); // undocumented
+                    UpdatePointModule(); // undocumented
                 }
                 else
                 {
@@ -1986,6 +1975,25 @@ namespace MphRead
         {
             Pivot,
             Roam
+        }
+
+        private void UpdatePointModule()
+        {
+            if (PointModuleEntity.Current == null)
+            {
+                if (TryGetEntity(PointModuleEntity.StartId, out EntityBase? entity) && entity is PointModuleEntity module)
+                {
+                    module.SetCurrent();
+                }
+            }
+            else
+            {
+                PointModuleEntity? entity = PointModuleEntity.Current.Next ?? PointModuleEntity.Current.Prev;
+                if (entity != null)
+                {
+                    entity.SetCurrent();
+                }
+            }  
         }
     }
 
