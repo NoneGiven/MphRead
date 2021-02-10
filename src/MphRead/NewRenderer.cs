@@ -63,6 +63,7 @@ namespace MphRead
 
         private readonly List<IRenderable> _renderables = new List<IRenderable>();
         private readonly List<EntityBase> _entities = new List<EntityBase>();
+        private readonly List<EntityBase> _entitySort = new List<EntityBase>();
         private readonly Dictionary<int, EntityBase> _entityMap = new Dictionary<int, EntityBase>();
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
@@ -137,6 +138,7 @@ namespace MphRead
                 = SceneSetup.LoadNewRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
             _renderables.Add(room);
             _entities.Add(room);
+            _entitySort.Add(room);
             InitRenderable(room);
             _cameraMode = CameraMode.Roam;
             if (meta.InGameName != null)
@@ -147,6 +149,7 @@ namespace MphRead
             {
                 _renderables.Add(entity);
                 _entities.Add(entity);
+                _entitySort.Add(entity);
                 Debug.Assert(entity.Id != -1);
                 _entityMap.Add(entity.Id, entity);
                 InitRenderable(entity);
@@ -187,6 +190,7 @@ namespace MphRead
             var entity = new ModelEntity(Read.GetNewModel(name), recolor);
             _renderables.Add(entity);
             _entities.Add(entity);
+            _entitySort.Add(entity);
             if (entity.Id != -1)
             {
                 _entityMap.Add(entity.Id, entity);
@@ -198,6 +202,7 @@ namespace MphRead
         {
             _renderables.Add(entity);
             _entities.Add(entity);
+            _entitySort.Add(entity);
             if (entity.Id != -1)
             {
                 _entityMap.Add(entity.Id, entity);
@@ -211,6 +216,7 @@ namespace MphRead
             var entity = new PlayerEntity(hunter, recolor);
             _renderables.Add(entity);
             _entities.Add(entity);
+            _entitySort.Add(entity);
             if (entity.Id != -1)
             {
                 _entityMap.Add(entity.Id, entity);
@@ -1502,12 +1508,12 @@ namespace MphRead
                 }
                 _freeRenderItems.Enqueue(item);
             }
-            _entities.Sort(CompareEntities);
+            _entitySort.Sort(CompareEntities);
             _nextPolygonId = 1;
 
-            for (int i = 0; i < _entities.Count; i++)
+            for (int i = 0; i < _entitySort.Count; i++)
             {
-                EntityBase entity = _entities[i];
+                EntityBase entity = _entitySort[i];
                 if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
                 {
                     entity.Process(this);
