@@ -29,7 +29,7 @@ namespace MphRead.Entities
             _flags &= 0xFB;
             _flags &= 0xF7;
             _flags &= 0xEF;
-            if (data.EffectId > 0)
+            if (data.EffectId > 0 && (data.EffectFlags & 1) != 0)
             {
                 _effectVolume = SceneSetup.TransformVolume(data.Volume, Transform); // ntodo: no public statics
             }

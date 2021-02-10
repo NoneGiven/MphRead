@@ -1970,6 +1970,7 @@ namespace MphRead.Effects
         {
             if (DrawNode)
             {
+                NewModel model = Owner.Model;
                 Node node = Owner.Nodes[ParticleId];
                 Mesh mesh = Owner.Model.Meshes[node.MeshId / 2];
                 Material material = Owner.Model.Materials[MaterialId];
@@ -1992,7 +1993,8 @@ namespace MphRead.Effects
                 }
                 material.CurrentDiffuse = Color;
                 material.CurrentAlpha = Alpha;
-                Debug.Assert(Owner.Model.NodeMatrixIds.Count == 0);
+                Debug.Assert(model.NodeMatrixIds.Count == 0);
+                scene.UpdateMaterials(model, 0); // probably not necessary unless the model has texture animation
                 scene.AddRenderItem(material, scene.GetNextPolygonId(), 1, Vector3.Zero, LightInfo.Zero, texcoordMtx,
                     transform, mesh.ListId, 0, Array.Empty<float>(), null, null);
             }

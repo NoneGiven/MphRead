@@ -185,9 +185,10 @@ namespace MphRead
             _cameraMode = CameraMode.Roam;
         }
 
-        public void AddModel(string name, int recolor = 0)
+        public void AddModel(string name, int recolor = 0, bool firstHunt = false)
         {
-            var entity = new ModelEntity(Read.GetNewModel(name), recolor);
+            NewModel model = firstHunt ? Read.GetFhNewModel(name) : Read.GetNewModel(name);
+            var entity = new ModelEntity(model, recolor);
             _renderables.Add(entity);
             _entities.Add(entity);
             _entitySort.Add(entity);
@@ -305,7 +306,7 @@ namespace MphRead
 
             GL.UseProgram(_shaderProgramId);
 
-            var floats = new List<float>();
+            var floats = new List<float>(Metadata.ToonTable.Count * 3);
             foreach (Vector3 vector in Metadata.ToonTable)
             {
                 floats.Add(vector.X);
@@ -2610,9 +2611,9 @@ namespace MphRead
             Scene.AddRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
         }
 
-        public void AddModel(string name, int recolor = 0)
+        public void AddModel(string name, int recolor = 0, bool firstHunt = false)
         {
-            Scene.AddModel(name, recolor);
+            Scene.AddModel(name, recolor, firstHunt);
         }
 
         public void AddPlayer(Hunter hunter, int recolor = 0)
