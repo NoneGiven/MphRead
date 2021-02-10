@@ -212,9 +212,9 @@ namespace MphRead
             entity.Init(this);
         }
 
-        public void AddPlayer(Hunter hunter, int recolor = 0)
+        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null)
         {
-            var entity = new PlayerEntity(hunter, recolor);
+            var entity = new PlayerEntity(hunter, recolor, position);
             _renderables.Add(entity);
             _entities.Add(entity);
             _entitySort.Add(entity);
@@ -2616,9 +2616,9 @@ namespace MphRead
             Scene.AddModel(name, recolor, firstHunt);
         }
 
-        public void AddPlayer(Hunter hunter, int recolor = 0)
+        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null)
         {
-            Scene.AddPlayer(hunter, recolor);
+            Scene.AddPlayer(hunter, recolor, position);
         }
 
         protected override void OnLoad()
