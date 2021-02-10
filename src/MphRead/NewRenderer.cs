@@ -182,7 +182,7 @@ namespace MphRead
             _cameraMode = CameraMode.Roam;
         }
 
-        public void AddEntity(string name, int recolor = 0)
+        public void AddModel(string name, int recolor = 0)
         {
             var entity = new ModelEntity(Read.GetNewModel(name), recolor);
             _renderables.Add(entity);
@@ -2604,9 +2604,9 @@ namespace MphRead
             Scene.AddRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
         }
 
-        public void AddEntity(string name, int recolor = 0)
+        public void AddModel(string name, int recolor = 0)
         {
-            Scene.AddEntity(name, recolor);
+            Scene.AddModel(name, recolor);
         }
 
         public void AddPlayer(Hunter hunter, int recolor = 0)

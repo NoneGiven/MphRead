@@ -1994,10 +1994,18 @@ namespace MphRead.Effects
                 {
                     transform = NodeTransform;
                 }
+                Matrix4 texcoordMtx = Matrix4.Identity;
+                if (material.TexgenMode == TexgenMode.Texcoord)
+                {
+                    texcoordMtx = Matrix4.CreateTranslation(material.ScaleS * material.TranslateS,
+                        material.ScaleT * material.TranslateT, 0.0f);
+                    texcoordMtx = Matrix4.CreateScale(material.ScaleS, material.ScaleT, 1.0f) * texcoordMtx;
+                    texcoordMtx = Matrix4.CreateRotationZ(material.RotateZ) * texcoordMtx;
+                }
                 material.CurrentDiffuse = Color;
                 material.CurrentAlpha = Alpha;
                 Debug.Assert(Owner.Model.NodeMatrixIds.Count == 0);
-                scene.AddRenderItem(material, scene.GetNextPolygonId(), 1, Vector3.Zero, LightInfo.Zero, Matrix4.Identity,
+                scene.AddRenderItem(material, scene.GetNextPolygonId(), 1, Vector3.Zero, LightInfo.Zero, texcoordMtx,
                     transform, mesh.ListId, 0, Array.Empty<float>(), null, null);
             }
             else
