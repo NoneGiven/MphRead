@@ -19,9 +19,14 @@ namespace MphRead.Entities
         private bool _altForm = false;
         private bool _doubleDamage = false;
 
-        public PlayerEntity(Hunter hunter) : base(NewEntityType.Player)
+        public PlayerEntity(Hunter hunter, int recolor = 0, Vector3? position = null) : base(NewEntityType.Player)
         {
             Hunter = hunter;
+            if (position.HasValue)
+            {
+                Position = position.Value;
+            }
+            Recolor = recolor;
             // todo: lod1
             IReadOnlyList<string> models = Metadata.HunterModels[Hunter];
             Debug.Assert(models.Count == 3);
@@ -44,6 +49,8 @@ namespace MphRead.Entities
             }
             _dblDmgModel = Read.GetNewModel("doubleDamage_img");
             _scaleMtx = Matrix4.CreateScale(Metadata.HunterScales[Hunter]);
+            // temporary
+            _bipedModel.Animations.NodeGroupId = 4;
         }
 
         protected override bool GetModelActive(NewModel model, int index)

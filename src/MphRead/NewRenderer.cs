@@ -204,6 +204,18 @@ namespace MphRead
             entity.Init(this);
         }
 
+        public void AddPlayer(Hunter hunter, int recolor = 0)
+        {
+            var entity = new PlayerEntity(hunter, recolor);
+            _renderables.Add(entity);
+            _entities.Add(entity);
+            if (entity.Id != -1)
+            {
+                _entityMap.Add(entity.Id, entity);
+            }
+            InitRenderable(entity);
+        }
+
         public bool TryGetEntity(int id, [NotNullWhen(true)] out EntityBase? entity)
         {
             return _entityMap.TryGetValue(id, out entity);
@@ -2051,6 +2063,11 @@ namespace MphRead
         public void AddEntity(string name, int recolor = 0)
         {
             Scene.AddEntity(name, recolor);
+        }
+
+        public void AddPlayer(Hunter hunter, int recolor = 0)
+        {
+            Scene.AddPlayer(hunter, recolor);
         }
 
         protected override void OnLoad()

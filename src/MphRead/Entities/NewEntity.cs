@@ -395,7 +395,7 @@ namespace MphRead.Entities
         private readonly Dictionary<NewModel, int> _textureAnimFrames = new Dictionary<NewModel, int>();
         private readonly Dictionary<NewModel, int> _nodeAnimFrames = new Dictionary<NewModel, int>();
 
-        // ntodo: maybe remove CurrentFrame from these classes
+        // ntodo: animation refactoring (all state needs to be on the entity)
         private void UpdateAnimationFrames(NewModel model)
         {
             if (model.Animations.MaterialGroup != null)
