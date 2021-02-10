@@ -432,11 +432,9 @@ namespace MphRead.Models
         public bool AltForm { get; set; }
         public bool Frozen { get; set; }
         // todo: load/init/cache/etc.
-        [NotNull, DisallowNull]
         private static Model? _altIceModel;
         private static Model? _samusIceModel;
         private static Model? _noxusIceModel;
-        [NotNull, DisallowNull]
         private Model? _bipedIceModel;
 
         public PlayerModel(string name, Header header, IReadOnlyList<RawNode> nodes,
@@ -483,7 +481,7 @@ namespace MphRead.Models
                 if (AltForm)
                 {
                     // todo: collision radius scale, height offset
-                    Node node = _altIceModel.Nodes[0];
+                    Node node = _altIceModel!.Nodes[0];
                     Mesh mesh = _altIceModel.Meshes[node.MeshId / 2];
                     Material material = _altIceModel.Materials[mesh.MaterialId];
                     //var meshInfo = new MeshInfo(_altIceModel, node, mesh, material, polygonId++, 1, Transform);
@@ -492,7 +490,7 @@ namespace MphRead.Models
                 }
                 else
                 {
-                    for (int j = 0; j < _bipedIceModel.Nodes.Count; j++)
+                    for (int j = 0; j < _bipedIceModel!.Nodes.Count; j++)
                     {
                         _bipedIceModel.Nodes[j].Animation = Nodes[j].Animation;
                     }

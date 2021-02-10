@@ -40,8 +40,7 @@ namespace MphRead.Effects
 
     public class SingleParticle : IDrawable
     {
-        [NotNull, DisallowNull]
-        public Particle? ParticleDefinition { get; set; }
+        public Particle ParticleDefinition { get; set; } = null!;
         public Vector3 Position { get; set; }
         public Vector3 Color { get; set; }
         public float Alpha { get; set; }
@@ -109,8 +108,7 @@ namespace MphRead.Effects
 
     public class NewSingleParticle : IDrawable
     {
-        [NotNull, DisallowNull]
-        public NewParticle? ParticleDefinition { get; set; }
+        public NewParticle ParticleDefinition { get; set; } = null!;
         public Vector3 Position { get; set; }
         public Vector3 Color { get; set; }
         public float Alpha { get; set; }
@@ -209,10 +207,8 @@ namespace MphRead.Effects
     [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
     public abstract class EffectFuncBase
     {
-        [NotNull, DisallowNull]
-        public virtual IReadOnlyDictionary<FuncAction, FxFuncInfo>? Actions { get; set; }
-        [NotNull, DisallowNull]
-        public virtual IReadOnlyDictionary<uint, FxFuncInfo>? Funcs { get; set; }
+        public virtual IReadOnlyDictionary<FuncAction, FxFuncInfo> Actions { get; set; } = null!;
+        public virtual IReadOnlyDictionary<uint, FxFuncInfo> Funcs { get; set; } = null!;
 
         protected abstract void FxFunc01(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec);
 
@@ -708,8 +704,7 @@ namespace MphRead.Effects
         public List<EffectParticle> Particles { get; } = new List<EffectParticle>(); // todo: pre-size?
 
         public EffectEntry? EffectEntry { get; set; }
-        [NotNull, DisallowNull]
-        public Model? Model { get; set; }
+        public Model Model { get; set; } = null!;
         public List<Node> Nodes { get; } = new List<Node>(); // todo: pre-size?
 
         protected override void FxFunc01(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
@@ -861,8 +856,7 @@ namespace MphRead.Effects
         public List<NewEffectParticle> Particles { get; } = new List<NewEffectParticle>(); // todo: pre-size?
 
         public NewEffectEntry? EffectEntry { get; set; }
-        [NotNull, DisallowNull]
-        public NewModel? Model { get; set; }
+        public NewModel Model { get; set; } = null!;
         public List<Node> Nodes { get; } = new List<Node>(); // todo: pre-size?
 
         protected override void FxFunc01(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
@@ -1014,8 +1008,7 @@ namespace MphRead.Effects
         public float RwField3 { get; set; }
         public float RwField4 { get; set; }
 
-        [NotNull, DisallowNull]
-        public EffectElementEntry? Owner { get; set; }
+        public EffectElementEntry Owner { get; set; } = null!;
         public int MaterialId { get; set; }
         public int SetVecsId { get; set; }
         public int DrawId { get; set; }
@@ -1037,15 +1030,13 @@ namespace MphRead.Effects
         public bool BillboardNode { get; private set; }
         public Matrix4 NodeTransform { get; private set; }
 
-        [NotNull, DisallowNull]
-        public override IReadOnlyDictionary<uint, FxFuncInfo>? Funcs
+        public override IReadOnlyDictionary<uint, FxFuncInfo> Funcs
         {
             get => Owner.Funcs;
             set => Owner.Funcs = value;
         }
 
-        [NotNull, DisallowNull]
-        public override IReadOnlyDictionary<FuncAction, FxFuncInfo>? Actions
+        public override IReadOnlyDictionary<FuncAction, FxFuncInfo> Actions
         {
             get => Owner.Actions;
             set => Owner.Actions = value;
@@ -1509,8 +1500,7 @@ namespace MphRead.Effects
         public float RwField3 { get; set; }
         public float RwField4 { get; set; }
 
-        [NotNull, DisallowNull]
-        public NewEffectElementEntry? Owner { get; set; }
+        public NewEffectElementEntry Owner { get; set; } = null!;
         public int MaterialId { get; set; } // updated when ParticleId changes during processing
         public int SetVecsId { get; set; }
         public int DrawId { get; set; }
@@ -1532,15 +1522,13 @@ namespace MphRead.Effects
         public bool BillboardNode { get; private set; }
         public Matrix4 NodeTransform { get; private set; }
 
-        [NotNull, DisallowNull]
-        public override IReadOnlyDictionary<uint, FxFuncInfo>? Funcs
+        public override IReadOnlyDictionary<uint, FxFuncInfo> Funcs
         {
             get => Owner.Funcs;
             set => Owner.Funcs = value;
         }
 
-        [NotNull, DisallowNull]
-        public override IReadOnlyDictionary<FuncAction, FxFuncInfo>? Actions
+        public override IReadOnlyDictionary<FuncAction, FxFuncInfo> Actions
         {
             get => Owner.Actions;
             set => Owner.Actions = value;
