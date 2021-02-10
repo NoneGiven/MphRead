@@ -7,22 +7,26 @@ namespace MphRead.Entities
         private readonly LightSourceEntityData _data;
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0xDE, 0xAD).AsVector4();
 
-        private readonly CollisionVolume _volume;
-        private readonly Vector3 _light1Vector;
-        private readonly Vector3 _light1Color;
-        private readonly Vector3 _light2Vector;
-        private readonly Vector3 _light2Color;
+        public CollisionVolume Volume { get; }
+        public bool Light1Enabled { get; }
+        public Vector3 Light1Vector { get; }
+        public Vector3 Light1Color { get; }
+        public bool Light2Enabled { get; }
+        public Vector3 Light2Vector { get; }
+        public Vector3 Light2Color { get; }
 
         public LightSourceEntity(LightSourceEntityData data) : base(NewEntityType.LightSource)
         {
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            _volume = SceneSetup.MoveVolume(_data.Volume, Position);
-            _light1Vector = _data.Light1Vector.ToFloatVector();
-            _light1Color = _data.Light1Color.AsVector3();
-            _light2Vector = _data.Light2Vector.ToFloatVector();
-            _light2Color = _data.Light2Color.AsVector3();
+            Volume = SceneSetup.MoveVolume(_data.Volume, Position);
+            Light1Enabled = _data.Light1Enabled != 0;
+            Light1Vector = _data.Light1Vector.ToFloatVector();
+            Light1Color = _data.Light1Color.AsVector3();
+            Light2Enabled = _data.Light2Enabled != 0;
+            Light2Vector = _data.Light2Vector.ToFloatVector();
+            Light2Color = _data.Light2Color.AsVector3();
             AddPlaceholderModel();
         }
 
@@ -33,13 +37,13 @@ namespace MphRead.Entities
                 Vector3 color = Vector3.Zero;
                 if (scene.ShowVolumes == VolumeDisplay.LightColor1 && _data.Light1Enabled != 0)
                 {
-                    color = _light1Color;
+                    color = Light1Color;
                 }
                 else if (scene.ShowVolumes == VolumeDisplay.LightColor2 && _data.Light2Enabled != 0)
                 {
-                    color = _light2Color;
+                    color = Light2Color;
                 }
-                AddVolumeItem(_volume, color, scene);
+                AddVolumeItem(Volume, color, scene);
             }
         }
     }

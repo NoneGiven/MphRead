@@ -109,6 +109,7 @@ namespace MphRead
         public Vector3 Light1Color => _light1Color;
         public Vector3 Light2Vector => _light2Vector;
         public Vector3 Light2Color => _light2Color;
+        public IReadOnlyList<EntityBase> Entities => _entities;
 
         public const int DisplaySphereStacks = 16;
         public const int DisplaySphereSectors = 24;
