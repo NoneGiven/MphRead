@@ -654,6 +654,16 @@ namespace MphRead
             }
         }
 
+        public int BindGetTexture(NewModel model, int textureId, int paletteId, int recolorId)
+        {
+            if (_texPalMap.TryGetValue(model.Id, out NewTextureMap? value))
+            {
+                return value.Get(textureId, paletteId, recolorId).BindingId;
+            }
+            BindTexture(model, textureId, paletteId, recolorId);
+            return _textureCount;
+        }
+
         private bool BindTexture(NewModel model, int textureId, int paletteId, int recolorId)
         {
             _textureCount++;
@@ -849,7 +859,7 @@ namespace MphRead
 
         public void AddRenderItem(Material material, int polygonId, float alphaScale, Vector3 emission, LightInfo lightInfo,
             Matrix4 texcoordMatrix, Matrix4 transform, int listId, int matrixStackCount, IReadOnlyList<float> matrixStack,
-            Vector4? overrideColor, Vector4? paletteOverride)
+            Vector4? overrideColor, Vector4? paletteOverride, int? bindingOverride = null)
         {
             RenderItem item = GetRenderItem();
             item.Type = RenderItemType.Mesh;
@@ -865,11 +875,22 @@ namespace MphRead
             item.Specular = material.CurrentSpecular;
             item.Emission = emission;
             item.LightInfo = lightInfo;
-            item.TexgenMode = material.TexgenMode;
-            item.XRepeat = material.XRepeat;
-            item.YRepeat = material.YRepeat;
-            item.HasTexture = material.TextureId != UInt16.MaxValue;
-            item.TextureBindingId = material.TextureBindingId;
+            if (bindingOverride.HasValue)
+            {
+                item.TexgenMode = TexgenMode.Normal;
+                item.XRepeat = RepeatMode.Mirror;
+                item.YRepeat = RepeatMode.Mirror;
+                item.HasTexture = true;
+                item.TextureBindingId = bindingOverride.Value;
+            }
+            else
+            {
+                item.TexgenMode = material.TexgenMode;
+                item.XRepeat = material.XRepeat;
+                item.YRepeat = material.YRepeat;
+                item.HasTexture = material.TextureId != UInt16.MaxValue;
+                item.TextureBindingId = material.TextureBindingId;
+            }
             item.TexcoordMatrix = texcoordMatrix;
             item.Transform = transform;
             item.ListId = listId;

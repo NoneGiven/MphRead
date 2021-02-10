@@ -259,9 +259,9 @@ namespace MphRead.Entities
             return new LightInfo(scene.Light1Vector, scene.Light1Color, scene.Light2Vector, scene.Light2Color);
         }
 
-        protected virtual Material GetMaterial(NewModel model, int materialId)
+        protected virtual int? GetBindingOverride(NewModel model, Material material, int index)
         {
-            return model.Materials[materialId];
+            return null;
         }
 
         public override void GetDrawInfo(NewScene scene)
@@ -289,11 +289,13 @@ namespace MphRead.Entities
                         {
                             continue;
                         }
-                        Material material = GetMaterial(model, mesh.MaterialId);
-                        Matrix4 texcoordMatrix = GetTexcoordMatrix(model, material, node, scene);
-                        scene.AddRenderItem(material, polygonId, Alpha, emission: Vector3.Zero, GetLightInfo(model, scene),
+                        Material material = model.Materials[mesh.MaterialId];
+                        Vector3 emission = GetEmission(model, material, mesh.MaterialId);
+                        Matrix4 texcoordMatrix = GetTexcoordMatrix(model, material, mesh.MaterialId, node, scene);
+                        int? bindingOverride = GetBindingOverride(model, material, mesh.MaterialId);
+                        scene.AddRenderItem(material, polygonId, Alpha, emission, GetLightInfo(model, scene),
                             texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
-                            model.IsPlaceholder ? GetOverrideColor(model, index) : null, PaletteOverride);
+                            model.IsPlaceholder ? GetOverrideColor(model, index) : null, PaletteOverride, bindingOverride);
                     }
                     if (node.ChildIndex != UInt16.MaxValue)
                     {
@@ -307,7 +309,12 @@ namespace MphRead.Entities
             }
         }
 
-        protected Matrix4 GetTexcoordMatrix(NewModel model, Material material, Node node, NewScene scene)
+        protected virtual Vector3 GetEmission(NewModel model, Material material, int index)
+        {
+            return Vector3.Zero;
+        }
+
+        protected virtual Matrix4 GetTexcoordMatrix(NewModel model, Material material, int materialId, Node node, NewScene scene)
         {
             Matrix4 texcoordMatrix = Matrix4.Identity;
             TexcoordAnimationGroup? group = model.Animations.TexcoordGroup;
@@ -353,7 +360,7 @@ namespace MphRead.Entities
                     {
                         texgenMatrix = Matrix4.CreateScale(model.Scale) * texgenMatrix;
                     }
-                    // in-game, big 0 is set on creation if any materials have lighting enabled
+                    // in-game, bit 0 is set on creation if any materials have lighting enabled
                     if (_anyLighting || (model.Header.Flags & 1) > 0)
                     {
                         texgenMatrix = scene.ViewMatrix * texgenMatrix;
@@ -365,16 +372,6 @@ namespace MphRead.Entities
                     product.M23 *= -1;
                     product.M32 *= -1;
                     product.M33 *= -1;
-                    //if (model.DoubleDamage && !model.DoubleDamageSkipMaterials.Contains(material)
-                    //    && material.Lighting > 0 && node.BillboardMode == BillboardMode.None)
-                    //{
-                    //    long frame = _frameCount / 2;
-                    //    float rotZ = ((int)(16 * ((781874935307L * (ulong)(53248 * frame) >> 32) + 2048)) >> 20) * (360 / 4096f);
-                    //    float rotY = ((int)(16 * ((781874935307L * (ulong)(26624 * frame) + 0x80000000000) >> 32)) >> 20) * (360 / 4096f);
-                    //    var rot = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(rotZ));
-                    //    rot *= Matrix4.CreateRotationY(MathHelper.DegreesToRadians(rotY));
-                    //    product = rot * product;
-                    //}
                     product *= materialMatrix;
                     product *= texcoordMatrix;
                     product *= (1.0f / (texture.Width / 2));
@@ -646,14 +643,5 @@ namespace MphRead.Entities
     //else if (model.Team == Team.Green)
     //{
     //    emission = Metadata.EmissionGreen;
-    //}
-
-    //if (model.DoubleDamage && !model.DoubleDamageSkipMaterials.Contains(material)
-    //    && material.Lighting > 0 && node.BillboardMode == BillboardMode.None)
-    //{
-    //    texgenMode = TexgenMode.Normal;
-    //    xRepeat = RepeatMode.Mirror;
-    //    yRepeat = RepeatMode.Mirror;
-    //    bindingId = _dblDmgBindingId;
     //}
 }
