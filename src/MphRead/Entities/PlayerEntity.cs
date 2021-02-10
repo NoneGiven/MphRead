@@ -53,7 +53,6 @@ namespace MphRead.Entities
             _scaleMtx = Matrix4.CreateScale(Metadata.HunterScales[Hunter]);
             // temporary
             _bipedModel.Animations.NodeGroupId = 4;
-            _doubleDamage = true;
         }
 
         public override void Init(NewScene scene)
@@ -64,7 +63,15 @@ namespace MphRead.Entities
 
         protected override bool GetModelActive(NewModel model, int index)
         {
-            return (_altForm && model == _altModel) || (_mainPlayer && model == _gunModel) || (!_mainPlayer && model == _bipedModel);
+            if (_altForm)
+            {
+                return model == _altModel;
+            }
+            if (_mainPlayer)
+            {
+                return model == _gunModel;
+            }
+            return model == _bipedModel;
         }
 
         protected override Matrix4 GetModelTransform(NewModel model, int index)
