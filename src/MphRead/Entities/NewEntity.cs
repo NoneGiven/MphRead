@@ -45,7 +45,7 @@ namespace MphRead.Entities
     {
         NewEntityType Type { get; }
         int Recolor { get; }
-        IEnumerable<NewModel> GetModels();
+        IEnumerable<ModelInstance> GetModels();
         void GetDrawInfo(NewScene scene);
     }
 
@@ -137,9 +137,9 @@ namespace MphRead.Entities
         {
         }
 
-        public virtual IEnumerable<NewModel> GetModels()
+        public virtual IEnumerable<ModelInstance> GetModels()
         {
-            return Enumerable.Empty<NewModel>();
+            return Enumerable.Empty<ModelInstance>();
         }
 
         public virtual void GetDrawInfo(NewScene scene)
@@ -162,7 +162,7 @@ namespace MphRead.Entities
         public float Alpha { get; set; } = 1.0f;
 
         protected bool _anyLighting = false;
-        protected readonly List<NewModel> _models = new List<NewModel>();
+        protected readonly List<ModelInstance> _models = new List<ModelInstance>();
 
         protected virtual bool UseNodeTransform => true;
         protected virtual Vector4? OverrideColor { get; } = null;
@@ -174,23 +174,15 @@ namespace MphRead.Entities
 
         public override void Init(NewScene scene)
         {
-            _anyLighting = _models.Any(n => n.Materials.Any(m => m.Lighting != 0));
-            for (int i = 0; i < _models.Count; i++)
-            {
-                NewModel model = _models[i];
-                _materialAnimFrames.Add(model, 0);
-                _texcoordAnimFrames.Add(model, 0);
-                _textureAnimFrames.Add(model, 0);
-                _nodeAnimFrames.Add(model, 0);
-            }
+            _anyLighting = _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));
         }
 
-        protected virtual Matrix4 GetModelTransform(NewModel model, int index)
+        protected virtual Matrix4 GetModelTransform(ModelInstance inst, int index)
         {
-            return Matrix4.CreateScale(model.Scale) * _transform;
+            return Matrix4.CreateScale(inst.Model.Scale) * _transform;
         }
 
-        protected virtual bool GetModelActive(NewModel model, int index)
+        protected virtual bool GetModelActive(ModelInstance inst, int index)
         {
             return true;
         }
@@ -199,18 +191,18 @@ namespace MphRead.Entities
         {
             for (int i = 0; i < _models.Count; i++)
             {
-                NewModel model = _models[i];
-                if (GetModelActive(model, i))
+                ModelInstance inst = _models[i];
+                if (GetModelActive(inst, i))
                 {
                     if (scene.FrameCount != 0 && scene.FrameCount % 2 == 0)
                     {
-                        UpdateAnimationFrames(model);
+                        inst.UpdateAnimFrames();
                     }
                 }
             }
         }
 
-        protected virtual int GetModelRecolor(NewModel model, int index)
+        protected virtual int GetModelRecolor(ModelInstance inst, int index)
         {
             return Recolor;
         }
@@ -221,45 +213,46 @@ namespace MphRead.Entities
             {
                 for (int i = 0; i < _models.Count; i++)
                 {
-                    NewModel model = _models[i];
-                    if (GetModelActive(model, i))
+                    ModelInstance inst = _models[i];
+                    if (GetModelActive(inst, i))
                     {
-                        model.AnimateMaterials(_materialAnimFrames[model]);
-                        model.AnimateTextures(_textureAnimFrames[model]);
+                        NewModel model = inst.Model;
+                        model.AnimateMaterials(inst.AnimInfo.Material);
+                        model.AnimateTextures(inst.AnimInfo.Texture);
                         model.ComputeNodeMatrices(index: 0);
-                        Matrix4 transform = GetModelTransform(model, i);
-                        model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, _nodeAnimFrames[model]);
+                        Matrix4 transform = GetModelTransform(inst, i);
+                        model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, inst.AnimInfo.Node);
                         model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
                         // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
-                        scene.UpdateMaterials(model, GetModelRecolor(model, i));
+                        scene.UpdateMaterials(model, GetModelRecolor(inst, i));
                     }
                 }
             }
         }
 
-        public override IEnumerable<NewModel> GetModels()
+        public override IEnumerable<ModelInstance> GetModels()
         {
             return _models;
         }
 
         protected void AddPlaceholderModel()
         {
-            NewModel model = Read.GetNewModel("pick_wpn_missile");
-            model.IsPlaceholder = true;
-            _models.Add(model);
+            ModelInstance inst = Read.GetNewModel("pick_wpn_missile");
+            inst.IsPlaceholder = true;
+            _models.Add(inst);
         }
 
-        protected virtual Vector4? GetOverrideColor(NewModel model, int index)
+        protected virtual Vector4? GetOverrideColor(ModelInstance inst, int index)
         {
             return OverrideColor;
         }
 
-        protected virtual LightInfo GetLightInfo(NewModel model, NewScene scene)
+        protected virtual LightInfo GetLightInfo(NewScene scene)
         {
             return new LightInfo(scene.Light1Vector, scene.Light1Color, scene.Light2Vector, scene.Light2Color);
         }
 
-        protected virtual int? GetBindingOverride(NewModel model, Material material, int index)
+        protected virtual int? GetBindingOverride(ModelInstance inst, Material material, int index)
         {
             return null;
         }
@@ -268,17 +261,18 @@ namespace MphRead.Entities
         {
             for (int i = 0; i < _models.Count; i++)
             {
-                NewModel model = _models[i];
-                if (!GetModelActive(model, i) || (model.IsPlaceholder && !scene.ShowInvisible))
+                ModelInstance inst = _models[i];
+                if (!GetModelActive(inst, i) || (inst.IsPlaceholder && !scene.ShowInvisible))
                 {
                     continue;
                 }
                 int polygonId = scene.GetNextPolygonId();
-                GetItems(model, i, model.Nodes[0], polygonId);
+                GetItems(inst, i, inst.Model.Nodes[0], polygonId);
             }
 
-            void GetItems(NewModel model, int index, Node node, int polygonId)
+            void GetItems(ModelInstance inst, int index, Node node, int polygonId)
             {
+                NewModel model = inst.Model;
                 if (node.Enabled)
                 {
                     int start = node.MeshId / 2;
@@ -290,34 +284,35 @@ namespace MphRead.Entities
                             continue;
                         }
                         Material material = model.Materials[mesh.MaterialId];
-                        Vector3 emission = GetEmission(model, material, mesh.MaterialId);
-                        Matrix4 texcoordMatrix = GetTexcoordMatrix(model, material, mesh.MaterialId, node, scene);
-                        int? bindingOverride = GetBindingOverride(model, material, mesh.MaterialId);
-                        scene.AddRenderItem(material, polygonId, Alpha, emission, GetLightInfo(model, scene),
+                        Vector3 emission = GetEmission(inst, material, mesh.MaterialId);
+                        Matrix4 texcoordMatrix = GetTexcoordMatrix(inst, material, mesh.MaterialId, node, scene);
+                        int? bindingOverride = GetBindingOverride(inst, material, mesh.MaterialId);
+                        scene.AddRenderItem(material, polygonId, Alpha, emission, GetLightInfo(scene),
                             texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
-                            model.IsPlaceholder ? GetOverrideColor(model, index) : null, PaletteOverride, bindingOverride);
+                            inst.IsPlaceholder ? GetOverrideColor(inst, index) : null, PaletteOverride, bindingOverride);
                     }
                     if (node.ChildIndex != UInt16.MaxValue)
                     {
-                        GetItems(model, index, model.Nodes[node.ChildIndex], polygonId);
+                        GetItems(inst, index, model.Nodes[node.ChildIndex], polygonId);
                     }
                 }
                 if (node.NextIndex != UInt16.MaxValue)
                 {
-                    GetItems(model, index, model.Nodes[node.NextIndex], polygonId);
+                    GetItems(inst, index, model.Nodes[node.NextIndex], polygonId);
                 }
             }
         }
 
-        protected virtual Vector3 GetEmission(NewModel model, Material material, int index)
+        protected virtual Vector3 GetEmission(ModelInstance inst, Material material, int index)
         {
             return Vector3.Zero;
         }
 
-        protected virtual Matrix4 GetTexcoordMatrix(NewModel model, Material material, int materialId, Node node, NewScene scene)
+        protected virtual Matrix4 GetTexcoordMatrix(ModelInstance inst, Material material, int materialId, Node node, NewScene scene)
         {
+            NewModel model = inst.Model;
             Matrix4 texcoordMatrix = Matrix4.Identity;
-            TexcoordAnimationGroup? group = model.Animations.TexcoordGroup;
+            TexcoordAnimationGroup? group = inst.AnimInfo.Texcoord.Group;
             TexcoordAnimation? animation = null;
             if (group != null && group.Animations.TryGetValue(material.Name, out TexcoordAnimation result))
             {
@@ -325,7 +320,7 @@ namespace MphRead.Entities
             }
             if (group != null && animation != null)
             {
-                texcoordMatrix = model.AnimateTexcoords(group, animation.Value, _texcoordAnimFrames[model]);
+                texcoordMatrix = model.AnimateTexcoords(group, animation.Value, inst.AnimInfo.Texcoord.CurrentFrame);
             }
             if (material.TexgenMode != TexgenMode.None)
             {
@@ -385,44 +380,6 @@ namespace MphRead.Entities
                 }
             }
             return texcoordMatrix;
-        }
-
-        private readonly Dictionary<NewModel, int> _materialAnimFrames = new Dictionary<NewModel, int>();
-        private readonly Dictionary<NewModel, int> _texcoordAnimFrames = new Dictionary<NewModel, int>();
-        private readonly Dictionary<NewModel, int> _textureAnimFrames = new Dictionary<NewModel, int>();
-        private readonly Dictionary<NewModel, int> _nodeAnimFrames = new Dictionary<NewModel, int>();
-
-        // ntodo: animation refactoring (all state needs to be on the entity) -- also review mutable state in materials, etc.
-        private void UpdateAnimationFrames(NewModel model)
-        {
-            if (model.Animations.MaterialGroup != null)
-            {
-                int frame = _materialAnimFrames[model];
-                frame++;
-                frame %= model.Animations.MaterialGroup.FrameCount;
-                _materialAnimFrames[model] = frame;
-            }
-            if (model.Animations.TexcoordGroup != null)
-            {
-                int frame = _texcoordAnimFrames[model];
-                frame++;
-                frame %= model.Animations.TexcoordGroup.FrameCount;
-                _texcoordAnimFrames[model] = frame;
-            }
-            if (model.Animations.TextureGroup != null)
-            {
-                int frame = _textureAnimFrames[model];
-                frame++;
-                frame %= model.Animations.TextureGroup.FrameCount;
-                _textureAnimFrames[model] = frame;
-            }
-            if (model.Animations.NodeGroup != null)
-            {
-                int frame = _nodeAnimFrames[model];
-                frame++;
-                frame %= model.Animations.NodeGroup.FrameCount;
-                _nodeAnimFrames[model] = frame;
-            }
         }
 
         protected void ComputeTransform(Vector3Fx vector2, Vector3Fx vector1, Vector3Fx position)
@@ -591,10 +548,10 @@ namespace MphRead.Entities
             base.Process(scene);
         }
 
-        protected override Matrix4 GetModelTransform(NewModel model, int index)
+        protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
         {
-            var transform = Matrix4.CreateScale(model.Scale);
-            if (index == _spinModelIndex && model.Animations.NodeGroupId == -1)
+            var transform = Matrix4.CreateScale(inst.Model.Scale);
+            if (index == _spinModelIndex && inst.AnimInfo.Node.Group == null)
             {
                 transform *= SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
                     MathHelper.DegreesToRadians(_spinAxis.X * _spin),
@@ -620,7 +577,7 @@ namespace MphRead.Entities
 
     public class ModelEntity : VisibleEntityBase
     {
-        public ModelEntity(NewModel model, int recolor = 0) : base(NewEntityType.Model)
+        public ModelEntity(ModelInstance model, int recolor = 0) : base(NewEntityType.Model)
         {
             Recolor = recolor;
             _models.Add(model);

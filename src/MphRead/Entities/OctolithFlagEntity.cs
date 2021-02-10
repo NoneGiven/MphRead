@@ -15,14 +15,14 @@ namespace MphRead.Entities
             Recolor = mode == GameMode.Capture ? data.TeamId : 2;
             if (mode == GameMode.Capture || mode == GameMode.Bounty)
             {
-                NewModel octolith = Read.GetNewModel("octolith_ctf");
-                _models.Add(octolith);
+                ModelInstance octolithInst = Read.GetNewModel("octolith_ctf");
+                _models.Add(octolithInst);
                 // note: in-game, the flag is responsible for drawing its own base in Capture mode as well,
                 // but we have that implemented in the flag base entity (which is used in Capture mode, but is invisible)
                 if (mode == GameMode.Bounty)
                 {
-                    NewModel flagBase = Read.GetNewModel("flagbase_bounty");
-                    _models.Add(flagBase);
+                    ModelInstance flagBaseInst = Read.GetNewModel("flagbase_bounty");
+                    _models.Add(flagBaseInst);
                 }
                 _basePosition = Position;
                 SetAtBase();
@@ -34,9 +34,9 @@ namespace MphRead.Entities
             Position = _basePosition.AddY(1.25f);
         }
 
-        protected override Matrix4 GetModelTransform(NewModel model, int index)
+        protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
         {
-            Matrix4 transform = base.GetModelTransform(model, index);
+            Matrix4 transform = base.GetModelTransform(inst, index);
             if (index == 1)
             {
                 transform.Row3.Xyz = _basePosition;
@@ -44,13 +44,13 @@ namespace MphRead.Entities
             return transform;
         }
 
-        protected override int GetModelRecolor(NewModel model, int index)
+        protected override int GetModelRecolor(ModelInstance inst, int index)
         {
             if (index == 1)
             {
                 return 0;
             }
-            return base.GetModelRecolor(model, index);
+            return base.GetModelRecolor(inst, index);
         }
     }
 }

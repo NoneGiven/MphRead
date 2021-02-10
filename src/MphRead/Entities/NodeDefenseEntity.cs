@@ -16,19 +16,19 @@ namespace MphRead.Entities
             _volume = SceneSetup.MoveVolume(_data.Volume, Position);
             if (mode == GameMode.Defender || mode == GameMode.Nodes)
             {
-                NewModel node = Read.GetNewModel("koth_data_flow");
-                _models.Add(node);
+                ModelInstance nodeInst = Read.GetNewModel("koth_data_flow");
+                _models.Add(nodeInst);
                 // todo: spinning + changing color when active
-                NewModel circle = Read.GetNewModel("koth_terminal");
+                ModelInstance circleInst = Read.GetNewModel("koth_terminal");
                 float scale = data.Volume.CylinderRadius.FloatValue;
                 _circleScale = Matrix4.CreateScale(scale);
-                _models.Add(circle);
+                _models.Add(circleInst);
             }
         }
 
-        protected override Matrix4 GetModelTransform(NewModel model, int index)
+        protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
         {
-            Matrix4 transform = base.GetModelTransform(model, index);
+            Matrix4 transform = base.GetModelTransform(inst, index);
             if (index == 1)
             {
                 transform = _circleScale * transform;

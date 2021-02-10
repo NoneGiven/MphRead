@@ -19,8 +19,8 @@ namespace MphRead.Entities
             if (mode == GameMode.Capture || mode == GameMode.Bounty)
             {
                 string name = mode == GameMode.Capture ? "flagbase_ctf" : "flagbase_cap";
-                NewModel model = Read.GetNewModel(name);
-                _models.Add(model);
+                ModelInstance inst = Read.GetNewModel(name);
+                _models.Add(inst);
             }
         }
 

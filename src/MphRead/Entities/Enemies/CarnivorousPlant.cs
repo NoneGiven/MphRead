@@ -8,8 +8,8 @@ namespace MphRead.Entities.Enemies
             _initialPosition = Position;
             var spawner = (EnemySpawnEntity)data.Spawner;
             ObjectMetadata meta = Metadata.GetObjectById(spawner.Data.TextureId);
-            NewModel enemy = Read.GetNewModel(meta.Name);
-            _models.Add(enemy);
+            ModelInstance inst = Read.GetNewModel(meta.Name);
+            _models.Add(inst);
         }
     }
 }

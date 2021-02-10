@@ -13,21 +13,21 @@ namespace MphRead.Entities
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             string name = data.ModelId >= 8 ? "Octolith" : $"Artifact0{data.ModelId + 1}";
-            NewModel model = Read.GetNewModel(name);
-            _heightOffset = data.ModelId >= 8 ? 1.75f : model.Nodes[0].CullRadius;
+            ModelInstance inst = Read.GetNewModel(name);
+            _heightOffset = data.ModelId >= 8 ? 1.75f : inst.Model.Nodes[0].CullRadius;
             if (data.ModelId >= 8)
             {
                 _spinModelIndex = 0;
             }
-            _models.Add(model);
+            _models.Add(inst);
             if (data.HasBase != 0)
             {
-                NewModel baseModel = Read.GetNewModel("ArtifactBase");
-                _models.Add(baseModel);
+                ModelInstance baseInst = Read.GetNewModel("ArtifactBase");
+                _models.Add(baseInst);
             }
         }
 
-        protected override LightInfo GetLightInfo(NewModel model, NewScene scene)
+        protected override LightInfo GetLightInfo(NewScene scene)
         {
             if (_data.ModelId >= 8)
             {
@@ -42,12 +42,12 @@ namespace MphRead.Entities
                     Metadata.OctolithLightColor
                 );
             }
-            return base.GetLightInfo(model, scene);
+            return base.GetLightInfo(scene);
         }
 
-        protected override Matrix4 GetModelTransform(NewModel model, int index)
+        protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
         {
-            Matrix4 transform = base.GetModelTransform(model, index);
+            Matrix4 transform = base.GetModelTransform(inst, index);
             if (index == 0)
             {
                 transform.Row3.Y += _heightOffset;

@@ -45,39 +45,39 @@ namespace MphRead.Entities
             {
                 ObjectMetadata meta = Metadata.GetObjectById((int)data.ModelId);
                 Recolor = meta.RecolorId;
-                NewModel model = Read.GetNewModel(meta.Name);
+                ModelInstance inst = Read.GetNewModel(meta.Name);
                 if (meta != null && meta.AnimationIds[0] == 0xFF)
                 {
-                    model.Animations.NodeGroupId = -1;
-                    model.Animations.MaterialGroupId = -1;
-                    model.Animations.TexcoordGroupId = -1;
-                    model.Animations.TextureGroupId = -1;
+                    inst.SetNodeAnim(-1);
+                    inst.SetMaterialAnim(-1);
+                    inst.SetTexcoordAnim(-1);
+                    inst.SetTexcoordAnim(-1);
                 }
                 // AlimbicGhost_01, GhostSwitch
                 if (data.ModelId == 0 || data.ModelId == 41)
                 {
                     _scanVisorOnly = true;
                 }
-                _models.Add(model);
+                _models.Add(inst);
                 // temporary
-                if (model.Name == "AlimbicCapsule")
+                if (inst.Model.Name == "AlimbicCapsule")
                 {
-                    model.Animations.NodeGroupId = -1;
-                    model.Animations.MaterialGroupId = -1;
+                    inst.SetNodeAnim(-1);
+                    inst.SetMaterialAnim(-1);
                 }
-                else if (model.Name == "WallSwitch")
+                else if (inst.Model.Name == "WallSwitch")
                 {
-                    model.Animations.NodeGroupId = -1;
-                    model.Animations.MaterialGroupId = -1;
+                    inst.SetNodeAnim(-1);
+                    inst.SetMaterialAnim(-1);
                 }
-                else if (model.Name == "SniperTarget")
+                else if (inst.Model.Name == "SniperTarget")
                 {
-                    model.Animations.NodeGroupId = -1;
+                    inst.SetNodeAnim(-1);
                 }
-                else if (model.Name == "SecretSwitch")
+                else if (inst.Model.Name == "SecretSwitch")
                 {
-                    model.Animations.NodeGroupId = -1;
-                    model.Animations.MaterialGroupId = -1;
+                    inst.SetNodeAnim(-1);
+                    inst.SetMaterialAnim(-1);
                 }
             }
         }

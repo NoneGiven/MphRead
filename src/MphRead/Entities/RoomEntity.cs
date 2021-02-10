@@ -12,27 +12,28 @@ namespace MphRead.Entities
     {
         private readonly IReadOnlyList<CollisionPortal> _portals = new List<CollisionPortal>();
         private readonly IReadOnlyList<PortalNodeRef> _forceFields = new List<PortalNodeRef>();
-        private IReadOnlyList<Node> Nodes => _models[0].Nodes;
+        private IReadOnlyList<Node> Nodes => _models[0].Model.Nodes;
 
         protected override bool UseNodeTransform => false; // default -- will use transform if setting is enabled
 
-        // ntodo: room should load its own model
-        public RoomEntity(NewModel model, RoomMetadata meta, CollisionInfo collision, int layerMask) : base(NewEntityType.Room)
+        // ntodo: room should load its own model etc.
+        public RoomEntity(ModelInstance inst, RoomMetadata meta, CollisionInfo collision, int layerMask) : base(NewEntityType.Room)
         {
-            _models.Add(model);
+            _models.Add(inst);
             FilterNodes(layerMask);
             if (meta.Name == "UNIT2_C6")
             {
                 // manually disable a decal that isn't rendered in-game because it's not on a surface
                 Nodes[46].Enabled = false;
             }
+            NewModel model = inst.Model;
             var portals = new List<CollisionPortal>();
             var forceFields = new List<PortalNodeRef>();
             portals.AddRange(collision.Portals.Where(p => (p.LayerMask & 4) != 0 || (p.LayerMask & layerMask) != 0));
             if (portals.Count > 0)
             {
                 IEnumerable<string> parts = portals.Select(p => p.NodeName1).Concat(portals.Select(p => p.NodeName2)).Distinct();
-                foreach (Node node in model.Nodes)
+                foreach (Node node in inst.Model.Nodes)
                 {
                     if (parts.Contains(node.Name))
                     {
@@ -122,7 +123,7 @@ namespace MphRead.Entities
 
         public override void GetDrawInfo(NewScene scene)
         {
-            NewModel model = _models[0];
+            ModelInstance inst = _models[0];
             for (int i = 0; i < Nodes.Count; i++)
             {
                 Node pnode = Nodes[i];
@@ -133,12 +134,12 @@ namespace MphRead.Entities
                     {
                         Node node = Nodes[childIndex];
                         Debug.Assert(node.ChildIndex == UInt16.MaxValue);
-                        GetItems(model, node);
+                        GetItems(inst, node);
                         int nextIndex = node.NextIndex;
                         while (nextIndex != UInt16.MaxValue)
                         {
                             node = Nodes[nextIndex];
-                            GetItems(model, node);
+                            GetItems(inst, node);
                             nextIndex = node.NextIndex;
                         }
                     }
@@ -153,24 +154,25 @@ namespace MphRead.Entities
                     if (pnode.ChildIndex != UInt16.MaxValue)
                     {
                         Node node = Nodes[pnode.ChildIndex];
-                        GetItems(model, node, forceField.Portal);
+                        GetItems(inst, node, forceField.Portal);
                         int nextIndex = node.NextIndex;
                         while (nextIndex != UInt16.MaxValue)
                         {
                             node = Nodes[nextIndex];
-                            GetItems(model, node, forceField.Portal);
+                            GetItems(inst, node, forceField.Portal);
                             nextIndex = node.NextIndex;
                         }
                     }
                 }
             }
 
-            void GetItems(NewModel model, Node node, CollisionPortal? portal = null)
+            void GetItems(ModelInstance inst, Node node, CollisionPortal? portal = null)
             {
                 if (!node.Enabled)
                 {
                     return;
                 }
+                NewModel model = inst.Model;
                 int start = node.MeshId / 2;
                 for (int k = 0; k < node.MeshCount; k++)
                 {
@@ -191,8 +193,8 @@ namespace MphRead.Entities
                     {
                         polygonId = scene.GetNextPolygonId();
                     }
-                    Matrix4 texcoordMatrix = GetTexcoordMatrix(model, material, mesh.MaterialId, node, scene);
-                    scene.AddRenderItem(material, polygonId, alpha, emission: Vector3.Zero, GetLightInfo(model, scene),
+                    Matrix4 texcoordMatrix = GetTexcoordMatrix(inst, material, mesh.MaterialId, node, scene);
+                    scene.AddRenderItem(material, polygonId, alpha, emission: Vector3.Zero, GetLightInfo(scene),
                         texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
                         overrideColor: null, paletteOverride: null);
                 }

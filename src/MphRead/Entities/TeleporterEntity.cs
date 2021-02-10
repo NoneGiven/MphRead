@@ -35,8 +35,8 @@ namespace MphRead.Entities
                 {
                     modelName = "Teleporter";
                 }
-                NewModel model = Read.GetNewModel(modelName);
-                _models.Add(model);
+                ModelInstance inst = Read.GetNewModel(modelName);
+                _models.Add(inst);
             }
             if (multiplayer)
             {
@@ -44,23 +44,23 @@ namespace MphRead.Entities
             }
         }
 
-        protected override Matrix4 GetModelTransform(NewModel model, int index)
+        protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
         {
-            Matrix4 transform = base.GetModelTransform(model, index);
-            if (model.IsPlaceholder && index != 0)
+            Matrix4 transform = base.GetModelTransform(inst, index);
+            if (inst.IsPlaceholder && index != 0)
             {
                 transform.Row3.Xyz = _targetPos;
             }
             return transform;
         }
 
-        protected override Vector4? GetOverrideColor(NewModel model, int index)
+        protected override Vector4? GetOverrideColor(ModelInstance inst, int index)
         {
-            if (model.IsPlaceholder && index != 0)
+            if (inst.IsPlaceholder && index != 0)
             {
                 return _overrideColor2;
             }
-            return base.GetOverrideColor(model, index);
+            return base.GetOverrideColor(inst, index);
         }
     }
 }

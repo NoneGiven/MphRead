@@ -29,16 +29,12 @@ namespace MphRead.Entities
             }
             else
             {
-                NewModel model = Read.GetNewModel(meta.Name);
-                _models.Add(model);
+                ModelInstance inst = Read.GetNewModel(meta.Name);
+                _models.Add(inst);
                 // temporary
-                if (meta.Name == "SamusShip")
+                if (meta.Name == "SamusShip" || meta.Name == "SyluxTurret")
                 {
-                    model.Animations.NodeGroupId = 1;
-                }
-                else if (meta.Name == "SyluxTurret")
-                {
-                    model.Animations.NodeGroupId = -1;
+                    inst.SetNodeAnim(-1);
                 }
             }
         }
@@ -48,7 +44,7 @@ namespace MphRead.Entities
             base.Init(scene);
             if ((_flags & 0x80000) != 0)
             {
-                NewModel model = _models[0];
+                NewModel model = _models[0].Model;
                 for (int i = 0; i < model.Nodes.Count; i++)
                 {
                     Node node = model.Nodes[i];
@@ -79,7 +75,7 @@ namespace MphRead.Entities
         public override void Process(NewScene scene)
         {
             // todo: if "is_visible" returns false (and other conditions), don't draw the effects
-            NewModel model = _models[0];
+            NewModel model = _models[0].Model;
             for (int i = 0; i < 4; i++)
             {
                 if (_effectNodeIds[i] >= 0 && _effects[i] == null)
@@ -125,8 +121,8 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            NewModel model = Read.GetFhNewModel("platform");
-            _models.Add(model);
+            ModelInstance inst = Read.GetFhNewModel("platform");
+            _models.Add(inst);
         }
     }
 }

@@ -18,7 +18,7 @@ namespace MphRead
         private static readonly Dictionary<string, NewModel> _modelCache = new Dictionary<string, NewModel>();
         private static readonly Dictionary<string, NewModel> _fhModelCache = new Dictionary<string, NewModel>();
 
-        public static NewModel GetNewModel(string name)
+        public static ModelInstance GetNewModel(string name)
         {
             if (!_modelCache.TryGetValue(name, out NewModel? model))
             {
@@ -29,10 +29,10 @@ namespace MphRead
                 }
                 _modelCache.Add(name, model);
             }
-            return model;
+            return new ModelInstance(model);
         }
 
-        public static NewModel GetFhNewModel(string name)
+        public static ModelInstance GetFhNewModel(string name)
         {
             if (!_fhModelCache.TryGetValue(name, out NewModel? model))
             {
@@ -43,7 +43,7 @@ namespace MphRead
                 }
                 _fhModelCache.Add(name, model);
             }
-            return model;
+            return new ModelInstance(model);
         }
 
         private static NewModel? GetNewModel(string name, bool firstHunt)
@@ -64,14 +64,23 @@ namespace MphRead
             return GetNewModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.AnimationShare, meta.Recolors, meta.FirstHunt);
         }
 
-        public static NewModel GetNewRoom(string name)
+        public static ModelInstance GetNewRoom(string name)
         {
             (RoomMetadata? meta, _) = Metadata.GetRoomByName(name);
             if (meta == null)
             {
                 throw new ProgramException("No room with this name is known.");
             }
-            return GetNewRoom(meta);
+            if (!_modelCache.TryGetValue(meta.Name, out NewModel? model))
+            {
+                model = GetNewRoom(meta);
+                if (model == null)
+                {
+                    throw new ProgramException("No model with this name is known.");
+                }
+                _modelCache.Add(name, model);
+            }
+            return new ModelInstance(model);
         }
 
         private static NewModel GetNewRoom(RoomMetadata meta)
@@ -1022,7 +1031,8 @@ namespace MphRead
             {
                 return particle;
             }
-            NewModel model = GetNewModel(modelName);
+            ModelInstance inst = GetNewModel(modelName);
+            NewModel model = inst.Model;
             Node? node = model.Nodes.FirstOrDefault(n => n.Name == particleName);
             // todo: see what the game does here; gib3/gib4 nodes are probably meant to be used for these
             if (modelName == "geo1" && particleName == "gib")
@@ -1032,7 +1042,7 @@ namespace MphRead
             if (node != null && node.MeshCount > 0)
             {
                 int materialId = model.Meshes[node.MeshId / 2].MaterialId;
-                var newParticle = new NewParticle(particleName, model, node, materialId);
+                var newParticle = new NewParticle(particleName, inst.Model, node, materialId);
                 _newParticleDefs.Add((modelName, particleName), newParticle);
                 return newParticle;
             }

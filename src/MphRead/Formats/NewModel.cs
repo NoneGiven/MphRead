@@ -6,11 +6,178 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
+    public class ModelInstance
+    {
+        public NewModel Model { get; }
+        public NewAnimationInfo AnimInfo { get; } = new NewAnimationInfo();
+        public bool IsPlaceholder { get; set; }
+
+        public ModelInstance(NewModel model)
+        {
+            Model = model;
+            // todo: once we have proper animation selection, this can be removed
+            if (Model.AnimationGroups.Node.Count > 0)
+            {
+                AnimInfo.Node.Index = 0;
+                AnimInfo.Node.Group = Model.AnimationGroups.Node[0];
+            }
+            if (Model.AnimationGroups.Material.Count > 0)
+            {
+                AnimInfo.Material.Index = 0;
+                AnimInfo.Material.Group = Model.AnimationGroups.Material[0];
+            }
+            if (Model.AnimationGroups.Texcoord.Count > 0)
+            {
+                AnimInfo.Texcoord.Index = 0;
+                AnimInfo.Texcoord.Group = Model.AnimationGroups.Texcoord[0];
+            }
+            if (Model.AnimationGroups.Texture.Count > 0)
+            {
+                AnimInfo.Texture.Index = 0;
+                AnimInfo.Texture.Group = Model.AnimationGroups.Texture[0];
+            }
+        }
+
+        public void SetNodeAnim(int index)
+        {
+            if (index <= -1 || index >= Model.AnimationGroups.Node.Count)
+            {
+                AnimInfo.Node.Index = -1;
+                AnimInfo.Node.Group = null;
+            }
+            else
+            {
+                AnimInfo.Node.Index = index;
+                AnimInfo.Node.Group = Model.AnimationGroups.Node[index];
+            }
+        }
+
+        public void SetMaterialAnim(int index)
+        {
+            if (index <= -1 || index >= Model.AnimationGroups.Material.Count)
+            {
+                AnimInfo.Material.Index = -1;
+                AnimInfo.Material.Group = null;
+            }
+            else
+            {
+                AnimInfo.Material.Index = index;
+                AnimInfo.Material.Group = Model.AnimationGroups.Material[index];
+            }
+        }
+
+        public void SetTexcoordAnim(int index)
+        {
+            if (index <= -1 || index >= Model.AnimationGroups.Texcoord.Count)
+            {
+                AnimInfo.Texcoord.Index = -1;
+                AnimInfo.Texcoord.Group = null;
+            }
+            else
+            {
+                AnimInfo.Texcoord.Index = index;
+                AnimInfo.Texcoord.Group = Model.AnimationGroups.Texcoord[index];
+            }
+        }
+
+        public void SeTextureAnim(int index)
+        {
+            if (index <= -1 || index >= Model.AnimationGroups.Texture.Count)
+            {
+                AnimInfo.Texture.Index = -1;
+                AnimInfo.Texture.Group = null;
+            }
+            else
+            {
+                AnimInfo.Texture.Index = index;
+                AnimInfo.Texture.Group = Model.AnimationGroups.Texture[index];
+            }
+        }
+
+        public void UpdateAnimFrames()
+        {
+            if (AnimInfo.Node.Group != null)
+            {
+                AnimInfo.Node.CurrentFrame++;
+                AnimInfo.Node.CurrentFrame %= AnimInfo.Node.Group.FrameCount;
+            }
+            if (AnimInfo.Material.Group != null)
+            {
+                AnimInfo.Material.CurrentFrame++;
+                AnimInfo.Material.CurrentFrame %= AnimInfo.Material.Group.FrameCount;
+            }
+            if (AnimInfo.Texcoord.Group != null)
+            {
+                AnimInfo.Texcoord.CurrentFrame++;
+                AnimInfo.Texcoord.CurrentFrame %= AnimInfo.Texcoord.Group.FrameCount;
+            }
+            if (AnimInfo.Texture.Group != null)
+            {
+                AnimInfo.Texture.CurrentFrame++;
+                AnimInfo.Texture.CurrentFrame %= AnimInfo.Texture.Group.FrameCount;
+            }
+        }
+    }
+
+    public readonly struct AnimationGroups
+    {
+        public readonly IReadOnlyList<NodeAnimationGroup> Node;
+        public readonly IReadOnlyList<MaterialAnimationGroup> Material;
+        public readonly IReadOnlyList<TexcoordAnimationGroup> Texcoord;
+        public readonly IReadOnlyList<TextureAnimationGroup> Texture;
+
+        public AnimationGroups(IReadOnlyList<NodeAnimationGroup> nodes, IReadOnlyList<MaterialAnimationGroup> materials,
+            IReadOnlyList<TexcoordAnimationGroup> texcoords, IReadOnlyList<TextureAnimationGroup> textures)
+        {
+            Node = nodes;
+            Material = materials;
+            Texcoord = texcoords;
+            Texture = textures;
+        }
+    }
+
+    public class NewAnimationInfo
+    {
+        public NodeAnimationInfo Node { get; } = new NodeAnimationInfo();
+        public MaterialAnimationInfo Material { get; } = new MaterialAnimationInfo();
+        public TexcoordAnimationInfo Texcoord { get; } = new TexcoordAnimationInfo();
+        public TextureAnimationInfo Texture { get; } = new TextureAnimationInfo();
+    }
+
+    // none of these setters should be called outside of ModelInstance
+    public class NodeAnimationInfo
+    {
+        public int Index { get; set; } = -1;
+        public NodeAnimationGroup? Group { get; set; }
+        public int CurrentFrame { get; set; }
+    }
+
+    public class MaterialAnimationInfo
+    {
+        public int Index { get; set; } = -1;
+        public MaterialAnimationGroup? Group { get; set; }
+        public int CurrentFrame { get; set; }
+    }
+
+    public class TexcoordAnimationInfo
+    {
+        public int Index { get; set; } = -1;
+        public TexcoordAnimationGroup? Group { get; set; }
+        public int CurrentFrame { get; set; }
+    }
+
+    public class TextureAnimationInfo
+    {
+        public int Index { get; set; } = -1;
+        public TextureAnimationGroup? Group { get; set; }
+        public int CurrentFrame { get; set; }
+    }
+
+    // ntodo: review all mutable state
     public class NewModel
     {
         private static int _nextId = 0;
         public int Id { get; } = _nextId++;
-        public bool IsPlaceholder { get; set; }
 
         public string Name { get; }
         public Header Header { get; }
@@ -24,7 +191,7 @@ namespace MphRead.Entities
         public IReadOnlyList<int> NodeMatrixIds { get; }
         private readonly float[] _matrixStackValues;
         public IReadOnlyList<float> MatrixStackValues => _matrixStackValues;
-        public AnimationInfo Animations { get; }
+        public AnimationGroups AnimationGroups { get; }
 
         public Vector3 Scale { get; }
 
@@ -59,7 +226,7 @@ namespace MphRead.Entities
             {
                 _matrixStackValues = Array.Empty<float>();
             }
-            Animations = new AnimationInfo(nodeGroups, materialGroups, texcoordGroups, textureGroups);
+            AnimationGroups = new AnimationGroups(nodeGroups, materialGroups, texcoordGroups, textureGroups);
             float scale = Header.ScaleBase.FloatValue * (1 << (int)Header.ScaleFactor);
             Scale = new Vector3(scale, scale, scale);
         }
@@ -141,16 +308,16 @@ namespace MphRead.Entities
             return transform;
         }
 
-        public void AnimateNodes(int index, bool useNodeTransform, Matrix4 parentTansform, Vector3 scale, int currentFrame)
+        public void AnimateNodes(int index, bool useNodeTransform, Matrix4 parentTansform, Vector3 scale, NodeAnimationInfo info)
         {
             for (int i = index; i != UInt16.MaxValue;)
             {
                 Node node = Nodes[i];
                 Matrix4 transform = useNodeTransform ? node.Transform : Matrix4.Identity;
-                NodeAnimationGroup? group = Animations.NodeGroup;
+                NodeAnimationGroup? group = info.Group;
                 if (group != null && group.Animations.TryGetValue(node.Name, out NodeAnimation animation))
                 {
-                    transform = AnimateNode(group, animation, scale, currentFrame);
+                    transform = AnimateNode(group, animation, scale, info.CurrentFrame);
                     if (node.ParentIndex != UInt16.MaxValue)
                     {
                         transform *= Nodes[node.ParentIndex].Animation;
@@ -159,7 +326,7 @@ namespace MphRead.Entities
                 node.Animation = transform;
                 if (node.ChildIndex != UInt16.MaxValue)
                 {
-                    AnimateNodes(node.ChildIndex, useNodeTransform, parentTansform, scale, currentFrame);
+                    AnimateNodes(node.ChildIndex, useNodeTransform, parentTansform, scale, info);
                 }
                 node.Animation *= parentTansform;
                 i = node.NextIndex;
@@ -192,7 +359,7 @@ namespace MphRead.Entities
             return nodeMatrix;
         }
 
-        public void AnimateMaterials(int currentFrame)
+        public void AnimateMaterials(MaterialAnimationInfo info)
         {
             for (int i = 0; i < Materials.Count; i++)
             {
@@ -201,9 +368,10 @@ namespace MphRead.Entities
                 material.CurrentAmbient = material.Ambient / 31.0f;
                 material.CurrentSpecular = material.Specular / 31.0f;
                 material.CurrentAlpha = material.Alpha / 31.0f;
-                MaterialAnimationGroup? group = Animations.MaterialGroup;
+                MaterialAnimationGroup? group = info.Group;
                 if (group != null && group.Animations.TryGetValue(material.Name, out MaterialAnimation animation))
                 {
+                    int currentFrame = info.CurrentFrame;
                     if (!material.AnimationFlags.HasFlag(AnimationFlags.DisableColor))
                     {
                         float diffuseR = InterpolateAnimation(group.Colors, animation.DiffuseLutIndexR, currentFrame,
@@ -260,19 +428,19 @@ namespace MphRead.Entities
             return textureMatrix;
         }
 
-        public void AnimateTextures(int currentFrame)
+        public void AnimateTextures(TextureAnimationInfo info)
         {
             for (int i = 0; i < Materials.Count; i++)
             {
                 Material material = Materials[i];
                 material.CurrentTextureId = material.TextureId;
                 material.CurrentPaletteId = material.PaletteId;
-                TextureAnimationGroup? group = Animations.TextureGroup;
+                TextureAnimationGroup? group = info.Group;
                 if (group != null && group.Animations.TryGetValue(material.Name, out TextureAnimation animation))
                 {
                     for (int j = animation.StartIndex; j < animation.StartIndex + animation.Count; j++)
                     {
-                        if (group.FrameIndices[j] == currentFrame)
+                        if (group.FrameIndices[j] == info.CurrentFrame)
                         {
                             material.CurrentTextureId = group.TextureIds[j];
                             material.CurrentPaletteId = group.PaletteIds[j];

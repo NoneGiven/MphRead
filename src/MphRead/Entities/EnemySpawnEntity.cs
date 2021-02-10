@@ -24,14 +24,14 @@ namespace MphRead.Entities
                 {
                     spawner = "PlantCarnivarous_Pod";
                 }
-                NewModel model = Read.GetNewModel(spawner);
-                _models.Add(model);
+                ModelInstance inst = Read.GetNewModel(spawner);
+                _models.Add(inst);
                 // temporary
                 if (spawner == "EnemySpawner")
                 {
-                    model.Animations.NodeGroupId = -1;
-                    model.Animations.MaterialGroupId = -1;
-                    model.Animations.TexcoordGroupId = 1;
+                    inst.SetNodeAnim(-1);
+                    inst.SetMaterialAnim(-1);
+                    inst.SetTexcoordAnim(-1);
                 }
             }
             else

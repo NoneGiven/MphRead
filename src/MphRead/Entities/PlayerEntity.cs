@@ -9,12 +9,12 @@ namespace MphRead.Entities
     {
         public Hunter Hunter { get; }
         public Team Team { get; set; }
-        private readonly NewModel _bipedModel = null!;
-        private readonly NewModel _altModel = null!;
-        private readonly NewModel _gunModel = null!;
-        private readonly NewModel _dblDmgModel;
-        private readonly NewModel _altIceModel;
-        private readonly NewModel _bipedIceModel;
+        private readonly ModelInstance _bipedModel = null!;
+        private readonly ModelInstance _altModel = null!;
+        private readonly ModelInstance _gunModel = null!;
+        private readonly ModelInstance _dblDmgModel;
+        private readonly ModelInstance _altIceModel;
+        private readonly ModelInstance _bipedIceModel;
         private int _dblDmgBindingId;
         // todo: does this affect collision and stuff?
         private readonly Matrix4 _scaleMtx;
@@ -46,19 +46,19 @@ namespace MphRead.Entities
             Debug.Assert(models.Count == 3);
             for (int i = 0; i < models.Count; i++)
             {
-                NewModel model = Read.GetNewModel(models[i]);
-                _models.Add(model);
+                ModelInstance inst = Read.GetNewModel(models[i]);
+                _models.Add(inst);
                 if (i == 0)
                 {
-                    _bipedModel = model;
+                    _bipedModel = inst;
                 }
                 else if (i == 1)
                 {
-                    _altModel = model;
+                    _altModel = inst;
                 }
                 else if (i == 2)
                 {
-                    _gunModel = model;
+                    _gunModel = inst;
                 }
             }
             _dblDmgModel = Read.GetNewModel("doubleDamage_img");
@@ -68,13 +68,13 @@ namespace MphRead.Entities
             _models.Add(_bipedIceModel);
             _scaleMtx = Matrix4.CreateScale(Metadata.HunterScales[Hunter]);
             // temporary
-            _bipedModel.Animations.NodeGroupId = 4;
+            _bipedModel.SetNodeAnim(4);
         }
 
         public override void Init(NewScene scene)
         {
             base.Init(scene);
-            _dblDmgBindingId = scene.BindGetTexture(_dblDmgModel, 0, 0, 0);
+            _dblDmgBindingId = scene.BindGetTexture(_dblDmgModel.Model, 0, 0, 0);
             _light1Vector = scene.Light1Vector;
             _light1Color = scene.Light1Color;
             _light2Vector = scene.Light2Vector;
@@ -120,15 +120,15 @@ namespace MphRead.Entities
             float sin270 = MathF.Sin(MathHelper.DegreesToRadians(270));
             float sin180 = MathF.Sin(MathHelper.DegreesToRadians(180));
             float offset = (angle - sin270) / (sin180 - sin270);
-            for (int j = 1; j < _bipedModel.Nodes.Count; j++)
+            for (int j = 1; j < _bipedModel.Model.Nodes.Count; j++)
             {
-                Node node = _bipedModel.Nodes[j];
+                Node node = _bipedModel.Model.Nodes[j];
                 var nodePos = new Vector3(node.Animation.Row3);
                 nodePos.Y += offset;
                 if (node.ChildIndex != UInt16.MaxValue)
                 {
                     Debug.Assert(node.ChildIndex > 0);
-                    var childPos = new Vector3(_bipedModel.Nodes[node.ChildIndex].Animation.Row3);
+                    var childPos = new Vector3(_bipedModel.Model.Nodes[node.ChildIndex].Animation.Row3);
                     childPos.Y += offset;
                     for (int k = 1; k < 5; k++)
                     {
@@ -144,7 +144,7 @@ namespace MphRead.Entities
                 if (node.NextIndex != UInt16.MaxValue)
                 {
                     Debug.Assert(node.NextIndex > 0);
-                    var nextPos = new Vector3(_bipedModel.Nodes[node.NextIndex].Animation.Row3);
+                    var nextPos = new Vector3(_bipedModel.Model.Nodes[node.NextIndex].Animation.Row3);
                     nextPos.Y += offset;
                     for (int k = 1; k < 5; k++)
                     {
@@ -173,12 +173,12 @@ namespace MphRead.Entities
 
         private void UpdateIceModel()
         {
-            for (int j = 0; j < _bipedIceModel.Nodes.Count; j++)
+            for (int j = 0; j < _bipedIceModel.Model.Nodes.Count; j++)
             {
-                _bipedIceModel.Nodes[j].Animation = _bipedModel.Nodes[j].Animation;
+                _bipedIceModel.Model.Nodes[j].Animation = _bipedModel.Model.Nodes[j].Animation;
             }
             // identity matrices are fine since the ice model doesn't have any billboard nodes
-            _bipedIceModel.UpdateMatrixStack(Matrix4.Identity, Matrix4.Identity);
+            _bipedIceModel.Model.UpdateMatrixStack(Matrix4.Identity, Matrix4.Identity);
         }
 
         private const float _colorStep = 8 / 255f;
@@ -273,47 +273,47 @@ namespace MphRead.Entities
             _light2Vector = light2Vector.Normalized();
         }
 
-        protected override LightInfo GetLightInfo(NewModel model, NewScene scene)
+        protected override LightInfo GetLightInfo(NewScene scene)
         {
             return new LightInfo(_light1Vector, _light1Color, _light2Vector, _light2Color);
         }
 
-        protected override bool GetModelActive(NewModel model, int index)
+        protected override bool GetModelActive(ModelInstance inst, int index)
         {
             if (_altForm)
             {
-                return model == _altModel || (_frozen && model == _altIceModel);
+                return inst == _altModel || (_frozen && inst == _altIceModel);
             }
             if (_mainPlayer)
             {
-                return model == _gunModel;
+                return inst == _gunModel;
             }
-            return model == _bipedModel || (_frozen && model == _bipedIceModel);
+            return inst == _bipedModel || (_frozen && inst == _bipedIceModel);
         }
 
-        protected override Matrix4 GetModelTransform(NewModel model, int index)
+        protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
         {
             // todo: alt ice collision radius scale + height offset
-            Matrix4 transform = base.GetModelTransform(model, index);
-            if (model == _bipedModel || model == _bipedIceModel)
+            Matrix4 transform = base.GetModelTransform(inst, index);
+            if (inst == _bipedModel || inst == _bipedIceModel)
             {
                 transform = _scaleMtx * transform;
             }
             return transform;
         }
 
-        protected override int? GetBindingOverride(NewModel model, Material material, int index)
+        protected override int? GetBindingOverride(ModelInstance inst, Material material, int index)
         {
-            if (_doubleDamage && (Hunter != Hunter.Spire || !(model == _gunModel && index == 0)) && material.Lighting > 0)
+            if (_doubleDamage && (Hunter != Hunter.Spire || !(inst == _gunModel && index == 0)) && material.Lighting > 0)
             {
                 return _dblDmgBindingId;
             }
-            return base.GetBindingOverride(model, material, index);
+            return base.GetBindingOverride(inst, material, index);
         }
 
-        protected override Vector3 GetEmission(NewModel model, Material material, int index)
+        protected override Vector3 GetEmission(ModelInstance inst, Material material, int index)
         {
-            if (_doubleDamage && (Hunter != Hunter.Spire || !(model == _gunModel && index == 0)) && material.Lighting > 0)
+            if (_doubleDamage && (Hunter != Hunter.Spire || !(inst == _gunModel && index == 0)) && material.Lighting > 0)
             {
                 return Metadata.EmissionGray;
             }
@@ -325,24 +325,24 @@ namespace MphRead.Entities
             {
                 return Metadata.EmissionGreen;
             }
-            return base.GetEmission(model, material, index);
+            return base.GetEmission(inst, material, index);
         }
 
-        protected override Matrix4 GetTexcoordMatrix(NewModel model, Material material, int materialId, Node node, NewScene scene)
+        protected override Matrix4 GetTexcoordMatrix(ModelInstance inst, Material material, int materialId, Node node, NewScene scene)
         {
-            if (_doubleDamage && (Hunter != Hunter.Spire || !(model == _gunModel && materialId == 0))
+            if (_doubleDamage && (Hunter != Hunter.Spire || !(inst == _gunModel && materialId == 0))
                 && material.Lighting > 0 && node.BillboardMode == BillboardMode.None)
             {
-                Texture texture = _dblDmgModel.Recolors[0].Textures[0];
+                Texture texture = _dblDmgModel.Model.Recolors[0].Textures[0];
                 Matrix4 product = node.Animation.Keep3x3();
                 Matrix4 texgenMatrix = Matrix4.Identity;
                 // in-game, there's only one uniform scale factor for models
-                if (model.Scale.X != 1 || model.Scale.Y != 1 || model.Scale.Z != 1)
+                if (inst.Model.Scale.X != 1 || inst.Model.Scale.Y != 1 || inst.Model.Scale.Z != 1)
                 {
-                    texgenMatrix = Matrix4.CreateScale(model.Scale) * texgenMatrix;
+                    texgenMatrix = Matrix4.CreateScale(inst.Model.Scale) * texgenMatrix;
                 }
                 // in-game, bit 0 is set on creation if any materials have lighting enabled
-                if (_anyLighting || (model.Header.Flags & 1) > 0)
+                if (_anyLighting || (inst.Model.Header.Flags & 1) > 0)
                 {
                     texgenMatrix = scene.ViewMatrix * texgenMatrix;
                 }
@@ -369,7 +369,7 @@ namespace MphRead.Entities
                 product.Transpose();
                 return product;
             }
-            return base.GetTexcoordMatrix(model, material, materialId, node, scene);
+            return base.GetTexcoordMatrix(inst, material, materialId, node, scene);
         }
     }
 }

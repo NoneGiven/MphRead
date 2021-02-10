@@ -27,42 +27,42 @@ namespace MphRead.Entities
             // - morph ball = 0
             // - boss = 0
             // - thin = 0, 7
-            NewModel model = Read.GetNewModel(meta.Name);
-            _models.Add(model);
+            ModelInstance inst = Read.GetNewModel(meta.Name);
+            _models.Add(inst);
             // todo: remove temporary code like this once animations are being selected properly
-            model.Animations.NodeGroupId = -1;
-            model.Animations.MaterialGroupId = -1;
-            NewModel doorLock = Read.GetNewModel(meta.LockName);
+            inst.SetNodeAnim(-1);
+            inst.SetMaterialAnim(-1);
+            ModelInstance lockInst = Read.GetNewModel(meta.LockName);
             _lockTransform = Matrix4.CreateTranslation(0, meta.LockOffset, 0);
             _locked = false; // todo: use flags and room state to determine lock/color state
-            _models.Add(doorLock);
+            _models.Add(lockInst);
         }
 
-        protected override Matrix4 GetModelTransform(NewModel model, int index)
+        protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
         {
             if (index == 1)
             {
-                return Matrix4.CreateScale(model.Scale) * _transform * _lockTransform;
+                return Matrix4.CreateScale(inst.Model.Scale) * _transform * _lockTransform;
             }
-            return base.GetModelTransform(model, index);
+            return base.GetModelTransform(inst, index);
         }
 
-        protected override bool GetModelActive(NewModel model, int index)
+        protected override bool GetModelActive(ModelInstance inst, int index)
         {
             if (index == 1)
             {
                 return _locked;
             }
-            return base.GetModelActive(model, index);
+            return base.GetModelActive(inst, index);
         }
 
-        protected override int GetModelRecolor(NewModel model, int index)
+        protected override int GetModelRecolor(ModelInstance inst, int index)
         {
             if (index == 1)
             {
                 return 0;
             }
-            return base.GetModelRecolor(model, index);
+            return base.GetModelRecolor(inst, index);
         }
     }
 
@@ -75,11 +75,11 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            NewModel model = Read.GetFhNewModel(Metadata.FhDoors[(int)data.ModelId]);
-            _models.Add(model);
+            ModelInstance inst = Read.GetFhNewModel(Metadata.FhDoors[(int)data.ModelId]);
+            _models.Add(inst);
             // temporary
-            model.Animations.NodeGroupId = -1;
-            model.Animations.MaterialGroupId = -1;
+            inst.SetNodeAnim(-1);
+            inst.SetMaterialAnim(-1);
         }
     }
 }

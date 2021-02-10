@@ -187,7 +187,7 @@ namespace MphRead
 
         public void AddModel(string name, int recolor = 0, bool firstHunt = false)
         {
-            NewModel model = firstHunt ? Read.GetFhNewModel(name) : Read.GetNewModel(name);
+            ModelInstance model = firstHunt ? Read.GetFhNewModel(name) : Read.GetNewModel(name);
             var entity = new ModelEntity(model, recolor);
             _renderables.Add(entity);
             _entities.Add(entity);
@@ -324,10 +324,10 @@ namespace MphRead
 
         private void InitRenderable(IRenderable renderable)
         {
-            foreach (NewModel model in renderable.GetModels())
+            foreach (ModelInstance inst in renderable.GetModels())
             {
-                InitTextures(model);
-                GenerateLists(model, isRoom: renderable.Type == NewEntityType.Room);
+                InitTextures(inst.Model);
+                GenerateLists(inst.Model, isRoom: renderable.Type == NewEntityType.Room);
             }
         }
 
@@ -640,7 +640,7 @@ namespace MphRead
                     combos.Add((material.TextureId, material.PaletteId, i));
                 }
             }
-            foreach (TextureAnimationGroup group in model.Animations.TextureGroups)
+            foreach (TextureAnimationGroup group in model.AnimationGroups.Texture)
             {
                 foreach (TextureAnimation animation in group.Animations.Values)
                 {
@@ -1032,7 +1032,7 @@ namespace MphRead
                 // todo: cleaner/common way of keeping track of models that have had lists generated
                 if (!_effectModels.Contains(element.ModelName))
                 {
-                    GenerateLists(Read.GetNewModel(element.ModelName), isRoom: false);
+                    GenerateLists(Read.GetNewModel(element.ModelName).Model, isRoom: false);
                     _effectModels.Add(element.ModelName);
                 }
             }

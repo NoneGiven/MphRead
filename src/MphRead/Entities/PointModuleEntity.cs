@@ -18,8 +18,8 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            NewModel model = Read.GetFhNewModel("pick_morphball");
-            _models.Add(model);
+            ModelInstance inst = Read.GetFhNewModel("pick_morphball");
+            _models.Add(inst);
             Active = false;
         }
 
@@ -66,7 +66,7 @@ namespace MphRead.Entities
             }
         }
 
-        protected override bool GetModelActive(NewModel model, int index)
+        protected override bool GetModelActive(ModelInstance inst, int index)
         {
             return Active;
         }
