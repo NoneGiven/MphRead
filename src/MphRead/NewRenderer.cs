@@ -1019,8 +1019,8 @@ namespace MphRead
 
         public void LoadEffect(int effectId)
         {
-            Effect effect = Read.LoadEffect(effectId);
-            foreach (EffectElement element in effect.Elements)
+            NewEffect effect = Read.NewLoadEffect(effectId);
+            foreach (NewEffectElement element in effect.Elements)
             {
                 // todo: cleaner/common way of keeping track of models that have had lists generated
                 if (!_effectModels.Contains(element.ModelName))
