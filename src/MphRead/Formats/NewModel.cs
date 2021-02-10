@@ -24,7 +24,7 @@ namespace MphRead.Entities
         public IReadOnlyList<int> NodeMatrixIds { get; }
         private readonly float[] _matrixStackValues;
         public IReadOnlyList<float> MatrixStackValues => _matrixStackValues;
-        public AnimationInfo Animations { get; } // ntodo: remove mutable state for this (and review all mutable state in materials etc.)
+        public AnimationInfo Animations { get; }
 
         public Vector3 Scale { get; }
 
