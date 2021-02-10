@@ -837,7 +837,7 @@ namespace MphRead
 
         public void AddRenderItem(Material material, int polygonId, float alphaScale, Vector3 emission, LightInfo lightInfo,
             Matrix4 texcoordMatrix, Matrix4 transform, int listId, int matrixStackCount, IReadOnlyList<float> matrixStack,
-            Vector4? overrideColor)
+            Vector4? overrideColor, Vector4? paletteOverride)
         {
             RenderItem item = GetRenderItem();
             item.Type = RenderItemType.Mesh;
@@ -868,6 +868,7 @@ namespace MphRead
                 item.MatrixStack[i] = matrixStack[i];
             }
             item.OverrideColor = overrideColor;
+            item.PaletteOverride = paletteOverride;
             item.Vertices = Array.Empty<Vector3>();
             AddRenderItem(item);
         }
@@ -898,6 +899,7 @@ namespace MphRead
             item.ListId = 0;
             item.MatrixStackCount = 0;
             item.OverrideColor = overrideColor;
+            item.PaletteOverride = null;
             item.Vertices = vertices;
             AddRenderItem(item);
         }
@@ -1445,17 +1447,16 @@ namespace MphRead
             {
                 GL.Uniform1(_shaderLocations.UseOverride, 0);
             }
-            //if (model.PaletteOverride != null)
-            //{
-            //    Vector4 overrideColorValue = model.PaletteOverride.Value;
-            //    GL.Uniform1(_shaderLocations.UsePaletteOverride, 1);
-            //    GL.Uniform4(_shaderLocations.PaletteOverrideColor, ref overrideColorValue);
-            //}
-            //else
-            //{
-            //    GL.Uniform1(_shaderLocations.UsePaletteOverride, 0);
-            //}
-            GL.Uniform1(_shaderLocations.UsePaletteOverride, 0);
+            if (item.PaletteOverride != null)
+            {
+                Vector4 overrideColorValue = item.PaletteOverride.Value;
+                GL.Uniform1(_shaderLocations.UsePaletteOverride, 1);
+                GL.Uniform4(_shaderLocations.PaletteOverrideColor, ref overrideColorValue);
+            }
+            else
+            {
+                GL.Uniform1(_shaderLocations.UsePaletteOverride, 0);
+            }
         }
 
         public void OnMouseClick(bool down)

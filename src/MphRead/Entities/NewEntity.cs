@@ -166,6 +166,7 @@ namespace MphRead.Entities
 
         protected virtual bool UseNodeTransform => true;
         protected virtual Vector4? OverrideColor { get; } = null;
+        protected virtual Vector4? PaletteOverride { get; set; } = null;
 
         public VisibleEntityBase(NewEntityType type) : base(type)
         {
@@ -287,7 +288,7 @@ namespace MphRead.Entities
                         Matrix4 texcoordMatrix = GetTexcoordMatrix(model, material, node, scene);
                         scene.AddRenderItem(material, polygonId, Alpha, emission: Vector3.Zero, GetLightInfo(model, scene),
                             texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
-                            model.IsPlaceholder ? GetOverrideColor(model, index) : null);
+                            model.IsPlaceholder ? GetOverrideColor(model, index) : null, PaletteOverride);
                     }
                     if (node.ChildIndex != UInt16.MaxValue)
                     {
