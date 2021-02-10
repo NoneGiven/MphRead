@@ -13,6 +13,8 @@ namespace MphRead.Entities
         private readonly NewModel _altModel = null!;
         private readonly NewModel _gunModel = null!;
         private readonly NewModel _dblDmgModel;
+        private readonly NewModel _altIceModel;
+        private readonly NewModel _bipedIceModel;
         private int _dblDmgBindingId;
         // todo: does this affect collision and stuff?
         private readonly Matrix4 _scaleMtx;
@@ -26,6 +28,7 @@ namespace MphRead.Entities
         private readonly bool _mainPlayer = false;
         private bool _altForm = false;
         private bool _doubleDamage = false;
+        private bool _frozen = false;
 
         public PlayerEntity(Hunter hunter, int recolor = 0, Vector3? position = null) : base(NewEntityType.Player)
         {
@@ -56,9 +59,14 @@ namespace MphRead.Entities
                 }
             }
             _dblDmgModel = Read.GetNewModel("doubleDamage_img");
+            _altIceModel = Read.GetNewModel("alt_ice");
+            _models.Add(_altIceModel);
+            _bipedIceModel = Read.GetNewModel(Hunter == Hunter.Noxus || Hunter == Hunter.Trace ? "nox_ice" : "samus_ice");
+            _models.Add(_bipedIceModel);
             _scaleMtx = Matrix4.CreateScale(Metadata.HunterScales[Hunter]);
             // temporary
             _bipedModel.Animations.NodeGroupId = 4;
+            _frozen = true;
         }
 
         public override void Init(NewScene scene)
@@ -75,6 +83,25 @@ namespace MphRead.Entities
         {
             UpdateLightSources(scene);
             base.Process(scene);
+        }
+
+        public override void UpdateTransforms(NewScene scene)
+        {
+            base.UpdateTransforms(scene);
+            if (_frozen && !_altForm && !_mainPlayer)
+            {
+                UpdateIceModel();
+            }
+        }
+
+        private void UpdateIceModel()
+        {
+            for (int j = 0; j < _bipedIceModel.Nodes.Count; j++)
+            {
+                _bipedIceModel.Nodes[j].Animation = _bipedModel.Nodes[j].Animation;
+            }
+            // identity matrices are fine since the ice model doesn't have any billboard nodes
+            _bipedIceModel.UpdateMatrixStack(Matrix4.Identity, Matrix4.Identity);
         }
 
         private const float _colorStep = 8 / 255f;
@@ -178,19 +205,20 @@ namespace MphRead.Entities
         {
             if (_altForm)
             {
-                return model == _altModel;
+                return model == _altModel || (_frozen && model == _altIceModel);
             }
             if (_mainPlayer)
             {
                 return model == _gunModel;
             }
-            return model == _bipedModel;
+            return model == _bipedModel || (_frozen && model == _bipedIceModel);
         }
 
         protected override Matrix4 GetModelTransform(NewModel model, int index)
         {
+            // todo: alt ice collision radius scale + height offset
             Matrix4 transform = base.GetModelTransform(model, index);
-            if (model == _bipedModel)
+            if (model == _bipedModel || model == _bipedIceModel)
             {
                 transform = _scaleMtx * transform;
             }
