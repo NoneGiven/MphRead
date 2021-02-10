@@ -1995,7 +1995,8 @@ namespace MphRead.Effects
                     transform = NodeTransform;
                 }
                 material.CurrentDiffuse = Color;
-                scene.AddRenderItem(material, scene.GetNextPolygonId(), Alpha, Vector3.Zero, LightInfo.Zero, Matrix4.Identity,
+                material.CurrentAlpha = Alpha;
+                scene.AddRenderItem(material, scene.GetNextPolygonId(), 1, Vector3.Zero, LightInfo.Zero, Matrix4.Identity,
                     transform, mesh.ListId, 0, Array.Empty<float>(), null, null);
             }
             else
