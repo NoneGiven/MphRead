@@ -29,6 +29,9 @@ namespace MphRead.Entities
         private bool _altForm = false;
         private bool _doubleDamage = false;
         private bool _frozen = false;
+        private bool _dead = false;
+        private int _respawnTimer = 0;
+        private const int _respawnCooldown = 180;
 
         public PlayerEntity(Hunter hunter, int recolor = 0, Vector3? position = null) : base(NewEntityType.Player)
         {
@@ -66,7 +69,6 @@ namespace MphRead.Entities
             _scaleMtx = Matrix4.CreateScale(Metadata.HunterScales[Hunter]);
             // temporary
             _bipedModel.Animations.NodeGroupId = 4;
-            _frozen = true;
         }
 
         public override void Init(NewScene scene)
@@ -83,6 +85,73 @@ namespace MphRead.Entities
         {
             UpdateLightSources(scene);
             base.Process(scene);
+        }
+
+        public override void GetDrawInfo(NewScene scene)
+        {
+            if (_dead)
+            {
+                if (!_altForm)
+                {
+                    DrawDeathParticles(scene);
+                }
+            }
+            else
+            {
+                base.GetDrawInfo(scene);
+            }
+        }
+
+        private void DrawDeathParticles(NewScene scene)
+        {
+            // get current percentage through the first 1/3 of the respawn cooldown
+            float timePct = 1 - ((_respawnTimer - (2 / 3f * _respawnCooldown)) / (1 / 3f * _respawnCooldown));
+            float scale = timePct / 2 + 0.1f;
+            // todo: the angle stuff could be removed
+            float angle = MathF.Sin(MathHelper.DegreesToRadians(270 - 90 * timePct));
+            float sin270 = MathF.Sin(MathHelper.DegreesToRadians(270));
+            float sin180 = MathF.Sin(MathHelper.DegreesToRadians(180));
+            float offset = (angle - sin270) / (sin180 - sin270);
+            for (int j = 1; j < _bipedModel.Nodes.Count; j++)
+            {
+                Node node = _bipedModel.Nodes[j];
+                var nodePos = new Vector3(node.Animation.Row3);
+                nodePos.Y += offset;
+                if (node.ChildIndex != UInt16.MaxValue)
+                {
+                    Debug.Assert(node.ChildIndex > 0);
+                    var childPos = new Vector3(_bipedModel.Nodes[node.ChildIndex].Animation.Row3);
+                    childPos.Y += offset;
+                    for (int k = 1; k < 5; k++)
+                    {
+                        var segPos = new Vector3(
+                            nodePos.X + k * (childPos.X - nodePos.X) / 5,
+                            nodePos.Y + k * (childPos.Y - nodePos.Y) / 5,
+                            nodePos.Z + k * (childPos.Z - nodePos.Z) / 5
+                        );
+                        segPos += (segPos - Position).Normalized() * offset;
+                        scene.AddSingleParticle(SingleType.Death, segPos, Vector3.One, 1 - timePct, scale);
+                    }
+                }
+                if (node.NextIndex != UInt16.MaxValue)
+                {
+                    Debug.Assert(node.NextIndex > 0);
+                    var nextPos = new Vector3(_bipedModel.Nodes[node.NextIndex].Animation.Row3);
+                    nextPos.Y += offset;
+                    for (int k = 1; k < 5; k++)
+                    {
+                        var segPos = new Vector3(
+                            nodePos.X + k * (nextPos.X - nodePos.X) / 5,
+                            nodePos.Y + k * (nextPos.Y - nodePos.Y) / 5,
+                            nodePos.Z + k * (nextPos.Z - nodePos.Z) / 5
+                        );
+                        segPos += (segPos - Position).Normalized() * offset;
+                        scene.AddSingleParticle(SingleType.Death, segPos, Vector3.One, 1 - timePct, scale);
+                    }
+                }
+                nodePos += (nodePos - Position).Normalized() * offset;
+                scene.AddSingleParticle(SingleType.Death, nodePos, Vector3.One, 1 - timePct, scale);
+            }
         }
 
         public override void UpdateTransforms(NewScene scene)
