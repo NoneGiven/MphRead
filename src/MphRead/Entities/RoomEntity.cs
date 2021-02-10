@@ -16,7 +16,7 @@ namespace MphRead.Entities
 
         protected override bool UseNodeTransform => false; // default -- will use transform if setting is enabled
 
-        // todo: room should load its own model
+        // ntodo: room should load its own model
         public RoomEntity(NewModel model, RoomMetadata meta, CollisionInfo collision, int layerMask) : base(NewEntityType.Room)
         {
             _models.Add(model);
