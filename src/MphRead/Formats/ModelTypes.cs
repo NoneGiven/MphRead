@@ -473,7 +473,7 @@ namespace MphRead.Models
             _bipedIceModel = Hunter == Hunter.Noxus || Hunter == Hunter.Trace ? _noxusIceModel! : _samusIceModel!;
         }
 
-        private void GetFrozenDrawItems()
+        public void GetFrozenDrawItems()
         {
             if (Frozen)
             {
