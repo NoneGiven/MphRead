@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using MphRead.Entities;
 using OpenTK.Mathematics;
 
 namespace MphRead
@@ -335,6 +336,26 @@ namespace MphRead
         }
     }
 
+    public class NewEffect
+    {
+        public string Name { get; }
+        public uint Field0 { get; }
+        // the key is the file offset, which we need to keep around because e.g. fx15's parameters are themselves function pointers
+        public IReadOnlyDictionary<uint, FxFuncInfo> Funcs { get; }
+        public IReadOnlyList<uint> List2 { get; }
+        public IReadOnlyList<NewEffectElement> Elements { get; }
+
+        public NewEffect(RawEffect raw, IReadOnlyDictionary<uint, FxFuncInfo> funcs, IReadOnlyList<uint> list2,
+            IReadOnlyList<NewEffectElement> elements, string name)
+        {
+            Name = Path.GetFileNameWithoutExtension(name).Replace("_PS", "");
+            Field0 = raw.Field0;
+            Funcs = funcs;
+            List2 = list2;
+            Elements = elements;
+        }
+    }
+
     // todo: this class is basically duplicated, should just go from raw struct to entry? or also make this a readonly struct?
     public class EffectElement
     {
@@ -369,6 +390,39 @@ namespace MphRead
         }
     }
 
+    public class NewEffectElement
+    {
+        public string Name { get; }
+        public string ModelName { get; }
+        public IReadOnlyList<NewParticle> Particles { get; }
+        public uint Flags { get; }
+        public Vector3 Acceleration { get; }
+        public uint ChildEffectId { get; }
+        public float Lifespan { get; }
+        public float DrainTime { get; }
+        public float BufferTime { get; }
+        public int DrawType { get; }
+        public IReadOnlyDictionary<FuncAction, FxFuncInfo> Actions { get; }
+        public IReadOnlyDictionary<uint, FxFuncInfo> Funcs { get; }
+
+        public NewEffectElement(RawEffectElement raw, IReadOnlyList<NewParticle> particles,
+            IReadOnlyDictionary<uint, FxFuncInfo> funcs, IReadOnlyDictionary<FuncAction, FxFuncInfo> actions)
+        {
+            Name = raw.Name.MarshalString();
+            ModelName = raw.ModelName.MarshalString();
+            Flags = raw.Flags;
+            Acceleration = raw.Acceleration.ToFloatVector();
+            ChildEffectId = raw.ChildEffectId;
+            Lifespan = raw.Lifespan.FloatValue;
+            DrainTime = raw.DrainTime.FloatValue;
+            BufferTime = raw.BufferTime.FloatValue;
+            DrawType = raw.DrawType;
+            Particles = particles;
+            Funcs = funcs;
+            Actions = actions;
+        }
+    }
+
     public class Particle
     {
         public string Name { get; }
@@ -377,6 +431,22 @@ namespace MphRead
         public int MaterialId { get; }
 
         public Particle(string name, Model model, Node node, int materialId)
+        {
+            Name = name;
+            Model = model;
+            Node = node;
+            MaterialId = materialId;
+        }
+    }
+
+    public class NewParticle
+    {
+        public string Name { get; }
+        public NewModel Model { get; }
+        public Node Node { get; }
+        public int MaterialId { get; }
+
+        public NewParticle(string name, NewModel model, Node node, int materialId)
         {
             Name = name;
             Model = model;

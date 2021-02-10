@@ -836,6 +836,9 @@ namespace MphRead
         public static Dictionary<string, Model> EffectModels { get; } = new Dictionary<string, Model>();
         private static readonly Dictionary<(string, string), Particle> _particleDefs = new Dictionary<(string, string), Particle>();
 
+        private static readonly Dictionary<string, NewEffect> _newEffects = new Dictionary<string, NewEffect>();
+        private static readonly Dictionary<(string, string), NewParticle> _newParticleDefs = new Dictionary<(string, string), NewParticle>();
+
         private static Effect LoadEffect(string path)
         {
             if (_effects.TryGetValue(path, out Effect? cached))
@@ -917,6 +920,120 @@ namespace MphRead
                 int materialId = model.Meshes[node.MeshId / 2].MaterialId;
                 var newParticle = new Particle(particleName, model, node, materialId);
                 _particleDefs.Add((modelName, particleName), newParticle);
+                return newParticle;
+            }
+            throw new ProgramException("Could not get particle.");
+        }
+
+        public static NewEffect NewLoadEffect(int id)
+        {
+            if (id < 1 || id > Metadata.Effects.Count)
+            {
+                throw new ProgramException("Could not get particle.");
+            }
+            (string name, string? archive) = Metadata.Effects[id];
+            return NewLoadEffect(name, archive);
+        }
+
+        public static NewEffect NewLoadEffect(string name, string? archive)
+        {
+            string path;
+            if (archive == null)
+            {
+                path = $"effects/{name}_PS.bin";
+            }
+            else
+            {
+                path = $"_archives/{archive}/{name}_PS.bin";
+            }
+            NewEffect effect = NewLoadEffect(path);
+            foreach (NewEffectElement element in effect.Elements)
+            {
+                if (element.ChildEffectId != 0)
+                {
+                    NewLoadEffect((int)element.ChildEffectId);
+                }
+            }
+            return effect;
+        }
+
+        private static NewEffect NewLoadEffect(string path)
+        {
+            if (_newEffects.TryGetValue(path, out NewEffect? cached))
+            {
+                return cached;
+            }
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
+            RawEffect effect = ReadStruct<RawEffect>(bytes);
+            var funcs = new Dictionary<uint, FxFuncInfo>();
+            foreach (uint offset in DoOffsets<uint>(bytes, effect.FuncOffset, effect.FuncCount))
+            {
+                uint funcId = SpanReadUint(bytes, offset);
+                uint paramOffset = SpanReadUint(bytes, offset + 4);
+                DebugValidateParams(funcId, offset, paramOffset);
+                uint paramCount = (offset - paramOffset) / 4;
+                IReadOnlyList<int> parameters = DoOffsets<int>(bytes, paramOffset, paramCount);
+                funcs.Add(offset, new FxFuncInfo(funcId, parameters));
+            }
+            // todo: these are also offsets into the func/param arrays; what are they used for?
+            IReadOnlyList<uint> list2 = DoOffsets<uint>(bytes, effect.Offset2, effect.Count2);
+            IReadOnlyList<uint> elementOffsets = DoOffsets<uint>(bytes, effect.ElementOffset, effect.ElementCount);
+            var elements = new List<NewEffectElement>();
+            foreach (uint offset in elementOffsets)
+            {
+                RawEffectElement element = DoOffset<RawEffectElement>(bytes, offset);
+                var particles = new List<NewParticle>();
+                foreach (uint nameOffset in DoOffsets<uint>(bytes, element.ParticleOffset, element.ParticleCount))
+                {
+                    // todo: move the model reference to the element instead of the particle definitions
+                    particles.Add(NewGetParticle(element.ModelName.MarshalString(), ReadString(bytes, nameOffset, 16)));
+                }
+                var elemFuncs = new Dictionary<FuncAction, FxFuncInfo>();
+                IReadOnlyList<uint> elemFuncMeta = DoOffsets<uint>(bytes, element.FuncOffset, 2 * element.FuncCount);
+                for (int i = 0; i < elemFuncMeta.Count; i += 2)
+                {
+                    uint index = elemFuncMeta[i];
+                    uint funcOffset = elemFuncMeta[i + 1];
+                    if (funcOffset != 0)
+                    {
+                        // the main list always includes the offsets referenced by elements
+                        elemFuncs.Add((FuncAction)index, funcs[funcOffset]);
+                    }
+                }
+                elements.Add(new NewEffectElement(element, particles, funcs, elemFuncs));
+            }
+            var newEffect = new NewEffect(effect, funcs, list2, elements, path);
+            _newEffects.Add(path, newEffect);
+            return newEffect;
+        }
+
+        public static NewParticle NewGetSingleParticle(SingleType type)
+        {
+            if (Metadata.SingleParticles.TryGetValue(type, out (string Model, string Particle) meta))
+            {
+                return NewGetParticle(meta.Model, meta.Particle);
+            }
+            throw new ProgramException("Could not get single particle.");
+        }
+
+        private static NewParticle NewGetParticle(string modelName, string particleName)
+        {
+            if (_newParticleDefs.TryGetValue((modelName, particleName), out NewParticle? particle))
+            {
+                return particle;
+            }
+            NewModel model = GetNewModel(modelName);
+            Node? node = model.Nodes.FirstOrDefault(n => n.Name == particleName);
+            // todo: see what the game does here; gib3/gib4 nodes are probably meant to be used for these
+            if (modelName == "geo1" && particleName == "gib")
+            {
+                node = model.Nodes.First(n => n.Name == "gib3");
+            }
+            if (node != null && node.MeshCount > 0)
+            {
+                int materialId = model.Meshes[node.MeshId / 2].MaterialId;
+                var newParticle = new NewParticle(particleName, model, node, materialId);
+                _newParticleDefs.Add((modelName, particleName), newParticle);
                 return newParticle;
             }
             throw new ProgramException("Could not get particle.");
