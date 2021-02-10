@@ -1449,7 +1449,7 @@ namespace MphRead
             item.TextureBindingId = bindingId;
             item.TexcoordMatrix = Matrix4.Identity;
             item.Transform = transform;
-            item.ListId = 0; // sktodo
+            item.ListId = 0;
             item.MatrixStackCount = 0;
             item.OverrideColor = null;
             item.PaletteOverride = null;
