@@ -1383,6 +1383,8 @@ namespace MphRead
             item.OverrideColor = overrideColor;
             item.PaletteOverride = paletteOverride;
             item.Vertices = Array.Empty<Vector3>();
+            item.ScaleS = 1;
+            item.ScaleT = 1;
             AddRenderItem(item);
         }
 
@@ -1415,11 +1417,14 @@ namespace MphRead
             item.OverrideColor = overrideColor;
             item.PaletteOverride = null;
             item.Vertices = vertices;
+            item.ScaleS = 1;
+            item.ScaleT = 1;
             AddRenderItem(item);
         }
 
         // for effects
-        public void AddRenderItem(float alpha, int polygonId, Vector3 color, Vector3[] uvsAndVerts)
+        public void AddRenderItem(float alpha, int polygonId, Vector3 color, RepeatMode xRepeat, RepeatMode yRepeat,
+            float scaleS, float scaleT, Matrix4 transform, Vector3[] uvsAndVerts, int bindingId)
         {
             RenderItem item = GetRenderItem();
             item.Type = RenderItemType.Particle;
@@ -1436,17 +1441,19 @@ namespace MphRead
             item.Emission = Vector3.Zero;
             item.LightInfo = LightInfo.Zero;
             item.TexgenMode = TexgenMode.None;
-            item.XRepeat = RepeatMode.Clamp;
-            item.YRepeat = RepeatMode.Clamp;
-            item.HasTexture = false;
-            item.TextureBindingId = 0; // sktodo
+            item.XRepeat = xRepeat;
+            item.YRepeat = yRepeat;
+            item.HasTexture = true;
+            item.TextureBindingId = bindingId;
             item.TexcoordMatrix = Matrix4.Identity;
-            item.Transform = Matrix4.Identity; // sktodo
-            item.ListId = 0;
+            item.Transform = transform;
+            item.ListId = 0; // sktodo
             item.MatrixStackCount = 0;
             item.OverrideColor = null;
             item.PaletteOverride = null;
             item.Vertices = uvsAndVerts;
+            item.ScaleS = scaleS;
+            item.ScaleT = scaleT;
             AddRenderItem(item);
         }
 
@@ -1662,11 +1669,6 @@ namespace MphRead
 
         private void RenderItem(RenderItem item)
         {
-            RenderMesh(item);
-        }
-
-        private void RenderMesh(RenderItem item)
-        {
             UseLight1(item.LightInfo.Light1Vector, item.LightInfo.Light1Color);
             UseLight2(item.LightInfo.Light2Vector, item.LightInfo.Light2Color);
 
@@ -1727,6 +1729,10 @@ namespace MphRead
                     // todo: implement this for volumes as well
                     RenderPlaneLines(item.Vertices);
                 }
+            }
+            else if (item.Type == RenderItemType.Particle)
+            {
+                RenderParticle(item);
             }
         }
 
@@ -1891,6 +1897,28 @@ namespace MphRead
             GL.Vertex3(verts[1]);
             GL.Vertex3(verts[2]);
             GL.Vertex3(verts[3]);
+            GL.End();
+        }
+
+        private void RenderParticle(RenderItem item)
+        {
+            Vector3 texcoord0 = item.Vertices[0];
+            Vector3 vertex0 = item.Vertices[1];
+            Vector3 texcoord1 = item.Vertices[2];
+            Vector3 vertex1 = item.Vertices[3];
+            Vector3 texcoord2 = item.Vertices[4];
+            Vector3 vertex2 = item.Vertices[5];
+            Vector3 texcoord3 = item.Vertices[6];
+            Vector3 vertex3 = item.Vertices[7];
+            GL.Begin(PrimitiveType.Quads);
+            GL.TexCoord3(texcoord0.X * item.ScaleS, texcoord0.Y * item.ScaleT, 0f);
+            GL.Vertex3(vertex0);
+            GL.TexCoord3(texcoord1.X * item.ScaleS, texcoord1.Y * item.ScaleT, 0f);
+            GL.Vertex3(vertex1);
+            GL.TexCoord3(texcoord2.X * item.ScaleS, texcoord2.Y * item.ScaleT, 0f);
+            GL.Vertex3(vertex2);
+            GL.TexCoord3(texcoord3.X * item.ScaleS, texcoord3.Y * item.ScaleT, 0f);
+            GL.Vertex3(vertex3);
             GL.End();
         }
 

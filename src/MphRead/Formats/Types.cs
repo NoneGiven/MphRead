@@ -58,7 +58,9 @@ namespace MphRead
         public float[] MatrixStack { get; }
         public Vector4? OverrideColor { get; set; }
         public Vector4? PaletteOverride { get; set; }
-        public Vector3[] Vertices { get; set; } // ntodo: texcoords
+        public Vector3[] Vertices { get; set; }
+        public float ScaleS { get; set; }
+        public float ScaleT { get; set; }
 
         public RenderItem()
         {

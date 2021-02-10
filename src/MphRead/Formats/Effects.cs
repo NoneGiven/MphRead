@@ -177,7 +177,6 @@ namespace MphRead.Effects
 
         public void AddRenderItem(NewScene scene)
         {
-            // sktodo: same as below
             Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(8);
             uvsAndVerts[0] = new Vector3(Texcoord0);
             uvsAndVerts[1] = Vertex0;
@@ -187,7 +186,23 @@ namespace MphRead.Effects
             uvsAndVerts[5] = Vertex2;
             uvsAndVerts[6] = new Vector3(Texcoord3);
             uvsAndVerts[7] = Vertex3;
-            scene.AddRenderItem(Alpha, scene.GetNextPolygonId(), Color, uvsAndVerts);
+            Material material = ParticleDefinition.Model.Materials[ParticleDefinition.MaterialId];
+            // should already be bound
+            int bindingId = scene.BindGetTexture(ParticleDefinition.Model, material.TextureId, material.PaletteId, 0);
+            RepeatMode xRepeat = material.XRepeat;
+            RepeatMode yRepeat = material.YRepeat;
+            float scaleS = 1;
+            float scaleT = 1;
+            if (xRepeat == RepeatMode.Mirror)
+            {
+                scaleS = material.ScaleS;
+            }
+            if (yRepeat == RepeatMode.Mirror)
+            {
+                scaleT = material.ScaleT;
+            }
+            Matrix4 transform = Matrix4.Identity;
+            scene.AddRenderItem(Alpha, scene.GetNextPolygonId(), Color, xRepeat, yRepeat, scaleS, scaleT, transform, uvsAndVerts, bindingId);
         }
     }
 
@@ -1965,7 +1980,6 @@ namespace MphRead.Effects
 
         public void AddRenderItem(NewScene scene)
         {
-            // sktodo: confirm everything -- can/should we multiply texcoords by material scale here?
             Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(8);
             uvsAndVerts[0] = new Vector3(Texcoord0);
             uvsAndVerts[1] = Vertex0;
@@ -1975,7 +1989,26 @@ namespace MphRead.Effects
             uvsAndVerts[5] = Vertex2;
             uvsAndVerts[6] = new Vector3(Texcoord3);
             uvsAndVerts[7] = Vertex3;
-            scene.AddRenderItem(Alpha, scene.GetNextPolygonId(), Color, uvsAndVerts);
+            Material material = Owner.Model.Materials[Owner.ParticleDefinitions[ParticleId].MaterialId];
+            int bindingId = Owner.TextureBindingIds[ParticleId];
+            RepeatMode xRepeat = material.XRepeat;
+            RepeatMode yRepeat = material.YRepeat;
+            float scaleS = 1;
+            float scaleT = 1;
+            if (xRepeat == RepeatMode.Mirror)
+            {
+                scaleS = material.ScaleS;
+            }
+            if (yRepeat == RepeatMode.Mirror)
+            {
+                scaleT = material.ScaleT;
+            }
+            Matrix4 transform = Matrix4.Identity;
+            if ((Owner.Flags & 1) != 0)
+            {
+                transform = Owner.Transform;
+            }
+            scene.AddRenderItem(Alpha, scene.GetNextPolygonId(), Color, xRepeat, yRepeat, scaleS, scaleT, transform, uvsAndVerts, bindingId);
         }
     }
 }
