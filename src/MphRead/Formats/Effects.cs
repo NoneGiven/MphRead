@@ -1982,6 +1982,7 @@ namespace MphRead.Effects
         {
             if (DrawNode)
             {
+                NewModel model = Owner.Model;
                 Node node = Owner.Nodes[ParticleId];
                 Mesh mesh = Owner.Model.Meshes[node.MeshId / 2];
                 Material material = Owner.Model.Materials[MaterialId];
@@ -1997,7 +1998,7 @@ namespace MphRead.Effects
                 material.CurrentDiffuse = Color;
                 material.CurrentAlpha = Alpha;
                 scene.AddRenderItem(material, scene.GetNextPolygonId(), 1, Vector3.Zero, LightInfo.Zero, Matrix4.Identity,
-                    transform, mesh.ListId, 0, Array.Empty<float>(), null, null);
+                    transform, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues, null, null);
             }
             else
             {
