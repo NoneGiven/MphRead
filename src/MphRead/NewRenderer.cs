@@ -1071,7 +1071,8 @@ namespace MphRead
                     }
                     element.Nodes.Add(particleDef.Node);
                     Material material = particleDef.Model.Materials[particleDef.MaterialId];
-                    element.TextureBindingIds.Add(_texPalMap[particleDef.Model.Id].Get(material.TextureId, material.PaletteId, 0).BindingId);
+                    material.TextureBindingId = _texPalMap[particleDef.Model.Id].Get(material.TextureId, material.PaletteId, 0).BindingId;
+                    element.TextureBindingIds.Add(material.TextureBindingId);
                 }
             }
         }
@@ -1357,6 +1358,7 @@ namespace MphRead
             item.LightInfo = lightInfo;
             if (bindingOverride.HasValue)
             {
+                // double damage
                 item.TexgenMode = TexgenMode.Normal;
                 item.XRepeat = RepeatMode.Mirror;
                 item.YRepeat = RepeatMode.Mirror;
