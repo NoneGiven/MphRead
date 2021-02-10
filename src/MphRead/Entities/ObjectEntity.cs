@@ -72,6 +72,15 @@ namespace MphRead.Entities
             base.Process(scene);
         }
 
+        public override void Init(NewScene scene)
+        {
+            base.Init(scene);
+            if (_data.EffectId > 0)
+            {
+                scene.LoadEffect((int)_data.EffectId);
+            }
+        }
+
         public override void GetDisplayVolumes(NewScene scene)
         {
             if (_data.EffectId > 0 && scene.ShowVolumes == VolumeDisplay.Object)
