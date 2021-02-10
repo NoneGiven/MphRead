@@ -27,7 +27,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override LightInfo GetLightInfo(NewModel model, NewScene scene)
+        protected override LightInfo GetLightInfo(NewModel model, NewScene scene)
         {
             if (_data.ModelId >= 8)
             {

@@ -254,9 +254,14 @@ namespace MphRead.Entities
             return OverrideColor;
         }
 
-        public virtual LightInfo GetLightInfo(NewModel model, NewScene scene)
+        protected virtual LightInfo GetLightInfo(NewModel model, NewScene scene)
         {
             return new LightInfo(scene.Light1Vector, scene.Light1Color, scene.Light2Vector, scene.Light2Color);
+        }
+
+        protected virtual Material GetMaterial(NewModel model, int materialId)
+        {
+            return model.Materials[materialId];
         }
 
         public override void GetDrawInfo(NewScene scene)
@@ -284,7 +289,7 @@ namespace MphRead.Entities
                         {
                             continue;
                         }
-                        Material material = model.Materials[mesh.MaterialId];
+                        Material material = GetMaterial(model, mesh.MaterialId);
                         Matrix4 texcoordMatrix = GetTexcoordMatrix(model, material, node, scene);
                         scene.AddRenderItem(material, polygonId, Alpha, emission: Vector3.Zero, GetLightInfo(model, scene),
                             texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
@@ -315,7 +320,7 @@ namespace MphRead.Entities
             {
                 texcoordMatrix = model.AnimateTexcoords(group, animation.Value, _texcoordAnimFrames[model]);
             }
-            if (material.TexgenMode != TexgenMode.None) // ntodo: texgen mode (among other things) can be overriden by double damage
+            if (material.TexgenMode != TexgenMode.None)
             {
                 Matrix4 materialMatrix;
                 // in-game, this is a list of precomputed matrices that we compute on the fly in the next block;
