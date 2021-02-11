@@ -219,11 +219,11 @@ namespace MphRead.Entities
                         Material material = model.Materials[mesh.MaterialId];
                         Vector3 emission = GetEmission(inst, material, mesh.MaterialId);
                         Matrix4 texcoordMatrix = GetTexcoordMatrix(inst, material, mesh.MaterialId, node, scene);
-                        bool selected = Selection.IsSelected(this, inst, node, mesh);
+                        SelectionType selectionType = Selection.IsSelected(this, inst, node, mesh);
                         int? bindingOverride = GetBindingOverride(inst, material, mesh.MaterialId);
                         scene.AddRenderItem(material, polygonId, Alpha, emission, GetLightInfo(scene),
                             texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
-                            inst.IsPlaceholder ? GetOverrideColor(inst, index) : null, PaletteOverride, selected, bindingOverride);
+                            inst.IsPlaceholder ? GetOverrideColor(inst, index) : null, PaletteOverride, selectionType, bindingOverride);
                     }
                     if (node.ChildIndex != UInt16.MaxValue)
                     {
@@ -445,6 +445,16 @@ namespace MphRead.Entities
         public virtual void SetActive(bool active)
         {
             Active = active;
+        }
+
+        public virtual EntityBase? GetParent()
+        {
+            return null;
+        }
+
+        public virtual EntityBase? GetChild()
+        {
+            return null;
         }
     }
 

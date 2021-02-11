@@ -19,25 +19,48 @@ namespace MphRead
 
         private static bool _showSelection = true;
 
-        public static bool IsSelected(EntityBase entity, ModelInstance inst, Node node, Mesh mesh)
+        public static SelectionType IsSelected(EntityBase entity, ModelInstance inst, Node node, Mesh mesh)
         {
             if (Mesh != null)
             {
-                return mesh == Mesh && node == Node && inst == Instance && entity == Entity;
+                if (mesh == Mesh && node == Node && inst == Instance && entity == Entity)
+                {
+                    return SelectionType.Selected;
+                }
             }
-            if (Node != null)
+            else if (Node != null)
             {
-                return node == Node && inst == Instance && entity == Entity;
+                if (node == Node && inst == Instance && entity == Entity)
+                {
+                    return SelectionType.Selected;
+                }
             }
-            if (Instance != null)
+            else if (Instance != null)
             {
-                return inst == Instance && entity == Entity;
+                if (inst == Instance && entity == Entity)
+                {
+                    return SelectionType.Selected;
+                }
+            }
+            else if (Entity != null)
+            {
+                if (entity == Entity)
+                {
+                    return SelectionType.Selected;
+                }
             }
             if (Entity != null)
             {
-                return entity == Entity;
+                if (Entity.GetParent() == entity)
+                {
+                    return SelectionType.Parent;
+                }
+                if (Entity.GetChild() == entity)
+                {
+                    return SelectionType.Child;
+                }
             }
-            return false;
+            return SelectionType.None;
         }
 
         public static void ToggleShowSelection()
@@ -395,7 +418,7 @@ namespace MphRead
                 ModelInstance? instance = Entity.GetModels().FirstOrDefault();
                 if (instance != null)
                 {
-                    int recolor = Entity.Recolor -1;
+                    int recolor = Entity.Recolor - 1;
                     if (recolor < 0)
                     {
                         recolor = instance.Model.Recolors.Count - 1;

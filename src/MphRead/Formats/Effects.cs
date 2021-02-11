@@ -1996,7 +1996,7 @@ namespace MphRead.Effects
                 Debug.Assert(model.NodeMatrixIds.Count == 0);
                 scene.UpdateMaterials(model, 0); // probably not necessary unless the model has texture animation
                 scene.AddRenderItem(material, scene.GetNextPolygonId(), 1, Vector3.Zero, LightInfo.Zero, texcoordMtx,
-                    transform, mesh.ListId, 0, Array.Empty<float>(), null, null, false);
+                    transform, mesh.ListId, 0, Array.Empty<float>(), null, null, SelectionType.None);
             }
             else
             {

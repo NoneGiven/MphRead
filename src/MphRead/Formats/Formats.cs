@@ -563,7 +563,6 @@ namespace MphRead
             Data = data;
         }
 
-        // sktodo: item and enemy spawners
         public override ushort GetParentId()
         {
             if (Data is TriggerVolumeEntityData triggerData)

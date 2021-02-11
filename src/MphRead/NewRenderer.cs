@@ -1340,7 +1340,7 @@ namespace MphRead
         // for meshes
         public void AddRenderItem(Material material, int polygonId, float alphaScale, Vector3 emission, LightInfo lightInfo,
             Matrix4 texcoordMatrix, Matrix4 transform, int listId, int matrixStackCount, IReadOnlyList<float> matrixStack,
-            Vector4? overrideColor, Vector4? paletteOverride, bool isSelected, int? bindingOverride = null)
+            Vector4? overrideColor, Vector4? paletteOverride, SelectionType selectionType, int? bindingOverride = null)
         {
             RenderItem item = GetRenderItem();
             item.Type = RenderItemType.Mesh;
@@ -1387,10 +1387,9 @@ namespace MphRead
             item.Vertices = Array.Empty<Vector3>();
             item.ScaleS = 1;
             item.ScaleT = 1;
-            if (isSelected)
+            if (selectionType != SelectionType.None)
             {
-                // mtodo: other selection types
-                overrideColor = Selection.GetSelectionColor(SelectionType.Selected);
+                overrideColor = Selection.GetSelectionColor(selectionType);
                 if (overrideColor != null)
                 {
                     item.OverrideColor = overrideColor;
