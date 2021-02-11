@@ -2298,7 +2298,7 @@ namespace MphRead
             {
                 if (e.Alt)
                 {
-                    UpdatePointModule(); // undocumented
+                    UpdatePointModule();
                 }
                 else
                 {
