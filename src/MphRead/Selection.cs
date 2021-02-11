@@ -336,7 +336,7 @@ namespace MphRead
                 {
                     Entity = null;
                 }
-                else
+                else if (Entity.GetModels().Any(m => !m.IsPlaceholder))
                 {
                     Instance = Entity.GetModels().FirstOrDefault();
                 }

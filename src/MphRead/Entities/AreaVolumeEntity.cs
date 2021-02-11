@@ -13,6 +13,7 @@ namespace MphRead.Entities
         private readonly Vector3 _exitEventColor;
 
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0xFF, 0x00).AsVector4();
+        public AreaVolumeEntityData Data => _data;
 
         public AreaVolumeEntity(AreaVolumeEntityData data) : base(EntityType.AreaVolume)
         {
@@ -61,11 +62,13 @@ namespace MphRead.Entities
     public class FhAreaVolumeEntity : EntityBase
     {
         private readonly FhAreaVolumeEntityData _data;
-        protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0xFF, 0x00).AsVector4();
 
         private readonly CollisionVolume _volume;
         private readonly Vector3 _insideEventColor;
         private readonly Vector3 _exitEventColor;
+
+        protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0xFF, 0x00).AsVector4();
+        public FhAreaVolumeEntityData Data => _data;
 
         public FhAreaVolumeEntity(FhAreaVolumeEntityData data) : base(EntityType.AreaVolume)
         {

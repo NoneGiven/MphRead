@@ -18,6 +18,7 @@ namespace MphRead.Entities
 
         // used for ID -1 (scan point, effect spawner)
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x22, 0x8B, 0x22).AsVector4();
+        public ObjectEntityData Data => _data;
 
         public ObjectEntity(ObjectEntityData data) : base(EntityType.Object)
         {

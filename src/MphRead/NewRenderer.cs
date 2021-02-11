@@ -3,6 +3,10 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using MphRead.Effects;
 using MphRead.Entities;
 using MphRead.Export;
@@ -247,6 +251,7 @@ namespace MphRead
             {
                 _entities[i].Init(this);
             }
+            OutputStart();
         }
 
         private void InitShaders()
@@ -2381,6 +2386,256 @@ namespace MphRead
                     }
                 }
             }
+        }
+
+        private readonly CancellationTokenSource _outputCts = new CancellationTokenSource();
+        private string _currentOutput = "";
+        private readonly StringBuilder _sb = new StringBuilder();
+
+        private void OutputStart()
+        {
+            Task.Run(async () => await OutputUpdate(_outputCts.Token), _outputCts.Token);
+        }
+
+        private async Task OutputUpdate(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                string output = OutputGetAll();
+                if (output != _currentOutput)
+                {
+                    Console.Clear();
+                    Console.WriteLine(output);
+                    _currentOutput = output;
+                }
+                await Task.Delay(100, token);
+            }
+        }
+
+        private string OutputGetAll()
+        {
+            _sb.Clear();
+            string recording = _recording ? " - Recording" : "";
+            string frameAdvance = _frameAdvanceOn ? " - Frame Advance" : "";
+            _sb.AppendLine($"MphRead Version {Program.Version}{recording}{frameAdvance}");
+            if (Selection.Entity != null)
+            {
+                OutputGetEntityInfo();
+                if (Selection.Instance != null)
+                {
+                    if (Selection.Node != null)
+                    {
+                        if (Selection.Mesh != null)
+                        {
+
+                        }
+                    }
+                }
+            }
+            else
+            {
+                OutputGetMenu();
+            }
+            return _sb.ToString();
+        }
+
+        private void OutputGetMenu()
+        {
+            _sb.AppendLine();
+            if (_cameraMode == CameraMode.Pivot)
+            {
+                _sb.AppendLine(" - Scroll mouse wheel to zoom");
+            }
+            else if (_cameraMode == CameraMode.Roam)
+            {
+                _sb.AppendLine(" - Use WASD, Space, and V to move");
+            }
+            string volume = _showVolumes switch
+            {
+                VolumeDisplay.LightColor1 => "light sources, color 1",
+                VolumeDisplay.LightColor2 => "light sources, color 2",
+                VolumeDisplay.TriggerParent => "trigger volumes, parent event",
+                VolumeDisplay.TriggerChild => "trigger volumes, child event",
+                VolumeDisplay.AreaInside => "area volumes, inside event",
+                VolumeDisplay.AreaExit => "area volumes, exit event",
+                VolumeDisplay.MorphCamera => "morph cameras",
+                VolumeDisplay.JumpPad => "jump pads",
+                VolumeDisplay.Object => "objects",
+                VolumeDisplay.FlagBase => "flag bases",
+                VolumeDisplay.DefenseNode => "defense nodes",
+                VolumeDisplay.KillPlane => "kill plane",
+                VolumeDisplay.Portal => "portals",
+                _ => "off"
+            };
+            string invisible = _showInvisible switch
+            {
+                2 => "all",
+                1 => "placeholders",
+                _ => "off"
+            };
+            _sb.AppendLine(" - Hold left mouse button or use arrow keys to rotate");
+            _sb.AppendLine(" - Hold Shift to move the camera faster");
+            _sb.AppendLine($" - T toggles texturing ({FormatOnOff(_showTextures)})");
+            _sb.AppendLine($" - C toggles vertex colours ({FormatOnOff(_showColors)})");
+            _sb.AppendLine($" - Q toggles wireframe ({FormatOnOff(_wireframe)})");
+            _sb.AppendLine($" - B toggles face culling ({FormatOnOff(_faceCulling)})");
+            _sb.AppendLine($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})");
+            _sb.AppendLine($" - L toggles lighting ({FormatOnOff(_lighting)})");
+            _sb.AppendLine($" - G toggles fog ({FormatOnOff(_showFog)})");
+            _sb.AppendLine($" - E toggles Scan Visor ({FormatOnOff(_scanVisor)})");
+            _sb.AppendLine($" - I toggles invisible entities ({invisible})");
+            _sb.AppendLine($" - Z toggles volume display ({volume})");
+            _sb.AppendLine($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
+            _sb.AppendLine(" - R resets the camera");
+            _sb.AppendLine(" - Ctrl+O then enter \"model_name [recolor]\" to load");
+            _sb.AppendLine(" - Ctrl+U then enter \"model_id\" to unload");
+            _sb.AppendLine(" - Esc closes the viewer");
+        }
+
+        private void OutputGetEntityInfo()
+        {
+            EntityBase? model = Selection.Entity;
+            Debug.Assert(model != null);
+            _sb.AppendLine();
+            string header = "";
+            if (_roomLoaded)
+            {
+                string string1 = $"{(int)(_light1Color.X * 255)};{(int)(_light1Color.Y * 255)};{(int)(_light1Color.Z * 255)}";
+                string string2 = $"{(int)(_light2Color.X * 255)};{(int)(_light2Color.Y * 255)};{(int)(_light2Color.Z * 255)}";
+                header += $"Room \u001b[38;2;{string1}m████\u001b[0m \u001b[38;2;{string2}m████\u001b[0m";
+                header += $" ({_light1Vector.X}, {_light1Vector.Y}, {_light1Vector.Z}) " +
+                    $"({_light2Vector.X}, {_light2Vector.Y}, {_light2Vector.Z})";
+            }
+            else
+            {
+                header = "No room loaded";
+            }
+            _sb.AppendLine(header);
+            Vector3 cam = _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1);
+            _sb.AppendLine($"Camera ({cam.X}, {cam.Y}, {cam.Z})");
+            _sb.AppendLine();
+            _sb.AppendLine($"Entity: {model.Type} [{model.Id}] {(model.Active ? "On " : "Off")} - Color {model.Recolor}");
+            // sktodo: remove as much string concatenation as possible
+            if (model.Type == EntityType.Room)
+            {
+                _sb.Append($" ({model.GetModels()[0].Model.Nodes.Count(n => n.IsRoomPartNode)})");
+            }
+            else if (model is LightSourceEntity light)
+            {
+                Vector3 color1 = light.Light1Color;
+                Vector3 color2 = light.Light2Color;
+                string string1 = $"{(int)(color1.X * 255)};{(int)(color1.Y * 255)};{(int)(color1.Z * 255)}";
+                string string2 = $"{(int)(color2.X * 255)};{(int)(color2.Y * 255)};{(int)(color2.Z * 255)}";
+                _sb.Append($" \u001b[38;2;{string1}m████\u001b[0m \u001b[38;2;{string2}m████\u001b[0m");
+                _sb.Append($" {light.Light1Enabled} / {light.Light2Enabled}");
+                Vector3 vector1 = light.Light1Vector;
+                Vector3 vector2 = light.Light2Vector;
+                _sb.Append($" ({vector1.X}, {vector1.Y}, {vector1.Z}) ({vector2.X}, {vector2.Y}, {vector2.Z})");
+            }
+            else if (model is AreaVolumeEntity area)
+            {
+                _sb.AppendLine();
+                _sb.Append($"Entry: {area.Data.InsideEvent}");
+                _sb.Append($", Param1: {area.Data.InsideEventParam1}, Param2: {area.Data.InsideEventParam1}");
+                _sb.AppendLine();
+                _sb.Append($" Exit: {area.Data.ExitEvent}");
+                _sb.Append($", Param1: {area.Data.ExitEventParam1}, Param2: {area.Data.ExitEventParam2}");
+                _sb.AppendLine();
+                if (TryGetEntity(area.Data.ParentId, out EntityBase? parent))
+                {
+                    _sb.Append($"Target: {parent.Type} ({area.Data.ParentId})");
+                }
+                else
+                {
+                    _sb.Append("Target: None");
+                }
+            }
+            else if (model is FhAreaVolumeEntity fhArea)
+            {
+                _sb.AppendLine();
+                _sb.Append($"Entry: {fhArea.Data.InsideEvent}");
+                _sb.Append($", Param1: {fhArea.Data.InsideParam1}, Param2: 0");
+                _sb.AppendLine();
+                _sb.Append($" Exit: {fhArea.Data.ExitEvent}");
+                _sb.Append($", Param1: {fhArea.Data.ExitParam1}, Param2: 0");
+                _sb.AppendLine();
+                _sb.Append("Target: None");
+            }
+            else if (model is TriggerVolumeEntity trigger)
+            {
+                _sb.Append($" ({trigger.Data.Type})");
+                if (trigger.Data.Type == TriggerType.Threshold)
+                {
+                    _sb.Append($" x{trigger.Data.TriggerThreshold})");
+                }
+                _sb.AppendLine();
+                _sb.Append($"Parent: {trigger.Data.ParentEvent}");
+                if (trigger.Data.ParentEvent != Message.None && TryGetEntity(trigger.Data.ParentId, out EntityBase? parent))
+                {
+                    _sb.Append($", Target: {parent.Type} ({trigger.Data.ParentId})");
+                }
+                else
+                {
+                    _sb.Append(", Target: None");
+                }
+                _sb.Append($", Param1: {trigger.Data.ParentEventParam1}, Param2: {trigger.Data.ParentEventParam2}");
+                _sb.AppendLine();
+                _sb.Append($" Child: {trigger.Data.ChildEvent}");
+                if (trigger.Data.ChildEvent != Message.None && TryGetEntity(trigger.Data.ChildId, out EntityBase? child))
+                {
+                    _sb.Append($", Target: {child.Type} ({trigger.Data.ChildId})");
+                }
+                else
+                {
+                    _sb.Append(", Target: None");
+                }
+                _sb.Append($", Param1: {trigger.Data.ChildEventParam1}, Param2: {trigger.Data.ChildEventParam2}");
+            }
+            else if (model is FhTriggerVolumeEntity fhTrigger)
+            {
+                _sb.Append($" ({fhTrigger.Data.Subtype})");
+                if (fhTrigger.Data.Subtype == 3)
+                {
+                    _sb.Append($" x{fhTrigger.Data.Threshold}");
+                }
+                _sb.AppendLine();
+                _sb.Append($"Parent: {fhTrigger.Data.ParentEvent}");
+                if (fhTrigger.Data.ParentEvent != FhMessage.None && TryGetEntity(fhTrigger.Data.ParentId, out EntityBase? parent))
+                {
+                    _sb.Append($", Target: {parent.Type} ({fhTrigger.Data.ParentId})");
+                }
+                else
+                {
+                    _sb.Append(", Target: None");
+                }
+                _sb.Append($", Param1: {fhTrigger.Data.ParentParam1}, Param2: 0");
+                _sb.AppendLine();
+                _sb.Append($" Child: {fhTrigger.Data.ChildEvent}");
+                if (fhTrigger.Data.ChildEvent != FhMessage.None && TryGetEntity(fhTrigger.Data.ChildId, out EntityBase? child))
+                {
+                    _sb.Append($", Target: {child.Type} ({fhTrigger.Data.ChildId})");
+                }
+                else
+                {
+                    _sb.Append(", Target: None");
+                }
+                _sb.Append($", Param1: {fhTrigger.Data.ChildParam1}, Param2: 0");
+            }
+            else if (model is ObjectEntity obj)
+            {
+                if (obj.Data.EffectId != 0)
+                {
+                    _sb.Append($" ({obj.Data.EffectId}, {Metadata.Effects[(int)obj.Data.EffectId].Name})");
+                }
+            }
+            _sb.AppendLine($"Position ({model.Position.X}, {model.Position.Y}, {model.Position.Z})");
+            _sb.AppendLine($"Rotation ({model.Rotation.X}, {model.Rotation.Y}, {model.Rotation.Z})");
+            _sb.AppendLine($"   Scale ({model.Scale.X}, {model.Scale.Y}, {model.Scale.Z})");
+        }
+
+        private string FormatOnOff(bool setting)
+        {
+            return setting ? "on" : "off";
         }
     }
 

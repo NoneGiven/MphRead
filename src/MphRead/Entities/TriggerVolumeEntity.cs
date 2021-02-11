@@ -13,6 +13,7 @@ namespace MphRead.Entities
         private readonly Vector3 _childEventColor;
 
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0x8C, 0x00).AsVector4();
+        public TriggerVolumeEntityData Data => _data;
 
         public TriggerVolumeEntity(TriggerVolumeEntityData data) : base(EntityType.TriggerVolume)
         {
@@ -70,6 +71,7 @@ namespace MphRead.Entities
         private readonly Vector3 _childEventColor;
 
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0x8C, 0x00).AsVector4();
+        public FhTriggerVolumeEntityData Data => _data;
 
         public FhTriggerVolumeEntity(FhTriggerVolumeEntityData data) : base(EntityType.TriggerVolume)
         {
