@@ -92,14 +92,26 @@ namespace MphRead
             }
             if (e.Key == Keys.Equal || e.Key == Keys.KeyPadEqual)
             {
-                // mtodo: cycle animations
-                SelectNext(scene);
+                if (e.Alt)
+                {
+                    NextAnimation(e.Control);
+                }
+                else
+                {
+                    SelectNext(scene, e.Control);
+                }
                 return true;
             }
             if (e.Key == Keys.Minus || e.Key == Keys.KeyPadSubtract)
             {
-                // mtodo: cycle animations
-                SelectPrev(scene);
+                if (e.Alt)
+                {
+                    PrevAnimation(e.Control);
+                }
+                else
+                {
+                    SelectPrev(scene, e.Control);
+                }
                 return true;
             }
             if (e.Key == Keys.X)
@@ -208,7 +220,65 @@ namespace MphRead
             }
         }
 
-        private static void SelectNext(NewScene scene)
+        private static void NextAnimation(bool control)
+        {
+            ModelInstance? inst = null;
+            if (Instance != null)
+            {
+                inst = Instance;
+            }
+            else if (Entity != null)
+            {
+                inst = Entity.GetModels().FirstOrDefault();
+            }
+            if (inst != null)
+            {
+                if (control)
+                {
+                    inst.SetMaterialAnim(inst.AnimInfo.Material.Index + 1);
+                }
+                else
+                {
+                    inst.SetNodeAnim(inst.AnimInfo.Node.Index + 1);
+                }
+            }
+        }
+
+        private static void PrevAnimation(bool control)
+        {
+            ModelInstance? inst = null;
+            if (Instance != null)
+            {
+                inst = Instance;
+            }
+            else if (Entity != null)
+            {
+                inst = Entity.GetModels().FirstOrDefault();
+            }
+            if (inst != null)
+            {
+                if (control)
+                {
+                    int index = inst.AnimInfo.Material.Index - 1;
+                    if (index < -1)
+                    {
+                        index = inst.Model.AnimationGroups.Material.Count - 1;
+                    }
+                    inst.SetMaterialAnim(index);
+                }
+                else
+                {
+                    int index = inst.AnimInfo.Node.Index - 1;
+                    if (index < -1)
+                    {
+                        index = inst.Model.AnimationGroups.Node.Count - 1;
+                    }
+                    inst.SetNodeAnim(index);
+                }
+            }
+        }
+
+        private static void SelectNext(NewScene scene, bool control)
         {
             if (Mesh != null)
             {
@@ -216,7 +286,7 @@ namespace MphRead
             }
             else if (Node != null)
             {
-                SelectNode(1);
+                SelectNode(1, control);
             }
             else if (Instance != null)
             {
@@ -228,7 +298,7 @@ namespace MphRead
             }
         }
 
-        private static void SelectPrev(NewScene scene)
+        private static void SelectPrev(NewScene scene, bool control)
         {
             if (Mesh != null)
             {
@@ -236,7 +306,7 @@ namespace MphRead
             }
             else if (Node != null)
             {
-                SelectNode(-1);
+                SelectNode(-1, control);
             }
             else if (Instance != null)
             {
@@ -288,7 +358,7 @@ namespace MphRead
             return true;
         }
 
-        private static void SelectNode(int direction)
+        private static void SelectNode(int direction, bool control)
         {
             if (Instance != null)
             {
@@ -307,7 +377,7 @@ namespace MphRead
                         index = 0;
                     }
                     node = nodes[index];
-                    if (FilterNode(/*node*/))
+                    if (FilterNode(node, control))
                     {
                         Node = node;
                         break;
@@ -316,9 +386,9 @@ namespace MphRead
             }
         }
 
-        private static bool FilterNode(/*Node node*/)
+        private static bool FilterNode(Node node, bool roomOnly)
         {
-            return true;
+            return !roomOnly || node.IsRoomPartNode;
         }
 
         private static void SelectInstance(int direction)
