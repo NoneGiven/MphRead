@@ -6,7 +6,6 @@ namespace MphRead.Entities
     {
         private readonly DoorEntityData _data;
         private readonly Matrix4 _lockTransform;
-        private bool _locked;
 
         public DoorEntity(DoorEntityData data) : base(EntityType.Door)
         {
@@ -35,7 +34,6 @@ namespace MphRead.Entities
             _lockTransform = Matrix4.CreateTranslation(0, meta.LockOffset, 0);
             _models.Add(lockInst);
             // todo: use flags and room state to determine lock/color state
-            _locked = false;
             lockInst.Active = false;
         }
 
@@ -61,7 +59,6 @@ namespace MphRead.Entities
     public class FhDoorEntity : EntityBase
     {
         private readonly FhDoorEntityData _data;
-        private bool _locked;
 
         public FhDoorEntity(FhDoorEntityData data) : base(EntityType.Door)
         {
