@@ -6,7 +6,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using MphRead.Archive;
-using MphRead.Entities;
 using MphRead.Export;
 using OpenTK.Mathematics;
 
@@ -17,8 +16,6 @@ namespace MphRead
         private static readonly Dictionary<string, Model> _modelCache = new Dictionary<string, Model>();
         private static readonly Dictionary<string, Model> _fhModelCache = new Dictionary<string, Model>();
 
-        #region Hide
-        // ctodo: nocache
         public static ModelInstance GetModelInstance(string name, bool firstHunt = false)
         {
             ModelInstance? inst = GetModelInstanceOrNull(name, firstHunt);
@@ -219,8 +216,6 @@ namespace MphRead
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
                 textureMatrices, recolors, nodeWeights);
         }
-
-        #endregion
 
         private class AnimationResults
         {

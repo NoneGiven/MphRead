@@ -5,7 +5,6 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using MphRead.Entities;
 using OpenTK.Graphics.OpenGL;
 
 namespace MphRead.Export

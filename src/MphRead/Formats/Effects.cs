@@ -3,7 +3,6 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using MphRead.Entities;
 using OpenTK.Mathematics;
 
 namespace MphRead.Effects

@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using MphRead.Effects;
-using MphRead.Entities;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 

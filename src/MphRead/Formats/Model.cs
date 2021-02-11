@@ -4,9 +4,8 @@ using System.Diagnostics;
 using System.Linq;
 using OpenTK.Mathematics;
 
-namespace MphRead.Entities
+namespace MphRead
 {
-    // ctodo: namespace
     public class ModelInstance
     {
         public Model Model { get; }
