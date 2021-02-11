@@ -3,10 +3,8 @@ namespace MphRead.Entities
     public class PointModuleEntity : EntityBase
     {
         private readonly PointModuleEntityData _data;
-        private PointModuleEntity? _next;
-        public PointModuleEntity? Next => _next;
-        private PointModuleEntity? _prev;
-        public PointModuleEntity? Prev => _prev;
+        public PointModuleEntity? Next { get; private set; }
+        public PointModuleEntity? Prev { get; private set; }
 
         private static PointModuleEntity? _current;
         public static PointModuleEntity? Current => _current;
@@ -28,11 +26,11 @@ namespace MphRead.Entities
             base.Init(scene);
             if (_data.NextId != 0 && scene.TryGetEntity(_data.NextId, out EntityBase? entity))
             {
-                _next = (PointModuleEntity)entity;
+                Next = (PointModuleEntity)entity;
             }
             if (_data.PrevId != 0 && scene.TryGetEntity(_data.PrevId, out entity))
             {
-                _prev = (PointModuleEntity)entity;
+                Prev = (PointModuleEntity)entity;
             }
         }
 
@@ -70,6 +68,16 @@ namespace MphRead.Entities
         {
             base.SetActive(active);
             _models[0].Active = Active;
+        }
+
+        public override EntityBase? GetParent()
+        {
+            return Prev;
+        }
+
+        public override EntityBase? GetChild()
+        {
+            return Next;
         }
     }
 }

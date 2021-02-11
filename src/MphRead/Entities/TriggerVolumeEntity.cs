@@ -5,11 +5,14 @@ namespace MphRead.Entities
     public class TriggerVolumeEntity : EntityBase
     {
         private readonly TriggerVolumeEntityData _data;
-        protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0x8C, 0x00).AsVector4();
+        private EntityBase? _parent = null;
+        private EntityBase? _child = null;
 
         private readonly CollisionVolume _volume;
         private readonly Vector3 _parentEventColor;
         private readonly Vector3 _childEventColor;
+
+        protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0x8C, 0x00).AsVector4();
 
         public TriggerVolumeEntity(TriggerVolumeEntityData data) : base(EntityType.TriggerVolume)
         {
@@ -23,6 +26,19 @@ namespace MphRead.Entities
             AddPlaceholderModel();
         }
 
+        public override void Init(NewScene scene)
+        {
+            base.Init(scene);
+            if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
+            {
+                _parent = parent;
+            }
+            if (scene.TryGetEntity(_data.ChildId, out EntityBase? child))
+            {
+                _child = child;
+            }
+        }
+
         public override void GetDisplayVolumes(NewScene scene)
         {
             if (scene.ShowVolumes == VolumeDisplay.TriggerParent || scene.ShowVolumes == VolumeDisplay.TriggerChild)
@@ -31,16 +47,29 @@ namespace MphRead.Entities
                 AddVolumeItem(_volume, color, scene);
             }
         }
+
+        public override EntityBase? GetParent()
+        {
+            return _parent;
+        }
+
+        public override EntityBase? GetChild()
+        {
+            return _child;
+        }
     }
 
     public class FhTriggerVolumeEntity : EntityBase
     {
         private readonly FhTriggerVolumeEntityData _data;
-        protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0x8C, 0x00).AsVector4();
+        private EntityBase? _parent = null;
+        private EntityBase? _child = null;
 
         private readonly CollisionVolume _volume;
         private readonly Vector3 _parentEventColor;
         private readonly Vector3 _childEventColor;
+
+        protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0x8C, 0x00).AsVector4();
 
         public FhTriggerVolumeEntity(FhTriggerVolumeEntityData data) : base(EntityType.TriggerVolume)
         {
@@ -53,6 +82,19 @@ namespace MphRead.Entities
             AddPlaceholderModel();
         }
 
+        public override void Init(NewScene scene)
+        {
+            base.Init(scene);
+            if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
+            {
+                _parent = parent;
+            }
+            if (scene.TryGetEntity(_data.ChildId, out EntityBase? child))
+            {
+                _child = child;
+            }
+        }
+
         public override void GetDisplayVolumes(NewScene scene)
         {
             if (scene.ShowVolumes == VolumeDisplay.TriggerParent || scene.ShowVolumes == VolumeDisplay.TriggerChild)
@@ -60,6 +102,16 @@ namespace MphRead.Entities
                 Vector3 color = scene.ShowVolumes == VolumeDisplay.TriggerParent ? _parentEventColor : _childEventColor;
                 AddVolumeItem(_volume, color, scene);
             }
+        }
+
+        public override EntityBase? GetParent()
+        {
+            return _parent;
+        }
+
+        public override EntityBase? GetChild()
+        {
+            return _child;
         }
     }
 }
