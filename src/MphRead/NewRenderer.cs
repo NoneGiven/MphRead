@@ -64,6 +64,7 @@ namespace MphRead
         private int _showInvisible = 0;
         private VolumeDisplay _showVolumes = VolumeDisplay.None;
         private bool _transformRoomNodes = false;
+        private bool _outputCameraPos = false;
 
         private readonly List<IRenderable> _renderables = new List<IRenderable>();
         private readonly List<EntityBase> _entities = new List<EntityBase>();
@@ -2097,7 +2098,14 @@ namespace MphRead
             }
             else if (e.Key == Keys.C)
             {
-                _showColors = !_showColors;
+                if (e.Alt)
+                {
+                    _outputCameraPos = !_outputCameraPos;
+                }
+                else
+                {
+                    _showColors = !_showColors;
+                }
             }
             else if (e.Key == Keys.Q)
             {
@@ -2510,11 +2518,17 @@ namespace MphRead
             {
                 _sb.AppendLine("No room loaded");
             }
-            Vector3 cam = _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1);
-            _sb.AppendLine($"Camera ({cam.X}, {cam.Y}, {cam.Z})");
+            if (_outputCameraPos)
+            {
+                Vector3 cam = _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1);
+                _sb.AppendLine($"Camera ({cam.X}, {cam.Y}, {cam.Z})");
+            }
+            else
+            {
+                _sb.AppendLine($"Camera (?, ?, ?)");
+            }
             _sb.AppendLine();
             _sb.Append($"Entity: {entity.Type} [{entity.Id}] {(entity.Active ? "On " : "Off")} - Color {entity.Recolor}");
-            // sktodo: remove as much string concatenation as possible
             if (entity.Type == EntityType.Room)
             {
                 _sb.Append($" ({entity.GetModels()[0].Model.Nodes.Count(n => n.IsRoomPartNode)})");
