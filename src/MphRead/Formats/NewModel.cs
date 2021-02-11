@@ -531,6 +531,21 @@ namespace MphRead.Entities
             _matrixStackValues[16 * index + 15] = matrix.M44;
         }
 
+        public bool NodeParentsEnabled(Node node)
+        {
+            int parentIndex = node.ParentIndex;
+            while (parentIndex != UInt16.MaxValue)
+            {
+                Node parent = Nodes[parentIndex];
+                if (!parent.Enabled)
+                {
+                    return false;
+                }
+                parentIndex = parent.ParentIndex;
+            }
+            return true;
+        }
+
         public IReadOnlyList<ColorRgba> GetPixels(int textureId, int paletteId, int recolorId)
         {
             Recolor recolor = Recolors[recolorId];

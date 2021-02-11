@@ -2426,9 +2426,10 @@ namespace MphRead
                     OutputGetModel();
                     if (Selection.Node != null)
                     {
+                        OutputGetNode();
                         if (Selection.Mesh != null)
                         {
-
+                            OutputGetMesh();
                         }
                     }
                 }
@@ -2645,6 +2646,63 @@ namespace MphRead
             AnimationGroups g = inst.Model.AnimationGroups;
             _sb.AppendLine($"Anim: Node {a.Node.Index} / {g.Node.Count}, Material {a.Material.Index} / {g.Material.Count}," +
                 $" Texcoord {a.Texcoord.Index} / {g.Texcoord.Count}, Texture {a.Texture.Index} / {g.Texture.Count}");
+        }
+
+        private void OutputGetNode()
+        {
+            static string FormatNode(NewModel model, int otherId)
+            {
+                if (otherId == UInt16.MaxValue)
+                {
+                    return "None";
+                }
+                return $"{model.Nodes[otherId].Name} [{otherId}]";
+            }
+            Node? node = Selection.Node;
+            ModelInstance? inst = Selection.Instance;
+            Debug.Assert(node != null && inst != null);
+            _sb.AppendLine();
+            string mesh = $" - Meshes {node.MeshCount}";
+            IEnumerable<int> meshIds = node.GetMeshIds().OrderBy(m => m);
+            if (meshIds.Count() == 1)
+            {
+                mesh += $" ({meshIds.First()})";
+            }
+            else if (meshIds.Count() > 1)
+            {
+                mesh += $" ({meshIds.First()} - {meshIds.Last()})";
+            }
+            int index = inst.Model.Nodes.IndexOf(n => n == node);
+            string enabled = node.Enabled ? (inst.Model.NodeParentsEnabled(node) ? "On " : "On*") : "Off";
+            string billboard = node.BillboardMode != BillboardMode.None ? $" - {node.BillboardMode} Billboard" : "";
+            _sb.AppendLine($"Node: {node.Name} [{index}] {enabled}{mesh}{billboard}");
+            _sb.AppendLine($"Parent {FormatNode(inst.Model, node.ParentIndex)}");
+            _sb.AppendLine($" Child {FormatNode(inst.Model, node.ChildIndex)}");
+            _sb.AppendLine($"  Next {FormatNode(inst.Model, node.NextIndex)}");
+            _sb.AppendLine($"Position ({node.Position.X}, {node.Position.Y}, {node.Position.Z})");
+            _sb.AppendLine($"Rotation ({node.Angle.X}, {node.Angle.Y}, {node.Angle.Z})");
+            _sb.AppendLine($"   Scale ({node.Scale.X}, {node.Scale.Y}, {node.Scale.Z})");
+        }
+
+        private void OutputGetMesh()
+        {
+            Mesh? mesh = Selection.Mesh;
+            ModelInstance? inst = Selection.Instance;
+            Debug.Assert(mesh != null && inst != null);
+            int index = inst.Model.Meshes.IndexOf(n => n == mesh);
+            _sb.AppendLine();
+            _sb.AppendLine($"Mesh: [{index}] {(mesh.Visible ? "On " : "Off")} - " +
+                $"Material ID {mesh.MaterialId}, DList ID {mesh.DlistId}");
+            _sb.AppendLine();
+            Material material = inst.Model.Materials[mesh.MaterialId];
+            _sb.AppendLine($"Material: {material.Name} [{mesh.MaterialId}] - {material.RenderMode}, {material.PolygonMode}" +
+                $" - {material.TexgenMode}");
+            _sb.AppendLine($"Lighting {material.Lighting}, Alpha {material.Alpha}, " +
+                $"XRepeat {material.XRepeat}, YRepeat {material.YRepeat}");
+            _sb.AppendLine($"Texture ID {material.CurrentTextureId}, Palette ID {material.CurrentPaletteId}");
+            _sb.AppendLine($"Diffuse ({material.Diffuse.Red}, {material.Diffuse.Green}, {material.Diffuse.Blue})" +
+                $" Ambient ({material.Ambient.Red}, {material.Ambient.Green}, {material.Ambient.Blue})" +
+                $" Specular ({ material.Specular.Red}, { material.Specular.Green}, { material.Specular.Blue})");
         }
 
         private string OnOff(bool setting)
