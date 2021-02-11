@@ -152,7 +152,7 @@ namespace MphRead
         Threshold = 1,
         Relay = 2,
         Automatic = 3,
-        Unknown4 = 4
+        StateBits = 4
     }
 
     public enum Message : uint

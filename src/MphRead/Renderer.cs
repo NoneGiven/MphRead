@@ -2692,8 +2692,8 @@ namespace MphRead
             }
             else if (entity is TriggerVolumeEntity trigger)
             {
-                _sb.Append($" ({trigger.Data.Type})");
-                if (trigger.Data.Type == TriggerType.Threshold)
+                _sb.Append($" ({trigger.Data.Subtype})");
+                if (trigger.Data.Subtype == TriggerType.Threshold)
                 {
                     _sb.Append($" x{trigger.Data.TriggerThreshold})");
                 }
