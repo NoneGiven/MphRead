@@ -7,7 +7,7 @@ namespace MphRead
     public static class SceneSetup
     {
         // todo: artifact flags
-        public static (RoomEntity, RoomMetadata, CollisionInfo, IReadOnlyList<EntityBase>, int) LoadNewRoom(string name,
+        public static (RoomEntity, RoomMetadata, CollisionInfo, IReadOnlyList<EntityBase>, int) LoadRoom(string name,
             GameMode mode = GameMode.None, int playerCount = 0, BossFlags bossFlags = BossFlags.None,
             int nodeLayerMask = 0, int entityLayerId = -1)
         {
@@ -71,14 +71,14 @@ namespace MphRead
                     }
                 }
             }
-            IReadOnlyList<EntityBase> entities = LoadNewEntities(metadata, areaId, entityLayerId, mode);
+            IReadOnlyList<EntityBase> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
             CollisionInfo collision = Collision.ReadCollision(metadata.CollisionPath, metadata.FirstHunt || metadata.Hybrid, nodeLayerMask);
             // todo: once ReadCollision is filering things, we don't need to pass nodeLayerMask here or return it
             var room = new RoomEntity(name, metadata, collision, nodeLayerMask);
             return (room, metadata, collision, entities, nodeLayerMask);
         }
 
-        private static IReadOnlyList<EntityBase> LoadNewEntities(RoomMetadata metadata, int areaId, int layerId, GameMode mode)
+        private static IReadOnlyList<EntityBase> LoadEntities(RoomMetadata metadata, int areaId, int layerId, GameMode mode)
         {
             var results = new List<EntityBase>();
             if (metadata.EntityPath == null)

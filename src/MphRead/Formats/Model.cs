@@ -6,14 +6,15 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
+    // ctodo: namespace
     public class ModelInstance
     {
-        public NewModel Model { get; }
-        public NewAnimationInfo AnimInfo { get; } = new NewAnimationInfo();
+        public Model Model { get; }
+        public AnimationInfo AnimInfo { get; } = new AnimationInfo();
         public bool IsPlaceholder { get; set; }
         public bool Active { get; set; } = true;
 
-        public ModelInstance(NewModel model)
+        public ModelInstance(Model model)
         {
             Model = model;
             // todo: once we have proper animation selection, this can be removed
@@ -141,7 +142,7 @@ namespace MphRead.Entities
         }
     }
 
-    public class NewAnimationInfo
+    public class AnimationInfo
     {
         public NodeAnimationInfo Node { get; } = new NodeAnimationInfo();
         public MaterialAnimationInfo Material { get; } = new MaterialAnimationInfo();
@@ -178,7 +179,7 @@ namespace MphRead.Entities
         public int CurrentFrame { get; set; }
     }
 
-    public class NewModel
+    public class Model
     {
         private static int _nextId = 0;
         public int Id { get; } = _nextId++;
@@ -200,7 +201,7 @@ namespace MphRead.Entities
 
         public Vector3 Scale { get; }
 
-        public NewModel(string name, bool firstHunt, Header header, IEnumerable<RawNode> nodes, IEnumerable<RawMesh> meshes,
+        public Model(string name, bool firstHunt, Header header, IEnumerable<RawNode> nodes, IEnumerable<RawMesh> meshes,
             IEnumerable<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
             IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,

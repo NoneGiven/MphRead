@@ -25,9 +25,9 @@ namespace MphRead.Effects
         }
     }
 
-    public class NewSingleParticle
+    public class SingleParticle
     {
-        public NewParticle ParticleDefinition { get; set; } = null!;
+        public Particle ParticleDefinition { get; set; } = null!;
         public Vector3 Position { get; set; }
         public Vector3 Color { get; set; }
         public float Alpha { get; set; }
@@ -92,7 +92,7 @@ namespace MphRead.Effects
             }
         }
 
-        public void AddRenderItem(NewScene scene)
+        public void AddRenderItem(Scene scene)
         {
             Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(8);
             uvsAndVerts[0] = new Vector3(Texcoord0);
@@ -586,13 +586,13 @@ namespace MphRead.Effects
         }
     }
 
-    public class NewEffectEntry
+    public class EffectEntry
     {
         public int EffectId { get; set; }
-        public List<NewEffectElementEntry> Elements { get; } = new List<NewEffectElementEntry>(); // todo: pre-size?
+        public List<EffectElementEntry> Elements { get; } = new List<EffectElementEntry>(); // todo: pre-size?
     }
 
-    public class NewEffectElementEntry : EffectFuncBase
+    public class EffectElementEntry : EffectFuncBase
     {
         public string EffectName { get; set; } = "";
         public string ElementName { get; set; } = "";
@@ -612,12 +612,12 @@ namespace MphRead.Effects
         public int ChildEffectId { get; set; }
 
         public int Parity { get; set; }
-        public List<NewParticle> ParticleDefinitions { get; } = new List<NewParticle>();
+        public List<Particle> ParticleDefinitions { get; } = new List<Particle>();
         public List<int> TextureBindingIds { get; } = new List<int>();
-        public List<NewEffectParticle> Particles { get; } = new List<NewEffectParticle>(); // todo: pre-size?
+        public List<EffectParticle> Particles { get; } = new List<EffectParticle>(); // todo: pre-size?
 
-        public NewEffectEntry? EffectEntry { get; set; }
-        public NewModel Model { get; set; } = null!;
+        public EffectEntry? EffectEntry { get; set; }
+        public Model Model { get; set; } = null!;
         public List<Node> Nodes { get; } = new List<Node>(); // todo: pre-size?
 
         protected override void FxFunc01(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
@@ -745,7 +745,7 @@ namespace MphRead.Effects
     }
 
     [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
-    public class NewEffectParticle : EffectFuncBase
+    public class EffectParticle : EffectFuncBase
     {
         public float CreationTime { get; set; }
         public float ExpirationTime { get; set; }
@@ -769,7 +769,7 @@ namespace MphRead.Effects
         public float RwField3 { get; set; }
         public float RwField4 { get; set; }
 
-        public NewEffectElementEntry Owner { get; set; } = null!;
+        public EffectElementEntry Owner { get; set; } = null!;
         public int MaterialId { get; set; } // updated when ParticleId changes during processing
         public int SetVecsId { get; set; }
         public int DrawId { get; set; }
@@ -1235,11 +1235,11 @@ namespace MphRead.Effects
             (SetVecsId, DrawId) = GetFuncIds(Owner.Flags, Owner.DrawType);
         }
 
-        public void AddRenderItem(NewScene scene)
+        public void AddRenderItem(Scene scene)
         {
             if (DrawNode)
             {
-                NewModel model = Owner.Model;
+                Model model = Owner.Model;
                 Node node = Owner.Nodes[ParticleId];
                 Mesh mesh = Owner.Model.Meshes[node.MeshId / 2];
                 Material material = Owner.Model.Materials[MaterialId];

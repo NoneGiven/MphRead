@@ -11,7 +11,7 @@ namespace MphRead.Export
 {
     public class Scripting
     {
-        private static void PrintAnimations(NewModel model, StringBuilder sb)
+        private static void PrintAnimations(Model model, StringBuilder sb)
         {
             int indent = 1;
             sb.AppendIndent("uv_anims = [", indent);
@@ -147,7 +147,7 @@ namespace MphRead.Export
             sb.AppendIndent("]", indent);
         }
 
-        public static string GenerateScript(NewModel model, Dictionary<string, IReadOnlyList<Collada.Vertex>> lists)
+        public static string GenerateScript(Model model, Dictionary<string, IReadOnlyList<Collada.Vertex>> lists)
         {
             var sb = new StringBuilder();
             sb.AppendLine("import bpy");

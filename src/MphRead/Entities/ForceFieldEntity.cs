@@ -21,7 +21,7 @@ namespace MphRead.Entities
             Active = data.Active != 0;
         }
 
-        public override void Process(NewScene scene)
+        public override void Process(Scene scene)
         {
             // todo: despawn when deactivated/destroyed
             if (Active && _data.Type != 9 && !_lockSpawned)

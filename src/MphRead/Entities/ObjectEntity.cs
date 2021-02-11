@@ -12,7 +12,7 @@ namespace MphRead.Entities
         private int _effectIntervalTimer = 0;
         private int _effectIntervalIndex = 0;
         private bool _effectProcessing = false;
-        private NewEffectEntry? _effectEntry = null;
+        private EffectEntry? _effectEntry = null;
         public bool _effectActive = false;
         private readonly bool _scanVisorOnly = false;
 
@@ -83,7 +83,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Init(NewScene scene)
+        public override void Init(Scene scene)
         {
             base.Init(scene);
             if (_data.EffectId > 0)
@@ -92,7 +92,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Process(NewScene scene)
+        public override void Process(Scene scene)
         {
             ShouldDraw = !_scanVisorOnly || scene.ScanVisor;
             if (_data.EffectId != 0 && scene.FrameCount % 2 == 0)
@@ -152,7 +152,7 @@ namespace MphRead.Entities
                                     _effectEntry = scene.SpawnEffectGetEntry((int)_data.EffectId, Transform);
                                     for (int i = 0; i < _effectEntry.Elements.Count; i++)
                                     {
-                                        NewEffectElementEntry element = _effectEntry.Elements[i];
+                                        EffectElementEntry element = _effectEntry.Elements[i];
                                         element.Flags |= 0x80000; // set bit 19 (lifetime extension)
                                     }
                                 }
@@ -187,7 +187,7 @@ namespace MphRead.Entities
             {
                 for (int i = 0; i < _effectEntry.Elements.Count; i++)
                 {
-                    NewEffectElementEntry element = _effectEntry.Elements[i];
+                    EffectElementEntry element = _effectEntry.Elements[i];
                     element.Position = Position;
                     element.Transform = Transform;
                 }
@@ -195,7 +195,7 @@ namespace MphRead.Entities
             base.Process(scene);
         }
 
-        private void RemoveEffect(NewScene scene)
+        private void RemoveEffect(Scene scene)
         {
             if (_effectEntry != null)
             {
@@ -210,7 +210,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void GetDisplayVolumes(NewScene scene)
+        public override void GetDisplayVolumes(Scene scene)
         {
             if (_data.EffectId > 0 && scene.ShowVolumes == VolumeDisplay.Object)
             {

@@ -14,8 +14,8 @@ namespace MphRead
 {
     public static class Read
     {
-        private static readonly Dictionary<string, NewModel> _modelCache = new Dictionary<string, NewModel>();
-        private static readonly Dictionary<string, NewModel> _fhModelCache = new Dictionary<string, NewModel>();
+        private static readonly Dictionary<string, Model> _modelCache = new Dictionary<string, Model>();
+        private static readonly Dictionary<string, Model> _fhModelCache = new Dictionary<string, Model>();
 
         #region Hide
         // ctodo: nocache
@@ -31,8 +31,8 @@ namespace MphRead
 
         private static ModelInstance? GetModelInstanceOrNull(string name, bool firstHunt)
         {
-            Dictionary<string, NewModel> cache = firstHunt ? _fhModelCache : _modelCache;
-            if (!cache.TryGetValue(name, out NewModel? model))
+            Dictionary<string, Model> cache = firstHunt ? _fhModelCache : _modelCache;
+            if (!cache.TryGetValue(name, out Model? model))
             {
                 model = GetModel(name, firstHunt: false);
                 if (model == null)
@@ -44,7 +44,7 @@ namespace MphRead
             return new ModelInstance(model);
         }
 
-        private static NewModel? GetModel(string name, bool firstHunt)
+        private static Model? GetModel(string name, bool firstHunt)
         {
             ModelMetadata? meta;
             if (firstHunt)
@@ -79,7 +79,7 @@ namespace MphRead
             {
                 return null;
             }
-            if (!_modelCache.TryGetValue(name, out NewModel? model))
+            if (!_modelCache.TryGetValue(name, out Model? model))
             {
                 model = GetRoomModel(meta);
                 if (model == null)
@@ -91,7 +91,7 @@ namespace MphRead
             return new ModelInstance(model);
         }
 
-        private static NewModel GetRoomModel(RoomMetadata meta)
+        private static Model GetRoomModel(RoomMetadata meta)
         {
             var recolors = new List<RecolorMetadata>()
             {
@@ -113,7 +113,7 @@ namespace MphRead
             }
         }
 
-        private static NewModel ReadModel(string name, string modelPath, string? animationPath, string? animationShare,
+        private static Model ReadModel(string name, string modelPath, string? animationPath, string? animationShare,
             IReadOnlyList<RecolorMetadata> recolorMeta, bool firstHunt)
         {
             string root = firstHunt ? Paths.FhFileSystem : Paths.FileSystem;
@@ -215,7 +215,7 @@ namespace MphRead
                 shared.TextureAnimationGroups.AddRange(animations.TextureAnimationGroups);
                 animations = shared;
             }
-            return new NewModel(name, firstHunt, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+            return new Model(name, firstHunt, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
                 textureMatrices, recolors, nodeWeights);
         }
@@ -631,20 +631,20 @@ namespace MphRead
             return frames;
         }
 
-        private static readonly Dictionary<string, NewEffect> _newEffects = new Dictionary<string, NewEffect>();
-        private static readonly Dictionary<(string, string), NewParticle> _newParticleDefs = new Dictionary<(string, string), NewParticle>();
+        private static readonly Dictionary<string, Effect> _effects = new Dictionary<string, Effect>();
+        private static readonly Dictionary<(string, string), Particle> _particleDefs = new Dictionary<(string, string), Particle>();
 
-        public static NewEffect NewLoadEffect(int id)
+        public static Effect LoadEffect(int id)
         {
             if (id < 1 || id > Metadata.Effects.Count)
             {
                 throw new ProgramException("Could not get particle.");
             }
             (string name, string? archive) = Metadata.Effects[id];
-            return NewLoadEffect(name, archive);
+            return LoadEffect(name, archive);
         }
 
-        public static NewEffect NewLoadEffect(string name, string? archive)
+        public static Effect LoadEffect(string name, string? archive)
         {
             string path;
             if (archive == null)
@@ -655,20 +655,20 @@ namespace MphRead
             {
                 path = $"_archives/{archive}/{name}_PS.bin";
             }
-            NewEffect effect = NewLoadEffect(path);
-            foreach (NewEffectElement element in effect.Elements)
+            Effect effect = LoadEffect(path);
+            foreach (EffectElement element in effect.Elements)
             {
                 if (element.ChildEffectId != 0)
                 {
-                    NewLoadEffect((int)element.ChildEffectId);
+                    LoadEffect((int)element.ChildEffectId);
                 }
             }
             return effect;
         }
 
-        private static NewEffect NewLoadEffect(string path)
+        private static Effect LoadEffect(string path)
         {
-            if (_newEffects.TryGetValue(path, out NewEffect? cached))
+            if (_effects.TryGetValue(path, out Effect? cached))
             {
                 return cached;
             }
@@ -687,15 +687,15 @@ namespace MphRead
             // todo: these are also offsets into the func/param arrays; what are they used for?
             IReadOnlyList<uint> list2 = DoOffsets<uint>(bytes, effect.Offset2, effect.Count2);
             IReadOnlyList<uint> elementOffsets = DoOffsets<uint>(bytes, effect.ElementOffset, effect.ElementCount);
-            var elements = new List<NewEffectElement>();
+            var elements = new List<EffectElement>();
             foreach (uint offset in elementOffsets)
             {
                 RawEffectElement element = DoOffset<RawEffectElement>(bytes, offset);
-                var particles = new List<NewParticle>();
+                var particles = new List<Particle>();
                 foreach (uint nameOffset in DoOffsets<uint>(bytes, element.ParticleOffset, element.ParticleCount))
                 {
                     // todo: move the model reference to the element instead of the particle definitions
-                    particles.Add(NewGetParticle(element.ModelName.MarshalString(), ReadString(bytes, nameOffset, 16)));
+                    particles.Add(GetParticle(element.ModelName.MarshalString(), ReadString(bytes, nameOffset, 16)));
                 }
                 var elemFuncs = new Dictionary<FuncAction, FxFuncInfo>();
                 IReadOnlyList<uint> elemFuncMeta = DoOffsets<uint>(bytes, element.FuncOffset, 2 * element.FuncCount);
@@ -709,30 +709,30 @@ namespace MphRead
                         elemFuncs.Add((FuncAction)index, funcs[funcOffset]);
                     }
                 }
-                elements.Add(new NewEffectElement(element, particles, funcs, elemFuncs));
+                elements.Add(new EffectElement(element, particles, funcs, elemFuncs));
             }
-            var newEffect = new NewEffect(effect, funcs, list2, elements, path);
-            _newEffects.Add(path, newEffect);
+            var newEffect = new Effect(effect, funcs, list2, elements, path);
+            _effects.Add(path, newEffect);
             return newEffect;
         }
 
-        public static NewParticle NewGetSingleParticle(SingleType type)
+        public static Particle GetSingleParticle(SingleType type)
         {
             if (Metadata.SingleParticles.TryGetValue(type, out (string Model, string Particle) meta))
             {
-                return NewGetParticle(meta.Model, meta.Particle);
+                return GetParticle(meta.Model, meta.Particle);
             }
             throw new ProgramException("Could not get single particle.");
         }
 
-        private static NewParticle NewGetParticle(string modelName, string particleName)
+        private static Particle GetParticle(string modelName, string particleName)
         {
-            if (_newParticleDefs.TryGetValue((modelName, particleName), out NewParticle? particle))
+            if (_particleDefs.TryGetValue((modelName, particleName), out Particle? particle))
             {
                 return particle;
             }
             ModelInstance inst = GetModelInstance(modelName);
-            NewModel model = inst.Model;
+            Model model = inst.Model;
             Node? node = model.Nodes.FirstOrDefault(n => n.Name == particleName);
             // ptodo: see what the game does here; gib3/gib4 nodes are probably meant to be used for these
             if (modelName == "geo1" && particleName == "gib")
@@ -742,8 +742,8 @@ namespace MphRead
             if (node != null && node.MeshCount > 0)
             {
                 int materialId = model.Meshes[node.MeshId / 2].MaterialId;
-                var newParticle = new NewParticle(particleName, inst.Model, node, materialId);
-                _newParticleDefs.Add((modelName, particleName), newParticle);
+                var newParticle = new Particle(particleName, inst.Model, node, materialId);
+                _particleDefs.Add((modelName, particleName), newParticle);
                 return newParticle;
             }
             throw new ProgramException("Could not get particle.");
@@ -1034,7 +1034,7 @@ namespace MphRead
 
         public static void ReadAndExport(string name, bool firstHunt = false)
         {
-            NewModel? model = GetModelInstanceOrNull(name, firstHunt)?.Model;
+            Model? model = GetModelInstanceOrNull(name, firstHunt)?.Model;
             if (model == null)
             {
                 model = GetRoomModelInstanceOrNull(name)?.Model;

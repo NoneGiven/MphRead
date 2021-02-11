@@ -37,7 +37,7 @@ namespace MphRead.Entities
             return base.GetModelTransform(inst, index);
         }
 
-        public override void GetDisplayVolumes(NewScene scene)
+        public override void GetDisplayVolumes(Scene scene)
         {
             if (scene.ShowVolumes == VolumeDisplay.JumpPad)
             {
@@ -89,7 +89,7 @@ namespace MphRead.Entities
             return base.GetModelTransform(inst, index);
         }
 
-        public override void GetDisplayVolumes(NewScene scene)
+        public override void GetDisplayVolumes(Scene scene)
         {
             if (scene.ShowVolumes == VolumeDisplay.JumpPad)
             {

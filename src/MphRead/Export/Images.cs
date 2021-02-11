@@ -26,7 +26,7 @@ namespace MphRead.Export
             bitmap.Save(Path.Combine(path, $"{name}.png"));
         }
 
-        public static void ExportImages(NewModel model)
+        public static void ExportImages(Model model)
         {
             string exportPath = Path.Combine(Paths.Export, model.Name);
             foreach (Recolor recolor in model.Recolors)
@@ -105,7 +105,7 @@ namespace MphRead.Export
             }
         }
 
-        public static void ExportPalettes(NewModel model)
+        public static void ExportPalettes(Model model)
         {
             string exportPath = Path.Combine(Paths.Export, model.Name);
             foreach (Recolor recolor in model.Recolors)

@@ -71,7 +71,7 @@ namespace MphRead.Entities
             _bipedModel.SetNodeAnim(4);
         }
 
-        public override void Init(NewScene scene)
+        public override void Init(Scene scene)
         {
             base.Init(scene);
             _dblDmgBindingId = scene.BindGetTexture(_dblDmgModel.Model, 0, 0, 0);
@@ -81,7 +81,7 @@ namespace MphRead.Entities
             _light2Color = scene.Light2Color;
         }
 
-        public override void Process(NewScene scene)
+        public override void Process(Scene scene)
         {
             UpdateLightSources(scene);
             if (_respawnTimer > 0)
@@ -105,7 +105,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void GetDrawInfo(NewScene scene)
+        public override void GetDrawInfo(Scene scene)
         {
             if (_dead)
             {
@@ -120,7 +120,7 @@ namespace MphRead.Entities
             }
         }
 
-        private void DrawDeathParticles(NewScene scene)
+        private void DrawDeathParticles(Scene scene)
         {
             // get current percentage through the first 1/3 of the respawn cooldown
             float timePct = 1 - ((_respawnTimer - (2 / 3f * _respawnCooldown)) / (1 / 3f * _respawnCooldown));
@@ -176,7 +176,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void UpdateTransforms(NewScene scene)
+        public override void UpdateTransforms(Scene scene)
         {
             base.UpdateTransforms(scene);
             if (_frozen && !_altForm && !_mainPlayer)
@@ -197,7 +197,7 @@ namespace MphRead.Entities
 
         private const float _colorStep = 8 / 255f;
 
-        private void UpdateLightSources(NewScene scene)
+        private void UpdateLightSources(Scene scene)
         {
             static float UpdateChannel(float current, float source, float frames)
             {
@@ -287,7 +287,7 @@ namespace MphRead.Entities
             _light2Vector = light2Vector.Normalized();
         }
 
-        protected override LightInfo GetLightInfo(NewScene scene)
+        protected override LightInfo GetLightInfo(Scene scene)
         {
             return new LightInfo(_light1Vector, _light1Color, _light2Vector, _light2Color);
         }
@@ -329,7 +329,7 @@ namespace MphRead.Entities
             return base.GetEmission(inst, material, index);
         }
 
-        protected override Matrix4 GetTexcoordMatrix(ModelInstance inst, Material material, int materialId, Node node, NewScene scene)
+        protected override Matrix4 GetTexcoordMatrix(ModelInstance inst, Material material, int materialId, Node node, Scene scene)
         {
             if (_doubleDamage && (Hunter != Hunter.Spire || !(inst == _gunModel && materialId == 0))
                 && material.Lighting > 0 && node.BillboardMode == BillboardMode.None)

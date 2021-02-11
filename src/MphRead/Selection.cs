@@ -139,7 +139,7 @@ namespace MphRead
             return null;
         }
 
-        public static bool OnKeyDown(KeyboardKeyEventArgs e, NewScene scene)
+        public static bool OnKeyDown(KeyboardKeyEventArgs e, Scene scene)
         {
             if (e.Key == Keys.M)
             {
@@ -293,7 +293,7 @@ namespace MphRead
             }
         }
 
-        private static void UpdateSelection(bool control, bool shift, NewScene scene)
+        private static void UpdateSelection(bool control, bool shift, Scene scene)
         {
             if (control && shift)
             {
@@ -447,7 +447,7 @@ namespace MphRead
             }
         }
 
-        private static void SelectNext(NewScene scene, bool control)
+        private static void SelectNext(Scene scene, bool control)
         {
             // todo: it would be nice to have node/mesh selection follow the hierarchy (with meshes "overflowing" to the next node)
             if (Mesh != null)
@@ -468,7 +468,7 @@ namespace MphRead
             }
         }
 
-        private static void SelectPrev(NewScene scene, bool control)
+        private static void SelectPrev(Scene scene, bool control)
         {
             if (Mesh != null)
             {
@@ -594,7 +594,7 @@ namespace MphRead
             return true;
         }
 
-        private static void SelectEntity(int direction, NewScene scene)
+        private static void SelectEntity(int direction, Scene scene)
         {
             EntityBase? entity = null;
             int index = scene.Entities.IndexOf(e => e == Entity);
@@ -618,13 +618,13 @@ namespace MphRead
             }
         }
 
-        private static bool FilterEntity(EntityBase entity, NewScene scene)
+        private static bool FilterEntity(EntityBase entity, Scene scene)
         {
             return entity.GetModels().Any(m => (scene.ShowAllEntities || m.Active)
                 && (scene.ShowAllEntities || scene.ShowInvisibleEntities || !m.IsPlaceholder));
         }
 
-        private static void LookAtSelection(NewScene scene, bool control, bool shift)
+        private static void LookAtSelection(Scene scene, bool control, bool shift)
         {
             if (control)
             {

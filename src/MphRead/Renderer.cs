@@ -38,7 +38,7 @@ namespace MphRead
         Portal
     }
 
-    public class NewScene
+    public class Scene
     {
         public Vector2i Size { get; set; }
         private Matrix4 _viewMatrix = Matrix4.Identity;
@@ -73,7 +73,7 @@ namespace MphRead
         private readonly Dictionary<int, EntityBase> _entityMap = new Dictionary<int, EntityBase>();
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
-        private readonly Dictionary<int, NewTextureMap> _texPalMap = new Dictionary<int, NewTextureMap>();
+        private readonly Dictionary<int, TextureMap> _texPalMap = new Dictionary<int, TextureMap>();
 
         private int _shaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
@@ -127,7 +127,7 @@ namespace MphRead
         private readonly KeyboardState _keyboardState;
         private readonly Action<string> _setTitle;
 
-        public NewScene(Vector2i size, KeyboardState keyboardState, Action<string> setTitle)
+        public Scene(Vector2i size, KeyboardState keyboardState, Action<string> setTitle)
         {
             Size = size;
             _keyboardState = keyboardState;
@@ -144,7 +144,7 @@ namespace MphRead
             }
             _roomLoaded = true;
             (RoomEntity room, RoomMetadata meta, CollisionInfo collision, IReadOnlyList<EntityBase> entities, int updatedMask)
-                = SceneSetup.LoadNewRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
+                = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
             _entities.Add(room);
             _entitySort.Add(room);
             InitEntity(room);
@@ -342,7 +342,7 @@ namespace MphRead
 
         private readonly HashSet<string> _effectModels = new HashSet<string>();
 
-        private void GenerateLists(NewModel model, bool isRoom)
+        private void GenerateLists(Model model, bool isRoom)
         {
             var tempListIds = new Dictionary<int, int>();
             foreach (Mesh mesh in model.Meshes)
@@ -368,7 +368,7 @@ namespace MphRead
             }
         }
 
-        private void DoDlist(NewModel model, Mesh mesh, int textureWidth, int textureHeight, bool texgen, bool isRoom)
+        private void DoDlist(Model model, Mesh mesh, int textureWidth, int textureHeight, bool texgen, bool isRoom)
         {
             IReadOnlyList<RenderInstruction> list = model.RenderInstructionLists[mesh.DlistId];
             float vtxX = 0;
@@ -626,7 +626,7 @@ namespace MphRead
             GL.TexCoord3(0f, 0f, 0f);
         }
 
-        private void InitTextures(NewModel model)
+        private void InitTextures(Model model)
         {
             if (_texPalMap.ContainsKey(model.Id))
             {
@@ -663,7 +663,7 @@ namespace MphRead
             }
             if (combos.Count > 0)
             {
-                var map = new NewTextureMap();
+                var map = new TextureMap();
                 foreach ((int textureId, int paletteId, int recolorId) in combos)
                 {
                     bool onlyOpaque = BindTexture(model, textureId, paletteId, recolorId);
@@ -673,9 +673,9 @@ namespace MphRead
             }
         }
 
-        public int BindGetTexture(NewModel model, int textureId, int paletteId, int recolorId)
+        public int BindGetTexture(Model model, int textureId, int paletteId, int recolorId)
         {
-            if (_texPalMap.TryGetValue(model.Id, out NewTextureMap? value))
+            if (_texPalMap.TryGetValue(model.Id, out TextureMap? value))
             {
                 return value.Get(textureId, paletteId, recolorId).BindingId;
             }
@@ -683,7 +683,7 @@ namespace MphRead
             return _textureCount;
         }
 
-        private bool BindTexture(NewModel model, int textureId, int paletteId, int recolorId)
+        private bool BindTexture(Model model, int textureId, int paletteId, int recolorId)
         {
             _textureCount++;
             bool onlyOpaque = true;
@@ -701,7 +701,7 @@ namespace MphRead
             return onlyOpaque;
         }
 
-        public void UpdateMaterials(NewModel model, int recolorId)
+        public void UpdateMaterials(Model model, int recolorId)
         {
             for (int i = 0; i < model.Materials.Count; i++)
             {
@@ -808,7 +808,7 @@ namespace MphRead
             _entities.RemoveAll(e => e == entity);
             foreach (ModelInstance inst in entity.GetModels())
             {
-                NewModel model = inst.Model;
+                Model model = inst.Model;
                 if (Metadata.EffectsBases.ContainsKey(model.Name))
                 {
                     continue;
@@ -820,9 +820,9 @@ namespace MphRead
             }
         }
 
-        private void UnloadModel(NewModel model)
+        private void UnloadModel(Model model)
         {
-            if (_texPalMap.TryGetValue(model.Id, out NewTextureMap? map))
+            if (_texPalMap.TryGetValue(model.Id, out TextureMap? map))
             {
                 foreach (KeyValuePair<int, (int BindingId, bool OnlyOpaque)> kvp in map)
                 {
@@ -931,30 +931,30 @@ namespace MphRead
         private static readonly int _effectParticleMax = 3000;
         private static readonly int _singleParticleMax = 1000;
 
-        private readonly Queue<NewEffectEntry> _inactiveEffects = new Queue<NewEffectEntry>(_effectEntryMax);
-        private readonly Queue<NewEffectElementEntry> _inactiveElements = new Queue<NewEffectElementEntry>(_effectElementMax);
-        private readonly List<NewEffectElementEntry> _activeElements = new List<NewEffectElementEntry>(_effectElementMax);
-        private readonly Queue<NewEffectParticle> _inactiveParticles = new Queue<NewEffectParticle>(_effectParticleMax);
+        private readonly Queue<EffectEntry> _inactiveEffects = new Queue<EffectEntry>(_effectEntryMax);
+        private readonly Queue<EffectElementEntry> _inactiveElements = new Queue<EffectElementEntry>(_effectElementMax);
+        private readonly List<EffectElementEntry> _activeElements = new List<EffectElementEntry>(_effectElementMax);
+        private readonly Queue<EffectParticle> _inactiveParticles = new Queue<EffectParticle>(_effectParticleMax);
         private int _singleParticleCount = 0;
-        private readonly List<NewSingleParticle> _singleParticles = new List<NewSingleParticle>(_singleParticleMax);
+        private readonly List<SingleParticle> _singleParticles = new List<SingleParticle>(_singleParticleMax);
 
         private void AllocateEffects()
         {
             for (int i = 0; i < _effectEntryMax; i++)
             {
-                _inactiveEffects.Enqueue(new NewEffectEntry());
+                _inactiveEffects.Enqueue(new EffectEntry());
             }
             for (int i = 0; i < _effectElementMax; i++)
             {
-                _inactiveElements.Enqueue(new NewEffectElementEntry());
+                _inactiveElements.Enqueue(new EffectElementEntry());
             }
             for (int i = 0; i < _effectParticleMax; i++)
             {
-                _inactiveParticles.Enqueue(new NewEffectParticle());
+                _inactiveParticles.Enqueue(new EffectParticle());
             }
             for (int i = 0; i < _singleParticleMax; i++)
             {
-                _singleParticles.Add(new NewSingleParticle());
+                _singleParticles.Add(new SingleParticle());
             }
         }
 
@@ -963,8 +963,8 @@ namespace MphRead
             // note: skipping the room size limit check; singles get cleared every frame anyway
             if (_singleParticleCount < _singleParticleMax)
             {
-                NewSingleParticle entry = _singleParticles[_singleParticleCount++];
-                entry.ParticleDefinition = Read.NewGetSingleParticle(type);
+                SingleParticle entry = _singleParticles[_singleParticleCount++];
+                entry.ParticleDefinition = Read.GetSingleParticle(type);
                 entry.Position = position;
                 entry.Color = color;
                 entry.Alpha = alpha;
@@ -976,29 +976,29 @@ namespace MphRead
             }
         }
 
-        private NewEffectEntry InitEffectEntry()
+        private EffectEntry InitEffectEntry()
         {
-            NewEffectEntry entry = _inactiveEffects.Dequeue();
+            EffectEntry entry = _inactiveEffects.Dequeue();
             entry.EffectId = 0;
             Debug.Assert(entry.Elements.Count == 0);
             return entry;
         }
 
-        public void UnlinkEffectEntry(NewEffectEntry entry)
+        public void UnlinkEffectEntry(EffectEntry entry)
         {
             for (int i = 0; i < entry.Elements.Count; i++)
             {
-                NewEffectElementEntry element = entry.Elements[i];
+                EffectElementEntry element = entry.Elements[i];
                 UnlinkEffectElement(element);
             }
             _inactiveEffects.Enqueue(entry);
         }
 
-        public void DetachEffectEntry(NewEffectEntry entry, bool setExpired)
+        public void DetachEffectEntry(EffectEntry entry, bool setExpired)
         {
             for (int i = 0; i < entry.Elements.Count; i++)
             {
-                NewEffectElementEntry element = entry.Elements[i];
+                EffectElementEntry element = entry.Elements[i];
                 if ((element.Flags & 0x100) != 0)
                 {
                     UnlinkEffectElement(element);
@@ -1018,9 +1018,9 @@ namespace MphRead
             UnlinkEffectEntry(entry);
         }
 
-        private NewEffectElementEntry InitEffectElement(NewEffect effect, NewEffectElement element)
+        private EffectElementEntry InitEffectElement(Effect effect, EffectElement element)
         {
-            NewEffectElementEntry entry = _inactiveElements.Dequeue();
+            EffectElementEntry entry = _inactiveElements.Dequeue();
             entry.EffectName = effect.Name;
             entry.ElementName = element.Name;
             entry.BufferTime = element.BufferTime;
@@ -1047,11 +1047,11 @@ namespace MphRead
             return entry;
         }
 
-        private void UnlinkEffectElement(NewEffectElementEntry element)
+        private void UnlinkEffectElement(EffectElementEntry element)
         {
             while (element.Particles.Count > 0)
             {
-                NewEffectParticle particle = element.Particles[0];
+                EffectParticle particle = element.Particles[0];
                 element.Particles.Remove(particle);
                 UnlinkEffectParticle(particle);
             }
@@ -1066,9 +1066,9 @@ namespace MphRead
             _inactiveElements.Enqueue(element);
         }
 
-        private NewEffectParticle InitEffectParticle()
+        private EffectParticle InitEffectParticle()
         {
-            NewEffectParticle particle = _inactiveParticles.Dequeue();
+            EffectParticle particle = _inactiveParticles.Dequeue();
             particle.Position = Vector3.Zero;
             particle.Speed = Vector3.Zero;
             particle.ParticleId = 0;
@@ -1084,14 +1084,14 @@ namespace MphRead
             return particle;
         }
 
-        private void UnlinkEffectParticle(NewEffectParticle particle)
+        private void UnlinkEffectParticle(EffectParticle particle)
         {
             _inactiveParticles.Enqueue(particle);
         }
 
-        public NewEffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform)
+        public EffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform)
         {
-            NewEffectEntry entry = InitEffectEntry();
+            EffectEntry entry = InitEffectEntry();
             entry.EffectId = effectId;
             SpawnEffect(effectId, transform, entry);
             return entry;
@@ -1099,8 +1099,8 @@ namespace MphRead
 
         public void LoadEffect(int effectId)
         {
-            NewEffect effect = Read.NewLoadEffect(effectId);
-            foreach (NewEffectElement element in effect.Elements)
+            Effect effect = Read.LoadEffect(effectId);
+            foreach (EffectElement element in effect.Elements)
             {
                 // todo: cleaner/common way of keeping track of models that have had lists generated
                 if (!_effectModels.Contains(element.ModelName))
@@ -1111,14 +1111,14 @@ namespace MphRead
             }
         }
 
-        public void SpawnEffect(int effectId, Matrix4 transform, NewEffectEntry? entry = null)
+        public void SpawnEffect(int effectId, Matrix4 transform, EffectEntry? entry = null)
         {
-            NewEffect effect = Read.NewLoadEffect(effectId); // should already be loaded
+            Effect effect = Read.LoadEffect(effectId); // should already be loaded
             var position = new Vector3(transform.Row3);
             for (int i = 0; i < effect.Elements.Count; i++)
             {
-                NewEffectElement elementDef = effect.Elements[i];
-                NewEffectElementEntry element = InitEffectElement(effect, elementDef);
+                EffectElement elementDef = effect.Elements[i];
+                EffectElementEntry element = InitEffectElement(effect, elementDef);
                 if (entry != null)
                 {
                     element.EffectEntry = entry;
@@ -1134,7 +1134,7 @@ namespace MphRead
                 element.Transform = transform;
                 for (int j = 0; j < elementDef.Particles.Count; j++)
                 {
-                    NewParticle particleDef = elementDef.Particles[j];
+                    Particle particleDef = elementDef.Particles[j];
                     if (j == 0)
                     {
                         if (!_texPalMap.ContainsKey(particleDef.Model.Id))
@@ -1155,7 +1155,7 @@ namespace MphRead
         {
             for (int i = 0; i < _activeElements.Count; i++)
             {
-                NewEffectElementEntry element = _activeElements[i];
+                EffectElementEntry element = _activeElements[i];
                 if (!element.Expired && _elapsedTime > element.ExpirationTime)
                 {
                     if (element.EffectEntry == null && (element.Flags & 0x10) == 0)
@@ -1203,7 +1203,7 @@ namespace MphRead
                     for (int j = 0; j < spawnCount; j++)
                     {
                         Vector3 temp = Vector3.Zero;
-                        NewEffectParticle particle = InitEffectParticle();
+                        EffectParticle particle = InitEffectParticle();
                         element.Particles.Add(particle);
                         particle.Owner = element;
                         particle.SetFuncIds();
@@ -1274,7 +1274,7 @@ namespace MphRead
                 }
                 for (int j = 0; j < element.Particles.Count; j++)
                 {
-                    NewEffectParticle particle = element.Particles[j];
+                    EffectParticle particle = element.Particles[j];
                     if ((element.Flags & 0x80000) != 0 && (element.Flags & 0x20) != 0)
                     {
                         if (_elapsedTime - particle.CreationTime > element.BufferTime)
@@ -1613,16 +1613,16 @@ namespace MphRead
                 var camVec3 = new Vector3(_viewMatrix.M31, _viewMatrix.M32, _viewMatrix.M33 * -1);
                 for (int i = 0; i < _singleParticleCount; i++)
                 {
-                    NewSingleParticle single = _singleParticles[i];
+                    SingleParticle single = _singleParticles[i];
                     single.Process(camVec1, camVec2, camVec3, 1);
                 }
             }
             for (int i = 0; i < _activeElements.Count; i++)
             {
-                NewEffectElementEntry element = _activeElements[i];
+                EffectElementEntry element = _activeElements[i];
                 for (int j = 0; j < element.Particles.Count; j++)
                 {
-                    NewEffectParticle particle = element.Particles[j];
+                    EffectParticle particle = element.Particles[j];
                     Matrix4 matrix = _viewMatrix;
                     if ((particle.Owner.Flags & 1) != 0 && (particle.Owner.Flags & 4) == 0)
                     {
@@ -1638,7 +1638,7 @@ namespace MphRead
             }
             for (int i = 0; i < _singleParticleCount; i++)
             {
-                NewSingleParticle single = _singleParticles[i];
+                SingleParticle single = _singleParticles[i];
                 if (single.ShouldDraw)
                 {
                     single.AddRenderItem(this);
@@ -2773,7 +2773,7 @@ namespace MphRead
                 $"{(inst.IsPlaceholder ? " Placeholder" : "")}");
             _sb.AppendLine($"Nodes {inst.Model.Nodes.Count}, Meshes {inst.Model.Meshes.Count}, Materials {inst.Model.Materials.Count}," +
                 $" Textures {inst.Model.Recolors[0].Textures.Count}, Palettes {inst.Model.Recolors[0].Palettes.Count}");
-            NewAnimationInfo a = inst.AnimInfo;
+            AnimationInfo a = inst.AnimInfo;
             AnimationGroups g = inst.Model.AnimationGroups;
             _sb.AppendLine($"Anim: Node {a.Node.Index} / {g.Node.Count}, Material {a.Material.Index} / {g.Material.Count}," +
                 $" Texcoord {a.Texcoord.Index} / {g.Texcoord.Count}, Texture {a.Texture.Index} / {g.Texture.Count}");
@@ -2781,7 +2781,7 @@ namespace MphRead
 
         private void OutputGetNode()
         {
-            static string FormatNode(NewModel model, int otherId)
+            static string FormatNode(Model model, int otherId)
             {
                 if (otherId == UInt16.MaxValue)
                 {
@@ -2847,7 +2847,7 @@ namespace MphRead
         }
     }
 
-    public class NewRenderWindow : GameWindow
+    public class RenderWindow : GameWindow
     {
         private static readonly GameWindowSettings _gameWindowSettings = new GameWindowSettings()
         {
@@ -2863,11 +2863,11 @@ namespace MphRead
             APIVersion = new Version(3, 2)
         };
 
-        public NewScene Scene { get; }
+        public Scene Scene { get; }
 
-        public NewRenderWindow() : base(_gameWindowSettings, _nativeWindowSettings)
+        public RenderWindow() : base(_gameWindowSettings, _nativeWindowSettings)
         {
-            Scene = new NewScene(Size, KeyboardState, (string title) =>
+            Scene = new Scene(Size, KeyboardState, (string title) =>
             {
                 Title = title;
             });
@@ -2965,7 +2965,7 @@ namespace MphRead
         }
     }
 
-    public class NewTextureMap : Dictionary<int, (int BindingId, bool OnlyOpaque)>
+    public class TextureMap : Dictionary<int, (int BindingId, bool OnlyOpaque)>
     {
         private int GetKey(int textureId, int paletteId, int recolorId)
         {

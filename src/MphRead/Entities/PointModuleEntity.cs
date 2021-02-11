@@ -22,7 +22,7 @@ namespace MphRead.Entities
             _models[0].Active = false;
         }
 
-        public override void Init(NewScene scene)
+        public override void Init(Scene scene)
         {
             base.Init(scene);
             if (_data.NextId != 0 && scene.TryGetEntity(_data.NextId, out EntityBase? entity))
@@ -35,7 +35,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Process(NewScene scene)
+        public override void Process(Scene scene)
         {
             base.Process(scene);
             if (_current == null && Id == StartId)

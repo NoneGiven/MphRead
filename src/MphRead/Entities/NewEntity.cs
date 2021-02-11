@@ -102,7 +102,7 @@ namespace MphRead.Entities
             Type = type;
         }
 
-        public virtual void Init(NewScene scene)
+        public virtual void Init(Scene scene)
         {
             _anyLighting = _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));
         }
@@ -112,7 +112,7 @@ namespace MphRead.Entities
             return Matrix4.CreateScale(inst.Model.Scale) * _transform;
         }
 
-        public virtual void Process(NewScene scene)
+        public virtual void Process(Scene scene)
         {
             for (int i = 0; i < _models.Count; i++)
             {
@@ -132,7 +132,7 @@ namespace MphRead.Entities
             return Recolor;
         }
 
-        public virtual void UpdateTransforms(NewScene scene)
+        public virtual void UpdateTransforms(Scene scene)
         {
             if (ShouldDraw && Alpha > 0)
             {
@@ -141,7 +141,7 @@ namespace MphRead.Entities
                     ModelInstance inst = _models[i];
                     if (inst.Active || scene.ShowAllEntities)
                     {
-                        NewModel model = inst.Model;
+                        Model model = inst.Model;
                         model.AnimateMaterials(inst.AnimInfo.Material);
                         model.AnimateTextures(inst.AnimInfo.Texture);
                         model.ComputeNodeMatrices(index: 0);
@@ -172,7 +172,7 @@ namespace MphRead.Entities
             return OverrideColor;
         }
 
-        protected virtual LightInfo GetLightInfo(NewScene scene)
+        protected virtual LightInfo GetLightInfo(Scene scene)
         {
             return new LightInfo(scene.Light1Vector, scene.Light1Color, scene.Light2Vector, scene.Light2Color);
         }
@@ -182,7 +182,7 @@ namespace MphRead.Entities
             return null;
         }
 
-        public virtual void GetDrawInfo(NewScene scene)
+        public virtual void GetDrawInfo(Scene scene)
         {
             for (int i = 0; i < _models.Count; i++)
             {
@@ -197,7 +197,7 @@ namespace MphRead.Entities
 
             void GetItems(ModelInstance inst, int index, Node node, int polygonId)
             {
-                NewModel model = inst.Model;
+                Model model = inst.Model;
                 if (node.Enabled)
                 {
                     int start = node.MeshId / 2;
@@ -234,9 +234,9 @@ namespace MphRead.Entities
             return Vector3.Zero;
         }
 
-        protected virtual Matrix4 GetTexcoordMatrix(ModelInstance inst, Material material, int materialId, Node node, NewScene scene)
+        protected virtual Matrix4 GetTexcoordMatrix(ModelInstance inst, Material material, int materialId, Node node, Scene scene)
         {
-            NewModel model = inst.Model;
+            Model model = inst.Model;
             Matrix4 texcoordMatrix = Matrix4.Identity;
             TexcoordAnimationGroup? group = inst.AnimInfo.Texcoord.Group;
             TexcoordAnimation? animation = null;
@@ -345,7 +345,7 @@ namespace MphRead.Entities
             return transform;
         }
 
-        protected void AddVolumeItem(CollisionVolume volume, Vector3 color, NewScene scene)
+        protected void AddVolumeItem(CollisionVolume volume, Vector3 color, Scene scene)
         {
             if (!Selection.CheckVolume(this))
             {
@@ -400,8 +400,8 @@ namespace MphRead.Entities
             }
             else if (volume.Type == VolumeType.Sphere)
             {
-                int stackCount = NewScene.DisplaySphereStacks;
-                int sectorCount = NewScene.DisplaySphereSectors;
+                int stackCount = Scene.DisplaySphereStacks;
+                int sectorCount = Scene.DisplaySphereSectors;
                 verts = ArrayPool<Vector3>.Shared.Rent(stackCount * sectorCount);
                 float radius = volume.SphereRadius;
                 float sectorStep = 2 * MathF.PI / sectorCount;
@@ -434,7 +434,7 @@ namespace MphRead.Entities
             );
         }
 
-        public virtual void GetDisplayVolumes(NewScene scene)
+        public virtual void GetDisplayVolumes(Scene scene)
         {
         }
 
@@ -492,7 +492,7 @@ namespace MphRead.Entities
             _floatModelIndex = floatModelIndex;
         }
 
-        public override void Process(NewScene scene)
+        public override void Process(Scene scene)
         {
             _spin = (float)(_spin + scene.FrameTime * 360 * _spinSpeed) % 360;
             base.Process(scene);

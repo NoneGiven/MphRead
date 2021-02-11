@@ -27,7 +27,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Process(NewScene scene)
+        public override void Process(Scene scene)
         {
             // todo: item spawning logic
             if (_enabled && _spawn)
@@ -61,7 +61,7 @@ namespace MphRead.Entities
             AddPlaceholderModel();
         }
 
-        public override void Process(NewScene scene)
+        public override void Process(Scene scene)
         {
             // todo: FH item spawning logic
             if (_spawn)

@@ -26,7 +26,7 @@ namespace MphRead.Entities
                 // manually disable a decal that isn't rendered in-game because it's not on a surface
                 Nodes[46].Enabled = false;
             }
-            NewModel model = inst.Model;
+            Model model = inst.Model;
             var portals = new List<CollisionPortal>();
             var forceFields = new List<PortalNodeRef>();
             portals.AddRange(collision.Portals.Where(p => (p.LayerMask & 4) != 0 || (p.LayerMask & layerMask) != 0));
@@ -121,7 +121,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void GetDrawInfo(NewScene scene)
+        public override void GetDrawInfo(Scene scene)
         {
             ModelInstance inst = _models[0];
             for (int i = 0; i < Nodes.Count; i++)
@@ -180,7 +180,7 @@ namespace MphRead.Entities
                 {
                     return;
                 }
-                NewModel model = inst.Model;
+                Model model = inst.Model;
                 int start = node.MeshId / 2;
                 for (int k = 0; k < node.MeshCount; k++)
                 {
@@ -216,7 +216,7 @@ namespace MphRead.Entities
             return MathF.Min(between / 8, 1);
         }
 
-        public override void GetDisplayVolumes(NewScene scene)
+        public override void GetDisplayVolumes(Scene scene)
         {
             if (scene.ShowVolumes == VolumeDisplay.Portal)
             {

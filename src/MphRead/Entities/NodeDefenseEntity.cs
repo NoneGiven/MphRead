@@ -37,7 +37,7 @@ namespace MphRead.Entities
             return transform;
         }
 
-        public override void GetDisplayVolumes(NewScene scene)
+        public override void GetDisplayVolumes(Scene scene)
         {
             if (scene.ShowVolumes == VolumeDisplay.DefenseNode)
             {

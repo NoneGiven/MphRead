@@ -87,8 +87,8 @@ namespace MphRead
             {
                 if (name != "" && name != "sparksFall" && name != "mortarSecondary" && name != "powerBeamChargeNoSplatMP")
                 {
-                    NewEffect effect = Read.NewLoadEffect(name, archive);
-                    foreach (NewEffectElement element in effect.Elements)
+                    Effect effect = Read.LoadEffect(name, archive);
+                    foreach (EffectElement element in effect.Elements)
                     {
                     }
                 }
@@ -101,7 +101,7 @@ namespace MphRead
             var names = new List<string>() { "deathParticle", "geo1", "particles", "particles2" };
             foreach (string name in names)
             {
-                NewModel model = Read.GetModelInstance(name).Model;
+                Model model = Read.GetModelInstance(name).Model;
                 foreach (Material material in model.Materials)
                 {
                     if (material.XRepeat == RepeatMode.Mirror || material.YRepeat == RepeatMode.Mirror)
@@ -211,7 +211,7 @@ namespace MphRead
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 CollisionInfo collision = Collision.ReadCollision(meta.Value.CollisionPath, meta.Value.FirstHunt || meta.Value.Hybrid);
-                NewModel room = Read.GetRoomModelInstance(meta.Key).Model;
+                Model room = Read.GetRoomModelInstance(meta.Key).Model;
                 Nop();
             }
             Nop();
@@ -322,14 +322,14 @@ namespace MphRead
 
         public static void TestAllModels()
         {
-            foreach (NewModel model in GetAllModels())
+            foreach (Model model in GetAllModels())
             {
             }
         }
 
         public static void TestMtxRestore()
         {
-            foreach (NewModel model in GetAllModels())
+            foreach (Model model in GetAllModels())
             {
                 int count = 0;
                 int most = -1;
@@ -1024,7 +1024,7 @@ namespace MphRead
             );
         }
 
-        public static void GetPolygonAttrs(NewModel model, int polygonId)
+        public static void GetPolygonAttrs(Model model, int polygonId)
         {
             foreach (Material material in model.Materials)
             {
@@ -1032,7 +1032,7 @@ namespace MphRead
             }
         }
 
-        public static void GetPolygonAttrs(NewModel model, Material material, int polygonId)
+        public static void GetPolygonAttrs(Model model, Material material, int polygonId)
         {
             int v19 = polygonId == 1 ? 0x4000 : 0;
             int v20 = v19 | 0x8000;
@@ -1084,7 +1084,7 @@ namespace MphRead
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
-                SceneSetup.LoadNewRoom(meta.Key);
+                SceneSetup.LoadRoom(meta.Key);
             }
         }
 
@@ -1092,7 +1092,7 @@ namespace MphRead
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
-                NewModel room = Read.GetRoomModelInstance(meta.Key).Model;
+                Model room = Read.GetRoomModelInstance(meta.Key).Model;
                 Console.WriteLine(meta.Key);
                 for (int i = 0; i < room.Nodes.Count; i++)
                 {
@@ -1124,14 +1124,14 @@ namespace MphRead
 
         public static void TestEntityEffects()
         {
-            var effects = new Dictionary<int, NewEffect>();
+            var effects = new Dictionary<int, Effect>();
             for (int i = 0; i < Metadata.Effects.Count; i++)
             {
                 (string name, string? archive) = Metadata.Effects[i];
                 if (name != "" && name != "sparksFall" && name != "mortarSecondary"
                     && name != "powerBeamChargeNoSplatMP")
                 {
-                    effects.Add(i, Read.NewLoadEffect(name, archive));
+                    effects.Add(i, Read.LoadEffect(name, archive));
                 }
             }
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
@@ -1155,10 +1155,10 @@ namespace MphRead
                                     Console.WriteLine();
                                     printed = true;
                                 }
-                                NewEffect effect = effects[(int)data.EffectId];
+                                Effect effect = effects[(int)data.EffectId];
                                 Console.WriteLine($"[ ] Entity {entity.EntityId}, Effect {data.EffectId} ({effect.Name})");
                                 var elems = new List<string>();
-                                foreach (NewEffectElement element in effect.Elements)
+                                foreach (EffectElement element in effect.Elements)
                                 {
                                     (int setVecsId, int drawId) = EffectFuncBase.GetFuncIds(element.Flags, element.DrawType);
                                     string vecs = setVecsId switch
@@ -1257,7 +1257,7 @@ namespace MphRead
             Console.WriteLine();
         }
 
-        private static IEnumerable<NewModel> GetAllModels()
+        private static IEnumerable<Model> GetAllModels()
         {
             foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.ModelMetadata)
             {
@@ -1273,7 +1273,7 @@ namespace MphRead
             }
         }
 
-        private static IEnumerable<NewModel> GetAllRooms()
+        private static IEnumerable<Model> GetAllRooms()
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
