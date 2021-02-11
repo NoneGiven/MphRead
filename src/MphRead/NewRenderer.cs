@@ -633,7 +633,6 @@ namespace MphRead
                 }
                 if (material.RenderMode == RenderMode.Unknown3 || material.RenderMode == RenderMode.Unknown4)
                 {
-                    //_logs.Add($"mat {material.Name} of model {model.Name} has render mode {material.RenderMode}");
                     material.RenderMode = RenderMode.Normal;
                 }
                 for (int i = 0; i < model.Recolors.Count; i++)
