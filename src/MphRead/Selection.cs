@@ -12,27 +12,27 @@ namespace MphRead
     public static class Selection
     {
         public static EntityBase? Entity { get; private set; }
-        public static ModelInstance? Inst { get; private set; }
+        public static ModelInstance? Instance { get; private set; }
         public static Node? Node { get; private set; }
         public static Mesh? Mesh { get; private set; }
 
-        private static bool Any => Mesh != null || Node != null || Inst != null || Entity != null;
+        private static bool Any => Mesh != null || Node != null || Instance != null || Entity != null;
 
         private static bool _showSelection = true;
 
-        public static bool IsSelected(EntityBase entity, ModelInstance model, Node node, Mesh mesh)
+        public static bool IsSelected(EntityBase entity, ModelInstance inst, Node node, Mesh mesh)
         {
             if (Mesh != null)
             {
-                return mesh == Mesh && node == Node && model == Inst && entity == Entity;
+                return mesh == Mesh && node == Node && inst == Instance && entity == Entity;
             }
             if (Node != null)
             {
-                return node == Node && model == Inst && entity == Entity;
+                return node == Node && inst == Instance && entity == Entity;
             }
-            if (Inst != null)
+            if (Instance != null)
             {
-                return model == Inst && entity == Entity;
+                return inst == Instance && entity == Entity;
             }
             if (Entity != null)
             {
@@ -118,9 +118,9 @@ namespace MphRead
                 {
                     Node.Enabled = !Node.Enabled;
                 }
-                else if (Inst != null)
+                else if (Instance != null)
                 {
-                    Inst.Active = !Inst.Active;
+                    Instance.Active = !Instance.Active;
                 }
                 else if (Entity != null)
                 {
@@ -151,7 +151,7 @@ namespace MphRead
             if (control && shift)
             {
                 Entity = null;
-                Inst = null;
+                Instance = null;
                 Node = null;
                 Mesh = null;
             }
@@ -164,7 +164,7 @@ namespace MphRead
                 else
                 {
                     Entity = null;
-                    Inst = null;
+                    Instance = null;
                     Node = null;
                     Mesh = null;
                 }
@@ -175,20 +175,20 @@ namespace MphRead
                 {
                     Node = null;
                 }
-                else if (Inst != null && Node.MeshCount > 0)
+                else if (Instance != null && Node.MeshCount > 0)
                 {
-                    Mesh = Inst.Model.Meshes[Node.MeshId / 2];
+                    Mesh = Instance.Model.Meshes[Node.MeshId / 2];
                 }
             }
-            else if (Inst != null)
+            else if (Instance != null)
             {
                 if (shift)
                 {
-                    Inst = null;
+                    Instance = null;
                 }
                 else
                 {
-                    Node = Inst.Model.Nodes.FirstOrDefault();
+                    Node = Instance.Model.Nodes.FirstOrDefault();
                 }
             }
             else if (Entity != null)
@@ -199,7 +199,7 @@ namespace MphRead
                 }
                 else
                 {
-                    Inst = Entity.GetModels().FirstOrDefault();
+                    Instance = Entity.GetModels().FirstOrDefault();
                 }
             }
             else if (!shift)
@@ -208,21 +208,19 @@ namespace MphRead
             }
         }
 
-        private static List<EntityBase> _buffer = new List<EntityBase>();
-
         private static void SelectNext(NewScene scene)
         {
             if (Mesh != null)
             {
-
+                SelectMesh(1);
             }
             else if (Node != null)
             {
-
+                SelectNode(1);
             }
-            else if (Inst != null)
+            else if (Instance != null)
             {
-
+                SelectInstance(1);
             }
             else if (Entity != null)
             {
@@ -234,15 +232,15 @@ namespace MphRead
         {
             if (Mesh != null)
             {
-
+                SelectMesh(-1);
             }
             else if (Node != null)
             {
-
+                SelectNode(-1);
             }
-            else if (Inst != null)
+            else if (Instance != null)
             {
-
+                SelectInstance(-1);
             }
             else if (Entity != null)
             {
@@ -250,9 +248,114 @@ namespace MphRead
             }
         }
 
+        private static readonly List<Mesh> _meshBuffer = new List<Mesh>();
+
+        private static void SelectMesh(int direction)
+        {
+            if (Instance != null && Node != null)
+            {
+                Mesh? mesh = null;
+                _meshBuffer.Clear();
+                int start = Node.MeshId / 2;
+                for (int i = 0; i < Node.MeshCount; i++)
+                {
+                    _meshBuffer.Add(Instance.Model.Meshes[start + i]);
+                }
+                int index = _meshBuffer.IndexOf(e => e == Mesh);
+                while (mesh != Mesh)
+                {
+                    index += direction;
+                    if (index < 0)
+                    {
+                        index = _meshBuffer.Count - 1;
+                    }
+                    else if (index >= _meshBuffer.Count)
+                    {
+                        index = 0;
+                    }
+                    mesh = _meshBuffer[index];
+                    if (FilterMesh(/*mesh*/))
+                    {
+                        Mesh = mesh;
+                        break;
+                    }
+                }
+            }
+        }
+
+        private static bool FilterMesh(/*Mesh mesh*/)
+        {
+            return true;
+        }
+
+        private static void SelectNode(int direction)
+        {
+            if (Instance != null)
+            {
+                Node? node = null;
+                IReadOnlyList<Node> nodes = Instance.Model.Nodes;
+                int index = nodes.IndexOf(e => e == Node);
+                while (node != Node)
+                {
+                    index += direction;
+                    if (index < 0)
+                    {
+                        index = nodes.Count - 1;
+                    }
+                    else if (index >= nodes.Count)
+                    {
+                        index = 0;
+                    }
+                    node = nodes[index];
+                    if (FilterNode(/*node*/))
+                    {
+                        Node = node;
+                        break;
+                    }
+                }
+            }
+        }
+
+        private static bool FilterNode(/*Node node*/)
+        {
+            return true;
+        }
+
+        private static void SelectInstance(int direction)
+        {
+            if (Entity != null)
+            {
+                ModelInstance? inst = null;
+                IReadOnlyList<ModelInstance> insts = Entity.GetModels();
+                int index = insts.IndexOf(e => e == Instance);
+                while (inst != Instance)
+                {
+                    index += direction;
+                    if (index < 0)
+                    {
+                        index = insts.Count - 1;
+                    }
+                    else if (index >= insts.Count)
+                    {
+                        index = 0;
+                    }
+                    inst = insts[index];
+                    if (FilterInstance(/*inst*/))
+                    {
+                        Instance = inst;
+                        break;
+                    }
+                }
+            }
+        }
+
+        private static bool FilterInstance(/*ModelInstance inst*/)
+        {
+            return true;
+        }
+
         private static void SelectEntity(int direction, NewScene scene)
         {
-            _buffer.Clear();
             EntityBase? entity = null;
             int index = scene.Entities.IndexOf(e => e == Entity);
             while (entity != Entity)
@@ -283,11 +386,11 @@ namespace MphRead
 
         private static void LookAtSelection(NewScene scene)
         {
-            if (Node != null) // mesh or node
+            if (Node != null) // node or mesh
             {
                 scene.LookAt(Node.Animation.Row3.Xyz);
             }
-            else if (Entity != null) // model or entity
+            else if (Entity != null) // entity or model instance
             {
                 scene.LookAt(Entity.Position);
             }

@@ -10,7 +10,7 @@ namespace MphRead.Entities
     {
         EntityType Type { get; }
         int Recolor { get; }
-        IEnumerable<ModelInstance> GetModels();
+        IReadOnlyList<ModelInstance> GetModels();
         void GetDrawInfo(NewScene scene);
     }
 
@@ -151,7 +151,7 @@ namespace MphRead.Entities
             }
         }
 
-        public virtual IEnumerable<ModelInstance> GetModels()
+        public IReadOnlyList<ModelInstance> GetModels()
         {
             return _models;
         }
