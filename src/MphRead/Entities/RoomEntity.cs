@@ -8,7 +8,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class RoomEntity : VisibleEntityBase
+    public class RoomEntity : EntityBase
     {
         private readonly IReadOnlyList<CollisionPortal> _portals = new List<CollisionPortal>();
         private readonly IReadOnlyList<PortalNodeRef> _forceFields = new List<PortalNodeRef>();

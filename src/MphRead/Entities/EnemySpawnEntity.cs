@@ -3,7 +3,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class EnemySpawnEntity : VisibleEntityBase
+    public class EnemySpawnEntity : EntityBase
     {
         private readonly EnemyEntityData _data;
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x00, 0x00, 0x8B).AsVector4();
@@ -71,7 +71,7 @@ namespace MphRead.Entities
         }
     }
 
-    public class FhEnemySpawnEntity : VisibleEntityBase
+    public class FhEnemySpawnEntity : EntityBase
     {
         private readonly FhEnemyEntityData _data;
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x00, 0x00, 0x8B).AsVector4();

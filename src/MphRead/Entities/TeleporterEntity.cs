@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class TeleporterEntity : VisibleEntityBase
+    public class TeleporterEntity : EntityBase
     {
         private readonly TeleporterEntityData _data;
         private readonly Vector3 _targetPos = Vector3.Zero;

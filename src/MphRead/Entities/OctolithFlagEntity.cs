@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class OctolithFlagEntity : VisibleEntityBase
+    public class OctolithFlagEntity : EntityBase
     {
         private readonly OctolithFlagEntityData _data;
         private readonly Vector3 _basePosition = Vector3.Zero;

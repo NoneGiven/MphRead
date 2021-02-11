@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class AreaVolumeEntity : VisibleEntityBase
+    public class AreaVolumeEntity : EntityBase
     {
         private readonly AreaVolumeEntityData _data;
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0xFF, 0x00).AsVector4();
@@ -32,7 +32,7 @@ namespace MphRead.Entities
         }
     }
 
-    public class FhAreaVolumeEntity : VisibleEntityBase
+    public class FhAreaVolumeEntity : EntityBase
     {
         private readonly FhAreaVolumeEntityData _data;
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0xFF, 0x00).AsVector4();

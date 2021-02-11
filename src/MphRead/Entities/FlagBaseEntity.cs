@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class FlagBaseEntity : VisibleEntityBase
+    public class FlagBaseEntity : EntityBase
     {
         private readonly FlagBaseEntityData _data;
         private readonly CollisionVolume _volume;

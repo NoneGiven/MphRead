@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class DoorEntity : VisibleEntityBase
+    public class DoorEntity : EntityBase
     {
         private readonly DoorEntityData _data;
         private readonly Matrix4 _lockTransform;
@@ -66,7 +66,7 @@ namespace MphRead.Entities
         }
     }
 
-    public class FhDoorEntity : VisibleEntityBase
+    public class FhDoorEntity : EntityBase
     {
         private readonly FhDoorEntityData _data;
 

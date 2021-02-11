@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class ItemSpawnEntity : VisibleEntityBase
+    public class ItemSpawnEntity : EntityBase
     {
         private readonly ItemEntityData _data;
         private bool _enabled;
@@ -46,7 +46,7 @@ namespace MphRead.Entities
         }
     }
 
-    public class FhItemSpawnEntity : VisibleEntityBase
+    public class FhItemSpawnEntity : EntityBase
     {
         private readonly FhItemEntityData _data;
         private bool _spawn = true;

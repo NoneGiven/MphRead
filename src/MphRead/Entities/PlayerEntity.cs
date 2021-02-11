@@ -5,7 +5,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class PlayerEntity : VisibleEntityBase
+    public class PlayerEntity : EntityBase
     {
         public Hunter Hunter { get; }
         public Team Team { get; set; }

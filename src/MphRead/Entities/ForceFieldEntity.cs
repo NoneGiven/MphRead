@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class ForceFieldEntity : VisibleEntityBase
+    public class ForceFieldEntity : EntityBase
     {
         private readonly ForceFieldEntityData _data;
         private bool _lockSpawned = false;

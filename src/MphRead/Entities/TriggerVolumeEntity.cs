@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class TriggerVolumeEntity : VisibleEntityBase
+    public class TriggerVolumeEntity : EntityBase
     {
         private readonly TriggerVolumeEntityData _data;
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0x8C, 0x00).AsVector4();
@@ -33,7 +33,7 @@ namespace MphRead.Entities
         }
     }
 
-    public class FhTriggerVolumeEntity : VisibleEntityBase
+    public class FhTriggerVolumeEntity : EntityBase
     {
         private readonly FhTriggerVolumeEntityData _data;
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0x8C, 0x00).AsVector4();

@@ -21,6 +21,7 @@ namespace MphRead.Entities
         public EntityType Type { get; }
         public bool ShouldDraw { get; protected set; } = true;
         public bool Active { get; protected set; } = true;
+        public float Alpha { get; set; } = 1.0f;
 
         protected Matrix4 _transform = Matrix4.Identity;
         protected Vector3 _scale = new Vector3(1, 1, 1);
@@ -85,47 +86,6 @@ namespace MphRead.Entities
             }
         }
 
-        protected EntityBase(EntityType type)
-        {
-            Type = type;
-        }
-
-        public virtual void Init(NewScene scene)
-        {
-        }
-
-        public virtual void Process(NewScene scene)
-        {
-        }
-
-        public virtual void UpdateTransforms(NewScene scene)
-        {
-        }
-
-        public virtual IEnumerable<ModelInstance> GetModels()
-        {
-            return Enumerable.Empty<ModelInstance>();
-        }
-
-        public virtual void GetDrawInfo(NewScene scene)
-        {
-        }
-
-        public virtual void GetDisplayVolumes(NewScene scene)
-        {
-        }
-
-        public virtual void SetActive(bool active)
-        {
-            Active = active;
-        }
-    }
-
-    // ntodo: do we need this, or can this just be the first base class?
-    public abstract class VisibleEntityBase : EntityBase
-    {
-        public float Alpha { get; set; } = 1.0f;
-
         protected bool _anyLighting = false;
         protected readonly List<ModelInstance> _models = new List<ModelInstance>();
 
@@ -133,11 +93,12 @@ namespace MphRead.Entities
         protected virtual Vector4? OverrideColor { get; } = null;
         protected virtual Vector4? PaletteOverride { get; set; } = null;
 
-        public VisibleEntityBase(EntityType type) : base(type)
+        protected EntityBase(EntityType type)
         {
+            Type = type;
         }
 
-        public override void Init(NewScene scene)
+        public virtual void Init(NewScene scene)
         {
             _anyLighting = _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));
         }
@@ -152,7 +113,7 @@ namespace MphRead.Entities
             return true;
         }
 
-        public override void Process(NewScene scene)
+        public virtual void Process(NewScene scene)
         {
             for (int i = 0; i < _models.Count; i++)
             {
@@ -172,7 +133,7 @@ namespace MphRead.Entities
             return Recolor;
         }
 
-        public override void UpdateTransforms(NewScene scene)
+        public virtual void UpdateTransforms(NewScene scene)
         {
             if (ShouldDraw && Alpha > 0)
             {
@@ -195,7 +156,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override IEnumerable<ModelInstance> GetModels()
+        public virtual IEnumerable<ModelInstance> GetModels()
         {
             return _models;
         }
@@ -222,7 +183,7 @@ namespace MphRead.Entities
             return null;
         }
 
-        public override void GetDrawInfo(NewScene scene)
+        public virtual void GetDrawInfo(NewScene scene)
         {
             for (int i = 0; i < _models.Count; i++)
             {
@@ -468,9 +429,18 @@ namespace MphRead.Entities
                 radius * MathF.Sin(2f * MathF.PI * index / 16f)
             );
         }
+
+        public virtual void GetDisplayVolumes(NewScene scene)
+        {
+        }
+
+        public virtual void SetActive(bool active)
+        {
+            Active = active;
+        }
     }
 
-    public abstract class SpinningEntityBase : VisibleEntityBase
+    public abstract class SpinningEntityBase : EntityBase
     {
         private float _spin;
         private readonly float _spinSpeed;
@@ -541,7 +511,7 @@ namespace MphRead.Entities
         }
     }
 
-    public class ModelEntity : VisibleEntityBase
+    public class ModelEntity : EntityBase
     {
         public ModelEntity(ModelInstance model, int recolor = 0) : base(EntityType.Model)
         {

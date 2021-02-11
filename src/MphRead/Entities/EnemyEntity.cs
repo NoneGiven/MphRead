@@ -14,7 +14,7 @@ namespace MphRead.Entities
         }
     }
 
-    public class EnemyEntity : VisibleEntityBase
+    public class EnemyEntity : EntityBase
     {
         protected readonly EnemyInstanceEntityData _data;
         protected Vector3 _initialPosition; // todo: use init

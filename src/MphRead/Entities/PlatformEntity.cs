@@ -4,7 +4,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class PlatformEntity : VisibleEntityBase
+    public class PlatformEntity : EntityBase
     {
         private readonly PlatformEntityData _data;
 
@@ -114,7 +114,7 @@ namespace MphRead.Entities
         }
     }
 
-    public class FhPlatformEntity : VisibleEntityBase
+    public class FhPlatformEntity : EntityBase
     {
         private readonly FhPlatformEntityData _data;
 

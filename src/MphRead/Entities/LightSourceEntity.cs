@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class LightSourceEntity : VisibleEntityBase
+    public class LightSourceEntity : EntityBase
     {
         private readonly LightSourceEntityData _data;
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0xDE, 0xAD).AsVector4();

@@ -4,7 +4,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class ObjectEntity : VisibleEntityBase
+    public class ObjectEntity : EntityBase
     {
         private readonly ObjectEntityData _data;
         private CollisionVolume _effectVolume;

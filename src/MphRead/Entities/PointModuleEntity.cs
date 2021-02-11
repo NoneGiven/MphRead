@@ -1,6 +1,6 @@
 namespace MphRead.Entities
 {
-    public class PointModuleEntity : VisibleEntityBase
+    public class PointModuleEntity : EntityBase
     {
         private readonly PointModuleEntityData _data;
         private PointModuleEntity? _next;

@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class JumpPadEntity : VisibleEntityBase
+    public class JumpPadEntity : EntityBase
     {
         private readonly JumpPadEntityData _data;
         private readonly Matrix4 _beamTransform;
@@ -54,7 +54,7 @@ namespace MphRead.Entities
         }
     }
 
-    public class FhJumpPadEntity : VisibleEntityBase
+    public class FhJumpPadEntity : EntityBase
     {
         private readonly FhJumpPadEntityData _data;
         private readonly Matrix4 _beamTransform;
