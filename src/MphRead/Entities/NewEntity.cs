@@ -6,15 +6,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public interface IRenderable
-    {
-        EntityType Type { get; }
-        int Recolor { get; }
-        IReadOnlyList<ModelInstance> GetModels();
-        void GetDrawInfo(NewScene scene);
-    }
-
-    public abstract class EntityBase : IRenderable
+    public abstract class EntityBase
     {
         public int Id { get; protected set; } = -1; // todo: use init for Id
         public virtual int Recolor { get; set; }

@@ -18,6 +18,16 @@ namespace MphRead
         private static readonly Dictionary<string, NewModel> _modelCache = new Dictionary<string, NewModel>();
         private static readonly Dictionary<string, NewModel> _fhModelCache = new Dictionary<string, NewModel>();
 
+        public static void RemoveModel(string name)
+        {
+            _modelCache.Remove(name);
+        }
+
+        public static void RemoveFhModel(string name)
+        {
+            _fhModelCache.Remove(name);
+        }
+
         public static ModelInstance GetNewModel(string name)
         {
             if (!_modelCache.TryGetValue(name, out NewModel? model))
@@ -195,7 +205,7 @@ namespace MphRead
                 shared.TextureAnimationGroups.AddRange(animations.TextureAnimationGroups);
                 animations = shared;
             }
-            return new NewModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+            return new NewModel(name, firstHunt, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
                 textureMatrices, recolors, nodeWeights);
         }

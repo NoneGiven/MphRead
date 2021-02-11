@@ -23,7 +23,6 @@ namespace MphRead
         public IReadOnlyList<RecolorMetadata> Recolors { get; }
         public bool UseLightSources { get; }
         public bool FirstHunt { get; }
-        public bool EffectsBase { get; }
 
         public ModelMetadata(string name, string modelPath, string? animationPath, string? collisionPath,
             IReadOnlyList<RecolorMetadata> recolors, string? animationShare = null, bool useLightSources = false)
@@ -137,7 +136,7 @@ namespace MphRead
 
         public ModelMetadata(string name, bool animation = true, bool collision = false, bool texture = false,
             string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None, string? archive = null,
-            string? addToAnim = null, bool firstHunt = false, string? animationPath = null, bool effectsBase = false)
+            string? addToAnim = null, bool firstHunt = false, string? animationPath = null)
         {
             Name = name;
             string path;
@@ -178,7 +177,6 @@ namespace MphRead
                 new RecolorMetadata("default", recolorModel, texture ? $@"models\{name}{suffix}_Tex.bin" : recolorModel)
             };
             FirstHunt = firstHunt;
-            EffectsBase = effectsBase;
         }
     }
 
@@ -1172,6 +1170,15 @@ namespace MphRead
         {
             { SingleType.Death, ("deathParticle", "death") },
             { SingleType.Fuzzball, ("particles", "fuzzBall") }
+        };
+
+        public static IReadOnlyDictionary<string, bool> EffectsBases = new Dictionary<string, bool>()
+        {
+            { "deathParticle", true },
+            { "particles", true },
+            { "particles2", true },
+            { "TearParticle", true },
+            { "icons", true }
         };
 
         public static (RoomMetadata?, int) GetRoomByName(string name)
@@ -3355,23 +3362,23 @@ namespace MphRead
                 // effectsBase
                 {
                     "deathParticle",
-                    new ModelMetadata("deathParticle", animation: false, texture: true, archive: "effectsBase", effectsBase: true)
+                    new ModelMetadata("deathParticle", animation: false, texture: true, archive: "effectsBase")
                 },
                 {
                     "geo1",
-                    new ModelMetadata("geo1", animation: false, texture: true, archive: "effectsBase", effectsBase: true)
+                    new ModelMetadata("geo1", animation: false, texture: true, archive: "effectsBase")
                 },
                 {
                     "particles",
-                    new ModelMetadata("particles", animation: false, texture: true, archive: "effectsBase", effectsBase: true)
+                    new ModelMetadata("particles", animation: false, texture: true, archive: "effectsBase")
                 },
                 {
                     "particles2",
-                    new ModelMetadata("particles2", animation: false, texture: true, archive: "effectsBase", effectsBase: true)
+                    new ModelMetadata("particles2", animation: false, texture: true, archive: "effectsBase")
                 },
                 {
                     "TearParticle",
-                    new ModelMetadata("TearParticle", animation: false, texture: true, effectsBase: true)
+                    new ModelMetadata("TearParticle", animation: false, texture: true)
                 }
                 // todo: can't parse some out of bounds texture/palette offsets from this
                 //{
@@ -3384,8 +3391,7 @@ namespace MphRead
                 //        {
                 //            new RecolorMetadata("default",
                 //                modelPath: @"hud\icons_Model.bin")
-                //        },
-                //        effectsBase: true
+                //        }
                 //    )
                 //}
             };

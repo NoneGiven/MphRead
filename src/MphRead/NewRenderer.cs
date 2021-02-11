@@ -68,7 +68,6 @@ namespace MphRead
         private bool _transformRoomNodes = false;
         private bool _outputCameraPos = false;
 
-        private readonly List<IRenderable> _renderables = new List<IRenderable>();
         private readonly List<EntityBase> _entities = new List<EntityBase>();
         private readonly List<EntityBase> _entitySort = new List<EntityBase>();
         private readonly Dictionary<int, EntityBase> _entityMap = new Dictionary<int, EntityBase>();
@@ -146,10 +145,9 @@ namespace MphRead
             _roomLoaded = true;
             (RoomEntity room, RoomMetadata meta, CollisionInfo collision, IReadOnlyList<EntityBase> entities, int updatedMask)
                 = SceneSetup.LoadNewRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
-            _renderables.Add(room);
             _entities.Add(room);
             _entitySort.Add(room);
-            InitRenderable(room);
+            InitEntity(room);
             _cameraMode = CameraMode.Roam;
             if (meta.InGameName != null)
             {
@@ -157,12 +155,11 @@ namespace MphRead
             }
             foreach (EntityBase entity in entities)
             {
-                _renderables.Add(entity);
                 _entities.Add(entity);
                 _entitySort.Add(entity);
                 Debug.Assert(entity.Id != -1);
                 _entityMap.Add(entity.Id, entity);
-                InitRenderable(entity);
+                InitEntity(entity);
             }
             _light1Vector = meta.Light1Vector;
             _light1Color = new Vector3(
@@ -200,28 +197,26 @@ namespace MphRead
         {
             ModelInstance model = firstHunt ? Read.GetFhNewModel(name) : Read.GetNewModel(name);
             var entity = new ModelEntity(model, recolor);
-            _renderables.Add(entity);
             _entities.Add(entity);
             _entitySort.Add(entity);
             if (entity.Id != -1)
             {
                 _entityMap.Add(entity.Id, entity);
             }
-            InitRenderable(entity);
+            InitEntity(entity);
             return entity;
         }
 
         // called after load -- entity needs init
         public void AddEntity(EntityBase entity)
         {
-            _renderables.Add(entity);
             _entities.Add(entity);
             _entitySort.Add(entity);
             if (entity.Id != -1)
             {
                 _entityMap.Add(entity.Id, entity);
             }
-            InitRenderable(entity);
+            InitEntity(entity);
             entity.Init(this);
         }
 
@@ -229,14 +224,13 @@ namespace MphRead
         public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null)
         {
             var entity = new PlayerEntity(hunter, recolor, position);
-            _renderables.Add(entity);
             _entities.Add(entity);
             _entitySort.Add(entity);
             if (entity.Id != -1)
             {
                 _entityMap.Add(entity.Id, entity);
             }
-            InitRenderable(entity);
+            InitEntity(entity);
         }
 
         public bool TryGetEntity(int id, [NotNullWhen(true)] out EntityBase? entity)
@@ -337,12 +331,12 @@ namespace MphRead
             GL.Uniform1(_shaderLocations.FogMaxDistance, fogMax);
         }
 
-        private void InitRenderable(IRenderable renderable)
+        private void InitEntity(EntityBase entity)
         {
-            foreach (ModelInstance inst in renderable.GetModels())
+            foreach (ModelInstance inst in entity.GetModels())
             {
                 InitTextures(inst.Model);
-                GenerateLists(inst.Model, isRoom: renderable.Type == EntityType.Room);
+                GenerateLists(inst.Model, isRoom: entity.Type == EntityType.Room);
             }
         }
 
@@ -780,23 +774,73 @@ namespace MphRead
 
         private void LoadAndUnload()
         {
+            if (_loadQueue.Count > 0)
+            {
+                while (_loadQueue.TryDequeue(out (string Name, int Recolor, bool FirstHunt) item))
+                {
+                    try
+                    {
+                        // called after load -- entity needs init
+                        EntityBase entity = AddModel(item.Name, item.Recolor, item.FirstHunt);
+                        entity.Init(this);
+                    }
+                    catch (ProgramException) { }
+                }
+            }
             if (_unloadQueue.Count > 0)
             {
                 Selection.Clear();
                 while (_unloadQueue.TryDequeue(out EntityBase? entity))
                 {
-                    // mtodo: unload
+                    UnloadEntity(entity);
                 }
             }
-            while (_loadQueue.TryDequeue(out (string Name, int Recolor, bool FirstHunt) item))
+        }
+
+        private void UnloadEntity(EntityBase entity)
+        {
+            if (entity.Type == EntityType.Room)
             {
-                try
+                return;
+            }
+            _entityMap.Remove(entity.Id);
+            _entitySort.RemoveAll(e => e == entity);
+            _entities.RemoveAll(e => e == entity);
+            foreach (ModelInstance inst in entity.GetModels())
+            {
+                NewModel model = inst.Model;
+                if (Metadata.EffectsBases.ContainsKey(model.Name))
                 {
-                    // called after load -- entity needs init
-                    EntityBase entity = AddModel(item.Name, item.Recolor, item.FirstHunt);
-                    entity.Init(this);
+                    continue;
                 }
-                catch (ProgramException) { }
+                if (!_entities.Any(e => e.GetModels().Any(m => m.Model == model)))
+                {
+                    UnloadModel(model);
+                }
+            }
+        }
+
+        private void UnloadModel(NewModel model)
+        {
+            if (_texPalMap.TryGetValue(model.Id, out NewTextureMap? map))
+            {
+                foreach (KeyValuePair<int, (int BindingId, bool OnlyOpaque)> kvp in map)
+                {
+                    GL.DeleteTexture(kvp.Value.BindingId);
+                }
+                _texPalMap.Remove(model.Id);
+            }
+            foreach (Mesh mesh in model.Meshes)
+            {
+                GL.DeleteLists(mesh.ListId, 1);
+            }
+            if (model.FirstHunt)
+            {
+                Read.RemoveFhModel(model.Name);
+            }
+            else
+            {
+                Read.RemoveModel(model.Name);
             }
         }
 

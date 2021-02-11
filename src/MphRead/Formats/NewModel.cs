@@ -184,6 +184,7 @@ namespace MphRead.Entities
         public int Id { get; } = _nextId++;
 
         public string Name { get; }
+        public bool FirstHunt { get; }
         public Header Header { get; }
         public IReadOnlyList<Node> Nodes { get; }
         public IReadOnlyList<Mesh> Meshes { get; }
@@ -199,7 +200,7 @@ namespace MphRead.Entities
 
         public Vector3 Scale { get; }
 
-        public NewModel(string name, Header header, IEnumerable<RawNode> nodes, IEnumerable<RawMesh> meshes,
+        public NewModel(string name, bool firstHunt, Header header, IEnumerable<RawNode> nodes, IEnumerable<RawMesh> meshes,
             IEnumerable<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
             IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
@@ -207,6 +208,7 @@ namespace MphRead.Entities
             IReadOnlyList<Matrix4> textureMatrices, IReadOnlyList<Recolor> recolors, IReadOnlyList<int> nodeWeights)
         {
             Name = name;
+            FirstHunt = firstHunt;
             Header = header;
             Nodes = nodes.Select(n => new Node(n)).ToList();
             Meshes = meshes.Select(m => new Mesh(m)).ToList();
