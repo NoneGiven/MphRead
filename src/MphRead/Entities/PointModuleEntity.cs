@@ -19,6 +19,7 @@ namespace MphRead.Entities
             ModelInstance inst = Read.GetFhNewModel("pick_morphball");
             _models.Add(inst);
             Active = false;
+            _models[0].Active = false;
         }
 
         public override void Init(NewScene scene)

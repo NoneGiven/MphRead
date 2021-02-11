@@ -155,7 +155,7 @@ namespace MphRead
             IReadOnlyList<EntityBase> entities = LoadNewEntities(metadata, areaId, entityLayerId, mode);
             CollisionInfo collision = Collision.ReadCollision(metadata.CollisionPath, metadata.FirstHunt || metadata.Hybrid, nodeLayerMask);
             // todo: once ReadCollision is filering things, we don't need to pass nodeLayerMask here or return it
-            var room = new RoomEntity(metadata, collision, nodeLayerMask);
+            var room = new RoomEntity(name, metadata, collision, nodeLayerMask);
             return (room, metadata, collision, entities, nodeLayerMask);
         }
 

@@ -125,7 +125,7 @@ namespace MphRead.Entities
             for (int i = 0; i < _models.Count; i++)
             {
                 ModelInstance inst = _models[i];
-                if (inst.Active)
+                if (inst.Active || scene.ShowAll)
                 {
                     if (scene.FrameCount != 0 && scene.FrameCount % 2 == 0)
                     {
@@ -147,7 +147,7 @@ namespace MphRead.Entities
                 for (int i = 0; i < _models.Count; i++)
                 {
                     ModelInstance inst = _models[i];
-                    if (inst.Active)
+                    if (inst.Active || scene.ShowAll)
                     {
                         NewModel model = inst.Model;
                         model.AnimateMaterials(inst.AnimInfo.Material);
@@ -195,7 +195,7 @@ namespace MphRead.Entities
             for (int i = 0; i < _models.Count; i++)
             {
                 ModelInstance inst = _models[i];
-                if (!inst.Active || (inst.IsPlaceholder && !scene.ShowInvisible))
+                if ((!inst.Active && !scene.ShowAll) || (inst.IsPlaceholder && !scene.ShowInvisible && !scene.ShowAll))
                 {
                     continue;
                 }

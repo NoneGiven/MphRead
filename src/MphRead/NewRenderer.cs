@@ -57,7 +57,7 @@ namespace MphRead
         private bool _textureFiltering = false;
         private bool _lighting = false;
         private bool _scanVisor = false;
-        private bool _showInvisible = false;
+        private int _showInvisible = 0;
         private VolumeDisplay _showVolumes = VolumeDisplay.None;
         private bool _transformRoomNodes = false;
 
@@ -99,7 +99,8 @@ namespace MphRead
         public Matrix4 ViewInvRotMatrix => _viewInvRotMatrix;
         public Matrix4 ViewInvRotYMatrix => _viewInvRotYMatrix;
         public Vector3 CameraPosition => _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1);
-        public bool ShowInvisible => _showInvisible;
+        public bool ShowInvisible => _showInvisible != 0;
+        public bool ShowAll => _showInvisible == 2;
         public bool TransformRoomNodes => _transformRoomNodes;
         public float FrameTime => _frameTime;
         public long FrameCount => _frameCount;
@@ -2165,7 +2166,25 @@ namespace MphRead
             }
             else if (e.Key == Keys.I)
             {
-                _showInvisible = !_showInvisible;
+                if (e.Alt)
+                {
+                    if (_showInvisible == 2)
+                    {
+                        _showInvisible = 0;
+                    }
+                    else
+                    {
+                        _showInvisible = 2;
+                    }
+                }
+                else if (_showInvisible == 0)
+                {
+                    _showInvisible = 1;
+                }
+                else
+                {
+                    _showInvisible = 0;
+                }
             }
             else if (e.Key == Keys.E)
             {
