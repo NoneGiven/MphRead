@@ -171,9 +171,84 @@ namespace MphRead
             return false;
         }
 
-        public static void OnKeyHeld()
+        private const float _twoPi = MathF.PI * 2;
+
+        public static void OnKeyHeld(KeyboardState keyboardState)
         {
-            // mtodo: move selected entity
+            if (Entity != null && Entity.Type != EntityType.Room)
+            {
+                float step = 0.1f;
+                Vector3 position = Entity.Position;
+                if (keyboardState.IsKeyDown(Keys.W)) // move Z-
+                {
+                    position = position.AddZ(-step);
+                }
+                else if (keyboardState.IsKeyDown(Keys.S)) // move Z+
+                {
+                    position = position.AddZ(step);
+                }
+                if (keyboardState.IsKeyDown(Keys.Space)) // move Y+
+                {
+                    position = position.AddY(step);
+                }
+                else if (keyboardState.IsKeyDown(Keys.V)) // move Y-
+                {
+                    position = position.AddY(-step);
+                }
+                if (keyboardState.IsKeyDown(Keys.A)) // move X-
+                {
+                    position = position.AddX(-step);
+                }
+                else if (keyboardState.IsKeyDown(Keys.D)) // move X+
+                {
+                    position = position.AddX(step);
+                }
+                // todo: some transforms (sniper targets in UNIT4_RM2) aren't consistent when first changing the rotation
+                step = 0.0436332f; // 2.5 degrees
+                Vector3 rotation = Entity.Rotation;
+                if (keyboardState.IsKeyDown(Keys.Up)) // rotate up
+                {
+                    rotation.X += step;
+                }
+                else if (keyboardState.IsKeyDown(Keys.Down)) // rotate down
+                {
+                    rotation.X -= step;
+                }
+                if (keyboardState.IsKeyDown(Keys.Left)) // rotate left
+                {
+                    rotation.Y += step;
+                }
+                else if (keyboardState.IsKeyDown(Keys.Right)) // rotate right
+                {
+                    rotation.Y -= step;
+                }
+                while (rotation.X < 0)
+                {
+                    rotation.X += _twoPi;
+                }
+                while (rotation.X > _twoPi)
+                {
+                    rotation.X -= _twoPi;
+                }
+                while (rotation.Y < 0)
+                {
+                    rotation.Y += _twoPi;
+                }
+                while (rotation.Y > _twoPi)
+                {
+                    rotation.Y -= _twoPi;
+                }
+                while (rotation.Z < 0)
+                {
+                    rotation.Z += _twoPi;
+                }
+                while (rotation.Z > _twoPi)
+                {
+                    rotation.Z -= _twoPi;
+                }
+                Entity.Position = position;
+                Entity.Rotation = rotation;
+            }
         }
 
         private static void UpdateSelection(bool control, bool shift, NewScene scene)

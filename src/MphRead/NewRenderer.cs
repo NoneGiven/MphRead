@@ -2228,7 +2228,7 @@ namespace MphRead
         {
             if (_keyboardState.IsKeyDown(Keys.LeftAlt) || _keyboardState.IsKeyDown(Keys.RightAlt))
             {
-                Selection.OnKeyHeld();
+                Selection.OnKeyHeld(_keyboardState);
                 return;
             }
             // sprint

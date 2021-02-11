@@ -36,10 +36,13 @@ namespace MphRead.Entities
             }
             set
             {
-                _scale = value.ExtractScale();
-                value.ExtractRotation().ToEulerAngles(out _rotation);
-                _position = value.Row3.Xyz;
-                _transform = value;
+                if (_transform != value)
+                {
+                    _scale = value.ExtractScale();
+                    value.ExtractRotation().ToEulerAngles(out _rotation);
+                    _position = value.Row3.Xyz;
+                    _transform = value;
+                }
             }
         }
 
@@ -51,10 +54,13 @@ namespace MphRead.Entities
             }
             set
             {
-                _transform = Matrix4.CreateScale(value) * Matrix4.CreateRotationZ(Rotation.Z)
-                    * Matrix4.CreateRotationY(Rotation.Y) * Matrix4.CreateRotationX(Rotation.X);
-                _transform.Row3.Xyz = Position;
-                _scale = value;
+                if (_scale != value)
+                {
+                    _transform = Matrix4.CreateScale(value) * Matrix4.CreateRotationZ(Rotation.Z)
+                        * Matrix4.CreateRotationY(Rotation.Y) * Matrix4.CreateRotationX(Rotation.X);
+                    _transform.Row3.Xyz = Position;
+                    _scale = value;
+                }
             }
         }
 
@@ -66,10 +72,13 @@ namespace MphRead.Entities
             }
             set
             {
-                _transform = Matrix4.CreateScale(Scale) * Matrix4.CreateRotationZ(value.Z)
-                    * Matrix4.CreateRotationY(value.Y) * Matrix4.CreateRotationX(value.X);
-                _transform.Row3.Xyz = Position;
-                _rotation = value;
+                if (_rotation != value)
+                {
+                    _transform = Matrix4.CreateScale(Scale) * Matrix4.CreateRotationZ(value.Z)
+                        * Matrix4.CreateRotationY(value.Y) * Matrix4.CreateRotationX(value.X);
+                    _transform.Row3.Xyz = Position;
+                    _rotation = value;
+                }
             }
         }
 
@@ -81,8 +90,11 @@ namespace MphRead.Entities
             }
             set
             {
-                _transform.Row3.Xyz = value;
-                _position = value;
+                if (_position != value)
+                {
+                    _transform.Row3.Xyz = value;
+                    _position = value;
+                }
             }
         }
 

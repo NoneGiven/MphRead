@@ -51,6 +51,7 @@ namespace MphRead.Entities
                 AnimInfo.Node.Index = index;
                 AnimInfo.Node.Group = Model.AnimationGroups.Node[index];
             }
+            AnimInfo.Node.CurrentFrame = 0;
         }
 
         public void SetMaterialAnim(int index)
@@ -65,6 +66,7 @@ namespace MphRead.Entities
                 AnimInfo.Material.Index = index;
                 AnimInfo.Material.Group = Model.AnimationGroups.Material[index];
             }
+            AnimInfo.Material.CurrentFrame = 0;
         }
 
         public void SetTexcoordAnim(int index)
@@ -79,6 +81,7 @@ namespace MphRead.Entities
                 AnimInfo.Texcoord.Index = index;
                 AnimInfo.Texcoord.Group = Model.AnimationGroups.Texcoord[index];
             }
+            AnimInfo.Texcoord.CurrentFrame = 0;
         }
 
         public void SeTextureAnim(int index)
@@ -93,6 +96,7 @@ namespace MphRead.Entities
                 AnimInfo.Texture.Index = index;
                 AnimInfo.Texture.Group = Model.AnimationGroups.Texture[index];
             }
+            AnimInfo.Texture.CurrentFrame = 0;
         }
 
         public void UpdateAnimFrames()
