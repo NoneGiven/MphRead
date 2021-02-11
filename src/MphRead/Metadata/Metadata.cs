@@ -23,6 +23,7 @@ namespace MphRead
         public IReadOnlyList<RecolorMetadata> Recolors { get; }
         public bool UseLightSources { get; }
         public bool FirstHunt { get; }
+        public bool EffectsBase { get; }
 
         public ModelMetadata(string name, string modelPath, string? animationPath, string? collisionPath,
             IReadOnlyList<RecolorMetadata> recolors, string? animationShare = null, bool useLightSources = false)
@@ -136,7 +137,7 @@ namespace MphRead
 
         public ModelMetadata(string name, bool animation = true, bool collision = false, bool texture = false,
             string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None, string? archive = null,
-            string? addToAnim = null, bool firstHunt = false, string? animationPath = null)
+            string? addToAnim = null, bool firstHunt = false, string? animationPath = null, bool effectsBase = false)
         {
             Name = name;
             string path;
@@ -177,6 +178,7 @@ namespace MphRead
                 new RecolorMetadata("default", recolorModel, texture ? $@"models\{name}{suffix}_Tex.bin" : recolorModel)
             };
             FirstHunt = firstHunt;
+            EffectsBase = effectsBase;
         }
     }
 
@@ -2932,10 +2934,6 @@ namespace MphRead
                     new ModelMetadata("SyluxTurret")
                 },
                 {
-                    "TearParticle",
-                    new ModelMetadata("TearParticle", animation: false, texture: true)
-                },
-                {
                     "Teleporter",
                     new ModelMetadata("Teleporter",
                         modelPath: @"models\Teleporter_mdl_Model.bin",
@@ -3357,19 +3355,23 @@ namespace MphRead
                 // effectsBase
                 {
                     "deathParticle",
-                    new ModelMetadata("deathParticle", animation: false, texture: true, archive: "effectsBase")
+                    new ModelMetadata("deathParticle", animation: false, texture: true, archive: "effectsBase", effectsBase: true)
                 },
                 {
                     "geo1",
-                    new ModelMetadata("geo1", animation: false, texture: true, archive: "effectsBase")
+                    new ModelMetadata("geo1", animation: false, texture: true, archive: "effectsBase", effectsBase: true)
                 },
                 {
                     "particles",
-                    new ModelMetadata("particles", animation: false, texture: true, archive: "effectsBase")
+                    new ModelMetadata("particles", animation: false, texture: true, archive: "effectsBase", effectsBase: true)
                 },
                 {
                     "particles2",
-                    new ModelMetadata("particles2", animation: false, texture: true, archive: "effectsBase")
+                    new ModelMetadata("particles2", animation: false, texture: true, archive: "effectsBase", effectsBase: true)
+                },
+                {
+                    "TearParticle",
+                    new ModelMetadata("TearParticle", animation: false, texture: true, effectsBase: true)
                 }
                 // todo: can't parse some out of bounds texture/palette offsets from this
                 //{
@@ -3382,7 +3384,8 @@ namespace MphRead
                 //        {
                 //            new RecolorMetadata("default",
                 //                modelPath: @"hud\icons_Model.bin")
-                //        }
+                //        },
+                //        effectsBase: true
                 //    )
                 //}
             };
