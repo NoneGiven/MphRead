@@ -135,6 +135,7 @@ namespace MphRead
             _setTitle = setTitle;
         }
 
+        // called before load
         public void AddRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
             BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
         {
@@ -194,7 +195,8 @@ namespace MphRead
             _cameraMode = CameraMode.Roam;
         }
 
-        public void AddModel(string name, int recolor = 0, bool firstHunt = false)
+        // called before load
+        public EntityBase AddModel(string name, int recolor = 0, bool firstHunt = false)
         {
             ModelInstance model = firstHunt ? Read.GetFhNewModel(name) : Read.GetNewModel(name);
             var entity = new ModelEntity(model, recolor);
@@ -206,8 +208,10 @@ namespace MphRead
                 _entityMap.Add(entity.Id, entity);
             }
             InitRenderable(entity);
+            return entity;
         }
 
+        // called after load -- entity needs init
         public void AddEntity(EntityBase entity)
         {
             _renderables.Add(entity);
@@ -221,6 +225,7 @@ namespace MphRead
             entity.Init(this);
         }
 
+        // called before load
         public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null)
         {
             var entity = new PlayerEntity(hunter, recolor, position);
@@ -787,7 +792,9 @@ namespace MphRead
             {
                 try
                 {
-                    AddModel(item.Name, item.Recolor, item.FirstHunt);
+                    // called after load -- entity needs init
+                    EntityBase entity = AddModel(item.Name, item.Recolor, item.FirstHunt);
+                    entity.Init(this);
                 }
                 catch (ProgramException) { }
             }
