@@ -11,7 +11,7 @@ namespace MphRead.Entities
         // used if there is no base model
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xC8, 0x00, 0xC8).AsVector4();
 
-        public ItemSpawnEntity(ItemEntityData data) : base(EntityType.Item)
+        public ItemSpawnEntity(ItemEntityData data) : base(EntityType.ItemSpawn)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -53,7 +53,7 @@ namespace MphRead.Entities
 
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xC8, 0x00, 0xC8).AsVector4();
 
-        public FhItemSpawnEntity(FhItemEntityData data) : base(EntityType.Item)
+        public FhItemSpawnEntity(FhItemEntityData data) : base(EntityType.ItemSpawn)
         {
             _data = data;
             Id = data.Header.EntityId;

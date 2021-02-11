@@ -12,7 +12,7 @@ namespace MphRead.Entities
         public EnemyEntityData Data => _data;
 
         // todo: enemy and item spawners should preload the models that will be used when they spawn their entities
-        public EnemySpawnEntity(EnemyEntityData data) : base(EntityType.Enemy)
+        public EnemySpawnEntity(EnemyEntityData data) : base(EntityType.EnemySpawn)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -77,7 +77,7 @@ namespace MphRead.Entities
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x00, 0x00, 0x8B).AsVector4();
 
         // todo: FH enemy spawning
-        public FhEnemySpawnEntity(FhEnemyEntityData data) : base(EntityType.Enemy)
+        public FhEnemySpawnEntity(FhEnemyEntityData data) : base(EntityType.EnemySpawn)
         {
             _data = data;
             Id = data.Header.EntityId;

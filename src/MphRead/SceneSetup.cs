@@ -195,7 +195,7 @@ namespace MphRead
                 {
                     results.Add(new FhDoorEntity(((Entity<FhDoorEntityData>)entity).Data));
                 }
-                else if (entity.Type == EntityType.Item)
+                else if (entity.Type == EntityType.ItemSpawn)
                 {
                     results.Add(new ItemSpawnEntity(((Entity<ItemEntityData>)entity).Data));
                 }
@@ -203,7 +203,7 @@ namespace MphRead
                 {
                     results.Add(new FhItemSpawnEntity(((Entity<FhItemEntityData>)entity).Data));
                 }
-                else if (entity.Type == EntityType.Enemy)
+                else if (entity.Type == EntityType.EnemySpawn)
                 {
                     results.Add(new EnemySpawnEntity(((Entity<EnemyEntityData>)entity).Data));
                 }
@@ -509,7 +509,7 @@ namespace MphRead
                 {
                     models.Add(LoadDoor((Entity<FhDoorEntityData>)entity));
                 }
-                else if (entity.Type == EntityType.Item)
+                else if (entity.Type == EntityType.ItemSpawn)
                 {
                     models.AddRange(LoadItem((Entity<ItemEntityData>)entity));
                 }
@@ -517,7 +517,7 @@ namespace MphRead
                 {
                     models.Add(LoadItem((Entity<FhItemEntityData>)entity));
                 }
-                else if (entity.Type == EntityType.Enemy)
+                else if (entity.Type == EntityType.EnemySpawn)
                 {
                     models.AddRange(LoadEnemy((Entity<EnemyEntityData>)entity));
                 }
@@ -1127,7 +1127,7 @@ namespace MphRead
         {
             { EntityType.Platform, new ColorRgb(0x2F, 0x4F, 0x4F) }, // used for ID 2 (energyBeam, arcWelder)
             { EntityType.Object, new ColorRgb(0x22, 0x8B, 0x22) }, // used for ID -1 (scan point, effect spawner)
-            { EntityType.Enemy, new ColorRgb(0x00, 0x00, 0x8B) },
+            { EntityType.EnemySpawn, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.FhEnemy, new ColorRgb(0x00, 0x00, 0x8B) },
             { EntityType.TriggerVolume, new ColorRgb(0xFF, 0x8C, 0x00) },
             { EntityType.FhTriggerVolume, new ColorRgb(0xFF, 0x8C, 0x00) },
