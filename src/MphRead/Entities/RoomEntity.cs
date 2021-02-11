@@ -127,7 +127,15 @@ namespace MphRead.Entities
             for (int i = 0; i < Nodes.Count; i++)
             {
                 Node pnode = Nodes[i];
-                if (pnode.IsRoomPartNode && pnode.Enabled)
+                if (!pnode.Enabled)
+                {
+                    continue;
+                }
+                if (scene.ShowAllNodes)
+                {
+                    GetItems(inst, pnode);
+                }
+                else if (pnode.IsRoomPartNode)
                 {
                     int childIndex = pnode.ChildIndex;
                     if (childIndex != UInt16.MaxValue)

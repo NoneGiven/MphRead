@@ -612,8 +612,8 @@ namespace MphRead
 
         private static bool FilterEntity(EntityBase entity, NewScene scene)
         {
-            return entity.GetModels().Any(m => (scene.ShowAll || m.Active)
-                && (scene.ShowAll || scene.ShowInvisible || !m.IsPlaceholder));
+            return entity.GetModels().Any(m => (scene.ShowAllEntities || m.Active)
+                && (scene.ShowAllEntities || scene.ShowInvisibleEntities || !m.IsPlaceholder));
         }
 
         private static void LookAtSelection(NewScene scene, bool control, bool shift)
