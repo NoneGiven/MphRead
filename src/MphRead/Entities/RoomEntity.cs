@@ -194,7 +194,7 @@ namespace MphRead.Entities
                         polygonId = scene.GetNextPolygonId();
                     }
                     Matrix4 texcoordMatrix = GetTexcoordMatrix(inst, material, mesh.MaterialId, node, scene);
-                    SelectionType selectionType = Selection.IsSelected(this, inst, node, mesh);
+                    SelectionType selectionType = Selection.CheckSelection(this, inst, node, mesh);
                     scene.AddRenderItem(material, polygonId, alpha, emission: Vector3.Zero, GetLightInfo(scene),
                         texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
                         overrideColor: null, paletteOverride: null, selectionType);

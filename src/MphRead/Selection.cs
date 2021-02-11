@@ -19,7 +19,7 @@ namespace MphRead
 
         private static bool _showSelection = true;
 
-        public static SelectionType IsSelected(EntityBase entity, ModelInstance inst, Node node, Mesh mesh)
+        public static SelectionType CheckSelection(EntityBase entity, ModelInstance inst, Node node, Mesh mesh)
         {
             if (Mesh != null)
             {
