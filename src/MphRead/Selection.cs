@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MphRead.Entities;
-using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -46,6 +45,13 @@ namespace MphRead
             _showSelection = !_showSelection;
         }
 
+        private static readonly Vector3 _entityColor = Vector3.One; // white
+        private static readonly Vector3 _modelColor = new Vector3(255, 255, 200) / 255f; // yellow
+        private static readonly Vector3 _nodeColor = new Vector3(200, 255, 200) / 255f; // green
+        private static readonly Vector3 _meshColor = new Vector3(255, 200, 255) / 255f; // pink
+        private static readonly Vector3 _parentColor = Vector3.UnitX; // red
+        private static readonly Vector3 _childColor = Vector3.UnitZ; // blue
+
         public static Vector4? GetSelectionColor(SelectionType type)
         {
             static float GetFactor()
@@ -63,17 +69,29 @@ namespace MphRead
                 if (type == SelectionType.Selected)
                 {
                     float factor = GetFactor();
-                    return new Vector4(factor, factor, factor, 1);
+                    if (Mesh != null)
+                    {
+                        return new Vector4(_meshColor * factor, 1);
+                    }
+                    if (Node != null)
+                    {
+                        return new Vector4(_nodeColor * factor, 1);
+                    }
+                    if (Instance != null)
+                    {
+                        return new Vector4(_modelColor * factor, 1);
+                    }
+                    return new Vector4(_entityColor * factor, 1);
                 }
                 if (type == SelectionType.Parent)
                 {
                     float factor = GetFactor();
-                    return new Vector4(factor, 0, 0, 1);
+                    return new Vector4(_parentColor * factor, 1);
                 }
                 if (type == SelectionType.Child)
                 {
                     float factor = GetFactor();
-                    return new Vector4(0, 0, factor, 1);
+                    return new Vector4(_childColor * factor, 1);
                 }
             }
             return null;
@@ -314,6 +332,7 @@ namespace MphRead
 
         private static void SelectNext(NewScene scene, bool control)
         {
+            // todo: it would be nice to have node/mesh selection follow the hierarchy (with meshes "overflowing" to the next node)
             if (Mesh != null)
             {
                 SelectMesh(1);
