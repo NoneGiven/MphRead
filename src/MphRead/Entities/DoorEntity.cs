@@ -34,8 +34,10 @@ namespace MphRead.Entities
             inst.SetMaterialAnim(-1);
             ModelInstance lockInst = Read.GetNewModel(meta.LockName);
             _lockTransform = Matrix4.CreateTranslation(0, meta.LockOffset, 0);
-            _locked = false; // todo: use flags and room state to determine lock/color state
             _models.Add(lockInst);
+            // todo: use flags and room state to determine lock/color state
+            _locked = false;
+            lockInst.Active = false;
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
@@ -45,15 +47,6 @@ namespace MphRead.Entities
                 return Matrix4.CreateScale(inst.Model.Scale) * _transform * _lockTransform;
             }
             return base.GetModelTransform(inst, index);
-        }
-
-        protected override bool GetModelActive(ModelInstance inst, int index)
-        {
-            if (index == 1)
-            {
-                return _locked;
-            }
-            return base.GetModelActive(inst, index);
         }
 
         protected override int GetModelRecolor(ModelInstance inst, int index)

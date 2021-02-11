@@ -71,7 +71,7 @@ namespace MphRead
         public bool Visible { get; set; } = true;
         public Vector4? PlaceholderColor { get; set; }
 
-        public Selection Selection { get; set; } = Selection.None;
+        public SelectionType Selection { get; set; } = SelectionType.None;
 
         public Vector4? OverrideColor
         {
@@ -87,17 +87,17 @@ namespace MphRead
                     }
                     return percentage;
                 }
-                if (Selection == Selection.Selected)
+                if (Selection == SelectionType.Selected)
                 {
                     float factor = GetFactor();
                     return new Vector4(factor, factor, factor, 1);
                 }
-                if (Selection == Selection.Parent)
+                if (Selection == SelectionType.Parent)
                 {
                     float factor = GetFactor();
                     return new Vector4(factor, 0, 0, 1);
                 }
-                if (Selection == Selection.Child)
+                if (Selection == SelectionType.Child)
                 {
                     float factor = GetFactor();
                     return new Vector4(0, 0, factor, 1);
@@ -113,7 +113,7 @@ namespace MphRead
         }
     }
 
-    public enum Selection
+    public enum SelectionType
     {
         None,
         Selected,
@@ -153,11 +153,6 @@ namespace MphRead
         public float TranslateS { get; }
         public float TranslateT { get; }
         public float RotateZ { get; }
-
-        public RenderMode GetEffectiveRenderMode(Mesh mesh)
-        {
-            return mesh.Selection == Selection.None ? RenderMode : RenderMode.Translucent;
-        }
 
         public Material(RawMaterial raw)
         {

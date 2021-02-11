@@ -586,7 +586,7 @@ namespace MphRead
             _selectedModelId = sceneId;
             foreach (Mesh mesh in SelectedModel.Meshes)
             {
-                mesh.Selection = Selection.Selected;
+                mesh.Selection = SelectionType.Selected;
             }
             if (SelectedModel.Entity != null)
             {
@@ -595,7 +595,7 @@ namespace MphRead
                 {
                     foreach (Mesh mesh in parent.Meshes)
                     {
-                        mesh.Selection = Selection.Parent;
+                        mesh.Selection = SelectionType.Parent;
                     }
                 }
                 ushort childId = SelectedModel.Entity.GetChildId();
@@ -603,7 +603,7 @@ namespace MphRead
                 {
                     foreach (Mesh mesh in child.Meshes)
                     {
-                        mesh.Selection = Selection.Child;
+                        mesh.Selection = SelectionType.Child;
                     }
                 }
             }
@@ -622,7 +622,7 @@ namespace MphRead
             _selectedNodeId = nodeId;
             foreach (Mesh mesh in SelectedModel.GetNodeMeshes(_selectedNodeId))
             {
-                mesh.Selection = Selection.Selected;
+                mesh.Selection = SelectionType.Selected;
             }
         }
 
@@ -631,7 +631,7 @@ namespace MphRead
             Deselect();
             _selectedModelId = sceneId;
             _selectedMeshId = meshId;
-            SelectedModel.Meshes[meshId].Selection = Selection.Selected;
+            SelectedModel.Meshes[meshId].Selection = SelectionType.Selected;
         }
 
         private void Deselect()
@@ -640,7 +640,7 @@ namespace MphRead
             {
                 foreach (Mesh mesh in SelectedModel.Meshes)
                 {
-                    mesh.Selection = Selection.None;
+                    mesh.Selection = SelectionType.None;
                 }
                 if (SelectedModel.Entity != null)
                 {
@@ -649,7 +649,7 @@ namespace MphRead
                     {
                         foreach (Mesh mesh in parent.Meshes)
                         {
-                            mesh.Selection = Selection.None;
+                            mesh.Selection = SelectionType.None;
                         }
                     }
                     ushort childId = SelectedModel.Entity.GetChildId();
@@ -657,7 +657,7 @@ namespace MphRead
                     {
                         foreach (Mesh mesh in child.Meshes)
                         {
-                            mesh.Selection = Selection.None;
+                            mesh.Selection = SelectionType.None;
                         }
                     }
                 }

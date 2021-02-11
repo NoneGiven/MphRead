@@ -11,6 +11,7 @@ namespace MphRead.Entities
         public NewModel Model { get; }
         public NewAnimationInfo AnimInfo { get; } = new NewAnimationInfo();
         public bool IsPlaceholder { get; set; }
+        public bool Active { get; set; } = true;
 
         public ModelInstance(NewModel model)
         {

@@ -66,9 +66,10 @@ namespace MphRead.Entities
             }
         }
 
-        protected override bool GetModelActive(ModelInstance inst, int index)
+        public override void SetActive(bool active)
         {
-            return Active;
+            base.SetActive(active);
+            _models[0].Active = Active;
         }
     }
 }

@@ -1340,7 +1340,7 @@ namespace MphRead
         // for meshes
         public void AddRenderItem(Material material, int polygonId, float alphaScale, Vector3 emission, LightInfo lightInfo,
             Matrix4 texcoordMatrix, Matrix4 transform, int listId, int matrixStackCount, IReadOnlyList<float> matrixStack,
-            Vector4? overrideColor, Vector4? paletteOverride, int? bindingOverride = null)
+            Vector4? overrideColor, Vector4? paletteOverride, bool isSelected, int? bindingOverride = null)
         {
             RenderItem item = GetRenderItem();
             item.Type = RenderItemType.Mesh;
@@ -1387,6 +1387,16 @@ namespace MphRead
             item.Vertices = Array.Empty<Vector3>();
             item.ScaleS = 1;
             item.ScaleT = 1;
+            if (isSelected)
+            {
+                // mtodo: other selection types
+                overrideColor = Selection.GetSelectionColor(SelectionType.Selected);
+                if (overrideColor != null)
+                {
+                    item.OverrideColor = overrideColor;
+                    item.PaletteOverride = null;
+                }
+            }
             AddRenderItem(item);
         }
 
@@ -1984,15 +1994,7 @@ namespace MphRead
                 GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref texcoordMatrix);
             }
             GL.Uniform1(_shaderLocations.UseTexture, item.HasTexture && _showTextures ? 1 : 0);
-            Vector4? overrideColor = null;
-            //if (_showSelection)
-            //{
-            //    overrideColor = mesh.OverrideColor;
-            //}
-            if (overrideColor == null)
-            {
-                overrideColor = item.OverrideColor;
-            }
+            Vector4? overrideColor = item.OverrideColor;
             if (overrideColor != null)
             {
                 Vector4 overrideColorValue = overrideColor.Value;
@@ -2012,6 +2014,37 @@ namespace MphRead
             else
             {
                 GL.Uniform1(_shaderLocations.UsePaletteOverride, 0);
+            }
+        }
+
+        public void LookAt(Vector3 target)
+        {
+            static bool FloatEqual(float one, float two)
+            {
+                return MathF.Abs(one - two) < 0.001f;
+            }
+            if (_cameraMode == CameraMode.Roam)
+            {
+                _cameraPosition = -1 * target.WithZ(target.Z + 5);
+                Vector3 position = -1 * _cameraPosition;
+                Vector3 unit = FloatEqual(position.Z, target.Z) && FloatEqual(position.X, target.X)
+                    ? Vector3.UnitZ
+                    : Vector3.UnitY;
+                Matrix4.LookAt(position, target, unit).ExtractRotation().ToEulerAngles(out Vector3 angles);
+                _angleX = MathHelper.RadiansToDegrees(angles.X + angles.Z);
+                if (_angleX < -90)
+                {
+                    _angleX += 360;
+                }
+                else if (_angleX > 90)
+                {
+                    _angleX -= 360;
+                }
+                _angleY = MathHelper.RadiansToDegrees(angles.Y);
+                if (FloatEqual(MathF.Abs(angles.Z), MathF.PI))
+                {
+                    _angleY = 180 - _angleY;
+                }
             }
         }
 
@@ -2043,6 +2076,10 @@ namespace MphRead
 
         public void OnKeyDown(KeyboardKeyEventArgs e)
         {
+            if (Selection.OnKeyDown(e, this))
+            {
+                return;
+            }
             if (e.Key == Keys.D5)
             {
                 if (!_recording)
@@ -2087,7 +2124,6 @@ namespace MphRead
             }
             else if (e.Key == Keys.Z)
             {
-                // todo: this needs to be organized
                 if (e.Control)
                 {
                     _showVolumes = VolumeDisplay.None;
@@ -2099,18 +2135,6 @@ namespace MphRead
                     {
                         _showVolumes = VolumeDisplay.Portal;
                     }
-                    //if (_showVolumes != 0 && _selectionMode == SelectionMode.Model)
-                    //{
-                    //    int previousSelection = _selectedModelId;
-                    //    Deselect();
-                    //    _selectedModelId = 0;
-                    //    SelectNextModel();
-                    //    if (!_modelMap.ContainsKey(_selectedModelId))
-                    //    {
-                    //        _selectedModelId = previousSelection;
-                    //        SetSelectedModel(previousSelection);
-                    //    }
-                    //}
                 }
                 else
                 {
@@ -2119,18 +2143,6 @@ namespace MphRead
                     {
                         _showVolumes = VolumeDisplay.None;
                     }
-                    //if (_showVolumes != 0 && _selectionMode == SelectionMode.Model)
-                    //{
-                    //    int previousSelection = _selectedModelId;
-                    //    Deselect();
-                    //    _selectedModelId = 0;
-                    //    SelectNextModel();
-                    //    if (!_modelMap.ContainsKey(_selectedModelId))
-                    //    {
-                    //        _selectedModelId = previousSelection;
-                    //        SetSelectedModel(previousSelection);
-                    //    }
-                    //}
                 }
             }
             else if (e.Key == Keys.G)
@@ -2150,7 +2162,7 @@ namespace MphRead
             }
             else if (e.Key == Keys.H)
             {
-                //_showSelection = !_showSelection;
+                Selection.ToggleShowSelection();
             }
             else if (e.Key == Keys.I)
             {
@@ -2158,19 +2170,7 @@ namespace MphRead
             }
             else if (e.Key == Keys.E)
             {
-                if (e.Alt)
-                {
-                    // undocumented -- might not be needed once we have an animation index setter
-                    //if (_selectionMode == SelectionMode.Model
-                    //    && SelectedModel.Entity is Entity<ObjectEntityData> obj && obj.Data.EffectId != 0)
-                    //{
-                    //    ((ObjectModel)SelectedModel).ForceSpawnEffect = true;
-                    //}
-                }
-                else
-                {
-                    _scanVisor = !_scanVisor;
-                }
+                _scanVisor = !_scanVisor;
             }
             else if (e.Key == Keys.R)
             {
@@ -2222,216 +2222,15 @@ namespace MphRead
             {
                 //UnloadModel();
             }
-            else if (e.Key == Keys.M)
-            {
-                //if (_models.Any(m => m.Meshes.Count > 0))
-                //{
-                //    if (e.Control)
-                //    {
-                //        if (_selectionMode == SelectionMode.Model)
-                //        {
-                //            InputSelectModel();
-                //        }
-                //        else if (_selectionMode == SelectionMode.Node)
-                //        {
-                //            InputSelectNode();
-                //        }
-                //        else if (_selectionMode == SelectionMode.Mesh)
-                //        {
-                //            InputSelectMesh();
-                //        }
-                //    }
-                //    else
-                //    {
-                //        Deselect();
-                //        if (_selectedModelId < 0)
-                //        {
-                //            _selectedModelId = _models[0].SceneId;
-                //        }
-                //        if (_selectionMode == SelectionMode.None)
-                //        {
-                //            _selectionMode = SelectionMode.Model;
-                //            SetSelectedModel(_selectedModelId);
-                //        }
-                //        else if (_selectionMode == SelectionMode.Model)
-                //        {
-                //            _selectionMode = SelectionMode.Node;
-                //            SetSelectedNode(_selectedModelId, _selectedNodeId);
-                //        }
-                //        else if (_selectionMode == SelectionMode.Node)
-                //        {
-                //            if (!SelectedModel.GetNodeMeshes(_selectedNodeId).Any())
-                //            {
-                //                _selectionMode = SelectionMode.None;
-                //            }
-                //            else
-                //            {
-                //                _selectionMode = SelectionMode.Mesh;
-                //                SetSelectedMesh(_selectedModelId, _selectedMeshId);
-                //            }
-                //        }
-                //        else
-                //        {
-                //            _selectionMode = SelectionMode.None;
-                //        }
-                //        PrintOutput();
-                //    }
-                //}
-            }
-            else if (e.Key == Keys.Equal || e.Key == Keys.KeyPadEqual)
-            {
-                //if (e.Alt)
-                //{
-                //    // todo: select other animation types, and enable playing in reverse
-                //    if (_selectionMode == SelectionMode.Model && _modelMap.TryGetValue(_selectedModelId, out Model? model))
-                //    {
-                //        if (e.Control)
-                //        {
-                //            int id = model.Animations.MaterialGroupId + 1;
-                //            if (id >= model.Animations.MaterialGroups.Count)
-                //            {
-                //                id = -1;
-                //            }
-                //            model.Animations.MaterialGroupId = id;
-                //        }
-                //        else
-                //        {
-                //            int id = model.Animations.NodeGroupId + 1;
-                //            if (id >= model.Animations.NodeGroups.Count)
-                //            {
-                //                id = -1;
-                //            }
-                //            model.Animations.NodeGroupId = id;
-                //        }
-                //    }
-                //}
-                //else
-                //{
-                //    SelectNextModel(e.Shift);
-                //}
-            }
-            else if (e.Key == Keys.Minus || e.Key == Keys.KeyPadSubtract)
-            {
-                //if (e.Alt)
-                //{
-                //    if (_selectionMode == SelectionMode.Model && _modelMap.TryGetValue(_selectedModelId, out Model? model))
-                //    {
-                //        if (e.Control)
-                //        {
-                //            int id = model.Animations.MaterialGroupId - 1;
-                //            if (id < -1)
-                //            {
-                //                id = model.Animations.MaterialGroups.Count - 1;
-                //            }
-                //            model.Animations.MaterialGroupId = id;
-                //        }
-                //        else
-                //        {
-                //            int id = model.Animations.NodeGroupId - 1;
-                //            if (id < -1)
-                //            {
-                //                id = model.Animations.NodeGroups.Count - 1;
-                //            }
-                //            model.Animations.NodeGroupId = id;
-                //        }
-                //    }
-                //}
-                //else
-                //{
-                //    SelectPreviousModel(e.Shift);
-                //}
-            }
-            else if (e.Key == Keys.X)
-            {
-                //if (_selectionMode == SelectionMode.Model)
-                //{
-                //    if (e.Control)
-                //    {
-                //        if (SelectedModel.Entity != null)
-                //        {
-                //            if (e.Shift)
-                //            {
-                //                ushort childId = SelectedModel.Entity.GetChildId();
-                //                Model? child = _models.FirstOrDefault(m => m.Entity?.EntityId == childId);
-                //                if (child != null)
-                //                {
-                //                    LookAt(child.Position);
-                //                }
-                //            }
-                //            else
-                //            {
-                //                ushort parentId = SelectedModel.Entity.GetParentId();
-                //                Model? parent = _models.FirstOrDefault(m => m.Entity?.EntityId == parentId);
-                //                if (parent != null)
-                //                {
-                //                    LookAt(parent.Position);
-                //                }
-                //            }
-                //        }
-                //    }
-                //    else
-                //    {
-                //        LookAt(SelectedModel.Position);
-                //    }
-                //}
-                //else if (_selectionMode == SelectionMode.Node || _selectionMode == SelectionMode.Mesh)
-                //{
-                //    LookAt(SelectedModel.Nodes[_selectedNodeId].Position);
-                //}
-            }
-            else if (e.Key == Keys.D0 || e.Key == Keys.KeyPad0)
-            {
-                //if (_selectionMode == SelectionMode.Model)
-                //{
-                //    SelectedModel.Visible = !SelectedModel.Visible;
-                //}
-                //else if (_selectionMode == SelectionMode.Node)
-                //{
-                //    SelectedModel.Nodes[_selectedNodeId].Enabled = !SelectedModel.Nodes[_selectedNodeId].Enabled;
-                //}
-                //else if (_selectionMode == SelectionMode.Mesh)
-                //{
-                //    SelectedModel.Meshes[_selectedMeshId].Visible = !SelectedModel.Meshes[_selectedMeshId].Visible;
-                //}
-            }
-            else if (e.Key == Keys.D1 || e.Key == Keys.KeyPad1)
-            {
-                //if (_selectionMode == SelectionMode.Model && SelectedModel.Recolors.Count > 1)
-                //{
-                //    int recolor = SelectedModel.CurrentRecolor - 1;
-                //    if (recolor < 0)
-                //    {
-                //        recolor = SelectedModel.Recolors.Count - 1;
-                //    }
-                //    SelectedModel.CurrentRecolor = recolor;
-                //    DeleteTextures(SelectedModel.SceneId);
-                //    InitTextures(SelectedModel);
-                //}
-            }
-            else if (e.Key == Keys.D2 || e.Key == Keys.KeyPad2)
-            {
-                //if (_selectionMode == SelectionMode.Model && SelectedModel.Recolors.Count > 1)
-                //{
-                //    int recolor = SelectedModel.CurrentRecolor + 1;
-                //    if (recolor > SelectedModel.Recolors.Count - 1)
-                //    {
-                //        recolor = 0;
-                //    }
-                //    SelectedModel.CurrentRecolor = recolor;
-                //    DeleteTextures(SelectedModel.SceneId);
-                //    InitTextures(SelectedModel);
-                //}
-            }
         }
 
         private void OnKeyHeld()
         {
-            //if ((_keyboardState.IsKeyDown(Keys.LeftAlt) || _keyboardState.IsKeyDown(Keys.RightAlt))
-            //    && _selectionMode == SelectionMode.Model)
-            //{
-            //    MoveModel();
-            //    return;
-            //}
+            if (_keyboardState.IsKeyDown(Keys.LeftAlt) || _keyboardState.IsKeyDown(Keys.RightAlt))
+            {
+                Selection.OnKeyHeld();
+                return;
+            }
             // sprint
             float step = _keyboardState.IsKeyDown(Keys.LeftShift) || _keyboardState.IsKeyDown(Keys.RightShift) ? 5 : 1;
             if (_cameraMode == CameraMode.Roam)

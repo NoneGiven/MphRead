@@ -25,6 +25,7 @@ namespace MphRead.Entities
             // todo: room state
             Active = data.Active != 0;
             _models.Add(beamInst);
+            beamInst.Active = Active;
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
@@ -36,21 +37,18 @@ namespace MphRead.Entities
             return base.GetModelTransform(inst, index);
         }
 
-        protected override bool GetModelActive(ModelInstance inst, int index)
-        {
-            if (index == 1)
-            {
-                return Active;
-            }
-            return base.GetModelActive(inst, index);
-        }
-
         public override void GetDisplayVolumes(NewScene scene)
         {
             if (scene.ShowVolumes == VolumeDisplay.JumpPad)
             {
                 AddVolumeItem(_volume, Vector3.UnitY, scene);
             }
+        }
+
+        public override void SetActive(bool active)
+        {
+            base.SetActive(active);
+            _models[1].Active = Active;
         }
     }
 

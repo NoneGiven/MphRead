@@ -108,17 +108,12 @@ namespace MphRead.Entities
             return Matrix4.CreateScale(inst.Model.Scale) * _transform;
         }
 
-        protected virtual bool GetModelActive(ModelInstance inst, int index)
-        {
-            return true;
-        }
-
         public virtual void Process(NewScene scene)
         {
             for (int i = 0; i < _models.Count; i++)
             {
                 ModelInstance inst = _models[i];
-                if (GetModelActive(inst, i))
+                if (inst.Active)
                 {
                     if (scene.FrameCount != 0 && scene.FrameCount % 2 == 0)
                     {
@@ -140,7 +135,7 @@ namespace MphRead.Entities
                 for (int i = 0; i < _models.Count; i++)
                 {
                     ModelInstance inst = _models[i];
-                    if (GetModelActive(inst, i))
+                    if (inst.Active)
                     {
                         NewModel model = inst.Model;
                         model.AnimateMaterials(inst.AnimInfo.Material);
@@ -188,7 +183,7 @@ namespace MphRead.Entities
             for (int i = 0; i < _models.Count; i++)
             {
                 ModelInstance inst = _models[i];
-                if (!GetModelActive(inst, i) || (inst.IsPlaceholder && !scene.ShowInvisible))
+                if (!inst.Active || (inst.IsPlaceholder && !scene.ShowInvisible))
                 {
                     continue;
                 }
@@ -212,10 +207,11 @@ namespace MphRead.Entities
                         Material material = model.Materials[mesh.MaterialId];
                         Vector3 emission = GetEmission(inst, material, mesh.MaterialId);
                         Matrix4 texcoordMatrix = GetTexcoordMatrix(inst, material, mesh.MaterialId, node, scene);
+                        bool selected = Selection.IsSelected(this, inst, node, mesh);
                         int? bindingOverride = GetBindingOverride(inst, material, mesh.MaterialId);
                         scene.AddRenderItem(material, polygonId, Alpha, emission, GetLightInfo(scene),
                             texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
-                            inst.IsPlaceholder ? GetOverrideColor(inst, index) : null, PaletteOverride, bindingOverride);
+                            inst.IsPlaceholder ? GetOverrideColor(inst, index) : null, PaletteOverride, selected, bindingOverride);
                     }
                     if (node.ChildIndex != UInt16.MaxValue)
                     {

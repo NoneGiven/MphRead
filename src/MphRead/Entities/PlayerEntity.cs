@@ -88,7 +88,21 @@ namespace MphRead.Entities
             {
                 _respawnTimer--;
             }
+            UpdateModels();
             base.Process(scene);
+        }
+
+        private void UpdateModels()
+        {
+            for (int i = 0; i < _models.Count; i++)
+            {
+                ModelInstance inst = _models[i];
+                _altModel.Active = !_dead && _altForm;
+                _altIceModel.Active = _altModel.Active && _frozen;
+                _gunModel.Active = !_dead && _mainPlayer && !_altForm;
+                _bipedModel.Active = !_dead && !_mainPlayer && !_altForm;
+                _bipedIceModel.Active = _bipedModel.Active && _frozen;
+            }
         }
 
         public override void GetDrawInfo(NewScene scene)
@@ -276,19 +290,6 @@ namespace MphRead.Entities
         protected override LightInfo GetLightInfo(NewScene scene)
         {
             return new LightInfo(_light1Vector, _light1Color, _light2Vector, _light2Color);
-        }
-
-        protected override bool GetModelActive(ModelInstance inst, int index)
-        {
-            if (_altForm)
-            {
-                return inst == _altModel || (_frozen && inst == _altIceModel);
-            }
-            if (_mainPlayer)
-            {
-                return inst == _gunModel;
-            }
-            return inst == _bipedModel || (_frozen && inst == _bipedIceModel);
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
