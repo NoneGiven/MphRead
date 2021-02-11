@@ -1,5 +1,6 @@
 using System;
 using System.Buffers;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -740,7 +741,7 @@ namespace MphRead
         {
             _frameCount++;
             _frameTime = (float)frameTime;
-            //LoadAndUnload();
+            LoadAndUnload();
             OnKeyHeld();
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
@@ -769,6 +770,26 @@ namespace MphRead
             if (_advanceOneFrame)
             {
                 _advanceOneFrame = false;
+            }
+        }
+
+        private void LoadAndUnload()
+        {
+            if (_unloadQueue.Count > 0)
+            {
+                Selection.Clear();
+                while (_unloadQueue.TryDequeue(out EntityBase? entity))
+                {
+                    // mtodo: unload
+                }
+            }
+            while (_loadQueue.TryDequeue(out (string Name, int Recolor, bool FirstHunt) item))
+            {
+                try
+                {
+                    AddModel(item.Name, item.Recolor, item.FirstHunt);
+                }
+                catch (ProgramException) { }
             }
         }
 
@@ -2262,11 +2283,14 @@ namespace MphRead
             }
             else if (e.Control && e.Key == Keys.O)
             {
-                //LoadModel();
+                _showLoadPrompt = true;
             }
             else if (e.Control && e.Key == Keys.U)
             {
-                //UnloadModel();
+                if (Selection.Entity != null)
+                {
+                    _unloadQueue.Enqueue(Selection.Entity);
+                }
             }
         }
 
@@ -2405,6 +2429,10 @@ namespace MphRead
             }
         }
 
+        private bool _showLoadPrompt = false;
+        private readonly ConcurrentQueue<(string Name, int Recolor, bool FirstHunt)> _loadQueue = new ConcurrentQueue<(string, int, bool)>();
+        private readonly ConcurrentQueue<EntityBase> _unloadQueue = new ConcurrentQueue<EntityBase>();
+
         private readonly CancellationTokenSource _outputCts = new CancellationTokenSource();
         private string _currentOutput = "";
         private readonly StringBuilder _sb = new StringBuilder();
@@ -2418,6 +2446,12 @@ namespace MphRead
         {
             while (!token.IsCancellationRequested)
             {
+                if (_showLoadPrompt)
+                {
+                    OutputDoPrompt();
+                    _showLoadPrompt = false;
+                    _currentOutput = "";
+                }
                 string output = OutputGetAll();
                 if (output != _currentOutput)
                 {
@@ -2426,6 +2460,31 @@ namespace MphRead
                     _currentOutput = output;
                 }
                 await Task.Delay(100, token);
+            }
+        }
+
+        private void OutputDoPrompt()
+        {
+            Console.Clear();
+            Console.Write("Enter model name: ");
+            string[] input = Console.ReadLine().Trim().Split(' ');
+            string name = input[0].Trim();
+            if (name.Length > 0)
+            {
+                int recolor = 0;
+                bool firstHunt = false;
+                if (input.Length > 1)
+                {
+                    if (UInt32.TryParse(input[1].Trim(), out uint value))
+                    {
+                        recolor = (int)value;
+                    }
+                    if (input.Length > 2)
+                    {
+                        firstHunt = input[2].Trim() == "-fh";
+                    }
+                }
+                _loadQueue.Enqueue((name, recolor, firstHunt));
             }
         }
 
@@ -2537,7 +2596,12 @@ namespace MphRead
                 _sb.AppendLine($"Camera (?, ?, ?)");
             }
             _sb.AppendLine();
-            _sb.Append($"Entity: {entity.Type} [{entity.Id}] {(entity.Active ? "On " : "Off")} - Color {entity.Recolor}");
+            _sb.Append($"Entity: {entity.Type}");
+            if (entity.Type == EntityType.Model)
+            {
+                _sb.Append($" ({entity.GetModels()[0].Model.Name})");
+            }
+            _sb.Append($" [{entity.Id}] {(entity.Active ? "On " : "Off")} - Color {entity.Recolor}");
             if (entity.Type == EntityType.Room)
             {
                 _sb.Append($" ({entity.GetModels()[0].Model.Nodes.Count(n => n.IsRoomPartNode)})");

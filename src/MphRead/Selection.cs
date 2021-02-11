@@ -25,6 +25,14 @@ namespace MphRead
             return !_hideUnselectedVolumes || Entity == null || entity == Entity;
         }
 
+        public static void Clear()
+        {
+            Mesh = null;
+            Node = null;
+            Instance = null;
+            Entity = null;
+        }
+
         public static SelectionType CheckSelection(EntityBase entity, ModelInstance inst, Node node, Mesh mesh)
         {
             if (Mesh != null)
