@@ -157,7 +157,7 @@ namespace MphRead
             }
             if (e.Key == Keys.X)
             {
-                LookAtSelection(scene);
+                LookAtSelection(scene, e.Control, e.Shift);
                 return true;
             }
             if (e.Key == Keys.D0 || e.Key == Keys.KeyPad0)
@@ -605,9 +605,17 @@ namespace MphRead
                 && (scene.ShowAll || scene.ShowInvisible || !m.IsPlaceholder));
         }
 
-        private static void LookAtSelection(NewScene scene)
+        private static void LookAtSelection(NewScene scene, bool control, bool shift)
         {
-            if (Node != null) // node or mesh
+            if (control)
+            {
+                EntityBase? target = shift ? Entity?.GetChild() : Entity?.GetParent();
+                if (target != null)
+                {
+                    scene.LookAt(target.Position);
+                }
+            }
+            else if (Node != null) // node or mesh
             {
                 scene.LookAt(Node.Animation.Row3.Xyz);
             }
