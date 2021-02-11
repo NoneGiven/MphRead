@@ -142,12 +142,12 @@ namespace MphRead
             }
             if (e.Key == Keys.D1 || e.Key == Keys.KeyPad1)
             {
-                // mtodo: cycle recolors
+                NextRecolor();
                 return true;
             }
             if (e.Key == Keys.D2 || e.Key == Keys.KeyPad2)
             {
-                // mtodo: cycle recolors
+                PrevRecolor();
                 return true;
             }
             return false;
@@ -274,6 +274,40 @@ namespace MphRead
                         index = inst.Model.AnimationGroups.Node.Count - 1;
                     }
                     inst.SetNodeAnim(index);
+                }
+            }
+        }
+
+        private static void NextRecolor()
+        {
+            if (Entity != null)
+            {
+                ModelInstance? instance = Entity.GetModels().FirstOrDefault();
+                if (instance != null)
+                {
+                    int recolor = Entity.Recolor + 1;
+                    if (recolor >= instance.Model.Recolors.Count)
+                    {
+                        recolor = 0;
+                    }
+                    Entity.Recolor = recolor;
+                }
+            }
+        }
+
+        private static void PrevRecolor()
+        {
+            if (Entity != null)
+            {
+                ModelInstance? instance = Entity.GetModels().FirstOrDefault();
+                if (instance != null)
+                {
+                    int recolor = Entity.Recolor -1;
+                    if (recolor < 0)
+                    {
+                        recolor = instance.Model.Recolors.Count - 1;
+                    }
+                    Entity.Recolor = recolor;
                 }
             }
         }
@@ -450,7 +484,6 @@ namespace MphRead
 
         private static bool FilterEntity(EntityBase entity, NewScene scene)
         {
-            // mtodo: filter options
             return scene.ShowInvisible || entity.GetModels().Any(m => !m.IsPlaceholder);
         }
 

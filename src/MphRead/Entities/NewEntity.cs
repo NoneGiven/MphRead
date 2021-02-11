@@ -16,8 +16,8 @@ namespace MphRead.Entities
 
     public abstract class EntityBase : IRenderable
     {
-        public int Id { get; protected set; } = -1; // todo: use init for Id and Recolor
-        public virtual int Recolor { get; protected set; }
+        public int Id { get; protected set; } = -1; // todo: use init for Id
+        public virtual int Recolor { get; set; }
         public EntityType Type { get; }
         public bool ShouldDraw { get; protected set; } = true;
         public bool Active { get; protected set; } = true;
