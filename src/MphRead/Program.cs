@@ -18,10 +18,9 @@ namespace MphRead
             IReadOnlyList<Argument> arguments = ParseArguments(args);
             if (arguments.Count == 0)
             {
-                using var renderer = new Renderer();
+                using var renderer = new RenderWindow();
                 renderer.AddRoom("MP3 PROVING GROUND");
                 //renderer.AddModel("Crate01");
-                Nop();
                 renderer.Run();
             }
             else if (arguments.Any(a => a.Name == "setup"))
@@ -90,7 +89,7 @@ namespace MphRead
                 {
                     Exit();
                 }
-                using var renderer = new Renderer();
+                using var renderer = new RenderWindow();
                 foreach (string room in rooms)
                 {
                     renderer.AddRoom(room, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);

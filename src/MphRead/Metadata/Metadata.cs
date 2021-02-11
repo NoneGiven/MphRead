@@ -402,6 +402,42 @@ namespace MphRead
             { Hunter.Guardian, 1.0f }
         };
 
+        public static IReadOnlyDictionary<Hunter, IReadOnlyList<string>> HunterModels = new Dictionary<Hunter, IReadOnlyList<string>>
+        {
+            {
+                Hunter.Samus,
+                new List<string>() { "Samus_lod0", "SamusAlt_lod0", "SamusGun" }
+            },
+            {
+                Hunter.Kanden,
+                new List<string>() { "Kanden_lod0", "KandenAlt_lod0", "KandenGun" }
+            },
+            {
+                Hunter.Trace,
+                new List<string>() { "Trace_lod0", "TraceAlt_lod0", "TraceGun" }
+            },
+            {
+                Hunter.Sylux,
+                new List<string>() { "Sylux_lod0", "SyluxAlt_lod0", "SyluxGun" }
+            },
+            {
+                Hunter.Noxus,
+                new List<string>() { "Nox_lod0", "NoxAlt_lod0", "NoxGun" }
+            },
+            {
+                Hunter.Spire,
+                new List<string>() { "Spire_lod0", "SpireAlt_lod0", "SpireGun" }
+            },
+            {
+                Hunter.Weavel,
+                new List<string>() { "Weavel_lod0", "WeavelAlt_lod0", "WeavelGun" }
+            },
+            {
+                Hunter.Guardian,
+                new List<string>() { "GuardianR_lod0", "SamusAlt_lod0", "SamusGun" }
+            }
+        };
+
         public static readonly IReadOnlyList<int> AdpcmTable = new List<int>()
         {
             7, 8, 9, 10, 11, 12, 13, 14,
@@ -1134,6 +1170,15 @@ namespace MphRead
         {
             { SingleType.Death, ("deathParticle", "death") },
             { SingleType.Fuzzball, ("particles", "fuzzBall") }
+        };
+
+        public static IReadOnlyDictionary<string, bool> EffectsBases = new Dictionary<string, bool>()
+        {
+            { "deathParticle", true },
+            { "particles", true },
+            { "particles2", true },
+            { "TearParticle", true },
+            { "icons", true }
         };
 
         public static (RoomMetadata?, int) GetRoomByName(string name)
@@ -2896,10 +2941,6 @@ namespace MphRead
                     new ModelMetadata("SyluxTurret")
                 },
                 {
-                    "TearParticle",
-                    new ModelMetadata("TearParticle", animation: false, texture: true)
-                },
-                {
                     "Teleporter",
                     new ModelMetadata("Teleporter",
                         modelPath: @"models\Teleporter_mdl_Model.bin",
@@ -3335,20 +3376,24 @@ namespace MphRead
                     "particles2",
                     new ModelMetadata("particles2", animation: false, texture: true, archive: "effectsBase")
                 },
-                // todo: can't parse some out of bounds texture/palette offsets from this
                 {
-                    "icons",
-                    new ModelMetadata("icons",
-                        modelPath: @"hud\icons_Model.bin",
-                        animationPath: null,
-                        collisionPath: null,
-                        new List<RecolorMetadata>()
-                        {
-                            new RecolorMetadata("default",
-                                modelPath: @"hud\icons_Model.bin")
-                        }
-                    )
+                    "TearParticle",
+                    new ModelMetadata("TearParticle", animation: false, texture: true)
                 }
+                // todo: can't parse some out of bounds texture/palette offsets from this
+                //{
+                //    "icons",
+                //    new ModelMetadata("icons",
+                //        modelPath: @"hud\icons_Model.bin",
+                //        animationPath: null,
+                //        collisionPath: null,
+                //        new List<RecolorMetadata>()
+                //        {
+                //            new RecolorMetadata("default",
+                //                modelPath: @"hud\icons_Model.bin")
+                //        }
+                //    )
+                //}
             };
 
         public static readonly IReadOnlyDictionary<string, ModelMetadata> FirstHuntModels
@@ -3452,9 +3497,8 @@ namespace MphRead
                     new ModelMetadata("jumppad_base", animation: false, firstHunt: true)
                 },
                 {
-                    // this has an animation file (unlike jumpad_ray), but it is not used
                     "jumppad_ray",
-                    new ModelMetadata("jumppad_ray", animation: false, firstHunt: true)
+                    new ModelMetadata("jumppad_ray", firstHunt: true)
                 },
                 {
                     "lightningCol",

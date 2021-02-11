@@ -6,9 +6,9 @@ namespace MphRead
         Object = 1,
         PlayerSpawn = 2,
         Door = 3,
-        Item = 4,
+        ItemSpawn = 4,
         ItemInstance = 5,
-        Enemy = 6,
+        EnemySpawn = 6,
         TriggerVolume = 7,
         AreaVolume = 8,
         JumpPad = 9,
@@ -48,8 +48,11 @@ namespace MphRead
         FhMorphCamera = 114,
         FhEnemyInstance = 115,
         FhPlayer = 116,
-        FhBeamProjectile = 117
+        FhBeamProjectile = 117,
         // 118 = entity list header
+        // viewer only
+        Room = 200,
+        Model = 201
     }
 
     public enum VolumeType : uint

@@ -3,6 +3,73 @@ using OpenTK.Mathematics;
 
 namespace MphRead
 {
+    public readonly struct LightInfo
+    {
+        public readonly Vector3 Light1Vector;
+        public readonly Vector3 Light1Color;
+        public readonly Vector3 Light2Vector;
+        public readonly Vector3 Light2Color;
+
+        public static readonly LightInfo Zero = new LightInfo(Vector3.Zero, Vector3.Zero, Vector3.Zero, Vector3.Zero);
+
+        public LightInfo(Vector3 light1Vector, Vector3 light1Color, Vector3 light2Vector, Vector3 light2Color)
+        {
+            Light1Vector = light1Vector;
+            Light1Color = light1Color;
+            Light2Vector = light2Vector;
+            Light2Color = light2Color;
+        }
+    }
+
+    public enum RenderItemType
+    {
+        Mesh = 0,
+        Box = 1,
+        Cylinder = 2,
+        Sphere = 3,
+        Plane = 4,
+        Particle = 5
+    }
+
+    public class RenderItem
+    {
+        public RenderItemType Type { get; set; }
+        public int PolygonId { get; set; }
+        public float Alpha { get; set; }
+        public PolygonMode PolygonMode { get; set; }
+        public RenderMode RenderMode { get; set; }
+        public CullingMode CullingMode { get; set; }
+        public bool Wireframe { get; set; }
+        public bool Lighting { get; set; }
+        public Vector3 Diffuse { get; set; }
+        public Vector3 Ambient { get; set; }
+        public Vector3 Specular { get; set; }
+        public Vector3 Emission { get; set; }
+        public LightInfo LightInfo { get; set; }
+        public TexgenMode TexgenMode { get; set; }
+        public RepeatMode XRepeat { get; set; }
+        public RepeatMode YRepeat { get; set; }
+        public bool HasTexture { get; set; }
+        public int TextureBindingId { get; set; }
+        public Matrix4 TexcoordMatrix { get; set; }
+        public Matrix4 Transform { get; set; }
+        public int ListId { get; set; }
+        public int MatrixStackCount { get; set; }
+        public float[] MatrixStack { get; }
+        public Vector4? OverrideColor { get; set; }
+        public Vector4? PaletteOverride { get; set; }
+        public Vector3[] Vertices { get; set; }
+        public float ScaleS { get; set; }
+        public float ScaleT { get; set; }
+
+        public RenderItem()
+        {
+            // todo: consider using ArrayPool
+            MatrixStack = new float[16 * 31];
+            Vertices = Array.Empty<Vector3>();
+        }
+    }
+
     // size: 4
     public readonly struct Fixed
     {
@@ -100,6 +167,98 @@ namespace MphRead
 
     public static class Matrix
     {
+        public static Matrix3 GetTransform3(Vector3 vector1, Vector3 vector2)
+        {
+            Vector3 up = Vector3.Cross(vector2, vector1).Normalized();
+            var direction = Vector3.Cross(vector1, up);
+
+            Matrix3 transform = default;
+
+            transform.M11 = up.X;
+            transform.M12 = up.Y;
+            transform.M13 = up.Z;
+
+            transform.M21 = direction.X;
+            transform.M22 = direction.Y;
+            transform.M23 = direction.Z;
+
+            transform.M31 = vector1.X;
+            transform.M32 = vector1.Y;
+            transform.M33 = vector1.Z;
+
+            return transform;
+        }
+
+        public static Matrix4 GetTransform4(Vector3 vector1, Vector3 vector2, Vector3 position)
+        {
+            Vector3 up = Vector3.Cross(vector2, vector1).Normalized();
+            var direction = Vector3.Cross(vector1, up);
+
+            Matrix4 transform = default;
+
+            transform.M11 = up.X;
+            transform.M12 = up.Y;
+            transform.M13 = up.Z;
+
+            transform.M21 = direction.X;
+            transform.M22 = direction.Y;
+            transform.M23 = direction.Z;
+
+            transform.M31 = vector1.X;
+            transform.M32 = vector1.Y;
+            transform.M33 = vector1.Z;
+
+            transform.M41 = position.X;
+            transform.M42 = position.Y;
+            transform.M43 = position.Z;
+            transform.M44 = 1;
+
+            return transform;
+        }
+
+        public static Matrix4 GetTransformSRT(Vector3 scale, Vector3 angle, Vector3 position)
+        {
+            float sinAx = MathF.Sin(angle.X);
+            float sinAy = MathF.Sin(angle.Y);
+            float sinAz = MathF.Sin(angle.Z);
+            float cosAx = MathF.Cos(angle.X);
+            float cosAy = MathF.Cos(angle.Y);
+            float cosAz = MathF.Cos(angle.Z);
+
+            float v18 = cosAx * cosAz;
+            float v19 = cosAx * sinAz;
+            float v20 = cosAx * cosAy;
+
+            float v22 = sinAx * sinAy;
+
+            float v17 = v19 * sinAy;
+
+            Matrix4 transform = default;
+
+            transform.M11 = scale.X * cosAy * cosAz;
+            transform.M12 = scale.X * cosAy * sinAz;
+            transform.M13 = scale.X * -sinAy;
+
+            transform.M21 = scale.Y * ((v22 * cosAz) - v19);
+            transform.M22 = scale.Y * ((v22 * sinAz) + v18);
+            transform.M23 = scale.Y * sinAx * cosAy;
+
+            transform.M31 = scale.Z * (v18 * sinAy + sinAx * sinAz);
+            transform.M32 = scale.Z * (v17 + (v19 * sinAy) - (sinAx * cosAz));
+            transform.M33 = scale.Z * v20;
+
+            transform.M41 = position.X;
+            transform.M42 = position.Y;
+            transform.M43 = position.Z;
+
+            transform.M14 = 0;
+            transform.M24 = 0;
+            transform.M34 = 0;
+            transform.M44 = 1;
+
+            return transform;
+        }
+
         public static Vector3 Vec3MultMtx4(Vector3 vec, Matrix4 mat)
         {
             Vector3 result = Vector3.Zero;
@@ -214,9 +373,22 @@ namespace MphRead
             Alpha = alpha;
         }
 
+        public ColorRgba(uint value, byte alpha = 255)
+        {
+            Red = (byte)MathF.Round(((value >> 0) & 0x1F) / 31f * 255f);
+            Green = (byte)MathF.Round(((value >> 5) & 0x1F) / 31f * 255f);
+            Blue = (byte)MathF.Round(((value >> 10) & 0x1F) / 31f * 255f);
+            Alpha = alpha;
+        }
+
         public ColorRgba WithAlpha(byte alpha)
         {
             return new ColorRgba(Red, Green, Blue, alpha);
+        }
+
+        public uint ToUint()
+        {
+            return (uint)((Red << 0) | (Green << 8) | (Blue << 16) | (Alpha << 24));
         }
     }
 

@@ -70,7 +70,7 @@ namespace MphRead
         public bool Visible { get; set; } = true;
         public Vector4? PlaceholderColor { get; set; }
 
-        public Selection Selection { get; set; } = Selection.None;
+        public SelectionType Selection { get; set; } = SelectionType.None;
 
         public Vector4? OverrideColor
         {
@@ -86,17 +86,17 @@ namespace MphRead
                     }
                     return percentage;
                 }
-                if (Selection == Selection.Selected)
+                if (Selection == SelectionType.Selected)
                 {
                     float factor = GetFactor();
                     return new Vector4(factor, factor, factor, 1);
                 }
-                if (Selection == Selection.Parent)
+                if (Selection == SelectionType.Parent)
                 {
                     float factor = GetFactor();
                     return new Vector4(factor, 0, 0, 1);
                 }
-                if (Selection == Selection.Child)
+                if (Selection == SelectionType.Child)
                 {
                     float factor = GetFactor();
                     return new Vector4(0, 0, factor, 1);
@@ -112,7 +112,7 @@ namespace MphRead
         }
     }
 
-    public enum Selection
+    public enum SelectionType
     {
         None,
         Selected,
@@ -152,11 +152,6 @@ namespace MphRead
         public float TranslateS { get; }
         public float TranslateT { get; }
         public float RotateZ { get; }
-
-        public RenderMode GetEffectiveRenderMode(Mesh mesh)
-        {
-            return mesh.Selection == Selection.None ? RenderMode : RenderMode.Translucent;
-        }
 
         public Material(RawMaterial raw)
         {
@@ -425,6 +420,7 @@ namespace MphRead
         }
     }
 
+    // todo: review whether we still need this class after the entity refactor (entity classes aren't using it)
     public class Entity
     {
         public string NodeName { get; }
@@ -497,7 +493,6 @@ namespace MphRead
             Data = data;
         }
 
-        // sktodo: item and enemy spawners
         public override ushort GetParentId()
         {
             if (Data is TriggerVolumeEntityData triggerData)
@@ -671,6 +666,77 @@ namespace MphRead
             SphereRadius = rad;
         }
 
+        public static CollisionVolume Transform(CollisionVolume vol, Matrix4 transform)
+        {
+            if (vol.Type == VolumeType.Box)
+            {
+                return new CollisionVolume(
+                    Matrix.Vec3MultMtx3(vol.BoxVector1, transform),
+                    Matrix.Vec3MultMtx3(vol.BoxVector2, transform),
+                    Matrix.Vec3MultMtx3(vol.BoxVector3, transform),
+                    Matrix.Vec3MultMtx4(vol.BoxPosition, transform),
+                    vol.BoxDot1,
+                    vol.BoxDot2,
+                    vol.BoxDot3
+                );
+            }
+            if (vol.Type == VolumeType.Cylinder)
+            {
+                return new CollisionVolume(
+                    Matrix.Vec3MultMtx3(vol.CylinderVector, transform),
+                    Matrix.Vec3MultMtx4(vol.CylinderPosition, transform),
+                    vol.CylinderRadius,
+                    vol.CylinderDot
+                );
+            }
+            if (vol.Type == VolumeType.Sphere)
+            {
+                return new CollisionVolume(
+                    Matrix.Vec3MultMtx4(vol.SpherePosition, transform),
+                    vol.SphereRadius
+                );
+            }
+            throw new ProgramException($"Invalid volume type {vol.Type}.");
+        }
+
+        public static CollisionVolume Transform(RawCollisionVolume vol, Matrix4 transform)
+        {
+            return Transform(new CollisionVolume(vol), transform);
+        }
+
+        public static CollisionVolume Transform(FhRawCollisionVolume vol, Matrix4 transform)
+        {
+            return Transform(new CollisionVolume(vol), transform);
+        }
+
+        public static CollisionVolume Move(CollisionVolume vol, Vector3 position)
+        {
+            if (vol.Type == VolumeType.Box)
+            {
+                return new CollisionVolume(
+                    vol.BoxVector1, vol.BoxVector2, vol.BoxVector3, vol.BoxPosition + position, vol.BoxDot1, vol.BoxDot2, vol.BoxDot3);
+            }
+            if (vol.Type == VolumeType.Cylinder)
+            {
+                return new CollisionVolume(vol.CylinderVector, vol.CylinderPosition + position, vol.CylinderRadius, vol.CylinderDot);
+            }
+            if (vol.Type == VolumeType.Sphere)
+            {
+                return new CollisionVolume(vol.SpherePosition + position, vol.SphereRadius);
+            }
+            throw new ProgramException($"Invalid volume type {vol.Type}.");
+        }
+
+        public static CollisionVolume Move(RawCollisionVolume vol, Vector3 position)
+        {
+            return Move(new CollisionVolume(vol), position);
+        }
+
+        public static CollisionVolume Move(FhRawCollisionVolume vol, Vector3 position)
+        {
+            return Move(new CollisionVolume(vol), position);
+        }
+
         public bool TestPoint(Vector3 point)
         {
             if (Type == VolumeType.Box)
@@ -715,17 +781,32 @@ namespace MphRead
 
         public DisplayVolume(RawCollisionVolume volume, Matrix4 transform)
         {
-            Volume = SceneSetup.TransformVolume(volume, transform);
+            Volume = CollisionVolume.Transform(volume, transform);
         }
 
         public DisplayVolume(FhRawCollisionVolume volume, Matrix4 transform)
         {
-            Volume = SceneSetup.TransformVolume(volume, transform);
+            Volume = CollisionVolume.Transform(volume, transform);
         }
 
         public DisplayVolume(CollisionVolume volume, Matrix4 transform)
         {
-            Volume = SceneSetup.TransformVolume(volume, transform);
+            Volume = CollisionVolume.Transform(volume, transform);
+        }
+
+        public DisplayVolume(RawCollisionVolume volume, Vector3 position)
+        {
+            Volume = CollisionVolume.Move(volume, position);
+        }
+
+        public DisplayVolume(FhRawCollisionVolume volume, Vector3 position)
+        {
+            Volume = CollisionVolume.Move(volume, position);
+        }
+
+        public DisplayVolume(CollisionVolume volume, Vector3 position)
+        {
+            Volume = CollisionVolume.Move(volume, position);
         }
 
         public abstract Vector3? GetColor(int index);
@@ -733,14 +814,14 @@ namespace MphRead
 
     public class MorphCameraDisplay : DisplayVolume
     {
-        public MorphCameraDisplay(Entity<MorphCameraEntityData> entity, Matrix4 transform)
-            : base(entity.Data.Volume, transform)
+        public MorphCameraDisplay(Entity<MorphCameraEntityData> entity, Vector3 position)
+            : base(entity.Data.Volume, position)
         {
             Color1 = new Vector3(1, 1, 0);
         }
 
-        public MorphCameraDisplay(Entity<FhMorphCameraEntityData> entity, Matrix4 transform)
-            : base(entity.Data.Volume, transform)
+        public MorphCameraDisplay(Entity<FhMorphCameraEntityData> entity, Vector3 position)
+            : base(entity.Data.Volume, position)
         {
             Color1 = new Vector3(1, 1, 0);
         }
@@ -761,8 +842,8 @@ namespace MphRead
         public float Speed { get; }
         public bool Active { get; }
 
-        public JumpPadDisplay(Entity<JumpPadEntityData> entity, Matrix4 transform)
-            : base(entity.Data.Volume, transform)
+        public JumpPadDisplay(Entity<JumpPadEntityData> entity, Vector3 position)
+            : base(entity.Data.Volume, position)
         {
             Vector = entity.Data.BeamVector.ToFloatVector();
             Speed = entity.Data.Speed.FloatValue;
@@ -770,8 +851,8 @@ namespace MphRead
             Color1 = new Vector3(0, 1, 0);
         }
 
-        public JumpPadDisplay(Entity<FhJumpPadEntityData> entity, Matrix4 transform)
-            : base(entity.Data.ActiveVolume, transform)
+        public JumpPadDisplay(Entity<FhJumpPadEntityData> entity, Vector3 position)
+            : base(entity.Data.ActiveVolume, position)
         {
             Vector = entity.Data.BeamVector.ToFloatVector();
             Speed = entity.Data.Speed.FloatValue;
@@ -809,8 +890,8 @@ namespace MphRead
 
     public class FlagBaseDisplay : DisplayVolume
     {
-        public FlagBaseDisplay(Entity<FlagBaseEntityData> entity, Matrix4 transform)
-            : base(entity.Data.Volume, transform)
+        public FlagBaseDisplay(Entity<FlagBaseEntityData> entity, Vector3 position)
+            : base(entity.Data.Volume, position)
         {
             Color1 = new Vector3(1, 1, 1);
         }
@@ -827,8 +908,8 @@ namespace MphRead
 
     public class NodeDefenseDisplay : DisplayVolume
     {
-        public NodeDefenseDisplay(Entity<NodeDefenseEntityData> entity, Matrix4 transform)
-            : base(entity.Data.Volume, transform)
+        public NodeDefenseDisplay(Entity<NodeDefenseEntityData> entity, Vector3 position)
+            : base(entity.Data.Volume, position)
         {
             Color1 = new Vector3(1, 1, 1);
         }
@@ -846,15 +927,15 @@ namespace MphRead
     // todo: some subtypes might not use their volume? if so, don't render them (confirm that all AreaVolumes do, also)
     public class TriggerVolumeDisplay : DisplayVolume
     {
-        public TriggerVolumeDisplay(Entity<TriggerVolumeEntityData> entity, Matrix4 transform)
-            : base(entity.Data.Volume, transform)
+        public TriggerVolumeDisplay(Entity<TriggerVolumeEntityData> entity, Vector3 position)
+            : base(entity.Data.Volume, position)
         {
             Color1 = Metadata.GetEventColor(entity.Data.ParentEvent);
             Color2 = Metadata.GetEventColor(entity.Data.ChildEvent);
         }
 
-        public TriggerVolumeDisplay(Entity<FhTriggerVolumeEntityData> entity, Matrix4 transform)
-            : base(entity.Data.ActiveVolume, transform)
+        public TriggerVolumeDisplay(Entity<FhTriggerVolumeEntityData> entity, Vector3 position)
+            : base(entity.Data.ActiveVolume, position)
         {
             Color1 = Metadata.GetEventColor(entity.Data.ParentEvent);
             Color2 = Metadata.GetEventColor(entity.Data.ChildEvent);
@@ -876,15 +957,15 @@ namespace MphRead
 
     public class AreaVolumeDisplay : DisplayVolume
     {
-        public AreaVolumeDisplay(Entity<AreaVolumeEntityData> entity, Matrix4 transform)
-            : base(entity.Data.Volume, transform)
+        public AreaVolumeDisplay(Entity<AreaVolumeEntityData> entity, Vector3 position)
+            : base(entity.Data.Volume, position)
         {
             Color1 = Metadata.GetEventColor(entity.Data.InsideEvent);
             Color2 = Metadata.GetEventColor(entity.Data.ExitEvent);
         }
 
-        public AreaVolumeDisplay(Entity<FhAreaVolumeEntityData> entity, Matrix4 transform)
-            : base(entity.Data.ActiveVolume, transform)
+        public AreaVolumeDisplay(Entity<FhAreaVolumeEntityData> entity, Vector3 position)
+            : base(entity.Data.ActiveVolume, position)
         {
             Color1 = Metadata.GetEventColor(entity.Data.InsideEvent);
             Color2 = Metadata.GetEventColor(entity.Data.ExitEvent);
@@ -911,8 +992,8 @@ namespace MphRead
         public bool Light2Enabled { get; }
         public Vector3 Light2Vector { get; }
 
-        public LightSource(Entity<LightSourceEntityData> entity, Matrix4 transform)
-            : base(entity.Data.Volume, transform)
+        public LightSource(Entity<LightSourceEntityData> entity, Vector3 position)
+            : base(entity.Data.Volume, position)
         {
             Light1Enabled = entity.Data.Light1Enabled != 0;
             Color1 = entity.Data.Light1Color.AsVector3();

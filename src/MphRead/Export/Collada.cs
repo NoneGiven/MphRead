@@ -40,16 +40,6 @@ namespace MphRead.Export
             return MathF.Round(input, 6, MidpointRounding.AwayFromZero).ToString("F6", CultureInfo.InvariantCulture);
         }
 
-        public static void ExportModel(string modelName)
-        {
-            ExportModel(Read.GetModelByName(modelName), transformRoom: false);
-        }
-
-        public static void ExportRoom(string roomName, bool transformRoom = false)
-        {
-            ExportModel(Read.GetRoomByName(roomName), transformRoom);
-        }
-
         public static void ExportModel(Model model, bool transformRoom = false)
         {
             string exportPath = Path.Combine(Paths.Export, model.Name);
@@ -127,7 +117,7 @@ namespace MphRead.Export
             }
             id = 1;
             imagesInLibrary.Clear();
-            foreach (TextureAnimationGroup group in model.Animations.TextureGroups)
+            foreach (TextureAnimationGroup group in model.AnimationGroups.Texture)
             {
                 foreach (TextureAnimation animation in group.Animations.Values)
                 {
@@ -522,7 +512,7 @@ namespace MphRead.Export
             // scene
             sb.Append("\n\t<library_visual_scenes>");
             sb.Append("\n\t\t<visual_scene id=\"Scene\" name=\"Scene\">\n");
-            if (model.Type == ModelType.Room)
+            if (Metadata.RoomMetadata.ContainsKey(model.Name))
             {
                 ExportRoomNodes(model, UInt16.MaxValue, sb, 3, transformRoom);
             }

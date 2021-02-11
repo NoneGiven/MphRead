@@ -65,7 +65,7 @@ namespace MphRead.Export
                 }
                 id = 1;
                 usedCombos.Clear();
-                foreach (TextureAnimationGroup group in model.Animations.TextureGroups)
+                foreach (TextureAnimationGroup group in model.AnimationGroups.Texture)
                 {
                     foreach (TextureAnimation animation in group.Animations.Values)
                     {
@@ -87,7 +87,7 @@ namespace MphRead.Export
                             continue;
                         }
                         Texture texture = recolor.Textures[t];
-                        for (int p = 0; p < model.Palettes.Count; p++)
+                        for (int p = 0; p < recolor.Palettes.Count; p++)
                         {
                             IReadOnlyList<TextureData> textureData = recolor.TextureData[t];
                             IReadOnlyList<PaletteData> palette = recolor.PaletteData[p];

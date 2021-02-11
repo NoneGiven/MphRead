@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -23,23 +24,9 @@ namespace MphRead.Effects
         }
     }
 
-    public interface IDrawable
+    public class SingleParticle
     {
-        Vector3 Color { get; }
-        Vector2 Texcoord0 { get;  }
-        Vector3 Vertex0 { get;  }
-        Vector2 Texcoord1 { get; }
-        Vector3 Vertex1 { get; }
-        Vector2 Texcoord2 { get; }
-        Vector3 Vertex2 { get; }
-        Vector2 Texcoord3 { get;  }
-        Vector3 Vertex3 { get; }
-    }
-
-    public class SingleParticle : IDrawable
-    {
-        [NotNull, DisallowNull]
-        public Particle? ParticleDefinition { get; set; }
+        public Particle ParticleDefinition { get; set; } = null!;
         public Vector3 Position { get; set; }
         public Vector3 Color { get; set; }
         public float Alpha { get; set; }
@@ -103,15 +90,43 @@ namespace MphRead.Effects
                 Texcoord3 = new Vector2(0, 1);
             }
         }
+
+        public void AddRenderItem(Scene scene)
+        {
+            Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(8);
+            uvsAndVerts[0] = new Vector3(Texcoord0);
+            uvsAndVerts[1] = Vertex0;
+            uvsAndVerts[2] = new Vector3(Texcoord1);
+            uvsAndVerts[3] = Vertex1;
+            uvsAndVerts[4] = new Vector3(Texcoord2);
+            uvsAndVerts[5] = Vertex2;
+            uvsAndVerts[6] = new Vector3(Texcoord3);
+            uvsAndVerts[7] = Vertex3;
+            Material material = ParticleDefinition.Model.Materials[ParticleDefinition.MaterialId];
+            // should already be bound
+            int bindingId = scene.BindGetTexture(ParticleDefinition.Model, material.TextureId, material.PaletteId, 0);
+            RepeatMode xRepeat = material.XRepeat;
+            RepeatMode yRepeat = material.YRepeat;
+            float scaleS = 1;
+            float scaleT = 1;
+            if (xRepeat == RepeatMode.Mirror)
+            {
+                scaleS = material.ScaleS;
+            }
+            if (yRepeat == RepeatMode.Mirror)
+            {
+                scaleT = material.ScaleT;
+            }
+            Matrix4 transform = Matrix4.Identity;
+            scene.AddRenderItem(Alpha, scene.GetNextPolygonId(), Color, xRepeat, yRepeat, scaleS, scaleT, transform, uvsAndVerts, bindingId);
+        }
     }
 
     [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
     public abstract class EffectFuncBase
     {
-        [NotNull, DisallowNull]
-        public virtual IReadOnlyDictionary<FuncAction, FxFuncInfo>? Actions { get; set; }
-        [NotNull, DisallowNull]
-        public virtual IReadOnlyDictionary<uint, FxFuncInfo>? Funcs { get; set; }
+        public virtual IReadOnlyDictionary<FuncAction, FxFuncInfo> Actions { get; set; } = null!;
+        public virtual IReadOnlyDictionary<uint, FxFuncInfo> Funcs { get; set; } = null!;
 
         protected abstract void FxFunc01(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec);
 
@@ -601,8 +616,7 @@ namespace MphRead.Effects
         public List<EffectParticle> Particles { get; } = new List<EffectParticle>(); // todo: pre-size?
 
         public EffectEntry? EffectEntry { get; set; }
-        [NotNull, DisallowNull]
-        public Model? Model { get; set; }
+        public Model Model { get; set; } = null!;
         public List<Node> Nodes { get; } = new List<Node>(); // todo: pre-size?
 
         protected override void FxFunc01(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
@@ -730,7 +744,7 @@ namespace MphRead.Effects
     }
 
     [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
-    public class EffectParticle : EffectFuncBase, IDrawable
+    public class EffectParticle : EffectFuncBase
     {
         public float CreationTime { get; set; }
         public float ExpirationTime { get; set; }
@@ -754,9 +768,8 @@ namespace MphRead.Effects
         public float RwField3 { get; set; }
         public float RwField4 { get; set; }
 
-        [NotNull, DisallowNull]
-        public EffectElementEntry? Owner { get; set; }
-        public int MaterialId { get; set; }
+        public EffectElementEntry Owner { get; set; } = null!;
+        public int MaterialId { get; set; } // updated when ParticleId changes during processing
         public int SetVecsId { get; set; }
         public int DrawId { get; set; }
         public Vector3 EffectVec1 { get; private set; }
@@ -777,15 +790,13 @@ namespace MphRead.Effects
         public bool BillboardNode { get; private set; }
         public Matrix4 NodeTransform { get; private set; }
 
-        [NotNull, DisallowNull]
-        public override IReadOnlyDictionary<uint, FxFuncInfo>? Funcs
+        public override IReadOnlyDictionary<uint, FxFuncInfo> Funcs
         {
             get => Owner.Funcs;
             set => Owner.Funcs = value;
         }
 
-        [NotNull, DisallowNull]
-        public override IReadOnlyDictionary<FuncAction, FxFuncInfo>? Actions
+        public override IReadOnlyDictionary<FuncAction, FxFuncInfo> Actions
         {
             get => Owner.Actions;
             set => Owner.Actions = value;
@@ -1221,6 +1232,72 @@ namespace MphRead.Effects
         public void SetFuncIds()
         {
             (SetVecsId, DrawId) = GetFuncIds(Owner.Flags, Owner.DrawType);
+        }
+
+        public void AddRenderItem(Scene scene)
+        {
+            if (DrawNode)
+            {
+                Model model = Owner.Model;
+                Node node = Owner.Nodes[ParticleId];
+                Mesh mesh = Owner.Model.Meshes[node.MeshId / 2];
+                Material material = Owner.Model.Materials[MaterialId];
+                Matrix4 transform;
+                if (BillboardNode)
+                {
+                    transform = scene.ViewInvRotMatrix * NodeTransform;
+                }
+                else
+                {
+                    transform = NodeTransform;
+                }
+                Matrix4 texcoordMtx = Matrix4.Identity;
+                if (material.TexgenMode == TexgenMode.Texcoord)
+                {
+                    texcoordMtx = Matrix4.CreateTranslation(material.ScaleS * material.TranslateS,
+                        material.ScaleT * material.TranslateT, 0.0f);
+                    texcoordMtx = Matrix4.CreateScale(material.ScaleS, material.ScaleT, 1.0f) * texcoordMtx;
+                    texcoordMtx = Matrix4.CreateRotationZ(material.RotateZ) * texcoordMtx;
+                }
+                material.CurrentDiffuse = Color;
+                material.CurrentAlpha = Alpha;
+                Debug.Assert(model.NodeMatrixIds.Count == 0);
+                scene.UpdateMaterials(model, 0); // probably not necessary unless the model has texture animation
+                scene.AddRenderItem(material, scene.GetNextPolygonId(), 1, Vector3.Zero, LightInfo.Zero, texcoordMtx,
+                    transform, mesh.ListId, 0, Array.Empty<float>(), null, null, SelectionType.None);
+            }
+            else
+            {
+                Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(8);
+                uvsAndVerts[0] = new Vector3(Texcoord0);
+                uvsAndVerts[1] = Vertex0;
+                uvsAndVerts[2] = new Vector3(Texcoord1);
+                uvsAndVerts[3] = Vertex1;
+                uvsAndVerts[4] = new Vector3(Texcoord2);
+                uvsAndVerts[5] = Vertex2;
+                uvsAndVerts[6] = new Vector3(Texcoord3);
+                uvsAndVerts[7] = Vertex3;
+                Material material = Owner.Model.Materials[MaterialId];
+                int bindingId = Owner.TextureBindingIds[ParticleId];
+                RepeatMode xRepeat = material.XRepeat;
+                RepeatMode yRepeat = material.YRepeat;
+                float scaleS = 1;
+                float scaleT = 1;
+                if (xRepeat == RepeatMode.Mirror)
+                {
+                    scaleS = material.ScaleS;
+                }
+                if (yRepeat == RepeatMode.Mirror)
+                {
+                    scaleT = material.ScaleT;
+                }
+                Matrix4 transform = Matrix4.Identity;
+                if ((Owner.Flags & 1) != 0)
+                {
+                    transform = Owner.Transform;
+                }
+                scene.AddRenderItem(Alpha, scene.GetNextPolygonId(), Color, xRepeat, yRepeat, scaleS, scaleT, transform, uvsAndVerts, bindingId);
+            }
         }
     }
 }

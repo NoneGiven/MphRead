@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using OpenTK.Mathematics;
 
 namespace MphRead
 {
@@ -37,6 +38,25 @@ namespace MphRead
         public readonly Vector3Fx Position;
         public readonly Vector3Fx UpVector;
         public readonly Vector3Fx RightVector;
+    }
+
+    // size: 40
+    public readonly struct EntitySpawnHeader
+    {
+        public readonly ushort Type;
+        public readonly ushort EntityId;
+        public readonly Vector3 Position;
+        public readonly Vector3 UpVector;
+        public readonly Vector3 RightVector;
+
+        public EntitySpawnHeader(ushort type, ushort entityId, Vector3 position, Vector3 upVector, Vector3 rightVector)
+        {
+            Type = type;
+            EntityId = entityId;
+            Position = position;
+            UpVector = upVector;
+            RightVector = rightVector;
+        }
     }
 
     // size: 588
@@ -743,7 +763,7 @@ namespace MphRead
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 15)]
         public readonly char[] TargetRoom;
         public readonly uint Field38;
-        public readonly Vector3Fx Field3C;
+        public readonly Vector3Fx TargetPosition;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;
     }

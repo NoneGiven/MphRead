@@ -7,85 +7,112 @@ using System.Runtime.InteropServices;
 using System.Text;
 using MphRead.Archive;
 using MphRead.Export;
-using MphRead.Models;
 using OpenTK.Mathematics;
 
 namespace MphRead
 {
     public static class Read
     {
-        // NOTE: When _Texture file exists, the main _Model file header will list a non-zero number of textures/palettes,
-        // but the texture/palette offset will be 0 (because they're located at the start of the _Texture file).
-        // However, when recolor files are used (e.g. _pal01 or flagbase_ctf_mdl -> flagbase_ctf_green_img), the number
-        // of textures/palettes will be zero as well. To get the real information, the _Model file for the recolor must
-        // be used in addition to the main header. And after doing that, you might then still be dealing with a _Texture file.
+        private static readonly Dictionary<string, Model> _modelCache = new Dictionary<string, Model>();
+        private static readonly Dictionary<string, Model> _fhModelCache = new Dictionary<string, Model>();
 
-        public static Model GetModelByName(string name, int defaultRecolor = 0, bool firstHunt = false)
+        public static ModelInstance GetModelInstance(string name, bool firstHunt = false)
         {
-            return GetModelByName<Model>(name, defaultRecolor, firstHunt);
-        }
-
-        public static T GetModelByName<T>(string name, int defaultRecolor = 0, bool firstHunt = false) where T : Model
-        {
-            ModelMetadata? modelMeta;
-            if (firstHunt)
-            {
-                modelMeta = Metadata.GetFirstHuntModelByName(name);
-            }
-            else
-            {
-                modelMeta = Metadata.GetModelByName(name);
-            }
-            if (modelMeta == null)
+            ModelInstance? inst = GetModelInstanceOrNull(name, firstHunt);
+            if (inst == null)
             {
                 throw new ProgramException("No model with this name is known.");
             }
-            return GetModel<T>(modelMeta, defaultRecolor);
+            return inst;
         }
 
-        public static RoomModel GetRoomByName(string name)
+        private static ModelInstance? GetModelInstanceOrNull(string name, bool firstHunt)
         {
-            (RoomMetadata? roomMeta, _) = Metadata.GetRoomByName(name);
-            if (roomMeta == null)
+            Dictionary<string, Model> cache = firstHunt ? _fhModelCache : _modelCache;
+            if (!cache.TryGetValue(name, out Model? model))
+            {
+                model = GetModel(name, firstHunt: false);
+                if (model == null)
+                {
+                    return null;
+                }
+                cache.Add(name, model);
+            }
+            return new ModelInstance(model);
+        }
+
+        private static Model? GetModel(string name, bool firstHunt)
+        {
+            ModelMetadata? meta;
+            if (firstHunt)
+            {
+                meta = Metadata.GetFirstHuntModelByName(name);
+            }
+            else
+            {
+                meta = Metadata.GetModelByName(name);
+            }
+            if (meta == null)
+            {
+                return null;
+            }
+            return ReadModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.AnimationShare, meta.Recolors, meta.FirstHunt);
+        }
+
+        public static ModelInstance GetRoomModelInstance(string name)
+        {
+            ModelInstance? inst = GetRoomModelInstanceOrNull(name);
+            if (inst == null)
             {
                 throw new ProgramException("No room with this name is known.");
             }
-            return GetRoom(roomMeta);
+            return inst;
         }
 
-        public static RoomModel GetRoomById(int id)
+        private static ModelInstance? GetRoomModelInstanceOrNull(string name)
         {
-            RoomMetadata? roomMeta = Metadata.GetRoomById(id);
-            if (roomMeta == null)
+            (RoomMetadata? meta, _) = Metadata.GetRoomByName(name);
+            if (meta == null)
             {
-                throw new ProgramException("No room with this ID is known.");
+                return null;
             }
-            return GetRoom(roomMeta);
+            if (!_modelCache.TryGetValue(name, out Model? model))
+            {
+                model = GetRoomModel(meta);
+                if (model == null)
+                {
+                    return null;
+                }
+                _modelCache.Add(name, model);
+            }
+            return new ModelInstance(model);
         }
 
-        private static RoomModel GetRoom(RoomMetadata meta)
+        private static Model GetRoomModel(RoomMetadata meta)
         {
             var recolors = new List<RecolorMetadata>()
             {
                 new RecolorMetadata("default", meta.ModelPath, meta.TexturePath ?? meta.ModelPath)
             };
-            return GetModel<RoomModel>(meta.Name, meta.ModelPath, meta.AnimationPath, animationShare: null,
-                recolors, defaultRecolor: 0, useLightSources: false, firstHunt: meta.FirstHunt || meta.Hybrid);
+            return ReadModel(meta.Name, meta.ModelPath, meta.AnimationPath, animationShare: null, recolors,
+                firstHunt: meta.FirstHunt || meta.Hybrid);
         }
 
-        private static T GetModel<T>(ModelMetadata meta, int defaultRecolor) where T : Model
+        public static void RemoveModel(string name, bool firstHunt = false)
         {
-            return GetModel<T>(meta.Name, meta.ModelPath, meta.AnimationPath, meta.AnimationShare, meta.Recolors,
-                defaultRecolor, meta.UseLightSources, firstHunt: meta.FirstHunt);
-        }
-
-        private static T GetModel<T>(string name, string modelPath, string? animationPath, string? animationShare,
-            IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor, bool useLightSources, bool firstHunt) where T : Model
-        {
-            if (defaultRecolor < 0 || defaultRecolor > recolorMeta.Count - 1)
+            if (firstHunt)
             {
-                throw new ProgramException("The specified recolor index is invalid for this entity.");
+                _fhModelCache.Remove(name);
             }
+            else
+            {
+                _modelCache.Remove(name);
+            }
+        }
+
+        private static Model ReadModel(string name, string modelPath, string? animationPath, string? animationShare,
+            IReadOnlyList<RecolorMetadata> recolorMeta, bool firstHunt)
+        {
             string root = firstHunt ? Paths.FhFileSystem : Paths.FileSystem;
             string path = Path.Combine(root, modelPath);
             ReadOnlySpan<byte> initialBytes = ReadBytes(path, firstHunt);
@@ -185,33 +212,9 @@ namespace MphRead
                 shared.TextureAnimationGroups.AddRange(animations.TextureAnimationGroups);
                 animations = shared;
             }
-            if (typeof(T) == typeof(RoomModel))
-            {
-                return (new RoomModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
-                    animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                    textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
-            }
-            if (typeof(T) == typeof(PlatformModel))
-            {
-                return (new PlatformModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
-                    animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                    textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
-            }
-            if (typeof(T) == typeof(ObjectModel))
-            {
-                return (new ObjectModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
-                    animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                    textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
-            }
-            if (typeof(T) == typeof(ForceFieldLockModel))
-            {
-                return (new ForceFieldLockModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
-                    animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                    textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
-            }
-            return (new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+            return new Model(name, firstHunt, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
+                textureMatrices, recolors, nodeWeights);
         }
 
         private class AnimationResults
@@ -527,8 +530,8 @@ namespace MphRead
                 EntityType.Object => ReadEntity<ObjectEntityData>(bytes, entry, header),
                 EntityType.PlayerSpawn => ReadEntity<PlayerSpawnEntityData>(bytes, entry, header),
                 EntityType.Door => ReadEntity<DoorEntityData>(bytes, entry, header),
-                EntityType.Item => ReadEntity<ItemEntityData>(bytes, entry, header),
-                EntityType.Enemy => ReadEntity<EnemyEntityData>(bytes, entry, header),
+                EntityType.ItemSpawn => ReadEntity<ItemEntityData>(bytes, entry, header),
+                EntityType.EnemySpawn => ReadEntity<EnemyEntityData>(bytes, entry, header),
                 EntityType.TriggerVolume => ReadEntity<TriggerVolumeEntityData>(bytes, entry, header),
                 EntityType.AreaVolume => ReadEntity<AreaVolumeEntityData>(bytes, entry, header),
                 EntityType.JumpPad => ReadEntity<JumpPadEntityData>(bytes, entry, header),
@@ -623,6 +626,9 @@ namespace MphRead
             return frames;
         }
 
+        private static readonly Dictionary<string, Effect> _effects = new Dictionary<string, Effect>();
+        private static readonly Dictionary<(string, string), Particle> _particleDefs = new Dictionary<(string, string), Particle>();
+
         public static Effect LoadEffect(int id)
         {
             if (id < 1 || id > Metadata.Effects.Count)
@@ -654,10 +660,6 @@ namespace MphRead
             }
             return effect;
         }
-
-        private static readonly Dictionary<string, Effect> _effects = new Dictionary<string, Effect>();
-        public static Dictionary<string, Model> EffectModels { get; } = new Dictionary<string, Model>();
-        private static readonly Dictionary<(string, string), Particle> _particleDefs = new Dictionary<(string, string), Particle>();
 
         private static Effect LoadEffect(string path)
         {
@@ -724,13 +726,10 @@ namespace MphRead
             {
                 return particle;
             }
-            if (!EffectModels.TryGetValue(modelName, out Model? model))
-            {
-                model = GetModelByName(modelName);
-                EffectModels.Add(modelName, model);
-            }
+            ModelInstance inst = GetModelInstance(modelName);
+            Model model = inst.Model;
             Node? node = model.Nodes.FirstOrDefault(n => n.Name == particleName);
-            // todo: see what the game does here; gib3/gib4 nodes are probably meant to be used for these
+            // ptodo: see what the game does here; gib3/gib4 nodes are probably meant to be used for these
             if (modelName == "geo1" && particleName == "gib")
             {
                 node = model.Nodes.First(n => n.Name == "gib3");
@@ -738,7 +737,7 @@ namespace MphRead
             if (node != null && node.MeshCount > 0)
             {
                 int materialId = model.Meshes[node.MeshId / 2].MaterialId;
-                var newParticle = new Particle(particleName, model, node, materialId);
+                var newParticle = new Particle(particleName, inst.Model, node, materialId);
                 _particleDefs.Add((modelName, particleName), newParticle);
                 return newParticle;
             }
@@ -1030,19 +1029,11 @@ namespace MphRead
 
         public static void ReadAndExport(string name, bool firstHunt = false)
         {
-            // todo: need non-throwing versions of these
-            Model model;
-            try
+            Model? model = GetModelInstanceOrNull(name, firstHunt)?.Model;
+            if (model == null)
             {
-                model = GetModelByName(name, firstHunt: firstHunt);
-            }
-            catch
-            {
-                try
-                {
-                    model = GetRoomByName(name);
-                }
-                catch
+                model = GetRoomModelInstanceOrNull(name)?.Model;
+                if (model == null)
                 {
                     Console.WriteLine($"No model or room with the name {name} could be found.");
                     return;
