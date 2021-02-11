@@ -340,13 +340,15 @@ namespace MphRead
             }
         }
 
-        private readonly HashSet<string> _effectModels = new HashSet<string>();
-
         private void GenerateLists(Model model, bool isRoom)
         {
             var tempListIds = new Dictionary<int, int>();
             foreach (Mesh mesh in model.Meshes)
             {
+                if (mesh.ListId != 0)
+                {
+                    continue;
+                }
                 if (!tempListIds.TryGetValue(mesh.DlistId, out int listId))
                 {
                     int textureWidth = 0;
@@ -1102,12 +1104,8 @@ namespace MphRead
             Effect effect = Read.LoadEffect(effectId);
             foreach (EffectElement element in effect.Elements)
             {
-                // todo: cleaner/common way of keeping track of models that have had lists generated
-                if (!_effectModels.Contains(element.ModelName))
-                {
-                    GenerateLists(Read.GetModelInstance(element.ModelName).Model, isRoom: false);
-                    _effectModels.Add(element.ModelName);
-                }
+                // the model may already be loaded; meshes with a ListId will be skipped
+                GenerateLists(Read.GetModelInstance(element.ModelName).Model, isRoom: false);
             }
         }
 
