@@ -34,8 +34,7 @@ namespace MphRead.Entities
                 Vector3 player = scene.CameraPosition;
                 var vector1 = new Vector3(0, 1, 0);
                 Vector3 vector2 = new Vector3(player.X - Position.X, 0, player.Z - Position.Z).Normalized();
-                // ntodo
-                Matrix3 lightTransform = SceneSetup.GetTransformMatrix(vector2, vector1);
+                Matrix3 lightTransform = Matrix.GetTransform3(vector2, vector1);
                 return new LightInfo(
                     (Metadata.OctolithLight1Vector * lightTransform).Normalized(),
                     Metadata.OctolithLightColor,

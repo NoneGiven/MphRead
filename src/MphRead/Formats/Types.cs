@@ -167,6 +167,98 @@ namespace MphRead
 
     public static class Matrix
     {
+        public static Matrix3 GetTransform3(Vector3 vector1, Vector3 vector2)
+        {
+            Vector3 up = Vector3.Cross(vector2, vector1).Normalized();
+            var direction = Vector3.Cross(vector1, up);
+
+            Matrix3 transform = default;
+
+            transform.M11 = up.X;
+            transform.M12 = up.Y;
+            transform.M13 = up.Z;
+
+            transform.M21 = direction.X;
+            transform.M22 = direction.Y;
+            transform.M23 = direction.Z;
+
+            transform.M31 = vector1.X;
+            transform.M32 = vector1.Y;
+            transform.M33 = vector1.Z;
+
+            return transform;
+        }
+
+        public static Matrix4 GetTransform4(Vector3 vector1, Vector3 vector2, Vector3 position)
+        {
+            Vector3 up = Vector3.Cross(vector2, vector1).Normalized();
+            var direction = Vector3.Cross(vector1, up);
+
+            Matrix4 transform = default;
+
+            transform.M11 = up.X;
+            transform.M12 = up.Y;
+            transform.M13 = up.Z;
+
+            transform.M21 = direction.X;
+            transform.M22 = direction.Y;
+            transform.M23 = direction.Z;
+
+            transform.M31 = vector1.X;
+            transform.M32 = vector1.Y;
+            transform.M33 = vector1.Z;
+
+            transform.M41 = position.X;
+            transform.M42 = position.Y;
+            transform.M43 = position.Z;
+            transform.M44 = 1;
+
+            return transform;
+        }
+
+        public static Matrix4 GetTransformSRT(Vector3 scale, Vector3 angle, Vector3 position)
+        {
+            float sinAx = MathF.Sin(angle.X);
+            float sinAy = MathF.Sin(angle.Y);
+            float sinAz = MathF.Sin(angle.Z);
+            float cosAx = MathF.Cos(angle.X);
+            float cosAy = MathF.Cos(angle.Y);
+            float cosAz = MathF.Cos(angle.Z);
+
+            float v18 = cosAx * cosAz;
+            float v19 = cosAx * sinAz;
+            float v20 = cosAx * cosAy;
+
+            float v22 = sinAx * sinAy;
+
+            float v17 = v19 * sinAy;
+
+            Matrix4 transform = default;
+
+            transform.M11 = scale.X * cosAy * cosAz;
+            transform.M12 = scale.X * cosAy * sinAz;
+            transform.M13 = scale.X * -sinAy;
+
+            transform.M21 = scale.Y * ((v22 * cosAz) - v19);
+            transform.M22 = scale.Y * ((v22 * sinAz) + v18);
+            transform.M23 = scale.Y * sinAx * cosAy;
+
+            transform.M31 = scale.Z * (v18 * sinAy + sinAx * sinAz);
+            transform.M32 = scale.Z * (v17 + (v19 * sinAy) - (sinAx * cosAz));
+            transform.M33 = scale.Z * v20;
+
+            transform.M41 = position.X;
+            transform.M42 = position.Y;
+            transform.M43 = position.Z;
+
+            transform.M14 = 0;
+            transform.M24 = 0;
+            transform.M34 = 0;
+            transform.M44 = 1;
+
+            return transform;
+        }
+
         public static Vector3 Vec3MultMtx4(Vector3 vec, Matrix4 mat)
         {
             Vector3 result = Vector3.Zero;

@@ -1056,14 +1056,7 @@ namespace MphRead
                 {
                     Vector3 vec1 = Vector3.UnitY;
                     Vector3 vec2 = Vector3.UnitX;
-                    // ntodo
-                    Matrix3 temp = SceneSetup.GetTransformMatrix(vec2, vec1);
-                    transform = new Matrix4(
-                        new Vector4(temp.Row0),
-                        new Vector4(temp.Row1),
-                        new Vector4(temp.Row2),
-                        new Vector4(position, 1)
-                    );
+                    transform = Matrix.GetTransform4(vec2, vec1, position);
                 }
                 element.Transform = transform;
                 for (int j = 0; j < elementDef.Particles.Count; j++)
@@ -1316,9 +1309,7 @@ namespace MphRead
                                 vec2 = Vector3.UnitZ;
                             }
                             vec2 = Vector3.Cross(vec1, vec2).Normalized();
-                            // ntodo
-                            var transform = new Matrix4(SceneSetup.GetTransformMatrix(vec2, vec1));
-                            transform.Row3 = new Vector4(particle.Position, 1);
+                            Matrix4 transform = Matrix.GetTransform4(vec2, vec1, particle.Position);
                             SpawnEffect(element.ChildEffectId, transform);
                         }
                         element.Particles.Remove(particle);
