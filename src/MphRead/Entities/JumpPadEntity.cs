@@ -16,9 +16,9 @@ namespace MphRead.Entities
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             _volume = CollisionVolume.Move(_data.Volume, Position);
             string modelName = Metadata.JumpPads[(int)data.ModelId];
-            ModelInstance baseInst = Read.GetNewModel(modelName);
+            ModelInstance baseInst = Read.GetModelInstance(modelName);
             _models.Add(baseInst);
-            ModelInstance beamInst = Read.GetNewModel("JumpPad_Beam");
+            ModelInstance beamInst = Read.GetModelInstance("JumpPad_Beam");
             Vector3 beamVector = data.BeamVector.ToFloatVector().Normalized();
             _beamTransform = GetTransformMatrix(beamVector, beamVector.X != 0 || beamVector.Z != 0 ? Vector3.UnitY : Vector3.UnitX);
             _beamTransform.Row3.Y = 0.25f;
@@ -37,7 +37,7 @@ namespace MphRead.Entities
             return base.GetModelTransform(inst, index);
         }
 
-        public override void GetDisplayVolumes(NewScene scene)
+        public override void GetDisplayVolumes(Scene scene)
         {
             if (scene.ShowVolumes == VolumeDisplay.JumpPad)
             {
@@ -66,10 +66,10 @@ namespace MphRead.Entities
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             _volume = CollisionVolume.Move(_data.ActiveVolume, Position);
             string name = data.ModelId == 1 ? "balljump" : "jumppad_base";
-            ModelInstance baseInst = Read.GetFhNewModel(name);
+            ModelInstance baseInst = Read.GetModelInstance(name, firstHunt: true);
             _models.Add(baseInst);
             name = data.ModelId == 1 ? "balljump_ray" : "jumppad_ray";
-            ModelInstance beamInst = Read.GetFhNewModel(name);
+            ModelInstance beamInst = Read.GetModelInstance(name, firstHunt: true);
             Vector3 beamVector = data.BeamVector.ToFloatVector().Normalized();
             _beamTransform = GetTransformMatrix(beamVector, beamVector.X != 0 || beamVector.Z != 0 ? Vector3.UnitY : Vector3.UnitX);
             beamInst.SetTexcoordAnim(-1); // the game doesn't enable this animation
@@ -89,7 +89,7 @@ namespace MphRead.Entities
             return base.GetModelTransform(inst, index);
         }
 
-        public override void GetDisplayVolumes(NewScene scene)
+        public override void GetDisplayVolumes(Scene scene)
         {
             if (scene.ShowVolumes == VolumeDisplay.JumpPad)
             {

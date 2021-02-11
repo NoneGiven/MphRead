@@ -26,7 +26,7 @@ namespace MphRead.Entities
             AddPlaceholderModel();
         }
 
-        public override void Init(NewScene scene)
+        public override void Init(Scene scene)
         {
             base.Init(scene);
             if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
@@ -39,7 +39,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void GetDisplayVolumes(NewScene scene)
+        public override void GetDisplayVolumes(Scene scene)
         {
             if (scene.ShowVolumes == VolumeDisplay.AreaInside || scene.ShowVolumes == VolumeDisplay.AreaExit)
             {
@@ -81,7 +81,7 @@ namespace MphRead.Entities
             AddPlaceholderModel();
         }
 
-        public override void GetDisplayVolumes(NewScene scene)
+        public override void GetDisplayVolumes(Scene scene)
         {
             if (scene.ShowVolumes == VolumeDisplay.AreaInside || scene.ShowVolumes == VolumeDisplay.AreaExit)
             {

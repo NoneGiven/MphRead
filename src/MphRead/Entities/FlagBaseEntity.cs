@@ -19,12 +19,12 @@ namespace MphRead.Entities
             if (mode == GameMode.Capture || mode == GameMode.Bounty)
             {
                 string name = mode == GameMode.Capture ? "flagbase_ctf" : "flagbase_cap";
-                ModelInstance inst = Read.GetNewModel(name);
+                ModelInstance inst = Read.GetModelInstance(name);
                 _models.Add(inst);
             }
         }
 
-        public override void GetDisplayVolumes(NewScene scene)
+        public override void GetDisplayVolumes(Scene scene)
         {
             if (scene.ShowVolumes == VolumeDisplay.FlagBase)
             {

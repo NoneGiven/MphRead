@@ -6,57 +6,42 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using MphRead.Archive;
-using MphRead.Entities;
 using MphRead.Export;
-using MphRead.Models;
 using OpenTK.Mathematics;
 
 namespace MphRead
 {
     public static class Read
     {
-        private static readonly Dictionary<string, NewModel> _modelCache = new Dictionary<string, NewModel>();
-        private static readonly Dictionary<string, NewModel> _fhModelCache = new Dictionary<string, NewModel>();
+        private static readonly Dictionary<string, Model> _modelCache = new Dictionary<string, Model>();
+        private static readonly Dictionary<string, Model> _fhModelCache = new Dictionary<string, Model>();
 
-        public static void RemoveModel(string name)
+        public static ModelInstance GetModelInstance(string name, bool firstHunt = false)
         {
-            _modelCache.Remove(name);
-        }
-
-        public static void RemoveFhModel(string name)
-        {
-            _fhModelCache.Remove(name);
-        }
-
-        public static ModelInstance GetNewModel(string name)
-        {
-            if (!_modelCache.TryGetValue(name, out NewModel? model))
+            ModelInstance? inst = GetModelInstanceOrNull(name, firstHunt);
+            if (inst == null)
             {
-                model = GetNewModel(name, firstHunt: false);
+                throw new ProgramException("No model with this name is known.");
+            }
+            return inst;
+        }
+
+        private static ModelInstance? GetModelInstanceOrNull(string name, bool firstHunt)
+        {
+            Dictionary<string, Model> cache = firstHunt ? _fhModelCache : _modelCache;
+            if (!cache.TryGetValue(name, out Model? model))
+            {
+                model = GetModel(name, firstHunt: false);
                 if (model == null)
                 {
-                    throw new ProgramException("No model with this name is known.");
+                    return null;
                 }
-                _modelCache.Add(name, model);
+                cache.Add(name, model);
             }
             return new ModelInstance(model);
         }
 
-        public static ModelInstance GetFhNewModel(string name)
-        {
-            if (!_fhModelCache.TryGetValue(name, out NewModel? model))
-            {
-                model = GetNewModel(name, firstHunt: true);
-                if (model == null)
-                {
-                    throw new ProgramException("No model with this name is known.");
-                }
-                _fhModelCache.Add(name, model);
-            }
-            return new ModelInstance(model);
-        }
-
-        private static NewModel? GetNewModel(string name, bool firstHunt)
+        private static Model? GetModel(string name, bool firstHunt)
         {
             ModelMetadata? meta;
             if (firstHunt)
@@ -71,39 +56,61 @@ namespace MphRead
             {
                 return null;
             }
-            return GetNewModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.AnimationShare, meta.Recolors, meta.FirstHunt);
+            return ReadModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.AnimationShare, meta.Recolors, meta.FirstHunt);
         }
 
-        public static ModelInstance GetNewRoom(string name)
+        public static ModelInstance GetRoomModelInstance(string name)
+        {
+            ModelInstance? inst = GetRoomModelInstanceOrNull(name);
+            if (inst == null)
+            {
+                throw new ProgramException("No room with this name is known.");
+            }
+            return inst;
+        }
+
+        private static ModelInstance? GetRoomModelInstanceOrNull(string name)
         {
             (RoomMetadata? meta, _) = Metadata.GetRoomByName(name);
             if (meta == null)
             {
-                throw new ProgramException("No room with this name is known.");
+                return null;
             }
-            if (!_modelCache.TryGetValue(meta.Name, out NewModel? model))
+            if (!_modelCache.TryGetValue(name, out Model? model))
             {
-                model = GetNewRoom(meta);
+                model = GetRoomModel(meta);
                 if (model == null)
                 {
-                    throw new ProgramException("No model with this name is known.");
+                    return null;
                 }
                 _modelCache.Add(name, model);
             }
             return new ModelInstance(model);
         }
 
-        private static NewModel GetNewRoom(RoomMetadata meta)
+        private static Model GetRoomModel(RoomMetadata meta)
         {
             var recolors = new List<RecolorMetadata>()
             {
                 new RecolorMetadata("default", meta.ModelPath, meta.TexturePath ?? meta.ModelPath)
             };
-            return GetNewModel(meta.Name, meta.ModelPath, meta.AnimationPath, animationShare: null, recolors,
+            return ReadModel(meta.Name, meta.ModelPath, meta.AnimationPath, animationShare: null, recolors,
                 firstHunt: meta.FirstHunt || meta.Hybrid);
         }
 
-        private static NewModel GetNewModel(string name, string modelPath, string? animationPath, string? animationShare,
+        public static void RemoveModel(string name, bool firstHunt = false)
+        {
+            if (firstHunt)
+            {
+                _fhModelCache.Remove(name);
+            }
+            else
+            {
+                _modelCache.Remove(name);
+            }
+        }
+
+        private static Model ReadModel(string name, string modelPath, string? animationPath, string? animationShare,
             IReadOnlyList<RecolorMetadata> recolorMeta, bool firstHunt)
         {
             string root = firstHunt ? Paths.FhFileSystem : Paths.FileSystem;
@@ -205,209 +212,9 @@ namespace MphRead
                 shared.TextureAnimationGroups.AddRange(animations.TextureAnimationGroups);
                 animations = shared;
             }
-            return new NewModel(name, firstHunt, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+            return new Model(name, firstHunt, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
                 textureMatrices, recolors, nodeWeights);
-        }
-
-        // NOTE: When _Texture file exists, the main _Model file header will list a non-zero number of textures/palettes,
-        // but the texture/palette offset will be 0 (because they're located at the start of the _Texture file).
-        // However, when recolor files are used (e.g. _pal01 or flagbase_ctf_mdl -> flagbase_ctf_green_img), the number
-        // of textures/palettes will be zero as well. To get the real information, the _Model file for the recolor must
-        // be used in addition to the main header. And after doing that, you might then still be dealing with a _Texture file.
-
-        public static Model GetModelByName(string name, int defaultRecolor = 0, bool firstHunt = false)
-        {
-            return GetModelByName<Model>(name, defaultRecolor, firstHunt);
-        }
-
-        public static T GetModelByName<T>(string name, int defaultRecolor = 0, bool firstHunt = false) where T : Model
-        {
-            ModelMetadata? modelMeta;
-            if (firstHunt)
-            {
-                modelMeta = Metadata.GetFirstHuntModelByName(name);
-            }
-            else
-            {
-                modelMeta = Metadata.GetModelByName(name);
-            }
-            if (modelMeta == null)
-            {
-                throw new ProgramException("No model with this name is known.");
-            }
-            return GetModel<T>(modelMeta, defaultRecolor);
-        }
-
-        public static RoomModel GetRoomByName(string name)
-        {
-            (RoomMetadata? roomMeta, _) = Metadata.GetRoomByName(name);
-            if (roomMeta == null)
-            {
-                throw new ProgramException("No room with this name is known.");
-            }
-            return GetRoom(roomMeta);
-        }
-
-        public static RoomModel GetRoomById(int id)
-        {
-            RoomMetadata? roomMeta = Metadata.GetRoomById(id);
-            if (roomMeta == null)
-            {
-                throw new ProgramException("No room with this ID is known.");
-            }
-            return GetRoom(roomMeta);
-        }
-
-        private static RoomModel GetRoom(RoomMetadata meta)
-        {
-            var recolors = new List<RecolorMetadata>()
-            {
-                new RecolorMetadata("default", meta.ModelPath, meta.TexturePath ?? meta.ModelPath)
-            };
-            return GetModel<RoomModel>(meta.Name, meta.ModelPath, meta.AnimationPath, animationShare: null,
-                recolors, defaultRecolor: 0, useLightSources: false, firstHunt: meta.FirstHunt || meta.Hybrid);
-        }
-
-        private static T GetModel<T>(ModelMetadata meta, int defaultRecolor) where T : Model
-        {
-            return GetModel<T>(meta.Name, meta.ModelPath, meta.AnimationPath, meta.AnimationShare, meta.Recolors,
-                defaultRecolor, meta.UseLightSources, firstHunt: meta.FirstHunt);
-        }
-
-        private static T GetModel<T>(string name, string modelPath, string? animationPath, string? animationShare,
-            IReadOnlyList<RecolorMetadata> recolorMeta, int defaultRecolor, bool useLightSources, bool firstHunt) where T : Model
-        {
-            if (defaultRecolor < 0 || defaultRecolor > recolorMeta.Count - 1)
-            {
-                throw new ProgramException("The specified recolor index is invalid for this entity.");
-            }
-            string root = firstHunt ? Paths.FhFileSystem : Paths.FileSystem;
-            string path = Path.Combine(root, modelPath);
-            ReadOnlySpan<byte> initialBytes = ReadBytes(path, firstHunt);
-            Header header = ReadStruct<Header>(initialBytes[0..Sizes.Header]);
-            IReadOnlyList<RawNode> nodes = DoOffsets<RawNode>(initialBytes, header.NodeOffset, header.NodeCount);
-            IReadOnlyList<RawMesh> meshes = DoOffsets<RawMesh>(initialBytes, header.MeshOffset, header.MeshCount);
-            IReadOnlyList<DisplayList> dlists = DoOffsets<DisplayList>(initialBytes, header.DlistOffset, header.MeshCount);
-            var instructions = new List<IReadOnlyList<RenderInstruction>>();
-            foreach (DisplayList dlist in dlists)
-            {
-                instructions.Add(DoRenderInstructions(initialBytes, dlist));
-            }
-            IReadOnlyList<RawMaterial> materials = DoOffsets<RawMaterial>(initialBytes, header.MaterialOffset, header.MaterialCount);
-            var recolors = new List<Recolor>();
-            foreach (RecolorMetadata meta in recolorMeta)
-            {
-                ReadOnlySpan<byte> modelBytes = initialBytes;
-                Header modelHeader = header;
-                if (Path.Combine(root, meta.ModelPath) != path)
-                {
-                    modelBytes = ReadBytes(meta.ModelPath, firstHunt);
-                    modelHeader = ReadStruct<Header>(modelBytes[0..Sizes.Header]);
-                }
-                IReadOnlyList<Texture> textures = DoOffsets<Texture>(modelBytes, modelHeader.TextureOffset, modelHeader.TextureCount);
-                IReadOnlyList<Palette> palettes = DoOffsets<Palette>(modelBytes, modelHeader.PaletteOffset, modelHeader.PaletteCount);
-                ReadOnlySpan<byte> textureBytes = modelBytes;
-                if (meta.TexturePath != meta.ModelPath)
-                {
-                    textureBytes = ReadBytes(meta.TexturePath, firstHunt);
-                }
-                ReadOnlySpan<byte> paletteBytes = textureBytes;
-                if (meta.PalettePath != meta.TexturePath && meta.ReplaceIds.Count == 0)
-                {
-                    paletteBytes = ReadBytes(meta.PalettePath, firstHunt);
-                    if (meta.SeparatePaletteHeader)
-                    {
-                        Header paletteHeader = ReadStruct<Header>(paletteBytes[0..Sizes.Header]);
-                        palettes = DoOffsets<Palette>(paletteBytes, paletteHeader.PaletteOffset, paletteHeader.PaletteCount);
-                    }
-                }
-                var textureData = new List<IReadOnlyList<TextureData>>();
-                var paletteData = new List<IReadOnlyList<PaletteData>>();
-                foreach (Texture texture in textures)
-                {
-                    textureData.Add(GetTextureData(texture, textureBytes));
-                }
-                foreach (Palette palette in palettes)
-                {
-                    paletteData.Add(GetPaletteData(palette, paletteBytes));
-                }
-                string replacePath = meta.ReplacePath ?? meta.PalettePath;
-                if (replacePath != meta.TexturePath && meta.ReplaceIds.Count > 0)
-                {
-                    paletteBytes = ReadBytes(replacePath, firstHunt);
-                    Header paletteHeader = ReadStruct<Header>(paletteBytes[0..Sizes.Header]);
-                    IReadOnlyList<Palette> replacePalettes
-                        = DoOffsets<Palette>(paletteBytes, paletteHeader.PaletteOffset, paletteHeader.PaletteCount);
-                    var replacePaletteData = new List<IReadOnlyList<PaletteData>>();
-                    foreach (Palette palette in replacePalettes)
-                    {
-                        replacePaletteData.Add(GetPaletteData(palette, paletteBytes));
-                    }
-                    for (int i = 0; i < replacePaletteData.Count; i++)
-                    {
-                        if (meta.ReplaceIds.TryGetValue(i, out IEnumerable<int>? replaceIds))
-                        {
-                            // note: palette header is not being replaced
-                            foreach (int replaceId in replaceIds)
-                            {
-                                paletteData[replaceId] = replacePaletteData[i];
-                            }
-                        }
-                    }
-                }
-                recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
-            }
-            // note: in RAM, model texture matrices are 4x4, but only the leftmost 4x2 or 4x3 is set,
-            // and the rest is garbage data, and ultimately only the upper-left 3x2 is actually used
-            var textureMatrices = new List<Matrix4>();
-            if (name == "AlimbicCapsule")
-            {
-                Debug.Assert(header.TextureMatrixCount == 1);
-                Matrix4 textureMatrix = Matrix4.Zero;
-                textureMatrix.M21 = Fixed.ToFloat(-2048);
-                textureMatrix.M31 = Fixed.ToFloat(410);
-                textureMatrix.M32 = Fixed.ToFloat(-3891);
-                textureMatrices.Add(textureMatrix);
-            }
-            IReadOnlyList<int> nodeWeights = DoOffsets<int>(initialBytes, header.NodeWeightOffset, header.NodeWeightCount);
-            AnimationResults animations = LoadAnimation(name, animationPath, nodes, firstHunt);
-            if (animationShare != null)
-            {
-                AnimationResults shared = LoadAnimation(name, animationShare, nodes, firstHunt);
-                shared.NodeAnimationGroups.AddRange(animations.NodeAnimationGroups);
-                shared.MaterialAnimationGroups.AddRange(animations.MaterialAnimationGroups);
-                shared.TexcoordAnimationGroups.AddRange(animations.TexcoordAnimationGroups);
-                shared.TextureAnimationGroups.AddRange(animations.TextureAnimationGroups);
-                animations = shared;
-            }
-            if (typeof(T) == typeof(RoomModel))
-            {
-                return (new RoomModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
-                    animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                    textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
-            }
-            if (typeof(T) == typeof(PlatformModel))
-            {
-                return (new PlatformModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
-                    animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                    textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
-            }
-            if (typeof(T) == typeof(ObjectModel))
-            {
-                return (new ObjectModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
-                    animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                    textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
-            }
-            if (typeof(T) == typeof(ForceFieldLockModel))
-            {
-                return (new ForceFieldLockModel(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
-                    animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                    textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
-            }
-            return (new Model(name, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
-                animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                textureMatrices, recolors, defaultRecolor, useLightSources, nodeWeights) as T)!;
         }
 
         private class AnimationResults
@@ -819,6 +626,9 @@ namespace MphRead
             return frames;
         }
 
+        private static readonly Dictionary<string, Effect> _effects = new Dictionary<string, Effect>();
+        private static readonly Dictionary<(string, string), Particle> _particleDefs = new Dictionary<(string, string), Particle>();
+
         public static Effect LoadEffect(int id)
         {
             if (id < 1 || id > Metadata.Effects.Count)
@@ -850,13 +660,6 @@ namespace MphRead
             }
             return effect;
         }
-
-        private static readonly Dictionary<string, Effect> _effects = new Dictionary<string, Effect>();
-        public static Dictionary<string, Model> EffectModels { get; } = new Dictionary<string, Model>();
-        private static readonly Dictionary<(string, string), Particle> _particleDefs = new Dictionary<(string, string), Particle>();
-
-        private static readonly Dictionary<string, NewEffect> _newEffects = new Dictionary<string, NewEffect>();
-        private static readonly Dictionary<(string, string), NewParticle> _newParticleDefs = new Dictionary<(string, string), NewParticle>();
 
         private static Effect LoadEffect(string path)
         {
@@ -923,13 +726,10 @@ namespace MphRead
             {
                 return particle;
             }
-            if (!EffectModels.TryGetValue(modelName, out Model? model))
-            {
-                model = GetModelByName(modelName);
-                EffectModels.Add(modelName, model);
-            }
+            ModelInstance inst = GetModelInstance(modelName);
+            Model model = inst.Model;
             Node? node = model.Nodes.FirstOrDefault(n => n.Name == particleName);
-            // todo: see what the game does here; gib3/gib4 nodes are probably meant to be used for these
+            // ptodo: see what the game does here; gib3/gib4 nodes are probably meant to be used for these
             if (modelName == "geo1" && particleName == "gib")
             {
                 node = model.Nodes.First(n => n.Name == "gib3");
@@ -937,123 +737,8 @@ namespace MphRead
             if (node != null && node.MeshCount > 0)
             {
                 int materialId = model.Meshes[node.MeshId / 2].MaterialId;
-                var newParticle = new Particle(particleName, model, node, materialId);
+                var newParticle = new Particle(particleName, inst.Model, node, materialId);
                 _particleDefs.Add((modelName, particleName), newParticle);
-                return newParticle;
-            }
-            throw new ProgramException("Could not get particle.");
-        }
-
-        public static NewEffect NewLoadEffect(int id)
-        {
-            if (id < 1 || id > Metadata.Effects.Count)
-            {
-                throw new ProgramException("Could not get particle.");
-            }
-            (string name, string? archive) = Metadata.Effects[id];
-            return NewLoadEffect(name, archive);
-        }
-
-        public static NewEffect NewLoadEffect(string name, string? archive)
-        {
-            string path;
-            if (archive == null)
-            {
-                path = $"effects/{name}_PS.bin";
-            }
-            else
-            {
-                path = $"_archives/{archive}/{name}_PS.bin";
-            }
-            NewEffect effect = NewLoadEffect(path);
-            foreach (NewEffectElement element in effect.Elements)
-            {
-                if (element.ChildEffectId != 0)
-                {
-                    NewLoadEffect((int)element.ChildEffectId);
-                }
-            }
-            return effect;
-        }
-
-        private static NewEffect NewLoadEffect(string path)
-        {
-            if (_newEffects.TryGetValue(path, out NewEffect? cached))
-            {
-                return cached;
-            }
-            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
-            RawEffect effect = ReadStruct<RawEffect>(bytes);
-            var funcs = new Dictionary<uint, FxFuncInfo>();
-            foreach (uint offset in DoOffsets<uint>(bytes, effect.FuncOffset, effect.FuncCount))
-            {
-                uint funcId = SpanReadUint(bytes, offset);
-                uint paramOffset = SpanReadUint(bytes, offset + 4);
-                DebugValidateParams(funcId, offset, paramOffset);
-                uint paramCount = (offset - paramOffset) / 4;
-                IReadOnlyList<int> parameters = DoOffsets<int>(bytes, paramOffset, paramCount);
-                funcs.Add(offset, new FxFuncInfo(funcId, parameters));
-            }
-            // todo: these are also offsets into the func/param arrays; what are they used for?
-            IReadOnlyList<uint> list2 = DoOffsets<uint>(bytes, effect.Offset2, effect.Count2);
-            IReadOnlyList<uint> elementOffsets = DoOffsets<uint>(bytes, effect.ElementOffset, effect.ElementCount);
-            var elements = new List<NewEffectElement>();
-            foreach (uint offset in elementOffsets)
-            {
-                RawEffectElement element = DoOffset<RawEffectElement>(bytes, offset);
-                var particles = new List<NewParticle>();
-                foreach (uint nameOffset in DoOffsets<uint>(bytes, element.ParticleOffset, element.ParticleCount))
-                {
-                    // todo: move the model reference to the element instead of the particle definitions
-                    particles.Add(NewGetParticle(element.ModelName.MarshalString(), ReadString(bytes, nameOffset, 16)));
-                }
-                var elemFuncs = new Dictionary<FuncAction, FxFuncInfo>();
-                IReadOnlyList<uint> elemFuncMeta = DoOffsets<uint>(bytes, element.FuncOffset, 2 * element.FuncCount);
-                for (int i = 0; i < elemFuncMeta.Count; i += 2)
-                {
-                    uint index = elemFuncMeta[i];
-                    uint funcOffset = elemFuncMeta[i + 1];
-                    if (funcOffset != 0)
-                    {
-                        // the main list always includes the offsets referenced by elements
-                        elemFuncs.Add((FuncAction)index, funcs[funcOffset]);
-                    }
-                }
-                elements.Add(new NewEffectElement(element, particles, funcs, elemFuncs));
-            }
-            var newEffect = new NewEffect(effect, funcs, list2, elements, path);
-            _newEffects.Add(path, newEffect);
-            return newEffect;
-        }
-
-        public static NewParticle NewGetSingleParticle(SingleType type)
-        {
-            if (Metadata.SingleParticles.TryGetValue(type, out (string Model, string Particle) meta))
-            {
-                return NewGetParticle(meta.Model, meta.Particle);
-            }
-            throw new ProgramException("Could not get single particle.");
-        }
-
-        private static NewParticle NewGetParticle(string modelName, string particleName)
-        {
-            if (_newParticleDefs.TryGetValue((modelName, particleName), out NewParticle? particle))
-            {
-                return particle;
-            }
-            ModelInstance inst = GetNewModel(modelName);
-            NewModel model = inst.Model;
-            Node? node = model.Nodes.FirstOrDefault(n => n.Name == particleName);
-            // todo: see what the game does here; gib3/gib4 nodes are probably meant to be used for these
-            if (modelName == "geo1" && particleName == "gib")
-            {
-                node = model.Nodes.First(n => n.Name == "gib3");
-            }
-            if (node != null && node.MeshCount > 0)
-            {
-                int materialId = model.Meshes[node.MeshId / 2].MaterialId;
-                var newParticle = new NewParticle(particleName, inst.Model, node, materialId);
-                _newParticleDefs.Add((modelName, particleName), newParticle);
                 return newParticle;
             }
             throw new ProgramException("Could not get particle.");
@@ -1344,19 +1029,11 @@ namespace MphRead
 
         public static void ReadAndExport(string name, bool firstHunt = false)
         {
-            // todo: need non-throwing versions of these
-            Model model;
-            try
+            Model? model = GetModelInstanceOrNull(name, firstHunt)?.Model;
+            if (model == null)
             {
-                model = GetModelByName(name, firstHunt: firstHunt);
-            }
-            catch
-            {
-                try
-                {
-                    model = GetRoomByName(name);
-                }
-                catch
+                model = GetRoomModelInstanceOrNull(name)?.Model;
+                if (model == null)
                 {
                     Console.WriteLine($"No model or room with the name {name} could be found.");
                     return;

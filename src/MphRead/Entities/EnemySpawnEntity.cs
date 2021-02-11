@@ -24,7 +24,7 @@ namespace MphRead.Entities
                 {
                     spawner = "PlantCarnivarous_Pod";
                 }
-                ModelInstance inst = Read.GetNewModel(spawner);
+                ModelInstance inst = Read.GetModelInstance(spawner);
                 _models.Add(inst);
                 // temporary
                 if (spawner == "EnemySpawner")
@@ -40,7 +40,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Process(NewScene scene)
+        public override void Process(Scene scene)
         {
             // todo: enemy spawning logic
             if (_spawn)

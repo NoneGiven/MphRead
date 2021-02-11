@@ -13,7 +13,7 @@ namespace MphRead.Entities
 
         private uint _flags = 0;
         private readonly List<int> _effectNodeIds = new List<int>() { -1, -1, -1, -1 };
-        private readonly List<NewEffectEntry?> _effects = new List<NewEffectEntry?>() { null, null, null, null };
+        private readonly List<EffectEntry?> _effects = new List<EffectEntry?>() { null, null, null, null };
         private const int _effectId = 182; // nozzleJet
 
         public PlatformEntity(PlatformEntityData data) : base(EntityType.Platform)
@@ -29,7 +29,7 @@ namespace MphRead.Entities
             }
             else
             {
-                ModelInstance inst = Read.GetNewModel(meta.Name);
+                ModelInstance inst = Read.GetModelInstance(meta.Name);
                 _models.Add(inst);
                 // temporary
                 if (meta.Name == "SamusShip" || meta.Name == "SyluxTurret")
@@ -39,12 +39,12 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Init(NewScene scene)
+        public override void Init(Scene scene)
         {
             base.Init(scene);
             if ((_flags & 0x80000) != 0)
             {
-                NewModel model = _models[0].Model;
+                Model model = _models[0].Model;
                 for (int i = 0; i < model.Nodes.Count; i++)
                 {
                     Node node = model.Nodes[i];
@@ -72,10 +72,10 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Process(NewScene scene)
+        public override void Process(Scene scene)
         {
             // todo: if "is_visible" returns false (and other conditions), don't draw the effects
-            NewModel model = _models[0].Model;
+            Model model = _models[0].Model;
             for (int i = 0; i < 4; i++)
             {
                 if (_effectNodeIds[i] >= 0 && _effects[i] == null)
@@ -84,7 +84,7 @@ namespace MphRead.Entities
                     _effects[i] = scene.SpawnEffectGetEntry(_effectId, transform);
                     for (int j = 0; j < _effects[i]!.Elements.Count; j++)
                     {
-                        NewEffectElementEntry element = _effects[i]!.Elements[j];
+                        EffectElementEntry element = _effects[i]!.Elements[j];
                         element.Flags |= 0x80000; // set bit 19 (lifetime extension)
                     }
                 }
@@ -99,7 +99,7 @@ namespace MphRead.Entities
                     transform = Matrix.GetTransform4(new Vector3(transform.Row1), new Vector3(transform.Row2), position);
                     for (int j = 0; j < _effects[i]!.Elements.Count; j++)
                     {
-                        NewEffectElementEntry element = _effects[i]!.Elements[j];
+                        EffectElementEntry element = _effects[i]!.Elements[j];
                         element.Position = position;
                         element.Transform = transform;
                     }
@@ -118,7 +118,7 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            ModelInstance inst = Read.GetFhNewModel("platform");
+            ModelInstance inst = Read.GetModelInstance("platform", firstHunt: true);
             _models.Add(inst);
         }
     }

@@ -30,7 +30,7 @@ namespace MphRead.Entities
             AddPlaceholderModel();
         }
 
-        public override void GetDisplayVolumes(NewScene scene)
+        public override void GetDisplayVolumes(Scene scene)
         {
             if (scene.ShowVolumes == VolumeDisplay.LightColor1 || scene.ShowVolumes == VolumeDisplay.LightColor2)
             {

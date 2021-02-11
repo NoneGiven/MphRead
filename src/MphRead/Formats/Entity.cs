@@ -41,7 +41,7 @@ namespace MphRead
     }
 
     // size: 40
-    public readonly struct NewEntityDataHeader
+    public readonly struct EntitySpawnHeader
     {
         public readonly ushort Type;
         public readonly ushort EntityId;
@@ -49,7 +49,7 @@ namespace MphRead
         public readonly Vector3 UpVector;
         public readonly Vector3 RightVector;
 
-        public NewEntityDataHeader(ushort type, ushort entityId, Vector3 position, Vector3 upVector, Vector3 rightVector)
+        public EntitySpawnHeader(ushort type, ushort entityId, Vector3 position, Vector3 upVector, Vector3 rightVector)
         {
             Type = type;
             EntityId = entityId;
