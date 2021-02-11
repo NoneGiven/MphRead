@@ -15,7 +15,7 @@ namespace MphRead.Entities
         public Vector3 Light2Vector { get; }
         public Vector3 Light2Color { get; }
 
-        public LightSourceEntity(LightSourceEntityData data) : base(NewEntityType.LightSource)
+        public LightSourceEntity(LightSourceEntityData data) : base(EntityType.LightSource)
         {
             _data = data;
             Id = data.Header.EntityId;

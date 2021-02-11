@@ -11,7 +11,7 @@ namespace MphRead.Entities
         private readonly Vector3 _insideEventColor;
         private readonly Vector3 _exitEventColor;
 
-        public AreaVolumeEntity(AreaVolumeEntityData data) : base(NewEntityType.AreaVolume)
+        public AreaVolumeEntity(AreaVolumeEntityData data) : base(EntityType.AreaVolume)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -41,7 +41,7 @@ namespace MphRead.Entities
         private readonly Vector3 _insideEventColor;
         private readonly Vector3 _exitEventColor;
 
-        public FhAreaVolumeEntity(FhAreaVolumeEntityData data) : base(NewEntityType.AreaVolume)
+        public FhAreaVolumeEntity(FhAreaVolumeEntityData data) : base(EntityType.AreaVolume)
         {
             _data = data;
             Id = data.Header.EntityId;

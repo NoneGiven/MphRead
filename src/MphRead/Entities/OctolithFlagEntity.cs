@@ -7,7 +7,7 @@ namespace MphRead.Entities
         private readonly OctolithFlagEntityData _data;
         private readonly Vector3 _basePosition = Vector3.Zero;
 
-        public OctolithFlagEntity(OctolithFlagEntityData data, GameMode mode) : base(NewEntityType.OctolithFlag)
+        public OctolithFlagEntity(OctolithFlagEntityData data, GameMode mode) : base(EntityType.OctolithFlag)
         {
             _data = data;
             Id = data.Header.EntityId;

@@ -48,8 +48,11 @@ namespace MphRead
         FhMorphCamera = 114,
         FhEnemyInstance = 115,
         FhPlayer = 116,
-        FhBeamProjectile = 117
+        FhBeamProjectile = 117,
         // 118 = entity list header
+        // viewer only
+        Room = 200,
+        Model = 201
     }
 
     public enum VolumeType : uint

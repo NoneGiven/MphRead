@@ -327,7 +327,7 @@ namespace MphRead
             foreach (ModelInstance inst in renderable.GetModels())
             {
                 InitTextures(inst.Model);
-                GenerateLists(inst.Model, isRoom: renderable.Type == NewEntityType.Room);
+                GenerateLists(inst.Model, isRoom: renderable.Type == EntityType.Room);
             }
         }
 
@@ -826,15 +826,15 @@ namespace MphRead
 
         private int CompareEntities(EntityBase one, EntityBase two)
         {
-            if (one.Type == NewEntityType.Room)
+            if (one.Type == EntityType.Room)
             {
-                if (two.Type != NewEntityType.Room)
+                if (two.Type != EntityType.Room)
                 {
                     return -1;
                 }
                 return 0;
             }
-            if (two.Type == NewEntityType.Room)
+            if (two.Type == EntityType.Room)
             {
                 return 1;
             }

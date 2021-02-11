@@ -13,7 +13,7 @@ namespace MphRead.Entities
 
         public const int StartId = 50;
 
-        public PointModuleEntity(PointModuleEntityData data) : base(NewEntityType.PointModule)
+        public PointModuleEntity(PointModuleEntityData data) : base(EntityType.PointModule)
         {
             _data = data;
             Id = data.Header.EntityId;

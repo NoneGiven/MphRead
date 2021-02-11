@@ -11,7 +11,7 @@ namespace MphRead.Entities
         private readonly Vector3 _parentEventColor;
         private readonly Vector3 _childEventColor;
 
-        public TriggerVolumeEntity(TriggerVolumeEntityData data) : base(NewEntityType.TriggerVolume)
+        public TriggerVolumeEntity(TriggerVolumeEntityData data) : base(EntityType.TriggerVolume)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -42,7 +42,7 @@ namespace MphRead.Entities
         private readonly Vector3 _parentEventColor;
         private readonly Vector3 _childEventColor;
 
-        public FhTriggerVolumeEntity(FhTriggerVolumeEntityData data) : base(NewEntityType.TriggerVolume)
+        public FhTriggerVolumeEntity(FhTriggerVolumeEntityData data) : base(EntityType.TriggerVolume)
         {
             _data = data;
             Id = data.Header.EntityId;

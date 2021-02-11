@@ -16,7 +16,7 @@ namespace MphRead.Entities
         private readonly List<NewEffectEntry?> _effects = new List<NewEffectEntry?>() { null, null, null, null };
         private const int _effectId = 182; // nozzleJet
 
-        public PlatformEntity(PlatformEntityData data) : base(NewEntityType.Platform)
+        public PlatformEntity(PlatformEntityData data) : base(EntityType.Platform)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -118,7 +118,7 @@ namespace MphRead.Entities
     {
         private readonly FhPlatformEntityData _data;
 
-        public FhPlatformEntity(FhPlatformEntityData data) : base(NewEntityType.Platform)
+        public FhPlatformEntity(FhPlatformEntityData data) : base(EntityType.Platform)
         {
             _data = data;
             Id = data.Header.EntityId;

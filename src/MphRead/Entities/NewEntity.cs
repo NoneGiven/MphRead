@@ -6,44 +6,9 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    // ntodo: merge this with the other enum
-    public enum NewEntityType
-    {
-        Platform = 0,
-        Object = 1,
-        PlayerSpawn = 2,
-        Door = 3,
-        Item = 4,
-        ItemInstance = 5,
-        Enemy = 6,
-        TriggerVolume = 7,
-        AreaVolume = 8,
-        JumpPad = 9,
-        PointModule = 10,
-        MorphCamera = 11,
-        OctolithFlag = 12,
-        FlagBase = 13,
-        Teleporter = 14,
-        NodeDefense = 15,
-        LightSource = 16,
-        Artifact = 17,
-        CameraSequence = 18,
-        ForceField = 19,
-        EffectInstance = 21,
-        Bomb = 22,
-        EnemyInstance = 23,
-        Halfturret = 24,
-        Player = 25,
-        BeamProjectile = 26,
-        Room = 100,
-        Effect = 101,
-        Particle = 102,
-        Model = 103
-    }
-
     public interface IRenderable
     {
-        NewEntityType Type { get; }
+        EntityType Type { get; }
         int Recolor { get; }
         IEnumerable<ModelInstance> GetModels();
         void GetDrawInfo(NewScene scene);
@@ -53,7 +18,7 @@ namespace MphRead.Entities
     {
         public int Id { get; protected set; } = -1; // todo: use init for Id and Recolor
         public virtual int Recolor { get; protected set; }
-        public NewEntityType Type { get; }
+        public EntityType Type { get; }
         public bool ShouldDraw { get; protected set; } = true;
         public bool Active { get; protected set; } = true;
 
@@ -120,7 +85,7 @@ namespace MphRead.Entities
             }
         }
 
-        protected EntityBase(NewEntityType type)
+        protected EntityBase(EntityType type)
         {
             Type = type;
         }
@@ -168,7 +133,7 @@ namespace MphRead.Entities
         protected virtual Vector4? OverrideColor { get; } = null;
         protected virtual Vector4? PaletteOverride { get; set; } = null;
 
-        public VisibleEntityBase(NewEntityType type) : base(type)
+        public VisibleEntityBase(EntityType type) : base(type)
         {
         }
 
@@ -515,7 +480,7 @@ namespace MphRead.Entities
 
         private static ushort _nextItemRotation = 0;
 
-        public SpinningEntityBase(float spinSpeed, Vector3 spinAxis, NewEntityType type) : base(type)
+        public SpinningEntityBase(float spinSpeed, Vector3 spinAxis, EntityType type) : base(type)
         {
             _spin = GetItemRotation();
             _spinSpeed = spinSpeed;
@@ -524,7 +489,7 @@ namespace MphRead.Entities
             _floatModelIndex = -1;
         }
 
-        public SpinningEntityBase(float spinSpeed, Vector3 spinAxis, int spinModelIndex, NewEntityType type) : base(type)
+        public SpinningEntityBase(float spinSpeed, Vector3 spinAxis, int spinModelIndex, EntityType type) : base(type)
         {
             _spin = GetItemRotation();
             _spinSpeed = spinSpeed;
@@ -533,7 +498,7 @@ namespace MphRead.Entities
             _floatModelIndex = -1;
         }
 
-        public SpinningEntityBase(float spinSpeed, Vector3 spinAxis, int spinModelIndex, int floatModelIndex, NewEntityType type) : base(type)
+        public SpinningEntityBase(float spinSpeed, Vector3 spinAxis, int spinModelIndex, int floatModelIndex, EntityType type) : base(type)
         {
             _spin = GetItemRotation();
             _spinSpeed = spinSpeed;
@@ -578,7 +543,7 @@ namespace MphRead.Entities
 
     public class ModelEntity : VisibleEntityBase
     {
-        public ModelEntity(ModelInstance model, int recolor = 0) : base(NewEntityType.Model)
+        public ModelEntity(ModelInstance model, int recolor = 0) : base(EntityType.Model)
         {
             Recolor = recolor;
             _models.Add(model);

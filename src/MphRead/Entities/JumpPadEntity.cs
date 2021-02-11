@@ -9,7 +9,7 @@ namespace MphRead.Entities
 
         private readonly CollisionVolume _volume;
 
-        public JumpPadEntity(JumpPadEntityData data) : base(NewEntityType.JumpPad)
+        public JumpPadEntity(JumpPadEntityData data) : base(EntityType.JumpPad)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -61,7 +61,7 @@ namespace MphRead.Entities
 
         private readonly CollisionVolume _volume;
 
-        public FhJumpPadEntity(FhJumpPadEntityData data) : base(NewEntityType.JumpPad)
+        public FhJumpPadEntity(FhJumpPadEntityData data) : base(EntityType.JumpPad)
         {
             _data = data;
             Id = data.Header.EntityId;

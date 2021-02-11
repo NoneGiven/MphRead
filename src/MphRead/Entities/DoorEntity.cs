@@ -9,7 +9,7 @@ namespace MphRead.Entities
 
         private bool _locked;
 
-        public DoorEntity(DoorEntityData data) : base(NewEntityType.Door)
+        public DoorEntity(DoorEntityData data) : base(EntityType.Door)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -70,7 +70,7 @@ namespace MphRead.Entities
     {
         private readonly FhDoorEntityData _data;
 
-        public FhDoorEntity(FhDoorEntityData data) : base(NewEntityType.Door)
+        public FhDoorEntity(FhDoorEntityData data) : base(EntityType.Door)
         {
             _data = data;
             Id = data.Header.EntityId;

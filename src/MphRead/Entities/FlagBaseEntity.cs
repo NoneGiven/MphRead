@@ -7,7 +7,7 @@ namespace MphRead.Entities
         private readonly FlagBaseEntityData _data;
         private readonly CollisionVolume _volume;
 
-        public FlagBaseEntity(FlagBaseEntityData data, GameMode mode) : base(NewEntityType.FlagBase)
+        public FlagBaseEntity(FlagBaseEntityData data, GameMode mode) : base(EntityType.FlagBase)
         {
             _data = data;
             Id = data.Header.EntityId;

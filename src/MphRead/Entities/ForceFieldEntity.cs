@@ -9,7 +9,7 @@ namespace MphRead.Entities
 
         public ForceFieldEntityData Data => _data;
 
-        public ForceFieldEntity(ForceFieldEntityData data) : base(NewEntityType.ForceField)
+        public ForceFieldEntity(ForceFieldEntityData data) : base(EntityType.ForceField)
         {
             _data = data;
             Id = data.Header.EntityId;

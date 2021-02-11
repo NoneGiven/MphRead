@@ -7,7 +7,7 @@ namespace MphRead.Entities
         private readonly ArtifactEntityData _data;
         private readonly float _heightOffset;
 
-        public ArtifactEntity(ArtifactEntityData data) : base(0.25f, Vector3.UnitY, NewEntityType.Artifact)
+        public ArtifactEntity(ArtifactEntityData data) : base(0.25f, Vector3.UnitY, EntityType.Artifact)
         {
             _data = data;
             Id = data.Header.EntityId;

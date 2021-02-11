@@ -8,7 +8,7 @@ namespace MphRead.Entities
         private readonly Matrix4 _circleScale;
         private readonly CollisionVolume _volume;
 
-        public NodeDefenseEntity(NodeDefenseEntityData data, GameMode mode) : base(NewEntityType.NodeDefense)
+        public NodeDefenseEntity(NodeDefenseEntityData data, GameMode mode) : base(EntityType.NodeDefense)
         {
             _data = data;
             Id = data.Header.EntityId;

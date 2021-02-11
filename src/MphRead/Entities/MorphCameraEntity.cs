@@ -10,7 +10,7 @@ namespace MphRead.Entities
         private readonly CollisionVolume _volume;
         private static readonly Vector3 _volumeColor = new Vector3(1, 1, 0);
 
-        public MorphCameraEntity(MorphCameraEntityData data) : base(NewEntityType.MorphCamera)
+        public MorphCameraEntity(MorphCameraEntityData data) : base(EntityType.MorphCamera)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -36,7 +36,7 @@ namespace MphRead.Entities
         private readonly CollisionVolume _volume;
         private static readonly Vector3 _volumeColor = new Vector3(1, 1, 0);
 
-        public FhMorphCameraEntity(FhMorphCameraEntityData data) : base(NewEntityType.MorphCamera)
+        public FhMorphCameraEntity(FhMorphCameraEntityData data) : base(EntityType.MorphCamera)
         {
             _data = data;
             Id = data.Header.EntityId;

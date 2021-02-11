@@ -19,7 +19,7 @@ namespace MphRead.Entities
         protected readonly EnemyInstanceEntityData _data;
         protected Vector3 _initialPosition; // todo: use init
 
-        public EnemyEntity(EnemyInstanceEntityData data) : base(NewEntityType.EnemyInstance)
+        public EnemyEntity(EnemyInstanceEntityData data) : base(EntityType.EnemyInstance)
         {
             _data = data;
         }

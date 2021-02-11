@@ -33,7 +33,7 @@ namespace MphRead.Entities
         private int _respawnTimer = 0;
         private const int _respawnCooldown = 180;
 
-        public PlayerEntity(Hunter hunter, int recolor = 0, Vector3? position = null) : base(NewEntityType.Player)
+        public PlayerEntity(Hunter hunter, int recolor = 0, Vector3? position = null) : base(EntityType.Player)
         {
             Hunter = hunter;
             if (position.HasValue)
@@ -219,7 +219,7 @@ namespace MphRead.Entities
             for (int i = 0; i < scene.Entities.Count; i++)
             {
                 EntityBase entity = scene.Entities[i];
-                if (entity.Type != NewEntityType.LightSource)
+                if (entity.Type != EntityType.LightSource)
                 {
                     continue;
                 }

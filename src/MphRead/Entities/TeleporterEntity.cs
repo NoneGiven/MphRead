@@ -12,7 +12,7 @@ namespace MphRead.Entities
         // used for multiplayer teleporter destination -- todo: confirm 1P doesn't have any intra-room teleporters
         private readonly Vector4 _overrideColor2 = new ColorRgb(0xAA, 0xAA, 0xAA).AsVector4();
 
-        public TeleporterEntity(TeleporterEntityData data, int areaId, bool multiplayer) : base(NewEntityType.Teleporter)
+        public TeleporterEntity(TeleporterEntityData data, int areaId, bool multiplayer) : base(EntityType.Teleporter)
         {
             _data = data;
             Id = data.Header.EntityId;
