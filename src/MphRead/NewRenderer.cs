@@ -2404,7 +2404,7 @@ namespace MphRead
                 string output = OutputGetAll();
                 if (output != _currentOutput)
                 {
-                    Console.Clear();
+                    Console.Clear(); // todo: this causes flickering
                     Console.WriteLine(output);
                     _currentOutput = output;
                 }
@@ -2423,6 +2423,7 @@ namespace MphRead
                 OutputGetEntityInfo();
                 if (Selection.Instance != null)
                 {
+                    OutputGetModel();
                     if (Selection.Node != null)
                     {
                         if (Selection.Mesh != null)
@@ -2475,14 +2476,14 @@ namespace MphRead
             };
             _sb.AppendLine(" - Hold left mouse button or use arrow keys to rotate");
             _sb.AppendLine(" - Hold Shift to move the camera faster");
-            _sb.AppendLine($" - T toggles texturing ({FormatOnOff(_showTextures)})");
-            _sb.AppendLine($" - C toggles vertex colours ({FormatOnOff(_showColors)})");
-            _sb.AppendLine($" - Q toggles wireframe ({FormatOnOff(_wireframe)})");
-            _sb.AppendLine($" - B toggles face culling ({FormatOnOff(_faceCulling)})");
-            _sb.AppendLine($" - F toggles texture filtering ({FormatOnOff(_textureFiltering)})");
-            _sb.AppendLine($" - L toggles lighting ({FormatOnOff(_lighting)})");
-            _sb.AppendLine($" - G toggles fog ({FormatOnOff(_showFog)})");
-            _sb.AppendLine($" - E toggles Scan Visor ({FormatOnOff(_scanVisor)})");
+            _sb.AppendLine($" - T toggles texturing ({OnOff(_showTextures)})");
+            _sb.AppendLine($" - C toggles vertex colours ({OnOff(_showColors)})");
+            _sb.AppendLine($" - Q toggles wireframe ({OnOff(_wireframe)})");
+            _sb.AppendLine($" - B toggles face culling ({OnOff(_faceCulling)})");
+            _sb.AppendLine($" - F toggles texture filtering ({OnOff(_textureFiltering)})");
+            _sb.AppendLine($" - L toggles lighting ({OnOff(_lighting)})");
+            _sb.AppendLine($" - G toggles fog ({OnOff(_showFog)})");
+            _sb.AppendLine($" - E toggles Scan Visor ({OnOff(_scanVisor)})");
             _sb.AppendLine($" - I toggles invisible entities ({invisible})");
             _sb.AppendLine($" - Z toggles volume display ({volume})");
             _sb.AppendLine($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
@@ -2497,24 +2498,21 @@ namespace MphRead
             EntityBase? entity = Selection.Entity;
             Debug.Assert(entity != null);
             _sb.AppendLine();
-            string header = "";
             if (_roomLoaded)
             {
                 string string1 = $"{(int)(_light1Color.X * 255)};{(int)(_light1Color.Y * 255)};{(int)(_light1Color.Z * 255)}";
                 string string2 = $"{(int)(_light2Color.X * 255)};{(int)(_light2Color.Y * 255)};{(int)(_light2Color.Z * 255)}";
-                header += $"Room \u001b[38;2;{string1}m████\u001b[0m \u001b[38;2;{string2}m████\u001b[0m";
-                header += $" ({_light1Vector.X}, {_light1Vector.Y}, {_light1Vector.Z}) " +
-                    $"({_light2Vector.X}, {_light2Vector.Y}, {_light2Vector.Z})";
+                _sb.Append($"Room \u001b[38;2;{string1}m████\u001b[0m \u001b[38;2;{string2}m████\u001b[0m");
+                _sb.AppendLine($" ({_light1Vector.X}, {_light1Vector.Y}, {_light1Vector.Z}) ({_light2Vector.X}, {_light2Vector.Y}, {_light2Vector.Z})");
             }
             else
             {
-                header = "No room loaded";
+                _sb.AppendLine("No room loaded");
             }
-            _sb.AppendLine(header);
             Vector3 cam = _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1);
             _sb.AppendLine($"Camera ({cam.X}, {cam.Y}, {cam.Z})");
             _sb.AppendLine();
-            _sb.AppendLine($"Entity: {entity.Type} [{entity.Id}] {(entity.Active ? "On " : "Off")} - Color {entity.Recolor}");
+            _sb.Append($"Entity: {entity.Type} [{entity.Id}] {(entity.Active ? "On " : "Off")} - Color {entity.Recolor}");
             // sktodo: remove as much string concatenation as possible
             if (entity.Type == EntityType.Room)
             {
@@ -2628,14 +2626,35 @@ namespace MphRead
                     _sb.Append($" ({obj.Data.EffectId}, {Metadata.Effects[(int)obj.Data.EffectId].Name})");
                 }
             }
+            _sb.AppendLine();
             _sb.AppendLine($"Position ({entity.Position.X}, {entity.Position.Y}, {entity.Position.Z})");
             _sb.AppendLine($"Rotation ({entity.Rotation.X}, {entity.Rotation.Y}, {entity.Rotation.Z})");
             _sb.AppendLine($"   Scale ({entity.Scale.X}, {entity.Scale.Y}, {entity.Scale.Z})");
         }
 
-        private string FormatOnOff(bool setting)
+        private void OutputGetModel()
+        {
+            ModelInstance? inst = Selection.Instance;
+            Debug.Assert(inst != null);
+            _sb.AppendLine();
+            _sb.AppendLine($"Model: {inst.Model.Name}, Scale: {inst.Model.Scale.X}, Active: {YesNo(inst.Active)}," +
+                $"{(inst.IsPlaceholder ? " Placeholder" : "")}");
+            _sb.AppendLine($"Nodes {inst.Model.Nodes.Count}, Meshes {inst.Model.Meshes.Count}, Materials {inst.Model.Materials.Count}," +
+                $" Textures {inst.Model.Recolors[0].Textures.Count}, Palettes {inst.Model.Recolors[0].Palettes.Count}");
+            NewAnimationInfo a = inst.AnimInfo;
+            AnimationGroups g = inst.Model.AnimationGroups;
+            _sb.AppendLine($"Anim: Node {a.Node.Index} / {g.Node.Count}, Material {a.Material.Index} / {g.Material.Count}," +
+                $" Texcoord {a.Texcoord.Index} / {g.Texcoord.Count}, Texture {a.Texture.Index} / {g.Texture.Count}");
+        }
+
+        private string OnOff(bool setting)
         {
             return setting ? "on" : "off";
+        }
+
+        private string YesNo(bool setting)
+        {
+            return setting ? "yes" : "no ";
         }
     }
 
