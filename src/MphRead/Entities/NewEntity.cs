@@ -451,6 +451,7 @@ namespace MphRead.Entities
             Active = active;
         }
 
+        // todo: item and enemy spawners
         public virtual EntityBase? GetParent()
         {
             return null;
