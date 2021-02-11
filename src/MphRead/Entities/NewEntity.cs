@@ -162,7 +162,7 @@ namespace MphRead.Entities
 
         protected void AddPlaceholderModel()
         {
-            ModelInstance inst = Read.GetNewModel("pick_wpn_missile");
+            ModelInstance inst = Read.GetModelInstance("pick_wpn_missile");
             inst.IsPlaceholder = true;
             _models.Add(inst);
         }

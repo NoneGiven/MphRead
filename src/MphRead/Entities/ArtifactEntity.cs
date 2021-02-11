@@ -13,7 +13,7 @@ namespace MphRead.Entities
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             string name = data.ModelId >= 8 ? "Octolith" : $"Artifact0{data.ModelId + 1}";
-            ModelInstance inst = Read.GetNewModel(name);
+            ModelInstance inst = Read.GetModelInstance(name);
             _heightOffset = data.ModelId >= 8 ? 1.75f : inst.Model.Nodes[0].CullRadius;
             if (data.ModelId >= 8)
             {
@@ -22,7 +22,7 @@ namespace MphRead.Entities
             _models.Add(inst);
             if (data.HasBase != 0)
             {
-                ModelInstance baseInst = Read.GetNewModel("ArtifactBase");
+                ModelInstance baseInst = Read.GetModelInstance("ArtifactBase");
                 _models.Add(baseInst);
             }
         }

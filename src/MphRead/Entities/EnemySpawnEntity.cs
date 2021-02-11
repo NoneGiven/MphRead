@@ -24,7 +24,7 @@ namespace MphRead.Entities
                 {
                     spawner = "PlantCarnivarous_Pod";
                 }
-                ModelInstance inst = Read.GetNewModel(spawner);
+                ModelInstance inst = Read.GetModelInstance(spawner);
                 _models.Add(inst);
                 // temporary
                 if (spawner == "EnemySpawner")

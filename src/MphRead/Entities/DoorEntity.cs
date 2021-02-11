@@ -25,12 +25,12 @@ namespace MphRead.Entities
             // - morph ball = 0
             // - boss = 0
             // - thin = 0, 7
-            ModelInstance inst = Read.GetNewModel(meta.Name);
+            ModelInstance inst = Read.GetModelInstance(meta.Name);
             _models.Add(inst);
             // todo: remove temporary code like this once animations are being selected properly
             inst.SetNodeAnim(-1);
             inst.SetMaterialAnim(-1);
-            ModelInstance lockInst = Read.GetNewModel(meta.LockName);
+            ModelInstance lockInst = Read.GetModelInstance(meta.LockName);
             _lockTransform = Matrix4.CreateTranslation(0, meta.LockOffset, 0);
             _models.Add(lockInst);
             // todo: use flags and room state to determine lock/color state
@@ -65,7 +65,7 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            ModelInstance inst = Read.GetFhNewModel(Metadata.FhDoors[(int)data.ModelId]);
+            ModelInstance inst = Read.GetModelInstance(Metadata.FhDoors[(int)data.ModelId], firstHunt: true);
             _models.Add(inst);
             // temporary
             inst.SetNodeAnim(-1);

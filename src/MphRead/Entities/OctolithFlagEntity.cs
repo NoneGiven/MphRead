@@ -15,13 +15,13 @@ namespace MphRead.Entities
             Recolor = mode == GameMode.Capture ? data.TeamId : 2;
             if (mode == GameMode.Capture || mode == GameMode.Bounty)
             {
-                ModelInstance octolithInst = Read.GetNewModel("octolith_ctf");
+                ModelInstance octolithInst = Read.GetModelInstance("octolith_ctf");
                 _models.Add(octolithInst);
                 // note: in-game, the flag is responsible for drawing its own base in Capture mode as well,
                 // but we have that implemented in the flag base entity (which is used in Capture mode, but is invisible)
                 if (mode == GameMode.Bounty)
                 {
-                    ModelInstance flagBaseInst = Read.GetNewModel("flagbase_bounty");
+                    ModelInstance flagBaseInst = Read.GetModelInstance("flagbase_bounty");
                     _models.Add(flagBaseInst);
                 }
                 _basePosition = Position;

@@ -195,7 +195,7 @@ namespace MphRead
         // called before load
         public EntityBase AddModel(string name, int recolor = 0, bool firstHunt = false)
         {
-            ModelInstance model = firstHunt ? Read.GetFhNewModel(name) : Read.GetNewModel(name);
+            ModelInstance model = Read.GetModelInstance(name, firstHunt);
             var entity = new ModelEntity(model, recolor);
             _entities.Add(entity);
             _entitySort.Add(entity);
@@ -834,14 +834,7 @@ namespace MphRead
             {
                 GL.DeleteLists(mesh.ListId, 1);
             }
-            if (model.FirstHunt)
-            {
-                Read.RemoveFhModel(model.Name);
-            }
-            else
-            {
-                Read.RemoveModel(model.Name);
-            }
+            Read.RemoveModel(model.Name, model.FirstHunt);
         }
 
         private void TransformCamera()
@@ -1112,7 +1105,7 @@ namespace MphRead
                 // todo: cleaner/common way of keeping track of models that have had lists generated
                 if (!_effectModels.Contains(element.ModelName))
                 {
-                    GenerateLists(Read.GetNewModel(element.ModelName).Model, isRoom: false);
+                    GenerateLists(Read.GetModelInstance(element.ModelName).Model, isRoom: false);
                     _effectModels.Add(element.ModelName);
                 }
             }

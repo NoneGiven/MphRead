@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using MphRead.Entities;
 using OpenTK.Mathematics;
 
 namespace MphRead.Export
@@ -40,17 +41,7 @@ namespace MphRead.Export
             return MathF.Round(input, 6, MidpointRounding.AwayFromZero).ToString("F6", CultureInfo.InvariantCulture);
         }
 
-        public static void ExportModel(string modelName)
-        {
-            ExportModel(Read.GetModelByName(modelName), transformRoom: false);
-        }
-
-        public static void ExportRoom(string roomName, bool transformRoom = false)
-        {
-            ExportModel(Read.GetRoomByName(roomName), transformRoom);
-        }
-
-        public static void ExportModel(Model model, bool transformRoom = false)
+        public static void ExportModel(NewModel model, bool transformRoom = false)
         {
             string exportPath = Path.Combine(Paths.Export, model.Name);
             Directory.CreateDirectory(exportPath);
@@ -82,7 +73,7 @@ namespace MphRead.Export
             File.WriteAllText(Path.Combine(exportPath, $"import_{model.Name}.py"), Scripting.GenerateScript(model, lists.First()));
         }
 
-        private static Dictionary<string, IReadOnlyList<Vertex>> ExportRecolor(Model model, bool transformRoom, int recolorIndex)
+        private static Dictionary<string, IReadOnlyList<Vertex>> ExportRecolor(NewModel model, bool transformRoom, int recolorIndex)
         {
             var results = new Dictionary<string, IReadOnlyList<Vertex>>();
             Recolor recolor = model.Recolors[recolorIndex];
@@ -127,7 +118,7 @@ namespace MphRead.Export
             }
             id = 1;
             imagesInLibrary.Clear();
-            foreach (TextureAnimationGroup group in model.Animations.TextureGroups)
+            foreach (TextureAnimationGroup group in model.AnimationGroups.Texture)
             {
                 foreach (TextureAnimation animation in group.Animations.Values)
                 {
@@ -522,7 +513,7 @@ namespace MphRead.Export
             // scene
             sb.Append("\n\t<library_visual_scenes>");
             sb.Append("\n\t\t<visual_scene id=\"Scene\" name=\"Scene\">\n");
-            if (model.Type == ModelType.Room)
+            if (Metadata.RoomMetadata.ContainsKey(model.Name))
             {
                 ExportRoomNodes(model, UInt16.MaxValue, sb, 3, transformRoom);
             }
@@ -541,7 +532,7 @@ namespace MphRead.Export
             return results;
         }
 
-        private static void ExportRoomNodes(Model model, int parentId, StringBuilder sb, int indent, bool transformRoom)
+        private static void ExportRoomNodes(NewModel model, int parentId, StringBuilder sb, int indent, bool transformRoom)
         {
             for (int i = 0; i < model.Nodes.Count; i++)
             {
@@ -588,7 +579,7 @@ namespace MphRead.Export
             }
         }
 
-        private static void ExportNodeMeshes(Model model, int nodeId, StringBuilder sb, int indent)
+        private static void ExportNodeMeshes(NewModel model, int nodeId, StringBuilder sb, int indent)
         {
             foreach (int meshId in model.Nodes[nodeId].GetMeshIds())
             {
@@ -600,7 +591,7 @@ namespace MphRead.Export
             }
         }
 
-        private static void ExportMeshes(Model model, StringBuilder sb, int indent)
+        private static void ExportMeshes(NewModel model, StringBuilder sb, int indent)
         {
             for (int i = 0; i < model.Meshes.Count; i++)
             {
@@ -612,7 +603,7 @@ namespace MphRead.Export
             }
         }
 
-        private static void ExportMesh(Model model, int meshId, StringBuilder sb, int indent)
+        private static void ExportMesh(NewModel model, int meshId, StringBuilder sb, int indent)
         {
             Mesh mesh = model.Meshes[meshId];
             Material material = model.Materials[mesh.MaterialId];
@@ -637,7 +628,7 @@ namespace MphRead.Export
             sb.Append("</instance_geometry>\n");
         }
 
-        private static void ExportDlist(Model model, int dlistId, List<Vertex> meshVerts, List<Vertex> tempMeshVerts)
+        private static void ExportDlist(NewModel model, int dlistId, List<Vertex> meshVerts, List<Vertex> tempMeshVerts)
         {
             float[] vtx_state = { 0.0f, 0.0f, 0.0f };
             float[] nrm_state = { 0.0f, 0.0f, 0.0f };

@@ -18,7 +18,7 @@ namespace MphRead.Entities
 
         public RoomEntity(string name, RoomMetadata meta, CollisionInfo collision, int layerMask) : base(EntityType.Room)
         {
-            ModelInstance inst = Read.GetNewRoom(name);
+            ModelInstance inst = Read.GetRoomModelInstance(name);
             _models.Add(inst);
             FilterNodes(layerMask);
             if (meta.Name == "UNIT2_C6")

@@ -46,7 +46,7 @@ namespace MphRead.Entities
             Debug.Assert(models.Count == 3);
             for (int i = 0; i < models.Count; i++)
             {
-                ModelInstance inst = Read.GetNewModel(models[i]);
+                ModelInstance inst = Read.GetModelInstance(models[i]);
                 _models.Add(inst);
                 if (i == 0)
                 {
@@ -61,10 +61,10 @@ namespace MphRead.Entities
                     _gunModel = inst;
                 }
             }
-            _dblDmgModel = Read.GetNewModel("doubleDamage_img");
-            _altIceModel = Read.GetNewModel("alt_ice");
+            _dblDmgModel = Read.GetModelInstance("doubleDamage_img");
+            _altIceModel = Read.GetModelInstance("alt_ice");
             _models.Add(_altIceModel);
-            _bipedIceModel = Read.GetNewModel(Hunter == Hunter.Noxus || Hunter == Hunter.Trace ? "nox_ice" : "samus_ice");
+            _bipedIceModel = Read.GetModelInstance(Hunter == Hunter.Noxus || Hunter == Hunter.Trace ? "nox_ice" : "samus_ice");
             _models.Add(_bipedIceModel);
             _scaleMtx = Matrix4.CreateScale(Metadata.HunterScales[Hunter]);
             // temporary

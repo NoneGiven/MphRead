@@ -46,7 +46,7 @@ namespace MphRead.Entities
             {
                 ObjectMetadata meta = Metadata.GetObjectById((int)data.ModelId);
                 Recolor = meta.RecolorId;
-                ModelInstance inst = Read.GetNewModel(meta.Name);
+                ModelInstance inst = Read.GetModelInstance(meta.Name);
                 if (meta != null && meta.AnimationIds[0] == 0xFF)
                 {
                     inst.SetNodeAnim(-1);

@@ -16,7 +16,7 @@ namespace MphRead.Entities
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             Scale = new Vector3(data.Width.FloatValue, data.Height.FloatValue, 1.0f);
             Recolor = Metadata.DoorPalettes[(int)data.Type];
-            ModelInstance inst = Read.GetNewModel("ForceField");
+            ModelInstance inst = Read.GetModelInstance("ForceField");
             _models.Add(inst);
             Active = data.Active != 0;
         }

@@ -16,7 +16,7 @@ namespace MphRead.Entities.Enemies
             position += _vec2 * Fixed.ToFloat(409);
             ComputeTransform(_vec2, _vec1, position);
             _initialPosition = Position;
-            ModelInstance inst = Read.GetNewModel("ForceFieldLock");
+            ModelInstance inst = Read.GetModelInstance("ForceFieldLock");
             _models.Add(inst);
             Recolor = data.Spawner.Recolor;
         }

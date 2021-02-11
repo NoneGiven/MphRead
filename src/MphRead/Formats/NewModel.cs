@@ -457,7 +457,7 @@ namespace MphRead.Entities
             }
         }
 
-        private float InterpolateAnimation(IReadOnlyList<float> values, int start, int frame, int blend, int lutLength, int frameCount,
+        public float InterpolateAnimation(IReadOnlyList<float> values, int start, int frame, int blend, int lutLength, int frameCount,
             bool isRotation = false)
         {
             if (lutLength == 1)
@@ -581,6 +581,96 @@ namespace MphRead.Entities
                 }
             }
             return pixels;
+        }
+    }
+
+    public class Recolor
+    {
+        public string Name { get; }
+        public IReadOnlyList<Texture> Textures { get; }
+        public IReadOnlyList<Palette> Palettes { get; }
+        public IReadOnlyList<IReadOnlyList<TextureData>> TextureData { get; }
+        public IReadOnlyList<IReadOnlyList<PaletteData>> PaletteData { get; }
+
+        public Recolor(string name, IReadOnlyList<Texture> textures, IReadOnlyList<Palette> palettes,
+            IReadOnlyList<IReadOnlyList<TextureData>> textureData, IReadOnlyList<IReadOnlyList<PaletteData>> paletteData)
+        {
+            ThrowIfInvalidEnums(textures);
+            Name = name;
+            Textures = textures;
+            Palettes = palettes;
+            TextureData = textureData;
+            PaletteData = paletteData;
+            Debug.Assert(Textures.Count == TextureData.Count);
+            Debug.Assert(Palettes.Count == PaletteData.Count);
+        }
+
+        public IReadOnlyList<ColorRgba> GetPixels(int textureId, int palettteId)
+        {
+            if (textureId < 0 || textureId >= TextureData.Count)
+            {
+                throw new ArgumentException(nameof(textureId));
+            }
+            var pixels = new List<ColorRgba>();
+            TextureFormat textureFormat = Textures[textureId].Format;
+            if (textureFormat == TextureFormat.DirectRgb)
+            {
+                for (int i = 0; i < TextureData[textureId].Count; i++)
+                {
+                    uint color = TextureData[textureId][i].Data;
+                    byte alpha = TextureData[textureId][i].Alpha;
+                    pixels.Add(ColorFromShort(color, alpha));
+                }
+            }
+            else
+            {
+                if (palettteId < 0 || palettteId >= PaletteData.Count)
+                {
+                    throw new ArgumentException(nameof(palettteId));
+                }
+                for (int i = 0; i < TextureData[textureId].Count; i++)
+                {
+                    int index = (int)TextureData[textureId][i].Data;
+                    ushort color = PaletteData[palettteId][index].Data;
+                    byte alpha = TextureData[textureId][i].Alpha;
+                    pixels.Add(ColorFromShort(color, alpha));
+                }
+            }
+            return pixels;
+        }
+
+        public IReadOnlyList<ColorRgba> GetPalettePixels(int palettteId)
+        {
+            if (palettteId < 0 || palettteId >= PaletteData.Count)
+            {
+                throw new ArgumentException(nameof(palettteId));
+            }
+            var pixels = new List<ColorRgba>();
+            foreach (PaletteData paletteData in PaletteData[palettteId])
+            {
+                pixels.Add(ColorFromShort(paletteData.Data, 255));
+            }
+            return pixels;
+        }
+
+        // todo: just return float color early
+        private ColorRgba ColorFromShort(uint value, byte alpha)
+        {
+            byte red = (byte)MathF.Round(((value >> 0) & 0x1F) / 31f * 255f);
+            byte green = (byte)MathF.Round(((value >> 5) & 0x1F) / 31f * 255f);
+            byte blue = (byte)MathF.Round(((value >> 10) & 0x1F) / 31f * 255f);
+            return new ColorRgba(red, green, blue, alpha);
+        }
+
+        private static void ThrowIfInvalidEnums(IEnumerable<Texture> textures)
+        {
+            foreach (Texture texture in textures)
+            {
+                if (!Enum.IsDefined(typeof(TextureFormat), texture.Format))
+                {
+                    throw new ProgramException($"Invalid texture format {texture.Format}.");
+                }
+            }
         }
     }
 }

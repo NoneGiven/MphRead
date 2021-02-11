@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using MphRead.Entities;
 using OpenTK.Graphics.OpenGL;
 
 namespace MphRead.Export
@@ -25,7 +26,7 @@ namespace MphRead.Export
             bitmap.Save(Path.Combine(path, $"{name}.png"));
         }
 
-        public static void ExportImages(Model model)
+        public static void ExportImages(NewModel model)
         {
             string exportPath = Path.Combine(Paths.Export, model.Name);
             foreach (Recolor recolor in model.Recolors)
@@ -65,7 +66,7 @@ namespace MphRead.Export
                 }
                 id = 1;
                 usedCombos.Clear();
-                foreach (TextureAnimationGroup group in model.Animations.TextureGroups)
+                foreach (TextureAnimationGroup group in model.AnimationGroups.Texture)
                 {
                     foreach (TextureAnimation animation in group.Animations.Values)
                     {
@@ -87,7 +88,7 @@ namespace MphRead.Export
                             continue;
                         }
                         Texture texture = recolor.Textures[t];
-                        for (int p = 0; p < model.Palettes.Count; p++)
+                        for (int p = 0; p < recolor.Palettes.Count; p++)
                         {
                             IReadOnlyList<TextureData> textureData = recolor.TextureData[t];
                             IReadOnlyList<PaletteData> palette = recolor.PaletteData[p];
@@ -104,7 +105,7 @@ namespace MphRead.Export
             }
         }
 
-        public static void ExportPalettes(Model model)
+        public static void ExportPalettes(NewModel model)
         {
             string exportPath = Path.Combine(Paths.Export, model.Name);
             foreach (Recolor recolor in model.Recolors)

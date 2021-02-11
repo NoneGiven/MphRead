@@ -4,17 +4,18 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using MphRead.Entities;
 using OpenTK.Mathematics;
 
 namespace MphRead.Export
 {
     public class Scripting
     {
-        private static void PrintAnimations(Model model, StringBuilder sb)
+        private static void PrintAnimations(NewModel model, StringBuilder sb)
         {
             int indent = 1;
             sb.AppendIndent("uv_anims = [", indent);
-            foreach (TexcoordAnimationGroup group in model.Animations.TexcoordGroups)
+            foreach (TexcoordAnimationGroup group in model.AnimationGroups.Texcoord)
             {
                 sb.AppendIndent("{", indent + 1);
                 foreach (KeyValuePair<string, TexcoordAnimation> kvp in group.Animations)
@@ -24,15 +25,15 @@ namespace MphRead.Export
                     sb.AppendIndent("[", indent + 2);
                     for (int frame = 0; frame < group.FrameCount; frame++)
                     {
-                        float scaleS = RenderWindow.InterpolateAnimation(group.Scales, anim.ScaleLutIndexS, frame,
+                        float scaleS = model.InterpolateAnimation(group.Scales, anim.ScaleLutIndexS, frame,
                             anim.ScaleBlendS, anim.ScaleLutLengthS, group.FrameCount);
-                        float scaleT = RenderWindow.InterpolateAnimation(group.Scales, anim.ScaleLutIndexT, frame,
+                        float scaleT = model.InterpolateAnimation(group.Scales, anim.ScaleLutIndexT, frame,
                             anim.ScaleBlendT, anim.ScaleLutLengthT, group.FrameCount);
-                        float rotate = RenderWindow.InterpolateAnimation(group.Rotations, anim.RotateLutIndexZ, frame,
+                        float rotate = model.InterpolateAnimation(group.Rotations, anim.RotateLutIndexZ, frame,
                             anim.RotateBlendZ, anim.RotateLutLengthZ, group.FrameCount, isRotation: true);
-                        float translateS = RenderWindow.InterpolateAnimation(group.Translations, anim.TranslateLutIndexS, frame,
+                        float translateS = model.InterpolateAnimation(group.Translations, anim.TranslateLutIndexS, frame,
                             anim.TranslateBlendS, anim.TranslateLutLengthS, group.FrameCount);
-                        float translateT = RenderWindow.InterpolateAnimation(group.Translations, anim.TranslateLutIndexT, frame,
+                        float translateT = model.InterpolateAnimation(group.Translations, anim.TranslateLutIndexT, frame,
                             anim.TranslateBlendT, anim.TranslateLutLengthT, group.FrameCount);
                         sb.AppendIndent($"[{scaleS}, {scaleT}, {rotate}, {translateS}, {translateT}],", indent + 3);
                     }
@@ -42,7 +43,7 @@ namespace MphRead.Export
             }
             sb.AppendIndent("]", indent);
             sb.AppendIndent("mat_anims = [", indent);
-            foreach (MaterialAnimationGroup group in model.Animations.MaterialGroups)
+            foreach (MaterialAnimationGroup group in model.AnimationGroups.Material)
             {
                 sb.AppendIndent("{", indent + 1);
                 foreach (KeyValuePair<string, MaterialAnimation> kvp in group.Animations)
@@ -53,13 +54,13 @@ namespace MphRead.Export
                     for (int frame = 0; frame < group.FrameCount; frame++)
                     {
                         // todo: animate diffuse/ambient/specular light colors
-                        float red = RenderWindow.InterpolateAnimation(group.Colors, anim.DiffuseLutIndexR, frame,
+                        float red = model.InterpolateAnimation(group.Colors, anim.DiffuseLutIndexR, frame,
                             anim.DiffuseBlendR, anim.DiffuseLutLengthR, group.FrameCount);
-                        float green = RenderWindow.InterpolateAnimation(group.Colors, anim.DiffuseLutIndexG, frame,
+                        float green = model.InterpolateAnimation(group.Colors, anim.DiffuseLutIndexG, frame,
                             anim.DiffuseBlendG, anim.DiffuseLutLengthG, group.FrameCount);
-                        float blue = RenderWindow.InterpolateAnimation(group.Colors, anim.DiffuseLutIndexB, frame,
+                        float blue = model.InterpolateAnimation(group.Colors, anim.DiffuseLutIndexB, frame,
                             anim.DiffuseBlendB, anim.DiffuseLutLengthB, group.FrameCount);
-                        float alpha = RenderWindow.InterpolateAnimation(group.Colors, anim.AlphaLutIndex, frame,
+                        float alpha = model.InterpolateAnimation(group.Colors, anim.AlphaLutIndex, frame,
                             anim.AlphaBlend, anim.AlphaLutLength, group.FrameCount);
                         sb.AppendIndent($"[{red / 31.0f}, {green / 31.0f}, {blue / 31.0f}, {alpha / 31.0f}],", indent + 3);
                     }
@@ -71,7 +72,7 @@ namespace MphRead.Export
 
             sb.AppendIndent("tex_anims = [", indent);
             var combos = new List<(int, int)>();
-            foreach (TextureAnimationGroup group in model.Animations.TextureGroups)
+            foreach (TextureAnimationGroup group in model.AnimationGroups.Texture)
             {
                 foreach (KeyValuePair<string, TextureAnimation> kvp in group.Animations)
                 {
@@ -85,7 +86,7 @@ namespace MphRead.Export
                     }
                 }
             }
-            foreach (TextureAnimationGroup group in model.Animations.TextureGroups)
+            foreach (TextureAnimationGroup group in model.AnimationGroups.Texture)
             {
                 sb.AppendIndent("{", indent + 1);
                 foreach (KeyValuePair<string, TextureAnimation> kvp in group.Animations)
@@ -108,7 +109,7 @@ namespace MphRead.Export
 
 
             sb.AppendIndent("node_anims = [", indent);
-            foreach (NodeAnimationGroup group in model.Animations.NodeGroups)
+            foreach (NodeAnimationGroup group in model.AnimationGroups.Node)
             {
                 sb.AppendIndent("{", indent + 1);
                 foreach (KeyValuePair<string, NodeAnimation> kvp in group.Animations)
@@ -118,23 +119,23 @@ namespace MphRead.Export
                     sb.AppendIndent("[", indent + 2);
                     for (int frame = 0; frame < group.FrameCount; frame++)
                     {
-                        float scaleX = RenderWindow.InterpolateAnimation(group.Scales, anim.ScaleLutIndexX, frame,
+                        float scaleX = model.InterpolateAnimation(group.Scales, anim.ScaleLutIndexX, frame,
                             anim.ScaleBlendX, anim.ScaleLutLengthX, group.FrameCount);
-                        float scaleY = RenderWindow.InterpolateAnimation(group.Scales, anim.ScaleLutIndexY, frame,
+                        float scaleY = model.InterpolateAnimation(group.Scales, anim.ScaleLutIndexY, frame,
                             anim.ScaleBlendY, anim.ScaleLutLengthY, group.FrameCount);
-                        float scaleZ = RenderWindow.InterpolateAnimation(group.Scales, anim.ScaleLutIndexZ, frame,
+                        float scaleZ = model.InterpolateAnimation(group.Scales, anim.ScaleLutIndexZ, frame,
                             anim.ScaleBlendZ, anim.ScaleLutLengthZ, group.FrameCount);
-                        float rotateX = RenderWindow.InterpolateAnimation(group.Rotations, anim.RotateLutIndexX, frame,
+                        float rotateX = model.InterpolateAnimation(group.Rotations, anim.RotateLutIndexX, frame,
                             anim.RotateBlendX, anim.RotateLutLengthX, group.FrameCount, isRotation: true);
-                        float rotateY = RenderWindow.InterpolateAnimation(group.Rotations, anim.RotateLutIndexY, frame,
+                        float rotateY = model.InterpolateAnimation(group.Rotations, anim.RotateLutIndexY, frame,
                             anim.RotateBlendY, anim.RotateLutLengthY, group.FrameCount, isRotation: true);
-                        float rotateZ = RenderWindow.InterpolateAnimation(group.Rotations, anim.RotateLutIndexZ, frame,
+                        float rotateZ = model.InterpolateAnimation(group.Rotations, anim.RotateLutIndexZ, frame,
                             anim.RotateBlendZ, anim.RotateLutLengthZ, group.FrameCount, isRotation: true);
-                        float translateX = RenderWindow.InterpolateAnimation(group.Translations, anim.TranslateLutIndexX, frame,
+                        float translateX = model.InterpolateAnimation(group.Translations, anim.TranslateLutIndexX, frame,
                             anim.TranslateBlendX, anim.TranslateLutLengthX, group.FrameCount);
-                        float translateY = RenderWindow.InterpolateAnimation(group.Translations, anim.TranslateLutIndexY, frame,
+                        float translateY = model.InterpolateAnimation(group.Translations, anim.TranslateLutIndexY, frame,
                             anim.TranslateBlendY, anim.TranslateLutLengthY, group.FrameCount);
-                        float translateZ = RenderWindow.InterpolateAnimation(group.Translations, anim.TranslateLutIndexZ, frame,
+                        float translateZ = model.InterpolateAnimation(group.Translations, anim.TranslateLutIndexZ, frame,
                             anim.TranslateBlendZ, anim.TranslateLutLengthZ, group.FrameCount);
                         sb.AppendIndent($"[{scaleX}, {scaleY}, {scaleZ}, {rotateX}, {rotateY}, {rotateZ}," +
                             $" {translateX}, {translateY}, {translateZ}],", indent + 3);
@@ -146,7 +147,7 @@ namespace MphRead.Export
             sb.AppendIndent("]", indent);
         }
 
-        public static string GenerateScript(Model model, Dictionary<string, IReadOnlyList<Collada.Vertex>> lists)
+        public static string GenerateScript(NewModel model, Dictionary<string, IReadOnlyList<Collada.Vertex>> lists)
         {
             var sb = new StringBuilder();
             sb.AppendLine("import bpy");
@@ -157,12 +158,12 @@ namespace MphRead.Export
             sb.AppendLine($"expected_version = '{Program.Version}'");
             sb.AppendLine($"# recolors: {String.Join(", ", model.Recolors.Select(r => r.Name))}");
             sb.AppendLine($"recolor = '{model.Recolors.First().Name}'");
-            sb.AppendLine($"# uv anims: {model.Animations.TexcoordGroups.Count}, mat anims: {model.Animations.MaterialGroups.Count}," +
-                $" node anims: {model.Animations.NodeGroups.Count}, tex anims: {model.Animations.TextureGroups.Count}");
-            int texcoordId = model.Animations.TexcoordGroups.Count > 0 ? 0 : -1;
-            int materialId = model.Animations.MaterialGroups.Count > 0 ? 0 : -1;
-            int nodeId = model.Animations.NodeGroups.Count > 0 ? 0 : -1;
-            int textureId = model.Animations.TextureGroups.Count > 0 ? 0 : -1;
+            sb.AppendLine($"# uv anims: {model.AnimationGroups.Texcoord.Count}, mat anims: {model.AnimationGroups.Material.Count}," +
+                $" node anims: {model.AnimationGroups.Node.Count}, tex anims: {model.AnimationGroups.Texture.Count}");
+            int texcoordId = model.AnimationGroups.Texcoord.Count > 0 ? 0 : -1;
+            int materialId = model.AnimationGroups.Material.Count > 0 ? 0 : -1;
+            int nodeId = model.AnimationGroups.Node.Count > 0 ? 0 : -1;
+            int textureId = model.AnimationGroups.Texture.Count > 0 ? 0 : -1;
             sb.AppendLine($"uv_index = {texcoordId}");
             sb.AppendLine($"mat_index = {materialId}");
             sb.AppendLine($"node_index = {nodeId}");

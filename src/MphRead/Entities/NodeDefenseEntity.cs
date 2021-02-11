@@ -16,10 +16,10 @@ namespace MphRead.Entities
             _volume = CollisionVolume.Move(_data.Volume, Position);
             if (mode == GameMode.Defender || mode == GameMode.Nodes)
             {
-                ModelInstance nodeInst = Read.GetNewModel("koth_data_flow");
+                ModelInstance nodeInst = Read.GetModelInstance("koth_data_flow");
                 _models.Add(nodeInst);
                 // todo: spinning + changing color when active
-                ModelInstance circleInst = Read.GetNewModel("koth_terminal");
+                ModelInstance circleInst = Read.GetModelInstance("koth_terminal");
                 float scale = data.Volume.CylinderRadius.FloatValue;
                 _circleScale = Matrix4.CreateScale(scale);
                 _models.Add(circleInst);

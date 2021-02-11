@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using MphRead.Effects;
+using MphRead.Entities;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
@@ -86,8 +87,8 @@ namespace MphRead
             {
                 if (name != "" && name != "sparksFall" && name != "mortarSecondary" && name != "powerBeamChargeNoSplatMP")
                 {
-                    Effect effect = Read.LoadEffect(name, archive);
-                    foreach (EffectElement element in effect.Elements)
+                    NewEffect effect = Read.NewLoadEffect(name, archive);
+                    foreach (NewEffectElement element in effect.Elements)
                     {
                     }
                 }
@@ -100,7 +101,7 @@ namespace MphRead
             var names = new List<string>() { "deathParticle", "geo1", "particles", "particles2" };
             foreach (string name in names)
             {
-                Model model = Read.GetModelByName(name);
+                NewModel model = Read.GetModelInstance(name).Model;
                 foreach (Material material in model.Materials)
                 {
                     if (material.XRepeat == RepeatMode.Mirror || material.YRepeat == RepeatMode.Mirror)
@@ -210,7 +211,7 @@ namespace MphRead
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 CollisionInfo collision = Collision.ReadCollision(meta.Value.CollisionPath, meta.Value.FirstHunt || meta.Value.Hybrid);
-                Model room = Read.GetRoomByName(meta.Key);
+                NewModel room = Read.GetRoomModelInstance(meta.Key).Model;
                 Nop();
             }
             Nop();
@@ -321,14 +322,14 @@ namespace MphRead
 
         public static void TestAllModels()
         {
-            foreach (Model model in GetAllModels())
+            foreach (NewModel model in GetAllModels())
             {
             }
         }
 
         public static void TestMtxRestore()
         {
-            foreach (Model model in GetAllModels())
+            foreach (NewModel model in GetAllModels())
             {
                 int count = 0;
                 int most = -1;
@@ -693,7 +694,7 @@ namespace MphRead
                         }
                         else
                         {
-                            Matrix3 transform = SceneSetup.GetTransformMatrix(player.Field64, player.FieldB4);
+                            Matrix3 transform = Matrix.GetTransform3(player.Field64, player.FieldB4);
                             var matrix = new Matrix4x3(transform.Row0, transform.Row1, transform.Row2, new Vector3());
                             CModelDraw(player.Gun, matrix);
                             if (player.SomeFlags.HasFlag(SomeFlags.DrawGunSmoke))
@@ -1023,7 +1024,7 @@ namespace MphRead
             );
         }
 
-        public static void GetPolygonAttrs(Model model, int polygonId)
+        public static void GetPolygonAttrs(NewModel model, int polygonId)
         {
             foreach (Material material in model.Materials)
             {
@@ -1031,7 +1032,7 @@ namespace MphRead
             }
         }
 
-        public static void GetPolygonAttrs(Model model, Material material, int polygonId)
+        public static void GetPolygonAttrs(NewModel model, Material material, int polygonId)
         {
             int v19 = polygonId == 1 ? 0x4000 : 0;
             int v20 = v19 | 0x8000;
@@ -1083,7 +1084,7 @@ namespace MphRead
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
-                SceneSetup.LoadRoom(meta.Key);
+                SceneSetup.LoadNewRoom(meta.Key);
             }
         }
 
@@ -1091,7 +1092,7 @@ namespace MphRead
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
-                Model room = Read.GetRoomByName(meta.Key);
+                NewModel room = Read.GetRoomModelInstance(meta.Key).Model;
                 Console.WriteLine(meta.Key);
                 for (int i = 0; i < room.Nodes.Count; i++)
                 {
@@ -1123,14 +1124,14 @@ namespace MphRead
 
         public static void TestEntityEffects()
         {
-            var effects = new Dictionary<int, Effect>();
+            var effects = new Dictionary<int, NewEffect>();
             for (int i = 0; i < Metadata.Effects.Count; i++)
             {
                 (string name, string? archive) = Metadata.Effects[i];
                 if (name != "" && name != "sparksFall" && name != "mortarSecondary"
                     && name != "powerBeamChargeNoSplatMP")
                 {
-                    effects.Add(i, Read.LoadEffect(name, archive));
+                    effects.Add(i, Read.NewLoadEffect(name, archive));
                 }
             }
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
@@ -1154,10 +1155,10 @@ namespace MphRead
                                     Console.WriteLine();
                                     printed = true;
                                 }
-                                Effect effect = effects[(int)data.EffectId];
+                                NewEffect effect = effects[(int)data.EffectId];
                                 Console.WriteLine($"[ ] Entity {entity.EntityId}, Effect {data.EffectId} ({effect.Name})");
                                 var elems = new List<string>();
-                                foreach (EffectElement element in effect.Elements)
+                                foreach (NewEffectElement element in effect.Elements)
                                 {
                                     (int setVecsId, int drawId) = EffectFuncBase.GetFuncIds(element.Flags, element.DrawType);
                                     string vecs = setVecsId switch
@@ -1256,27 +1257,27 @@ namespace MphRead
             Console.WriteLine();
         }
 
-        private static IEnumerable<Model> GetAllModels()
+        private static IEnumerable<NewModel> GetAllModels()
         {
             foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.ModelMetadata)
             {
-                yield return Read.GetModelByName(meta.Key);
+                yield return Read.GetModelInstance(meta.Key).Model;
             }
             foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.FirstHuntModels)
             {
-                yield return Read.GetModelByName(meta.Key, firstHunt: true);
+                yield return Read.GetModelInstance(meta.Key, firstHunt: true).Model;
             }
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
-                yield return Read.GetRoomByName(meta.Key);
+                yield return Read.GetRoomModelInstance(meta.Key).Model;
             }
         }
 
-        private static IEnumerable<Model> GetAllRooms()
+        private static IEnumerable<NewModel> GetAllRooms()
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
-                yield return Read.GetRoomByName(meta.Key);
+                yield return Read.GetRoomModelInstance(meta.Key).Model;
             }
         }
 

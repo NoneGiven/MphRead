@@ -35,7 +35,7 @@ namespace MphRead.Entities
                 {
                     modelName = "Teleporter";
                 }
-                ModelInstance inst = Read.GetNewModel(modelName);
+                ModelInstance inst = Read.GetModelInstance(modelName);
                 _models.Add(inst);
             }
             if (multiplayer)

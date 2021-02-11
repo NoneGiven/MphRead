@@ -29,7 +29,7 @@ namespace MphRead.Entities
             }
             else
             {
-                ModelInstance inst = Read.GetNewModel(meta.Name);
+                ModelInstance inst = Read.GetModelInstance(meta.Name);
                 _models.Add(inst);
                 // temporary
                 if (meta.Name == "SamusShip" || meta.Name == "SyluxTurret")
@@ -118,7 +118,7 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            ModelInstance inst = Read.GetFhNewModel("platform");
+            ModelInstance inst = Read.GetModelInstance("platform", firstHunt: true);
             _models.Add(inst);
         }
     }
