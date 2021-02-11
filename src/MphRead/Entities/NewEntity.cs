@@ -355,6 +355,10 @@ namespace MphRead.Entities
 
         protected void AddVolumeItem(CollisionVolume volume, Vector3 color, NewScene scene)
         {
+            if (!Selection.CheckVolume(this))
+            {
+                return;
+            }
             Vector3[] verts = Array.Empty<Vector3>();
             if (volume.Type == VolumeType.Box)
             {

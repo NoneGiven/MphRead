@@ -2162,7 +2162,14 @@ namespace MphRead
             }
             else if (e.Key == Keys.H)
             {
-                Selection.ToggleShowSelection();
+                if (e.Alt)
+                {
+                    Selection.ToggleUnselectedVolumes();
+                }
+                else
+                {
+                    Selection.ToggleShowSelection();
+                }
             }
             else if (e.Key == Keys.I)
             {

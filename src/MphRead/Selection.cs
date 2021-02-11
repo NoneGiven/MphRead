@@ -18,6 +18,12 @@ namespace MphRead
         private static bool Any => Mesh != null || Node != null || Instance != null || Entity != null;
 
         private static bool _showSelection = true;
+        private static bool _hideUnselectedVolumes = false;
+
+        public static bool CheckVolume(EntityBase entity)
+        {
+            return !_hideUnselectedVolumes || Entity == null || entity == Entity;
+        }
 
         public static SelectionType CheckSelection(EntityBase entity, ModelInstance inst, Node node, Mesh mesh)
         {
@@ -66,6 +72,11 @@ namespace MphRead
         public static void ToggleShowSelection()
         {
             _showSelection = !_showSelection;
+        }
+
+        public static void ToggleUnselectedVolumes()
+        {
+            _hideUnselectedVolumes = !_hideUnselectedVolumes;
         }
 
         private static readonly Vector3 _entityColor = Vector3.One; // white
