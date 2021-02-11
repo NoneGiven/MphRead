@@ -198,48 +198,48 @@ namespace MphRead
                 _modelMap.Add(entity.SceneId, entity);
                 if (entity.Entity is Entity<LightSourceEntityData> lightSource)
                 {
-                    var display = new LightSource(lightSource, entity.Transform);
+                    var display = new LightSource(lightSource, entity.Position);
                     _displayVolumes.Add(entity.SceneId, display);
                     _lightSourceMap.Add(entity.SceneId, display);
                     _lightSources.Add(display);
                 }
                 else if (entity.Entity is Entity<TriggerVolumeEntityData> trigger)
                 {
-                    _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(trigger, entity.Transform));
+                    _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(trigger, entity.Position));
                 }
                 else if (entity.Entity is Entity<FhTriggerVolumeEntityData> fhTrigger)
                 {
                     if (fhTrigger.Data.Subtype != 0)
                     {
-                        _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(fhTrigger, entity.Transform));
+                        _displayVolumes.Add(entity.SceneId, new TriggerVolumeDisplay(fhTrigger, entity.Position));
                     }
                 }
                 else if (entity.Entity is Entity<AreaVolumeEntityData> area)
                 {
-                    _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(area, entity.Transform));
+                    _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(area, entity.Position));
                 }
                 else if (entity.Entity is Entity<FhAreaVolumeEntityData> fhArea)
                 {
                     if (fhArea.Data.Subtype != 0)
                     {
-                        _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(fhArea, entity.Transform));
+                        _displayVolumes.Add(entity.SceneId, new AreaVolumeDisplay(fhArea, entity.Position));
                     }
                 }
                 else if (entity.Entity is Entity<MorphCameraEntityData> morphCamera)
                 {
-                    _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(morphCamera, entity.Transform));
+                    _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(morphCamera, entity.Position));
                 }
                 else if (entity.Entity is Entity<FhMorphCameraEntityData> fhMorphCamera)
                 {
-                    _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(fhMorphCamera, entity.Transform));
+                    _displayVolumes.Add(entity.SceneId, new MorphCameraDisplay(fhMorphCamera, entity.Position));
                 }
                 else if (entity.Entity is Entity<JumpPadEntityData> jumpPad && entity.Name != "JumpPad_Beam")
                 {
-                    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(jumpPad, entity.Transform));
+                    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(jumpPad, entity.Position));
                 }
                 else if (entity.Entity is Entity<FhJumpPadEntityData> fhJumpPad)
                 {
-                    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(fhJumpPad, entity.Transform));
+                    _displayVolumes.Add(entity.SceneId, new JumpPadDisplay(fhJumpPad, entity.Position));
                 }
                 else if (entity.Entity is Entity<ObjectEntityData> obj && obj.Data.EffectId > 0 && (obj.Data.EffectFlags & 1) != 0)
                 {
@@ -247,11 +247,11 @@ namespace MphRead
                 }
                 else if (entity.Entity is Entity<FlagBaseEntityData> flag)
                 {
-                    _displayVolumes.Add(entity.SceneId, new FlagBaseDisplay(flag, entity.Transform));
+                    _displayVolumes.Add(entity.SceneId, new FlagBaseDisplay(flag, entity.Position));
                 }
                 else if (entity.Entity is Entity<NodeDefenseEntityData> defense)
                 {
-                    _displayVolumes.Add(entity.SceneId, new NodeDefenseDisplay(defense, entity.Transform));
+                    _displayVolumes.Add(entity.SceneId, new NodeDefenseDisplay(defense, entity.Position));
                 }
                 else if (entity.Entity is Entity<PointModuleEntityData> module)
                 {
@@ -586,7 +586,7 @@ namespace MphRead
             _selectedModelId = sceneId;
             foreach (Mesh mesh in SelectedModel.Meshes)
             {
-                mesh.Selection = Selection.Selected;
+                mesh.Selection = SelectionType.Selected;
             }
             if (SelectedModel.Entity != null)
             {
@@ -595,7 +595,7 @@ namespace MphRead
                 {
                     foreach (Mesh mesh in parent.Meshes)
                     {
-                        mesh.Selection = Selection.Parent;
+                        mesh.Selection = SelectionType.Parent;
                     }
                 }
                 ushort childId = SelectedModel.Entity.GetChildId();
@@ -603,7 +603,7 @@ namespace MphRead
                 {
                     foreach (Mesh mesh in child.Meshes)
                     {
-                        mesh.Selection = Selection.Child;
+                        mesh.Selection = SelectionType.Child;
                     }
                 }
             }
@@ -622,7 +622,7 @@ namespace MphRead
             _selectedNodeId = nodeId;
             foreach (Mesh mesh in SelectedModel.GetNodeMeshes(_selectedNodeId))
             {
-                mesh.Selection = Selection.Selected;
+                mesh.Selection = SelectionType.Selected;
             }
         }
 
@@ -631,7 +631,7 @@ namespace MphRead
             Deselect();
             _selectedModelId = sceneId;
             _selectedMeshId = meshId;
-            SelectedModel.Meshes[meshId].Selection = Selection.Selected;
+            SelectedModel.Meshes[meshId].Selection = SelectionType.Selected;
         }
 
         private void Deselect()
@@ -640,7 +640,7 @@ namespace MphRead
             {
                 foreach (Mesh mesh in SelectedModel.Meshes)
                 {
-                    mesh.Selection = Selection.None;
+                    mesh.Selection = SelectionType.None;
                 }
                 if (SelectedModel.Entity != null)
                 {
@@ -649,7 +649,7 @@ namespace MphRead
                     {
                         foreach (Mesh mesh in parent.Meshes)
                         {
-                            mesh.Selection = Selection.None;
+                            mesh.Selection = SelectionType.None;
                         }
                     }
                     ushort childId = SelectedModel.Entity.GetChildId();
@@ -657,7 +657,7 @@ namespace MphRead
                     {
                         foreach (Mesh mesh in child.Meshes)
                         {
-                            mesh.Selection = Selection.None;
+                            mesh.Selection = SelectionType.None;
                         }
                     }
                 }

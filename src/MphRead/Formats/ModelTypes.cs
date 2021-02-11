@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using MphRead.Effects;
 using MphRead.Formats.Collision;
@@ -432,11 +431,9 @@ namespace MphRead.Models
         public bool AltForm { get; set; }
         public bool Frozen { get; set; }
         // todo: load/init/cache/etc.
-        [NotNull, DisallowNull]
         private static Model? _altIceModel;
         private static Model? _samusIceModel;
         private static Model? _noxusIceModel;
-        [NotNull, DisallowNull]
         private Model? _bipedIceModel;
 
         public PlayerModel(string name, Header header, IReadOnlyList<RawNode> nodes,
@@ -460,27 +457,30 @@ namespace MphRead.Models
                 _altIceModel = renderer.AddModel("alt_ice", 0, firstHunt: false);
                 renderer.InitModel(_altIceModel);
             }
-            if (_samusIceModel == null)
+            if (Hunter == Hunter.Noxus || Hunter == Hunter.Trace)
+            {
+                if (_noxusIceModel == null)
+                {
+                    _noxusIceModel = renderer.AddModel("nox_ice", 0, firstHunt: false);
+                    renderer.InitModel(_noxusIceModel);
+                }
+            }
+            else if (_samusIceModel == null)
             {
                 _samusIceModel = renderer.AddModel("samus_ice", 0, firstHunt: false);
                 renderer.InitModel(_samusIceModel);
             }
-            if (_noxusIceModel == null)
-            {
-                _noxusIceModel = renderer.AddModel("nox_ice", 0, firstHunt: false);
-                renderer.InitModel(_noxusIceModel);
-            }
-            _bipedIceModel = Hunter == Hunter.Noxus || Hunter == Hunter.Trace ? _noxusIceModel : _samusIceModel;
+            _bipedIceModel = Hunter == Hunter.Noxus || Hunter == Hunter.Trace ? _noxusIceModel! : _samusIceModel!;
         }
 
-        private void GetFrozenDrawItems()
+        public void GetFrozenDrawItems()
         {
             if (Frozen)
             {
                 if (AltForm)
                 {
                     // todo: collision radius scale, height offset
-                    Node node = _altIceModel.Nodes[0];
+                    Node node = _altIceModel!.Nodes[0];
                     Mesh mesh = _altIceModel.Meshes[node.MeshId / 2];
                     Material material = _altIceModel.Materials[mesh.MaterialId];
                     //var meshInfo = new MeshInfo(_altIceModel, node, mesh, material, polygonId++, 1, Transform);
@@ -489,7 +489,7 @@ namespace MphRead.Models
                 }
                 else
                 {
-                    for (int j = 0; j < _bipedIceModel.Nodes.Count; j++)
+                    for (int j = 0; j < _bipedIceModel!.Nodes.Count; j++)
                     {
                         _bipedIceModel.Nodes[j].Animation = Nodes[j].Animation;
                     }

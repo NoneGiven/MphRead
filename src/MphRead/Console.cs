@@ -21,13 +21,9 @@ namespace MphRead
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                IntPtr iStdIn = GetStdHandle(-10);
                 IntPtr iStdOut = GetStdHandle(-11);
-                GetConsoleMode(iStdIn, out uint inConsoleMode);
                 GetConsoleMode(iStdOut, out uint outConsoleMode);
-                inConsoleMode |= 0x0200;
-                outConsoleMode |= 0x0004 | 0x0008;
-                SetConsoleMode(iStdIn, inConsoleMode);
+                outConsoleMode |= 4;
                 SetConsoleMode(iStdOut, outConsoleMode);
             }
         }

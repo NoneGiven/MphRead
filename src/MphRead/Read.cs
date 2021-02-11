@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using MphRead.Archive;
+using MphRead.Entities;
 using MphRead.Export;
 using MphRead.Models;
 using OpenTK.Mathematics;
@@ -14,6 +15,201 @@ namespace MphRead
 {
     public static class Read
     {
+        private static readonly Dictionary<string, NewModel> _modelCache = new Dictionary<string, NewModel>();
+        private static readonly Dictionary<string, NewModel> _fhModelCache = new Dictionary<string, NewModel>();
+
+        public static void RemoveModel(string name)
+        {
+            _modelCache.Remove(name);
+        }
+
+        public static void RemoveFhModel(string name)
+        {
+            _fhModelCache.Remove(name);
+        }
+
+        public static ModelInstance GetNewModel(string name)
+        {
+            if (!_modelCache.TryGetValue(name, out NewModel? model))
+            {
+                model = GetNewModel(name, firstHunt: false);
+                if (model == null)
+                {
+                    throw new ProgramException("No model with this name is known.");
+                }
+                _modelCache.Add(name, model);
+            }
+            return new ModelInstance(model);
+        }
+
+        public static ModelInstance GetFhNewModel(string name)
+        {
+            if (!_fhModelCache.TryGetValue(name, out NewModel? model))
+            {
+                model = GetNewModel(name, firstHunt: true);
+                if (model == null)
+                {
+                    throw new ProgramException("No model with this name is known.");
+                }
+                _fhModelCache.Add(name, model);
+            }
+            return new ModelInstance(model);
+        }
+
+        private static NewModel? GetNewModel(string name, bool firstHunt)
+        {
+            ModelMetadata? meta;
+            if (firstHunt)
+            {
+                meta = Metadata.GetFirstHuntModelByName(name);
+            }
+            else
+            {
+                meta = Metadata.GetModelByName(name);
+            }
+            if (meta == null)
+            {
+                return null;
+            }
+            return GetNewModel(meta.Name, meta.ModelPath, meta.AnimationPath, meta.AnimationShare, meta.Recolors, meta.FirstHunt);
+        }
+
+        public static ModelInstance GetNewRoom(string name)
+        {
+            (RoomMetadata? meta, _) = Metadata.GetRoomByName(name);
+            if (meta == null)
+            {
+                throw new ProgramException("No room with this name is known.");
+            }
+            if (!_modelCache.TryGetValue(meta.Name, out NewModel? model))
+            {
+                model = GetNewRoom(meta);
+                if (model == null)
+                {
+                    throw new ProgramException("No model with this name is known.");
+                }
+                _modelCache.Add(name, model);
+            }
+            return new ModelInstance(model);
+        }
+
+        private static NewModel GetNewRoom(RoomMetadata meta)
+        {
+            var recolors = new List<RecolorMetadata>()
+            {
+                new RecolorMetadata("default", meta.ModelPath, meta.TexturePath ?? meta.ModelPath)
+            };
+            return GetNewModel(meta.Name, meta.ModelPath, meta.AnimationPath, animationShare: null, recolors,
+                firstHunt: meta.FirstHunt || meta.Hybrid);
+        }
+
+        private static NewModel GetNewModel(string name, string modelPath, string? animationPath, string? animationShare,
+            IReadOnlyList<RecolorMetadata> recolorMeta, bool firstHunt)
+        {
+            string root = firstHunt ? Paths.FhFileSystem : Paths.FileSystem;
+            string path = Path.Combine(root, modelPath);
+            ReadOnlySpan<byte> initialBytes = ReadBytes(path, firstHunt);
+            Header header = ReadStruct<Header>(initialBytes[0..Sizes.Header]);
+            IReadOnlyList<RawNode> nodes = DoOffsets<RawNode>(initialBytes, header.NodeOffset, header.NodeCount);
+            IReadOnlyList<RawMesh> meshes = DoOffsets<RawMesh>(initialBytes, header.MeshOffset, header.MeshCount);
+            IReadOnlyList<DisplayList> dlists = DoOffsets<DisplayList>(initialBytes, header.DlistOffset, header.MeshCount);
+            var instructions = new List<IReadOnlyList<RenderInstruction>>();
+            foreach (DisplayList dlist in dlists)
+            {
+                instructions.Add(DoRenderInstructions(initialBytes, dlist));
+            }
+            IReadOnlyList<RawMaterial> materials = DoOffsets<RawMaterial>(initialBytes, header.MaterialOffset, header.MaterialCount);
+            var recolors = new List<Recolor>();
+            foreach (RecolorMetadata meta in recolorMeta)
+            {
+                ReadOnlySpan<byte> modelBytes = initialBytes;
+                Header modelHeader = header;
+                if (Path.Combine(root, meta.ModelPath) != path)
+                {
+                    modelBytes = ReadBytes(meta.ModelPath, firstHunt);
+                    modelHeader = ReadStruct<Header>(modelBytes[0..Sizes.Header]);
+                }
+                IReadOnlyList<Texture> textures = DoOffsets<Texture>(modelBytes, modelHeader.TextureOffset, modelHeader.TextureCount);
+                IReadOnlyList<Palette> palettes = DoOffsets<Palette>(modelBytes, modelHeader.PaletteOffset, modelHeader.PaletteCount);
+                ReadOnlySpan<byte> textureBytes = modelBytes;
+                if (meta.TexturePath != meta.ModelPath)
+                {
+                    textureBytes = ReadBytes(meta.TexturePath, firstHunt);
+                }
+                ReadOnlySpan<byte> paletteBytes = textureBytes;
+                if (meta.PalettePath != meta.TexturePath && meta.ReplaceIds.Count == 0)
+                {
+                    paletteBytes = ReadBytes(meta.PalettePath, firstHunt);
+                    if (meta.SeparatePaletteHeader)
+                    {
+                        Header paletteHeader = ReadStruct<Header>(paletteBytes[0..Sizes.Header]);
+                        palettes = DoOffsets<Palette>(paletteBytes, paletteHeader.PaletteOffset, paletteHeader.PaletteCount);
+                    }
+                }
+                var textureData = new List<IReadOnlyList<TextureData>>();
+                var paletteData = new List<IReadOnlyList<PaletteData>>();
+                foreach (Texture texture in textures)
+                {
+                    textureData.Add(GetTextureData(texture, textureBytes));
+                }
+                foreach (Palette palette in palettes)
+                {
+                    paletteData.Add(GetPaletteData(palette, paletteBytes));
+                }
+                string replacePath = meta.ReplacePath ?? meta.PalettePath;
+                if (replacePath != meta.TexturePath && meta.ReplaceIds.Count > 0)
+                {
+                    paletteBytes = ReadBytes(replacePath, firstHunt);
+                    Header paletteHeader = ReadStruct<Header>(paletteBytes[0..Sizes.Header]);
+                    IReadOnlyList<Palette> replacePalettes
+                        = DoOffsets<Palette>(paletteBytes, paletteHeader.PaletteOffset, paletteHeader.PaletteCount);
+                    var replacePaletteData = new List<IReadOnlyList<PaletteData>>();
+                    foreach (Palette palette in replacePalettes)
+                    {
+                        replacePaletteData.Add(GetPaletteData(palette, paletteBytes));
+                    }
+                    for (int i = 0; i < replacePaletteData.Count; i++)
+                    {
+                        if (meta.ReplaceIds.TryGetValue(i, out IEnumerable<int>? replaceIds))
+                        {
+                            // note: palette header is not being replaced
+                            foreach (int replaceId in replaceIds)
+                            {
+                                paletteData[replaceId] = replacePaletteData[i];
+                            }
+                        }
+                    }
+                }
+                recolors.Add(new Recolor(meta.Name, textures, palettes, textureData, paletteData));
+            }
+            // note: in RAM, model texture matrices are 4x4, but only the leftmost 4x2 or 4x3 is set,
+            // and the rest is garbage data, and ultimately only the upper-left 3x2 is actually used
+            var textureMatrices = new List<Matrix4>();
+            if (name == "AlimbicCapsule")
+            {
+                Debug.Assert(header.TextureMatrixCount == 1);
+                Matrix4 textureMatrix = Matrix4.Zero;
+                textureMatrix.M21 = Fixed.ToFloat(-2048);
+                textureMatrix.M31 = Fixed.ToFloat(410);
+                textureMatrix.M32 = Fixed.ToFloat(-3891);
+                textureMatrices.Add(textureMatrix);
+            }
+            IReadOnlyList<int> nodeWeights = DoOffsets<int>(initialBytes, header.NodeWeightOffset, header.NodeWeightCount);
+            AnimationResults animations = LoadAnimation(name, animationPath, nodes, firstHunt);
+            if (animationShare != null)
+            {
+                AnimationResults shared = LoadAnimation(name, animationShare, nodes, firstHunt);
+                shared.NodeAnimationGroups.AddRange(animations.NodeAnimationGroups);
+                shared.MaterialAnimationGroups.AddRange(animations.MaterialAnimationGroups);
+                shared.TexcoordAnimationGroups.AddRange(animations.TexcoordAnimationGroups);
+                shared.TextureAnimationGroups.AddRange(animations.TextureAnimationGroups);
+                animations = shared;
+            }
+            return new NewModel(name, firstHunt, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
+                animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
+                textureMatrices, recolors, nodeWeights);
+        }
+
         // NOTE: When _Texture file exists, the main _Model file header will list a non-zero number of textures/palettes,
         // but the texture/palette offset will be 0 (because they're located at the start of the _Texture file).
         // However, when recolor files are used (e.g. _pal01 or flagbase_ctf_mdl -> flagbase_ctf_green_img), the number
@@ -527,8 +723,8 @@ namespace MphRead
                 EntityType.Object => ReadEntity<ObjectEntityData>(bytes, entry, header),
                 EntityType.PlayerSpawn => ReadEntity<PlayerSpawnEntityData>(bytes, entry, header),
                 EntityType.Door => ReadEntity<DoorEntityData>(bytes, entry, header),
-                EntityType.Item => ReadEntity<ItemEntityData>(bytes, entry, header),
-                EntityType.Enemy => ReadEntity<EnemyEntityData>(bytes, entry, header),
+                EntityType.ItemSpawn => ReadEntity<ItemEntityData>(bytes, entry, header),
+                EntityType.EnemySpawn => ReadEntity<EnemyEntityData>(bytes, entry, header),
                 EntityType.TriggerVolume => ReadEntity<TriggerVolumeEntityData>(bytes, entry, header),
                 EntityType.AreaVolume => ReadEntity<AreaVolumeEntityData>(bytes, entry, header),
                 EntityType.JumpPad => ReadEntity<JumpPadEntityData>(bytes, entry, header),
@@ -659,6 +855,9 @@ namespace MphRead
         public static Dictionary<string, Model> EffectModels { get; } = new Dictionary<string, Model>();
         private static readonly Dictionary<(string, string), Particle> _particleDefs = new Dictionary<(string, string), Particle>();
 
+        private static readonly Dictionary<string, NewEffect> _newEffects = new Dictionary<string, NewEffect>();
+        private static readonly Dictionary<(string, string), NewParticle> _newParticleDefs = new Dictionary<(string, string), NewParticle>();
+
         private static Effect LoadEffect(string path)
         {
             if (_effects.TryGetValue(path, out Effect? cached))
@@ -740,6 +939,121 @@ namespace MphRead
                 int materialId = model.Meshes[node.MeshId / 2].MaterialId;
                 var newParticle = new Particle(particleName, model, node, materialId);
                 _particleDefs.Add((modelName, particleName), newParticle);
+                return newParticle;
+            }
+            throw new ProgramException("Could not get particle.");
+        }
+
+        public static NewEffect NewLoadEffect(int id)
+        {
+            if (id < 1 || id > Metadata.Effects.Count)
+            {
+                throw new ProgramException("Could not get particle.");
+            }
+            (string name, string? archive) = Metadata.Effects[id];
+            return NewLoadEffect(name, archive);
+        }
+
+        public static NewEffect NewLoadEffect(string name, string? archive)
+        {
+            string path;
+            if (archive == null)
+            {
+                path = $"effects/{name}_PS.bin";
+            }
+            else
+            {
+                path = $"_archives/{archive}/{name}_PS.bin";
+            }
+            NewEffect effect = NewLoadEffect(path);
+            foreach (NewEffectElement element in effect.Elements)
+            {
+                if (element.ChildEffectId != 0)
+                {
+                    NewLoadEffect((int)element.ChildEffectId);
+                }
+            }
+            return effect;
+        }
+
+        private static NewEffect NewLoadEffect(string path)
+        {
+            if (_newEffects.TryGetValue(path, out NewEffect? cached))
+            {
+                return cached;
+            }
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
+            RawEffect effect = ReadStruct<RawEffect>(bytes);
+            var funcs = new Dictionary<uint, FxFuncInfo>();
+            foreach (uint offset in DoOffsets<uint>(bytes, effect.FuncOffset, effect.FuncCount))
+            {
+                uint funcId = SpanReadUint(bytes, offset);
+                uint paramOffset = SpanReadUint(bytes, offset + 4);
+                DebugValidateParams(funcId, offset, paramOffset);
+                uint paramCount = (offset - paramOffset) / 4;
+                IReadOnlyList<int> parameters = DoOffsets<int>(bytes, paramOffset, paramCount);
+                funcs.Add(offset, new FxFuncInfo(funcId, parameters));
+            }
+            // todo: these are also offsets into the func/param arrays; what are they used for?
+            IReadOnlyList<uint> list2 = DoOffsets<uint>(bytes, effect.Offset2, effect.Count2);
+            IReadOnlyList<uint> elementOffsets = DoOffsets<uint>(bytes, effect.ElementOffset, effect.ElementCount);
+            var elements = new List<NewEffectElement>();
+            foreach (uint offset in elementOffsets)
+            {
+                RawEffectElement element = DoOffset<RawEffectElement>(bytes, offset);
+                var particles = new List<NewParticle>();
+                foreach (uint nameOffset in DoOffsets<uint>(bytes, element.ParticleOffset, element.ParticleCount))
+                {
+                    // todo: move the model reference to the element instead of the particle definitions
+                    particles.Add(NewGetParticle(element.ModelName.MarshalString(), ReadString(bytes, nameOffset, 16)));
+                }
+                var elemFuncs = new Dictionary<FuncAction, FxFuncInfo>();
+                IReadOnlyList<uint> elemFuncMeta = DoOffsets<uint>(bytes, element.FuncOffset, 2 * element.FuncCount);
+                for (int i = 0; i < elemFuncMeta.Count; i += 2)
+                {
+                    uint index = elemFuncMeta[i];
+                    uint funcOffset = elemFuncMeta[i + 1];
+                    if (funcOffset != 0)
+                    {
+                        // the main list always includes the offsets referenced by elements
+                        elemFuncs.Add((FuncAction)index, funcs[funcOffset]);
+                    }
+                }
+                elements.Add(new NewEffectElement(element, particles, funcs, elemFuncs));
+            }
+            var newEffect = new NewEffect(effect, funcs, list2, elements, path);
+            _newEffects.Add(path, newEffect);
+            return newEffect;
+        }
+
+        public static NewParticle NewGetSingleParticle(SingleType type)
+        {
+            if (Metadata.SingleParticles.TryGetValue(type, out (string Model, string Particle) meta))
+            {
+                return NewGetParticle(meta.Model, meta.Particle);
+            }
+            throw new ProgramException("Could not get single particle.");
+        }
+
+        private static NewParticle NewGetParticle(string modelName, string particleName)
+        {
+            if (_newParticleDefs.TryGetValue((modelName, particleName), out NewParticle? particle))
+            {
+                return particle;
+            }
+            ModelInstance inst = GetNewModel(modelName);
+            NewModel model = inst.Model;
+            Node? node = model.Nodes.FirstOrDefault(n => n.Name == particleName);
+            // todo: see what the game does here; gib3/gib4 nodes are probably meant to be used for these
+            if (modelName == "geo1" && particleName == "gib")
+            {
+                node = model.Nodes.First(n => n.Name == "gib3");
+            }
+            if (node != null && node.MeshCount > 0)
+            {
+                int materialId = model.Meshes[node.MeshId / 2].MaterialId;
+                var newParticle = new NewParticle(particleName, inst.Model, node, materialId);
+                _newParticleDefs.Add((modelName, particleName), newParticle);
                 return newParticle;
             }
             throw new ProgramException("Could not get particle.");

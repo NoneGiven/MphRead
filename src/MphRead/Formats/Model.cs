@@ -142,11 +142,13 @@ namespace MphRead
             }
             set
             {
-                _transform = SceneSetup.ComputeNodeTransforms(value, new Vector3(
-                    MathHelper.DegreesToRadians(Rotation.X),
-                    MathHelper.DegreesToRadians(Rotation.Y),
-                    MathHelper.DegreesToRadians(Rotation.Z)),
-                    Position);
+                _transform = Matrix4.CreateScale(value)
+                    * Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(Rotation.Z))
+                    * Matrix4.CreateRotationY(MathHelper.DegreesToRadians(Rotation.Y))
+                    * Matrix4.CreateRotationX(MathHelper.DegreesToRadians(Rotation.X));
+                _transform.M41 = Position.X;
+                _transform.M42 = Position.Y;
+                _transform.M43 = Position.Z;
                 _scale = value;
             }
         }
@@ -159,11 +161,13 @@ namespace MphRead
             }
             set
             {
-                _transform = SceneSetup.ComputeNodeTransforms(Scale, new Vector3(
-                    MathHelper.DegreesToRadians(value.X),
-                    MathHelper.DegreesToRadians(value.Y),
-                    MathHelper.DegreesToRadians(value.Z)),
-                    Position);
+                _transform = Matrix4.CreateScale(Scale)
+                    * Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(value.Z))
+                    * Matrix4.CreateRotationY(MathHelper.DegreesToRadians(value.Y))
+                    * Matrix4.CreateRotationX(MathHelper.DegreesToRadians(value.X));
+                _transform.M41 = Position.X;
+                _transform.M42 = Position.Y;
+                _transform.M43 = Position.Z;
                 _rotation = value;
             }
         }
