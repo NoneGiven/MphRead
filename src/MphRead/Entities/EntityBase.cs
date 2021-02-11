@@ -107,7 +107,7 @@ namespace MphRead.Entities
             _anyLighting = _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));
         }
 
-        public virtual void Destroy()
+        public virtual void Destroy(Scene scene)
         {
         }
 

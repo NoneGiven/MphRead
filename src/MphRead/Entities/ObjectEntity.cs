@@ -92,6 +92,14 @@ namespace MphRead.Entities
             }
         }
 
+        public override void Destroy(Scene scene)
+        {
+            if (_effectEntry != null)
+            {
+                scene.UnlinkEffectEntry(_effectEntry);
+            }
+        }
+
         public override void Process(Scene scene)
         {
             ShouldDraw = !_scanVisorOnly || scene.ScanVisor;
@@ -114,14 +122,6 @@ namespace MphRead.Entities
                         processEffect = (_flags & 3) != 0;
                     }
                 }
-                //if (ForceSpawnEffect)
-                //{
-                //    if (_effectEntry == null)
-                //    {
-                //        processEffect = true;
-                //    }
-                //    ForceSpawnEffect = false;
-                //}
                 if (processEffect)
                 {
                     if (!_effectProcessing)

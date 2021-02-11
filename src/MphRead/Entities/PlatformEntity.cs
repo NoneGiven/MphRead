@@ -72,6 +72,18 @@ namespace MphRead.Entities
             }
         }
 
+        public override void Destroy(Scene scene)
+        {
+            for (int i = 0; i < _effects.Count; i++)
+            {
+                EffectEntry? effectEntry = _effects[i];
+                if (effectEntry != null)
+                {
+                    scene.UnlinkEffectEntry(effectEntry);
+                }
+            }
+        }
+
         public override void Process(Scene scene)
         {
             // todo: if "is_visible" returns false (and other conditions), don't draw the effects

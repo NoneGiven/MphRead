@@ -805,7 +805,7 @@ namespace MphRead
             {
                 return;
             }
-            entity.Destroy();
+            entity.Destroy(this);
             _entityMap.Remove(entity.Id);
             _entitySort.RemoveAll(e => e == entity);
             _entities.RemoveAll(e => e == entity);
