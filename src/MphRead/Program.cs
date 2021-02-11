@@ -89,7 +89,7 @@ namespace MphRead
                 {
                     Exit();
                 }
-                using var renderer = new Renderer();
+                using var renderer = new NewRenderWindow();
                 foreach (string room in rooms)
                 {
                     renderer.AddRoom(room, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
