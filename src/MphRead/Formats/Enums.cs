@@ -155,6 +155,14 @@ namespace MphRead
         StateBits = 4
     }
 
+    public enum FhTriggerType : uint
+    {
+        Sphere = 0,
+        Box = 1,
+        Cylinder = 2, // not used for area volumes -- game code mistakenly copies data from box volume
+        Threshold = 3 // not used for area volumes
+    }
+
     public enum Message : uint
     {
         None = 0,

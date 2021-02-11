@@ -100,7 +100,8 @@ namespace MphRead.Entities
 
         public override void GetDisplayVolumes(Scene scene)
         {
-            if (scene.ShowVolumes == VolumeDisplay.TriggerParent || scene.ShowVolumes == VolumeDisplay.TriggerChild)
+            if (_data.Subtype != FhTriggerType.Threshold &&
+                (scene.ShowVolumes == VolumeDisplay.TriggerParent || scene.ShowVolumes == VolumeDisplay.TriggerChild))
             {
                 Vector3 color = scene.ShowVolumes == VolumeDisplay.TriggerParent ? _parentEventColor : _childEventColor;
                 AddVolumeItem(_volume, color, scene);

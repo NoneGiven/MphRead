@@ -559,7 +559,7 @@ namespace MphRead
     public readonly struct FhTriggerVolumeEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Subtype; // 0/1/2 - sphere/box/cylinder, 3 - threshold
+        public readonly FhTriggerType Subtype; // 0/1/2 - sphere/box/cylinder, 3 - threshold
         public readonly FhRawCollisionVolume Box;
         public readonly FhRawCollisionVolume Sphere;
         public readonly FhRawCollisionVolume Cylinder;
@@ -580,19 +580,15 @@ namespace MphRead
         {
             get
             {
-                if (Subtype == 0)
-                {
-                    return Sphere;
-                }
-                if (Subtype == 1)
-                {
-                    return Box;
-                }
-                if (Subtype == 2)
+                if (Subtype == FhTriggerType.Cylinder)
                 {
                     return Cylinder;
                 }
-                return default;
+                if (Subtype == FhTriggerType.Box)
+                {
+                    return Box;
+                }
+                return Sphere;
             }
         }
     }
@@ -626,7 +622,7 @@ namespace MphRead
     public readonly struct FhAreaVolumeEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Subtype; // 0 - sphere, 1/2 - box
+        public readonly FhTriggerType Subtype; // 0/1 - sphere/box
         public readonly FhRawCollisionVolume Box;
         public readonly FhRawCollisionVolume Sphere;
         public readonly FhRawCollisionVolume Cylinder;
@@ -642,15 +638,15 @@ namespace MphRead
         {
             get
             {
-                if (Subtype == 0)
+                if (Subtype == FhTriggerType.Cylinder)
                 {
-                    return Sphere;
+                    return Cylinder;
                 }
-                if (Subtype == 1 || Subtype == 2)
+                if (Subtype == FhTriggerType.Box)
                 {
                     return Box;
                 }
-                return default;
+                return Sphere;
             }
         }
     }

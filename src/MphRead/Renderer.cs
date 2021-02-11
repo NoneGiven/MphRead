@@ -2722,8 +2722,7 @@ namespace MphRead
             }
             else if (entity is FhTriggerVolumeEntity fhTrigger)
             {
-                _sb.Append($" ({fhTrigger.Data.Subtype})");
-                if (fhTrigger.Data.Subtype == 3)
+                if (fhTrigger.Data.Subtype == FhTriggerType.Threshold)
                 {
                     _sb.Append($" x{fhTrigger.Data.Threshold}");
                 }
