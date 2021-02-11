@@ -39,9 +39,9 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Init(Scene scene)
+        public override void Initialize(Scene scene)
         {
-            base.Init(scene);
+            base.Initialize(scene);
             if ((_flags & 0x80000) != 0)
             {
                 Model model = _models[0].Model;

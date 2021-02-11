@@ -217,7 +217,7 @@ namespace MphRead
                 _entityMap.Add(entity.Id, entity);
             }
             InitEntity(entity);
-            entity.Init(this);
+            entity.Initialize(this);
         }
 
         // called before load
@@ -252,7 +252,7 @@ namespace MphRead
             }
             for (int i = 0; i < _entities.Count; i++)
             {
-                _entities[i].Init(this);
+                _entities[i].Initialize(this);
             }
             OutputStart();
         }
@@ -784,7 +784,7 @@ namespace MphRead
                     {
                         // called after load -- entity needs init
                         EntityBase entity = AddModel(item.Name, item.Recolor, item.FirstHunt);
-                        entity.Init(this);
+                        entity.Initialize(this);
                     }
                     catch (ProgramException) { }
                 }
@@ -805,6 +805,7 @@ namespace MphRead
             {
                 return;
             }
+            entity.Destroy();
             _entityMap.Remove(entity.Id);
             _entitySort.RemoveAll(e => e == entity);
             _entities.RemoveAll(e => e == entity);

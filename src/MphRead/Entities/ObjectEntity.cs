@@ -83,9 +83,9 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Init(Scene scene)
+        public override void Initialize(Scene scene)
         {
-            base.Init(scene);
+            base.Initialize(scene);
             if (_data.EffectId > 0)
             {
                 scene.LoadEffect((int)_data.EffectId);

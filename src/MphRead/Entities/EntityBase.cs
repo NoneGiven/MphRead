@@ -102,9 +102,13 @@ namespace MphRead.Entities
             Type = type;
         }
 
-        public virtual void Init(Scene scene)
+        public virtual void Initialize(Scene scene)
         {
             _anyLighting = _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));
+        }
+
+        public virtual void Destroy()
+        {
         }
 
         protected virtual Matrix4 GetModelTransform(ModelInstance inst, int index)

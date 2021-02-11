@@ -26,9 +26,9 @@ namespace MphRead.Entities
             AddPlaceholderModel();
         }
 
-        public override void Init(Scene scene)
+        public override void Initialize(Scene scene)
         {
-            base.Init(scene);
+            base.Initialize(scene);
             if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
             {
                 _parent = parent;

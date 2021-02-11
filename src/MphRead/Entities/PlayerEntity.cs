@@ -71,9 +71,9 @@ namespace MphRead.Entities
             _bipedModel.SetNodeAnim(4);
         }
 
-        public override void Init(Scene scene)
+        public override void Initialize(Scene scene)
         {
-            base.Init(scene);
+            base.Initialize(scene);
             _dblDmgBindingId = scene.BindGetTexture(_dblDmgModel.Model, 0, 0, 0);
             _light1Vector = scene.Light1Vector;
             _light1Color = scene.Light1Color;

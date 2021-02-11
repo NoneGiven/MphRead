@@ -22,9 +22,9 @@ namespace MphRead.Entities
             _models[0].Active = false;
         }
 
-        public override void Init(Scene scene)
+        public override void Initialize(Scene scene)
         {
-            base.Init(scene);
+            base.Initialize(scene);
             if (_data.NextId != 0 && scene.TryGetEntity(_data.NextId, out EntityBase? entity))
             {
                 Next = (PointModuleEntity)entity;
