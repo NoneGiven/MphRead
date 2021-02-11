@@ -355,6 +355,7 @@ namespace MphRead
             }
         }
 
+        // todo: select other animation types, and enable playing in reverse
         private static void NextAnimation(bool control)
         {
             ModelInstance? inst = null;

@@ -18,6 +18,7 @@ namespace MphRead.Entities
             Recolor = Metadata.DoorPalettes[(int)data.Type];
             ModelInstance inst = Read.GetModelInstance("ForceField");
             _models.Add(inst);
+            // todo: fade in/out "animation"
             Active = data.Active != 0;
         }
 
