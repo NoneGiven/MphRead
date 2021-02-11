@@ -2494,8 +2494,8 @@ namespace MphRead
 
         private void OutputGetEntityInfo()
         {
-            EntityBase? model = Selection.Entity;
-            Debug.Assert(model != null);
+            EntityBase? entity = Selection.Entity;
+            Debug.Assert(entity != null);
             _sb.AppendLine();
             string header = "";
             if (_roomLoaded)
@@ -2514,13 +2514,13 @@ namespace MphRead
             Vector3 cam = _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1);
             _sb.AppendLine($"Camera ({cam.X}, {cam.Y}, {cam.Z})");
             _sb.AppendLine();
-            _sb.AppendLine($"Entity: {model.Type} [{model.Id}] {(model.Active ? "On " : "Off")} - Color {model.Recolor}");
+            _sb.AppendLine($"Entity: {entity.Type} [{entity.Id}] {(entity.Active ? "On " : "Off")} - Color {entity.Recolor}");
             // sktodo: remove as much string concatenation as possible
-            if (model.Type == EntityType.Room)
+            if (entity.Type == EntityType.Room)
             {
-                _sb.Append($" ({model.GetModels()[0].Model.Nodes.Count(n => n.IsRoomPartNode)})");
+                _sb.Append($" ({entity.GetModels()[0].Model.Nodes.Count(n => n.IsRoomPartNode)})");
             }
-            else if (model is LightSourceEntity light)
+            else if (entity is LightSourceEntity light)
             {
                 Vector3 color1 = light.Light1Color;
                 Vector3 color2 = light.Light2Color;
@@ -2532,7 +2532,7 @@ namespace MphRead
                 Vector3 vector2 = light.Light2Vector;
                 _sb.Append($" ({vector1.X}, {vector1.Y}, {vector1.Z}) ({vector2.X}, {vector2.Y}, {vector2.Z})");
             }
-            else if (model is AreaVolumeEntity area)
+            else if (entity is AreaVolumeEntity area)
             {
                 _sb.AppendLine();
                 _sb.Append($"Entry: {area.Data.InsideEvent}");
@@ -2550,7 +2550,7 @@ namespace MphRead
                     _sb.Append("Target: None");
                 }
             }
-            else if (model is FhAreaVolumeEntity fhArea)
+            else if (entity is FhAreaVolumeEntity fhArea)
             {
                 _sb.AppendLine();
                 _sb.Append($"Entry: {fhArea.Data.InsideEvent}");
@@ -2561,7 +2561,7 @@ namespace MphRead
                 _sb.AppendLine();
                 _sb.Append("Target: None");
             }
-            else if (model is TriggerVolumeEntity trigger)
+            else if (entity is TriggerVolumeEntity trigger)
             {
                 _sb.Append($" ({trigger.Data.Type})");
                 if (trigger.Data.Type == TriggerType.Threshold)
@@ -2591,7 +2591,7 @@ namespace MphRead
                 }
                 _sb.Append($", Param1: {trigger.Data.ChildEventParam1}, Param2: {trigger.Data.ChildEventParam2}");
             }
-            else if (model is FhTriggerVolumeEntity fhTrigger)
+            else if (entity is FhTriggerVolumeEntity fhTrigger)
             {
                 _sb.Append($" ({fhTrigger.Data.Subtype})");
                 if (fhTrigger.Data.Subtype == 3)
@@ -2621,16 +2621,16 @@ namespace MphRead
                 }
                 _sb.Append($", Param1: {fhTrigger.Data.ChildParam1}, Param2: 0");
             }
-            else if (model is ObjectEntity obj)
+            else if (entity is ObjectEntity obj)
             {
                 if (obj.Data.EffectId != 0)
                 {
                     _sb.Append($" ({obj.Data.EffectId}, {Metadata.Effects[(int)obj.Data.EffectId].Name})");
                 }
             }
-            _sb.AppendLine($"Position ({model.Position.X}, {model.Position.Y}, {model.Position.Z})");
-            _sb.AppendLine($"Rotation ({model.Rotation.X}, {model.Rotation.Y}, {model.Rotation.Z})");
-            _sb.AppendLine($"   Scale ({model.Scale.X}, {model.Scale.Y}, {model.Scale.Z})");
+            _sb.AppendLine($"Position ({entity.Position.X}, {entity.Position.Y}, {entity.Position.Z})");
+            _sb.AppendLine($"Rotation ({entity.Rotation.X}, {entity.Rotation.Y}, {entity.Rotation.Z})");
+            _sb.AppendLine($"   Scale ({entity.Scale.X}, {entity.Scale.Y}, {entity.Scale.Z})");
         }
 
         private string FormatOnOff(bool setting)
