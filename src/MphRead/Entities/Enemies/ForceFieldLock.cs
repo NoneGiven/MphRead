@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities.Enemies
 {
-    public class Enemy49Entity : EnemyEntity
+    public class Enemy49Entity : EnemyInstanceEntity
     {
         private Vector3 _vec1;
         private Vector3 _vec2;

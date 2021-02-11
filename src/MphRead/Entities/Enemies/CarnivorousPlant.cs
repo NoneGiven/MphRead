@@ -1,6 +1,6 @@
 namespace MphRead.Entities.Enemies
 {
-    public class Enemy51Entity : EnemyEntity
+    public class Enemy51Entity : EnemyInstanceEntity
     {
         public Enemy51Entity(EnemyInstanceEntityData data) : base(data)
         {

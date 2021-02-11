@@ -46,7 +46,7 @@ namespace MphRead.Entities
             if (_spawn)
             {
                 _spawn = false;
-                EnemyEntity? enemy = SpawnEnemy(this, _data.Type);
+                EnemyInstanceEntity? enemy = SpawnEnemy(this, _data.Type);
                 if (enemy != null)
                 {
                     scene.AddEntity(enemy);
@@ -56,7 +56,7 @@ namespace MphRead.Entities
         }
 
         // todo: entity node ref
-        public static EnemyEntity? SpawnEnemy(EntityBase spawner, EnemyType type)
+        public static EnemyInstanceEntity? SpawnEnemy(EntityBase spawner, EnemyType type)
         {
             if (type == EnemyType.ForceFieldLock)
             {

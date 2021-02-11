@@ -27,7 +27,7 @@ namespace MphRead.Entities
             // todo: despawn when deactivated/destroyed
             if (Active && _data.Type != 9 && !_lockSpawned)
             {
-                EnemyEntity? enemy = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock);
+                EnemyInstanceEntity? enemy = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock);
                 if (enemy != null)
                 {
                     scene.AddEntity(enemy);

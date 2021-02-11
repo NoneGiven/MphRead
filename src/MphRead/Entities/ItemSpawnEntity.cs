@@ -32,7 +32,7 @@ namespace MphRead.Entities
             // todo: item spawning logic
             if (_enabled && _spawn)
             {
-                ItemEntity item = SpawnItem(Position, (int)_data.ModelId);
+                ItemInstanceEntity item = SpawnItem(Position, (int)_data.ModelId);
                 scene.AddEntity(item);
                 _spawn = false;
             }
@@ -40,9 +40,9 @@ namespace MphRead.Entities
         }
 
         // todo: entity node ref
-        public static ItemEntity SpawnItem(Vector3 position, int itemType)
+        public static ItemInstanceEntity SpawnItem(Vector3 position, int itemType)
         {
-            return new ItemEntity(new ItemInstanceEntityData(position, itemType));
+            return new ItemInstanceEntity(new ItemInstanceEntityData(position, itemType));
         }
     }
 

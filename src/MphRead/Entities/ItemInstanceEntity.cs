@@ -15,9 +15,9 @@ namespace MphRead.Entities
         }
     }
 
-    public class ItemEntity : SpinningEntityBase
+    public class ItemInstanceEntity : SpinningEntityBase
     {
-        public ItemEntity(ItemInstanceEntityData data) : base(0.35f, Vector3.UnitY, 0, 0, EntityType.ItemInstance)
+        public ItemInstanceEntity(ItemInstanceEntityData data) : base(0.35f, Vector3.UnitY, 0, 0, EntityType.ItemInstance)
         {
             Position = data.Position.AddY(0.65f);
             ModelInstance inst = Read.GetModelInstance(Metadata.Items[data.ItemType]);
