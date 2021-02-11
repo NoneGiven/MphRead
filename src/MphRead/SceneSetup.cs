@@ -155,7 +155,7 @@ namespace MphRead
             IReadOnlyList<EntityBase> entities = LoadNewEntities(metadata, areaId, entityLayerId, mode);
             CollisionInfo collision = Collision.ReadCollision(metadata.CollisionPath, metadata.FirstHunt || metadata.Hybrid, nodeLayerMask);
             // todo: once ReadCollision is filering things, we don't need to pass nodeLayerMask here or return it
-            var room = new RoomEntity(Read.GetNewRoom(name), metadata, collision, nodeLayerMask);
+            var room = new RoomEntity(metadata, collision, nodeLayerMask);
             return (room, metadata, collision, entities, nodeLayerMask);
         }
 
@@ -610,77 +610,6 @@ namespace MphRead
             return models;
         }
 
-        public static CollisionVolume TransformVolume(CollisionVolume vol, Matrix4 transform)
-        {
-            if (vol.Type == VolumeType.Box)
-            {
-                return new CollisionVolume(
-                    Matrix.Vec3MultMtx3(vol.BoxVector1, transform),
-                    Matrix.Vec3MultMtx3(vol.BoxVector2, transform),
-                    Matrix.Vec3MultMtx3(vol.BoxVector3, transform),
-                    Matrix.Vec3MultMtx4(vol.BoxPosition, transform),
-                    vol.BoxDot1,
-                    vol.BoxDot2,
-                    vol.BoxDot3
-                );
-            }
-            if (vol.Type == VolumeType.Cylinder)
-            {
-                return new CollisionVolume(
-                    Matrix.Vec3MultMtx3(vol.CylinderVector, transform),
-                    Matrix.Vec3MultMtx4(vol.CylinderPosition, transform),
-                    vol.CylinderRadius,
-                    vol.CylinderDot
-                );
-            }
-            if (vol.Type == VolumeType.Sphere)
-            {
-                return new CollisionVolume(
-                    Matrix.Vec3MultMtx4(vol.SpherePosition, transform),
-                    vol.SphereRadius
-                );
-            }
-            throw new ProgramException($"Invalid volume type {vol.Type}.");
-        }
-
-        public static CollisionVolume TransformVolume(RawCollisionVolume vol, Matrix4 transform)
-        {
-            return TransformVolume(new CollisionVolume(vol), transform);
-        }
-
-        public static CollisionVolume TransformVolume(FhRawCollisionVolume vol, Matrix4 transform)
-        {
-            return TransformVolume(new CollisionVolume(vol), transform);
-        }
-
-        public static CollisionVolume MoveVolume(CollisionVolume vol, Vector3 position)
-        {
-            if (vol.Type == VolumeType.Box)
-            {
-                return new CollisionVolume(
-                    vol.BoxVector1, vol.BoxVector2, vol.BoxVector3, vol.BoxPosition + position, vol.BoxDot1, vol.BoxDot2, vol.BoxDot3);
-            }
-            if (vol.Type == VolumeType.Cylinder)
-            {
-                return new CollisionVolume(vol.CylinderVector, vol.CylinderPosition + position, vol.CylinderRadius, vol.CylinderDot);
-            }
-            if (vol.Type == VolumeType.Sphere)
-            {
-                return new CollisionVolume(vol.SpherePosition + position, vol.SphereRadius);
-            }
-            throw new ProgramException($"Invalid volume type {vol.Type}.");
-        }
-
-        public static CollisionVolume MoveVolume(RawCollisionVolume vol, Vector3 position)
-        {
-            return MoveVolume(new CollisionVolume(vol), position);
-        }
-
-        public static CollisionVolume MoveVolume(FhRawCollisionVolume vol, Vector3 position)
-        {
-            return MoveVolume(new CollisionVolume(vol), position);
-        }
-
         // todo: this is duplicated
         private static Vector3 Vector3ByMatrix4(Vector3 vector, Matrix4 matrix)
         {
@@ -769,7 +698,7 @@ namespace MphRead
             ObjectModel model = Read.GetModelByName<ObjectModel>(meta.Name, meta.RecolorId);
             if (data.EffectId > 0)
             {
-                model.EffectVolume = TransformVolume(data.Volume, model.Transform);
+                model.EffectVolume = CollisionVolume.Transform(data.Volume, model.Transform);
             }
             model.Position = data.Header.Position.ToFloatVector();
             ComputeModelMatrices(model, data.Header.RightVector.ToFloatVector(), data.Header.UpVector.ToFloatVector());

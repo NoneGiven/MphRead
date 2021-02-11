@@ -13,7 +13,7 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            _volume = SceneSetup.MoveVolume(_data.Volume, Position);
+            _volume = CollisionVolume.Move(_data.Volume, Position);
             if (mode == GameMode.Defender || mode == GameMode.Nodes)
             {
                 ModelInstance nodeInst = Read.GetNewModel("koth_data_flow");

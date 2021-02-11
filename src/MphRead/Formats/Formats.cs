@@ -742,6 +742,77 @@ namespace MphRead
             SphereRadius = rad;
         }
 
+        public static CollisionVolume Transform(CollisionVolume vol, Matrix4 transform)
+        {
+            if (vol.Type == VolumeType.Box)
+            {
+                return new CollisionVolume(
+                    Matrix.Vec3MultMtx3(vol.BoxVector1, transform),
+                    Matrix.Vec3MultMtx3(vol.BoxVector2, transform),
+                    Matrix.Vec3MultMtx3(vol.BoxVector3, transform),
+                    Matrix.Vec3MultMtx4(vol.BoxPosition, transform),
+                    vol.BoxDot1,
+                    vol.BoxDot2,
+                    vol.BoxDot3
+                );
+            }
+            if (vol.Type == VolumeType.Cylinder)
+            {
+                return new CollisionVolume(
+                    Matrix.Vec3MultMtx3(vol.CylinderVector, transform),
+                    Matrix.Vec3MultMtx4(vol.CylinderPosition, transform),
+                    vol.CylinderRadius,
+                    vol.CylinderDot
+                );
+            }
+            if (vol.Type == VolumeType.Sphere)
+            {
+                return new CollisionVolume(
+                    Matrix.Vec3MultMtx4(vol.SpherePosition, transform),
+                    vol.SphereRadius
+                );
+            }
+            throw new ProgramException($"Invalid volume type {vol.Type}.");
+        }
+
+        public static CollisionVolume Transform(RawCollisionVolume vol, Matrix4 transform)
+        {
+            return Transform(new CollisionVolume(vol), transform);
+        }
+
+        public static CollisionVolume Transform(FhRawCollisionVolume vol, Matrix4 transform)
+        {
+            return Transform(new CollisionVolume(vol), transform);
+        }
+
+        public static CollisionVolume Move(CollisionVolume vol, Vector3 position)
+        {
+            if (vol.Type == VolumeType.Box)
+            {
+                return new CollisionVolume(
+                    vol.BoxVector1, vol.BoxVector2, vol.BoxVector3, vol.BoxPosition + position, vol.BoxDot1, vol.BoxDot2, vol.BoxDot3);
+            }
+            if (vol.Type == VolumeType.Cylinder)
+            {
+                return new CollisionVolume(vol.CylinderVector, vol.CylinderPosition + position, vol.CylinderRadius, vol.CylinderDot);
+            }
+            if (vol.Type == VolumeType.Sphere)
+            {
+                return new CollisionVolume(vol.SpherePosition + position, vol.SphereRadius);
+            }
+            throw new ProgramException($"Invalid volume type {vol.Type}.");
+        }
+
+        public static CollisionVolume Move(RawCollisionVolume vol, Vector3 position)
+        {
+            return Move(new CollisionVolume(vol), position);
+        }
+
+        public static CollisionVolume Move(FhRawCollisionVolume vol, Vector3 position)
+        {
+            return Move(new CollisionVolume(vol), position);
+        }
+
         public bool TestPoint(Vector3 point)
         {
             if (Type == VolumeType.Box)
@@ -786,32 +857,32 @@ namespace MphRead
 
         public DisplayVolume(RawCollisionVolume volume, Matrix4 transform)
         {
-            Volume = SceneSetup.TransformVolume(volume, transform);
+            Volume = CollisionVolume.Transform(volume, transform);
         }
 
         public DisplayVolume(FhRawCollisionVolume volume, Matrix4 transform)
         {
-            Volume = SceneSetup.TransformVolume(volume, transform);
+            Volume = CollisionVolume.Transform(volume, transform);
         }
 
         public DisplayVolume(CollisionVolume volume, Matrix4 transform)
         {
-            Volume = SceneSetup.TransformVolume(volume, transform);
+            Volume = CollisionVolume.Transform(volume, transform);
         }
 
         public DisplayVolume(RawCollisionVolume volume, Vector3 position)
         {
-            Volume = SceneSetup.MoveVolume(volume, position);
+            Volume = CollisionVolume.Move(volume, position);
         }
 
         public DisplayVolume(FhRawCollisionVolume volume, Vector3 position)
         {
-            Volume = SceneSetup.MoveVolume(volume, position);
+            Volume = CollisionVolume.Move(volume, position);
         }
 
         public DisplayVolume(CollisionVolume volume, Vector3 position)
         {
-            Volume = SceneSetup.MoveVolume(volume, position);
+            Volume = CollisionVolume.Move(volume, position);
         }
 
         public abstract Vector3? GetColor(int index);

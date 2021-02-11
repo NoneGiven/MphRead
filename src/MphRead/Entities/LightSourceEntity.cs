@@ -20,7 +20,7 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            Volume = SceneSetup.MoveVolume(_data.Volume, Position);
+            Volume = CollisionVolume.Move(_data.Volume, Position);
             Light1Enabled = _data.Light1Enabled != 0;
             Light1Vector = _data.Light1Vector.ToFloatVector();
             Light1Color = _data.Light1Color.AsVector3();

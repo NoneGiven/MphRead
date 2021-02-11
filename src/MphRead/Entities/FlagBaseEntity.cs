@@ -12,7 +12,7 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            _volume = SceneSetup.MoveVolume(_data.Volume, Position);
+            _volume = CollisionVolume.Move(_data.Volume, Position);
             Recolor = mode == GameMode.Capture ? (int)data.TeamId : 0;
             // note: this mode check is necessary because e.g. Sic Transit has OctolithFlags/FlagBases
             // enabled in Defender mode according to their layer masks, but they don't appear in-game

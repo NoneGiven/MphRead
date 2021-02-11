@@ -553,6 +553,7 @@ namespace MphRead.Entities
             var transform = Matrix4.CreateScale(inst.Model.Scale);
             if (index == _spinModelIndex && inst.AnimInfo.Node.Group == null)
             {
+                // ntodo
                 transform *= SceneSetup.ComputeNodeTransforms(Vector3.One, new Vector3(
                     MathHelper.DegreesToRadians(_spinAxis.X * _spin),
                     MathHelper.DegreesToRadians(_spinAxis.Y * _spin),

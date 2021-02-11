@@ -80,6 +80,7 @@ namespace MphRead.Entities
             {
                 if (_effectNodeIds[i] >= 0 && _effects[i] == null)
                 {
+                    // ntodo
                     var transform = new Matrix4(SceneSetup.GetTransformMatrix(Vector3.UnitX, Vector3.UnitY));
                     transform.M32 = 2;
                     transform.M34 = 1;
@@ -98,6 +99,7 @@ namespace MphRead.Entities
                         transform.M32 * 1.5f + transform.M42,
                         transform.M33 * 1.5f + transform.M43
                     );
+                    // ntodo
                     transform = new Matrix4(SceneSetup.GetTransformMatrix(new Vector3(transform.Row1), new Vector3(transform.Row2)));
                     transform.Row3 = new Vector4(position, 1);
                     for (int j = 0; j < _effects[i]!.Elements.Count; j++)

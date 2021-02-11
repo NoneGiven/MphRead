@@ -31,7 +31,7 @@ namespace MphRead.Entities
             _flags &= 0xEF;
             if (data.EffectId > 0 && (data.EffectFlags & 1) != 0)
             {
-                _effectVolume = SceneSetup.TransformVolume(data.Volume, Transform); // ntodo: no public statics
+                _effectVolume = CollisionVolume.Transform(data.Volume, Transform);
             }
             if (data.ModelId == UInt32.MaxValue)
             {

@@ -173,7 +173,6 @@ namespace MphRead.Entities
         public int CurrentFrame { get; set; }
     }
 
-    // ntodo: review all mutable state
     public class NewModel
     {
         private static int _nextId = 0;

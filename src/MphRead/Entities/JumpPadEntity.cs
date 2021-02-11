@@ -14,7 +14,7 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            _volume = SceneSetup.MoveVolume(_data.Volume, Position);
+            _volume = CollisionVolume.Move(_data.Volume, Position);
             string modelName = Metadata.JumpPads[(int)data.ModelId];
             ModelInstance baseInst = Read.GetNewModel(modelName);
             _models.Add(baseInst);
@@ -66,7 +66,7 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
-            _volume = SceneSetup.MoveVolume(_data.ActiveVolume, Position);
+            _volume = CollisionVolume.Move(_data.ActiveVolume, Position);
             string name = data.ModelId == 1 ? "balljump" : "jumppad_base";
             ModelInstance baseInst = Read.GetFhNewModel(name);
             _models.Add(baseInst);
