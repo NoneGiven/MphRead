@@ -46,23 +46,29 @@ namespace MphRead.Entities
             {
                 string name = $"Artifact0{data.ArtifactId + 1}";
                 ModelInstance inst = Read.GetModelInstance(name);
-                inst.Active = true;
+                inst.Active = false;
                 inst.SetNodeAnim(-1);
+                inst.SetTexcoordAnim(-1);
                 _models.Add(inst);
                 inst = Read.GetModelInstance(name);
-                inst.Active = true;
+                inst.Active = false;
                 inst.SetNodeAnim(-1);
+                inst.SetTexcoordAnim(-1);
                 _models.Add(inst);
                 inst = Read.GetModelInstance(name);
-                inst.Active = true;
+                inst.Active = false;
                 inst.SetNodeAnim(-1);
+                inst.SetTexcoordAnim(-1);
                 _models.Add(inst);
-                Matrix4 transform = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(31.640625f))
-                    * Matrix4.CreateRotationY(MathHelper.DegreesToRadians(29.61914f));
-                transform.Row3.Xyz = new Vector3(Fixed.ToFloat(7208), 0, Fixed.ToFloat(2375));
+                float angleY = MathHelper.DegreesToRadians(337 * (360 / 4096f));
+                float angleZ = MathHelper.DegreesToRadians(360 * (360 / 4096f));
+                Matrix4 transform = Matrix4.CreateRotationY(angleY) * Matrix4.CreateRotationZ(angleZ);
+                transform.Row3.Xyz = new Vector3(Fixed.ToFloat(7208), Fixed.ToFloat(2375), 0);
                 _artifact1Transform = transform;
-                _artifact2Transform = _artifact1Transform * Matrix4.CreateRotationY(MathHelper.DegreesToRadians(119.9707f));
-                _artifact3Transform = _artifact1Transform * Matrix4.CreateRotationY(MathHelper.DegreesToRadians(239.9414f));
+                angleY = MathHelper.DegreesToRadians(1365 * (360 / 4096f));
+                _artifact2Transform = _artifact1Transform * Matrix4.CreateRotationY(angleY);
+                angleY = MathHelper.DegreesToRadians(2730 * (360 / 4096f));
+                _artifact3Transform = _artifact1Transform * Matrix4.CreateRotationY(angleY);
             }
             if (multiplayer)
             {
@@ -72,10 +78,12 @@ namespace MphRead.Entities
 
         public override void Process(Scene scene)
         {
-            // sktodo: set artifacts active based on state
+            // todo: set artifacts active based on state
             if (_data.ArtifactId < 8)
             {
-
+                _models[1].Active = true;
+                _models[2].Active = true;
+                _models[3].Active = true;
             }
             base.Process(scene);
         }
@@ -89,14 +97,10 @@ namespace MphRead.Entities
             }
             else if (index == 1)
             {
-                inst.Model.Nodes[0].Animation = Matrix4.Identity;
                 return _artifact1Transform * _transform;
             }
             else if (index == 2)
             {
-                // having the second transform is affecting where the second instance ends up???
-                // --> because we're not calling updatetransforms between these calls?
-                inst.Model.Nodes[0].Animation = Matrix4.Identity;
                 return _artifact2Transform * _transform;
             }
             else if (index == 3)
