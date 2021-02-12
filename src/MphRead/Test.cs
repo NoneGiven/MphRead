@@ -722,140 +722,138 @@ namespace MphRead
 
         private static readonly List<string> _weaponNames = new List<string>()
         {
-            "Power Beam", "Volt Driver", "Missiles", "Battlehammer", "Imperialist", "Judicator", "Magmaul", "Shock Coil", "Omega Cannon"
+            "Power Beam", "Volt Driver", "Missiles", "Battlehammer", "Imperialist", "Judicator", "Magmaul", "Shock Coil", "Omega Cannon", "Platform"
         };
 
-        //[StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public struct WeaponInfo
+        public readonly struct WeaponInfo
         {
-            public byte BeamId;
-            public byte WeaponId; // same as BeamId except for platform beams, which have a value of 9
-            public ushort Field2;
-            public ushort Field4;
-            public ushort Field6;
-            public byte Flags;
-            public byte Field9;
-            public byte FieldA;
-            public byte FieldB;
-            public ushort SplashDamage;
-            public ushort FieldE;
-            public ushort Field10;
-            public ushort Field12;
-            public byte ShotCooldown;
-            public byte Field15; // related to shot cooldown
-            public byte AmmoType;
-            public byte Field17;
-            public byte Field18;
-            public byte Field19;
-            public byte Field1A;
-            public byte Field1B;
-            public byte Field1C;
-            public byte Field1D;
-            public ushort Field1E;
-            public ushort Field20;
-            public ushort FullCharge;
-            public ushort Field24;
-            public ushort AmmoCost;
-            public ushort ChargeCost;
-            public ushort Field2A; // same as ChargeCost
-            public ushort UnchargedDamage;
-            public ushort Field2E; // some damage value?
-            public ushort ChargedDamage;
-            public ushort HeadshotDamage;
-            public ushort Field34; // some headshot damage value?
-            public ushort ChargedHeadshotDamage;
-            public ushort Field38;
-            public ushort Field3A;
-            public ushort Field3C;
-            public ushort Field3E;
-            public ushort Field40;
-            public ushort Field42;
-            public ushort Field44;
-            public ushort Field46;
-            public ushort Field48;
-            public ushort Field4A;
-            public ushort Field4C;
-            public ushort Field4E;
-            public ushort Field50;
-            public ushort Field52;
-            public ushort Field54;
-            public ushort Field56;
-            public ushort Field58;
-            public ushort Field5A;
-            public ushort Field5C;
-            public ushort Field5E;
-            public ushort Field60;
-            public ushort Field62;
-            public ushort Field64;
-            public ushort Field66;
-            public ushort Field68;
-            public ushort Field6A;
-            public ushort Field6C;
-            public ushort Field6E;
-            public ushort Field70;
-            public ushort Field72;
-            public ushort Field74;
-            public ushort Field76;
-            public ushort Field78;
-            public ushort Field7A;
-            public ushort Field7C;
-            public ushort Field7E;
-            public ushort Field80;
-            public ushort Field82;
-            public ushort Field84;
-            public ushort Field86;
-            public ushort Field88;
-            public ushort Field8A;
-            public ushort Field8C;
-            public ushort Field8E;
-            public ushort Field90;
-            public ushort Field92;
-            public ushort Field94; // ?
-            public ushort Field96;
-            public ushort Field98;
-            public ushort Field9A;
-            public ushort Field9C;
-            public ushort Field9E;
-            public ushort FieldA0;
-            public ushort FieldA2;
-            public ushort FieldA4;
-            public ushort FieldA6;
-            public ushort FieldA8;
-            public ushort FieldAA;
-            public ushort FieldAC;
-            public ushort FieldAE;
-            public ushort FieldB0;
-            public ushort FieldB2;
-            public ushort FieldB4;
-            public ushort FieldB6;
-            public ushort FieldB8;
-            public ushort FieldBA;
-            public ushort FieldBC;
-            public ushort FieldBE;
-            public ushort FieldC0;
-            public ushort FieldC2;
-            public ushort FieldC4;
-            public ushort FieldC6;
-            public ushort FieldC8;
-            public ushort FieldCA;
-            public ushort FieldCC;
-            public ushort FieldCE;
-            public ushort FieldD0;
-            public ushort FieldD2;
-            public ushort FieldD4;
-            public ushort FieldD6;
-            public ushort FieldD8;
-            public ushort FieldDA;
-            public ushort FieldDC;
-            public ushort FieldDE;
-            public ushort FieldE0;
-            public ushort FieldE2;
-            public ushort FieldE4;
-            public ushort FieldE6;
-            public ushort FieldE8;
-            public ushort FieldEA;
-            public ushort FieldEC;
-            public ushort FieldEE;
+            public readonly byte BeamId;
+            public readonly byte BeamId2; // same as BeamId except for platform beams, which have a value of 9
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
+            public readonly byte[] Field2;
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U2, SizeConst = 2)]
+            public readonly ushort[] Field4;
+            public readonly uint Flags;
+            public readonly ushort SplashDamage;
+            public readonly ushort FieldE;
+            public readonly ushort Field10;
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
+            public readonly byte[] Field12;
+            public readonly byte ShotCooldown;
+            public readonly byte ShotCooldownRelated;
+            public readonly byte AmmoType;
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
+            public readonly byte[] BeamTypes; // correspond to collision effects
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
+            public readonly byte[] MuzzleEffects;
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
+            public readonly byte[] Field1B;
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
+            public readonly byte[] Field1D;
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
+            public readonly byte[] Afflictions; // bit 0 - freeze, bit 1 - disrupt, bit 3 - burn
+            public readonly byte Field21;
+            public readonly ushort FullCharge;
+            public readonly ushort ChargeAmtShake;
+            public readonly ushort AmmoCost;
+            public readonly ushort ChargeCost;
+            public readonly ushort ChargeCostCopy;
+            public readonly ushort UnchargedDamage;
+            public readonly ushort SomeDamage;
+            public readonly ushort ChargedDamage;
+            public readonly ushort HeadshotDamage;
+            public readonly ushort SomeHeadshotDamage;
+            public readonly ushort ChargedHeadshotDamage;
+            public readonly ushort Field38;
+            public readonly ushort Field3A;
+            public readonly ushort Field3C;
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U2, SizeConst = 2)]
+            public readonly ushort[] Field3E;
+            public readonly ushort Field42;
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U2, SizeConst = 2)]
+            public readonly ushort[] Field44;
+            public readonly ushort Field48;
+            public readonly ushort Field4A;
+            public readonly ushort Field4C;
+            public readonly ushort Field4E;
+            public readonly ushort Field50;
+            public readonly ushort Field52;
+            public readonly ushort Field54;
+            public readonly ushort Field56;
+            public readonly ushort Field58;
+            public readonly ushort Field5A;
+            public readonly ushort Field5C;
+            public readonly ushort Field5E;
+            public readonly ushort Field60;
+            public readonly ushort Field62;
+            public readonly ushort Field64;
+            public readonly ushort Field66;
+            public readonly ushort Field68;
+            public readonly ushort Field6A;
+            public readonly ushort Field6C;
+            public readonly ushort Field6E;
+            public readonly ushort Field70;
+            public readonly ushort Field72;
+            public readonly ushort Field74;
+            public readonly ushort Field76;
+            public readonly ushort Field78;
+            public readonly ushort Field7A;
+            public readonly ushort Field7C;
+            public readonly ushort Field7E;
+            public readonly ushort Field80;
+            public readonly ushort Field82;
+            public readonly ushort Field84;
+            public readonly ushort Field86;
+            public readonly ushort Field88;
+            public readonly ushort Field8A;
+            public readonly ushort Field8C;
+            public readonly ushort Field8E;
+            public readonly ushort Field90;
+            public readonly ushort Field92;
+            public readonly ushort Field94; // ?
+            public readonly ushort Field96;
+            public readonly ushort Field98;
+            public readonly ushort Field9A;
+            public readonly ushort Field9C;
+            public readonly ushort Field9E;
+            public readonly ushort FieldA0;
+            public readonly ushort FieldA2;
+            public readonly ushort FieldA4;
+            public readonly ushort FieldA6;
+            public readonly ushort FieldA8;
+            public readonly ushort FieldAA;
+            public readonly ushort FieldAC;
+            public readonly ushort FieldAE;
+            public readonly ushort FieldB0;
+            public readonly ushort FieldB2;
+            public readonly ushort FieldB4;
+            public readonly ushort FieldB6;
+            public readonly ushort FieldB8;
+            public readonly ushort FieldBA;
+            public readonly ushort FieldBC;
+            public readonly ushort FieldBE;
+            public readonly ushort FieldC0;
+            public readonly ushort FieldC2;
+            public readonly ushort FieldC4;
+            public readonly ushort FieldC6;
+            public readonly ushort FieldC8;
+            public readonly ushort FieldCA;
+            public readonly ushort FieldCC;
+            public readonly ushort FieldCE;
+            public readonly ushort FieldD0;
+            public readonly ushort FieldD2;
+            public readonly ushort FieldD4;
+            public readonly ushort FieldD6;
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U4, SizeConst = 2)]
+            public readonly uint[] FieldD8;
+            public readonly ushort FieldE0;
+            public readonly ushort FieldE2;
+            public readonly ushort FieldE4;
+            public readonly ushort FieldE6;
+            public readonly ushort FieldE8;
+            public readonly ushort FieldEA;
+            public readonly ushort FieldEC;
+            public readonly ushort FieldEE;
 
             public string Name => _weaponNames[BeamId];
         }
@@ -864,6 +862,54 @@ namespace MphRead
         {
             IReadOnlyList<WeaponInfo> weapons1P = Get1PWeapons();
             IReadOnlyList<WeaponInfo> weaponsMP = GetMPWeapons();
+
+            static void WriteStuff(WeaponInfo w, bool aff, bool mp)
+            {
+                Console.WriteLine($"{w.Name}" + (aff ? " (AF)" : "(NM)") + (mp ? " (MP)" : " (1P)"));
+                byte afl1 = w.Afflictions[0];
+                string str1 = "";
+                if ((afl1 & 1) != 0)
+                {
+                    str1 += "Frz ";
+                }
+                if ((afl1 & 2) != 0)
+                {
+                    str1 += "Dis ";
+                }
+                if ((afl1 & 4) != 0)
+                {
+                    str1 += "Brn ";
+                }
+                Debug.Assert((afl1 & 0xF8) == 0);
+                byte afl2 = w.Afflictions[1];
+                string str2 = "";
+                if ((afl2 & 1) != 0)
+                {
+                    str2 += "Frz ";
+                }
+                if ((afl2 & 2) != 0)
+                {
+                    str2 += "Dis ";
+                }
+                if ((afl2 & 4) != 0)
+                {
+                    str2 += "Brn ";
+                }
+                str1 = str1.Trim();
+                str2 = str2.Trim();
+                Debug.Assert((afl2 & 0xF8) == 0);
+                Console.WriteLine($"{str1} / {str2}");
+            }
+
+            for (int i = 0; i < 9; i++)
+            {
+                WriteStuff(weapons1P[i], false, false);
+                WriteStuff(weapons1P[i + 9], true, false);
+                WriteStuff(weaponsMP[i], false, true);
+                WriteStuff(weaponsMP[i + 9], true, true);
+                Console.WriteLine();
+            }
+
             Nop();
         }
 
@@ -871,6 +917,7 @@ namespace MphRead
         {
             int count = 18;
             int size = Marshal.SizeOf<WeaponInfo>();
+            Debug.Assert(size == 0xF0);
             var results = new List<WeaponInfo>();
             var bytes = new ReadOnlySpan<byte>(array);
             Debug.Assert(bytes.Length == count * size);
@@ -878,7 +925,8 @@ namespace MphRead
             {
                 int start = i * size;
                 int end = start + size;
-                results.Add(MemoryMarshal.Read<WeaponInfo>(bytes[start..end]));
+                results.Add(Read.ReadStruct<WeaponInfo>(bytes[start..end]));
+                //results.Add(MemoryMarshal.Read<WeaponInfo>(bytes[start..end]));
             }
             return results;
         }
@@ -918,6 +966,20 @@ namespace MphRead
             field4F4.Row2 = field4F4.Row2.Normalized();
 
             return field4F4;
+        }
+
+        public static Vector3 ParseVector3(string values)
+        {
+            string[] split = values.Split(' ');
+            if (split.Length != 12 || split.Any(s => s.Length != 2))
+            {
+                throw new ArgumentException(nameof(values));
+            }
+            return new Vector3(
+                Int32.Parse(split[3] + split[2] + split[1] + split[0], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(split[7] + split[6] + split[5] + split[4], System.Globalization.NumberStyles.HexNumber) / 4096f,
+                Int32.Parse(split[11] + split[10] + split[9] + split[8], System.Globalization.NumberStyles.HexNumber) / 4096f
+            );
         }
 
         public static Matrix4x3 ParseMatrix12(params string[] values)
@@ -1106,16 +1168,36 @@ namespace MphRead
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
+                bool room = false;
                 if (meta.Value.EntityPath != null)
                 {
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
                     foreach (Entity entity in entities)
                     {
-                        if (entity.Type == EntityType.Object)
+                        if (entity.Type == EntityType.Platform)
                         {
-                            ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
+                            PlatformEntityData data = ((Entity<PlatformEntityData>)entity).Data;
+                            if (data.BeamIndex != UInt32.MaxValue)
+                            {
+                                PlatformMetadata? type = Metadata.GetPlatformById((int)data.ModelId);
+                                string name = type?.Name ?? "N/A";
+                                if (data.BeamIndex > 0 && (data.Flags & 4) == 0)
+                                {
+                                    Debugger.Break();
+                                }
+                                if (!room)
+                                {
+                                    room = true;
+                                    Console.WriteLine(meta.Key);
+                                }
+                                Console.WriteLine($"[{data.BeamIndex}] {data.Header.EntityId:D2} ({name})");
+                            }
                         }
                     }
+                }
+                if (room)
+                {
+                    Console.WriteLine();
                 }
             }
             Nop();

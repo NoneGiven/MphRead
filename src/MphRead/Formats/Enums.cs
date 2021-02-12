@@ -23,7 +23,7 @@ namespace MphRead
         CameraSequence = 18,
         ForceField = 19,
         // 20 = missing?
-        EffectInstance = 21,
+        BeamEffect = 21,
         Bomb = 22,
         EnemyInstance = 23,
         Halfturret = 24,

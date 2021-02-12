@@ -103,10 +103,12 @@ namespace MphRead.Formats.Collision
     public readonly struct CollisionData
     {
         public readonly uint Field0;
-        public readonly uint Field4;
+        public readonly ushort Field4;
+        public readonly ushort Field9; // bits 5-8 = terrain type
         public readonly ushort LayerMask;
         public readonly ushort FieldA;
-        public readonly uint FieldC;
+        public readonly ushort FieldC;
+        public readonly ushort FieldE;
     }
 
     // size: 4
