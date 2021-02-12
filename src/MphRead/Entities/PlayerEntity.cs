@@ -69,6 +69,10 @@ namespace MphRead.Entities
             _scaleMtx = Matrix4.CreateScale(Metadata.HunterScales[Hunter]);
             // temporary
             _bipedModel.SetNodeAnim(4);
+            if (Hunter == Hunter.Weavel)
+            {
+                _bipedModel.SetMaterialAnim(-1);
+            }
         }
 
         public override void Initialize(Scene scene)
@@ -178,7 +182,14 @@ namespace MphRead.Entities
 
         protected override void UpdateTransforms(ModelInstance inst, int index, Scene scene)
         {
-            base.UpdateTransforms(inst, index, scene);
+            if (inst == _bipedIceModel)
+            {
+                scene.UpdateMaterials(inst.Model, GetModelRecolor(inst, index));
+            }
+            else
+            {
+                base.UpdateTransforms(inst, index, scene);
+            }
             if (_frozen && !_altForm && !_mainPlayer && inst == _bipedModel)
             {
                 UpdateIceModel();
