@@ -65,7 +65,7 @@ namespace MphRead
         public readonly EntityDataHeader Header;
         public readonly uint Field24;
         public readonly uint ModelId;
-        public readonly ushort SomeEntityId;
+        public readonly ushort ParentId;
         public readonly byte Field2E;
         public readonly byte Field2F;
         public readonly ushort Field30;
@@ -131,8 +131,8 @@ namespace MphRead
         public readonly Vector3Fx Field18C;
         public readonly Vector3Fx Field198;
         public readonly uint BeamIndex;
-        public readonly uint BeamCooldown;
-        public readonly uint Field1AC;
+        public readonly uint BeamInterval;
+        public readonly uint BeamOnIntervals; // 16 bits are used
         public readonly uint Field1B0;
         public readonly uint EffectId1;
         public readonly uint Health;

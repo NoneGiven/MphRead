@@ -89,7 +89,6 @@ namespace MphRead
             IReadOnlyList<Entity> entities = Read.GetEntities(metadata.EntityPath, layerId, metadata.FirstHunt);
             foreach (Entity entity in entities)
             {
-                int count = results.Count;
                 if (entity.Type == EntityType.Platform)
                 {
                     results.Add(new PlatformEntity(((Entity<PlatformEntityData>)entity).Data));
