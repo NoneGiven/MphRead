@@ -741,7 +741,14 @@ namespace MphRead
         public void OnRenderFrame(double frameTime)
         {
             _frameCount++;
-            _frameTime = (float)frameTime;
+            if (_recording)
+            {
+                _frameTime = 1 / 60f; // todo: FPS stuff
+            }
+            else
+            {
+                _frameTime = (float)frameTime;
+            }
             LoadAndUnload();
             OnKeyHeld();
 
@@ -1568,7 +1575,7 @@ namespace MphRead
         {
             if (_frameCount != 0 || !_frameAdvanceOn || _advanceOneFrame)
             {
-                _elapsedTime += 1 / 60f;
+                _elapsedTime += 1 / 60f; // todo: FPS stuff
                 _singleParticleCount = 0;
             }
             _decalItems.Clear();
