@@ -679,7 +679,7 @@ namespace MphRead
                 IReadOnlyList<int> parameters = DoOffsets<int>(bytes, paramOffset, paramCount);
                 funcs.Add(offset, new FxFuncInfo(funcId, parameters));
             }
-            // todo: these are also offsets into the func/param arrays; what are they used for?
+            // todo: these are also offsets into the func/param arrays, but don't seem to be used
             IReadOnlyList<uint> list2 = DoOffsets<uint>(bytes, effect.Offset2, effect.Count2);
             IReadOnlyList<uint> elementOffsets = DoOffsets<uint>(bytes, effect.ElementOffset, effect.ElementCount);
             var elements = new List<EffectElement>();
