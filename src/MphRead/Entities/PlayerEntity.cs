@@ -176,10 +176,10 @@ namespace MphRead.Entities
             }
         }
 
-        public override void UpdateTransforms(Scene scene)
+        protected override void UpdateTransforms(ModelInstance inst, int index, Scene scene)
         {
-            base.UpdateTransforms(scene);
-            if (_frozen && !_altForm && !_mainPlayer)
+            base.UpdateTransforms(inst, index, scene);
+            if (_frozen && !_altForm && !_mainPlayer && inst == _bipedModel)
             {
                 UpdateIceModel();
             }

@@ -1602,7 +1602,6 @@ namespace MphRead
                 }
                 if (entity.ShouldDraw)
                 {
-                    entity.UpdateTransforms(this);
                     entity.GetDrawInfo(this);
                 }
                 if (_showVolumes != VolumeDisplay.None)

@@ -136,29 +136,6 @@ namespace MphRead.Entities
             return Recolor;
         }
 
-        public virtual void UpdateTransforms(Scene scene)
-        {
-            if (ShouldDraw && Alpha > 0)
-            {
-                for (int i = 0; i < _models.Count; i++)
-                {
-                    ModelInstance inst = _models[i];
-                    if (inst.Active || scene.ShowAllEntities)
-                    {
-                        Model model = inst.Model;
-                        model.AnimateMaterials(inst.AnimInfo.Material);
-                        model.AnimateTextures(inst.AnimInfo.Texture);
-                        model.ComputeNodeMatrices(index: 0);
-                        Matrix4 transform = GetModelTransform(inst, i);
-                        model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, inst.AnimInfo.Node);
-                        model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
-                        // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
-                        scene.UpdateMaterials(model, GetModelRecolor(inst, i));
-                    }
-                }
-            }
-        }
-
         public IReadOnlyList<ModelInstance> GetModels()
         {
             return _models;
@@ -186,6 +163,19 @@ namespace MphRead.Entities
             return null;
         }
 
+        protected virtual void UpdateTransforms(ModelInstance inst, int index, Scene scene)
+        {
+            Model model = inst.Model;
+            model.AnimateMaterials(inst.AnimInfo.Material);
+            model.AnimateTextures(inst.AnimInfo.Texture);
+            model.ComputeNodeMatrices(index: 0);
+            Matrix4 transform = GetModelTransform(inst, index);
+            model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, inst.AnimInfo.Node);
+            model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
+            // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
+            scene.UpdateMaterials(model, GetModelRecolor(inst, index));
+        }
+
         public virtual void GetDrawInfo(Scene scene)
         {
             for (int i = 0; i < _models.Count; i++)
@@ -195,6 +185,7 @@ namespace MphRead.Entities
                 {
                     continue;
                 }
+                UpdateTransforms(inst, i, scene);
                 int polygonId = scene.GetNextPolygonId();
                 GetItems(inst, i, inst.Model.Nodes[0], polygonId);
             }
