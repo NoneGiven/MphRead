@@ -24,11 +24,11 @@ namespace MphRead.Entities
             else
             {
                 Recolor = multiplayer ? 0 : areaId;
-                // todo: how to use ArtifactId?
                 int flags = data.ArtifactId < 8 && data.Invisible == 0 ? 2 : 0;
                 string modelName;
                 if ((flags & 2) == 0)
                 {
+                    // todo: how to use ArtifactId? also, use room state/etc. to determine active state
                     modelName = multiplayer ? "TeleporterMP" : "TeleporterSmall";
                 }
                 else
@@ -40,7 +40,7 @@ namespace MphRead.Entities
             }
             if (multiplayer)
             {
-                AddPlaceholderModel(); // always at least the second model
+                AddPlaceholderModel(); // this is always the second model in the list
             }
         }
 
@@ -56,7 +56,7 @@ namespace MphRead.Entities
 
         protected override Vector4? GetOverrideColor(ModelInstance inst, int index)
         {
-            if (inst.IsPlaceholder && index != 0)
+            if (inst.IsPlaceholder && index == 1)
             {
                 return _overrideColor2;
             }
