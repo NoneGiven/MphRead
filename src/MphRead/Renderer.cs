@@ -1099,14 +1099,6 @@ namespace MphRead
             _inactiveParticles.Enqueue(particle);
         }
 
-        public EffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform)
-        {
-            EffectEntry entry = InitEffectEntry();
-            entry.EffectId = effectId;
-            SpawnEffect(effectId, transform, entry);
-            return entry;
-        }
-
         public void LoadEffect(int effectId)
         {
             Effect effect = Read.LoadEffect(effectId);
@@ -1117,7 +1109,20 @@ namespace MphRead
             }
         }
 
-        public void SpawnEffect(int effectId, Matrix4 transform, EffectEntry? entry = null)
+        public EffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform)
+        {
+            EffectEntry entry = InitEffectEntry();
+            entry.EffectId = effectId;
+            SpawnEffect(effectId, transform, entry);
+            return entry;
+        }
+
+        public void SpawnEffect(int effectId, Matrix4 transform)
+        {
+            SpawnEffect(effectId, transform, entry: null);
+        }
+
+        private void SpawnEffect(int effectId, Matrix4 transform, EffectEntry? entry)
         {
             Effect effect = Read.LoadEffect(effectId); // should already be loaded
             var position = new Vector3(transform.Row3);
