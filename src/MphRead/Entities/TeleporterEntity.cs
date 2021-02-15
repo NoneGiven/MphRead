@@ -73,6 +73,7 @@ namespace MphRead.Entities
             if (multiplayer)
             {
                 AddPlaceholderModel();
+                _targetPos = _data.TargetPosition;
             }
         }
 
