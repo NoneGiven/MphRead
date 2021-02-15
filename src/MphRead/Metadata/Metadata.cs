@@ -1172,13 +1172,16 @@ namespace MphRead
             { SingleType.Fuzzball, ("particles", "fuzzBall") }
         };
 
-        public static IReadOnlyDictionary<string, bool> EffectsBases = new Dictionary<string, bool>()
+        public static IReadOnlyDictionary<string, bool> PreloadResources = new Dictionary<string, bool>()
         {
             { "deathParticle", true },
             { "particles", true },
             { "particles2", true },
             { "TearParticle", true },
-            { "icons", true }
+            { "icons", true },
+            { "iceWave", true },
+            { "sniperBeam", true },
+            { "cylBossLaserBurn", true }
         };
 
         public static (RoomMetadata?, int) GetRoomByName(string name)

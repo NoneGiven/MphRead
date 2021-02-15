@@ -24,7 +24,7 @@ namespace MphRead.Entities
         protected BeamEffectEntity(BeamEffectEntityData data) : base(EntityType.BeamEffect)
         {
             _data = data;
-            // todo: load these along with the room
+            // already loaded by scene setup
             ModelInstance model;
             if (data.Type == 0)
             {

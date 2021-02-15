@@ -74,6 +74,7 @@ namespace MphRead
             IReadOnlyList<EntityBase> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
             CollisionInfo collision = Collision.ReadCollision(metadata.CollisionPath, metadata.FirstHunt || metadata.Hybrid, nodeLayerMask);
             // todo: once ReadCollision is filering things, we don't need to pass nodeLayerMask here or return it
+            LoadResources();
             var room = new RoomEntity(name, metadata, collision, nodeLayerMask);
             return (room, metadata, collision, entities, nodeLayerMask);
         }
@@ -203,6 +204,14 @@ namespace MphRead
                 }
             }
             return results;
+        }
+
+        private static void LoadResources()
+        {
+            // todo: this could also allocate effect lists and stuff, since we don't need those if there's no room
+            Read.GetModelInstance("iceWave");
+            Read.GetModelInstance("sniperBeam");
+            Read.GetModelInstance("cylBossLaserBurn");
         }
     }
 }
