@@ -819,7 +819,7 @@ namespace MphRead
             foreach (ModelInstance inst in entity.GetModels())
             {
                 Model model = inst.Model;
-                if (Metadata.EffectsBases.ContainsKey(model.Name))
+                if (Metadata.PreloadResources.ContainsKey(model.Name))
                 {
                     continue;
                 }
@@ -940,6 +940,7 @@ namespace MphRead
         private static readonly int _effectElementMax = 200;
         private static readonly int _effectParticleMax = 3000;
         private static readonly int _singleParticleMax = 1000;
+        private static readonly int _beamEffectMax = 100;
 
         private readonly Queue<EffectEntry> _inactiveEffects = new Queue<EffectEntry>(_effectEntryMax);
         private readonly Queue<EffectElementEntry> _inactiveElements = new Queue<EffectElementEntry>(_effectElementMax);
@@ -947,6 +948,8 @@ namespace MphRead
         private readonly Queue<EffectParticle> _inactiveParticles = new Queue<EffectParticle>(_effectParticleMax);
         private int _singleParticleCount = 0;
         private readonly List<SingleParticle> _singleParticles = new List<SingleParticle>(_singleParticleMax);
+        private readonly Queue<BeamEffectEntity> _inactiveBeamEffects = new Queue<BeamEffectEntity>(_beamEffectMax);
+        private readonly List<BeamEffectEntity> _activeBeamEffects = new List<BeamEffectEntity>(_beamEffectMax);
 
         private void AllocateEffects()
         {
@@ -966,6 +969,23 @@ namespace MphRead
             {
                 _singleParticles.Add(new SingleParticle());
             }
+            for (int i = 0; i < _beamEffectMax; i++)
+            {
+                _inactiveBeamEffects.Enqueue(new BeamEffectEntity());
+            }
+        }
+
+        public BeamEffectEntity InitBeamEffect(BeamEffectEntityData data)
+        {
+            BeamEffectEntity entry = _inactiveBeamEffects.Dequeue();
+            entry.Spawn(data, this);
+            return entry;
+        }
+
+        public void UnlinkBeamEffect(BeamEffectEntity entry)
+        {
+            _activeBeamEffects.Remove(entry);
+            _inactiveBeamEffects.Enqueue(entry);
         }
 
         public void AddSingleParticle(SingleType type, Vector3 position, Vector3 color, float alpha, float scale)
@@ -1601,17 +1621,25 @@ namespace MphRead
             for (int i = 0; i < _entitySort.Count; i++)
             {
                 EntityBase entity = _entitySort[i];
+                bool processed = true;
                 if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
                 {
-                    entity.Process(this);
+                    processed = entity.Process(this);
                 }
-                if (entity.ShouldDraw)
+                if (!processed)
                 {
-                    entity.GetDrawInfo(this);
+                    entity.Destroy(this);
                 }
-                if (_showVolumes != VolumeDisplay.None)
+                else
                 {
-                    entity.GetDisplayVolumes(this);
+                    if (entity.ShouldDraw)
+                    {
+                        entity.GetDrawInfo(this);
+                    }
+                    if (_showVolumes != VolumeDisplay.None)
+                    {
+                        entity.GetDisplayVolumes(this);
+                    }
                 }
             }
 
