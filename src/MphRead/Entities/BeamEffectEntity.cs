@@ -66,8 +66,7 @@ namespace MphRead.Entities
         {
             if (_lifespan-- <= 0)
             {
-                Active = false;
-                _models[0].Active = false;
+                return false;
             }
             return base.Process(scene);
         }
