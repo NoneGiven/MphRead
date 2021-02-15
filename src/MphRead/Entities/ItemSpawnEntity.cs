@@ -27,7 +27,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
             // todo: item spawning logic
             if (_enabled && _spawn)
@@ -36,7 +36,7 @@ namespace MphRead.Entities
                 scene.AddEntity(item);
                 _spawn = false;
             }
-            base.Process(scene);
+            return base.Process(scene);
         }
 
         // todo: entity node ref
@@ -61,7 +61,7 @@ namespace MphRead.Entities
             AddPlaceholderModel();
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
             // todo: FH item spawning logic
             if (_spawn)
@@ -70,7 +70,7 @@ namespace MphRead.Entities
                 scene.AddEntity(item);
                 _spawn = false;
             }
-            base.Process(scene);
+            return base.Process(scene);
         }
 
         // todo: FH entity node ref

@@ -116,7 +116,7 @@ namespace MphRead.Entities
             return Matrix4.CreateScale(inst.Model.Scale) * _transform;
         }
 
-        public virtual void Process(Scene scene)
+        public virtual bool Process(Scene scene)
         {
             for (int i = 0; i < _models.Count; i++)
             {
@@ -129,6 +129,7 @@ namespace MphRead.Entities
                     }
                 }
             }
+            return true;
         }
 
         protected virtual int GetModelRecolor(ModelInstance inst, int index)
@@ -487,10 +488,10 @@ namespace MphRead.Entities
             _floatModelIndex = floatModelIndex;
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
             _spin = (float)(_spin + scene.FrameTime * 360 * _spinSpeed) % 360;
-            base.Process(scene);
+            return base.Process(scene);
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)

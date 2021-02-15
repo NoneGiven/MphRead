@@ -76,7 +76,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
             // todo: set artifacts active based on state
             if (_data.ArtifactId < 8)
@@ -85,7 +85,7 @@ namespace MphRead.Entities
                 _models[2].Active = true;
                 _models[3].Active = true;
             }
-            base.Process(scene);
+            return base.Process(scene);
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)

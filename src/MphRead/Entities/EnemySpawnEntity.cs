@@ -40,7 +40,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
             // todo: enemy spawning logic
             if (_spawn)
@@ -52,7 +52,7 @@ namespace MphRead.Entities
                     scene.AddEntity(enemy);
                 }
             }
-            base.Process(scene);
+            return base.Process(scene);
         }
 
         // todo: entity node ref

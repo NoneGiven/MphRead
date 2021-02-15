@@ -84,7 +84,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
             // todo: if "is_visible" returns false (and other conditions), don't draw the effects
             Model model = _models[0].Model;
@@ -117,7 +117,7 @@ namespace MphRead.Entities
                     }
                 }
             }
-            base.Process(scene);
+            return base.Process(scene);
         }
     }
 

@@ -85,7 +85,7 @@ namespace MphRead.Entities
             _light2Color = scene.Light2Color;
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
             UpdateLightSources(scene);
             if (_respawnTimer > 0)
@@ -93,7 +93,7 @@ namespace MphRead.Entities
                 _respawnTimer--;
             }
             UpdateModels();
-            base.Process(scene);
+            return base.Process(scene);
         }
 
         private void UpdateModels()

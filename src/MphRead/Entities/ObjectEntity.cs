@@ -100,7 +100,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
             ShouldDraw = !_scanVisorOnly || scene.ScanVisor;
             if (_data.EffectId != 0 && scene.FrameCount % 2 == 0)
@@ -192,7 +192,7 @@ namespace MphRead.Entities
                     element.Transform = Transform;
                 }
             }
-            base.Process(scene);
+            return base.Process(scene);
         }
 
         private void RemoveEffect(Scene scene)

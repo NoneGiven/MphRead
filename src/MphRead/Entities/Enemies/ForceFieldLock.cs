@@ -21,7 +21,7 @@ namespace MphRead.Entities.Enemies
             Recolor = data.Spawner.Recolor;
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
             if (Vector3.Dot(scene.CameraPosition - _initialPosition, _vec2) < 0)
             {
@@ -29,7 +29,7 @@ namespace MphRead.Entities.Enemies
                 Vector3 position = _initialPosition + _vec2 * Fixed.ToFloat(409);
                 ComputeTransform(_vec2, _vec1, position);
             }
-            base.Process(scene);
+            return base.Process(scene);
         }
     }
 }

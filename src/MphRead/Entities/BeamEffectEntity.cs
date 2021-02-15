@@ -18,12 +18,14 @@ namespace MphRead.Entities
 
     public class BeamEffectEntity : EntityBase
     {
-        private readonly BeamEffectEntityData _data;
         private int _lifespan = 0;
 
-        protected BeamEffectEntity(BeamEffectEntityData data) : base(EntityType.BeamEffect)
+        public BeamEffectEntity() : base(EntityType.BeamEffect)
         {
-            _data = data;
+        }
+
+        public void Spawn(BeamEffectEntityData data, Scene scene)
+        {
             // already loaded by scene setup
             ModelInstance model;
             if (data.Type == 0)
@@ -43,6 +45,7 @@ namespace MphRead.Entities
                 throw new ProgramException("Invalid beam effect type.");
             }
             _models.Add(model);
+            _lifespan = 0;
             // in-game all the group types are checked, but we're just checking what's actually used
             if (model.Model.AnimationGroups.Node.Count > 0)
             {
@@ -53,25 +56,25 @@ namespace MphRead.Entities
                 _lifespan = (model.Model.AnimationGroups.Material[0].FrameCount - 1) * 2;
             }
             Transform = data.Transform;
-        }
-
-        public override void Initialize(Scene scene)
-        {
-            base.Initialize(scene);
-            if (_data.Type == 0)
+            if (data.Type == 0)
             {
-                scene.SpawnEffect(78, _data.Transform); // iceWave
+                scene.SpawnEffect(78, data.Transform); // iceWave
             }
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
             if (_lifespan-- <= 0)
             {
                 Active = false;
                 _models[0].Active = false;
             }
-            base.Process(scene);
+            return base.Process(scene);
+        }
+
+        public override void Destroy(Scene scene)
+        {
+            scene.UnlinkBeamEffect(this);
         }
 
         public static BeamEffectEntity? Create(BeamEffectEntityData data, Scene scene)
@@ -96,8 +99,7 @@ namespace MphRead.Entities
                 scene.SpawnEffect(effectId, data.Transform);
                 return null;
             }
-            // todo: pre-allocate list instead of creating here
-            return new BeamEffectEntity(data);
+            return scene.InitBeamEffect(data);
         }
     }
 }
