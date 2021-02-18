@@ -62,7 +62,7 @@ namespace MphRead.Memory
                 while (true)
                 {
                     RefreshMemory();
-                    UpdateEntities();
+                    GetEntities();
                     await Task.Delay(15);
                 }
             }).GetAwaiter().GetResult();
@@ -75,17 +75,17 @@ namespace MphRead.Memory
             Debug.Assert(count.ToInt32() == _size);
         }
 
-        private void UpdateEntities()
+        private void GetEntities()
         {
             _entities.Clear();
             CEntity head = GetEntity(Addresses.EntityListHead);
             Debug.Assert(head.Type == EntityType.ListHead);
             _entities.Add(head);
-            CEntity prev = GetEntity(head.Prev);
-            while (prev != head)
+            CEntity next = GetEntity(head.Next);
+            while (next != head)
             {
-                _entities.Add(prev);
-                prev = GetEntity(prev.Prev);
+                _entities.Add(next);
+                next = GetEntity(next.Next);
             }
         }
 
