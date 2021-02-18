@@ -1,9 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using System.Threading;
+using System.Threading.Tasks;
 
 namespace MphRead.Memory
 {
@@ -52,40 +52,44 @@ namespace MphRead.Memory
             throw new ProgramException("Could not find process.");*/
         }
 
+        private readonly List<CEntity> _entities = new List<CEntity>();
+
         private void Run()
         {
             _baseAddress = new IntPtr(0x91A8100);
-            while (true)
+            Task.Run(async () =>
             {
-                Update();
-                Console.Clear();
-                var head = new CEntity(this, Addresses.EntityListHead);
-                Console.WriteLine(head.Type);
-                var prev = new CEntity(this, head.Prev);
-                while (prev != head)
+                while (true)
                 {
-                    Console.WriteLine(prev.Type);
-                    if (prev.Type == EntityType.ForceField)
-                    {
-                        var ff = new CForceField(this, prev.Address);
-                        Console.WriteLine(ff.Alpha);
-                        ff.Alpha = 31;
-                        Console.WriteLine(ff.Alpha);
-                    }
-                    prev = new CEntity(this, prev.Prev);
+                    RefreshMemory();
+                    UpdateEntities();
+                    await Task.Delay(15);
                 }
-                Thread.Sleep(100);
-            }
+            }).GetAwaiter().GetResult();
         }
 
-        private void Update()
+        private void RefreshMemory()
         {
             bool result = ReadProcessMemory(_process.Handle, _baseAddress, _buffer, _size, out IntPtr count);
             Debug.Assert(result);
             Debug.Assert(count.ToInt32() == _size);
         }
 
-        public void Write(int address, byte[] value, int size)
+        private void UpdateEntities()
+        {
+            _entities.Clear();
+            CEntity head = GetEntity(Addresses.EntityListHead);
+            Debug.Assert(head.Type == EntityType.ListHead);
+            _entities.Add(head);
+            CEntity prev = GetEntity(head.Prev);
+            while (prev != head)
+            {
+                _entities.Add(prev);
+                prev = GetEntity(prev.Prev);
+            }
+        }
+
+        public void WriteMemory(int address, byte[] value, int size)
         {
             int offset = address - Offset;
             var pointer = new IntPtr(_baseAddress.ToInt32() + offset);
@@ -96,6 +100,22 @@ namespace MphRead.Memory
             {
                 _buffer[offset + i] = value[i];
             }
+        }
+
+        private CEntity GetEntity(IntPtr address)
+        {
+            return GetEntity(address.ToInt32());
+        }
+
+        private CEntity GetEntity(int address)
+        {
+            int offset = address - Offset;
+            var type = (EntityType)BitConverter.ToUInt16(_buffer, offset);
+            if (type == EntityType.ForceField)
+            {
+                return new CForceField(this, address);
+            }
+            return new CEntity(this, address);
         }
     }
 
@@ -180,32 +200,32 @@ namespace MphRead.Memory
 
         protected void WriteSByte(int offset, sbyte value)
         {
-            _memory.Write(Address + offset, BitConverter.GetBytes(value), sizeof(sbyte));
+            _memory.WriteMemory(Address + offset, BitConverter.GetBytes(value), sizeof(sbyte));
         }
 
         protected void WriteByte(int offset, byte value)
         {
-            _memory.Write(Address + offset, BitConverter.GetBytes(value), sizeof(byte));
+            _memory.WriteMemory(Address + offset, BitConverter.GetBytes(value), sizeof(byte));
         }
 
         protected void WriteInt16(int offset, short value)
         {
-            _memory.Write(Address + offset, BitConverter.GetBytes(value), sizeof(short));
+            _memory.WriteMemory(Address + offset, BitConverter.GetBytes(value), sizeof(short));
         }
 
         protected void WriteUInt16(int offset, ushort value)
         {
-            _memory.Write(Address + offset, BitConverter.GetBytes(value), sizeof(ushort));
+            _memory.WriteMemory(Address + offset, BitConverter.GetBytes(value), sizeof(ushort));
         }
 
         protected void WriteInt32(int offset, int value)
         {
-            _memory.Write(Address + offset, BitConverter.GetBytes(value), sizeof(int));
+            _memory.WriteMemory(Address + offset, BitConverter.GetBytes(value), sizeof(int));
         }
 
         protected void WriteUInt32(int offset, uint value)
         {
-            _memory.Write(Address + offset, BitConverter.GetBytes(value), sizeof(uint));
+            _memory.WriteMemory(Address + offset, BitConverter.GetBytes(value), sizeof(uint));
         }
 
         protected IntPtr ReadPointer(int offset)
@@ -250,7 +270,7 @@ namespace MphRead.Memory
             {
                 vector[i + 8] = component[i];
             }
-            _memory.Write(Address + offset, component, 12);
+            _memory.WriteMemory(Address + offset, component, 12);
         }
     }
 
