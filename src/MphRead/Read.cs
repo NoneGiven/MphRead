@@ -925,6 +925,16 @@ namespace MphRead
             return (T)result;
         }
 
+        public static T ReadStruct<T>(IntPtr pointer) where T : struct
+        {
+            object? result = Marshal.PtrToStructure(pointer, typeof(T));
+            if (result == null)
+            {
+                throw new ProgramException($"Failed to read {typeof(T)} struct.");
+            }
+            return (T)result;
+        }
+
         public static string ReadString(ReadOnlySpan<byte> bytes, uint offset, int length)
         {
             return ReadString(bytes, (int)offset, length);

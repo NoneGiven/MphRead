@@ -29,7 +29,7 @@ namespace MphRead
         Halfturret = 24,
         Player = 25,
         BeamProjectile = 26,
-        // 27 = entity list header
+        ListHead = 27,
         // First Hunt
         FhUnknown0 = 100,
         FhPlayerSpawn = 101,
