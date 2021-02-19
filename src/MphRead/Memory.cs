@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -53,6 +52,7 @@ namespace MphRead.Memory
         }
 
         private readonly List<CEntity> _entities = new List<CEntity>();
+        private readonly Dictionary<IntPtr, CEntity> _temp = new Dictionary<IntPtr, CEntity>();
 
         private void Run()
         {
@@ -77,16 +77,36 @@ namespace MphRead.Memory
 
         private void GetEntities()
         {
+            _temp.Clear();
+            foreach (CEntity entity in _entities)
+            {
+                _temp.Add(entity.Address, entity);
+            }
             _entities.Clear();
             CEntity head = GetEntity(Addresses.EntityListHead);
-            Debug.Assert(head.Type == EntityType.ListHead);
+            Debug.Assert(head.EntityType == EntityType.ListHead);
             _entities.Add(head);
-            CEntity next = GetEntity(head.Next);
-            while (next != head)
+            IntPtr nextAddr = head.Next;
+            while (nextAddr != head.Address)
             {
-                _entities.Add(next);
-                next = GetEntity(next.Next);
+                CEntity entity;
+                if (_temp.TryGetValue(nextAddr, out entity!)
+                    && entity.EntityType == (EntityType)BitConverter.ToUInt16(_buffer, nextAddr.ToInt32() - Offset))
+                {
+                    _entities.Add(entity);
+                }
+                else
+                {
+                    entity = GetEntity(nextAddr);
+                    _entities.Add(entity);
+                }
+                nextAddr = entity.Next;
             }
+        }
+
+        public void WriteMemory(IntPtr address, byte[] value, int size)
+        {
+            WriteMemory(address.ToInt32(), value, size);
         }
 
         public void WriteMemory(int address, byte[] value, int size)
@@ -111,253 +131,460 @@ namespace MphRead.Memory
         {
             int offset = address - Offset;
             var type = (EntityType)BitConverter.ToUInt16(_buffer, offset);
+            if (type == EntityType.Platform)
+            {
+                return new CPlatform(this, address);
+            }
+            if (type == EntityType.Object)
+            {
+                return new CObject(this, address);
+            }
+            if (type == EntityType.PlayerSpawn)
+            {
+                return new CPlayerSpawn(this, address);
+            }
+            if (type == EntityType.Door)
+            {
+                return new CDoor(this, address);
+            }
+            if (type == EntityType.ItemSpawn)
+            {
+                return new CItemSpawn(this, address);
+            }
+            if (type == EntityType.ItemInstance)
+            {
+                return new CItemInstance(this, address);
+            }
+            if (type == EntityType.EnemySpawn)
+            {
+                return new CEnemySpawn(this, address);
+            }
+            if (type == EntityType.TriggerVolume)
+            {
+                return new CTriggerVolume(this, address);
+            }
+            if (type == EntityType.AreaVolume)
+            {
+                return new CAreaVolume(this, address);
+            }
+            if (type == EntityType.JumpPad)
+            {
+                return new CJumpPad(this, address);
+            }
+            if (type == EntityType.PointModule)
+            {
+                return new CPointModule(this, address);
+            }
+            if (type == EntityType.MorphCamera)
+            {
+                return new CMorphCamera(this, address);
+            }
+            if (type == EntityType.OctolithFlag)
+            {
+                return new COctolithFlag(this, address);
+            }
+            if (type == EntityType.FlagBase)
+            {
+                return new CFlagBase(this, address);
+            }
+            if (type == EntityType.Teleporter)
+            {
+                return new CTeleporter(this, address);
+            }
+            if (type == EntityType.NodeDefense)
+            {
+                return new CNodeDefense(this, address);
+            }
+            if (type == EntityType.LightSource)
+            {
+                return new CLightSource(this, address);
+            }
+            if (type == EntityType.Artifact)
+            {
+                return new CArtifact(this, address);
+            }
+            if (type == EntityType.CameraSequence)
+            {
+                return new CCameraSequence(this, address);
+            }
             if (type == EntityType.ForceField)
             {
                 return new CForceField(this, address);
             }
+            if (type == EntityType.BeamEffect)
+            {
+                return new CBeamEffect(this, address);
+            }
+            if (type == EntityType.Bomb)
+            {
+                return new CBomb(this, address);
+            }
+            if (type == EntityType.EnemyInstance)
+            {
+                // sktodo: enemy instance
+            }
+            if (type == EntityType.Halfturret)
+            {
+                return new CHalfturret(this, address);
+            }
+            if (type == EntityType.Player)
+            {
+                return new CPlayer(this, address);
+            }
+            if (type == EntityType.BeamProjectile)
+            {
+                return new CBeamProjectile(this, address);
+            }
             return new CEntity(this, address);
         }
-    }
 
-    public abstract class MemoryClass
-    {
-        private readonly Memory _memory;
-        private readonly int _offset;
-
-        public int Address { get; }
-
-        protected MemoryClass(Memory memory, IntPtr address)
+        public static void ParseStruct(string className, bool entity, string data)
         {
-            _memory = memory;
-            Address = address.ToInt32();
-            _offset = Address - Memory.Offset;
-        }
-
-        protected MemoryClass(Memory memory, int address)
-        {
-            _memory = memory;
-            Address = address;
-            _offset = Address - Memory.Offset;
-        }
-
-        public override bool Equals(object? obj)
-        {
-            return this == (obj as MemoryClass);
-        }
-
-        public override int GetHashCode()
-        {
-            return Address.GetHashCode();
-        }
-
-        public static bool operator ==(MemoryClass? lhs, MemoryClass? rhs)
-        {
-            if (lhs is null)
+            if (String.IsNullOrWhiteSpace(data))
             {
-                return rhs is null;
+                return;
             }
-            if (rhs is null)
+            int index = 0;
+            int offset = entity ? 0x18 : 0;
+            var byteEnums = new Dictionary<string, string>()
             {
-                return false;
-            }
-            return lhs.Address == rhs.Address;
-        }
-
-        public static bool operator !=(MemoryClass? lhs, MemoryClass? rhs)
-        {
-            return !(lhs == rhs);
-        }
-
-        protected sbyte ReadSByte(int offset)
-        {
-            return (sbyte)_memory.Buffer[_offset + offset];
-        }
-
-        protected byte ReadByte(int offset)
-        {
-            return _memory.Buffer[_offset + offset];
-        }
-
-        protected short ReadInt16(int offset)
-        {
-            return BitConverter.ToInt16(_memory.Buffer, _offset + offset);
-        }
-
-        protected ushort ReadUInt16(int offset)
-        {
-            return BitConverter.ToUInt16(_memory.Buffer, _offset + offset);
-        }
-
-        protected int ReadInt32(int offset)
-        {
-            return BitConverter.ToInt32(_memory.Buffer, _offset + offset);
-        }
-
-        protected uint ReadUInt32(int offset)
-        {
-            return BitConverter.ToUInt32(_memory.Buffer, _offset + offset);
-        }
-
-        protected void WriteSByte(int offset, sbyte value)
-        {
-            _memory.WriteMemory(Address + offset, BitConverter.GetBytes(value), sizeof(sbyte));
-        }
-
-        protected void WriteByte(int offset, byte value)
-        {
-            _memory.WriteMemory(Address + offset, BitConverter.GetBytes(value), sizeof(byte));
-        }
-
-        protected void WriteInt16(int offset, short value)
-        {
-            _memory.WriteMemory(Address + offset, BitConverter.GetBytes(value), sizeof(short));
-        }
-
-        protected void WriteUInt16(int offset, ushort value)
-        {
-            _memory.WriteMemory(Address + offset, BitConverter.GetBytes(value), sizeof(ushort));
-        }
-
-        protected void WriteInt32(int offset, int value)
-        {
-            _memory.WriteMemory(Address + offset, BitConverter.GetBytes(value), sizeof(int));
-        }
-
-        protected void WriteUInt32(int offset, uint value)
-        {
-            _memory.WriteMemory(Address + offset, BitConverter.GetBytes(value), sizeof(uint));
-        }
-
-        protected IntPtr ReadPointer(int offset)
-        {
-            return new IntPtr(ReadInt32(offset));
-        }
-
-        protected void WritePointer(int offset, IntPtr value)
-        {
-            WriteInt32(offset, value.ToInt32());
-        }
-
-        protected T ReadClass<T>(int offset, Func<Memory, int, T> create) where T : MemoryClass
-        {
-            return create.Invoke(_memory, ReadInt32(offset));
-        }
-
-        protected Vector3 ReadVec3(int offset)
-        {
-            return new Vector3(
-                ReadInt32(offset) / 4096f,
-                ReadInt32(offset + 4) / 4096f,
-                ReadInt32(offset + 8) / 4096f
-            );
-        }
-
-        protected void WriteVec3(int offset, Vector3 value)
-        {
-            byte[] vector = new byte[12];
-            byte[] component = BitConverter.GetBytes((int)(value.X * 4096));
-            for (int i = 0; i < 4; i++)
+                { "ENEMY_TYPE", "EnemyType" },
+                { "HUNTER", "Hunter" }
+            };
+            var ushortEnums = new Dictionary<string, string>()
             {
-                vector[i] = component[i];
-            }
-            component = BitConverter.GetBytes((int)(value.Y * 4096));
-            for (int i = 0; i < 4; i++)
+                { "ITEM_TYPE", "ItemType" }
+            };
+            var uintEnums = new Dictionary<string, string>()
             {
-                vector[i + 4] = component[i];
-            }
-            component = BitConverter.GetBytes((int)(value.Z * 4096));
-            for (int i = 0; i < 4; i++)
+                { "EVENT_TYPE", "Message" },
+                { "DOOR_TYPE", "DoorType" },
+                { "COLLISION_VOLUME_TYPE", "VolumeType" }
+            };
+            if (entity)
             {
-                vector[i + 8] = component[i];
+                Console.WriteLine($"public class {className} : CEntity");
             }
-            _memory.WriteMemory(Address + offset, component, 12);
-        }
-    }
-
-    public class CEntity : MemoryClass
-    {
-        private const int _off0 = 0x0;
-        public EntityType Type { get => (EntityType)ReadUInt16(_off0); set => WriteUInt16(_off0, (ushort)value); }
-
-        private const int _off1 = 0x2;
-        public ushort EntityId { get => ReadUInt16(_off1); set => WriteUInt16(_off1, value); }
-
-        private const int _off2 = 0x4;
-        public ushort ScanId { get => ReadUInt16(_off2); set => WriteUInt16(_off2, value); }
-
-        private const int _off3 = 0x6;
-        public ushort Field6 { get => ReadUInt16(_off3); set => WriteUInt16(_off3, value); }
-
-        private const int _off4 = 0x8;
-        public IntPtr MtxPtr { get => ReadPointer(_off4); set => WritePointer(_off4, value); }
-
-        private const int _off5 = 0xC;
-        public IntPtr Funcs { get => ReadPointer(_off5); set => WritePointer(_off5, value); }
-
-        private const int _off6 = 0x10;
-        public IntPtr Prev { get => ReadPointer(_off6); set => WritePointer(_off6, value); }
-
-        private const int _off7 = 0x14;
-        public IntPtr Next { get => ReadPointer(_off7); set => WritePointer(_off7, value); }
-
-        /*
-            MtxFx43 *mtxptr;
-            EntityClass *funcs;
-            CEntity *prev;
-            CEntity *next;
-        */
-
-        public CEntity(Memory memory, int address) : base(memory, address)
-        {
-        }
-
-        public CEntity(Memory memory, IntPtr address) : base(memory, address)
-        {
-        }
-    }
-
-    public class CForceField : CEntity
-    {
-        private const int _off0 = 0x18;
-        public Vector3 Normal { get => ReadVec3(_off0); set => WriteVec3(_off0, value); }
-
-        private const int _off1 = 0x24;
-        public byte Flags { get => ReadByte(_off1); set => WriteByte(_off1, value); }
-
-        private const int _off2 = 0x25;
-        public byte Alpha { get => ReadByte(_off2); set => WriteByte(_off2, value); }
-
-        private const int _off3 = 0x26;
-        public ushort Field26 { get => ReadUInt16(_off3); set => WriteUInt16(_off3, value); }
-
-        private const int _off4 = 0x28;
-        public IntPtr Data { get => ReadPointer(_off4); set => WritePointer(_off4, value); }
-
-        private const int _off5 = 0x2C;
-        public IntPtr NodeRef { get => ReadPointer(_off5); set => WritePointer(_off5, value); }
-
-        private const int _off6 = 0x30;
-        public IntPtr Lock { get => ReadPointer(_off6); set => WritePointer(_off6, value); }
-
-        private const int _off7 = 0x34;
-        public Vector3 Vector2 { get => ReadVec3(_off7); set => WriteVec3(_off7, value); }
-
-        private const int _off8 = 0x44;
-        public int Field40 { get => ReadInt32(_off8); set => WriteInt32(_off8, value); }
-
-        /*
-            EntityData *data;
-            NodeRef *node_ref;
-            CEnemy *lock;
-            CModel model;
-        */
-
-        public CForceField(Memory memory, int address) : base(memory, address)
-        {
-        }
-
-        public CForceField(Memory memory, IntPtr address) : base(memory, address)
-        {
+            else
+            {
+                Console.WriteLine($"public class {className} : MemoryClass");
+            }
+            Console.WriteLine("    {");
+            var news = new List<string>();
+            foreach (string line in data.Split(Environment.NewLine))
+            {
+                string[] split = line.Trim().Replace("signed ", "signed").Replace(" *", "* ").Replace(";", "").Split(' ');
+                Debug.Assert(split.Length == 2);
+                string name = "";
+                foreach (string part in split[1].Split('_'))
+                {
+                    name += part[0].ToString().ToUpperInvariant() + part[1..];
+                }
+                string comment = "";
+                string type;
+                string getter;
+                string setter;
+                int size;
+                bool enums = false;
+                bool embed = false;
+                string cast = "";
+                if (split[0].Contains("*"))
+                {
+                    type = "IntPtr";
+                    getter = "ReadPointer";
+                    setter = "WritePointer";
+                    size = 4;
+                    comment = $" // {split[0]}";
+                }
+                else if (split[0] == "EntityPtrUnion")
+                {
+                    type = "IntPtr";
+                    getter = "ReadPointer";
+                    setter = "WritePointer";
+                    size = 4;
+                    comment = $" // CEntity*";
+                }
+                else if (split[0] == "EntityIdOrRef")
+                {
+                    type = "IntPtr";
+                    getter = "ReadPointer";
+                    setter = "WritePointer";
+                    size = 4;
+                    comment = $" // EntityIdOrRef";
+                }
+                else if (split[0] == "int")
+                {
+                    type = "int";
+                    getter = "ReadInt32";
+                    setter = "WriteInt32";
+                    size = 4;
+                }
+                else if (split[0] == "unsignedint")
+                {
+                    type = "uint";
+                    getter = "ReadUInt32";
+                    setter = "WriteUInt32";
+                    size = 4;
+                }
+                else if (split[0] == "signed__int16")
+                {
+                    type = "short";
+                    getter = "ReadInt16";
+                    setter = "WriteInt16";
+                    size = 2;
+                }
+                else if (split[0] == "__int16" || split[0] == "unsigned__int16")
+                {
+                    type = "ushort";
+                    getter = "ReadUInt16";
+                    setter = "WriteUInt16";
+                    size = 2;
+                }
+                else if (split[0] == "char" || split[0] == "__int8" || split[0] == "unsigned__int8")
+                {
+                    type = "byte";
+                    getter = "ReadByte";
+                    setter = "WriteByte";
+                    size = 1;
+                }
+                else if (split[0] == "signed__int8")
+                {
+                    type = "sbyte";
+                    getter = "ReadSByte";
+                    setter = "WriteSByte";
+                    size = 1;
+                }
+                else if (split[0] == "Color3")
+                {
+                    type = "ColorRgb";
+                    getter = "ReadColor3";
+                    setter = "WriteColor3";
+                    size = 3;
+                }
+                else if (split[0] == "VecFx32")
+                {
+                    type = "Vector3";
+                    getter = "ReadVec3";
+                    setter = "WriteVec3";
+                    size = 12;
+                }
+                else if (split[0] == "Vec4")
+                {
+                    type = "Vector4";
+                    getter = "ReadVec4";
+                    setter = "WriteVec4";
+                    size = 16;
+                }
+                else if (split[0] == "MtxFx43")
+                {
+                    type = "Matrix4x3";
+                    getter = "ReadMtx43";
+                    setter = "WriteMtx43";
+                    size = 48;
+                }
+                else if (split[0] == "CModel")
+                {
+                    type = "CModel";
+                    getter = "";
+                    setter = "";
+                    size = 0x48;
+                    embed = true;
+                }
+                else if (split[0] == "BeamInfo")
+                {
+                    type = "BeamInfo";
+                    getter = "";
+                    setter = "";
+                    size = 0x14;
+                    embed = true;
+                }
+                else if (split[0] == "EntityCollision")
+                {
+                    type = "EntityCollision";
+                    getter = "";
+                    setter = "";
+                    size = 0xB4;
+                    embed = true;
+                }
+                else if (split[0] == "SmallSfxStruct")
+                {
+                    type = "SmallSfxStruct";
+                    getter = "";
+                    setter = "";
+                    size = 4;
+                    embed = true;
+                }
+                else if (split[0] == "CollisionVolume")
+                {
+                    type = "CollisionVolume";
+                    getter = "";
+                    setter = "";
+                    size = 0x40;
+                    embed = true;
+                }
+                else if (split[0] == "Light")
+                {
+                    type = "Light";
+                    getter = "";
+                    setter = "";
+                    size = 0xF;
+                    embed = true;
+                }
+                else if (split[0] == "LightInfo")
+                {
+                    type = "LightInfo";
+                    getter = "";
+                    setter = "";
+                    size = 0x1F;
+                    embed = true;
+                }
+                else if (split[0] == "CameraInfo")
+                {
+                    type = "CameraInfo";
+                    getter = "";
+                    setter = "";
+                    size = 0x11C;
+                    embed = true;
+                }
+                else if (split[0] == "PlayerControlsMaybe")
+                {
+                    type = "PlayerControls";
+                    getter = "";
+                    setter = "";
+                    size = 0x9C;
+                    embed = true;
+                }
+                else if (split[0] == "PlayerInputProbably")
+                {
+                    type = "PlayerInput";
+                    getter = "";
+                    setter = "";
+                    size = 0x48;
+                    embed = true;
+                }
+                else if (split[0] == "CBeamProjectile")
+                {
+                    type = "CBeamProjectile";
+                    getter = "";
+                    setter = "";
+                    size = 0x158;
+                    embed = true;
+                }
+                else if (byteEnums.TryGetValue(split[0], out string? value))
+                {
+                    type = value;
+                    getter = "ReadByte";
+                    setter = "WriteByte";
+                    size = 1;
+                    enums = true;
+                    cast = "byte";
+                }
+                else if (ushortEnums.TryGetValue(split[0], out value))
+                {
+                    type = value;
+                    getter = "ReadUInt16";
+                    setter = "WriteUInt16";
+                    size = 2;
+                    enums = true;
+                    cast = "ushort";
+                }
+                else if (uintEnums.TryGetValue(split[0], out value))
+                {
+                    type = value;
+                    getter = "ReadUInt32";
+                    setter = "WriteUInt32";
+                    size = 4;
+                    enums = true;
+                    cast = "uint";
+                }
+                else
+                {
+                    type = split[0];
+                    getter = "Read";
+                    setter = "Write";
+                    size = 4;
+                    embed = true;
+                    Debugger.Break();
+                }
+                int number = 0;
+                bool array = name.Contains('[');
+                string param = "";
+                if (array)
+                {
+                    split = name.Split('[');
+                    number = Int32.Parse(split[1].Split(']')[0]);
+                    Debug.Assert(number > 1);
+                    name = split[0];
+                    if (comment == "")
+                    {
+                        comment = $" // {type}";
+                    }
+                    comment += $"[{number}]";
+                    if (embed)
+                    {
+                        param = $",{Environment.NewLine}                {size}, (Memory m, int a) => new {type}(m, a)";
+                        type = $"StructArray<{type}>";
+                    }
+                    else if (enums && size == 1)
+                    {
+                        type = $"U8EnumArray<{type}>";
+                    }
+                    else if (enums && size == 2)
+                    {
+                        type = $"U16EnumArray<{type}>";
+                    }
+                    else if (enums && size == 4)
+                    {
+                        type = $"U32EnumArray<{type}>";
+                    }
+                    else
+                    {
+                        type = getter.Replace("Read", "").Replace("Pointer", "IntPtr") + "Array";
+                    }
+                    size *= number;
+                }
+                Console.WriteLine($"        private const int _off{index} = 0x{offset:X1};{comment}");
+                if (array)
+                {
+                    Console.WriteLine($"        public {type} {name} {{ get; }}");
+                    news.Add($"            {name} = new {type}(memory, address + _off{index}, {number}{param});");
+                }
+                else if (embed)
+                {
+                    Console.WriteLine($"        public {type} {name} {{ get; }}");
+                    news.Add($"            {name} = new {type}(memory, address + _off{index});");
+                }
+                else if (enums)
+                {
+                    Console.WriteLine($"        public {type} {name} {{ get => ({type}){getter}(_off{index}); " +
+                        $"set => {setter}(_off{index}, ({cast})value); }}");
+                }
+                else
+                {
+                    Console.WriteLine($"        public {type} {name} {{ get => {getter}(_off{index}); " +
+                        $"set => {setter}(_off{index}, value); }}");
+                }
+                Console.WriteLine();
+                index++;
+                offset += size;
+            }
+            Console.WriteLine($"        public {className}(Memory memory, int address) : base(memory, address)");
+            Console.WriteLine("        {");
+            foreach (string line in news)
+            {
+                Console.WriteLine(line);
+            }
+            Console.WriteLine("        }");
+            Console.WriteLine();
+            Console.WriteLine($"        public {className}(Memory memory, IntPtr address) : base(memory, address)");
+            Console.WriteLine("        {");
+            foreach (string line in news)
+            {
+                Console.WriteLine(line);
+            }
+            Console.WriteLine("        }");
+            Console.WriteLine("    }");
+            Debugger.Break();
         }
     }
 }

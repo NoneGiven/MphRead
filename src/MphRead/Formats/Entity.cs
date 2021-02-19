@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.InteropServices;
-using OpenTK.Mathematics;
 
 namespace MphRead
 {
@@ -280,7 +279,7 @@ namespace MphRead
     public readonly struct ItemEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint ItemEntityId;
+        public readonly uint ParentId;
         public readonly uint ModelId;
         public readonly byte Enabled; // boolean
         public readonly byte HasBase; // boolean
@@ -311,6 +310,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly EnemyType Type;
+        public readonly byte Padding25; // in-game, the type is 4 bytes on this struct (but is 1 byte on the class),
+        public readonly ushort Padding26; // so this padding isn't actually there
         public readonly uint Subtype;
         public readonly uint TextureId;
         public readonly uint HunterWeapon;
@@ -636,7 +637,7 @@ namespace MphRead
     public readonly struct JumpPadEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Field24;
+        public readonly uint ParentId;
         public readonly uint Field28;
         public readonly RawCollisionVolume Volume;
         public readonly Vector3Fx BeamVector;
