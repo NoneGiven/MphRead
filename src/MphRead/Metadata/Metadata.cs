@@ -761,6 +761,12 @@ namespace MphRead
             return _platforms[id];
         }
 
+        public static readonly IReadOnlyList<string> WeaponNames = new List<string>()
+        {
+            "Power Beam", "Volt Driver", "Missiles", "Battlehammer", "Imperialist", "Judicator", "Magmaul", "Shock Coil", "Omega Cannon",
+            "Platform", "Enemy"
+        };
+
         // todo: organize/enum
         public static Vector3 GetEventColor(Message eventId)
         {

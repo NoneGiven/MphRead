@@ -1,3 +1,5 @@
+using System;
+
 namespace MphRead
 {
     public enum EntityType : ushort
@@ -115,7 +117,17 @@ namespace MphRead
         Magmaul = 6,
         ShockCoil = 7,
         OmegaCannon = 8,
-        Platform = 9
+        Platform = 9,
+        Enemy = 10
+    }
+
+    [Flags]
+    public enum Affliction : byte
+    {
+        None = 0,
+        Freeze = 1,
+        Disrupt = 2,
+        Burn = 4
     }
 
     public enum ModelType
