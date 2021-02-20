@@ -104,6 +104,20 @@ namespace MphRead
         PickWpnMissile = 22
     }
 
+    public enum BeamType : byte
+    {
+        PowerBeam = 0,
+        VoltDriver = 1,
+        Missile = 2,
+        Battlehamer = 3,
+        Imperialist = 4,
+        Judicator = 5,
+        Magmaul = 6,
+        ShockCoil = 7,
+        OmegaCannon = 8,
+        Platform = 9
+    }
+
     public enum ModelType
     {
         Generic,

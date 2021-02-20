@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -11,6 +12,8 @@ namespace MphRead.Memory
         private static class Addresses
         {
             public static readonly int EntityListHead = 0x20E3EE0;
+            public static readonly int FrameCount = 0x20D94FC;
+            public static readonly int PlayerUA = 0x20DB180;
         }
 
         [DllImport("kernel32.dll")]
@@ -59,10 +62,22 @@ namespace MphRead.Memory
             _baseAddress = new IntPtr(0x91A8100);
             Task.Run(async () =>
             {
+                var results = new List<(int, int)>();
+                int last = 0;
                 while (true)
                 {
                     RefreshMemory();
                     GetEntities();
+                    int fc = BitConverter.ToInt32(_buffer, Addresses.FrameCount - Offset);
+                    if (last != fc)
+                    {
+                        last = fc;
+                        if (_entities.Any(e => e.EntityType == EntityType.BeamProjectile))
+                        {
+                            int ua = BitConverter.ToInt16(_buffer, Addresses.PlayerUA - Offset);
+                            results.Add((fc, ua));
+                        }
+                    }
                     await Task.Delay(15);
                 }
             }).GetAwaiter().GetResult();

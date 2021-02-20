@@ -727,8 +727,8 @@ namespace MphRead
 
         public readonly struct WeaponInfo
         {
-            public readonly byte BeamId;
-            public readonly byte BeamId2; // same as BeamId except for platform beams, which have a value of 9
+            public readonly BeamType BeamId;
+            public readonly BeamType BeamId2; // same as BeamId except for platform beams, which have a value of 9
             [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
             public readonly byte[] Field2;
             [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U2, SizeConst = 2)]
@@ -753,20 +753,20 @@ namespace MphRead
             [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
             public readonly byte[] Afflictions; // bit 0 - freeze, bit 1 - disrupt, bit 3 - burn
             public readonly byte Field21;
+            public readonly ushort MinCharge;
             public readonly ushort FullCharge;
-            public readonly ushort ChargeAmtShake;
             public readonly ushort AmmoCost;
             public readonly ushort ChargeCost;
-            public readonly ushort ChargeCostCopy;
+            public readonly ushort MinChargeCost;
             public readonly ushort UnchargedDamage;
-            public readonly ushort SomeDamage;
+            public readonly ushort MinChargeDamage;
             public readonly ushort ChargedDamage;
             public readonly ushort HeadshotDamage;
-            public readonly ushort SomeHeadshotDamage;
+            public readonly ushort MinChargeHeadshotDamage;
             public readonly ushort ChargedHeadshotDamage;
-            public readonly ushort Field38;
-            public readonly ushort Field3A;
-            public readonly ushort Field3C;
+            public readonly ushort Lifespan;
+            public readonly ushort ChargedLifespan;
+            public readonly ushort MinChargeLifespan;
             [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U2, SizeConst = 2)]
             public readonly ushort[] Field3E;
             public readonly ushort Field42;
@@ -846,76 +846,117 @@ namespace MphRead
             public readonly ushort FieldD6;
             [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U4, SizeConst = 2)]
             public readonly uint[] FieldD8;
-            public readonly ushort FieldE0;
-            public readonly ushort FieldE2;
-            public readonly ushort FieldE4;
-            public readonly ushort FieldE6;
-            public readonly ushort FieldE8;
-            public readonly ushort FieldEA;
-            public readonly ushort FieldEC;
-            public readonly ushort FieldEE;
+            public readonly ushort ProjectileCount;
+            public readonly ushort ChargedProjectileCount;
+            public readonly ushort MinChargeProjectileCount;
+            public readonly ushort SmokeStart; // start drawing gun smoke when smoke level reaches this value (and cap it)
+            public readonly ushort SmokeMinimum; // continue drawing gun smoke until level drops below this value
+            public readonly ushort SmokeDrain; // reduce level by this amount each frame (or bring it to 0)
+            public readonly ushort SmokeAmount; // increase level by this amount when firing
+            public readonly ushort SmokeChargeAmount; // increase level by this amount each frame while charging
 
-            public string Name => _weaponNames[BeamId];
+            public string Name => _weaponNames[(int)BeamId];
         }
 
         public static void TestWeaponInfo()
         {
             IReadOnlyList<WeaponInfo> weapons1P = Get1PWeapons();
             IReadOnlyList<WeaponInfo> weaponsMP = GetMPWeapons();
+            WeaponInfo judicatorRico = GetJudicatorRicochet();
 
-            static void WriteStuff(WeaponInfo w, bool aff, bool mp)
+            foreach (WeaponInfo weapon in weapons1P.Concat(weaponsMP))
             {
-                Console.WriteLine($"{w.Name}" + (aff ? " (AF)" : "(NM)") + (mp ? " (MP)" : " (1P)"));
-                byte afl1 = w.Afflictions[0];
-                string str1 = "";
-                if ((afl1 & 1) != 0)
-                {
-                    str1 += "Frz ";
-                }
-                if ((afl1 & 2) != 0)
-                {
-                    str1 += "Dis ";
-                }
-                if ((afl1 & 4) != 0)
-                {
-                    str1 += "Brn ";
-                }
-                Debug.Assert((afl1 & 0xF8) == 0);
-                byte afl2 = w.Afflictions[1];
-                string str2 = "";
-                if ((afl2 & 1) != 0)
-                {
-                    str2 += "Frz ";
-                }
-                if ((afl2 & 2) != 0)
-                {
-                    str2 += "Dis ";
-                }
-                if ((afl2 & 4) != 0)
-                {
-                    str2 += "Brn ";
-                }
-                str1 = str1.Trim();
-                str2 = str2.Trim();
-                Debug.Assert((afl2 & 0xF8) == 0);
-                Console.WriteLine($"{str1} / {str2}");
             }
 
             for (int i = 0; i < 9; i++)
             {
-                WriteStuff(weapons1P[i], false, false);
-                WriteStuff(weapons1P[i + 9], true, false);
-                WriteStuff(weaponsMP[i], false, true);
-                WriteStuff(weaponsMP[i + 9], true, true);
+                WeaponInfo singleNormal = weapons1P[i];
+                WeaponInfo multiNormal = weaponsMP[i];
+                WeaponInfo singleAffinity = weapons1P[i + 9];
+                WeaponInfo multiAffinity = weaponsMP[i + 9];
+
+                Console.WriteLine(singleNormal.Name);
+                Console.WriteLine($"1P Nrm: {singleNormal}");
+                Console.WriteLine($"MP Nrm: {multiNormal}");
+                Console.WriteLine($"1P Aff: {singleAffinity}");
+                Console.WriteLine($"MP Aff: {multiAffinity}");
                 Console.WriteLine();
+
+                //int bit = 31;
+                //uint mask = (uint)Math.Pow(2, bit);
+                //bool snTest = (singleNormal.Flags & mask) != 0;
+                //bool mnTest = (multiNormal.Flags & mask) != 0;
+                //bool saTest = (singleAffinity.Flags & mask) != 0;
+                //bool maTest = (multiAffinity.Flags & mask) != 0;
+                //var results = new HashSet<bool>();
+                //results.Add(snTest);
+                //results.Add(mnTest);
+                //results.Add(saTest);
+                //results.Add(maTest);
+                //if (results.Count != 1)
+                //{
+                //    Debugger.Break();
+                //}
+                //Console.WriteLine(singleNormal.Name);
+                //Console.WriteLine($"1P Nrm: {snTest}");
+                //Console.WriteLine($"MP Nrm: {mnTest}");
+                //Console.WriteLine($"1P Aff: {saTest}");
+                //Console.WriteLine($"MP Aff: {maTest}");
+                //Console.WriteLine();
             }
 
             Nop();
+
+            //static void WriteStuff(WeaponInfo w, bool aff, bool mp)
+            //{
+            //    Console.WriteLine($"{w.Name}" + (aff ? " (AF)" : "(NM)") + (mp ? " (MP)" : " (1P)"));
+            //    byte afl1 = w.Afflictions[0];
+            //    string str1 = "";
+            //    if ((afl1 & 1) != 0)
+            //    {
+            //        str1 += "Frz ";
+            //    }
+            //    if ((afl1 & 2) != 0)
+            //    {
+            //        str1 += "Dis ";
+            //    }
+            //    if ((afl1 & 4) != 0)
+            //    {
+            //        str1 += "Brn ";
+            //    }
+            //    Debug.Assert((afl1 & 0xF8) == 0);
+            //    byte afl2 = w.Afflictions[1];
+            //    string str2 = "";
+            //    if ((afl2 & 1) != 0)
+            //    {
+            //        str2 += "Frz ";
+            //    }
+            //    if ((afl2 & 2) != 0)
+            //    {
+            //        str2 += "Dis ";
+            //    }
+            //    if ((afl2 & 4) != 0)
+            //    {
+            //        str2 += "Brn ";
+            //    }
+            //    str1 = str1.Trim();
+            //    str2 = str2.Trim();
+            //    Debug.Assert((afl2 & 0xF8) == 0);
+            //    Console.WriteLine($"{str1} / {str2}");
+            //}
+
+            //for (int i = 0; i < 9; i++)
+            //{
+            //    WriteStuff(weapons1P[i], false, false);
+            //    WriteStuff(weapons1P[i + 9], true, false);
+            //    WriteStuff(weaponsMP[i], false, true);
+            //    WriteStuff(weaponsMP[i + 9], true, true);
+            //    Console.WriteLine();
+            //}
         }
 
-        private static IReadOnlyList<WeaponInfo> ParseWeaponInfo(byte[] array)
+        private static IReadOnlyList<WeaponInfo> ParseWeaponInfo(byte[] array, int count = 18)
         {
-            int count = 18;
             int size = Marshal.SizeOf<WeaponInfo>();
             Debug.Assert(size == 0xF0);
             var results = new List<WeaponInfo>();
@@ -1174,25 +1215,33 @@ namespace MphRead
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
                     foreach (Entity entity in entities)
                     {
-                        if (entity.Type == EntityType.Platform)
+                        if (entity.Type == EntityType.Object)
                         {
-                            PlatformEntityData data = ((Entity<PlatformEntityData>)entity).Data;
-                            if (data.BeamIndex != UInt32.MaxValue)
+                            ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
+                            if ((data.EffectFlags & 8) != 0 && data.ModelId != 46)
                             {
-                                PlatformMetadata? type = Metadata.GetPlatformById((int)data.ModelId);
-                                string name = type?.Name ?? "N/A";
-                                if (data.BeamIndex > 0 && (data.Flags & 4) == 0)
-                                {
-                                    Debugger.Break();
-                                }
-                                if (!room)
-                                {
-                                    room = true;
-                                    Console.WriteLine(meta.Key);
-                                }
-                                Console.WriteLine($"[{data.BeamIndex}] {data.Header.EntityId:D2} ({name})");
+                                Debugger.Break();
                             }
                         }
+                        //if (entity.Type == EntityType.Platform)
+                        //{
+                        //    PlatformEntityData data = ((Entity<PlatformEntityData>)entity).Data;
+                        //    if (data.BeamIndex != UInt32.MaxValue)
+                        //    {
+                        //        PlatformMetadata? type = Metadata.GetPlatformById((int)data.ModelId);
+                        //        string name = type?.Name ?? "N/A";
+                        //        if (data.BeamIndex > 0 && (data.Flags & 4) == 0)
+                        //        {
+                        //            Debugger.Break();
+                        //        }
+                        //        if (!room)
+                        //        {
+                        //            room = true;
+                        //            Console.WriteLine(meta.Key);
+                        //        }
+                        //        Console.WriteLine($"[{data.BeamIndex}] {data.Header.EntityId:D2} ({name})");
+                        //    }
+                        //}
                     }
                 }
                 if (room)
@@ -1363,6 +1412,28 @@ namespace MphRead
         }
 
         private static void Nop() { }
+
+        private static WeaponInfo GetJudicatorRicochet()
+        {
+            return ParseWeaponInfo(new byte[]
+            {
+                0x05, 0x05, 0x03, 0x03, 0x94, 0x7E, 0x94, 0x7E, 0x02, 0x12, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x14, 0x14, 0x00, 0x0B, 0x0B, 0xFF, 0xFF, 0x03, 0x03, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x0F, 0x00, 0x3C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x00, 0x18, 0x00,
+                0x18, 0x00, 0x18, 0x00, 0x18, 0x00, 0x18, 0x00, 0x0F, 0x00, 0x0F, 0x00, 0x0F, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x33, 0x03, 0x00, 0x00, 0x33, 0x03, 0x00, 0x00,
+                0x33, 0x03, 0x00, 0x00, 0x00, 0xA0, 0x00, 0x00, 0x99, 0x01, 0x00, 0x00, 0x99, 0x01, 0x00, 0x00,
+                0x99, 0x01, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0x01, 0x00, 0x38, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x66, 0x0E, 0x00, 0x00, 0x66, 0x0E, 0x00, 0x00, 0x66, 0x0E, 0x00, 0x00, 0x66, 0x0E, 0x00, 0x00,
+                0x66, 0x0E, 0x00, 0x00, 0x66, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x64, 0x00, 0x32, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00
+            }, count: 1)[0];
+        }
 
         private static IReadOnlyList<WeaponInfo> Get1PWeapons()
         {
