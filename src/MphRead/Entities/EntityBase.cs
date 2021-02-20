@@ -304,12 +304,12 @@ namespace MphRead.Entities
             return texcoordMatrix;
         }
 
-        protected void ComputeTransform(Vector3Fx vector2, Vector3Fx vector1, Vector3Fx position)
+        protected void SetTransform(Vector3Fx vector2, Vector3Fx vector1, Vector3Fx position)
         {
-            ComputeTransform(vector2.ToFloatVector(), vector1.ToFloatVector(), position.ToFloatVector());
+            SetTransform(vector2.ToFloatVector(), vector1.ToFloatVector(), position.ToFloatVector());
         }
 
-        protected void ComputeTransform(Vector3 vector2, Vector3 vector1, Vector3 position)
+        protected void SetTransform(Vector3 vector2, Vector3 vector1, Vector3 position)
         {
             Matrix4 transform = GetTransformMatrix(vector2, vector1);
             transform.ExtractRotation().ToEulerAngles(out Vector3 rotation);
@@ -317,7 +317,7 @@ namespace MphRead.Entities
             Position = position;
         }
 
-        protected Matrix4 GetTransformMatrix(Vector3 vector2, Vector3 vector1)
+        protected static Matrix4 GetTransformMatrix(Vector3 vector2, Vector3 vector1)
         {
             Vector3 up = Vector3.Cross(vector1, vector2).Normalized();
             var direction = Vector3.Cross(vector2, up);

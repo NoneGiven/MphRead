@@ -24,7 +24,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             _flags = data.Flags;
             // todo: bits 0 and 1 should be cleared if entity ID is -1 (and they should also be affected by room state otherwise)
             _flags &= 0xFB;

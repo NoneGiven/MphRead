@@ -11,7 +11,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             Recolor = mode == GameMode.Capture ? data.TeamId : 2;
             if (mode == GameMode.Capture || mode == GameMode.Bounty)
             {

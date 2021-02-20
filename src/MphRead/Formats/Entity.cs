@@ -411,7 +411,7 @@ namespace MphRead
         public readonly ushort CooldownTime;
         public readonly ushort InitialCooldown;
         public readonly ushort Padding1C6;
-        public readonly uint ActiveDistance; // sktodo: display sphere
+        public readonly uint ActiveDistance; // todo: display sphere
         public readonly uint Field1CC;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;

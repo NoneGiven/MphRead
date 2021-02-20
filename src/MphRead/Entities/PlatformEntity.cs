@@ -21,7 +21,7 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             _flags = data.Flags;
-            ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             PlatformMetadata? meta = Metadata.GetPlatformById((int)data.ModelId);
             if (meta == null)
             {
@@ -129,7 +129,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             ModelInstance inst = Read.GetModelInstance("platform", firstHunt: true);
             _models.Add(inst);
         }

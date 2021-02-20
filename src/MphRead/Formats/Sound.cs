@@ -492,7 +492,7 @@ namespace MphRead.Formats.Sound
     // size: 12
     public readonly struct RawSoundTableEntry
     {
-        // sktodo: SFX fields
+        // nxtodo: SFX fields
         public readonly ushort Field0;
         public readonly byte CategoryId;
         public readonly byte Field3;

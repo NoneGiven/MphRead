@@ -734,21 +734,14 @@ namespace MphRead
             IReadOnlyList<WeaponInfo> platforms = Weapons.PlatformWeapons;
             IReadOnlyList<WeaponInfo> ricochets = Weapons.Ricochets;
 
-            for (int i = 0; i < ricochets.Count; i++)
+            foreach (WeaponInfo weapon in weapons1P.Concat(weaponsMP).Concat(enemies).Concat(platforms).Concat(ricochets))
             {
-                WeaponInfo weapon = ricochets[i];
-                if (weapon.Description != "")
+                if (weapon.MuzzleEffects[0] < 3 || weapon.MuzzleEffects[1] < 3)
                 {
-                    Console.WriteLine(weapon.Description);
+                    Debugger.Break();
                 }
-                else
-                {
-                    Console.WriteLine($"{i} / {weapon.Weapon} / {weapon.WeaponType}");
-                } 
-                Console.WriteLine($"{weapon.DrawFuncIds[0]} {weapon.DrawFuncIds[1]}");
-                Console.WriteLine();
             }
-
+            
             Nop();
 
             for (int i = 0; i < 9; i++)
@@ -788,7 +781,20 @@ namespace MphRead
                 //Console.WriteLine();
             }
 
-            Nop();
+            //for (int i = 0; i < ricochets.Count; i++)
+            //{
+            //    WeaponInfo weapon = ricochets[i];
+            //    if (weapon.Description != "")
+            //    {
+            //        Console.WriteLine(weapon.Description);
+            //    }
+            //    else
+            //    {
+            //        Console.WriteLine($"{i} / {weapon.Weapon} / {weapon.WeaponType}");
+            //    }
+            //    Console.WriteLine($"{weapon.DrawFuncIds[0]} {weapon.DrawFuncIds[1]}");
+            //    Console.WriteLine();
+            //}
 
             //static void WriteStuff(WeaponInfo w, bool aff, bool mp)
             //{
@@ -838,18 +844,18 @@ namespace MphRead
             //}
         }
 
-        private static IReadOnlyList<WeaponInfo> ParseWeaponInfo(int count, byte[] array)
+        private static IReadOnlyList<RawWeaponInfo> ParseWeaponInfo(int count, byte[] array)
         {
-            int size = Marshal.SizeOf<WeaponInfo>();
+            int size = Marshal.SizeOf<RawWeaponInfo>();
             Debug.Assert(size == 0xF0);
-            var results = new List<WeaponInfo>();
+            var results = new List<RawWeaponInfo>();
             var bytes = new ReadOnlySpan<byte>(array);
             Debug.Assert(bytes.Length == count * size);
             for (int i = 0; i < count; i++)
             {
                 int start = i * size;
                 int end = start + size;
-                results.Add(Read.ReadStruct<WeaponInfo>(bytes[start..end]));
+                results.Add(Read.ReadStruct<RawWeaponInfo>(bytes[start..end]));
                 //results.Add(MemoryMarshal.Read<WeaponInfo>(bytes[start..end]));
             }
             return results;
@@ -1296,7 +1302,7 @@ namespace MphRead
 
         private static void Nop() { }
 
-        private static IReadOnlyList<WeaponInfo> GetRicochets()
+        private static IReadOnlyList<RawWeaponInfo> GetRicochets()
         {
             return ParseWeaponInfo(count: 4, new byte[]
             {
@@ -1316,7 +1322,7 @@ namespace MphRead
                 0x66, 0x0E, 0x00, 0x00, 0x66, 0x0E, 0x00, 0x00, 0x66, 0x0E, 0x00, 0x00, 0x66, 0x0E, 0x00, 0x00,
                 0x66, 0x0E, 0x00, 0x00, 0x66, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x64, 0x00, 0x32, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
-                // 1 - 0x20CA130 - sktodo
+                // 1 - 0x20CA130
                 0x06, 0x0A, 0x04, 0x04, 0x3F, 0x02, 0x3F, 0x02, 0x02, 0x01, 0x00, 0x40, 0x01, 0x00, 0x01, 0x00,
                 0x01, 0x00, 0x02, 0x02, 0x14, 0x14, 0x00, 0x09, 0x09, 0xFF, 0xFF, 0x03, 0x03, 0x00, 0x00, 0x00,
                 0x00, 0x00, 0x0F, 0x00, 0x3C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x05, 0x00,
@@ -1332,7 +1338,7 @@ namespace MphRead
                 0x00, 0x08, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00,
                 0x00, 0x08, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x40, 0xA0, 0x0C, 0x02, 0x00, 0x00, 0x00, 0x00,
                 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x64, 0x00, 0x00, 0x00, 0x0A, 0x00, 0x64, 0x00, 0x0A, 0x00,
-                // 2 - 0x20CA220 - sktodo
+                // 2 - 0x20CA220
                 0x05, 0x0A, 0x03, 0x03, 0x94, 0x7E, 0x94, 0x7E, 0x02, 0x12, 0x04, 0x40, 0x00, 0x00, 0x00, 0x00,
                 0x00, 0x00, 0x00, 0x00, 0x14, 0x14, 0x00, 0x0B, 0x0B, 0xFF, 0xFF, 0x03, 0x03, 0x00, 0x00, 0x00,
                 0x01, 0x00, 0x0F, 0x00, 0x3C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04, 0x00,
@@ -1348,7 +1354,7 @@ namespace MphRead
                 0x66, 0x0E, 0x00, 0x00, 0x66, 0x0E, 0x00, 0x00, 0x66, 0x0E, 0x00, 0x00, 0x66, 0x0E, 0x00, 0x00,
                 0x66, 0x0E, 0x00, 0x00, 0x66, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 0x03, 0x00, 0x01, 0x00, 0x01, 0x00, 0x64, 0x00, 0x32, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
-                // 3 - 0x20CA040 - sktodo
+                // 3 - 0x20CA040
                 0x06, 0x0A, 0x04, 0x04, 0x3F, 0x02, 0x3F, 0x02, 0x02, 0x01, 0x00, 0x40, 0x01, 0x00, 0x01, 0x00,
                 0x01, 0x00, 0x02, 0x02, 0x14, 0x14, 0x00, 0x09, 0x09, 0xFF, 0xFF, 0x03, 0x03, 0x00, 0x00, 0x00,
                 0x00, 0x00, 0x0F, 0x00, 0x3C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x05, 0x00,
@@ -1367,7 +1373,7 @@ namespace MphRead
             });
         }
 
-        private static IReadOnlyList<WeaponInfo> Get1PWeapons()
+        private static IReadOnlyList<RawWeaponInfo> Get1PWeapons()
         {
             return ParseWeaponInfo(count: 18, new byte[]
             {
@@ -1644,7 +1650,7 @@ namespace MphRead
             });
         }
 
-        private static IReadOnlyList<WeaponInfo> GetMPWeapons()
+        private static IReadOnlyList<RawWeaponInfo> GetMPWeapons()
         {
             return ParseWeaponInfo(count: 18, new byte[]
             {
@@ -1922,7 +1928,7 @@ namespace MphRead
             });
         }
 
-        private static IReadOnlyList<WeaponInfo> GetEnemyWeapons()
+        private static IReadOnlyList<RawWeaponInfo> GetEnemyWeapons()
         {
             return ParseWeaponInfo(count: 11, new byte[]
             {
@@ -2094,7 +2100,7 @@ namespace MphRead
             });
         }
 
-        private static IReadOnlyList<WeaponInfo> GetPlatformWeapons()
+        private static IReadOnlyList<RawWeaponInfo> GetPlatformWeapons()
         {
             return ParseWeaponInfo(count: 4, new byte[]
             {
@@ -2160,6 +2166,101 @@ namespace MphRead
                 0xCC, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
                 0x01, 0x00, 0xE8, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
             });
+        }
+
+        public readonly struct RawWeaponInfo
+        {
+            public readonly BeamType Weapon;
+            public readonly BeamType WeaponType; // same as Weapon except for platform/enemy beams
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
+            public readonly byte[] DrawFuncIds;
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U2, SizeConst = 2)]
+            public readonly ushort[] Colors;
+            public readonly WeaponFlags Flags;
+            public readonly ushort SplashDamage;
+            public readonly ushort MinChargeSplashDamage;
+            public readonly ushort ChargedSplashDamage;
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
+            public readonly byte[] Field12;
+            public readonly byte ShotCooldown;
+            public readonly byte ShotCooldownRelated;
+            public readonly byte AmmoType;
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
+            public readonly byte[] BeamTypes; // correspond to collision effects
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
+            public readonly byte[] MuzzleEffects;
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
+            public readonly byte[] Field1B;
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
+            public readonly byte[] Field1D;
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
+            public readonly Affliction[] Afflictions; // bit 0 - freeze, bit 1 - disrupt, bit 3 - burn
+            public readonly byte Field21;
+            public readonly ushort MinCharge;
+            public readonly ushort FullCharge;
+            public readonly ushort AmmoCost;
+            public readonly ushort MinChargeCost;
+            public readonly ushort ChargeCost;
+            public readonly ushort UnchargedDamage;
+            public readonly ushort MinChargeDamage;
+            public readonly ushort ChargedDamage;
+            public readonly ushort HeadshotDamage;
+            public readonly ushort MinChargeHeadshotDamage;
+            public readonly ushort ChargedHeadshotDamage;
+            public readonly ushort UnchargedLifespan;
+            public readonly ushort MinChargeLifespan;
+            public readonly ushort ChargedLifespan;
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U2, SizeConst = 2)]
+            public readonly ushort[] Field3E;
+            public readonly ushort Field42;
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U2, SizeConst = 2)]
+            public readonly ushort[] Field44;
+            public readonly int Field48; // uncharged
+            public readonly int Field4C; // min charge
+            public readonly int Field50; // full charge
+            public readonly int Field54;
+            public readonly int Field58; // uncharged
+            public readonly int Field5C; // min charge
+            public readonly int Field60; // full charge
+            public readonly int Field64; // uncharged
+            public readonly int Field68; // min charge
+            public readonly int Field6C; // full charge
+            public readonly int Field70; // uncharged
+            public readonly int Field74; // min charge
+            public readonly int Field78; // full charge
+            public readonly int UnchargedGravity;
+            public readonly int MinChargeGravity;
+            public readonly int ChargedGravity;
+            public readonly int UnchargedHoming;
+            public readonly int MinChargeHoming;
+            public readonly int ChargedHoming;
+            public readonly int Field94;
+            public readonly int Field98;
+            public readonly int UnchargedScale;
+            public readonly int MinChargeScale;
+            public readonly int ChargedScale;
+            public readonly int UnchargedDistance;
+            public readonly int MinChargeDistance;
+            public readonly int ChargedDistance;
+            public readonly int FieldB4; // uncharged
+            public readonly int FieldB8; // min charge
+            public readonly int FieldBC; // full charge
+            public readonly int FieldC0; // uncharged
+            public readonly int FieldC4; // min charge
+            public readonly int FieldC8; // full charge
+            public readonly int FieldCC; // uncharged
+            public readonly int FieldD0; // min charge
+            public readonly int FieldD4; // full charge
+            [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U4, SizeConst = 2)]
+            public readonly uint[] RicochetWeaponPtr; // WeaponInfo*
+            public readonly ushort ProjectileCount;
+            public readonly ushort MinChargedProjectileCount;
+            public readonly ushort ChargeProjectileCount;
+            public readonly ushort SmokeStart; // start drawing gun smoke when smoke level reaches this value (and cap it)
+            public readonly ushort SmokeMinimum; // continue drawing gun smoke until level drops below this value
+            public readonly ushort SmokeDrain; // reduce level by this amount each frame (or bring it to 0)
+            public readonly ushort SmokeShotAmount; // increase level by this amount when firing uncharged shot
+            public readonly ushort SmokeChargeAmount; // increase level by this amount each frame while charging
         }
     }
 }

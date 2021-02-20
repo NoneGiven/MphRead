@@ -53,7 +53,7 @@ namespace MphRead.Formats.Collision
 
         private static CollisionInfo ReadFhCollision(string path, ReadOnlySpan<byte> bytes)
         {
-            // sktodo: read and return the rest of the data
+            // nxtodo: read and return the rest of the data
             FhCollisionHeader header = Read.ReadStruct<FhCollisionHeader>(bytes);
             IReadOnlyList<Vector3Fx> vectors = Read.DoOffsets<Vector3Fx>(bytes, header.VectorOffset, header.VectorCount);
             var portals = new List<CollisionPortal>();
@@ -181,7 +181,7 @@ namespace MphRead.Formats.Collision
             Position = position;
         }
 
-        // sktodo: temporary
+        // nxtodo: temporary
         public CollisionPortal(FhCollisionPortal raw)
         {
             Name = raw.Name.MarshalString();

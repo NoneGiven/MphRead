@@ -14,7 +14,7 @@ namespace MphRead.Entities.Enemies
             _vec1 = spawner.Data.Header.UpVector.ToFloatVector();
             _vec2 = spawner.Data.Header.RightVector.ToFloatVector();
             position += _vec2 * Fixed.ToFloat(409);
-            ComputeTransform(_vec2, _vec1, position);
+            SetTransform(_vec2, _vec1, position);
             _initialPosition = Position;
             ModelInstance inst = Read.GetModelInstance("ForceFieldLock");
             _models.Add(inst);
@@ -27,7 +27,7 @@ namespace MphRead.Entities.Enemies
             {
                 _vec2 *= -1;
                 Vector3 position = _initialPosition + _vec2 * Fixed.ToFloat(409);
-                ComputeTransform(_vec2, _vec1, position);
+                SetTransform(_vec2, _vec1, position);
             }
             return base.Process(scene);
         }

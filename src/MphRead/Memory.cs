@@ -236,7 +236,7 @@ namespace MphRead.Memory
             }
             if (type == EntityType.EnemyInstance)
             {
-                // sktodo: enemy instance
+                // nxtodo: enemy instance
             }
             if (type == EntityType.Halfturret)
             {
