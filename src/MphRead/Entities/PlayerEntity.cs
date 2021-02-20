@@ -93,6 +93,11 @@ namespace MphRead.Entities
                 _respawnTimer--;
             }
             UpdateModels();
+            if (_frozen)
+            {
+                // skip incrementing animation frames
+                return true;
+            }
             return base.Process(scene);
         }
 
