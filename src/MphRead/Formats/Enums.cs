@@ -315,7 +315,7 @@ namespace MphRead
         GreaterIthrak = 47,
         Hunter = 48,
         ForceFieldLock = 49,
-        Unknown50 = 50, // enemy projectile -- ithraks and fire/ice spawn?
+        Unknown50 = 50, // weak spot for 46/47/39
         CarnivorousPlant = 51
     }
 
