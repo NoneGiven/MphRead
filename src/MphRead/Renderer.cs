@@ -2184,9 +2184,48 @@ namespace MphRead
             }
         }
 
+        private void TestSpawnBeam(int type)
+        {
+            if (type == 0)
+            {
+                float maxDist = Weapons.WeaponsMP[14].ChargedDistance / 4096f;
+                Matrix4 transform = Matrix4.CreateScale(maxDist) * Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-90));
+                transform.Row3.Xyz = new Vector3(0.37203538f, 1.2936982f, -1.0930165f);
+                var ent = BeamEffectEntity.Create(new BeamEffectEntityData(0, false, transform), this);
+                if (ent != null)
+                {
+                    AddEntity(ent);
+                }
+            }
+            else if (type == 1)
+            {
+                Matrix4 transform = Matrix4.CreateScale(new Vector3(1, 200, 1)) * Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-90));
+                transform.Row3.Xyz = new Vector3(0.37203538f, 1.2936982f, -1.0930165f);
+                var ent = BeamEffectEntity.Create(new BeamEffectEntityData(1, false, transform), this);
+                if (ent != null)
+                {
+                    AddEntity(ent);
+                }
+            }
+            else if (type == 2)
+            {
+                Matrix4 transform = Matrix4.Identity;
+                transform.Row3.Z = 2f;
+                var ent = BeamEffectEntity.Create(new BeamEffectEntityData(2, false, transform), this);
+                if (ent != null)
+                {
+                    AddEntity(ent);
+                }
+            }
+        }
+
         public void OnKeyDown(KeyboardKeyEventArgs e)
         {
-            if (Selection.OnKeyDown(e, this))
+            if (e.Key == Keys.E && e.Alt)
+            {
+                TestSpawnBeam(type: 0);
+            }
+            else if (Selection.OnKeyDown(e, this))
             {
                 return;
             }

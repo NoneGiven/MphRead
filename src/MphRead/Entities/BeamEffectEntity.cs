@@ -58,7 +58,7 @@ namespace MphRead.Entities
             Transform = data.Transform;
             if (data.Type == 0)
             {
-                scene.SpawnEffect(78, data.Transform); // iceWave
+                scene.SpawnEffect(78, data.Transform.ClearScale()); // iceWave
             }
         }
 
