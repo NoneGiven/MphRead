@@ -30,7 +30,7 @@ namespace MphRead
         Plane = 4,
         Particle = 5,
         Trail1 = 6,
-        Trail2 = 6
+        Trail2 = 7
     }
 
     public class RenderItem
