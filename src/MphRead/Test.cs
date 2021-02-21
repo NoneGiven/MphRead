@@ -734,9 +734,12 @@ namespace MphRead
             IReadOnlyList<WeaponInfo> platforms = Weapons.PlatformWeapons;
             IReadOnlyList<WeaponInfo> ricochets = Weapons.Ricochets;
 
-            foreach (WeaponInfo weapon in weapons1P.Concat(weaponsMP).Concat(enemies).Concat(platforms).Concat(ricochets))
+            foreach (WeaponInfo weapon in enemies)
             {
-                if (weapon.Flags.HasFlag(WeaponFlags.Bit26) || weapon.Flags.HasFlag(WeaponFlags.Bit27))
+                var ids = new HashSet<ushort>();
+                ids.Add(weapon.DrawFuncIds[0]);
+                ids.Add(weapon.DrawFuncIds[1]);
+                if (ids.Contains(6) || ids.Contains(12))
                 {
                     Debugger.Break();
                 }

@@ -29,8 +29,8 @@ namespace MphRead
         Sphere = 3,
         Plane = 4,
         Particle = 5,
-        Trail1 = 6,
-        Trail2 = 7
+        TrailSingle = 6,
+        TrailMulti = 7
     }
 
     public class RenderItem
@@ -61,7 +61,7 @@ namespace MphRead
         public Vector4? OverrideColor { get; set; }
         public Vector4? PaletteOverride { get; set; }
         public Vector3[] Points { get; set; }
-        public int PointCount { get; set; } // only needed for trails
+        public int PointCount { get; set; } // only needed for multi-segment trails
         public float ScaleS { get; set; }
         public float ScaleT { get; set; }
 

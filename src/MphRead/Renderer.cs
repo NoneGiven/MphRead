@@ -1932,13 +1932,13 @@ namespace MphRead
             {
                 RenderParticle(item);
             }
-            else if (item.Type == RenderItemType.Trail1)
+            else if (item.Type == RenderItemType.TrailSingle)
             {
-                RenderTrail1(item);
+                RenderTrailSingle(item);
             }
-            else if (item.Type == RenderItemType.Trail2)
+            else if (item.Type == RenderItemType.TrailMulti)
             {
-                RenderTrail2(item);
+                RenderTrailMulti(item);
             }
         }
 
@@ -2128,7 +2128,7 @@ namespace MphRead
             GL.End();
         }
 
-        private void RenderTrail1(RenderItem item)
+        private void RenderTrailSingle(RenderItem item)
         {
             Vector3 texcoord0 = item.Points[0];
             Vector3 vertex0 = item.Points[1];
@@ -2150,7 +2150,7 @@ namespace MphRead
             GL.End();
         }
 
-        private void RenderTrail2(RenderItem item)
+        private void RenderTrailMulti(RenderItem item)
         {
             Debug.Assert(item.PointCount >= 4 && item.PointCount % 2 == 0);
             GL.Begin(PrimitiveType.QuadStrip);

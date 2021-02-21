@@ -250,7 +250,7 @@ namespace MphRead.Entities
             {
                 scene.AddSingleParticle(SingleType.Fuzzball, Position, Vector3.One, alpha: 1, scale: 1 / 4f);
             }
-            // sktodo: draw trail 3
+            DrawTrail3(Fixed.ToFloat(204), scene);
         }
 
         // Missile
@@ -313,7 +313,7 @@ namespace MphRead.Entities
             // sktodo: make sure this is already bound, or just store it in the constructor
             int bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
             float alpha = Math.Clamp(Lifespan * 30 * 8, 0, 31) / 31;
-            scene.AddRenderItem(RenderItemType.Trail1, alpha, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
+            scene.AddRenderItem(RenderItemType.TrailSingle, alpha, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
                 material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(BackPosition), uvsAndVerts, bindingId);
         }
 
@@ -349,8 +349,42 @@ namespace MphRead.Entities
             // sktodo: make sure this is already bound, or just store it in the constructor
             int bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
             float alpha = Math.Clamp(Lifespan * 30 * 8, 0, 31) / 31;
-            scene.AddRenderItem(RenderItemType.Trail2, alpha, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
+            scene.AddRenderItem(RenderItemType.TrailMulti, alpha, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
                 material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[0]), uvsAndVerts, bindingId, count);
+        }
+
+        private void DrawTrail3(float height, Scene scene)
+        {
+            Debug.Assert(_trailModel != null);
+            float uvS1 = (32 - (1 / 16f)) / 32;
+            float uvT1 = (8 - (1 / 16f)) / 32;
+
+            Texture texture = _trailModel.Model.Recolors[0].Textures[0];
+            float uvS2 = (texture.Width - (1 / 16f)) / texture.Width;
+            float uvT2 = (texture.Height / 4f - (1 / 16f)) / texture.Height;
+
+            Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(8);
+            uvsAndVerts[0] = Vector3.Zero;
+            uvsAndVerts[1] = new Vector3(0, -height, 0);
+            uvsAndVerts[2] = new Vector3(0, uvT2, 0);
+            uvsAndVerts[3] = new Vector3(0, height, 0);
+            uvsAndVerts[4] = new Vector3(uvS2, 0, 0);
+            uvsAndVerts[5] = new Vector3(
+                PastPositions[8].X - PastPositions[0].X,
+                PastPositions[8].Y - PastPositions[0].Y - height,
+                PastPositions[8].Z - PastPositions[0].Z
+            );
+            uvsAndVerts[6] = new Vector3(uvS2, uvT2, 0);
+            uvsAndVerts[7] = new Vector3(PastPositions[8].X - PastPositions[0].X,
+                PastPositions[8].Y - PastPositions[0].Y + height,
+                PastPositions[8].Z - PastPositions[0].Z
+            );
+            Material material = _trailModel.Model.Materials[0];
+            // sktodo: make sure this is already bound, or just store it in the constructor
+            int bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
+            float alpha = Math.Clamp(Lifespan * 30 * 8, 0, 31) / 31;
+            scene.AddRenderItem(RenderItemType.TrailSingle, alpha, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
+                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[0]), uvsAndVerts, bindingId);
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
@@ -569,6 +603,7 @@ namespace MphRead.Entities
                     beam.Velocity = beam.Acceleration = Vector3.Zero;
                     beam.Flags = BeamFlags.Collided;
                     beam.Lifespan = 0;
+                    beam.Destroy(scene);
                     return true;
                 }
                 if (maxSpread > 0)
@@ -652,7 +687,7 @@ namespace MphRead.Entities
         private void SpawnSniperBeam(Scene scene)
         {
             // following what the game does, but this should always be the same as SpawnPosition
-            Vector3 spawnPos = PastPositions[9];
+            Vector3 spawnPos = PastPositions[8];
             Vector3 vec1 = Position - spawnPos;
             float magnitude = vec1.Length;
             if (magnitude > 0)
