@@ -189,7 +189,7 @@ namespace MphRead.Entities
                 {
                     EffectElementEntry element = _effectEntry.Elements[i];
                     element.Position = Position;
-                    element.Transform = Transform;
+                    element.Transform = Transform.ClearScale();
                 }
             }
             return base.Process(scene);

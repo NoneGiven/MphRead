@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using MphRead.Effects;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -41,6 +42,8 @@ namespace MphRead.Entities
 
         public EntityBase? Owner { get; set; }
         public WeaponInfo? RicochetWeapon { get; set; }
+        public EffectEntry? Effect { get; set; }
+        public EntityBase? Target { get; set; }
 
         public float Field1E { get; set; }
         public float Field1F { get; set; }
@@ -59,6 +62,56 @@ namespace MphRead.Entities
 
         public override void GetDrawInfo(Scene scene)
         {
+        }
+
+        public override bool Process(Scene scene)
+        {
+            if (Lifespan <= 0)
+            {
+                return false;
+            }
+            Lifespan -= scene.FrameTime;
+            if (Flags.HasFlag(BeamFlags.Collided))
+            {
+                return true;
+            }
+            BackPosition = FrontPosition;
+            // todo?: the game only does this every other frame for some reason
+            for (int i = 4; i > 0; i--)
+            {
+                PastPositions[i] = PastPositions[i - 1];
+            }
+            PastPositions[0] = FrontPosition;
+            if (Flags.HasFlag(BeamFlags.Homing) && Flags.HasFlag(BeamFlags.Bit06))
+            {
+                if (Target != null)
+                {
+                    FrontPosition = Target.Position;
+                }
+                else
+                {
+                    Velocity /= 4;
+                }
+            }
+            else
+            {
+                FrontPosition += Velocity;
+                Velocity += Acceleration;
+                // btodo: speed decay stuff
+            }
+            // todo: beam SFX, node refs
+            // btodo: target, homing, collision stuff
+            if (Effect != null)
+            {
+                for (int i = 0; i < Effect.Elements.Count; i++)
+                {
+                    EffectElementEntry element = Effect.Elements[i];
+                    element.Position = Position;
+                    element.Transform = Transform.ClearScale();
+                }
+            }
+            // btodo: expiry/collision
+            return base.Process(scene);
         }
 
         public static bool Spawn(EntityBase owner, EquipInfo equip, Vector3 position, Vector3 direction, BeamSpawnFlags spawnFlags, Scene scene)
@@ -203,6 +256,7 @@ namespace MphRead.Entities
                         equip.SmokeLevel = weapon.SmokeStart;
                     }
                 }
+                beam._models.Clear();
                 beam.Weapon = weapon.Weapon;
                 beam.WeaponType = weapon.WeaponType;
                 beam.Flags = flags;
@@ -248,7 +302,6 @@ namespace MphRead.Entities
                     beam.Velocity = beam.Acceleration = Vector3.Zero;
                     beam.Flags = BeamFlags.Collided;
                     beam.Lifespan = 0;
-                    beam._models.Clear();
                     return true;
                 }
                 if (maxSpread > 0)
@@ -266,8 +319,43 @@ namespace MphRead.Entities
                 }
                 beam.Velocity = velocity;
                 beam.Acceleration = acceleration;
-                // btodo: draw func/model/effect setup
-                // btodo: targeting stuff
+                if (beam.DrawFuncId == 3)
+                {
+                    beam.Flags |= BeamFlags.HasModel;
+                    beam._models.Add(Read.GetModelInstance("iceShard"));
+                }
+                else if (beam.DrawFuncId == 17)
+                {
+                    beam.Flags |= BeamFlags.HasModel;
+                    beam._models.Add(Read.GetModelInstance("energyBeam"));
+                    // btodo: animation frame stuff
+                }
+                else
+                {
+                    int effectId = Metadata.BeamDrawEffects[beam.DrawFuncId];
+                    if (effectId != 0)
+                    {
+                        Vector3 effVec1 = beam.Vec1;
+                        Vector3 effVec2;
+                        if (effVec1.Z <= Fixed.ToFloat(-3686) || effVec1.Z >= Fixed.ToFloat(3686))
+                        {
+                            effVec2 = Vector3.Cross(Vector3.UnitX, effVec1).Normalized();
+                        }
+                        else
+                        {
+                            effVec2 = Vector3.Cross(Vector3.UnitZ, effVec1).Normalized();
+                        }
+                        Matrix4 transform = GetTransformMatrix(effVec2, effVec1);
+                        transform.Row3.Xyz = beam.FrontPosition;
+                        beam.Effect = scene.SpawnEffectGetEntry(effectId, transform);
+                        for (int j = 0; j < beam.Effect.Elements.Count; j++)
+                        {
+                            EffectElementEntry element = beam.Effect.Elements[j];
+                            element.Flags |= 0x80000; // set bit 19 (lifetime extension)
+                        }
+                    }
+                }
+                // btodo: homing/target stuff
                 scene.AddEntity(beam);
             }
             return true;
@@ -279,6 +367,7 @@ namespace MphRead.Entities
                 ? weapon.UnchargedSpread
                 : weapon.MinChargeSpread + ((weapon.ChargedSpread - weapon.MinChargeSpread) * chargePct);
             angle /= 4096f;
+            Debug.Assert(angle == 60);
             // todo: collision check with player and halfturret
             Vector3 vec1 = beam.Vec1;
             Vector3 vec2;
