@@ -741,7 +741,10 @@ namespace MphRead
 
         public void OnRenderFrame(double frameTime)
         {
-            _frameCount++;
+            if (!_frameAdvanceOn || _advanceOneFrame)
+            {
+                _frameCount++;
+            }
             if (_recording)
             {
                 _frameTime = 1 / 60f; // todo: FPS stuff
@@ -1932,6 +1935,10 @@ namespace MphRead
             {
                 RenderTrail1(item);
             }
+            else if (item.Type == RenderItemType.Trail2)
+            {
+                RenderTrail2(item);
+            }
         }
 
         private void RenderBox(Vector3[] verts)
@@ -2139,6 +2146,20 @@ namespace MphRead
             GL.Vertex3(vertex2);
             GL.TexCoord3(texcoord3);
             GL.Vertex3(vertex3);
+            GL.End();
+        }
+
+        private void RenderTrail2(RenderItem item)
+        {
+            Debug.Assert(item.Vertices.Length >= 4 && item.Vertices.Length % 2 == 0);
+            GL.Begin(PrimitiveType.QuadStrip);
+            for (int i = 0; i < item.Vertices.Length; i += 2)
+            {
+                Vector3 texcoord = item.Vertices[i];
+                Vector3 vertex = item.Vertices[i + 1];
+                GL.TexCoord3(texcoord);
+                GL.Vertex3(vertex);
+            }
             GL.End();
         }
 

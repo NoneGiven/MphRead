@@ -88,12 +88,14 @@ namespace MphRead.Entities
             }
             Age += scene.FrameTime;
             BackPosition = Position;
-            // todo?: the game only does this every other frame for some reason
-            for (int i = 4; i > 0; i--)
+            if (scene.FrameCount % 4 == 0)
             {
-                PastPositions[i] = PastPositions[i - 1];
+                for (int i = 4; i > 0; i--)
+                {
+                    PastPositions[i] = PastPositions[i - 1];
+                }
+                PastPositions[0] = Position;
             }
-            PastPositions[0] = Position;
             if (Flags.HasFlag(BeamFlags.Homing) && Flags.HasFlag(BeamFlags.Bit06))
             {
                 if (Target != null)
@@ -225,7 +227,7 @@ namespace MphRead.Entities
         // charged Volt Driver
         private void Draw02(Scene scene)
         {
-            // sktodo: draw trail 2
+            DrawTrail2(Fixed.ToFloat(1024), 5, scene);
         }
 
         // non-affinity Judicator
@@ -235,7 +237,7 @@ namespace MphRead.Entities
             {
                 base.GetDrawInfo(scene);
             }
-            // sktodo: draw trail 2
+            DrawTrail2(Fixed.ToFloat(204), 5, scene);
         }
 
         // enemy tear/Judicator
@@ -255,7 +257,7 @@ namespace MphRead.Entities
             {
                 scene.AddSingleParticle(SingleType.Fuzzball, Position, Vector3.One, alpha: 1, scale: 1 / 4f);
             }
-            // sktodo: draw trail 2
+            DrawTrail2(Fixed.ToFloat(204), 5, scene);
         }
 
         // Shock Coil
@@ -277,7 +279,7 @@ namespace MphRead.Entities
         // Battlehammer
         private void Draw10(Scene scene)
         {
-            // draw trail 2
+            DrawTrail2(Fixed.ToFloat(81), 2, scene);
         }
 
         // green energy beam
@@ -310,6 +312,42 @@ namespace MphRead.Entities
             float alpha = Math.Clamp(Lifespan * 30 * 8, 0, 31) / 31;
             scene.AddRenderItem(RenderItemType.Trail1, alpha, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
                 material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(BackPosition), uvsAndVerts, bindingId);
+        }
+
+        private void DrawTrail2(float height, int segments, Scene scene)
+        {
+            if (segments < 2)
+            {
+                return;
+            }
+            if (segments > PastPositions.Count)
+            {
+                segments = PastPositions.Count;
+            }
+
+            Debug.Assert(_trailModel != null);
+            Texture texture = _trailModel.Model.Recolors[0].Textures[0];
+            float uvT = (texture.Height - (1 / 16f)) / texture.Height;
+            Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(4 * segments);
+            for (int i = 0; i < segments; i++)
+            {
+                float uvS = 0;
+                if (i > 0)
+                {
+                    uvS = (texture.Width / (float)(segments - 1) * i - (1 / 16f)) / texture.Width;
+                }
+                Vector3 vec = PastPositions[i] - PastPositions[0];
+                uvsAndVerts[4 * i] = new Vector3(uvS, 0, 0);
+                uvsAndVerts[4 * i + 1] = new Vector3(vec.X, vec.Y - height, vec.Z);
+                uvsAndVerts[4 * i + 2] = new Vector3(uvS, uvT, 0);
+                uvsAndVerts[4 * i + 3] = new Vector3(vec.X, vec.Y + height, vec.Z);
+            }
+            Material material = _trailModel.Model.Materials[0];
+            // sktodo: make sure this is already bound, or just store it in the constructor
+            int bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
+            float alpha = Math.Clamp(Lifespan * 30 * 8, 0, 31) / 31;
+            scene.AddRenderItem(RenderItemType.Trail2, alpha, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
+                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[0]), uvsAndVerts, bindingId);
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
