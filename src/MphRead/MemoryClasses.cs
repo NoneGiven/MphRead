@@ -1,4 +1,5 @@
 using System;
+using MphRead.Entities;
 using OpenTK.Mathematics;
 
 namespace MphRead.Memory
@@ -4066,28 +4067,28 @@ namespace MphRead.Memory
     public class CBeamProjectile : CEntity
     {
         private const int _off0 = 0x18;
-        public byte WeaponId { get => ReadByte(_off0); set => WriteByte(_off0, value); }
+        public BeamType WeaponType { get => (BeamType)ReadByte(_off0); set => WriteByte(_off0, (byte)value); }
 
         private const int _off1 = 0x19;
-        public byte BeamId { get => ReadByte(_off1); set => WriteByte(_off1, value); }
+        public BeamType Weapon { get => (BeamType)ReadByte(_off1); set => WriteByte(_off1, (byte)value); }
 
         private const int _off2 = 0x1A;
-        public byte DrawFuncIndex { get => ReadByte(_off2); set => WriteByte(_off2, value); }
+        public byte DrawFuncId { get => ReadByte(_off2); set => WriteByte(_off2, value); }
 
         private const int _off3 = 0x1B;
-        public byte BeamType { get => ReadByte(_off3); set => WriteByte(_off3, value); }
+        public byte ColEffect { get => ReadByte(_off3); set => WriteByte(_off3, value); }
 
         private const int _off4 = 0x1C;
-        public byte DmgRelatedType { get => ReadByte(_off4); set => WriteByte(_off4, value); }
+        public byte SplashDmgType { get => ReadByte(_off4); set => WriteByte(_off4, value); }
 
         private const int _off5 = 0x1D;
-        public byte DirRelatedType { get => ReadByte(_off5); set => WriteByte(_off5, value); }
+        public byte DmgDirType { get => ReadByte(_off5); set => WriteByte(_off5, value); }
 
         private const int _off6 = 0x1E;
         public byte Field1E { get => ReadByte(_off6); set => WriteByte(_off6, value); }
 
         private const int _off7 = 0x1F;
-        public byte Field1F { get => ReadByte(_off7); set => WriteByte(_off7, value); }
+        public byte SpeedInterpolation { get => ReadByte(_off7); set => WriteByte(_off7, value); }
 
         private const int _off8 = 0x20;
         public byte Afflictions { get => ReadByte(_off8); set => WriteByte(_off8, value); }
@@ -4096,7 +4097,7 @@ namespace MphRead.Memory
         public byte ListCount { get => ReadByte(_off9); set => WriteByte(_off9, value); }
 
         private const int _off10 = 0x22;
-        public ushort Flags { get => ReadUInt16(_off10); set => WriteUInt16(_off10, value); }
+        public BeamFlags Flags { get => (BeamFlags)ReadUInt16(_off10); set => WriteUInt16(_off10, (ushort)value); }
 
         private const int _off11 = 0x24;
         public ushort Color { get => ReadUInt16(_off11); set => WriteUInt16(_off11, value); }
@@ -4105,37 +4106,37 @@ namespace MphRead.Memory
         public ushort Damage { get => ReadUInt16(_off12); set => WriteUInt16(_off12, value); }
 
         private const int _off13 = 0x28;
-        public ushort Field28 { get => ReadUInt16(_off13); set => WriteUInt16(_off13, value); }
+        public ushort HeadshotDamage { get => ReadUInt16(_off13); set => WriteUInt16(_off13, value); }
 
         private const int _off14 = 0x2A;
-        public ushort DmgRelatedAmount { get => ReadUInt16(_off14); set => WriteUInt16(_off14, value); }
+        public ushort SplashDamage { get => ReadUInt16(_off14); set => WriteUInt16(_off14, value); }
 
         private const int _off15 = 0x2C;
         public ushort Lifespan { get => ReadUInt16(_off15); set => WriteUInt16(_off15, value); }
 
         private const int _off16 = 0x2E;
-        public ushort AgeMaybe { get => ReadUInt16(_off16); set => WriteUInt16(_off16, value); }
+        public ushort Age { get => ReadUInt16(_off16); set => WriteUInt16(_off16, value); }
 
         private const int _off17 = 0x30;
-        public ushort Field30 { get => ReadUInt16(_off17); set => WriteUInt16(_off17, value); }
+        public ushort SpeedDecayTime { get => ReadUInt16(_off17); set => WriteUInt16(_off17, value); }
 
         private const int _off18 = 0x32;
         public ushort Field32 { get => ReadUInt16(_off18); set => WriteUInt16(_off18, value); }
 
         private const int _off19 = 0x34;
-        public Vector3 Field34 { get => ReadVec3(_off19); set => WriteVec3(_off19, value); }
+        public Vector3 PastPos0 { get => ReadVec3(_off19); set => WriteVec3(_off19, value); }
 
         private const int _off20 = 0x40;
-        public Vector3 Field40 { get => ReadVec3(_off20); set => WriteVec3(_off20, value); }
+        public Vector3 PastPos1 { get => ReadVec3(_off20); set => WriteVec3(_off20, value); }
 
         private const int _off21 = 0x4C;
-        public Vector3 Field4C { get => ReadVec3(_off21); set => WriteVec3(_off21, value); }
+        public Vector3 PastPos2 { get => ReadVec3(_off21); set => WriteVec3(_off21, value); }
 
         private const int _off22 = 0x58;
-        public Vector3 Field58 { get => ReadVec3(_off22); set => WriteVec3(_off22, value); }
+        public Vector3 PastPos3 { get => ReadVec3(_off22); set => WriteVec3(_off22, value); }
 
         private const int _off23 = 0x64;
-        public Vector3 HitPos { get => ReadVec3(_off23); set => WriteVec3(_off23, value); }
+        public Vector3 PastPos4 { get => ReadVec3(_off23); set => WriteVec3(_off23, value); }
 
         private const int _off24 = 0x70;
         public Vector3 Vec1 { get => ReadVec3(_off24); set => WriteVec3(_off24, value); }
@@ -4153,25 +4154,25 @@ namespace MphRead.Memory
         public Vector3 CylFront { get => ReadVec3(_off28); set => WriteVec3(_off28, value); }
 
         private const int _off29 = 0xAC;
-        public Vector3 FiredPos { get => ReadVec3(_off29); set => WriteVec3(_off29, value); }
+        public Vector3 SpawnPos { get => ReadVec3(_off29); set => WriteVec3(_off29, value); }
 
         private const int _off30 = 0xB8;
-        public int FieldB8 { get => ReadInt32(_off30); set => WriteInt32(_off30, value); }
+        public int Speed { get => ReadInt32(_off30); set => WriteInt32(_off30, value); }
 
         private const int _off31 = 0xBC;
-        public int FieldBC { get => ReadInt32(_off31); set => WriteInt32(_off31, value); }
+        public int InitialSpeed { get => ReadInt32(_off31); set => WriteInt32(_off31, value); }
 
         private const int _off32 = 0xC0;
-        public int FieldC0 { get => ReadInt32(_off32); set => WriteInt32(_off32, value); }
+        public int FinalSpeed { get => ReadInt32(_off32); set => WriteInt32(_off32, value); }
 
         private const int _off33 = 0xC4;
-        public Vector3 Speed { get => ReadVec3(_off33); set => WriteVec3(_off33, value); }
+        public Vector3 Velocity { get => ReadVec3(_off33); set => WriteVec3(_off33, value); }
 
         private const int _off34 = 0xD0;
         public Vector3 Acceleration { get => ReadVec3(_off34); set => WriteVec3(_off34, value); }
 
         private const int _off35 = 0xDC;
-        public int FieldDC { get => ReadInt32(_off35); set => WriteInt32(_off35, value); }
+        public int Homing { get => ReadInt32(_off35); set => WriteInt32(_off35, value); }
 
         private const int _off36 = 0xE0;
         public int FieldE0 { get => ReadInt32(_off36); set => WriteInt32(_off36, value); }
@@ -4189,19 +4190,19 @@ namespace MphRead.Memory
         public int FieldF0 { get => ReadInt32(_off40); set => WriteInt32(_off40, value); }
 
         private const int _off41 = 0xF4;
-        public int ScaleMaybe { get => ReadInt32(_off41); set => WriteInt32(_off41, value); }
+        public int Scale { get => ReadInt32(_off41); set => WriteInt32(_off41, value); }
 
         private const int _off42 = 0xF8; // CEntity*
         public IntPtr Owner { get => ReadPointer(_off42); set => WritePointer(_off42, value); }
 
-        private const int _off43 = 0xFC;
-        public int FieldFC { get => ReadInt32(_off43); set => WriteInt32(_off43, value); }
+        private const int _off43 = 0xFC; // WeaponInfo*
+        public IntPtr RicochetWeapon { get => ReadPointer(_off43); set => WritePointer(_off43, value); }
 
         private const int _off44 = 0x100; // CBeamProjectile*
         public IntPtr ListHead { get => ReadPointer(_off44); set => WritePointer(_off44, value); }
 
-        private const int _off45 = 0x104; // CPlayer*
-        public IntPtr TargetMaybe { get => ReadPointer(_off45); set => WritePointer(_off45, value); }
+        private const int _off45 = 0x104; // CEntity*
+        public IntPtr Target { get => ReadPointer(_off45); set => WritePointer(_off45, value); }
 
         private const int _off46 = 0x108;
         public CModel Model { get; }

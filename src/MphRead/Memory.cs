@@ -63,21 +63,10 @@ namespace MphRead.Memory
             Task.Run(async () =>
             {
                 var results = new List<(int, int)>();
-                int last = 0;
                 while (true)
                 {
                     RefreshMemory();
                     GetEntities();
-                    int fc = BitConverter.ToInt32(_buffer, Addresses.FrameCount - Offset);
-                    if (last != fc)
-                    {
-                        last = fc;
-                        if (_entities.Any(e => e.EntityType == EntityType.BeamProjectile))
-                        {
-                            int ua = BitConverter.ToInt16(_buffer, Addresses.PlayerUA - Offset);
-                            results.Add((fc, ua));
-                        }
-                    }
                     await Task.Delay(15);
                 }
             }).GetAwaiter().GetResult();

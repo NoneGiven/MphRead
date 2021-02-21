@@ -13,7 +13,7 @@ namespace MphRead.Entities
         public BeamType WeaponType { get; set; }
 
         public Vector3 Velocity { get; set; }
-        public Vector3 Acceleration { get; set; }
+        public Vector3 Acceleration { get; set; } // only used for gravity
         public Vector3 BackPosition { get; set; }
         public Vector3 SpawnPosition { get; set; }
         public List<Vector3> PastPositions { get; } = new List<Vector3>();
@@ -45,11 +45,11 @@ namespace MphRead.Entities
         public EntityBase? Target { get; set; }
 
         public float Field1E { get; set; }
-        public float Field1F { get; set; }
-        public float Field30 { get; set; }
+        public int SpeedInterpolation { get; set; }
+        public float SpeedDecayTime { get; set; }
         public float Speed { get; set; }
         public float InitialSpeed { get; set; }
-        public float FieldC0 { get; set; }
+        public float FinalSpeed { get; set; }
         public float FieldE0 { get; set; }
         public float FieldE8 { get; set; }
         public float FieldEC { get; set; }
@@ -70,6 +70,7 @@ namespace MphRead.Entities
             {
                 return true;
             }
+            Age += scene.FrameTime;
             BackPosition = Position;
             // todo?: the game only does this every other frame for some reason
             for (int i = 4; i > 0; i--)
@@ -92,7 +93,16 @@ namespace MphRead.Entities
             {
                 Position += Velocity;
                 Velocity += Acceleration;
-                // btodo: speed decay stuff
+                Debug.Assert(SpeedDecayTime >= 0);
+                if (SpeedDecayTime > 0 && Age <= SpeedDecayTime)
+                {
+                    float magnitude = Velocity.Length;
+                    if (magnitude > 0)
+                    {
+                        Speed = GetInterpolatedValue(SpeedInterpolation, InitialSpeed, FinalSpeed, Age / SpeedDecayTime);
+                        Velocity *= Speed / magnitude;
+                    }
+                }
             }
             // todo: beam SFX, node refs
             // btodo: target, homing, collision stuff
@@ -108,6 +118,32 @@ namespace MphRead.Entities
             // btodo: expiry/collision
             // sktodo: spawn sniper beam
             return base.Process(scene);
+        }
+
+        private float GetInterpolatedValue(int type, float value1, float value2, float ratio)
+        {
+            if (type == 3)
+            {
+                // binary
+                return ratio > 1 ? value2 : value1;
+            }
+            ratio = Math.Clamp(ratio, 0, 1);
+            if (type == 0)
+            {
+                // lerp
+                return value1 + (value2 - value1) * ratio;
+            }
+            if (type == 1)
+            {
+                // sin 1
+                return value1 + (value2 - value1) * ((MathF.Sin(270 - 180 * ratio) + 1) / 2);
+            }
+            if (type == 2)
+            {
+                // sin 2
+                return value1 + (value2 - value1) * (MathF.Sin(270 - 90 * ratio) + 1);
+            }
+            return 0;
         }
 
         public override void GetDrawInfo(Scene scene)
@@ -309,9 +345,9 @@ namespace MphRead.Entities
 
             BeamFlags flags = BeamFlags.None;
             float speed = GetAmount(weapon.UnchargedSpeed, weapon.MinChargeSpeed, weapon.ChargedSpeed) / 4096f / 2; // todo: FPS stuff
-            float fieldC0 = GetAmount(weapon.Field70, weapon.Field74, weapon.Field78);
-            ushort field30 = weapon.Field3E[charged ? 1 : 0];
-            ushort field1F = weapon.Field44[charged ? 1 : 0];
+            float finalSpeed = GetAmount(weapon.UnchargedFinalSpeed, weapon.MinChargeFinalSpeed, weapon.ChargedFinalSpeed) / 4096f / 2;
+            float speedDecayTime = weapon.SpeedDecayTimes[charged ? 1 : 0] * (1 / 30f);
+            ushort speedInterpolation = weapon.SpeedInterpolations[charged ? 1 : 0];
             float gravity = GetAmount(weapon.UnchargedGravity, weapon.MinChargeGravity, weapon.ChargedGravity);
             var acceleration = new Vector3(0, gravity, 0);
             float homing = GetAmount(weapon.UnchargedHoming, weapon.MinChargeHoming, weapon.ChargedHoming);
@@ -401,9 +437,9 @@ namespace MphRead.Entities
                 beam.Flags = flags;
                 beam.Age = 0;
                 beam.InitialSpeed = beam.Speed = speed;
-                beam.FieldC0 = fieldC0;
-                beam.Field30 = field30;
-                beam.Field1F = field1F;
+                beam.FinalSpeed = finalSpeed;
+                beam.SpeedDecayTime = speedDecayTime;
+                beam.SpeedInterpolation = speedInterpolation;
                 beam.Homing = homing;
                 beam.DrawFuncId = drawFuncId;
                 beam.Color = color;

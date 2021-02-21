@@ -60,9 +60,9 @@ namespace MphRead
         public ushort UnchargedLifespan { get; }
         public ushort MinChargeLifespan { get; }
         public ushort ChargedLifespan { get; }
-        public IReadOnlyList<ushort> Field3E { get; }
+        public IReadOnlyList<ushort> SpeedDecayTimes { get; }
         public ushort Field42 { get; }
-        public IReadOnlyList<ushort> Field44 { get; }
+        public IReadOnlyList<ushort> SpeedInterpolations { get; }
         public int Field48 { get; } // uncharged
         public int Field4C { get; } // min charge
         public int Field50 { get; } // full charge
@@ -74,9 +74,9 @@ namespace MphRead
         public int UnchargedSpeed { get; }
         public int MinChargeSpeed { get; }
         public int ChargedSpeed { get; }
-        public int Field70 { get; } // uncharged
-        public int Field74 { get; } // min charge
-        public int Field78 { get; } // full charge
+        public int UnchargedFinalSpeed { get; } // uncharged
+        public int MinChargeFinalSpeed { get; } // min charge
+        public int ChargedFinalSpeed { get; } // full charge
         public int UnchargedGravity { get; }
         public int MinChargeGravity { get; }
         public int ChargedGravity { get; }
@@ -161,9 +161,9 @@ namespace MphRead
             UnchargedLifespan = unchargedLifespan;
             MinChargeLifespan = minChargeLifespan;
             ChargedLifespan = chargedLifespan;
-            Field3E = field3E;
+            SpeedDecayTimes = field3E;
             Field42 = field42;
-            Field44 = field44;
+            SpeedInterpolations = field44;
             Field48 = field48;
             Field4C = field4C;
             Field50 = field50;
@@ -174,9 +174,9 @@ namespace MphRead
             UnchargedSpeed = field64;
             MinChargeSpeed = field68;
             ChargedSpeed = field6C;
-            Field70 = field70;
-            Field74 = field74;
-            Field78 = field78;
+            UnchargedFinalSpeed = field70;
+            MinChargeFinalSpeed = field74;
+            ChargedFinalSpeed = field78;
             UnchargedGravity = unchargedGravity;
             MinChargeGravity = minChargeGravity;
             ChargedGravity = chargedGravity;
