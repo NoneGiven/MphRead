@@ -70,7 +70,6 @@ namespace MphRead
         public int Field58 { get; } // uncharged
         public int Field5C { get; } // min charge
         public int Field60 { get; } // full charge
-        // sktodo: convert values like to this floats in the metadata, and be careful about how they're used in the spawn method
         public int UnchargedSpeed { get; }
         public int MinChargeSpeed { get; }
         public int ChargedSpeed { get; }
