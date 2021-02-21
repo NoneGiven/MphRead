@@ -736,7 +736,7 @@ namespace MphRead
 
             foreach (WeaponInfo weapon in weapons1P.Concat(weaponsMP).Concat(enemies).Concat(platforms).Concat(ricochets))
             {
-                if (weapon.MuzzleEffects[0] < 3 || weapon.MuzzleEffects[1] < 3)
+                if (weapon.Flags.HasFlag(WeaponFlags.Bit26) || weapon.Flags.HasFlag(WeaponFlags.Bit27))
                 {
                     Debugger.Break();
                 }
@@ -752,10 +752,10 @@ namespace MphRead
                 WeaponInfo multiAffinity = weaponsMP[i + 9];
 
                 Console.WriteLine(singleNormal.Name);
-                Console.WriteLine($"1P Nrm: {singleNormal.DrawFuncIds[0]} {singleNormal.DrawFuncIds[1]}");
-                Console.WriteLine($"MP Nrm: {multiNormal.DrawFuncIds[0]} {multiNormal.DrawFuncIds[1]}");
-                Console.WriteLine($"1P Aff: {singleAffinity.DrawFuncIds[0]} {singleAffinity.DrawFuncIds[1]}");
-                Console.WriteLine($"MP Aff: {multiAffinity.DrawFuncIds[0]} {multiAffinity.DrawFuncIds[1]}");
+                Console.WriteLine($"1P Nrm: {singleNormal.UnchargedSpread} / {singleNormal.MinChargeSpread} / {singleNormal.ChargedSpread}");
+                Console.WriteLine($"MP Nrm: {multiNormal.UnchargedSpread} / {multiNormal.MinChargeSpread} / {multiNormal.ChargedSpread}");
+                Console.WriteLine($"1P Aff: {singleAffinity.UnchargedSpread} / {singleAffinity.MinChargeSpread} / {singleAffinity.ChargedSpread}");
+                Console.WriteLine($"MP Aff: {multiAffinity.UnchargedSpread} / {multiAffinity.MinChargeSpread} / {multiAffinity.ChargedSpread}");
                 Console.WriteLine();
 
                 //int bit = 9;
@@ -780,6 +780,8 @@ namespace MphRead
                 //Console.WriteLine($"MP Aff: {maTest}");
                 //Console.WriteLine();
             }
+
+            Nop();
 
             //for (int i = 0; i < ricochets.Count; i++)
             //{

@@ -2186,16 +2186,12 @@ namespace MphRead
 
         private void TestSpawnBeam(int type)
         {
+            var gunPos = new Vector3(0.37203538f, 1.2936982f, -1.0930165f);
             if (type == 0)
             {
-                float maxDist = Weapons.WeaponsMP[14].ChargedDistance / 4096f;
-                Matrix4 transform = Matrix4.CreateScale(maxDist) * Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-90));
-                transform.Row3.Xyz = new Vector3(0.37203538f, 1.2936982f, -1.0930165f);
-                var ent = BeamEffectEntity.Create(new BeamEffectEntityData(0, false, transform), this);
-                if (ent != null)
-                {
-                    AddEntity(ent);
-                }
+                WeaponInfo weapon = Weapons.WeaponsMP[14];
+                BeamProjectileEntity.Spawn(null!, new EquipInfo(weapon) { ChargeLevel = weapon.FullCharge },
+                    gunPos, -Vector3.UnitZ, BeamSpawnFlags.NoMuzzle, this);
             }
             else if (type == 1)
             {

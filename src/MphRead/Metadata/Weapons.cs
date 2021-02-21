@@ -5,7 +5,7 @@ namespace MphRead
 {
     public class EquipInfo
     {
-        public byte Flags { get; set; }
+        public EquipFlags Flags { get; set; }
         public byte Count { get; set; }
         //CBeamProjectile* beams;
         public WeaponInfo Weapon { get; set; }
@@ -19,6 +19,13 @@ namespace MphRead
         }
     }
 
+    [Flags]
+    public enum EquipFlags
+    {
+        None = 0x0,
+        Zoomed = 0x1,
+    }
+
     public class WeaponInfo
     {
         public BeamType Weapon { get; }
@@ -29,13 +36,13 @@ namespace MphRead
         public ushort SplashDamage { get; }
         public ushort MinChargeSplashDamage { get; }
         public ushort ChargedSplashDamage { get; }
-        public IReadOnlyList<byte> Field12 { get; }
+        public IReadOnlyList<byte> SplashDamageTypes { get; }
         public byte ShotCooldown { get; }
         public byte ShotCooldownRelated { get; }
         public byte AmmoType { get; }
-        public IReadOnlyList<byte> BeamTypes { get; } // correspond to collision effects
+        public IReadOnlyList<byte> CollisionEffects { get; }
         public IReadOnlyList<byte> MuzzleEffects { get; }
-        public IReadOnlyList<byte> Field1B { get; }
+        public IReadOnlyList<byte> DmgDirTypes { get; }
         public IReadOnlyList<byte> Field1D { get; }
         public IReadOnlyList<Affliction> Afflictions { get; } // bit 0 - freeze, bit 1 - disrupt, bit 3 - burn
         public byte Field21 { get; }
@@ -63,9 +70,10 @@ namespace MphRead
         public int Field58 { get; } // uncharged
         public int Field5C { get; } // min charge
         public int Field60 { get; } // full charge
-        public int Field64 { get; } // uncharged
-        public int Field68 { get; } // min charge
-        public int Field6C { get; } // full charge
+        // sktodo: convert values like to this floats in the metadata, and be careful about how they're used in the spawn method
+        public int UnchargedSpeed { get; }
+        public int MinChargeSpeed { get; }
+        public int ChargedSpeed { get; }
         public int Field70 { get; } // uncharged
         public int Field74 { get; } // min charge
         public int Field78 { get; } // full charge
@@ -83,9 +91,9 @@ namespace MphRead
         public int UnchargedDistance { get; }
         public int MinChargeDistance { get; }
         public int ChargedDistance { get; }
-        public int FieldB4 { get; } // uncharged
-        public int FieldB8 { get; } // min charge
-        public int FieldBC { get; } // full charge
+        public int UnchargedSpread { get; } // uncharged
+        public int MinChargeSpread { get; } // min charge
+        public int ChargedSpread { get; } // full charge
         public int FieldC0 { get; } // uncharged
         public int FieldC4 { get; } // min charge
         public int FieldC8 { get; } // full charge
@@ -93,9 +101,9 @@ namespace MphRead
         public int FieldD0 { get; } // min charge
         public int FieldD4 { get; } // full charge
         public IReadOnlyList<uint> RicochetWeaponPtr { get; } // WeaponInfo*
-        public ushort ProjectileCount { get; }
-        public ushort MinChargedProjectileCount { get; }
-        public ushort ChargeProjectileCount { get; }
+        public ushort Projectiles { get; }
+        public ushort MinChargeProjectiles { get; }
+        public ushort ChargedProjectiles { get; }
         public ushort SmokeStart { get; } // start drawing gun smoke when smoke level reaches this value (and cap it)
         public ushort SmokeMinimum { get; } // continue drawing gun smoke until level drops below this value
         public ushort SmokeDrain { get; } // reduce level by this amount each frame (or bring it to 0)
@@ -129,13 +137,13 @@ namespace MphRead
             SplashDamage = splashDamage;
             MinChargeSplashDamage = minChargeSplashDamage;
             ChargedSplashDamage = chargedSplashDamage;
-            Field12 = field12;
+            SplashDamageTypes = field12;
             ShotCooldown = shotCooldown;
             ShotCooldownRelated = shotCooldownRelated;
             AmmoType = ammoType;
-            BeamTypes = beamTypes;
+            CollisionEffects = beamTypes;
             MuzzleEffects = muzzleEffects;
-            Field1B = field1B;
+            DmgDirTypes = field1B;
             Field1D = field1D;
             Afflictions = afflictions;
             Field21 = field21;
@@ -163,9 +171,9 @@ namespace MphRead
             Field58 = field58;
             Field5C = field5C;
             Field60 = field60;
-            Field64 = field64;
-            Field68 = field68;
-            Field6C = field6C;
+            UnchargedSpeed = field64;
+            MinChargeSpeed = field68;
+            ChargedSpeed = field6C;
             Field70 = field70;
             Field74 = field74;
             Field78 = field78;
@@ -183,9 +191,9 @@ namespace MphRead
             UnchargedDistance = unchargedDistance;
             MinChargeDistance = minChargeDistance;
             ChargedDistance = chargedDistance;
-            FieldB4 = fieldB4;
-            FieldB8 = fieldB8;
-            FieldBC = fieldBC;
+            UnchargedSpread = fieldB4;
+            MinChargeSpread = fieldB8;
+            ChargedSpread = fieldBC;
             FieldC0 = fieldC0;
             FieldC4 = fieldC4;
             FieldC8 = fieldC8;
@@ -193,9 +201,9 @@ namespace MphRead
             FieldD0 = fieldD0;
             FieldD4 = fieldD4;
             RicochetWeaponPtr = ricochetWeapon;
-            ProjectileCount = projectileCount;
-            MinChargedProjectileCount = minChargedProjectileCount;
-            ChargeProjectileCount = chargeProjectileCount;
+            Projectiles = projectileCount;
+            MinChargeProjectiles = minChargedProjectileCount;
+            ChargedProjectiles = chargeProjectileCount;
             SmokeStart = smokeStart;
             SmokeMinimum = smokeMinimum;
             SmokeDrain = smokeDrain;
