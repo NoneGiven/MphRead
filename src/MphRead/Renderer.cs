@@ -1654,7 +1654,7 @@ namespace MphRead
 
         private void RenderScene()
         {
-            if (_frameCount != 0 || !_frameAdvanceOn || _advanceOneFrame)
+            if (_frameCount != 0 && (!_frameAdvanceOn || _advanceOneFrame))
             {
                 _elapsedTime += 1 / 60f; // todo: FPS stuff
                 _singleParticleCount = 0;

@@ -116,7 +116,7 @@ namespace MphRead.Entities
             Vector3 direction = -Vector3.UnitZ;
             if (type == -1)
             {
-                WeaponInfo weapon = Weapons.WeaponsMP[0];
+                WeaponInfo weapon = Weapons.WeaponsMP[1];
                 bool charged = false;
                 BeamProjectileEntity.Spawn(this, new EquipInfo(weapon) { ChargeLevel = charged ? weapon.FullCharge : (ushort)0 },
                     gunPos, direction, BeamSpawnFlags.NoMuzzle, scene);
