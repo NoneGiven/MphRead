@@ -88,9 +88,12 @@ namespace MphRead.Entities
             }
             Age += scene.FrameTime;
             BackPosition = Position;
-            if (scene.FrameCount % 4 == 0)
+            // the game does this every other frame at 30 fps and keeps 5 past positions; we do it every other frame at 60 fps and keep 10,
+            // and use only every other position to draw each trail segment, which results in the beam trail updating at the same frequency
+            // (relative to the projectile) and having the same amount of smear as in the game
+            if (scene.FrameCount % 2 == 0)
             {
-                for (int i = 4; i > 0; i--)
+                for (int i = 9; i > 0; i--)
                 {
                     PastPositions[i] = PastPositions[i - 1];
                 }
@@ -320,9 +323,9 @@ namespace MphRead.Entities
             {
                 return;
             }
-            if (segments > PastPositions.Count)
+            if (segments > PastPositions.Count / 2)
             {
-                segments = PastPositions.Count;
+                segments = PastPositions.Count / 2;
             }
 
             Debug.Assert(_trailModel != null);
@@ -336,7 +339,7 @@ namespace MphRead.Entities
                 {
                     uvS = (texture.Width / (float)(segments - 1) * i - (1 / 16f)) / texture.Width;
                 }
-                Vector3 vec = PastPositions[i] - PastPositions[0];
+                Vector3 vec = PastPositions[i * 2] - PastPositions[0];
                 uvsAndVerts[4 * i] = new Vector3(uvS, 0, 0);
                 uvsAndVerts[4 * i + 1] = new Vector3(vec.X, vec.Y - height, vec.Z);
                 uvsAndVerts[4 * i + 2] = new Vector3(uvS, uvT, 0);
@@ -531,7 +534,7 @@ namespace MphRead.Entities
                 beam.SplashDamageType = splashDmgType;
                 beam.FieldE0 = fieldE0;
                 beam.SpawnPosition = beam.BackPosition = beam.Position = position;
-                for (int j = 0; j < 5; j++)
+                for (int j = 0; j < 10; j++)
                 {
                     beam.PastPositions.Add(position);
                 }
@@ -643,7 +646,7 @@ namespace MphRead.Entities
         private void SpawnSniperBeam(Scene scene)
         {
             // following what the game does, but this should always be the same as SpawnPosition
-            Vector3 spawnPos = PastPositions[4];
+            Vector3 spawnPos = PastPositions[9];
             Vector3 vec1 = Position - spawnPos;
             float magnitude = vec1.Length;
             if (magnitude > 0)
