@@ -116,7 +116,11 @@ namespace MphRead.Entities
                 }
             }
             // btodo: expiry/collision
-            // sktodo: spawn sniper beam
+            if (Lifespan <= 0 && DrawFuncId == 8)
+            {
+                // btodo: this should really be spawned after a collision or when max dist is reached
+                SpawnSniperBeam(scene);
+            }
             return base.Process(scene);
         }
 
@@ -318,15 +322,7 @@ namespace MphRead.Entities
                 {
                     Debug.Assert(effectId >= 3);
                     Vector3 effVec1 = direction;
-                    Vector3 effVec2;
-                    if (effVec1.Z <= Fixed.ToFloat(-3686) || effVec1.Z >= Fixed.ToFloat(3686))
-                    {
-                        effVec2 = Vector3.Cross(Vector3.UnitX, effVec1).Normalized();
-                    }
-                    else
-                    {
-                        effVec2 = Vector3.Cross(Vector3.UnitZ, effVec1).Normalized();
-                    }
+                    Vector3 effVec2 = GetCrossVector(effVec1);
                     Matrix4 transform = GetTransformMatrix(effVec2, effVec1);
                     transform.Row3.Xyz = position;
                     // the game does this by spawning a CBeamEffect, but that's unncessary for muzzle effects
@@ -472,7 +468,7 @@ namespace MphRead.Entities
                 // todo: game state max damage stuff (efficiency?)
                 if (instant)
                 {
-                    SpawnIceWave(beam, weapon, chargePct, scene);
+                    beam.SpawnIceWave(weapon, chargePct, scene);
                     // we don't actually "spawn" the beam projectile
                     beam.Velocity = beam.Acceleration = Vector3.Zero;
                     beam.Flags = BeamFlags.Collided;
@@ -511,15 +507,7 @@ namespace MphRead.Entities
                     if (effectId != 0)
                     {
                         Vector3 effVec1 = beam.Vec1;
-                        Vector3 effVec2;
-                        if (effVec1.Z <= Fixed.ToFloat(-3686) || effVec1.Z >= Fixed.ToFloat(3686))
-                        {
-                            effVec2 = Vector3.Cross(Vector3.UnitX, effVec1).Normalized();
-                        }
-                        else
-                        {
-                            effVec2 = Vector3.Cross(Vector3.UnitZ, effVec1).Normalized();
-                        }
+                        Vector3 effVec2 = GetCrossVector(effVec1);
                         Matrix4 transform = GetTransformMatrix(effVec2, effVec1);
                         transform.Row3.Xyz = beam.Position;
                         beam.Effect = scene.SpawnEffectGetEntry(effectId, transform);
@@ -536,7 +524,7 @@ namespace MphRead.Entities
             return true;
         }
 
-        private static void SpawnIceWave(BeamProjectileEntity beam, WeaponInfo weapon, float chargePct, Scene scene)
+        private void SpawnIceWave(WeaponInfo weapon, float chargePct, Scene scene)
         {
             float angle = chargePct <= 0
                 ? weapon.UnchargedSpread
@@ -544,7 +532,7 @@ namespace MphRead.Entities
             angle /= 4096f;
             Debug.Assert(angle == 60);
             // todo: collision check with player and halfturret
-            Vector3 vec1 = beam.Vec1;
+            Vector3 vec1 = Vec1;
             Vector3 vec2;
             if (vec1.X != 0 || vec1.Z != 0)
             {
@@ -556,13 +544,43 @@ namespace MphRead.Entities
                 var temp = Vector3.Cross(Vector3.UnitX, vec1);
                 vec2 = Vector3.Cross(vec1, temp).Normalized();
             }
-            Matrix4 transform = Matrix4.CreateScale(beam.MaxDistance) * GetTransformMatrix(vec2, vec1);
-            transform.Row3.Xyz = beam.Position;
+            Matrix4 transform = Matrix4.CreateScale(MaxDistance) * GetTransformMatrix(vec2, vec1);
+            transform.Row3.Xyz = Position;
             var ent = BeamEffectEntity.Create(new BeamEffectEntityData(type: 0, noSplat: false, transform), scene);
             if (ent != null)
             {
                 scene.AddEntity(ent);
             }
+        }
+
+        private void SpawnSniperBeam(Scene scene)
+        {
+            // following what the game does, but this should always be the same as SpawnPosition
+            Vector3 spawnPos = PastPositions[4];
+            Vector3 vec1 = Position - spawnPos;
+            float magnitude = vec1.Length;
+            if (magnitude > 0)
+            {
+                vec1.Normalize();
+                Vector3 vec2 = GetCrossVector(vec1);
+                Matrix4 transform = GetTransformMatrix(vec2, vec1);
+                transform.Row3.Xyz = spawnPos;
+                var ent = BeamEffectEntity.Create(new BeamEffectEntityData(type: 1, noSplat: false, transform), scene);
+                if (ent != null)
+                {
+                    ent.Scale = new Vector3(1, magnitude, 1);
+                    scene.AddEntity(ent);
+                }
+            }
+        }
+
+        private static Vector3 GetCrossVector(Vector3 vec1)
+        {
+            if (vec1.Z <= Fixed.ToFloat(-3686) || vec1.Z >= Fixed.ToFloat(3686))
+            {
+                return Vector3.Cross(Vector3.UnitX, vec1).Normalized();
+            }
+            return Vector3.Cross(Vector3.UnitZ, vec1).Normalized();
         }
     }
 
