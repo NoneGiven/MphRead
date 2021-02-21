@@ -190,6 +190,7 @@ namespace MphRead.Entities
             }
         }
 
+        // Power Beam
         private void Draw00(Scene scene)
         {
             if (!Flags.HasFlag(BeamFlags.Collided))
@@ -199,16 +200,19 @@ namespace MphRead.Entities
             // sktodo: draw trail 1
         }
 
+        // uncharged Volt Driver
         private void Draw01(Scene scene)
         {
             // sktodo: draw trail 1
         }
 
+        // charged Volt Driver
         private void Draw02(Scene scene)
         {
             // sktodo: draw trail 2
         }
 
+        // non-affinity Judicator
         private void Draw03(Scene scene)
         {
             if (!Flags.HasFlag(BeamFlags.Collided))
@@ -218,6 +222,7 @@ namespace MphRead.Entities
             // sktodo: draw trail 2
         }
 
+        // enemy tear/Judicator
         private void Draw06(Scene scene)
         {
             if (!Flags.HasFlag(BeamFlags.Collided))
@@ -227,6 +232,7 @@ namespace MphRead.Entities
             // sktodo: draw trail 3
         }
 
+        // Missile
         private void Draw07(Scene scene)
         {
             if (!Flags.HasFlag(BeamFlags.Collided))
@@ -236,6 +242,7 @@ namespace MphRead.Entities
             // sktodo: draw trail 2
         }
 
+        // Shock Coil
         private void Draw09(Scene scene)
         {
             if (!Flags.HasFlag(BeamFlags.Collided))
@@ -251,11 +258,13 @@ namespace MphRead.Entities
             }
         }
 
+        // Battlehammer
         private void Draw10(Scene scene)
         {
             // draw trail 2
         }
 
+        // green energy beam
         private void Draw17(Scene scene)
         {
             if (!Flags.HasFlag(BeamFlags.Collided))
@@ -344,7 +353,7 @@ namespace MphRead.Entities
             float finalSpeed = GetAmount(weapon.UnchargedFinalSpeed, weapon.MinChargeFinalSpeed, weapon.ChargedFinalSpeed) / 4096f / 2;
             float speedDecayTime = weapon.SpeedDecayTimes[charged ? 1 : 0] * (1 / 30f);
             ushort speedInterpolation = weapon.SpeedInterpolations[charged ? 1 : 0];
-            float gravity = GetAmount(weapon.UnchargedGravity, weapon.MinChargeGravity, weapon.ChargedGravity);
+            float gravity = GetAmount(weapon.UnchargedGravity, weapon.MinChargeGravity, weapon.ChargedGravity) / 4096f;
             var acceleration = new Vector3(0, gravity, 0);
             float homing = GetAmount(weapon.UnchargedHoming, weapon.MinChargeHoming, weapon.ChargedHoming);
             if (homing > 0)
