@@ -1274,6 +1274,72 @@ namespace MphRead
                         {
                             particle.RoField4 = particle.InvokeFloatFunc(info, times);
                         }
+                        if (element.Actions.TryGetValue(FuncAction.SetNewParticleLifespan, out info))
+                        {
+                            var tempTimes = new TimeValues(_elapsedTime, 1.0f, element.Lifespan);
+                            particle.Lifespan = particle.InvokeFloatFunc(info, tempTimes);
+                            particle.ExpirationTime = particle.CreationTime + particle.Lifespan;
+                        }
+                        else
+                        {
+                            particle.Lifespan = element.Lifespan;
+                            particle.ExpirationTime = element.ExpirationTime;
+                        }
+                        // in-game, if these one-time functions are called here, they are unset so they don't get called again
+                        if (element.Actions.TryGetValue(FuncAction.UpdateParticleSpeed, out info) && info.FuncId == 4)
+                        {
+                            Vector3 temp2 = particle.Speed;
+                            particle.InvokeVecFunc(info, times, ref temp2);
+                            particle.Speed = temp2;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRed, out info) && info.FuncId == 42)
+                        {
+                            particle.Red = particle.InvokeFloatFunc(info, times);
+                        }
+                        else
+                        {
+                            particle.Red = 1;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleGreen, out info) && info.FuncId == 42)
+                        {
+                            particle.Green = particle.InvokeFloatFunc(info, times);
+                        }
+                        else
+                        {
+                            particle.Green = 1;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleBlue, out info) && info.FuncId == 42)
+                        {
+                            particle.Blue = particle.InvokeFloatFunc(info, times);
+                        }
+                        else
+                        {
+                            particle.Blue = 1;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleAlpha, out info) && info.FuncId == 42)
+                        {
+                            particle.Alpha = particle.InvokeFloatFunc(info, times);
+                            if (particle.Alpha < 0)
+                            {
+                                particle.Alpha = 0;
+                            }
+                        }
+                        else
+                        {
+                            particle.Alpha = 1;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleScale, out info) && info.FuncId == 42)
+                        {
+                            particle.Scale = particle.InvokeFloatFunc(info, times);
+                        }
+                        else
+                        {
+                            particle.Scale = 0;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRotation, out info) && info.FuncId == 42)
+                        {
+                            particle.Rotation = particle.InvokeFloatFunc(info, times);
+                        }
                         if (element.Actions.TryGetValue(FuncAction.SetParticleRwField1, out info))
                         {
                             particle.RwField1 = particle.InvokeFloatFunc(info, times);
@@ -1289,17 +1355,6 @@ namespace MphRead
                         if (element.Actions.TryGetValue(FuncAction.SetParticleRwField4, out info))
                         {
                             particle.RwField4 = particle.InvokeFloatFunc(info, times);
-                        }
-                        if (element.Actions.TryGetValue(FuncAction.SetNewParticleLifespan, out info))
-                        {
-                            var tempTimes = new TimeValues(_elapsedTime, 1.0f, element.Lifespan);
-                            particle.Lifespan = particle.InvokeFloatFunc(info, tempTimes);
-                            particle.ExpirationTime = particle.CreationTime + particle.Lifespan;
-                        }
-                        else
-                        {
-                            particle.Lifespan = element.Lifespan;
-                            particle.ExpirationTime = element.ExpirationTime;
                         }
                         portionTotal += 1f / spawnCount;
                     }
