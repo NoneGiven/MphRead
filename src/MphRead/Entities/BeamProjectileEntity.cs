@@ -355,6 +355,12 @@ namespace MphRead.Entities
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
         {
+            if (DrawFuncId == 3)
+            {
+                Matrix4 transform = GetTransformMatrix(Vec1, Vec2);
+                transform.Row3.Xyz = Position;
+                return transform;
+            }
             if (DrawFuncId == 17)
             {
                 Matrix4 transform = Transform.ClearScale();
