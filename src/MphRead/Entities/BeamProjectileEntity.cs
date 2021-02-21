@@ -14,7 +14,6 @@ namespace MphRead.Entities
 
         public Vector3 Velocity { get; set; }
         public Vector3 Acceleration { get; set; }
-        public Vector3 FrontPosition { get; set; }
         public Vector3 BackPosition { get; set; }
         public Vector3 SpawnPosition { get; set; }
         public List<Vector3> PastPositions { get; } = new List<Vector3>();
@@ -71,18 +70,18 @@ namespace MphRead.Entities
             {
                 return true;
             }
-            BackPosition = FrontPosition;
+            BackPosition = Position;
             // todo?: the game only does this every other frame for some reason
             for (int i = 4; i > 0; i--)
             {
                 PastPositions[i] = PastPositions[i - 1];
             }
-            PastPositions[0] = FrontPosition;
+            PastPositions[0] = Position;
             if (Flags.HasFlag(BeamFlags.Homing) && Flags.HasFlag(BeamFlags.Bit06))
             {
                 if (Target != null)
                 {
-                    FrontPosition = Target.Position;
+                    Position = Target.Position;
                 }
                 else
                 {
@@ -91,7 +90,7 @@ namespace MphRead.Entities
             }
             else
             {
-                FrontPosition += Velocity;
+                Position += Velocity;
                 Velocity += Acceleration;
                 // btodo: speed decay stuff
             }
@@ -155,7 +154,7 @@ namespace MphRead.Entities
         {
             if (!Flags.HasFlag(BeamFlags.Collided))
             {
-                scene.AddSingleParticle(SingleType.Fuzzball, FrontPosition, Color, alpha: 1, scale: 1 / 4f);
+                scene.AddSingleParticle(SingleType.Fuzzball, Position, Color, alpha: 1, scale: 1 / 4f);
             }
             // sktodo: draw trail 1
         }
@@ -183,7 +182,7 @@ namespace MphRead.Entities
         {
             if (!Flags.HasFlag(BeamFlags.Collided))
             {
-                scene.AddSingleParticle(SingleType.Fuzzball, FrontPosition, Vector3.One, alpha: 1, scale: 1 / 4f);
+                scene.AddSingleParticle(SingleType.Fuzzball, Position, Vector3.One, alpha: 1, scale: 1 / 4f);
             }
             // sktodo: draw trail 3
         }
@@ -192,7 +191,7 @@ namespace MphRead.Entities
         {
             if (!Flags.HasFlag(BeamFlags.Collided))
             {
-                scene.AddSingleParticle(SingleType.Fuzzball, FrontPosition, Vector3.One, alpha: 1, scale: 1 / 4f);
+                scene.AddSingleParticle(SingleType.Fuzzball, Position, Vector3.One, alpha: 1, scale: 1 / 4f);
             }
             // sktodo: draw trail 2
         }
@@ -230,7 +229,7 @@ namespace MphRead.Entities
             if (DrawFuncId == 17)
             {
                 Matrix4 transform = Transform.ClearScale();
-                float scale = Vector3.Distance(FrontPosition, BackPosition);
+                float scale = Vector3.Distance(Position, BackPosition);
                 transform.Row2.Xyz *= scale;
                 transform.Row3.Xyz = BackPosition;
                 return transform;
@@ -412,7 +411,7 @@ namespace MphRead.Entities
                 beam.DamageDirType = dmgDirType;
                 beam.SplashDamageType = splashDmgType;
                 beam.FieldE0 = fieldE0;
-                beam.SpawnPosition = beam.BackPosition = beam.FrontPosition = position;
+                beam.SpawnPosition = beam.BackPosition = beam.Position = position;
                 for (int j = 0; j < 5; j++)
                 {
                     beam.PastPositions.Add(position);
@@ -486,7 +485,7 @@ namespace MphRead.Entities
                             effVec2 = Vector3.Cross(Vector3.UnitZ, effVec1).Normalized();
                         }
                         Matrix4 transform = GetTransformMatrix(effVec2, effVec1);
-                        transform.Row3.Xyz = beam.FrontPosition;
+                        transform.Row3.Xyz = beam.Position;
                         beam.Effect = scene.SpawnEffectGetEntry(effectId, transform);
                         for (int j = 0; j < beam.Effect.Elements.Count; j++)
                         {
@@ -522,7 +521,7 @@ namespace MphRead.Entities
                 vec2 = Vector3.Cross(vec1, temp).Normalized();
             }
             Matrix4 transform = Matrix4.CreateScale(beam.MaxDistance) * GetTransformMatrix(vec2, vec1);
-            transform.Row3.Xyz = beam.FrontPosition;
+            transform.Row3.Xyz = beam.Position;
             var ent = BeamEffectEntity.Create(new BeamEffectEntityData(type: 0, noSplat: false, transform), scene);
             if (ent != null)
             {

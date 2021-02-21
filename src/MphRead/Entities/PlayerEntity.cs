@@ -114,8 +114,8 @@ namespace MphRead.Entities
             Vector3 gunPos = Position + new Vector3(0.37203538f, 1.2936982f, -1.0930165f);
             if (type == -1)
             {
-                WeaponInfo weapon = Weapons.WeaponsMP[0];
-                BeamProjectileEntity.Spawn(this, new EquipInfo(weapon) { ChargeLevel = 0 },
+                WeaponInfo weapon = Weapons.WeaponsMP[1];
+                BeamProjectileEntity.Spawn(this, new EquipInfo(weapon) { ChargeLevel = weapon.FullCharge },
                     gunPos, -Vector3.UnitZ, BeamSpawnFlags.NoMuzzle, scene);
             }
             else if (type == 0)
