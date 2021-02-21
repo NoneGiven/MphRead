@@ -307,7 +307,8 @@ namespace MphRead.Entities
             Material material = _trailModel.Model.Materials[0];
             // sktodo: make sure this is already bound, or just store it in the constructor
             int bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
-            scene.AddRenderItem(RenderItemType.Trail1, Alpha, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
+            float alpha = Math.Clamp(Lifespan * 30 * 8, 0, 31) / 31;
+            scene.AddRenderItem(RenderItemType.Trail1, alpha, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
                 material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(BackPosition), uvsAndVerts, bindingId);
         }
 
