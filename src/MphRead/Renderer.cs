@@ -70,6 +70,7 @@ namespace MphRead
 
         private readonly List<EntityBase> _entities = new List<EntityBase>();
         private readonly List<EntityBase> _entitySort = new List<EntityBase>();
+        private readonly List<EntityBase> _destroyedEntities = new List<EntityBase>();
         private readonly Dictionary<int, EntityBase> _entityMap = new Dictionary<int, EntityBase>();
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
@@ -1615,45 +1616,61 @@ namespace MphRead
                 }
                 _freeRenderItems.Enqueue(item);
             }
-            _entitySort.Sort(CompareEntities);
             _nextPolygonId = 1;
+            _destroyedEntities.Clear();
+
+            if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
+            {
+                for (int i = 0; i < _entities.Count; i++)
+                {
+                    EntityBase entity = _entities[i];
+                    if (!entity.Process(this))
+                    {
+                        // todo: need to handle destroying vs. unloading etc.
+                        entity.Destroy(this);
+                        _destroyedEntities.Add(entity);
+                    }
+                }
+            }
+
+            _entitySort.Sort(CompareEntities);
 
             for (int i = 0; i < _entitySort.Count; i++)
             {
                 EntityBase entity = _entitySort[i];
-                bool processed = true;
-                if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
+                if (_destroyedEntities.Contains(entity))
                 {
-                    processed = entity.Process(this);
+                    continue;
                 }
-                if (!processed)
+                if (entity.ShouldDraw)
                 {
-                    entity.Destroy(this);
+                    entity.GetDrawInfo(this);
                 }
-                else
+                if (_showVolumes != VolumeDisplay.None)
                 {
-                    if (entity.ShouldDraw)
-                    {
-                        entity.GetDrawInfo(this);
-                    }
-                    if (_showVolumes != VolumeDisplay.None)
-                    {
-                        entity.GetDisplayVolumes(this);
-                    }
+                    entity.GetDisplayVolumes(this);
                 }
+            }
+
+            for (int i = 0; i < _destroyedEntities.Count; i++)
+            {
+                EntityBase entity = _destroyedEntities[i];
+                _entityMap.Remove(entity.Id);
+                _entitySort.RemoveAll(e => e == entity);
+                _entities.RemoveAll(e => e == entity);
             }
 
             if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
             {
                 ProcessEffects();
-                var camVec1 = new Vector3(_viewMatrix.M11, _viewMatrix.M12, _viewMatrix.M13 * -1);
-                var camVec2 = new Vector3(_viewMatrix.M21, _viewMatrix.M22, _viewMatrix.M23 * -1);
-                var camVec3 = new Vector3(_viewMatrix.M31, _viewMatrix.M32, _viewMatrix.M33 * -1);
-                for (int i = 0; i < _singleParticleCount; i++)
-                {
-                    SingleParticle single = _singleParticles[i];
-                    single.Process(camVec1, camVec2, camVec3, 1);
-                }
+            }
+            var camVec1 = new Vector3(_viewMatrix.M11, _viewMatrix.M12, _viewMatrix.M13 * -1);
+            var camVec2 = new Vector3(_viewMatrix.M21, _viewMatrix.M22, _viewMatrix.M23 * -1);
+            var camVec3 = new Vector3(_viewMatrix.M31, _viewMatrix.M32, _viewMatrix.M33 * -1);
+            for (int i = 0; i < _singleParticleCount; i++)
+            {
+                SingleParticle single = _singleParticles[i];
+                single.Process(camVec1, camVec2, camVec3, 1);
             }
             for (int i = 0; i < _activeElements.Count; i++)
             {
@@ -2184,42 +2201,19 @@ namespace MphRead
             }
         }
 
-        private void TestSpawnBeam(int type)
-        {
-            var gunPos = new Vector3(0.37203538f, 1.2936982f, -1.0930165f);
-            if (type == 0)
-            {
-                WeaponInfo weapon = Weapons.WeaponsMP[14];
-                BeamProjectileEntity.Spawn(null!, new EquipInfo(weapon) { ChargeLevel = weapon.FullCharge },
-                    gunPos, -Vector3.UnitZ, BeamSpawnFlags.NoMuzzle, this);
-            }
-            else if (type == 1)
-            {
-                Matrix4 transform = Matrix4.CreateScale(new Vector3(1, 200, 1)) * Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-90));
-                transform.Row3.Xyz = new Vector3(0.37203538f, 1.2936982f, -1.0930165f);
-                var ent = BeamEffectEntity.Create(new BeamEffectEntityData(1, false, transform), this);
-                if (ent != null)
-                {
-                    AddEntity(ent);
-                }
-            }
-            else if (type == 2)
-            {
-                Matrix4 transform = Matrix4.Identity;
-                transform.Row3.Z = 2f;
-                var ent = BeamEffectEntity.Create(new BeamEffectEntityData(2, false, transform), this);
-                if (ent != null)
-                {
-                    AddEntity(ent);
-                }
-            }
-        }
-
         public void OnKeyDown(KeyboardKeyEventArgs e)
         {
             if (e.Key == Keys.E && e.Alt)
             {
-                TestSpawnBeam(type: 0);
+                for (int i = 0; i < _entities.Count; i++)
+                {
+                    EntityBase entity = _entities[i];
+                    if (entity.Type == EntityType.Player)
+                    {
+                        ((PlayerEntity)entity).Shoot = true;
+                        break;
+                    }
+                }
             }
             else if (Selection.OnKeyDown(e, this))
             {

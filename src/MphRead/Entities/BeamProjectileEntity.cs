@@ -24,7 +24,7 @@ namespace MphRead.Entities
         public float Age { get; set; }
         public float Lifespan { get; set; }
 
-        public ushort Color { get; set; }
+        public Vector3 Color { get; set; }
         public byte CollisionEffect { get; set; }
         public byte DamageDirType { get; set; }
         public byte SplashDamageType { get; set; }
@@ -57,10 +57,6 @@ namespace MphRead.Entities
         public float FieldF0 { get; set; }
 
         public BeamProjectileEntity() : base(EntityType.BeamProjectile)
-        {
-        }
-
-        public override void GetDrawInfo(Scene scene)
         {
         }
 
@@ -111,7 +107,147 @@ namespace MphRead.Entities
                 }
             }
             // btodo: expiry/collision
+            // sktodo: spawn sniper beam
             return base.Process(scene);
+        }
+
+        public override void GetDrawInfo(Scene scene)
+        {
+            if (DrawFuncId == 0)
+            {
+                Draw00(scene);
+            }
+            else if (DrawFuncId == 1)
+            {
+                Draw01(scene);
+            }
+            else if (DrawFuncId == 2)
+            {
+                Draw02(scene);
+            }
+            else if (DrawFuncId == 3)
+            {
+                Draw03(scene);
+            }
+            else if (DrawFuncId == 6)
+            {
+                Draw06(scene);
+            }
+            else if (DrawFuncId == 7)
+            {
+                Draw07(scene);
+            }
+            else if (DrawFuncId == 9)
+            {
+                Draw09(scene);
+            }
+            else if (DrawFuncId == 10)
+            {
+                Draw10(scene);
+            }
+            else if (DrawFuncId == 17)
+            {
+                Draw17(scene);
+            }
+        }
+
+        private void Draw00(Scene scene)
+        {
+            if (!Flags.HasFlag(BeamFlags.Collided))
+            {
+                scene.AddSingleParticle(SingleType.Fuzzball, FrontPosition, Color, alpha: 1, scale: 1 / 4f);
+            }
+            // sktodo: draw trail 1
+        }
+
+        private void Draw01(Scene scene)
+        {
+            // sktodo: draw trail 1
+        }
+
+        private void Draw02(Scene scene)
+        {
+            // sktodo: draw trail 2
+        }
+
+        private void Draw03(Scene scene)
+        {
+            if (!Flags.HasFlag(BeamFlags.Collided))
+            {
+                base.GetDrawInfo(scene);
+            }
+            // sktodo: draw trail 2
+        }
+
+        private void Draw06(Scene scene)
+        {
+            if (!Flags.HasFlag(BeamFlags.Collided))
+            {
+                scene.AddSingleParticle(SingleType.Fuzzball, FrontPosition, Vector3.One, alpha: 1, scale: 1 / 4f);
+            }
+            // sktodo: draw trail 3
+        }
+
+        private void Draw07(Scene scene)
+        {
+            if (!Flags.HasFlag(BeamFlags.Collided))
+            {
+                scene.AddSingleParticle(SingleType.Fuzzball, FrontPosition, Vector3.One, alpha: 1, scale: 1 / 4f);
+            }
+            // sktodo: draw trail 2
+        }
+
+        private void Draw09(Scene scene)
+        {
+            if (!Flags.HasFlag(BeamFlags.Collided))
+            {
+                if (Target != null)
+                {
+                    // sktodo: draw Shock Coil
+                }
+                else
+                {
+                    // todo: only draw if owner is main player
+                }
+            }
+        }
+
+        private void Draw10(Scene scene)
+        {
+            // draw trail 2
+        }
+
+        private void Draw17(Scene scene)
+        {
+            if (!Flags.HasFlag(BeamFlags.Collided))
+            {
+                base.GetDrawInfo(scene);
+            }
+        }
+
+        protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
+        {
+            if (DrawFuncId == 17)
+            {
+                Matrix4 transform = Transform.ClearScale();
+                float scale = Vector3.Distance(FrontPosition, BackPosition);
+                transform.Row2.Xyz *= scale;
+                transform.Row3.Xyz = BackPosition;
+                return transform;
+            }
+            return base.GetModelTransform(inst, index);
+        }
+
+        public override void Destroy(Scene scene)
+        {
+            if (Effect != null)
+            {
+                scene.DetachEffectEntry(Effect, setExpired: true);
+            }
+            Owner = null;
+            Effect = null;
+            Target = null;
+            RicochetWeapon = null;
         }
 
         public static bool Spawn(EntityBase owner, EquipInfo equip, Vector3 position, Vector3 direction, BeamSpawnFlags spawnFlags, Scene scene)
@@ -173,7 +309,7 @@ namespace MphRead.Entities
                 || (!charged && weapon.Flags.HasFlag(WeaponFlags.InstantUncharged));
 
             BeamFlags flags = BeamFlags.None;
-            float speed = GetAmount(weapon.UnchargedSpeed, weapon.MinChargeSpeed, weapon.ChargedSpeed);
+            float speed = GetAmount(weapon.UnchargedSpeed, weapon.MinChargeSpeed, weapon.ChargedSpeed) / 4096f / 2; // todo: FPS stuff
             float fieldC0 = GetAmount(weapon.Field70, weapon.Field74, weapon.Field78);
             ushort field30 = weapon.Field3E[charged ? 1 : 0];
             ushort field1F = weapon.Field44[charged ? 1 : 0];
@@ -189,7 +325,11 @@ namespace MphRead.Entities
                 flags |= BeamFlags.Charged;
             }
             byte drawFuncId = weapon.DrawFuncIds[charged ? 1 : 0];
-            ushort color = weapon.Colors[charged ? 1 : 0];
+            ushort colorValue = weapon.Colors[charged ? 1 : 0];
+            float red = ((colorValue >> 0) & 0x1F) / 31f;
+            float green = ((colorValue >> 5) & 0x1F) / 31f;
+            float blue = ((colorValue >> 10) & 0x1F) / 31f;
+            var color = new Vector3(red, green, blue);
             byte colEffect = weapon.CollisionEffects[charged ? 1 : 0];
             byte dmgDirType = weapon.DmgDirTypes[charged ? 1 : 0];
             float fieldE0 = GetAmount(weapon.Field48, weapon.Field4C, weapon.Field50);

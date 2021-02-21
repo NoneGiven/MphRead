@@ -33,6 +33,9 @@ namespace MphRead.Entities
         private int _respawnTimer = 0;
         private const int _respawnCooldown = 180;
 
+        // todo: remove testing code
+        public bool Shoot { get; set; }
+
         public PlayerEntity(Hunter hunter, int recolor = 0, Vector3? position = null) : base(EntityType.Player)
         {
             Hunter = hunter;
@@ -98,7 +101,49 @@ namespace MphRead.Entities
                 // skip incrementing animation frames
                 return true;
             }
+            if (Shoot)
+            {
+                TestSpawnBeam(-1, scene);
+                Shoot = false;
+            }
             return base.Process(scene);
+        }
+
+        private void TestSpawnBeam(int type, Scene scene)
+        {
+            Vector3 gunPos = Position + new Vector3(0.37203538f, 1.2936982f, -1.0930165f);
+            if (type == -1)
+            {
+                WeaponInfo weapon = Weapons.WeaponsMP[0];
+                BeamProjectileEntity.Spawn(this, new EquipInfo(weapon) { ChargeLevel = 0 },
+                    gunPos, -Vector3.UnitZ, BeamSpawnFlags.NoMuzzle, scene);
+            }
+            else if (type == 0)
+            {
+                WeaponInfo weapon = Weapons.WeaponsMP[14];
+                BeamProjectileEntity.Spawn(this, new EquipInfo(weapon) { ChargeLevel = weapon.FullCharge },
+                    gunPos, -Vector3.UnitZ, BeamSpawnFlags.NoMuzzle, scene);
+            }
+            else if (type == 1)
+            {
+                Matrix4 transform = Matrix4.CreateScale(new Vector3(1, 200, 1)) * Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-90));
+                transform.Row3.Xyz = new Vector3(0.37203538f, 1.2936982f, -1.0930165f);
+                var ent = BeamEffectEntity.Create(new BeamEffectEntityData(1, false, transform), scene);
+                if (ent != null)
+                {
+                    scene.AddEntity(ent);
+                }
+            }
+            else if (type == 2)
+            {
+                Matrix4 transform = Matrix4.Identity;
+                transform.Row3.Z = 2f;
+                var ent = BeamEffectEntity.Create(new BeamEffectEntityData(2, false, transform), scene);
+                if (ent != null)
+                {
+                    scene.AddEntity(ent);
+                }
+            }
         }
 
         private void UpdateModels()
