@@ -28,7 +28,8 @@ namespace MphRead
         Cylinder = 2,
         Sphere = 3,
         Plane = 4,
-        Particle = 5
+        Particle = 5,
+        Trail1 = 6
     }
 
     public class RenderItem

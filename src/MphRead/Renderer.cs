@@ -1593,12 +1593,12 @@ namespace MphRead
             AddRenderItem(item);
         }
 
-        // for effects
-        public void AddRenderItem(float alpha, int polygonId, Vector3 color, RepeatMode xRepeat, RepeatMode yRepeat,
+        // for effects/trails
+        public void AddRenderItem(RenderItemType type, float alpha, int polygonId, Vector3 color, RepeatMode xRepeat, RepeatMode yRepeat,
             float scaleS, float scaleT, Matrix4 transform, Vector3[] uvsAndVerts, int bindingId)
         {
             RenderItem item = GetRenderItem();
-            item.Type = RenderItemType.Particle;
+            item.Type = type;
             item.PolygonId = polygonId;
             item.Alpha = alpha;
             item.PolygonMode = PolygonMode.Modulate;
@@ -1928,6 +1928,10 @@ namespace MphRead
             {
                 RenderParticle(item);
             }
+            else if (item.Type == RenderItemType.Trail1)
+            {
+                RenderTrail1(item);
+            }
         }
 
         private void RenderBox(Vector3[] verts)
@@ -2112,6 +2116,28 @@ namespace MphRead
             GL.TexCoord3(texcoord2.X * item.ScaleS, texcoord2.Y * item.ScaleT, 0f);
             GL.Vertex3(vertex2);
             GL.TexCoord3(texcoord3.X * item.ScaleS, texcoord3.Y * item.ScaleT, 0f);
+            GL.Vertex3(vertex3);
+            GL.End();
+        }
+
+        private void RenderTrail1(RenderItem item)
+        {
+            Vector3 texcoord0 = item.Vertices[0];
+            Vector3 vertex0 = item.Vertices[1];
+            Vector3 texcoord1 = item.Vertices[2];
+            Vector3 vertex1 = item.Vertices[3];
+            Vector3 texcoord2 = item.Vertices[4];
+            Vector3 vertex2 = item.Vertices[5];
+            Vector3 texcoord3 = item.Vertices[6];
+            Vector3 vertex3 = item.Vertices[7];
+            GL.Begin(PrimitiveType.QuadStrip);
+            GL.TexCoord3(texcoord0);
+            GL.Vertex3(vertex0);
+            GL.TexCoord3(texcoord1);
+            GL.Vertex3(vertex1);
+            GL.TexCoord3(texcoord2);
+            GL.Vertex3(vertex2);
+            GL.TexCoord3(texcoord3);
             GL.Vertex3(vertex3);
             GL.End();
         }

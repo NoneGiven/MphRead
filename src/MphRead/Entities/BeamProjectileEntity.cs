@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Effects;
@@ -55,8 +56,23 @@ namespace MphRead.Entities
         public float FieldEC { get; set; }
         public float FieldF0 { get; set; }
 
+        private ModelInstance? _trailModel;
+
         public BeamProjectileEntity() : base(EntityType.BeamProjectile)
         {
+        }
+
+        public override void Initialize(Scene scene)
+        {
+            base.Initialize(scene);
+            if (DrawFuncId == 0 || DrawFuncId == 3 || DrawFuncId == 6 || DrawFuncId == 7 || DrawFuncId == 10)
+            {
+                _trailModel = Read.GetModelInstance("trail");
+            }
+            else if (DrawFuncId == 1 || DrawFuncId == 2)
+            {
+                _trailModel = Read.GetModelInstance("electroTrail");
+            }
         }
 
         public override bool Process(Scene scene)
@@ -197,13 +213,13 @@ namespace MphRead.Entities
             {
                 scene.AddSingleParticle(SingleType.Fuzzball, Position, Color, alpha: 1, scale: 1 / 4f);
             }
-            // sktodo: draw trail 1
+            DrawTrail1(Fixed.ToFloat(122), scene);
         }
 
         // uncharged Volt Driver
         private void Draw01(Scene scene)
         {
-            // sktodo: draw trail 1
+            DrawTrail1(Fixed.ToFloat(614), scene);
         }
 
         // charged Volt Driver
@@ -273,6 +289,28 @@ namespace MphRead.Entities
             }
         }
 
+        private void DrawTrail1(float height, Scene scene)
+        {
+            Debug.Assert(_trailModel != null);
+            Texture texture = _trailModel.Model.Recolors[0].Textures[0];
+            float uvS = (texture.Width - (1 / 16f)) / texture.Width;
+            float uvT = (texture.Height - (1 / 16f)) / texture.Height;
+            Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(8);
+            uvsAndVerts[0] = Vector3.Zero;
+            uvsAndVerts[1] = new Vector3(Position.X - BackPosition.X, Position.Y - BackPosition.Y - height, Position.Z - BackPosition.Z);
+            uvsAndVerts[2] = new Vector3(0, uvT, 0);
+            uvsAndVerts[3] = new Vector3(Position.X - BackPosition.X, height + Position.Y - BackPosition.Y, Position.Z - BackPosition.Z);
+            uvsAndVerts[4] = new Vector3(uvS, 0, 0);
+            uvsAndVerts[5] = new Vector3(0, -height, 0);
+            uvsAndVerts[6] = new Vector3(uvS, uvT, 0);
+            uvsAndVerts[7] = new Vector3(0, height, 0);
+            Material material = _trailModel.Model.Materials[0];
+            // sktodo: make sure this is already bound, or just store it in the constructor
+            int bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
+            scene.AddRenderItem(RenderItemType.Trail1, Alpha, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
+                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(BackPosition), uvsAndVerts, bindingId);
+        }
+
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
         {
             if (DrawFuncId == 17)
@@ -296,6 +334,7 @@ namespace MphRead.Entities
             Effect = null;
             Target = null;
             RicochetWeapon = null;
+            _trailModel = null;
         }
 
         public static bool Spawn(EntityBase owner, EquipInfo equip, Vector3 position, Vector3 direction, BeamSpawnFlags spawnFlags, Scene scene)
