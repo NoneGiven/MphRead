@@ -73,9 +73,9 @@ namespace MphRead
         public int UnchargedSpeed { get; }
         public int MinChargeSpeed { get; }
         public int ChargedSpeed { get; }
-        public int UnchargedFinalSpeed { get; } // uncharged
-        public int MinChargeFinalSpeed { get; } // min charge
-        public int ChargedFinalSpeed { get; } // full charge
+        public int UnchargedFinalSpeed { get; }
+        public int MinChargeFinalSpeed { get; }
+        public int ChargedFinalSpeed { get; }
         public int UnchargedGravity { get; }
         public int MinChargeGravity { get; }
         public int ChargedGravity { get; }
@@ -90,9 +90,9 @@ namespace MphRead
         public int UnchargedDistance { get; }
         public int MinChargeDistance { get; }
         public int ChargedDistance { get; }
-        public int UnchargedSpread { get; } // uncharged
-        public int MinChargeSpread { get; } // min charge
-        public int ChargedSpread { get; } // full charge
+        public int UnchargedSpread { get; }
+        public int MinChargeSpread { get; }
+        public int ChargedSpread { get; }
         public int FieldC0 { get; } // uncharged
         public int FieldC4 { get; } // min charge
         public int FieldC8 { get; } // full charge
