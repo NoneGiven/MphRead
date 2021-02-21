@@ -60,7 +60,8 @@ namespace MphRead
         public float[] MatrixStack { get; }
         public Vector4? OverrideColor { get; set; }
         public Vector4? PaletteOverride { get; set; }
-        public Vector3[] Vertices { get; set; }
+        public Vector3[] Points { get; set; }
+        public int PointCount { get; set; } // only needed for trails
         public float ScaleS { get; set; }
         public float ScaleT { get; set; }
 
@@ -68,7 +69,7 @@ namespace MphRead
         {
             // todo: consider using ArrayPool
             MatrixStack = new float[16 * 31];
-            Vertices = Array.Empty<Vector3>();
+            Points = Array.Empty<Vector3>();
         }
     }
 

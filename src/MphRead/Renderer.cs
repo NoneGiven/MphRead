@@ -1547,7 +1547,7 @@ namespace MphRead
             }
             item.OverrideColor = overrideColor;
             item.PaletteOverride = paletteOverride;
-            item.Vertices = Array.Empty<Vector3>();
+            item.Points = Array.Empty<Vector3>();
             item.ScaleS = 1;
             item.ScaleT = 1;
             if (selectionType != SelectionType.None)
@@ -1590,7 +1590,7 @@ namespace MphRead
             item.MatrixStackCount = 0;
             item.OverrideColor = overrideColor;
             item.PaletteOverride = null;
-            item.Vertices = vertices;
+            item.Points = vertices;
             item.ScaleS = 1;
             item.ScaleT = 1;
             AddRenderItem(item);
@@ -1598,7 +1598,7 @@ namespace MphRead
 
         // for effects/trails
         public void AddRenderItem(RenderItemType type, float alpha, int polygonId, Vector3 color, RepeatMode xRepeat, RepeatMode yRepeat,
-            float scaleS, float scaleT, Matrix4 transform, Vector3[] uvsAndVerts, int bindingId)
+            float scaleS, float scaleT, Matrix4 transform, Vector3[] uvsAndVerts, int bindingId, int pointCount = 8)
         {
             RenderItem item = GetRenderItem();
             item.Type = type;
@@ -1625,9 +1625,10 @@ namespace MphRead
             item.MatrixStackCount = 0;
             item.OverrideColor = null;
             item.PaletteOverride = null;
-            item.Vertices = uvsAndVerts;
+            item.Points = uvsAndVerts;
             item.ScaleS = scaleS;
             item.ScaleT = scaleT;
+            item.PointCount = pointCount;
             AddRenderItem(item);
         }
 
@@ -1670,7 +1671,7 @@ namespace MphRead
                 RenderItem item = _usedRenderItems.Dequeue();
                 if (item.Type != RenderItemType.Mesh)
                 {
-                    ArrayPool<Vector3>.Shared.Return(item.Vertices);
+                    ArrayPool<Vector3>.Shared.Return(item.Points);
                 }
                 _freeRenderItems.Enqueue(item);
             }
@@ -1908,23 +1909,23 @@ namespace MphRead
             }
             else if (item.Type == RenderItemType.Box)
             {
-                RenderBox(item.Vertices);
+                RenderBox(item.Points);
             }
             else if (item.Type == RenderItemType.Cylinder)
             {
-                RenderCylinder(item.Vertices);
+                RenderCylinder(item.Points);
             }
             else if (item.Type == RenderItemType.Sphere)
             {
-                RenderSphere(item.Vertices);
+                RenderSphere(item.Points);
             }
             else if (item.Type == RenderItemType.Plane)
             {
-                RenderPlane(item.Vertices);
+                RenderPlane(item.Points);
                 if (_volumeEdges)
                 {
                     // todo: implement this for volumes as well
-                    RenderPlaneLines(item.Vertices);
+                    RenderPlaneLines(item.Points);
                 }
             }
             else if (item.Type == RenderItemType.Particle)
@@ -2107,14 +2108,14 @@ namespace MphRead
 
         private void RenderParticle(RenderItem item)
         {
-            Vector3 texcoord0 = item.Vertices[0];
-            Vector3 vertex0 = item.Vertices[1];
-            Vector3 texcoord1 = item.Vertices[2];
-            Vector3 vertex1 = item.Vertices[3];
-            Vector3 texcoord2 = item.Vertices[4];
-            Vector3 vertex2 = item.Vertices[5];
-            Vector3 texcoord3 = item.Vertices[6];
-            Vector3 vertex3 = item.Vertices[7];
+            Vector3 texcoord0 = item.Points[0];
+            Vector3 vertex0 = item.Points[1];
+            Vector3 texcoord1 = item.Points[2];
+            Vector3 vertex1 = item.Points[3];
+            Vector3 texcoord2 = item.Points[4];
+            Vector3 vertex2 = item.Points[5];
+            Vector3 texcoord3 = item.Points[6];
+            Vector3 vertex3 = item.Points[7];
             GL.Begin(PrimitiveType.Quads);
             GL.TexCoord3(texcoord0.X * item.ScaleS, texcoord0.Y * item.ScaleT, 0f);
             GL.Vertex3(vertex0);
@@ -2129,14 +2130,14 @@ namespace MphRead
 
         private void RenderTrail1(RenderItem item)
         {
-            Vector3 texcoord0 = item.Vertices[0];
-            Vector3 vertex0 = item.Vertices[1];
-            Vector3 texcoord1 = item.Vertices[2];
-            Vector3 vertex1 = item.Vertices[3];
-            Vector3 texcoord2 = item.Vertices[4];
-            Vector3 vertex2 = item.Vertices[5];
-            Vector3 texcoord3 = item.Vertices[6];
-            Vector3 vertex3 = item.Vertices[7];
+            Vector3 texcoord0 = item.Points[0];
+            Vector3 vertex0 = item.Points[1];
+            Vector3 texcoord1 = item.Points[2];
+            Vector3 vertex1 = item.Points[3];
+            Vector3 texcoord2 = item.Points[4];
+            Vector3 vertex2 = item.Points[5];
+            Vector3 texcoord3 = item.Points[6];
+            Vector3 vertex3 = item.Points[7];
             GL.Begin(PrimitiveType.QuadStrip);
             GL.TexCoord3(texcoord0);
             GL.Vertex3(vertex0);
@@ -2151,12 +2152,12 @@ namespace MphRead
 
         private void RenderTrail2(RenderItem item)
         {
-            Debug.Assert(item.Vertices.Length >= 4 && item.Vertices.Length % 2 == 0);
+            Debug.Assert(item.PointCount >= 4 && item.PointCount % 2 == 0);
             GL.Begin(PrimitiveType.QuadStrip);
-            for (int i = 0; i < item.Vertices.Length; i += 2)
+            for (int i = 0; i < item.PointCount; i += 2)
             {
-                Vector3 texcoord = item.Vertices[i];
-                Vector3 vertex = item.Vertices[i + 1];
+                Vector3 texcoord = item.Points[i];
+                Vector3 vertex = item.Points[i + 1];
                 GL.TexCoord3(texcoord);
                 GL.Vertex3(vertex);
             }

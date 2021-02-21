@@ -117,7 +117,7 @@ namespace MphRead.Entities
             if (type == -1)
             {
                 WeaponInfo weapon = Weapons.WeaponsMP[5];
-                bool charged = false;
+                bool charged = true;
                 BeamProjectileEntity.Spawn(this, new EquipInfo(weapon) { ChargeLevel = charged ? weapon.FullCharge : (ushort)0 },
                     gunPos, direction, BeamSpawnFlags.NoMuzzle, scene);
             }

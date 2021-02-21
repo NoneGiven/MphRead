@@ -319,6 +319,7 @@ namespace MphRead.Entities
 
         private void DrawTrail2(float height, int segments, Scene scene)
         {
+            Debug.Assert(_trailModel != null);
             if (segments < 2)
             {
                 return;
@@ -327,11 +328,10 @@ namespace MphRead.Entities
             {
                 segments = PastPositions.Count / 2;
             }
-
-            Debug.Assert(_trailModel != null);
+            int count = 4 * segments;
             Texture texture = _trailModel.Model.Recolors[0].Textures[0];
             float uvT = (texture.Height - (1 / 16f)) / texture.Height;
-            Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(4 * segments);
+            Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(count);
             for (int i = 0; i < segments; i++)
             {
                 float uvS = 0;
@@ -350,7 +350,7 @@ namespace MphRead.Entities
             int bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
             float alpha = Math.Clamp(Lifespan * 30 * 8, 0, 31) / 31;
             scene.AddRenderItem(RenderItemType.Trail2, alpha, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
-                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[0]), uvsAndVerts, bindingId);
+                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[0]), uvsAndVerts, bindingId, count);
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
