@@ -89,6 +89,7 @@ namespace MphRead.Entities
             {
                 return true;
             }
+            bool firstFrame = Age == 0;
             Age += scene.FrameTime;
             BackPosition = Position;
             // the game does this every other frame at 30 fps and keeps 5 past positions; we do it every other frame at 60 fps and keep 10,
@@ -102,16 +103,12 @@ namespace MphRead.Entities
                 }
                 PastPositions[0] = Position;
             }
-            // sktodo: remove debug code after targeting is implemented
-            if (Flags.HasFlag(BeamFlags.Continuous))
+            // sktodo: debug code
+            if (Flags.HasFlag(BeamFlags.Continuous) && DrawFuncId == 17)
             {
-                if (DrawFuncId == 9)
+                if (firstFrame)
                 {
-                    Position = Position.AddY(-3.5f);
-                }
-                else if (DrawFuncId == 17)
-                {
-                    Position = Position.AddY(-4f);
+                    Position = Position.AddY(-4);
                 }
             }
             else if (Flags.HasFlag(BeamFlags.Homing) && Flags.HasFlag(BeamFlags.Continuous))
@@ -756,6 +753,11 @@ namespace MphRead.Entities
                     }
                 }
                 // btodo: homing/target stuff
+                // sktodo: debug code
+                if (beam.Flags.HasFlag(BeamFlags.Continuous) && beam.DrawFuncId == 9)
+                {
+                    beam.Position = beam.Position.AddY(-3.5f);
+                }
                 scene.AddEntity(beam);
             }
             return true;
