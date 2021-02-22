@@ -65,7 +65,7 @@ namespace MphRead.Entities
         public override void Initialize(Scene scene)
         {
             base.Initialize(scene);
-            if (DrawFuncId == 0 || DrawFuncId == 3 || DrawFuncId == 6 || DrawFuncId == 7 || DrawFuncId == 10)
+            if (DrawFuncId == 0 || DrawFuncId == 3 || DrawFuncId == 6 || DrawFuncId == 7 || DrawFuncId == 10 || DrawFuncId == 12)
             {
                 _trailModel = Read.GetModelInstance("trail");
             }
@@ -189,7 +189,7 @@ namespace MphRead.Entities
             {
                 Draw03(scene);
             }
-            else if (DrawFuncId == 6)
+            else if (DrawFuncId == 6 || DrawFuncId == 12)
             {
                 Draw06(scene);
             }

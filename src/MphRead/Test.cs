@@ -849,7 +849,7 @@ namespace MphRead
             //}
         }
 
-        private static IReadOnlyList<RawWeaponInfo> ParseWeaponInfo(int count, byte[] array)
+        public static IReadOnlyList<RawWeaponInfo> ParseWeaponInfo(int count, byte[] array)
         {
             int size = Marshal.SizeOf<RawWeaponInfo>();
             Debug.Assert(size == 0xF0);
@@ -864,6 +864,93 @@ namespace MphRead
                 //results.Add(MemoryMarshal.Read<WeaponInfo>(bytes[start..end]));
             }
             return results;
+        }
+
+        public static void DumpWeaponInfo(RawWeaponInfo weapon)
+        {
+            Console.WriteLine($@"            new WeaponInfo(
+                description: """",
+                weapon: BeamType.{weapon.Weapon},
+                weaponType: BeamType.{weapon.WeaponType},
+                drawFuncIds: new byte[] {{ {weapon.DrawFuncIds[0]}, {weapon.DrawFuncIds[1]} }},
+                colors: new ushort[] {{ {weapon.Colors[0]}, {weapon.Colors[1]} }},
+                flags: {EnumToString(weapon.Flags)},
+                splashDamage: {weapon.SplashDamage},
+                minChargeSplashDamage: {weapon.MinChargeSplashDamage},
+                chargedSplashDamage: {weapon.ChargedSplashDamage},
+                field12: new byte[] {{ {weapon.Field12[0]}, {weapon.Field12[1]} }},
+                shotCooldown: {weapon.ShotCooldown},
+                shotCooldownRelated: {weapon.ShotCooldownRelated},
+                ammoType: {weapon.AmmoType},
+                beamTypes: new byte[] {{ {weapon.BeamTypes[0]}, {weapon.BeamTypes[1]} }},
+                muzzleEffects: new byte[] {{ {weapon.MuzzleEffects[0]}, {weapon.MuzzleEffects[1]} }},
+                field1B: new byte[] {{ {weapon.Field1B[0]}, {weapon.Field1B[1]} }},
+                field1D: new byte[] {{ {weapon.Field1D[0]}, {weapon.Field1D[1]} }},
+                afflictions: new Affliction[] {{ {EnumToString(weapon.Afflictions[0])}, {EnumToString(weapon.Afflictions[1])} }},
+                field21: {weapon.Field21},
+                minCharge: {weapon.MinCharge},
+                fullCharge: {weapon.FullCharge},
+                ammoCost: {weapon.AmmoCost},
+                minChargeCost: {weapon.MinChargeCost},
+                chargeCost: {weapon.ChargeCost},
+                unchargedDamage: {weapon.UnchargedDamage},
+                minChargeDamage: {weapon.MinChargeDamage},
+                chargedDamage: {weapon.ChargedDamage},
+                headshotDamage: {weapon.HeadshotDamage},
+                minChargeHeadshotDamage: {weapon.MinChargeHeadshotDamage},
+                chargedHeadshotDamage: {weapon.ChargedHeadshotDamage},
+                unchargedLifespan: {weapon.UnchargedLifespan},
+                minChargeLifespan: {weapon.MinChargeLifespan},
+                chargedLifespan: {weapon.ChargedLifespan},
+                field3E: new ushort[] {{ {weapon.Field3E[0]}, {weapon.Field3E[1]} }},
+                field42: {weapon.Field42},
+                field44: new ushort[] {{ {weapon.Field44[0]}, {weapon.Field44[1]} }},
+                field48: {weapon.Field48},
+                field4C: {weapon.Field4C},
+                field50: {weapon.Field50},
+                field54: {weapon.Field54},
+                field58: {weapon.Field58},
+                field5C: {weapon.Field5C},
+                field60: {weapon.Field60},
+                field64: {weapon.Field64},
+                field68: {weapon.Field68},
+                field6C: {weapon.Field6C},
+                field70: {weapon.Field70},
+                field74: {weapon.Field74},
+                field78: {weapon.Field78},
+                unchargedGravity: {weapon.UnchargedGravity},
+                minChargeGravity: {weapon.MinChargeGravity},
+                chargedGravity: {weapon.ChargedGravity},
+                unchargedHoming: {weapon.UnchargedHoming},
+                minChargeHoming: {weapon.MinChargeHoming},
+                chargedHoming: {weapon.ChargedHoming},
+                field94: {weapon.Field94},
+                field98: {weapon.Field98},
+                unchargedScale: {weapon.UnchargedScale},
+                minChargeScale: {weapon.MinChargeScale},
+                chargedScale: {weapon.ChargedScale},
+                unchargedDistance: {weapon.UnchargedDistance},
+                minChargeDistance: {weapon.MinChargeDistance},
+                chargedDistance: {weapon.ChargedDistance},
+                fieldB4: {weapon.FieldB4},
+                fieldB8: {weapon.FieldB8},
+                fieldBC: {weapon.FieldBC},
+                fieldC0: {weapon.FieldC0},
+                fieldC4: {weapon.FieldC4},
+                fieldC8: {weapon.FieldC8},
+                fieldCC: {weapon.FieldCC},
+                fieldD0: {weapon.FieldD0},
+                fieldD4: {weapon.FieldD4},
+                ricochetWeapon: new uint[] {{ 0x{weapon.RicochetWeaponPtr[0]:X1}, 0x{weapon.RicochetWeaponPtr[1]:X1} }},
+                projectileCount: {weapon.ProjectileCount},
+                minChargedProjectileCount: {weapon.MinChargedProjectileCount},
+                chargeProjectileCount: {weapon.ChargeProjectileCount},
+                smokeStart: {weapon.SmokeStart},
+                smokeMinimum: {weapon.SmokeMinimum},
+                smokeDrain: {weapon.SmokeDrain},
+                smokeShotAmount: {weapon.SmokeShotAmount},
+                smokeChargeAmount: {weapon.SmokeChargeAmount}
+            ),");
         }
 
         public static void TestMatrix()

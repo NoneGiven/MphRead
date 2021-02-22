@@ -66,6 +66,15 @@ namespace MphRead.Memory
                 {
                     RefreshMemory();
                     GetEntities();
+                    byte[] bytes = new byte[0xF0];
+                    for (int i = 0; i < 0xF0; i++)
+                    {
+                        // 0x137A9C cretaphid crystal
+                        // 0x13846C
+                        bytes[i] = _buffer[0x13846C + i];
+                    }
+                    IReadOnlyList<Test.RawWeaponInfo> info = Test.ParseWeaponInfo(1, bytes);
+                    Test.DumpWeaponInfo(info[0]);
                     await Task.Delay(15);
                 }
             }).GetAwaiter().GetResult();
