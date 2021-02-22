@@ -108,9 +108,9 @@ namespace MphRead
         public readonly uint Field180;
         public readonly uint Flags;
         public readonly uint Field188;
-        public readonly Vector3Fx Field18C;
-        public readonly Vector3Fx Field198;
-        public readonly uint BeamIndex;
+        public readonly Vector3Fx BeamSpawnDir;
+        public readonly Vector3Fx BeamSpawnPos;
+        public readonly int BeamId;
         public readonly uint BeamInterval;
         public readonly uint BeamOnIntervals; // 16 bits are used
         public readonly uint Field1B0;

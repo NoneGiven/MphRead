@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using MphRead.Effects;
 using OpenTK.Mathematics;
 
@@ -15,6 +16,14 @@ namespace MphRead.Entities
         private readonly List<int> _effectNodeIds = new List<int>() { -1, -1, -1, -1 };
         private readonly List<EffectEntry?> _effects = new List<EffectEntry?>() { null, null, null, null };
         private const int _effectId = 182; // nozzleJet
+
+        private bool _beamActive = false;
+        private readonly int _beamInterval = 0;
+        private int _beamIntervalTimer = 0;
+        private int _beamIntervalIndex = 0;
+        private readonly EquipInfo? _equipInfo;
+        private readonly Vector3 _beamSpawnPos;
+        private readonly Vector3 _beamSpawnDir;
 
         public PlatformEntity(PlatformEntityData data) : base(EntityType.Platform)
         {
@@ -36,6 +45,15 @@ namespace MphRead.Entities
                 {
                     inst.SetNodeAnim(-1);
                 }
+            }
+            _beamInterval = (int)data.BeamInterval * 2;
+            if (data.BeamId != -1)
+            {
+                Debug.Assert(data.BeamId < Weapons.PlatformWeapons.Count);
+                _equipInfo = new EquipInfo(Weapons.PlatformWeapons[data.BeamId]);
+                _beamSpawnPos = data.BeamSpawnPos.ToFloatVector();
+                _beamSpawnDir = data.BeamSpawnDir.ToFloatVector();
+                _beamIntervalIndex = 15;
             }
         }
 
@@ -86,6 +104,29 @@ namespace MphRead.Entities
 
         public override bool Process(Scene scene)
         {
+            // todo: the game does a bunch of flags checks for this
+            if (_data.BeamId != -1)
+            {
+                if (--_beamIntervalTimer <= 0)
+                {
+                    _beamIntervalIndex++;
+                    _beamIntervalIndex %= 16;
+                    _beamActive = (_data.BeamOnIntervals & (1 << _beamIntervalIndex)) != 0;
+                    // todo: SFX
+                    _beamIntervalTimer = _beamInterval;
+                }
+                if (_beamActive)
+                {
+                    Debug.Assert(_equipInfo != null);
+                    Vector3 spawnPos = Matrix.Vec3MultMtx4(_beamSpawnPos, Transform);
+                    Vector3 spawnDir = Matrix.Vec3MultMtx3(_beamSpawnDir, Transform).Normalized();
+                    BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, BeamSpawnFlags.None, scene);
+                    if (!_equipInfo.Weapon.Flags.HasFlag(WeaponFlags.Bit10))
+                    {
+                        _beamActive = false;
+                    }
+                }
+            }
             // todo: if "is_visible" returns false (and other conditions), don't draw the effects
             Model model = _models[0].Model;
             for (int i = 0; i < 4; i++)

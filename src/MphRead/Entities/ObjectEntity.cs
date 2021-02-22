@@ -178,7 +178,7 @@ namespace MphRead.Entities
                             }
                             scene.SpawnEffect((int)_data.EffectId, spawnTransform);
                         }
-                        _effectIntervalTimer = (int)_data.EffectInterval;
+                        _effectIntervalTimer = (int)_data.EffectInterval * 2;
                     }
                 }
                 _effectProcessing = processEffect;

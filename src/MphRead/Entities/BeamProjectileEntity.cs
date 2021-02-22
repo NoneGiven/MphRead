@@ -99,7 +99,7 @@ namespace MphRead.Entities
                 }
                 PastPositions[0] = Position;
             }
-            if (Flags.HasFlag(BeamFlags.Homing) && Flags.HasFlag(BeamFlags.Bit06))
+            if (Flags.HasFlag(BeamFlags.Homing) && Flags.HasFlag(BeamFlags.Continuous))
             {
                 if (Target != null)
                 {
@@ -725,7 +725,7 @@ namespace MphRead.Entities
         Bit03 = 0x8,
         Bit04 = 0x10,
         Bit05 = 0x20,
-        Bit06 = 0x40,
+        Continuous = 0x40,
         Bit07 = 0x80,
         HasModel = 0x100,
         Bit09 = 0x200,
