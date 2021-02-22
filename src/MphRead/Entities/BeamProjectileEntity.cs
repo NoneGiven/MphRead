@@ -102,7 +102,19 @@ namespace MphRead.Entities
                 }
                 PastPositions[0] = Position;
             }
-            if (Flags.HasFlag(BeamFlags.Homing) && Flags.HasFlag(BeamFlags.Continuous))
+            // sktodo: remove debug code after targeting is implemented
+            if (Flags.HasFlag(BeamFlags.Continuous))
+            {
+                if (DrawFuncId == 9)
+                {
+                    Position = Position.AddY(-3.5f);
+                }
+                else if (DrawFuncId == 17)
+                {
+                    Position = Position.AddY(-4f);
+                }
+            }
+            else if (Flags.HasFlag(BeamFlags.Homing) && Flags.HasFlag(BeamFlags.Continuous))
             {
                 if (Target != null)
                 {
@@ -452,7 +464,7 @@ namespace MphRead.Entities
             }
             if (DrawFuncId == 17)
             {
-                Matrix4 transform = Transform.ClearScale();
+                Matrix4 transform = Transform;
                 float scale = Vector3.Distance(Position, BackPosition);
                 transform.Row2.Xyz *= scale;
                 transform.Row3.Xyz = BackPosition;
@@ -721,6 +733,9 @@ namespace MphRead.Entities
                 {
                     beam.Flags |= BeamFlags.HasModel;
                     beam._models.Add(Read.GetModelInstance("energyBeam"));
+                    Matrix4 transform = GetTransformMatrix(beam.Vec1, beam.Vec2);
+                    transform.Row3.Xyz = position;
+                    beam.Transform = transform;
                     // btodo: animation frame stuff
                 }
                 else
@@ -741,11 +756,6 @@ namespace MphRead.Entities
                     }
                 }
                 // btodo: homing/target stuff
-                // sktodo: remove debug code after targeting is implemented
-                if (beam.Flags.HasFlag(BeamFlags.Continuous))
-                {
-                    beam.Position = beam.Position.AddY(-3.5f);
-                }
                 scene.AddEntity(beam);
             }
             return true;
