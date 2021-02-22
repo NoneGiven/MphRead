@@ -1,6 +1,5 @@
 using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Effects;
 using OpenTK.Mathematics;
@@ -17,7 +16,7 @@ namespace MphRead.Entities
         public Vector3 Acceleration { get; set; } // only used for gravity
         public Vector3 BackPosition { get; set; }
         public Vector3 SpawnPosition { get; set; }
-        public List<Vector3> PastPositions { get; } = new List<Vector3>();
+        public Vector3[] PastPositions { get; } = new Vector3[10];
         public Vector3 Field7C { get; set; }
 
         public int DrawFuncId { get; set; }
@@ -72,6 +71,10 @@ namespace MphRead.Entities
             else if (DrawFuncId == 1 || DrawFuncId == 2)
             {
                 _trailModel = Read.GetModelInstance("electroTrail");
+            }
+            else if (DrawFuncId == 9)
+            {
+                _trailModel = Read.GetModelInstance("arcWelder");
             }
         }
 
@@ -268,13 +271,16 @@ namespace MphRead.Entities
         {
             if (!Flags.HasFlag(BeamFlags.Collided))
             {
-                if (Target != null)
+                if (Target != null || true)
                 {
-                    // sktodo: draw Shock Coil
+                    // sktodo: platform beams must have a target or else they wouldn't be rendering
+                    // --> "receiver" platforms in Fault Line? and the ones for the gate move around a bit?
+                    DrawTrail4(Fixed.ToFloat(614), 2048, 10, scene);
                 }
                 else
                 {
                     // todo: only draw if owner is main player
+                    DrawTrail4(Fixed.ToFloat(102), 1433, 5, scene);
                 }
             }
         }
@@ -324,9 +330,9 @@ namespace MphRead.Entities
             {
                 return;
             }
-            if (segments > PastPositions.Count / 2)
+            if (segments > PastPositions.Length / 2)
             {
-                segments = PastPositions.Count / 2;
+                segments = PastPositions.Length / 2;
             }
             int count = 4 * segments;
             Texture texture = _trailModel.Model.Recolors[0].Textures[0];
@@ -381,6 +387,59 @@ namespace MphRead.Entities
             float alpha = Math.Clamp(Lifespan * 30 * 8, 0, 31) / 31;
             scene.AddRenderItem(RenderItemType.TrailSingle, alpha, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
                 material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[0]), uvsAndVerts, bindingId);
+        }
+
+        private void DrawTrail4(float height, uint a4, int segments, Scene scene)
+        {
+            Debug.Assert(_trailModel != null);
+            if (segments < 2)
+            {
+                return;
+            }
+            int count = 4 * segments;
+
+            int frames = (int)scene.FrameCount / 2;
+            uint rng = (uint)(frames + (int)(Position.X * 4096));
+            int index = frames & 15;
+            float v8 = a4 / 4096f / 2;
+            Vector3 vec = PastPositions[8] - Position;
+
+            Texture texture = _trailModel.Model.Recolors[0].Textures[0];
+            float uvT = (texture.Height - (1 / 16f)) / texture.Height;
+            Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(count);
+            for (int i = 0; i < segments; i++)
+            {
+                float uvS = 0;
+                int factor = index + i;
+                if (factor > 0)
+                {
+                    uvS = (2 * texture.Width / (float)(segments - 1) * factor - (1 / 16f)) / texture.Width;
+                }
+
+                float pct = (float)i / segments - 1;
+
+                float v15 = vec.X * pct + Velocity.X * pct * (1 - pct);
+                float v17 = vec.Y * pct + Velocity.Y * pct * (1 - pct);
+                float v18 = vec.Z * pct + Velocity.Z * pct * (1 - pct);
+
+                if (i > 0 && i < segments - 1)
+                {
+                    v15 += Test.CallRng(ref rng, a4) / 4096f - v8;
+                    v17 += Test.CallRng(ref rng, a4) / 4096f - v8;
+                    v18 += Test.CallRng(ref rng, a4) / 4096f - v8;
+                }
+
+                uvsAndVerts[4 * i] = new Vector3(uvS, 0, 0);
+                uvsAndVerts[4 * i + 1] = new Vector3(v15, v17 - height, v18);
+                uvsAndVerts[4 * i + 2] = new Vector3(uvS, uvT, 0);
+                uvsAndVerts[4 * i + 3] = new Vector3(v15, v17 + height, v18);
+            }
+
+            Material material = _trailModel.Model.Materials[0];
+            // sktodo: make sure this is already bound, or just store it in the constructor
+            int bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
+            scene.AddRenderItem(RenderItemType.TrailMulti, alpha: 1, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
+                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[8]), uvsAndVerts, bindingId, count);
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
@@ -609,7 +668,7 @@ namespace MphRead.Entities
                 beam.SpawnPosition = beam.BackPosition = beam.Position = position;
                 for (int j = 0; j < 10; j++)
                 {
-                    beam.PastPositions.Add(position);
+                    beam.PastPositions[i] = position;
                 }
                 // btodo: transform
                 beam.Vec1 = vec1;
@@ -682,6 +741,11 @@ namespace MphRead.Entities
                     }
                 }
                 // btodo: homing/target stuff
+                // sktodo: remove debug code after targeting is implemented
+                if (beam.Flags.HasFlag(BeamFlags.Continuous))
+                {
+                    beam.Position = beam.Position.AddY(-3.5f);
+                }
                 scene.AddEntity(beam);
             }
             return true;

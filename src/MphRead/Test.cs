@@ -19,6 +19,13 @@ namespace MphRead
         public static uint Rng1 { get; private set; } = UInt32.Parse("3DE9179B", System.Globalization.NumberStyles.HexNumber);
         public static uint Rng2 { get; private set; }
 
+        public static uint CallRng(ref uint rng, uint value)
+        {
+            rng *= 0x7FF8A3ED;
+            rng += 0x2AA01D31;
+            return (uint)((rng >> 16) * (long)value / 0x10000L);
+        }
+
         public static uint GetRandomInt1(uint value)
         {
             Rng1 *= 0x7FF8A3ED;

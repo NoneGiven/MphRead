@@ -49,7 +49,8 @@ namespace MphRead.Entities
                 }
             }
             _beamInterval = (int)data.BeamInterval * 2;
-            if (data.BeamId != -1)
+            // sktodo: should be -1, need to check what stops the "missiles" from spawning in-game in Fault Line
+            if (data.BeamId > 0)
             {
                 Debug.Assert(data.BeamId < Weapons.PlatformWeapons.Count);
                 _equipInfo = new EquipInfo(Weapons.PlatformWeapons[data.BeamId], _beams);
@@ -107,7 +108,8 @@ namespace MphRead.Entities
         public override bool Process(Scene scene)
         {
             // todo: the game does a bunch of flags checks for this
-            if (_data.BeamId != -1)
+            // sktodo: see above
+            if (_data.BeamId > 0)
             {
                 if (--_beamIntervalTimer <= 0)
                 {
