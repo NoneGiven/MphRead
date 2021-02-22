@@ -415,6 +415,36 @@ namespace MphRead.Entities
             _trailModel = null;
         }
 
+        private static BeamProjectileEntity ChooseBeamSlot(EquipInfo equip, EntityBase owner)
+        {
+            if (equip.Weapon.Flags.HasFlag(WeaponFlags.Continuous))
+            {
+                for (int i = 0; i < equip.Beams.Length; i++)
+                {
+                    BeamProjectileEntity beam = equip.Beams[i];
+                    if (beam.Flags.HasFlag(BeamFlags.Continuous) && beam.WeaponType == equip.Weapon.WeaponType
+                        && beam.Owner == owner && beam.Lifespan < equip.Weapon.UnchargedLifespan)
+                    {
+                        return beam;
+                    }
+                }
+            }
+            for (int i = 0; i < equip.Beams.Length; i++)
+            {
+                BeamProjectileEntity beam = equip.Beams[i];
+                if (beam.Lifespan <= 0)
+                {
+                    return beam;
+                }
+                if (beam.Flags.HasFlag(BeamFlags.Continuous) && beam.WeaponType == equip.Weapon.WeaponType
+                    && beam.Owner == owner && beam.Lifespan < equip.Weapon.UnchargedLifespan)
+                {
+                    return beam;
+                }
+            }
+            return equip.Beams[^1];
+        }
+
         public static bool Spawn(EntityBase owner, EquipInfo equip, Vector3 position, Vector3 direction, BeamSpawnFlags spawnFlags, Scene scene)
         {
             WeaponInfo weapon = equip.Weapon;
@@ -519,7 +549,11 @@ namespace MphRead.Entities
             Affliction afflictions = weapon.Afflictions[charged ? 1 : 0];
             float fieldF0 = GetAmount(weapon.Field58, weapon.Field5C, weapon.Field60);
             float lifespan = GetAmount(weapon.UnchargedLifespan, weapon.MinChargeLifespan, weapon.ChargedLifespan) * (1 / 30f);
-            // btodo: set flags
+            // btodo: set more flags
+            if (weapon.Flags.HasFlag(WeaponFlags.Continuous))
+            {
+                flags |= BeamFlags.Continuous;
+            }
             float fieldE8 = GetAmount(weapon.FieldC0, weapon.FieldC4, weapon.FieldC8);
             float fieldEC = GetAmount(weapon.FieldCC, weapon.FieldD0, weapon.FieldD4);
             int maxSpread = (int)GetAmount(weapon.UnchargedSpread, weapon.MinChargeSpread, weapon.ChargedSpread);
@@ -542,8 +576,11 @@ namespace MphRead.Entities
             }
             for (int i = 0; i < projectiles; i++)
             {
-                // btodo: find existing beam to reuse, call hit function, destroy (instead of creating new)
-                var beam = new BeamProjectileEntity();
+                BeamProjectileEntity beam = ChooseBeamSlot(equip, owner);
+                // btodo: call collision function if the beam we choose had a lifespan
+                beam.Destroy(scene);
+                scene.RemoveEntity(beam);
+                beam._models.Clear();
                 // btodo: draw gun smoke
                 if (!charged)
                 {
@@ -553,7 +590,7 @@ namespace MphRead.Entities
                         equip.SmokeLevel = weapon.SmokeStart;
                     }
                 }
-                beam._models.Clear();
+                beam.Owner = owner;
                 beam.Weapon = weapon.Weapon;
                 beam.WeaponType = weapon.WeaponType;
                 beam.Flags = flags;
@@ -589,7 +626,6 @@ namespace MphRead.Entities
                 beam.Lifespan = lifespan;
                 beam.FieldE8 = fieldE8;
                 beam.FieldEC = fieldEC;
-                beam.Owner = owner;
                 beam.RicochetWeapon = ricochetWeapon;
                 // todo: game state max damage stuff (efficiency?)
                 if (instant)

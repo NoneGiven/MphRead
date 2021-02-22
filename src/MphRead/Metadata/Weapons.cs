@@ -1,21 +1,22 @@
 using System;
 using System.Collections.Generic;
+using MphRead.Entities;
 
 namespace MphRead
 {
     public class EquipInfo
     {
         public EquipFlags Flags { get; set; }
-        public byte Count { get; set; }
-        //CBeamProjectile* beams;
         public WeaponInfo Weapon { get; set; }
+        public BeamProjectileEntity[] Beams { get; }
         //unsigned __int16 *ammo_ptr;
         public ushort ChargeLevel { get; set; }
         public ushort SmokeLevel { get; set; }
 
-        public EquipInfo(WeaponInfo weapon)
+        public EquipInfo(WeaponInfo weapon, BeamProjectileEntity[] beams)
         {
             Weapon = weapon;
+            Beams = beams;
         }
     }
 

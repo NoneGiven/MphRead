@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using MphRead.Entities;
 using MphRead.Formats.Collision;
 
@@ -212,6 +213,17 @@ namespace MphRead
             Read.GetModelInstance("iceWave");
             Read.GetModelInstance("sniperBeam");
             Read.GetModelInstance("cylBossLaserBurn");
+        }
+
+        public static BeamProjectileEntity[] CreateBeamList(int size)
+        {
+            Debug.Assert(size > 0);
+            var beams = new BeamProjectileEntity[size];
+            for (int i = 0; i < size; i++)
+            {
+                beams[i] = new BeamProjectileEntity();
+            }
+            return beams;
         }
     }
 }

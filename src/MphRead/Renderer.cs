@@ -239,6 +239,13 @@ namespace MphRead
             return _entityMap.TryGetValue(id, out entity);
         }
 
+        public void RemoveEntity(EntityBase entity)
+        {
+            _entityMap.Remove(entity.Id);
+            _entities.Remove(entity);
+            _entitySort.Remove(entity);
+        }
+
         public void OnLoad()
         {
             GL.ClearColor(_clearColor);
@@ -745,7 +752,7 @@ namespace MphRead
             {
                 _frameCount++;
             }
-            if (_recording)
+            if (_recording || Debugger.IsAttached)
             {
                 _frameTime = 1 / 60f; // todo: FPS stuff
             }
@@ -817,9 +824,7 @@ namespace MphRead
                 return;
             }
             entity.Destroy(this);
-            _entityMap.Remove(entity.Id);
-            _entitySort.RemoveAll(e => e == entity);
-            _entities.RemoveAll(e => e == entity);
+            RemoveEntity(entity);
             foreach (ModelInstance inst in entity.GetModels())
             {
                 Model model = inst.Model;
@@ -1714,9 +1719,7 @@ namespace MphRead
             for (int i = 0; i < _destroyedEntities.Count; i++)
             {
                 EntityBase entity = _destroyedEntities[i];
-                _entityMap.Remove(entity.Id);
-                _entitySort.RemoveAll(e => e == entity);
-                _entities.RemoveAll(e => e == entity);
+                RemoveEntity(entity);
             }
 
             if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)

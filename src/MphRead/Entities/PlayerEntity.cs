@@ -33,6 +33,8 @@ namespace MphRead.Entities
         private int _respawnTimer = 0;
         private const int _respawnCooldown = 180;
 
+        private readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(16); // in-game: 5
+
         // todo: remove testing code
         public bool Shoot { get; set; }
 
@@ -118,13 +120,13 @@ namespace MphRead.Entities
             {
                 WeaponInfo weapon = Weapons.WeaponsMP[5];
                 bool charged = true;
-                BeamProjectileEntity.Spawn(this, new EquipInfo(weapon) { ChargeLevel = charged ? weapon.FullCharge : (ushort)0 },
+                BeamProjectileEntity.Spawn(this, new EquipInfo(weapon, _beams) { ChargeLevel = charged ? weapon.FullCharge : (ushort)0 },
                     gunPos, direction, BeamSpawnFlags.NoMuzzle, scene);
             }
             else if (type == 0)
             {
                 WeaponInfo weapon = Weapons.WeaponsMP[14];
-                BeamProjectileEntity.Spawn(this, new EquipInfo(weapon) { ChargeLevel = weapon.FullCharge },
+                BeamProjectileEntity.Spawn(this, new EquipInfo(weapon, _beams) { ChargeLevel = weapon.FullCharge },
                     gunPos, -Vector3.UnitZ, BeamSpawnFlags.NoMuzzle, scene);
             }
             else if (type == 1)

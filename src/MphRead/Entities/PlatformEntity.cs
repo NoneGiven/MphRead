@@ -25,6 +25,8 @@ namespace MphRead.Entities
         private readonly Vector3 _beamSpawnPos;
         private readonly Vector3 _beamSpawnDir;
 
+        private static readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(64); // in-game: 18
+
         public PlatformEntity(PlatformEntityData data) : base(EntityType.Platform)
         {
             _data = data;
@@ -50,7 +52,7 @@ namespace MphRead.Entities
             if (data.BeamId != -1)
             {
                 Debug.Assert(data.BeamId < Weapons.PlatformWeapons.Count);
-                _equipInfo = new EquipInfo(Weapons.PlatformWeapons[data.BeamId]);
+                _equipInfo = new EquipInfo(Weapons.PlatformWeapons[data.BeamId], _beams);
                 _beamSpawnPos = data.BeamSpawnPos.ToFloatVector();
                 _beamSpawnDir = data.BeamSpawnDir.ToFloatVector();
                 _beamIntervalIndex = 15;
