@@ -356,13 +356,9 @@ namespace MphRead.Entities
         private void DrawTrail3(float height, Scene scene)
         {
             Debug.Assert(_trailModel != null);
-            float uvS1 = (32 - (1 / 16f)) / 32;
-            float uvT1 = (8 - (1 / 16f)) / 32;
-
             Texture texture = _trailModel.Model.Recolors[0].Textures[0];
             float uvS2 = (texture.Width - (1 / 16f)) / texture.Width;
             float uvT2 = (texture.Height / 4f - (1 / 16f)) / texture.Height;
-
             Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(8);
             uvsAndVerts[0] = Vector3.Zero;
             uvsAndVerts[1] = new Vector3(0, -height, 0);
