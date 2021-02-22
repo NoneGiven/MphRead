@@ -69,9 +69,9 @@ namespace MphRead.Memory
                     byte[] bytes = new byte[0xF0];
                     for (int i = 0; i < 0xF0; i++)
                     {
-                        // 0x137A9C cretaphid crystal
-                        // 0x13846C
-                        bytes[i] = _buffer[0x13846C + i];
+                        // 0x137A9C Cretaphid 1 crystal
+                        // 0x13846C Slench 1 tear
+                        bytes[i] = _buffer[0x137A9C + i];
                     }
                     IReadOnlyList<Test.RawWeaponInfo> info = Test.ParseWeaponInfo(1, bytes);
                     Test.DumpWeaponInfo(info[0]);
