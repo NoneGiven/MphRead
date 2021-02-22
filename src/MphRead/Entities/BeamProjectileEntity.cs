@@ -280,10 +280,10 @@ namespace MphRead.Entities
         {
             if (!Flags.HasFlag(BeamFlags.Collided))
             {
+                // sktodo: debug code
+                // --> "receiver" platforms? and maybe the ones for the gate in Fault Line move around a bit?
                 if (Target != null || true)
                 {
-                    // sktodo: platform beams must have a target or else they wouldn't be rendering
-                    // --> "receiver" platforms in Fault Line? and the ones for the gate move around a bit?
                     DrawTrail4(Fixed.ToFloat(614), 2048, 10, scene);
                 }
                 else

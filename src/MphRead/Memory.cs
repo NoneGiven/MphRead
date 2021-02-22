@@ -41,7 +41,7 @@ namespace MphRead.Memory
 
         public static void Start()
         {
-            new Memory(Process.GetProcessById(34248)).Run();
+            new Memory(Process.GetProcessById(26628)).Run();
             /*var procs = Process.GetProcessesByName("NO$GBA").ToList();
             foreach (Process process in procs)
             {
@@ -59,7 +59,7 @@ namespace MphRead.Memory
 
         private void Run()
         {
-            _baseAddress = new IntPtr(0x91A8100);
+            _baseAddress = new IntPtr(0x999D100);
             Task.Run(async () =>
             {
                 // 0x137A9C Cretaphid 1 crystal
