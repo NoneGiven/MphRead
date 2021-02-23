@@ -166,6 +166,11 @@ namespace MphRead.Entities
                 // btodo: this should really be spawned after a collision or when max dist is reached
                 SpawnSniperBeam(scene);
             }
+            if (DrawFuncId == 17)
+            {
+                // don't interfere with the animation frames set from the global frame count
+                return true;
+            }
             return base.Process(scene);
         }
 
@@ -740,11 +745,13 @@ namespace MphRead.Entities
                 else if (beam.DrawFuncId == 17)
                 {
                     beam.Flags |= BeamFlags.HasModel;
-                    beam._models.Add(Read.GetModelInstance("energyBeam"));
+                    ModelInstance model = Read.GetModelInstance("energyBeam");
+                    beam._models.Add(model);
                     Matrix4 transform = GetTransformMatrix(beam.Vec1, beam.Vec2);
                     transform.Row3.Xyz = position;
                     beam.Transform = transform;
-                    // btodo: animation frame stuff
+                    Debug.Assert(model.AnimInfo.Node.Group != null);
+                    model.UpdateAnimFrames((int)scene.FrameCount / 2 % model.AnimInfo.Node.Group.FrameCount);
                 }
                 else
                 {

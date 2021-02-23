@@ -122,6 +122,31 @@ namespace MphRead
                 AnimInfo.Texture.CurrentFrame %= AnimInfo.Texture.Group.FrameCount;
             }
         }
+
+        public void UpdateAnimFrames(int frame)
+        {
+            //Debug.Assert(frame >= 0);
+            if (AnimInfo.Node.Group != null)
+            {
+                Debug.Assert(frame < AnimInfo.Node.Group.FrameCount);
+                AnimInfo.Node.CurrentFrame = frame;
+            }
+            if (AnimInfo.Material.Group != null)
+            {
+                Debug.Assert(frame < AnimInfo.Material.Group.FrameCount);
+                AnimInfo.Material.CurrentFrame = frame;
+            }
+            if (AnimInfo.Texcoord.Group != null)
+            {
+                Debug.Assert(frame < AnimInfo.Texcoord.Group.FrameCount);
+                AnimInfo.Texcoord.CurrentFrame = frame;
+            }
+            if (AnimInfo.Texture.Group != null)
+            {
+                Debug.Assert(frame < AnimInfo.Texture.Group.FrameCount);
+                AnimInfo.Texture.CurrentFrame = frame;
+            }
+        }
     }
 
     public readonly struct AnimationGroups
