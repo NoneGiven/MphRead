@@ -529,7 +529,7 @@ namespace MphRead.Entities
             return equip.Beams[^1];
         }
 
-        public static bool Spawn(EntityBase owner, EquipInfo equip, Vector3 position, Vector3 direction, BeamSpawnFlags spawnFlags, Scene scene)
+        public static void Spawn(EntityBase owner, EquipInfo equip, Vector3 position, Vector3 direction, BeamSpawnFlags spawnFlags, Scene scene)
         {
             WeaponInfo weapon = equip.Weapon;
             bool charged = false;
@@ -573,7 +573,7 @@ namespace MphRead.Entities
             int projectiles = (int)GetAmount(weapon.Projectiles, weapon.MinChargeProjectiles, weapon.ChargedProjectiles);
             if (projectiles <= 0)
             {
-                return true;
+                return;
             }
 
             bool instant = (charged && weapon.Flags.HasFlag(WeaponFlags.InstantCharged))
@@ -720,7 +720,7 @@ namespace MphRead.Entities
                     beam.Flags = BeamFlags.Collided;
                     beam.Lifespan = 0;
                     beam.Destroy(scene);
-                    return true;
+                    return;
                 }
                 if (maxSpread > 0)
                 {
@@ -818,7 +818,6 @@ namespace MphRead.Entities
                 }
                 scene.AddEntity(beam);
             }
-            return true;
         }
 
         private void SpawnIceWave(WeaponInfo weapon, float chargePct, Scene scene)
