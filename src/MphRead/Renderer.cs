@@ -145,7 +145,7 @@ namespace MphRead
             }
             _roomLoaded = true;
             (RoomEntity room, RoomMetadata meta, CollisionInfo collision, IReadOnlyList<EntityBase> entities, int updatedMask)
-                = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
+                = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId, this);
             _entities.Add(room);
             _entitySort.Add(room);
             InitEntity(room);

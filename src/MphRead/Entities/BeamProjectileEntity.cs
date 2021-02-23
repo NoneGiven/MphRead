@@ -571,7 +571,6 @@ namespace MphRead.Entities
                     Matrix4 transform = GetTransformMatrix(effVec2, effVec1);
                     transform.Row3.Xyz = position;
                     // the game does this by spawning a CBeamEffect, but that's unncessary for muzzle effects
-                    // sktodo: players, enemies, and platforms need to load all the relevant beam effects when they're loaded
                     scene.SpawnEffect(effectId - 3, transform);
                 }
             }

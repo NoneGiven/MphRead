@@ -8,9 +8,9 @@ namespace MphRead
     public static class SceneSetup
     {
         // todo: artifact flags
-        public static (RoomEntity, RoomMetadata, CollisionInfo, IReadOnlyList<EntityBase>, int) LoadRoom(string name,
-            GameMode mode = GameMode.None, int playerCount = 0, BossFlags bossFlags = BossFlags.None,
-            int nodeLayerMask = 0, int entityLayerId = -1)
+        public static (RoomEntity, RoomMetadata, CollisionInfo, IReadOnlyList<EntityBase>, int)
+            LoadRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
+                BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1, Scene? scene = null)
         {
             (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
             int areaId = Metadata.GetAreaInfo(roomId);
@@ -75,7 +75,7 @@ namespace MphRead
             IReadOnlyList<EntityBase> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
             CollisionInfo collision = Collision.ReadCollision(metadata.CollisionPath, metadata.FirstHunt || metadata.Hybrid, nodeLayerMask);
             // todo: once ReadCollision is filering things, we don't need to pass nodeLayerMask here or return it
-            LoadResources();
+            LoadResources(scene);
             var room = new RoomEntity(name, metadata, collision, nodeLayerMask);
             return (room, metadata, collision, entities, nodeLayerMask);
         }
@@ -207,12 +207,81 @@ namespace MphRead
             return results;
         }
 
-        private static void LoadResources()
+        private static void LoadResources(Scene? scene)
         {
             // todo: this could also allocate effect lists and stuff, since we don't need those if there's no room
+            // todo: sort this all out by game mode/etc. for what's actually needed
+            if (scene != null)
+            {
+                LoadBeamEffectResources();
+                LoadBeamProjectileResources();
+                LoadRoomResources(scene);
+            }
+        }
+
+        private static void LoadBeamEffectResources()
+        {
             Read.GetModelInstance("iceWave");
             Read.GetModelInstance("sniperBeam");
             Read.GetModelInstance("cylBossLaserBurn");
+        }
+
+        private static void LoadBeamProjectileResources()
+        {
+            Read.GetModelInstance("iceShard");
+            Read.GetModelInstance("energyBeam");
+            Read.GetModelInstance("trail");
+            Read.GetModelInstance("electroTrail");
+            Read.GetModelInstance("arcWelder");
+        }
+
+        private static void LoadRoomResources(Scene scene)
+        {
+            scene.LoadEffect(1);
+            scene.LoadEffect(2);
+            scene.LoadEffect(5);
+            scene.LoadEffect(6);
+            scene.LoadEffect(7);
+            scene.LoadEffect(8);
+            scene.LoadEffect(11);
+            scene.LoadEffect(12);
+            scene.LoadEffect(13);
+            scene.LoadEffect(14);
+            scene.LoadEffect(15);
+            scene.LoadEffect(16);
+            scene.LoadEffect(17);
+            scene.LoadEffect(18);
+            scene.LoadEffect(19);
+            scene.LoadEffect(20);
+            scene.LoadEffect(21);
+            scene.LoadEffect(22);
+            scene.LoadEffect(23);
+            scene.LoadEffect(24);
+            scene.LoadEffect(25);
+            scene.LoadEffect(26);
+            scene.LoadEffect(27);
+            scene.LoadEffect(28);
+            scene.LoadEffect(31);
+            scene.LoadEffect(33);
+            scene.LoadEffect(99);
+            scene.LoadEffect(115);
+            scene.LoadEffect(154);
+            scene.LoadEffect(155);
+            scene.LoadEffect(156);
+            scene.LoadEffect(157);
+            scene.LoadEffect(158);
+            scene.LoadEffect(159);
+            scene.LoadEffect(160);
+            scene.LoadEffect(161);
+            scene.LoadEffect(173);
+            scene.LoadEffect(190);
+            scene.LoadEffect(191);
+            scene.LoadEffect(192);
+            scene.LoadEffect(231);
+            scene.LoadEffect(239);
+            // todo: lore
+            Read.GetSingleParticle(SingleType.Death);
+            Read.GetSingleParticle(SingleType.Fuzzball);
         }
 
         public static BeamProjectileEntity[] CreateBeamList(int size)
