@@ -108,7 +108,8 @@ namespace MphRead.Entities
             {
                 scene.LoadEffect(_data.EffectId3);
             }
-            if (_data.BeamId == 0 && (Flags & 4) != 0) {
+            if (_data.BeamId == 0 && (Flags & 4) != 0)
+            {
                 scene.LoadEffect(183);
                 scene.LoadEffect(184);
                 scene.LoadEffect(185);

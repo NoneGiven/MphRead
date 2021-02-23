@@ -931,8 +931,8 @@ namespace MphRead
                 unchargedHoming: {weapon.UnchargedHoming},
                 minChargeHoming: {weapon.MinChargeHoming},
                 chargedHoming: {weapon.ChargedHoming},
-                field94: {weapon.Field94},
-                field98: {weapon.Field98},
+                homingRange: {weapon.HomingRange},
+                homingTolerance: {weapon.HomingTolerance},
                 unchargedScale: {weapon.UnchargedScale},
                 minChargeScale: {weapon.MinChargeScale},
                 chargedScale: {weapon.ChargedScale},
@@ -2333,8 +2333,8 @@ namespace MphRead
             public readonly int UnchargedHoming;
             public readonly int MinChargeHoming;
             public readonly int ChargedHoming;
-            public readonly int Field94;
-            public readonly int Field98;
+            public readonly int HomingRange;
+            public readonly int HomingTolerance;
             public readonly int UnchargedScale;
             public readonly int MinChargeScale;
             public readonly int ChargedScale;

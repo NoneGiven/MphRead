@@ -17,7 +17,7 @@ namespace MphRead.Entities
         public Vector3 BackPosition { get; set; }
         public Vector3 SpawnPosition { get; set; }
         public Vector3[] PastPositions { get; } = new Vector3[10];
-        public Vector3 Field7C { get; set; }
+        public Vector3 VecCross { get; set; }
 
         public int DrawFuncId { get; set; }
         public float Age { get; set; }
@@ -433,7 +433,6 @@ namespace MphRead.Entities
             int index = frames & 15;
             float halfRange = range / 4096f / 2;
             Vector3 vec = PastPositions[8] - Position;
-
             Texture texture = _trailModel.Model.Recolors[0].Textures[0];
             float uvT = (texture.Height - (1 / 16f)) / texture.Height;
             Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(count);
@@ -646,16 +645,16 @@ namespace MphRead.Entities
             int maxSpread = (int)GetAmount(weapon.UnchargedSpread, weapon.MinChargeSpread, weapon.ChargedSpread);
             WeaponInfo? ricochetWeapon = charged ? weapon.RicochetWeapon1 : weapon.RicochetWeapon0;
             Vector3 vec1 = direction;
-            Vector3 field7C;
+            Vector3 vecC;
             if (vec1.X != 0 || vec1.Z != 0)
             {
-                field7C = new Vector3(vec1.Z, 0, -vec1.X).Normalized();
+                vecC = new Vector3(vec1.Z, 0, -vec1.X).Normalized();
             }
             else
             {
-                field7C = Vector3.UnitX;
+                vecC = Vector3.UnitX;
             }
-            Vector3 vec2 = Vector3.Cross(vec1, field7C).Normalized();
+            Vector3 vec2 = Vector3.Cross(vec1, vecC).Normalized();
             Vector3 velocity = Vector3.Zero;
             if (maxSpread <= 0)
             {
@@ -701,7 +700,7 @@ namespace MphRead.Entities
                 // btodo: transform
                 beam.Vec1 = vec1;
                 beam.Vec2 = vec2;
-                beam.Field7C = field7C;
+                beam.VecCross = vecC;
                 beam.Damage = damage;
                 beam.HeadshotDamage = hsDamage;
                 beam.SplashDamage = splashDmg;
@@ -733,9 +732,9 @@ namespace MphRead.Entities
                     float cos1 = MathF.Cos(angle1);
                     float sin2 = MathF.Sin(angle2);
                     float cos2 = MathF.Cos(angle2);
-                    velocity.X = direction.X * cos1 + (beam.Vec2.X * cos2 + beam.Field7C.X * sin2) * sin1;
-                    velocity.Y = direction.Y * cos1 + (beam.Vec2.Y * cos2 + beam.Field7C.Y * sin2) * sin1;
-                    velocity.Z = direction.Z * cos1 + (beam.Vec2.Z * cos2 + beam.Field7C.Z * sin2) * sin1;
+                    velocity.X = direction.X * cos1 + (beam.Vec2.X * cos2 + beam.VecCross.X * sin2) * sin1;
+                    velocity.Y = direction.Y * cos1 + (beam.Vec2.Y * cos2 + beam.VecCross.Y * sin2) * sin1;
+                    velocity.Z = direction.Z * cos1 + (beam.Vec2.Z * cos2 + beam.VecCross.Z * sin2) * sin1;
                     velocity *= beam.Speed;
                 }
                 beam.Velocity = velocity;
@@ -779,8 +778,8 @@ namespace MphRead.Entities
                 {
                     // btodo: check for entities of other types
                     // btodo: implement the "get alive" check
-                    float field98 = weapon.Field98 / 4096f;
-                    float homingDistance = field98;
+                    float tolerance = weapon.HomingTolerance / 4096f;
+                    float homingDistance = tolerance;
                     for (int j = 0; j < scene.Entities.Count; j++)
                     {
                         EntityBase entity = scene.Entities[j];
@@ -791,8 +790,8 @@ namespace MphRead.Entities
                             {
                                 Vector3 between = platform.Position - beam.Position;
                                 float dot1 = Vector3.Dot(between, between);
-                                float field94 = weapon.Field94 / 4096f;
-                                if (dot1 <= field94 * field94)
+                                float range = weapon.HomingRange / 4096f;
+                                if (dot1 <= range * range)
                                 {
                                     float distance = between.Length;
                                     if (distance > 0)
@@ -801,13 +800,12 @@ namespace MphRead.Entities
                                         float div1 = dot2 / distance;
                                         if (div1 >= homingDistance)
                                         {
-                                            float sqrt = MathF.Sqrt(dot1);
-                                            float div2 = sqrt / field94;
+                                            float div2 = distance / range;
                                             if (div2 > 1)
                                             {
                                                 div2 = 1;
                                             }
-                                            if (div1 >= field98 + div2 * (Fixed.ToFloat(4094) - field98))
+                                            if (div1 >= tolerance + div2 * (Fixed.ToFloat(4094) - tolerance))
                                             {
                                                 beam.Target = entity;
                                                 homingDistance = div1;
