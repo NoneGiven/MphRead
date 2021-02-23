@@ -211,10 +211,11 @@ namespace MphRead
         {
             // todo: this could also allocate effect lists and stuff, since we don't need those if there's no room
             // todo: sort this all out by game mode/etc. for what's actually needed
+            // todo: add an assert if any loading occurs after room init (besides manual model/entity loading)
             if (scene != null)
             {
                 LoadBeamEffectResources();
-                LoadBeamProjectileResources();
+                LoadBeamProjectileResources(scene);
                 LoadRoomResources(scene);
             }
         }
@@ -226,13 +227,44 @@ namespace MphRead
             Read.GetModelInstance("cylBossLaserBurn");
         }
 
-        private static void LoadBeamProjectileResources()
+        private static void LoadBeamProjectileResources(Scene scene)
         {
             Read.GetModelInstance("iceShard");
             Read.GetModelInstance("energyBeam");
             Read.GetModelInstance("trail");
             Read.GetModelInstance("electroTrail");
             Read.GetModelInstance("arcWelder");
+            scene.LoadEffect(57);
+            scene.LoadEffect(58);
+            scene.LoadEffect(59);
+            scene.LoadEffect(60);
+            scene.LoadEffect(61);
+            scene.LoadEffect(62);
+            scene.LoadEffect(63);
+            scene.LoadEffect(78);
+            scene.LoadEffect(85);
+            scene.LoadEffect(86);
+            scene.LoadEffect(92);
+            scene.LoadEffect(98);
+            scene.LoadEffect(99);
+            scene.LoadEffect(100);
+            scene.LoadEffect(121);
+            scene.LoadEffect(122);
+            scene.LoadEffect(123);
+            scene.LoadEffect(124);
+            scene.LoadEffect(125);
+            scene.LoadEffect(126);
+            scene.LoadEffect(130);
+            scene.LoadEffect(134);
+            scene.LoadEffect(137);
+            scene.LoadEffect(140);
+            scene.LoadEffect(141);
+            scene.LoadEffect(142);
+            scene.LoadEffect(171);
+            scene.LoadEffect(211);
+            scene.LoadEffect(237);
+            scene.LoadEffect(238);
+            scene.LoadEffect(246);
         }
 
         private static void LoadRoomResources(Scene scene)

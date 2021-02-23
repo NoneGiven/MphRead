@@ -11,7 +11,7 @@ namespace MphRead.Entities
 
         public EnemyEntityData Data => _data;
 
-        // todo: enemy and item spawners should preload the models that will be used when they spawn their entities
+        // todo: enemy and item spawners should preload the models and effects that will be used when they spawn their entities
         public EnemySpawnEntity(EnemyEntityData data) : base(EntityType.EnemySpawn)
         {
             _data = data;

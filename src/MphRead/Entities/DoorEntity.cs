@@ -37,6 +37,12 @@ namespace MphRead.Entities
             lockInst.Active = false;
         }
 
+        public override void Initialize(Scene scene)
+        {
+            base.Initialize(scene);
+            scene.LoadEffect(144);
+        }
+
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
         {
             if (index == 1)

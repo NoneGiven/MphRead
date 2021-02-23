@@ -15,7 +15,7 @@ namespace MphRead.Entities
         public uint Flags { get; private set; }
         private readonly List<int> _effectNodeIds = new List<int>() { -1, -1, -1, -1 };
         private readonly List<EffectEntry?> _effects = new List<EffectEntry?>() { null, null, null, null };
-        private const int _effectId = 182; // nozzleJet
+        private const int _nozzleEffectId = 182; // nozzleJet
 
         private bool _beamActive = false;
         private readonly int _beamInterval = 0;
@@ -93,8 +93,25 @@ namespace MphRead.Entities
                 }
                 if (_effectNodeIds[0] != -1 || _effectNodeIds[1] != -1 || _effectNodeIds[2] != -1 || _effectNodeIds[3] != -1)
                 {
-                    scene.LoadEffect(_effectId);
+                    scene.LoadEffect(_nozzleEffectId);
                 }
+            }
+            if (_data.EffectId1 != 0)
+            {
+                scene.LoadEffect(_data.EffectId1);
+            }
+            if (_data.EffectId2 != 0)
+            {
+                scene.LoadEffect(_data.EffectId2);
+            }
+            if (_data.EffectId3 != 0)
+            {
+                scene.LoadEffect(_data.EffectId3);
+            }
+            if (_data.BeamId == 0 && (Flags & 4) != 0) {
+                scene.LoadEffect(183);
+                scene.LoadEffect(184);
+                scene.LoadEffect(185);
             }
         }
 
@@ -112,8 +129,9 @@ namespace MphRead.Entities
 
         public override bool Process(Scene scene)
         {
-            // btodo: the game does a bunch of flags checks for this, which we'll need so Sylux turret works (and not elevators)
-            if (_data.BeamId > 0 || (_data.BeamId == 0 && _data.ModelId == 21))
+            // btodo: the game does a bunch of flags checks for this
+            // todo: 0 is valid for Sylux turret missiles, but without proper handling those would eat up the effect lists
+            if (_data.BeamId > 0 && (Flags & 4) != 0)
             {
                 if (--_beamIntervalTimer <= 0)
                 {
@@ -142,7 +160,7 @@ namespace MphRead.Entities
                 if (_effectNodeIds[i] >= 0 && _effects[i] == null)
                 {
                     Matrix4 transform = Matrix.GetTransform4(Vector3.UnitX, Vector3.UnitY, new Vector3(0, 2, 0));
-                    _effects[i] = scene.SpawnEffectGetEntry(_effectId, transform);
+                    _effects[i] = scene.SpawnEffectGetEntry(_nozzleEffectId, transform);
                     for (int j = 0; j < _effects[i]!.Elements.Count; j++)
                     {
                         EffectElementEntry element = _effects[i]!.Elements[j];

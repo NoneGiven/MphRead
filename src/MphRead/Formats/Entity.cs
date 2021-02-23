@@ -114,11 +114,11 @@ namespace MphRead
         public readonly uint BeamInterval;
         public readonly uint BeamOnIntervals; // 16 bits are used
         public readonly uint Field1B0;
-        public readonly uint EffectId1;
+        public readonly int EffectId1;
         public readonly uint Health;
         public readonly uint Field1BC;
-        public readonly uint EffectId2;
-        public readonly uint EffectId3;
+        public readonly int EffectId2;
+        public readonly int EffectId3;
         public readonly byte ItemChance;
         public readonly byte Field1C9;
         public readonly ushort Field1CA;

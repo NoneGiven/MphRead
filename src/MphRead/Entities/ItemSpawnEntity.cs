@@ -11,6 +11,7 @@ namespace MphRead.Entities
         // used if there is no base model
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xC8, 0x00, 0xC8).AsVector4();
 
+        // todo: preload items and effects (including for enemies and platforms)
         public ItemSpawnEntity(ItemEntityData data) : base(EntityType.ItemSpawn)
         {
             _data = data;
