@@ -121,6 +121,11 @@ namespace MphRead.Entities
                     {
                         Position = Position.AddY(-8f);
                     }
+                    else if (Owner.Id == 37 || Owner.Id == 40 || Owner.Id == 41 || Owner.Id == 42
+                        || Owner.Id == 44 || Owner.Id == 43 || Owner.Id == 49)
+                    {
+                        Position = Position.AddY(-3.3f);
+                    }
                 }
             }
             else if (Flags.HasFlag(BeamFlags.Homing) && Flags.HasFlag(BeamFlags.Continuous))
