@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.InteropServices;
-using OpenTK.Mathematics;
 
 namespace MphRead
 {
@@ -40,32 +39,13 @@ namespace MphRead
         public readonly Vector3Fx RightVector;
     }
 
-    // size: 40
-    public readonly struct EntitySpawnHeader
-    {
-        public readonly ushort Type;
-        public readonly ushort EntityId;
-        public readonly Vector3 Position;
-        public readonly Vector3 UpVector;
-        public readonly Vector3 RightVector;
-
-        public EntitySpawnHeader(ushort type, ushort entityId, Vector3 position, Vector3 upVector, Vector3 rightVector)
-        {
-            Type = type;
-            EntityId = entityId;
-            Position = position;
-            UpVector = upVector;
-            RightVector = rightVector;
-        }
-    }
-
     // size: 588
     public readonly struct PlatformEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly uint Field24;
         public readonly uint ModelId;
-        public readonly ushort SomeEntityId;
+        public readonly ushort ParentId;
         public readonly byte Field2E;
         public readonly byte Field2F;
         public readonly ushort Field30;
@@ -128,17 +108,17 @@ namespace MphRead
         public readonly uint Field180;
         public readonly uint Flags;
         public readonly uint Field188;
-        public readonly Vector3Fx Field18C;
-        public readonly Vector3Fx Field198;
-        public readonly uint BeamIndex;
-        public readonly uint BeamCooldown;
-        public readonly uint Field1AC;
+        public readonly Vector3Fx BeamSpawnDir;
+        public readonly Vector3Fx BeamSpawnPos;
+        public readonly int BeamId;
+        public readonly uint BeamInterval;
+        public readonly uint BeamOnIntervals; // 16 bits are used
         public readonly uint Field1B0;
-        public readonly uint EffectId1;
+        public readonly int EffectId1;
         public readonly uint Health;
         public readonly uint Field1BC;
-        public readonly uint EffectId2;
-        public readonly uint EffectId3;
+        public readonly int EffectId2;
+        public readonly int EffectId3;
         public readonly byte ItemChance;
         public readonly byte Field1C9;
         public readonly ushort Field1CA;
@@ -299,7 +279,7 @@ namespace MphRead
     public readonly struct ItemEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint ItemEntityId;
+        public readonly uint ParentId;
         public readonly uint ModelId;
         public readonly byte Enabled; // boolean
         public readonly byte HasBase; // boolean
@@ -330,6 +310,8 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly EnemyType Type;
+        public readonly byte Padding25; // in-game, the type is 4 bytes on this struct (but is 1 byte on the class),
+        public readonly ushort Padding26; // so this padding isn't actually there
         public readonly uint Subtype;
         public readonly uint TextureId;
         public readonly uint HunterWeapon;
@@ -351,22 +333,7 @@ namespace MphRead
         public readonly uint Field64;
         public readonly uint Field68;
         public readonly uint Field6C;
-        public readonly uint Field70;
-        public readonly uint Field74;
-        public readonly uint Field78;
-        public readonly uint Field7C;
-        public readonly uint Field80;
-        public readonly uint Field84;
-        public readonly uint Field88;
-        public readonly uint Field8C;
-        public readonly uint Field90;
-        public readonly uint Field94;
-        public readonly uint Field98;
-        public readonly uint Field9C;
-        public readonly uint FieldA0;
-        public readonly uint FieldA4;
-        public readonly uint FieldA8;
-        public readonly uint FieldAC;
+        public readonly RawCollisionVolume Volume;
         public readonly uint FieldB0;
         public readonly uint FieldB4;
         public readonly uint FieldB8;
@@ -444,7 +411,7 @@ namespace MphRead
         public readonly ushort CooldownTime;
         public readonly ushort InitialCooldown;
         public readonly ushort Padding1C6;
-        public readonly uint ActiveDistance; // sktodo: display sphere
+        public readonly uint ActiveDistance; // todo: display sphere
         public readonly uint Field1CC;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;
@@ -530,7 +497,7 @@ namespace MphRead
     public readonly struct TriggerVolumeEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly TriggerType Type;
+        public readonly TriggerType Subtype;
         public readonly RawCollisionVolume Volume;
         public readonly ushort Unused68; // always UInt16.MaxValue
         public readonly byte Active; // boolean
@@ -559,7 +526,7 @@ namespace MphRead
     public readonly struct FhTriggerVolumeEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Subtype; // 0/1/2 - sphere/box/cylinder, 3 - threshold
+        public readonly FhTriggerType Subtype; // 0/1/2 - sphere/box/cylinder, 3 - threshold
         public readonly FhRawCollisionVolume Box;
         public readonly FhRawCollisionVolume Sphere;
         public readonly FhRawCollisionVolume Cylinder;
@@ -580,19 +547,15 @@ namespace MphRead
         {
             get
             {
-                if (Subtype == 0)
-                {
-                    return Sphere;
-                }
-                if (Subtype == 1)
-                {
-                    return Box;
-                }
-                if (Subtype == 2)
+                if (Subtype == FhTriggerType.Cylinder)
                 {
                     return Cylinder;
                 }
-                return default;
+                if (Subtype == FhTriggerType.Box)
+                {
+                    return Box;
+                }
+                return Sphere;
             }
         }
     }
@@ -626,7 +589,7 @@ namespace MphRead
     public readonly struct FhAreaVolumeEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Subtype; // 0 - sphere, 1/2 - box
+        public readonly FhTriggerType Subtype; // 0/1 - sphere/box
         public readonly FhRawCollisionVolume Box;
         public readonly FhRawCollisionVolume Sphere;
         public readonly FhRawCollisionVolume Cylinder;
@@ -642,15 +605,15 @@ namespace MphRead
         {
             get
             {
-                if (Subtype == 0)
+                if (Subtype == FhTriggerType.Cylinder)
                 {
-                    return Sphere;
+                    return Cylinder;
                 }
-                if (Subtype == 1 || Subtype == 2)
+                if (Subtype == FhTriggerType.Box)
                 {
                     return Box;
                 }
-                return default;
+                return Sphere;
             }
         }
     }
@@ -659,7 +622,7 @@ namespace MphRead
     public readonly struct JumpPadEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Field24;
+        public readonly uint ParentId;
         public readonly uint Field28;
         public readonly RawCollisionVolume Volume;
         public readonly Vector3Fx BeamVector;

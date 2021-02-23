@@ -33,6 +33,11 @@ namespace MphRead.Entities
         private int _respawnTimer = 0;
         private const int _respawnCooldown = 180;
 
+        private readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(16); // in-game: 5
+
+        // todo: remove testing code
+        public bool Shoot { get; set; }
+
         public PlayerEntity(Hunter hunter, int recolor = 0, Vector3? position = null) : base(EntityType.Player)
         {
             Hunter = hunter;
@@ -69,6 +74,10 @@ namespace MphRead.Entities
             _scaleMtx = Matrix4.CreateScale(Metadata.HunterScales[Hunter]);
             // temporary
             _bipedModel.SetNodeAnim(4);
+            if (Hunter == Hunter.Weavel)
+            {
+                _bipedModel.SetMaterialAnim(-1);
+            }
         }
 
         public override void Initialize(Scene scene)
@@ -81,7 +90,7 @@ namespace MphRead.Entities
             _light2Color = scene.Light2Color;
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
             UpdateLightSources(scene);
             if (_respawnTimer > 0)
@@ -89,7 +98,57 @@ namespace MphRead.Entities
                 _respawnTimer--;
             }
             UpdateModels();
-            base.Process(scene);
+            if (_frozen)
+            {
+                // skip incrementing animation frames
+                return true;
+            }
+            if (Shoot)
+            {
+                TestSpawnBeam(-1, scene);
+                Shoot = false;
+            }
+            return base.Process(scene);
+        }
+
+        private void TestSpawnBeam(int type, Scene scene)
+        {
+            Vector3 gunPos = Position + new Vector3(0.37203538f, 1.2936982f, -1.0930165f);
+            //Vector3 direction = new Vector3(0, 2, -5).Normalized();
+            Vector3 direction = -Vector3.UnitZ;
+            if (type == -1)
+            {
+                WeaponInfo weapon = Weapons.WeaponsMP[5];
+                bool charged = true;
+                BeamProjectileEntity.Spawn(this, new EquipInfo(weapon, _beams) { ChargeLevel = charged ? weapon.FullCharge : (ushort)0 },
+                    gunPos, direction, BeamSpawnFlags.NoMuzzle, scene);
+            }
+            else if (type == 0)
+            {
+                WeaponInfo weapon = Weapons.WeaponsMP[14];
+                BeamProjectileEntity.Spawn(this, new EquipInfo(weapon, _beams) { ChargeLevel = weapon.FullCharge },
+                    gunPos, -Vector3.UnitZ, BeamSpawnFlags.NoMuzzle, scene);
+            }
+            else if (type == 1)
+            {
+                Matrix4 transform = Matrix4.CreateScale(new Vector3(1, 200, 1)) * Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-90));
+                transform.Row3.Xyz = new Vector3(0.37203538f, 1.2936982f, -1.0930165f);
+                var ent = BeamEffectEntity.Create(new BeamEffectEntityData(1, false, transform), scene);
+                if (ent != null)
+                {
+                    scene.AddEntity(ent);
+                }
+            }
+            else if (type == 2)
+            {
+                Matrix4 transform = Matrix4.Identity;
+                transform.Row3.Z = 2f;
+                var ent = BeamEffectEntity.Create(new BeamEffectEntityData(2, false, transform), scene);
+                if (ent != null)
+                {
+                    scene.AddEntity(ent);
+                }
+            }
         }
 
         private void UpdateModels()
@@ -176,10 +235,17 @@ namespace MphRead.Entities
             }
         }
 
-        public override void UpdateTransforms(Scene scene)
+        protected override void UpdateTransforms(ModelInstance inst, int index, Scene scene)
         {
-            base.UpdateTransforms(scene);
-            if (_frozen && !_altForm && !_mainPlayer)
+            if (inst == _bipedIceModel)
+            {
+                scene.UpdateMaterials(inst.Model, GetModelRecolor(inst, index));
+            }
+            else
+            {
+                base.UpdateTransforms(inst, index, scene);
+            }
+            if (_frozen && !_altForm && !_mainPlayer && inst == _bipedModel)
             {
                 UpdateIceModel();
             }

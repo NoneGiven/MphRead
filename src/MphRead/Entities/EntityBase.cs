@@ -116,7 +116,7 @@ namespace MphRead.Entities
             return Matrix4.CreateScale(inst.Model.Scale) * _transform;
         }
 
-        public virtual void Process(Scene scene)
+        public virtual bool Process(Scene scene)
         {
             for (int i = 0; i < _models.Count; i++)
             {
@@ -129,34 +129,12 @@ namespace MphRead.Entities
                     }
                 }
             }
+            return true;
         }
 
         protected virtual int GetModelRecolor(ModelInstance inst, int index)
         {
             return Recolor;
-        }
-
-        public virtual void UpdateTransforms(Scene scene)
-        {
-            if (ShouldDraw && Alpha > 0)
-            {
-                for (int i = 0; i < _models.Count; i++)
-                {
-                    ModelInstance inst = _models[i];
-                    if (inst.Active || scene.ShowAllEntities)
-                    {
-                        Model model = inst.Model;
-                        model.AnimateMaterials(inst.AnimInfo.Material);
-                        model.AnimateTextures(inst.AnimInfo.Texture);
-                        model.ComputeNodeMatrices(index: 0);
-                        Matrix4 transform = GetModelTransform(inst, i);
-                        model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, inst.AnimInfo.Node);
-                        model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
-                        // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
-                        scene.UpdateMaterials(model, GetModelRecolor(inst, i));
-                    }
-                }
-            }
         }
 
         public IReadOnlyList<ModelInstance> GetModels()
@@ -186,6 +164,19 @@ namespace MphRead.Entities
             return null;
         }
 
+        protected virtual void UpdateTransforms(ModelInstance inst, int index, Scene scene)
+        {
+            Model model = inst.Model;
+            model.AnimateMaterials(inst.AnimInfo.Material);
+            model.AnimateTextures(inst.AnimInfo.Texture);
+            model.ComputeNodeMatrices(index: 0);
+            Matrix4 transform = GetModelTransform(inst, index);
+            model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, inst.AnimInfo.Node);
+            model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
+            // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
+            scene.UpdateMaterials(model, GetModelRecolor(inst, index));
+        }
+
         public virtual void GetDrawInfo(Scene scene)
         {
             for (int i = 0; i < _models.Count; i++)
@@ -195,6 +186,7 @@ namespace MphRead.Entities
                 {
                     continue;
                 }
+                UpdateTransforms(inst, i, scene);
                 int polygonId = scene.GetNextPolygonId();
                 GetItems(inst, i, inst.Model.Nodes[0], polygonId);
             }
@@ -312,12 +304,12 @@ namespace MphRead.Entities
             return texcoordMatrix;
         }
 
-        protected void ComputeTransform(Vector3Fx vector2, Vector3Fx vector1, Vector3Fx position)
+        protected void SetTransform(Vector3Fx vector2, Vector3Fx vector1, Vector3Fx position)
         {
-            ComputeTransform(vector2.ToFloatVector(), vector1.ToFloatVector(), position.ToFloatVector());
+            SetTransform(vector2.ToFloatVector(), vector1.ToFloatVector(), position.ToFloatVector());
         }
 
-        protected void ComputeTransform(Vector3 vector2, Vector3 vector1, Vector3 position)
+        protected void SetTransform(Vector3 vector2, Vector3 vector1, Vector3 position)
         {
             Matrix4 transform = GetTransformMatrix(vector2, vector1);
             transform.ExtractRotation().ToEulerAngles(out Vector3 rotation);
@@ -325,7 +317,7 @@ namespace MphRead.Entities
             Position = position;
         }
 
-        protected Matrix4 GetTransformMatrix(Vector3 vector2, Vector3 vector1)
+        protected static Matrix4 GetTransformMatrix(Vector3 vector2, Vector3 vector1)
         {
             Vector3 up = Vector3.Cross(vector1, vector2).Normalized();
             var direction = Vector3.Cross(vector2, up);
@@ -496,10 +488,10 @@ namespace MphRead.Entities
             _floatModelIndex = floatModelIndex;
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
             _spin = (float)(_spin + scene.FrameTime * 360 * _spinSpeed) % 360;
-            base.Process(scene);
+            return base.Process(scene);
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)

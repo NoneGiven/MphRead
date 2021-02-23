@@ -679,7 +679,7 @@ namespace MphRead
                 IReadOnlyList<int> parameters = DoOffsets<int>(bytes, paramOffset, paramCount);
                 funcs.Add(offset, new FxFuncInfo(funcId, parameters));
             }
-            // todo: these are also offsets into the func/param arrays; what are they used for?
+            // these are also offsets into the func/param arrays, but don't seem to be used
             IReadOnlyList<uint> list2 = DoOffsets<uint>(bytes, effect.Offset2, effect.Count2);
             IReadOnlyList<uint> elementOffsets = DoOffsets<uint>(bytes, effect.ElementOffset, effect.ElementCount);
             var elements = new List<EffectElement>();
@@ -918,6 +918,16 @@ namespace MphRead
             var handle = GCHandle.Alloc(bytes.ToArray(), GCHandleType.Pinned);
             object? result = Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(T));
             handle.Free();
+            if (result == null)
+            {
+                throw new ProgramException($"Failed to read {typeof(T)} struct.");
+            }
+            return (T)result;
+        }
+
+        public static T ReadStruct<T>(IntPtr pointer) where T : struct
+        {
+            object? result = Marshal.PtrToStructure(pointer, typeof(T));
             if (result == null)
             {
                 throw new ProgramException($"Failed to read {typeof(T)} struct.");

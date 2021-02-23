@@ -124,6 +124,7 @@ namespace MphRead.Entities
         public override void GetDrawInfo(Scene scene)
         {
             ModelInstance inst = _models[0];
+            UpdateTransforms(inst, 0, scene);
             for (int i = 0; i < Nodes.Count; i++)
             {
                 Node pnode = Nodes[i];

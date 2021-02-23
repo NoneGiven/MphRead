@@ -28,7 +28,9 @@ namespace MphRead
         Cylinder = 2,
         Sphere = 3,
         Plane = 4,
-        Particle = 5
+        Particle = 5,
+        TrailSingle = 6,
+        TrailMulti = 7
     }
 
     public class RenderItem
@@ -58,7 +60,8 @@ namespace MphRead
         public float[] MatrixStack { get; }
         public Vector4? OverrideColor { get; set; }
         public Vector4? PaletteOverride { get; set; }
-        public Vector3[] Vertices { get; set; }
+        public Vector3[] Points { get; set; }
+        public int PointCount { get; set; } // only needed for multi-segment trails
         public float ScaleS { get; set; }
         public float ScaleT { get; set; }
 
@@ -66,7 +69,7 @@ namespace MphRead
         {
             // todo: consider using ArrayPool
             MatrixStack = new float[16 * 31];
-            Vertices = Array.Empty<Vector3>();
+            Points = Array.Empty<Vector3>();
         }
     }
 

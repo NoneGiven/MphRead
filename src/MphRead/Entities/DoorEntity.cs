@@ -11,7 +11,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             DoorMetadata meta = Metadata.Doors[(int)data.ModelId];
             int recolorId = 0;
             // AlimbicDoor, AlimbicThinDoor
@@ -35,6 +35,12 @@ namespace MphRead.Entities
             _models.Add(lockInst);
             // todo: use flags and room state to determine lock/color state
             lockInst.Active = false;
+        }
+
+        public override void Initialize(Scene scene)
+        {
+            base.Initialize(scene);
+            scene.LoadEffect(144);
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
@@ -64,7 +70,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             ModelInstance inst = Read.GetModelInstance(Metadata.FhDoors[(int)data.ModelId], firstHunt: true);
             _models.Add(inst);
             // temporary

@@ -11,12 +11,12 @@ namespace MphRead.Entities
 
         public EnemyEntityData Data => _data;
 
-        // todo: enemy and item spawners should preload the models that will be used when they spawn their entities
+        // todo: enemy and item spawners should preload the models and effects that will be used when they spawn their entities
         public EnemySpawnEntity(EnemyEntityData data) : base(EntityType.EnemySpawn)
         {
             _data = data;
             Id = data.Header.EntityId;
-            ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             if (data.SpawnerModel != 0)
             {
                 string spawner = "EnemySpawner";
@@ -40,23 +40,23 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
             // todo: enemy spawning logic
             if (_spawn)
             {
                 _spawn = false;
-                EnemyEntity? enemy = SpawnEnemy(this, _data.Type);
+                EnemyInstanceEntity? enemy = SpawnEnemy(this, _data.Type);
                 if (enemy != null)
                 {
                     scene.AddEntity(enemy);
                 }
             }
-            base.Process(scene);
+            return base.Process(scene);
         }
 
         // todo: entity node ref
-        public static EnemyEntity? SpawnEnemy(EntityBase spawner, EnemyType type)
+        public static EnemyInstanceEntity? SpawnEnemy(EntityBase spawner, EnemyType type)
         {
             if (type == EnemyType.ForceFieldLock)
             {
@@ -81,7 +81,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             AddPlaceholderModel();
         }
     }

@@ -15,7 +15,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             ModelInstance inst = Read.GetModelInstance("pick_morphball", firstHunt: true);
             _models.Add(inst);
             Active = false;
@@ -35,13 +35,13 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
-            base.Process(scene);
             if (_current == null && Id == StartId)
             {
                 SetCurrent();
             }
+            return base.Process(scene);
         }
 
         public void SetCurrent()

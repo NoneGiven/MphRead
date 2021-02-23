@@ -390,7 +390,7 @@ namespace MphRead
             return new Vector3(r / 31.0f, g / 31.0f, b / 31.0f);
         }
 
-        public static IReadOnlyDictionary<Hunter, float> HunterScales = new Dictionary<Hunter, float>
+        public static readonly IReadOnlyDictionary<Hunter, float> HunterScales = new Dictionary<Hunter, float>
         {
             { Hunter.Samus, 1.0f },
             { Hunter.Kanden, Fixed.ToFloat(0x10F5) },
@@ -402,7 +402,7 @@ namespace MphRead
             { Hunter.Guardian, 1.0f }
         };
 
-        public static IReadOnlyDictionary<Hunter, IReadOnlyList<string>> HunterModels = new Dictionary<Hunter, IReadOnlyList<string>>
+        public static readonly IReadOnlyDictionary<Hunter, IReadOnlyList<string>> HunterModels = new Dictionary<Hunter, IReadOnlyList<string>>
         {
             {
                 Hunter.Samus,
@@ -760,6 +760,12 @@ namespace MphRead
             }
             return _platforms[id];
         }
+
+        public static readonly IReadOnlyList<string> WeaponNames = new List<string>()
+        {
+            "Power Beam", "Volt Driver", "Missiles", "Battlehammer", "Imperialist", "Judicator", "Magmaul", "Shock Coil", "Omega Cannon",
+            "Platform", "Enemy"
+        };
 
         // todo: organize/enum
         public static Vector3 GetEventColor(Message eventId)
@@ -1166,19 +1172,28 @@ namespace MphRead
             /* 246 */ ("enemyMortarProjectile", null)
         };
 
-        public static IReadOnlyDictionary<SingleType, (string Model, string Particle)> SingleParticles = new Dictionary<SingleType, (string, string)>()
+        public static readonly IReadOnlyList<int> BeamDrawEffects = new List<int>()
+        {
+            0, 237, 137, 0, 211, 130, 0, 0, 0, 0, 134, 209, 64, 0, 102, 94, 96, 0, 116, 138, 183, 238, 246
+        };
+
+        public static readonly IReadOnlyDictionary<SingleType, (string Model, string Particle)> SingleParticles
+            = new Dictionary<SingleType, (string, string)>()
         {
             { SingleType.Death, ("deathParticle", "death") },
             { SingleType.Fuzzball, ("particles", "fuzzBall") }
         };
 
-        public static IReadOnlyDictionary<string, bool> EffectsBases = new Dictionary<string, bool>()
+        public static readonly IReadOnlyDictionary<string, bool> PreloadResources = new Dictionary<string, bool>()
         {
             { "deathParticle", true },
             { "particles", true },
             { "particles2", true },
             { "TearParticle", true },
-            { "icons", true }
+            { "icons", true },
+            { "iceWave", true },
+            { "sniperBeam", true },
+            { "cylBossLaserBurn", true }
         };
 
         public static (RoomMetadata?, int) GetRoomByName(string name)

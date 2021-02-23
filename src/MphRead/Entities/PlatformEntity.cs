@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using MphRead.Effects;
 using OpenTK.Mathematics;
 
@@ -11,17 +12,33 @@ namespace MphRead.Entities
         // used for ID 2 (energyBeam, arcWelder)
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x2F, 0x4F, 0x4F).AsVector4();
 
-        private uint _flags = 0;
+        public uint Flags { get; private set; }
         private readonly List<int> _effectNodeIds = new List<int>() { -1, -1, -1, -1 };
         private readonly List<EffectEntry?> _effects = new List<EffectEntry?>() { null, null, null, null };
-        private const int _effectId = 182; // nozzleJet
+        private const int _nozzleEffectId = 182; // nozzleJet
+
+        private bool _beamActive = false;
+        private readonly int _beamInterval = 0;
+        private int _beamIntervalTimer = 0;
+        private int _beamIntervalIndex = 0;
+        private readonly EquipInfo? _equipInfo;
+        private readonly Vector3 _beamSpawnPos;
+        private readonly Vector3 _beamSpawnDir;
+
+        private static readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(64); // in-game: 18
 
         public PlatformEntity(PlatformEntityData data) : base(EntityType.Platform)
         {
             _data = data;
             Id = data.Header.EntityId;
-            _flags = data.Flags;
-            ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            Flags = data.Flags;
+            if ((Flags & 0x100000) != 0)
+            {
+                Flags |= 0x8;
+                Flags |= 0x2000u;
+                Flags |= 0x40000u;
+            }
+            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             PlatformMetadata? meta = Metadata.GetPlatformById((int)data.ModelId);
             if (meta == null)
             {
@@ -37,12 +54,21 @@ namespace MphRead.Entities
                     inst.SetNodeAnim(-1);
                 }
             }
+            _beamInterval = (int)data.BeamInterval * 2;
+            if (data.BeamId > -1)
+            {
+                Debug.Assert(data.BeamId < Weapons.PlatformWeapons.Count);
+                _equipInfo = new EquipInfo(Weapons.PlatformWeapons[data.BeamId], _beams);
+                _beamSpawnPos = data.BeamSpawnPos.ToFloatVector();
+                _beamSpawnDir = data.BeamSpawnDir.ToFloatVector();
+                _beamIntervalIndex = 15;
+            }
         }
 
         public override void Initialize(Scene scene)
         {
             base.Initialize(scene);
-            if ((_flags & 0x80000) != 0)
+            if ((Flags & 0x80000) != 0)
             {
                 Model model = _models[0].Model;
                 for (int i = 0; i < model.Nodes.Count; i++)
@@ -67,8 +93,26 @@ namespace MphRead.Entities
                 }
                 if (_effectNodeIds[0] != -1 || _effectNodeIds[1] != -1 || _effectNodeIds[2] != -1 || _effectNodeIds[3] != -1)
                 {
-                    scene.LoadEffect(_effectId);
+                    scene.LoadEffect(_nozzleEffectId);
                 }
+            }
+            if (_data.EffectId1 != 0)
+            {
+                scene.LoadEffect(_data.EffectId1);
+            }
+            if (_data.EffectId2 != 0)
+            {
+                scene.LoadEffect(_data.EffectId2);
+            }
+            if (_data.EffectId3 != 0)
+            {
+                scene.LoadEffect(_data.EffectId3);
+            }
+            if (_data.BeamId == 0 && (Flags & 4) != 0)
+            {
+                scene.LoadEffect(183);
+                scene.LoadEffect(184);
+                scene.LoadEffect(185);
             }
         }
 
@@ -84,8 +128,32 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
+            // btodo: the game does a bunch of flags checks for this
+            // todo: 0 is valid for Sylux turret missiles, but without proper handling those would eat up the effect lists
+            if (_data.BeamId > 0 && (Flags & 4) != 0)
+            {
+                if (--_beamIntervalTimer <= 0)
+                {
+                    _beamIntervalIndex++;
+                    _beamIntervalIndex %= 16;
+                    _beamActive = (_data.BeamOnIntervals & (1 << _beamIntervalIndex)) != 0;
+                    // todo: SFX
+                    _beamIntervalTimer = _beamInterval;
+                }
+                if (_beamActive)
+                {
+                    Debug.Assert(_equipInfo != null);
+                    Vector3 spawnPos = Matrix.Vec3MultMtx4(_beamSpawnPos, Transform);
+                    Vector3 spawnDir = Matrix.Vec3MultMtx3(_beamSpawnDir, Transform).Normalized();
+                    BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, BeamSpawnFlags.None, scene);
+                    if (!_equipInfo.Weapon.Flags.HasFlag(WeaponFlags.Bit10))
+                    {
+                        _beamActive = false;
+                    }
+                }
+            }
             // todo: if "is_visible" returns false (and other conditions), don't draw the effects
             Model model = _models[0].Model;
             for (int i = 0; i < 4; i++)
@@ -93,7 +161,7 @@ namespace MphRead.Entities
                 if (_effectNodeIds[i] >= 0 && _effects[i] == null)
                 {
                     Matrix4 transform = Matrix.GetTransform4(Vector3.UnitX, Vector3.UnitY, new Vector3(0, 2, 0));
-                    _effects[i] = scene.SpawnEffectGetEntry(_effectId, transform);
+                    _effects[i] = scene.SpawnEffectGetEntry(_nozzleEffectId, transform);
                     for (int j = 0; j < _effects[i]!.Elements.Count; j++)
                     {
                         EffectElementEntry element = _effects[i]!.Elements[j];
@@ -117,7 +185,7 @@ namespace MphRead.Entities
                     }
                 }
             }
-            base.Process(scene);
+            return base.Process(scene);
         }
     }
 
@@ -129,7 +197,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             ModelInstance inst = Read.GetModelInstance("platform", firstHunt: true);
             _models.Add(inst);
         }

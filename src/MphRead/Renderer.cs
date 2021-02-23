@@ -70,6 +70,7 @@ namespace MphRead
 
         private readonly List<EntityBase> _entities = new List<EntityBase>();
         private readonly List<EntityBase> _entitySort = new List<EntityBase>();
+        private readonly List<EntityBase> _destroyedEntities = new List<EntityBase>();
         private readonly Dictionary<int, EntityBase> _entityMap = new Dictionary<int, EntityBase>();
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
@@ -144,7 +145,7 @@ namespace MphRead
             }
             _roomLoaded = true;
             (RoomEntity room, RoomMetadata meta, CollisionInfo collision, IReadOnlyList<EntityBase> entities, int updatedMask)
-                = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
+                = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId, this);
             _entities.Add(room);
             _entitySort.Add(room);
             InitEntity(room);
@@ -236,6 +237,13 @@ namespace MphRead
         public bool TryGetEntity(int id, [NotNullWhen(true)] out EntityBase? entity)
         {
             return _entityMap.TryGetValue(id, out entity);
+        }
+
+        public void RemoveEntity(EntityBase entity)
+        {
+            _entityMap.Remove(entity.Id);
+            _entities.Remove(entity);
+            _entitySort.Remove(entity);
         }
 
         public void OnLoad()
@@ -628,6 +636,17 @@ namespace MphRead
             GL.TexCoord3(0f, 0f, 0f);
         }
 
+        public void LoadModel(string name, bool firstHunt = false)
+        {
+            LoadModel(Read.GetModelInstance(name, firstHunt).Model);
+        }
+
+        public void LoadModel(Model model)
+        {
+            InitTextures(model);
+            GenerateLists(model, isRoom: false);
+        }
+
         private void InitTextures(Model model)
         {
             if (_texPalMap.ContainsKey(model.Id))
@@ -740,8 +759,18 @@ namespace MphRead
 
         public void OnRenderFrame(double frameTime)
         {
-            _frameCount++;
-            _frameTime = (float)frameTime;
+            if (!_frameAdvanceOn || _advanceOneFrame)
+            {
+                _frameCount++;
+            }
+            if (_recording || Debugger.IsAttached)
+            {
+                _frameTime = 1 / 60f; // todo: FPS stuff
+            }
+            else
+            {
+                _frameTime = (float)frameTime;
+            }
             LoadAndUnload();
             OnKeyHeld();
 
@@ -806,13 +835,11 @@ namespace MphRead
                 return;
             }
             entity.Destroy(this);
-            _entityMap.Remove(entity.Id);
-            _entitySort.RemoveAll(e => e == entity);
-            _entities.RemoveAll(e => e == entity);
+            RemoveEntity(entity);
             foreach (ModelInstance inst in entity.GetModels())
             {
                 Model model = inst.Model;
-                if (Metadata.EffectsBases.ContainsKey(model.Name))
+                if (Metadata.PreloadResources.ContainsKey(model.Name))
                 {
                     continue;
                 }
@@ -933,6 +960,7 @@ namespace MphRead
         private static readonly int _effectElementMax = 200;
         private static readonly int _effectParticleMax = 3000;
         private static readonly int _singleParticleMax = 1000;
+        private static readonly int _beamEffectMax = 100;
 
         private readonly Queue<EffectEntry> _inactiveEffects = new Queue<EffectEntry>(_effectEntryMax);
         private readonly Queue<EffectElementEntry> _inactiveElements = new Queue<EffectElementEntry>(_effectElementMax);
@@ -940,6 +968,8 @@ namespace MphRead
         private readonly Queue<EffectParticle> _inactiveParticles = new Queue<EffectParticle>(_effectParticleMax);
         private int _singleParticleCount = 0;
         private readonly List<SingleParticle> _singleParticles = new List<SingleParticle>(_singleParticleMax);
+        private readonly Queue<BeamEffectEntity> _inactiveBeamEffects = new Queue<BeamEffectEntity>(_beamEffectMax);
+        private readonly List<BeamEffectEntity> _activeBeamEffects = new List<BeamEffectEntity>(_beamEffectMax);
 
         private void AllocateEffects()
         {
@@ -959,6 +989,23 @@ namespace MphRead
             {
                 _singleParticles.Add(new SingleParticle());
             }
+            for (int i = 0; i < _beamEffectMax; i++)
+            {
+                _inactiveBeamEffects.Enqueue(new BeamEffectEntity());
+            }
+        }
+
+        public BeamEffectEntity InitBeamEffect(BeamEffectEntityData data)
+        {
+            BeamEffectEntity entry = _inactiveBeamEffects.Dequeue();
+            entry.Spawn(data, this);
+            return entry;
+        }
+
+        public void UnlinkBeamEffect(BeamEffectEntity entry)
+        {
+            _activeBeamEffects.Remove(entry);
+            _inactiveBeamEffects.Enqueue(entry);
         }
 
         public void AddSingleParticle(SingleType type, Vector3 position, Vector3 color, float alpha, float scale)
@@ -1092,14 +1139,6 @@ namespace MphRead
             _inactiveParticles.Enqueue(particle);
         }
 
-        public EffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform)
-        {
-            EffectEntry entry = InitEffectEntry();
-            entry.EffectId = effectId;
-            SpawnEffect(effectId, transform, entry);
-            return entry;
-        }
-
         public void LoadEffect(int effectId)
         {
             Effect effect = Read.LoadEffect(effectId);
@@ -1110,7 +1149,20 @@ namespace MphRead
             }
         }
 
-        public void SpawnEffect(int effectId, Matrix4 transform, EffectEntry? entry = null)
+        public EffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform)
+        {
+            EffectEntry entry = InitEffectEntry();
+            entry.EffectId = effectId;
+            SpawnEffect(effectId, transform, entry);
+            return entry;
+        }
+
+        public void SpawnEffect(int effectId, Matrix4 transform)
+        {
+            SpawnEffect(effectId, transform, entry: null);
+        }
+
+        private void SpawnEffect(int effectId, Matrix4 transform, EffectEntry? entry)
         {
             Effect effect = Read.LoadEffect(effectId); // should already be loaded
             var position = new Vector3(transform.Row3);
@@ -1241,6 +1293,72 @@ namespace MphRead
                         {
                             particle.RoField4 = particle.InvokeFloatFunc(info, times);
                         }
+                        if (element.Actions.TryGetValue(FuncAction.SetNewParticleLifespan, out info))
+                        {
+                            var tempTimes = new TimeValues(_elapsedTime, 1.0f, element.Lifespan);
+                            particle.Lifespan = particle.InvokeFloatFunc(info, tempTimes);
+                            particle.ExpirationTime = particle.CreationTime + particle.Lifespan;
+                        }
+                        else
+                        {
+                            particle.Lifespan = element.Lifespan;
+                            particle.ExpirationTime = element.ExpirationTime;
+                        }
+                        // in-game, if these one-time functions are called here, they are unset so they don't get called again
+                        if (element.Actions.TryGetValue(FuncAction.UpdateParticleSpeed, out info) && info.FuncId == 4)
+                        {
+                            Vector3 temp2 = particle.Speed;
+                            particle.InvokeVecFunc(info, times, ref temp2);
+                            particle.Speed = temp2;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRed, out info) && info.FuncId == 42)
+                        {
+                            particle.Red = particle.InvokeFloatFunc(info, times);
+                        }
+                        else
+                        {
+                            particle.Red = 1;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleGreen, out info) && info.FuncId == 42)
+                        {
+                            particle.Green = particle.InvokeFloatFunc(info, times);
+                        }
+                        else
+                        {
+                            particle.Green = 1;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleBlue, out info) && info.FuncId == 42)
+                        {
+                            particle.Blue = particle.InvokeFloatFunc(info, times);
+                        }
+                        else
+                        {
+                            particle.Blue = 1;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleAlpha, out info) && info.FuncId == 42)
+                        {
+                            particle.Alpha = particle.InvokeFloatFunc(info, times);
+                            if (particle.Alpha < 0)
+                            {
+                                particle.Alpha = 0;
+                            }
+                        }
+                        else
+                        {
+                            particle.Alpha = 1;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleScale, out info) && info.FuncId == 42)
+                        {
+                            particle.Scale = particle.InvokeFloatFunc(info, times);
+                        }
+                        else
+                        {
+                            particle.Scale = 0;
+                        }
+                        if (element.Actions.TryGetValue(FuncAction.SetParticleRotation, out info) && info.FuncId == 42)
+                        {
+                            particle.Rotation = particle.InvokeFloatFunc(info, times);
+                        }
                         if (element.Actions.TryGetValue(FuncAction.SetParticleRwField1, out info))
                         {
                             particle.RwField1 = particle.InvokeFloatFunc(info, times);
@@ -1256,17 +1374,6 @@ namespace MphRead
                         if (element.Actions.TryGetValue(FuncAction.SetParticleRwField4, out info))
                         {
                             particle.RwField4 = particle.InvokeFloatFunc(info, times);
-                        }
-                        if (element.Actions.TryGetValue(FuncAction.SetNewParticleLifespan, out info))
-                        {
-                            var tempTimes = new TimeValues(_elapsedTime, 1.0f, element.Lifespan);
-                            particle.Lifespan = particle.InvokeFloatFunc(info, tempTimes);
-                            particle.ExpirationTime = particle.CreationTime + particle.Lifespan;
-                        }
-                        else
-                        {
-                            particle.Lifespan = element.Lifespan;
-                            particle.ExpirationTime = element.ExpirationTime;
                         }
                         portionTotal += 1f / spawnCount;
                     }
@@ -1456,7 +1563,7 @@ namespace MphRead
             }
             item.OverrideColor = overrideColor;
             item.PaletteOverride = paletteOverride;
-            item.Vertices = Array.Empty<Vector3>();
+            item.Points = Array.Empty<Vector3>();
             item.ScaleS = 1;
             item.ScaleT = 1;
             if (selectionType != SelectionType.None)
@@ -1499,18 +1606,18 @@ namespace MphRead
             item.MatrixStackCount = 0;
             item.OverrideColor = overrideColor;
             item.PaletteOverride = null;
-            item.Vertices = vertices;
+            item.Points = vertices;
             item.ScaleS = 1;
             item.ScaleT = 1;
             AddRenderItem(item);
         }
 
-        // for effects
-        public void AddRenderItem(float alpha, int polygonId, Vector3 color, RepeatMode xRepeat, RepeatMode yRepeat,
-            float scaleS, float scaleT, Matrix4 transform, Vector3[] uvsAndVerts, int bindingId)
+        // for effects/trails
+        public void AddRenderItem(RenderItemType type, float alpha, int polygonId, Vector3 color, RepeatMode xRepeat, RepeatMode yRepeat,
+            float scaleS, float scaleT, Matrix4 transform, Vector3[] uvsAndVerts, int bindingId, int pointCount = 8)
         {
             RenderItem item = GetRenderItem();
-            item.Type = RenderItemType.Particle;
+            item.Type = type;
             item.PolygonId = polygonId;
             item.Alpha = alpha;
             item.PolygonMode = PolygonMode.Modulate;
@@ -1534,9 +1641,10 @@ namespace MphRead
             item.MatrixStackCount = 0;
             item.OverrideColor = null;
             item.PaletteOverride = null;
-            item.Vertices = uvsAndVerts;
+            item.Points = uvsAndVerts;
             item.ScaleS = scaleS;
             item.ScaleT = scaleT;
+            item.PointCount = pointCount;
             AddRenderItem(item);
         }
 
@@ -1566,9 +1674,9 @@ namespace MphRead
 
         private void RenderScene()
         {
-            if (_frameCount != 0 || !_frameAdvanceOn || _advanceOneFrame)
+            if (_frameCount != 0 && (!_frameAdvanceOn || _advanceOneFrame))
             {
-                _elapsedTime += 1 / 60f;
+                _elapsedTime += 1 / 60f; // todo: FPS stuff
                 _singleParticleCount = 0;
             }
             _decalItems.Clear();
@@ -1579,23 +1687,38 @@ namespace MphRead
                 RenderItem item = _usedRenderItems.Dequeue();
                 if (item.Type != RenderItemType.Mesh)
                 {
-                    ArrayPool<Vector3>.Shared.Return(item.Vertices);
+                    ArrayPool<Vector3>.Shared.Return(item.Points);
                 }
                 _freeRenderItems.Enqueue(item);
             }
-            _entitySort.Sort(CompareEntities);
             _nextPolygonId = 1;
+            _destroyedEntities.Clear();
+
+            if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
+            {
+                for (int i = 0; i < _entities.Count; i++)
+                {
+                    EntityBase entity = _entities[i];
+                    if (!entity.Process(this))
+                    {
+                        // todo: need to handle destroying vs. unloading etc.
+                        entity.Destroy(this);
+                        _destroyedEntities.Add(entity);
+                    }
+                }
+            }
+
+            _entitySort.Sort(CompareEntities);
 
             for (int i = 0; i < _entitySort.Count; i++)
             {
                 EntityBase entity = _entitySort[i];
-                if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
+                if (_destroyedEntities.Contains(entity))
                 {
-                    entity.Process(this);
+                    continue;
                 }
                 if (entity.ShouldDraw)
                 {
-                    entity.UpdateTransforms(this);
                     entity.GetDrawInfo(this);
                 }
                 if (_showVolumes != VolumeDisplay.None)
@@ -1604,17 +1727,23 @@ namespace MphRead
                 }
             }
 
+            for (int i = 0; i < _destroyedEntities.Count; i++)
+            {
+                EntityBase entity = _destroyedEntities[i];
+                RemoveEntity(entity);
+            }
+
             if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
             {
                 ProcessEffects();
-                var camVec1 = new Vector3(_viewMatrix.M11, _viewMatrix.M12, _viewMatrix.M13 * -1);
-                var camVec2 = new Vector3(_viewMatrix.M21, _viewMatrix.M22, _viewMatrix.M23 * -1);
-                var camVec3 = new Vector3(_viewMatrix.M31, _viewMatrix.M32, _viewMatrix.M33 * -1);
-                for (int i = 0; i < _singleParticleCount; i++)
-                {
-                    SingleParticle single = _singleParticles[i];
-                    single.Process(camVec1, camVec2, camVec3, 1);
-                }
+            }
+            var camVec1 = new Vector3(_viewMatrix.M11, _viewMatrix.M12, _viewMatrix.M13 * -1);
+            var camVec2 = new Vector3(_viewMatrix.M21, _viewMatrix.M22, _viewMatrix.M23 * -1);
+            var camVec3 = new Vector3(_viewMatrix.M31, _viewMatrix.M32, _viewMatrix.M33 * -1);
+            for (int i = 0; i < _singleParticleCount; i++)
+            {
+                SingleParticle single = _singleParticles[i];
+                single.Process(camVec1, camVec2, camVec3, 1);
             }
             for (int i = 0; i < _activeElements.Count; i++)
             {
@@ -1794,28 +1923,36 @@ namespace MphRead
             }
             else if (item.Type == RenderItemType.Box)
             {
-                RenderBox(item.Vertices);
+                RenderBox(item.Points);
             }
             else if (item.Type == RenderItemType.Cylinder)
             {
-                RenderCylinder(item.Vertices);
+                RenderCylinder(item.Points);
             }
             else if (item.Type == RenderItemType.Sphere)
             {
-                RenderSphere(item.Vertices);
+                RenderSphere(item.Points);
             }
             else if (item.Type == RenderItemType.Plane)
             {
-                RenderPlane(item.Vertices);
+                RenderPlane(item.Points);
                 if (_volumeEdges)
                 {
                     // todo: implement this for volumes as well
-                    RenderPlaneLines(item.Vertices);
+                    RenderPlaneLines(item.Points);
                 }
             }
             else if (item.Type == RenderItemType.Particle)
             {
                 RenderParticle(item);
+            }
+            else if (item.Type == RenderItemType.TrailSingle)
+            {
+                RenderTrailSingle(item);
+            }
+            else if (item.Type == RenderItemType.TrailMulti)
+            {
+                RenderTrailMulti(item);
             }
         }
 
@@ -1985,14 +2122,14 @@ namespace MphRead
 
         private void RenderParticle(RenderItem item)
         {
-            Vector3 texcoord0 = item.Vertices[0];
-            Vector3 vertex0 = item.Vertices[1];
-            Vector3 texcoord1 = item.Vertices[2];
-            Vector3 vertex1 = item.Vertices[3];
-            Vector3 texcoord2 = item.Vertices[4];
-            Vector3 vertex2 = item.Vertices[5];
-            Vector3 texcoord3 = item.Vertices[6];
-            Vector3 vertex3 = item.Vertices[7];
+            Vector3 texcoord0 = item.Points[0];
+            Vector3 vertex0 = item.Points[1];
+            Vector3 texcoord1 = item.Points[2];
+            Vector3 vertex1 = item.Points[3];
+            Vector3 texcoord2 = item.Points[4];
+            Vector3 vertex2 = item.Points[5];
+            Vector3 texcoord3 = item.Points[6];
+            Vector3 vertex3 = item.Points[7];
             GL.Begin(PrimitiveType.Quads);
             GL.TexCoord3(texcoord0.X * item.ScaleS, texcoord0.Y * item.ScaleT, 0f);
             GL.Vertex3(vertex0);
@@ -2002,6 +2139,42 @@ namespace MphRead
             GL.Vertex3(vertex2);
             GL.TexCoord3(texcoord3.X * item.ScaleS, texcoord3.Y * item.ScaleT, 0f);
             GL.Vertex3(vertex3);
+            GL.End();
+        }
+
+        private void RenderTrailSingle(RenderItem item)
+        {
+            Vector3 texcoord0 = item.Points[0];
+            Vector3 vertex0 = item.Points[1];
+            Vector3 texcoord1 = item.Points[2];
+            Vector3 vertex1 = item.Points[3];
+            Vector3 texcoord2 = item.Points[4];
+            Vector3 vertex2 = item.Points[5];
+            Vector3 texcoord3 = item.Points[6];
+            Vector3 vertex3 = item.Points[7];
+            GL.Begin(PrimitiveType.QuadStrip);
+            GL.TexCoord3(texcoord0);
+            GL.Vertex3(vertex0);
+            GL.TexCoord3(texcoord1);
+            GL.Vertex3(vertex1);
+            GL.TexCoord3(texcoord2);
+            GL.Vertex3(vertex2);
+            GL.TexCoord3(texcoord3);
+            GL.Vertex3(vertex3);
+            GL.End();
+        }
+
+        private void RenderTrailMulti(RenderItem item)
+        {
+            Debug.Assert(item.PointCount >= 4 && item.PointCount % 2 == 0);
+            GL.Begin(PrimitiveType.QuadStrip);
+            for (int i = 0; i < item.PointCount; i += 2)
+            {
+                Vector3 texcoord = item.Points[i];
+                Vector3 vertex = item.Points[i + 1];
+                GL.TexCoord3(texcoord);
+                GL.Vertex3(vertex);
+            }
             GL.End();
         }
 
@@ -2147,7 +2320,19 @@ namespace MphRead
 
         public void OnKeyDown(KeyboardKeyEventArgs e)
         {
-            if (Selection.OnKeyDown(e, this))
+            if (e.Key == Keys.E && e.Alt)
+            {
+                for (int i = 0; i < _entities.Count; i++)
+                {
+                    EntityBase entity = _entities[i];
+                    if (entity.Type == EntityType.Player)
+                    {
+                        ((PlayerEntity)entity).Shoot = true;
+                        break;
+                    }
+                }
+            }
+            else if (Selection.OnKeyDown(e, this))
             {
                 return;
             }
@@ -2298,7 +2483,7 @@ namespace MphRead
             {
                 if (e.Alt)
                 {
-                    UpdatePointModule(); // undocumented
+                    UpdatePointModule();
                 }
                 else
                 {
@@ -2692,8 +2877,8 @@ namespace MphRead
             }
             else if (entity is TriggerVolumeEntity trigger)
             {
-                _sb.Append($" ({trigger.Data.Type})");
-                if (trigger.Data.Type == TriggerType.Threshold)
+                _sb.Append($" ({trigger.Data.Subtype})");
+                if (trigger.Data.Subtype == TriggerType.Threshold)
                 {
                     _sb.Append($" x{trigger.Data.TriggerThreshold})");
                 }
@@ -2722,8 +2907,7 @@ namespace MphRead
             }
             else if (entity is FhTriggerVolumeEntity fhTrigger)
             {
-                _sb.Append($" ({fhTrigger.Data.Subtype})");
-                if (fhTrigger.Data.Subtype == 3)
+                if (fhTrigger.Data.Subtype == FhTriggerType.Threshold)
                 {
                     _sb.Append($" x{fhTrigger.Data.Threshold}");
                 }

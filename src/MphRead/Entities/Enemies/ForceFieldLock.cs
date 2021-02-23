@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities.Enemies
 {
-    public class Enemy49Entity : EnemyEntity
+    public class Enemy49Entity : EnemyInstanceEntity
     {
         private Vector3 _vec1;
         private Vector3 _vec2;
@@ -14,22 +14,22 @@ namespace MphRead.Entities.Enemies
             _vec1 = spawner.Data.Header.UpVector.ToFloatVector();
             _vec2 = spawner.Data.Header.RightVector.ToFloatVector();
             position += _vec2 * Fixed.ToFloat(409);
-            ComputeTransform(_vec2, _vec1, position);
+            SetTransform(_vec2, _vec1, position);
             _initialPosition = Position;
             ModelInstance inst = Read.GetModelInstance("ForceFieldLock");
             _models.Add(inst);
             Recolor = data.Spawner.Recolor;
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
             if (Vector3.Dot(scene.CameraPosition - _initialPosition, _vec2) < 0)
             {
                 _vec2 *= -1;
                 Vector3 position = _initialPosition + _vec2 * Fixed.ToFloat(409);
-                ComputeTransform(_vec2, _vec1, position);
+                SetTransform(_vec2, _vec1, position);
             }
-            base.Process(scene);
+            return base.Process(scene);
         }
     }
 }

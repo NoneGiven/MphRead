@@ -14,12 +14,12 @@ namespace MphRead.Entities
         }
     }
 
-    public class EnemyEntity : EntityBase
+    public class EnemyInstanceEntity : EntityBase
     {
         protected readonly EnemyInstanceEntityData _data;
         protected Vector3 _initialPosition; // todo: use init
 
-        public EnemyEntity(EnemyInstanceEntityData data) : base(EntityType.EnemyInstance)
+        public EnemyInstanceEntity(EnemyInstanceEntityData data) : base(EntityType.EnemyInstance)
         {
             _data = data;
         }

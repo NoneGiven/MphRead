@@ -1,3 +1,5 @@
+using System;
+
 namespace MphRead
 {
     public enum EntityType : ushort
@@ -23,13 +25,13 @@ namespace MphRead
         CameraSequence = 18,
         ForceField = 19,
         // 20 = missing?
-        EffectInstance = 21,
+        BeamEffect = 21,
         Bomb = 22,
         EnemyInstance = 23,
         Halfturret = 24,
         Player = 25,
         BeamProjectile = 26,
-        // 27 = entity list header
+        ListHead = 27,
         // First Hunt
         FhUnknown0 = 100,
         FhPlayerSpawn = 101,
@@ -67,6 +69,65 @@ namespace MphRead
         Sphere = 0,
         Box = 1,
         Cylinder = 2
+    }
+
+    public enum DoorType : uint
+    {
+        Standard = 0,
+        MorphBall = 1,
+        Boss = 2,
+        Thin = 3
+    }
+
+    public enum ItemType : ushort
+    {
+        HealthMedium = 0,
+        HealthSmall = 1,
+        HealthBig = 2,
+        DoubleDamage = 3,
+        EnergyTank = 4,
+        VoltDriver = 5,
+        MissileExpansion = 6,
+        Battlehammer = 7,
+        Imperialist = 8,
+        Judicator = 9,
+        Magmaul = 10,
+        ShockCoil = 11,
+        OmegaCannon = 12,
+        UASmall = 13,
+        UABig = 14,
+        MissileSmall = 15,
+        MissileBig = 16,
+        Cloak = 17,
+        UAExpansion = 18,
+        ArtifactKey = 19,
+        Deathalt = 20,
+        AffinityWeapon = 21,
+        PickWpnMissile = 22
+    }
+
+    public enum BeamType : byte
+    {
+        PowerBeam = 0,
+        VoltDriver = 1,
+        Missile = 2,
+        Battlehamer = 3,
+        Imperialist = 4,
+        Judicator = 5,
+        Magmaul = 6,
+        ShockCoil = 7,
+        OmegaCannon = 8,
+        Platform = 9,
+        Enemy = 10
+    }
+
+    [Flags]
+    public enum Affliction : byte
+    {
+        None = 0,
+        Freeze = 1,
+        Disrupt = 2,
+        Burn = 4
     }
 
     public enum ModelType
@@ -152,7 +213,15 @@ namespace MphRead
         Threshold = 1,
         Relay = 2,
         Automatic = 3,
-        Unknown4 = 4
+        StateBits = 4
+    }
+
+    public enum FhTriggerType : uint
+    {
+        Sphere = 0,
+        Box = 1,
+        Cylinder = 2, // not used for area volumes -- game code mistakenly copies data from box volume
+        Threshold = 3 // not used for area volumes
     }
 
     public enum Message : uint
@@ -220,7 +289,7 @@ namespace MphRead
         Unknown21 = 21
     }
 
-    public enum EnemyType : uint
+    public enum EnemyType : byte // see note on enemy spawn entity struct
     {
         WarWasp = 0,
         Zoomer = 1,
@@ -243,18 +312,18 @@ namespace MphRead
         AlimbicTurret = 18,
         Cretaphid = 19,
         CretaphidEye = 20,
-        Unknown21 = 21,
-        Unknown22 = 22,
+        Unknown21 = 21, // Cretaphid-related
+        Unknown22 = 22, // Cretaphid-related
         PsychoBit1 = 23,
         Gorea1A = 24,
-        Unknown25 = 25,
+        Unknown25 = 25, // Gorea-related
         GoreaArm = 26,
-        Unknown27 = 27,
+        Unknown27 = 27, // Gorea-related
         Gorea1B = 28,
         GoreaSealSphere = 29,
         Trocra = 30,
         Gorea2 = 31,
-        Unknown32 = 32,
+        Unknown32 = 32, // Gorea-related
         GoreaMeteor = 33,
         PsychoBit2 = 34,
         Voldrum2 = 35,
@@ -264,7 +333,7 @@ namespace MphRead
         FireSpawn = 39,
         Spawner = 40,
         Slench = 41,
-        Unknown42 = 42,
+        Unknown42 = 42, // Slench-related
         SlenchNest = 43,
         SlenchSynapse = 44,
         SlenchTurret = 45,
@@ -272,7 +341,7 @@ namespace MphRead
         GreaterIthrak = 47,
         Hunter = 48,
         ForceFieldLock = 49,
-        Unknown50 = 50,
+        Unknown50 = 50, // weak spot for 46/47/39
         CarnivorousPlant = 51
     }
 

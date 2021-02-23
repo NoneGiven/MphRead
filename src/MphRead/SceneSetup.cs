@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using MphRead.Entities;
 using MphRead.Formats.Collision;
 
@@ -7,9 +8,9 @@ namespace MphRead
     public static class SceneSetup
     {
         // todo: artifact flags
-        public static (RoomEntity, RoomMetadata, CollisionInfo, IReadOnlyList<EntityBase>, int) LoadRoom(string name,
-            GameMode mode = GameMode.None, int playerCount = 0, BossFlags bossFlags = BossFlags.None,
-            int nodeLayerMask = 0, int entityLayerId = -1)
+        public static (RoomEntity, RoomMetadata, CollisionInfo, IReadOnlyList<EntityBase>, int)
+            LoadRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
+                BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1, Scene? scene = null)
         {
             (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
             int areaId = Metadata.GetAreaInfo(roomId);
@@ -74,6 +75,7 @@ namespace MphRead
             IReadOnlyList<EntityBase> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
             CollisionInfo collision = Collision.ReadCollision(metadata.CollisionPath, metadata.FirstHunt || metadata.Hybrid, nodeLayerMask);
             // todo: once ReadCollision is filering things, we don't need to pass nodeLayerMask here or return it
+            LoadResources(scene);
             var room = new RoomEntity(name, metadata, collision, nodeLayerMask);
             return (room, metadata, collision, entities, nodeLayerMask);
         }
@@ -89,7 +91,6 @@ namespace MphRead
             IReadOnlyList<Entity> entities = Read.GetEntities(metadata.EntityPath, layerId, metadata.FirstHunt);
             foreach (Entity entity in entities)
             {
-                int count = results.Count;
                 if (entity.Type == EntityType.Platform)
                 {
                     results.Add(new PlatformEntity(((Entity<PlatformEntityData>)entity).Data));
@@ -204,6 +205,126 @@ namespace MphRead
                 }
             }
             return results;
+        }
+
+        private static void LoadResources(Scene? scene)
+        {
+            // todo: this could also allocate effect lists and stuff, since we don't need those if there's no room
+            // todo: sort this all out by game mode/etc. for what's actually needed
+            // todo: add an assert if any loading occurs after room init (besides manual model/entity loading)
+            if (scene != null)
+            {
+                LoadBeamEffectResources(scene);
+                LoadBeamProjectileResources(scene);
+                LoadRoomResources(scene);
+            }
+        }
+
+        private static void LoadBeamEffectResources(Scene scene)
+        {
+            scene.LoadModel("iceWave");
+            scene.LoadModel("sniperBeam");
+            scene.LoadModel("cylBossLaserBurn");
+        }
+
+        private static void LoadBeamProjectileResources(Scene scene)
+        {
+            scene.LoadModel("iceShard");
+            scene.LoadModel("energyBeam");
+            scene.LoadModel("trail");
+            scene.LoadModel("electroTrail");
+            scene.LoadModel("arcWelder");
+            scene.LoadEffect(57);
+            scene.LoadEffect(58);
+            scene.LoadEffect(59);
+            scene.LoadEffect(60);
+            scene.LoadEffect(61);
+            scene.LoadEffect(62);
+            scene.LoadEffect(63);
+            scene.LoadEffect(78);
+            scene.LoadEffect(85);
+            scene.LoadEffect(86);
+            scene.LoadEffect(92);
+            scene.LoadEffect(98);
+            scene.LoadEffect(99);
+            scene.LoadEffect(100);
+            scene.LoadEffect(121);
+            scene.LoadEffect(122);
+            scene.LoadEffect(123);
+            scene.LoadEffect(124);
+            scene.LoadEffect(125);
+            scene.LoadEffect(126);
+            scene.LoadEffect(130);
+            scene.LoadEffect(134);
+            scene.LoadEffect(137);
+            scene.LoadEffect(140);
+            scene.LoadEffect(141);
+            scene.LoadEffect(142);
+            scene.LoadEffect(171);
+            scene.LoadEffect(211);
+            scene.LoadEffect(237);
+            scene.LoadEffect(238);
+            scene.LoadEffect(246);
+        }
+
+        private static void LoadRoomResources(Scene scene)
+        {
+            scene.LoadEffect(1);
+            scene.LoadEffect(2);
+            scene.LoadEffect(5);
+            scene.LoadEffect(6);
+            scene.LoadEffect(7);
+            scene.LoadEffect(8);
+            scene.LoadEffect(11);
+            scene.LoadEffect(12);
+            scene.LoadEffect(13);
+            scene.LoadEffect(14);
+            scene.LoadEffect(15);
+            scene.LoadEffect(16);
+            scene.LoadEffect(17);
+            scene.LoadEffect(18);
+            scene.LoadEffect(19);
+            scene.LoadEffect(20);
+            scene.LoadEffect(21);
+            scene.LoadEffect(22);
+            scene.LoadEffect(23);
+            scene.LoadEffect(24);
+            scene.LoadEffect(25);
+            scene.LoadEffect(26);
+            scene.LoadEffect(27);
+            scene.LoadEffect(28);
+            scene.LoadEffect(31);
+            scene.LoadEffect(33);
+            scene.LoadEffect(99);
+            scene.LoadEffect(115);
+            scene.LoadEffect(154);
+            scene.LoadEffect(155);
+            scene.LoadEffect(156);
+            scene.LoadEffect(157);
+            scene.LoadEffect(158);
+            scene.LoadEffect(159);
+            scene.LoadEffect(160);
+            scene.LoadEffect(161);
+            scene.LoadEffect(173);
+            scene.LoadEffect(190);
+            scene.LoadEffect(191);
+            scene.LoadEffect(192);
+            scene.LoadEffect(231);
+            scene.LoadEffect(239);
+            // todo: lore
+            scene.LoadModel(Read.GetSingleParticle(SingleType.Death).Model);
+            scene.LoadModel(Read.GetSingleParticle(SingleType.Fuzzball).Model);
+        }
+
+        public static BeamProjectileEntity[] CreateBeamList(int size)
+        {
+            Debug.Assert(size > 0);
+            var beams = new BeamProjectileEntity[size];
+            for (int i = 0; i < size; i++)
+            {
+                beams[i] = new BeamProjectileEntity();
+            }
+            return beams;
         }
     }
 }

@@ -24,7 +24,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             _flags = data.Flags;
             // todo: bits 0 and 1 should be cleared if entity ID is -1 (and they should also be affected by room state otherwise)
             _flags &= 0xFB;
@@ -100,7 +100,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
             ShouldDraw = !_scanVisorOnly || scene.ScanVisor;
             if (_data.EffectId != 0 && scene.FrameCount % 2 == 0)
@@ -178,7 +178,7 @@ namespace MphRead.Entities
                             }
                             scene.SpawnEffect((int)_data.EffectId, spawnTransform);
                         }
-                        _effectIntervalTimer = (int)_data.EffectInterval;
+                        _effectIntervalTimer = (int)_data.EffectInterval * 2;
                     }
                 }
                 _effectProcessing = processEffect;
@@ -189,10 +189,10 @@ namespace MphRead.Entities
                 {
                     EffectElementEntry element = _effectEntry.Elements[i];
                     element.Position = Position;
-                    element.Transform = Transform;
+                    element.Transform = Transform.ClearScale();
                 }
             }
-            base.Process(scene);
+            return base.Process(scene);
         }
 
         private void RemoveEffect(Scene scene)

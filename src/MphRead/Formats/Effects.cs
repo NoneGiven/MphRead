@@ -118,7 +118,8 @@ namespace MphRead.Effects
                 scaleT = material.ScaleT;
             }
             Matrix4 transform = Matrix4.Identity;
-            scene.AddRenderItem(Alpha, scene.GetNextPolygonId(), Color, xRepeat, yRepeat, scaleS, scaleT, transform, uvsAndVerts, bindingId);
+            scene.AddRenderItem(RenderItemType.Particle, Alpha, scene.GetNextPolygonId(), Color, xRepeat, yRepeat,
+                scaleS, scaleT, transform, uvsAndVerts, bindingId);
         }
     }
 
@@ -1296,7 +1297,8 @@ namespace MphRead.Effects
                 {
                     transform = Owner.Transform;
                 }
-                scene.AddRenderItem(Alpha, scene.GetNextPolygonId(), Color, xRepeat, yRepeat, scaleS, scaleT, transform, uvsAndVerts, bindingId);
+                scene.AddRenderItem(RenderItemType.Particle, Alpha, scene.GetNextPolygonId(), Color, xRepeat, yRepeat,
+                    scaleS, scaleT, transform, uvsAndVerts, bindingId);
             }
         }
     }

@@ -11,11 +11,12 @@ namespace MphRead.Entities
         // used if there is no base model
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xC8, 0x00, 0xC8).AsVector4();
 
+        // todo: preload items and effects (including for enemies and platforms)
         public ItemSpawnEntity(ItemEntityData data) : base(EntityType.ItemSpawn)
         {
             _data = data;
             Id = data.Header.EntityId;
-            ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             _enabled = data.Enabled != 0;
             if (data.HasBase != 0)
             {
@@ -27,22 +28,22 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
             // todo: item spawning logic
             if (_enabled && _spawn)
             {
-                ItemEntity item = SpawnItem(Position, (int)_data.ModelId);
+                ItemInstanceEntity item = SpawnItem(Position, (int)_data.ModelId);
                 scene.AddEntity(item);
                 _spawn = false;
             }
-            base.Process(scene);
+            return base.Process(scene);
         }
 
         // todo: entity node ref
-        public static ItemEntity SpawnItem(Vector3 position, int itemType)
+        public static ItemInstanceEntity SpawnItem(Vector3 position, int itemType)
         {
-            return new ItemEntity(new ItemInstanceEntityData(position, itemType));
+            return new ItemInstanceEntity(new ItemInstanceEntityData(position, itemType));
         }
     }
 
@@ -57,11 +58,11 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            ComputeTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             AddPlaceholderModel();
         }
 
-        public override void Process(Scene scene)
+        public override bool Process(Scene scene)
         {
             // todo: FH item spawning logic
             if (_spawn)
@@ -70,7 +71,7 @@ namespace MphRead.Entities
                 scene.AddEntity(item);
                 _spawn = false;
             }
-            base.Process(scene);
+            return base.Process(scene);
         }
 
         // todo: FH entity node ref
