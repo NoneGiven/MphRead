@@ -41,7 +41,7 @@ namespace MphRead.Memory
 
         public static void Start()
         {
-            new Memory(Process.GetProcessById(26628)).Run();
+            new Memory(Process.GetProcessById(27556)).Run();
             /*var procs = Process.GetProcessesByName("NO$GBA").ToList();
             foreach (Process process in procs)
             {
@@ -59,10 +59,11 @@ namespace MphRead.Memory
 
         private void Run()
         {
-            _baseAddress = new IntPtr(0x999D100);
+            _baseAddress = new IntPtr(0x9997100);
             Task.Run(async () =>
             {
                 // 0x137A9C Cretaphid 1 crystal
+                // 0x137C7C Cretaphid 2 plasma
                 // 0x13846C Slench 1 tear
                 var results = new List<(int, int)>();
                 while (true)
@@ -70,6 +71,13 @@ namespace MphRead.Memory
                     RefreshMemory();
                     GetEntities();
                     var beams = _entities.Where(e => e.EntityType == EntityType.BeamProjectile).ToList();
+
+                    byte[] weapon = new byte[0xF0];
+                    for (int i = 0; i < 0xF0; i++)
+                    {
+                        weapon[i] = _buffer[0x137C7C + i];
+                    }
+                    Test.DumpWeaponInfo(Test.ParseWeaponInfo(1, weapon)[0]);
                     await Task.Delay(15);
                 }
             }).GetAwaiter().GetResult();
