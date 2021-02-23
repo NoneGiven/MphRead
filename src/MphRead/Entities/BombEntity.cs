@@ -34,7 +34,7 @@ namespace MphRead.Entities
             else if (BombType == BombType.Lockjaw)
             {
                 Countdown = 900 * 2;
-                effectId = Metadata.SyluxBombEffects[Owner.Recolor];
+                effectId = Metadata.SyluxBombEffects[Recolor];
                 if (Owner.BombCount == 2)
                 {
                     BombEntity firstBomb = Owner.Bombs[0];
@@ -76,6 +76,7 @@ namespace MphRead.Entities
                 // todo: collision and damage check stuff
                 if (BombType == BombType.Lockjaw && Owner.BombCount == 3)
                 {
+                    // todo: if there's a target, detonation doesn't happen immediately
                     for (int i = 0; i < 3; i++)
                     {
                         Owner.Bombs[i].Countdown = 1;
@@ -152,6 +153,7 @@ namespace MphRead.Entities
             bomb.BombType = type;
             bomb.BombIndex = owner.BombCount++;
             bomb.Transform = transform;
+            bomb.Recolor = owner.Recolor;
             bomb.Flags = BombFlags.None;
             scene.AddEntity(bomb);
         }
