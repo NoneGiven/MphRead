@@ -87,7 +87,6 @@ namespace MphRead.Entities
             {
                 if (Flags.HasFlag(BombFlags.Exploded))
                 {
-                    Owner.BombCount--;
                     return false;
                 }
                 Flags |= BombFlags.Exploded;
@@ -122,6 +121,12 @@ namespace MphRead.Entities
 
         public override void Destroy(Scene scene)
         {
+            Debug.Assert(Owner != null);
+            for (int i = BombIndex; i < Owner.BombMax - 1; i++)
+            {
+                Owner.Bombs[i] = Owner.Bombs[i + 1];
+            }
+            Owner.BombCount--;
             _models.Clear();
             if (Effect != null)
             {

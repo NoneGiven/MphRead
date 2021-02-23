@@ -35,6 +35,7 @@ namespace MphRead.Entities
 
         private readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(16); // in-game: 5
         public BombEntity[] Bombs { get; } = new BombEntity[3];
+        public int BombMax { get; }
         public int BombCount { get; set; }
 
         // todo: remove testing code
@@ -44,6 +45,15 @@ namespace MphRead.Entities
         public PlayerEntity(Hunter hunter, int recolor = 0, Vector3? position = null) : base(EntityType.Player)
         {
             Hunter = hunter;
+            BombMax = 0;
+            if (Hunter == Hunter.Samus || Hunter == Hunter.Sylux)
+            {
+                BombMax = 3;
+            }
+            else if (Hunter == Hunter.Kanden)
+            {
+                BombMax = 1;
+            }
             if (position.HasValue)
             {
                 Position = position.Value;
@@ -161,16 +171,7 @@ namespace MphRead.Entities
 
         private void SpawnBomb(Scene scene)
         {
-            int bombMax = 0;
-            if (Hunter == Hunter.Samus || Hunter == Hunter.Sylux)
-            {
-                bombMax = 3;
-            }
-            else if (Hunter == Hunter.Kanden)
-            {
-                bombMax = 1;
-            }
-            if (BombCount >= bombMax)
+            if (BombCount >= BombMax)
             {
                 if (Hunter == Hunter.Sylux)
                 {
