@@ -56,6 +56,7 @@ namespace MphRead.Entities
         public float FieldF0 { get; set; }
 
         private ModelInstance? _trailModel;
+        private int _bindingId = 0;
 
         public BeamProjectileEntity() : base(EntityType.BeamProjectile)
         {
@@ -64,6 +65,7 @@ namespace MphRead.Entities
         public override void Initialize(Scene scene)
         {
             base.Initialize(scene);
+            // model will be loaded and bound by scene setup
             if (DrawFuncId == 0 || DrawFuncId == 3 || DrawFuncId == 6 || DrawFuncId == 7 || DrawFuncId == 10 || DrawFuncId == 12)
             {
                 _trailModel = Read.GetModelInstance("trail");
@@ -75,6 +77,11 @@ namespace MphRead.Entities
             else if (DrawFuncId == 9)
             {
                 _trailModel = Read.GetModelInstance("arcWelder");
+            }
+            if (_trailModel != null)
+            {
+                Material material = _trailModel.Model.Materials[0];
+                _bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
             }
         }
 
@@ -345,11 +352,9 @@ namespace MphRead.Entities
             uvsAndVerts[6] = new Vector3(uvS, uvT, 0);
             uvsAndVerts[7] = new Vector3(0, height, 0);
             Material material = _trailModel.Model.Materials[0];
-            // sktodo: make sure this is already bound, or just store it in the constructor
-            int bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
             float alpha = Math.Clamp(Lifespan * 30 * 8, 0, 31) / 31;
             scene.AddRenderItem(RenderItemType.TrailSingle, alpha, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
-                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(BackPosition), uvsAndVerts, bindingId);
+                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(BackPosition), uvsAndVerts, _bindingId);
         }
 
         private void DrawTrail2(float height, int segments, Scene scene)
@@ -381,11 +386,9 @@ namespace MphRead.Entities
                 uvsAndVerts[4 * i + 3] = new Vector3(vec.X, vec.Y + height, vec.Z);
             }
             Material material = _trailModel.Model.Materials[0];
-            // sktodo: make sure this is already bound, or just store it in the constructor
-            int bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
             float alpha = Math.Clamp(Lifespan * 30 * 8, 0, 31) / 31;
             scene.AddRenderItem(RenderItemType.TrailMulti, alpha, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
-                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[0]), uvsAndVerts, bindingId, count);
+                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[0]), uvsAndVerts, _bindingId, count);
         }
 
         private void DrawTrail3(float height, Scene scene)
@@ -411,11 +414,9 @@ namespace MphRead.Entities
                 PastPositions[8].Z - PastPositions[0].Z
             );
             Material material = _trailModel.Model.Materials[0];
-            // sktodo: make sure this is already bound, or just store it in the constructor
-            int bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
             float alpha = Math.Clamp(Lifespan * 30 * 8, 0, 31) / 31;
             scene.AddRenderItem(RenderItemType.TrailSingle, alpha, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
-                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[0]), uvsAndVerts, bindingId);
+                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[0]), uvsAndVerts, _bindingId);
         }
 
         private void DrawTrail4(float height, uint range, int segments, Scene scene)
@@ -466,10 +467,8 @@ namespace MphRead.Entities
             }
 
             Material material = _trailModel.Model.Materials[0];
-            // sktodo: make sure this is already bound, or just store it in the constructor
-            int bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
             scene.AddRenderItem(RenderItemType.TrailMulti, alpha: 1, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
-                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[8]), uvsAndVerts, bindingId, count);
+                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[8]), uvsAndVerts, _bindingId, count);
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)

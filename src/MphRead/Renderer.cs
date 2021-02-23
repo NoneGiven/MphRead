@@ -636,6 +636,17 @@ namespace MphRead
             GL.TexCoord3(0f, 0f, 0f);
         }
 
+        public void LoadModel(string name, bool firstHunt = false)
+        {
+            LoadModel(Read.GetModelInstance(name, firstHunt).Model);
+        }
+
+        public void LoadModel(Model model)
+        {
+            InitTextures(model);
+            GenerateLists(model, isRoom: false);
+        }
+
         private void InitTextures(Model model)
         {
             if (_texPalMap.ContainsKey(model.Id))

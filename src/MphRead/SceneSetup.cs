@@ -214,26 +214,26 @@ namespace MphRead
             // todo: add an assert if any loading occurs after room init (besides manual model/entity loading)
             if (scene != null)
             {
-                LoadBeamEffectResources();
+                LoadBeamEffectResources(scene);
                 LoadBeamProjectileResources(scene);
                 LoadRoomResources(scene);
             }
         }
 
-        private static void LoadBeamEffectResources()
+        private static void LoadBeamEffectResources(Scene scene)
         {
-            Read.GetModelInstance("iceWave");
-            Read.GetModelInstance("sniperBeam");
-            Read.GetModelInstance("cylBossLaserBurn");
+            scene.LoadModel("iceWave");
+            scene.LoadModel("sniperBeam");
+            scene.LoadModel("cylBossLaserBurn");
         }
 
         private static void LoadBeamProjectileResources(Scene scene)
         {
-            Read.GetModelInstance("iceShard");
-            Read.GetModelInstance("energyBeam");
-            Read.GetModelInstance("trail");
-            Read.GetModelInstance("electroTrail");
-            Read.GetModelInstance("arcWelder");
+            scene.LoadModel("iceShard");
+            scene.LoadModel("energyBeam");
+            scene.LoadModel("trail");
+            scene.LoadModel("electroTrail");
+            scene.LoadModel("arcWelder");
             scene.LoadEffect(57);
             scene.LoadEffect(58);
             scene.LoadEffect(59);
@@ -312,8 +312,8 @@ namespace MphRead
             scene.LoadEffect(231);
             scene.LoadEffect(239);
             // todo: lore
-            Read.GetSingleParticle(SingleType.Death);
-            Read.GetSingleParticle(SingleType.Fuzzball);
+            scene.LoadModel(Read.GetSingleParticle(SingleType.Death).Model);
+            scene.LoadModel(Read.GetSingleParticle(SingleType.Fuzzball).Model);
         }
 
         public static BeamProjectileEntity[] CreateBeamList(int size)
