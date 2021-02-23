@@ -103,12 +103,24 @@ namespace MphRead.Entities
                 }
                 PastPositions[0] = Position;
             }
-            // sktodo: debug code
+            // todo: remove debug code once we have collision positions for the green beams
             if (Flags.HasFlag(BeamFlags.Continuous) && DrawFuncId == 17)
             {
                 if (firstFrame)
                 {
-                    Position = Position.AddY(-4);
+                    Debug.Assert(Owner != null);
+                    if (Owner.Id == 10 || Owner.Id == 11)
+                    {
+                        Position = Position.AddY(-3.8f);
+                    }
+                    else if (Owner.Id == 12)
+                    {
+                        Position = Position.AddY(-8.54f);
+                    }
+                    else if (Owner.Id == 15 || Owner.Id == 16 || Owner.Id == 17)
+                    {
+                        Position = Position.AddY(-8f);
+                    }
                 }
             }
             else if (Flags.HasFlag(BeamFlags.Homing) && Flags.HasFlag(BeamFlags.Continuous))
@@ -119,7 +131,7 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    Velocity /= 4;
+                    Velocity /= 4f;
                 }
             }
             else
@@ -280,9 +292,7 @@ namespace MphRead.Entities
         {
             if (!Flags.HasFlag(BeamFlags.Collided))
             {
-                // sktodo: debug code
-                // --> "receiver" platforms? and maybe the ones for the gate in Fault Line move around a bit?
-                if (Target != null || true)
+                if (Target != null)
                 {
                     DrawTrail4(Fixed.ToFloat(614), 2048, 10, scene);
                 }
@@ -398,7 +408,7 @@ namespace MphRead.Entities
                 material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[0]), uvsAndVerts, bindingId);
         }
 
-        private void DrawTrail4(float height, uint a4, int segments, Scene scene)
+        private void DrawTrail4(float height, uint range, int segments, Scene scene)
         {
             Debug.Assert(_trailModel != null);
             if (segments < 2)
@@ -410,7 +420,7 @@ namespace MphRead.Entities
             int frames = (int)scene.FrameCount / 2;
             uint rng = (uint)(frames + (int)(Position.X * 4096));
             int index = frames & 15;
-            float v8 = a4 / 4096f / 2;
+            float halfRange = range / 4096f / 2;
             Vector3 vec = PastPositions[8] - Position;
 
             Texture texture = _trailModel.Model.Recolors[0].Textures[0];
@@ -427,21 +437,22 @@ namespace MphRead.Entities
 
                 float pct = (float)i / segments - 1;
 
-                float v15 = vec.X * pct + Velocity.X * pct * (1 - pct);
-                float v17 = vec.Y * pct + Velocity.Y * pct * (1 - pct);
-                float v18 = vec.Z * pct + Velocity.Z * pct * (1 - pct);
+                // todo?: not sure if dividing by 4 is strictly correct here
+                float x = vec.X * pct + Velocity.X / 4 * pct * (1 - pct);
+                float y = vec.Y * pct + Velocity.Y / 4 * pct * (1 - pct);
+                float z = vec.Z * pct + Velocity.Z / 4 * pct * (1 - pct);
 
                 if (i > 0 && i < segments - 1)
                 {
-                    v15 += Test.CallRng(ref rng, a4) / 4096f - v8;
-                    v17 += Test.CallRng(ref rng, a4) / 4096f - v8;
-                    v18 += Test.CallRng(ref rng, a4) / 4096f - v8;
+                    x += Test.CallRng(ref rng, range) / 4096f - halfRange;
+                    y += Test.CallRng(ref rng, range) / 4096f - halfRange;
+                    z += Test.CallRng(ref rng, range) / 4096f - halfRange;
                 }
 
                 uvsAndVerts[4 * i] = new Vector3(uvS, 0, 0);
-                uvsAndVerts[4 * i + 1] = new Vector3(v15, v17 - height, v18);
+                uvsAndVerts[4 * i + 1] = new Vector3(x, y - height, z);
                 uvsAndVerts[4 * i + 2] = new Vector3(uvS, uvT, 0);
-                uvsAndVerts[4 * i + 3] = new Vector3(v15, v17 + height, v18);
+                uvsAndVerts[4 * i + 3] = new Vector3(x, y + height, z);
             }
 
             Material material = _trailModel.Model.Materials[0];
@@ -645,7 +656,7 @@ namespace MphRead.Entities
             for (int i = 0; i < projectiles; i++)
             {
                 BeamProjectileEntity beam = ChooseBeamSlot(equip, owner);
-                // btodo: call collision function if the beam we choose had a lifespan
+                // btodo: call collision function if the beam we chose had a lifespan
                 beam.Destroy(scene);
                 scene.RemoveEntity(beam);
                 beam._models.Clear();
@@ -677,7 +688,7 @@ namespace MphRead.Entities
                 beam.SpawnPosition = beam.BackPosition = beam.Position = position;
                 for (int j = 0; j < 10; j++)
                 {
-                    beam.PastPositions[i] = position;
+                    beam.PastPositions[j] = position;
                 }
                 // btodo: transform
                 beam.Vec1 = vec1;
@@ -752,11 +763,51 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                // btodo: homing/target stuff
-                // sktodo: debug code
-                if (beam.Flags.HasFlag(BeamFlags.Continuous) && beam.DrawFuncId == 9)
+                // btodo: the latter two parts of this condition are just one code path
+                if (beam.Flags.HasFlag(BeamFlags.Homing)
+                    && weapon.Flags.HasFlag(WeaponFlags.Continuous) && beam.WeaponType == BeamType.Platform)
                 {
-                    beam.Position = beam.Position.AddY(-3.5f);
+                    // btodo: check for entities of other types
+                    // btodo: implement the "get alive" check
+                    float field98 = weapon.Field98 / 4096f;
+                    float homingDistance = field98;
+                    for (int j = 0; j < scene.Entities.Count; j++)
+                    {
+                        EntityBase entity = scene.Entities[j];
+                        if (entity.Type == EntityType.Platform && entity != beam.Owner)
+                        {
+                            var platform = (PlatformEntity)entity;
+                            if ((platform.Flags & 0x40000) != 0)
+                            {
+                                Vector3 between = platform.Position - beam.Position;
+                                float dot1 = Vector3.Dot(between, between);
+                                float field94 = weapon.Field94 / 4096f;
+                                if (dot1 <= field94 * field94)
+                                {
+                                    float distance = between.Length;
+                                    if (distance > 0)
+                                    {
+                                        float dot2 = Vector3.Dot(between, beam.Velocity.Normalized());
+                                        float div1 = dot2 / distance;
+                                        if (div1 >= homingDistance)
+                                        {
+                                            float sqrt = MathF.Sqrt(dot1);
+                                            float div2 = sqrt / field94;
+                                            if (div2 > 1)
+                                            {
+                                                div2 = 1;
+                                            }
+                                            if (div1 >= field98 + div2 * (Fixed.ToFloat(4094) - field98))
+                                            {
+                                                beam.Target = entity;
+                                                homingDistance = div1;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 scene.AddEntity(beam);
             }

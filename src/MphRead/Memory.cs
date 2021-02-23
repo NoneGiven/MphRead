@@ -71,13 +71,12 @@ namespace MphRead.Memory
                     RefreshMemory();
                     GetEntities();
                     var beams = _entities.Where(e => e.EntityType == EntityType.BeamProjectile).ToList();
-
-                    byte[] weapon = new byte[0xF0];
-                    for (int i = 0; i < 0xF0; i++)
-                    {
-                        weapon[i] = _buffer[0x137C7C + i];
-                    }
-                    Test.DumpWeaponInfo(Test.ParseWeaponInfo(1, weapon)[0]);
+                    //byte[] weapon = new byte[0xF0];
+                    //for (int i = 0; i < 0xF0; i++)
+                    //{
+                    //    weapon[i] = _buffer[0x137C7C + i];
+                    //}
+                    //Test.DumpWeaponInfo(Test.ParseWeaponInfo(1, weapon)[0]);
                     await Task.Delay(15);
                 }
             }).GetAwaiter().GetResult();

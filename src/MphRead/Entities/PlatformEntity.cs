@@ -12,7 +12,7 @@ namespace MphRead.Entities
         // used for ID 2 (energyBeam, arcWelder)
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x2F, 0x4F, 0x4F).AsVector4();
 
-        private uint _flags = 0;
+        public uint Flags { get; private set; }
         private readonly List<int> _effectNodeIds = new List<int>() { -1, -1, -1, -1 };
         private readonly List<EffectEntry?> _effects = new List<EffectEntry?>() { null, null, null, null };
         private const int _effectId = 182; // nozzleJet
@@ -31,7 +31,13 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            _flags = data.Flags;
+            Flags = data.Flags;
+            if ((Flags & 0x100000) != 0)
+            {
+                Flags |= 0x8;
+                Flags |= 0x2000u;
+                Flags |= 0x40000u;
+            }
             SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             PlatformMetadata? meta = Metadata.GetPlatformById((int)data.ModelId);
             if (meta == null)
@@ -62,7 +68,7 @@ namespace MphRead.Entities
         public override void Initialize(Scene scene)
         {
             base.Initialize(scene);
-            if ((_flags & 0x80000) != 0)
+            if ((Flags & 0x80000) != 0)
             {
                 Model model = _models[0].Model;
                 for (int i = 0; i < model.Nodes.Count; i++)
