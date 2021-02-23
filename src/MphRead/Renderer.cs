@@ -961,6 +961,7 @@ namespace MphRead
         private static readonly int _effectParticleMax = 3000;
         private static readonly int _singleParticleMax = 1000;
         private static readonly int _beamEffectMax = 100;
+        private static readonly int _bombMax = 32;
 
         private readonly Queue<EffectEntry> _inactiveEffects = new Queue<EffectEntry>(_effectEntryMax);
         private readonly Queue<EffectElementEntry> _inactiveElements = new Queue<EffectElementEntry>(_effectElementMax);
@@ -970,6 +971,8 @@ namespace MphRead
         private readonly List<SingleParticle> _singleParticles = new List<SingleParticle>(_singleParticleMax);
         private readonly Queue<BeamEffectEntity> _inactiveBeamEffects = new Queue<BeamEffectEntity>(_beamEffectMax);
         private readonly List<BeamEffectEntity> _activeBeamEffects = new List<BeamEffectEntity>(_beamEffectMax);
+        private readonly Queue<BombEntity> _inactiveBombs = new Queue<BombEntity>(_bombMax);
+        private readonly List<BombEntity> _activeBombs = new List<BombEntity>(_bombMax);
 
         private void AllocateEffects()
         {
@@ -993,6 +996,10 @@ namespace MphRead
             {
                 _inactiveBeamEffects.Enqueue(new BeamEffectEntity());
             }
+            for (int i = 0; i < _bombMax; i++)
+            {
+                _inactiveBombs.Enqueue(new BombEntity());
+            }
         }
 
         public BeamEffectEntity InitBeamEffect(BeamEffectEntityData data)
@@ -1006,6 +1013,21 @@ namespace MphRead
         {
             _activeBeamEffects.Remove(entry);
             _inactiveBeamEffects.Enqueue(entry);
+        }
+
+        public BombEntity? InitBomb()
+        {
+            if (_inactiveBombs.Count == 0)
+            {
+                return null;
+            }
+            return _inactiveBombs.Dequeue();
+        }
+
+        public void UnlinkBomb(BombEntity entry)
+        {
+            _activeBombs.Remove(entry);
+            _inactiveBombs.Enqueue(entry);
         }
 
         public void AddSingleParticle(SingleType type, Vector3 position, Vector3 color, float alpha, float scale)
@@ -2328,6 +2350,18 @@ namespace MphRead
                     if (entity.Type == EntityType.Player)
                     {
                         ((PlayerEntity)entity).Shoot = true;
+                        break;
+                    }
+                }
+            }
+            else if (e.Key == Keys.B && e.Alt)
+            {
+                for (int i = 0; i < _entities.Count; i++)
+                {
+                    EntityBase entity = _entities[i];
+                    if (entity.Type == EntityType.Player)
+                    {
+                        ((PlayerEntity)entity).Bomb = true;
                         break;
                     }
                 }

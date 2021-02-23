@@ -1177,6 +1177,11 @@ namespace MphRead
             0, 237, 137, 0, 211, 130, 0, 0, 0, 0, 134, 209, 64, 0, 102, 94, 96, 0, 116, 138, 183, 238, 246
         };
 
+        public static readonly IReadOnlyList<int> SyluxBombEffects = new List<int>()
+        {
+            113, 152, 151, 153, 150, 149
+        };
+
         public static readonly IReadOnlyDictionary<SingleType, (string Model, string Particle)> SingleParticles
             = new Dictionary<SingleType, (string, string)>()
         {

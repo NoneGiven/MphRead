@@ -121,6 +121,13 @@ namespace MphRead
         Enemy = 10
     }
 
+    public enum BombType : byte
+    {
+        MorphBall = 0,
+        Stinglarva = 1,
+        Lockjaw = 2
+    }
+
     [Flags]
     public enum Affliction : byte
     {
