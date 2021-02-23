@@ -4282,7 +4282,7 @@ namespace MphRead
                 smokeChargeAmount: 0
             ),
             new WeaponInfo(
-                description: "",
+                description: "Cretaphid 2 Plasma",
                 weapon: BeamType.VoltDriver,
                 weaponType: BeamType.VoltDriver,
                 drawFuncIds: new byte[] { 19, 19 },
