@@ -759,6 +759,8 @@ namespace MphRead
 
         public void OnRenderFrame(double frameTime)
         {
+            uint rng1 = Test.Rng1;
+            uint rng2 = Test.Rng2;
             if (!_frameAdvanceOn || _advanceOneFrame)
             {
                 _frameCount++;
@@ -788,6 +790,11 @@ namespace MphRead
             UpdateCameraPosition();
 
             RenderScene();
+            if (_frameAdvanceOn && !_advanceOneFrame)
+            {
+                Test.SetRng1(rng1);
+                Test.SetRng2(rng2);
+            }
         }
 
         public void AfterRenderFrame()
