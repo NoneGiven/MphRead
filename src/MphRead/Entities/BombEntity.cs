@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Diagnostics;
 using MphRead.Effects;
 using OpenTK.Mathematics;
@@ -15,6 +16,8 @@ namespace MphRead.Entities
         public int Countdown { get; set; }
 
         public EffectEntry? Effect { get; private set; }
+        private ModelInstance? _trailModel = null;
+        private int _bindingId = 0;
 
         public BombEntity() : base(EntityType.Bomb)
         {
@@ -27,12 +30,20 @@ namespace MphRead.Entities
             int effectId = 0;
             if (BombType == BombType.Stinglarva)
             {
-                Flags |= BombFlags.HasModel;
                 _models.Add(Read.GetModelInstance("KandenAlt_TailBomb"));
+                Flags |= BombFlags.HasModel;
                 Countdown = 43 * 2; // todo: FPS stuff
             }
             else if (BombType == BombType.Lockjaw)
             {
+                if (Recolor == 0)
+                {
+                    _trailModel = Read.GetModelInstance("arcWelder");
+                }
+                else
+                {
+                    _trailModel = Read.GetModelInstance("arcWelder1");
+                } 
                 Countdown = 900 * 2;
                 effectId = Metadata.SyluxBombEffects[Recolor];
                 if (Owner.BombCount == 2)
@@ -60,6 +71,16 @@ namespace MphRead.Entities
                     EffectElementEntry element = Effect.Elements[i];
                     element.Flags |= 0x80000; // set bit 19 (lifetime extension)
                 }
+            }
+            if (_trailModel != null)
+            {
+                int recolor = Recolor;
+                if (Recolor > 0)
+                {
+                    recolor--;
+                }
+                Material material = _trailModel.Model.Materials[0];
+                _bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, recolor);
             }
         }
 
@@ -119,6 +140,68 @@ namespace MphRead.Entities
             return base.Process(scene);
         }
 
+        public override void GetDrawInfo(Scene scene)
+        {
+            Debug.Assert(Owner != null);
+            if (BombType == BombType.Lockjaw)
+            {
+                if (BombIndex == 1)
+                {
+                    DrawLockjawTrail(Position, Owner.Bombs[0].Position, Fixed.ToFloat(614), 10, scene);
+                }
+                else if (BombIndex == 2)
+                {
+                    DrawLockjawTrail(Position, Owner.Bombs[1].Position, Fixed.ToFloat(614), 10, scene);
+                    DrawLockjawTrail(Position, Owner.Bombs[0].Position, Fixed.ToFloat(614), 10, scene);
+                }
+            }
+            base.GetDrawInfo(scene);
+        }
+
+        private void DrawLockjawTrail(Vector3 point1, Vector3 point2, float height, int segments, Scene scene)
+        {
+            Debug.Assert(_trailModel != null);
+            if (segments < 2)
+            {
+                return;
+            }
+            int count = 4 * segments;
+            int recolor = Recolor;
+            if (Recolor > 0)
+            {
+                recolor--;
+            }
+            Vector3 vec = point2 - point1;
+            Texture texture = _trailModel.Model.Recolors[recolor].Textures[0];
+            float uvT = (texture.Height - (1 / 16f)) / texture.Height;
+            Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(count);
+            for (int i = 0; i < segments; i++)
+            {
+                float uvS = 0;
+                if (i > 0)
+                {
+                    uvS = (texture.Width / (float)(segments - 1) * i - (1 / 16f)) / texture.Width;
+                }
+                float pct = i * (1f / (segments - 1));
+                float x = vec.X * pct;
+                float y = vec.Y * pct;
+                float z = vec.Z * pct;
+                if (i > 0 && i < segments - 1)
+                {
+                    x += Test.GetRandomInt1(0x800) / 4096f - 0.25f;
+                    y += Test.GetRandomInt1(0x800) / 4096f - 0.25f;
+                    z += Test.GetRandomInt1(0x800) / 4096f - 0.25f;
+                }
+                uvsAndVerts[4 * i] = new Vector3(uvS, 0, 0);
+                uvsAndVerts[4 * i + 1] = new Vector3(x, y - height, z);
+                uvsAndVerts[4 * i + 2] = new Vector3(uvS, uvT, 0);
+                uvsAndVerts[4 * i + 3] = new Vector3(x, y + height, z);
+            }
+            Material material = _trailModel.Model.Materials[0];
+            scene.AddRenderItem(RenderItemType.TrailMulti, alpha: 1, scene.GetNextPolygonId(), Vector3.One, material.XRepeat, material.YRepeat,
+                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(point1), uvsAndVerts, _bindingId, count);
+        }
+
         public override void Destroy(Scene scene)
         {
             Debug.Assert(Owner != null);
@@ -128,6 +211,7 @@ namespace MphRead.Entities
             }
             Owner.BombCount--;
             _models.Clear();
+            _trailModel = null;
             if (Effect != null)
             {
                 scene.UnlinkEffectEntry(Effect);

@@ -224,6 +224,8 @@ namespace MphRead
         private static void LoadBombResources(Scene scene)
         {
             scene.LoadModel("KandenAlt_TailBomb");
+            scene.LoadModel("arcWelder");
+            scene.LoadModel("arcWelder1");
             scene.LoadEffect(9);
             scene.LoadEffect(113);
             scene.LoadEffect(119);

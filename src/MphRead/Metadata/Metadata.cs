@@ -74,7 +74,8 @@ namespace MphRead
 
         public ModelMetadata(string name, IEnumerable<string> recolors, string? remove = null, bool animation = false,
             string? animationPath = null, bool texture = false, MdlSuffix mdlSuffix = MdlSuffix.None, string? archive = null,
-            string? recolorName = null, string? animationShare = null, bool useLightSources = false, bool firstHunt = false)
+            string? recolorName = null, string? animationShare = null, bool useLightSources = false, bool firstHunt = false,
+            bool noUnderscore = false)
         {
             Name = name;
             string suffix = "";
@@ -120,7 +121,7 @@ namespace MphRead
             var recolorList = new List<RecolorMetadata>();
             foreach (string recolor in recolors)
             {
-                string recolorString = $"{recolorName ?? name}_{recolor}";
+                string recolorString = $"{recolorName ?? name}{(noUnderscore ? "" : "_")}{recolor}";
                 if (recolor.StartsWith("*"))
                 {
                     recolorString = recolor.Replace("*", "");
@@ -702,7 +703,7 @@ namespace MphRead
         {
             /*  0 */ new PlatformMetadata("platform"),
             /*  1 */ null, // duplicate of 0
-            /*  2 */ null, // arcWelder or energyBeam
+            /*  2 */ null, // no model
             /*  3 */ new PlatformMetadata("Elevator"),
             /*  4 */ new PlatformMetadata("smasher"),
             /*  5 */ new PlatformMetadata("Platform_Unit4_C1", someFlag: 1),
@@ -1520,23 +1521,18 @@ namespace MphRead
                 },
                 {
                     "arcWelder1",
-                    new ModelMetadata("arcWelder1", animation: false)
-                },
-                {
-                    "arcWelder2",
-                    new ModelMetadata("arcWelder2", animation: false)
-                },
-                {
-                    "arcWelder3",
-                    new ModelMetadata("arcWelder3", animation: false)
-                },
-                {
-                    "arcWelder4",
-                    new ModelMetadata("arcWelder4", animation: false)
-                },
-                {
-                    "arcWelder5",
-                    new ModelMetadata("arcWelder5", animation: false)
+                    new ModelMetadata("arcWelder1",
+                        remove: "1",
+                        recolors: new List<string>()
+                        {
+                            "1",
+                            "2",
+                            "3",
+                            "4",
+                            "5"
+                        },
+                        animation: false,
+                        noUnderscore: true)
                 },
                 {
                     "ArtifactBase",
