@@ -34,13 +34,26 @@ namespace MphRead.Entities
         private const int _respawnCooldown = 180;
 
         private readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(16); // in-game: 5
+        public BombEntity[] Bombs { get; } = new BombEntity[3];
+        public int BombMax { get; }
+        public int BombCount { get; set; }
 
         // todo: remove testing code
         public bool Shoot { get; set; }
+        public bool Bomb { get; set; }
 
         public PlayerEntity(Hunter hunter, int recolor = 0, Vector3? position = null) : base(EntityType.Player)
         {
             Hunter = hunter;
+            BombMax = 0;
+            if (Hunter == Hunter.Samus || Hunter == Hunter.Sylux)
+            {
+                BombMax = 3;
+            }
+            else if (Hunter == Hunter.Kanden)
+            {
+                BombMax = 1;
+            }
             if (position.HasValue)
             {
                 Position = position.Value;
@@ -108,6 +121,11 @@ namespace MphRead.Entities
                 TestSpawnBeam(-1, scene);
                 Shoot = false;
             }
+            if (Bomb)
+            {
+                SpawnBomb(scene);
+                Bomb = false;
+            }
             return base.Process(scene);
         }
 
@@ -149,6 +167,34 @@ namespace MphRead.Entities
                     scene.AddEntity(ent);
                 }
             }
+        }
+
+        private void SpawnBomb(Scene scene)
+        {
+            if (BombCount >= BombMax)
+            {
+                if (Hunter == Hunter.Sylux)
+                {
+                    for (int i = 0; i < 3; i++)
+                    {
+                        Bombs[i].Countdown = 0;
+                    }
+                }
+                return;
+            }
+            // todo: bomb spawn position/transform
+            Matrix4 transform;
+            if (Hunter == Hunter.Kanden)
+            {
+                transform = Transform.ClearScale();
+                transform.Row3.Xyz = Position.AddY(0.25f);
+            }
+            else
+            {
+                transform = Matrix4.CreateTranslation(Position.AddY(Fixed.ToFloat(1000)));
+            }
+            BombEntity.Spawn(this, transform, scene);
+            // todo: bomb cooldown/refill stuff
         }
 
         private void UpdateModels()

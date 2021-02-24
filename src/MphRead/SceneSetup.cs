@@ -214,10 +214,29 @@ namespace MphRead
             // todo: add an assert if any loading occurs after room init (besides manual model/entity loading)
             if (scene != null)
             {
+                LoadBombResources(scene);
                 LoadBeamEffectResources(scene);
                 LoadBeamProjectileResources(scene);
                 LoadRoomResources(scene);
             }
+        }
+
+        private static void LoadBombResources(Scene scene)
+        {
+            scene.LoadModel("KandenAlt_TailBomb");
+            scene.LoadModel("arcWelder");
+            scene.LoadModel("arcWelder1");
+            scene.LoadEffect(9);
+            scene.LoadEffect(113);
+            scene.LoadEffect(119);
+            scene.LoadEffect(129);
+            scene.LoadEffect(145);
+            scene.LoadEffect(146);
+            scene.LoadEffect(149);
+            scene.LoadEffect(150);
+            scene.LoadEffect(151);
+            scene.LoadEffect(152);
+            scene.LoadEffect(153);
         }
 
         private static void LoadBeamEffectResources(Scene scene)

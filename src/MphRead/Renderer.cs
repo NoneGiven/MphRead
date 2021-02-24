@@ -69,7 +69,6 @@ namespace MphRead
         private bool _outputCameraPos = false;
 
         private readonly List<EntityBase> _entities = new List<EntityBase>();
-        private readonly List<EntityBase> _entitySort = new List<EntityBase>();
         private readonly List<EntityBase> _destroyedEntities = new List<EntityBase>();
         private readonly Dictionary<int, EntityBase> _entityMap = new Dictionary<int, EntityBase>();
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
@@ -147,7 +146,6 @@ namespace MphRead
             (RoomEntity room, RoomMetadata meta, CollisionInfo collision, IReadOnlyList<EntityBase> entities, int updatedMask)
                 = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId, this);
             _entities.Add(room);
-            _entitySort.Add(room);
             InitEntity(room);
             _cameraMode = CameraMode.Roam;
             if (meta.InGameName != null)
@@ -157,7 +155,6 @@ namespace MphRead
             foreach (EntityBase entity in entities)
             {
                 _entities.Add(entity);
-                _entitySort.Add(entity);
                 Debug.Assert(entity.Id != -1);
                 _entityMap.Add(entity.Id, entity);
                 InitEntity(entity);
@@ -199,7 +196,6 @@ namespace MphRead
             ModelInstance model = Read.GetModelInstance(name, firstHunt);
             var entity = new ModelEntity(model, recolor);
             _entities.Add(entity);
-            _entitySort.Add(entity);
             if (entity.Id != -1)
             {
                 _entityMap.Add(entity.Id, entity);
@@ -212,7 +208,6 @@ namespace MphRead
         public void AddEntity(EntityBase entity)
         {
             _entities.Add(entity);
-            _entitySort.Add(entity);
             if (entity.Id != -1)
             {
                 _entityMap.Add(entity.Id, entity);
@@ -226,7 +221,6 @@ namespace MphRead
         {
             var entity = new PlayerEntity(hunter, recolor, position);
             _entities.Add(entity);
-            _entitySort.Add(entity);
             if (entity.Id != -1)
             {
                 _entityMap.Add(entity.Id, entity);
@@ -243,7 +237,6 @@ namespace MphRead
         {
             _entityMap.Remove(entity.Id);
             _entities.Remove(entity);
-            _entitySort.Remove(entity);
         }
 
         public void OnLoad()
@@ -759,6 +752,8 @@ namespace MphRead
 
         public void OnRenderFrame(double frameTime)
         {
+            uint rng1 = Test.Rng1;
+            uint rng2 = Test.Rng2;
             if (!_frameAdvanceOn || _advanceOneFrame)
             {
                 _frameCount++;
@@ -788,6 +783,11 @@ namespace MphRead
             UpdateCameraPosition();
 
             RenderScene();
+            if (_frameAdvanceOn && !_advanceOneFrame)
+            {
+                Test.SetRng1(rng1);
+                Test.SetRng2(rng2);
+            }
         }
 
         public void AfterRenderFrame()
@@ -927,33 +927,6 @@ namespace MphRead
             }
         }
 
-        private int CompareEntities(EntityBase one, EntityBase two)
-        {
-            if (one.Type == EntityType.Room)
-            {
-                if (two.Type != EntityType.Room)
-                {
-                    return -1;
-                }
-                return 0;
-            }
-            if (two.Type == EntityType.Room)
-            {
-                return 1;
-            }
-            float distanceOne = Vector3.DistanceSquared(-1 * _cameraPosition, one.Position);
-            float distanceTwo = Vector3.DistanceSquared(-1 * _cameraPosition, two.Position);
-            if (distanceOne == distanceTwo)
-            {
-                return 0;
-            }
-            if (distanceOne < distanceTwo)
-            {
-                return 1;
-            }
-            return -1;
-        }
-
         // todo: effect limits for beam effects
         // in-game: 64 effects, 96 elements, 200 particles
         private static readonly int _effectEntryMax = 100;
@@ -961,6 +934,7 @@ namespace MphRead
         private static readonly int _effectParticleMax = 3000;
         private static readonly int _singleParticleMax = 1000;
         private static readonly int _beamEffectMax = 100;
+        private static readonly int _bombMax = 32;
 
         private readonly Queue<EffectEntry> _inactiveEffects = new Queue<EffectEntry>(_effectEntryMax);
         private readonly Queue<EffectElementEntry> _inactiveElements = new Queue<EffectElementEntry>(_effectElementMax);
@@ -970,6 +944,8 @@ namespace MphRead
         private readonly List<SingleParticle> _singleParticles = new List<SingleParticle>(_singleParticleMax);
         private readonly Queue<BeamEffectEntity> _inactiveBeamEffects = new Queue<BeamEffectEntity>(_beamEffectMax);
         private readonly List<BeamEffectEntity> _activeBeamEffects = new List<BeamEffectEntity>(_beamEffectMax);
+        private readonly Queue<BombEntity> _inactiveBombs = new Queue<BombEntity>(_bombMax);
+        private readonly List<BombEntity> _activeBombs = new List<BombEntity>(_bombMax);
 
         private void AllocateEffects()
         {
@@ -993,6 +969,10 @@ namespace MphRead
             {
                 _inactiveBeamEffects.Enqueue(new BeamEffectEntity());
             }
+            for (int i = 0; i < _bombMax; i++)
+            {
+                _inactiveBombs.Enqueue(new BombEntity());
+            }
         }
 
         public BeamEffectEntity InitBeamEffect(BeamEffectEntityData data)
@@ -1006,6 +986,21 @@ namespace MphRead
         {
             _activeBeamEffects.Remove(entry);
             _inactiveBeamEffects.Enqueue(entry);
+        }
+
+        public BombEntity? InitBomb()
+        {
+            if (_inactiveBombs.Count == 0)
+            {
+                return null;
+            }
+            return _inactiveBombs.Dequeue();
+        }
+
+        public void UnlinkBomb(BombEntity entry)
+        {
+            _activeBombs.Remove(entry);
+            _inactiveBombs.Enqueue(entry);
         }
 
         public void AddSingleParticle(SingleType type, Vector3 position, Vector3 color, float alpha, float scale)
@@ -1708,11 +1703,9 @@ namespace MphRead
                 }
             }
 
-            _entitySort.Sort(CompareEntities);
-
-            for (int i = 0; i < _entitySort.Count; i++)
+            for (int i = 0; i < _entities.Count; i++)
             {
-                EntityBase entity = _entitySort[i];
+                EntityBase entity = _entities[i];
                 if (_destroyedEntities.Contains(entity))
                 {
                     continue;
@@ -2322,14 +2315,16 @@ namespace MphRead
         {
             if (e.Key == Keys.E && e.Alt)
             {
-                for (int i = 0; i < _entities.Count; i++)
+                if (Selection.Entity != null && Selection.Entity.Type == EntityType.Player)
                 {
-                    EntityBase entity = _entities[i];
-                    if (entity.Type == EntityType.Player)
-                    {
-                        ((PlayerEntity)entity).Shoot = true;
-                        break;
-                    }
+                    ((PlayerEntity)Selection.Entity).Shoot = true;
+                }
+            }
+            else if (e.Key == Keys.B && e.Alt)
+            {
+                if (Selection.Entity != null && Selection.Entity.Type == EntityType.Player)
+                {
+                    ((PlayerEntity)Selection.Entity).Bomb = true;
                 }
             }
             else if (Selection.OnKeyDown(e, this))
@@ -2369,7 +2364,7 @@ namespace MphRead
                     _wireframe = !_wireframe;
                 }
             }
-            else if (e.Key == Keys.B)
+            else if (e.Key == Keys.B && !e.Alt)
             {
                 _faceCulling = !_faceCulling;
                 if (!_faceCulling)
@@ -2463,7 +2458,7 @@ namespace MphRead
                     _showInvisible = 0;
                 }
             }
-            else if (e.Key == Keys.E)
+            else if (e.Key == Keys.E && !e.Alt)
             {
                 _scanVisor = !_scanVisor;
             }

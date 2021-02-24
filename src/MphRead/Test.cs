@@ -40,6 +40,16 @@ namespace MphRead
             return (uint)((Rng2 >> 16) * (long)value / 0x10000L);
         }
 
+        public static void SetRng1(uint value)
+        {
+            Rng1 = value;
+        }
+
+        public static void SetRng2(uint value)
+        {
+            Rng2 = value;
+        }
+
         private static readonly Random _random = new Random();
 
         public static void TestEffectMath()
