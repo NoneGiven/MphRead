@@ -2351,26 +2351,16 @@ namespace MphRead
         {
             if (e.Key == Keys.E && e.Alt)
             {
-                for (int i = 0; i < _entities.Count; i++)
+                if (Selection.Entity != null && Selection.Entity.Type == EntityType.Player)
                 {
-                    EntityBase entity = _entities[i];
-                    if (entity.Type == EntityType.Player)
-                    {
-                        ((PlayerEntity)entity).Shoot = true;
-                        break;
-                    }
+                    ((PlayerEntity)Selection.Entity).Shoot = true;
                 }
             }
             else if (e.Key == Keys.B && e.Alt)
             {
-                for (int i = 0; i < _entities.Count; i++)
+                if (Selection.Entity != null && Selection.Entity.Type == EntityType.Player)
                 {
-                    EntityBase entity = _entities[i];
-                    if (entity.Type == EntityType.Player)
-                    {
-                        ((PlayerEntity)entity).Bomb = true;
-                        break;
-                    }
+                    ((PlayerEntity)Selection.Entity).Bomb = true;
                 }
             }
             else if (Selection.OnKeyDown(e, this))
@@ -2410,7 +2400,7 @@ namespace MphRead
                     _wireframe = !_wireframe;
                 }
             }
-            else if (e.Key == Keys.B)
+            else if (e.Key == Keys.B && !e.Alt)
             {
                 _faceCulling = !_faceCulling;
                 if (!_faceCulling)
@@ -2504,7 +2494,7 @@ namespace MphRead
                     _showInvisible = 0;
                 }
             }
-            else if (e.Key == Keys.E)
+            else if (e.Key == Keys.E && !e.Alt)
             {
                 _scanVisor = !_scanVisor;
             }
