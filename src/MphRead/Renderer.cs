@@ -69,7 +69,6 @@ namespace MphRead
         private bool _outputCameraPos = false;
 
         private readonly List<EntityBase> _entities = new List<EntityBase>();
-        private readonly List<EntityBase> _entitySort = new List<EntityBase>();
         private readonly List<EntityBase> _destroyedEntities = new List<EntityBase>();
         private readonly Dictionary<int, EntityBase> _entityMap = new Dictionary<int, EntityBase>();
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
@@ -147,7 +146,6 @@ namespace MphRead
             (RoomEntity room, RoomMetadata meta, CollisionInfo collision, IReadOnlyList<EntityBase> entities, int updatedMask)
                 = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId, this);
             _entities.Add(room);
-            _entitySort.Add(room);
             InitEntity(room);
             _cameraMode = CameraMode.Roam;
             if (meta.InGameName != null)
@@ -157,7 +155,6 @@ namespace MphRead
             foreach (EntityBase entity in entities)
             {
                 _entities.Add(entity);
-                _entitySort.Add(entity);
                 Debug.Assert(entity.Id != -1);
                 _entityMap.Add(entity.Id, entity);
                 InitEntity(entity);
@@ -199,7 +196,6 @@ namespace MphRead
             ModelInstance model = Read.GetModelInstance(name, firstHunt);
             var entity = new ModelEntity(model, recolor);
             _entities.Add(entity);
-            _entitySort.Add(entity);
             if (entity.Id != -1)
             {
                 _entityMap.Add(entity.Id, entity);
@@ -212,7 +208,6 @@ namespace MphRead
         public void AddEntity(EntityBase entity)
         {
             _entities.Add(entity);
-            _entitySort.Add(entity);
             if (entity.Id != -1)
             {
                 _entityMap.Add(entity.Id, entity);
@@ -226,7 +221,6 @@ namespace MphRead
         {
             var entity = new PlayerEntity(hunter, recolor, position);
             _entities.Add(entity);
-            _entitySort.Add(entity);
             if (entity.Id != -1)
             {
                 _entityMap.Add(entity.Id, entity);
@@ -243,7 +237,6 @@ namespace MphRead
         {
             _entityMap.Remove(entity.Id);
             _entities.Remove(entity);
-            _entitySort.Remove(entity);
         }
 
         public void OnLoad()
@@ -932,33 +925,6 @@ namespace MphRead
             {
                 _cameraPosition = new Vector3(0, 0, 0);
             }
-        }
-
-        private int CompareEntities(EntityBase one, EntityBase two)
-        {
-            if (one.Type == EntityType.Room)
-            {
-                if (two.Type != EntityType.Room)
-                {
-                    return -1;
-                }
-                return 0;
-            }
-            if (two.Type == EntityType.Room)
-            {
-                return 1;
-            }
-            float distanceOne = Vector3.DistanceSquared(-1 * _cameraPosition, one.Position);
-            float distanceTwo = Vector3.DistanceSquared(-1 * _cameraPosition, two.Position);
-            if (distanceOne == distanceTwo)
-            {
-                return 0;
-            }
-            if (distanceOne < distanceTwo)
-            {
-                return 1;
-            }
-            return -1;
         }
 
         // todo: effect limits for beam effects
@@ -1737,11 +1703,9 @@ namespace MphRead
                 }
             }
 
-            _entitySort.Sort(CompareEntities);
-
-            for (int i = 0; i < _entitySort.Count; i++)
+            for (int i = 0; i < _entities.Count; i++)
             {
-                EntityBase entity = _entitySort[i];
+                EntityBase entity = _entities[i];
                 if (_destroyedEntities.Contains(entity))
                 {
                     continue;
