@@ -7,10 +7,12 @@ namespace MphRead.Formats
 {
     public class CameraSequence
     {
+        public byte Flags { get; }
         public IReadOnlyList<CameraSequenceKeyframe> Keyframes { get; }
 
-        public CameraSequence(IReadOnlyList<CameraSequenceKeyframe> keyframes)
+        public CameraSequence(CameraSequenceHeader header, IReadOnlyList<CameraSequenceKeyframe> keyframes)
         {
+            Flags = header.Flags;
             Keyframes = keyframes;
         }
 
@@ -27,7 +29,7 @@ namespace MphRead.Formats
             CameraSequenceHeader header = Read.ReadStruct<CameraSequenceHeader>(bytes);
             Debug.Assert(header.Padding3 == 0);
             Debug.Assert(header.Padding4 == 0);
-            return new CameraSequence(Read.DoOffsets<CameraSequenceKeyframe>(bytes, Sizes.CameraSequenceHeader, header.Count));
+            return new CameraSequence(header, Read.DoOffsets<CameraSequenceKeyframe>(bytes, Sizes.CameraSequenceHeader, header.Count));
         }
 
         private static readonly IReadOnlyList<string> _filenames = new List<string>()
