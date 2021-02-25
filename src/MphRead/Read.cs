@@ -605,27 +605,6 @@ namespace MphRead
             return new Entity<T>(entry, (EntityType)(header.Type + 100), header.EntityId, ReadStruct<T>(bytes[start..end]), header);
         }
 
-        // todo: should return a CameraSequence class (flags etc.)
-        public static IReadOnlyList<CameraSequenceFrame> ReadCameraSequence(string name)
-        {
-            name = Path.Combine(Paths.FileSystem, $@"cameraEditor\{name}.bin");
-            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(name));
-            if (bytes.Length < Sizes.CameraSequenceHeader)
-            {
-                throw new ProgramException("Invalid camera sequence file format.");
-            }
-            CameraSequenceHeader header = ReadStruct<CameraSequenceHeader>(bytes);
-            int length = Sizes.CameraSequenceHeader + Sizes.CameraSequenceFrame * header.Count;
-            Debug.Assert(bytes.Length == length);
-            if (bytes.Length < length)
-            {
-                throw new ProgramException("Invalid camera sequence file format.");
-            }
-            uint offset = (uint)Sizes.CameraSequenceHeader;
-            IReadOnlyList<CameraSequenceFrame> frames = DoOffsets<CameraSequenceFrame>(bytes, offset, header.Count);
-            return frames;
-        }
-
         private static readonly Dictionary<string, Effect> _effects = new Dictionary<string, Effect>();
         private static readonly Dictionary<(string, string), Particle> _particleDefs = new Dictionary<(string, string), Particle>();
 

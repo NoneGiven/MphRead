@@ -789,7 +789,7 @@ namespace MphRead
         public readonly ushort Entity2;
         public readonly ushort Entity3;
         public readonly uint SomeMessageId;
-        public readonly uint Field38;
+        public readonly uint SomeMessageParam;
     }
 
     // size: 53

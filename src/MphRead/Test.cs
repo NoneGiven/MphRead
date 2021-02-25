@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using MphRead.Effects;
+using MphRead.Formats;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
@@ -216,7 +217,7 @@ namespace MphRead
                 string name = Path.GetFileNameWithoutExtension(filePath);
                 if (name != "cameraEditBG")
                 {
-                    IReadOnlyList<CameraSequenceFrame> frames = Read.ReadCameraSequence(name);
+                    var seq = CameraSequence.Load(name);
                     Nop();
                 }
             }
