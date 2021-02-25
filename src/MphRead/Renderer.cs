@@ -2220,15 +2220,23 @@ namespace MphRead
         {
             for (int i = 0; i < item.TrailCount; i++)
             {
+                Vector3 texcoord0 = item.Points[i * 8];
+                Vector3 vertex0 = item.Points[i * 8 + 1];
+                Vector3 texcoord1 = item.Points[i * 8 + 2];
+                Vector3 vertex1 = item.Points[i * 8 + 3];
+                Vector3 texcoord2 = item.Points[i * 8 + 4];
+                Vector3 vertex2 = item.Points[i * 8 + 5];
+                Vector3 texcoord3 = item.Points[i * 8 + 6];
+                Vector3 vertex3 = item.Points[i * 8 + 7];
                 GL.Begin(PrimitiveType.Quads);
-                GL.TexCoord3(item.Points[i * 8]);
-                GL.Vertex3(item.Points[i * 8 + 1]);
-                GL.TexCoord3(item.Points[i * 8 + 2]);
-                GL.Vertex3(item.Points[i * 8 + 3]);
-                GL.TexCoord3(item.Points[i * 8 + 4]);
-                GL.Vertex3(item.Points[i * 8 + 5]);
-                GL.TexCoord3(item.Points[i * 8 + 6]);
-                GL.Vertex3(item.Points[i * 8 + 7]);
+                GL.TexCoord3(texcoord0);
+                GL.Vertex3(vertex0);
+                GL.TexCoord3(texcoord1);
+                GL.Vertex3(vertex1);
+                GL.TexCoord3(texcoord2);
+                GL.Vertex3(vertex2);
+                GL.TexCoord3(texcoord3);
+                GL.Vertex3(vertex3);
                 GL.End();
             }
         }
