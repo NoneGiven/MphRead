@@ -481,14 +481,14 @@ namespace MphRead
     {
         public T Data { get; }
 
-        public Entity(EntityEntry entry, EntityType type, ushort someId, T data, EntityDataHeader header)
-            : base(entry, type, someId, header)
+        public Entity(EntityEntry entry, EntityType type, ushort entityId, T data, EntityDataHeader header)
+            : base(entry, type, entityId, header)
         {
             Data = data;
         }
 
-        public Entity(FhEntityEntry entry, EntityType type, ushort someId, T data, EntityDataHeader header)
-            : base(entry, type, someId, header)
+        public Entity(FhEntityEntry entry, EntityType type, ushort entityId, T data, EntityDataHeader header)
+            : base(entry, type, entityId, header)
         {
             Data = data;
         }

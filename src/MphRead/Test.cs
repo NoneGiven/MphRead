@@ -212,6 +212,7 @@ namespace MphRead
 
         public static void TestCameraSequences()
         {
+            var ids = new HashSet<int>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 if (meta.Value.EntityPath != null)
@@ -223,8 +224,22 @@ namespace MphRead
                         {
                             CameraSequenceEntityData data = ((Entity<CameraSequenceEntityData>)entity).Data;
                             var entityClass = new CameraSequenceEntity(data);
-                            foreach (CameraSequenceKeyframe frame in entityClass.Sequence.Keyframes)
+                            if (ids.Contains(entityClass.Id))
                             {
+                                continue;
+                            }
+                            ids.Add(entityClass.Id);
+                            if (entityClass.Sequence.Version == 9)
+                            {
+                                foreach (CameraSequenceKeyframe frame in entityClass.Sequence.Keyframes)
+                                {
+                                    Console.WriteLine($"{frame.Entity1Type} {frame.Entity1Id}");
+                                    Console.WriteLine($"{frame.Entity2Type} {frame.Entity2Id}");
+                                    Console.WriteLine($"{frame.MessageTargetType} {frame.MessageTargetId}");
+                                    Console.WriteLine();
+                                }
+                                Console.WriteLine("-------------------------------------------------------------");
+                                Console.WriteLine();
                             }
                             Nop();
                         }
@@ -236,16 +251,16 @@ namespace MphRead
 
         public static void TestCameraSequenceFiles()
         {
-            // todo: metadata for this
             foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Paths.FileSystem, "cameraEditor")))
             {
-                string name = Path.GetFileNameWithoutExtension(filePath);
-                if (name != "cameraEditBG")
+                string name = Path.GetFileName(filePath);
+                if (name != "cameraEditBG.bin")
                 {
                     var seq = CameraSequence.Load(name);
                     Nop();
                 }
             }
+            Nop();
         }
 
         public static void TestCollision()

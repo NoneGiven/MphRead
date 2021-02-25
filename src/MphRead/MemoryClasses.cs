@@ -1793,16 +1793,16 @@ namespace MphRead.Memory
         public IntPtr Ent2 { get => ReadPointer(_off2); set => WritePointer(_off2, value); }
 
         private const int _off3 = 0x24; // CEntity*
-        public IntPtr SomeEventTarget { get => ReadPointer(_off3); set => WritePointer(_off3, value); }
+        public IntPtr MessageTarget { get => ReadPointer(_off3); set => WritePointer(_off3, value); }
 
         private const int _off4 = 0x28;
         public byte Flags { get => ReadByte(_off4); set => WriteByte(_off4, value); }
 
         private const int _off5 = 0x29;
-        public byte Field29 { get => ReadByte(_off5); set => WriteByte(_off5, value); }
+        public byte Padding29 { get => ReadByte(_off5); set => WriteByte(_off5, value); }
 
         private const int _off6 = 0x2A;
-        public ushort TimeMaybe { get => ReadUInt16(_off6); set => WriteUInt16(_off6, value); }
+        public ushort DelayTimer { get => ReadUInt16(_off6); set => WriteUInt16(_off6, value); }
 
         public CCameraSequence(Memory memory, int address) : base(memory, address)
         {
@@ -4875,6 +4875,149 @@ namespace MphRead.Memory
 
         public PlayerInput(Memory memory, IntPtr address) : base(memory, address)
         {
+        }
+    }
+
+    public class CameraSequence : MemoryClass
+    {
+        private const int _off0 = 0x0;
+        public byte Flags { get => ReadByte(_off0); set => WriteByte(_off0, value); }
+
+        private const int _off1 = 0x1;
+        public byte Version { get => ReadByte(_off1); set => WriteByte(_off1, value); }
+
+        private const int _off2 = 0x2;
+        public byte Field2 { get => ReadByte(_off2); set => WriteByte(_off2, value); }
+
+        private const int _off3 = 0x3;
+        public byte Field3 { get => ReadByte(_off3); set => WriteByte(_off3, value); }
+
+        private const int _off4 = 0x4;
+        public int KeyframeElapsed { get => ReadInt32(_off4); set => WriteInt32(_off4, value); }
+
+        private const int _off5 = 0x8; // CameraSequenceKeyframe*
+        public IntPtr Keyframes { get => ReadPointer(_off5); set => WritePointer(_off5, value); }
+
+        private const int _off6 = 0xC; // CameraSequenceKeyframe*
+        public IntPtr NextKeyframe { get => ReadPointer(_off6); set => WritePointer(_off6, value); }
+
+        private const int _off7 = 0x10; // CameraInfo*
+        public IntPtr CameraInfoPtr { get => ReadPointer(_off7); set => WritePointer(_off7, value); }
+
+        private const int _off8 = 0x14;
+        public CameraInfo CameraInfo { get; }
+
+        public CameraSequence(Memory memory, int address) : base(memory, address)
+        {
+            CameraInfo = new CameraInfo(memory, address + _off8);
+        }
+
+        public CameraSequence(Memory memory, IntPtr address) : base(memory, address)
+        {
+            CameraInfo = new CameraInfo(memory, address + _off8);
+        }
+    }
+
+    public class CameraSequenceKeyframe : MemoryClass
+    {
+        private const int _off0 = 0x0;
+        public Vector3 Pos { get => ReadVec3(_off0); set => WriteVec3(_off0, value); }
+
+        private const int _off1 = 0xC;
+        public Vector3 ToTarget { get => ReadVec3(_off1); set => WriteVec3(_off1, value); }
+
+        private const int _off2 = 0x18;
+        public int RollAngle { get => ReadInt32(_off2); set => WriteInt32(_off2, value); }
+
+        private const int _off3 = 0x1C;
+        public int Fov { get => ReadInt32(_off3); set => WriteInt32(_off3, value); }
+
+        private const int _off4 = 0x20;
+        public int MoveTime { get => ReadInt32(_off4); set => WriteInt32(_off4, value); }
+
+        private const int _off5 = 0x24;
+        public int HoldTime { get => ReadInt32(_off5); set => WriteInt32(_off5, value); }
+
+        private const int _off6 = 0x28;
+        public int FadeInTime { get => ReadInt32(_off6); set => WriteInt32(_off6, value); }
+
+        private const int _off7 = 0x2C;
+        public int FadeOutTime { get => ReadInt32(_off7); set => WriteInt32(_off7, value); }
+
+        private const int _off8 = 0x30;
+        public byte FadeInType { get => ReadByte(_off8); set => WriteByte(_off8, value); }
+
+        private const int _off9 = 0x31;
+        public byte FadeOutType { get => ReadByte(_off9); set => WriteByte(_off9, value); }
+
+        private const int _off10 = 0x32;
+        public byte Field32 { get => ReadByte(_off10); set => WriteByte(_off10, value); }
+
+        private const int _off11 = 0x33;
+        public byte Field33 { get => ReadByte(_off11); set => WriteByte(_off11, value); }
+
+        private const int _off12 = 0x34;
+        public byte Field34 { get => ReadByte(_off12); set => WriteByte(_off12, value); }
+
+        private const int _off13 = 0x35;
+        public byte Padding35 { get => ReadByte(_off13); set => WriteByte(_off13, value); }
+
+        private const int _off14 = 0x36;
+        public ushort Padding36 { get => ReadUInt16(_off14); set => WriteUInt16(_off14, value); }
+
+        private const int _off15 = 0x38; // EntityIdOrRef
+        public IntPtr Ent1Ref { get => ReadPointer(_off15); set => WritePointer(_off15, value); }
+
+        private const int _off16 = 0x3C; // EntityIdOrRef
+        public IntPtr Ent2Ref { get => ReadPointer(_off16); set => WritePointer(_off16, value); }
+
+        private const int _off17 = 0x40; // EntityIdOrRef
+        public IntPtr EventTarget { get => ReadPointer(_off17); set => WritePointer(_off17, value); }
+
+        private const int _off18 = 0x44;
+        public ushort EventId { get => ReadUInt16(_off18); set => WriteUInt16(_off18, value); }
+
+        private const int _off19 = 0x46;
+        public ushort EventParam { get => ReadUInt16(_off19); set => WriteUInt16(_off19, value); }
+
+        private const int _off20 = 0x48;
+        public int Field48 { get => ReadInt32(_off20); set => WriteInt32(_off20, value); }
+
+        private const int _off21 = 0x4C;
+        public int Unused4C { get => ReadInt32(_off21); set => WriteInt32(_off21, value); }
+
+        private const int _off22 = 0x50;
+        public int Unused50 { get => ReadInt32(_off22); set => WriteInt32(_off22, value); }
+
+        private const int _off23 = 0x54; // NodeRef*
+        public IntPtr NodeRef { get => ReadPointer(_off23); set => WritePointer(_off23, value); }
+
+        private const int _off24 = 0x58; // byte[12]
+        public ByteArray NodeNameRest { get; }
+
+        private const int _off25 = 0x64; // CameraSequenceKeyframe*
+        public IntPtr Next { get => ReadPointer(_off25); set => WritePointer(_off25, value); }
+
+        private const int _off26 = 0x68; // CameraSequenceKeyframe*
+        public IntPtr Prev { get => ReadPointer(_off26); set => WritePointer(_off26, value); }
+
+        private const int _off27 = 0x6C;
+        public byte Index { get => ReadByte(_off27); set => WriteByte(_off27, value); }
+
+        private const int _off28 = 0x6D;
+        public byte Padding6D { get => ReadByte(_off28); set => WriteByte(_off28, value); }
+
+        private const int _off29 = 0x6E;
+        public ushort Padding6E { get => ReadUInt16(_off29); set => WriteUInt16(_off29, value); }
+
+        public CameraSequenceKeyframe(Memory memory, int address) : base(memory, address)
+        {
+            NodeNameRest = new ByteArray(memory, address + _off24, 12);
+        }
+
+        public CameraSequenceKeyframe(Memory memory, IntPtr address) : base(memory, address)
+        {
+            NodeNameRest = new ByteArray(memory, address + _off24, 12);
         }
     }
 }

@@ -433,7 +433,7 @@ namespace MphRead
     public readonly struct CameraSequenceHeader
     {
         public readonly ushort Count;
-        public readonly byte SomeId;
+        public readonly byte Version;
         // these fields aren't used in ReadCamSeqData, which is probably the only place this struct is read
         public readonly byte Padding3;
         public readonly uint Padding4;
@@ -457,9 +457,12 @@ namespace MphRead
         public readonly byte Field34; // entity transform boolean
         public readonly byte Padding35;
         public readonly ushort Padding36;
-        public readonly uint Entity1;
-        public readonly uint Entity2;
-        public readonly uint MessageTarget;
+        public readonly ushort Entity1Type;
+        public readonly ushort Entity1Id;
+        public readonly ushort Entity2Type;
+        public readonly ushort Entity2Id;
+        public readonly ushort MessageTargetType;
+        public readonly ushort MessageTargetId;
         public readonly ushort MessageId;
         public readonly ushort MessageParam;
         public readonly Fixed Field48; // speed?

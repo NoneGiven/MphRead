@@ -8,13 +8,13 @@ namespace MphRead.Formats
     public class CameraSequence
     {
         public string Name { get; }
-        public byte SomeId { get; }
+        public byte Version { get; }
         public IReadOnlyList<CameraSequenceKeyframe> Keyframes { get; }
 
         public CameraSequence(string name, CameraSequenceHeader header, IReadOnlyList<CameraSequenceKeyframe> keyframes)
         {
             Name = name.Replace(".bin", "");
-            SomeId = header.SomeId;
+            Version = header.Version;
             Keyframes = keyframes;
         }
 
