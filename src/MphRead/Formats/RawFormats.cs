@@ -464,7 +464,7 @@ namespace MphRead
         public readonly ushort MessageTargetId;
         public readonly ushort MessageId;
         public readonly ushort MessageParam;
-        public readonly Fixed Easing;
+        public readonly Fixed Easing; // always 0, 4096, or 4120 (1.00585938)
         public readonly uint Unused4C;
         public readonly uint Unused50;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
