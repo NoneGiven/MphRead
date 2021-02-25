@@ -14,6 +14,7 @@ namespace MphRead.Memory
             public static readonly int EntityListHead = 0x20E3EE0;
             public static readonly int FrameCount = 0x20D94FC;
             public static readonly int PlayerUA = 0x20DB180;
+            public static readonly int CamSeqData = 0x21335E0;
         }
 
         [DllImport("kernel32.dll")]
@@ -41,7 +42,7 @@ namespace MphRead.Memory
 
         public static void Start()
         {
-            new Memory(Process.GetProcessById(27556)).Run();
+            new Memory(Process.GetProcessById(15480)).Run();
             /*var procs = Process.GetProcessesByName("NO$GBA").ToList();
             foreach (Process process in procs)
             {
@@ -59,7 +60,7 @@ namespace MphRead.Memory
 
         private void Run()
         {
-            _baseAddress = new IntPtr(0x9997100);
+            _baseAddress = new IntPtr(0x9991100);
             Task.Run(async () =>
             {
                 // 0x137A9C Cretaphid 1 crystal
@@ -70,13 +71,18 @@ namespace MphRead.Memory
                 {
                     RefreshMemory();
                     GetEntities();
-                    var beams = _entities.Where(e => e.EntityType == EntityType.BeamProjectile).ToList();
+                    //var beams = _entities.Where(e => e.EntityType == EntityType.BeamProjectile).ToList();
                     //byte[] weapon = new byte[0xF0];
                     //for (int i = 0; i < 0xF0; i++)
                     //{
                     //    weapon[i] = _buffer[0x137C7C + i];
                     //}
                     //Test.DumpWeaponInfo(Test.ParseWeaponInfo(1, weapon)[0]);
+                    var camSeqs = new IntPtrArray(this, Addresses.CamSeqData, 175);
+                    var scanIntro = new CameraSequence(this, camSeqs[5]);
+                    var keyframe0 = new CameraSequenceKeyframe(this, scanIntro.Keyframes);
+                    var keyframe1 = new CameraSequenceKeyframe(this, keyframe0.Next);
+                    var keyframe2 = new CameraSequenceKeyframe(this, keyframe1.Next);
                     await Task.Delay(15);
                 }
             }).GetAwaiter().GetResult();

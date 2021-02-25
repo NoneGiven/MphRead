@@ -5,7 +5,7 @@ namespace MphRead.Entities
 {
     public class CameraSequenceEntity : EntityBase
     {
-        private readonly CameraSequenceEntityData _data;
+        public CameraSequenceEntityData Data { get; }
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0x69, 0xB4).AsVector4();
 
         public CameraSequence Sequence { get; }
@@ -15,16 +15,16 @@ namespace MphRead.Entities
 
         public CameraSequenceEntity(CameraSequenceEntityData data) : base(EntityType.CameraSequence)
         {
-            _data = data;
+            Data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
             AddPlaceholderModel();
-            byte id = _data.Id;
-            CameraSequence? sequence = _sequenceData[id];
+            byte seqId = data.SequenceId;
+            CameraSequence? sequence = _sequenceData[seqId];
             if (sequence == null)
             {
-                sequence = CameraSequence.Load(id);
-                _sequenceData[id] = sequence;
+                sequence = CameraSequence.Load(seqId);
+                _sequenceData[seqId] = sequence;
             }
             Sequence = sequence;
         }

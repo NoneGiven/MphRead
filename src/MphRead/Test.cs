@@ -224,22 +224,17 @@ namespace MphRead
                         {
                             CameraSequenceEntityData data = ((Entity<CameraSequenceEntityData>)entity).Data;
                             var entityClass = new CameraSequenceEntity(data);
-                            if (ids.Contains(entityClass.Id))
+                            if (ids.Contains(data.SequenceId))
                             {
                                 continue;
                             }
-                            ids.Add(entityClass.Id);
-                            if (entityClass.Sequence.Version == 9)
+                            ids.Add(data.SequenceId);
+                            foreach (CameraSequenceKeyframe frame in entityClass.Sequence.Keyframes)
                             {
-                                foreach (CameraSequenceKeyframe frame in entityClass.Sequence.Keyframes)
+                                if (frame.Easing.Value != 0 && frame.Easing.Value != 4096 && frame.Easing.Value != 4120)
                                 {
-                                    Console.WriteLine($"{frame.Entity1Type} {frame.Entity1Id}");
-                                    Console.WriteLine($"{frame.Entity2Type} {frame.Entity2Id}");
-                                    Console.WriteLine($"{frame.MessageTargetType} {frame.MessageTargetId}");
-                                    Console.WriteLine();
+                                    Console.WriteLine(frame.Easing);
                                 }
-                                Console.WriteLine("-------------------------------------------------------------");
-                                Console.WriteLine();
                             }
                             Nop();
                         }

@@ -3007,6 +3007,10 @@ namespace MphRead
                     _sb.Append($" ({obj.Data.EffectId}, {Metadata.Effects[(int)obj.Data.EffectId].Name})");
                 }
             }
+            else if (entity is CameraSequenceEntity cam)
+            {
+                _sb.Append($" (ID {cam.Data.SequenceId})");
+            }
             _sb.AppendLine();
             _sb.AppendLine($"Position ({entity.Position.X}, {entity.Position.Y}, {entity.Position.Z})");
             _sb.AppendLine($"Rotation ({entity.Rotation.X}, {entity.Rotation.Y}, {entity.Rotation.Z})");

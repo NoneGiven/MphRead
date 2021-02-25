@@ -4945,10 +4945,10 @@ namespace MphRead.Memory
         public int FadeOutTime { get => ReadInt32(_off7); set => WriteInt32(_off7, value); }
 
         private const int _off8 = 0x30;
-        public byte FadeInType { get => ReadByte(_off8); set => WriteByte(_off8, value); }
+        public FadeType FadeInType { get => (FadeType)ReadByte(_off8); set => WriteByte(_off8, (byte)value); }
 
         private const int _off9 = 0x31;
-        public byte FadeOutType { get => ReadByte(_off9); set => WriteByte(_off9, value); }
+        public FadeType FadeOutType { get => (FadeType)ReadByte(_off9); set => WriteByte(_off9, (byte)value); }
 
         private const int _off10 = 0x32;
         public byte Field32 { get => ReadByte(_off10); set => WriteByte(_off10, value); }
@@ -4981,7 +4981,7 @@ namespace MphRead.Memory
         public ushort EventParam { get => ReadUInt16(_off19); set => WriteUInt16(_off19, value); }
 
         private const int _off20 = 0x48;
-        public int Field48 { get => ReadInt32(_off20); set => WriteInt32(_off20, value); }
+        public int Easing { get => ReadInt32(_off20); set => WriteInt32(_off20, value); }
 
         private const int _off21 = 0x4C;
         public int Unused4C { get => ReadInt32(_off21); set => WriteInt32(_off21, value); }

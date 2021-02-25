@@ -434,7 +434,6 @@ namespace MphRead
     {
         public readonly ushort Count;
         public readonly byte Version;
-        // these fields aren't used in ReadCamSeqData, which is probably the only place this struct is read
         public readonly byte Padding3;
         public readonly uint Padding4;
     }
@@ -465,7 +464,7 @@ namespace MphRead
         public readonly ushort MessageTargetId;
         public readonly ushort MessageId;
         public readonly ushort MessageParam;
-        public readonly Fixed Field48; // speed?
+        public readonly Fixed Easing;
         public readonly uint Unused4C;
         public readonly uint Unused50;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]

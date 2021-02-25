@@ -776,7 +776,7 @@ namespace MphRead
     public readonly struct CameraSequenceEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly byte Id;
+        public readonly byte SequenceId;
         public readonly byte Field25;
         public readonly byte Loop;
         public readonly byte Field27;
