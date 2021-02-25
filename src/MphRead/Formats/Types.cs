@@ -30,7 +30,8 @@ namespace MphRead
         Plane = 4,
         Particle = 5,
         TrailSingle = 6,
-        TrailMulti = 7
+        TrailMulti = 7,
+        TrailStack = 8
     }
 
     public class RenderItem
@@ -61,7 +62,8 @@ namespace MphRead
         public Vector4? OverrideColor { get; set; }
         public Vector4? PaletteOverride { get; set; }
         public Vector3[] Points { get; set; }
-        public int PointCount { get; set; } // only needed for multi-segment trails
+        // number of segments for morph ball trail, or total for other multi-segment trails
+        public int TrailCount { get; set; }
         public float ScaleS { get; set; }
         public float ScaleT { get; set; }
 

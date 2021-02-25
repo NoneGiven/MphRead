@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTK.Mathematics;
@@ -42,9 +43,24 @@ namespace MphRead.Entities
         public bool Shoot { get; set; }
         public bool Bomb { get; set; }
 
+        public static int PlayerCount { get; private set; }
+        public int Slot { get; private set; }
+        private const int _maxPlayers = 4;
+        private const int _mbTrailSegments = 9;
+        private static readonly Matrix4[,] _mbTrailMatrices = new Matrix4[_maxPlayers, _mbTrailSegments];
+        private static readonly int[,] _mbTrailAlphas = new int[_maxPlayers, _mbTrailSegments];
+        private static readonly int[] _mbTrailIndices = new int[_maxPlayers];
+        private ModelInstance? _trailModel = null;
+        private int _bindingId = 0;
+
+        public Vector3 PrevPosition1 { get; private set; }
+        public Vector3 PrevPosition2 { get; private set; }
+
         public PlayerEntity(Hunter hunter, int recolor = 0, Vector3? position = null) : base(EntityType.Player)
         {
             Hunter = hunter;
+            Slot = PlayerCount++;
+            Debug.Assert(Slot < _maxPlayers);
             BombMax = 0;
             if (Hunter == Hunter.Samus || Hunter == Hunter.Sylux)
             {
@@ -58,6 +74,7 @@ namespace MphRead.Entities
             {
                 Position = position.Value;
             }
+            PrevPosition2 = PrevPosition2 = Position;
             Recolor = recolor;
             // todo: lod1
             IReadOnlyList<string> models = Metadata.HunterModels[Hunter];
@@ -101,16 +118,29 @@ namespace MphRead.Entities
             _light1Color = scene.Light1Color;
             _light2Vector = scene.Light2Vector;
             _light2Color = scene.Light2Color;
+            if (Hunter == Hunter.Samus)
+            {
+                _trailModel = Read.GetModelInstance("trail");
+                Material material = _trailModel.Model.Materials[0];
+                _bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
+            }
+            ResetMorphBallTrail();
         }
 
         public override bool Process(Scene scene)
         {
+            PrevPosition2 = PrevPosition1;
+            PrevPosition1 = Position;
             UpdateLightSources(scene);
             if (_respawnTimer > 0)
             {
                 _respawnTimer--;
             }
             UpdateModels();
+            if (Hunter == Hunter.Samus && scene.FrameCount % 2 == 0)
+            {
+                UpdateMorphBallTrail();
+            }
             if (_frozen)
             {
                 // skip incrementing animation frames
@@ -197,6 +227,11 @@ namespace MphRead.Entities
             // todo: bomb cooldown/refill stuff
         }
 
+        public override void Destroy(Scene scene)
+        {
+            _trailModel = null;
+        }
+
         private void UpdateModels()
         {
             for (int i = 0; i < _models.Count; i++)
@@ -222,6 +257,10 @@ namespace MphRead.Entities
             else
             {
                 base.GetDrawInfo(scene);
+                if (_altForm && Hunter == Hunter.Samus)
+                {
+                    DrawMorphBallTrail(scene);
+                }
             }
         }
 
@@ -483,6 +522,108 @@ namespace MphRead.Entities
                 return product;
             }
             return base.GetTexcoordMatrix(inst, material, materialId, node, scene);
+        }
+
+        private void ResetMorphBallTrail()
+        {
+            for (int i = 0; i < _mbTrailSegments; i++)
+            {
+                _mbTrailAlphas[Slot, i] = 0;
+            }
+            _mbTrailIndices[Slot] = 0;
+        }
+
+        private void UpdateMorphBallTrail()
+        {
+            for (int i = 0; i < _mbTrailSegments; i++)
+            {
+                int alpha = _mbTrailAlphas[Slot, i] - 3;
+                if (alpha < 0)
+                {
+                    alpha = 0;
+                }
+                _mbTrailAlphas[Slot, i] = alpha;
+            }
+            if (_altForm)
+            {
+                // todo: use actual speed value and remove previous positions (and the fx32 value should be 1269)
+                Vector3 row0 = Transform.Row0.Xyz;
+                float hSpeed = (PrevPosition2.WithY(0) - Position.WithY(0)).Length;
+                if (hSpeed >= Fixed.ToFloat(600) && Vector3.Dot(Vector3.UnitY, row0) < 0.5f)
+                {
+                    Vector3 cross = Vector3.Cross(row0, Vector3.UnitY).Normalized();
+                    var cross2 = Vector3.Cross(cross, row0);
+                    int index = _mbTrailIndices[Slot];
+                    _mbTrailAlphas[Slot, index] = 25;
+                    _mbTrailMatrices[Slot, index] = new Matrix4(
+                        row0.X, row0.Y, row0.Z, 0,
+                        cross2.X, cross2.Y, cross2.Z, 0,
+                        cross.X, cross.Y, cross.Z, 0,
+                        Position.X, Position.Y, Position.Z, 1
+                    );
+                    _mbTrailIndices[Slot] = (index + 1) % _mbTrailSegments;
+                }
+            }
+        }
+
+        private void DrawMorphBallTrail(Scene scene)
+        {
+            Debug.Assert(_trailModel != null);
+            Material material = _trailModel.Model.Materials[0];
+            Debug.Assert(_trailModel.Model.Recolors[0].Textures[material.TextureId].Width == 32);
+            float[] matrixStack = ArrayPool<float>.Shared.Rent(16 * _mbTrailSegments);
+            for (int i = 0; i < _mbTrailSegments; i++)
+            {
+                Matrix4 matrix = _mbTrailMatrices[Slot, i];
+                matrixStack[i * 16] = matrix.Row0.X;
+                matrixStack[i * 16 + 1] = matrix.Row0.Y;
+                matrixStack[i * 16 + 2] = matrix.Row0.Z;
+                matrixStack[i * 16 + 3] = matrix.Row0.W;
+                matrixStack[i * 16 + 4] = matrix.Row1.X;
+                matrixStack[i * 16 + 5] = matrix.Row1.Y;
+                matrixStack[i * 16 + 6] = matrix.Row1.Z;
+                matrixStack[i * 16 + 7] = matrix.Row1.W;
+                matrixStack[i * 16 + 8] = matrix.Row2.X;
+                matrixStack[i * 16 + 9] = matrix.Row2.Y;
+                matrixStack[i * 16 + 10] = matrix.Row2.Z;
+                matrixStack[i * 16 + 11] = matrix.Row2.W;
+                matrixStack[i * 16 + 12] = matrix.Row3.X;
+                matrixStack[i * 16 + 13] = matrix.Row3.Y;
+                matrixStack[i * 16 + 14] = matrix.Row3.Z;
+                matrixStack[i * 16 + 15] = matrix.Row3.W;
+            }
+            int count = 0;
+            int index = _mbTrailIndices[Slot];
+            Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(8 * _mbTrailSegments);
+            for (int i = 0; i < _mbTrailSegments; i++)
+            {
+                // going backwards with wrap-around
+                int mtxId1 = index - 1 - i + (index - 1 - i < 0 ? 9 : 0);
+                int mtxId2 = mtxId1 - 1 + (mtxId1 - 1 < 0 ? 9 : 0);
+                int alpha1 = _mbTrailAlphas[Slot, mtxId1];
+                int alpha2 = _mbTrailAlphas[Slot, mtxId2];
+                if (alpha1 > 0 && alpha2 > 0)
+                {
+                    float uvS1 = (31 - alpha1) / 32f;
+                    float uvS2 = (31 - alpha2) / 32f;
+                    uvsAndVerts[i * 8] = new Vector3(uvS1, 0, mtxId1);
+                    uvsAndVerts[i * 8 + 1] = new Vector3(0, 0.375f, 0);
+                    uvsAndVerts[i * 8 + 2] = new Vector3(uvS1, 1, mtxId1);
+                    uvsAndVerts[i * 8 + 3] = new Vector3(0, -0.375f, 0);
+                    uvsAndVerts[i * 8 + 4] = new Vector3(uvS2, 1, mtxId2);
+                    uvsAndVerts[i * 8 + 5] = new Vector3(0, -0.375f, 0);
+                    uvsAndVerts[i * 8 + 6] = new Vector3(uvS2, 0, mtxId2);
+                    uvsAndVerts[i * 8 + 7] = new Vector3(0, 0.375f, 0);
+                    count++;
+                }
+            }
+            if (count > 0)
+            {
+                var color = new Vector3(1, 27 / 31f, 11 / 31f);
+                scene.AddRenderItem(RenderItemType.TrailStack, scene.GetNextPolygonId(), color, material.XRepeat, material.YRepeat,
+                    material.ScaleS, material.ScaleT, _mbTrailSegments, matrixStack, uvsAndVerts, count, _bindingId);
+            }
+            ArrayPool<float>.Shared.Return(matrixStack);
         }
     }
 }

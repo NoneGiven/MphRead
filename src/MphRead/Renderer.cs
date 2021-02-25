@@ -1609,7 +1609,7 @@ namespace MphRead
 
         // for effects/trails
         public void AddRenderItem(RenderItemType type, float alpha, int polygonId, Vector3 color, RepeatMode xRepeat, RepeatMode yRepeat,
-            float scaleS, float scaleT, Matrix4 transform, Vector3[] uvsAndVerts, int bindingId, int pointCount = 8)
+            float scaleS, float scaleT, Matrix4 transform, Vector3[] uvsAndVerts, int bindingId, int trailCount = 8)
         {
             RenderItem item = GetRenderItem();
             item.Type = type;
@@ -1639,7 +1639,48 @@ namespace MphRead
             item.Points = uvsAndVerts;
             item.ScaleS = scaleS;
             item.ScaleT = scaleT;
-            item.PointCount = pointCount;
+            item.TrailCount = trailCount;
+            AddRenderItem(item);
+        }
+
+        // for Morph Ball trails
+        public void AddRenderItem(RenderItemType type, int polygonId, Vector3 color, RepeatMode xRepeat, RepeatMode yRepeat, float scaleS,
+            float scaleT, int matrixStackCount, IReadOnlyList<float> matrixStack, Vector3[] uvsAndVerts, int segmentCount, int bindingId)
+        {
+            RenderItem item = GetRenderItem();
+            item.Type = type;
+            item.PolygonId = polygonId;
+            item.Alpha = 1;
+            item.PolygonMode = PolygonMode.Modulate;
+            item.RenderMode = RenderMode.Translucent;
+            item.CullingMode = CullingMode.Neither;
+            item.Wireframe = false;
+            item.Lighting = false;
+            item.Diffuse = color;
+            item.Ambient = Vector3.Zero;
+            item.Specular = Vector3.Zero;
+            item.Emission = Vector3.Zero;
+            item.LightInfo = LightInfo.Zero;
+            item.TexgenMode = TexgenMode.None;
+            item.XRepeat = xRepeat;
+            item.YRepeat = yRepeat;
+            item.HasTexture = true;
+            item.TextureBindingId = bindingId;
+            item.TexcoordMatrix = Matrix4.Identity;
+            item.Transform = Matrix4.Identity;
+            item.ListId = 0;
+            Debug.Assert(matrixStack.Count >= 16 * matrixStackCount);
+            item.MatrixStackCount = matrixStackCount;
+            for (int i = 0; i < matrixStack.Count; i++)
+            {
+                item.MatrixStack[i] = matrixStack[i];
+            }
+            item.OverrideColor = null;
+            item.PaletteOverride = null;
+            item.Points = uvsAndVerts;
+            item.ScaleS = scaleS;
+            item.ScaleT = scaleT;
+            item.TrailCount = segmentCount;
             AddRenderItem(item);
         }
 
@@ -1947,6 +1988,10 @@ namespace MphRead
             {
                 RenderTrailMulti(item);
             }
+            else if (item.Type == RenderItemType.TrailStack)
+            {
+                RenderTrailStack(item);
+            }
         }
 
         private void RenderBox(Vector3[] verts)
@@ -2159,9 +2204,9 @@ namespace MphRead
 
         private void RenderTrailMulti(RenderItem item)
         {
-            Debug.Assert(item.PointCount >= 4 && item.PointCount % 2 == 0);
+            Debug.Assert(item.TrailCount >= 4 && item.TrailCount % 2 == 0);
             GL.Begin(PrimitiveType.QuadStrip);
-            for (int i = 0; i < item.PointCount; i += 2)
+            for (int i = 0; i < item.TrailCount; i += 2)
             {
                 Vector3 texcoord = item.Points[i];
                 Vector3 vertex = item.Points[i + 1];
@@ -2169,6 +2214,23 @@ namespace MphRead
                 GL.Vertex3(vertex);
             }
             GL.End();
+        }
+
+        private void RenderTrailStack(RenderItem item)
+        {
+            for (int i = 0; i < item.TrailCount; i++)
+            {
+                GL.Begin(PrimitiveType.Quads);
+                GL.TexCoord3(item.Points[i * 8]);
+                GL.Vertex3(item.Points[i * 8 + 1]);
+                GL.TexCoord3(item.Points[i * 8 + 2]);
+                GL.Vertex3(item.Points[i * 8 + 3]);
+                GL.TexCoord3(item.Points[i * 8 + 4]);
+                GL.Vertex3(item.Points[i * 8 + 5]);
+                GL.TexCoord3(item.Points[i * 8 + 6]);
+                GL.Vertex3(item.Points[i * 8 + 7]);
+                GL.End();
+            }
         }
 
         private void DoMaterial(RenderItem item)
