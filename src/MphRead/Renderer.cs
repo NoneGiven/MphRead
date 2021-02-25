@@ -2942,11 +2942,12 @@ namespace MphRead
             }
             else if (entity is TriggerVolumeEntity trigger)
             {
-                _sb.Append($" ({trigger.Data.Subtype})");
+                _sb.Append($" ({trigger.Data.Subtype}");
                 if (trigger.Data.Subtype == TriggerType.Threshold)
                 {
-                    _sb.Append($" x{trigger.Data.TriggerThreshold})");
+                    _sb.Append($" x{trigger.Data.TriggerThreshold}");
                 }
+                _sb.Append(')');
                 _sb.AppendLine();
                 _sb.Append($"Parent: {trigger.Data.ParentEvent}");
                 if (trigger.Data.ParentEvent != Message.None && TryGetEntity(trigger.Data.ParentId, out EntityBase? parent))
