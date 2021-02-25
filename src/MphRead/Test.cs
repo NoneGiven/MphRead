@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using MphRead.Effects;
+using MphRead.Entities;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
@@ -210,6 +211,35 @@ namespace MphRead
         //}
 
         public static void TestCameraSequences()
+        {
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                if (meta.Value.EntityPath != null)
+                {
+                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
+                    foreach (Entity entity in entities)
+                    {
+                        if (entity.Type == EntityType.CameraSequence)
+                        {
+                            CameraSequenceEntityData data = ((Entity<CameraSequenceEntityData>)entity).Data;
+                            var entityClass = new CameraSequenceEntity(data);
+                            if (entityClass.Name == "unit2_co_bit_intro")
+                            {
+                                foreach (CameraSequenceKeyframe frame in entityClass.Sequence.Keyframes)
+                                {
+                                    Console.WriteLine($"{frame.HoldTime.FloatValue} {frame.MoveTime.FloatValue}");
+                                    Console.WriteLine();
+                                }
+                            }
+                            Nop();
+                        }
+                    }
+                }
+            }
+            Nop();
+        }
+
+        public static void TestCameraSequenceFiles()
         {
             // todo: metadata for this
             foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Paths.FileSystem, "cameraEditor")))

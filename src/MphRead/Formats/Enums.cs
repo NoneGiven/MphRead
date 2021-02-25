@@ -137,6 +137,17 @@ namespace MphRead
         Burn = 4
     }
 
+    public enum FadeType : byte
+    {
+        None = 0,
+        FadeInBlack = 1,
+        FadeOutBlack = 2,
+        FadeInWhite = 3,
+        FadeOutWhite = 4,
+        FadeOutInBlack = 5,
+        FadeOutInWhite = 6
+    }
+
     public enum ModelType
     {
         Generic,

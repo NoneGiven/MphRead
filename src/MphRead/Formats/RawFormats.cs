@@ -450,12 +450,12 @@ namespace MphRead
         public readonly uint Field14;
         public readonly uint Field18;
         public readonly uint Field1C;
-        public readonly uint Field20;
-        public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly byte Field30;
-        public readonly byte Field31;
+        public readonly Fixed MoveTime;
+        public readonly Fixed HoldTime;
+        public readonly Fixed FadeInTime;
+        public readonly Fixed FadeOutTime;
+        public readonly FadeType FadeInType;
+        public readonly FadeType FadeOutType;
         public readonly byte Field32;
         public readonly byte Field33;
         public readonly byte Field34;
@@ -463,10 +463,10 @@ namespace MphRead
         public readonly ushort Field36;
         public readonly uint Entity1;
         public readonly uint Entity2;
-        public readonly uint SomeEventTarget;
-        public readonly ushort SomeEventId;
-        public readonly ushort SomeEventParam;
-        public readonly Fixed Field48; // might be a Vector3Fx around this
+        public readonly uint MessageTarget;
+        public readonly ushort MessageId;
+        public readonly ushort MessageParam;
+        public readonly Fixed Field48;
         public readonly uint Field4C;
         public readonly uint Field50;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]

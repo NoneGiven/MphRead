@@ -6,8 +6,10 @@ namespace MphRead.Entities
     public class CameraSequenceEntity : EntityBase
     {
         private readonly CameraSequenceEntityData _data;
-        private readonly CameraSequence _sequence;
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0x69, 0xB4).AsVector4();
+
+        public CameraSequence Sequence { get; }
+        public string Name => Sequence.Name;
 
         private static readonly CameraSequence?[] _sequenceData = new CameraSequence[172]; // game uses 175, but the last three are tmp.bin
 
@@ -24,7 +26,7 @@ namespace MphRead.Entities
                 sequence = CameraSequence.Load(id);
                 _sequenceData[id] = sequence;
             }
-            _sequence = sequence;
+            Sequence = sequence;
         }
 
         public override void Initialize(Scene scene)

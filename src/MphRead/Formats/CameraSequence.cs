@@ -20,7 +20,7 @@ namespace MphRead.Formats
 
         public static CameraSequence Load(int id)
         {
-            Debug.Assert(id > 0 && id < 172);
+            Debug.Assert(id >= 0 && id < 172);
             return Load(_filenames[id]);
         }
 
