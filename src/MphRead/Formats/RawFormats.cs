@@ -442,33 +442,29 @@ namespace MphRead
     // size: 100 (100 bytes are read from the file into a 112-byte struct)
     public readonly struct CameraSequenceKeyframe
     {
-        public readonly uint Field0;
-        public readonly uint Field4;
-        public readonly uint Field8;
-        public readonly uint FieldC;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
+        public readonly Vector3Fx Position;
+        public readonly Vector3Fx ToTarget;
+        public readonly uint RollAngle;
+        public readonly uint Fov;
         public readonly Fixed MoveTime;
         public readonly Fixed HoldTime;
         public readonly Fixed FadeInTime;
         public readonly Fixed FadeOutTime;
         public readonly FadeType FadeInType;
         public readonly FadeType FadeOutType;
-        public readonly byte Field32;
-        public readonly byte Field33;
-        public readonly byte Field34;
-        public readonly byte Field35;
-        public readonly ushort Field36;
+        public readonly byte Field32; // flags 1
+        public readonly byte Field33; // flags 2
+        public readonly byte Field34; // entity transform boolean
+        public readonly byte Padding35;
+        public readonly ushort Padding36;
         public readonly uint Entity1;
         public readonly uint Entity2;
         public readonly uint MessageTarget;
         public readonly ushort MessageId;
         public readonly ushort MessageParam;
-        public readonly Fixed Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
+        public readonly Fixed Field48; // speed?
+        public readonly uint Unused4C;
+        public readonly uint Unused50;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;
     }

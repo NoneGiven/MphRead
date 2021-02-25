@@ -223,13 +223,8 @@ namespace MphRead
                         {
                             CameraSequenceEntityData data = ((Entity<CameraSequenceEntityData>)entity).Data;
                             var entityClass = new CameraSequenceEntity(data);
-                            if (entityClass.Name == "unit2_co_bit_intro")
+                            foreach (CameraSequenceKeyframe frame in entityClass.Sequence.Keyframes)
                             {
-                                foreach (CameraSequenceKeyframe frame in entityClass.Sequence.Keyframes)
-                                {
-                                    Console.WriteLine($"{frame.HoldTime.FloatValue} {frame.MoveTime.FloatValue}");
-                                    Console.WriteLine();
-                                }
                             }
                             Nop();
                         }
