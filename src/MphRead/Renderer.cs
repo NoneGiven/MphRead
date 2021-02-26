@@ -97,7 +97,6 @@ namespace MphRead
         private int _fogOffset = 0;
         private int _fogSlope = 0;
         private Color4 _clearColor = new Color4(0f, 0f, 0f, 1f);
-        private Color4 _currentClearColor = new Color4(0f, 0f, 0f, 1f);
         private float _farClip = 0;
         private bool _useClip = false;
         private float _killHeight = 0f;
@@ -193,7 +192,7 @@ namespace MphRead
             _fogSlope = meta.FogSlope;
             if (meta.ClearFog && meta.FirstHunt)
             {
-                _currentClearColor = _clearColor = new Color4(_fogColor.X, _fogColor.Y, _fogColor.Z, _fogColor.W);
+                _clearColor = new Color4(_fogColor.X, _fogColor.Y, _fogColor.Z, _fogColor.W);
             }
             _killHeight = meta.KillHeight;
             _farClip = meta.FarClip;
@@ -2009,7 +2008,6 @@ namespace MphRead
                 _fadeColor = 0;
                 _fadeTarget = 0;
                 _currentFade = 0;
-                _currentClearColor = _clearColor;
                 _fadeStart = 0;
                 _fadeLength = 0;
             }
@@ -2039,6 +2037,7 @@ namespace MphRead
 
         private void UpdateFade()
         {
+            Color4 clearColor = _clearColor;
             if (_fadeType != FadeType.None)
             {
                 float percent = (_elapsedTime - _fadeStart) / _fadeLength;
@@ -2047,15 +2046,15 @@ namespace MphRead
                     percent = 1;
                 }
                 _currentFade = _fadeColor + (_fadeTarget - _fadeColor) * percent;
-                _currentClearColor = new Color4(_currentClearColor.R + _currentFade, _currentClearColor.G + _currentFade,
-                    _currentClearColor.B + _currentFade, _currentClearColor.A);
+                clearColor = new Color4(_clearColor.R + _currentFade, _clearColor.G + _currentFade,
+                    _clearColor.B + _currentFade, _clearColor.A);
                 if (percent == 1)
                 {
                     EndFade();
                 }
             }
             GL.Uniform1(_shaderLocations.FadeColor, _currentFade);
-            GL.ClearColor(_currentClearColor);
+            GL.ClearColor(clearColor);
         }
 
         private void EndFade()
@@ -2063,12 +2062,10 @@ namespace MphRead
             if (_fadeType == FadeType.FadeOutBlack)
             {
                 _currentFade = -1;
-                _currentClearColor = new Color4(0f, 0f, 0f, 1f);
             }
             else if (_fadeType == FadeType.FadeOutWhite)
             {
                 _currentFade = 1;
-                _currentClearColor = new Color4(1f, 1f, 1f, 1f);
             }
             else if (_fadeType == FadeType.FadeOutInBlack)
             {
@@ -2084,7 +2081,6 @@ namespace MphRead
                 _fadeColor = 0;
                 _fadeTarget = 0;
                 _currentFade = 0;
-                _currentClearColor = _clearColor;
                 _fadeStart = 0;
                 _fadeLength = 0;
             }
