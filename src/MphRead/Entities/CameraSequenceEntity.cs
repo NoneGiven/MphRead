@@ -107,8 +107,8 @@ namespace MphRead.Entities
             // current/prev/after/next
             var factorVec = new Vector4(
                 0,
-                (curFrame.Field32 & 1) == 0 ? 1 / 3f : 0,
-                (curFrame.Field33 & 1) == 0 ? 2 / 3f : 1,
+                (curFrame.PrevFrameInfluence & 1) == 0 ? 1 / 3f : 0,
+                (curFrame.AfterFrameInfluence & 1) == 0 ? 2 / 3f : 1,
                 1
             );
             float factorDot = Vector4.Dot(factorVec, moveVec);
@@ -121,7 +121,7 @@ namespace MphRead.Entities
             }
             if (hasNextFrame)
             {
-                if (((curFrame.Field32 | curFrame.Field33) & 2) != 0 && curFrame.MoveTime.FloatValue > 0)
+                if (((curFrame.PrevFrameInfluence | curFrame.AfterFrameInfluence) & 2) != 0 && curFrame.MoveTime.FloatValue > 0)
                 {
                     Vector3 curPos = curFrame.Position.ToFloatVector();
                     Vector3 curTarget = curFrame.ToTarget.ToFloatVector();
@@ -140,7 +140,7 @@ namespace MphRead.Entities
                     }
                     Vector3 prevPos;
                     Vector3 prevTarget;
-                    if (_keyframeIndex > 0 && hasPrevFrame && (curFrame.Field32 & 2) != 0 && prevFrame.MoveTime.FloatValue > 0)
+                    if (_keyframeIndex > 0 && hasPrevFrame && (curFrame.PrevFrameInfluence & 2) != 0 && prevFrame.MoveTime.FloatValue > 0)
                     {
                         float easing = 1 / 6f * curFrame.MoveTime.FloatValue * curFrame.Easing.FloatValue;
                         prevPos = prevFrame.Position.ToFloatVector();
@@ -168,7 +168,7 @@ namespace MphRead.Entities
                     }
                     Vector3 afterPos;
                     Vector3 afterTarget;
-                    if (hasAfterFrame && (curFrame.Field33 & 2) != 0 && nextFrame.MoveTime.FloatValue > 0)
+                    if (hasAfterFrame && (curFrame.AfterFrameInfluence & 2) != 0 && nextFrame.MoveTime.FloatValue > 0)
                     {
                         float easing = -1 / 6f * curFrame.MoveTime.FloatValue * nextFrame.Easing.FloatValue;
                         afterPos = afterFrame.Position.ToFloatVector();

@@ -451,9 +451,9 @@ namespace MphRead
         public readonly Fixed FadeOutTime;
         public readonly FadeType FadeInType;
         public readonly FadeType FadeOutType;
-        public readonly byte Field32; // flags 1
-        public readonly byte Field33; // flags 2
-        public readonly byte Field34; // entity transform boolean
+        public readonly byte PrevFrameInfluence; // flag bits 0/1
+        public readonly byte AfterFrameInfluence; // flag bits 0/1
+        public readonly byte UseEntityTransform;
         public readonly byte Padding35;
         public readonly ushort Padding36;
         public readonly ushort Entity1Type;

@@ -4951,13 +4951,13 @@ namespace MphRead.Memory
         public FadeType FadeOutType { get => (FadeType)ReadByte(_off9); set => WriteByte(_off9, (byte)value); }
 
         private const int _off10 = 0x32;
-        public byte Field32 { get => ReadByte(_off10); set => WriteByte(_off10, value); }
+        public byte PrevFrameInfluence { get => ReadByte(_off10); set => WriteByte(_off10, value); }
 
         private const int _off11 = 0x33;
-        public byte Field33 { get => ReadByte(_off11); set => WriteByte(_off11, value); }
+        public byte AfterFrameInfluence { get => ReadByte(_off11); set => WriteByte(_off11, value); }
 
         private const int _off12 = 0x34;
-        public byte Field34 { get => ReadByte(_off12); set => WriteByte(_off12, value); }
+        public byte UseEntityTransform { get => ReadByte(_off12); set => WriteByte(_off12, value); }
 
         private const int _off13 = 0x35;
         public byte Padding35 { get => ReadByte(_off13); set => WriteByte(_off13, value); }
