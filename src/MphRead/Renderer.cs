@@ -53,7 +53,7 @@ namespace MphRead
         private Vector3 _cameraFacing = -Vector3.UnitZ;
         private Vector3 _cameraUp = Vector3.UnitY;
         private Vector3 _cameraRight = Vector3.UnitX;
-        private float _cameraFov = MathHelper.DegreesToRadians(39);
+        private float _cameraFov = MathHelper.DegreesToRadians(78);
         private bool _leftMouse = false;
         private float _wheelOffset = 0;
         private bool _cutsceneActive = false;
@@ -61,6 +61,7 @@ namespace MphRead
         public bool AllowCameraMovement => !_cutsceneActive || (_frameAdvanceOn && !_advanceOneFrame);
         private Vector3 _priorCameraPos = Vector3.Zero;
         private Vector3 _priorCameraFacing = -Vector3.UnitZ;
+        private float _priorCameraFov = MathHelper.DegreesToRadians(78);
 
         private bool _showTextures = true;
         private bool _showColors = true;
@@ -785,8 +786,7 @@ namespace MphRead
             // todo: update this only when the viewport or camera values change
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
             float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
-            float fov = _cameraFov * 2;
-            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.0625f, _useClip ? _farClip : 10000f);
+            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(_cameraFov, aspect, 0.0625f, _useClip ? _farClip : 10000f);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref perspectiveMatrix);
 
             TransformCamera();
@@ -944,7 +944,7 @@ namespace MphRead
             }
         }
 
-        public void SetCamera(Vector3 position, Vector3 target, Vector3 up)
+        public void SetCamera(Vector3 position, Vector3 target, Vector3 up, float fov = 0)
         {
             _cameraMode = CameraMode.Roam;
             _cameraPosition = position;
@@ -952,6 +952,10 @@ namespace MphRead
             _cameraUp = up;
             _cameraRight = Vector3.Cross(_cameraFacing, _cameraUp);
             _cameraUp = Vector3.Cross(_cameraRight, _cameraFacing);
+            if (fov > 0)
+            {
+                _cameraFov = fov;
+            }
         }
 
         private const float _almostHalfPi = MathF.PI / 2 - 0.000001f;
@@ -977,6 +981,7 @@ namespace MphRead
                 _cutsceneActive = true;
                 _priorCameraPos = _cameraPosition;
                 _priorCameraFacing = _cameraFacing;
+                _priorCameraFov = _cameraFov;
             }
         }
 
@@ -989,6 +994,7 @@ namespace MphRead
                 _cameraFacing = _priorCameraFacing;
                 _cameraRight = Vector3.Cross(_cameraFacing, Vector3.UnitY);
                 _cameraUp = Vector3.Cross(_cameraRight, _cameraFacing);
+                _cameraFov = _priorCameraFov;
             }
         }
 

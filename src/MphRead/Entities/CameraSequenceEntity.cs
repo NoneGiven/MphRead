@@ -237,8 +237,9 @@ namespace MphRead.Entities
                 finalRoll = curFrame.Roll.FloatValue;
                 finalFov = curFrame.Fov.FloatValue;
             }
-            // todo: pass and use roll and FOV
-            scene.SetCamera(finalPosition, finalToTarget, Vector3.UnitY);
+            // todo: pass and use roll
+            finalFov = MathHelper.DegreesToRadians(finalFov * 2);
+            scene.SetCamera(finalPosition, finalToTarget, Vector3.UnitY, finalFov);
         }
 
         private void AddEntityPosition(CameraSequenceKeyframe keyframe, ref Vector3 vec1, ref Vector3 vec2)
