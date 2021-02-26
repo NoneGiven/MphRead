@@ -239,7 +239,8 @@ namespace MphRead.Entities
             }
             // todo: pass and use roll
             finalFov = MathHelper.DegreesToRadians(finalFov * 2);
-            scene.SetCamera(finalPosition, finalToTarget, Vector3.UnitY, finalFov);
+            finalRoll = MathHelper.DegreesToRadians(finalRoll);
+            scene.SetCamera(finalPosition, finalToTarget, finalFov, finalRoll);
         }
 
         private void AddEntityPosition(CameraSequenceKeyframe keyframe, ref Vector3 vec1, ref Vector3 vec2)
@@ -258,11 +259,6 @@ namespace MphRead.Entities
                 3 * pctSqr * inverse,
                 pctSqr * percent
             );
-        }
-
-        private Vector3 VecMultAdd(Vector3 vec1, Vector3 vec2, float factor)
-        {
-            return vec1 * factor + vec2;
         }
     }
 }

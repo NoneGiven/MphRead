@@ -944,12 +944,16 @@ namespace MphRead
             }
         }
 
-        public void SetCamera(Vector3 position, Vector3 target, Vector3 up, float fov = 0)
+        public void SetCamera(Vector3 position, Vector3 target, float fov = 0, float roll = 0)
         {
             _cameraMode = CameraMode.Roam;
             _cameraPosition = position;
             _cameraFacing = target;
-            _cameraUp = up;
+            _cameraUp = Vector3.UnitY;
+            if (roll > 0)
+            {
+                _cameraUp = (Matrix3.CreateRotationZ(roll) * _cameraUp).Normalized();
+            }
             _cameraRight = Vector3.Cross(_cameraFacing, _cameraUp);
             _cameraUp = Vector3.Cross(_cameraRight, _cameraFacing);
             if (fov > 0)
