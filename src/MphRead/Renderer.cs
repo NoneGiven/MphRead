@@ -55,6 +55,11 @@ namespace MphRead
         private Vector3 _cameraRight = Vector3.UnitX;
         private bool _leftMouse = false;
         private float _wheelOffset = 0;
+        private bool _cutsceneActive = false;
+        // ctodo: disallow if camera roll is not zero
+        public bool AllowCameraMovement => !_cutsceneActive || (_frameAdvanceOn && !_advanceOneFrame);
+        private Vector3 _priorCameraPos = Vector3.Zero;
+        private Vector3 _priorCameraFacing = -Vector3.UnitZ;
 
         private bool _showTextures = true;
         private bool _showColors = true;
@@ -959,8 +964,30 @@ namespace MphRead
                 MathF.Sin(angleV),
                 -(MathF.Cos(angleV) * MathF.Cos(angleH))
             ).Normalized();
-            _cameraRight = Vector3.Cross(_cameraFacing, Vector3.UnitY).Normalized();
-            _cameraUp = Vector3.Cross(_cameraRight, _cameraFacing).Normalized();
+            _cameraRight = Vector3.Cross(_cameraFacing, Vector3.UnitY);
+            _cameraUp = Vector3.Cross(_cameraRight, _cameraFacing);
+        }
+
+        public void StartCutscene()
+        {
+            if (!_cutsceneActive)
+            {
+                _cutsceneActive = true;
+                _priorCameraPos = _cameraPosition;
+                _priorCameraFacing = _cameraFacing;
+            }
+        }
+
+        public void EndCutscene()
+        {
+            if (_cutsceneActive)
+            {
+                _cutsceneActive = false;
+                _cameraPosition = _priorCameraPos;
+                _cameraFacing = _priorCameraFacing;
+                _cameraRight = Vector3.Cross(_cameraFacing, Vector3.UnitY);
+                _cameraUp = Vector3.Cross(_cameraRight, _cameraFacing);
+            }
         }
 
         // todo: effect limits for beam effects
@@ -2464,7 +2491,6 @@ namespace MphRead
 
         public void LookAt(Vector3 target)
         {
-            // ctodo: prevent during cutscene
             _cameraMode = CameraMode.Roam;
             _cameraPosition = target.AddZ(5);
             _cameraFacing = -Vector3.UnitZ;
@@ -2479,7 +2505,7 @@ namespace MphRead
 
         public void OnMouseMove(float deltaX, float deltaY)
         {
-            if (_leftMouse)
+            if (_leftMouse && AllowCameraMovement)
             {
                 if (_cameraMode == CameraMode.Pivot)
                 {
@@ -2497,7 +2523,7 @@ namespace MphRead
 
         public void OnMouseWheel(float offsetY)
         {
-            if (_cameraMode == CameraMode.Pivot)
+            if (_cameraMode == CameraMode.Pivot && AllowCameraMovement)
             {
                 float delta = _wheelOffset - offsetY;
                 _pivotDistance += delta / 1.5f;
@@ -2663,7 +2689,7 @@ namespace MphRead
                     _recording = !_recording;
                     _framesRecorded = 0;
                 }
-                else
+                else if (AllowCameraMovement)
                 {
                     ResetCamera();
                 }
@@ -2718,8 +2744,10 @@ namespace MphRead
                 Selection.OnKeyHeld(_keyboardState);
                 return;
             }
-            // ctodo: restrict when cutscene is playing
-            // --> if the cutscene is paused with frame advance, we should allow it, but not if there's non-zero roll
+            if (!AllowCameraMovement)
+            {
+                return;
+            }
             if (_cameraMode == CameraMode.Roam)
             {
                 float moveStep = _keyboardState.IsKeyDown(Keys.LeftShift) || _keyboardState.IsKeyDown(Keys.RightShift) ? 0.5f : 0.1f;

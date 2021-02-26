@@ -16,7 +16,7 @@ namespace MphRead.Entities
         private int _keyframeIndex = 0;
         private float _keyframeElapsed = 0;
 
-        private byte _entityFlags = 0;
+        //private byte _entityFlags = 0;
         private byte _sequenceFlags = 0;
 
         public CameraSequenceEntity(CameraSequenceEntityData data) : base(EntityType.CameraSequence)
@@ -47,6 +47,7 @@ namespace MphRead.Entities
             // todo: delay timer and other stuff at the entity level
             if (Active && (_sequenceFlags & 1) == 0 && Sequence.Keyframes.Count != 0)
             {
+                scene.StartCutscene();
                 CameraSequenceKeyframe curFrame = Sequence.Keyframes[_keyframeIndex];
                 float frameLength = curFrame.HoldTime.FloatValue + curFrame.MoveTime.FloatValue;
                 float fadeOutStart = frameLength - curFrame.FadeOutTime.FloatValue;
@@ -80,6 +81,7 @@ namespace MphRead.Entities
                         _keyframeIndex = 0;
                         _keyframeElapsed = 0;
                         Active = false;
+                        scene.EndCutscene();
                     }
                 }
             }
