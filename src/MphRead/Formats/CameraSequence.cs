@@ -21,7 +21,7 @@ namespace MphRead.Formats
         public static CameraSequence Load(int id)
         {
             Debug.Assert(id >= 0 && id < 172);
-            return Load(_filenames[id]);
+            return Load(Filenames[id]);
         }
 
         public static CameraSequence Load(string name)
@@ -34,7 +34,7 @@ namespace MphRead.Formats
             return new CameraSequence(name, header, Read.DoOffsets<CameraSequenceKeyframe>(bytes, Sizes.CameraSequenceHeader, header.Count));
         }
 
-        private static readonly IReadOnlyList<string> _filenames = new List<string>()
+        public static IReadOnlyList<string> Filenames { get; } = new List<string>()
         {
             /*   0 */ "unit1_land_intro.bin",
             /*   1 */ "unit2_land_intro.bin",
