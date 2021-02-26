@@ -99,7 +99,7 @@ namespace MphRead.Entities
             CameraSequenceKeyframe curFrame = Sequence.Keyframes[_keyframeIndex];
             float movePercent = 0;
             float moveElapsed = _keyframeElapsed - curFrame.HoldTime.FloatValue;
-            if (moveElapsed >= 0)
+            if (moveElapsed >= 0 && curFrame.MoveTime.FloatValue > 0)
             {
                 movePercent = moveElapsed / curFrame.MoveTime.FloatValue;
             }
