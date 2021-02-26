@@ -13,8 +13,8 @@ namespace MphRead.Entities
 
         private static readonly CameraSequence?[] _sequenceData = new CameraSequence[172]; // game uses 175, but the last three are tmp.bin
 
-        private readonly int _keyframeIndex = 0;
-        private readonly float _keyframeElapsed = 0;
+        private int _keyframeIndex = 0;
+        private float _keyframeElapsed = 0;
 
         private byte _entityFlags = 0;
         private byte _sequenceFlags = 0;
@@ -33,6 +33,7 @@ namespace MphRead.Entities
                 _sequenceData[seqId] = sequence;
             }
             Sequence = sequence;
+            Active = false;
         }
 
         public override void Initialize(Scene scene)
@@ -44,20 +45,33 @@ namespace MphRead.Entities
         public override bool Process(Scene scene)
         {
             // todo: delay timer and other stuff at the entity level
-            if ((_sequenceFlags & 1) != 0 || Sequence.Keyframes.Count == 0)
+            if (Active && (_sequenceFlags & 1) == 0 && Sequence.Keyframes.Count != 0)
             {
-                return true;
+                CameraSequenceKeyframe curFrame = Sequence.Keyframes[_keyframeIndex];
+                float frameLength = curFrame.HoldTime.FloatValue + curFrame.MoveTime.FloatValue;
+                CalculateFrameValues(scene);
+                // todo: messaging, fades, field2/field3 stuff
+                _keyframeElapsed += scene.FrameTime;
+                if (_keyframeElapsed >= frameLength)
+                {
+                    _keyframeElapsed -= frameLength;
+                    _keyframeIndex++;
+                    // todo: looping or ending
+                    if (_keyframeIndex >= Sequence.Keyframes.Count)
+                    {
+                        _keyframeIndex = 0;
+                        _keyframeElapsed = 0;
+                        Active = false;
+                    }
+                }
             }
-            CalculateFrameValues();
-            // sktodo: set camera values
-            // todo: messaging, fades, field2/field3 stuff
             // todo: player input restrictions, etc.
             return base.Process(scene);
         }
 
-        private void CalculateFrameValues()
+        private void CalculateFrameValues(Scene scene)
         {
-            // todo: use the roll and FOV (also set camera shake to 0 once that exists)
+            // todo: set camera shake to 0 once that exists
             Vector3 finalPosition;
             Vector3 finalToTarget;
             float finalRoll;
@@ -106,7 +120,7 @@ namespace MphRead.Entities
                     }
                     Vector3 prevPos;
                     Vector3 prevTarget;
-                    if (_keyframeIndex > 0 && (curFrame.Field32 & 2) != 0 && hasPrevFrame && prevFrame.MoveTime.FloatValue > 0)
+                    if (_keyframeIndex > 0 && hasPrevFrame && (curFrame.Field32 & 2) != 0 && prevFrame.MoveTime.FloatValue > 0)
                     {
                         float easing = 1 / 6f * curFrame.MoveTime.FloatValue * curFrame.Easing.FloatValue;
                         prevPos = prevFrame.Position.ToFloatVector();
@@ -203,6 +217,8 @@ namespace MphRead.Entities
                 finalRoll = curFrame.Roll.FloatValue;
                 finalFov = curFrame.Fov.FloatValue;
             }
+            // todo: pass and use roll and FOV
+            scene.SetCamera(finalPosition, finalToTarget + finalPosition, Vector3.UnitY);
         }
 
         private void AddEntityPosition(CameraSequenceKeyframe keyframe, ref Vector3 vec1, ref Vector3 vec2)

@@ -927,6 +927,16 @@ namespace MphRead
             }
         }
 
+        public void SetCamera(Vector3 position, Vector3 target, Vector3 up)
+        {
+            _cameraMode = CameraMode.Roam;
+            var lookAt = Matrix4.LookAt(position, target, up);
+            _cameraPosition = lookAt.Row3.Xyz;
+            lookAt.ExtractRotation().ToEulerAngles(out Vector3 rotation);
+            _angleX = MathHelper.RadiansToDegrees(rotation.X);
+            _angleY = MathHelper.RadiansToDegrees(rotation.Y);
+        }
+
         // todo: effect limits for beam effects
         // in-game: 64 effects, 96 elements, 200 particles
         private static readonly int _effectEntryMax = 100;
