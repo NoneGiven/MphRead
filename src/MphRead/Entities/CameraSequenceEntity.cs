@@ -218,12 +218,12 @@ namespace MphRead.Entities
                 finalFov = curFrame.Fov.FloatValue;
             }
             // todo: pass and use roll and FOV
-            scene.SetCamera(finalPosition, finalToTarget + finalPosition, Vector3.UnitY);
+            scene.SetCamera(finalPosition, finalToTarget, Vector3.UnitY);
         }
 
         private void AddEntityPosition(CameraSequenceKeyframe keyframe, ref Vector3 vec1, ref Vector3 vec2)
         {
-            // sktodo
+            // ctodo: entity position/tracking
         }
 
         private Vector4 GetVec4(float percent)
