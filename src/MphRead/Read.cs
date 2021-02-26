@@ -31,7 +31,7 @@ namespace MphRead
             Dictionary<string, Model> cache = firstHunt ? _fhModelCache : _modelCache;
             if (!cache.TryGetValue(name, out Model? model))
             {
-                model = GetModel(name, firstHunt: false);
+                model = GetModel(name, firstHunt);
                 if (model == null)
                 {
                     return null;

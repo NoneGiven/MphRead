@@ -49,8 +49,26 @@ namespace MphRead.Entities
             {
                 CameraSequenceKeyframe curFrame = Sequence.Keyframes[_keyframeIndex];
                 float frameLength = curFrame.HoldTime.FloatValue + curFrame.MoveTime.FloatValue;
+                float fadeOutStart = frameLength - curFrame.FadeOutTime.FloatValue;
                 CalculateFrameValues(scene);
-                // todo: messaging, fades, field2/field3 stuff
+                FadeType fadeType = FadeType.None;
+                float fadeTime = 0;
+                if (curFrame.FadeInType != FadeType.None && _keyframeElapsed <= 2 / 30f)
+                {
+                    fadeType = curFrame.FadeInType;
+                    fadeTime = curFrame.FadeInTime.FloatValue;
+                }
+                else if (curFrame.FadeOutType != FadeType.None
+                    && _keyframeElapsed >= fadeOutStart && _keyframeElapsed <= fadeOutStart + 2 / 30f)
+                {
+                    fadeType = curFrame.FadeOutType;
+                    fadeTime = curFrame.FadeOutTime.FloatValue;
+                }
+                if (fadeType != FadeType.None)
+                {
+                    scene.SetFade(fadeType, fadeTime, overwrite: false);
+                }
+                // todo: messaging, field2/field3 stuff
                 _keyframeElapsed += scene.FrameTime;
                 if (_keyframeElapsed >= frameLength)
                 {

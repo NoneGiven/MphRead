@@ -101,6 +101,7 @@ uniform vec4 pal_override_color;
 uniform float mat_alpha;
 uniform int mat_mode;
 uniform vec3[32] toon_table;
+uniform float fade_color;
 
 varying vec2 texcoord;
 varying vec4 color;
@@ -155,11 +156,9 @@ void main()
             // MPH fog table has min 0 and max 124
             density = (depth - fog_min) / (fog_max - fog_min) * 124.0 / 128.0;
         }
-        gl_FragColor = vec4((col * (1.0 - density) + fog_color * density).xyz, col.a);
+        col = vec4((col * (1.0 - density) + fog_color * density).xyz, col.a);
     }
-    else {
-        gl_FragColor = col;
-    }
+    gl_FragColor = col + vec4(fade_color, fade_color, fade_color, 0);
 }
 ";
     }
@@ -193,5 +192,6 @@ void main()
         public int TexgenMode { get; set; }
         public int MatrixStack { get; set; }
         public int ToonTable { get; set; }
+        public int FadeColor { get; set; }
     }
 }

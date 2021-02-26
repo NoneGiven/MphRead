@@ -90,6 +90,7 @@ namespace MphRead
         private int _fogOffset = 0;
         private int _fogSlope = 0;
         private Color4 _clearColor = new Color4(0f, 0f, 0f, 1f);
+        private Color4 _currentClearColor = new Color4(0f, 0f, 0f, 1f);
         private float _farClip = 0;
         private bool _useClip = false;
         private float _killHeight = 0f;
@@ -185,7 +186,7 @@ namespace MphRead
             _fogSlope = meta.FogSlope;
             if (meta.ClearFog && meta.FirstHunt)
             {
-                _clearColor = new Color4(_fogColor.X, _fogColor.Y, _fogColor.Z, _fogColor.W);
+                _currentClearColor = _clearColor = new Color4(_fogColor.X, _fogColor.Y, _fogColor.Z, _fogColor.W);
             }
             _killHeight = meta.KillHeight;
             _farClip = meta.FarClip;
@@ -315,6 +316,7 @@ namespace MphRead
             _shaderLocations.TexgenMode = GL.GetUniformLocation(_shaderProgramId, "texgen_mode");
             _shaderLocations.MatrixStack = GL.GetUniformLocation(_shaderProgramId, "mtx_stack");
             _shaderLocations.ToonTable = GL.GetUniformLocation(_shaderProgramId, "toon_table");
+            _shaderLocations.FadeColor = GL.GetUniformLocation(_shaderProgramId, "fade_color");
 
             GL.UseProgram(_shaderProgramId);
 
@@ -1925,6 +1927,7 @@ namespace MphRead
             UseRoomLights();
             GL.Uniform1(_shaderLocations.UseFog, _hasFog && _showFog ? 1 : 0);
             GL.Uniform1(_shaderLocations.ShowColors, _showColors ? 1 : 0);
+            UpdateFade();
         }
 
         private void UseRoomLights()
@@ -1945,6 +1948,107 @@ namespace MphRead
         {
             GL.Uniform3(_shaderLocations.Light2Vector, vector);
             GL.Uniform3(_shaderLocations.Light2Color, color);
+        }
+
+        private FadeType _fadeType = FadeType.None;
+        private float _fadeColor = 0;
+        private float _fadeTarget = 0;
+        private float _fadeStart = 0;
+        private float _fadeLength = 0;
+        private float _currentFade = 0;
+
+        public void SetFade(FadeType type, float length, bool overwrite)
+        {
+            if (!overwrite && _fadeType != FadeType.None)
+            {
+                return;
+            }
+            _fadeType = type;
+            if (type == FadeType.None)
+            {
+                _fadeType = type;
+                _fadeColor = 0;
+                _fadeTarget = 0;
+                _currentFade = 0;
+                _currentClearColor = _clearColor;
+                _fadeStart = 0;
+                _fadeLength = 0;
+            }
+            else if (type == FadeType.FadeInWhite)
+            {
+                _fadeColor = 1;
+                _fadeTarget = 0;
+            }
+            else if (type == FadeType.FadeInBlack)
+            {
+                _fadeColor = -1;
+                _fadeTarget = 0;
+            }
+            else if (type == FadeType.FadeOutWhite || type == FadeType.FadeOutInWhite)
+            {
+                _fadeColor = 0;
+                _fadeTarget = 1;
+            }
+            else if (type == FadeType.FadeOutBlack || type == FadeType.FadeOutInBlack)
+            {
+                _fadeColor = 0;
+                _fadeTarget = -1;
+            }
+            _fadeStart = _elapsedTime;
+            _fadeLength = length;
+        }
+
+        private void UpdateFade()
+        {
+            if (_fadeType != FadeType.None)
+            {
+                float percent = (_elapsedTime - _fadeStart) / _fadeLength;
+                if (percent > 1)
+                {
+                    percent = 1;
+                }
+                _currentFade = _fadeColor + (_fadeTarget - _fadeColor) * percent;
+                _currentClearColor = new Color4(_currentClearColor.R + _currentFade, _currentClearColor.G + _currentFade,
+                    _currentClearColor.B + _currentFade, _currentClearColor.A);
+                if (percent == 1)
+                {
+                    EndFade();
+                }
+            }
+            GL.Uniform1(_shaderLocations.FadeColor, _currentFade);
+            GL.ClearColor(_currentClearColor);
+        }
+
+        private void EndFade()
+        {
+            if (_fadeType == FadeType.FadeOutBlack)
+            {
+                _currentFade = -1;
+                _currentClearColor = new Color4(0f, 0f, 0f, 1f);
+            }
+            else if (_fadeType == FadeType.FadeOutWhite)
+            {
+                _currentFade = 1;
+                _currentClearColor = new Color4(1f, 1f, 1f, 1f);
+            }
+            else if (_fadeType == FadeType.FadeOutInBlack)
+            {
+                SetFade(FadeType.FadeInBlack, _fadeLength, overwrite: true);
+            }
+            else if (_fadeType == FadeType.FadeOutInWhite)
+            {
+                SetFade(FadeType.FadeInWhite, _fadeLength, overwrite: true);
+            }
+            else
+            {
+                _fadeType = FadeType.None;
+                _fadeColor = 0;
+                _fadeTarget = 0;
+                _currentFade = 0;
+                _currentClearColor = _clearColor;
+                _fadeStart = 0;
+                _fadeLength = 0;
+            }
         }
 
         private void RenderItem(RenderItem item)
