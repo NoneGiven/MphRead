@@ -443,8 +443,8 @@ namespace MphRead
     {
         public readonly Vector3Fx Position;
         public readonly Vector3Fx ToTarget;
-        public readonly uint RollAngle;
-        public readonly uint Fov;
+        public readonly Fixed Roll;
+        public readonly Fixed Fov;
         public readonly Fixed MoveTime;
         public readonly Fixed HoldTime;
         public readonly Fixed FadeInTime;

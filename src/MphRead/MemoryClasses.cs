@@ -4927,7 +4927,7 @@ namespace MphRead.Memory
         public Vector3 ToTarget { get => ReadVec3(_off1); set => WriteVec3(_off1, value); }
 
         private const int _off2 = 0x18;
-        public int RollAngle { get => ReadInt32(_off2); set => WriteInt32(_off2, value); }
+        public int Roll { get => ReadInt32(_off2); set => WriteInt32(_off2, value); }
 
         private const int _off3 = 0x1C;
         public int Fov { get => ReadInt32(_off3); set => WriteInt32(_off3, value); }

@@ -282,6 +282,15 @@ namespace MphRead
             return result;
         }
 
+        public static Vector3 Vec4MultMtx4x3(Vector4 vec, Matrix4x3 mat)
+        {
+            Vector3 result = Vector3.Zero;
+            result.X = vec.W * mat.M41 + vec.Z * mat.M31 + vec.X * mat.M11 + vec.Y * mat.M21;
+            result.Y = vec.W * mat.M42 + vec.Z * mat.M32 + vec.X * mat.M12 + vec.Y * mat.M22;
+            result.Z = vec.W * mat.M43 + vec.Z * mat.M33 + vec.X * mat.M13 + vec.Y * mat.M23;
+            return result;
+        }
+
         public static Matrix4x3 Concat43(Matrix4x3 first, Matrix4x3 second)
         {
             Matrix4x3 output = Matrix4x3.Zero;
