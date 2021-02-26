@@ -1243,7 +1243,6 @@ namespace MphRead
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
-                bool room = false;
                 if (meta.Value.EntityPath != null)
                 {
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
@@ -1254,10 +1253,6 @@ namespace MphRead
                             CameraSequenceEntityData data = ((Entity<CameraSequenceEntityData>)entity).Data;
                         }
                     }
-                }
-                if (room)
-                {
-                    Console.WriteLine();
                 }
             }
             Nop();
