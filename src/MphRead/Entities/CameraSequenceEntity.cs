@@ -11,7 +11,7 @@ namespace MphRead.Entities
         public CameraSequence Sequence { get; }
         public string Name => Sequence.Name;
 
-        private static readonly CameraSequence?[] _sequenceData = new CameraSequence[172]; // game uses 175, but the last three are tmp.bin
+        private static readonly CameraSequence?[] _sequenceData = new CameraSequence[199];
 
         private int _keyframeIndex = 0;
         private float _keyframeElapsed = 0;

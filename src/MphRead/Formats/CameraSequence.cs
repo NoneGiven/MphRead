@@ -20,7 +20,8 @@ namespace MphRead.Formats
 
         public static CameraSequence Load(int id)
         {
-            Debug.Assert(id >= 0 && id < 172);
+            // indices only go up to 171 in game, but we've added the 27 multiplayer intros
+            Debug.Assert(id >= 0 && id < 199);
             return Load(Filenames[id]);
         }
 
@@ -44,7 +45,7 @@ namespace MphRead.Formats
             /*   5 */ "unit2_co_scan_intro.bin",
             /*   6 */ "unit2_co_scan_outro.bin",
             /*   7 */ "unit2_co_bit_intro.bin",
-            /*   8 */ "unit2_c4_teleporter_intro.bin",
+            /*   8 */ "unit2_c4_teleporter_intro.bin",  // no file
             /*   9 */ "unit2_co_bit_outro.bin",
             /*  10 */ "unit2_co_helm_flyby.bin",
             /*  11 */ "unit2_rm1_artifact_intro.bin",
@@ -102,10 +103,10 @@ namespace MphRead.Formats
             /*  63 */ "unit2_rm4_panel_open_3.bin",
             /*  64 */ "unit2_rm4_cntlroom_open.bin",
             /*  65 */ "unit2_rm4_teleporter_active.bin",
-            /*  66 */ "unit2_rm6_teleporter_active.bin",
+            /*  66 */ "unit2_rm6_teleporter_active.bin", // no file
             /*  67 */ "unit1_rm2_rm3door_open.bin",
             /*  68 */ "unit1_rm2_c3door_open.bin",
-            /*  69 */ "unit1_rm3_lavademon_intro.bin",
+            /*  69 */ "unit1_rm3_lavademon_intro.bin", // no file
             /*  70 */ "unit1_rm3_magmaul_intro.bin",
             /*  71 */ "unit3_rm3_race1.bin",
             /*  72 */ "unit3_rm3_race1_fail.bin",
@@ -120,7 +121,7 @@ namespace MphRead.Formats
             /*  81 */ "unit4_rm5_artifact_intro.bin",
             /*  82 */ "unit3_rm2_door_unlock.bin",
             /*  83 */ "unit3_rm2_evac_end.bin",
-            /*  84 */ "unit1_rm3_forcefield_unlock.bin",
+            /*  84 */ "unit1_rm3_forcefield_unlock.bin", // duplicate of 78
             /*  85 */ "unit1_c0_weavel_outro.bin",
             /*  86 */ "unit3_rm1_sylux_preship.bin",
             /*  87 */ "unit1_rm1_mover_activate_layer3.bin",
@@ -142,7 +143,7 @@ namespace MphRead.Formats
             /* 103 */ "unit2_land_cockpit.bin",
             /* 104 */ "unit3_land_cockpit.bin",
             /* 105 */ "unit4_land_cockpit.bin",
-            /* 106 */ "unit1_land_cockpit.bin",
+            /* 106 */ "unit1_land_cockpit.bin", // duplicate of 102
             /* 107 */ "unit1_rm1_artifact_intro.bin",
             /* 108 */ "unit2_rm5_artifact_intro.bin",
             /* 109 */ "unit2_c7_forcefield_lock.bin",
@@ -158,8 +159,8 @@ namespace MphRead.Formats
             /* 119 */ "unit3_land_cockpit_takeoff.bin",
             /* 120 */ "unit4_land_cockpit_land.bin",
             /* 121 */ "unit4_land_cockpit_takeoff.bin",
-            /* 122 */ "unit1_land_cockpit_land.bin",
-            /* 123 */ "unit1_land_cockpit_takeoff.bin",
+            /* 122 */ "unit1_land_cockpit_land.bin", // duplicate of 114
+            /* 123 */ "unit1_land_cockpit_takeoff.bin", // duplicate of 115
             /* 124 */ "unit1_rm2_mover1_activate.bin",
             /* 125 */ "unit1_rm2_mover2_activate.bin",
             /* 126 */ "unit1_rm2_mover3_activate.bin",
@@ -207,7 +208,34 @@ namespace MphRead.Formats
             /* 168 */ "gorea_land_cockpit.bin",
             /* 169 */ "gorea_land_cockpit_land.bin",
             /* 170 */ "gorea_land_cockpit_takeoff.bin",
-            /* 171 */ "unit4_rm1_puzzle_intro.bin"
+            /* 171 */ "unit4_rm1_puzzle_intro.bin",
+            /* 172 */ "mp00_intro.bin",
+            /* 173 */ "mp01_intro.bin",
+            /* 174 */ "mp02_intro.bin",
+            /* 175 */ "mp03_intro.bin",
+            /* 176 */ "mp04_intro.bin",
+            /* 177 */ "mp05_intro.bin",
+            /* 178 */ "mp06_intro.bin",
+            /* 179 */ "mp07_intro.bin",
+            /* 180 */ "mp08_intro.bin",
+            /* 181 */ "mp09_intro.bin",
+            /* 182 */ "mp10_intro.bin",
+            /* 183 */ "mp11_intro.bin",
+            /* 184 */ "mp12_intro.bin",
+            /* 185 */ "mp13_intro.bin",
+            /* 186 */ "mp14_intro.bin",
+            /* 187 */ "mp15_intro.bin",
+            /* 188 */ "mp16_intro.bin",
+            /* 189 */ "mp17_intro.bin",
+            /* 190 */ "mp18_intro.bin",
+            /* 191 */ "mp19_intro.bin",
+            /* 192 */ "mp20_intro.bin",
+            /* 193 */ "mp21_intro.bin",
+            /* 194 */ "mp22_intro.bin",
+            /* 195 */ "mp23_intro.bin",
+            /* 196 */ "mp24_intro.bin",
+            /* 197 */ "mp25_intro.bin",
+            /* 198 */ "mp26_intro.bin"
         };
     }
 }
