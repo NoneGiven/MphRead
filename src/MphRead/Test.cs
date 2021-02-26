@@ -231,10 +231,6 @@ namespace MphRead
                             ids.Add(data.SequenceId);
                             foreach (CameraSequenceKeyframe frame in entityClass.Sequence.Keyframes)
                             {
-                                if (frame.Easing.Value != 0 && frame.Easing.Value != 4096 && frame.Easing.Value != 4120)
-                                {
-                                    Console.WriteLine(frame.Easing);
-                                }
                             }
                             Nop();
                         }
