@@ -898,7 +898,6 @@ namespace MphRead
 
         private void UpdateCameraPosition()
         {
-            // todo: position calculation is off -- doesn't work for portal alpha
             if (_cameraMode == CameraMode.Pivot)
             {
                 float angleY = _pivotAngleY + 90;
