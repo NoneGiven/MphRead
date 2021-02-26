@@ -70,7 +70,15 @@ namespace MphRead.Entities
                     scene.SetFade(fadeType, fadeTime, overwrite: false);
                 }
                 // todo: messaging, field2/field3 stuff
-                _keyframeElapsed += scene.FrameTime;
+                if (curFrame.HoldTime.FloatValue == 0 && curFrame.MoveTime.FloatValue == 0)
+                {
+                    // make zero-length frames last for 2 frames (equivalent to 1 frame in game)
+                    _keyframeElapsed += scene.FrameTime / 2;
+                }
+                else
+                {
+                    _keyframeElapsed += scene.FrameTime;
+                } 
                 if (_keyframeElapsed >= frameLength)
                 {
                     _keyframeElapsed -= frameLength;
