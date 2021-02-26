@@ -1249,33 +1249,10 @@ namespace MphRead
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
                     foreach (Entity entity in entities)
                     {
-                        if (entity.Type == EntityType.Object)
+                        if (entity.Type == EntityType.CameraSequence)
                         {
-                            ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
-                            if ((data.EffectFlags & 8) != 0 && data.ModelId != 46)
-                            {
-                                Debugger.Break();
-                            }
+                            CameraSequenceEntityData data = ((Entity<CameraSequenceEntityData>)entity).Data;
                         }
-                        //if (entity.Type == EntityType.Platform)
-                        //{
-                        //    PlatformEntityData data = ((Entity<PlatformEntityData>)entity).Data;
-                        //    if (data.BeamIndex != UInt32.MaxValue)
-                        //    {
-                        //        PlatformMetadata? type = Metadata.GetPlatformById((int)data.ModelId);
-                        //        string name = type?.Name ?? "N/A";
-                        //        if (data.BeamIndex > 0 && (data.Flags & 4) == 0)
-                        //        {
-                        //            Debugger.Break();
-                        //        }
-                        //        if (!room)
-                        //        {
-                        //            room = true;
-                        //            Console.WriteLine(meta.Key);
-                        //        }
-                        //        Console.WriteLine($"[{data.BeamIndex}] {data.Header.EntityId:D2} ({name})");
-                        //    }
-                        //}
                     }
                 }
                 if (room)
