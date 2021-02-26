@@ -59,6 +59,21 @@ namespace MphRead.Entities
         {
             return _child;
         }
+
+        public override bool Process(Scene scene)
+        {
+            // todo: add "cutscene triggers active" toggle and use this code w/ parent/child refs
+            //if (Id == 17 && Active && _volume.TestPoint(scene.CameraPosition))
+            //{
+            //    if (scene.TryGetEntity(18, out EntityBase? entity) && entity.Type == EntityType.CameraSequence)
+            //    {
+            //        Active = false;
+            //        var trigger = (CameraSequenceEntity)entity;
+            //        trigger.SetActive(true);
+            //    } 
+            //}
+            return base.Process(scene);
+        }
     }
 
     public class FhTriggerVolumeEntity : EntityBase
