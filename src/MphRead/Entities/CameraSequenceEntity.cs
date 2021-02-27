@@ -304,14 +304,14 @@ namespace MphRead.Entities
                     var transform = new Matrix3(
                         entTransform.Row0.Xyz,
                         entTransform.Row1.Xyz,
-                        entTransform.Row2.Xyz * (keyframe.PositionEntity.Type == EntityType.Player ? -1  : 1)
+                        entTransform.Row2.Xyz * (keyframe.PositionEntity.Type == EntityType.Player ? -1 : 1)
                     );
                     position = position * transform + entPos;
                 }
                 else
                 {
                     position += entPos;
-                } 
+                }
             }
             if (keyframe.TargetEntity != null)
             {

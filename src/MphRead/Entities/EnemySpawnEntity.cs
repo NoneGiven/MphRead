@@ -52,12 +52,12 @@ namespace MphRead.Entities
                 // todo: random encounter setup
                 if (hunter != Hunter.Random)
                 {
-                    SceneSetup.LoadHunterResources(hunter, scene);
-                    var player = PlayerEntity.Spawn(hunter, position: Position, facing: _data.Header.FacingVector.ToFloatVector());
-                    if (player != null)
-                    {
-                        scene.AddEntity(player);
-                    }
+                    //SceneSetup.LoadHunterResources(hunter, scene);
+                    //var player = PlayerEntity.Spawn(hunter, position: Position, facing: _data.Header.FacingVector.ToFloatVector());
+                    //if (player != null)
+                    //{
+                    //    scene.AddEntity(player);
+                    //}
                 }
             }
         }
