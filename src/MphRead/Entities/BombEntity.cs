@@ -69,7 +69,7 @@ namespace MphRead.Entities
                 for (int i = 0; i < Effect.Elements.Count; i++)
                 {
                     EffectElementEntry element = Effect.Elements[i];
-                    element.Flags |= 0x80000; // set bit 19 (lifetime extension)
+                    element.Flags |= EffElemFlags.ElementExtension;
                 }
             }
             if (_trailModel != null)

@@ -768,7 +768,7 @@ namespace MphRead.Entities
                         for (int j = 0; j < beam.Effect.Elements.Count; j++)
                         {
                             EffectElementEntry element = beam.Effect.Elements[j];
-                            element.Flags |= 0x80000; // set bit 19 (lifetime extension)
+                            element.Flags |= EffElemFlags.ElementExtension;
                         }
                     }
                 }

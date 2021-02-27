@@ -165,7 +165,7 @@ namespace MphRead.Entities
                     for (int j = 0; j < _effects[i]!.Elements.Count; j++)
                     {
                         EffectElementEntry element = _effects[i]!.Elements[j];
-                        element.Flags |= 0x80000; // set bit 19 (lifetime extension)
+                        element.Flags |= EffElemFlags.ElementExtension;
                     }
                 }
                 if (_effects[i] != null)

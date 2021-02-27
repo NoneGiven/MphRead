@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using MphRead.Effects;
 using MphRead.Entities;
 using OpenTK.Mathematics;
 
@@ -337,7 +338,7 @@ namespace MphRead
         public string Name { get; }
         public string ModelName { get; }
         public IReadOnlyList<Particle> Particles { get; }
-        public uint Flags { get; }
+        public EffElemFlags Flags { get; }
         public Vector3 Acceleration { get; }
         public uint ChildEffectId { get; }
         public float Lifespan { get; }

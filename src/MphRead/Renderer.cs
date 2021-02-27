@@ -1128,14 +1128,14 @@ namespace MphRead
             for (int i = 0; i < entry.Elements.Count; i++)
             {
                 EffectElementEntry element = entry.Elements[i];
-                if ((element.Flags & 0x100) != 0)
+                if (element.Flags.HasFlag(EffElemFlags.DestroyOnDetach))
                 {
                     UnlinkEffectElement(element);
                 }
                 else
                 {
-                    element.Flags &= 0xFFF7FFFF; // clear bit 19 (lifetime extension)
-                    element.Flags |= 0x10; // set big 4 (keep alive until particles expire)
+                    element.Flags &= EffElemFlags.ElementExtension;
+                    element.Flags |= EffElemFlags.KeepAlive; // keep alive until particles expire
                     element.EffectEntry = null;
                     if (setExpired)
                     {
@@ -1160,7 +1160,7 @@ namespace MphRead
             entry.Lifespan = element.Lifespan;
             entry.ExpirationTime = entry.CreationTime + entry.Lifespan;
             entry.Flags = element.Flags;
-            entry.Flags |= 0x100000; // set bit 20 (draw enabled)
+            entry.Flags |= EffElemFlags.DrawEnabled;
             entry.Func39Called = false;
             entry.Funcs = element.Funcs;
             entry.Actions = element.Actions;
@@ -1255,7 +1255,7 @@ namespace MphRead
                     entry.Elements.Add(element);
                 }
                 element.Position = position;
-                if ((element.Flags & 8) != 0)
+                if (element.Flags.HasFlag(EffElemFlags.SpawnUnitVecs))
                 {
                     Vector3 vec1 = Vector3.UnitY;
                     Vector3 vec2 = Vector3.UnitX;
@@ -1288,7 +1288,7 @@ namespace MphRead
                 EffectElementEntry element = _activeElements[i];
                 if (!element.Expired && _elapsedTime > element.ExpirationTime)
                 {
-                    if (element.EffectEntry == null && (element.Flags & 0x10) == 0)
+                    if (element.EffectEntry == null && !element.Flags.HasFlag(EffElemFlags.KeepAlive))
                     {
                         UnlinkEffectElement(element);
                         i--;
@@ -1309,7 +1309,7 @@ namespace MphRead
                 }
                 else
                 {
-                    if ((element.Flags & 0x80000) != 0)
+                    if (element.Flags.HasFlag(EffElemFlags.ElementExtension))
                     {
                         if (_elapsedTime - element.CreationTime > element.BufferTime)
                         {
@@ -1349,7 +1349,7 @@ namespace MphRead
                             particle.InvokeVecFunc(info, times, ref temp);
                             particle.Speed = temp;
                         }
-                        if ((element.Flags & 1) == 0)
+                        if (!element.Flags.HasFlag(EffElemFlags.Bit00))
                         {
                             particle.Position = Matrix.Vec3MultMtx4(particle.Position, element.Transform);
                             particle.Speed = Matrix.Vec3MultMtx3(particle.Speed, element.Transform);
@@ -1460,7 +1460,7 @@ namespace MphRead
                 for (int j = 0; j < element.Particles.Count; j++)
                 {
                     EffectParticle particle = element.Particles[j];
-                    if ((element.Flags & 0x80000) != 0 && (element.Flags & 0x20) != 0)
+                    if (element.Flags.HasFlag(EffElemFlags.ElementExtension) && element.Flags.HasFlag(EffElemFlags.ParticleExtension))
                     {
                         if (_elapsedTime - particle.CreationTime > element.BufferTime)
                         {
@@ -1531,7 +1531,7 @@ namespace MphRead
                             particle.Rotation = particle.InvokeFloatFunc(info, times);
                         }
                         // todo: frame time scaling for speed/accel
-                        if ((element.Flags & 2) != 0)
+                        if (element.Flags.HasFlag(EffElemFlags.UseAcceleration))
                         {
                             particle.Speed = new Vector3(
                                 particle.Speed.X + element.Acceleration.X * (1 / 60f),
@@ -1545,7 +1545,7 @@ namespace MphRead
                             particle.Position.Y + particle.Speed.Y * (1 / 60f),
                             particle.Position.Z + particle.Speed.Z * (1 / 60f)
                         );
-                        if ((element.Flags & 0x40) != 0)
+                        if (element.Flags.HasFlag(EffElemFlags.CheckCollision))
                         {
                             // ptodo: collision check between previous and new positions
                             // --> set position to intersection point
@@ -1554,7 +1554,7 @@ namespace MphRead
                     }
                     else
                     {
-                        if ((element.Flags & 0x80) != 0 && element.ChildEffectId != 0)
+                        if (element.Flags.HasFlag(EffElemFlags.SpawnChildEffect) && element.ChildEffectId != 0)
                         {
                             Vector3 vec1 = (-particle.Speed).Normalized();
                             Vector3 vec2;
@@ -1870,7 +1870,7 @@ namespace MphRead
                 {
                     EffectParticle particle = element.Particles[j];
                     Matrix4 matrix = _viewMatrix;
-                    if ((particle.Owner.Flags & 1) != 0 && (particle.Owner.Flags & 4) == 0)
+                    if (particle.Owner.Flags.HasFlag(EffElemFlags.Bit00) && !particle.Owner.Flags.HasFlag(EffElemFlags.UseMesh))
                     {
                         matrix = particle.Owner.Transform * matrix;
                     }

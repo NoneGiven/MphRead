@@ -513,22 +513,23 @@ namespace MphRead.Effects
             };
         }
 
-        public static (int, int) GetFuncIds(uint flags, int drawType)
+        public static (int, int) GetFuncIds(EffElemFlags flags, int drawType)
         {
             int drawId;
             int setVecsId;
-            if ((flags & 4) != 0)
+            if (flags.HasFlag(EffElemFlags.UseMesh))
             {
                 drawId = 7;
                 setVecsId = (drawType == 3 ? 4 : 5);
             }
             else
             {
+                bool alternate = flags.HasFlag(EffElemFlags.Bit00);
                 switch (drawType)
                 {
                 case 1:
                     setVecsId = 1;
-                    if ((flags & 1) != 0)
+                    if (alternate)
                     {
                         drawId = 1;
                     }
@@ -539,7 +540,7 @@ namespace MphRead.Effects
                     break;
                 case 2:
                     setVecsId = 2;
-                    if ((flags & 1) != 0)
+                    if (alternate)
                     {
                         drawId = 1;
                     }
@@ -554,7 +555,7 @@ namespace MphRead.Effects
                     break;
                 case 4:
                     setVecsId = 1;
-                    if ((flags & 1) != 0)
+                    if (alternate)
                     {
                         drawId = 4;
                     }
@@ -565,7 +566,7 @@ namespace MphRead.Effects
                     break;
                 case 5:
                     setVecsId = 2;
-                    if ((flags & 1) != 0)
+                    if (alternate)
                     {
                         drawId = 4;
                     }
@@ -586,6 +587,44 @@ namespace MphRead.Effects
         }
     }
 
+    [Flags]
+    public enum EffElemFlags : uint
+    {
+        None = 0x0,
+        Bit00 = 0x1,
+        UseAcceleration = 0x2,
+        UseMesh = 0x4,
+        SpawnUnitVecs = 0x8,
+        KeepAlive = 0x10,
+        ParticleExtension = 0x20,
+        CheckCollision = 0x40,
+        SpawnChildEffect = 0x80,
+        DestroyOnDetach = 0x100,
+        Bit09 = 0x200,
+        Bit10 = 0x400,
+        Bit11 = 0x800,
+        Bit12 = 0x1000,
+        Bit13 = 0x2000,
+        Bit14 = 0x4000,
+        Bit15 = 0x8000,
+        Bit16 = 0x10000,
+        Bit17 = 0x20000,
+        Bit18 = 0x40000,
+        ElementExtension = 0x80000,
+        DrawEnabled = 0x100000,
+        Bit21 = 0x200000,
+        Bit22 = 0x400000,
+        Bit23 = 0x800000,
+        Bit24 = 0x1000000,
+        Bit25 = 0x2000000,
+        Bit26 = 0x4000000,
+        Bit27 = 0x8000000,
+        Bit28 = 0x10000000,
+        Bit29 = 0x20000000,
+        Bit30 = 0x40000000,
+        Bit31 = 0x80000000
+    }
+
     public class EffectEntry
     {
         public int EffectId { get; set; }
@@ -601,7 +640,7 @@ namespace MphRead.Effects
         public float DrainTime { get; set; }
         public float BufferTime { get; set; }
         public float Lifespan { get; set; }
-        public uint Flags { get; set; }
+        public EffElemFlags Flags { get; set; }
         public int DrawType { get; set; }
         public Vector3 Position { get; set; }
         public Matrix4 Transform { get; set; }
@@ -1127,7 +1166,7 @@ namespace MphRead.Effects
                 DrawNode = true;
                 Color = new Vector3(Red, Green, Blue);
                 Vector4 ev4;
-                if ((Owner.Flags & 1) != 0)
+                if (Owner.Flags.HasFlag(EffElemFlags.Bit00))
                 {
                     ev4 = new Vector4(Position + Owner.Position, 1);
                 }
@@ -1293,7 +1332,7 @@ namespace MphRead.Effects
                     scaleT = material.ScaleT;
                 }
                 Matrix4 transform = Matrix4.Identity;
-                if ((Owner.Flags & 1) != 0)
+                if (Owner.Flags.HasFlag(EffElemFlags.Bit00))
                 {
                     transform = Owner.Transform;
                 }
