@@ -1147,14 +1147,14 @@ namespace MphRead
             UnlinkEffectEntry(entry);
         }
 
-        private EffectElementEntry InitEffectElement(Effect effect, EffectElement element)
+        private EffectElementEntry InitEffectElement(Effect effect, EffectElement element, bool child)
         {
             EffectElementEntry entry = _inactiveElements.Dequeue();
             entry.EffectName = effect.Name;
             entry.ElementName = element.Name;
             entry.BufferTime = element.BufferTime;
-            // todo: if created during effect processing (child effect), increase creation time by one frame
-            entry.CreationTime = _elapsedTime;
+            // todo: FPS stuff
+            entry.CreationTime = _elapsedTime + (child ? (1 / 60f) : 0);
             entry.DrainTime = element.DrainTime;
             entry.DrawType = element.DrawType;
             entry.Lifespan = element.Lifespan;
@@ -1232,23 +1232,23 @@ namespace MphRead
         {
             EffectEntry entry = InitEffectEntry();
             entry.EffectId = effectId;
-            SpawnEffect(effectId, transform, entry);
+            SpawnEffect(effectId, transform, child: false, entry);
             return entry;
         }
 
-        public void SpawnEffect(int effectId, Matrix4 transform)
+        public void SpawnEffect(int effectId, Matrix4 transform, bool child = false)
         {
-            SpawnEffect(effectId, transform, entry: null);
+            SpawnEffect(effectId, transform, child, entry: null);
         }
 
-        private void SpawnEffect(int effectId, Matrix4 transform, EffectEntry? entry)
+        private void SpawnEffect(int effectId, Matrix4 transform, bool child, EffectEntry? entry)
         {
             Effect effect = Read.LoadEffect(effectId); // should already be loaded
             var position = new Vector3(transform.Row3);
             for (int i = 0; i < effect.Elements.Count; i++)
             {
                 EffectElement elementDef = effect.Elements[i];
-                EffectElementEntry element = InitEffectElement(effect, elementDef);
+                EffectElementEntry element = InitEffectElement(effect, elementDef, child);
                 if (entry != null)
                 {
                     element.EffectEntry = entry;
