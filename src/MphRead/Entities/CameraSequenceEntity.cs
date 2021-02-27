@@ -129,7 +129,6 @@ namespace MphRead.Entities
                 {
                     _keyframeElapsed -= frameLength;
                     _keyframeIndex++;
-                    // todo: proper looping or ending (entity flags vs. sequence data flags, etc.)
                     if (_keyframeIndex >= Sequence.Keyframes.Count)
                     {
                         _keyframeIndex = 0;
@@ -288,7 +287,6 @@ namespace MphRead.Entities
                 finalRoll = curFrame.Roll;
                 finalFov = curFrame.Fov;
             }
-            // todo: pass and use roll
             finalFov = MathHelper.DegreesToRadians(finalFov * 2);
             finalRoll = MathHelper.DegreesToRadians(finalRoll);
             scene.SetCamera(finalPosition, finalToTarget, finalFov, finalRoll);
