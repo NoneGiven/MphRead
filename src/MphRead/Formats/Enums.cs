@@ -137,6 +137,17 @@ namespace MphRead
         Burn = 4
     }
 
+    public enum FadeType : byte
+    {
+        None = 0,
+        FadeInBlack = 1,
+        FadeOutBlack = 2,
+        FadeInWhite = 3,
+        FadeOutWhite = 4,
+        FadeOutInBlack = 5,
+        FadeOutInWhite = 6
+    }
+
     public enum ModelType
     {
         Generic,
@@ -237,7 +248,7 @@ namespace MphRead
         SetActive = 5,
         Destroyed = 6,
         Damage = 7,
-        Unknown9 = 9,
+        Trigger = 9,
         Unknown12 = 12,
         Gravity = 15,
         Unknown16 = 16, // unlock?
@@ -361,7 +372,8 @@ namespace MphRead
         Noxus = 4,
         Spire = 5,
         Weavel = 6,
-        Guardian = 7
+        Guardian = 7,
+        Random = 8
     }
 
     public enum Language

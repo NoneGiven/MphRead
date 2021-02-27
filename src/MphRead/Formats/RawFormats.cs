@@ -13,7 +13,7 @@ namespace MphRead
         public static readonly int ItemEntityData = Marshal.SizeOf(typeof(ItemEntityData));
         public static readonly int NodeAnimation = Marshal.SizeOf(typeof(NodeAnimation));
         public static readonly int CameraSequenceHeader = Marshal.SizeOf(typeof(CameraSequenceHeader));
-        public static readonly int CameraSequenceFrame = Marshal.SizeOf(typeof(CameraSequenceFrame));
+        public static readonly int CameraSequenceKeyframe = Marshal.SizeOf(typeof(RawCameraSequenceKeyframe));
     }
 
     // size: 4
@@ -433,44 +433,42 @@ namespace MphRead
     public readonly struct CameraSequenceHeader
     {
         public readonly ushort Count;
-        public readonly byte Flags;
-        // these fields aren't used in ReadCamSeqData, which is probably the only place this struct is read
-        public readonly byte Padding1;
-        public readonly uint Padding2;
+        public readonly byte Version;
+        public readonly byte Padding3;
+        public readonly uint Padding4;
     }
 
     // size: 100 (100 bytes are read from the file into a 112-byte struct)
-    public readonly struct CameraSequenceFrame
+    public readonly struct RawCameraSequenceKeyframe
     {
-        public readonly uint Field0;
-        public readonly uint Field4;
-        public readonly uint Field8;
-        public readonly uint FieldC;
-        public readonly uint Field10;
-        public readonly uint Field14;
-        public readonly uint Field18;
-        public readonly uint Field1C;
-        public readonly uint Field20;
-        public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly byte Field30;
-        public readonly byte Field31;
-        public readonly byte Field32;
-        public readonly byte Field33;
-        public readonly byte Field34;
-        public readonly byte Field35;
-        public readonly ushort Field36;
-        public readonly uint Entity1; // runtime pointer
-        public readonly uint Entity2; // runtime pointer
-        public readonly uint Field40;
-        public readonly ushort Field44;
-        public readonly ushort Field46;
-        public readonly Fixed Field48; // might be a Vector3Fx around this
-        public readonly uint Field4C;
-        public readonly uint Field50;
+        public readonly Vector3Fx Position;
+        public readonly Vector3Fx ToTarget;
+        public readonly Fixed Roll;
+        public readonly Fixed Fov;
+        public readonly Fixed MoveTime;
+        public readonly Fixed HoldTime;
+        public readonly Fixed FadeInTime;
+        public readonly Fixed FadeOutTime;
+        public readonly FadeType FadeInType;
+        public readonly FadeType FadeOutType;
+        public readonly byte PrevFrameInfluence; // flag bits 0/1
+        public readonly byte AfterFrameInfluence; // flag bits 0/1
+        public readonly byte UseEntityTransform;
+        public readonly byte Padding35;
+        public readonly ushort Padding36;
+        public readonly ushort PosEntityType;
+        public readonly ushort PosEntityId;
+        public readonly ushort TargetEntityType;
+        public readonly ushort TargetEntityId;
+        public readonly ushort MessageTargetType;
+        public readonly ushort MessageTargetId;
+        public readonly ushort MessageId;
+        public readonly ushort MessageParam;
+        public readonly Fixed Easing; // always 0, 4096, or 4120 (1.00585938)
+        public readonly uint Unused4C;
+        public readonly uint Unused50;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public readonly char[] NodeName; // actually "NodeNameOrRef" union
+        public readonly char[] NodeName;
     }
 
     // size: 28

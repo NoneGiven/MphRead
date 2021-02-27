@@ -1,3 +1,5 @@
+using System;
+using System.Diagnostics;
 using MphRead.Entities.Enemies;
 using OpenTK.Mathematics;
 
@@ -16,7 +18,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             if (data.SpawnerModel != 0)
             {
                 string spawner = "EnemySpawner";
@@ -37,6 +39,26 @@ namespace MphRead.Entities
             else
             {
                 AddPlaceholderModel();
+            }
+        }
+
+        public override void Initialize(Scene scene)
+        {
+            base.Initialize(scene);
+            if (_data.Type == EnemyType.Hunter)
+            {
+                var hunter = (Hunter)_data.Subtype;
+                Debug.Assert(Enum.IsDefined(typeof(Hunter), hunter));
+                // todo: random encounter setup
+                if (hunter != Hunter.Random)
+                {
+                    //SceneSetup.LoadHunterResources(hunter, scene);
+                    //var player = PlayerEntity.Spawn(hunter, position: Position, facing: _data.Header.FacingVector.ToFloatVector());
+                    //if (player != null)
+                    //{
+                    //    scene.AddEntity(player);
+                    //}
+                }
             }
         }
 
@@ -81,7 +103,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             AddPlaceholderModel();
         }
     }

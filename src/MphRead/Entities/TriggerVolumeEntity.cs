@@ -22,7 +22,7 @@ namespace MphRead.Entities
             // todo: change the display/color when inactive (same for AreaVolumes)
             _parentEventColor = Metadata.GetEventColor(data.ParentEvent);
             _childEventColor = Metadata.GetEventColor(data.ChildEvent);
-            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _volume = CollisionVolume.Move(_data.Volume, Position);
             AddPlaceholderModel();
         }
@@ -59,6 +59,21 @@ namespace MphRead.Entities
         {
             return _child;
         }
+
+        public override bool Process(Scene scene)
+        {
+            // todo: add "cutscene triggers active" toggle and use this code w/ parent/child refs
+            //if (Id == 17 && Active && _volume.TestPoint(scene.CameraPosition))
+            //{
+            //    if (scene.TryGetEntity(18, out EntityBase? entity) && entity.Type == EntityType.CameraSequence)
+            //    {
+            //        Active = false;
+            //        var trigger = (CameraSequenceEntity)entity;
+            //        trigger.SetActive(true);
+            //    } 
+            //}
+            return base.Process(scene);
+        }
     }
 
     public class FhTriggerVolumeEntity : EntityBase
@@ -80,7 +95,7 @@ namespace MphRead.Entities
             Id = data.Header.EntityId;
             _parentEventColor = Metadata.GetEventColor(data.ParentEvent);
             _childEventColor = Metadata.GetEventColor(data.ChildEvent);
-            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _volume = CollisionVolume.Move(_data.ActiveVolume, Position);
             AddPlaceholderModel();
         }

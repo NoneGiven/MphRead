@@ -43,7 +43,7 @@ namespace MphRead.Entities
                 else
                 {
                     _trailModel = Read.GetModelInstance("arcWelder1");
-                } 
+                }
                 Countdown = 900 * 2;
                 effectId = Metadata.SyluxBombEffects[Recolor];
                 if (Owner.BombCount == 2)
@@ -101,7 +101,7 @@ namespace MphRead.Entities
                     for (int i = 0; i < 3; i++)
                     {
                         Owner.Bombs[i].Countdown = 1;
-                    } 
+                    }
                 }
             }
             if (Flags.HasFlag(BombFlags.Exploding))

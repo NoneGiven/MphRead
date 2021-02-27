@@ -30,7 +30,8 @@ namespace MphRead
         Plane = 4,
         Particle = 5,
         TrailSingle = 6,
-        TrailMulti = 7
+        TrailMulti = 7,
+        TrailStack = 8
     }
 
     public class RenderItem
@@ -61,7 +62,8 @@ namespace MphRead
         public Vector4? OverrideColor { get; set; }
         public Vector4? PaletteOverride { get; set; }
         public Vector3[] Points { get; set; }
-        public int PointCount { get; set; } // only needed for multi-segment trails
+        // number of segments for morph ball trail, or total for other multi-segment trails
+        public int TrailCount { get; set; }
         public float ScaleS { get; set; }
         public float ScaleT { get; set; }
 
@@ -277,6 +279,15 @@ namespace MphRead
             result.X = (vec.X * mat.Row0.X) + (vec.Y * mat.Row1.X) + (vec.Z * mat.Row2.X);
             result.Y = (vec.X * mat.Row0.Y) + (vec.Y * mat.Row1.Y) + (vec.Z * mat.Row2.Y);
             result.Z = (vec.X * mat.Row0.Z) + (vec.Y * mat.Row1.Z) + (vec.Z * mat.Row2.Z);
+            return result;
+        }
+
+        public static Vector3 Vec4MultMtx4x3(Vector4 vec, Matrix4x3 mat)
+        {
+            Vector3 result = Vector3.Zero;
+            result.X = vec.W * mat.M41 + vec.Z * mat.M31 + vec.X * mat.M11 + vec.Y * mat.M21;
+            result.Y = vec.W * mat.M42 + vec.Z * mat.M32 + vec.X * mat.M12 + vec.Y * mat.M22;
+            result.Z = vec.W * mat.M43 + vec.Z * mat.M33 + vec.X * mat.M13 + vec.Y * mat.M23;
             return result;
         }
 

@@ -90,6 +90,8 @@ namespace MphRead.Entities
             }
         }
 
+        public virtual Vector3 TargetPosition => Position;
+
         protected bool _anyLighting = false;
         protected readonly List<ModelInstance> _models = new List<ModelInstance>();
 
@@ -309,30 +311,30 @@ namespace MphRead.Entities
             SetTransform(vector2.ToFloatVector(), vector1.ToFloatVector(), position.ToFloatVector());
         }
 
-        protected void SetTransform(Vector3 vector2, Vector3 vector1, Vector3 position)
+        protected void SetTransform(Vector3 up, Vector3 facing, Vector3 position)
         {
-            Matrix4 transform = GetTransformMatrix(vector2, vector1);
+            Matrix4 transform = GetTransformMatrix(up, facing);
             transform.ExtractRotation().ToEulerAngles(out Vector3 rotation);
             Rotation = rotation;
             Position = position;
         }
 
-        protected static Matrix4 GetTransformMatrix(Vector3 vector2, Vector3 vector1)
+        protected static Matrix4 GetTransformMatrix(Vector3 up, Vector3 facing)
         {
-            Vector3 up = Vector3.Cross(vector1, vector2).Normalized();
-            var direction = Vector3.Cross(vector2, up);
+            Vector3 upNorm = Vector3.Cross(facing, up).Normalized();
+            var faceNorm = Vector3.Cross(up, upNorm);
             Matrix4 transform = default;
-            transform.M11 = up.X;
-            transform.M12 = up.Y;
-            transform.M13 = up.Z;
+            transform.M11 = upNorm.X;
+            transform.M12 = upNorm.Y;
+            transform.M13 = upNorm.Z;
             transform.M14 = 0;
-            transform.M21 = direction.X;
-            transform.M22 = direction.Y;
-            transform.M23 = direction.Z;
+            transform.M21 = faceNorm.X;
+            transform.M22 = faceNorm.Y;
+            transform.M23 = faceNorm.Z;
             transform.M24 = 0;
-            transform.M31 = vector2.X;
-            transform.M32 = vector2.Y;
-            transform.M33 = vector2.Z;
+            transform.M31 = up.X;
+            transform.M32 = up.Y;
+            transform.M33 = up.Z;
             transform.M34 = 0;
             transform.M41 = 0;
             transform.M42 = 0;

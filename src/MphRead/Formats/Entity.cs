@@ -36,7 +36,7 @@ namespace MphRead
         public readonly ushort EntityId; // counts up
         public readonly Vector3Fx Position;
         public readonly Vector3Fx UpVector;
-        public readonly Vector3Fx RightVector;
+        public readonly Vector3Fx FacingVector;
     }
 
     // size: 588
@@ -776,20 +776,20 @@ namespace MphRead
     public readonly struct CameraSequenceEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly byte Id;
+        public readonly byte SequenceId;
         public readonly byte Field25;
-        public readonly byte Field26;
+        public readonly byte Loop;
         public readonly byte Field27;
         public readonly byte Field28;
         public readonly byte Field29;
-        public readonly ushort Field2A;
-        public readonly byte Field2C;
-        public readonly byte Field2D;
+        public readonly ushort DelayFrames;
+        public readonly byte PlayerId1;
+        public readonly byte PlayerId2;
         public readonly ushort Entity1;
         public readonly ushort Entity2;
-        public readonly ushort Entity3;
-        public readonly uint SomeMessageId;
-        public readonly uint Field38;
+        public readonly ushort MessageTargetId;
+        public readonly uint MessageId;
+        public readonly uint MessageParam;
     }
 
     // size: 53

@@ -11,7 +11,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             string name = data.ModelId >= 8 ? "Octolith" : $"Artifact0{data.ModelId + 1}";
             ModelInstance inst = Read.GetModelInstance(name);
             _heightOffset = data.ModelId >= 8 ? 1.75f : inst.Model.Nodes[0].CullRadius;

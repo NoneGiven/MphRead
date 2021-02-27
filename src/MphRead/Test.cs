@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using MphRead.Effects;
+using MphRead.Entities;
+using MphRead.Formats;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
@@ -210,16 +212,46 @@ namespace MphRead
 
         public static void TestCameraSequences()
         {
-            // todo: metadata for this
+            var ids = new HashSet<int>();
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                if (meta.Value.EntityPath != null)
+                {
+                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
+                    foreach (Entity entity in entities)
+                    {
+                        if (entity.Type == EntityType.CameraSequence)
+                        {
+                            CameraSequenceEntityData data = ((Entity<CameraSequenceEntityData>)entity).Data;
+                            var entityClass = new CameraSequenceEntity(data);
+                            if (ids.Contains(data.SequenceId))
+                            {
+                                continue;
+                            }
+                            ids.Add(data.SequenceId);
+                            foreach (CameraSequenceKeyframe frame in entityClass.Sequence.Keyframes)
+                            {
+                            }
+                            Nop();
+                        }
+                    }
+                }
+            }
+            Nop();
+        }
+
+        public static void TestCameraSequenceFiles()
+        {
             foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Paths.FileSystem, "cameraEditor")))
             {
-                string name = Path.GetFileNameWithoutExtension(filePath);
-                if (name != "cameraEditBG")
+                string name = Path.GetFileName(filePath);
+                if (name != "cameraEditBG.bin")
                 {
-                    IReadOnlyList<CameraSequenceFrame> frames = Read.ReadCameraSequence(name);
+                    var seq = CameraSequence.Load(name);
                     Nop();
                 }
             }
+            Nop();
         }
 
         public static void TestCollision()
@@ -1207,44 +1239,20 @@ namespace MphRead
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
-                bool room = false;
                 if (meta.Value.EntityPath != null)
                 {
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
                     foreach (Entity entity in entities)
                     {
-                        if (entity.Type == EntityType.Object)
+                        if (entity.Type == EntityType.CameraSequence)
                         {
-                            ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
-                            if ((data.EffectFlags & 8) != 0 && data.ModelId != 46)
+                            CameraSequenceEntityData data = ((Entity<CameraSequenceEntityData>)entity).Data;
+                            if (data.PlayerId1 != 0 || data.PlayerId2 != 0)
                             {
                                 Debugger.Break();
                             }
                         }
-                        //if (entity.Type == EntityType.Platform)
-                        //{
-                        //    PlatformEntityData data = ((Entity<PlatformEntityData>)entity).Data;
-                        //    if (data.BeamIndex != UInt32.MaxValue)
-                        //    {
-                        //        PlatformMetadata? type = Metadata.GetPlatformById((int)data.ModelId);
-                        //        string name = type?.Name ?? "N/A";
-                        //        if (data.BeamIndex > 0 && (data.Flags & 4) == 0)
-                        //        {
-                        //            Debugger.Break();
-                        //        }
-                        //        if (!room)
-                        //        {
-                        //            room = true;
-                        //            Console.WriteLine(meta.Key);
-                        //        }
-                        //        Console.WriteLine($"[{data.BeamIndex}] {data.Header.EntityId:D2} ({name})");
-                        //    }
-                        //}
                     }
-                }
-                if (room)
-                {
-                    Console.WriteLine();
                 }
             }
             Nop();

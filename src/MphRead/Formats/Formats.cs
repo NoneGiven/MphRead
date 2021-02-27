@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using MphRead.Entities;
 using OpenTK.Mathematics;
 
 namespace MphRead
@@ -432,7 +433,7 @@ namespace MphRead
 
         public Vector3 Position { get; }
         public readonly Vector3 UpVector;
-        public readonly Vector3 RightVector;
+        public readonly Vector3 FacingVector;
 
         public Entity(EntityEntry entry, EntityType type, ushort entityId, EntityDataHeader header)
         {
@@ -448,7 +449,7 @@ namespace MphRead
             FirstHunt = false;
             Position = header.Position.ToFloatVector();
             UpVector = header.UpVector.ToFloatVector();
-            RightVector = header.RightVector.ToFloatVector();
+            FacingVector = header.FacingVector.ToFloatVector();
         }
 
         public Entity(FhEntityEntry entry, EntityType type, ushort entityId, EntityDataHeader header)
@@ -463,7 +464,7 @@ namespace MphRead
             FirstHunt = true;
             Position = header.Position.ToFloatVector();
             UpVector = header.UpVector.ToFloatVector();
-            RightVector = header.RightVector.ToFloatVector();
+            FacingVector = header.FacingVector.ToFloatVector();
         }
 
         public virtual ushort GetParentId()
@@ -481,14 +482,14 @@ namespace MphRead
     {
         public T Data { get; }
 
-        public Entity(EntityEntry entry, EntityType type, ushort someId, T data, EntityDataHeader header)
-            : base(entry, type, someId, header)
+        public Entity(EntityEntry entry, EntityType type, ushort entityId, T data, EntityDataHeader header)
+            : base(entry, type, entityId, header)
         {
             Data = data;
         }
 
-        public Entity(FhEntityEntry entry, EntityType type, ushort someId, T data, EntityDataHeader header)
-            : base(entry, type, someId, header)
+        public Entity(FhEntityEntry entry, EntityType type, ushort entityId, T data, EntityDataHeader header)
+            : base(entry, type, entityId, header)
         {
             Data = data;
         }
@@ -1014,6 +1015,64 @@ namespace MphRead
                 return Light2Enabled ? Color2 : Vector3.Zero;
             }
             return null;
+        }
+    }
+
+    public class CameraSequenceKeyframe
+    {
+        public Vector3 Position { get; }
+        public Vector3 ToTarget { get; }
+        public float Roll { get; }
+        public float Fov { get; }
+        public float MoveTime { get; }
+        public float HoldTime { get; }
+        public float FadeInTime { get; }
+        public float FadeOutTime { get; }
+        public FadeType FadeInType { get; }
+        public FadeType FadeOutType { get; }
+        public byte PrevFrameInfluence { get; } // flag bits 0/1
+        public byte AfterFrameInfluence { get; } // flag bits 0/1
+        public bool UseEntityTransform { get; }
+        public ushort PosEntityType { get; }
+        public ushort PosEntityId { get; }
+        public ushort TargetEntityType { get; }
+        public ushort TargetEntityId { get; }
+        public ushort MessageTargetType { get; }
+        public ushort MessageTargetId { get; }
+        public ushort MessageId { get; }
+        public ushort MessageParam { get; }
+        public float Easing { get; } // always 0, 4096, or 4120 (1.00585938)
+        public string NodeName { get; }
+
+        public EntityBase? PositionEntity { get; set; }
+        public EntityBase? TargetEntity { get; set; }
+        public EntityBase? MessageTarget { get; set; }
+
+        public CameraSequenceKeyframe(RawCameraSequenceKeyframe raw)
+        {
+            Position = raw.Position.ToFloatVector();
+            ToTarget = raw.ToTarget.ToFloatVector();
+            Roll = raw.Roll.FloatValue;
+            Fov = raw.Fov.FloatValue;
+            MoveTime = raw.MoveTime.FloatValue;
+            HoldTime = raw.HoldTime.FloatValue;
+            FadeInTime = raw.FadeInTime.FloatValue;
+            FadeOutTime = raw.FadeOutTime.FloatValue;
+            FadeInType = raw.FadeInType;
+            FadeOutType = raw.FadeOutType;
+            PrevFrameInfluence = raw.PrevFrameInfluence;
+            AfterFrameInfluence = raw.AfterFrameInfluence;
+            UseEntityTransform = raw.UseEntityTransform != 0;
+            PosEntityType = raw.PosEntityType;
+            PosEntityId = raw.PosEntityId;
+            TargetEntityType = raw.TargetEntityType;
+            TargetEntityId = raw.TargetEntityId;
+            MessageTargetType = raw.MessageTargetType;
+            MessageTargetId = raw.MessageTargetId;
+            MessageId = raw.MessageId;
+            MessageParam = raw.MessageParam;
+            Easing = raw.Easing.FloatValue;
+            NodeName = raw.NodeName.MarshalString();
         }
     }
 

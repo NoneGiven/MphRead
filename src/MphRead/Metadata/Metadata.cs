@@ -827,7 +827,7 @@ namespace MphRead
             {
                 return new Vector3(0.619f, 0.980f, 0.678f);
             }
-            if (eventId == Message.Unknown9) // dark red
+            if (eventId == Message.Trigger) // dark red
             {
                 return new Vector3(0.549f, 0.18f, 0.18f);
             }

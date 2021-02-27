@@ -46,13 +46,20 @@ namespace MphRead
         private Matrix4 _viewInvRotYMatrix = Matrix4.Identity;
 
         private CameraMode _cameraMode = CameraMode.Pivot;
-        private float _angleY = 0.0f;
-        private float _angleX = 0.0f;
-        private float _distance = 5.0f;
-        // note: the axes are reversed from the model coordinates
-        private Vector3 _cameraPosition = new Vector3(0, 0, 0);
+        private float _pivotAngleY = 0.0f;
+        private float _pivotAngleX = 0.0f;
+        private float _pivotDistance = 5.0f;
+        private Vector3 _cameraPosition = Vector3.Zero;
+        private Vector3 _cameraFacing = -Vector3.UnitZ;
+        private Vector3 _cameraUp = Vector3.UnitY;
+        private Vector3 _cameraRight = Vector3.UnitX;
+        private float _cameraFov = MathHelper.DegreesToRadians(78);
         private bool _leftMouse = false;
         private float _wheelOffset = 0;
+        private int _activeCutscene = -1;
+        private Vector3 _priorCameraPos = Vector3.Zero;
+        private Vector3 _priorCameraFacing = -Vector3.UnitZ;
+        private float _priorCameraFov = MathHelper.DegreesToRadians(78);
 
         private bool _showTextures = true;
         private bool _showColors = true;
@@ -104,7 +111,7 @@ namespace MphRead
         public Matrix4 ViewMatrix => _viewMatrix;
         public Matrix4 ViewInvRotMatrix => _viewInvRotMatrix;
         public Matrix4 ViewInvRotYMatrix => _viewInvRotYMatrix;
-        public Vector3 CameraPosition => _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1);
+        public Vector3 CameraPosition => _cameraPosition;
         public bool ShowInvisibleEntities => _showInvisible != 0;
         public bool ShowAllEntities => _showInvisible == 2;
         public bool TransformRoomNodes => _transformRoomNodes;
@@ -120,6 +127,9 @@ namespace MphRead
         public Vector3 Light2Vector => _light2Vector;
         public Vector3 Light2Color => _light2Color;
         public IReadOnlyList<EntityBase> Entities => _entities;
+        public int ActiveCutscene => _activeCutscene;
+        // todo: disallow if camera roll is not zero?
+        public bool AllowCameraMovement => _activeCutscene == -1 || (_frameAdvanceOn && !_advanceOneFrame);
 
         public const int DisplaySphereStacks = 16;
         public const int DisplaySphereSectors = 24;
@@ -217,15 +227,14 @@ namespace MphRead
         }
 
         // called before load
-        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null)
+        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null)
         {
-            var entity = new PlayerEntity(hunter, recolor, position);
-            _entities.Add(entity);
-            if (entity.Id != -1)
+            var entity = PlayerEntity.Spawn(hunter, recolor, position, facing);
+            if (entity != null)
             {
-                _entityMap.Add(entity.Id, entity);
+                _entities.Add(entity);
+                InitEntity(entity);
             }
-            InitEntity(entity);
         }
 
         public bool TryGetEntity(int id, [NotNullWhen(true)] out EntityBase? entity)
@@ -313,6 +322,7 @@ namespace MphRead
             _shaderLocations.TexgenMode = GL.GetUniformLocation(_shaderProgramId, "texgen_mode");
             _shaderLocations.MatrixStack = GL.GetUniformLocation(_shaderProgramId, "mtx_stack");
             _shaderLocations.ToonTable = GL.GetUniformLocation(_shaderProgramId, "toon_table");
+            _shaderLocations.FadeColor = GL.GetUniformLocation(_shaderProgramId, "fade_color");
 
             GL.UseProgram(_shaderProgramId);
 
@@ -772,11 +782,10 @@ namespace MphRead
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
             GL.ClearStencil(0);
 
-            // todo: confirm fov and recalculate this only in the resize event
+            // todo: update this only when the viewport or camera values change
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
             float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
-            float fov = MathHelper.DegreesToRadians(80.0f);
-            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, 0.0625f, _useClip ? _farClip : 10000f);
+            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(_cameraFov, aspect, 0.0625f, _useClip ? _farClip : 10000f);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref perspectiveMatrix);
 
             TransformCamera();
@@ -869,61 +878,130 @@ namespace MphRead
 
         private void TransformCamera()
         {
-            // todo: only update this when the camera position changes
+            // todo: only update this when the camera values change
             _viewMatrix = Matrix4.Identity;
             _viewInvRotMatrix = Matrix4.Identity;
             _viewInvRotYMatrix = Matrix4.Identity;
             if (_cameraMode == CameraMode.Pivot)
             {
-                _viewMatrix = Matrix4.CreateTranslation(new Vector3(0, 0, _distance * -1));
-                _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX)) * _viewMatrix;
-                _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
-                _viewInvRotMatrix = _viewInvRotYMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _angleY));
-                _viewInvRotMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-1 * _angleX)) * _viewInvRotMatrix;
+                _viewMatrix.Row3.Xyz = new Vector3(0, 0, _pivotDistance * -1);
+                _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_pivotAngleX)) * _viewMatrix;
+                _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_pivotAngleY)) * _viewMatrix;
+                _viewInvRotMatrix = _viewInvRotYMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _pivotAngleY));
+                _viewInvRotMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-1 * _pivotAngleX)) * _viewInvRotMatrix;
             }
             else if (_cameraMode == CameraMode.Roam)
             {
-                _viewMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX));
-                _viewMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY)) * _viewMatrix;
-                _viewMatrix = Matrix4.CreateTranslation(_cameraPosition) * _viewMatrix;
-                _viewInvRotMatrix = _viewInvRotYMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _angleY));
-                _viewInvRotMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-1 * _angleX)) * _viewInvRotMatrix;
+                _viewMatrix = Matrix4.LookAt(_cameraPosition, _cameraPosition + _cameraFacing, _cameraUp);
+                _viewInvRotMatrix = Matrix4.Transpose(_viewMatrix.ClearTranslation());
+                if (_viewInvRotMatrix.Row0.X != 0 || _viewInvRotMatrix.Row0.Z != 0)
+                {
+                    _viewInvRotYMatrix.Row0.Xyz = new Vector3(_viewInvRotMatrix.Row0.X, 0, _viewInvRotMatrix.Row0.Z).Normalized();
+                    _viewInvRotYMatrix.Row2.Xyz = new Vector3(_viewInvRotMatrix.Row2.X, 0, _viewInvRotMatrix.Row2.Z).Normalized();
+                }
             }
             GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref _viewMatrix);
         }
 
         private void UpdateCameraPosition()
         {
-            // todo: position calculation is off -- doesn't work for portal alpha
             if (_cameraMode == CameraMode.Pivot)
             {
-                float angleX = _angleY + 90;
-                if (angleX > 360)
-                {
-                    angleX -= 360;
-                }
-                float angleY = _angleX + 90;
+                float angleY = _pivotAngleY + 90;
                 if (angleY > 360)
                 {
                     angleY -= 360;
                 }
-                float theta = MathHelper.DegreesToRadians(angleX);
-                float phi = MathHelper.DegreesToRadians(angleY);
-                float x = MathF.Round(_distance * MathF.Cos(theta), 4);
-                float y = MathF.Round(_distance * MathF.Sin(theta) * MathF.Cos(phi), 4) * -1;
-                float z = MathF.Round(_distance * MathF.Sin(theta) * MathF.Sin(phi), 4);
+                float angleX = _pivotAngleX + 90;
+                if (angleX > 360)
+                {
+                    angleX -= 360;
+                }
+                float theta = MathHelper.DegreesToRadians(angleY);
+                float phi = MathHelper.DegreesToRadians(angleX);
+                float x = MathF.Round(_pivotDistance * MathF.Cos(theta), 4);
+                float y = MathF.Round(_pivotDistance * MathF.Sin(theta) * MathF.Cos(phi), 4) * -1;
+                float z = MathF.Round(_pivotDistance * MathF.Sin(theta) * MathF.Sin(phi), 4);
                 _cameraPosition = new Vector3(x, y, z);
             }
         }
 
         private void ResetCamera()
         {
-            _angleX = 0;
-            _angleY = 0;
-            _distance = 5.0f;
             if (_cameraMode == CameraMode.Roam)
             {
-                _cameraPosition = new Vector3(0, 0, 0);
+                _cameraPosition = Vector3.Zero;
+                _cameraFacing = -Vector3.UnitZ;
+                _cameraUp = Vector3.UnitY;
+                _cameraRight = Vector3.UnitX;
+            }
+            else if (_cameraMode == CameraMode.Pivot)
+            {
+                _pivotAngleX = 0;
+                _pivotAngleY = 0;
+                _pivotDistance = 5.0f;
+            }
+        }
+
+        public void SetCamera(Vector3 position, Vector3 target, float fov = 0, float roll = 0)
+        {
+            _cameraMode = CameraMode.Roam;
+            _cameraPosition = position;
+            _cameraFacing = target;
+            _cameraUp = Vector3.UnitY;
+            if (roll > 0)
+            {
+                _cameraUp = (Matrix3.CreateRotationZ(roll) * _cameraUp).Normalized();
+            }
+            _cameraRight = Vector3.Cross(_cameraFacing, _cameraUp);
+            _cameraUp = Vector3.Cross(_cameraRight, _cameraFacing);
+            if (fov > 0)
+            {
+                _cameraFov = fov;
+            }
+        }
+
+        private const float _almostHalfPi = MathF.PI / 2 - 0.000001f;
+
+        private void UpdateCameraRotation(float stepH, float stepV)
+        {
+            float angleH = MathF.Atan2(_cameraFacing.X, -_cameraFacing.Z) + stepH;
+            float angleV = MathF.Asin(_cameraFacing.Y) + stepV;
+            angleV = Math.Clamp(angleV, -_almostHalfPi, _almostHalfPi);
+            _cameraFacing = new Vector3(
+                MathF.Cos(angleV) * MathF.Sin(angleH),
+                MathF.Sin(angleV),
+                -(MathF.Cos(angleV) * MathF.Cos(angleH))
+            ).Normalized();
+            _cameraRight = Vector3.Cross(_cameraFacing, Vector3.UnitY);
+            _cameraUp = Vector3.Cross(_cameraRight, _cameraFacing);
+        }
+
+        public void StartCutscene(int id)
+        {
+            if (_activeCutscene == -1)
+            {
+                _activeCutscene = id;
+                _priorCameraPos = _cameraPosition;
+                _priorCameraFacing = _cameraFacing;
+                _priorCameraFov = _cameraFov;
+            }
+        }
+
+        public void EndCutscene(bool resetFade = false)
+        {
+            if (_activeCutscene != -1)
+            {
+                _activeCutscene = -1;
+                _cameraPosition = _priorCameraPos;
+                _cameraFacing = _priorCameraFacing;
+                _cameraRight = Vector3.Cross(_cameraFacing, Vector3.UnitY);
+                _cameraUp = Vector3.Cross(_cameraRight, _cameraFacing);
+                _cameraFov = _priorCameraFov;
+            }
+            if (resetFade)
+            {
+                SetFade(FadeType.None, length: 0, overwrite: true);
             }
         }
 
@@ -1609,7 +1687,7 @@ namespace MphRead
 
         // for effects/trails
         public void AddRenderItem(RenderItemType type, float alpha, int polygonId, Vector3 color, RepeatMode xRepeat, RepeatMode yRepeat,
-            float scaleS, float scaleT, Matrix4 transform, Vector3[] uvsAndVerts, int bindingId, int pointCount = 8)
+            float scaleS, float scaleT, Matrix4 transform, Vector3[] uvsAndVerts, int bindingId, int trailCount = 8)
         {
             RenderItem item = GetRenderItem();
             item.Type = type;
@@ -1639,7 +1717,48 @@ namespace MphRead
             item.Points = uvsAndVerts;
             item.ScaleS = scaleS;
             item.ScaleT = scaleT;
-            item.PointCount = pointCount;
+            item.TrailCount = trailCount;
+            AddRenderItem(item);
+        }
+
+        // for Morph Ball trails
+        public void AddRenderItem(RenderItemType type, int polygonId, Vector3 color, RepeatMode xRepeat, RepeatMode yRepeat, float scaleS,
+            float scaleT, int matrixStackCount, IReadOnlyList<float> matrixStack, Vector3[] uvsAndVerts, int segmentCount, int bindingId)
+        {
+            RenderItem item = GetRenderItem();
+            item.Type = type;
+            item.PolygonId = polygonId;
+            item.Alpha = 1;
+            item.PolygonMode = PolygonMode.Modulate;
+            item.RenderMode = RenderMode.Translucent;
+            item.CullingMode = CullingMode.Neither;
+            item.Wireframe = false;
+            item.Lighting = false;
+            item.Diffuse = color;
+            item.Ambient = Vector3.Zero;
+            item.Specular = Vector3.Zero;
+            item.Emission = Vector3.Zero;
+            item.LightInfo = LightInfo.Zero;
+            item.TexgenMode = TexgenMode.None;
+            item.XRepeat = xRepeat;
+            item.YRepeat = yRepeat;
+            item.HasTexture = true;
+            item.TextureBindingId = bindingId;
+            item.TexcoordMatrix = Matrix4.Identity;
+            item.Transform = Matrix4.Identity;
+            item.ListId = 0;
+            Debug.Assert(matrixStack.Count >= 16 * matrixStackCount);
+            item.MatrixStackCount = matrixStackCount;
+            for (int i = 0; i < matrixStack.Count; i++)
+            {
+                item.MatrixStack[i] = matrixStack[i];
+            }
+            item.OverrideColor = null;
+            item.PaletteOverride = null;
+            item.Points = uvsAndVerts;
+            item.ScaleS = scaleS;
+            item.ScaleT = scaleT;
+            item.TrailCount = segmentCount;
             AddRenderItem(item);
         }
 
@@ -1850,6 +1969,7 @@ namespace MphRead
             UseRoomLights();
             GL.Uniform1(_shaderLocations.UseFog, _hasFog && _showFog ? 1 : 0);
             GL.Uniform1(_shaderLocations.ShowColors, _showColors ? 1 : 0);
+            UpdateFade();
         }
 
         private void UseRoomLights()
@@ -1870,6 +1990,104 @@ namespace MphRead
         {
             GL.Uniform3(_shaderLocations.Light2Vector, vector);
             GL.Uniform3(_shaderLocations.Light2Color, color);
+        }
+
+        private FadeType _fadeType = FadeType.None;
+        private float _fadeColor = 0;
+        private float _fadeTarget = 0;
+        private float _fadeStart = 0;
+        private float _fadeLength = 0;
+        private float _currentFade = 0;
+
+        public void SetFade(FadeType type, float length, bool overwrite)
+        {
+            if (!overwrite && _fadeType != FadeType.None)
+            {
+                return;
+            }
+            _fadeType = type;
+            if (type == FadeType.None)
+            {
+                _fadeType = type;
+                _fadeColor = 0;
+                _fadeTarget = 0;
+                _currentFade = 0;
+                _fadeStart = 0;
+                _fadeLength = 0;
+            }
+            else if (type == FadeType.FadeInWhite)
+            {
+                _fadeColor = 1;
+                _fadeTarget = 0;
+            }
+            else if (type == FadeType.FadeInBlack)
+            {
+                _fadeColor = -1;
+                _fadeTarget = 0;
+            }
+            else if (type == FadeType.FadeOutWhite || type == FadeType.FadeOutInWhite)
+            {
+                _fadeColor = 0;
+                _fadeTarget = 1;
+            }
+            else if (type == FadeType.FadeOutBlack || type == FadeType.FadeOutInBlack)
+            {
+                _fadeColor = 0;
+                _fadeTarget = -1;
+            }
+            _fadeStart = _elapsedTime;
+            _fadeLength = length;
+        }
+
+        private void UpdateFade()
+        {
+            Color4 clearColor = _clearColor;
+            if (_fadeType != FadeType.None)
+            {
+                float percent = (_elapsedTime - _fadeStart) / _fadeLength;
+                if (percent > 1)
+                {
+                    percent = 1;
+                }
+                _currentFade = _fadeColor + (_fadeTarget - _fadeColor) * percent;
+                clearColor = new Color4(_clearColor.R + _currentFade, _clearColor.G + _currentFade,
+                    _clearColor.B + _currentFade, _clearColor.A);
+                if (percent == 1)
+                {
+                    EndFade();
+                }
+            }
+            GL.Uniform1(_shaderLocations.FadeColor, _currentFade);
+            GL.ClearColor(clearColor);
+        }
+
+        private void EndFade()
+        {
+            if (_fadeType == FadeType.FadeOutBlack)
+            {
+                _currentFade = -1;
+            }
+            else if (_fadeType == FadeType.FadeOutWhite)
+            {
+                _currentFade = 1;
+            }
+            else if (_fadeType == FadeType.FadeOutInBlack)
+            {
+                SetFade(FadeType.FadeInBlack, _fadeLength, overwrite: true);
+            }
+            else if (_fadeType == FadeType.FadeOutInWhite)
+            {
+                SetFade(FadeType.FadeInWhite, _fadeLength, overwrite: true);
+            }
+            else
+            {
+                _fadeType = FadeType.None;
+                _fadeColor = 0;
+                _fadeTarget = 0;
+                _currentFade = 0;
+                _fadeStart = 0;
+                _fadeLength = 0;
+            }
         }
 
         private void RenderItem(RenderItem item)
@@ -1946,6 +2164,10 @@ namespace MphRead
             else if (item.Type == RenderItemType.TrailMulti)
             {
                 RenderTrailMulti(item);
+            }
+            else if (item.Type == RenderItemType.TrailStack)
+            {
+                RenderTrailStack(item);
             }
         }
 
@@ -2159,9 +2381,9 @@ namespace MphRead
 
         private void RenderTrailMulti(RenderItem item)
         {
-            Debug.Assert(item.PointCount >= 4 && item.PointCount % 2 == 0);
+            Debug.Assert(item.TrailCount >= 4 && item.TrailCount % 2 == 0);
             GL.Begin(PrimitiveType.QuadStrip);
-            for (int i = 0; i < item.PointCount; i += 2)
+            for (int i = 0; i < item.TrailCount; i += 2)
             {
                 Vector3 texcoord = item.Points[i];
                 Vector3 vertex = item.Points[i + 1];
@@ -2169,6 +2391,31 @@ namespace MphRead
                 GL.Vertex3(vertex);
             }
             GL.End();
+        }
+
+        private void RenderTrailStack(RenderItem item)
+        {
+            for (int i = 0; i < item.TrailCount; i++)
+            {
+                Vector3 texcoord0 = item.Points[i * 8];
+                Vector3 vertex0 = item.Points[i * 8 + 1];
+                Vector3 texcoord1 = item.Points[i * 8 + 2];
+                Vector3 vertex1 = item.Points[i * 8 + 3];
+                Vector3 texcoord2 = item.Points[i * 8 + 4];
+                Vector3 vertex2 = item.Points[i * 8 + 5];
+                Vector3 texcoord3 = item.Points[i * 8 + 6];
+                Vector3 vertex3 = item.Points[i * 8 + 7];
+                GL.Begin(PrimitiveType.Quads);
+                GL.TexCoord3(texcoord0);
+                GL.Vertex3(vertex0);
+                GL.TexCoord3(texcoord1);
+                GL.Vertex3(vertex1);
+                GL.TexCoord3(texcoord2);
+                GL.Vertex3(vertex2);
+                GL.TexCoord3(texcoord3);
+                GL.Vertex3(vertex3);
+                GL.End();
+            }
         }
 
         private void DoMaterial(RenderItem item)
@@ -2256,33 +2503,11 @@ namespace MphRead
 
         public void LookAt(Vector3 target)
         {
-            static bool FloatEqual(float one, float two)
-            {
-                return MathF.Abs(one - two) < 0.001f;
-            }
-            if (_cameraMode == CameraMode.Roam)
-            {
-                _cameraPosition = -1 * target.WithZ(target.Z + 5);
-                Vector3 position = -1 * _cameraPosition;
-                Vector3 unit = FloatEqual(position.Z, target.Z) && FloatEqual(position.X, target.X)
-                    ? Vector3.UnitZ
-                    : Vector3.UnitY;
-                Matrix4.LookAt(position, target, unit).ExtractRotation().ToEulerAngles(out Vector3 angles);
-                _angleX = MathHelper.RadiansToDegrees(angles.X + angles.Z);
-                if (_angleX < -90)
-                {
-                    _angleX += 360;
-                }
-                else if (_angleX > 90)
-                {
-                    _angleX -= 360;
-                }
-                _angleY = MathHelper.RadiansToDegrees(angles.Y);
-                if (FloatEqual(MathF.Abs(angles.Z), MathF.PI))
-                {
-                    _angleY = 180 - _angleY;
-                }
-            }
+            _cameraMode = CameraMode.Roam;
+            _cameraPosition = target.AddZ(5);
+            _cameraFacing = -Vector3.UnitZ;
+            _cameraUp = Vector3.UnitY;
+            _cameraRight = Vector3.UnitX;
         }
 
         public void OnMouseClick(bool down)
@@ -2292,21 +2517,28 @@ namespace MphRead
 
         public void OnMouseMove(float deltaX, float deltaY)
         {
-            if (_leftMouse)
+            if (_leftMouse && AllowCameraMovement)
             {
-                _angleX += deltaY / 1.5f;
-                _angleX = Math.Clamp(_angleX, -90.0f, 90.0f);
-                _angleY += deltaX / 1.5f;
-                _angleY %= 360f;
+                if (_cameraMode == CameraMode.Pivot)
+                {
+                    _pivotAngleX += deltaY / 1.5f;
+                    _pivotAngleX = Math.Clamp(_pivotAngleX, -90.0f, 90.0f);
+                    _pivotAngleY += deltaX / 1.5f;
+                    _pivotAngleY %= 360f;
+                }
+                else if (_cameraMode == CameraMode.Roam)
+                {
+                    UpdateCameraRotation(MathHelper.DegreesToRadians(deltaX / 1.5f), MathHelper.DegreesToRadians(-deltaY / 1.5f));
+                }
             }
         }
 
         public void OnMouseWheel(float offsetY)
         {
-            if (_cameraMode == CameraMode.Pivot)
+            if (_cameraMode == CameraMode.Pivot && AllowCameraMovement)
             {
                 float delta = _wheelOffset - offsetY;
-                _distance += delta / 1.5f;
+                _pivotDistance += delta / 1.5f;
                 _wheelOffset = offsetY;
             }
         }
@@ -2469,7 +2701,7 @@ namespace MphRead
                     _recording = !_recording;
                     _framesRecorded = 0;
                 }
-                else
+                else if (AllowCameraMovement)
                 {
                     ResetCamera();
                 }
@@ -2524,99 +2756,86 @@ namespace MphRead
                 Selection.OnKeyHeld(_keyboardState);
                 return;
             }
-            // sprint
-            float step = _keyboardState.IsKeyDown(Keys.LeftShift) || _keyboardState.IsKeyDown(Keys.RightShift) ? 5 : 1;
+            if (!AllowCameraMovement)
+            {
+                return;
+            }
             if (_cameraMode == CameraMode.Roam)
             {
+                float moveStep = _keyboardState.IsKeyDown(Keys.LeftShift) || _keyboardState.IsKeyDown(Keys.RightShift) ? 0.5f : 0.1f;
+                float rotStepDeg = _keyboardState.IsKeyDown(Keys.LeftShift) || _keyboardState.IsKeyDown(Keys.RightShift) ? 3 : 1.5f;
+                float rotStep = MathHelper.DegreesToRadians(rotStepDeg);
                 if (_keyboardState.IsKeyDown(Keys.W)) // move forward
                 {
-                    _cameraPosition = new Vector3(
-                        _cameraPosition.X +
-                            step * MathF.Sin(MathHelper.DegreesToRadians(-1 * _angleY))
-                            * MathF.Cos(MathHelper.DegreesToRadians(_angleX)) * 0.1f,
-                        _cameraPosition.Y +
-                            step * MathF.Sin(MathHelper.DegreesToRadians(_angleX)) * 0.1f,
-                        _cameraPosition.Z +
-                            step * MathF.Cos(MathHelper.DegreesToRadians(_angleY))
-                            * MathF.Cos(MathHelper.DegreesToRadians(_angleX)) * 0.1f
-                    );
+                    _cameraPosition += _cameraFacing * moveStep;
                 }
                 else if (_keyboardState.IsKeyDown(Keys.S)) // move backward
                 {
-                    _cameraPosition = new Vector3(
-                        _cameraPosition.X -
-                            step * MathF.Sin(MathHelper.DegreesToRadians(-1 * _angleY))
-                            * MathF.Cos(MathHelper.DegreesToRadians(_angleX)) * 0.1f,
-                        _cameraPosition.Y -
-                            step * MathF.Sin(MathHelper.DegreesToRadians(_angleX)) * 0.1f,
-                        _cameraPosition.Z -
-                            step * MathF.Cos(MathHelper.DegreesToRadians(_angleY))
-                            * MathF.Cos(MathHelper.DegreesToRadians(_angleX)) * 0.1f
-                    );
+                    _cameraPosition -= _cameraFacing * moveStep;
                 }
                 if (_keyboardState.IsKeyDown(Keys.Space)) // move up
                 {
-                    _cameraPosition = new Vector3(_cameraPosition.X, _cameraPosition.Y - step * 0.1f, _cameraPosition.Z);
+                    _cameraPosition = _cameraPosition.WithY(_cameraPosition.Y + moveStep);
                 }
                 else if (_keyboardState.IsKeyDown(Keys.V)) // move down
                 {
-                    _cameraPosition = new Vector3(_cameraPosition.X, _cameraPosition.Y + step * 0.1f, _cameraPosition.Z);
+                    _cameraPosition = _cameraPosition.WithY(_cameraPosition.Y - moveStep);
                 }
                 if (_keyboardState.IsKeyDown(Keys.A)) // move left
                 {
-                    float angleX = _angleY - 90;
-                    if (angleX < 0)
-                    {
-                        angleX += 360;
-                    }
-                    _cameraPosition = new Vector3(
-                        _cameraPosition.X +
-                            step * MathF.Sin(MathHelper.DegreesToRadians(-1 * angleX))
-                            * 0.1f,
-                        _cameraPosition.Y,
-                        _cameraPosition.Z +
-                            step * MathF.Cos(MathHelper.DegreesToRadians(angleX))
-                            * 0.1f
-                    );
+                    _cameraPosition -= _cameraRight * moveStep;
                 }
                 else if (_keyboardState.IsKeyDown(Keys.D)) // move right
                 {
-                    float angleX = _angleY + 90;
-                    if (angleX > 360)
-                    {
-                        angleX -= 360;
-                    }
-                    _cameraPosition = new Vector3(
-                        _cameraPosition.X +
-                            step * MathF.Sin(MathHelper.DegreesToRadians(-1 * angleX))
-                            * 0.1f,
-                        _cameraPosition.Y,
-                        _cameraPosition.Z +
-                            step * MathF.Cos(MathHelper.DegreesToRadians(angleX))
-                            * 0.1f
-                    );
+                    _cameraPosition += _cameraRight * moveStep;
                 }
-                step = _keyboardState.IsKeyDown(Keys.LeftShift) || _keyboardState.IsKeyDown(Keys.RightShift) ? -3 : -1.5f;
+                if (_keyboardState.IsKeyDown(Keys.Left) || _keyboardState.IsKeyDown(Keys.Right)
+                    || _keyboardState.IsKeyDown(Keys.Up) || _keyboardState.IsKeyDown(Keys.Down))
+                {
+                    float stepH = 0;
+                    float stepV = 0;
+                    if (_keyboardState.IsKeyDown(Keys.Left)) // rotate left
+                    {
+                        stepH = -rotStep;
+                    }
+                    else if (_keyboardState.IsKeyDown(Keys.Right)) // rotate right
+                    {
+                        stepH = rotStep;
+                    }
+                    if (_keyboardState.IsKeyDown(Keys.Up)) // rotate up
+                    {
+                        stepV = rotStep;
+                    }
+                    else if (_keyboardState.IsKeyDown(Keys.Down)) // rotate down
+                    {
+                        stepV = -rotStep;
+                    }
+                    UpdateCameraRotation(stepH, stepV);
+                }
             }
-            if (_keyboardState.IsKeyDown(Keys.Up)) // rotate up
+            else if (_cameraMode == CameraMode.Pivot)
             {
-                _angleX += step;
-                _angleX = Math.Clamp(_angleX, -90.0f, 90.0f);
-            }
-            else if (_keyboardState.IsKeyDown(Keys.Down)) // rotate down
-            {
-                _angleX -= step;
-                _angleX = Math.Clamp(_angleX, -90.0f, 90.0f);
-            }
-            if (_keyboardState.IsKeyDown(Keys.Left)) // rotate left
-            {
-                _angleY += step;
-                _angleY %= 360f;
-            }
-            else if (_keyboardState.IsKeyDown(Keys.Right)) // rotate right
-            {
-                _angleY -= step;
-                _angleY %= 360f;
+                float rotStep = _keyboardState.IsKeyDown(Keys.LeftShift) || _keyboardState.IsKeyDown(Keys.RightShift) ? -3 : -1.5f;
+                if (_keyboardState.IsKeyDown(Keys.Up)) // rotate up
+                {
+                    _pivotAngleX += rotStep;
+                    _pivotAngleX = Math.Clamp(_pivotAngleX, -90.0f, 90.0f);
+                }
+                else if (_keyboardState.IsKeyDown(Keys.Down)) // rotate down
+                {
+                    _pivotAngleX -= rotStep;
+                    _pivotAngleX = Math.Clamp(_pivotAngleX, -90.0f, 90.0f);
+                }
+                if (_keyboardState.IsKeyDown(Keys.Left)) // rotate left
+                {
+                    _pivotAngleY += rotStep;
+                    _pivotAngleY %= 360f;
+                }
+                else if (_keyboardState.IsKeyDown(Keys.Right)) // rotate right
+                {
+                    _pivotAngleY -= rotStep;
+                    _pivotAngleY %= 360f;
+                }
             }
         }
 
@@ -2811,8 +3030,7 @@ namespace MphRead
             }
             if (_outputCameraPos)
             {
-                Vector3 cam = _cameraPosition * (_cameraMode == CameraMode.Roam ? -1 : 1);
-                _sb.AppendLine($"Camera ({cam.X}, {cam.Y}, {cam.Z})");
+                _sb.AppendLine($"Camera ({_cameraPosition.X}, {_cameraPosition.Y}, {_cameraPosition.Z})");
             }
             else
             {
@@ -2872,11 +3090,12 @@ namespace MphRead
             }
             else if (entity is TriggerVolumeEntity trigger)
             {
-                _sb.Append($" ({trigger.Data.Subtype})");
+                _sb.Append($" ({trigger.Data.Subtype}");
                 if (trigger.Data.Subtype == TriggerType.Threshold)
                 {
-                    _sb.Append($" x{trigger.Data.TriggerThreshold})");
+                    _sb.Append($" x{trigger.Data.TriggerThreshold}");
                 }
+                _sb.Append(')');
                 _sb.AppendLine();
                 _sb.Append($"Parent: {trigger.Data.ParentEvent}");
                 if (trigger.Data.ParentEvent != Message.None && TryGetEntity(trigger.Data.ParentId, out EntityBase? parent))
@@ -2935,6 +3154,10 @@ namespace MphRead
                 {
                     _sb.Append($" ({obj.Data.EffectId}, {Metadata.Effects[(int)obj.Data.EffectId].Name})");
                 }
+            }
+            else if (entity is CameraSequenceEntity cam)
+            {
+                _sb.Append($" (ID {cam.Data.SequenceId})");
             }
             _sb.AppendLine();
             _sb.AppendLine($"Position ({entity.Position.X}, {entity.Position.Y}, {entity.Position.Z})");
@@ -3073,9 +3296,9 @@ namespace MphRead
             Scene.AddModel(name, recolor, firstHunt);
         }
 
-        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null)
+        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null)
         {
-            Scene.AddPlayer(hunter, recolor, position);
+            Scene.AddPlayer(hunter, recolor, position, facing);
         }
 
         protected override void OnLoad()

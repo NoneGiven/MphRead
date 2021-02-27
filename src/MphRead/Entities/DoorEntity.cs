@@ -11,7 +11,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             DoorMetadata meta = Metadata.Doors[(int)data.ModelId];
             int recolorId = 0;
             // AlimbicDoor, AlimbicThinDoor
@@ -70,7 +70,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             ModelInstance inst = Read.GetModelInstance(Metadata.FhDoors[(int)data.ModelId], firstHunt: true);
             _models.Add(inst);
             // temporary
