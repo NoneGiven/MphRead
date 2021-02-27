@@ -36,7 +36,7 @@ namespace MphRead
         public readonly ushort EntityId; // counts up
         public readonly Vector3Fx Position;
         public readonly Vector3Fx UpVector;
-        public readonly Vector3Fx RightVector;
+        public readonly Vector3Fx FacingVector;
     }
 
     // size: 588

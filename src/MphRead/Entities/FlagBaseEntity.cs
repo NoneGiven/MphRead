@@ -11,7 +11,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _volume = CollisionVolume.Move(_data.Volume, Position);
             Recolor = mode == GameMode.Capture ? (int)data.TeamId : 0;
             // note: this mode check is necessary because e.g. Sic Transit has OctolithFlags/FlagBases

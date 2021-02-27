@@ -432,7 +432,7 @@ namespace MphRead
 
         public Vector3 Position { get; }
         public readonly Vector3 UpVector;
-        public readonly Vector3 RightVector;
+        public readonly Vector3 FacingVector;
 
         public Entity(EntityEntry entry, EntityType type, ushort entityId, EntityDataHeader header)
         {
@@ -448,7 +448,7 @@ namespace MphRead
             FirstHunt = false;
             Position = header.Position.ToFloatVector();
             UpVector = header.UpVector.ToFloatVector();
-            RightVector = header.RightVector.ToFloatVector();
+            FacingVector = header.FacingVector.ToFloatVector();
         }
 
         public Entity(FhEntityEntry entry, EntityType type, ushort entityId, EntityDataHeader header)
@@ -463,7 +463,7 @@ namespace MphRead
             FirstHunt = true;
             Position = header.Position.ToFloatVector();
             UpVector = header.UpVector.ToFloatVector();
-            RightVector = header.RightVector.ToFloatVector();
+            FacingVector = header.FacingVector.ToFloatVector();
         }
 
         public virtual ushort GetParentId()

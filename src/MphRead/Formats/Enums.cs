@@ -372,7 +372,8 @@ namespace MphRead
         Noxus = 4,
         Spire = 5,
         Weavel = 6,
-        Guardian = 7
+        Guardian = 7,
+        Random = 8
     }
 
     public enum Language

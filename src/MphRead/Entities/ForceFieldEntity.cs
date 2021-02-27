@@ -13,7 +13,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             Scale = new Vector3(data.Width.FloatValue, data.Height.FloatValue, 1.0f);
             Recolor = Metadata.DoorPalettes[(int)data.Type];
             ModelInstance inst = Read.GetModelInstance("ForceField");
