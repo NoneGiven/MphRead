@@ -23,7 +23,7 @@ namespace MphRead.Entities
         {
             Data = data;
             Id = data.Header.EntityId;
-            SetTransform(data.Header.RightVector, data.Header.UpVector, data.Header.Position);
+            SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             AddPlaceholderModel();
             byte seqId = data.SequenceId;
             CameraSequence? sequence = _sequenceData[seqId];

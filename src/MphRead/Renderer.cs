@@ -226,15 +226,14 @@ namespace MphRead
         }
 
         // called before load
-        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null)
+        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null)
         {
-            var entity = new PlayerEntity(hunter, recolor, position);
-            _entities.Add(entity);
-            if (entity.Id != -1)
+            var entity = PlayerEntity.Spawn(hunter, recolor, position, facing);
+            if (entity != null)
             {
-                _entityMap.Add(entity.Id, entity);
+                _entities.Add(entity);
+                InitEntity(entity);
             }
-            InitEntity(entity);
         }
 
         public bool TryGetEntity(int id, [NotNullWhen(true)] out EntityBase? entity)
@@ -3292,9 +3291,9 @@ namespace MphRead
             Scene.AddModel(name, recolor, firstHunt);
         }
 
-        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null)
+        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null)
         {
-            Scene.AddPlayer(hunter, recolor, position);
+            Scene.AddPlayer(hunter, recolor, position, facing);
         }
 
         protected override void OnLoad()

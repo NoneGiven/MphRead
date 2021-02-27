@@ -8,17 +8,17 @@ namespace MphRead.Entities
 {
     public class PlayerEntity : EntityBase
     {
-        public Hunter Hunter { get; }
+        public Hunter Hunter { get; private set; }
         public Team Team { get; set; }
-        private readonly ModelInstance _bipedModel = null!;
-        private readonly ModelInstance _altModel = null!;
-        private readonly ModelInstance _gunModel = null!;
+        private ModelInstance _bipedModel = null!;
+        private ModelInstance _altModel = null!;
+        private ModelInstance _gunModel = null!;
         private readonly ModelInstance _dblDmgModel;
         private readonly ModelInstance _altIceModel;
-        private readonly ModelInstance _bipedIceModel;
+        private ModelInstance _bipedIceModel = null!;
         private int _dblDmgBindingId;
         // todo: does this affect collision and stuff?
-        private readonly Matrix4 _scaleMtx;
+        private Matrix4 _scaleMtx;
 
         private Vector3 _light1Vector;
         private Vector3 _light1Color;
@@ -36,7 +36,7 @@ namespace MphRead.Entities
 
         private readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(16); // in-game: 5
         public BombEntity[] Bombs { get; } = new BombEntity[3];
-        public int BombMax { get; }
+        public int BombMax { get; private set; }
         public int BombCount { get; set; }
 
         // todo: remove testing code
@@ -56,11 +56,34 @@ namespace MphRead.Entities
         public Vector3 PrevPosition1 { get; private set; }
         public Vector3 PrevPosition2 { get; private set; }
 
-        public PlayerEntity(Hunter hunter, int recolor = 0, Vector3? position = null) : base(EntityType.Player)
+        public static readonly PlayerEntity[] Players = new PlayerEntity[4]
+        {
+            new PlayerEntity(), new PlayerEntity(), new PlayerEntity(), new PlayerEntity()
+        };
+
+        private PlayerEntity() : base(EntityType.Player)
+        {
+            _dblDmgModel = Read.GetModelInstance("doubleDamage_img");
+            _altIceModel = Read.GetModelInstance("alt_ice");
+            _models.Add(_altIceModel);
+        }
+
+        public static PlayerEntity? Spawn(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null)
+        {
+            int slot = PlayerCount++;
+            if (slot >= _maxPlayers)
+            {
+                return null;
+            }
+            PlayerEntity player = Players[slot];
+            player.Slot = slot;
+            player.Setup(hunter, recolor, position, facing);
+            return player;
+        }
+
+        private void Setup(Hunter hunter, int recolor, Vector3? position, Vector3? facing)
         {
             Hunter = hunter;
-            Slot = PlayerCount++;
-            Debug.Assert(Slot < _maxPlayers);
             BombMax = 0;
             if (Hunter == Hunter.Samus || Hunter == Hunter.Sylux)
             {
@@ -70,10 +93,8 @@ namespace MphRead.Entities
             {
                 BombMax = 1;
             }
-            if (position.HasValue)
-            {
-                Position = position.Value;
-            }
+            // todo: player transform does something weird with the spine rotation (instead of this negation)
+            SetTransform(facing.HasValue ? -facing.Value : Vector3.UnitZ, Vector3.UnitY, position ?? Vector3.Zero);
             PrevPosition2 = PrevPosition2 = Position;
             Recolor = recolor;
             // todo: lod1
@@ -96,9 +117,6 @@ namespace MphRead.Entities
                     _gunModel = inst;
                 }
             }
-            _dblDmgModel = Read.GetModelInstance("doubleDamage_img");
-            _altIceModel = Read.GetModelInstance("alt_ice");
-            _models.Add(_altIceModel);
             _bipedIceModel = Read.GetModelInstance(Hunter == Hunter.Noxus || Hunter == Hunter.Trace ? "nox_ice" : "samus_ice");
             _models.Add(_bipedIceModel);
             _scaleMtx = Matrix4.CreateScale(Metadata.HunterScales[Hunter]);
@@ -416,21 +434,21 @@ namespace MphRead.Entities
             }
             if (!hasLight1)
             {
-                light1Vector.X += (_light1Vector.X - light1Vector.X) / 8f * frames;
-                light1Vector.Y += (_light1Vector.Y - light1Vector.Y) / 8f * frames;
-                light1Vector.Z += (_light1Vector.Z - light1Vector.Z) / 8f * frames;
-                light1Color.X = UpdateChannel(light1Color.X, _light1Color.X, frames);
-                light1Color.Y = UpdateChannel(light1Color.Y, _light1Color.Y, frames);
-                light1Color.Z = UpdateChannel(light1Color.Z, _light1Color.Z, frames);
+                light1Vector.X += (scene.Light1Vector.X - light1Vector.X) / 8f * frames;
+                light1Vector.Y += (scene.Light1Vector.Y - light1Vector.Y) / 8f * frames;
+                light1Vector.Z += (scene.Light1Vector.Z - light1Vector.Z) / 8f * frames;
+                light1Color.X = UpdateChannel(light1Color.X, scene.Light1Color.X, frames);
+                light1Color.Y = UpdateChannel(light1Color.Y, scene.Light1Color.Y, frames);
+                light1Color.Z = UpdateChannel(light1Color.Z, scene.Light1Color.Z, frames);
             }
             if (!hasLight2)
             {
-                light2Vector.X += (_light2Vector.X - light2Vector.X) / 8f * frames;
-                light2Vector.Y += (_light2Vector.Y - light2Vector.Y) / 8f * frames;
-                light2Vector.Z += (_light2Vector.Z - light2Vector.Z) / 8f * frames;
-                light2Color.X = UpdateChannel(light2Color.X, _light2Color.X, frames);
-                light2Color.Y = UpdateChannel(light2Color.Y, _light2Color.Y, frames);
-                light2Color.Z = UpdateChannel(light2Color.Z, _light2Color.Z, frames);
+                light2Vector.X += (scene.Light2Vector.X - light2Vector.X) / 8f * frames;
+                light2Vector.Y += (scene.Light2Vector.Y - light2Vector.Y) / 8f * frames;
+                light2Vector.Z += (scene.Light2Vector.Z - light2Vector.Z) / 8f * frames;
+                light2Color.X = UpdateChannel(light2Color.X, scene.Light2Color.X, frames);
+                light2Color.Y = UpdateChannel(light2Color.Y, scene.Light2Color.Y, frames);
+                light2Color.Z = UpdateChannel(light2Color.Z, scene.Light2Color.Z, frames);
             }
             _light1Color = light1Color;
             _light1Vector = light1Vector.Normalized();

@@ -221,6 +221,22 @@ namespace MphRead
             }
         }
 
+        public static void LoadHunterResources(Hunter hunter, Scene scene)
+        {
+            // todo: lods
+            scene.LoadModel("doubleDamage_img");
+            scene.LoadModel("alt_ice");
+            scene.LoadModel(hunter == Hunter.Noxus || hunter == Hunter.Trace ? "nox_ice" : "samus_ice");
+            foreach (string modelName in Metadata.HunterModels[hunter])
+            {
+                scene.LoadModel(modelName);
+            }
+            if (hunter == Hunter.Samus)
+            {
+                scene.LoadModel("trail");
+            }
+        }
+
         private static void LoadBombResources(Scene scene)
         {
             scene.LoadModel("KandenAlt_TailBomb");
