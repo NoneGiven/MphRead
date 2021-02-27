@@ -600,29 +600,8 @@ namespace MphRead.Effects
         CheckCollision = 0x40,
         SpawnChildEffect = 0x80,
         DestroyOnDetach = 0x100,
-        Bit09 = 0x200,
-        Bit10 = 0x400,
-        Bit11 = 0x800,
-        Bit12 = 0x1000,
-        Bit13 = 0x2000,
-        Bit14 = 0x4000,
-        Bit15 = 0x8000,
-        Bit16 = 0x10000,
-        Bit17 = 0x20000,
-        Bit18 = 0x40000,
         ElementExtension = 0x80000,
-        DrawEnabled = 0x100000,
-        Bit21 = 0x200000,
-        Bit22 = 0x400000,
-        Bit23 = 0x800000,
-        Bit24 = 0x1000000,
-        Bit25 = 0x2000000,
-        Bit26 = 0x4000000,
-        Bit27 = 0x8000000,
-        Bit28 = 0x10000000,
-        Bit29 = 0x20000000,
-        Bit30 = 0x40000000,
-        Bit31 = 0x80000000
+        DrawEnabled = 0x100000
     }
 
     public class EffectEntry
