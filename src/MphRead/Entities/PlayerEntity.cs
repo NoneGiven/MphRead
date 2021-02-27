@@ -45,11 +45,11 @@ namespace MphRead.Entities
 
         public static int PlayerCount { get; private set; }
         public int Slot { get; private set; }
-        private const int _maxPlayers = 4;
+        public const int MaxPlayers = 4;
         private const int _mbTrailSegments = 9;
-        private static readonly Matrix4[,] _mbTrailMatrices = new Matrix4[_maxPlayers, _mbTrailSegments];
-        private static readonly int[,] _mbTrailAlphas = new int[_maxPlayers, _mbTrailSegments];
-        private static readonly int[] _mbTrailIndices = new int[_maxPlayers];
+        private static readonly Matrix4[,] _mbTrailMatrices = new Matrix4[MaxPlayers, _mbTrailSegments];
+        private static readonly int[,] _mbTrailAlphas = new int[MaxPlayers, _mbTrailSegments];
+        private static readonly int[] _mbTrailIndices = new int[MaxPlayers];
         private ModelInstance? _trailModel = null;
         private int _bindingId = 0;
 
@@ -71,7 +71,7 @@ namespace MphRead.Entities
         public static PlayerEntity? Spawn(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null)
         {
             int slot = PlayerCount++;
-            if (slot >= _maxPlayers)
+            if (slot >= MaxPlayers)
             {
                 return null;
             }

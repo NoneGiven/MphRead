@@ -1787,13 +1787,13 @@ namespace MphRead.Memory
         public IntPtr Data { get => ReadPointer(_off0); set => WritePointer(_off0, value); }
 
         private const int _off1 = 0x1C; // CEntity*
-        public IntPtr Ent1 { get => ReadPointer(_off1); set => WritePointer(_off1, value); }
+        public IntPtr Entity1 { get => ReadPointer(_off1); set => WritePointer(_off1, value); }
 
         private const int _off2 = 0x20; // CEntity*
-        public IntPtr Ent2 { get => ReadPointer(_off2); set => WritePointer(_off2, value); }
+        public IntPtr Entity2 { get => ReadPointer(_off2); set => WritePointer(_off2, value); }
 
         private const int _off3 = 0x24; // CEntity*
-        public IntPtr MessageTarget { get => ReadPointer(_off3); set => WritePointer(_off3, value); }
+        public IntPtr EventTarget { get => ReadPointer(_off3); set => WritePointer(_off3, value); }
 
         private const int _off4 = 0x28;
         public byte Flags { get => ReadByte(_off4); set => WriteByte(_off4, value); }

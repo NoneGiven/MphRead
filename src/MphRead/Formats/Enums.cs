@@ -248,7 +248,7 @@ namespace MphRead
         SetActive = 5,
         Destroyed = 6,
         Damage = 7,
-        Unknown9 = 9,
+        Trigger = 9,
         Unknown12 = 12,
         Gravity = 15,
         Unknown16 = 16, // unlock?

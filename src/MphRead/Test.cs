@@ -1247,6 +1247,10 @@ namespace MphRead
                         if (entity.Type == EntityType.CameraSequence)
                         {
                             CameraSequenceEntityData data = ((Entity<CameraSequenceEntityData>)entity).Data;
+                            if (data.PlayerId1 != 0 || data.PlayerId2 != 0)
+                            {
+                                Debugger.Break();
+                            }
                         }
                     }
                 }

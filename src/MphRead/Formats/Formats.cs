@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using MphRead.Entities;
 using OpenTK.Mathematics;
 
 namespace MphRead
@@ -1014,6 +1015,64 @@ namespace MphRead
                 return Light2Enabled ? Color2 : Vector3.Zero;
             }
             return null;
+        }
+    }
+
+    public class CameraSequenceKeyframe
+    {
+        public Vector3 Position { get; }
+        public Vector3 ToTarget { get; }
+        public float Roll { get; }
+        public float Fov { get; }
+        public float MoveTime { get; }
+        public float HoldTime { get; }
+        public float FadeInTime { get; }
+        public float FadeOutTime { get; }
+        public FadeType FadeInType { get; }
+        public FadeType FadeOutType { get; }
+        public byte PrevFrameInfluence { get; } // flag bits 0/1
+        public byte AfterFrameInfluence { get; } // flag bits 0/1
+        public byte UseEntityTransform { get; }
+        public ushort Entity1Type { get; }
+        public ushort Entity1Id { get; }
+        public ushort Entity2Type { get; }
+        public ushort Entity2Id { get; }
+        public ushort MessageTargetType { get; }
+        public ushort MessageTargetId { get; }
+        public ushort MessageId { get; }
+        public ushort MessageParam { get; }
+        public float Easing { get; } // always 0, 4096, or 4120 (1.00585938)
+        public string NodeName { get; }
+
+        public EntityBase? Entity1 { get; set; }
+        public EntityBase? Entity2 { get; set; }
+        public EntityBase? MessageTarget { get; set; }
+
+        public CameraSequenceKeyframe(RawCameraSequenceKeyframe raw)
+        {
+            Position = raw.Position.ToFloatVector();
+            ToTarget = raw.ToTarget.ToFloatVector();
+            Roll = raw.Roll.FloatValue;
+            Fov = raw.Fov.FloatValue;
+            MoveTime = raw.MoveTime.FloatValue;
+            HoldTime = raw.HoldTime.FloatValue;
+            FadeInTime = raw.FadeInTime.FloatValue;
+            FadeOutTime = raw.FadeOutTime.FloatValue;
+            FadeInType = raw.FadeInType;
+            FadeOutType = raw.FadeOutType;
+            PrevFrameInfluence = raw.PrevFrameInfluence;
+            AfterFrameInfluence = raw.AfterFrameInfluence;
+            UseEntityTransform = raw.UseEntityTransform;
+            Entity1Type = raw.Entity1Type;
+            Entity1Id = raw.Entity1Id;
+            Entity2Type = raw.Entity2Type;
+            Entity2Id = raw.Entity2Id;
+            MessageTargetType = raw.MessageTargetType;
+            MessageTargetId = raw.MessageTargetId;
+            MessageId = raw.MessageId;
+            MessageParam = raw.MessageParam;
+            Easing = raw.Easing.FloatValue;
+            NodeName = raw.NodeName.MarshalString();
         }
     }
 

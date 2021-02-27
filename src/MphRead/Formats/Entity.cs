@@ -787,7 +787,7 @@ namespace MphRead
         public readonly byte PlayerId2;
         public readonly ushort Entity1;
         public readonly ushort Entity2;
-        public readonly ushort Entity3;
+        public readonly ushort MessageTargetId;
         public readonly uint MessageId;
         public readonly uint MessageParam;
     }

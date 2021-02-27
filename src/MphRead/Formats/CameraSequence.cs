@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 namespace MphRead.Formats
 {
@@ -11,11 +12,11 @@ namespace MphRead.Formats
         public byte Version { get; }
         public IReadOnlyList<CameraSequenceKeyframe> Keyframes { get; }
 
-        public CameraSequence(string name, CameraSequenceHeader header, IReadOnlyList<CameraSequenceKeyframe> keyframes)
+        public CameraSequence(string name, CameraSequenceHeader header, IReadOnlyList<RawCameraSequenceKeyframe> keyframes)
         {
             Name = name.Replace(".bin", "");
             Version = header.Version;
-            Keyframes = keyframes;
+            Keyframes = keyframes.Select(k => new CameraSequenceKeyframe(k)).ToList();
         }
 
         public static CameraSequence Load(int id)
@@ -32,7 +33,7 @@ namespace MphRead.Formats
             CameraSequenceHeader header = Read.ReadStruct<CameraSequenceHeader>(bytes);
             Debug.Assert(header.Padding3 == 0);
             Debug.Assert(header.Padding4 == 0);
-            return new CameraSequence(name, header, Read.DoOffsets<CameraSequenceKeyframe>(bytes, Sizes.CameraSequenceHeader, header.Count));
+            return new CameraSequence(name, header, Read.DoOffsets<RawCameraSequenceKeyframe>(bytes, Sizes.CameraSequenceHeader, header.Count));
         }
 
         public static IReadOnlyList<string> Filenames { get; } = new List<string>()

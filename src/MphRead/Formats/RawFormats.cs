@@ -13,7 +13,7 @@ namespace MphRead
         public static readonly int ItemEntityData = Marshal.SizeOf(typeof(ItemEntityData));
         public static readonly int NodeAnimation = Marshal.SizeOf(typeof(NodeAnimation));
         public static readonly int CameraSequenceHeader = Marshal.SizeOf(typeof(CameraSequenceHeader));
-        public static readonly int CameraSequenceKeyframe = Marshal.SizeOf(typeof(CameraSequenceKeyframe));
+        public static readonly int CameraSequenceKeyframe = Marshal.SizeOf(typeof(RawCameraSequenceKeyframe));
     }
 
     // size: 4
@@ -439,7 +439,7 @@ namespace MphRead
     }
 
     // size: 100 (100 bytes are read from the file into a 112-byte struct)
-    public readonly struct CameraSequenceKeyframe
+    public readonly struct RawCameraSequenceKeyframe
     {
         public readonly Vector3Fx Position;
         public readonly Vector3Fx ToTarget;
