@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using MphRead.Entities;
 
 namespace MphRead
 {
@@ -106,7 +107,7 @@ namespace MphRead
         public readonly uint Field178;
         public readonly uint Field17C;
         public readonly uint Field180;
-        public readonly uint Flags;
+        public readonly PlatformFlags Flags;
         public readonly uint Field188;
         public readonly Vector3Fx BeamSpawnDir;
         public readonly Vector3Fx BeamSpawnPos;

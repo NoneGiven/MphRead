@@ -12,7 +12,7 @@ namespace MphRead.Entities
         // used for ID 2 (energyBeam, arcWelder)
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x2F, 0x4F, 0x4F).AsVector4();
 
-        public uint Flags { get; private set; }
+        public PlatformFlags Flags { get; private set; }
         private readonly List<int> _effectNodeIds = new List<int>() { -1, -1, -1, -1 };
         private readonly List<EffectEntry?> _effects = new List<EffectEntry?>() { null, null, null, null };
         private const int _nozzleEffectId = 182; // nozzleJet
@@ -32,11 +32,11 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             Flags = data.Flags;
-            if ((Flags & 0x100000) != 0)
+            if (Flags.HasFlag(PlatformFlags.Bit20))
             {
-                Flags |= 0x8;
-                Flags |= 0x2000u;
-                Flags |= 0x40000u;
+                Flags |= PlatformFlags.Bit03;
+                Flags |= PlatformFlags.Bit13;
+                Flags |= PlatformFlags.BeamTarget;
             }
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             PlatformMetadata? meta = Metadata.GetPlatformById((int)data.ModelId);
@@ -68,7 +68,7 @@ namespace MphRead.Entities
         public override void Initialize(Scene scene)
         {
             base.Initialize(scene);
-            if ((Flags & 0x80000) != 0)
+            if (Flags.HasFlag(PlatformFlags.NozzleEffect))
             {
                 Model model = _models[0].Model;
                 for (int i = 0; i < model.Nodes.Count; i++)
@@ -108,7 +108,7 @@ namespace MphRead.Entities
             {
                 scene.LoadEffect(_data.EffectId3);
             }
-            if (_data.BeamId == 0 && (Flags & 4) != 0)
+            if (_data.BeamId == 0 && Flags.HasFlag(PlatformFlags.BeamSpawner))
             {
                 scene.LoadEffect(183);
                 scene.LoadEffect(184);
@@ -132,7 +132,7 @@ namespace MphRead.Entities
         {
             // btodo: the game does a bunch of flags checks for this
             // todo: 0 is valid for Sylux turret missiles, but without proper handling those would eat up the effect lists
-            if (_data.BeamId > 0 && (Flags & 4) != 0)
+            if (_data.BeamId > 0 && Flags.HasFlag(PlatformFlags.BeamSpawner))
             {
                 if (--_beamIntervalTimer <= 0)
                 {
@@ -187,6 +187,43 @@ namespace MphRead.Entities
             }
             return base.Process(scene);
         }
+    }
+
+    public enum PlatformFlags : uint
+    {
+        None = 0x0,
+        Bit00 = 0x1,
+        Bit01 = 0x2,
+        BeamSpawner = 0x4,
+        Bit03 = 0x8,
+        Bit04 = 0x10,
+        Bit05 = 0x20,
+        Bit06 = 0x40,
+        Bit07 = 0x80,
+        Bit08 = 0x100,
+        Bit09 = 0x200,
+        Bit10 = 0x400,
+        Bit11 = 0x800,
+        Bit12 = 0x1000,
+        Bit13 = 0x2000,
+        Bit14 = 0x4000,
+        Bit15 = 0x8000,
+        Bit16 = 0x10000,
+        Bit17 = 0x20000,
+        BeamTarget = 0x40000,
+        NozzleEffect = 0x80000,
+        Bit20 = 0x100000,
+        Bit21 = 0x200000,
+        Bit22 = 0x400000,
+        Bit23 = 0x800000,
+        Bit24 = 0x1000000,
+        Bit25 = 0x2000000,
+        Bit26 = 0x4000000,
+        Bit27 = 0x8000000,
+        Bit28 = 0x10000000,
+        Bit29 = 0x20000000,
+        Bit30 = 0x40000000,
+        Bit31 = 0x80000000
     }
 
     public class FhPlatformEntity : EntityBase

@@ -280,7 +280,7 @@ namespace MphRead.Memory
         public int Field2C { get => ReadInt32(_off5); set => WriteInt32(_off5, value); }
 
         private const int _off6 = 0x30;
-        public int Flags { get => ReadInt32(_off6); set => WriteInt32(_off6, value); }
+        public PlatformFlags Flags { get => (PlatformFlags)ReadInt32(_off6); set => WriteInt32(_off6, (int)value); }
 
         private const int _off7 = 0x34;
         public ushort Field34 { get => ReadUInt16(_off7); set => WriteUInt16(_off7, value); }
