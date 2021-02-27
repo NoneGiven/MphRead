@@ -42,6 +42,7 @@ namespace MphRead.Entities
         public int BombMax { get; private set; }
         public int BombCount { get; set; }
 
+        private bool _respawning = false;
         // todo: remove testing code
         public bool Shoot { get; set; }
         public bool Bomb { get; set; }
@@ -71,7 +72,7 @@ namespace MphRead.Entities
             _models.Add(_altIceModel);
         }
 
-        public static PlayerEntity? Spawn(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null)
+        public static PlayerEntity? Spawn(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null, bool respawn = false)
         {
             int slot = PlayerCount++;
             if (slot >= MaxPlayers)
@@ -80,11 +81,11 @@ namespace MphRead.Entities
             }
             PlayerEntity player = Players[slot];
             player.Slot = slot;
-            player.Setup(hunter, recolor, position, facing);
+            player.Setup(hunter, recolor, position, facing, respawn);
             return player;
         }
 
-        private void Setup(Hunter hunter, int recolor, Vector3? position, Vector3? facing)
+        private void Setup(Hunter hunter, int recolor, Vector3? position, Vector3? facing, bool respawn)
         {
             Hunter = hunter;
             BombMax = 0;
@@ -123,6 +124,7 @@ namespace MphRead.Entities
             _bipedIceModel = Read.GetModelInstance(Hunter == Hunter.Noxus || Hunter == Hunter.Trace ? "nox_ice" : "samus_ice");
             _models.Add(_bipedIceModel);
             _scaleMtx = Matrix4.CreateScale(Metadata.HunterScales[Hunter]);
+            _respawning = respawn;
             // temporary
             _bipedModel.SetNodeAnim(4);
             if (Hunter == Hunter.Weavel)
@@ -146,6 +148,12 @@ namespace MphRead.Entities
                 _bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
             }
             ResetMorphBallTrail();
+            if (_respawning)
+            {
+                Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY);
+                transform.Row3.Xyz = _altForm ? Position : Position.AddY(0.5f);
+                scene.SpawnEffect(scene.Multiplayer ? 33 : 31, transform);
+            }
         }
 
         public override bool Process(Scene scene)

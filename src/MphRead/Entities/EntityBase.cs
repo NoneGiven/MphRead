@@ -306,35 +306,35 @@ namespace MphRead.Entities
             return texcoordMatrix;
         }
 
-        protected void SetTransform(Vector3Fx vector2, Vector3Fx vector1, Vector3Fx position)
+        protected void SetTransform(Vector3Fx facing, Vector3Fx up, Vector3Fx position)
         {
-            SetTransform(vector2.ToFloatVector(), vector1.ToFloatVector(), position.ToFloatVector());
+            SetTransform(facing.ToFloatVector(), up.ToFloatVector(), position.ToFloatVector());
         }
 
-        protected void SetTransform(Vector3 up, Vector3 facing, Vector3 position)
+        protected void SetTransform(Vector3 facing, Vector3 up, Vector3 position)
         {
-            Matrix4 transform = GetTransformMatrix(up, facing);
+            Matrix4 transform = GetTransformMatrix(facing, up);
             transform.ExtractRotation().ToEulerAngles(out Vector3 rotation);
             Rotation = rotation;
             Position = position;
         }
 
-        protected static Matrix4 GetTransformMatrix(Vector3 up, Vector3 facing)
+        protected static Matrix4 GetTransformMatrix(Vector3 facing, Vector3 up)
         {
-            Vector3 upNorm = Vector3.Cross(facing, up).Normalized();
-            var faceNorm = Vector3.Cross(up, upNorm);
+            Vector3 cross1 = Vector3.Cross(up, facing).Normalized();
+            var cross2 = Vector3.Cross(facing, cross1);
             Matrix4 transform = default;
-            transform.M11 = upNorm.X;
-            transform.M12 = upNorm.Y;
-            transform.M13 = upNorm.Z;
+            transform.M11 = cross1.X;
+            transform.M12 = cross1.Y;
+            transform.M13 = cross1.Z;
             transform.M14 = 0;
-            transform.M21 = faceNorm.X;
-            transform.M22 = faceNorm.Y;
-            transform.M23 = faceNorm.Z;
+            transform.M21 = cross2.X;
+            transform.M22 = cross2.Y;
+            transform.M23 = cross2.Z;
             transform.M24 = 0;
-            transform.M31 = up.X;
-            transform.M32 = up.Y;
-            transform.M33 = up.Z;
+            transform.M31 = facing.X;
+            transform.M32 = facing.Y;
+            transform.M33 = facing.Z;
             transform.M34 = 0;
             transform.M41 = 0;
             transform.M42 = 0;

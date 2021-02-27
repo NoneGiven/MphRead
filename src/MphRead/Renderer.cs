@@ -101,12 +101,14 @@ namespace MphRead
 
         private float _frameTime = 0;
         private float _elapsedTime = 0;
-        private long _frameCount = -1;
+        private long _frameCount = 0;
         private bool _frameAdvanceOn = false;
         private bool _advanceOneFrame = false;
         private bool _recording = false;
         private int _framesRecorded = 0;
         private bool _roomLoaded = false;
+        public GameMode GameMode { get; private set; } = GameMode.SinglePlayer;
+        public bool Multiplayer => GameMode != GameMode.SinglePlayer;
 
         public Matrix4 ViewMatrix => _viewMatrix;
         public Matrix4 ViewInvRotMatrix => _viewInvRotMatrix;
@@ -198,6 +200,10 @@ namespace MphRead
             _killHeight = meta.KillHeight;
             _farClip = meta.FarClip;
             _cameraMode = CameraMode.Roam;
+            if (mode != GameMode.None)
+            {
+                GameMode = mode;
+            }
         }
 
         // called before load
@@ -764,10 +770,6 @@ namespace MphRead
         {
             uint rng1 = Test.Rng1;
             uint rng2 = Test.Rng2;
-            if (!_frameAdvanceOn || _advanceOneFrame)
-            {
-                _frameCount++;
-            }
             if (_recording || Debugger.IsAttached)
             {
                 _frameTime = 1 / 60f; // todo: FPS stuff
@@ -796,6 +798,10 @@ namespace MphRead
             {
                 Test.SetRng1(rng1);
                 Test.SetRng2(rng2);
+            }
+            if (!_frameAdvanceOn || _advanceOneFrame)
+            {
+                _frameCount++;
             }
         }
 
