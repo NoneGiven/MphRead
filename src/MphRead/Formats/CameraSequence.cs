@@ -8,32 +8,44 @@ namespace MphRead.Formats
 {
     public class CameraSequence
     {
+        public int SequenceId { get; }
         public string Name { get; }
         public byte Version { get; }
         public IReadOnlyList<CameraSequenceKeyframe> Keyframes { get; }
 
-        public CameraSequence(string name, CameraSequenceHeader header, IReadOnlyList<RawCameraSequenceKeyframe> keyframes)
+        public bool Loop { get; }
+
+        private static readonly HashSet<int> _cockpitLoops = new HashSet<int>() { 102, 103, 104, 105, 106, 168 };
+
+        public CameraSequence(int id, string name, CameraSequenceHeader header, IReadOnlyList<RawCameraSequenceKeyframe> keyframes)
         {
+            SequenceId = id;
             Name = name.Replace(".bin", "");
             Version = header.Version;
             Keyframes = keyframes.Select(k => new CameraSequenceKeyframe(k)).ToList();
+            if (id > 171 || _cockpitLoops.Contains(id))
+            {
+                Loop = true;
+            }
         }
 
         public static CameraSequence Load(int id)
         {
             // indices only go up to 171 in game, but we've added the 27 multiplayer intros
             Debug.Assert(id >= 0 && id < 199);
-            return Load(Filenames[id]);
+            return Load(Filenames[id], id);
         }
 
-        public static CameraSequence Load(string name)
+        public static CameraSequence Load(string name, int id = -1)
         {
             string path = Path.Combine(Paths.FileSystem, "cameraEditor", name);
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             CameraSequenceHeader header = Read.ReadStruct<CameraSequenceHeader>(bytes);
             Debug.Assert(header.Padding3 == 0);
             Debug.Assert(header.Padding4 == 0);
-            return new CameraSequence(name, header, Read.DoOffsets<RawCameraSequenceKeyframe>(bytes, Sizes.CameraSequenceHeader, header.Count));
+            IReadOnlyList<RawCameraSequenceKeyframe> keyframes
+                = Read.DoOffsets<RawCameraSequenceKeyframe>(bytes, Sizes.CameraSequenceHeader, header.Count);
+            return new CameraSequence(id, name, header, keyframes);
         }
 
         public static IReadOnlyList<string> Filenames { get; } = new List<string>()

@@ -56,9 +56,7 @@ namespace MphRead
         private float _cameraFov = MathHelper.DegreesToRadians(78);
         private bool _leftMouse = false;
         private float _wheelOffset = 0;
-        private bool _cutsceneActive = false;
-        // todo: disallow if camera roll is not zero?
-        public bool AllowCameraMovement => !_cutsceneActive || (_frameAdvanceOn && !_advanceOneFrame);
+        private int _activeCutscene = -1;
         private Vector3 _priorCameraPos = Vector3.Zero;
         private Vector3 _priorCameraFacing = -Vector3.UnitZ;
         private float _priorCameraFov = MathHelper.DegreesToRadians(78);
@@ -129,6 +127,9 @@ namespace MphRead
         public Vector3 Light2Vector => _light2Vector;
         public Vector3 Light2Color => _light2Color;
         public IReadOnlyList<EntityBase> Entities => _entities;
+        public int ActiveCutscene => _activeCutscene;
+        // todo: disallow if camera roll is not zero?
+        public bool AllowCameraMovement => _activeCutscene == -1 || (_frameAdvanceOn && !_advanceOneFrame);
 
         public const int DisplaySphereStacks = 16;
         public const int DisplaySphereSectors = 24;
@@ -976,27 +977,31 @@ namespace MphRead
             _cameraUp = Vector3.Cross(_cameraRight, _cameraFacing);
         }
 
-        public void StartCutscene()
+        public void StartCutscene(int id)
         {
-            if (!_cutsceneActive)
+            if (_activeCutscene == -1)
             {
-                _cutsceneActive = true;
+                _activeCutscene = id;
                 _priorCameraPos = _cameraPosition;
                 _priorCameraFacing = _cameraFacing;
                 _priorCameraFov = _cameraFov;
             }
         }
 
-        public void EndCutscene()
+        public void EndCutscene(bool resetFade = false)
         {
-            if (_cutsceneActive)
+            if (_activeCutscene != -1)
             {
-                _cutsceneActive = false;
+                _activeCutscene = -1;
                 _cameraPosition = _priorCameraPos;
                 _cameraFacing = _priorCameraFacing;
                 _cameraRight = Vector3.Cross(_cameraFacing, Vector3.UnitY);
                 _cameraUp = Vector3.Cross(_cameraRight, _cameraFacing);
                 _cameraFov = _priorCameraFov;
+            }
+            if (resetFade)
+            {
+                SetFade(FadeType.None, length: 0, overwrite: true);
             }
         }
 

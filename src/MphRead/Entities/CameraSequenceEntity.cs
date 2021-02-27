@@ -76,10 +76,24 @@ namespace MphRead.Entities
 
         public override bool Process(Scene scene)
         {
+            if (Active)
+            {
+                if (scene.ActiveCutscene == -1)
+                {
+                    scene.StartCutscene(Data.SequenceId);
+                }
+                else if (scene.ActiveCutscene != Data.SequenceId)
+                {
+                    Active = false;
+                }
+            }
+            else if (scene.ActiveCutscene == Data.SequenceId)
+            {
+                scene.EndCutscene(resetFade: true);
+            }
             // todo: delay timer and other stuff at the entity level
             if (Active && (_sequenceFlags & 1) == 0 && Sequence.Keyframes.Count != 0)
             {
-                scene.StartCutscene();
                 CameraSequenceKeyframe curFrame = Sequence.Keyframes[_keyframeIndex];
                 float frameLength = curFrame.HoldTime + curFrame.MoveTime;
                 float fadeOutStart = frameLength - curFrame.FadeOutTime;
@@ -115,13 +129,16 @@ namespace MphRead.Entities
                 {
                     _keyframeElapsed -= frameLength;
                     _keyframeIndex++;
-                    // todo: looping or ending
+                    // todo: proper looping or ending (entity flags vs. sequence data flags, etc.)
                     if (_keyframeIndex >= Sequence.Keyframes.Count)
                     {
                         _keyframeIndex = 0;
                         _keyframeElapsed = 0;
-                        Active = false;
-                        scene.EndCutscene();
+                        if (Data.Loop == 0 && !Sequence.Loop)
+                        {
+                            Active = false;
+                            scene.EndCutscene();
+                        }
                     }
                 }
             }
