@@ -79,7 +79,7 @@ namespace MphRead
         Thin = 3
     }
 
-    public enum ItemType : ushort
+    public enum ItemType : uint
     {
         HealthMedium = 0,
         HealthSmall = 1,
@@ -104,6 +104,18 @@ namespace MphRead
         Deathalt = 20,
         AffinityWeapon = 21,
         PickWpnMissile = 22
+    }
+
+    public enum FhItemType : uint
+    {
+        AmmoSmall = 0,
+        AmmoBig = 1,
+        HealthSmall = 2,
+        HealthBig = 3,
+        DoubleDamage = 4,
+        PickMorphBall = 5,
+        ElectroLob = 6,
+        Missile = 7
     }
 
     public enum BeamType : byte

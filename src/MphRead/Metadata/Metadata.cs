@@ -768,7 +768,6 @@ namespace MphRead
             "Platform", "Enemy"
         };
 
-        // todo: organize/enum
         public static Vector3 GetEventColor(Message eventId)
         {
             if (eventId == Message.None) // black

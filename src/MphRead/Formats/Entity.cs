@@ -280,7 +280,7 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly uint ParentId;
-        public readonly uint ModelId;
+        public readonly ItemType ItemType;
         public readonly byte Enabled; // boolean
         public readonly byte HasBase; // boolean
         public readonly byte AlwaysActive; // boolean -- set flags bit 0 based on Active boolean only and ignore room state
@@ -299,7 +299,7 @@ namespace MphRead
     public readonly struct FhItemEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint ModelId;
+        public readonly FhItemType ItemType;
         public readonly ushort SpawnLimit;
         public readonly ushort CooldownTime;
         public readonly ushort Field2C;
