@@ -284,8 +284,14 @@ namespace MphRead.Entities
                 Vector3 entPos = keyframe.PositionEntity.TargetPosition;
                 if (keyframe.UseEntityTransform)
                 {
-                    // sktodo
-                    Debugger.Break();
+                    // todo: revisit this hack once the player Z rotation thing is addressed
+                    Matrix4 entTransform = keyframe.PositionEntity.Transform.ClearScale();
+                    var transform = new Matrix3(
+                        entTransform.Row0.Xyz,
+                        entTransform.Row1.Xyz,
+                        entTransform.Row2.Xyz * (keyframe.PositionEntity.Type == EntityType.Player ? -1  : 1)
+                    );
+                    position = position * transform + entPos;
                 }
                 else
                 {
