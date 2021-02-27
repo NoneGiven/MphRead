@@ -1349,7 +1349,7 @@ namespace MphRead
                             particle.InvokeVecFunc(info, times, ref temp);
                             particle.Speed = temp;
                         }
-                        if (!element.Flags.HasFlag(EffElemFlags.Bit00))
+                        if (!element.Flags.HasFlag(EffElemFlags.UseTransform))
                         {
                             particle.Position = Matrix.Vec3MultMtx4(particle.Position, element.Transform);
                             particle.Speed = Matrix.Vec3MultMtx3(particle.Speed, element.Transform);
@@ -1870,7 +1870,7 @@ namespace MphRead
                 {
                     EffectParticle particle = element.Particles[j];
                     Matrix4 matrix = _viewMatrix;
-                    if (particle.Owner.Flags.HasFlag(EffElemFlags.Bit00) && !particle.Owner.Flags.HasFlag(EffElemFlags.UseMesh))
+                    if (particle.Owner.Flags.HasFlag(EffElemFlags.UseTransform) && !particle.Owner.Flags.HasFlag(EffElemFlags.UseMesh))
                     {
                         matrix = particle.Owner.Transform * matrix;
                     }

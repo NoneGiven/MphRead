@@ -524,7 +524,7 @@ namespace MphRead.Effects
             }
             else
             {
-                bool alternate = flags.HasFlag(EffElemFlags.Bit00);
+                bool alternate = flags.HasFlag(EffElemFlags.UseTransform);
                 switch (drawType)
                 {
                 case 1:
@@ -591,7 +591,7 @@ namespace MphRead.Effects
     public enum EffElemFlags : uint
     {
         None = 0x0,
-        Bit00 = 0x1,
+        UseTransform = 0x1,
         UseAcceleration = 0x2,
         UseMesh = 0x4,
         SpawnUnitVecs = 0x8,
@@ -1166,7 +1166,7 @@ namespace MphRead.Effects
                 DrawNode = true;
                 Color = new Vector3(Red, Green, Blue);
                 Vector4 ev4;
-                if (Owner.Flags.HasFlag(EffElemFlags.Bit00))
+                if (Owner.Flags.HasFlag(EffElemFlags.UseTransform))
                 {
                     ev4 = new Vector4(Position + Owner.Position, 1);
                 }
@@ -1332,7 +1332,7 @@ namespace MphRead.Effects
                     scaleT = material.ScaleT;
                 }
                 Matrix4 transform = Matrix4.Identity;
-                if (Owner.Flags.HasFlag(EffElemFlags.Bit00))
+                if (Owner.Flags.HasFlag(EffElemFlags.UseTransform))
                 {
                     transform = Owner.Transform;
                 }
