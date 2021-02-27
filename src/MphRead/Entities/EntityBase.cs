@@ -90,6 +90,8 @@ namespace MphRead.Entities
             }
         }
 
+        public virtual Vector3 TargetPosition => Position;
+
         protected bool _anyLighting = false;
         protected readonly List<ModelInstance> _models = new List<ModelInstance>();
 

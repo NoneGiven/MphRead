@@ -1032,11 +1032,11 @@ namespace MphRead
         public FadeType FadeOutType { get; }
         public byte PrevFrameInfluence { get; } // flag bits 0/1
         public byte AfterFrameInfluence { get; } // flag bits 0/1
-        public byte UseEntityTransform { get; }
-        public ushort Entity1Type { get; }
-        public ushort Entity1Id { get; }
-        public ushort Entity2Type { get; }
-        public ushort Entity2Id { get; }
+        public bool UseEntityTransform { get; }
+        public ushort PosEntityType { get; }
+        public ushort PosEntityId { get; }
+        public ushort TargetEntityType { get; }
+        public ushort TargetEntityId { get; }
         public ushort MessageTargetType { get; }
         public ushort MessageTargetId { get; }
         public ushort MessageId { get; }
@@ -1044,8 +1044,8 @@ namespace MphRead
         public float Easing { get; } // always 0, 4096, or 4120 (1.00585938)
         public string NodeName { get; }
 
-        public EntityBase? Entity1 { get; set; }
-        public EntityBase? Entity2 { get; set; }
+        public EntityBase? PositionEntity { get; set; }
+        public EntityBase? TargetEntity { get; set; }
         public EntityBase? MessageTarget { get; set; }
 
         public CameraSequenceKeyframe(RawCameraSequenceKeyframe raw)
@@ -1062,11 +1062,11 @@ namespace MphRead
             FadeOutType = raw.FadeOutType;
             PrevFrameInfluence = raw.PrevFrameInfluence;
             AfterFrameInfluence = raw.AfterFrameInfluence;
-            UseEntityTransform = raw.UseEntityTransform;
-            Entity1Type = raw.Entity1Type;
-            Entity1Id = raw.Entity1Id;
-            Entity2Type = raw.Entity2Type;
-            Entity2Id = raw.Entity2Id;
+            UseEntityTransform = raw.UseEntityTransform != 0;
+            PosEntityType = raw.PosEntityType;
+            PosEntityId = raw.PosEntityId;
+            TargetEntityType = raw.TargetEntityType;
+            TargetEntityId = raw.TargetEntityId;
             MessageTargetType = raw.MessageTargetType;
             MessageTargetId = raw.MessageTargetId;
             MessageId = raw.MessageId;

@@ -78,11 +78,11 @@ namespace MphRead.Memory
                     //    weapon[i] = _buffer[0x137C7C + i];
                     //}
                     //Test.DumpWeaponInfo(Test.ParseWeaponInfo(1, weapon)[0]);
-                    var camSeqs = new IntPtrArray(this, Addresses.CamSeqData, 175);
-                    var scanIntro = new CameraSequence(this, camSeqs[5]);
-                    var keyframe0 = new CameraSequenceKeyframe(this, scanIntro.Keyframes);
-                    var keyframe1 = new CameraSequenceKeyframe(this, keyframe0.Next);
-                    var keyframe2 = new CameraSequenceKeyframe(this, keyframe1.Next);
+                    //var camSeqs = new IntPtrArray(this, Addresses.CamSeqData, 175);
+                    //var scanIntro = new CameraSequence(this, camSeqs[5]);
+                    //var keyframe0 = new CameraSequenceKeyframe(this, scanIntro.Keyframes);
+                    //var keyframe1 = new CameraSequenceKeyframe(this, keyframe0.Next);
+                    //var keyframe2 = new CameraSequenceKeyframe(this, keyframe1.Next);
                     await Task.Delay(15);
                 }
             }).GetAwaiter().GetResult();

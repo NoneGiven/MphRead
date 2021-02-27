@@ -57,7 +57,7 @@ namespace MphRead
         private bool _leftMouse = false;
         private float _wheelOffset = 0;
         private bool _cutsceneActive = false;
-        // ctodo: disallow if camera roll is not zero
+        // todo: disallow if camera roll is not zero?
         public bool AllowCameraMovement => !_cutsceneActive || (_frameAdvanceOn && !_advanceOneFrame);
         private Vector3 _priorCameraPos = Vector3.Zero;
         private Vector3 _priorCameraFacing = -Vector3.UnitZ;

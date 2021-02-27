@@ -25,6 +25,9 @@ namespace MphRead.Entities
         private Vector3 _light2Vector;
         private Vector3 _light2Color;
 
+        // todo: player position in biped is 0.5 above the ground, so the game only adds 0.5 -- handle this for biped and alt
+        public override Vector3 TargetPosition => _altForm ? Position : Position.AddY(1f);
+
         // todo: main player, player slots, etc.
         private readonly bool _mainPlayer = false;
         private bool _altForm = false;

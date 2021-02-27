@@ -54,8 +54,8 @@ namespace MphRead.Entities
             }
             foreach (CameraSequenceKeyframe keyframe in Sequence.Keyframes)
             {
-                keyframe.Entity1 = GetKeyframeRef(keyframe.Entity1Type, keyframe.Entity1Id, scene);
-                keyframe.Entity2 = GetKeyframeRef(keyframe.Entity2Type, keyframe.Entity2Id, scene);
+                keyframe.PositionEntity = GetKeyframeRef(keyframe.PosEntityType, keyframe.PosEntityId, scene);
+                keyframe.TargetEntity = GetKeyframeRef(keyframe.TargetEntityType, keyframe.TargetEntityId, scene);
                 keyframe.MessageTarget = GetKeyframeRef(keyframe.MessageTargetType, keyframe.MessageTargetId, scene);
             }
         }
@@ -277,9 +277,33 @@ namespace MphRead.Entities
             scene.SetCamera(finalPosition, finalToTarget, finalFov, finalRoll);
         }
 
-        private void AddEntityPosition(CameraSequenceKeyframe keyframe, ref Vector3 vec1, ref Vector3 vec2)
+        private void AddEntityPosition(CameraSequenceKeyframe keyframe, ref Vector3 position, ref Vector3 toTarget)
         {
-            // ctodo: entity position/tracking
+            if (keyframe.PositionEntity != null)
+            {
+                Vector3 entPos = keyframe.PositionEntity.TargetPosition;
+                if (keyframe.UseEntityTransform)
+                {
+                    // sktodo
+                    Debugger.Break();
+                }
+                else
+                {
+                    position += entPos;
+                } 
+            }
+            if (keyframe.TargetEntity != null)
+            {
+                Vector3 entPos = keyframe.TargetEntity.TargetPosition;
+                Vector3 between = (entPos - position).Normalized();
+                Vector3 cross1 = Vector3.Cross(Vector3.UnitY, between).Normalized();
+                var cross2 = Vector3.Cross(between, cross1);
+                toTarget = new Vector3(
+                    toTarget.Z * between.X + toTarget.X * cross1.X + toTarget.Y * cross2.X,
+                    toTarget.Z * between.Y + toTarget.X * cross1.Y + toTarget.Y * cross2.Y,
+                    toTarget.Z * between.Z + toTarget.X * cross1.Z + toTarget.Y * cross2.Z
+                );
+            }
         }
 
         private Vector4 GetVec4(float percent)

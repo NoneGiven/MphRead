@@ -456,10 +456,10 @@ namespace MphRead
         public readonly byte UseEntityTransform;
         public readonly byte Padding35;
         public readonly ushort Padding36;
-        public readonly ushort Entity1Type;
-        public readonly ushort Entity1Id;
-        public readonly ushort Entity2Type;
-        public readonly ushort Entity2Id;
+        public readonly ushort PosEntityType;
+        public readonly ushort PosEntityId;
+        public readonly ushort TargetEntityType;
+        public readonly ushort TargetEntityId;
         public readonly ushort MessageTargetType;
         public readonly ushort MessageTargetId;
         public readonly ushort MessageId;
