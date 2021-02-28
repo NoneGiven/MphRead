@@ -10,7 +10,8 @@ namespace MphRead.Formats.Collision
 {
     public static class Collision
     {
-        public static CollisionInfo ReadCollision(string path, bool firstHunt, int roomLayerMask = -1)
+        // sktodo: cache the raw structs as with models -- don't cache rooms
+        public static CollisionInfo ReadCollision(string path, bool firstHunt = false, int roomLayerMask = -1)
         {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path)));
             CollisionHeader header = Read.ReadStruct<CollisionHeader>(bytes);

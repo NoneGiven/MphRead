@@ -257,7 +257,7 @@ namespace MphRead
         public static void TestCollision()
         {
             string path = @"models\Crate01_Collision.bin";
-            CollisionInfo collision = Collision.ReadCollision(path, firstHunt: false);
+            CollisionInfo collision = Collision.ReadCollision(path);
             foreach (CollisionEntry entry in collision.Entries)
             {
                 for (int i = 0; i < entry.DataCount; i++)
@@ -287,14 +287,14 @@ namespace MphRead
             {
                 if (!meta.Value.FirstHunt && !meta.Value.Hybrid)
                 {
-                    allCollision.Add((true, Collision.ReadCollision(meta.Value.CollisionPath, firstHunt: false)));
+                    allCollision.Add((true, Collision.ReadCollision(meta.Value.CollisionPath)));
                 }
             }
             foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.ModelMetadata)
             {
                 if (meta.Value.CollisionPath != null)
                 {
-                    allCollision.Add((false, Collision.ReadCollision(meta.Value.CollisionPath, firstHunt: false)));
+                    allCollision.Add((false, Collision.ReadCollision(meta.Value.CollisionPath)));
                 }
             }
             foreach ((bool room, CollisionInfo collision) in allCollision)

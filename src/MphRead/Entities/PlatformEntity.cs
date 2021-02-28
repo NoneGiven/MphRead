@@ -52,8 +52,7 @@ namespace MphRead.Entities
                 ModelMetadata modelMeta = Metadata.ModelMetadata[meta.Name];
                 if (modelMeta.CollisionPath != null)
                 {
-                    // sktodo: cache the raw structs as with models -- don't cache rooms
-                    SetCollision(Collision.ReadCollision(modelMeta.CollisionPath, firstHunt: false));
+                    SetCollision(Collision.ReadCollision(modelMeta.CollisionPath));
                 }
                 // temporary
                 if (meta.Name == "SamusShip" || meta.Name == "SyluxTurret")
