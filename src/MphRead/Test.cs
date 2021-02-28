@@ -315,18 +315,15 @@ namespace MphRead
                     allCollision.Add((true, Collision.ReadCollision(meta.Value.CollisionPath, firstHunt: true)));
                 }
             }
-            foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.ModelMetadata)
+            foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.FirstHuntModels)
             {
-                if (meta.Value.CollisionPath != null && meta.Value.FirstHunt)
+                if (meta.Value.CollisionPath != null)
                 {
                     allCollision.Add((false, Collision.ReadCollision(meta.Value.CollisionPath, firstHunt: true)));
                 }
             }
             foreach ((bool room, CollisionInfo collision) in allCollision)
             {
-                foreach (CollisionData data in collision.Data)
-                {
-                }
             }
             Nop();
         }

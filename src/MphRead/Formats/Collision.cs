@@ -54,16 +54,17 @@ namespace MphRead.Formats.Collision
 
         private static CollisionInfo ReadFhCollision(string path, ReadOnlySpan<byte> bytes)
         {
-            // sktodo: read and return the rest of the FH collision data
+            // todo: read and return the rest of the FH collision data in its own format
             FhCollisionHeader header = Read.ReadStruct<FhCollisionHeader>(bytes);
             IReadOnlyList<Vector3Fx> points = Read.DoOffsets<Vector3Fx>(bytes, header.PointOffset, header.PointCount);
+            IReadOnlyList<CollisionPlane> planes = Read.DoOffsets<CollisionPlane>(bytes, header.PlaneOffset, header.PlaneCount);
             var portals = new List<CollisionPortal>();
             foreach (FhCollisionPortal portal in Read.DoOffsets<FhCollisionPortal>(bytes, header.PortalOffset, header.PortalCount))
             {
                 portals.Add(new CollisionPortal(portal));
             }
             string name = Path.GetFileNameWithoutExtension(path).Replace("_collision", "").Replace("_Collision", "");
-            return new CollisionInfo(name, default, points, new List<CollisionPlane>(), new List<ushort>(), new List<CollisionData>(),
+            return new CollisionInfo(name, default, points, planes, new List<ushort>(), new List<CollisionData>(),
                 new List<ushort>(), new List<CollisionEntry>(), portals, new Dictionary<uint, HashSet<ushort>>());
         }
     }
