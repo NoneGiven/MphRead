@@ -242,8 +242,18 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
+            // todo: support loading genericmover, and do something similar for unused MPH models
             ModelInstance inst = Read.GetModelInstance("platform", firstHunt: true);
+            ModelMetadata modelMeta = Metadata.FirstHuntModels["platform"];
+            Debug.Assert(modelMeta.CollisionPath != null);
+            SetCollision(Collision.ReadCollision(modelMeta.CollisionPath, firstHunt: true));
             _models.Add(inst);
+        }
+
+        public override bool Process(Scene scene)
+        {
+            UpdateCollision();
+            return base.Process(scene);
         }
     }
 }

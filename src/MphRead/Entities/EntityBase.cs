@@ -130,6 +130,7 @@ namespace MphRead.Entities
             }
         }
 
+        // sktodo: entity attach node stuff
         protected void UpdateCollision()
         {
             if (!_collisionTransformed)
@@ -276,19 +277,16 @@ namespace MphRead.Entities
         // sktodo: toggles to differentiate beam collision, player collision, show terrain types, etc.
         protected void GetCollisionDrawInfo(Scene scene)
         {
-            if (_collision != null)
+            Debug.Assert(_collision.Count == _colPoints.Count);
+            for (int i = 0; i < _collision.Count; i++)
             {
-                Debug.Assert(_colPoints != null);
-                for (int i = 0; i < _collision.Count; i++)
+                CollisionInfo collision = _collision[i];
+                if (!collision.Active)
                 {
-                    CollisionInfo collision = _collision[i];
-                    if (!collision.Active)
-                    {
-                        continue;
-                    }
-                    List<Vector3> colPoints = _colPoints[i];
-                    collision.GetDrawInfo(colPoints, scene);
+                    continue;
                 }
+                List<Vector3> colPoints = _colPoints[i];
+                collision.GetDrawInfo(colPoints, scene);
             }
         }
 

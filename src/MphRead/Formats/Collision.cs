@@ -359,6 +359,21 @@ namespace MphRead.Formats.Collision
 
         public override void GetDrawInfo(List<Vector3> points, Scene scene)
         {
+            var color = new Vector4(Vector3.UnitX, 0.5f);
+            int polygonId = scene.GetNextPolygonId();
+            for (int i = 0; i < Header.Data1Count; i++)
+            {
+                ushort data1Index = DataIndices[Header.Data1StartIndex + i];
+                FhCollisionData1 data1 = Data1[data1Index];
+                Debug.Assert(data1.Data2Count >= 3 && data1.Data2Count <= 6);
+                Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data1.Data2Count);
+                for (int j = 0; j < data1.Data2Count; j++)
+                {
+                    FhCollisionData2 data2 = Data2[data1.Data2StartIndex + j];
+                    verts[j] = points[data2.Point1Index];
+                }
+                scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data1.Data2Count);
+            }
         }
     }
 }

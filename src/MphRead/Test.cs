@@ -307,22 +307,22 @@ namespace MphRead
 
         public static void TestAllFhCollision()
         {
-            var allCollision = new List<(bool, CollisionInfo)>();
+            var allCollision = new List<(bool, FhCollisionInfo)>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 if (meta.Value.FirstHunt || meta.Value.Hybrid)
                 {
-                    allCollision.Add((true, Collision.ReadCollision(meta.Value.CollisionPath, firstHunt: true)));
+                    allCollision.Add((true, (FhCollisionInfo)Collision.ReadCollision(meta.Value.CollisionPath, firstHunt: true)));
                 }
             }
             foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.FirstHuntModels)
             {
                 if (meta.Value.CollisionPath != null)
                 {
-                    allCollision.Add((false, Collision.ReadCollision(meta.Value.CollisionPath, firstHunt: true)));
+                    allCollision.Add((false, (FhCollisionInfo)Collision.ReadCollision(meta.Value.CollisionPath, firstHunt: true)));
                 }
             }
-            foreach ((bool room, CollisionInfo collision) in allCollision)
+            foreach ((bool room, FhCollisionInfo collision) in allCollision)
             {
             }
             Nop();
