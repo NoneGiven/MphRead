@@ -29,12 +29,12 @@ namespace MphRead.Formats.Collision
             {
                 portals.Add(new CollisionPortal(portal));
             }
-            var enabledIndices = new Dictionary<uint, IReadOnlyList<ushort>>();
+            var enabledIndices = new Dictionary<uint, HashSet<ushort>>();
             foreach (CollisionEntry entry in entries.Where(e => e.DataCount > 0))
             {
                 // todo: use the layer mask to actually filter the returned items (indices, entries, data, portals, etc.)
                 Debug.Assert(entry.DataCount < 512);
-                var enabled = new List<ushort>();
+                var enabled = new HashSet<ushort>();
                 for (int i = 0; i < entry.DataCount; i++)
                 {
                     ushort index = indices[entry.DataStartIndex + i];
@@ -63,7 +63,7 @@ namespace MphRead.Formats.Collision
             }
             string name = Path.GetFileNameWithoutExtension(path).Replace("_collision", "").Replace("_Collision", "");
             return new CollisionInfo(name, default, vectors, new List<CollisionPlane>(), new List<ushort>(), new List<CollisionData>(),
-                new List<ushort>(), new List<CollisionEntry>(), portals, new Dictionary<uint, IReadOnlyList<ushort>>());
+                new List<ushort>(), new List<CollisionEntry>(), portals, new Dictionary<uint, HashSet<ushort>>());
         }
     }
 
@@ -209,10 +209,10 @@ namespace MphRead.Formats.Collision
         public IReadOnlyList<CollisionEntry> Entries { get; }
         public IReadOnlyList<CollisionPortal> Portals { get; }
         // todo: update classes based on usage
-        public IReadOnlyDictionary<uint, IReadOnlyList<ushort>> EnabledDataIndices { get; }
+        public IReadOnlyDictionary<uint, HashSet<ushort>> EnabledDataIndices { get; }
 
         public CollisionInfo(string name, CollisionHeader header, IReadOnlyList<Vector3Fx> vectors, IReadOnlyList<CollisionPlane> planes,
-            IReadOnlyList<ushort> vecIdxs, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> dataIdxs, IReadOnlyList<CollisionEntry> entries, IReadOnlyList<CollisionPortal> portals, IReadOnlyDictionary<uint, IReadOnlyList<ushort>> enabledIndices)
+            IReadOnlyList<ushort> vecIdxs, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> dataIdxs, IReadOnlyList<CollisionEntry> entries, IReadOnlyList<CollisionPortal> portals, IReadOnlyDictionary<uint, HashSet<ushort>> enabledIndices)
         {
             Name = name;
             Header = header;

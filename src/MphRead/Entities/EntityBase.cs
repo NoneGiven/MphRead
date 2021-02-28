@@ -1,7 +1,9 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -94,6 +96,9 @@ namespace MphRead.Entities
 
         protected bool _anyLighting = false;
         protected readonly List<ModelInstance> _models = new List<ModelInstance>();
+        // sktodo: need two slots, also add an on/off switch to CollisionInfo
+        protected CollisionInfo? _collision = null;
+        protected Vector3[]? _colPoints = null;
 
         protected virtual bool UseNodeTransform => true;
         protected virtual Vector4? OverrideColor { get; } = null;
@@ -107,6 +112,22 @@ namespace MphRead.Entities
         public virtual void Initialize(Scene scene)
         {
             _anyLighting = _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));
+        }
+
+        // sktodo: call when transform changes
+        protected void UpdateCollision(CollisionInfo collision)
+        {
+            _collision = collision;
+            if (_colPoints == null)
+            {
+                _colPoints = new Vector3[_collision.Vectors.Count];
+            }
+            // todo?: we could limit calculation to vectors referenced by enabled entries,
+            // but we'd still have to make the array full size
+            for (int i = 0; i < _collision.Vectors.Count; i++)
+            {
+                _colPoints[i] = Matrix.Vec3MultMtx4(_collision.Vectors[i].ToFloatVector(), Transform);
+            }
         }
 
         public virtual void Destroy(Scene scene)
@@ -192,6 +213,11 @@ namespace MphRead.Entities
                 int polygonId = scene.GetNextPolygonId();
                 GetItems(inst, i, inst.Model.Nodes[0], polygonId);
             }
+            if ((Type == EntityType.Platform && scene.CollisionDisplay.HasFlag(CollisionDisplay.Platform))
+                || (Type == EntityType.Object && scene.CollisionDisplay.HasFlag(CollisionDisplay.Object)))
+            {
+                GetCollisionDrawInfo(scene);
+            }
 
             void GetItems(ModelInstance inst, int index, Node node, int polygonId)
             {
@@ -223,6 +249,42 @@ namespace MphRead.Entities
                 if (node.NextIndex != UInt16.MaxValue)
                 {
                     GetItems(inst, index, model.Nodes[node.NextIndex], polygonId);
+                }
+            }
+        }
+
+        protected void GetCollisionDrawInfo(Scene scene)
+        {
+            if (_collision != null)
+            {
+                Debug.Assert(_colPoints != null);
+                // sktodo: color, etc.
+                var color = new Vector4(Vector3.UnitX, 0.5f);
+                // sktodo: I suppose entities could have disabled collision entries too
+                for (int i = 0; i < _collision.Entries.Count; i++)
+                {
+                    CollisionEntry entry = _collision.Entries[i];
+                    for (int j = 0; j < entry.DataCount; j++)
+                    {
+                        ushort dataIndex = _collision.DataIndices[entry.DataStartIndex + j];
+                        if (_collision.EnabledDataIndices[entry.DataStartIndex].Contains(dataIndex))
+                        {
+                            CollisionData data = _collision.Data[dataIndex];
+                            //CollisionPlane plane = _collision.Planes[data.PlaneIndex];
+                            //Debug.Assert(data.VectorIndexCount == 4);
+                            if (data.VectorIndexCount == 4)
+                            {
+                                Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(4);
+                                for (int k = 0; k < data.VectorIndexCount; k++)
+                                {
+                                    ushort vecIndex = _collision.VectorIndices[data.VectorStartIndex + (3 - k)];
+                                    Vector3 vector = _colPoints[vecIndex];
+                                    verts[k] = vector;
+                                }
+                                scene.AddRenderItem(CullingMode.Back, scene.GetNextPolygonId(), color, RenderItemType.Plane, verts);
+                            }
+                        }
+                    }
                 }
             }
         }

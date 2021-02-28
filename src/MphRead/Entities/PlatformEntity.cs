@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Effects;
+using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -48,6 +49,12 @@ namespace MphRead.Entities
             {
                 ModelInstance inst = Read.GetModelInstance(meta.Name);
                 _models.Add(inst);
+                ModelMetadata modelMeta = Metadata.ModelMetadata[meta.Name];
+                if (modelMeta.CollisionPath != null)
+                {
+                    // sktodo: cache the raw structs as with models
+                    UpdateCollision(Collision.ReadCollision(modelMeta.CollisionPath, firstHunt: false));
+                }
                 // temporary
                 if (meta.Name == "SamusShip" || meta.Name == "SyluxTurret")
                 {

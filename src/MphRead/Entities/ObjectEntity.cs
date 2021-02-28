@@ -1,5 +1,6 @@
 using System;
 using MphRead.Effects;
+using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -47,7 +48,7 @@ namespace MphRead.Entities
                 ObjectMetadata meta = Metadata.GetObjectById((int)data.ModelId);
                 Recolor = meta.RecolorId;
                 ModelInstance inst = Read.GetModelInstance(meta.Name);
-                if (meta != null && meta.AnimationIds[0] == 0xFF)
+                if (meta.AnimationIds[0] == 0xFF)
                 {
                     inst.SetNodeAnim(-1);
                     inst.SetMaterialAnim(-1);
@@ -60,6 +61,12 @@ namespace MphRead.Entities
                     _scanVisorOnly = true;
                 }
                 _models.Add(inst);
+                ModelMetadata modelMeta = Metadata.ModelMetadata[meta.Name];
+                if (modelMeta.CollisionPath != null)
+                {
+                    // sktodo: capsule shield collision
+                    UpdateCollision(Collision.ReadCollision(modelMeta.CollisionPath, firstHunt: false));
+                }
                 // temporary
                 if (inst.Model.Name == "AlimbicCapsule")
                 {

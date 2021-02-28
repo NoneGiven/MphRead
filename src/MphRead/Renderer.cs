@@ -38,6 +38,15 @@ namespace MphRead
         Portal
     }
 
+    [Flags]
+    public enum CollisionDisplay
+    {
+        None = 0x0,
+        Room = 0x1,
+        Platform = 0x2,
+        Object = 0x4
+    }
+
     public class Scene
     {
         public Vector2i Size { get; set; }
@@ -64,6 +73,7 @@ namespace MphRead
         private bool _showTextures = true;
         private bool _showColors = true;
         private bool _wireframe = false;
+        // sktodo: three states to allow edges only
         private bool _volumeEdges = false;
         private bool _faceCulling = true;
         private bool _textureFiltering = false;
@@ -71,6 +81,7 @@ namespace MphRead
         private bool _scanVisor = false;
         private int _showInvisible = 0;
         private VolumeDisplay _showVolumes = VolumeDisplay.None;
+        private CollisionDisplay _collisionDisplay = CollisionDisplay.None;
         private bool _showAllnodes = false;
         private bool _transformRoomNodes = false;
         private bool _outputCameraPos = false;
@@ -122,6 +133,7 @@ namespace MphRead
         public long FrameCount => _frameCount;
         public VolumeDisplay ShowVolumes => _showVolumes;
         public bool ShowForceFields => _showVolumes != VolumeDisplay.Portal;
+        public CollisionDisplay CollisionDisplay => _collisionDisplay;
         public float KillHeight => _killHeight;
         public bool ScanVisor => _scanVisor;
         public Vector3 Light1Vector => _light1Vector;

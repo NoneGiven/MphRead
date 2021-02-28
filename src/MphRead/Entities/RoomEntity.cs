@@ -10,7 +10,6 @@ namespace MphRead.Entities
 {
     public class RoomEntity : EntityBase
     {
-        private readonly CollisionInfo _collision;
         private readonly IReadOnlyList<CollisionPortal> _portals = new List<CollisionPortal>();
         private readonly IReadOnlyList<PortalNodeRef> _forceFields = new List<PortalNodeRef>();
         private IReadOnlyList<Node> Nodes => _models[0].Model.Nodes;
@@ -28,7 +27,6 @@ namespace MphRead.Entities
                 Nodes[46].Enabled = false;
             }
             Model model = inst.Model;
-            _collision = collision;
             var portals = new List<CollisionPortal>();
             var forceFields = new List<PortalNodeRef>();
             portals.AddRange(collision.Portals.Where(p => (p.LayerMask & 4) != 0 || (p.LayerMask & layerMask) != 0));
@@ -77,6 +75,8 @@ namespace MphRead.Entities
             Debug.Assert(model.Nodes.Any(n => n.IsRoomPartNode));
             _portals = portals;
             _forceFields = forceFields;
+            // sktodo: test if this works, might need scale?
+            UpdateCollision(collision);
         }
 
         private void FilterNodes(int layerMask)
@@ -175,6 +175,10 @@ namespace MphRead.Entities
                         }
                     }
                 }
+            }
+            if (scene.CollisionDisplay.HasFlag(CollisionDisplay.Room))
+            {
+                GetCollisionDrawInfo(scene);
             }
 
             void GetItems(ModelInstance inst, Node node, CollisionPortal? portal = null)
