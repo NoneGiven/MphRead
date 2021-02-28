@@ -103,7 +103,7 @@ namespace MphRead.Entities
 
         protected bool _anyLighting = false;
         protected readonly List<ModelInstance> _models = new List<ModelInstance>();
-        protected readonly List<CollisionInfo> _collision = new List<CollisionInfo>();
+        protected readonly List<CollisionInstance> _collision = new List<CollisionInstance>();
         protected readonly List<List<Vector3>> _colPoints = new List<List<Vector3>>();
 
         protected virtual bool UseNodeTransform => true;
@@ -120,14 +120,15 @@ namespace MphRead.Entities
             _anyLighting = _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));
         }
 
-        protected void SetCollision(CollisionInfo collision, int slot = 0, ModelInstance? attach = null)
+        protected void SetCollision(CollisionInstance collision, int slot = 0, ModelInstance? attach = null)
         {
+            CollisionInfo info = collision.Info;
             Debug.Assert(slot == 0 && _collision.Count == 0 || slot == 1 && _collision.Count == 1);
             _collision.Add(collision);
-            _colPoints.Add(new List<Vector3>(collision.Points.Count));
-            for (int i = 0; i < collision.Points.Count; i++)
+            _colPoints.Add(new List<Vector3>(info.Points.Count));
+            for (int i = 0; i < info.Points.Count; i++)
             {
-                _colPoints[slot].Add(Matrix.Vec3MultMtx4(collision.Points[i], Transform));
+                _colPoints[slot].Add(Matrix.Vec3MultMtx4(info.Points[i], Transform));
             }
             if (attach != null)
             {
@@ -150,7 +151,7 @@ namespace MphRead.Entities
                 Matrix4 transform = _collisionNode == null ? Transform : _collisionNode.Animation;
                 for (int i = 0; i < _collision.Count; i++)
                 {
-                    CollisionInfo collision = _collision[i];
+                    CollisionInfo collision = _collision[i].Info;
                     List<Vector3> colPoints = _colPoints[i];
                     for (int j = 0; j < collision.Points.Count; j++)
                     {
@@ -293,13 +294,13 @@ namespace MphRead.Entities
             Debug.Assert(_collision.Count == _colPoints.Count);
             for (int i = 0; i < _collision.Count; i++)
             {
-                CollisionInfo collision = _collision[i];
+                CollisionInstance collision = _collision[i];
                 if (!collision.Active)
                 {
                     continue;
                 }
                 List<Vector3> colPoints = _colPoints[i];
-                collision.GetDrawInfo(colPoints, scene);
+                collision.Info.GetDrawInfo(colPoints, scene);
             }
         }
 

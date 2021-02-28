@@ -64,11 +64,11 @@ namespace MphRead.Entities
                 ModelMetadata modelMeta = Metadata.ModelMetadata[meta.Name];
                 if (modelMeta.CollisionPath != null)
                 {
-                    SetCollision(Collision.ReadCollision(modelMeta.CollisionPath), attach: inst);
+                    SetCollision(Collision.GetCollision(modelMeta.CollisionPath), attach: inst);
                     if (modelMeta.ExtraCollisionPath != null)
                     {
                         // ctodo: disable capsule shield collision when appropriate
-                        SetCollision(Collision.ReadCollision(modelMeta.ExtraCollisionPath), slot: 1);
+                        SetCollision(Collision.GetCollision(modelMeta.ExtraCollisionPath), slot: 1);
                     }
                 }
                 // temporary

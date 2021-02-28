@@ -11,15 +11,35 @@ namespace MphRead.Formats.Collision
 {
     public static class Collision
     {
-        // sktodo: cache the raw structs as with models -- don't cache rooms
-        public static CollisionInfo ReadCollision(string path, bool firstHunt = false, int roomLayerMask = -1)
+        private static readonly Dictionary<string, CollisionInfo> _cache = new Dictionary<string, CollisionInfo>();
+        private static readonly Dictionary<string, CollisionInfo> _fhCache = new Dictionary<string, CollisionInfo>();
+
+        public static CollisionInstance GetCollision(string path, bool firstHunt = false, int roomLayerMask = -1)
         {
+            Dictionary<string, CollisionInfo> cache = firstHunt ? _fhCache : _cache;
+            if (roomLayerMask == -1 && cache.TryGetValue(path, out CollisionInfo? info))
+            {
+                return new CollisionInstance(info);
+            }
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path)));
             CollisionHeader header = Read.ReadStruct<CollisionHeader>(bytes);
-            if (header.Type.MarshalString() != "wc01")
+            if (header.Type.MarshalString() == "wc01")
             {
-                return ReadFhCollision(path, bytes);
+                info = ReadMphCollision(header, path, bytes, roomLayerMask);
             }
+            else
+            {
+                info = ReadFhCollision(path, bytes);
+            }
+            if (roomLayerMask != -1)
+            {
+                cache.Add(path, info);
+            }
+            return new CollisionInstance(info);
+        }
+
+        private static MphCollisionInfo ReadMphCollision(CollisionHeader header, string path, ReadOnlySpan<byte> bytes, int roomLayerMask)
+        {
             IReadOnlyList<Vector3Fx> points = Read.DoOffsets<Vector3Fx>(bytes, header.PointOffset, header.PointCount);
             IReadOnlyList<CollisionPlane> planes = Read.DoOffsets<CollisionPlane>(bytes, header.PlaneOffset, header.PlaneCount);
             IReadOnlyList<ushort> shorts = Read.DoOffsets<ushort>(bytes, header.VectorIndexOffset, header.VectorIndexCount);
@@ -206,9 +226,19 @@ namespace MphRead.Formats.Collision
         }
     }
 
-    public abstract class CollisionInfo
+    public class CollisionInstance
     {
         public bool Active { get; set; } = true;
+        public CollisionInfo Info { get; }
+
+        public CollisionInstance(CollisionInfo info)
+        {
+            Info = info;
+        }
+    }
+
+    public abstract class CollisionInfo
+    {
         public bool FirstHunt { get; }
         public string Name { get; }
         public IReadOnlyList<Vector3> Points { get; }
