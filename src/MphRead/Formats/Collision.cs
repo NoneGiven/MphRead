@@ -251,7 +251,7 @@ namespace MphRead.Formats.Collision
         public override void GetDrawInfo(List<Vector3> points, Scene scene)
         {
             _dataIds.Clear();
-            // ctodo: use color for visualization of stuff
+            // sktodo: toggles to differentiate beam collision, player collision, show terrain types, etc. (colors)
             var color = new Vector4(Vector3.UnitX, 0.5f);
             int polygonId = scene.GetNextPolygonId();
             for (int j = 0; j < Entries.Count; j++)

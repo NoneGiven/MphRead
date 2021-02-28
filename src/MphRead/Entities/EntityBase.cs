@@ -274,7 +274,6 @@ namespace MphRead.Entities
             }
         }
 
-        // sktodo: toggles to differentiate beam collision, player collision, show terrain types, etc.
         protected void GetCollisionDrawInfo(Scene scene)
         {
             Debug.Assert(_collision.Count == _colPoints.Count);
