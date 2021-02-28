@@ -203,9 +203,6 @@ namespace MphRead.Formats.Collision
                 points.Sum(p => p.Y) / points.Count,
                 points.Sum(p => p.Z) / points.Count
             );
-            Debug.Assert(raw.Field20 == 0);
-            Debug.Assert(raw.Field24 == 0);
-            Debug.Assert(raw.Field5E == 0);
         }
     }
 
@@ -290,10 +287,8 @@ namespace MphRead.Formats.Collision
     // size: 96
     public readonly struct FhCollisionPortal
     {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 40)]
         public readonly char[] Name;
-        public readonly uint Field20;
-        public readonly uint Field24;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName1; // side 0 room node
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
@@ -303,7 +298,7 @@ namespace MphRead.Formats.Collision
         public readonly ushort VectorStartIndex;
         public readonly byte Field5C;
         public readonly byte Field5D;
-        public readonly ushort Field5E;
+        public readonly ushort Padding5E;
     }
 
     // size: 72
