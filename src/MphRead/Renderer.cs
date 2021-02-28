@@ -81,6 +81,7 @@ namespace MphRead
         private bool _scanVisor = false;
         private int _showInvisible = 0;
         private VolumeDisplay _showVolumes = VolumeDisplay.None;
+        private bool _showCollisionMenu = false;
         private CollisionDisplay _collisionDisplay = CollisionDisplay.None;
         private bool _showAllnodes = false;
         private bool _transformRoomNodes = false;
@@ -2171,6 +2172,14 @@ namespace MphRead
                     RenderPlaneLines(item.Points);
                 }
             }
+            else if (item.Type == RenderItemType.Triangle)
+            {
+                RenderTriangle(item.Points);
+                if (_volumeEdges)
+                {
+                    RenderTriangleLines(item.Points);
+                }
+            }
             else if (item.Type == RenderItemType.Particle)
             {
                 RenderParticle(item);
@@ -2329,6 +2338,25 @@ namespace MphRead
                     }
                 }
             }
+            GL.End();
+        }
+
+        private void RenderTriangle(Vector3[] verts)
+        {
+            GL.Begin(PrimitiveType.Triangles);
+            GL.Vertex3(verts[0]);
+            GL.Vertex3(verts[1]);
+            GL.Vertex3(verts[2]);
+            GL.End();
+        }
+
+        private void RenderTriangleLines(Vector3[] verts)
+        {
+            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(1f, 0f, 0f, 1f));
+            GL.Begin(PrimitiveType.LineLoop);
+            GL.Vertex3(verts[0]);
+            GL.Vertex3(verts[1]);
+            GL.Vertex3(verts[2]);
             GL.End();
         }
 
@@ -2581,7 +2609,30 @@ namespace MphRead
             {
                 return;
             }
-            if (e.Key == Keys.D5)
+            if (e.Key == Keys.D6 && _showCollisionMenu)
+            {
+                _collisionDisplay ^= CollisionDisplay.Room;
+            }
+            else if (e.Key == Keys.D7 && _showCollisionMenu)
+            {
+                _collisionDisplay ^= CollisionDisplay.Platform;
+            }
+            else if (e.Key == Keys.D8 && _showCollisionMenu)
+            {
+                _collisionDisplay ^= CollisionDisplay.Object;
+            }
+            else if (e.Key == Keys.D9 && _showCollisionMenu)
+            {
+                if (_collisionDisplay != CollisionDisplay.None)
+                {
+                    _collisionDisplay = CollisionDisplay.None;
+                }
+                else
+                {
+                    _collisionDisplay = CollisionDisplay.Room | CollisionDisplay.Platform | CollisionDisplay.Object;
+                }
+            }
+            else if (e.Key == Keys.D5)
             {
                 if (!_recording)
                 {
@@ -2628,7 +2679,14 @@ namespace MphRead
             }
             else if (e.Key == Keys.L)
             {
-                _lighting = !_lighting;
+                if (e.Alt)
+                {
+                    _showCollisionMenu = !_showCollisionMenu;
+                }
+                else
+                {
+                    _lighting = !_lighting;
+                }
             }
             else if (e.Key == Keys.Z)
             {
@@ -2970,11 +3028,24 @@ namespace MphRead
                     }
                 }
             }
+            else if (_showCollisionMenu)
+            {
+                OutputGetCollisionMenu();
+            }
             else
             {
                 OutputGetMenu();
             }
             return _sb.ToString();
+        }
+
+        private void OutputGetCollisionMenu()
+        {
+            _sb.AppendLine();
+            _sb.AppendLine($"6: Toggle room collision ({(_collisionDisplay.HasFlag(CollisionDisplay.Room) ? "on" : "off")})");
+            _sb.AppendLine($"7: Toggle platform collision ({(_collisionDisplay.HasFlag(CollisionDisplay.Platform) ? "on" : "off")})");
+            _sb.AppendLine($"8: Toggle object collision ({(_collisionDisplay.HasFlag(CollisionDisplay.Object) ? "on" : "off")})");
+            _sb.AppendLine($"9: Toggle all");
         }
 
         private void OutputGetMenu()

@@ -15,6 +15,7 @@ namespace MphRead.Entities
         public EntityType Type { get; }
         public bool ShouldDraw { get; protected set; } = true;
         public bool Active { get; protected set; } = true;
+        public bool Hidden { get; set; }
         public float Alpha { get; set; } = 1.0f;
 
         protected Matrix4 _transform = Matrix4.Identity;
@@ -202,16 +203,19 @@ namespace MphRead.Entities
 
         public virtual void GetDrawInfo(Scene scene)
         {
-            for (int i = 0; i < _models.Count; i++)
+            if (!Hidden)
             {
-                ModelInstance inst = _models[i];
-                if ((!inst.Active && !scene.ShowAllEntities) || (inst.IsPlaceholder && !scene.ShowInvisibleEntities && !scene.ShowAllEntities))
+                for (int i = 0; i < _models.Count; i++)
                 {
-                    continue;
+                    ModelInstance inst = _models[i];
+                    if ((!inst.Active && !scene.ShowAllEntities) || (inst.IsPlaceholder && !scene.ShowInvisibleEntities && !scene.ShowAllEntities))
+                    {
+                        continue;
+                    }
+                    UpdateTransforms(inst, i, scene);
+                    int polygonId = scene.GetNextPolygonId();
+                    GetItems(inst, i, inst.Model.Nodes[0], polygonId);
                 }
-                UpdateTransforms(inst, i, scene);
-                int polygonId = scene.GetNextPolygonId();
-                GetItems(inst, i, inst.Model.Nodes[0], polygonId);
             }
             if ((Type == EntityType.Platform && scene.CollisionDisplay.HasFlag(CollisionDisplay.Platform))
                 || (Type == EntityType.Object && scene.CollisionDisplay.HasFlag(CollisionDisplay.Object)))
@@ -253,26 +257,41 @@ namespace MphRead.Entities
             }
         }
 
+        private readonly HashSet<ushort> _dataIds = new HashSet<ushort>();
+
         protected void GetCollisionDrawInfo(Scene scene)
         {
             if (_collision != null)
             {
+                _dataIds.Clear();
                 Debug.Assert(_colPoints != null);
-                // sktodo: color, etc.
+                // ctodo: use color for visualization of stuff
                 var color = new Vector4(Vector3.UnitX, 0.5f);
-                // sktodo: I suppose entities could have disabled collision entries too
+                int polygonId = scene.GetNextPolygonId();
                 for (int i = 0; i < _collision.Entries.Count; i++)
                 {
                     CollisionEntry entry = _collision.Entries[i];
                     for (int j = 0; j < entry.DataCount; j++)
                     {
                         ushort dataIndex = _collision.DataIndices[entry.DataStartIndex + j];
-                        if (_collision.EnabledDataIndices[entry.DataStartIndex].Contains(dataIndex))
+                        if (!_dataIds.Contains(dataIndex) && _collision.EnabledDataIndices[entry.DataStartIndex].Contains(dataIndex))
                         {
+                            _dataIds.Add(dataIndex);
                             CollisionData data = _collision.Data[dataIndex];
-                            //CollisionPlane plane = _collision.Planes[data.PlaneIndex];
-                            //Debug.Assert(data.VectorIndexCount == 4);
-                            if (data.VectorIndexCount == 4)
+                            Debug.Assert(data.VectorIndexCount >= 3 && data.VectorIndexCount <= 5);
+                            // sktodo: pentagons
+                            if (data.VectorIndexCount == 3)
+                            {
+                                Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(3);
+                                for (int k = 0; k < data.VectorIndexCount; k++)
+                                {
+                                    ushort vecIndex = _collision.VectorIndices[data.VectorStartIndex + k];
+                                    Vector3 vector = _colPoints[vecIndex];
+                                    verts[k] = vector;
+                                }
+                                scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Triangle, verts);
+                            }
+                            else if (data.VectorIndexCount == 4)
                             {
                                 Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(4);
                                 for (int k = 0; k < data.VectorIndexCount; k++)
@@ -281,7 +300,7 @@ namespace MphRead.Entities
                                     Vector3 vector = _colPoints[vecIndex];
                                     verts[k] = vector;
                                 }
-                                scene.AddRenderItem(CullingMode.Back, scene.GetNextPolygonId(), color, RenderItemType.Plane, verts);
+                                scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Plane, verts);
                             }
                         }
                     }

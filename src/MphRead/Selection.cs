@@ -196,7 +196,14 @@ namespace MphRead
                 }
                 else if (Entity != null)
                 {
-                    Entity.SetActive(!Entity.Active);
+                    if (e.Alt)
+                    {
+                        Entity.SetActive(!Entity.Active);
+                    }
+                    else
+                    {
+                        Entity.Hidden = !Entity.Hidden;
+                    }
                 }
                 return true;
             }

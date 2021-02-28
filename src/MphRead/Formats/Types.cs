@@ -23,15 +23,17 @@ namespace MphRead
 
     public enum RenderItemType
     {
+        // box/cylinder/sphere must be 1/2/3
         Mesh = 0,
         Box = 1,
         Cylinder = 2,
         Sphere = 3,
         Plane = 4,
-        Particle = 5,
-        TrailSingle = 6,
-        TrailMulti = 7,
-        TrailStack = 8
+        Triangle = 5,
+        Particle = 6,
+        TrailSingle = 7,
+        TrailMulti = 8,
+        TrailStack = 9
     }
 
     public class RenderItem

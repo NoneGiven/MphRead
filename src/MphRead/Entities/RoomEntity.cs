@@ -75,7 +75,6 @@ namespace MphRead.Entities
             Debug.Assert(model.Nodes.Any(n => n.IsRoomPartNode));
             _portals = portals;
             _forceFields = forceFields;
-            // sktodo: test if this works, might need scale?
             UpdateCollision(collision);
         }
 
@@ -125,53 +124,56 @@ namespace MphRead.Entities
 
         public override void GetDrawInfo(Scene scene)
         {
-            ModelInstance inst = _models[0];
-            UpdateTransforms(inst, 0, scene);
-            for (int i = 0; i < Nodes.Count; i++)
+            if (!Hidden)
             {
-                Node pnode = Nodes[i];
-                if (!pnode.Enabled)
+                ModelInstance inst = _models[0];
+                UpdateTransforms(inst, 0, scene);
+                for (int i = 0; i < Nodes.Count; i++)
                 {
-                    continue;
-                }
-                if (scene.ShowAllNodes)
-                {
-                    GetItems(inst, pnode);
-                }
-                else if (pnode.IsRoomPartNode)
-                {
-                    int childIndex = pnode.ChildIndex;
-                    if (childIndex != UInt16.MaxValue)
+                    Node pnode = Nodes[i];
+                    if (!pnode.Enabled)
                     {
-                        Node node = Nodes[childIndex];
-                        Debug.Assert(node.ChildIndex == UInt16.MaxValue);
-                        GetItems(inst, node);
-                        int nextIndex = node.NextIndex;
-                        while (nextIndex != UInt16.MaxValue)
+                        continue;
+                    }
+                    if (scene.ShowAllNodes)
+                    {
+                        GetItems(inst, pnode);
+                    }
+                    else if (pnode.IsRoomPartNode)
+                    {
+                        int childIndex = pnode.ChildIndex;
+                        if (childIndex != UInt16.MaxValue)
                         {
-                            node = Nodes[nextIndex];
+                            Node node = Nodes[childIndex];
+                            Debug.Assert(node.ChildIndex == UInt16.MaxValue);
                             GetItems(inst, node);
-                            nextIndex = node.NextIndex;
+                            int nextIndex = node.NextIndex;
+                            while (nextIndex != UInt16.MaxValue)
+                            {
+                                node = Nodes[nextIndex];
+                                GetItems(inst, node);
+                                nextIndex = node.NextIndex;
+                            }
                         }
                     }
                 }
-            }
-            if (scene.ShowForceFields)
-            {
-                for (int i = 0; i < _forceFields.Count; i++)
+                if (scene.ShowForceFields)
                 {
-                    PortalNodeRef forceField = _forceFields[i];
-                    Node pnode = Nodes[forceField.NodeIndex];
-                    if (pnode.ChildIndex != UInt16.MaxValue)
+                    for (int i = 0; i < _forceFields.Count; i++)
                     {
-                        Node node = Nodes[pnode.ChildIndex];
-                        GetItems(inst, node, forceField.Portal);
-                        int nextIndex = node.NextIndex;
-                        while (nextIndex != UInt16.MaxValue)
+                        PortalNodeRef forceField = _forceFields[i];
+                        Node pnode = Nodes[forceField.NodeIndex];
+                        if (pnode.ChildIndex != UInt16.MaxValue)
                         {
-                            node = Nodes[nextIndex];
+                            Node node = Nodes[pnode.ChildIndex];
                             GetItems(inst, node, forceField.Portal);
-                            nextIndex = node.NextIndex;
+                            int nextIndex = node.NextIndex;
+                            while (nextIndex != UInt16.MaxValue)
+                            {
+                                node = Nodes[nextIndex];
+                                GetItems(inst, node, forceField.Portal);
+                                nextIndex = node.NextIndex;
+                            }
                         }
                     }
                 }
