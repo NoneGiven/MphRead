@@ -279,7 +279,6 @@ namespace MphRead
             Nop();
         }
 
-        // not including FH collision at the moment
         public static void TestAllCollision()
         {
             var allCollision = new List<(bool, CollisionInfo)>();
@@ -292,9 +291,35 @@ namespace MphRead
             }
             foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.ModelMetadata)
             {
-                if (meta.Value.CollisionPath != null)
+                if (meta.Value.CollisionPath != null && !meta.Value.FirstHunt)
                 {
                     allCollision.Add((false, Collision.ReadCollision(meta.Value.CollisionPath)));
+                }
+            }
+            foreach ((bool room, CollisionInfo collision) in allCollision)
+            {
+                foreach (CollisionData data in collision.Data)
+                {
+                }
+            }
+            Nop();
+        }
+
+        public static void TestAllFhCollision()
+        {
+            var allCollision = new List<(bool, CollisionInfo)>();
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                if (meta.Value.FirstHunt || meta.Value.Hybrid)
+                {
+                    allCollision.Add((true, Collision.ReadCollision(meta.Value.CollisionPath, firstHunt: true)));
+                }
+            }
+            foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.ModelMetadata)
+            {
+                if (meta.Value.CollisionPath != null && meta.Value.FirstHunt)
+                {
+                    allCollision.Add((false, Collision.ReadCollision(meta.Value.CollisionPath, firstHunt: true)));
                 }
             }
             foreach ((bool room, CollisionInfo collision) in allCollision)

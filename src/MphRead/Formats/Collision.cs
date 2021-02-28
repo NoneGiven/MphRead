@@ -54,9 +54,9 @@ namespace MphRead.Formats.Collision
 
         private static CollisionInfo ReadFhCollision(string path, ReadOnlySpan<byte> bytes)
         {
-            // nxtodo: read and return the rest of the data
+            // sktodo: read and return the rest of the FH collision data
             FhCollisionHeader header = Read.ReadStruct<FhCollisionHeader>(bytes);
-            IReadOnlyList<Vector3Fx> points = Read.DoOffsets<Vector3Fx>(bytes, header.VectorOffset, header.VectorCount);
+            IReadOnlyList<Vector3Fx> points = Read.DoOffsets<Vector3Fx>(bytes, header.PointOffset, header.PointCount);
             var portals = new List<CollisionPortal>();
             foreach (FhCollisionPortal portal in Read.DoOffsets<FhCollisionPortal>(bytes, header.PortalOffset, header.PortalCount))
             {
@@ -93,7 +93,7 @@ namespace MphRead.Formats.Collision
         public readonly uint PortalOffset;
     }
 
-    // 16
+    // size: 16
     public readonly struct CollisionPlane
     {
         public readonly Vector3Fx Normal;
@@ -182,7 +182,7 @@ namespace MphRead.Formats.Collision
             Position = position;
         }
 
-        // nxtodo: temporary
+        // sktodo: set up FH collision portals
         public CollisionPortal(FhCollisionPortal raw)
         {
             Name = raw.Name.MarshalString();
@@ -253,22 +253,23 @@ namespace MphRead.Formats.Collision
     // size: 72
     public readonly struct FhCollisionHeader
     {
-        public readonly uint VectorCount;
-        public readonly uint VectorOffset;
-        public readonly uint Count2; // size: 16
-        public readonly uint Offset2;
-        public readonly uint Count3; // size: 6
-        public readonly uint Offset3;
-        public readonly uint Count4; // size: 6
-        public readonly uint Offset4;
-        public readonly uint ShortCount;
-        public readonly uint ShortOffset;
+        public readonly uint PointCount;
+        public readonly uint PointOffset;
+        public readonly uint PlaneCount;
+        public readonly uint PlaneOffset;
+        public readonly uint Data2Count;
+        public readonly uint Data2Offset;
+        public readonly ushort Data1Count;
+        public readonly ushort Data1StartIndex;
+        public readonly uint Data1Offset;
+        public readonly uint DataIndexCount;
+        public readonly uint DataIndexOffset;
         public readonly uint Count6; // size: 28
-        public readonly uint Offset6;
-        public readonly uint IntCount;
-        public readonly uint IntOffset;
+        public readonly uint Offset6; // link-related
+        public readonly uint Count7; // size: 4
+        public readonly uint Offset7; // link-related
         public readonly uint Count8; // size: 28
-        public readonly uint Offset8;
+        public readonly uint Offset8; // link-related
         public readonly uint PortalCount;
         public readonly uint PortalOffset;
     }
