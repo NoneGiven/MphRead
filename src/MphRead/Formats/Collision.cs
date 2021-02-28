@@ -31,7 +31,7 @@ namespace MphRead.Formats.Collision
             {
                 info = ReadFhCollision(path, bytes);
             }
-            if (roomLayerMask != -1)
+            if (roomLayerMask == -1)
             {
                 cache.Add(path, info);
             }
