@@ -56,8 +56,8 @@ namespace MphRead.Formats.Collision
         private static FhCollisionInfo ReadFhCollision(string path, ReadOnlySpan<byte> bytes)
         {
             FhCollisionHeader header = Read.ReadStruct<FhCollisionHeader>(bytes);
-            IReadOnlyList<FhCollisionData1> data1 = Read.DoOffsets<FhCollisionData1>(bytes, header.Data1Offset, header.Data1Count);
-            IReadOnlyList<FhCollisionData2> data2 = Read.DoOffsets<FhCollisionData2>(bytes, header.Data2Offset, header.Data2Count);
+            IReadOnlyList<FhCollisionData> data = Read.DoOffsets<FhCollisionData>(bytes, header.DataOffset, header.DataCount);
+            IReadOnlyList<FhCollisionVector> vectors = Read.DoOffsets<FhCollisionVector>(bytes, header.VectorOffset, header.VectorCount);
             IReadOnlyList<ushort> dataIndices = Read.DoOffsets<ushort>(bytes, header.DataIndexOffset, header.DataIndexCount);
             IReadOnlyList<Vector3Fx> points = Read.DoOffsets<Vector3Fx>(bytes, header.PointOffset, header.PointCount);
             IReadOnlyList<CollisionPlane> planes = Read.DoOffsets<CollisionPlane>(bytes, header.PlaneOffset, header.PlaneCount);
@@ -67,7 +67,7 @@ namespace MphRead.Formats.Collision
                 portals.Add(new CollisionPortal(portal));
             }
             string name = Path.GetFileNameWithoutExtension(path).Replace("_collision", "").Replace("_Collision", "");
-            return new FhCollisionInfo(name, header, points, planes, data1, data2, dataIndices, portals);
+            return new FhCollisionInfo(name, header, points, planes, data, vectors, dataIndices, portals);
         }
     }
 
@@ -307,11 +307,11 @@ namespace MphRead.Formats.Collision
         public readonly uint PointOffset;
         public readonly uint PlaneCount;
         public readonly uint PlaneOffset;
-        public readonly uint Data2Count;
-        public readonly uint Data2Offset;
-        public readonly ushort Data1Count;
-        public readonly ushort Data1StartIndex;
-        public readonly uint Data1Offset;
+        public readonly uint VectorCount;
+        public readonly uint VectorOffset;
+        public readonly ushort DataCount;
+        public readonly ushort DataStartIndex;
+        public readonly uint DataOffset;
         public readonly uint DataIndexCount;
         public readonly uint DataIndexOffset;
         public readonly uint Count6; // size: 28
@@ -325,15 +325,15 @@ namespace MphRead.Formats.Collision
     }
 
     // size: 6
-    public readonly struct FhCollisionData1
+    public readonly struct FhCollisionData
     {
         public readonly ushort PlaneIndex;
-        public readonly ushort Data2Count;
-        public readonly ushort Data2StartIndex;
+        public readonly ushort VectorCount;
+        public readonly ushort VectorStartIndex;
     }
 
     // size: 6
-    public readonly struct FhCollisionData2
+    public readonly struct FhCollisionVector
     {
         public readonly ushort Point1Index;
         public readonly ushort Point2Index;
@@ -343,17 +343,17 @@ namespace MphRead.Formats.Collision
     public class FhCollisionInfo : CollisionInfo
     {
         public FhCollisionHeader Header { get; }
-        public IReadOnlyList<FhCollisionData1> Data1 { get; }
-        public IReadOnlyList<FhCollisionData2> Data2 { get; }
+        public IReadOnlyList<FhCollisionData> Data { get; }
+        public IReadOnlyList<FhCollisionVector> Vectors { get; }
         public IReadOnlyList<ushort> DataIndices { get; }
 
         public FhCollisionInfo(string name, FhCollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
-            IReadOnlyList<FhCollisionData1> data1, IReadOnlyList<FhCollisionData2> data2, IReadOnlyList<ushort> dataIndices,
+            IReadOnlyList<FhCollisionData> data, IReadOnlyList<FhCollisionVector> vectors, IReadOnlyList<ushort> dataIndices,
             IReadOnlyList<CollisionPortal> portals) : base(name, points, planes, portals, firstHunt: true)
         {
             Header = header;
-            Data1 = data1;
-            Data2 = data2;
+            Data = data;
+            Vectors = vectors;
             DataIndices = dataIndices;
         }
 
@@ -361,18 +361,18 @@ namespace MphRead.Formats.Collision
         {
             var color = new Vector4(Vector3.UnitX, 0.5f);
             int polygonId = scene.GetNextPolygonId();
-            for (int i = 0; i < Header.Data1Count; i++)
+            for (int i = 0; i < Header.DataCount; i++)
             {
-                ushort data1Index = DataIndices[Header.Data1StartIndex + i];
-                FhCollisionData1 data1 = Data1[data1Index];
-                Debug.Assert(data1.Data2Count >= 3 && data1.Data2Count <= 6);
-                Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data1.Data2Count);
-                for (int j = 0; j < data1.Data2Count; j++)
+                ushort dataIndex = DataIndices[Header.DataStartIndex + i];
+                FhCollisionData data = Data[dataIndex];
+                Debug.Assert(data.VectorCount >= 3 && data.VectorCount <= 6);
+                Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.VectorCount);
+                for (int j = 0; j < data.VectorCount; j++)
                 {
-                    FhCollisionData2 data2 = Data2[data1.Data2StartIndex + j];
-                    verts[j] = points[data2.Point1Index];
+                    FhCollisionVector vector = Vectors[data.VectorStartIndex + j];
+                    verts[j] = points[vector.Point1Index];
                 }
-                scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data1.Data2Count);
+                scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.VectorCount);
             }
         }
     }
