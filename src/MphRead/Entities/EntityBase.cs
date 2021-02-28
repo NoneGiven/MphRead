@@ -273,8 +273,6 @@ namespace MphRead.Entities
             }
         }
 
-        private readonly HashSet<ushort> _dataIds = new HashSet<ushort>();
-
         // sktodo: toggles to differentiate beam collision, player collision, show terrain types, etc.
         protected void GetCollisionDrawInfo(Scene scene)
         {
@@ -289,32 +287,7 @@ namespace MphRead.Entities
                         continue;
                     }
                     List<Vector3> colPoints = _colPoints[i];
-                    _dataIds.Clear();
-                    // ctodo: use color for visualization of stuff
-                    var color = new Vector4(Vector3.UnitX, 0.5f);
-                    int polygonId = scene.GetNextPolygonId();
-                    for (int j = 0; j < collision.Entries.Count; j++)
-                    {
-                        CollisionEntry entry = collision.Entries[j];
-                        for (int k = 0; k < entry.DataCount; k++)
-                        {
-                            ushort dataIndex = collision.DataIndices[entry.DataStartIndex + k];
-                            // ctodo: revisit the dataIds hack; why are we getting multiple entries referencing the same data?
-                            if (!_dataIds.Contains(dataIndex) && collision.EnabledDataIndices[entry.DataStartIndex].Contains(dataIndex))
-                            {
-                                _dataIds.Add(dataIndex);
-                                CollisionData data = collision.Data[dataIndex];
-                                Debug.Assert(data.PointIndexCount >= 3 && data.PointIndexCount <= 10);
-                                Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.PointIndexCount);
-                                for (int l = 0; l < data.PointIndexCount; l++)
-                                {
-                                    ushort pointIndex = collision.PointIndices[data.PointStartIndex + l];
-                                    verts[l] = colPoints[pointIndex];
-                                }
-                                scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.PointIndexCount);
-                            }
-                        }
-                    }
+                    collision.GetDrawInfo(colPoints, scene);
                 }
             }
         }

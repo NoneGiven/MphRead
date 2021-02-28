@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -49,13 +50,15 @@ namespace MphRead.Formats.Collision
                 enabledIndices.Add(entry.DataStartIndex, enabled);
             }
             string name = Path.GetFileNameWithoutExtension(path).Replace("_collision", "").Replace("_Collision", "");
-            return new CollisionInfo(name, header, points, planes, shorts, data, indices, entries, portals, enabledIndices);
+            return new MphCollisionInfo(name, header, points, planes, shorts, data, indices, entries, portals, enabledIndices);
         }
 
-        private static CollisionInfo ReadFhCollision(string path, ReadOnlySpan<byte> bytes)
+        private static FhCollisionInfo ReadFhCollision(string path, ReadOnlySpan<byte> bytes)
         {
-            // todo: read and return the rest of the FH collision data in its own format
             FhCollisionHeader header = Read.ReadStruct<FhCollisionHeader>(bytes);
+            IReadOnlyList<FhCollisionData1> data1 = Read.DoOffsets<FhCollisionData1>(bytes, header.Data1Offset, header.Data1Count);
+            IReadOnlyList<FhCollisionData2> data2 = Read.DoOffsets<FhCollisionData2>(bytes, header.Data2Offset, header.Data2Count);
+            IReadOnlyList<ushort> dataIndices = Read.DoOffsets<ushort>(bytes, header.DataIndexOffset, header.DataIndexCount);
             IReadOnlyList<Vector3Fx> points = Read.DoOffsets<Vector3Fx>(bytes, header.PointOffset, header.PointCount);
             IReadOnlyList<CollisionPlane> planes = Read.DoOffsets<CollisionPlane>(bytes, header.PlaneOffset, header.PlaneCount);
             var portals = new List<CollisionPortal>();
@@ -64,8 +67,7 @@ namespace MphRead.Formats.Collision
                 portals.Add(new CollisionPortal(portal));
             }
             string name = Path.GetFileNameWithoutExtension(path).Replace("_collision", "").Replace("_Collision", "");
-            return new CollisionInfo(name, default, points, planes, new List<ushort>(), new List<CollisionData>(),
-                new List<ushort>(), new List<CollisionEntry>(), portals, new Dictionary<uint, HashSet<ushort>>());
+            return new FhCollisionInfo(name, header, points, planes, data1, data2, dataIndices, portals);
         }
     }
 
@@ -199,34 +201,81 @@ namespace MphRead.Formats.Collision
         }
     }
 
-    public class CollisionInfo
+    public abstract class CollisionInfo
     {
         public bool Active { get; set; } = true;
+        public bool FirstHunt { get; }
         public string Name { get; }
-        public CollisionHeader Header { get; }
         public IReadOnlyList<Vector3> Points { get; }
         public IReadOnlyList<CollisionPlane> Planes { get; }
+        public IReadOnlyList<CollisionPortal> Portals { get; }
+
+        public CollisionInfo(string name, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
+            IReadOnlyList<CollisionPortal> portals, bool firstHunt)
+        {
+            Name = name;
+            Points = points.Select(v => v.ToFloatVector()).ToList();
+            Planes = planes;
+            Portals = portals;
+            FirstHunt = firstHunt;
+        }
+
+        public abstract void GetDrawInfo(List<Vector3> points, Scene scene);
+    }
+
+    public class MphCollisionInfo : CollisionInfo
+    {
+        public CollisionHeader Header { get; }
         public IReadOnlyList<ushort> PointIndices { get; }
         public IReadOnlyList<CollisionData> Data { get; }
         public IReadOnlyList<ushort> DataIndices { get; }
         public IReadOnlyList<CollisionEntry> Entries { get; }
-        public IReadOnlyList<CollisionPortal> Portals { get; }
         // todo: update classes based on usage
         public IReadOnlyDictionary<uint, HashSet<ushort>> EnabledDataIndices { get; }
 
-        public CollisionInfo(string name, CollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
-            IReadOnlyList<ushort> ptIdxs, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> dataIdxs, IReadOnlyList<CollisionEntry> entries, IReadOnlyList<CollisionPortal> portals, IReadOnlyDictionary<uint, HashSet<ushort>> enabledIndices)
+        private readonly HashSet<ushort> _dataIds = new HashSet<ushort>();
+
+        public MphCollisionInfo(string name, CollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
+            IReadOnlyList<ushort> ptIdxs, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> dataIdxs, IReadOnlyList<CollisionEntry> entries,
+            IReadOnlyList<CollisionPortal> portals, IReadOnlyDictionary<uint, HashSet<ushort>> enabledIndices)
+            : base(name, points, planes, portals, firstHunt: false)
         {
-            Name = name;
             Header = header;
-            Points = points.Select(v => v.ToFloatVector()).ToList();
-            Planes = planes;
             PointIndices = ptIdxs;
             Data = data;
             DataIndices = dataIdxs;
             Entries = entries;
-            Portals = portals;
             EnabledDataIndices = enabledIndices;
+        }
+
+        public override void GetDrawInfo(List<Vector3> points, Scene scene)
+        {
+            _dataIds.Clear();
+            // ctodo: use color for visualization of stuff
+            var color = new Vector4(Vector3.UnitX, 0.5f);
+            int polygonId = scene.GetNextPolygonId();
+            for (int j = 0; j < Entries.Count; j++)
+            {
+                CollisionEntry entry = Entries[j];
+                for (int k = 0; k < entry.DataCount; k++)
+                {
+                    ushort dataIndex = DataIndices[entry.DataStartIndex + k];
+                    // ctodo: revisit the dataIds hack; why are we getting multiple entries referencing the same data?
+                    if (!_dataIds.Contains(dataIndex) && EnabledDataIndices[entry.DataStartIndex].Contains(dataIndex))
+                    {
+                        _dataIds.Add(dataIndex);
+                        CollisionData data = Data[dataIndex];
+                        Debug.Assert(data.PointIndexCount >= 3 && data.PointIndexCount <= 10);
+                        Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.PointIndexCount);
+                        for (int l = 0; l < data.PointIndexCount; l++)
+                        {
+                            ushort pointIndex = PointIndices[data.PointStartIndex + l];
+                            verts[l] = points[pointIndex];
+                        }
+                        scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.PointIndexCount);
+                    }
+                }
+            }
         }
     }
 
@@ -273,5 +322,43 @@ namespace MphRead.Formats.Collision
         public readonly uint Offset8; // link-related
         public readonly uint PortalCount;
         public readonly uint PortalOffset;
+    }
+
+    // size: 6
+    public readonly struct FhCollisionData1
+    {
+        public readonly ushort PlaneIndex;
+        public readonly ushort Data2Count;
+        public readonly ushort Data2StartIndex;
+    }
+
+    // size: 6
+    public readonly struct FhCollisionData2
+    {
+        public readonly ushort Point1Index;
+        public readonly ushort Point2Index;
+        public readonly ushort PlaneIndex;
+    }
+
+    public class FhCollisionInfo : CollisionInfo
+    {
+        public FhCollisionHeader Header { get; }
+        public IReadOnlyList<FhCollisionData1> Data1 { get; }
+        public IReadOnlyList<FhCollisionData2> Data2 { get; }
+        public IReadOnlyList<ushort> DataIndices { get; }
+
+        public FhCollisionInfo(string name, FhCollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
+            IReadOnlyList<FhCollisionData1> data1, IReadOnlyList<FhCollisionData2> data2, IReadOnlyList<ushort> dataIndices,
+            IReadOnlyList<CollisionPortal> portals) : base(name, points, planes, portals, firstHunt: true)
+        {
+            Header = header;
+            Data1 = data1;
+            Data2 = data2;
+            DataIndices = dataIndices;
+        }
+
+        public override void GetDrawInfo(List<Vector3> points, Scene scene)
+        {
+        }
     }
 }
