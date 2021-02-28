@@ -32,7 +32,7 @@ namespace MphRead.Formats.Collision
             var enabledIndices = new Dictionary<uint, HashSet<ushort>>();
             foreach (CollisionEntry entry in entries.Where(e => e.DataCount > 0))
             {
-                // todo: use the layer mask to actually filter the returned items (indices, entries, data, portals, etc.)
+                // todo?: use the layer mask to actually filter the returned items instead of building enabledIndices
                 Debug.Assert(entry.DataCount < 512);
                 var enabled = new HashSet<ushort>();
                 for (int i = 0; i < entry.DataCount; i++)

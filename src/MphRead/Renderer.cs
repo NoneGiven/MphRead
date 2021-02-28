@@ -2163,21 +2163,29 @@ namespace MphRead
             {
                 RenderSphere(item.Points);
             }
-            else if (item.Type == RenderItemType.Plane)
-            {
-                RenderPlane(item.Points);
-                if (_volumeEdges)
-                {
-                    // todo: implement this for volumes as well
-                    RenderPlaneLines(item.Points);
-                }
-            }
             else if (item.Type == RenderItemType.Triangle)
             {
                 RenderTriangle(item.Points);
                 if (_volumeEdges)
                 {
                     RenderTriangleLines(item.Points);
+                }
+            }
+            else if (item.Type == RenderItemType.Quad)
+            {
+                RenderQuad(item.Points);
+                if (_volumeEdges)
+                {
+                    // todo: implement this for volumes as well
+                    RenderQuadLines(item.Points);
+                }
+            }
+            else if (item.Type == RenderItemType.Pentagon)
+            {
+                RenderPentagon(item.Points);
+                if (_volumeEdges)
+                {
+                    RenderPentagonLines(item.Points);
                 }
             }
             else if (item.Type == RenderItemType.Particle)
@@ -2360,7 +2368,7 @@ namespace MphRead
             GL.End();
         }
 
-        private void RenderPlane(Vector3[] verts)
+        private void RenderQuad(Vector3[] verts)
         {
             GL.Begin(PrimitiveType.TriangleStrip);
             GL.Vertex3(verts[0]);
@@ -2370,7 +2378,7 @@ namespace MphRead
             GL.End();
         }
 
-        private void RenderPlaneLines(Vector3[] verts)
+        private void RenderQuadLines(Vector3[] verts)
         {
             GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(1f, 0f, 0f, 1f));
             GL.Begin(PrimitiveType.LineLoop);
@@ -2378,6 +2386,29 @@ namespace MphRead
             GL.Vertex3(verts[1]);
             GL.Vertex3(verts[2]);
             GL.Vertex3(verts[3]);
+            GL.End();
+        }
+
+        private void RenderPentagon(Vector3[] verts)
+        {
+            GL.Begin(PrimitiveType.TriangleFan);
+            GL.Vertex3(verts[0]);
+            GL.Vertex3(verts[1]);
+            GL.Vertex3(verts[2]);
+            GL.Vertex3(verts[3]);
+            GL.Vertex3(verts[4]);
+            GL.End();
+        }
+
+        private void RenderPentagonLines(Vector3[] verts)
+        {
+            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(1f, 0f, 0f, 1f));
+            GL.Begin(PrimitiveType.LineLoop);
+            GL.Vertex3(verts[0]);
+            GL.Vertex3(verts[1]);
+            GL.Vertex3(verts[2]);
+            GL.Vertex3(verts[3]);
+            GL.Vertex3(verts[4]);
             GL.End();
         }
 

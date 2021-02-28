@@ -28,12 +28,13 @@ namespace MphRead
         Box = 1,
         Cylinder = 2,
         Sphere = 3,
-        Plane = 4,
-        Triangle = 5,
-        Particle = 6,
-        TrailSingle = 7,
-        TrailMulti = 8,
-        TrailStack = 9
+        Triangle = 4,
+        Quad = 5,
+        Pentagon = 6,
+        Particle = 7,
+        TrailSingle = 8,
+        TrailMulti = 9,
+        TrailStack = 10
     }
 
     public class RenderItem

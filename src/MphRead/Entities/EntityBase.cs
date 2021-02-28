@@ -285,12 +285,12 @@ namespace MphRead.Entities
                         for (int k = 0; k < entry.DataCount; k++)
                         {
                             ushort dataIndex = collision.DataIndices[entry.DataStartIndex + k];
+                            // ctodo: revisit the dataIds hack; why are we getting multiple entries referencing the same data?
                             if (!_dataIds.Contains(dataIndex) && collision.EnabledDataIndices[entry.DataStartIndex].Contains(dataIndex))
                             {
                                 _dataIds.Add(dataIndex);
                                 CollisionData data = collision.Data[dataIndex];
                                 Debug.Assert(data.VectorIndexCount >= 3 && data.VectorIndexCount <= 5);
-                                // sktodo: pentagons
                                 if (data.VectorIndexCount == 3)
                                 {
                                     Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(3);
@@ -311,8 +311,19 @@ namespace MphRead.Entities
                                         Vector3 vector = colPoints[vecIndex];
                                         verts[l] = vector;
                                     }
-                                    scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Plane, verts);
+                                    scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Quad, verts);
                                 }
+                                else if (data.VectorIndexCount == 5)
+                                {
+                                    Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(5);
+                                    for (int l = 0; l < data.VectorIndexCount; l++)
+                                    {
+                                        ushort vecIndex = collision.VectorIndices[data.VectorStartIndex + l];
+                                        Vector3 vector = colPoints[vecIndex];
+                                        verts[l] = vector;
+                                    }
+                                    scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Pentagon, verts);
+                                } 
                             }
                         }
                     }
