@@ -102,7 +102,6 @@ namespace MphRead.Entities
 
         protected bool _anyLighting = false;
         protected readonly List<ModelInstance> _models = new List<ModelInstance>();
-        // sktodo: add an on/off switch to CollisionInfo
         protected readonly List<CollisionInfo> _collision = new List<CollisionInfo>();
         protected readonly List<List<Vector3>> _colPoints = new List<List<Vector3>>();
 
@@ -124,10 +123,10 @@ namespace MphRead.Entities
         {
             Debug.Assert(slot == 0 && _collision.Count == 0 || slot == 1 && _collision.Count == 1);
             _collision.Add(collision);
-            _colPoints.Add(new List<Vector3>(collision.Vectors.Count));
-            for (int i = 0; i < collision.Vectors.Count; i++)
+            _colPoints.Add(new List<Vector3>(collision.Points.Count));
+            for (int i = 0; i < collision.Points.Count; i++)
             {
-                _colPoints[slot].Add(Matrix.Vec3MultMtx4(collision.Vectors[i].ToFloatVector(), Transform));
+                _colPoints[slot].Add(Matrix.Vec3MultMtx4(collision.Points[i], Transform));
             }
         }
 
@@ -139,9 +138,9 @@ namespace MphRead.Entities
                 {
                     CollisionInfo collision = _collision[i];
                     List<Vector3> colPoints = _colPoints[i];
-                    for (int j = 0; j < collision.Vectors.Count; j++)
+                    for (int j = 0; j < collision.Points.Count; j++)
                     {
-                        colPoints[j] = Matrix.Vec3MultMtx4(collision.Vectors[j].ToFloatVector(), Transform);
+                        colPoints[j] = Matrix.Vec3MultMtx4(collision.Points[j], Transform);
                     }
                 }
                 _collisionTransformed = true;
@@ -276,7 +275,7 @@ namespace MphRead.Entities
 
         private readonly HashSet<ushort> _dataIds = new HashSet<ushort>();
 
-        // sktodo: toggles to differentiate beam collision, player collision, etc.
+        // sktodo: toggles to differentiate beam collision, player collision, show terrain types, etc.
         protected void GetCollisionDrawInfo(Scene scene)
         {
             if (_collision != null)
@@ -285,6 +284,10 @@ namespace MphRead.Entities
                 for (int i = 0; i < _collision.Count; i++)
                 {
                     CollisionInfo collision = _collision[i];
+                    if (!collision.Active)
+                    {
+                        continue;
+                    }
                     List<Vector3> colPoints = _colPoints[i];
                     _dataIds.Clear();
                     // ctodo: use color for visualization of stuff
@@ -301,15 +304,14 @@ namespace MphRead.Entities
                             {
                                 _dataIds.Add(dataIndex);
                                 CollisionData data = collision.Data[dataIndex];
-                                Debug.Assert(data.VectorIndexCount >= 3 && data.VectorIndexCount <= 10);
-                                Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.VectorIndexCount);
-                                for (int l = 0; l < data.VectorIndexCount; l++)
+                                Debug.Assert(data.PointIndexCount >= 3 && data.PointIndexCount <= 10);
+                                Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.PointIndexCount);
+                                for (int l = 0; l < data.PointIndexCount; l++)
                                 {
-                                    ushort vecIndex = collision.VectorIndices[data.VectorStartIndex + l];
-                                    Vector3 vector = colPoints[vecIndex];
-                                    verts[l] = vector;
+                                    ushort pointIndex = collision.PointIndices[data.PointStartIndex + l];
+                                    verts[l] = colPoints[pointIndex];
                                 }
-                                scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.VectorIndexCount);
+                                scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.PointIndexCount);
                             }
                         }
                     }

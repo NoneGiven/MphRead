@@ -18,7 +18,7 @@ namespace MphRead.Formats.Collision
             {
                 return ReadFhCollision(path, bytes);
             }
-            IReadOnlyList<Vector3Fx> vectors = Read.DoOffsets<Vector3Fx>(bytes, header.VectorOffset, header.VectorCount);
+            IReadOnlyList<Vector3Fx> points = Read.DoOffsets<Vector3Fx>(bytes, header.PointOffset, header.PointCount);
             IReadOnlyList<CollisionPlane> planes = Read.DoOffsets<CollisionPlane>(bytes, header.PlaneOffset, header.PlaneCount);
             IReadOnlyList<ushort> shorts = Read.DoOffsets<ushort>(bytes, header.VectorIndexOffset, header.VectorIndexCount);
             IReadOnlyList<CollisionData> data = Read.DoOffsets<CollisionData>(bytes, header.DataOffset, header.DataCount);
@@ -48,21 +48,21 @@ namespace MphRead.Formats.Collision
                 enabledIndices.Add(entry.DataStartIndex, enabled);
             }
             string name = Path.GetFileNameWithoutExtension(path).Replace("_collision", "").Replace("_Collision", "");
-            return new CollisionInfo(name, header, vectors, planes, shorts, data, indices, entries, portals, enabledIndices);
+            return new CollisionInfo(name, header, points, planes, shorts, data, indices, entries, portals, enabledIndices);
         }
 
         private static CollisionInfo ReadFhCollision(string path, ReadOnlySpan<byte> bytes)
         {
             // nxtodo: read and return the rest of the data
             FhCollisionHeader header = Read.ReadStruct<FhCollisionHeader>(bytes);
-            IReadOnlyList<Vector3Fx> vectors = Read.DoOffsets<Vector3Fx>(bytes, header.VectorOffset, header.VectorCount);
+            IReadOnlyList<Vector3Fx> points = Read.DoOffsets<Vector3Fx>(bytes, header.VectorOffset, header.VectorCount);
             var portals = new List<CollisionPortal>();
             foreach (FhCollisionPortal portal in Read.DoOffsets<FhCollisionPortal>(bytes, header.PortalOffset, header.PortalCount))
             {
                 portals.Add(new CollisionPortal(portal));
             }
             string name = Path.GetFileNameWithoutExtension(path).Replace("_collision", "").Replace("_Collision", "");
-            return new CollisionInfo(name, default, vectors, new List<CollisionPlane>(), new List<ushort>(), new List<CollisionData>(),
+            return new CollisionInfo(name, default, points, new List<CollisionPlane>(), new List<ushort>(), new List<CollisionData>(),
                 new List<ushort>(), new List<CollisionEntry>(), portals, new Dictionary<uint, HashSet<ushort>>());
         }
     }
@@ -72,8 +72,8 @@ namespace MphRead.Formats.Collision
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public readonly char[] Type; // wc01
-        public readonly uint VectorCount;
-        public readonly uint VectorOffset;
+        public readonly uint PointCount;
+        public readonly uint PointOffset;
         public readonly uint PlaneCount;
         public readonly uint PlaneOffset;
         public readonly uint VectorIndexCount;
@@ -107,8 +107,8 @@ namespace MphRead.Formats.Collision
         public readonly ushort Field9; // bits 5-8 = terrain type
         public readonly ushort LayerMask;
         public readonly ushort FieldA;
-        public readonly ushort VectorIndexCount;
-        public readonly ushort VectorStartIndex;
+        public readonly ushort PointIndexCount;
+        public readonly ushort PointStartIndex;
     }
 
     // size: 4
@@ -199,11 +199,12 @@ namespace MphRead.Formats.Collision
 
     public class CollisionInfo
     {
+        public bool Active { get; set; } = true;
         public string Name { get; }
         public CollisionHeader Header { get; }
-        public IReadOnlyList<Vector3Fx> Vectors { get; }
+        public IReadOnlyList<Vector3> Points { get; }
         public IReadOnlyList<CollisionPlane> Planes { get; }
-        public IReadOnlyList<ushort> VectorIndices { get; }
+        public IReadOnlyList<ushort> PointIndices { get; }
         public IReadOnlyList<CollisionData> Data { get; }
         public IReadOnlyList<ushort> DataIndices { get; }
         public IReadOnlyList<CollisionEntry> Entries { get; }
@@ -211,14 +212,14 @@ namespace MphRead.Formats.Collision
         // todo: update classes based on usage
         public IReadOnlyDictionary<uint, HashSet<ushort>> EnabledDataIndices { get; }
 
-        public CollisionInfo(string name, CollisionHeader header, IReadOnlyList<Vector3Fx> vectors, IReadOnlyList<CollisionPlane> planes,
-            IReadOnlyList<ushort> vecIdxs, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> dataIdxs, IReadOnlyList<CollisionEntry> entries, IReadOnlyList<CollisionPortal> portals, IReadOnlyDictionary<uint, HashSet<ushort>> enabledIndices)
+        public CollisionInfo(string name, CollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
+            IReadOnlyList<ushort> ptIdxs, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> dataIdxs, IReadOnlyList<CollisionEntry> entries, IReadOnlyList<CollisionPortal> portals, IReadOnlyDictionary<uint, HashSet<ushort>> enabledIndices)
         {
             Name = name;
             Header = header;
-            Vectors = vectors;
+            Points = points.Select(v => v.ToFloatVector()).ToList();
             Planes = planes;
-            VectorIndices = vecIdxs;
+            PointIndices = ptIdxs;
             Data = data;
             DataIndices = dataIdxs;
             Entries = entries;

@@ -179,6 +179,7 @@ namespace MphRead
                 LookAtSelection(scene, e.Control, e.Shift);
                 return true;
             }
+            // sktodo: allow toggling collision entries and individual planes
             if (e.Key == Keys.D0 || e.Key == Keys.KeyPad0)
             {
                 // note: toggling meshes and nodes will affect all model instances that use them
