@@ -73,8 +73,8 @@ namespace MphRead
         private bool _showTextures = true;
         private bool _showColors = true;
         private bool _wireframe = false;
-        // sktodo: three states to allow edges only
-        private bool _volumeEdges = false;
+        // 0 - lines + fill, 1 - lines only, 2 - fill only
+        private int _volumeEdges = 0;
         private bool _faceCulling = true;
         private bool _textureFiltering = false;
         private bool _lighting = false;
@@ -2169,17 +2169,16 @@ namespace MphRead
             else if (item.Type == RenderItemType.Quad)
             {
                 RenderQuad(item.Points);
-                if (_volumeEdges)
-                {
-                    // todo: implement this for volumes as well
-                    RenderQuadLines(item.Points);
-                }
             }
             else if (item.Type == RenderItemType.Ngon)
             {
-                RenderNgon(item.Points, item.ItemCount);
-                if (_volumeEdges)
+                if (_volumeEdges != 1)
                 {
+                    RenderNgon(item.Points, item.ItemCount);
+                }
+                if (_volumeEdges != 2)
+                {
+                    // todo: implement this for volumes as well
                     RenderNgonLines(item.Points, item.ItemCount);
                 }
             }
@@ -2351,17 +2350,6 @@ namespace MphRead
             GL.Vertex3(verts[3]);
             GL.Vertex3(verts[1]);
             GL.Vertex3(verts[2]);
-            GL.End();
-        }
-
-        private void RenderQuadLines(Vector3[] verts)
-        {
-            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(1f, 0f, 0f, 1f));
-            GL.Begin(PrimitiveType.LineLoop);
-            GL.Vertex3(verts[0]);
-            GL.Vertex3(verts[1]);
-            GL.Vertex3(verts[2]);
-            GL.Vertex3(verts[3]);
             GL.End();
         }
 
@@ -2663,7 +2651,22 @@ namespace MphRead
             {
                 if (e.Alt)
                 {
-                    _volumeEdges = !_volumeEdges;
+                    if (e.Shift)
+                    {
+                        _volumeEdges--;
+                        if (_volumeEdges < 0)
+                        {
+                            _volumeEdges = 2;
+                        }
+                    }
+                    else
+                    {
+                        _volumeEdges++;
+                        if (_volumeEdges > 2)
+                        {
+                            _volumeEdges = 0;
+                        }
+                    }
                 }
                 else
                 {
