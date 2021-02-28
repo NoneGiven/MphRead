@@ -1681,6 +1681,7 @@ namespace MphRead
             item.PolygonMode = PolygonMode.Modulate;
             item.RenderMode = RenderMode.Translucent;
             item.CullingMode = cullingMode;
+            // sktodo: make a bit field, include "no lines" option for kill plane/portals
             item.Wireframe = false;
             item.Lighting = false;
             item.Diffuse = Vector3.Zero;

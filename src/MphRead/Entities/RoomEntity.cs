@@ -232,16 +232,17 @@ namespace MphRead.Entities
                 for (int i = 0; i < _portals.Count; i++)
                 {
                     CollisionPortal portal = _portals[i];
-                    Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(4);
-                    verts[0] = portal.Point1;
-                    verts[1] = portal.Point2;
-                    verts[2] = portal.Point3;
-                    verts[3] = portal.Point4;
+                    int count = portal.Points.Count;
+                    Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(count);
+                    for (int j = 0; j < count; j++)
+                    {
+                        verts[j] = portal.Points[j];
+                    }
                     float alpha = GetPortalAlpha(portal.Position, scene.CameraPosition);
                     Vector4 color = portal.IsForceField
                         ? new Vector4(16 / 31f, 16 / 31f, 1f, alpha)
                         : new Vector4(16 / 31f, 1f, 16 / 31f, alpha);
-                    scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Quad, verts);
+                    scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Ngon, verts, count);
                 }
             }
             else if (scene.ShowVolumes == VolumeDisplay.KillPlane)

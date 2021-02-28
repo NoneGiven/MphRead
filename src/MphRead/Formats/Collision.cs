@@ -64,7 +64,7 @@ namespace MphRead.Formats.Collision
             var portals = new List<CollisionPortal>();
             foreach (FhCollisionPortal portal in Read.DoOffsets<FhCollisionPortal>(bytes, header.PortalOffset, header.PortalCount))
             {
-                portals.Add(new CollisionPortal(portal));
+                portals.Add(new CollisionPortal(portal, vectors, points));
             }
             string name = Path.GetFileNameWithoutExtension(path).Replace("_collision", "").Replace("_Collision", "");
             return new FhCollisionInfo(name, header, points, planes, data, vectors, dataIndices, portals);
@@ -160,10 +160,7 @@ namespace MphRead.Formats.Collision
         public string NodeName2 { get; }
         public ushort LayerMask { get; }
         public bool IsForceField { get; }
-        public Vector3 Point1 { get; }
-        public Vector3 Point2 { get; }
-        public Vector3 Point3 { get; }
-        public Vector3 Point4 { get; }
+        public IReadOnlyList<Vector3> Points { get; }
         public Vector3 Position { get; }
 
         public CollisionPortal(RawCollisionPortal raw)
@@ -174,30 +171,41 @@ namespace MphRead.Formats.Collision
             NodeName2 = raw.NodeName2.MarshalString();
             LayerMask = raw.LayerMask;
             IsForceField = Name.StartsWith("pmag");
-            Point1 = raw.Vector1.ToFloatVector();
-            Point2 = raw.Vector2.ToFloatVector();
-            Point3 = raw.Vector3.ToFloatVector();
-            Point4 = raw.Vector4.ToFloatVector();
-            Vector3 position = Vector3.Zero;
-            position.X = (Point1.X + Point2.X + Point3.X + Point4.X) * 0.25f;
-            position.Y = (Point1.Y + Point2.Y + Point3.Y + Point4.Y) * 0.25f;
-            position.Z = (Point1.Z + Point2.Z + Point3.Z + Point4.Z) * 0.25f;
-            Position = position;
+            var points = new List<Vector3>();
+            points.Add(raw.Vector1.ToFloatVector());
+            points.Add(raw.Vector2.ToFloatVector());
+            points.Add(raw.Vector3.ToFloatVector());
+            points.Add(raw.Vector4.ToFloatVector());
+            Points = points;
+            Position = new Vector3(
+                points.Sum(p => p.X) / points.Count,
+                points.Sum(p => p.Y) / points.Count,
+                points.Sum(p => p.Z) / points.Count
+            );
         }
 
-        // sktodo: set up FH collision portals
-        public CollisionPortal(FhCollisionPortal raw)
+        public CollisionPortal(FhCollisionPortal raw, IReadOnlyList<FhCollisionVector> rawVectors, IReadOnlyList<Vector3Fx> rawPoints)
         {
             Name = raw.Name.MarshalString();
             NodeName1 = raw.NodeName1.MarshalString();
             NodeName2 = raw.NodeName2.MarshalString();
-            LayerMask = 4;
-            IsForceField = Name.StartsWith("pmag");
-            Point1 = Vector3.Zero;
-            Point2 = Vector3.Zero;
-            Point3 = Vector3.Zero;
-            Point4 = Vector3.Zero;
-            Position = Vector3.Zero;
+            LayerMask = 4; // always on
+            var points = new List<Vector3>();
+            for (int i = 0; i < raw.VectorCount; i++)
+            {
+                FhCollisionVector vector = rawVectors[raw.VectorStartIndex + i];
+                Vector3Fx point = rawPoints[vector.Point1Index];
+                points.Add(point.ToFloatVector());
+            }
+            Points = points;
+            Position = new Vector3(
+                points.Sum(p => p.X) / points.Count,
+                points.Sum(p => p.Y) / points.Count,
+                points.Sum(p => p.Z) / points.Count
+            );
+            Debug.Assert(raw.Field20 == 0);
+            Debug.Assert(raw.Field24 == 0);
+            Debug.Assert(raw.Field5E == 0);
         }
     }
 
@@ -290,11 +298,9 @@ namespace MphRead.Formats.Collision
         public readonly char[] NodeName1; // side 0 room node
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName2; // side 1 room node
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
-        public readonly uint Field58;
+        public readonly CollisionPlane Plane;
+        public readonly ushort VectorCount;
+        public readonly ushort VectorStartIndex;
         public readonly byte Field5C;
         public readonly byte Field5D;
         public readonly ushort Field5E;
@@ -364,6 +370,11 @@ namespace MphRead.Formats.Collision
             for (int i = 0; i < Header.DataCount; i++)
             {
                 ushort dataIndex = DataIndices[Header.DataStartIndex + i];
+                if (dataIndex > Data.Count)
+                {
+                    // this happens in FH_E3
+                    continue;
+                }
                 FhCollisionData data = Data[dataIndex];
                 Debug.Assert(data.VectorCount >= 3 && data.VectorCount <= 6);
                 Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.VectorCount);
