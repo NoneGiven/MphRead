@@ -2593,7 +2593,7 @@ namespace MphRead
             }
             else if (e.Key == Keys.Q)
             {
-                if (_showVolumes == VolumeDisplay.Portal)
+                if (e.Alt)
                 {
                     _volumeEdges = !_volumeEdges;
                 }

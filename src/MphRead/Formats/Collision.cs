@@ -20,9 +20,9 @@ namespace MphRead.Formats.Collision
             }
             IReadOnlyList<Vector3Fx> vectors = Read.DoOffsets<Vector3Fx>(bytes, header.VectorOffset, header.VectorCount);
             IReadOnlyList<CollisionPlane> planes = Read.DoOffsets<CollisionPlane>(bytes, header.PlaneOffset, header.PlaneCount);
-            IReadOnlyList<ushort> shorts = Read.DoOffsets<ushort>(bytes, header.ShortOffset, header.ShortCount);
+            IReadOnlyList<ushort> shorts = Read.DoOffsets<ushort>(bytes, header.VectorIndexOffset, header.VectorIndexCount);
             IReadOnlyList<CollisionData> data = Read.DoOffsets<CollisionData>(bytes, header.DataOffset, header.DataCount);
-            IReadOnlyList<ushort> indices = Read.DoOffsets<ushort>(bytes, header.IndexOffset, header.IndexCount);
+            IReadOnlyList<ushort> indices = Read.DoOffsets<ushort>(bytes, header.DataIndexOffset, header.DataIndexCount);
             IReadOnlyList<CollisionEntry> entries = Read.DoOffsets<CollisionEntry>(bytes, header.EntryOffset, header.EntryCount);
             var portals = new List<CollisionPortal>();
             foreach (RawCollisionPortal portal in Read.DoOffsets<RawCollisionPortal>(bytes, header.PortalOffset, header.PortalCount))
@@ -30,22 +30,22 @@ namespace MphRead.Formats.Collision
                 portals.Add(new CollisionPortal(portal));
             }
             var enabledIndices = new Dictionary<uint, IReadOnlyList<ushort>>();
-            foreach (CollisionEntry entry in entries.Where(e => e.Count > 0))
+            foreach (CollisionEntry entry in entries.Where(e => e.DataCount > 0))
             {
                 // todo: use the layer mask to actually filter the returned items (indices, entries, data, portals, etc.)
-                Debug.Assert(entry.Count < 512);
+                Debug.Assert(entry.DataCount < 512);
                 var enabled = new List<ushort>();
-                for (int i = 0; i < entry.Count; i++)
+                for (int i = 0; i < entry.DataCount; i++)
                 {
-                    ushort index = indices[entry.StartIndex + i];
+                    ushort index = indices[entry.DataStartIndex + i];
                     ushort layerMask = data[index].LayerMask;
                     if ((layerMask & 4) != 0 || roomLayerMask == -1 || (layerMask & roomLayerMask) != 0)
                     {
                         enabled.Add(index);
                     }
                 }
-                Debug.Assert(!enabledIndices.ContainsKey(entry.StartIndex));
-                enabledIndices.Add(entry.StartIndex, enabled);
+                Debug.Assert(!enabledIndices.ContainsKey(entry.DataStartIndex));
+                enabledIndices.Add(entry.DataStartIndex, enabled);
             }
             string name = Path.GetFileNameWithoutExtension(path).Replace("_collision", "").Replace("_Collision", "");
             return new CollisionInfo(name, header, vectors, planes, shorts, data, indices, entries, portals, enabledIndices);
@@ -76,12 +76,12 @@ namespace MphRead.Formats.Collision
         public readonly uint VectorOffset;
         public readonly uint PlaneCount;
         public readonly uint PlaneOffset;
-        public readonly uint ShortCount;
-        public readonly uint ShortOffset;
+        public readonly uint VectorIndexCount;
+        public readonly uint VectorIndexOffset;
         public readonly uint DataCount;
         public readonly uint DataOffset;
-        public readonly uint IndexCount;
-        public readonly uint IndexOffset;
+        public readonly uint DataIndexCount;
+        public readonly uint DataIndexOffset;
         public readonly uint Field2C;
         public readonly uint Field30;
         public readonly uint Field34;
@@ -103,19 +103,19 @@ namespace MphRead.Formats.Collision
     public readonly struct CollisionData
     {
         public readonly uint Field0;
-        public readonly ushort Field4;
+        public readonly ushort PlaneIndex;
         public readonly ushort Field9; // bits 5-8 = terrain type
         public readonly ushort LayerMask;
         public readonly ushort FieldA;
-        public readonly ushort FieldC;
-        public readonly ushort FieldE;
+        public readonly ushort VectorIndexCount;
+        public readonly ushort VectorStartIndex;
     }
 
     // size: 4
     public readonly struct CollisionEntry
     {
-        public readonly ushort Count;
-        public readonly ushort StartIndex;
+        public readonly ushort DataCount;
+        public readonly ushort DataStartIndex;
     }
 
     // size: 224
@@ -203,27 +203,27 @@ namespace MphRead.Formats.Collision
         public CollisionHeader Header { get; }
         public IReadOnlyList<Vector3Fx> Vectors { get; }
         public IReadOnlyList<CollisionPlane> Planes { get; }
-        public IReadOnlyList<ushort> Shorts { get; }
+        public IReadOnlyList<ushort> VectorIndices { get; }
         public IReadOnlyList<CollisionData> Data { get; }
-        public IReadOnlyList<ushort> Indices { get; }
+        public IReadOnlyList<ushort> DataIndices { get; }
         public IReadOnlyList<CollisionEntry> Entries { get; }
         public IReadOnlyList<CollisionPortal> Portals { get; }
         // todo: update classes based on usage
-        public IReadOnlyDictionary<uint, IReadOnlyList<ushort>> EnabledIndices { get; }
+        public IReadOnlyDictionary<uint, IReadOnlyList<ushort>> EnabledDataIndices { get; }
 
         public CollisionInfo(string name, CollisionHeader header, IReadOnlyList<Vector3Fx> vectors, IReadOnlyList<CollisionPlane> planes,
-            IReadOnlyList<ushort> shorts, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> indices, IReadOnlyList<CollisionEntry> entries, IReadOnlyList<CollisionPortal> portals, IReadOnlyDictionary<uint, IReadOnlyList<ushort>> enabledIndices)
+            IReadOnlyList<ushort> vecIdxs, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> dataIdxs, IReadOnlyList<CollisionEntry> entries, IReadOnlyList<CollisionPortal> portals, IReadOnlyDictionary<uint, IReadOnlyList<ushort>> enabledIndices)
         {
             Name = name;
             Header = header;
             Vectors = vectors;
             Planes = planes;
-            Shorts = shorts;
+            VectorIndices = vecIdxs;
             Data = data;
-            Indices = indices;
+            DataIndices = dataIdxs;
             Entries = entries;
             Portals = portals;
-            EnabledIndices = enabledIndices;
+            EnabledDataIndices = enabledIndices;
         }
     }
 

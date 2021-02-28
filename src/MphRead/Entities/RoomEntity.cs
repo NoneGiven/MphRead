@@ -10,6 +10,7 @@ namespace MphRead.Entities
 {
     public class RoomEntity : EntityBase
     {
+        private readonly CollisionInfo _collision;
         private readonly IReadOnlyList<CollisionPortal> _portals = new List<CollisionPortal>();
         private readonly IReadOnlyList<PortalNodeRef> _forceFields = new List<PortalNodeRef>();
         private IReadOnlyList<Node> Nodes => _models[0].Model.Nodes;
@@ -27,6 +28,7 @@ namespace MphRead.Entities
                 Nodes[46].Enabled = false;
             }
             Model model = inst.Model;
+            _collision = collision;
             var portals = new List<CollisionPortal>();
             var forceFields = new List<PortalNodeRef>();
             portals.AddRange(collision.Portals.Where(p => (p.LayerMask & 4) != 0 || (p.LayerMask & layerMask) != 0));

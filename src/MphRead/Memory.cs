@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -70,7 +71,6 @@ namespace MphRead.Memory
                 {
                     RefreshMemory();
                     GetEntities();
-                    //var beams = _entities.Where(e => e.EntityType == EntityType.BeamProjectile).ToList();
                     //byte[] weapon = new byte[0xF0];
                     //for (int i = 0; i < 0xF0; i++)
                     //{
@@ -82,6 +82,7 @@ namespace MphRead.Memory
                     //var keyframe0 = new CameraSequenceKeyframe(this, scanIntro.Keyframes);
                     //var keyframe1 = new CameraSequenceKeyframe(this, keyframe0.Next);
                     //var keyframe2 = new CameraSequenceKeyframe(this, keyframe1.Next);
+                    var beams = _entities.Where(e => e.EntityType == EntityType.BeamProjectile).ToList();
                     await Task.Delay(15);
                 }
             }).GetAwaiter().GetResult();
