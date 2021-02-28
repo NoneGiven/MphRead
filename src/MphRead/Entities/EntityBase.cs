@@ -290,40 +290,15 @@ namespace MphRead.Entities
                             {
                                 _dataIds.Add(dataIndex);
                                 CollisionData data = collision.Data[dataIndex];
-                                Debug.Assert(data.VectorIndexCount >= 3 && data.VectorIndexCount <= 6);
-                                if (data.VectorIndexCount == 3)
+                                Debug.Assert(data.VectorIndexCount >= 3 && data.VectorIndexCount <= 10);
+                                Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.VectorIndexCount);
+                                for (int l = 0; l < data.VectorIndexCount; l++)
                                 {
-                                    Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(3);
-                                    for (int l = 0; l < data.VectorIndexCount; l++)
-                                    {
-                                        ushort vecIndex = collision.VectorIndices[data.VectorStartIndex + l];
-                                        Vector3 vector = colPoints[vecIndex];
-                                        verts[l] = vector;
-                                    }
-                                    scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Triangle, verts);
+                                    ushort vecIndex = collision.VectorIndices[data.VectorStartIndex + l];
+                                    Vector3 vector = colPoints[vecIndex];
+                                    verts[l] = vector;
                                 }
-                                else if (data.VectorIndexCount == 4)
-                                {
-                                    Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(4);
-                                    for (int l = 0; l < data.VectorIndexCount; l++)
-                                    {
-                                        ushort vecIndex = collision.VectorIndices[data.VectorStartIndex + (3 - l)];
-                                        Vector3 vector = colPoints[vecIndex];
-                                        verts[l] = vector;
-                                    }
-                                    scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Quad, verts);
-                                }
-                                else if (data.VectorIndexCount >= 5)
-                                {
-                                    Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.VectorIndexCount);
-                                    for (int l = 0; l < data.VectorIndexCount; l++)
-                                    {
-                                        ushort vecIndex = collision.VectorIndices[data.VectorStartIndex + l];
-                                        Vector3 vector = colPoints[vecIndex];
-                                        verts[l] = vector;
-                                    }
-                                    scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.VectorIndexCount);
-                                } 
+                                scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.VectorIndexCount);
                             }
                         }
                     }

@@ -1702,7 +1702,7 @@ namespace MphRead
             item.Points = vertices;
             item.ScaleS = 1;
             item.ScaleT = 1;
-            Debug.Assert(type != RenderItemType.Ngon || vertexCount >= 5);
+            Debug.Assert(type != RenderItemType.Ngon || vertexCount >= 3);
             item.ItemCount = vertexCount;
             AddRenderItem(item);
         }
@@ -2166,14 +2166,6 @@ namespace MphRead
             {
                 RenderSphere(item.Points);
             }
-            else if (item.Type == RenderItemType.Triangle)
-            {
-                RenderTriangle(item.Points);
-                if (_volumeEdges)
-                {
-                    RenderTriangleLines(item.Points);
-                }
-            }
             else if (item.Type == RenderItemType.Quad)
             {
                 RenderQuad(item.Points);
@@ -2349,25 +2341,6 @@ namespace MphRead
                     }
                 }
             }
-            GL.End();
-        }
-
-        private void RenderTriangle(Vector3[] verts)
-        {
-            GL.Begin(PrimitiveType.Triangles);
-            GL.Vertex3(verts[0]);
-            GL.Vertex3(verts[1]);
-            GL.Vertex3(verts[2]);
-            GL.End();
-        }
-
-        private void RenderTriangleLines(Vector3[] verts)
-        {
-            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(1f, 0f, 0f, 1f));
-            GL.Begin(PrimitiveType.LineLoop);
-            GL.Vertex3(verts[0]);
-            GL.Vertex3(verts[1]);
-            GL.Vertex3(verts[2]);
             GL.End();
         }
 
