@@ -286,7 +286,7 @@ namespace MphRead
             var allCollision = new List<CollisionInfo>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
-                if (!meta.Value.FirstHunt)
+                if (!meta.Value.FirstHunt && !meta.Value.Hybrid)
                 {
                     allCollision.Add(Collision.ReadCollision(meta.Value.CollisionPath, firstHunt: false));
                 }
