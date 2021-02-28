@@ -97,9 +97,9 @@ namespace MphRead.Entities
 
         protected bool _anyLighting = false;
         protected readonly List<ModelInstance> _models = new List<ModelInstance>();
-        // sktodo: need two slots, also add an on/off switch to CollisionInfo
-        protected CollisionInfo? _collision = null;
-        protected Vector3[]? _colPoints = null;
+        // sktodo: add an on/off switch to CollisionInfo
+        protected readonly List<CollisionInfo> _collision = new List<CollisionInfo>();
+        protected readonly List<List<Vector3>> _colPoints = new List<List<Vector3>>();
 
         protected virtual bool UseNodeTransform => true;
         protected virtual Vector4? OverrideColor { get; } = null;
@@ -116,18 +116,25 @@ namespace MphRead.Entities
         }
 
         // sktodo: call when transform changes
-        protected void UpdateCollision(CollisionInfo collision)
+        protected void UpdateCollision(CollisionInfo collision, int slot = 0)
         {
-            _collision = collision;
-            if (_colPoints == null)
+            Debug.Assert(slot == 0 || slot == 1);
+            if (slot == 0 && _collision.Count == 0 || slot == 1 && _collision.Count == 1)
             {
-                _colPoints = new Vector3[_collision.Vectors.Count];
+                _collision.Add(collision);
+                _colPoints.Add(new List<Vector3>(collision.Vectors.Count));
+                for (int i = 0; i < collision.Vectors.Count; i++)
+                {
+                    _colPoints[slot].Add(Matrix.Vec3MultMtx4(collision.Vectors[i].ToFloatVector(), Transform));
+                }
             }
-            // todo?: we could limit calculation to vectors referenced by enabled entries,
-            // but we'd still have to make the array full size
-            for (int i = 0; i < _collision.Vectors.Count; i++)
+            else
             {
-                _colPoints[i] = Matrix.Vec3MultMtx4(_collision.Vectors[i].ToFloatVector(), Transform);
+                Debug.Assert(_collision[slot] == collision && _colPoints[slot].Count == collision.Vectors.Count);
+                for (int i = 0; i < collision.Vectors.Count; i++)
+                {
+                    _colPoints[slot][i] = Matrix.Vec3MultMtx4(collision.Vectors[i].ToFloatVector(), Transform);
+                }
             }
         }
 
@@ -263,44 +270,49 @@ namespace MphRead.Entities
         {
             if (_collision != null)
             {
-                _dataIds.Clear();
                 Debug.Assert(_colPoints != null);
-                // ctodo: use color for visualization of stuff
-                var color = new Vector4(Vector3.UnitX, 0.5f);
-                int polygonId = scene.GetNextPolygonId();
-                for (int i = 0; i < _collision.Entries.Count; i++)
+                for (int i = 0; i < _collision.Count; i++)
                 {
-                    CollisionEntry entry = _collision.Entries[i];
-                    for (int j = 0; j < entry.DataCount; j++)
+                    CollisionInfo collision = _collision[i];
+                    List<Vector3> colPoints = _colPoints[i];
+                    _dataIds.Clear();
+                    // ctodo: use color for visualization of stuff
+                    var color = new Vector4(Vector3.UnitX, 0.5f);
+                    int polygonId = scene.GetNextPolygonId();
+                    for (int j = 0; j < collision.Entries.Count; j++)
                     {
-                        ushort dataIndex = _collision.DataIndices[entry.DataStartIndex + j];
-                        if (!_dataIds.Contains(dataIndex) && _collision.EnabledDataIndices[entry.DataStartIndex].Contains(dataIndex))
+                        CollisionEntry entry = collision.Entries[j];
+                        for (int k = 0; k < entry.DataCount; k++)
                         {
-                            _dataIds.Add(dataIndex);
-                            CollisionData data = _collision.Data[dataIndex];
-                            Debug.Assert(data.VectorIndexCount >= 3 && data.VectorIndexCount <= 5);
-                            // sktodo: pentagons
-                            if (data.VectorIndexCount == 3)
+                            ushort dataIndex = collision.DataIndices[entry.DataStartIndex + k];
+                            if (!_dataIds.Contains(dataIndex) && collision.EnabledDataIndices[entry.DataStartIndex].Contains(dataIndex))
                             {
-                                Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(3);
-                                for (int k = 0; k < data.VectorIndexCount; k++)
+                                _dataIds.Add(dataIndex);
+                                CollisionData data = collision.Data[dataIndex];
+                                Debug.Assert(data.VectorIndexCount >= 3 && data.VectorIndexCount <= 5);
+                                // sktodo: pentagons
+                                if (data.VectorIndexCount == 3)
                                 {
-                                    ushort vecIndex = _collision.VectorIndices[data.VectorStartIndex + k];
-                                    Vector3 vector = _colPoints[vecIndex];
-                                    verts[k] = vector;
+                                    Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(3);
+                                    for (int l = 0; l < data.VectorIndexCount; l++)
+                                    {
+                                        ushort vecIndex = collision.VectorIndices[data.VectorStartIndex + l];
+                                        Vector3 vector = colPoints[vecIndex];
+                                        verts[l] = vector;
+                                    }
+                                    scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Triangle, verts);
                                 }
-                                scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Triangle, verts);
-                            }
-                            else if (data.VectorIndexCount == 4)
-                            {
-                                Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(4);
-                                for (int k = 0; k < data.VectorIndexCount; k++)
+                                else if (data.VectorIndexCount == 4)
                                 {
-                                    ushort vecIndex = _collision.VectorIndices[data.VectorStartIndex + (3 - k)];
-                                    Vector3 vector = _colPoints[vecIndex];
-                                    verts[k] = vector;
+                                    Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(4);
+                                    for (int l = 0; l < data.VectorIndexCount; l++)
+                                    {
+                                        ushort vecIndex = collision.VectorIndices[data.VectorStartIndex + (3 - l)];
+                                        Vector3 vector = colPoints[vecIndex];
+                                        verts[l] = vector;
+                                    }
+                                    scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Plane, verts);
                                 }
-                                scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Plane, verts);
                             }
                         }
                     }
