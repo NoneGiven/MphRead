@@ -1622,6 +1622,7 @@ namespace MphRead
             item.CullingMode = material.Culling;
             item.Wireframe = material.Wireframe != 0;
             item.Lighting = material.Lighting != 0;
+            item.NoLines = false;
             item.Diffuse = material.CurrentDiffuse;
             item.Ambient = material.CurrentAmbient;
             item.Specular = material.CurrentSpecular;
@@ -1672,7 +1673,7 @@ namespace MphRead
 
         // for volumes/planes
         public void AddRenderItem(CullingMode cullingMode, int polygonId, Vector4 overrideColor, RenderItemType type,
-            Vector3[] vertices, int vertexCount = 0)
+            Vector3[] vertices, int vertexCount = 0, bool noLines = false)
         {
             RenderItem item = GetRenderItem();
             item.Type = type;
@@ -1681,9 +1682,9 @@ namespace MphRead
             item.PolygonMode = PolygonMode.Modulate;
             item.RenderMode = RenderMode.Translucent;
             item.CullingMode = cullingMode;
-            // sktodo: make a bit field, include "no lines" option for kill plane/portals
             item.Wireframe = false;
             item.Lighting = false;
+            item.NoLines = noLines;
             item.Diffuse = Vector3.Zero;
             item.Ambient = Vector3.Zero;
             item.Specular = Vector3.Zero;
@@ -1721,6 +1722,7 @@ namespace MphRead
             item.CullingMode = CullingMode.Neither;
             item.Wireframe = false;
             item.Lighting = false;
+            item.NoLines = false;
             item.Diffuse = color;
             item.Ambient = Vector3.Zero;
             item.Specular = Vector3.Zero;
@@ -1757,6 +1759,7 @@ namespace MphRead
             item.CullingMode = CullingMode.Neither;
             item.Wireframe = false;
             item.Lighting = false;
+            item.NoLines = false;
             item.Diffuse = color;
             item.Ambient = Vector3.Zero;
             item.Specular = Vector3.Zero;
@@ -2177,7 +2180,7 @@ namespace MphRead
                 {
                     RenderNgon(item.Points, item.ItemCount);
                 }
-                if (_volumeEdges != 2)
+                if (_volumeEdges != 2 && !item.NoLines)
                 {
                     // todo: implement this for volumes as well
                     RenderNgonLines(item.Points, item.ItemCount);

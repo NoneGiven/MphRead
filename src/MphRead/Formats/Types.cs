@@ -46,6 +46,7 @@ namespace MphRead
         public CullingMode CullingMode { get; set; }
         public bool Wireframe { get; set; }
         public bool Lighting { get; set; }
+        public bool NoLines { get; set; }
         public Vector3 Diffuse { get; set; }
         public Vector3 Ambient { get; set; }
         public Vector3 Specular { get; set; }

@@ -242,7 +242,7 @@ namespace MphRead.Entities
                     Vector4 color = portal.IsForceField
                         ? new Vector4(16 / 31f, 16 / 31f, 1f, alpha)
                         : new Vector4(16 / 31f, 1f, 16 / 31f, alpha);
-                    scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Ngon, verts, count);
+                    scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Ngon, verts, count, noLines: true);
                 }
             }
             else if (scene.ShowVolumes == VolumeDisplay.KillPlane)
@@ -253,7 +253,7 @@ namespace MphRead.Entities
                 verts[2] = new Vector3(-10000f, scene.KillHeight, -10000f);
                 verts[3] = new Vector3(-10000f, scene.KillHeight, 10000f);
                 var color = new Vector4(1f, 0f, 1f, 0.5f);
-                scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Quad, verts);
+                scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Quad, verts, noLines: true);
             }
         }
 
