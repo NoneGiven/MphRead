@@ -53,7 +53,7 @@ namespace MphRead.Entities
                 if (modelMeta.CollisionPath != null)
                 {
                     // sktodo: cache the raw structs as with models -- don't cache rooms
-                    UpdateCollision(Collision.ReadCollision(modelMeta.CollisionPath, firstHunt: false));
+                    SetCollision(Collision.ReadCollision(modelMeta.CollisionPath, firstHunt: false));
                 }
                 // temporary
                 if (meta.Name == "SamusShip" || meta.Name == "SyluxTurret")
@@ -192,6 +192,7 @@ namespace MphRead.Entities
                     }
                 }
             }
+            UpdateCollision();
             return base.Process(scene);
         }
     }

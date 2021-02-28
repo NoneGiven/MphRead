@@ -75,7 +75,7 @@ namespace MphRead.Entities
             Debug.Assert(model.Nodes.Any(n => n.IsRoomPartNode));
             _portals = portals;
             _forceFields = forceFields;
-            UpdateCollision(collision);
+            SetCollision(collision);
         }
 
         private void FilterNodes(int layerMask)

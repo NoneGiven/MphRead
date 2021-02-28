@@ -18,6 +18,7 @@ namespace MphRead.Entities
         public bool Hidden { get; set; }
         public float Alpha { get; set; } = 1.0f;
 
+        private bool _collisionTransformed = true;
         protected Matrix4 _transform = Matrix4.Identity;
         protected Vector3 _scale = new Vector3(1, 1, 1);
         protected Vector3 _rotation = Vector3.Zero;
@@ -37,6 +38,7 @@ namespace MphRead.Entities
                     value.ExtractRotation().ToEulerAngles(out _rotation);
                     _position = value.Row3.Xyz;
                     _transform = value;
+                    _collisionTransformed = false;
                 }
             }
         }
@@ -55,6 +57,7 @@ namespace MphRead.Entities
                         * Matrix4.CreateRotationY(Rotation.Y) * Matrix4.CreateRotationX(Rotation.X);
                     _transform.Row3.Xyz = Position;
                     _scale = value;
+                    _collisionTransformed = false;
                 }
             }
         }
@@ -73,6 +76,7 @@ namespace MphRead.Entities
                         * Matrix4.CreateRotationY(value.Y) * Matrix4.CreateRotationX(value.X);
                     _transform.Row3.Xyz = Position;
                     _rotation = value;
+                    _collisionTransformed = false;
                 }
             }
         }
@@ -89,6 +93,7 @@ namespace MphRead.Entities
                 {
                     _transform.Row3.Xyz = value;
                     _position = value;
+                    _collisionTransformed = false;
                 }
             }
         }
@@ -115,26 +120,31 @@ namespace MphRead.Entities
             _anyLighting = _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));
         }
 
-        // sktodo: call when transform changes
-        protected void UpdateCollision(CollisionInfo collision, int slot = 0)
+        protected void SetCollision(CollisionInfo collision, int slot = 0)
         {
-            Debug.Assert(slot == 0 || slot == 1);
-            if (slot == 0 && _collision.Count == 0 || slot == 1 && _collision.Count == 1)
+            Debug.Assert(slot == 0 && _collision.Count == 0 || slot == 1 && _collision.Count == 1);
+            _collision.Add(collision);
+            _colPoints.Add(new List<Vector3>(collision.Vectors.Count));
+            for (int i = 0; i < collision.Vectors.Count; i++)
             {
-                _collision.Add(collision);
-                _colPoints.Add(new List<Vector3>(collision.Vectors.Count));
-                for (int i = 0; i < collision.Vectors.Count; i++)
-                {
-                    _colPoints[slot].Add(Matrix.Vec3MultMtx4(collision.Vectors[i].ToFloatVector(), Transform));
-                }
+                _colPoints[slot].Add(Matrix.Vec3MultMtx4(collision.Vectors[i].ToFloatVector(), Transform));
             }
-            else
+        }
+
+        protected void UpdateCollision()
+        {
+            if (!_collisionTransformed)
             {
-                Debug.Assert(_collision[slot] == collision && _colPoints[slot].Count == collision.Vectors.Count);
-                for (int i = 0; i < collision.Vectors.Count; i++)
+                for (int i = 0; i < _collision.Count; i++)
                 {
-                    _colPoints[slot][i] = Matrix.Vec3MultMtx4(collision.Vectors[i].ToFloatVector(), Transform);
+                    CollisionInfo collision = _collision[i];
+                    List<Vector3> colPoints = _colPoints[i];
+                    for (int j = 0; j < collision.Vectors.Count; j++)
+                    {
+                        colPoints[j] = Matrix.Vec3MultMtx4(collision.Vectors[j].ToFloatVector(), Transform);
+                    }
                 }
+                _collisionTransformed = true;
             }
         }
 
@@ -266,6 +276,7 @@ namespace MphRead.Entities
 
         private readonly HashSet<ushort> _dataIds = new HashSet<ushort>();
 
+        // sktodo: toggles to differentiate beam collision, player collision, etc.
         protected void GetCollisionDrawInfo(Scene scene)
         {
             if (_collision != null)

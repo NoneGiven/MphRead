@@ -64,11 +64,11 @@ namespace MphRead.Entities
                 ModelMetadata modelMeta = Metadata.ModelMetadata[meta.Name];
                 if (modelMeta.CollisionPath != null)
                 {
-                    UpdateCollision(Collision.ReadCollision(modelMeta.CollisionPath, firstHunt: false));
+                    SetCollision(Collision.ReadCollision(modelMeta.CollisionPath, firstHunt: false));
                     if (modelMeta.ExtraCollisionPath != null)
                     {
                         // ctodo: disable capsule shield collision when appropriate
-                        UpdateCollision(Collision.ReadCollision(modelMeta.ExtraCollisionPath, firstHunt: false), slot: 1);
+                        SetCollision(Collision.ReadCollision(modelMeta.ExtraCollisionPath, firstHunt: false), slot: 1);
                     }
                 }
                 // temporary
@@ -203,6 +203,7 @@ namespace MphRead.Entities
                     element.Transform = Transform.ClearScale();
                 }
             }
+            UpdateCollision();
             return base.Process(scene);
         }
 
