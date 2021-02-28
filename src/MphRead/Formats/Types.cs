@@ -30,7 +30,7 @@ namespace MphRead
         Sphere = 3,
         Triangle = 4,
         Quad = 5,
-        Pentagon = 6,
+        Ngon = 6,
         Particle = 7,
         TrailSingle = 8,
         TrailMulti = 9,
@@ -66,7 +66,7 @@ namespace MphRead
         public Vector4? PaletteOverride { get; set; }
         public Vector3[] Points { get; set; }
         // number of segments for morph ball trail, or total for other multi-segment trails
-        public int TrailCount { get; set; }
+        public int ItemCount { get; set; }
         public float ScaleS { get; set; }
         public float ScaleT { get; set; }
 

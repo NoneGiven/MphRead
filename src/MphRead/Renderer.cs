@@ -1671,7 +1671,8 @@ namespace MphRead
         }
 
         // for volumes/planes
-        public void AddRenderItem(CullingMode cullingMode, int polygonId, Vector4 overrideColor, RenderItemType type, Vector3[] vertices)
+        public void AddRenderItem(CullingMode cullingMode, int polygonId, Vector4 overrideColor, RenderItemType type,
+            Vector3[] vertices, int vertexCount = 0)
         {
             RenderItem item = GetRenderItem();
             item.Type = type;
@@ -1701,6 +1702,8 @@ namespace MphRead
             item.Points = vertices;
             item.ScaleS = 1;
             item.ScaleT = 1;
+            Debug.Assert(type != RenderItemType.Ngon || vertexCount >= 5);
+            item.ItemCount = vertexCount;
             AddRenderItem(item);
         }
 
@@ -1736,7 +1739,7 @@ namespace MphRead
             item.Points = uvsAndVerts;
             item.ScaleS = scaleS;
             item.ScaleT = scaleT;
-            item.TrailCount = trailCount;
+            item.ItemCount = trailCount;
             AddRenderItem(item);
         }
 
@@ -1777,7 +1780,7 @@ namespace MphRead
             item.Points = uvsAndVerts;
             item.ScaleS = scaleS;
             item.ScaleT = scaleT;
-            item.TrailCount = segmentCount;
+            item.ItemCount = segmentCount;
             AddRenderItem(item);
         }
 
@@ -2180,12 +2183,12 @@ namespace MphRead
                     RenderQuadLines(item.Points);
                 }
             }
-            else if (item.Type == RenderItemType.Pentagon)
+            else if (item.Type == RenderItemType.Ngon)
             {
-                RenderPentagon(item.Points);
+                RenderNgon(item.Points, item.ItemCount);
                 if (_volumeEdges)
                 {
-                    RenderPentagonLines(item.Points);
+                    RenderNgonLines(item.Points, item.ItemCount);
                 }
             }
             else if (item.Type == RenderItemType.Particle)
@@ -2389,26 +2392,24 @@ namespace MphRead
             GL.End();
         }
 
-        private void RenderPentagon(Vector3[] verts)
+        private void RenderNgon(Vector3[] verts, int count)
         {
             GL.Begin(PrimitiveType.TriangleFan);
-            GL.Vertex3(verts[0]);
-            GL.Vertex3(verts[1]);
-            GL.Vertex3(verts[2]);
-            GL.Vertex3(verts[3]);
-            GL.Vertex3(verts[4]);
+            for (int i = 0; i < count; i++)
+            {
+                GL.Vertex3(verts[i]);
+            }
             GL.End();
         }
 
-        private void RenderPentagonLines(Vector3[] verts)
+        private void RenderNgonLines(Vector3[] verts, int count)
         {
             GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(1f, 0f, 0f, 1f));
             GL.Begin(PrimitiveType.LineLoop);
-            GL.Vertex3(verts[0]);
-            GL.Vertex3(verts[1]);
-            GL.Vertex3(verts[2]);
-            GL.Vertex3(verts[3]);
-            GL.Vertex3(verts[4]);
+            for (int i = 0; i < count; i++)
+            {
+                GL.Vertex3(verts[i]);
+            }
             GL.End();
         }
 
@@ -2458,9 +2459,9 @@ namespace MphRead
 
         private void RenderTrailMulti(RenderItem item)
         {
-            Debug.Assert(item.TrailCount >= 4 && item.TrailCount % 2 == 0);
+            Debug.Assert(item.ItemCount >= 4 && item.ItemCount % 2 == 0);
             GL.Begin(PrimitiveType.QuadStrip);
-            for (int i = 0; i < item.TrailCount; i += 2)
+            for (int i = 0; i < item.ItemCount; i += 2)
             {
                 Vector3 texcoord = item.Points[i];
                 Vector3 vertex = item.Points[i + 1];
@@ -2472,7 +2473,7 @@ namespace MphRead
 
         private void RenderTrailStack(RenderItem item)
         {
-            for (int i = 0; i < item.TrailCount; i++)
+            for (int i = 0; i < item.ItemCount; i++)
             {
                 Vector3 texcoord0 = item.Points[i * 8];
                 Vector3 vertex0 = item.Points[i * 8 + 1];
