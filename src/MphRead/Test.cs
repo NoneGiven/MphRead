@@ -299,7 +299,11 @@ namespace MphRead
             }
             foreach ((bool room, CollisionInfo collision) in allCollision)
             {
+                foreach (CollisionData data in collision.Data)
+                {
+                }
             }
+            Nop();
         }
 
         public static bool TestBytes(string one, string two)
