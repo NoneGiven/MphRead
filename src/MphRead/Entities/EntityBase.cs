@@ -18,6 +18,7 @@ namespace MphRead.Entities
         public bool Hidden { get; set; }
         public float Alpha { get; set; } = 1.0f;
 
+        private Node? _collisionNode = null;
         private bool _collisionTransformed = true;
         protected Matrix4 _transform = Matrix4.Identity;
         protected Vector3 _scale = new Vector3(1, 1, 1);
@@ -119,7 +120,7 @@ namespace MphRead.Entities
             _anyLighting = _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));
         }
 
-        protected void SetCollision(CollisionInfo collision, int slot = 0)
+        protected void SetCollision(CollisionInfo collision, int slot = 0, ModelInstance? attach = null)
         {
             Debug.Assert(slot == 0 && _collision.Count == 0 || slot == 1 && _collision.Count == 1);
             _collision.Add(collision);
@@ -128,20 +129,32 @@ namespace MphRead.Entities
             {
                 _colPoints[slot].Add(Matrix.Vec3MultMtx4(collision.Points[i], Transform));
             }
+            if (attach != null)
+            {
+                for (int i = 0; i < attach.Model.Nodes.Count; i++)
+                {
+                    Node node = attach.Model.Nodes[i];
+                    if (node.Name == "attach")
+                    {
+                        _collisionNode = node;
+                        break;
+                    }
+                }
+            }
         }
 
-        // sktodo: entity attach node stuff
-        protected void UpdateCollision()
+        private void UpdateCollision()
         {
-            if (!_collisionTransformed)
+            if (!_collisionTransformed || _collisionNode != null)
             {
+                Matrix4 transform = _collisionNode == null ? Transform : _collisionNode.Animation;
                 for (int i = 0; i < _collision.Count; i++)
                 {
                     CollisionInfo collision = _collision[i];
                     List<Vector3> colPoints = _colPoints[i];
                     for (int j = 0; j < collision.Points.Count; j++)
                     {
-                        colPoints[j] = Matrix.Vec3MultMtx4(collision.Points[j], Transform);
+                        colPoints[j] = Matrix.Vec3MultMtx4(collision.Points[j], transform);
                     }
                 }
                 _collisionTransformed = true;
@@ -216,6 +229,7 @@ namespace MphRead.Entities
             model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
             // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
             scene.UpdateMaterials(model, GetModelRecolor(inst, index));
+            UpdateCollision();
         }
 
         public virtual void GetDrawInfo(Scene scene)

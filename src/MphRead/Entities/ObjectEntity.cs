@@ -64,7 +64,7 @@ namespace MphRead.Entities
                 ModelMetadata modelMeta = Metadata.ModelMetadata[meta.Name];
                 if (modelMeta.CollisionPath != null)
                 {
-                    SetCollision(Collision.ReadCollision(modelMeta.CollisionPath));
+                    SetCollision(Collision.ReadCollision(modelMeta.CollisionPath), attach: inst);
                     if (modelMeta.ExtraCollisionPath != null)
                     {
                         // ctodo: disable capsule shield collision when appropriate
@@ -203,7 +203,6 @@ namespace MphRead.Entities
                     element.Transform = Transform.ClearScale();
                 }
             }
-            UpdateCollision();
             return base.Process(scene);
         }
 

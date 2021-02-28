@@ -52,7 +52,7 @@ namespace MphRead.Entities
                 ModelMetadata modelMeta = Metadata.ModelMetadata[meta.Name];
                 if (modelMeta.CollisionPath != null)
                 {
-                    SetCollision(Collision.ReadCollision(modelMeta.CollisionPath));
+                    SetCollision(Collision.ReadCollision(modelMeta.CollisionPath), attach: inst);
                 }
                 // temporary
                 if (meta.Name == "SamusShip" || meta.Name == "SyluxTurret")
@@ -191,7 +191,6 @@ namespace MphRead.Entities
                     }
                 }
             }
-            UpdateCollision();
             return base.Process(scene);
         }
     }
@@ -248,12 +247,6 @@ namespace MphRead.Entities
             Debug.Assert(modelMeta.CollisionPath != null);
             SetCollision(Collision.ReadCollision(modelMeta.CollisionPath, firstHunt: true));
             _models.Add(inst);
-        }
-
-        public override bool Process(Scene scene)
-        {
-            UpdateCollision();
-            return base.Process(scene);
         }
     }
 }
