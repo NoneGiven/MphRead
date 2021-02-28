@@ -256,13 +256,51 @@ namespace MphRead
 
         public static void TestCollision()
         {
-            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            string path1 = @"models\Crate01_Collision.bin";
+            string path2 = @"models\unit2_c1_mover_Collision.bin";
+            CollisionInfo collision = Collision.ReadCollision(path1, firstHunt: false);
+            foreach (CollisionEntry entry in collision.Entries)
             {
-                CollisionInfo collision = Collision.ReadCollision(meta.Value.CollisionPath, meta.Value.FirstHunt || meta.Value.Hybrid);
-                Model room = Read.GetRoomModelInstance(meta.Key).Model;
-                Nop();
+                for (int i = 0; i < entry.DataCount; i++)
+                {
+                    ushort dataIndex = collision.DataIndices[entry.DataStartIndex + i];
+                    if (collision.EnabledDataIndices[entry.DataStartIndex].Contains(dataIndex))
+                    {
+                        CollisionData data = collision.Data[dataIndex];
+                        CollisionPlane plane = collision.Planes[data.PlaneIndex];
+                        for (int j = 0; j < data.VectorIndexCount; j++)
+                        {
+                            ushort vecIndex = collision.VectorIndices[data.VectorStartIndex + j];
+                            Vector3 vector = collision.Vectors[vecIndex].ToFloatVector();
+                            Nop();
+                        }
+                    }
+                }
             }
             Nop();
+        }
+
+        // not including FH collision at the moment
+        public static void TestAllCollision()
+        {
+            var allCollision = new List<CollisionInfo>();
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                if (!meta.Value.FirstHunt)
+                {
+                    allCollision.Add(Collision.ReadCollision(meta.Value.CollisionPath, firstHunt: false));
+                }
+            }
+            foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.ModelMetadata)
+            {
+                if (meta.Value.CollisionPath != null)
+                {
+                    allCollision.Add(Collision.ReadCollision(meta.Value.CollisionPath, firstHunt: false));
+                }
+            }
+            foreach (CollisionInfo collision in allCollision)
+            {
+            }
         }
 
         public static bool TestBytes(string one, string two)
