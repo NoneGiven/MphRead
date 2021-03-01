@@ -303,18 +303,18 @@ namespace MphRead.Formats.Collision
 
         private static readonly IReadOnlyList<Vector4> _colors = new List<Vector4>()
         {
-            new Vector4(0.69f, 0.69f, 0.69f, 0.5f), //  0 (metal 1) - gray
-            new Vector4(0f, 1f, 0f, 0.5f), //  1 (metal 2) - green
-            new Vector4(0f, 0f, 0.858f, 0.5f), //  2 (metal 3) - blue
-            new Vector4(1f, 0.612f, 0.153f, 0.5f), //  3 (metal 4) - orange
-            new Vector4(0.141f, 1f, 1f, 0.5f), //  4 (ice) - light blue
-            new Vector4(1f, 1f, 1f, 0.5f), //  5 (snow) - white
-            new Vector4(0.964f, 1f, 0.058f, 0.5f), //  6 (sand) - yellow
-            new Vector4(0.505f, 0.364f, 0.211f, 0.5f), //  7 (rock) - brown
-            new Vector4(1f, 0f, 0f, 0.5f), //  8 (lava) - red
-            new Vector4(0.615f, 0f, 0.909f, 0.5f), //  9 (metal 5) - purple
-            new Vector4(0.988f, 0.463f, 0.824f, 0.5f), // 10 (metal 6) - pink
-            new Vector4(0.85f, 0.85f, 0.85f, 0.5f) // 11 (metal 7) - dark gray
+            /*  0 */ new Vector4(0.69f, 0.69f, 0.69f, 0.5f), // metal (gray)
+            /*  1 */ new Vector4(1f, 0.612f, 0.153f, 0.5f), // orange holo (orange)
+            /*  2 */ new Vector4(0f, 1f, 0f, 0.5f), // green holo (green)
+            /*  3 */ new Vector4(0f, 0f, 0.858f, 0.5f), // blue holo (blue)
+            /*  4 */ new Vector4(0.141f, 1f, 1f, 0.5f), // ice (light blue)
+            /*  5 */ new Vector4(1f, 1f, 1f, 0.5f), // snow (white)
+            /*  6 */ new Vector4(0.964f, 1f, 0.058f, 0.5f), // sand (yellow)
+            /*  7 */ new Vector4(0.505f, 0.364f, 0.211f, 0.5f), // rock (brown)
+            /*  8 */ new Vector4(1f, 0f, 0f, 0.5f), // lava (red)
+            /*  9 */ new Vector4(0.615f, 0f, 0.909f, 0.5f), // metal 5 (purple)
+            /* 10 */ new Vector4(0.988f, 0.463f, 0.824f, 0.5f), // metal 6 (pink)
+            /* 11 */ new Vector4(0.85f, 0.85f, 0.85f, 0.5f) // metal 7 (dark gray)
         };
 
         public override void GetDrawInfo(List<Vector3> points, Scene scene)
