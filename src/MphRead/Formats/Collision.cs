@@ -36,26 +36,26 @@ namespace MphRead.Formats.Collision
             Dictionary<string, CollisionInfo> cache = firstHunt ? _fhCache : _cache;
             if (roomLayerMask == -1 && cache.TryGetValue(path, out CollisionInfo? info))
             {
-                return new CollisionInstance(info);
+                return new CollisionInstance(name, info);
             }
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path)));
             CollisionHeader header = Read.ReadStruct<CollisionHeader>(bytes);
             if (header.Type.MarshalString() == "wc01")
             {
-                info = ReadMphCollision(header, name, bytes, roomLayerMask);
+                info = ReadMphCollision(header, bytes, roomLayerMask);
             }
             else
             {
-                info = ReadFhCollision(name, bytes);
+                info = ReadFhCollision(bytes);
             }
             if (roomLayerMask == -1)
             {
                 cache.Add(path, info);
             }
-            return new CollisionInstance(info);
+            return new CollisionInstance(name, info);
         }
 
-        private static MphCollisionInfo ReadMphCollision(CollisionHeader header, string name, ReadOnlySpan<byte> bytes, int roomLayerMask)
+        private static MphCollisionInfo ReadMphCollision(CollisionHeader header, ReadOnlySpan<byte> bytes, int roomLayerMask)
         {
             IReadOnlyList<Vector3Fx> points = Read.DoOffsets<Vector3Fx>(bytes, header.PointOffset, header.PointCount);
             IReadOnlyList<CollisionPlane> planes = Read.DoOffsets<CollisionPlane>(bytes, header.PlaneOffset, header.PlaneCount);
@@ -86,10 +86,10 @@ namespace MphRead.Formats.Collision
                 Debug.Assert(!enabledIndices.ContainsKey(entry.DataStartIndex));
                 enabledIndices.Add(entry.DataStartIndex, enabled);
             }
-            return new MphCollisionInfo(name, header, points, planes, shorts, data, indices, entries, portals, enabledIndices);
+            return new MphCollisionInfo(header, points, planes, shorts, data, indices, entries, portals, enabledIndices);
         }
 
-        private static FhCollisionInfo ReadFhCollision(string name, ReadOnlySpan<byte> bytes)
+        private static FhCollisionInfo ReadFhCollision(ReadOnlySpan<byte> bytes)
         {
             FhCollisionHeader header = Read.ReadStruct<FhCollisionHeader>(bytes);
             IReadOnlyList<FhCollisionData> data = Read.DoOffsets<FhCollisionData>(bytes, header.DataOffset, header.DataCount);
@@ -102,7 +102,7 @@ namespace MphRead.Formats.Collision
             {
                 portals.Add(new CollisionPortal(portal, vectors, points));
             }
-            return new FhCollisionInfo(name, header, points, planes, data, vectors, dataIndices, portals);
+            return new FhCollisionInfo(header, points, planes, data, vectors, dataIndices, portals);
         }
     }
 
@@ -246,11 +246,13 @@ namespace MphRead.Formats.Collision
 
     public class CollisionInstance
     {
+        public string Name { get; }
         public bool Active { get; set; } = true;
         public CollisionInfo Info { get; }
 
-        public CollisionInstance(CollisionInfo info)
+        public CollisionInstance(string name, CollisionInfo info)
         {
+            Name = name;
             Info = info;
         }
     }
@@ -258,15 +260,13 @@ namespace MphRead.Formats.Collision
     public abstract class CollisionInfo
     {
         public bool FirstHunt { get; }
-        public string Name { get; }
         public IReadOnlyList<Vector3> Points { get; }
         public IReadOnlyList<CollisionPlane> Planes { get; }
         public IReadOnlyList<CollisionPortal> Portals { get; }
 
-        public CollisionInfo(string name, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
+        public CollisionInfo(IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
             IReadOnlyList<CollisionPortal> portals, bool firstHunt)
         {
-            Name = name;
             Points = points.Select(v => v.ToFloatVector()).ToList();
             Planes = planes;
             Portals = portals;
@@ -288,10 +288,10 @@ namespace MphRead.Formats.Collision
 
         private readonly HashSet<ushort> _dataIds = new HashSet<ushort>();
 
-        public MphCollisionInfo(string name, CollisionHeader header, IReadOnlyList<Vector3Fx> points,
-            IReadOnlyList<CollisionPlane> planes, IReadOnlyList<ushort> ptIdxs, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> dataIdxs,
-            IReadOnlyList<CollisionEntry> entries, IReadOnlyList<CollisionPortal> portals, IReadOnlyDictionary<uint, HashSet<ushort>> enabledIndices)
-            : base(name, points, planes, portals, firstHunt: false)
+        public MphCollisionInfo(CollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
+            IReadOnlyList<ushort> ptIdxs, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> dataIdxs, IReadOnlyList<CollisionEntry> entries,
+            IReadOnlyList<CollisionPortal> portals, IReadOnlyDictionary<uint, HashSet<ushort>> enabledIndices)
+            : base(points, planes, portals, firstHunt: false)
         {
             Header = header;
             PointIndices = ptIdxs;
@@ -424,10 +424,9 @@ namespace MphRead.Formats.Collision
         public IReadOnlyList<FhCollisionVector> Vectors { get; }
         public IReadOnlyList<ushort> DataIndices { get; }
 
-        public FhCollisionInfo(string name, FhCollisionHeader header, IReadOnlyList<Vector3Fx> points,
-            IReadOnlyList<CollisionPlane> planes, IReadOnlyList<FhCollisionData> data, IReadOnlyList<FhCollisionVector> vectors,
-            IReadOnlyList<ushort> dataIndices, IReadOnlyList<CollisionPortal> portals)
-            : base(name, points, planes, portals, firstHunt: true)
+        public FhCollisionInfo(FhCollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
+            IReadOnlyList<FhCollisionData> data, IReadOnlyList<FhCollisionVector> vectors, IReadOnlyList<ushort> dataIndices,
+            IReadOnlyList<CollisionPortal> portals) : base(points, planes, portals, firstHunt: true)
         {
             Header = header;
             Data = data;
