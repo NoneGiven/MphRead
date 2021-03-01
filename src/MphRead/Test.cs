@@ -256,27 +256,28 @@ namespace MphRead
 
         public static void TestAllCollision()
         {
-            var allCollision = new List<(bool, MphCollisionInfo)>();
+            var allCollision = new List<(bool, CollisionInstance)>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 if (!meta.Value.FirstHunt && !meta.Value.Hybrid)
                 {
-                    allCollision.Add((true, (MphCollisionInfo)Collision.GetCollision(meta.Value).Info));
+                    allCollision.Add((true, Collision.GetCollision(meta.Value)));
                 }
             }
             foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.ModelMetadata)
             {
                 if (meta.Value.CollisionPath != null && !meta.Value.FirstHunt)
                 {
-                    allCollision.Add((false, (MphCollisionInfo)Collision.GetCollision(meta.Value).Info));
+                    allCollision.Add((false, Collision.GetCollision(meta.Value)));
                     if (meta.Value.ExtraCollisionPath != null)
                     {
-                        allCollision.Add((false, (MphCollisionInfo)Collision.GetCollision(meta.Value, extra: true).Info));
+                        allCollision.Add((false, Collision.GetCollision(meta.Value, extra: true)));
                     }
                 }
             }
-            foreach ((bool room, MphCollisionInfo collision) in allCollision)
+            foreach ((bool room, CollisionInstance instance) in allCollision)
             {
+                var collision = (MphCollisionInfo)instance.Info;
                 foreach (CollisionData data in collision.Data)
                 {
                 }
@@ -286,23 +287,24 @@ namespace MphRead
 
         public static void TestAllFhCollision()
         {
-            var allCollision = new List<(bool, FhCollisionInfo)>();
+            var allCollision = new List<(bool, CollisionInstance)>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 if (meta.Value.FirstHunt || meta.Value.Hybrid)
                 {
-                    allCollision.Add((true, (FhCollisionInfo)Collision.GetCollision(meta.Value).Info));
+                    allCollision.Add((true, Collision.GetCollision(meta.Value)));
                 }
             }
             foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.FirstHuntModels)
             {
                 if (meta.Value.CollisionPath != null)
                 {
-                    allCollision.Add((false, (FhCollisionInfo)Collision.GetCollision(meta.Value).Info));
+                    allCollision.Add((false, Collision.GetCollision(meta.Value)));
                 }
             }
-            foreach ((bool room, FhCollisionInfo collision) in allCollision)
+            foreach ((bool room, CollisionInstance instance) in allCollision)
             {
+                var collision = (FhCollisionInfo)instance.Info;
             }
             Nop();
         }
