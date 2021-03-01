@@ -15,48 +15,18 @@ This project is a model viewer, scene renderer, and general parser for file form
 
 ## Usage
 
-Ensure there is a `paths.txt` file in the same location as the `MphRead` binary. The contents should be as follows:
-
-```
-MPH file path
-FH file path
-Export path
-```
-
-The file paths must follow the structure of the games' file systems, with each root being equivalent to the `root` directory of the ROM; for example, `<MPH file path>\models\Trace_lod1_Model.bin` should be a valid path. Additionally, for the viewer to work, there must also be an `_archives` folder in the root which contains one folder for each archive, with the extracted files for that archive inside. This is not necessary for the exporter.
-
-If you don't have First Hunt files or don't need an export path, those lines can be left blank. Paths can be absolute or relative, so a blank line can also be used to point the directory where the `MphRead` binary is located.
-
 ```
 MphRead usage:
 
     -room <room_name -or- room_id>
     -model <model_name> [recolor_index]
 
-The layer mask and recolor index are optional.
 At most one room may be specified, while any number of models may be specified.
 To load First Hunt models, include -fh in the argument list.
 Available room options: -mode, -players, -boss, -node, -entity
-
-- or -
-
-    -extract <archive_path>
-
-If the target archive is LZ10-compressed, it will be decompressed.
-
-- or -
-
-    -export <target_name>
-
-The export target may be a model or room name.
 ```
 
-See these wiki pages for model and room names:
-* [Models (MPH)](https://github.com/NoneGiven/MphRead/wiki/Models) / [Models (FH)](https://github.com/NoneGiven/MphRead/wiki/Models-(First-Hunt))
-* [Rooms (MPH)](https://github.com/NoneGiven/MphRead/wiki/Rooms) / [Rooms (FH)](https://github.com/NoneGiven/MphRead/wiki/Rooms-(First-Hunt))
-
-See also:
-* [Full setup and export guide](https://github.com/NoneGiven/MphRead/wiki/Setup-&-Export-Guide)
+See the [full setup and export guide](https://github.com/NoneGiven/MphRead/wiki/Setup-&-Export-Guide) for details on setup and command line options.
 
 ## Building
 
