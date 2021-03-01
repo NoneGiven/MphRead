@@ -1691,7 +1691,7 @@ namespace MphRead
                 },
                 {
                     "cylinderbase",
-                    new ModelMetadata("cylinderbase", animation: false)
+                    new ModelMetadata("cylinderbase", animation: false, collision: true)
                 },
                 {
                     "CylinderBossEye",
