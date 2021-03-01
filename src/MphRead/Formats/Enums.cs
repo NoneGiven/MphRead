@@ -172,7 +172,7 @@ namespace MphRead
         Rock = 7,
         Lava = 8,
         Acid = 9,
-        GoreaWall = 10,
+        Gorea = 10,
         Unknown11 = 11, // unused
         None = 12, // viewer only
         All = 13 // viewer only
