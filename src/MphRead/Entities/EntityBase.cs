@@ -249,8 +249,7 @@ namespace MphRead.Entities
                     GetItems(inst, i, inst.Model.Nodes[0], polygonId);
                 }
             }
-            if ((Type == EntityType.Platform && scene.CollisionDisplay.HasFlag(CollisionDisplay.Platform))
-                || (Type == EntityType.Object && scene.CollisionDisplay.HasFlag(CollisionDisplay.Object)))
+            if (scene.ShowCollision && (scene.ColEntDisplay == EntityType.All || scene.ColEntDisplay == Type))
             {
                 GetCollisionDrawInfo(scene);
             }
@@ -300,7 +299,7 @@ namespace MphRead.Entities
                     continue;
                 }
                 List<Vector3> colPoints = _colPoints[i];
-                collision.Info.GetDrawInfo(colPoints, scene);
+                collision.Info.GetDrawInfo(colPoints, Type, scene);
             }
         }
 

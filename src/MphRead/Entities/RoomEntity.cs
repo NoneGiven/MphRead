@@ -179,7 +179,7 @@ namespace MphRead.Entities
                     }
                 }
             }
-            if (scene.CollisionDisplay.HasFlag(CollisionDisplay.Room))
+            if (scene.ShowCollision && (scene.ColEntDisplay == EntityType.All || scene.ColEntDisplay == Type))
             {
                 GetCollisionDrawInfo(scene);
             }

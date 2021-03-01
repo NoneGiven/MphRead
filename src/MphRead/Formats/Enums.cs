@@ -54,7 +54,8 @@ namespace MphRead
         // 118 = entity list header
         // viewer only
         Room = 200,
-        Model = 201
+        Model = 201,
+        All = 255
     }
 
     public enum VolumeType : uint
@@ -174,8 +175,7 @@ namespace MphRead
         Acid = 9,
         Gorea = 10,
         Unknown11 = 11, // unused
-        None = 12, // viewer only
-        All = 13 // viewer only
+        All = 12 // viewer only
     }
 
     public enum ModelType

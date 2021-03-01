@@ -38,13 +38,20 @@ namespace MphRead
         Portal
     }
 
-    [Flags]
-    public enum CollisionDisplay
+    public enum CollisionType
     {
-        None = 0x0,
-        Room = 0x1,
-        Platform = 0x2,
-        Object = 0x4
+        Any,
+        Player,
+        Beam,
+        Both
+    }
+
+    public enum CollisionColor
+    {
+        None,
+        Entity,
+        Terrain,
+        Type
     }
 
     public class Scene
@@ -81,9 +88,7 @@ namespace MphRead
         private bool _scanVisor = false;
         private int _showInvisible = 0;
         private VolumeDisplay _showVolumes = VolumeDisplay.None;
-        private bool _showCollisionMenu = false;
-        private CollisionDisplay _collisionDisplay = CollisionDisplay.None;
-        private Terrain _terrainDisplay = Terrain.None;
+        private bool _showCollision = false;
         private bool _showAllnodes = false;
         private bool _transformRoomNodes = false;
         private bool _outputCameraPos = false;
@@ -135,8 +140,6 @@ namespace MphRead
         public long FrameCount => _frameCount;
         public VolumeDisplay ShowVolumes => _showVolumes;
         public bool ShowForceFields => _showVolumes != VolumeDisplay.Portal;
-        public CollisionDisplay CollisionDisplay => _collisionDisplay;
-        public Terrain TerrainDisplay => _terrainDisplay;
         public float KillHeight => _killHeight;
         public bool ScanVisor => _scanVisor;
         public Vector3 Light1Vector => _light1Vector;
@@ -2588,6 +2591,14 @@ namespace MphRead
             }
         }
 
+        public bool ShowCollision => _showCollision;
+        public EntityType ColEntDisplay { get; private set; } = EntityType.Room;
+        public Terrain ColTerDisplay { get; private set; } = Terrain.All;
+        public CollisionType ColTypeDisplay { get; private set; } = CollisionType.Any;
+        public CollisionColor ColDisplayColor { get; private set; } = CollisionColor.None;
+        public float ColDisplayAlpha { get; private set; } = 0.5f;
+        private int _colMenuSelect = 0; // 0-4
+
         public void OnKeyDown(KeyboardKeyEventArgs e)
         {
             if (e.Key == Keys.E && e.Alt)
@@ -2608,53 +2619,167 @@ namespace MphRead
             {
                 return;
             }
-            if (e.Key == Keys.D6 && _showCollisionMenu)
+            if (e.Key == Keys.J && _showCollision)
             {
-                _collisionDisplay ^= CollisionDisplay.Room;
-            }
-            else if (e.Key == Keys.D7 && _showCollisionMenu)
-            {
-                _collisionDisplay ^= CollisionDisplay.Platform;
-            }
-            else if (e.Key == Keys.D8 && _showCollisionMenu)
-            {
-                _collisionDisplay ^= CollisionDisplay.Object;
-            }
-            else if (e.Key == Keys.J && _showCollisionMenu)
-            {
-                if (e.Shift)
+                if (_colMenuSelect == 0)
                 {
                     if (e.Control)
                     {
-                        _terrainDisplay = Terrain.None;
+                        ColEntDisplay = EntityType.All;
+                    }
+                    else if (e.Shift)
+                    {
+                        if (ColEntDisplay == EntityType.Room)
+                        {
+                            ColEntDisplay = EntityType.All;
+                        }
+                        else if (ColEntDisplay == EntityType.Object)
+                        {
+                            ColEntDisplay = EntityType.Platform;
+                        }
+                        else if (ColEntDisplay == EntityType.All)
+                        {
+                            ColEntDisplay = EntityType.Object;
+                        }
+                        else
+                        {
+                            ColEntDisplay = EntityType.Room;
+                        }
                     }
                     else
                     {
-                        _terrainDisplay--;
-                        if (_terrainDisplay < 0)
+                        if (ColEntDisplay == EntityType.Room)
                         {
-                            _terrainDisplay = Terrain.All;
+                            ColEntDisplay = EntityType.Platform;
+                        }
+                        else if (ColEntDisplay == EntityType.Platform)
+                        {
+                            ColEntDisplay = EntityType.Object;
+                        }
+                        else if (ColEntDisplay == EntityType.Object)
+                        {
+                            ColEntDisplay = EntityType.All;
+                        }
+                        else
+                        {
+                            ColEntDisplay = EntityType.Room;
                         }
                     }
                 }
-                else
+                else if (_colMenuSelect == 1)
                 {
-                    _terrainDisplay++;
-                    if (_terrainDisplay > Terrain.All)
+                    if (e.Control)
                     {
-                        _terrainDisplay = Terrain.Metal;
+                        ColTerDisplay = Terrain.All;
+                    }
+                    else if (e.Shift)
+                    {
+                        ColTerDisplay--;
+                        if (ColTerDisplay < 0)
+                        {
+                            ColTerDisplay = Terrain.All;
+                        }
+                    }
+                    else
+                    {
+                        ColTerDisplay++;
+                        if (ColTerDisplay > Terrain.All)
+                        {
+                            ColTerDisplay = Terrain.Metal;
+                        }
                     }
                 }
-            }
-            else if (e.Key == Keys.D9 && _showCollisionMenu)
-            {
-                if (_collisionDisplay != CollisionDisplay.None)
+                else if (_colMenuSelect == 2)
                 {
-                    _collisionDisplay = CollisionDisplay.None;
+                    if (e.Control)
+                    {
+                        ColTypeDisplay = CollisionType.Any;
+                    }
+                    else if (e.Shift)
+                    {
+                        ColTypeDisplay--;
+                        if (ColTypeDisplay < 0)
+                        {
+                            ColTypeDisplay = CollisionType.Both;
+                        }
+                    }
+                    else
+                    {
+                        ColTypeDisplay++;
+                        if (ColTypeDisplay > CollisionType.Both)
+                        {
+                            ColTypeDisplay = CollisionType.Any;
+                        }
+                    }
                 }
-                else
+                else if (_colMenuSelect == 3)
                 {
-                    _collisionDisplay = CollisionDisplay.Room | CollisionDisplay.Platform | CollisionDisplay.Object;
+                    if (e.Control)
+                    {
+                        ColDisplayColor = CollisionColor.None;
+                    }
+                    else if (e.Shift)
+                    {
+                        ColDisplayColor--;
+                        if (ColDisplayColor < 0)
+                        {
+                            ColDisplayColor = CollisionColor.Type;
+                        }
+                    }
+                    else
+                    {
+                        ColDisplayColor++;
+                        if (ColDisplayColor > CollisionColor.Type)
+                        {
+                            ColDisplayColor = CollisionColor.None;
+                        }
+                    }
+                }
+                else if (_colMenuSelect == 4)
+                {
+                    if (ColDisplayAlpha == 1)
+                    {
+                        ColDisplayAlpha = 0.5f;
+                    }
+                    else
+                    {
+                        ColDisplayAlpha = 1;
+                    } 
+                }
+            }
+            else if (e.Key == Keys.K)
+            {
+                if (e.Alt)
+                {
+                    _showCollision = !_showCollision;
+                }
+                else if (_showCollision)
+                {
+                    if (e.Control)
+                    {
+                        _colMenuSelect = 0;
+                        ColEntDisplay = EntityType.Room;
+                        ColTerDisplay = Terrain.All;
+                        ColTypeDisplay = CollisionType.Any;
+                        ColDisplayColor = CollisionColor.None;
+                        ColDisplayAlpha = 0.5f;
+                    }
+                    else if (e.Shift)
+                    {
+                        _colMenuSelect--;
+                        if (_colMenuSelect < 0)
+                        {
+                            _colMenuSelect = 4;
+                        }
+                    }
+                    else
+                    {
+                        _colMenuSelect++;
+                        if (_colMenuSelect > 4)
+                        {
+                            _colMenuSelect = 0;
+                        }
+                    }
                 }
             }
             else if (e.Key == Keys.D5)
@@ -2719,14 +2844,7 @@ namespace MphRead
             }
             else if (e.Key == Keys.L)
             {
-                if (e.Alt)
-                {
-                    _showCollisionMenu = !_showCollisionMenu;
-                }
-                else
-                {
-                    _lighting = !_lighting;
-                }
+                _lighting = !_lighting;
             }
             else if (e.Key == Keys.Z)
             {
@@ -3052,7 +3170,7 @@ namespace MphRead
             string recording = _recording ? " - Recording" : "";
             string frameAdvance = _frameAdvanceOn ? " - Frame Advance" : "";
             _sb.AppendLine($"MphRead Version {Program.Version}{recording}{frameAdvance}");
-            if (_showCollisionMenu)
+            if (_showCollision)
             {
                 OutputGetCollisionMenu();
             }
@@ -3072,11 +3190,7 @@ namespace MphRead
                     }
                 }
             }
-            else if (_showCollisionMenu)
-            {
-                OutputGetCollisionMenu();
-            }
-            else
+            else if (!_showCollision)
             {
                 OutputGetMenu();
             }
@@ -3086,11 +3200,14 @@ namespace MphRead
         private void OutputGetCollisionMenu()
         {
             _sb.AppendLine();
-            _sb.AppendLine($"6: Toggle room collision ({(_collisionDisplay.HasFlag(CollisionDisplay.Room) ? "on" : "off")})");
-            _sb.AppendLine($"7: Toggle platform collision ({(_collisionDisplay.HasFlag(CollisionDisplay.Platform) ? "on" : "off")})");
-            _sb.AppendLine($"8: Toggle object collision ({(_collisionDisplay.HasFlag(CollisionDisplay.Object) ? "on" : "off")})");
-            _sb.AppendLine($"9: Toggle all");
-            _sb.AppendLine($"J: Terrain display ({_terrainDisplay})");
+            _sb.AppendLine($"[{(_colMenuSelect == 0 ? "x" : " ")}] Entities ({ColEntDisplay})");
+            _sb.AppendLine($"[{(_colMenuSelect == 1 ? "x" : " ")}] Terrain ({ColTerDisplay})");
+            _sb.AppendLine($"[{(_colMenuSelect == 2 ? "x" : " ")}] Interaction ({ColTypeDisplay})");
+            _sb.AppendLine($"[{(_colMenuSelect == 3 ? "x" : " ")}] Color mode ({ColDisplayColor})");
+            _sb.AppendLine($"[{(_colMenuSelect == 4 ? "x" : " ")}] Opacity ({ColDisplayAlpha})");
+            _sb.AppendLine();
+            _sb.AppendLine("K: Next option, Shift+K: Previous option, Alt+K: Hide collision");
+            _sb.AppendLine("J: Next value, Shift+J: Previous value, Ctrl+J: Reset value, Ctrl+K: Reset all");
         }
 
         private void OutputGetMenu()

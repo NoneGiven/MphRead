@@ -177,6 +177,10 @@ namespace MphRead.Formats.Collision
 
         // bits 5-8
         public Terrain Terrain => (Terrain)(((ushort)Flags & 0x1E0) >> 5);
+
+        public bool IgnorePlayers => Flags.HasFlag(CollisionFlags.IgnorePlayers);
+
+        public bool IgnoreBeams => Flags.HasFlag(CollisionFlags.IgnoreBeams);
     }
 
     // size: 4
@@ -323,7 +327,7 @@ namespace MphRead.Formats.Collision
             FirstHunt = firstHunt;
         }
 
-        public abstract void GetDrawInfo(List<Vector3> points, Scene scene);
+        public abstract void GetDrawInfo(List<Vector3> points, EntityType entityType, Scene scene);
     }
 
     public class MphCollisionInfo : CollisionInfo
@@ -348,42 +352,84 @@ namespace MphRead.Formats.Collision
 
         private static readonly IReadOnlyList<Vector4> _colors = new List<Vector4>()
         {
-            /*  0 */ new Vector4(0.69f, 0.69f, 0.69f, 0.5f), // metal (gray)
-            /*  1 */ new Vector4(1f, 0.612f, 0.153f, 0.5f), // orange holo (orange)
-            /*  2 */ new Vector4(0f, 1f, 0f, 0.5f), // green holo (green)
-            /*  3 */ new Vector4(0f, 0f, 0.858f, 0.5f), // blue holo (blue)
-            /*  4 */ new Vector4(0.141f, 1f, 1f, 0.5f), // ice (light blue)
-            /*  5 */ new Vector4(1f, 1f, 1f, 0.5f), // snow (white)
-            /*  6 */ new Vector4(0.964f, 1f, 0.058f, 0.5f), // sand (yellow)
-            /*  7 */ new Vector4(0.505f, 0.364f, 0.211f, 0.5f), // rock (brown)
-            /*  8 */ new Vector4(1f, 0f, 0f, 0.5f), // lava (red)
-            /*  9 */ new Vector4(0.988f, 0.463f, 0.824f, 0.5f), // acid (pink)
-            /* 10 */ new Vector4(0.615f, 0f, 0.909f, 0.5f), // Gorea (purple)
-            /* 11 */ new Vector4(0.85f, 0.85f, 0.85f, 0.5f) // unused (dark gray)
+            /*  0 */ new Vector4(0.69f, 0.69f, 0.69f, 1f), // metal (gray)
+            /*  1 */ new Vector4(1f, 0.612f, 0.153f, 1f), // orange holo (orange)
+            /*  2 */ new Vector4(0f, 1f, 0f, 1f), // green holo (green)
+            /*  3 */ new Vector4(0f, 0f, 0.858f, 1f), // blue holo (blue)
+            /*  4 */ new Vector4(0.141f, 1f, 1f, 1f), // ice (light blue)
+            /*  5 */ new Vector4(1f, 1f, 1f, 1f), // snow (white)
+            /*  6 */ new Vector4(0.964f, 1f, 0.058f, 1f), // sand (yellow)
+            /*  7 */ new Vector4(0.505f, 0.364f, 0.211f, 1f), // rock (brown)
+            /*  8 */ new Vector4(0.984f, 0.701f, 0.576f, 1f), // lava (salmon)
+            /*  9 */ new Vector4(0.988f, 0.463f, 0.824f, 1f), // acid (pink)
+            /* 10 */ new Vector4(0.615f, 0f, 0.909f, 1f), // Gorea (purple)
+            /* 11 */ new Vector4(0.85f, 0.85f, 0.85f, 1f) // unused (dark gray)
         };
 
-        public override void GetDrawInfo(List<Vector3> points, Scene scene)
+        public override void GetDrawInfo(List<Vector3> points, EntityType entityType, Scene scene)
         {
             // todo: visualize extra things like slipperiness, reflection, damage
-            // sktodo: toggles to differentiate e.g. beam vs. player collision
             int polygonId = scene.GetNextPolygonId();
             for (int i = 0; i < Data.Count; i++)
             {
                 // todo?: what is the purpose of CollisionEntry? why are there so many and why do they reference the same CollisionData?
                 CollisionData data = Data[i];
-                Vector4 color = _colors[8];
-                if (scene.TerrainDisplay != Terrain.None)
+                if (scene.ColTerDisplay != Terrain.All && scene.ColTerDisplay != data.Terrain)
                 {
-                    if (scene.TerrainDisplay != Terrain.All && scene.TerrainDisplay != data.Terrain)
+                    continue;
+                }
+                if ((scene.ColTypeDisplay == CollisionType.Player && data.IgnorePlayers)
+                    || (scene.ColTypeDisplay == CollisionType.Beam && data.IgnoreBeams)
+                    || (scene.ColTypeDisplay == CollisionType.Both && (data.IgnorePlayers || data.IgnoreBeams)))
+                {
+                    continue;
+                }
+                Vector4 color;
+                if (scene.ColDisplayColor == CollisionColor.Entity)
+                {
+                    if (entityType == EntityType.Platform)
                     {
-                        continue;
+                        // teal
+                        color = new Vector4(0.109f, 0.768f, 0.850f, 1f);
                     }
+                    else if (entityType == EntityType.Object)
+                    {
+                        // magenta
+                        color = new Vector4(0.952f, 0.105f, 0.635f, 1f);
+                    }
+                    else
+                    {
+                        // orange (room)
+                        color = new Vector4(0.952f, 0.694f, 0.105f, 1f);
+                    }
+                }
+                else if (scene.ColDisplayColor == CollisionColor.Terrain)
+                {
                     color = _colors[(int)data.Terrain];
-                    if (scene.TerrainDisplay == Terrain.All)
+                }
+                else if (scene.ColDisplayColor == CollisionColor.Type)
+                {
+                    if (data.IgnoreBeams)
                     {
-                        color.W = 1;
+                        // yellow
+                        color = new Vector4(0.956f, 0.933f, 0.203f, 1f);
                     }
+                    else if (data.IgnorePlayers)
+                    {
+                        // green
+                        color = new Vector4(0.250f, 0.807f, 0.250f, 1f);
+                    }
+                    else
+                    {
+                        // purple (both)
+                        color = new Vector4(0.807f, 0.250f, 0.776f, 1f);
+                    } 
+                }
+                else
+                {
+                    color = new Vector4(1, 0, 0, 1);
                 } 
+                color.W = scene.ColDisplayAlpha;
                 Debug.Assert(data.PointIndexCount >= 3 && data.PointIndexCount <= 10);
                 Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.PointIndexCount);
                 for (int j = 0; j < data.PointIndexCount; j++)
@@ -470,7 +516,7 @@ namespace MphRead.Formats.Collision
             DataIndices = dataIndices;
         }
 
-        public override void GetDrawInfo(List<Vector3> points, Scene scene)
+        public override void GetDrawInfo(List<Vector3> points, EntityType entityType, Scene scene)
         {
             var color = new Vector4(Vector3.UnitX, 0.5f);
             int polygonId = scene.GetNextPolygonId();
