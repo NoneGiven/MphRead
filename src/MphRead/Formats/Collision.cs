@@ -128,11 +128,14 @@ namespace MphRead.Formats.Collision
     {
         public readonly uint Field0;
         public readonly ushort PlaneIndex;
-        public readonly ushort Flags; // bits 5-8 = terrain type
+        public readonly ushort Flags;
         public readonly ushort LayerMask;
         public readonly ushort FieldA;
         public readonly ushort PointIndexCount;
         public readonly ushort PointStartIndex;
+
+        // bits 5-8
+        public Terrain Terrain => (Terrain)((Flags & 0x1E0) >> 5);
     }
 
     // size: 4
@@ -316,15 +319,14 @@ namespace MphRead.Formats.Collision
                         _dataIds.Add(dataIndex);
                         CollisionData data = Data[dataIndex];
                         Vector4 color = _colors[8];
-                        if (scene.TerrainDisplay != TerrainDisplay.None)
+                        if (scene.TerrainDisplay != Terrain.None)
                         {
-                            int terrain = (data.Flags & 0x1E0) >> 5;
-                            if (scene.TerrainDisplay != TerrainDisplay.All && (int)scene.TerrainDisplay != terrain)
+                            if (scene.TerrainDisplay != Terrain.All && scene.TerrainDisplay != data.Terrain)
                             {
                                 continue;
                             }
-                            color = _colors[terrain];
-                            if (scene.TerrainDisplay == TerrainDisplay.All)
+                            color = _colors[(int)data.Terrain];
+                            if (scene.TerrainDisplay == Terrain.All)
                             {
                                 color.W = 1;
                             }

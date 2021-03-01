@@ -47,24 +47,6 @@ namespace MphRead
         Object = 0x4
     }
 
-    public enum TerrainDisplay
-    {
-        Metal1 = 0,
-        Metal2 = 1,
-        Metal3 = 2,
-        Metal4 = 3,
-        Ice = 4,
-        Snow = 5,
-        Sand = 6,
-        Rock = 7,
-        Lava = 8,
-        Metal5 = 9,
-        Metal6 = 10,
-        Metal7 = 11, // unused?
-        None = 12,
-        All = 13
-    }
-
     public class Scene
     {
         public Vector2i Size { get; set; }
@@ -101,7 +83,7 @@ namespace MphRead
         private VolumeDisplay _showVolumes = VolumeDisplay.None;
         private bool _showCollisionMenu = false;
         private CollisionDisplay _collisionDisplay = CollisionDisplay.None;
-        private TerrainDisplay _terrainDisplay = TerrainDisplay.None;
+        private Terrain _terrainDisplay = Terrain.None;
         private bool _showAllnodes = false;
         private bool _transformRoomNodes = false;
         private bool _outputCameraPos = false;
@@ -154,7 +136,7 @@ namespace MphRead
         public VolumeDisplay ShowVolumes => _showVolumes;
         public bool ShowForceFields => _showVolumes != VolumeDisplay.Portal;
         public CollisionDisplay CollisionDisplay => _collisionDisplay;
-        public TerrainDisplay TerrainDisplay => _terrainDisplay;
+        public Terrain TerrainDisplay => _terrainDisplay;
         public float KillHeight => _killHeight;
         public bool ScanVisor => _scanVisor;
         public Vector3 Light1Vector => _light1Vector;
@@ -2644,23 +2626,23 @@ namespace MphRead
                 {
                     if (e.Control)
                     {
-                        _terrainDisplay = TerrainDisplay.None;
+                        _terrainDisplay = Terrain.None;
                     }
                     else
                     {
                         _terrainDisplay--;
                         if (_terrainDisplay < 0)
                         {
-                            _terrainDisplay = TerrainDisplay.All;
+                            _terrainDisplay = Terrain.All;
                         }
                     }
                 }
                 else
                 {
                     _terrainDisplay++;
-                    if (_terrainDisplay > TerrainDisplay.All)
+                    if (_terrainDisplay > Terrain.All)
                     {
-                        _terrainDisplay = TerrainDisplay.Metal1;
+                        _terrainDisplay = Terrain.Metal1;
                     }
                 }
             }

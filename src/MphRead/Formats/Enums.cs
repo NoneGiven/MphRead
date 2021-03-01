@@ -160,6 +160,24 @@ namespace MphRead
         FadeOutInWhite = 6
     }
 
+    public enum Terrain
+    {
+        Metal1 = 0,
+        Metal2 = 1,
+        Metal3 = 2,
+        Metal4 = 3,
+        Ice = 4,
+        Snow = 5,
+        Sand = 6,
+        Rock = 7,
+        Lava = 8,
+        Metal5 = 9,
+        Metal6 = 10,
+        Metal7 = 11, // unused?
+        None = 12, // viewer only
+        All = 13 // viewer only
+    }
+
     public enum ModelType
     {
         Generic,
