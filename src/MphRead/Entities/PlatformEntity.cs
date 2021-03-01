@@ -55,7 +55,11 @@ namespace MphRead.Entities
                     SetCollision(Collision.GetCollision(modelMeta.CollisionPath), attach: inst);
                 }
                 // temporary
-                if (meta.Name == "SamusShip" || meta.Name == "SyluxTurret")
+                if (meta.Name == "SamusShip")
+                {
+                    inst.SetNodeAnim(1);
+                }
+                else if (meta.Name == "SyluxTurret")
                 {
                     inst.SetNodeAnim(-1);
                 }
