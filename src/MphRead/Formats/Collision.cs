@@ -128,7 +128,7 @@ namespace MphRead.Formats.Collision
     {
         public readonly uint Field0;
         public readonly ushort PlaneIndex;
-        public readonly ushort Field9; // bits 5-8 = terrain type
+        public readonly ushort Flags; // bits 5-8 = terrain type
         public readonly ushort LayerMask;
         public readonly ushort FieldA;
         public readonly ushort PointIndexCount;
@@ -283,11 +283,26 @@ namespace MphRead.Formats.Collision
             EnabledDataIndices = enabledIndices;
         }
 
+        private static readonly IReadOnlyList<Vector4> _colors = new List<Vector4>()
+        {
+            new Vector4(0.69f, 0.69f, 0.69f, 0.5f), //  0 (metal 1) - gray
+            new Vector4(0f, 1f, 0f, 0.5f), //  1 (metal 2) - green
+            new Vector4(0f, 0f, 0.858f, 0.5f), //  2 (metal 3) - blue
+            new Vector4(1f, 0.612f, 0.153f, 0.5f), //  3 (metal 4) - orange
+            new Vector4(0.141f, 1f, 1f, 0.5f), //  4 (ice) - light blue
+            new Vector4(1f, 1f, 1f, 0.5f), //  5 (snow) - white
+            new Vector4(0.964f, 1f, 0.058f, 0.5f), //  6 (sand) - yellow
+            new Vector4(0.505f, 0.364f, 0.211f, 0.5f), //  7 (rock) - brown
+            new Vector4(1f, 0f, 0f, 0.5f), //  8 (lava) - red
+            new Vector4(0.615f, 0f, 0.909f, 0.5f), //  9 (metal 5) - purple
+            new Vector4(0.988f, 0.463f, 0.824f, 0.5f), // 10 (metal 6) - pink
+            new Vector4(0.85f, 0.85f, 0.85f, 0.5f) // 11 (metal 7) - dark gray
+        };
+
         public override void GetDrawInfo(List<Vector3> points, Scene scene)
         {
             _dataIds.Clear();
-            // sktodo: toggles to differentiate beam collision, player collision, show terrain types, etc. (colors)
-            var color = new Vector4(Vector3.UnitX, 0.5f);
+            // sktodo: toggles to differentiate e.g. beam vs. player collision
             int polygonId = scene.GetNextPolygonId();
             for (int j = 0; j < Entries.Count; j++)
             {
@@ -300,6 +315,20 @@ namespace MphRead.Formats.Collision
                     {
                         _dataIds.Add(dataIndex);
                         CollisionData data = Data[dataIndex];
+                        Vector4 color = _colors[8];
+                        if (scene.TerrainDisplay != TerrainDisplay.None)
+                        {
+                            int terrain = (data.Flags & 0x1E0) >> 5;
+                            if (scene.TerrainDisplay != TerrainDisplay.All && (int)scene.TerrainDisplay != terrain)
+                            {
+                                continue;
+                            }
+                            color = _colors[terrain];
+                            if (scene.TerrainDisplay == TerrainDisplay.All)
+                            {
+                                color.W = 1;
+                            }
+                        }
                         Debug.Assert(data.PointIndexCount >= 3 && data.PointIndexCount <= 10);
                         Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.PointIndexCount);
                         for (int l = 0; l < data.PointIndexCount; l++)

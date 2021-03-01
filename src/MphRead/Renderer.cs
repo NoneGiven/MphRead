@@ -47,6 +47,24 @@ namespace MphRead
         Object = 0x4
     }
 
+    public enum TerrainDisplay
+    {
+        Metal1 = 0,
+        Metal2 = 1,
+        Metal3 = 2,
+        Metal4 = 3,
+        Ice = 4,
+        Snow = 5,
+        Sand = 6,
+        Rock = 7,
+        Lava = 8,
+        Metal5 = 9,
+        Metal6 = 10,
+        Metal7 = 11, // unused?
+        None = 12,
+        All = 13
+    }
+
     public class Scene
     {
         public Vector2i Size { get; set; }
@@ -83,6 +101,7 @@ namespace MphRead
         private VolumeDisplay _showVolumes = VolumeDisplay.None;
         private bool _showCollisionMenu = false;
         private CollisionDisplay _collisionDisplay = CollisionDisplay.None;
+        private TerrainDisplay _terrainDisplay = TerrainDisplay.None;
         private bool _showAllnodes = false;
         private bool _transformRoomNodes = false;
         private bool _outputCameraPos = false;
@@ -135,6 +154,7 @@ namespace MphRead
         public VolumeDisplay ShowVolumes => _showVolumes;
         public bool ShowForceFields => _showVolumes != VolumeDisplay.Portal;
         public CollisionDisplay CollisionDisplay => _collisionDisplay;
+        public TerrainDisplay TerrainDisplay => _terrainDisplay;
         public float KillHeight => _killHeight;
         public bool ScanVisor => _scanVisor;
         public Vector3 Light1Vector => _light1Vector;
@@ -2618,6 +2638,32 @@ namespace MphRead
             {
                 _collisionDisplay ^= CollisionDisplay.Object;
             }
+            else if (e.Key == Keys.J && _showCollisionMenu)
+            {
+                if (e.Shift)
+                {
+                    if (e.Control)
+                    {
+                        _terrainDisplay = TerrainDisplay.None;
+                    }
+                    else
+                    {
+                        _terrainDisplay--;
+                        if (_terrainDisplay < 0)
+                        {
+                            _terrainDisplay = TerrainDisplay.All;
+                        }
+                    }
+                }
+                else
+                {
+                    _terrainDisplay++;
+                    if (_terrainDisplay > TerrainDisplay.All)
+                    {
+                        _terrainDisplay = TerrainDisplay.Metal1;
+                    }
+                }
+            }
             else if (e.Key == Keys.D9 && _showCollisionMenu)
             {
                 if (_collisionDisplay != CollisionDisplay.None)
@@ -3024,6 +3070,10 @@ namespace MphRead
             string recording = _recording ? " - Recording" : "";
             string frameAdvance = _frameAdvanceOn ? " - Frame Advance" : "";
             _sb.AppendLine($"MphRead Version {Program.Version}{recording}{frameAdvance}");
+            if (_showCollisionMenu)
+            {
+                OutputGetCollisionMenu();
+            }
             if (Selection.Entity != null)
             {
                 OutputGetEntityInfo();
@@ -3058,6 +3108,7 @@ namespace MphRead
             _sb.AppendLine($"7: Toggle platform collision ({(_collisionDisplay.HasFlag(CollisionDisplay.Platform) ? "on" : "off")})");
             _sb.AppendLine($"8: Toggle object collision ({(_collisionDisplay.HasFlag(CollisionDisplay.Object) ? "on" : "off")})");
             _sb.AppendLine($"9: Toggle all");
+            _sb.AppendLine($"J: Terrain display ({_terrainDisplay})");
         }
 
         private void OutputGetMenu()
