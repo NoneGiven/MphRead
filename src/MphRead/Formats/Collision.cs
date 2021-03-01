@@ -166,14 +166,14 @@ namespace MphRead.Formats.Collision
     {
         public readonly uint Field0;
         public readonly ushort PlaneIndex;
-        public readonly ushort Flags;
+        public readonly CollisionFlags Flags;
         public readonly ushort LayerMask;
         public readonly ushort FieldA;
         public readonly ushort PointIndexCount;
         public readonly ushort PointStartIndex;
 
         // bits 5-8
-        public Terrain Terrain => (Terrain)((Flags & 0x1E0) >> 5);
+        public Terrain Terrain => (Terrain)(((ushort)Flags & 0x1E0) >> 5);
     }
 
     // size: 4
@@ -273,6 +273,24 @@ namespace MphRead.Formats.Collision
         }
     }
 
+    [Flags]
+    public enum CollisionFlags : ushort
+    {
+        None = 0x0,
+        Damagin = 0x1,
+        Bit01 = 0x2,
+        Bit02 = 0x4,
+        // bits 3-4: slipperiness
+        // bits 5-8: terrain type
+        ReflectBeams = 0x200,
+        Bit10 = 0x400,
+        Bit11 = 0x800,
+        Bit12 = 0x1000,
+        IgnorePlayers = 0x2000,
+        IgnoreBeams = 0x4000,
+        Bit15 = 0x8000
+    }
+
     public class CollisionInstance
     {
         public string Name { get; }
@@ -348,7 +366,7 @@ namespace MphRead.Formats.Collision
             int polygonId = scene.GetNextPolygonId();
             for (int i = 0; i < Data.Count; i++)
             {
-                // todo?: what is the purpose of CollisionEntry? why are there are so many and why do they reference the same CollisionData?
+                // todo?: what is the purpose of CollisionEntry? why are there so many and why do they reference the same CollisionData?
                 CollisionData data = Data[i];
                 Vector4 color = _colors[8];
                 if (scene.TerrainDisplay != Terrain.None)
