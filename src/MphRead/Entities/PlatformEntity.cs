@@ -202,7 +202,7 @@ namespace MphRead.Entities
     public enum PlatformFlags : uint
     {
         None = 0x0,
-        Bit00 = 0x1,
+        Crush = 0x1,
         Bit01 = 0x2,
         BeamSpawner = 0x4,
         Bit03 = 0x8,
