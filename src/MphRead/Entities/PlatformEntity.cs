@@ -52,7 +52,7 @@ namespace MphRead.Entities
                 ModelMetadata modelMeta = Metadata.ModelMetadata[meta.Name];
                 if (modelMeta.CollisionPath != null)
                 {
-                    SetCollision(Collision.GetCollision(modelMeta.CollisionPath), attach: inst);
+                    SetCollision(Collision.GetCollision(modelMeta.CollisionPath, owner: inst.Model.Name), attach: inst);
                 }
                 // temporary
                 if (meta.Name == "SamusShip")
@@ -246,10 +246,11 @@ namespace MphRead.Entities
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             // todo: support loading genericmover, and do something similar for unused MPH models
-            ModelInstance inst = Read.GetModelInstance("platform", firstHunt: true);
-            ModelMetadata modelMeta = Metadata.FirstHuntModels["platform"];
+            string name = "platform";
+            ModelInstance inst = Read.GetModelInstance(name, firstHunt: true);
+            ModelMetadata modelMeta = Metadata.FirstHuntModels[name];
             Debug.Assert(modelMeta.CollisionPath != null);
-            SetCollision(Collision.GetCollision(modelMeta.CollisionPath, firstHunt: true));
+            SetCollision(Collision.GetCollision(modelMeta.CollisionPath, firstHunt: true, owner: name));
             _models.Add(inst);
         }
     }
