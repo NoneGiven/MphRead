@@ -52,7 +52,7 @@ namespace MphRead.Entities
                 ModelMetadata modelMeta = Metadata.ModelMetadata[meta.Name];
                 if (modelMeta.CollisionPath != null)
                 {
-                    SetCollision(Collision.GetCollision(modelMeta.CollisionPath, owner: inst.Model.Name), attach: inst);
+                    SetCollision(Collision.GetCollision(modelMeta), attach: inst);
                 }
                 // temporary
                 if (meta.Name == "SamusShip")
@@ -250,7 +250,7 @@ namespace MphRead.Entities
             ModelInstance inst = Read.GetModelInstance(name, firstHunt: true);
             ModelMetadata modelMeta = Metadata.FirstHuntModels[name];
             Debug.Assert(modelMeta.CollisionPath != null);
-            SetCollision(Collision.GetCollision(modelMeta.CollisionPath, firstHunt: true, owner: name));
+            SetCollision(Collision.GetCollision(modelMeta));
             _models.Add(inst);
         }
     }

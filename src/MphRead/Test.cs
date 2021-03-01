@@ -254,31 +254,6 @@ namespace MphRead
             Nop();
         }
 
-        public static void TestCollision()
-        {
-            string path = @"models\Crate01_Collision.bin";
-            var collision = (MphCollisionInfo)Collision.GetCollision(path).Info;
-            foreach (CollisionEntry entry in collision.Entries)
-            {
-                for (int i = 0; i < entry.DataCount; i++)
-                {
-                    ushort dataIndex = collision.DataIndices[entry.DataStartIndex + i];
-                    if (collision.EnabledDataIndices[entry.DataStartIndex].Contains(dataIndex))
-                    {
-                        CollisionData data = collision.Data[dataIndex];
-                        CollisionPlane plane = collision.Planes[data.PlaneIndex];
-                        for (int j = 0; j < data.PointIndexCount; j++)
-                        {
-                            ushort pointIndex = collision.PointIndices[data.PointStartIndex + j];
-                            Vector3 point = collision.Points[pointIndex];
-                            Nop();
-                        }
-                    }
-                }
-            }
-            Nop();
-        }
-
         public static void TestAllCollision()
         {
             var allCollision = new List<(bool, MphCollisionInfo)>();
@@ -286,14 +261,14 @@ namespace MphRead
             {
                 if (!meta.Value.FirstHunt && !meta.Value.Hybrid)
                 {
-                    allCollision.Add((true, (MphCollisionInfo)Collision.GetCollision(meta.Value.CollisionPath).Info));
+                    allCollision.Add((true, (MphCollisionInfo)Collision.GetCollision(meta.Value).Info));
                 }
             }
             foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.ModelMetadata)
             {
                 if (meta.Value.CollisionPath != null && !meta.Value.FirstHunt)
                 {
-                    allCollision.Add((false, (MphCollisionInfo)Collision.GetCollision(meta.Value.CollisionPath).Info));
+                    allCollision.Add((false, (MphCollisionInfo)Collision.GetCollision(meta.Value).Info));
                 }
             }
             foreach ((bool room, MphCollisionInfo collision) in allCollision)
@@ -312,14 +287,14 @@ namespace MphRead
             {
                 if (meta.Value.FirstHunt || meta.Value.Hybrid)
                 {
-                    allCollision.Add((true, (FhCollisionInfo)Collision.GetCollision(meta.Value.CollisionPath, firstHunt: true).Info));
+                    allCollision.Add((true, (FhCollisionInfo)Collision.GetCollision(meta.Value).Info));
                 }
             }
             foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.FirstHuntModels)
             {
                 if (meta.Value.CollisionPath != null)
                 {
-                    allCollision.Add((false, (FhCollisionInfo)Collision.GetCollision(meta.Value.CollisionPath, firstHunt: true).Info));
+                    allCollision.Add((false, (FhCollisionInfo)Collision.GetCollision(meta.Value).Info));
                 }
             }
             foreach ((bool room, FhCollisionInfo collision) in allCollision)

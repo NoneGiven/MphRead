@@ -73,8 +73,7 @@ namespace MphRead
                 }
             }
             IReadOnlyList<EntityBase> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
-            CollisionInstance collision = Collision.GetCollision(metadata.CollisionPath, metadata.FirstHunt || metadata.Hybrid,
-                nodeLayerMask, name);
+            CollisionInstance collision = Collision.GetCollision(metadata, nodeLayerMask);
             // todo: if we make ReadCollision actually filter things, we don't need to pass nodeLayerMask here or return it
             LoadResources(scene);
             var room = new RoomEntity(name, metadata, collision, nodeLayerMask);
