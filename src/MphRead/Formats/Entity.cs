@@ -108,7 +108,7 @@ namespace MphRead
         public readonly uint Field17C;
         public readonly uint Field180;
         public readonly PlatformFlags Flags;
-        public readonly uint Field188;
+        public readonly uint ContactDamage;
         public readonly Vector3Fx BeamSpawnDir;
         public readonly Vector3Fx BeamSpawnPos;
         public readonly int BeamId;
