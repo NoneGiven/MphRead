@@ -2744,7 +2744,7 @@ namespace MphRead
                     else
                     {
                         ColDisplayAlpha = 1;
-                    } 
+                    }
                 }
             }
             else if (e.Key == Keys.K)

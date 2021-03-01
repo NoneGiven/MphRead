@@ -423,12 +423,12 @@ namespace MphRead.Formats.Collision
                     {
                         // purple (both)
                         color = new Vector4(0.807f, 0.250f, 0.776f, 1f);
-                    } 
+                    }
                 }
                 else
                 {
                     color = new Vector4(1, 0, 0, 1);
-                } 
+                }
                 color.W = scene.ColDisplayAlpha;
                 Debug.Assert(data.PointIndexCount >= 3 && data.PointIndexCount <= 10);
                 Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.PointIndexCount);
