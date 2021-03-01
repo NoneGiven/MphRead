@@ -343,6 +343,7 @@ namespace MphRead.Formats.Collision
 
         public override void GetDrawInfo(List<Vector3> points, Scene scene)
         {
+            // todo: visualize extra things like slipperiness, reflection, damage
             // sktodo: toggles to differentiate e.g. beam vs. player collision
             int polygonId = scene.GetNextPolygonId();
             for (int i = 0; i < Data.Count; i++)
@@ -361,7 +362,7 @@ namespace MphRead.Formats.Collision
                     {
                         color.W = 1;
                     }
-                }
+                } 
                 Debug.Assert(data.PointIndexCount >= 3 && data.PointIndexCount <= 10);
                 Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.PointIndexCount);
                 for (int j = 0; j < data.PointIndexCount; j++)
