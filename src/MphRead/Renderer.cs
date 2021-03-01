@@ -89,7 +89,7 @@ namespace MphRead
         private int _showInvisible = 0;
         private VolumeDisplay _showVolumes = VolumeDisplay.None;
         private bool _showCollision = false;
-        private bool _showAllnodes = false;
+        private bool _showAllNodes = false;
         private bool _transformRoomNodes = false;
         private bool _outputCameraPos = false;
 
@@ -135,7 +135,7 @@ namespace MphRead
         public bool ShowInvisibleEntities => _showInvisible != 0;
         public bool ShowAllEntities => _showInvisible == 2;
         public bool TransformRoomNodes => _transformRoomNodes;
-        public bool ShowAllNodes => _showAllnodes;
+        public bool ShowAllNodes => _showAllNodes;
         public float FrameTime => _frameTime;
         public long FrameCount => _frameCount;
         public VolumeDisplay ShowVolumes => _showVolumes;
@@ -2884,7 +2884,7 @@ namespace MphRead
             {
                 if (e.Alt)
                 {
-                    _showAllnodes = !_showAllnodes;
+                    _showAllNodes = !_showAllNodes;
                 }
                 else
                 {
