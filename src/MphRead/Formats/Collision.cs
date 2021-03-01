@@ -172,6 +172,9 @@ namespace MphRead.Formats.Collision
         public readonly ushort PointIndexCount;
         public readonly ushort PointStartIndex;
 
+        // bits 3-4
+        public int Slipperiness => ((ushort)Flags & 0x18) >> 3;
+
         // bits 5-8
         public Terrain Terrain => (Terrain)(((ushort)Flags & 0x1E0) >> 5);
     }
@@ -288,7 +291,7 @@ namespace MphRead.Formats.Collision
         Bit12 = 0x1000,
         IgnorePlayers = 0x2000,
         IgnoreBeams = 0x4000,
-        Bit15 = 0x8000
+        IgnoreScan = 0x8000
     }
 
     public class CollisionInstance
