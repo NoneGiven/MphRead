@@ -18,7 +18,12 @@ namespace MphRead.Formats.Collision
         {
             string? path = extra ? meta.ExtraCollisionPath : meta.CollisionPath;
             Debug.Assert(path != null);
-            return GetCollision(path, meta.Name, meta.FirstHunt, roomLayerMask: -1);
+            string name = meta.Name;
+            if (name == "AlimbicCapsule" && extra)
+            {
+                name = "AlmbCapsuleShld";
+            }
+            return GetCollision(path, name, meta.FirstHunt, roomLayerMask: -1);
         }
 
         public static CollisionInstance GetCollision(RoomMetadata meta, int roomLayerMask = -1)

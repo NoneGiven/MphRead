@@ -269,6 +269,10 @@ namespace MphRead
                 if (meta.Value.CollisionPath != null && !meta.Value.FirstHunt)
                 {
                     allCollision.Add((false, (MphCollisionInfo)Collision.GetCollision(meta.Value).Info));
+                    if (meta.Value.ExtraCollisionPath != null)
+                    {
+                        allCollision.Add((false, (MphCollisionInfo)Collision.GetCollision(meta.Value, extra: true).Info));
+                    }
                 }
             }
             foreach ((bool room, MphCollisionInfo collision) in allCollision)
