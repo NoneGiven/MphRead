@@ -312,9 +312,9 @@ namespace MphRead.Formats.Collision
             /*  6 */ new Vector4(0.964f, 1f, 0.058f, 0.5f), // sand (yellow)
             /*  7 */ new Vector4(0.505f, 0.364f, 0.211f, 0.5f), // rock (brown)
             /*  8 */ new Vector4(1f, 0f, 0f, 0.5f), // lava (red)
-            /*  9 */ new Vector4(0.615f, 0f, 0.909f, 0.5f), // metal 5 (purple)
-            /* 10 */ new Vector4(0.988f, 0.463f, 0.824f, 0.5f), // metal 6 (pink)
-            /* 11 */ new Vector4(0.85f, 0.85f, 0.85f, 0.5f) // metal 7 (dark gray)
+            /*  9 */ new Vector4(0.988f, 0.463f, 0.824f, 0.5f), // acid (pink)
+            /* 10 */ new Vector4(0.615f, 0f, 0.909f, 0.5f), // Gorea walls (purple)
+            /* 11 */ new Vector4(0.85f, 0.85f, 0.85f, 0.5f) // unused (dark gray)
         };
 
         public override void GetDrawInfo(List<Vector3> points, Scene scene)

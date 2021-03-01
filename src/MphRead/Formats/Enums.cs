@@ -162,18 +162,18 @@ namespace MphRead
 
     public enum Terrain
     {
-        Metal1 = 0,
-        Metal2 = 1,
-        Metal3 = 2,
-        Metal4 = 3,
+        Metal = 0,
+        OrangeHolo = 1,
+        GreenHolo = 2,
+        BlueHolo = 3,
         Ice = 4,
         Snow = 5,
         Sand = 6,
         Rock = 7,
         Lava = 8,
-        Metal5 = 9,
-        Metal6 = 10,
-        Metal7 = 11, // unused?
+        Acid = 9,
+        GoreaWall = 10,
+        Unknown11 = 11, // unused
         None = 12, // viewer only
         All = 13 // viewer only
     }

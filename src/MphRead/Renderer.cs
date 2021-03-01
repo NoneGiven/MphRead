@@ -2642,7 +2642,7 @@ namespace MphRead
                     _terrainDisplay++;
                     if (_terrainDisplay > Terrain.All)
                     {
-                        _terrainDisplay = Terrain.Metal1;
+                        _terrainDisplay = Terrain.Metal;
                     }
                 }
             }
