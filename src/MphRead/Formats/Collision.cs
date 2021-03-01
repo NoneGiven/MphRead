@@ -26,8 +26,12 @@ namespace MphRead.Formats.Collision
             return GetCollision(path, name, meta.FirstHunt, roomLayerMask: -1);
         }
 
-        public static CollisionInstance GetCollision(RoomMetadata meta, int roomLayerMask = -1)
+        public static CollisionInstance GetCollision(RoomMetadata meta, int roomLayerMask = 0)
         {
+            if (roomLayerMask == 0 && meta.NodeLayer > 0)
+            {
+                roomLayerMask = ((1 << meta.NodeLayer) & 0xFF) << 6;
+            }
             return GetCollision(meta.CollisionPath, meta.Name, meta.FirstHunt || meta.Hybrid, roomLayerMask);
         }
 
@@ -66,27 +70,46 @@ namespace MphRead.Formats.Collision
             var portals = new List<CollisionPortal>();
             foreach (RawCollisionPortal portal in Read.DoOffsets<RawCollisionPortal>(bytes, header.PortalOffset, header.PortalCount))
             {
-                portals.Add(new CollisionPortal(portal));
+                if ((portal.LayerMask & 4) != 0 || roomLayerMask == -1 || (portal.LayerMask & roomLayerMask) != 0)
+                {
+                    portals.Add(new CollisionPortal(portal));
+                }
             }
-            var enabledIndices = new Dictionary<uint, HashSet<ushort>>();
+            var indexMap = new Dictionary<ushort, ushort>();
+            var finalData = new List<CollisionData>();
+            var finalIndices = new List<ushort>();
+            var finalEntries = new List<CollisionEntry>();
             foreach (CollisionEntry entry in entries.Where(e => e.DataCount > 0))
             {
-                // todo?: use the layer mask to actually filter the returned items instead of building enabledIndices
-                Debug.Assert(entry.DataCount < 512);
-                var enabled = new HashSet<ushort>();
+                ushort newCount = 0;
+                ushort newStartIndex = (ushort)finalIndices.Count;
                 for (int i = 0; i < entry.DataCount; i++)
                 {
-                    ushort index = indices[entry.DataStartIndex + i];
-                    ushort layerMask = data[index].LayerMask;
-                    if ((layerMask & 4) != 0 || roomLayerMask == -1 || (layerMask & roomLayerMask) != 0)
+                    ushort oldIndex = indices[entry.DataStartIndex + i];
+                    if (indexMap.TryGetValue(oldIndex, out ushort newIndex))
                     {
-                        enabled.Add(index);
+                        finalIndices.Add(newIndex);
+                        newCount++;
+                    }
+                    else
+                    {
+                        CollisionData item = data[oldIndex];
+                        if ((item.LayerMask & 4) != 0 || roomLayerMask == -1 || (item.LayerMask & roomLayerMask) != 0)
+                        {
+                            newIndex = (ushort)finalData.Count;
+                            finalIndices.Add(newIndex);
+                            finalData.Add(item);
+                            newCount++;
+                            indexMap.Add(oldIndex, newIndex);
+                        }
                     }
                 }
-                Debug.Assert(!enabledIndices.ContainsKey(entry.DataStartIndex));
-                enabledIndices.Add(entry.DataStartIndex, enabled);
+                finalEntries.Add(new CollisionEntry(newCount, newStartIndex));
             }
-            return new MphCollisionInfo(header, points, planes, shorts, data, indices, entries, portals, enabledIndices);
+            data = finalData;
+            indices = finalIndices;
+            entries = finalEntries;
+            return new MphCollisionInfo(header, points, planes, shorts, data, indices, entries, portals);
         }
 
         private static FhCollisionInfo ReadFhCollision(ReadOnlySpan<byte> bytes)
@@ -158,6 +181,12 @@ namespace MphRead.Formats.Collision
     {
         public readonly ushort DataCount;
         public readonly ushort DataStartIndex;
+
+        public CollisionEntry(ushort dataCount, ushort dataStartIndex)
+        {
+            DataCount = dataCount;
+            DataStartIndex = dataStartIndex;
+        }
     }
 
     // size: 224
@@ -283,14 +312,10 @@ namespace MphRead.Formats.Collision
         public IReadOnlyList<CollisionData> Data { get; }
         public IReadOnlyList<ushort> DataIndices { get; }
         public IReadOnlyList<CollisionEntry> Entries { get; }
-        // todo: update classes based on usage
-        public IReadOnlyDictionary<uint, HashSet<ushort>> EnabledDataIndices { get; }
-
-        private readonly HashSet<ushort> _dataIds = new HashSet<ushort>();
 
         public MphCollisionInfo(CollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
             IReadOnlyList<ushort> ptIdxs, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> dataIdxs, IReadOnlyList<CollisionEntry> entries,
-            IReadOnlyList<CollisionPortal> portals, IReadOnlyDictionary<uint, HashSet<ushort>> enabledIndices)
+            IReadOnlyList<CollisionPortal> portals)
             : base(points, planes, portals, firstHunt: false)
         {
             Header = header;
@@ -298,7 +323,6 @@ namespace MphRead.Formats.Collision
             Data = data;
             DataIndices = dataIdxs;
             Entries = entries;
-            EnabledDataIndices = enabledIndices;
         }
 
         private static readonly IReadOnlyList<Vector4> _colors = new List<Vector4>()
@@ -319,43 +343,32 @@ namespace MphRead.Formats.Collision
 
         public override void GetDrawInfo(List<Vector3> points, Scene scene)
         {
-            _dataIds.Clear();
             // sktodo: toggles to differentiate e.g. beam vs. player collision
             int polygonId = scene.GetNextPolygonId();
-            for (int j = 0; j < Entries.Count; j++)
+            for (int i = 0; i < Data.Count; i++)
             {
-                CollisionEntry entry = Entries[j];
-                for (int k = 0; k < entry.DataCount; k++)
+                CollisionData data = Data[i];
+                Vector4 color = _colors[8];
+                if (scene.TerrainDisplay != Terrain.None)
                 {
-                    ushort dataIndex = DataIndices[entry.DataStartIndex + k];
-                    // ctodo: revisit the dataIds hack; why are we getting multiple entries referencing the same data?
-                    if (!_dataIds.Contains(dataIndex) && EnabledDataIndices[entry.DataStartIndex].Contains(dataIndex))
+                    if (scene.TerrainDisplay != Terrain.All && scene.TerrainDisplay != data.Terrain)
                     {
-                        _dataIds.Add(dataIndex);
-                        CollisionData data = Data[dataIndex];
-                        Vector4 color = _colors[8];
-                        if (scene.TerrainDisplay != Terrain.None)
-                        {
-                            if (scene.TerrainDisplay != Terrain.All && scene.TerrainDisplay != data.Terrain)
-                            {
-                                continue;
-                            }
-                            color = _colors[(int)data.Terrain];
-                            if (scene.TerrainDisplay == Terrain.All)
-                            {
-                                color.W = 1;
-                            }
-                        }
-                        Debug.Assert(data.PointIndexCount >= 3 && data.PointIndexCount <= 10);
-                        Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.PointIndexCount);
-                        for (int l = 0; l < data.PointIndexCount; l++)
-                        {
-                            ushort pointIndex = PointIndices[data.PointStartIndex + l];
-                            verts[l] = points[pointIndex];
-                        }
-                        scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.PointIndexCount);
+                        continue;
+                    }
+                    color = _colors[(int)data.Terrain];
+                    if (scene.TerrainDisplay == Terrain.All)
+                    {
+                        color.W = 1;
                     }
                 }
+                Debug.Assert(data.PointIndexCount >= 3 && data.PointIndexCount <= 10);
+                Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.PointIndexCount);
+                for (int j = 0; j < data.PointIndexCount; j++)
+                {
+                    ushort pointIndex = PointIndices[data.PointStartIndex + j];
+                    verts[j] = points[pointIndex];
+                }
+                scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.PointIndexCount);
             }
         }
     }
