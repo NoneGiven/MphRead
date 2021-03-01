@@ -22,7 +22,7 @@ namespace MphRead
         public Vector3 Scale { get; set; }
         public Vector3 Angle { get; set; }
         public Vector3 Position { get; set; }
-        public float CullRadius { get; }
+        public float BoundingRadius { get; }
         public Vector3 Vector1 { get; }
         public Vector3 Vector2 { get; }
         public BillboardMode BillboardMode { get; }
@@ -56,7 +56,7 @@ namespace MphRead
                 raw.AngleZ / 65536.0f * 2.0f * MathF.PI
             );
             Position = raw.Position.ToFloatVector();
-            CullRadius = raw.CullRadius.FloatValue;
+            BoundingRadius = raw.BoundingRadius.FloatValue;
             Vector1 = raw.Vector1.ToFloatVector();
             Vector2 = raw.Vector2.ToFloatVector();
             BillboardMode = raw.BillboardMode;

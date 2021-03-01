@@ -277,7 +277,7 @@ namespace MphRead.Formats.Collision
     public enum CollisionFlags : ushort
     {
         None = 0x0,
-        Damagin = 0x1,
+        Damaging = 0x1,
         Bit01 = 0x2,
         Bit02 = 0x4,
         // bits 3-4: slipperiness

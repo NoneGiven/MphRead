@@ -14,7 +14,7 @@ namespace MphRead.Entities
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             string name = data.ModelId >= 8 ? "Octolith" : $"Artifact0{data.ModelId + 1}";
             ModelInstance inst = Read.GetModelInstance(name);
-            _heightOffset = data.ModelId >= 8 ? 1.75f : inst.Model.Nodes[0].CullRadius;
+            _heightOffset = data.ModelId >= 8 ? 1.75f : inst.Model.Nodes[0].BoundingRadius;
             if (data.ModelId >= 8)
             {
                 _spinModelIndex = 0;

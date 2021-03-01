@@ -335,7 +335,7 @@ namespace MphRead
         public readonly short AngleZ;
         public readonly ushort Field62;
         public readonly Vector3Fx Position;
-        public readonly Fixed CullRadius;
+        public readonly Fixed BoundingRadius;
         public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
         public readonly BillboardMode BillboardMode;

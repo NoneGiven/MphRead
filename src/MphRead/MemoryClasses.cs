@@ -795,10 +795,10 @@ namespace MphRead.Memory
         public Vector3 LockPos { get => ReadVec3(_off10); set => WriteVec3(_off10, value); }
 
         private const int _off11 = 0x54;
-        public int CullRadius { get => ReadInt32(_off11); set => WriteInt32(_off11, value); }
+        public int BoundingRadius { get => ReadInt32(_off11); set => WriteInt32(_off11, value); }
 
         private const int _off12 = 0x58;
-        public int CullRadiusSquared { get => ReadInt32(_off12); set => WriteInt32(_off12, value); }
+        public int BoundingRadiusSquared { get => ReadInt32(_off12); set => WriteInt32(_off12, value); }
 
         private const int _off13 = 0x5C;
         public CModel DoorModel { get; }
