@@ -2,16 +2,18 @@
 This project is a model viewer, scene renderer, and general parser for file formats used in the Nintendo DS game Metroid Prime Hunters. The renderer is implemented using OpenGL via the [OpenTK](https://github.com/opentk/opentk) library. Documentation of various game features can be found in the [wiki](https://github.com/NoneGiven/MphRead/wiki).
 
 ## Features
-- Renders individual models or complete game scenes with room entities
+- Renders individual models or complete game rooms with entities
 - Processes and renders particle systems and effects
+- Visualizes collision data for rooms and entities
+- Plays in-engine camera sequences (cutscenes)
 - Exports models to COLLADA, textures to PNG, and sound effects to WAV
 - Generates Python scripts to import model animations and more into Blender
-- Contains game metadata and parses many more file types
 
 ## Planned
-- Parse and visualize collision data
 - Music and SFX playback
-- And more!
+- Render more things
+- Implement more gameplay logic
+- And even more!
 
 ## Usage
 
