@@ -2374,7 +2374,10 @@ namespace MphRead
 
         private void RenderNgonLines(Vector3[] verts, int count)
         {
-            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(1f, 0f, 0f, 1f));
+            Vector4 color = _showCollision && ColDisplayColor == CollisionColor.None && ColDisplayAlpha == 1
+                ? new Vector4(0f, 0f, 1f, 1f)
+                : new Vector4(1f, 0f, 0f, 1f);
+            GL.Uniform4(_shaderLocations.OverrideColor, color);
             GL.Begin(PrimitiveType.LineLoop);
             for (int i = 0; i < count; i++)
             {
