@@ -18,9 +18,8 @@ namespace MphRead
             IReadOnlyList<Argument> arguments = ParseArguments(args);
             if (arguments.Count == 0)
             {
-                Test.TestAllCollision();
                 using var renderer = new RenderWindow();
-                renderer.AddRoom("UNIT2_LAND");
+                renderer.AddRoom("MP3 PROVING GROUND");
                 //renderer.AddModel("Crate01");
                 renderer.Run();
             }
