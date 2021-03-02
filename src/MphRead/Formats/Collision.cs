@@ -147,7 +147,7 @@ namespace MphRead.Formats.Collision
         public readonly uint Field2C;
         public readonly uint Field30;
         public readonly uint Field34;
-        public readonly Vector3i Xyz;
+        public readonly Vector3Fx BasePosition;
         public readonly uint EntryCount;
         public readonly uint EntryOffset;
         public readonly uint PortalCount;
@@ -164,11 +164,11 @@ namespace MphRead.Formats.Collision
     // size: 16
     public readonly struct CollisionData
     {
-        public readonly uint Field0;
+        public readonly uint Counter; // only set at runtime
         public readonly ushort PlaneIndex;
         public readonly CollisionFlags Flags;
         public readonly ushort LayerMask;
-        public readonly ushort FieldA;
+        public readonly ushort PaddingA;
         public readonly ushort PointIndexCount;
         public readonly ushort PointStartIndex;
 
