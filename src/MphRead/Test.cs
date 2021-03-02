@@ -254,13 +254,57 @@ namespace MphRead
             Nop();
         }
 
-        public static void TestCollision()
+        public static void TestAllCollision()
         {
+            var allCollision = new List<(bool, CollisionInstance)>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
-                CollisionInfo collision = Collision.ReadCollision(meta.Value.CollisionPath, meta.Value.FirstHunt || meta.Value.Hybrid);
-                Model room = Read.GetRoomModelInstance(meta.Key).Model;
-                Nop();
+                if (!meta.Value.FirstHunt && !meta.Value.Hybrid)
+                {
+                    allCollision.Add((true, Collision.GetCollision(meta.Value)));
+                }
+            }
+            foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.ModelMetadata)
+            {
+                if (meta.Value.CollisionPath != null && !meta.Value.FirstHunt)
+                {
+                    allCollision.Add((false, Collision.GetCollision(meta.Value)));
+                    if (meta.Value.ExtraCollisionPath != null)
+                    {
+                        allCollision.Add((false, Collision.GetCollision(meta.Value, extra: true)));
+                    }
+                }
+            }
+            foreach ((bool room, CollisionInstance instance) in allCollision)
+            {
+                var collision = (MphCollisionInfo)instance.Info;
+                foreach (CollisionData data in collision.Data)
+                {
+                }
+            }
+            Nop();
+        }
+
+        public static void TestAllFhCollision()
+        {
+            var allCollision = new List<(bool, CollisionInstance)>();
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                if (meta.Value.FirstHunt || meta.Value.Hybrid)
+                {
+                    allCollision.Add((true, Collision.GetCollision(meta.Value)));
+                }
+            }
+            foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.FirstHuntModels)
+            {
+                if (meta.Value.CollisionPath != null)
+                {
+                    allCollision.Add((false, Collision.GetCollision(meta.Value)));
+                }
+            }
+            foreach ((bool room, CollisionInstance instance) in allCollision)
+            {
+                var collision = (FhCollisionInfo)instance.Info;
             }
             Nop();
         }
@@ -1247,10 +1291,6 @@ namespace MphRead
                         if (entity.Type == EntityType.CameraSequence)
                         {
                             CameraSequenceEntityData data = ((Entity<CameraSequenceEntityData>)entity).Data;
-                            if (data.PlayerId1 != 0 || data.PlayerId2 != 0)
-                            {
-                                Debugger.Break();
-                            }
                         }
                     }
                 }

@@ -1,5 +1,6 @@
 using System;
 using MphRead.Effects;
+using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -9,6 +10,7 @@ namespace MphRead.Entities
         private readonly ObjectEntityData _data;
         private CollisionVolume _effectVolume;
         private uint _flags = 0;
+        private int _effectInterval = 0;
         private int _effectIntervalTimer = 0;
         private int _effectIntervalIndex = 0;
         private bool _effectProcessing = false;
@@ -34,6 +36,7 @@ namespace MphRead.Entities
             {
                 _effectVolume = CollisionVolume.Transform(data.Volume, Transform);
             }
+            _effectInterval = (int)data.EffectInterval * 2;
             if (data.ModelId == UInt32.MaxValue)
             {
                 AddPlaceholderModel();
@@ -47,7 +50,7 @@ namespace MphRead.Entities
                 ObjectMetadata meta = Metadata.GetObjectById((int)data.ModelId);
                 Recolor = meta.RecolorId;
                 ModelInstance inst = Read.GetModelInstance(meta.Name);
-                if (meta != null && meta.AnimationIds[0] == 0xFF)
+                if (meta.AnimationIds[0] == 0xFF)
                 {
                     inst.SetNodeAnim(-1);
                     inst.SetMaterialAnim(-1);
@@ -60,6 +63,16 @@ namespace MphRead.Entities
                     _scanVisorOnly = true;
                 }
                 _models.Add(inst);
+                ModelMetadata modelMeta = Metadata.ModelMetadata[meta.Name];
+                if (modelMeta.CollisionPath != null)
+                {
+                    SetCollision(Collision.GetCollision(modelMeta), attach: inst);
+                    if (modelMeta.ExtraCollisionPath != null)
+                    {
+                        // ctodo: disable capsule shield collision when appropriate
+                        SetCollision(Collision.GetCollision(modelMeta, extra: true), slot: 1);
+                    }
+                }
                 // temporary
                 if (inst.Model.Name == "AlimbicCapsule")
                 {
@@ -103,7 +116,7 @@ namespace MphRead.Entities
         public override bool Process(Scene scene)
         {
             ShouldDraw = !_scanVisorOnly || scene.ScanVisor;
-            if (_data.EffectId != 0 && scene.FrameCount % 2 == 0)
+            if (_data.EffectId != 0)
             {
                 bool processEffect = false;
                 if ((_data.EffectFlags & 0x40) != 0)
@@ -153,7 +166,7 @@ namespace MphRead.Entities
                                     for (int i = 0; i < _effectEntry.Elements.Count; i++)
                                     {
                                         EffectElementEntry element = _effectEntry.Elements[i];
-                                        element.Flags |= 0x80000; // set bit 19 (lifetime extension)
+                                        element.Flags |= EffElemFlags.ElementExtension;
                                     }
                                 }
                             }
@@ -178,7 +191,7 @@ namespace MphRead.Entities
                             }
                             scene.SpawnEffect((int)_data.EffectId, spawnTransform);
                         }
-                        _effectIntervalTimer = (int)_data.EffectInterval * 2;
+                        _effectIntervalTimer = _effectInterval;
                     }
                 }
                 _effectProcessing = processEffect;

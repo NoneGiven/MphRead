@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using MphRead.Effects;
 
 namespace MphRead
 {
@@ -334,7 +335,7 @@ namespace MphRead
         public readonly short AngleZ;
         public readonly ushort Field62;
         public readonly Vector3Fx Position;
-        public readonly Fixed CullRadius;
+        public readonly Fixed BoundingRadius;
         public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
         public readonly BillboardMode BillboardMode;
@@ -493,7 +494,7 @@ namespace MphRead
         public readonly char[] ModelName;
         public readonly uint ParticleCount;
         public readonly uint ParticleOffset;
-        public readonly uint Flags;
+        public readonly EffElemFlags Flags;
         public readonly Vector3Fx Acceleration;
         public readonly uint ChildEffectId;
         public readonly Fixed Lifespan;

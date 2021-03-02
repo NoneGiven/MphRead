@@ -23,15 +23,17 @@ namespace MphRead
 
     public enum RenderItemType
     {
+        // box/cylinder/sphere must be 1/2/3
         Mesh = 0,
         Box = 1,
         Cylinder = 2,
         Sphere = 3,
-        Plane = 4,
-        Particle = 5,
-        TrailSingle = 6,
-        TrailMulti = 7,
-        TrailStack = 8
+        Quad = 4,
+        Ngon = 5,
+        Particle = 6,
+        TrailSingle = 7,
+        TrailMulti = 8,
+        TrailStack = 9
     }
 
     public class RenderItem
@@ -44,6 +46,7 @@ namespace MphRead
         public CullingMode CullingMode { get; set; }
         public bool Wireframe { get; set; }
         public bool Lighting { get; set; }
+        public bool NoLines { get; set; }
         public Vector3 Diffuse { get; set; }
         public Vector3 Ambient { get; set; }
         public Vector3 Specular { get; set; }
@@ -63,7 +66,7 @@ namespace MphRead
         public Vector4? PaletteOverride { get; set; }
         public Vector3[] Points { get; set; }
         // number of segments for morph ball trail, or total for other multi-segment trails
-        public int TrailCount { get; set; }
+        public int ItemCount { get; set; }
         public float ScaleS { get; set; }
         public float ScaleT { get; set; }
 

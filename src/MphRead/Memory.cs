@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -41,7 +42,7 @@ namespace MphRead.Memory
 
         public static void Start()
         {
-            new Memory(Process.GetProcessById(15480)).Run();
+            new Memory(Process.GetProcessById(22644)).Run();
             /*var procs = Process.GetProcessesByName("NO$GBA").ToList();
             foreach (Process process in procs)
             {
@@ -59,18 +60,18 @@ namespace MphRead.Memory
 
         private void Run()
         {
-            _baseAddress = new IntPtr(0x9991100);
+            _baseAddress = new IntPtr(0x9997100);
             Task.Run(async () =>
             {
                 // 0x137A9C Cretaphid 1 crystal
                 // 0x137C7C Cretaphid 2 plasma
                 // 0x13846C Slench 1 tear
                 var results = new List<(int, int)>();
+                string last = "";
                 while (true)
                 {
                     RefreshMemory();
                     GetEntities();
-                    //var beams = _entities.Where(e => e.EntityType == EntityType.BeamProjectile).ToList();
                     //byte[] weapon = new byte[0xF0];
                     //for (int i = 0; i < 0xF0; i++)
                     //{
@@ -82,6 +83,19 @@ namespace MphRead.Memory
                     //var keyframe0 = new CameraSequenceKeyframe(this, scanIntro.Keyframes);
                     //var keyframe1 = new CameraSequenceKeyframe(this, keyframe0.Next);
                     //var keyframe2 = new CameraSequenceKeyframe(this, keyframe1.Next);
+                    //var beams = _entities.Where(e => e.EntityType == EntityType.BeamProjectile).ToList();
+                    var player = _entities.FirstOrDefault(e => e.EntityType == EntityType.Player) as CPlayer;
+                    if (player != null)
+                    {
+                        int bit0 = player.SomeFlags & 0x10;
+                        int bit1 = player.SomeFlags & 0x40;
+                        string output = $"{(bit0 == 0 ? "Cleared" : "Set")} // {(bit1 == 0 ? "Cleared" : "Set")}";
+                        if (output != last)
+                        {
+                            Console.Write($"\r{output}                     ");
+                            last = output;
+                        }
+                    }
                     await Task.Delay(15);
                 }
             }).GetAwaiter().GetResult();

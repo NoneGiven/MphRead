@@ -179,6 +179,7 @@ namespace MphRead
                 LookAtSelection(scene, e.Control, e.Shift);
                 return true;
             }
+            // ctodo: allow toggling collision entries and individual planes
             if (e.Key == Keys.D0 || e.Key == Keys.KeyPad0)
             {
                 // note: toggling meshes and nodes will affect all model instances that use them
@@ -196,7 +197,14 @@ namespace MphRead
                 }
                 else if (Entity != null)
                 {
-                    Entity.SetActive(!Entity.Active);
+                    if (e.Alt)
+                    {
+                        Entity.SetActive(!Entity.Active);
+                    }
+                    else
+                    {
+                        Entity.Hidden = !Entity.Hidden;
+                    }
                 }
                 return true;
             }

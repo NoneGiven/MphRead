@@ -7,19 +7,24 @@ namespace MphRead.Entities
         private readonly FlagBaseEntityData _data;
         private readonly CollisionVolume _volume;
 
+        // flag base has a model in Bounty, but is invisible in Capture
+        protected override Vector4? OverrideColor { get; } = new ColorRgb(15, 207, 255).AsVector4();
+
         public FlagBaseEntity(FlagBaseEntityData data, GameMode mode) : base(EntityType.FlagBase)
         {
             _data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _volume = CollisionVolume.Move(_data.Volume, Position);
-            Recolor = mode == GameMode.Capture ? (int)data.TeamId : 0;
-            // note: this mode check is necessary because e.g. Sic Transit has OctolithFlags/FlagBases
+            // note: an explicit mode check is necessary because e.g. Sic Transit has OctolithFlags/FlagBases
             // enabled in Defender mode according to their layer masks, but they don't appear in-game
-            if (mode == GameMode.Capture || mode == GameMode.Bounty)
+            if (mode == GameMode.Capture)
             {
-                string name = mode == GameMode.Capture ? "flagbase_ctf" : "flagbase_cap";
-                ModelInstance inst = Read.GetModelInstance(name);
+                AddPlaceholderModel();
+            }
+            else if (mode == GameMode.Bounty || mode == GameMode.BountyTeams)
+            {
+                ModelInstance inst = Read.GetModelInstance("flagbase_cap");
                 _models.Add(inst);
             }
         }

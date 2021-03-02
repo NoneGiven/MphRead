@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using MphRead.Entities;
 
 namespace MphRead
 {
@@ -106,8 +107,8 @@ namespace MphRead
         public readonly uint Field178;
         public readonly uint Field17C;
         public readonly uint Field180;
-        public readonly uint Flags;
-        public readonly uint Field188;
+        public readonly PlatformFlags Flags;
+        public readonly uint ContactDamage;
         public readonly Vector3Fx BeamSpawnDir;
         public readonly Vector3Fx BeamSpawnPos;
         public readonly int BeamId;
@@ -280,7 +281,7 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly uint ParentId;
-        public readonly uint ModelId;
+        public readonly ItemType ItemType;
         public readonly byte Enabled; // boolean
         public readonly byte HasBase; // boolean
         public readonly byte AlwaysActive; // boolean -- set flags bit 0 based on Active boolean only and ignore room state
@@ -299,7 +300,7 @@ namespace MphRead
     public readonly struct FhItemEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint ModelId;
+        public readonly FhItemType ItemType;
         public readonly ushort SpawnLimit;
         public readonly ushort CooldownTime;
         public readonly ushort Field2C;

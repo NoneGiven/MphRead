@@ -768,7 +768,7 @@ namespace MphRead.Entities
                         for (int j = 0; j < beam.Effect.Elements.Count; j++)
                         {
                             EffectElementEntry element = beam.Effect.Elements[j];
-                            element.Flags |= 0x80000; // set bit 19 (lifetime extension)
+                            element.Flags |= EffElemFlags.ElementExtension;
                         }
                     }
                 }
@@ -786,7 +786,7 @@ namespace MphRead.Entities
                         if (entity.Type == EntityType.Platform && entity != beam.Owner)
                         {
                             var platform = (PlatformEntity)entity;
-                            if ((platform.Flags & 0x40000) != 0)
+                            if (platform.Flags.HasFlag(PlatformFlags.BeamTarget))
                             {
                                 Vector3 between = platform.Position - beam.Position;
                                 float dot1 = Vector3.Dot(between, between);

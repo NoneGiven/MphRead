@@ -38,6 +38,22 @@ namespace MphRead
         Portal
     }
 
+    public enum CollisionType
+    {
+        Any,
+        Player,
+        Beam,
+        Both
+    }
+
+    public enum CollisionColor
+    {
+        None,
+        Entity,
+        Terrain,
+        Type
+    }
+
     public class Scene
     {
         public Vector2i Size { get; set; }
@@ -64,14 +80,16 @@ namespace MphRead
         private bool _showTextures = true;
         private bool _showColors = true;
         private bool _wireframe = false;
-        private bool _volumeEdges = false;
+        // 0 - lines + fill, 1 - lines only, 2 - fill only
+        private int _volumeEdges = 0;
         private bool _faceCulling = true;
         private bool _textureFiltering = false;
         private bool _lighting = false;
         private bool _scanVisor = false;
         private int _showInvisible = 0;
         private VolumeDisplay _showVolumes = VolumeDisplay.None;
-        private bool _showAllnodes = false;
+        private bool _showCollision = false;
+        private bool _showAllNodes = false;
         private bool _transformRoomNodes = false;
         private bool _outputCameraPos = false;
 
@@ -101,12 +119,14 @@ namespace MphRead
 
         private float _frameTime = 0;
         private float _elapsedTime = 0;
-        private long _frameCount = -1;
+        private long _frameCount = 0;
         private bool _frameAdvanceOn = false;
         private bool _advanceOneFrame = false;
         private bool _recording = false;
         private int _framesRecorded = 0;
         private bool _roomLoaded = false;
+        public GameMode GameMode { get; private set; } = GameMode.SinglePlayer;
+        public bool Multiplayer => GameMode != GameMode.SinglePlayer;
 
         public Matrix4 ViewMatrix => _viewMatrix;
         public Matrix4 ViewInvRotMatrix => _viewInvRotMatrix;
@@ -115,7 +135,7 @@ namespace MphRead
         public bool ShowInvisibleEntities => _showInvisible != 0;
         public bool ShowAllEntities => _showInvisible == 2;
         public bool TransformRoomNodes => _transformRoomNodes;
-        public bool ShowAllNodes => _showAllnodes;
+        public bool ShowAllNodes => _showAllNodes;
         public float FrameTime => _frameTime;
         public long FrameCount => _frameCount;
         public VolumeDisplay ShowVolumes => _showVolumes;
@@ -153,7 +173,7 @@ namespace MphRead
                 throw new ProgramException("Cannot load more than one room in a scene.");
             }
             _roomLoaded = true;
-            (RoomEntity room, RoomMetadata meta, CollisionInfo collision, IReadOnlyList<EntityBase> entities, int updatedMask)
+            (RoomEntity room, RoomMetadata meta, CollisionInstance collision, IReadOnlyList<EntityBase> entities)
                 = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId, this);
             _entities.Add(room);
             InitEntity(room);
@@ -198,6 +218,10 @@ namespace MphRead
             _killHeight = meta.KillHeight;
             _farClip = meta.FarClip;
             _cameraMode = CameraMode.Roam;
+            if (mode != GameMode.None)
+            {
+                GameMode = mode;
+            }
         }
 
         // called before load
@@ -764,10 +788,6 @@ namespace MphRead
         {
             uint rng1 = Test.Rng1;
             uint rng2 = Test.Rng2;
-            if (!_frameAdvanceOn || _advanceOneFrame)
-            {
-                _frameCount++;
-            }
             if (_recording || Debugger.IsAttached)
             {
                 _frameTime = 1 / 60f; // todo: FPS stuff
@@ -796,6 +816,10 @@ namespace MphRead
             {
                 Test.SetRng1(rng1);
                 Test.SetRng2(rng2);
+            }
+            if (!_frameAdvanceOn || _advanceOneFrame)
+            {
+                _frameCount++;
             }
         }
 
@@ -1122,14 +1146,14 @@ namespace MphRead
             for (int i = 0; i < entry.Elements.Count; i++)
             {
                 EffectElementEntry element = entry.Elements[i];
-                if ((element.Flags & 0x100) != 0)
+                if (element.Flags.HasFlag(EffElemFlags.DestroyOnDetach))
                 {
                     UnlinkEffectElement(element);
                 }
                 else
                 {
-                    element.Flags &= 0xFFF7FFFF; // clear bit 19 (lifetime extension)
-                    element.Flags |= 0x10; // set big 4 (keep alive until particles expire)
+                    element.Flags &= EffElemFlags.ElementExtension;
+                    element.Flags |= EffElemFlags.KeepAlive; // keep alive until particles expire
                     element.EffectEntry = null;
                     if (setExpired)
                     {
@@ -1141,20 +1165,20 @@ namespace MphRead
             UnlinkEffectEntry(entry);
         }
 
-        private EffectElementEntry InitEffectElement(Effect effect, EffectElement element)
+        private EffectElementEntry InitEffectElement(Effect effect, EffectElement element, bool child)
         {
             EffectElementEntry entry = _inactiveElements.Dequeue();
             entry.EffectName = effect.Name;
             entry.ElementName = element.Name;
             entry.BufferTime = element.BufferTime;
-            // todo: if created during effect processing (child effect), increase creation time by one frame
-            entry.CreationTime = _elapsedTime;
+            // todo: FPS stuff
+            entry.CreationTime = _elapsedTime + (child ? (1 / 60f) : 0);
             entry.DrainTime = element.DrainTime;
             entry.DrawType = element.DrawType;
             entry.Lifespan = element.Lifespan;
             entry.ExpirationTime = entry.CreationTime + entry.Lifespan;
             entry.Flags = element.Flags;
-            entry.Flags |= 0x100000; // set bit 20 (draw enabled)
+            entry.Flags |= EffElemFlags.DrawEnabled;
             entry.Func39Called = false;
             entry.Funcs = element.Funcs;
             entry.Actions = element.Actions;
@@ -1226,30 +1250,30 @@ namespace MphRead
         {
             EffectEntry entry = InitEffectEntry();
             entry.EffectId = effectId;
-            SpawnEffect(effectId, transform, entry);
+            SpawnEffect(effectId, transform, child: false, entry);
             return entry;
         }
 
-        public void SpawnEffect(int effectId, Matrix4 transform)
+        public void SpawnEffect(int effectId, Matrix4 transform, bool child = false)
         {
-            SpawnEffect(effectId, transform, entry: null);
+            SpawnEffect(effectId, transform, child, entry: null);
         }
 
-        private void SpawnEffect(int effectId, Matrix4 transform, EffectEntry? entry)
+        private void SpawnEffect(int effectId, Matrix4 transform, bool child, EffectEntry? entry)
         {
             Effect effect = Read.LoadEffect(effectId); // should already be loaded
             var position = new Vector3(transform.Row3);
             for (int i = 0; i < effect.Elements.Count; i++)
             {
                 EffectElement elementDef = effect.Elements[i];
-                EffectElementEntry element = InitEffectElement(effect, elementDef);
+                EffectElementEntry element = InitEffectElement(effect, elementDef, child);
                 if (entry != null)
                 {
                     element.EffectEntry = entry;
                     entry.Elements.Add(element);
                 }
                 element.Position = position;
-                if ((element.Flags & 8) != 0)
+                if (element.Flags.HasFlag(EffElemFlags.SpawnUnitVecs))
                 {
                     Vector3 vec1 = Vector3.UnitY;
                     Vector3 vec2 = Vector3.UnitX;
@@ -1282,7 +1306,7 @@ namespace MphRead
                 EffectElementEntry element = _activeElements[i];
                 if (!element.Expired && _elapsedTime > element.ExpirationTime)
                 {
-                    if (element.EffectEntry == null && (element.Flags & 0x10) == 0)
+                    if (element.EffectEntry == null && !element.Flags.HasFlag(EffElemFlags.KeepAlive))
                     {
                         UnlinkEffectElement(element);
                         i--;
@@ -1303,7 +1327,7 @@ namespace MphRead
                 }
                 else
                 {
-                    if ((element.Flags & 0x80000) != 0)
+                    if (element.Flags.HasFlag(EffElemFlags.ElementExtension))
                     {
                         if (_elapsedTime - element.CreationTime > element.BufferTime)
                         {
@@ -1343,7 +1367,7 @@ namespace MphRead
                             particle.InvokeVecFunc(info, times, ref temp);
                             particle.Speed = temp;
                         }
-                        if ((element.Flags & 1) == 0)
+                        if (!element.Flags.HasFlag(EffElemFlags.UseTransform))
                         {
                             particle.Position = Matrix.Vec3MultMtx4(particle.Position, element.Transform);
                             particle.Speed = Matrix.Vec3MultMtx3(particle.Speed, element.Transform);
@@ -1454,7 +1478,7 @@ namespace MphRead
                 for (int j = 0; j < element.Particles.Count; j++)
                 {
                     EffectParticle particle = element.Particles[j];
-                    if ((element.Flags & 0x80000) != 0 && (element.Flags & 0x20) != 0)
+                    if (element.Flags.HasFlag(EffElemFlags.ElementExtension) && element.Flags.HasFlag(EffElemFlags.ParticleExtension))
                     {
                         if (_elapsedTime - particle.CreationTime > element.BufferTime)
                         {
@@ -1525,7 +1549,7 @@ namespace MphRead
                             particle.Rotation = particle.InvokeFloatFunc(info, times);
                         }
                         // todo: frame time scaling for speed/accel
-                        if ((element.Flags & 2) != 0)
+                        if (element.Flags.HasFlag(EffElemFlags.UseAcceleration))
                         {
                             particle.Speed = new Vector3(
                                 particle.Speed.X + element.Acceleration.X * (1 / 60f),
@@ -1539,7 +1563,7 @@ namespace MphRead
                             particle.Position.Y + particle.Speed.Y * (1 / 60f),
                             particle.Position.Z + particle.Speed.Z * (1 / 60f)
                         );
-                        if ((element.Flags & 0x40) != 0)
+                        if (element.Flags.HasFlag(EffElemFlags.CheckCollision))
                         {
                             // ptodo: collision check between previous and new positions
                             // --> set position to intersection point
@@ -1548,7 +1572,7 @@ namespace MphRead
                     }
                     else
                     {
-                        if ((element.Flags & 0x80) != 0 && element.ChildEffectId != 0)
+                        if (element.Flags.HasFlag(EffElemFlags.SpawnChildEffect) && element.ChildEffectId != 0)
                         {
                             Vector3 vec1 = (-particle.Speed).Normalized();
                             Vector3 vec2;
@@ -1603,6 +1627,7 @@ namespace MphRead
             item.CullingMode = material.Culling;
             item.Wireframe = material.Wireframe != 0;
             item.Lighting = material.Lighting != 0;
+            item.NoLines = false;
             item.Diffuse = material.CurrentDiffuse;
             item.Ambient = material.CurrentAmbient;
             item.Specular = material.CurrentSpecular;
@@ -1652,7 +1677,8 @@ namespace MphRead
         }
 
         // for volumes/planes
-        public void AddRenderItem(CullingMode cullingMode, int polygonId, Vector4 overrideColor, RenderItemType type, Vector3[] vertices)
+        public void AddRenderItem(CullingMode cullingMode, int polygonId, Vector4 overrideColor, RenderItemType type,
+            Vector3[] vertices, int vertexCount = 0, bool noLines = false)
         {
             RenderItem item = GetRenderItem();
             item.Type = type;
@@ -1663,6 +1689,7 @@ namespace MphRead
             item.CullingMode = cullingMode;
             item.Wireframe = false;
             item.Lighting = false;
+            item.NoLines = noLines;
             item.Diffuse = Vector3.Zero;
             item.Ambient = Vector3.Zero;
             item.Specular = Vector3.Zero;
@@ -1682,6 +1709,8 @@ namespace MphRead
             item.Points = vertices;
             item.ScaleS = 1;
             item.ScaleT = 1;
+            Debug.Assert(type != RenderItemType.Ngon || vertexCount >= 3);
+            item.ItemCount = vertexCount;
             AddRenderItem(item);
         }
 
@@ -1698,6 +1727,7 @@ namespace MphRead
             item.CullingMode = CullingMode.Neither;
             item.Wireframe = false;
             item.Lighting = false;
+            item.NoLines = false;
             item.Diffuse = color;
             item.Ambient = Vector3.Zero;
             item.Specular = Vector3.Zero;
@@ -1717,7 +1747,7 @@ namespace MphRead
             item.Points = uvsAndVerts;
             item.ScaleS = scaleS;
             item.ScaleT = scaleT;
-            item.TrailCount = trailCount;
+            item.ItemCount = trailCount;
             AddRenderItem(item);
         }
 
@@ -1734,6 +1764,7 @@ namespace MphRead
             item.CullingMode = CullingMode.Neither;
             item.Wireframe = false;
             item.Lighting = false;
+            item.NoLines = false;
             item.Diffuse = color;
             item.Ambient = Vector3.Zero;
             item.Specular = Vector3.Zero;
@@ -1758,7 +1789,7 @@ namespace MphRead
             item.Points = uvsAndVerts;
             item.ScaleS = scaleS;
             item.ScaleT = scaleT;
-            item.TrailCount = segmentCount;
+            item.ItemCount = segmentCount;
             AddRenderItem(item);
         }
 
@@ -1864,7 +1895,7 @@ namespace MphRead
                 {
                     EffectParticle particle = element.Particles[j];
                     Matrix4 matrix = _viewMatrix;
-                    if ((particle.Owner.Flags & 1) != 0 && (particle.Owner.Flags & 4) == 0)
+                    if (particle.Owner.Flags.HasFlag(EffElemFlags.UseTransform) && !particle.Owner.Flags.HasFlag(EffElemFlags.UseMesh))
                     {
                         matrix = particle.Owner.Transform * matrix;
                     }
@@ -2144,13 +2175,20 @@ namespace MphRead
             {
                 RenderSphere(item.Points);
             }
-            else if (item.Type == RenderItemType.Plane)
+            else if (item.Type == RenderItemType.Quad)
             {
-                RenderPlane(item.Points);
-                if (_volumeEdges)
+                RenderQuad(item.Points);
+            }
+            else if (item.Type == RenderItemType.Ngon)
+            {
+                if (_volumeEdges != 1)
+                {
+                    RenderNgon(item.Points, item.ItemCount);
+                }
+                if (_volumeEdges != 2 && !item.NoLines)
                 {
                     // todo: implement this for volumes as well
-                    RenderPlaneLines(item.Points);
+                    RenderNgonLines(item.Points, item.ItemCount);
                 }
             }
             else if (item.Type == RenderItemType.Particle)
@@ -2314,7 +2352,7 @@ namespace MphRead
             GL.End();
         }
 
-        private void RenderPlane(Vector3[] verts)
+        private void RenderQuad(Vector3[] verts)
         {
             GL.Begin(PrimitiveType.TriangleStrip);
             GL.Vertex3(verts[0]);
@@ -2324,14 +2362,27 @@ namespace MphRead
             GL.End();
         }
 
-        private void RenderPlaneLines(Vector3[] verts)
+        private void RenderNgon(Vector3[] verts, int count)
         {
-            GL.Uniform4(_shaderLocations.OverrideColor, new Vector4(1f, 0f, 0f, 1f));
+            GL.Begin(PrimitiveType.TriangleFan);
+            for (int i = 0; i < count; i++)
+            {
+                GL.Vertex3(verts[i]);
+            }
+            GL.End();
+        }
+
+        private void RenderNgonLines(Vector3[] verts, int count)
+        {
+            Vector4 color = _showCollision && ColDisplayColor == CollisionColor.None && ColDisplayAlpha == 1
+                ? new Vector4(0f, 0f, 1f, 1f)
+                : new Vector4(1f, 0f, 0f, 1f);
+            GL.Uniform4(_shaderLocations.OverrideColor, color);
             GL.Begin(PrimitiveType.LineLoop);
-            GL.Vertex3(verts[0]);
-            GL.Vertex3(verts[1]);
-            GL.Vertex3(verts[2]);
-            GL.Vertex3(verts[3]);
+            for (int i = 0; i < count; i++)
+            {
+                GL.Vertex3(verts[i]);
+            }
             GL.End();
         }
 
@@ -2381,9 +2432,9 @@ namespace MphRead
 
         private void RenderTrailMulti(RenderItem item)
         {
-            Debug.Assert(item.TrailCount >= 4 && item.TrailCount % 2 == 0);
+            Debug.Assert(item.ItemCount >= 4 && item.ItemCount % 2 == 0);
             GL.Begin(PrimitiveType.QuadStrip);
-            for (int i = 0; i < item.TrailCount; i += 2)
+            for (int i = 0; i < item.ItemCount; i += 2)
             {
                 Vector3 texcoord = item.Points[i];
                 Vector3 vertex = item.Points[i + 1];
@@ -2395,7 +2446,7 @@ namespace MphRead
 
         private void RenderTrailStack(RenderItem item)
         {
-            for (int i = 0; i < item.TrailCount; i++)
+            for (int i = 0; i < item.ItemCount; i++)
             {
                 Vector3 texcoord0 = item.Points[i * 8];
                 Vector3 vertex0 = item.Points[i * 8 + 1];
@@ -2543,6 +2594,14 @@ namespace MphRead
             }
         }
 
+        public bool ShowCollision => _showCollision;
+        public EntityType ColEntDisplay { get; private set; } = EntityType.Room;
+        public Terrain ColTerDisplay { get; private set; } = Terrain.All;
+        public CollisionType ColTypeDisplay { get; private set; } = CollisionType.Any;
+        public CollisionColor ColDisplayColor { get; private set; } = CollisionColor.None;
+        public float ColDisplayAlpha { get; private set; } = 0.5f;
+        private int _colMenuSelect = 0; // 0-4
+
         public void OnKeyDown(KeyboardKeyEventArgs e)
         {
             if (e.Key == Keys.E && e.Alt)
@@ -2563,7 +2622,170 @@ namespace MphRead
             {
                 return;
             }
-            if (e.Key == Keys.D5)
+            if (e.Key == Keys.J && _showCollision)
+            {
+                if (_colMenuSelect == 0)
+                {
+                    if (e.Control)
+                    {
+                        ColEntDisplay = EntityType.All;
+                    }
+                    else if (e.Shift)
+                    {
+                        if (ColEntDisplay == EntityType.Room)
+                        {
+                            ColEntDisplay = EntityType.All;
+                        }
+                        else if (ColEntDisplay == EntityType.Object)
+                        {
+                            ColEntDisplay = EntityType.Platform;
+                        }
+                        else if (ColEntDisplay == EntityType.All)
+                        {
+                            ColEntDisplay = EntityType.Object;
+                        }
+                        else
+                        {
+                            ColEntDisplay = EntityType.Room;
+                        }
+                    }
+                    else
+                    {
+                        if (ColEntDisplay == EntityType.Room)
+                        {
+                            ColEntDisplay = EntityType.Platform;
+                        }
+                        else if (ColEntDisplay == EntityType.Platform)
+                        {
+                            ColEntDisplay = EntityType.Object;
+                        }
+                        else if (ColEntDisplay == EntityType.Object)
+                        {
+                            ColEntDisplay = EntityType.All;
+                        }
+                        else
+                        {
+                            ColEntDisplay = EntityType.Room;
+                        }
+                    }
+                }
+                else if (_colMenuSelect == 1)
+                {
+                    if (e.Control)
+                    {
+                        ColTerDisplay = Terrain.All;
+                    }
+                    else if (e.Shift)
+                    {
+                        ColTerDisplay--;
+                        if (ColTerDisplay < 0)
+                        {
+                            ColTerDisplay = Terrain.All;
+                        }
+                    }
+                    else
+                    {
+                        ColTerDisplay++;
+                        if (ColTerDisplay > Terrain.All)
+                        {
+                            ColTerDisplay = Terrain.Metal;
+                        }
+                    }
+                }
+                else if (_colMenuSelect == 2)
+                {
+                    if (e.Control)
+                    {
+                        ColTypeDisplay = CollisionType.Any;
+                    }
+                    else if (e.Shift)
+                    {
+                        ColTypeDisplay--;
+                        if (ColTypeDisplay < 0)
+                        {
+                            ColTypeDisplay = CollisionType.Both;
+                        }
+                    }
+                    else
+                    {
+                        ColTypeDisplay++;
+                        if (ColTypeDisplay > CollisionType.Both)
+                        {
+                            ColTypeDisplay = CollisionType.Any;
+                        }
+                    }
+                }
+                else if (_colMenuSelect == 3)
+                {
+                    if (e.Control)
+                    {
+                        ColDisplayColor = CollisionColor.None;
+                    }
+                    else if (e.Shift)
+                    {
+                        ColDisplayColor--;
+                        if (ColDisplayColor < 0)
+                        {
+                            ColDisplayColor = CollisionColor.Type;
+                        }
+                    }
+                    else
+                    {
+                        ColDisplayColor++;
+                        if (ColDisplayColor > CollisionColor.Type)
+                        {
+                            ColDisplayColor = CollisionColor.None;
+                        }
+                    }
+                }
+                else if (_colMenuSelect == 4)
+                {
+                    if (ColDisplayAlpha == 1)
+                    {
+                        ColDisplayAlpha = 0.5f;
+                    }
+                    else
+                    {
+                        ColDisplayAlpha = 1;
+                    }
+                }
+            }
+            else if (e.Key == Keys.K)
+            {
+                if (e.Alt)
+                {
+                    _showCollision = !_showCollision;
+                }
+                else if (_showCollision)
+                {
+                    if (e.Control)
+                    {
+                        _colMenuSelect = 0;
+                        ColEntDisplay = EntityType.Room;
+                        ColTerDisplay = Terrain.All;
+                        ColTypeDisplay = CollisionType.Any;
+                        ColDisplayColor = CollisionColor.None;
+                        ColDisplayAlpha = 0.5f;
+                    }
+                    else if (e.Shift)
+                    {
+                        _colMenuSelect--;
+                        if (_colMenuSelect < 0)
+                        {
+                            _colMenuSelect = 4;
+                        }
+                    }
+                    else
+                    {
+                        _colMenuSelect++;
+                        if (_colMenuSelect > 4)
+                        {
+                            _colMenuSelect = 0;
+                        }
+                    }
+                }
+            }
+            else if (e.Key == Keys.D5)
             {
                 if (!_recording)
                 {
@@ -2587,9 +2809,24 @@ namespace MphRead
             }
             else if (e.Key == Keys.Q)
             {
-                if (_showVolumes == VolumeDisplay.Portal)
+                if (e.Alt)
                 {
-                    _volumeEdges = !_volumeEdges;
+                    if (e.Shift)
+                    {
+                        _volumeEdges--;
+                        if (_volumeEdges < 0)
+                        {
+                            _volumeEdges = 2;
+                        }
+                    }
+                    else
+                    {
+                        _volumeEdges++;
+                        if (_volumeEdges > 2)
+                        {
+                            _volumeEdges = 0;
+                        }
+                    }
                 }
                 else
                 {
@@ -2650,7 +2887,7 @@ namespace MphRead
             {
                 if (e.Alt)
                 {
-                    _showAllnodes = !_showAllnodes;
+                    _showAllNodes = !_showAllNodes;
                 }
                 else
                 {
@@ -2936,6 +3173,10 @@ namespace MphRead
             string recording = _recording ? " - Recording" : "";
             string frameAdvance = _frameAdvanceOn ? " - Frame Advance" : "";
             _sb.AppendLine($"MphRead Version {Program.Version}{recording}{frameAdvance}");
+            if (_showCollision)
+            {
+                OutputGetCollisionMenu();
+            }
             if (Selection.Entity != null)
             {
                 OutputGetEntityInfo();
@@ -2952,11 +3193,24 @@ namespace MphRead
                     }
                 }
             }
-            else
+            else if (!_showCollision)
             {
                 OutputGetMenu();
             }
             return _sb.ToString();
+        }
+
+        private void OutputGetCollisionMenu()
+        {
+            _sb.AppendLine();
+            _sb.AppendLine($"[{(_colMenuSelect == 0 ? "x" : " ")}] Entities ({ColEntDisplay})");
+            _sb.AppendLine($"[{(_colMenuSelect == 1 ? "x" : " ")}] Terrain ({ColTerDisplay})");
+            _sb.AppendLine($"[{(_colMenuSelect == 2 ? "x" : " ")}] Interaction ({ColTypeDisplay})");
+            _sb.AppendLine($"[{(_colMenuSelect == 3 ? "x" : " ")}] Color mode ({ColDisplayColor})");
+            _sb.AppendLine($"[{(_colMenuSelect == 4 ? "x" : " ")}] Opacity ({ColDisplayAlpha})");
+            _sb.AppendLine();
+            _sb.AppendLine("K: Next option, Shift+K: Previous option, Alt+K: Hide collision");
+            _sb.AppendLine("J: Next value, Shift+J: Previous value, Ctrl+J: Reset value, Ctrl+K: Reset all");
         }
 
         private void OutputGetMenu()

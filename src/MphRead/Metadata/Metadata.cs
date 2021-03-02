@@ -20,6 +20,7 @@ namespace MphRead
         public string? AnimationPath { get; }
         public string? AnimationShare { get; }
         public string? CollisionPath { get; }
+        public string? ExtraCollisionPath { get; }
         public IReadOnlyList<RecolorMetadata> Recolors { get; }
         public bool UseLightSources { get; }
         public bool FirstHunt { get; }
@@ -136,8 +137,8 @@ namespace MphRead
         }
 
         public ModelMetadata(string name, bool animation = true, bool collision = false, bool texture = false,
-            string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None, string? archive = null,
-            string? addToAnim = null, bool firstHunt = false, string? animationPath = null)
+            string? share = null, MdlSuffix mdlSuffix = MdlSuffix.None, string? archive = null, string? addToAnim = null,
+            bool firstHunt = false, string? animationPath = null, string? extraCollision = null)
         {
             Name = name;
             string path;
@@ -166,6 +167,10 @@ namespace MphRead
             if (collision)
             {
                 CollisionPath = $@"{path}\{name}{suffix}_Collision.bin";
+            }
+            if (extraCollision != null)
+            {
+                ExtraCollisionPath = $@"{path}\{extraCollision}_Collision.bin";
             }
             string recolorModel = ModelPath;
             if (share != null)
@@ -768,7 +773,6 @@ namespace MphRead
             "Platform", "Enemy"
         };
 
-        // todo: organize/enum
         public static Vector3 GetEventColor(Message eventId)
         {
             if (eventId == Message.None) // black
@@ -1286,9 +1290,8 @@ namespace MphRead
                     new ModelMetadata("AlimbicBossDoor")
                 },
                 {
-                    // todo: AlmbCapsuleShld_Collision is also used
                     "AlimbicCapsule",
-                    new ModelMetadata("AlimbicCapsule", collision: true)
+                    new ModelMetadata("AlimbicCapsule", collision: true, extraCollision: "AlmbCapsuleShld")
                 },
                 {
                     "AlimbicComputerStationControl",
@@ -1688,7 +1691,7 @@ namespace MphRead
                 },
                 {
                     "cylinderbase",
-                    new ModelMetadata("cylinderbase", animation: false)
+                    new ModelMetadata("cylinderbase", animation: false, collision: true)
                 },
                 {
                     "CylinderBossEye",

@@ -54,7 +54,8 @@ namespace MphRead
         // 118 = entity list header
         // viewer only
         Room = 200,
-        Model = 201
+        Model = 201,
+        All = 255
     }
 
     public enum VolumeType : uint
@@ -79,7 +80,7 @@ namespace MphRead
         Thin = 3
     }
 
-    public enum ItemType : ushort
+    public enum ItemType : uint
     {
         HealthMedium = 0,
         HealthSmall = 1,
@@ -104,6 +105,18 @@ namespace MphRead
         Deathalt = 20,
         AffinityWeapon = 21,
         PickWpnMissile = 22
+    }
+
+    public enum FhItemType : uint
+    {
+        AmmoSmall = 0,
+        AmmoBig = 1,
+        HealthSmall = 2,
+        HealthBig = 3,
+        DoubleDamage = 4,
+        PickMorphBall = 5,
+        ElectroLob = 6,
+        Missile = 7
     }
 
     public enum BeamType : byte
@@ -146,6 +159,23 @@ namespace MphRead
         FadeOutWhite = 4,
         FadeOutInBlack = 5,
         FadeOutInWhite = 6
+    }
+
+    public enum Terrain
+    {
+        Metal = 0,
+        OrangeHolo = 1,
+        GreenHolo = 2,
+        BlueHolo = 3,
+        Ice = 4,
+        Snow = 5,
+        Sand = 6,
+        Rock = 7,
+        Lava = 8,
+        Acid = 9,
+        Gorea = 10,
+        Unknown11 = 11, // unused
+        All = 12 // viewer only
     }
 
     public enum ModelType

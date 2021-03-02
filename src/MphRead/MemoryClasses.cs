@@ -280,7 +280,7 @@ namespace MphRead.Memory
         public int Field2C { get => ReadInt32(_off5); set => WriteInt32(_off5, value); }
 
         private const int _off6 = 0x30;
-        public int Flags { get => ReadInt32(_off6); set => WriteInt32(_off6, value); }
+        public PlatformFlags Flags { get => (PlatformFlags)ReadInt32(_off6); set => WriteInt32(_off6, (int)value); }
 
         private const int _off7 = 0x34;
         public ushort Field34 { get => ReadUInt16(_off7); set => WriteUInt16(_off7, value); }
@@ -795,10 +795,10 @@ namespace MphRead.Memory
         public Vector3 LockPos { get => ReadVec3(_off10); set => WriteVec3(_off10, value); }
 
         private const int _off11 = 0x54;
-        public int CullRadius { get => ReadInt32(_off11); set => WriteInt32(_off11, value); }
+        public int BoundingRadius { get => ReadInt32(_off11); set => WriteInt32(_off11, value); }
 
         private const int _off12 = 0x58;
-        public int CullRadiusSquared { get => ReadInt32(_off12); set => WriteInt32(_off12, value); }
+        public int BoundingRadiusSquared { get => ReadInt32(_off12); set => WriteInt32(_off12, value); }
 
         private const int _off13 = 0x5C;
         public CModel DoorModel { get; }

@@ -6,6 +6,7 @@ namespace MphRead.Entities
     {
         private readonly OctolithFlagEntityData _data;
         private readonly Vector3 _basePosition = Vector3.Zero;
+        private bool _bounty = false;
 
         public OctolithFlagEntity(OctolithFlagEntityData data, GameMode mode) : base(EntityType.OctolithFlag)
         {
@@ -13,17 +14,14 @@ namespace MphRead.Entities
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             Recolor = mode == GameMode.Capture ? data.TeamId : 2;
-            if (mode == GameMode.Capture || mode == GameMode.Bounty)
+            _bounty = mode != GameMode.Capture;
+            if (mode == GameMode.Capture || mode == GameMode.Bounty || mode == GameMode.BountyTeams)
             {
                 ModelInstance octolithInst = Read.GetModelInstance("octolith_ctf");
                 _models.Add(octolithInst);
-                // note: in-game, the flag is responsible for drawing its own base in Capture mode as well,
-                // but we have that implemented in the flag base entity (which is used in Capture mode, but is invisible)
-                if (mode == GameMode.Bounty)
-                {
-                    ModelInstance flagBaseInst = Read.GetModelInstance("flagbase_bounty");
-                    _models.Add(flagBaseInst);
-                }
+                string name = mode == GameMode.Capture ? "flagbase_ctf" : "flagbase_bounty";
+                ModelInstance flagBaseInst = Read.GetModelInstance(name);
+                _models.Add(flagBaseInst);
                 _basePosition = Position;
                 SetAtBase();
             }
@@ -46,7 +44,7 @@ namespace MphRead.Entities
 
         protected override int GetModelRecolor(ModelInstance inst, int index)
         {
-            if (index == 1)
+            if (index == 1 && _bounty)
             {
                 return 0;
             }

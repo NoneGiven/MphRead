@@ -1,7 +1,9 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -13,8 +15,11 @@ namespace MphRead.Entities
         public EntityType Type { get; }
         public bool ShouldDraw { get; protected set; } = true;
         public bool Active { get; protected set; } = true;
+        public bool Hidden { get; set; }
         public float Alpha { get; set; } = 1.0f;
 
+        private Node? _collisionNode = null;
+        private bool _collisionTransformed = true;
         protected Matrix4 _transform = Matrix4.Identity;
         protected Vector3 _scale = new Vector3(1, 1, 1);
         protected Vector3 _rotation = Vector3.Zero;
@@ -34,6 +39,7 @@ namespace MphRead.Entities
                     value.ExtractRotation().ToEulerAngles(out _rotation);
                     _position = value.Row3.Xyz;
                     _transform = value;
+                    _collisionTransformed = false;
                 }
             }
         }
@@ -52,6 +58,7 @@ namespace MphRead.Entities
                         * Matrix4.CreateRotationY(Rotation.Y) * Matrix4.CreateRotationX(Rotation.X);
                     _transform.Row3.Xyz = Position;
                     _scale = value;
+                    _collisionTransformed = false;
                 }
             }
         }
@@ -70,6 +77,7 @@ namespace MphRead.Entities
                         * Matrix4.CreateRotationY(value.Y) * Matrix4.CreateRotationX(value.X);
                     _transform.Row3.Xyz = Position;
                     _rotation = value;
+                    _collisionTransformed = false;
                 }
             }
         }
@@ -86,6 +94,7 @@ namespace MphRead.Entities
                 {
                     _transform.Row3.Xyz = value;
                     _position = value;
+                    _collisionTransformed = false;
                 }
             }
         }
@@ -94,6 +103,8 @@ namespace MphRead.Entities
 
         protected bool _anyLighting = false;
         protected readonly List<ModelInstance> _models = new List<ModelInstance>();
+        protected readonly List<CollisionInstance> _collision = new List<CollisionInstance>();
+        protected readonly List<List<Vector3>> _colPoints = new List<List<Vector3>>();
 
         protected virtual bool UseNodeTransform => true;
         protected virtual Vector4? OverrideColor { get; } = null;
@@ -107,6 +118,48 @@ namespace MphRead.Entities
         public virtual void Initialize(Scene scene)
         {
             _anyLighting = _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));
+        }
+
+        protected void SetCollision(CollisionInstance collision, int slot = 0, ModelInstance? attach = null)
+        {
+            CollisionInfo info = collision.Info;
+            Debug.Assert(slot == 0 && _collision.Count == 0 || slot == 1 && _collision.Count == 1);
+            _collision.Add(collision);
+            _colPoints.Add(new List<Vector3>(info.Points.Count));
+            for (int i = 0; i < info.Points.Count; i++)
+            {
+                _colPoints[slot].Add(Matrix.Vec3MultMtx4(info.Points[i], Transform));
+            }
+            if (attach != null)
+            {
+                for (int i = 0; i < attach.Model.Nodes.Count; i++)
+                {
+                    Node node = attach.Model.Nodes[i];
+                    if (node.Name == "attach")
+                    {
+                        _collisionNode = node;
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void UpdateCollision()
+        {
+            if (!_collisionTransformed || _collisionNode != null)
+            {
+                Matrix4 transform = _collisionNode == null ? Transform : _collisionNode.Animation;
+                for (int i = 0; i < _collision.Count; i++)
+                {
+                    CollisionInfo collision = _collision[i].Info;
+                    List<Vector3> colPoints = _colPoints[i];
+                    for (int j = 0; j < collision.Points.Count; j++)
+                    {
+                        colPoints[j] = Matrix.Vec3MultMtx4(collision.Points[j], transform);
+                    }
+                }
+                _collisionTransformed = true;
+            }
         }
 
         public virtual void Destroy(Scene scene)
@@ -177,20 +230,28 @@ namespace MphRead.Entities
             model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
             // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
             scene.UpdateMaterials(model, GetModelRecolor(inst, index));
+            UpdateCollision();
         }
 
         public virtual void GetDrawInfo(Scene scene)
         {
-            for (int i = 0; i < _models.Count; i++)
+            if (!Hidden)
             {
-                ModelInstance inst = _models[i];
-                if ((!inst.Active && !scene.ShowAllEntities) || (inst.IsPlaceholder && !scene.ShowInvisibleEntities && !scene.ShowAllEntities))
+                for (int i = 0; i < _models.Count; i++)
                 {
-                    continue;
+                    ModelInstance inst = _models[i];
+                    if ((!inst.Active && !scene.ShowAllEntities) || (inst.IsPlaceholder && !scene.ShowInvisibleEntities && !scene.ShowAllEntities))
+                    {
+                        continue;
+                    }
+                    UpdateTransforms(inst, i, scene);
+                    int polygonId = scene.GetNextPolygonId();
+                    GetItems(inst, i, inst.Model.Nodes[0], polygonId);
                 }
-                UpdateTransforms(inst, i, scene);
-                int polygonId = scene.GetNextPolygonId();
-                GetItems(inst, i, inst.Model.Nodes[0], polygonId);
+            }
+            if (scene.ShowCollision && (scene.ColEntDisplay == EntityType.All || scene.ColEntDisplay == Type))
+            {
+                GetCollisionDrawInfo(scene);
             }
 
             void GetItems(ModelInstance inst, int index, Node node, int polygonId)
@@ -224,6 +285,21 @@ namespace MphRead.Entities
                 {
                     GetItems(inst, index, model.Nodes[node.NextIndex], polygonId);
                 }
+            }
+        }
+
+        protected void GetCollisionDrawInfo(Scene scene)
+        {
+            Debug.Assert(_collision.Count == _colPoints.Count);
+            for (int i = 0; i < _collision.Count; i++)
+            {
+                CollisionInstance collision = _collision[i];
+                if (!collision.Active)
+                {
+                    continue;
+                }
+                List<Vector3> colPoints = _colPoints[i];
+                collision.Info.GetDrawInfo(colPoints, Type, scene);
             }
         }
 
@@ -306,35 +382,35 @@ namespace MphRead.Entities
             return texcoordMatrix;
         }
 
-        protected void SetTransform(Vector3Fx vector2, Vector3Fx vector1, Vector3Fx position)
+        protected void SetTransform(Vector3Fx facing, Vector3Fx up, Vector3Fx position)
         {
-            SetTransform(vector2.ToFloatVector(), vector1.ToFloatVector(), position.ToFloatVector());
+            SetTransform(facing.ToFloatVector(), up.ToFloatVector(), position.ToFloatVector());
         }
 
-        protected void SetTransform(Vector3 up, Vector3 facing, Vector3 position)
+        protected void SetTransform(Vector3 facing, Vector3 up, Vector3 position)
         {
-            Matrix4 transform = GetTransformMatrix(up, facing);
+            Matrix4 transform = GetTransformMatrix(facing, up);
             transform.ExtractRotation().ToEulerAngles(out Vector3 rotation);
             Rotation = rotation;
             Position = position;
         }
 
-        protected static Matrix4 GetTransformMatrix(Vector3 up, Vector3 facing)
+        protected static Matrix4 GetTransformMatrix(Vector3 facing, Vector3 up)
         {
-            Vector3 upNorm = Vector3.Cross(facing, up).Normalized();
-            var faceNorm = Vector3.Cross(up, upNorm);
+            Vector3 cross1 = Vector3.Cross(up, facing).Normalized();
+            var cross2 = Vector3.Cross(facing, cross1);
             Matrix4 transform = default;
-            transform.M11 = upNorm.X;
-            transform.M12 = upNorm.Y;
-            transform.M13 = upNorm.Z;
+            transform.M11 = cross1.X;
+            transform.M12 = cross1.Y;
+            transform.M13 = cross1.Z;
             transform.M14 = 0;
-            transform.M21 = faceNorm.X;
-            transform.M22 = faceNorm.Y;
-            transform.M23 = faceNorm.Z;
+            transform.M21 = cross2.X;
+            transform.M22 = cross2.Y;
+            transform.M23 = cross2.Z;
             transform.M24 = 0;
-            transform.M31 = up.X;
-            transform.M32 = up.Y;
-            transform.M33 = up.Z;
+            transform.M31 = facing.X;
+            transform.M32 = facing.Y;
+            transform.M33 = facing.Z;
             transform.M34 = 0;
             transform.M41 = 0;
             transform.M42 = 0;

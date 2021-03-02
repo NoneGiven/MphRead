@@ -16,7 +16,7 @@ namespace MphRead.Entities
 
         protected override bool UseNodeTransform => false; // default -- will use transform if setting is enabled
 
-        public RoomEntity(string name, RoomMetadata meta, CollisionInfo collision, int layerMask) : base(EntityType.Room)
+        public RoomEntity(string name, RoomMetadata meta, CollisionInstance collision, int layerMask) : base(EntityType.Room)
         {
             ModelInstance inst = Read.GetRoomModelInstance(name);
             _models.Add(inst);
@@ -29,7 +29,8 @@ namespace MphRead.Entities
             Model model = inst.Model;
             var portals = new List<CollisionPortal>();
             var forceFields = new List<PortalNodeRef>();
-            portals.AddRange(collision.Portals.Where(p => (p.LayerMask & 4) != 0 || (p.LayerMask & layerMask) != 0));
+            // portals are already filtered by layer mask
+            portals.AddRange(collision.Info.Portals);
             if (portals.Count > 0)
             {
                 IEnumerable<string> parts = portals.Select(p => p.NodeName1).Concat(portals.Select(p => p.NodeName2)).Distinct();
@@ -75,6 +76,7 @@ namespace MphRead.Entities
             Debug.Assert(model.Nodes.Any(n => n.IsRoomPartNode));
             _portals = portals;
             _forceFields = forceFields;
+            SetCollision(collision);
         }
 
         private void FilterNodes(int layerMask)
@@ -123,56 +125,63 @@ namespace MphRead.Entities
 
         public override void GetDrawInfo(Scene scene)
         {
-            ModelInstance inst = _models[0];
-            UpdateTransforms(inst, 0, scene);
-            for (int i = 0; i < Nodes.Count; i++)
+            if (!Hidden)
             {
-                Node pnode = Nodes[i];
-                if (!pnode.Enabled)
+                ModelInstance inst = _models[0];
+                UpdateTransforms(inst, 0, scene);
+                for (int i = 0; i < Nodes.Count; i++)
                 {
-                    continue;
-                }
-                if (scene.ShowAllNodes)
-                {
-                    GetItems(inst, pnode);
-                }
-                else if (pnode.IsRoomPartNode)
-                {
-                    int childIndex = pnode.ChildIndex;
-                    if (childIndex != UInt16.MaxValue)
+                    Node pnode = Nodes[i];
+                    if (!pnode.Enabled)
                     {
-                        Node node = Nodes[childIndex];
-                        Debug.Assert(node.ChildIndex == UInt16.MaxValue);
-                        GetItems(inst, node);
-                        int nextIndex = node.NextIndex;
-                        while (nextIndex != UInt16.MaxValue)
+                        continue;
+                    }
+                    if (scene.ShowAllNodes)
+                    {
+                        GetItems(inst, pnode);
+                    }
+                    else if (pnode.IsRoomPartNode)
+                    {
+                        int childIndex = pnode.ChildIndex;
+                        if (childIndex != UInt16.MaxValue)
                         {
-                            node = Nodes[nextIndex];
+                            Node node = Nodes[childIndex];
+                            Debug.Assert(node.ChildIndex == UInt16.MaxValue);
                             GetItems(inst, node);
-                            nextIndex = node.NextIndex;
+                            int nextIndex = node.NextIndex;
+                            while (nextIndex != UInt16.MaxValue)
+                            {
+                                node = Nodes[nextIndex];
+                                GetItems(inst, node);
+                                nextIndex = node.NextIndex;
+                            }
+                        }
+                    }
+                }
+                if (scene.ShowForceFields)
+                {
+                    for (int i = 0; i < _forceFields.Count; i++)
+                    {
+                        PortalNodeRef forceField = _forceFields[i];
+                        Node pnode = Nodes[forceField.NodeIndex];
+                        if (pnode.ChildIndex != UInt16.MaxValue)
+                        {
+                            Node node = Nodes[pnode.ChildIndex];
+                            GetItems(inst, node, forceField.Portal);
+                            int nextIndex = node.NextIndex;
+                            while (nextIndex != UInt16.MaxValue)
+                            {
+                                node = Nodes[nextIndex];
+                                GetItems(inst, node, forceField.Portal);
+                                nextIndex = node.NextIndex;
+                            }
                         }
                     }
                 }
             }
-            if (scene.ShowForceFields)
+            if (scene.ShowCollision && (scene.ColEntDisplay == EntityType.All || scene.ColEntDisplay == Type))
             {
-                for (int i = 0; i < _forceFields.Count; i++)
-                {
-                    PortalNodeRef forceField = _forceFields[i];
-                    Node pnode = Nodes[forceField.NodeIndex];
-                    if (pnode.ChildIndex != UInt16.MaxValue)
-                    {
-                        Node node = Nodes[pnode.ChildIndex];
-                        GetItems(inst, node, forceField.Portal);
-                        int nextIndex = node.NextIndex;
-                        while (nextIndex != UInt16.MaxValue)
-                        {
-                            node = Nodes[nextIndex];
-                            GetItems(inst, node, forceField.Portal);
-                            nextIndex = node.NextIndex;
-                        }
-                    }
-                }
+                GetCollisionDrawInfo(scene);
             }
 
             void GetItems(ModelInstance inst, Node node, CollisionPortal? portal = null)
@@ -224,16 +233,17 @@ namespace MphRead.Entities
                 for (int i = 0; i < _portals.Count; i++)
                 {
                     CollisionPortal portal = _portals[i];
-                    Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(4);
-                    verts[0] = portal.Point1;
-                    verts[1] = portal.Point2;
-                    verts[2] = portal.Point3;
-                    verts[3] = portal.Point4;
+                    int count = portal.Points.Count;
+                    Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(count);
+                    for (int j = 0; j < count; j++)
+                    {
+                        verts[j] = portal.Points[j];
+                    }
                     float alpha = GetPortalAlpha(portal.Position, scene.CameraPosition);
                     Vector4 color = portal.IsForceField
                         ? new Vector4(16 / 31f, 16 / 31f, 1f, alpha)
                         : new Vector4(16 / 31f, 1f, 16 / 31f, alpha);
-                    scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Plane, verts);
+                    scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Ngon, verts, count, noLines: true);
                 }
             }
             else if (scene.ShowVolumes == VolumeDisplay.KillPlane)
@@ -244,7 +254,7 @@ namespace MphRead.Entities
                 verts[2] = new Vector3(-10000f, scene.KillHeight, -10000f);
                 verts[3] = new Vector3(-10000f, scene.KillHeight, 10000f);
                 var color = new Vector4(1f, 0f, 1f, 0.5f);
-                scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Plane, verts);
+                scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Quad, verts, noLines: true);
             }
         }
 
