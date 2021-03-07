@@ -267,7 +267,7 @@ namespace MphRead
         public readonly uint Field14; // probably count for Field10
         public readonly uint VramOffset;
         public readonly uint Opaque;
-        public readonly uint Field20;
+        public readonly uint SkipVram;
         public readonly byte PackedSize;
         public readonly byte NativeTextureFormat;
         public readonly ushort TextureObjRef;
