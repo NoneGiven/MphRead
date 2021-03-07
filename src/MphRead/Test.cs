@@ -8,6 +8,7 @@ using MphRead.Effects;
 using MphRead.Entities;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
+using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 
 namespace MphRead
@@ -417,6 +418,27 @@ namespace MphRead
             foreach (Model model in GetAllModels())
             {
             }
+            Nop();
+        }
+
+        public static void TestModelFiles()
+        {
+            var paths = new List<string>();
+            paths.AddRange(Directory.EnumerateFiles(Path.Combine(Paths.FileSystem, "models")).Where(f => f.EndsWith("odel.bin")));
+            paths.AddRange(Directory.EnumerateFiles(Path.Combine(Paths.FileSystem, "_archives"), "", SearchOption.AllDirectories)
+                .Where(f => f.EndsWith("odel.bin")));
+            var headers = new Dictionary<string, Header>();
+            foreach (string path in paths)
+            {
+                var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
+                headers.Add(Path.GetFileName(path), Read.ReadStruct<Header>(bytes));
+            }
+            foreach (KeyValuePair<string, Header> kvp in headers)
+            {
+                string name = kvp.Key;
+                Header h = kvp.Value;
+            }
+            Nop();
         }
 
         public static void TestMtxRestore()

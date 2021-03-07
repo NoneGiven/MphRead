@@ -257,16 +257,17 @@ namespace MphRead
     public readonly struct Texture
     {
         public readonly TextureFormat Format;
+        public readonly byte Padding1;
         public readonly ushort Width;
         public readonly ushort Height;
-        public readonly ushort Padding;
+        public readonly ushort Padding6;
         public readonly uint ImageOffset;
         public readonly uint ImageSize;
-        public readonly uint Unknown7;
-        public readonly uint Unknown8;
+        public readonly uint Field10; // offset into image data
+        public readonly uint Field14; // probably count for Field10
         public readonly uint VramOffset;
         public readonly uint Opaque;
-        public readonly uint Unknown11;
+        public readonly uint Field20;
         public readonly byte PackedSize;
         public readonly byte NativeTextureFormat;
         public readonly ushort TextureObjRef;
@@ -286,24 +287,24 @@ namespace MphRead
     {
         public readonly uint ScaleFactor;
         public readonly Fixed ScaleBase;
-        public readonly uint Unknown3;
-        public readonly uint Unknown4;
+        public readonly uint PrimitiveCount;
+        public readonly uint VertexCount;
         public readonly uint MaterialOffset;
         public readonly uint DlistOffset;
         public readonly uint NodeOffset;
         public readonly ushort NodeWeightCount;
         public readonly byte Flags; // always 0 in the file
-        public readonly byte Field1F;
+        public readonly byte Padding1F;
         public readonly uint NodeWeightOffset;
         public readonly uint MeshOffset;
         public readonly ushort TextureCount;
-        public readonly ushort Field2A;
+        public readonly ushort Padding2A;
         public readonly uint TextureOffset;
         public readonly ushort PaletteCount;
-        public readonly ushort Field32;
+        public readonly ushort Padding32;
         public readonly uint PaletteOffset;
         public readonly uint UnknownAnimationCount;
-        public readonly uint Unknown8;
+        public readonly uint UnknownNodeCount;
         public readonly uint NodeInitialPosition;
         public readonly uint NodePosition;
         public readonly ushort MaterialCount;
@@ -325,7 +326,7 @@ namespace MphRead
         public readonly ushort ParentId;
         public readonly ushort ChildId;
         public readonly ushort NextId;
-        public readonly ushort Field46;
+        public readonly ushort Padding46;
         public readonly uint Enabled;
         public readonly ushort MeshCount;
         public readonly ushort MeshId;
@@ -333,17 +334,17 @@ namespace MphRead
         public readonly short AngleX;
         public readonly short AngleY;
         public readonly short AngleZ;
-        public readonly ushort Field62;
+        public readonly ushort Padding62;
         public readonly Vector3Fx Position;
         public readonly Fixed BoundingRadius;
         public readonly Vector3Fx Vector1;
         public readonly Vector3Fx Vector2;
         public readonly BillboardMode BillboardMode;
-        public readonly byte Field8D;
-        public readonly ushort Field8E;
-        public readonly Matrix43Fx Transform; // scratch space
-        public readonly uint FieldC0;
-        public readonly uint FieldC4;
+        public readonly byte Padding8D;
+        public readonly ushort Padding8E;
+        public readonly Matrix43Fx Transform; // set at runtime
+        public readonly uint BeforeTransform; // MtxFx43* set at runtime
+        public readonly uint AfterTransform; // MtxFx43* set at runtime
         public readonly uint FieldC8;
         public readonly uint FieldCC;
         public readonly uint FieldD0;

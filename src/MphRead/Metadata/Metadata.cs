@@ -2720,7 +2720,11 @@ namespace MphRead
                             new RecolorMetadata("default",
                                 modelPath: @"_archives\common\samus_ice_img_Model.bin",
                                 texturePath: @"_archives\common\samus_ice_img_Model.bin",
-                                palettePath: @"_archives\common\samus_ice_img_Model.bin")
+                                palettePath: @"_archives\common\samus_ice_img_Model.bin"),
+                            new RecolorMetadata("dbl_dmg",
+                                modelPath: @"_archives\common\doubleDamage_img_Model.bin",
+                                texturePath: @"_archives\common\doubleDamage_img_Model.bin",
+                                palettePath: @"_archives\common\doubleDamage_img_Model.bin")
                         }, useLightSources: true)
                 },
                 {
