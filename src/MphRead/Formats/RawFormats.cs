@@ -49,26 +49,26 @@ namespace MphRead
         public readonly ColorRgb Diffuse;
         public readonly ColorRgb Ambient;
         public readonly ColorRgb Specular;
-        public readonly byte Field53;
+        public readonly byte Padding53;
         public readonly PolygonMode PolygonMode;
         public readonly RenderMode RenderMode;
         public readonly byte AnimationFlags;
-        public readonly ushort Field5A;
+        public readonly ushort Padding5A;
         public readonly TexgenMode TexcoordTransformMode;
-        public readonly ushort TexcoordAnimationId;
-        public readonly ushort Field62;
+        public readonly ushort TexcoordAnimationId; // set at runtime
+        public readonly ushort Padding62;
         public readonly uint MatrixId;
         public readonly Fixed ScaleS;
         public readonly Fixed ScaleT;
         public readonly ushort RotateZ;
-        public readonly ushort Field72;
+        public readonly ushort Padding72;
         public readonly Fixed TranslateS;
         public readonly Fixed TranslateT;
-        public readonly ushort MaterialAnimationId;
-        public readonly ushort Field7E;
+        public readonly ushort MaterialAnimationId; // set at runtime
+        public readonly ushort TextureAnimationId; // set at runtime
         public readonly byte PackedRepeatMode;
-        public readonly byte Field81;
-        public readonly ushort Field82;
+        public readonly byte Padding81;
+        public readonly ushort Padding82;
     }
 
     // size: 24
@@ -270,7 +270,7 @@ namespace MphRead
         public readonly uint SkipVram;
         public readonly byte PackedSize;
         public readonly byte NativeTextureFormat;
-        public readonly ushort TextureObjRef;
+        public readonly ushort ObjectRef;
     }
 
     // size: 16
@@ -278,8 +278,8 @@ namespace MphRead
     {
         public readonly uint Offset;
         public readonly uint Size;
-        public readonly uint Unknown4;
-        public readonly uint UnknownReference5;
+        public readonly uint VramOffset;
+        public readonly uint ObjectRef;
     }
 
     // size: 100
@@ -345,16 +345,16 @@ namespace MphRead
         public readonly Matrix43Fx Transform; // set at runtime
         public readonly uint BeforeTransform; // MtxFx43* set at runtime
         public readonly uint AfterTransform; // MtxFx43* set at runtime
-        public readonly uint FieldC8;
-        public readonly uint FieldCC;
-        public readonly uint FieldD0;
-        public readonly uint FieldD4;
-        public readonly uint FieldD8;
-        public readonly uint FieldDC;
-        public readonly uint FieldE0;
-        public readonly uint FieldE4;
-        public readonly uint FieldE8;
-        public readonly uint FieldEC;
+        public readonly uint UnusedC8;
+        public readonly uint UnusedCC;
+        public readonly uint UnusedD0;
+        public readonly uint UnusedD4;
+        public readonly uint UnusedD8;
+        public readonly uint UnusedDC;
+        public readonly uint UnusedE0;
+        public readonly uint UnusedE4;
+        public readonly uint UnusedE8;
+        public readonly uint UnusedEC;
     }
 
     // size: 64
