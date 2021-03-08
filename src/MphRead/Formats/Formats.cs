@@ -38,6 +38,36 @@ namespace MphRead
             }
         }
 
+        public IEnumerable<int> GetAllMeshIds(Model model, bool root = false)
+        {
+            static IEnumerable<int> Yield(Node node)
+            {
+                int start = node.MeshId / 2;
+                for (int i = 0; i < node.MeshCount; i++)
+                {
+                    yield return start + i;
+                }
+            }
+            foreach (int value in Yield(this))
+            {
+                yield return value;
+            }
+            if (!root && NextIndex != UInt16.MaxValue)
+            {
+                foreach (int value in model.Nodes[NextIndex].GetAllMeshIds(model))
+                {
+                    yield return value;
+                }
+            }
+            if (ChildIndex != UInt16.MaxValue)
+            {
+                foreach (int value in model.Nodes[ChildIndex].GetAllMeshIds(model))
+                {
+                    yield return value;
+                }
+            }
+        }
+
         public bool IsRoomPartNode { get; set; }
 
         public Node(RawNode raw)
@@ -57,8 +87,8 @@ namespace MphRead
             );
             Position = raw.Position.ToFloatVector();
             BoundingRadius = raw.BoundingRadius.FloatValue;
-            Vector1 = raw.Vector1.ToFloatVector();
-            Vector2 = raw.Vector2.ToFloatVector();
+            Vector1 = raw.MinBounds.ToFloatVector();
+            Vector2 = raw.MaxBounds.ToFloatVector();
             BillboardMode = raw.BillboardMode;
         }
     }

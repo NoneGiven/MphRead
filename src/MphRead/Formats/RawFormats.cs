@@ -29,8 +29,8 @@ namespace MphRead
     {
         public readonly uint Offset;
         public readonly uint Size;
-        public readonly Vector3Fx MinCoordinates;
-        public readonly Vector3Fx MaxCoordinates;
+        public readonly Vector3Fx MinBounds;
+        public readonly Vector3Fx MaxBounds;
     }
 
     // size: 132
@@ -337,8 +337,8 @@ namespace MphRead
         public readonly ushort Padding62;
         public readonly Vector3Fx Position;
         public readonly Fixed BoundingRadius;
-        public readonly Vector3Fx Vector1;
-        public readonly Vector3Fx Vector2;
+        public readonly Vector3Fx MinBounds;
+        public readonly Vector3Fx MaxBounds;
         public readonly BillboardMode BillboardMode;
         public readonly byte Padding8D;
         public readonly ushort Padding8E;
