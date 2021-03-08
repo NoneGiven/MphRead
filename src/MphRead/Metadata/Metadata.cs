@@ -1663,7 +1663,7 @@ namespace MphRead
                 },
                 {
                     "Chomtroid",
-                    new ModelMetadata("Chomtroid", animation: false)
+                    new ModelMetadata("Chomtroid", animation: true, animationPath: @"models\Mochtroid_Anim.bin")
                 },
                 {
                     "Crate01",
