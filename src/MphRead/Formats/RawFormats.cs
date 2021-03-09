@@ -303,8 +303,8 @@ namespace MphRead
         public readonly ushort PaletteCount;
         public readonly ushort Padding32;
         public readonly uint PaletteOffset;
-        public readonly uint UnknownAnimationCount;
-        public readonly uint UnknownNodeCount;
+        public readonly uint NodePosCounts;
+        public readonly uint NodePosScales;
         public readonly uint NodeInitialPosition;
         public readonly uint NodePosition;
         public readonly ushort MaterialCount;

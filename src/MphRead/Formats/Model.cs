@@ -223,6 +223,12 @@ namespace MphRead
         public IReadOnlyList<float> MatrixStackValues => _matrixStackValues;
         public AnimationGroups AnimationGroups { get; }
 
+        public IReadOnlyList<RawNode> RawNodes { get; }
+        public IReadOnlyList<Vector3Fx> NodePos { get; }
+        public IReadOnlyList<Vector3Fx> NodeInitPos { get; }
+        public IReadOnlyList<int> NodePosCounts { get; }
+        public IReadOnlyList<Fixed> NodePosScales { get; }
+
         public Vector3 Scale { get; }
 
         public Model(string name, bool firstHunt, Header header, IEnumerable<RawNode> nodes, IEnumerable<RawMesh> meshes,
@@ -230,12 +236,18 @@ namespace MphRead
             IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
             IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
             IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
-            IReadOnlyList<Matrix4> textureMatrices, IReadOnlyList<Recolor> recolors, IReadOnlyList<int> nodeWeights)
+            IReadOnlyList<Matrix4> textureMatrices, IReadOnlyList<Recolor> recolors, IReadOnlyList<int> nodeWeights,
+            IReadOnlyList<Vector3Fx> nodePos, IReadOnlyList<Vector3Fx> nodeInitPos, IReadOnlyList<int> posCounts, IReadOnlyList<Fixed> posScales)
         {
             Name = name;
             FirstHunt = firstHunt;
             Header = header;
             Nodes = nodes.Select(n => new Node(n)).ToList();
+            RawNodes = nodes.ToList();
+            NodePos = nodePos;
+            NodeInitPos = nodeInitPos;
+            NodePosCounts = posCounts;
+            NodePosScales = posScales;
             Meshes = meshes.Select(m => new Mesh(m)).ToList();
             Materials = materials.Select(m => new Material(m)).ToList();
             DisplayLists = dlists;
