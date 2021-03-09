@@ -212,9 +212,27 @@ namespace MphRead
                 shared.TextureAnimationGroups.AddRange(animations.TextureAnimationGroups);
                 animations = shared;
             }
+            // NodePosition and NodeInitialPosition are always 0
+            IReadOnlyList<Vector3Fx> nodePos = DoOffsets<Vector3Fx>(initialBytes, header.NodePosition, header.NodeCount);
+            IReadOnlyList<Vector3Fx> nodeInitPos = DoOffsets<Vector3Fx>(initialBytes, header.NodeInitialPosition, header.NodeCount);
+            IReadOnlyList<int> posCounts = DoOffsets<int>(initialBytes, header.NodePosCounts, header.NodeWeightCount);
+            int maxIndex = -1;
+            if (header.NodePosCounts != 0)
+            {
+                for (int n = 0; n < header.NodeWeightCount; n++)
+                {
+                    for (int i = 0; i < posCounts[n]; i++)
+                    {
+                        int posIndex = i + nodeWeights[n];
+                        maxIndex = Math.Max(maxIndex, posIndex);
+                    }
+                }
+            }
+            // NodePosScales is never set, and it would only be used if an entry in posCounts is greater than 1, which also never happens
+            IReadOnlyList<Fixed> posScales = DoOffsets<Fixed>(initialBytes, header.NodePosScales, maxIndex + 1);
             return new Model(name, firstHunt, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
                 animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
-                textureMatrices, recolors, nodeWeights);
+                textureMatrices, recolors, nodeWeights, nodePos, nodeInitPos, posCounts, posScales);
         }
 
         private class AnimationResults
