@@ -155,7 +155,7 @@ namespace MphRead
     public class Material
     {
         public string Name { get; }
-        public byte Lighting { get; set; } // todo: what do lighting values 3 and 5 mean?
+        public byte Lighting { get; set; }
         public CullingMode Culling { get; }
         public byte Alpha { get; }
         public float CurrentAlpha { get; set; }
@@ -174,7 +174,7 @@ namespace MphRead
         public Vector3 CurrentAmbient { get; set; }
         public Vector3 CurrentSpecular { get; set; }
         public PolygonMode PolygonMode { get; set; }
-        public RenderMode RenderMode { get; set; }
+        public RenderMode RenderMode { get; set; } // todo: revisit the use as a polygon ID
         public AnimationFlags AnimationFlags { get; set; }
         public TexgenMode TexgenMode { get; set; }
         public int TexcoordAnimationId { get; set; }
