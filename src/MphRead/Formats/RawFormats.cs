@@ -6,6 +6,7 @@ namespace MphRead
     public static class Sizes
     {
         public static readonly int Header = Marshal.SizeOf(typeof(Header));
+        public static readonly int Texture = Marshal.SizeOf(typeof(Texture));
         public static readonly int EntityHeader = Marshal.SizeOf(typeof(EntityHeader));
         public static readonly int EntityEntry = Marshal.SizeOf(typeof(EntityEntry));
         public static readonly int FhEntityEntry = Marshal.SizeOf(typeof(FhEntityEntry));

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using OpenTK.Mathematics;
@@ -63,6 +64,7 @@ namespace MphRead
 
         public static void GetPolygonAttrs(Model model, Material material, int polygonId)
         {
+            Debug.Assert(polygonId >= 0);
             int v19 = polygonId == 1 ? 0x4000 : 0;
             int v20 = v19 | 0x8000;
             int attr = v20 | material.Lighting | 16 * (int)material.PolygonMode

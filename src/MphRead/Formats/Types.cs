@@ -110,6 +110,11 @@ namespace MphRead
             return ToFloat(Int32.Parse(value, System.Globalization.NumberStyles.HexNumber));
         }
 
+        public static int ToInt(float value)
+        {
+            return (int)(value * 4096);
+        }
+
         public override string? ToString()
         {
             return Value.ToString();
