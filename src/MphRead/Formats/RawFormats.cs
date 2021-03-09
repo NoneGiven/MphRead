@@ -263,8 +263,8 @@ namespace MphRead
         public readonly ushort Padding6;
         public readonly uint ImageOffset;
         public readonly uint ImageSize;
-        public readonly uint Field10; // offset into image data
-        public readonly uint Field14; // probably count for Field10
+        public readonly uint UnusedOffset; // offset into image data
+        public readonly uint UnusedCount; // probably count for previous field
         public readonly uint VramOffset;
         public readonly uint Opaque;
         public readonly uint SkipVram;
