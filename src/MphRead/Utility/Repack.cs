@@ -12,7 +12,6 @@ namespace MphRead.Utility
         {
             // todo: handle recolors
             Model model = Read.GetModelInstance("Crate01").Model;
-            // todo: this approach for textures/palettes doesn't handle ordering or unused data
             var textureInfo = new List<TextureInfo>();
             for (int i = 0; i < model.Recolors[0].Textures.Count; i++)
             {
@@ -20,7 +19,7 @@ namespace MphRead.Utility
                 IReadOnlyList<TextureData> data = model.Recolors[0].TextureData[i];
                 textureInfo.Add(ConvertData(texture, data));
             }
-            var paletteInfo = new List<PaletteInfo>(); // sktodo
+            var paletteInfo = new List<PaletteInfo>();
             foreach (IReadOnlyList<PaletteData> data in model.Recolors[0].PaletteData)
             {
                 paletteInfo.Add(new PaletteInfo(data.Select(d => d.Data).ToList()));
@@ -57,6 +56,19 @@ namespace MphRead.Utility
             Console.WriteLine($"TextureAnimations {header.TextureAnimations} {other.TextureAnimations}");
             Console.WriteLine($"MeshCount {header.MeshCount} {other.MeshCount}");
             Console.WriteLine($"TextureMatrixCount {header.TextureMatrixCount} {other.TextureMatrixCount}");
+            IReadOnlyList<Texture> textures = Read.DoOffsets<Texture>(span, header.TextureOffset, header.TextureCount);
+            IReadOnlyList<Texture> otherTextures = Read.DoOffsets<Texture>(fileBytes, other.TextureOffset, other.TextureCount);
+            Debug.Assert(textures.Count == otherTextures.Count);
+            for (int i = 0; i < textures.Count; i++)
+            {
+                Texture tex = textures[i];
+                Texture otherTex = otherTextures[i];
+                Console.WriteLine($"tex {i}");
+                Console.WriteLine($"ImageOffset {tex.ImageOffset} {otherTex.ImageOffset}");
+                Console.WriteLine($"ImageSize {tex.ImageSize} {otherTex.ImageSize}");
+                Console.WriteLine($"Opaque {tex.Opaque} {otherTex.Opaque}");
+            }
+            File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", "out.bin"), bytes);
             Nop();
         }
 
@@ -318,17 +330,49 @@ namespace MphRead.Utility
         {
             bool opaque = data.All(d => d.Alpha > 0);
             var imageData = new List<byte>();
-            foreach (TextureData entry in data)
+
+            if (texture.Format == TextureFormat.DirectRgb)
             {
-                uint value = entry.Data;
-                if (texture.Format == TextureFormat.DirectRgb)
+                foreach (TextureData entry in data)
                 {
-                    imageData.Add((byte)(value & 0xFF));
-                    imageData.Add((byte)(value >> 8));
+                    imageData.Add((byte)(entry.Data & 0xFF));
+                    imageData.Add((byte)(entry.Data >> 8));
                 }
-                else
+            }
+            else if (texture.Format == TextureFormat.Palette2Bit)
+            {
+                for (int i = 0; i < data.Count; i += 4)
                 {
-                    imageData.Add((byte)value);
+                    byte value = 0;
+                    for (int j = 0; j < 4 && i + j < data.Count; j++)
+                    {
+                        uint index = data[i + j].Data;
+                        value |= (byte)(index << (2 * j));
+                    }
+                    imageData.Add(value);
+                }
+            }
+            else if (texture.Format == TextureFormat.Palette4Bit)
+            {
+                foreach (TextureData entry in data)
+                {
+                }
+                for (int i = 0; i < data.Count; i += 2)
+                {
+                    byte value = 0;
+                    for (int j = 0; j < 2 && i + j < data.Count; j++)
+                    {
+                        uint index = data[i + j].Data;
+                        value |= (byte)(index << (4 * j));
+                    }
+                    imageData.Add(value);
+                }
+            }
+            else
+            {
+                foreach (TextureData entry in data)
+                {
+                    imageData.Add((byte)entry.Data);
                 }
             }
             return new TextureInfo(texture.Format, opaque, texture.Height, texture.Width, imageData);
@@ -361,7 +405,6 @@ namespace MphRead.Utility
             }
             else
             {
-                // todo: confirm palette color ordering
                 var colors = new Dictionary<(byte, byte, byte), int>();
                 foreach (ColorRgba pixel in image.Pixels)
                 {
