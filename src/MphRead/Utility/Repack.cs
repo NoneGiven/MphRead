@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
 
 namespace MphRead.Utility
 {
@@ -28,6 +27,37 @@ namespace MphRead.Utility
             }
             byte[] bytes = PackModel(model.Header.ScaleBase.FloatValue, model.Header.ScaleFactor, model.NodeMatrixIds, model.NodePosCounts,
                 model.Materials, textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists);
+            byte[] fileBytes = File.ReadAllBytes(Path.Combine(Paths.FileSystem, "models", "Crate01_Model.bin"));
+            var span = new ReadOnlySpan<byte>(bytes);
+            Header header = Read.ReadStruct<Header>(span);
+            Header other = model.Header;
+            Console.WriteLine($"ScaleFactor {header.ScaleFactor} {other.ScaleFactor}");
+            Console.WriteLine($"ScaleBase {header.ScaleBase} {other.ScaleBase}");
+            Console.WriteLine($"PrimitiveCount {header.PrimitiveCount} {other.PrimitiveCount}");
+            Console.WriteLine($"VertexCount {header.VertexCount} {other.VertexCount}");
+            Console.WriteLine($"MaterialOffset {header.MaterialOffset} {other.MaterialOffset}");
+            Console.WriteLine($"DlistOffset {header.DlistOffset} {other.DlistOffset}");
+            Console.WriteLine($"NodeOffset {header.NodeOffset} {other.NodeOffset}");
+            Console.WriteLine($"NodeWeightCount {header.NodeWeightCount} {other.NodeWeightCount}");
+            Console.WriteLine($"NodeWeightOffset {header.NodeWeightOffset} {other.NodeWeightOffset}");
+            Console.WriteLine($"MeshOffset {header.MeshOffset} {other.MeshOffset}");
+            Console.WriteLine($"TextureCount {header.TextureCount} {other.TextureCount}");
+            Console.WriteLine($"TextureOffset {header.TextureOffset} {other.TextureOffset}");
+            Console.WriteLine($"PaletteCount {header.PaletteCount} {other.PaletteCount}");
+            Console.WriteLine($"PaletteOffset {header.PaletteOffset} {other.PaletteOffset}");
+            Console.WriteLine($"NodePosCounts {header.NodePosCounts} {other.NodePosCounts}");
+            Console.WriteLine($"NodePosScales {header.NodePosScales} {other.NodePosScales}");
+            Console.WriteLine($"NodeInitialPosition {header.NodeInitialPosition} {other.NodeInitialPosition}");
+            Console.WriteLine($"NodePosition {header.NodePosition} {other.NodePosition}");
+            Console.WriteLine($"MaterialCount {header.MaterialCount} {other.MaterialCount}");
+            Console.WriteLine($"NodeCount {header.NodeCount} {other.NodeCount}");
+            Console.WriteLine($"NodeAnimationOffset {header.NodeAnimationOffset} {other.NodeAnimationOffset}");
+            Console.WriteLine($"TextureCoordinateAnimations {header.TextureCoordinateAnimations} {other.TextureCoordinateAnimations}");
+            Console.WriteLine($"MaterialAnimations {header.MaterialAnimations} {other.MaterialAnimations}");
+            Console.WriteLine($"TextureAnimations {header.TextureAnimations} {other.TextureAnimations}");
+            Console.WriteLine($"MeshCount {header.MeshCount} {other.MeshCount}");
+            Console.WriteLine($"TextureMatrixCount {header.TextureMatrixCount} {other.TextureMatrixCount}");
+            Nop();
         }
 
         public static byte[] PackModel(float scaleBase, uint scaleFactor, IReadOnlyList<int> nodeMtxIds, IReadOnlyList<int> nodePosScaleCounts,
@@ -46,7 +76,7 @@ namespace MphRead.Utility
             {
                 (int primitives, int vertices) = GetDlistCounts(render);
                 primitiveCount += primitives;
-                vertexCount += vertexCount;
+                vertexCount += vertices;
             }
             // header
             int offset = 0;
@@ -130,11 +160,19 @@ namespace MphRead.Utility
             }
             Debug.Assert(stream.Position == offset);
             // materials
-            var matrixIds = new Dictionary<(int, int, ushort, int, int), int>();
+            var matrixIds = new TexMtxMap();
             int materialsOffset = offset;
             foreach (Material material in materials)
             {
-                int matrixId = GetTextureMatrixId(material, matrixIds);
+                ushort height = 1;
+                ushort width = 1;
+                if (material.TextureId != UInt16.MaxValue)
+                {
+                    TextureInfo texture = textures[material.TextureId];
+                    height = texture.Height;
+                    width = texture.Width;
+                }
+                int matrixId = GetTextureMatrixId(material, height, width, matrixIds);
                 WriteMaterial(material, matrixId, writer);
                 offset += Sizes.Material;
             }
@@ -159,11 +197,6 @@ namespace MphRead.Utility
 
             stream.Position = 0;
             // header
-            int flags = 0;
-            int nodeScaleOffset = 0;
-            int nodeInitPosOffset = 0;
-            int nodePosOffset = 0;
-            int texMtxOffset = 0;
             // sktodo: handle animation (file)
             // sktodo: handle separate texture file
             int nodeAnimOffset = 0;
@@ -177,30 +210,30 @@ namespace MphRead.Utility
             writer.Write(materialsOffset);
             writer.Write(dlistsOffset);
             writer.Write(nodesOffset);
-            writer.Write(nodeMtxIds.Count);
-            writer.Write(flags);
+            writer.Write((ushort)nodeMtxIds.Count);
+            writer.Write(padByte); // Flags
             writer.Write(padByte);
             writer.Write(nodeMtxIdOffset);
             writer.Write(meshesOffset);
-            writer.Write(textures.Count);
+            writer.Write((ushort)textures.Count);
             writer.Write(padShort);
             writer.Write(texturesOffset);
-            writer.Write(palettes.Count);
+            writer.Write((ushort)palettes.Count);
             writer.Write(padShort);
             writer.Write(paletteOffset);
             writer.Write(nodePosCountOffset);
-            writer.Write(nodeScaleOffset);
-            writer.Write(nodeInitPosOffset);
-            writer.Write(nodePosOffset);
-            writer.Write(materials.Count);
-            writer.Write(nodes.Count);
-            writer.Write(texMtxOffset);
+            writer.Write(padInt); // NodePosScales
+            writer.Write(padInt); // NodeInitialPosition
+            writer.Write(padInt); // NodePosition
+            writer.Write((ushort)materials.Count);
+            writer.Write((ushort)nodes.Count);
+            writer.Write(padInt); // TextureMatrixOffset
             writer.Write(nodeAnimOffset);
             writer.Write(uvAnimOffset);
             writer.Write(matAnimOffset);
             writer.Write(texAnimOffset);
-            writer.Write(meshes.Count);
-            writer.Write(matrixIds.Count);
+            writer.Write((ushort)meshes.Count);
+            writer.Write((ushort)matrixIds.Count);
             Debug.Assert(stream.Position == Sizes.Header);
             // node matrix IDs
             foreach (int value in nodeMtxIds)
@@ -472,23 +505,23 @@ namespace MphRead.Utility
             return bytesWritten;
         }
 
-        private static int GetTextureMatrixId(Material material, Dictionary<(int, int, ushort, int, int), int> ids)
+        private static int GetTextureMatrixId(Material material, ushort height, ushort width, TexMtxMap ids)
         {
+            if (material.TexgenMode == TexgenMode.None)
+            {
+                return -1;
+            }
             int scaleS = Fixed.ToInt(material.ScaleS);
             int scaleT = Fixed.ToInt(material.ScaleT);
             ushort rotZ = (ushort)(material.RotateZ / MathF.PI / 2f * 65536f);
             int translateS = Fixed.ToInt(material.TranslateS);
             int translateT = Fixed.ToInt(material.TranslateT);
-            if (scaleS  == 4096 && scaleT == 4096 && rotZ == 0 && translateS == 0 && translateT == 0)
-            {
-                return -1;
-            }
-            if (ids.TryGetValue((scaleS, scaleT, rotZ, translateS, translateT), out int index))
+            if (ids.TryGetValue(width, height, scaleS, scaleT, rotZ, translateS, translateT, out int index))
             {
                 return index;
             }
             index = ids.Count;
-            ids.Add((scaleS, scaleT, rotZ, translateS, translateT), index);
+            ids.Add(width, height, scaleS, scaleT, rotZ, translateS, translateT, index);
             return index;
         }
 
@@ -521,7 +554,6 @@ namespace MphRead.Utility
             writer.Write(padShort);
             writer.Write((uint)material.TexgenMode);
             writer.Write(padShort); // TexcoordAnimationId
-            writer.Write(padShort);
             writer.Write(padShort);
             writer.Write(matrixId == -1 ? 0 : matrixId);
             writer.Write(Fixed.ToInt(material.ScaleS));
@@ -589,6 +621,10 @@ namespace MphRead.Utility
             writer.Write(padInt); // UnusedEC
         }
 
+        private static void Nop()
+        {
+        }
+
         public class TextureInfo
         {
             public TextureFormat Format { get; set; }
@@ -631,6 +667,24 @@ namespace MphRead.Utility
                 Height = height;
                 Width = width;
                 Pixels = pixels;
+            }
+        }
+
+        private class TexMtxMap
+        {
+            private readonly Dictionary<(ushort, ushort, int, int, ushort, int, int), int> _dict
+                = new Dictionary<(ushort, ushort, int, int, ushort, int, int), int>();
+
+            public int Count => _dict.Count;
+
+            public bool TryGetValue(ushort width, ushort height, int scaleS, int scaleT, ushort rotZ, int transS, int transT, out int index)
+            {
+                return _dict.TryGetValue((width, height, scaleS, scaleT, rotZ, transS, transT), out index);
+            }
+
+            public void Add(ushort width, ushort height, int scaleS, int scaleT, ushort rotZ, int transS, int transT, int index)
+            {
+                _dict.Add((width, height, scaleS, scaleT, rotZ, transS, transT), index);
             }
         }
     }
