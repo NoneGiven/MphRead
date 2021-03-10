@@ -215,7 +215,16 @@ namespace MphRead
             // NodePosition and NodeInitialPosition are always 0
             IReadOnlyList<Vector3Fx> nodePos = DoOffsets<Vector3Fx>(initialBytes, header.NodePosition, header.NodeCount);
             IReadOnlyList<Vector3Fx> nodeInitPos = DoOffsets<Vector3Fx>(initialBytes, header.NodeInitialPosition, header.NodeCount);
-            IReadOnlyList<int> posCounts = DoOffsets<int>(initialBytes, header.NodePosCounts, header.NodeWeightCount);
+            IReadOnlyList<int> posCounts;
+            if (header.NodePosCounts != 0 && header.NodeWeightCount == 0)
+            {
+                int nodeWeightCount = ((int)header.NodePosCounts - Sizes.Header) / 4;
+                posCounts = DoOffsets<int>(initialBytes, header.NodePosCounts, nodeWeightCount);
+            }
+            else
+            {
+                posCounts = DoOffsets<int>(initialBytes, header.NodePosCounts, header.NodeWeightCount);
+            } 
             int maxIndex = -1;
             if (header.NodePosCounts != 0)
             {

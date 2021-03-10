@@ -127,7 +127,16 @@ namespace MphRead.Utility
             if (nodeMtxIds.Count == 0)
             {
                 nodeMtxIdOffset = 0;
-                offset += sizeof(uint);
+                // sometimes the header has no offset for the matrix IDs, but the values are actually there after the header
+                // in that case, we can infer their existence and count from the pos scale count's offset
+                if (nodePosScaleCounts.Count == 0)
+                {
+                    offset += sizeof(uint);
+                }
+                else
+                {
+                    offset += nodePosScaleCounts.Count * sizeof(uint);
+                }
             }
             else
             {
@@ -142,6 +151,8 @@ namespace MphRead.Utility
             }
             else
             {
+                // in the situation described above, Read is returning the pos scale counts while ignore the matrix IDs,
+                // to avoid the matrix IDs messing with anything in the model transform code, so we can rely on the former here
                 nodePosCountOffset = offset;
                 offset += nodePosScaleCounts.Count * sizeof(uint);
             }
@@ -296,8 +307,11 @@ namespace MphRead.Utility
             // node matrix IDs
             if (nodeMtxIds.Count == 0)
             {
-                writer.Write(padInt);
-                writer.Write(padInt);
+                int padCount = nodePosScaleCounts.Count == 0 ? 1 : nodePosScaleCounts.Count;
+                for (int i = 0; i < padCount; i++)
+                {
+                    writer.Write(padInt);
+                }
             }
             else
             {
