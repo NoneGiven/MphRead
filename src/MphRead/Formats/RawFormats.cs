@@ -7,6 +7,11 @@ namespace MphRead
     {
         public static readonly int Header = Marshal.SizeOf(typeof(Header));
         public static readonly int Texture = Marshal.SizeOf(typeof(Texture));
+        public static readonly int Palette = Marshal.SizeOf(typeof(Palette));
+        public static readonly int Material = Marshal.SizeOf(typeof(RawMaterial));
+        public static readonly int Node = Marshal.SizeOf(typeof(RawNode));
+        public static readonly int Mesh = Marshal.SizeOf(typeof(RawMesh));
+        public static readonly int Dlist = Marshal.SizeOf(typeof(DisplayList));
         public static readonly int EntityHeader = Marshal.SizeOf(typeof(EntityHeader));
         public static readonly int EntityEntry = Marshal.SizeOf(typeof(EntityEntry));
         public static readonly int FhEntityEntry = Marshal.SizeOf(typeof(FhEntityEntry));

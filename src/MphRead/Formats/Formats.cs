@@ -23,8 +23,8 @@ namespace MphRead
         public Vector3 Angle { get; set; }
         public Vector3 Position { get; set; }
         public float BoundingRadius { get; }
-        public Vector3 Vector1 { get; }
-        public Vector3 Vector2 { get; }
+        public Vector3 MinBounds { get; }
+        public Vector3 MaxBounds { get; }
         public BillboardMode BillboardMode { get; }
         public Matrix4 Transform { get; set; } = Matrix4.Identity;
         public Matrix4 Animation { get; set; } = Matrix4.Identity;
@@ -87,8 +87,8 @@ namespace MphRead
             );
             Position = raw.Position.ToFloatVector();
             BoundingRadius = raw.BoundingRadius.FloatValue;
-            Vector1 = raw.MinBounds.ToFloatVector();
-            Vector2 = raw.MaxBounds.ToFloatVector();
+            MinBounds = raw.MinBounds.ToFloatVector();
+            MaxBounds = raw.MaxBounds.ToFloatVector();
             BillboardMode = raw.BillboardMode;
         }
     }

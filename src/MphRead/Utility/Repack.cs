@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -23,17 +24,21 @@ namespace MphRead.Utility
             }
         }
 
-        public static void PackModel(float scaleBase, int scaleFactor, IReadOnlyList<IReadOnlyList<RenderInstruction>> dlists,
-            IReadOnlyList<int> nodeMtxIds, IReadOnlyList<int> nodePosScaleCounts, IReadOnlyList<Material> materials,
-            IReadOnlyList<TextureInfo> textures, IReadOnlyList<Node> nodes, IReadOnlyList<Mesh> meshes)
+        public static void PackModel(float scaleBase, int scaleFactor, IReadOnlyList<int> nodeMtxIds, IReadOnlyList<int> nodePosScaleCounts,
+            IReadOnlyList<Material> materials, IReadOnlyList<TextureInfo> textures, IReadOnlyList<Node> nodes, IReadOnlyList<Mesh> meshes,
+            IReadOnlyList<IReadOnlyList<RenderInstruction>> renders, IReadOnlyList<DisplayList> dlists)
         {
+            byte padByte = 0;
+            ushort padShort = 0;
+            uint padInt = 0;
             using var stream = new MemoryStream();
             using var writer = new BinaryWriter(stream);
             int primitiveCount = 0;
             int vertexCount = 0;
-            foreach (IReadOnlyList<RenderInstruction> dlist in dlists)
+            Debug.Assert(renders.Count == dlists.Count);
+            foreach (IReadOnlyList<RenderInstruction> render in renders)
             {
-                (int primitives, int vertices) = GetDlistCounts(dlist);
+                (int primitives, int vertices) = GetDlistCounts(render);
                 primitiveCount += primitives;
                 vertexCount += vertexCount;
             }
@@ -47,8 +52,7 @@ namespace MphRead.Utility
             int nodePosCountOffset = offset;
             offset += nodePosScaleCounts.Count * sizeof(int);
             // texture data
-            int textureDataOffset = offset;
-            stream.Position = textureDataOffset;
+            stream.Position = offset;
             var palettes = new List<List<ushort>>();
             var textureResults = new List<(int Offset, int Size, bool Opaque)>();
             foreach (TextureInfo texture in textures)
@@ -65,33 +69,96 @@ namespace MphRead.Utility
                 WriteTextureMeta(textures[i], off, size, opaque, writer);
                 offset += Sizes.Texture;
             }
-
+            Debug.Assert(stream.Position == offset);
             // palette data
-            int paletteDataOffset = offset;
-            // texture data
+            var paletteResults = new List<(int, int)>();
+            foreach (List<ushort> palette in palettes)
+            {
+                int size = 0;
+                foreach (ushort value in palette)
+                {
+                    writer.Write(value);
+                    size += sizeof(ushort);
+                }
+                paletteResults.Add((offset, size));
+                offset += size;
+            }
+            Debug.Assert(stream.Position == offset);
+            // palette metdata
             int paletteOffset = offset;
+            foreach ((int off, int size) in paletteResults)
+            {
+                writer.Write(off);
+                writer.Write(size);
+                writer.Write(padInt); // VramOffset
+                writer.Write(padInt); // ObjectRef
+                offset += Sizes.Palette;
+            }
+            Debug.Assert(stream.Position == offset);
             // dlist data
-            int dlistDataOffset = offset;
+            var dlistResults = new List<(int, int)>();
+            foreach (IReadOnlyList<RenderInstruction> render in renders)
+            {
+                int size = WriteRenderInstructions(render, writer);
+                dlistResults.Add((offset, size));
+                offset += size;
+            }
+            Debug.Assert(stream.Position == offset);
             // dlist metadata
             int dlistsOffset = offset;
+            for (int i = 0; i < dlists.Count; i++)
+            {
+                DisplayList dlist = dlists[i];
+                (int off, int size) = dlistResults[i];
+                // todo: (attmept to) calculate dlist bounds instead of relying on existing values
+                writer.Write(off);
+                writer.Write(size);
+                writer.Write(dlist.MinBounds.X.Value);
+                writer.Write(dlist.MinBounds.Y.Value);
+                writer.Write(dlist.MinBounds.Z.Value);
+                writer.Write(dlist.MaxBounds.X.Value);
+                writer.Write(dlist.MaxBounds.Y.Value);
+                writer.Write(dlist.MaxBounds.Z.Value);
+                offset += Sizes.Dlist;
+            }
+            Debug.Assert(stream.Position == offset);
             // materials
+            var matrixIds = new Dictionary<(int, int, ushort, int, int), int>();
             int materialsOffset = offset;
+            foreach (Material material in materials)
+            {
+                int matrixId = GetTextureMatrixId(material, matrixIds);
+                WriteMaterial(material, matrixId, writer);
+                offset += Sizes.Material;
+            }
+            Debug.Assert(stream.Position == offset);
             // nodes
             int nodesOffset = offset;
+            foreach (Node node in nodes)
+            {
+                WriteNode(node, writer);
+                offset += Sizes.Node;
+            }
+            Debug.Assert(stream.Position == offset);
             // meshes
             int meshesOffset = offset;
+            foreach (Mesh mesh in meshes)
+            {
+                writer.Write((ushort)mesh.MaterialId);
+                writer.Write((ushort)mesh.DlistId);
+                offset += Sizes.Mesh;
+            }
+            Debug.Assert(stream.Position == offset);
 
             stream.Position = 0;
-            // write header
-            byte padByte = 0;
-            ushort padShort = 0;
+            // header
             int flags = 0;
             int nodeScaleOffset = 0;
             int nodeInitPosOffset = 0;
             int nodePosOffset = 0;
             int texMtxOffset = 0;
-            int texMtxCount = 0; // sktodo
-            // sktodo: animation (file)
+            // sktodo: handle animation (file)
+            // sktodo: handle separate texture file
             int nodeAnimOffset = 0;
             int uvAnimOffset = 0;
             int matAnimOffset = 0;
@@ -126,27 +193,32 @@ namespace MphRead.Utility
             writer.Write(matAnimOffset);
             writer.Write(texAnimOffset);
             writer.Write(meshes.Count);
-            writer.Write(texMtxCount);
+            writer.Write(matrixIds.Count);
             Debug.Assert(stream.Position == Sizes.Header);
-            // write node matrix IDs
+            // node matrix IDs
             foreach (int value in nodeMtxIds)
             {
                 writer.Write(value);
             }
-            // write node pos counts
+            // node pos counts
             foreach (int value in nodePosScaleCounts)
             {
                 writer.Write(value);
             }
-            // write texture data
-            // write texture metadata
-            // write palette data
-            // write texture data
-            // write dlist data
-            // write dlist metadata
-            // write materials
-            // write nodes
-            // write meshes
+        }
+
+        private static void WriteString(string value, int length, BinaryWriter writer)
+        {
+            Debug.Assert(value.Length <= length);
+            int i = 0;
+            for (; i < value.Length; i++)
+            {
+                writer.Write(value[i]);
+            }
+            for (; i < length; i++)
+            {
+                writer.Write('\0');
+            }
         }
 
         private static (int primitives, int vertices) GetDlistCounts(IReadOnlyList<RenderInstruction> dlist)
@@ -348,6 +420,150 @@ namespace MphRead.Utility
             writer.Write(padByte); // PackedSize
             writer.Write(padByte); // NativeTextureFormat
             writer.Write(padShort); // ObjectRef
+        }
+
+        private static int WriteRenderInstructions(IReadOnlyList<RenderInstruction> list, BinaryWriter writer)
+        {
+            int bytesWritten = 0;
+            var arguments = new List<uint>();
+            Debug.Assert(list.Count % 4 == 0);
+            for (int i = 0; i < list.Count; i += 4)
+            {
+                arguments.Clear();
+                uint packedCommands = 0;
+                for (int j = 0; j < 4; j++)
+                {
+                    RenderInstruction inst = list[i + j];
+                    uint code = (((uint)inst.Code) - 0x400) >> 2;
+                    packedCommands |= code << (8 * j);
+                    arguments.AddRange(inst.Arguments);
+                }
+                writer.Write(packedCommands);
+                bytesWritten += sizeof(uint);
+                foreach (uint argument in arguments)
+                {
+                    writer.Write(argument);
+                    bytesWritten += sizeof(uint);
+                }
+            }
+            return bytesWritten;
+        }
+
+        private static int GetTextureMatrixId(Material material, Dictionary<(int, int, ushort, int, int), int> ids)
+        {
+            int scaleS = Fixed.ToInt(material.ScaleS);
+            int scaleT = Fixed.ToInt(material.ScaleT);
+            ushort rotZ = (ushort)(material.RotateZ / MathF.PI / 2f * 65536f);
+            int translateS = Fixed.ToInt(material.TranslateS);
+            int translateT = Fixed.ToInt(material.TranslateT);
+            if (scaleS  == 4096 && scaleT == 4096 && rotZ == 0 && translateS == 0 && translateT == 0)
+            {
+                return -1;
+            }
+            if (ids.TryGetValue((scaleS, scaleT, rotZ, translateS, translateT), out int index))
+            {
+                return index;
+            }
+            index = ids.Count;
+            ids.Add((scaleS, scaleT, rotZ, translateS, translateT), index);
+            return index;
+        }
+
+        private static void WriteMaterial(Material material, int matrixId, BinaryWriter writer)
+        {
+            byte padByte = 0;
+            ushort padShort = 0;
+            WriteString(material.Name, length: 64, writer);
+            writer.Write(material.Lighting);
+            writer.Write((byte)material.Culling);
+            writer.Write(material.Alpha);
+            writer.Write(material.Wireframe);
+            writer.Write((ushort)material.PaletteId);
+            writer.Write((ushort)material.TextureId);
+            writer.Write((byte)material.XRepeat);
+            writer.Write((byte)material.YRepeat);
+            writer.Write(material.Diffuse.Red);
+            writer.Write(material.Diffuse.Green);
+            writer.Write(material.Diffuse.Blue);
+            writer.Write(material.Ambient.Red);
+            writer.Write(material.Ambient.Green);
+            writer.Write(material.Ambient.Blue);
+            writer.Write(material.Specular.Red);
+            writer.Write(material.Specular.Green);
+            writer.Write(material.Specular.Blue);
+            writer.Write(padByte);
+            writer.Write((uint)material.PolygonMode);
+            writer.Write((byte)material.RenderMode);
+            writer.Write((byte)material.AnimationFlags);
+            writer.Write(padShort);
+            writer.Write((uint)material.TexgenMode);
+            writer.Write(padShort); // TexcoordAnimationId
+            writer.Write(padShort);
+            writer.Write(padShort);
+            writer.Write(matrixId == -1 ? 0 : matrixId);
+            writer.Write(Fixed.ToInt(material.ScaleS));
+            writer.Write(Fixed.ToInt(material.ScaleT));
+            writer.Write((ushort)(material.RotateZ / MathF.PI / 2f * 65536f));
+            writer.Write(padShort);
+            writer.Write(Fixed.ToInt(material.TranslateS));
+            writer.Write(Fixed.ToInt(material.TranslateT));
+            writer.Write(padShort); // MaterialAnimationId
+            writer.Write(padShort); // TextureAnimationId
+            writer.Write(padByte); // PackedRepeatMode
+            writer.Write(padByte);
+            writer.Write(padShort);
+        }
+
+        private static void WriteNode(Node node, BinaryWriter writer)
+        {
+            byte padByte = 0;
+            ushort padShort = 0;
+            uint padInt = 0;
+            WriteString(node.Name, length: 64, writer);
+            writer.Write((ushort)node.ParentIndex);
+            writer.Write((ushort)node.ChildIndex);
+            writer.Write((ushort)node.NextIndex);
+            writer.Write(padShort);
+            writer.Write(node.Enabled ? 1 : 0);
+            writer.Write((ushort)node.MeshCount);
+            writer.Write((ushort)node.MeshId);
+            writer.Write(Fixed.ToInt(node.Scale.X));
+            writer.Write(Fixed.ToInt(node.Scale.Y));
+            writer.Write(Fixed.ToInt(node.Scale.Z));
+            writer.Write((ushort)(node.Angle.X / MathF.PI / 2f * 65536f));
+            writer.Write((ushort)(node.Angle.Y / MathF.PI / 2f * 65536f));
+            writer.Write((ushort)(node.Angle.Z / MathF.PI / 2f * 65536f));
+            writer.Write(padShort);
+            writer.Write(Fixed.ToInt(node.Position.X));
+            writer.Write(Fixed.ToInt(node.Position.Y));
+            writer.Write(Fixed.ToInt(node.Position.Z));
+            writer.Write(Fixed.ToInt(node.BoundingRadius));
+            // todo: (attmept to) calculate node bounds instead of relying on existing values
+            writer.Write(Fixed.ToInt(node.MinBounds.X));
+            writer.Write(Fixed.ToInt(node.MinBounds.Y));
+            writer.Write(Fixed.ToInt(node.MinBounds.Z));
+            writer.Write(Fixed.ToInt(node.MaxBounds.X));
+            writer.Write(Fixed.ToInt(node.MaxBounds.Y));
+            writer.Write(Fixed.ToInt(node.MaxBounds.Z));
+            writer.Write((byte)node.BillboardMode);
+            writer.Write(padByte);
+            writer.Write(padShort);
+            for (int i = 0; i < 12; i++)
+            {
+                writer.Write(padInt); // transform MtxFx43
+            }
+            writer.Write(padInt); // BeforeTransform
+            writer.Write(padInt); // AfterTransform
+            writer.Write(padInt); // UnusedC8
+            writer.Write(padInt); // UnusedCC
+            writer.Write(padInt); // UnusedD0
+            writer.Write(padInt); // UnusedD4
+            writer.Write(padInt); // UnusedD8
+            writer.Write(padInt); // UnusedDC
+            writer.Write(padInt); // UnusedE0
+            writer.Write(padInt); // UnusedE4
+            writer.Write(padInt); // UnusedE8
+            writer.Write(padInt); // UnusedEC
         }
     }
 }
