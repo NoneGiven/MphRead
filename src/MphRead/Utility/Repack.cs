@@ -10,8 +10,27 @@ namespace MphRead.Utility
     {
         public static void TestRepack()
         {
+            foreach (ModelMetadata meta in Metadata.ModelMetadata.Values)
+            {
+                // todo: these
+                if (meta.Recolors[0].ModelPath == meta.ModelPath && meta.Recolors[0].TexturePath == meta.ModelPath
+                    && meta.Recolors[0].SeparatePaletteHeader == false && meta.Name != "doubleDamage_img")
+                {
+                    TestRepack(meta.Name, meta.ModelPath, log: false);
+                }
+            }
+        }
+
+        public static void TestRepack(string name)
+        {
+            ModelMetadata meta = Metadata.ModelMetadata[name];
+            TestRepack(meta.Name, meta.ModelPath, log: true);
+        }
+
+        private static void TestRepack(string modelName, string modelPath, bool log)
+        {
             // todo: handle recolors
-            Model model = Read.GetModelInstance("Crate01").Model;
+            Model model = Read.GetModelInstance(modelName).Model;
             var textureInfo = new List<TextureInfo>();
             for (int i = 0; i < model.Recolors[0].Textures.Count; i++)
             {
@@ -26,49 +45,59 @@ namespace MphRead.Utility
             }
             byte[] bytes = PackModel(model.Header.ScaleBase.FloatValue, model.Header.ScaleFactor, model.NodeMatrixIds, model.NodePosCounts,
                 model.Materials, textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists);
-            byte[] fileBytes = File.ReadAllBytes(Path.Combine(Paths.FileSystem, "models", "Crate01_Model.bin"));
+            byte[] fileBytes = File.ReadAllBytes(Path.Combine(Paths.FileSystem, modelPath));
+            Debug.Assert(bytes.Length == fileBytes.Length);
             var span = new ReadOnlySpan<byte>(bytes);
             Header header = Read.ReadStruct<Header>(span);
             Header other = model.Header;
-            Console.WriteLine($"ScaleFactor {header.ScaleFactor} {other.ScaleFactor}");
-            Console.WriteLine($"ScaleBase {header.ScaleBase} {other.ScaleBase}");
-            Console.WriteLine($"PrimitiveCount {header.PrimitiveCount} {other.PrimitiveCount}");
-            Console.WriteLine($"VertexCount {header.VertexCount} {other.VertexCount}");
-            Console.WriteLine($"MaterialOffset {header.MaterialOffset} {other.MaterialOffset}");
-            Console.WriteLine($"DlistOffset {header.DlistOffset} {other.DlistOffset}");
-            Console.WriteLine($"NodeOffset {header.NodeOffset} {other.NodeOffset}");
-            Console.WriteLine($"NodeWeightCount {header.NodeWeightCount} {other.NodeWeightCount}");
-            Console.WriteLine($"NodeWeightOffset {header.NodeWeightOffset} {other.NodeWeightOffset}");
-            Console.WriteLine($"MeshOffset {header.MeshOffset} {other.MeshOffset}");
-            Console.WriteLine($"TextureCount {header.TextureCount} {other.TextureCount}");
-            Console.WriteLine($"TextureOffset {header.TextureOffset} {other.TextureOffset}");
-            Console.WriteLine($"PaletteCount {header.PaletteCount} {other.PaletteCount}");
-            Console.WriteLine($"PaletteOffset {header.PaletteOffset} {other.PaletteOffset}");
-            Console.WriteLine($"NodePosCounts {header.NodePosCounts} {other.NodePosCounts}");
-            Console.WriteLine($"NodePosScales {header.NodePosScales} {other.NodePosScales}");
-            Console.WriteLine($"NodeInitialPosition {header.NodeInitialPosition} {other.NodeInitialPosition}");
-            Console.WriteLine($"NodePosition {header.NodePosition} {other.NodePosition}");
-            Console.WriteLine($"MaterialCount {header.MaterialCount} {other.MaterialCount}");
-            Console.WriteLine($"NodeCount {header.NodeCount} {other.NodeCount}");
-            Console.WriteLine($"NodeAnimationOffset {header.NodeAnimationOffset} {other.NodeAnimationOffset}");
-            Console.WriteLine($"TextureCoordinateAnimations {header.TextureCoordinateAnimations} {other.TextureCoordinateAnimations}");
-            Console.WriteLine($"MaterialAnimations {header.MaterialAnimations} {other.MaterialAnimations}");
-            Console.WriteLine($"TextureAnimations {header.TextureAnimations} {other.TextureAnimations}");
-            Console.WriteLine($"MeshCount {header.MeshCount} {other.MeshCount}");
-            Console.WriteLine($"TextureMatrixCount {header.TextureMatrixCount} {other.TextureMatrixCount}");
+            if (log)
+            {
+                Console.WriteLine($"ScaleFactor {header.ScaleFactor} {other.ScaleFactor}");
+                Console.WriteLine($"ScaleBase {header.ScaleBase} {other.ScaleBase}");
+                Console.WriteLine($"PrimitiveCount {header.PrimitiveCount} {other.PrimitiveCount}");
+                Console.WriteLine($"VertexCount {header.VertexCount} {other.VertexCount}");
+                Console.WriteLine($"MaterialOffset {header.MaterialOffset} {other.MaterialOffset}");
+                Console.WriteLine($"DlistOffset {header.DlistOffset} {other.DlistOffset}");
+                Console.WriteLine($"NodeOffset {header.NodeOffset} {other.NodeOffset}");
+                Console.WriteLine($"NodeWeightCount {header.NodeWeightCount} {other.NodeWeightCount}");
+                Console.WriteLine($"NodeWeightOffset {header.NodeWeightOffset} {other.NodeWeightOffset}");
+                Console.WriteLine($"MeshOffset {header.MeshOffset} {other.MeshOffset}");
+                Console.WriteLine($"TextureCount {header.TextureCount} {other.TextureCount}");
+                Console.WriteLine($"TextureOffset {header.TextureOffset} {other.TextureOffset}");
+                Console.WriteLine($"PaletteCount {header.PaletteCount} {other.PaletteCount}");
+                Console.WriteLine($"PaletteOffset {header.PaletteOffset} {other.PaletteOffset}");
+                Console.WriteLine($"NodePosCounts {header.NodePosCounts} {other.NodePosCounts}");
+                Console.WriteLine($"NodePosScales {header.NodePosScales} {other.NodePosScales}");
+                Console.WriteLine($"NodeInitialPosition {header.NodeInitialPosition} {other.NodeInitialPosition}");
+                Console.WriteLine($"NodePosition {header.NodePosition} {other.NodePosition}");
+                Console.WriteLine($"MaterialCount {header.MaterialCount} {other.MaterialCount}");
+                Console.WriteLine($"NodeCount {header.NodeCount} {other.NodeCount}");
+                Console.WriteLine($"NodeAnimationOffset {header.NodeAnimationOffset} {other.NodeAnimationOffset}");
+                Console.WriteLine($"TextureCoordinateAnimations {header.TextureCoordinateAnimations} {other.TextureCoordinateAnimations}");
+                Console.WriteLine($"MaterialAnimations {header.MaterialAnimations} {other.MaterialAnimations}");
+                Console.WriteLine($"TextureAnimations {header.TextureAnimations} {other.TextureAnimations}");
+                Console.WriteLine($"MeshCount {header.MeshCount} {other.MeshCount}");
+                Console.WriteLine($"TextureMatrixCount {header.TextureMatrixCount} {other.TextureMatrixCount}");
+            }
+            Debug.Assert(header.TextureCount == other.TextureCount);
             IReadOnlyList<Texture> textures = Read.DoOffsets<Texture>(span, header.TextureOffset, header.TextureCount);
             IReadOnlyList<Texture> otherTextures = Read.DoOffsets<Texture>(fileBytes, other.TextureOffset, other.TextureCount);
-            Debug.Assert(textures.Count == otherTextures.Count);
             for (int i = 0; i < textures.Count; i++)
             {
                 Texture tex = textures[i];
                 Texture otherTex = otherTextures[i];
-                Console.WriteLine($"tex {i}");
-                Console.WriteLine($"ImageOffset {tex.ImageOffset} {otherTex.ImageOffset}");
-                Console.WriteLine($"ImageSize {tex.ImageSize} {otherTex.ImageSize}");
-                Console.WriteLine($"Opaque {tex.Opaque} {otherTex.Opaque}");
+                if (log)
+                {
+                    Console.WriteLine($"tex {i}");
+                    Console.WriteLine($"ImageOffset {tex.ImageOffset} {otherTex.ImageOffset}");
+                    Console.WriteLine($"ImageSize {tex.ImageSize} {otherTex.ImageSize}");
+                    Console.WriteLine($"Opaque {tex.Opaque} {otherTex.Opaque}");
+                }
             }
-            File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", "out.bin"), bytes);
+            Debug.Assert(header.PaletteCount == other.PaletteCount);
+            IReadOnlyList<Palette> palettes = Read.DoOffsets<Palette>(span, header.PaletteOffset, header.PaletteCount);
+            IReadOnlyList<Palette> otherPalettes = Read.DoOffsets<Palette>(fileBytes, other.PaletteOffset, other.PaletteCount);
+            //File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", "out2.bin"), bytes);
             Nop();
         }
 
@@ -93,12 +122,29 @@ namespace MphRead.Utility
             // header
             int offset = 0;
             offset += Sizes.Header;
-            // node mtx IDs
-            int nodeMtxIdOffset = offset;
-            offset += nodeMtxIds.Count * sizeof(int);
-            // node pos scale counts
-            int nodePosCountOffset = offset;
-            offset += nodePosScaleCounts.Count * sizeof(int);
+            // node mtx IDs, node pos scale counts
+            int nodeMtxIdOffset;
+            if (nodeMtxIds.Count == 0)
+            {
+                nodeMtxIdOffset = 0;
+                offset += sizeof(uint);
+            }
+            else
+            {
+                nodeMtxIdOffset = offset;
+                offset += nodeMtxIds.Count * sizeof(uint);
+            }
+            int nodePosCountOffset;
+            if (nodePosScaleCounts.Count == 0)
+            {
+                nodePosCountOffset = 0;
+                offset += sizeof(uint);
+            }
+            else
+            {
+                nodePosCountOffset = offset;
+                offset += nodePosScaleCounts.Count * sizeof(uint);
+            }
             // texture data
             stream.Position = offset;
             var textureDataOffsets = new List<int>();
@@ -248,9 +294,17 @@ namespace MphRead.Utility
             writer.Write((ushort)matrixIds.Count);
             Debug.Assert(stream.Position == Sizes.Header);
             // node matrix IDs
-            foreach (int value in nodeMtxIds)
+            if (nodeMtxIds.Count == 0)
             {
-                writer.Write(value);
+                writer.Write(padInt);
+                writer.Write(padInt);
+            }
+            else
+            {
+                foreach (int value in nodeMtxIds)
+                {
+                    writer.Write(value);
+                }
             }
             // node pos counts
             foreach (int value in nodePosScaleCounts)
