@@ -151,7 +151,7 @@ namespace MphRead.Utility
             }
             else
             {
-                // in the situation described above, Read is returning the pos scale counts while ignore the matrix IDs,
+                // in the situation described above, Read is returning the pos scale counts while ignoring the matrix IDs,
                 // to avoid the matrix IDs messing with anything in the model transform code, so we can rely on the former here
                 nodePosCountOffset = offset;
                 offset += nodePosScaleCounts.Count * sizeof(uint);
