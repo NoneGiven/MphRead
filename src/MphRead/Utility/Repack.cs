@@ -3,30 +3,36 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace MphRead.Utility
 {
     public static class Repack
     {
-        public class TextureInfo
+        public static void TestRepack()
         {
-            public TextureFormat Format { get; set; }
-            public ushort Height { get; set; }
-            public ushort Width { get; set; }
-            public IReadOnlyList<ColorRgba> Pixels { get; set; }
-
-            public TextureInfo(TextureFormat format, ushort height, ushort width, IReadOnlyList<ColorRgba> pixels)
+            // todo: handle recolors
+            Model model = Read.GetModelInstance("Crate01").Model;
+            // todo: this approach for textures/palettes doesn't handle ordering or unused data
+            var textureInfo = new List<TextureInfo>();
+            for (int i = 0; i < model.Recolors[0].Textures.Count; i++)
             {
-                Format = format;
-                Height = height;
-                Width = width;
-                Pixels = pixels;
+                Texture texture = model.Recolors[0].Textures[i];
+                IReadOnlyList<TextureData> data = model.Recolors[0].TextureData[i];
+                textureInfo.Add(ConvertData(texture, data));
             }
+            var paletteInfo = new List<PaletteInfo>(); // sktodo
+            foreach (IReadOnlyList<PaletteData> data in model.Recolors[0].PaletteData)
+            {
+                paletteInfo.Add(new PaletteInfo(data.Select(d => d.Data).ToList()));
+            }
+            byte[] bytes = PackModel(model.Header.ScaleBase.FloatValue, model.Header.ScaleFactor, model.NodeMatrixIds, model.NodePosCounts,
+                model.Materials, textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists);
         }
 
-        public static void PackModel(float scaleBase, int scaleFactor, IReadOnlyList<int> nodeMtxIds, IReadOnlyList<int> nodePosScaleCounts,
-            IReadOnlyList<Material> materials, IReadOnlyList<TextureInfo> textures, IReadOnlyList<Node> nodes, IReadOnlyList<Mesh> meshes,
-            IReadOnlyList<IReadOnlyList<RenderInstruction>> renders, IReadOnlyList<DisplayList> dlists)
+        public static byte[] PackModel(float scaleBase, uint scaleFactor, IReadOnlyList<int> nodeMtxIds, IReadOnlyList<int> nodePosScaleCounts,
+            IReadOnlyList<Material> materials, IReadOnlyList<TextureInfo> textures, IReadOnlyList<PaletteInfo> palettes, IReadOnlyList<Node> nodes,
+            IReadOnlyList<Mesh> meshes, IReadOnlyList<IReadOnlyList<RenderInstruction>> renders, IReadOnlyList<DisplayList> dlists)
         {
             byte padByte = 0;
             ushort padShort = 0;
@@ -53,43 +59,44 @@ namespace MphRead.Utility
             offset += nodePosScaleCounts.Count * sizeof(int);
             // texture data
             stream.Position = offset;
-            var palettes = new List<List<ushort>>();
-            var textureResults = new List<(int Offset, int Size, bool Opaque)>();
+            var textureDataOffsets = new List<int>();
             foreach (TextureInfo texture in textures)
             {
-                (int size, bool opaque) = WriteTextureData(texture, palettes, writer);
-                textureResults.Add((offset, size, opaque));
-                offset += size;
+                textureDataOffsets.Add(offset);
+                foreach (byte data in texture.Data)
+                {
+                    writer.Write(data);
+                    offset++;
+                }
             }
+            Debug.Assert(stream.Position == offset);
             // texture metadata
             int texturesOffset = offset;
             for (int i = 0; i < textures.Count; i++)
             {
-                (int off, int size, bool opaque) = textureResults[i];
-                WriteTextureMeta(textures[i], off, size, opaque, writer);
+                WriteTextureMeta(textures[i], textureDataOffsets[i], writer);
                 offset += Sizes.Texture;
             }
             Debug.Assert(stream.Position == offset);
             // palette data
-            var paletteResults = new List<(int, int)>();
-            foreach (List<ushort> palette in palettes)
+            var paletteDataOffsets = new List<int>();
+            foreach (PaletteInfo palette in palettes)
             {
-                int size = 0;
-                foreach (ushort value in palette)
+                paletteDataOffsets.Add(offset);
+                foreach (ushort data in palette.Data)
                 {
-                    writer.Write(value);
-                    size += sizeof(ushort);
+                    writer.Write(data);
+                    offset += sizeof(ushort);
                 }
-                paletteResults.Add((offset, size));
-                offset += size;
             }
             Debug.Assert(stream.Position == offset);
             // palette metdata
             int paletteOffset = offset;
-            foreach ((int off, int size) in paletteResults)
+            for (int i = 0; i < palettes.Count; i++)
             {
-                writer.Write(off);
-                writer.Write(size);
+                PaletteInfo palette = palettes[i];
+                writer.Write(paletteDataOffsets[i]);
+                writer.Write(palette.Data.Count * sizeof(ushort));
                 writer.Write(padInt); // VramOffset
                 writer.Write(padInt); // ObjectRef
                 offset += Sizes.Palette;
@@ -205,6 +212,7 @@ namespace MphRead.Utility
             {
                 writer.Write(value);
             }
+            return stream.ToArray();
         }
 
         private static void WriteString(string value, int length, BinaryWriter writer)
@@ -273,14 +281,35 @@ namespace MphRead.Utility
             return (primitiveCount, vertexCount);
         }
 
-        private static (int, bool) WriteTextureData(TextureInfo texture, List<List<ushort>> palettes, BinaryWriter writer)
+        public static TextureInfo ConvertData(Texture texture, IReadOnlyList<TextureData> data)
         {
-            int bytesWritten = 0;
-            bool opaque = true;
-            Debug.Assert(texture.Pixels.Count == texture.Width * texture.Height);
-            if (texture.Format == TextureFormat.DirectRgb)
+            bool opaque = data.All(d => d.Alpha > 0);
+            var imageData = new List<byte>();
+            foreach (TextureData entry in data)
             {
-                foreach (ColorRgba pixel in texture.Pixels)
+                uint value = entry.Data;
+                if (texture.Format == TextureFormat.DirectRgb)
+                {
+                    imageData.Add((byte)(value & 0xFF));
+                    imageData.Add((byte)(value >> 8));
+                }
+                else
+                {
+                    imageData.Add((byte)value);
+                }
+            }
+            return new TextureInfo(texture.Format, opaque, texture.Height, texture.Width, imageData);
+        }
+
+        public static (TextureInfo, PaletteInfo) ConvertImage(ImageInfo image)
+        {
+            bool opaque = true;
+            var imageData = new List<byte>();
+            var paletteData = new List<ushort>();
+            Debug.Assert(image.Pixels.Count == image.Width * image.Height);
+            if (image.Format == TextureFormat.DirectRgb)
+            {
+                foreach (ColorRgba pixel in image.Pixels)
                 {
                     ushort value = pixel.Alpha == 0 ? (ushort)0 : (ushort)0x8000;
                     ushort red = (ushort)(pixel.Red * 31 / 255);
@@ -289,8 +318,8 @@ namespace MphRead.Utility
                     value |= red;
                     value |= (ushort)(green << 5);
                     value |= (ushort)(blue << 10);
-                    writer.Write(value);
-                    bytesWritten += 2;
+                    imageData.Add((byte)(value & 0xFF));
+                    imageData.Add((byte)(value >> 8));
                     if (pixel.Alpha == 0)
                     {
                         opaque = false;
@@ -299,8 +328,9 @@ namespace MphRead.Utility
             }
             else
             {
+                // todo: confirm palette color ordering
                 var colors = new Dictionary<(byte, byte, byte), int>();
-                foreach (ColorRgba pixel in texture.Pixels)
+                foreach (ColorRgba pixel in image.Pixels)
                 {
                     (byte, byte, byte) color = (pixel.Red, pixel.Green, pixel.Blue);
                     if (!colors.ContainsKey(color))
@@ -308,81 +338,75 @@ namespace MphRead.Utility
                         colors.Add(color, colors.Count);
                     }
                 }
-                if (texture.Format == TextureFormat.PaletteA3I5)
+                if (image.Format == TextureFormat.PaletteA3I5)
                 {
                     Debug.Assert(colors.Count <= 32);
-                    foreach (ColorRgba pixel in texture.Pixels)
+                    foreach (ColorRgba pixel in image.Pixels)
                     {
                         byte value = (byte)colors[(pixel.Red, pixel.Green, pixel.Blue)];
                         byte alpha = (byte)(pixel.Alpha * 7 / 255);
                         value |= (byte)(alpha << 5);
-                        writer.Write(value);
-                        bytesWritten++;
+                        imageData.Add(value);
                         if (alpha < 7)
                         {
                             opaque = false;
                         }
                     }
                 }
-                else if (texture.Format == TextureFormat.PaletteA5I3)
+                else if (image.Format == TextureFormat.PaletteA5I3)
                 {
                     Debug.Assert(colors.Count <= 8);
-                    foreach (ColorRgba pixel in texture.Pixels)
+                    foreach (ColorRgba pixel in image.Pixels)
                     {
                         byte value = (byte)colors[(pixel.Red, pixel.Green, pixel.Blue)];
                         byte alpha = (byte)(pixel.Alpha * 31 / 255);
                         value |= (byte)(alpha << 3);
-                        writer.Write(value);
-                        bytesWritten++;
+                        imageData.Add(value);
                         if (alpha < 31)
                         {
                             opaque = false;
                         }
                     }
                 }
-                else if (texture.Format == TextureFormat.Palette2Bit)
+                else if (image.Format == TextureFormat.Palette2Bit)
                 {
                     Debug.Assert(colors.Count <= 4);
-                    for (int i = 0; i < texture.Pixels.Count; i += 4)
+                    for (int i = 0; i < image.Pixels.Count; i += 4)
                     {
                         byte value = 0;
-                        for (int j = 0; j < 4 && i + j < texture.Pixels.Count; j++)
+                        for (int j = 0; j < 4 && i + j < image.Pixels.Count; j++)
                         {
-                            ColorRgba pixel = texture.Pixels[i + j];
+                            ColorRgba pixel = image.Pixels[i + j];
                             byte index = (byte)colors[(pixel.Red, pixel.Green, pixel.Blue)];
                             value |= (byte)(index << (2 * j));
                         }
-                        writer.Write(value);
-                        bytesWritten++;
+                        imageData.Add(value);
                     }
                 }
-                else if (texture.Format == TextureFormat.Palette4Bit)
+                else if (image.Format == TextureFormat.Palette4Bit)
                 {
                     Debug.Assert(colors.Count <= 16);
-                    for (int i = 0; i < texture.Pixels.Count; i += 2)
+                    for (int i = 0; i < image.Pixels.Count; i += 2)
                     {
                         byte value = 0;
-                        for (int j = 0; j < 2 && i + j < texture.Pixels.Count; j++)
+                        for (int j = 0; j < 2 && i + j < image.Pixels.Count; j++)
                         {
-                            ColorRgba pixel = texture.Pixels[i + j];
+                            ColorRgba pixel = image.Pixels[i + j];
                             byte index = (byte)colors[(pixel.Red, pixel.Green, pixel.Blue)];
                             value |= (byte)(index << (4 * j));
                         }
-                        writer.Write(value);
-                        bytesWritten++;
+                        imageData.Add(value);
                     }
                 }
-                else if (texture.Format == TextureFormat.Palette8Bit)
+                else if (image.Format == TextureFormat.Palette8Bit)
                 {
                     Debug.Assert(colors.Count <= 256);
-                    foreach (ColorRgba pixel in texture.Pixels)
+                    foreach (ColorRgba pixel in image.Pixels)
                     {
                         byte value = (byte)colors[(pixel.Red, pixel.Green, pixel.Blue)];
-                        writer.Write(value);
-                        bytesWritten++;
+                        imageData.Add(value);
                     }
                 }
-                var palette = new List<ushort>();
                 foreach (KeyValuePair<(byte Red, byte Green, byte Blue), int> kvp in colors.OrderBy(c => c.Value))
                 {
                     ushort value = 0;
@@ -392,26 +416,25 @@ namespace MphRead.Utility
                     value |= red;
                     value |= (ushort)(green << 5);
                     value |= (ushort)(blue << 10);
-                    palette.Add(value);
+                    paletteData.Add(value);
                 }
-                palettes.Add(palette);
             }
-            return (bytesWritten, opaque);
+            return (new TextureInfo(image.Format, opaque, image.Height, image.Width, imageData), new PaletteInfo(paletteData));
         }
 
-        private static void WriteTextureMeta(TextureInfo texture, int offset, int size, bool opaque, BinaryWriter writer)
+        private static void WriteTextureMeta(TextureInfo texture, int offset, BinaryWriter writer)
         {
             byte padByte = 0;
             ushort padShort = 0;
             uint padInt = 0;
-            int opacity = opaque ? 1 : 0;
+            int opacity = texture.Opaque ? 1 : 0;
             writer.Write((byte)texture.Format);
             writer.Write(padByte);
             writer.Write(texture.Width);
             writer.Write(texture.Height);
             writer.Write(padShort);
             writer.Write(offset);
-            writer.Write(size);
+            writer.Write(texture.Data.Count);
             writer.Write(padInt); // UnusedOffset
             writer.Write(padInt); // UnusedCount
             writer.Write(padInt); // VramOffset
@@ -564,6 +587,51 @@ namespace MphRead.Utility
             writer.Write(padInt); // UnusedE4
             writer.Write(padInt); // UnusedE8
             writer.Write(padInt); // UnusedEC
+        }
+
+        public class TextureInfo
+        {
+            public TextureFormat Format { get; set; }
+            public bool Opaque { get; set; }
+            public ushort Height { get; set; }
+            public ushort Width { get; set; }
+            public IReadOnlyList<byte> Data { get; set; }
+
+            public TextureInfo(TextureFormat format,  bool opaque, ushort height, ushort width,
+                IReadOnlyList<byte> data)
+            {
+                Format = format;
+                Opaque = opaque;
+                Height = height;
+                Width = width;
+                Data = data;
+            }
+        }
+
+        public class PaletteInfo
+        {
+            public IReadOnlyList<ushort> Data { get; set; }
+
+            public PaletteInfo(IReadOnlyList<ushort> data)
+            {
+                Data = data;
+            }
+        }
+
+        public class ImageInfo
+        {
+            public TextureFormat Format { get; set; }
+            public ushort Height { get; set; }
+            public ushort Width { get; set; }
+            public IReadOnlyList<ColorRgba> Pixels { get; set; }
+
+            public ImageInfo(TextureFormat format, ushort height, ushort width, IReadOnlyList<ColorRgba> pixels)
+            {
+                Format = format;
+                Height = height;
+                Width = width;
+                Pixels = pixels;
+            }
         }
     }
 }
