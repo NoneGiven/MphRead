@@ -88,7 +88,9 @@ namespace MphRead.Utility
                 Texture otherTex = otherTextures[i];
                 if (log)
                 {
+                    Console.WriteLine();
                     Console.WriteLine($"tex {i}");
+                    Console.WriteLine($"Format {tex.Format} {otherTex.Format}");
                     Console.WriteLine($"ImageOffset {tex.ImageOffset} {otherTex.ImageOffset}");
                     Console.WriteLine($"ImageSize {tex.ImageSize} {otherTex.ImageSize}");
                     Console.WriteLine($"Opaque {tex.Opaque} {otherTex.Opaque}");
@@ -97,7 +99,19 @@ namespace MphRead.Utility
             Debug.Assert(header.PaletteCount == other.PaletteCount);
             IReadOnlyList<Palette> palettes = Read.DoOffsets<Palette>(span, header.PaletteOffset, header.PaletteCount);
             IReadOnlyList<Palette> otherPalettes = Read.DoOffsets<Palette>(fileBytes, other.PaletteOffset, other.PaletteCount);
-            //File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", "out2.bin"), bytes);
+            for (int i = 0; i < palettes.Count; i++)
+            {
+                Palette pal = palettes[i];
+                Palette otherPal = otherPalettes[i];
+                if (log)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"pal {i}");
+                    Console.WriteLine($"Offset {pal.Offset} {otherPal.Offset}");
+                    Console.WriteLine($"Size {pal.Size} {otherPal.Size}");
+                }
+            }
+            //File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}.bin"), bytes);
             Nop();
         }
 
@@ -407,6 +421,26 @@ namespace MphRead.Utility
                     imageData.Add((byte)(entry.Data >> 8));
                 }
             }
+            else if (texture.Format == TextureFormat.PaletteA3I5)
+            {
+                foreach (TextureData entry in data)
+                {
+                    byte value = (byte)entry.Data;
+                    byte alpha = (byte)Math.Round(entry.Alpha * 7f / 255f);
+                    value |= (byte)(alpha << 5);
+                    imageData.Add(value);
+                }
+            }
+            else if (texture.Format == TextureFormat.PaletteA5I3)
+            {
+                foreach (TextureData entry in data)
+                {
+                    byte value = (byte)entry.Data;
+                    byte alpha = (byte)Math.Round(entry.Alpha * 31f / 255f);
+                    value |= (byte)(alpha << 3);
+                    imageData.Add(value);
+                }
+            }
             else if (texture.Format == TextureFormat.Palette2Bit)
             {
                 for (int i = 0; i < data.Count; i += 4)
@@ -422,9 +456,6 @@ namespace MphRead.Utility
             }
             else if (texture.Format == TextureFormat.Palette4Bit)
             {
-                foreach (TextureData entry in data)
-                {
-                }
                 for (int i = 0; i < data.Count; i += 2)
                 {
                     byte value = 0;
@@ -436,7 +467,7 @@ namespace MphRead.Utility
                     imageData.Add(value);
                 }
             }
-            else
+            else if (texture.Format == TextureFormat.Palette8Bit)
             {
                 foreach (TextureData entry in data)
                 {
@@ -457,9 +488,9 @@ namespace MphRead.Utility
                 foreach (ColorRgba pixel in image.Pixels)
                 {
                     ushort value = pixel.Alpha == 0 ? (ushort)0 : (ushort)0x8000;
-                    ushort red = (ushort)(pixel.Red * 31 / 255);
-                    ushort green = (ushort)(pixel.Green * 31 / 255);
-                    ushort blue = (ushort)(pixel.Blue * 31 / 255);
+                    ushort red = (ushort)Math.Round(pixel.Red * 31f / 255f);
+                    ushort green = (ushort)Math.Round(pixel.Green * 31f / 255f);
+                    ushort blue = (ushort)Math.Round(pixel.Blue * 31f / 255f);
                     value |= red;
                     value |= (ushort)(green << 5);
                     value |= (ushort)(blue << 10);
@@ -488,7 +519,7 @@ namespace MphRead.Utility
                     foreach (ColorRgba pixel in image.Pixels)
                     {
                         byte value = (byte)colors[(pixel.Red, pixel.Green, pixel.Blue)];
-                        byte alpha = (byte)(pixel.Alpha * 7 / 255);
+                        byte alpha = (byte)Math.Round(pixel.Alpha * 7f / 255f);
                         value |= (byte)(alpha << 5);
                         imageData.Add(value);
                         if (alpha < 7)
@@ -503,7 +534,7 @@ namespace MphRead.Utility
                     foreach (ColorRgba pixel in image.Pixels)
                     {
                         byte value = (byte)colors[(pixel.Red, pixel.Green, pixel.Blue)];
-                        byte alpha = (byte)(pixel.Alpha * 31 / 255);
+                        byte alpha = (byte)Math.Round(pixel.Alpha * 31f / 255f);
                         value |= (byte)(alpha << 3);
                         imageData.Add(value);
                         if (alpha < 31)
@@ -554,9 +585,9 @@ namespace MphRead.Utility
                 foreach (KeyValuePair<(byte Red, byte Green, byte Blue), int> kvp in colors.OrderBy(c => c.Value))
                 {
                     ushort value = 0;
-                    ushort red = (ushort)(kvp.Key.Red * 31 / 255);
-                    ushort green = (ushort)(kvp.Key.Green * 31 / 255);
-                    ushort blue = (ushort)(kvp.Key.Blue * 31 / 255);
+                    ushort red = (ushort)Math.Round(kvp.Key.Red * 31f / 255f);
+                    ushort green = (ushort)Math.Round(kvp.Key.Green * 31f / 255f);
+                    ushort blue = (ushort)Math.Round(kvp.Key.Blue * 31f / 255f);
                     value |= red;
                     value |= (ushort)(green << 5);
                     value |= (ushort)(blue << 10);
