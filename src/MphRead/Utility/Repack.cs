@@ -75,7 +75,7 @@ namespace MphRead.Utility
             Debug.Assert(header.MaterialAnimations == other.MaterialAnimations);
             Debug.Assert(header.TextureAnimations == other.TextureAnimations);
             Debug.Assert(header.MeshCount == other.MeshCount);
-            //Debug.Assert(header.TextureMatrixCount == other.TextureMatrixCount);
+            Debug.Assert(header.TextureMatrixCount == other.TextureMatrixCount);
             IReadOnlyList<Texture> texes = Read.DoOffsets<Texture>(span, header.TextureOffset, header.TextureCount);
             IReadOnlyList<Texture> otherTexes = Read.DoOffsets<Texture>(fileBytes, other.TextureOffset, other.TextureCount);
             for (int i = 0; i < texes.Count; i++)
@@ -119,7 +119,7 @@ namespace MphRead.Utility
                 Debug.Assert(mat.AnimationFlags == otherMat.AnimationFlags);
                 Debug.Assert(mat.Culling == otherMat.Culling);
                 Debug.Assert(mat.Lighting == otherMat.Lighting);
-                //Debug.Assert(mat.MatrixId == otherMat.MatrixId);
+                Debug.Assert(mat.MatrixId == otherMat.MatrixId);
                 Debug.Assert(mat.PaletteId == otherMat.PaletteId);
                 Debug.Assert(mat.PolygonMode == otherMat.PolygonMode);
                 Debug.Assert(mat.RenderMode == otherMat.RenderMode);
@@ -310,7 +310,7 @@ namespace MphRead.Utility
             }
             Debug.Assert(stream.Position == offset);
             // materials
-            var matrixIds = new TexMtxMap();
+            int matrixIdCount = 0;
             int materialsOffset = offset;
             foreach (Material material in materials)
             {
@@ -322,7 +322,7 @@ namespace MphRead.Utility
                     height = texture.Height;
                     width = texture.Width;
                 }
-                int matrixId = GetTextureMatrixId(material, height, width, matrixIds);
+                int matrixId = GetTextureMatrixId(material, height, width, ref matrixIdCount);
                 WriteMaterial(material, matrixId, writer);
                 offset += Sizes.Material;
             }
@@ -383,7 +383,7 @@ namespace MphRead.Utility
             writer.Write(matAnimOffset);
             writer.Write(texAnimOffset);
             writer.Write((ushort)meshes.Count);
-            writer.Write((ushort)matrixIds.Count);
+            writer.Write((ushort)matrixIdCount);
             Debug.Assert(stream.Position == Sizes.Header);
             // node matrix IDs
             if (nodeMtxIds.Count == 0)
@@ -778,24 +778,21 @@ namespace MphRead.Utility
             return bytesWritten;
         }
 
-        private static int GetTextureMatrixId(Material material, ushort height, ushort width, TexMtxMap ids)
+        private static int GetTextureMatrixId(Material material, ushort height, ushort width, ref int indexCount)
         {
-            if (material.TexgenMode == TexgenMode.None)
-            {
-                return -1;
-            }
             int scaleS = Fixed.ToInt(material.ScaleS);
             int scaleT = Fixed.ToInt(material.ScaleT);
             ushort rotZ = (ushort)Math.Round(material.RotateZ / MathF.PI / 2f * 65536f);
-            int translateS = Fixed.ToInt(material.TranslateS);
-            int translateT = Fixed.ToInt(material.TranslateT);
-            if (ids.TryGetValue(width, height, scaleS, scaleT, rotZ, translateS, translateT, out int index))
+            int transS = Fixed.ToInt(material.TranslateS);
+            int transT = Fixed.ToInt(material.TranslateT);
+            // materials with no texgen mode and default transform values get a matrix ID of 0 and don't contribute to the matrix count.
+            // if the values are non-default, a matrix index is assigned even though the values won't be used due to the lack of texgen mode.
+            // also, if the texgen mode is set, then even materials with default transform values will have a matrix index assigned, with no sharing.
+            if (scaleS == 4096 && scaleT == 4096 && rotZ == 0 && transS == 0 && transT == 0 && material.TexgenMode == TexgenMode.None)
             {
-                return index;
+                return -1;
             }
-            index = ids.Count;
-            ids.Add(width, height, scaleS, scaleT, rotZ, translateS, translateT, index);
-            return index;
+            return indexCount++;
         }
 
         private static void WriteMaterial(Material material, int matrixId, BinaryWriter writer)
