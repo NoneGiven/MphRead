@@ -30,7 +30,9 @@ namespace MphRead.Utility
                 var options = new RepackOptions()
                 {
                     IsRoom = true,
-                    Texture = meta.ModelPath == meta.TexturePath ? RepackTexture.Inline  : RepackTexture.Separate
+                    Texture = meta.TexturePath == null || meta.ModelPath == meta.TexturePath
+                        ? RepackTexture.Inline
+                        : RepackTexture.Separate
                 };
                 TestRepack(meta.Name, meta.ModelPath, meta.FirstHunt || meta.Hybrid, options);
             }
@@ -79,7 +81,7 @@ namespace MphRead.Utility
             byte[] bytes = PackModel(model.Header.ScaleBase.FloatValue, model.Header.ScaleFactor, model.NodeMatrixIds, model.NodePosCounts,
                 model.Materials, textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists, options);
             byte[] fileBytes = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, modelPath));
-            ComparePacks(modelName, bytes, fileBytes);
+            ComparePacks(modelName, bytes, fileBytes, options);
             if (options.WriteFile)
             {
                 File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}.bin"), bytes);
@@ -87,7 +89,7 @@ namespace MphRead.Utility
             Nop();
         }
 
-        private static void ComparePacks(string name, byte[] bytes, byte[] otherBytes)
+        private static void ComparePacks(string name, byte[] bytes, byte[] otherBytes, RepackOptions options)
         {
             string temp = name;
             Debug.Assert(bytes.Length == otherBytes.Length);
@@ -131,9 +133,13 @@ namespace MphRead.Utility
                 Debug.Assert(tex.ImageOffset == otherTex.ImageOffset);
                 Debug.Assert(tex.ImageSize == otherTex.ImageSize);
                 Debug.Assert(tex.Opaque == otherTex.Opaque);
-                IReadOnlyList<byte> texData = Read.DoOffsets<byte>(bytes, tex.ImageOffset, tex.ImageSize);
-                IReadOnlyList<byte> otherTexData = Read.DoOffsets<byte>(otherBytes, otherTex.ImageOffset, otherTex.ImageSize);
-                Debug.Assert(Enumerable.SequenceEqual(texData, otherTexData));
+                // sktodo
+                if (options.Texture == RepackTexture.Inline)
+                {
+                    IReadOnlyList<byte> texData = Read.DoOffsets<byte>(bytes, tex.ImageOffset, tex.ImageSize);
+                    IReadOnlyList<byte> otherTexData = Read.DoOffsets<byte>(otherBytes, otherTex.ImageOffset, otherTex.ImageSize);
+                    Debug.Assert(Enumerable.SequenceEqual(texData, otherTexData));
+                }
             }
             IReadOnlyList<Palette> pals = Read.DoOffsets<Palette>(bytes, header.PaletteOffset, header.PaletteCount);
             IReadOnlyList<Palette> otherPals = Read.DoOffsets<Palette>(otherBytes, other.PaletteOffset, other.PaletteCount);
@@ -143,9 +149,13 @@ namespace MphRead.Utility
                 Palette otherPal = otherPals[i];
                 Debug.Assert(pal.Offset == otherPal.Offset);
                 Debug.Assert(pal.Size == otherPal.Size);
-                IReadOnlyList<byte> palData = Read.DoOffsets<byte>(bytes, pal.Offset, pal.Size);
-                IReadOnlyList<byte> otherPalData = Read.DoOffsets<byte>(otherBytes, otherPal.Offset, otherPal.Size);
-                Debug.Assert(Enumerable.SequenceEqual(palData, otherPalData));
+                // sktodo
+                if (options.Texture == RepackTexture.Inline)
+                {
+                    IReadOnlyList<byte> palData = Read.DoOffsets<byte>(bytes, pal.Offset, pal.Size);
+                    IReadOnlyList<byte> otherPalData = Read.DoOffsets<byte>(otherBytes, otherPal.Offset, otherPal.Size);
+                    Debug.Assert(Enumerable.SequenceEqual(palData, otherPalData));
+                }
             }
             IReadOnlyList<RawMaterial> mats = Read.DoOffsets<RawMaterial>(bytes, header.MaterialOffset, header.MaterialCount);
             IReadOnlyList<RawMaterial> otherMats = Read.DoOffsets<RawMaterial>(otherBytes, other.MaterialOffset, other.MaterialCount);
@@ -267,8 +277,8 @@ namespace MphRead.Utility
             uint padInt = 0;
             using var stream = new MemoryStream();
             using var writer = new BinaryWriter(stream);
-            //using MemoryStream texStream = options.Texture == RepackTexture.Inline ? stream : new MemoryStream();
-            //using BinaryWriter texWriter = options.Texture == RepackTexture.Inline ? writer : new BinaryWriter(texStream);
+            using MemoryStream texStream = options.Texture == RepackTexture.Inline ? stream : new MemoryStream();
+            using BinaryWriter texWriter = options.Texture == RepackTexture.Inline ? writer : new BinaryWriter(texStream);
             int primitiveCount = 0;
             int vertexCount = 0;
             Debug.Assert(renders.Count == dlists.Count);
@@ -353,10 +363,10 @@ namespace MphRead.Utility
             var textureDataOffsets = new List<int>();
             foreach (TextureInfo texture in textures)
             {
-                textureDataOffsets.Add((int)stream.Position);
+                textureDataOffsets.Add((int)texStream.Position);
                 foreach (byte data in texture.Data)
                 {
-                    writer.Write(data);
+                    texWriter.Write(data);
                 }
             }
             // texture metadata
@@ -369,10 +379,10 @@ namespace MphRead.Utility
             var paletteDataOffsets = new List<int>();
             foreach (PaletteInfo palette in palettes)
             {
-                paletteDataOffsets.Add((int)stream.Position);
+                paletteDataOffsets.Add((int)texStream.Position);
                 foreach (ushort data in palette.Data)
                 {
-                    writer.Write(data);
+                    texWriter.Write(data);
                 }
             }
             // palette metdata

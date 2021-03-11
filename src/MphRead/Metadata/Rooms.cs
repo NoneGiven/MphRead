@@ -221,16 +221,16 @@ namespace MphRead
                 /* 126 */ "biodefense chamber 04",
                 /* 127 */ "biodefense chamber 07",
                 // First Hunt
-                /* 128, 0 */ "FH_MP1",
-                /* 129, 1 */ "FH_MP2",
-                /* 130, 2 */ "FH_MP3",
-                /* 131, 3 */ "FH_MORPHBALL",
-                /* 132, 4 */ "FH_REGULATOR",
-                /* 133, 5 */ "FH_SURVIVOR",
-                /* 134, 6 */ "FH_TEST",
-                /* 135, 7 */ "FH_MP5",
-                /* 136, 8 */ "FH_MP1", // todo
-                /* 137, 9 */ "FH_E3"
+                /* 128, 0 */ "Level MP1",
+                /* 129, 1 */ "Level MP2",
+                /* 130, 2 */ "Level MP3",
+                /* 131, 3 */ "Level SP Morphball",
+                /* 132, 4 */ "Level SP Regulator",
+                /* 133, 5 */ "Level SP Survivor",
+                /* 134, 6 */ "Level FhTestLevel",
+                /* 135, 7 */ "Level MP5",
+                /* 136, 8 */ "Level MP1", // todo
+                /* 137, 9 */ "E3 level"
             };
 
         // todo: unused?
@@ -3760,7 +3760,7 @@ namespace MphRead
                 // todo: room ID 8 has the same files as MP1, but a few different parameters
                 // First Hunt
                 {
-                    "FH_MP1",
+                    "Level MP1",
                     new RoomMetadata(
                         name: "Level MP1",
                         inGameName: "Trooper Module",
@@ -3792,7 +3792,7 @@ namespace MphRead
                         firstHunt: true)
                 },
                 {
-                    "FH_MP2",
+                    "Level MP2",
                     new RoomMetadata(
                         name: "Level MP2",
                         inGameName: "Assault Cradle",
@@ -3824,7 +3824,7 @@ namespace MphRead
                         firstHunt: true)
                 },
                 {
-                    "FH_MP3",
+                    "Level MP3",
                     new RoomMetadata(
                         name: "Level MP3",
                         inGameName: "Ancient Vestige",
@@ -3856,7 +3856,7 @@ namespace MphRead
                         firstHunt: true)
                 },
                 {
-                    "FH_MORPHBALL",
+                    "Level SP Morphball",
                     new RoomMetadata(
                         name: "Level SP Morphball",
                         inGameName: "Morph Ball",
@@ -3887,7 +3887,7 @@ namespace MphRead
                         firstHunt: true)
                 },
                 {
-                    "FH_REGULATOR",
+                    "Level SP Regulator",
                     new RoomMetadata(
                         name: "Level SP Regulator",
                         inGameName: "Regulator",
@@ -3918,7 +3918,7 @@ namespace MphRead
                         firstHunt: true)
                 },
                 {
-                    "FH_SURVIVOR",
+                    "Level SP Survivor",
                     new RoomMetadata(
                         name: "Level SP Survivor",
                         inGameName: "Survivor",
@@ -3949,9 +3949,9 @@ namespace MphRead
                         firstHunt: true)
                 },
                 {
-                    "FH_TEST",
+                    "Level FhTestLevel",
                     new RoomMetadata(
-                        name: "Level TestLevel",
+                        name: "Level FhTestLevel", // name is actually "Level TestLevel"
                         inGameName: "Test Level (First Hunt)",
                         archive: "testLevel",
                         modelPath: "testLevel_Model.bin",
@@ -3980,7 +3980,7 @@ namespace MphRead
                         firstHunt: true)
                 },
                 {
-                    "FH_MP5",
+                    "Level MP5",
                     new RoomMetadata(
                         name: "Level MP5",
                         inGameName: "Early Head Shot (First Hunt)",
@@ -4012,7 +4012,7 @@ namespace MphRead
                         firstHunt: true)
                 },
                 {
-                    "FH_E3",
+                    "E3 level",
                     new RoomMetadata(
                         name: "E3 level",
                         inGameName: "Stasis Bunker (First Hunt)",
