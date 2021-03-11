@@ -16,7 +16,7 @@ namespace MphRead.Utility
                 if (meta.Recolors[0].ModelPath == meta.ModelPath && meta.Recolors[0].TexturePath == meta.ModelPath
                     && meta.Recolors[0].SeparatePaletteHeader == false && meta.Name != "doubleDamage_img")
                 {
-                    TestRepack(meta.Name, meta.ModelPath, log: false);
+                    TestRepack(meta.Name, meta.ModelPath, write: false);
                 }
             }
         }
@@ -24,10 +24,10 @@ namespace MphRead.Utility
         public static void TestRepack(string name)
         {
             ModelMetadata meta = Metadata.ModelMetadata[name];
-            TestRepack(meta.Name, meta.ModelPath, log: true);
+            TestRepack(meta.Name, meta.ModelPath, write: true);
         }
 
-        private static void TestRepack(string modelName, string modelPath, bool log)
+        private static void TestRepack(string modelName, string modelPath, bool write)
         {
             // todo: handle recolors
             Model model = Read.GetModelInstance(modelName).Model;
@@ -50,68 +50,134 @@ namespace MphRead.Utility
             var span = new ReadOnlySpan<byte>(bytes);
             Header header = Read.ReadStruct<Header>(span);
             Header other = model.Header;
-            if (log)
-            {
-                Console.WriteLine($"ScaleFactor {header.ScaleFactor} {other.ScaleFactor}");
-                Console.WriteLine($"ScaleBase {header.ScaleBase} {other.ScaleBase}");
-                Console.WriteLine($"PrimitiveCount {header.PrimitiveCount} {other.PrimitiveCount}");
-                Console.WriteLine($"VertexCount {header.VertexCount} {other.VertexCount}");
-                Console.WriteLine($"MaterialOffset {header.MaterialOffset} {other.MaterialOffset}");
-                Console.WriteLine($"DlistOffset {header.DlistOffset} {other.DlistOffset}");
-                Console.WriteLine($"NodeOffset {header.NodeOffset} {other.NodeOffset}");
-                Console.WriteLine($"NodeWeightCount {header.NodeWeightCount} {other.NodeWeightCount}");
-                Console.WriteLine($"NodeWeightOffset {header.NodeWeightOffset} {other.NodeWeightOffset}");
-                Console.WriteLine($"MeshOffset {header.MeshOffset} {other.MeshOffset}");
-                Console.WriteLine($"TextureCount {header.TextureCount} {other.TextureCount}");
-                Console.WriteLine($"TextureOffset {header.TextureOffset} {other.TextureOffset}");
-                Console.WriteLine($"PaletteCount {header.PaletteCount} {other.PaletteCount}");
-                Console.WriteLine($"PaletteOffset {header.PaletteOffset} {other.PaletteOffset}");
-                Console.WriteLine($"NodePosCounts {header.NodePosCounts} {other.NodePosCounts}");
-                Console.WriteLine($"NodePosScales {header.NodePosScales} {other.NodePosScales}");
-                Console.WriteLine($"NodeInitialPosition {header.NodeInitialPosition} {other.NodeInitialPosition}");
-                Console.WriteLine($"NodePosition {header.NodePosition} {other.NodePosition}");
-                Console.WriteLine($"MaterialCount {header.MaterialCount} {other.MaterialCount}");
-                Console.WriteLine($"NodeCount {header.NodeCount} {other.NodeCount}");
-                Console.WriteLine($"NodeAnimationOffset {header.NodeAnimationOffset} {other.NodeAnimationOffset}");
-                Console.WriteLine($"TextureCoordinateAnimations {header.TextureCoordinateAnimations} {other.TextureCoordinateAnimations}");
-                Console.WriteLine($"MaterialAnimations {header.MaterialAnimations} {other.MaterialAnimations}");
-                Console.WriteLine($"TextureAnimations {header.TextureAnimations} {other.TextureAnimations}");
-                Console.WriteLine($"MeshCount {header.MeshCount} {other.MeshCount}");
-                Console.WriteLine($"TextureMatrixCount {header.TextureMatrixCount} {other.TextureMatrixCount}");
-            }
+            Debug.Assert(header.ScaleFactor == other.ScaleFactor);
+            Debug.Assert(header.ScaleBase.Value == other.ScaleBase.Value);
+            Debug.Assert(header.PrimitiveCount == other.PrimitiveCount);
+            Debug.Assert(header.VertexCount == other.VertexCount);
+            Debug.Assert(header.MaterialOffset == other.MaterialOffset);
+            Debug.Assert(header.DlistOffset == other.DlistOffset);
+            Debug.Assert(header.NodeOffset == other.NodeOffset);
+            Debug.Assert(header.NodeWeightCount == other.NodeWeightCount);
+            Debug.Assert(header.NodeWeightOffset == other.NodeWeightOffset);
+            Debug.Assert(header.MeshOffset == other.MeshOffset);
             Debug.Assert(header.TextureCount == other.TextureCount);
-            IReadOnlyList<Texture> textures = Read.DoOffsets<Texture>(span, header.TextureOffset, header.TextureCount);
-            IReadOnlyList<Texture> otherTextures = Read.DoOffsets<Texture>(fileBytes, other.TextureOffset, other.TextureCount);
-            for (int i = 0; i < textures.Count; i++)
-            {
-                Texture tex = textures[i];
-                Texture otherTex = otherTextures[i];
-                if (log)
-                {
-                    Console.WriteLine();
-                    Console.WriteLine($"tex {i}");
-                    Console.WriteLine($"Format {tex.Format} {otherTex.Format}");
-                    Console.WriteLine($"ImageOffset {tex.ImageOffset} {otherTex.ImageOffset}");
-                    Console.WriteLine($"ImageSize {tex.ImageSize} {otherTex.ImageSize}");
-                    Console.WriteLine($"Opaque {tex.Opaque} {otherTex.Opaque}");
-                }
-            }
+            Debug.Assert(header.TextureOffset == other.TextureOffset);
             Debug.Assert(header.PaletteCount == other.PaletteCount);
-            IReadOnlyList<Palette> palettes = Read.DoOffsets<Palette>(span, header.PaletteOffset, header.PaletteCount);
-            IReadOnlyList<Palette> otherPalettes = Read.DoOffsets<Palette>(fileBytes, other.PaletteOffset, other.PaletteCount);
-            for (int i = 0; i < palettes.Count; i++)
+            Debug.Assert(header.PaletteOffset == other.PaletteOffset);
+            Debug.Assert(header.NodePosCounts == other.NodePosCounts);
+            Debug.Assert(header.NodePosScales == other.NodePosScales);
+            Debug.Assert(header.NodeInitialPosition == other.NodeInitialPosition);
+            Debug.Assert(header.NodePosition == other.NodePosition);
+            Debug.Assert(header.MaterialCount == other.MaterialCount);
+            Debug.Assert(header.NodeCount == other.NodeCount);
+            Debug.Assert(header.NodeAnimationOffset == other.NodeAnimationOffset);
+            Debug.Assert(header.TextureCoordinateAnimations == other.TextureCoordinateAnimations);
+            Debug.Assert(header.MaterialAnimations == other.MaterialAnimations);
+            Debug.Assert(header.TextureAnimations == other.TextureAnimations);
+            Debug.Assert(header.MeshCount == other.MeshCount);
+            Debug.Assert(header.TextureMatrixCount == other.TextureMatrixCount);
+            IReadOnlyList<Texture> texes = Read.DoOffsets<Texture>(span, header.TextureOffset, header.TextureCount);
+            IReadOnlyList<Texture> otherTexes = Read.DoOffsets<Texture>(fileBytes, other.TextureOffset, other.TextureCount);
+            for (int i = 0; i < texes.Count; i++)
             {
-                Palette pal = palettes[i];
-                Palette otherPal = otherPalettes[i];
-                if (log)
-                {
-                    Console.WriteLine();
-                    Console.WriteLine($"pal {i}");
-                    Console.WriteLine($"Offset {pal.Offset} {otherPal.Offset}");
-                    Console.WriteLine($"Size {pal.Size} {otherPal.Size}");
-                }
+                Texture tex = texes[i];
+                Texture otherTex = otherTexes[i];
+                Debug.Assert(tex.Format == otherTex.Format);
+                Debug.Assert(tex.Width == otherTex.Width);
+                Debug.Assert(tex.Height == otherTex.Height);
+                Debug.Assert(tex.ImageOffset == otherTex.ImageOffset);
+                Debug.Assert(tex.ImageSize == otherTex.ImageSize);
+                Debug.Assert(tex.Opaque == otherTex.Opaque);
             }
-            //File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}.bin"), bytes);
+            IReadOnlyList<Palette> pals = Read.DoOffsets<Palette>(span, header.PaletteOffset, header.PaletteCount);
+            IReadOnlyList<Palette> otherPals = Read.DoOffsets<Palette>(fileBytes, other.PaletteOffset, other.PaletteCount);
+            for (int i = 0; i < pals.Count; i++)
+            {
+                Palette pal = pals[i];
+                Palette otherPal = otherPals[i];
+                Debug.Assert(pal.Offset == otherPal.Offset);
+                Debug.Assert(pal.Size == otherPal.Size);
+            }
+            IReadOnlyList<RawMaterial> mats = Read.DoOffsets<RawMaterial>(span, header.MaterialOffset, header.MaterialCount);
+            IReadOnlyList<RawMaterial> otherMats = Read.DoOffsets<RawMaterial>(fileBytes, other.MaterialOffset, other.MaterialCount);
+            for (int i = 0; i < mats.Count; i++)
+            {
+                RawMaterial mat = mats[i];
+                RawMaterial otherMat = otherMats[i];
+                Debug.Assert(Enumerable.SequenceEqual(mat.Name, otherMat.Name));
+                Debug.Assert(mat.Alpha == otherMat.Alpha);
+                Debug.Assert(mat.Diffuse.Red == otherMat.Diffuse.Red);
+                Debug.Assert(mat.Diffuse.Green == otherMat.Diffuse.Green);
+                Debug.Assert(mat.Diffuse.Blue == otherMat.Diffuse.Blue);
+                Debug.Assert(mat.Ambient.Red == otherMat.Ambient.Red);
+                Debug.Assert(mat.Ambient.Green == otherMat.Ambient.Green);
+                Debug.Assert(mat.Ambient.Blue == otherMat.Ambient.Blue);
+                Debug.Assert(mat.Specular.Red == otherMat.Specular.Red);
+                Debug.Assert(mat.Specular.Green == otherMat.Specular.Green);
+                Debug.Assert(mat.Specular.Blue == otherMat.Specular.Blue);
+                Debug.Assert(mat.AnimationFlags == otherMat.AnimationFlags);
+                Debug.Assert(mat.Culling == otherMat.Culling);
+                Debug.Assert(mat.Lighting == otherMat.Lighting);
+                Debug.Assert(mat.MatrixId == otherMat.MatrixId);
+                Debug.Assert(mat.PaletteId == otherMat.PaletteId);
+                Debug.Assert(mat.PolygonMode == otherMat.PolygonMode);
+                Debug.Assert(mat.RenderMode == otherMat.RenderMode);
+                Debug.Assert(mat.RotateZ == otherMat.RotateZ);
+                Debug.Assert(mat.ScaleS.Value == otherMat.ScaleS.Value);
+                Debug.Assert(mat.ScaleT.Value == otherMat.ScaleT.Value);
+                Debug.Assert(mat.TranslateS.Value == otherMat.TranslateS.Value);
+                Debug.Assert(mat.TranslateT.Value == otherMat.TranslateT.Value);
+                Debug.Assert(mat.TexcoordTransformMode == otherMat.TexcoordTransformMode);
+                Debug.Assert(mat.TextureId == otherMat.TextureId);
+                Debug.Assert(mat.Wireframe == otherMat.Wireframe);
+                Debug.Assert(mat.XRepeat == otherMat.XRepeat);
+                Debug.Assert(mat.YRepeat == otherMat.YRepeat);
+            }
+            IReadOnlyList<RawNode> nodes = Read.DoOffsets<RawNode>(span, header.NodeOffset, header.NodeCount);
+            IReadOnlyList<RawNode> otherNodes = Read.DoOffsets<RawNode>(fileBytes, other.NodeOffset, other.NodeCount);
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                RawNode node = nodes[i];
+                RawNode otherNode = otherNodes[i];
+                Debug.Assert(Enumerable.SequenceEqual(node.Name, otherNode.Name));
+                Debug.Assert(node.AngleX == otherNode.AngleX);
+                Debug.Assert(node.AngleY == otherNode.AngleY);
+                Debug.Assert(node.AngleZ == otherNode.AngleZ);
+                Debug.Assert(node.BillboardMode == otherNode.BillboardMode);
+                Debug.Assert(node.BoundingRadius.Value == otherNode.BoundingRadius.Value);
+                Debug.Assert(node.ChildId == otherNode.ChildId);
+                Debug.Assert(node.NextId == otherNode.NextId);
+                Debug.Assert(node.ParentId == otherNode.ParentId);
+                Debug.Assert(node.Enabled == otherNode.Enabled);
+                Debug.Assert(node.MinBounds.X.Value == otherNode.MinBounds.X.Value);
+                Debug.Assert(node.MinBounds.Y.Value == otherNode.MinBounds.Y.Value);
+                Debug.Assert(node.MinBounds.Z.Value == otherNode.MinBounds.Z.Value);
+                Debug.Assert(node.MaxBounds.X.Value == otherNode.MaxBounds.X.Value);
+                Debug.Assert(node.MaxBounds.Y.Value == otherNode.MaxBounds.Y.Value);
+                Debug.Assert(node.MaxBounds.Z.Value == otherNode.MaxBounds.Z.Value);
+                Debug.Assert(node.MeshCount == otherNode.MeshCount);
+                Debug.Assert(node.MeshId == otherNode.MeshId);
+                Debug.Assert(node.Position.X.Value == otherNode.Position.X.Value);
+                Debug.Assert(node.Position.Y.Value == otherNode.Position.Y.Value);
+                Debug.Assert(node.Position.Z.Value == otherNode.Position.Z.Value);
+                Debug.Assert(node.Scale.X.Value == otherNode.Scale.X.Value);
+                Debug.Assert(node.Scale.Y.Value == otherNode.Scale.Y.Value);
+                Debug.Assert(node.Scale.Z.Value == otherNode.Scale.Z.Value);
+            }
+            IReadOnlyList<RawMesh> meshes = Read.DoOffsets<RawMesh>(span, header.MeshOffset, header.MeshCount);
+            IReadOnlyList<RawMesh> otherMeshes = Read.DoOffsets<RawMesh>(fileBytes, other.MeshOffset, other.MeshCount);
+            for (int i = 0; i < meshes.Count; i++)
+            {
+                RawMesh mesh = meshes[i];
+                RawMesh otherMesh = otherMeshes[i];
+                Debug.Assert(mesh.MaterialId == otherMesh.MaterialId);
+                Debug.Assert(mesh.DlistId == otherMesh.DlistId);
+            }
+            Debug.Assert(Enumerable.SequenceEqual(bytes, fileBytes));
+            if (write)
+            {
+                File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}.bin"), bytes);
+            }
             Nop();
         }
 
@@ -655,7 +721,7 @@ namespace MphRead.Utility
             }
             int scaleS = Fixed.ToInt(material.ScaleS);
             int scaleT = Fixed.ToInt(material.ScaleT);
-            ushort rotZ = (ushort)(material.RotateZ / MathF.PI / 2f * 65536f);
+            ushort rotZ = (ushort)Math.Round(material.RotateZ / MathF.PI / 2f * 65536f);
             int translateS = Fixed.ToInt(material.TranslateS);
             int translateT = Fixed.ToInt(material.TranslateT);
             if (ids.TryGetValue(width, height, scaleS, scaleT, rotZ, translateS, translateT, out int index))
@@ -700,7 +766,7 @@ namespace MphRead.Utility
             writer.Write(matrixId == -1 ? 0 : matrixId);
             writer.Write(Fixed.ToInt(material.ScaleS));
             writer.Write(Fixed.ToInt(material.ScaleT));
-            writer.Write((ushort)(material.RotateZ / MathF.PI / 2f * 65536f));
+            writer.Write((ushort)Math.Round(material.RotateZ / MathF.PI / 2f * 65536f));
             writer.Write(padShort);
             writer.Write(Fixed.ToInt(material.TranslateS));
             writer.Write(Fixed.ToInt(material.TranslateT));
@@ -727,9 +793,9 @@ namespace MphRead.Utility
             writer.Write(Fixed.ToInt(node.Scale.X));
             writer.Write(Fixed.ToInt(node.Scale.Y));
             writer.Write(Fixed.ToInt(node.Scale.Z));
-            writer.Write((ushort)(node.Angle.X / MathF.PI / 2f * 65536f));
-            writer.Write((ushort)(node.Angle.Y / MathF.PI / 2f * 65536f));
-            writer.Write((ushort)(node.Angle.Z / MathF.PI / 2f * 65536f));
+            writer.Write((ushort)Math.Round(node.Angle.X / MathF.PI / 2f * 65536f));
+            writer.Write((ushort)Math.Round(node.Angle.Y / MathF.PI / 2f * 65536f));
+            writer.Write((ushort)Math.Round(node.Angle.Z / MathF.PI / 2f * 65536f));
             writer.Write(padShort);
             writer.Write(Fixed.ToInt(node.Position.X));
             writer.Write(Fixed.ToInt(node.Position.Y));
