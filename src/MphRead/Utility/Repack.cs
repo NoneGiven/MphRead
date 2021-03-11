@@ -26,6 +26,7 @@ namespace MphRead.Utility
                 int i = 0;
                 foreach (RecolorMetadata recolor in meta.Recolors)
                 {
+                    // not real recolors -- data is from separate models which will get tested themselves
                     if ((meta.Name == "samus_hi_yellow" || meta.Name == "samus_low_yellow" || meta.Name == "morphBall") && i != 0)
                     {
                         break;
