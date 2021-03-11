@@ -10,34 +10,42 @@ namespace MphRead.Utility
     {
         public static void TestRepack()
         {
-            //foreach (ModelMetadata meta in Metadata.FirstHuntModels.Values)
             foreach (ModelMetadata meta in Metadata.ModelMetadata.Values)
             {
-                // todo: these
-                if (meta.Recolors[0].ModelPath == meta.ModelPath && meta.Recolors[0].TexturePath == meta.ModelPath
-                    && meta.Recolors[0].SeparatePaletteHeader == false)
-                {
-                    TestRepack(meta.Name, meta.ModelPath, meta.FirstHunt, write: false);
-                    //Console.WriteLine($"[x] {meta.Name}");
-                }
-                else
-                {
-                    //Console.WriteLine($"[ ] {meta.Name}");
-                }
+                //TestRepack(meta.Name, meta.ModelPath, meta.FirstHunt, room: false, write: false);
+            }
+            foreach (ModelMetadata meta in Metadata.FirstHuntModels.Values)
+            {
+                //TestRepack(meta.Name, meta.ModelPath, meta.FirstHunt, room: false, write: false);
+            }
+            foreach (RoomMetadata meta in Metadata.RoomMetadata.Values)
+            {
+                TestRepack(meta.Name, meta.ModelPath, meta.FirstHunt || meta.Hybrid, room: true, write: false);
             }
         }
 
         public static void TestRepack(string name, bool firstHunt = false)
         {
             ModelMetadata meta = Metadata.ModelMetadata[name];
-            TestRepack(meta.Name, meta.ModelPath, firstHunt, write: true);
+            TestRepack(meta.Name, meta.ModelPath, firstHunt, room: false, write: true);
         }
 
-        private static void TestRepack(string modelName, string modelPath, bool firstHunt, bool write)
+        private static void TestRepack(string modelName, string modelPath, bool firstHunt, bool room, bool write)
         {
             // todo: handle recolors
-            var options = new RepackOptions();
-            Model model = Read.GetModelInstance(modelName, firstHunt).Model;
+            var options = new RepackOptions()
+            {
+                IsRoom = room
+            };
+            Model model;
+            if (room)
+            {
+                model = Read.GetRoomModelInstance(modelName).Model;
+            }
+            else
+            {
+                model = Read.GetModelInstance(modelName, firstHunt).Model;
+            }
             var textureInfo = new List<TextureInfo>();
             for (int i = 0; i < model.Recolors[0].Textures.Count; i++)
             {
@@ -53,7 +61,7 @@ namespace MphRead.Utility
             byte[] bytes = PackModel(model.Header.ScaleBase.FloatValue, model.Header.ScaleFactor, model.NodeMatrixIds, model.NodePosCounts,
                 model.Materials, textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists, options);
             byte[] fileBytes = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, modelPath));
-            ComparePacks(bytes, fileBytes);
+            ComparePacks(modelName, bytes, fileBytes);
             if (write)
             {
                 File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}.bin"), bytes);
@@ -61,7 +69,7 @@ namespace MphRead.Utility
             Nop();
         }
 
-        private static void ComparePacks(byte[] bytes, byte[] otherBytes)
+        private static void ComparePacks(string name, byte[] bytes, byte[] otherBytes)
         {
             Debug.Assert(bytes.Length == otherBytes.Length);
             Header header = Read.ReadStruct<Header>(bytes);
@@ -214,6 +222,7 @@ namespace MphRead.Utility
                 Debug.Assert(Enumerable.SequenceEqual(dlistData, otherDlistData));
             }
             Debug.Assert(Enumerable.SequenceEqual(bytes, otherBytes));
+            Nop();
         }
 
         public enum RepackTexture
@@ -226,6 +235,7 @@ namespace MphRead.Utility
         public class RepackOptions
         {
             public RepackTexture Texture { get; set; }
+            public bool IsRoom { get; set; }
         }
 
         public static byte[] PackModel(float scaleBase, uint scaleFactor, IReadOnlyList<int> nodeMtxIds, IReadOnlyList<int> nodePosScaleCounts,
@@ -425,11 +435,24 @@ namespace MphRead.Utility
             // node matrix IDs
             if (nodeMtxIds.Count == 0)
             {
-                int padCount = nodePosScaleCounts.Count == 0 ? 1 : nodePosScaleCounts.Count;
-                for (int i = 0; i < padCount; i++)
+                if (options.IsRoom)
                 {
-                    // basically just a hack to differentiate between goreaLaser and arcWelder
-                    writer.Write(nodes.Count <= 1 ? 0 : i + 1);
+                    for (int i = 0; i < nodes.Count; i++)
+                    {
+                        if (nodes[i].MeshCount > 0)
+                        {
+                            writer.Write(i);
+                        }
+                    }
+                }
+                else
+                {
+                    int padCount = nodePosScaleCounts.Count == 0 ? 1 : nodePosScaleCounts.Count;
+                    for (int i = 0; i < padCount; i++)
+                    {
+                        // basically just a hack to differentiate between goreaLaser and arcWelder
+                        writer.Write(nodes.Count <= 1 ? 0 : i + 1);
+                    }
                 }
             }
             else
