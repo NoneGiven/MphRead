@@ -14,7 +14,7 @@ namespace MphRead.Utility
             {
                 // todo: these
                 if (meta.Recolors[0].ModelPath == meta.ModelPath && meta.Recolors[0].TexturePath == meta.ModelPath
-                    && meta.Recolors[0].SeparatePaletteHeader == false && meta.Name != "doubleDamage_img")
+                    && meta.Recolors[0].SeparatePaletteHeader == false)
                 {
                     TestRepack(meta.Name, meta.ModelPath, write: false);
                 }

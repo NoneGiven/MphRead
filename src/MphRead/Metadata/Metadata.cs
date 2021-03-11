@@ -532,6 +532,10 @@ namespace MphRead
 
         public static ModelMetadata? GetModelByName(string name)
         {
+            if (name == "doubleDamage_img")
+            {
+                return DoubleDamageImg;
+            }
             if (ModelMetadata.TryGetValue(name, out ModelMetadata? metadata))
             {
                 return metadata;
@@ -1276,6 +1280,9 @@ namespace MphRead
 
         public static readonly Vector4 WhitePalette = new Vector4(1f, 1f, 1f, 1f);
 
+        public static readonly ModelMetadata DoubleDamageImg
+            = new ModelMetadata("doubleDamage_img", animation: false, archive: "common");
+
         public static readonly IReadOnlyDictionary<string, ModelMetadata> ModelMetadata
             = new Dictionary<string, ModelMetadata>()
             {
@@ -1708,10 +1715,6 @@ namespace MphRead
                 {
                     "Door_Unit4_RM1",
                     new ModelMetadata("Door_Unit4_RM1", animation: false, collision: true)
-                },
-                {
-                    "doubleDamage_img",
-                    new ModelMetadata("doubleDamage_img", animation: false, archive: "common")
                 },
                 {
                     "DripStank_lod0",
@@ -2721,6 +2724,8 @@ namespace MphRead
                                 modelPath: @"_archives\common\samus_ice_img_Model.bin",
                                 texturePath: @"_archives\common\samus_ice_img_Model.bin",
                                 palettePath: @"_archives\common\samus_ice_img_Model.bin"),
+                            // header values indicate that doubleDamage_img_Model.bin was generated as a recolor of samus_ice,
+                            // although it's not used as one in practice -- note that the viewer uses the standalone member above
                             new RecolorMetadata("dbl_dmg",
                                 modelPath: @"_archives\common\doubleDamage_img_Model.bin",
                                 texturePath: @"_archives\common\doubleDamage_img_Model.bin",
