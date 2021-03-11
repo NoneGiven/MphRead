@@ -92,7 +92,6 @@ namespace MphRead.Utility
                 IReadOnlyList<byte> otherTexData = Read.DoOffsets<byte>(fileBytes, otherTex.ImageOffset, otherTex.ImageSize);
                 Debug.Assert(Enumerable.SequenceEqual(texData, otherTexData));
             }
-            // sktodo: sequence compare texture, palette, and dlist data
             IReadOnlyList<Palette> pals = Read.DoOffsets<Palette>(span, header.PaletteOffset, header.PaletteCount);
             IReadOnlyList<Palette> otherPals = Read.DoOffsets<Palette>(fileBytes, other.PaletteOffset, other.PaletteCount);
             for (int i = 0; i < pals.Count; i++)
@@ -338,15 +337,7 @@ namespace MphRead.Utility
             int materialsOffset = offset;
             foreach (Material material in materials)
             {
-                ushort height = 1;
-                ushort width = 1;
-                if (material.TextureId != UInt16.MaxValue)
-                {
-                    TextureInfo texture = textures[material.TextureId];
-                    height = texture.Height;
-                    width = texture.Width;
-                }
-                int matrixId = GetTextureMatrixId(material, height, width, ref matrixIdCount);
+                int matrixId = GetTextureMatrixId(material, ref matrixIdCount);
                 WriteMaterial(material, matrixId, writer);
                 offset += Sizes.Material;
             }
@@ -368,7 +359,6 @@ namespace MphRead.Utility
                 offset += Sizes.Mesh;
             }
             Debug.Assert(stream.Position == offset);
-
             stream.Position = 0;
             // header
             // sktodo: handle animation (file)
@@ -803,7 +793,7 @@ namespace MphRead.Utility
             return bytesWritten;
         }
 
-        private static int GetTextureMatrixId(Material material, ushort height, ushort width, ref int indexCount)
+        private static int GetTextureMatrixId(Material material, ref int indexCount)
         {
             int scaleS = Fixed.ToInt(material.ScaleS);
             int scaleT = Fixed.ToInt(material.ScaleT);
