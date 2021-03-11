@@ -17,13 +17,13 @@ namespace MphRead.Utility
                     IsRoom = false,
                     Texture = RepackTexture.Inline
                 };
-                if (meta.ModelPath != meta.Recolors[0].TexturePath)
+                if (meta.ModelPath != meta.Recolors[0].TexturePath || meta.ModelPath != meta.Recolors[0].PalettePath)
                 {
-                    options.Texture = meta.Recolors[0].TexturePath.ToLower().Contains("share")
+                    options.Texture = meta.Recolors[0].TexturePath.ToLower().Contains("share") || meta.ModelPath != meta.Recolors[0].PalettePath
                         ? RepackTexture.Shared
                         : RepackTexture.Separate;
                 }
-                TestRepack(meta.Name, meta.ModelPath, meta.FirstHunt, options);
+                //TestRepack(meta.Name, meta.ModelPath, meta.FirstHunt, options);
             }
             foreach (RoomMetadata meta in Metadata.RoomMetadata.Values)
             {
@@ -49,6 +49,7 @@ namespace MphRead.Utility
 
         private static void TestRepack(string modelName, string modelPath, bool firstHunt, RepackOptions options)
         {
+            // sktodo
             if (options.Texture == RepackTexture.Shared)
             {
                 return;
@@ -277,11 +278,11 @@ namespace MphRead.Utility
                 primitiveCount += primitives;
                 vertexCount += vertices;
             }
-            // header
-            int offset = 0;
-            offset += Sizes.Header;
+            // header is written last
+            stream.Position = Sizes.Header;
             // node mtx IDs, node pos scale counts
             int nodeMtxIdOffset;
+            int actualOffset = Sizes.Header;
             if (nodeMtxIds.Count == 0)
             {
                 nodeMtxIdOffset = 0;
@@ -289,67 +290,93 @@ namespace MphRead.Utility
                 // in that case, we can infer their existence and count from the pos scale count's offset
                 if (nodePosScaleCounts.Count == 0)
                 {
-                    offset += sizeof(uint);
+                    actualOffset += sizeof(uint);
                 }
                 else
                 {
-                    offset += nodePosScaleCounts.Count * sizeof(uint);
+                    actualOffset += nodePosScaleCounts.Count * sizeof(uint);
                 }
             }
             else
             {
-                nodeMtxIdOffset = offset;
-                offset += nodeMtxIds.Count * sizeof(uint);
+                nodeMtxIdOffset = actualOffset;
+                actualOffset += nodeMtxIds.Count * sizeof(uint);
             }
             int nodePosCountOffset;
             if (nodePosScaleCounts.Count == 0)
             {
                 nodePosCountOffset = 0;
-                offset += sizeof(uint);
             }
             else
             {
                 // in the situation described above, Read is returning the pos scale counts while ignoring the matrix IDs,
                 // to avoid the matrix IDs messing with anything in the model transform code, so we can rely on the former here
-                nodePosCountOffset = offset;
-                offset += nodePosScaleCounts.Count * sizeof(uint);
+                nodePosCountOffset = actualOffset;
             }
-            // todo: handle tex/pal share
+            // node matrix IDs
+            if (nodeMtxIds.Count == 0)
+            {
+                if (options.IsRoom)
+                {
+                    for (int i = 0; i < nodes.Count; i++)
+                    {
+                        if (nodes[i].MeshCount > 0)
+                        {
+                            writer.Write(i);
+                        }
+                    }
+                }
+                else
+                {
+                    int padCount = nodePosScaleCounts.Count == 0 ? 1 : nodePosScaleCounts.Count;
+                    for (int i = 0; i < padCount; i++)
+                    {
+                        // basically just a hack to differentiate between goreaLaser and arcWelder
+                        writer.Write(nodes.Count <= 1 ? 0 : i + 1);
+                    }
+                }
+            }
+            else
+            {
+                foreach (int value in nodeMtxIds)
+                {
+                    writer.Write(value);
+                }
+            }
+            // node pos counts
+            foreach (int value in nodePosScaleCounts)
+            {
+                writer.Write(value);
+            }
+            // sktodo: handle tex/pal share
             // texture data
-            stream.Position = offset;
             var textureDataOffsets = new List<int>();
             foreach (TextureInfo texture in textures)
             {
-                textureDataOffsets.Add(offset);
+                textureDataOffsets.Add((int)stream.Position);
                 foreach (byte data in texture.Data)
                 {
                     writer.Write(data);
-                    offset++;
                 }
             }
-            Debug.Assert(stream.Position == offset);
             // texture metadata
-            int texturesOffset = textures.Count == 0 ? 0 : offset;
+            int texturesOffset = textures.Count == 0 ? 0 : (int)stream.Position;
             for (int i = 0; i < textures.Count; i++)
             {
                 WriteTextureMeta(textures[i], textureDataOffsets[i], writer);
-                offset += Sizes.Texture;
             }
-            Debug.Assert(stream.Position == offset);
             // palette data
             var paletteDataOffsets = new List<int>();
             foreach (PaletteInfo palette in palettes)
             {
-                paletteDataOffsets.Add(offset);
+                paletteDataOffsets.Add((int)stream.Position);
                 foreach (ushort data in palette.Data)
                 {
                     writer.Write(data);
-                    offset += sizeof(ushort);
                 }
             }
-            Debug.Assert(stream.Position == offset);
             // palette metdata
-            int paletteOffset = palettes.Count == 0 ? 0 : offset;
+            int paletteOffset = palettes.Count == 0 ? 0 : (int)stream.Position;
             for (int i = 0; i < palettes.Count; i++)
             {
                 PaletteInfo palette = palettes[i];
@@ -357,20 +384,17 @@ namespace MphRead.Utility
                 writer.Write(palette.Data.Count * sizeof(ushort));
                 writer.Write(padInt); // VramOffset
                 writer.Write(padInt); // ObjectRef
-                offset += Sizes.Palette;
             }
-            Debug.Assert(stream.Position == offset);
             // dlist data
             var dlistResults = new List<(int, int)>();
             foreach (IReadOnlyList<RenderInstruction> render in renders)
             {
+                int offset = (int)stream.Position;
                 int size = WriteRenderInstructions(render, writer);
                 dlistResults.Add((offset, size));
-                offset += size;
             }
-            Debug.Assert(stream.Position == offset);
             // dlist metadata
-            int dlistsOffset = offset;
+            int dlistsOffset = (int)stream.Position;
             for (int i = 0; i < dlists.Count; i++)
             {
                 DisplayList dlist = dlists[i];
@@ -384,40 +408,31 @@ namespace MphRead.Utility
                 writer.Write(dlist.MaxBounds.X.Value);
                 writer.Write(dlist.MaxBounds.Y.Value);
                 writer.Write(dlist.MaxBounds.Z.Value);
-                offset += Sizes.Dlist;
             }
-            Debug.Assert(stream.Position == offset);
             // materials
             int matrixIdCount = 0;
-            int materialsOffset = offset;
+            int materialsOffset = (int)stream.Position;
             foreach (Material material in materials)
             {
                 int matrixId = GetTextureMatrixId(material, ref matrixIdCount);
                 WriteMaterial(material, matrixId, writer);
-                offset += Sizes.Material;
             }
-            Debug.Assert(stream.Position == offset);
             // nodes
-            int nodesOffset = offset;
+            int nodesOffset = (int)stream.Position;
             foreach (Node node in nodes)
             {
                 WriteNode(node, writer);
-                offset += Sizes.Node;
             }
-            Debug.Assert(stream.Position == offset);
             // meshes
-            int meshesOffset = offset;
+            int meshesOffset = (int)stream.Position;
             foreach (Mesh mesh in meshes)
             {
                 writer.Write((ushort)mesh.MaterialId);
                 writer.Write((ushort)mesh.DlistId);
-                offset += Sizes.Mesh;
             }
-            Debug.Assert(stream.Position == offset);
             stream.Position = 0;
             // header
             // sktodo: handle animation (file)
-            // sktodo: handle separate texture file
             int nodeAnimOffset = 0;
             int uvAnimOffset = 0;
             int matAnimOffset = 0;
@@ -454,41 +469,6 @@ namespace MphRead.Utility
             writer.Write((ushort)meshes.Count);
             writer.Write((ushort)matrixIdCount);
             Debug.Assert(stream.Position == Sizes.Header);
-            // node matrix IDs
-            if (nodeMtxIds.Count == 0)
-            {
-                if (options.IsRoom)
-                {
-                    for (int i = 0; i < nodes.Count; i++)
-                    {
-                        if (nodes[i].MeshCount > 0)
-                        {
-                            writer.Write(i);
-                        }
-                    }
-                }
-                else
-                {
-                    int padCount = nodePosScaleCounts.Count == 0 ? 1 : nodePosScaleCounts.Count;
-                    for (int i = 0; i < padCount; i++)
-                    {
-                        // basically just a hack to differentiate between goreaLaser and arcWelder
-                        writer.Write(nodes.Count <= 1 ? 0 : i + 1);
-                    }
-                }
-            }
-            else
-            {
-                foreach (int value in nodeMtxIds)
-                {
-                    writer.Write(value);
-                }
-            }
-            // node pos counts
-            foreach (int value in nodePosScaleCounts)
-            {
-                writer.Write(value);
-            }
             return stream.ToArray();
         }
 
