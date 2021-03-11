@@ -23,7 +23,16 @@ namespace MphRead.Utility
                         ? RepackTexture.Shared
                         : RepackTexture.Separate;
                 }
-                //TestRepack(meta.Name, meta.ModelPath, meta.FirstHunt, options);
+                int i = 0;
+                foreach (RecolorMetadata recolor in meta.Recolors)
+                {
+                    if ((meta.Name == "samus_hi_yellow" || meta.Name == "samus_low_yellow" || meta.Name == "morphBall") && i != 0)
+                    {
+                        break;
+                    }
+                    Model model = Read.GetModelInstance(meta.Name, meta.FirstHunt).Model;
+                    TestRepack(model, recolor: i++, meta.ModelPath, meta.FirstHunt, options);
+                }
             }
             foreach (RoomMetadata meta in Metadata.RoomMetadata.Values)
             {
@@ -34,57 +43,49 @@ namespace MphRead.Utility
                         ? RepackTexture.Inline
                         : RepackTexture.Separate
                 };
-                TestRepack(meta.Name, meta.ModelPath, meta.FirstHunt || meta.Hybrid, options);
+                Model model = Read.GetRoomModelInstance(meta.Name).Model;
+                TestRepack(model, recolor: 0, meta.ModelPath, meta.FirstHunt || meta.Hybrid, options);
             }
         }
 
-        public static void TestRepack(string name, bool firstHunt = false)
+        public static void TestRepack(string name, int recolor = 0, bool firstHunt = false)
         {
             var options = new RepackOptions()
             {
                 IsRoom = false,
                 WriteFile = true
             };
-            ModelMetadata meta = Metadata.ModelMetadata[name];
-            TestRepack(meta.Name, meta.ModelPath, firstHunt, options);
+            ModelMetadata meta = firstHunt ? Metadata.FirstHuntModels[name] : Metadata.ModelMetadata[name];
+            Model model = Read.GetModelInstance(meta.Name, meta.FirstHunt).Model;
+            TestRepack(model, recolor, meta.ModelPath, meta.FirstHunt, options);
         }
 
-        private static void TestRepack(string modelName, string modelPath, bool firstHunt, RepackOptions options)
+        private static void TestRepack(Model model, int recolor, string modelPath, bool firstHunt, RepackOptions options)
         {
-            // sktodo
+            // sktodo: share
             if (options.Texture == RepackTexture.Shared)
             {
                 return;
             }
-            // todo: handle recolors
-            Model model;
-            if (options.IsRoom)
-            {
-                model = Read.GetRoomModelInstance(modelName).Model;
-            }
-            else
-            {
-                model = Read.GetModelInstance(modelName, firstHunt).Model;
-            }
             var textureInfo = new List<TextureInfo>();
-            for (int i = 0; i < model.Recolors[0].Textures.Count; i++)
+            for (int i = 0; i < model.Recolors[recolor].Textures.Count; i++)
             {
-                Texture texture = model.Recolors[0].Textures[i];
-                IReadOnlyList<TextureData> data = model.Recolors[0].TextureData[i];
+                Texture texture = model.Recolors[recolor].Textures[i];
+                IReadOnlyList<TextureData> data = model.Recolors[recolor].TextureData[i];
                 textureInfo.Add(ConvertData(texture, data));
             }
             var paletteInfo = new List<PaletteInfo>();
-            foreach (IReadOnlyList<PaletteData> data in model.Recolors[0].PaletteData)
+            foreach (IReadOnlyList<PaletteData> data in model.Recolors[recolor].PaletteData)
             {
                 paletteInfo.Add(new PaletteInfo(data.Select(d => d.Data).ToList()));
             }
             byte[] bytes = PackModel(model.Header.ScaleBase.FloatValue, model.Header.ScaleFactor, model.NodeMatrixIds, model.NodePosCounts,
                 model.Materials, textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists, options);
             byte[] fileBytes = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, modelPath));
-            ComparePacks(modelName, bytes, fileBytes, options);
+            ComparePacks(model.Name, bytes, fileBytes, options);
             if (options.WriteFile)
             {
-                File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}.bin"), bytes);
+                File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}_{model.Recolors[recolor].Name}.bin"), bytes);
             }
             Nop();
         }
