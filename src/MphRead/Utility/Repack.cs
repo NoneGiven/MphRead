@@ -88,6 +88,9 @@ namespace MphRead.Utility
                 Debug.Assert(tex.ImageOffset == otherTex.ImageOffset);
                 Debug.Assert(tex.ImageSize == otherTex.ImageSize);
                 Debug.Assert(tex.Opaque == otherTex.Opaque);
+                IReadOnlyList<byte> texData = Read.DoOffsets<byte>(span, tex.ImageOffset, tex.ImageSize);
+                IReadOnlyList<byte> otherTexData = Read.DoOffsets<byte>(fileBytes, otherTex.ImageOffset, otherTex.ImageSize);
+                Debug.Assert(Enumerable.SequenceEqual(texData, otherTexData));
             }
             // sktodo: sequence compare texture, palette, and dlist data
             IReadOnlyList<Palette> pals = Read.DoOffsets<Palette>(span, header.PaletteOffset, header.PaletteCount);
@@ -98,6 +101,9 @@ namespace MphRead.Utility
                 Palette otherPal = otherPals[i];
                 Debug.Assert(pal.Offset == otherPal.Offset);
                 Debug.Assert(pal.Size == otherPal.Size);
+                IReadOnlyList<byte> palData = Read.DoOffsets<byte>(span, pal.Offset, pal.Size);
+                IReadOnlyList<byte> otherPalData = Read.DoOffsets<byte>(fileBytes, otherPal.Offset, otherPal.Size);
+                Debug.Assert(Enumerable.SequenceEqual(palData, otherPalData));
             }
             IReadOnlyList<RawMaterial> mats = Read.DoOffsets<RawMaterial>(span, header.MaterialOffset, header.MaterialCount);
             IReadOnlyList<RawMaterial> otherMats = Read.DoOffsets<RawMaterial>(fileBytes, other.MaterialOffset, other.MaterialCount);
@@ -173,6 +179,24 @@ namespace MphRead.Utility
                 RawMesh otherMesh = otherMeshes[i];
                 Debug.Assert(mesh.MaterialId == otherMesh.MaterialId);
                 Debug.Assert(mesh.DlistId == otherMesh.DlistId);
+            }
+            IReadOnlyList<DisplayList> dlists = Read.DoOffsets<DisplayList>(span, header.DlistOffset, header.MeshCount);
+            IReadOnlyList<DisplayList> otherDlists = Read.DoOffsets<DisplayList>(fileBytes, other.DlistOffset, other.MeshCount);
+            for (int i = 0; i < dlists.Count; i++)
+            {
+                DisplayList dlist = dlists[i];
+                DisplayList otherDlist = otherDlists[i];
+                Debug.Assert(dlist.Offset == otherDlist.Offset);
+                Debug.Assert(dlist.Size == otherDlist.Size);
+                Debug.Assert(dlist.MinBounds.X.Value == otherDlist.MinBounds.X.Value);
+                Debug.Assert(dlist.MinBounds.Y.Value == otherDlist.MinBounds.Y.Value);
+                Debug.Assert(dlist.MinBounds.Z.Value == otherDlist.MinBounds.Z.Value);
+                Debug.Assert(dlist.MaxBounds.X.Value == otherDlist.MaxBounds.X.Value);
+                Debug.Assert(dlist.MaxBounds.Y.Value == otherDlist.MaxBounds.Y.Value);
+                Debug.Assert(dlist.MaxBounds.Z.Value == otherDlist.MaxBounds.Z.Value);
+                IReadOnlyList<byte> dlistData = Read.DoOffsets<byte>(span, dlist.Offset, dlist.Size);
+                IReadOnlyList<byte> otherDlistData = Read.DoOffsets<byte>(fileBytes, otherDlist.Offset, otherDlist.Size);
+                Debug.Assert(Enumerable.SequenceEqual(dlistData, otherDlistData));
             }
             //Debug.Assert(Enumerable.SequenceEqual(bytes, fileBytes));
             if (write)
