@@ -563,7 +563,7 @@ namespace MphRead.Utility
                     value |= (ushort)(blue << 10);
                     imageData.Add((byte)(value & 0xFF));
                     imageData.Add((byte)(value >> 8));
-                    if (pixel.Alpha == 0)
+                    if (pixel.Alpha != 255)
                     {
                         opaque = false;
                     }
@@ -574,10 +574,13 @@ namespace MphRead.Utility
                 var colors = new Dictionary<(byte, byte, byte), int>();
                 foreach (ColorRgba pixel in image.Pixels)
                 {
-                    (byte, byte, byte) color = (pixel.Red, pixel.Green, pixel.Blue);
-                    if (!colors.ContainsKey(color))
+                    if (image.PaletteOpaque || pixel.Alpha > 0)
                     {
-                        colors.Add(color, colors.Count);
+                        (byte, byte, byte) color = (pixel.Red, pixel.Green, pixel.Blue);
+                        if (!colors.ContainsKey(color))
+                        {
+                            colors.Add(color, colors.Count);
+                        }
                     }
                 }
                 if (image.Format == TextureFormat.PaletteA3I5)
@@ -612,43 +615,104 @@ namespace MphRead.Utility
                 }
                 else if (image.Format == TextureFormat.Palette2Bit)
                 {
-                    Debug.Assert(colors.Count <= 4);
+                    if (image.PaletteOpaque || image.Pixels.All(i => i.Alpha > 0))
+                    {
+                        Debug.Assert(colors.Count <= 4);
+                    }
+                    else
+                    {
+                        Debug.Assert(colors.Count <= 3);
+                    }
                     for (int i = 0; i < image.Pixels.Count; i += 4)
                     {
                         byte value = 0;
                         for (int j = 0; j < 4 && i + j < image.Pixels.Count; j++)
                         {
                             ColorRgba pixel = image.Pixels[i + j];
-                            byte index = (byte)colors[(pixel.Red, pixel.Green, pixel.Blue)];
+                            byte index;
+                            if (image.PaletteOpaque || pixel.Alpha > 0)
+                            {
+                                index = (byte)colors[(pixel.Red, pixel.Green, pixel.Blue)];
+                                if (!image.PaletteOpaque)
+                                {
+                                    index++;
+                                }
+                            }
+                            else
+                            {
+                                index = 0;
+                            } 
                             value |= (byte)(index << (2 * j));
                         }
                         imageData.Add(value);
                     }
+                    opaque = image.PaletteOpaque;
                 }
                 else if (image.Format == TextureFormat.Palette4Bit)
                 {
-                    Debug.Assert(colors.Count <= 16);
+                    if (image.PaletteOpaque || image.Pixels.All(i => i.Alpha > 0))
+                    {
+                        Debug.Assert(colors.Count <= 16);
+                    }
+                    else
+                    {
+                        Debug.Assert(colors.Count <= 15);
+                    }
                     for (int i = 0; i < image.Pixels.Count; i += 2)
                     {
                         byte value = 0;
                         for (int j = 0; j < 2 && i + j < image.Pixels.Count; j++)
                         {
                             ColorRgba pixel = image.Pixels[i + j];
-                            byte index = (byte)colors[(pixel.Red, pixel.Green, pixel.Blue)];
+                            byte index;
+                            if (image.PaletteOpaque || pixel.Alpha > 0)
+                            {
+                                index = (byte)colors[(pixel.Red, pixel.Green, pixel.Blue)];
+                                if (!image.PaletteOpaque)
+                                {
+                                    index++;
+                                }
+                            }
+                            else
+                            {
+                                index = 0;
+                            }
                             value |= (byte)(index << (4 * j));
                         }
                         imageData.Add(value);
                     }
+                    opaque = image.PaletteOpaque;
                 }
                 else if (image.Format == TextureFormat.Palette8Bit)
                 {
-                    Debug.Assert(colors.Count <= 256);
+                    if (image.PaletteOpaque || image.Pixels.All(i => i.Alpha > 0))
+                    {
+                        Debug.Assert(colors.Count <= 256);
+                    }
+                    else
+                    {
+                        Debug.Assert(colors.Count <= 255);
+                    }
                     foreach (ColorRgba pixel in image.Pixels)
                     {
-                        byte value = (byte)colors[(pixel.Red, pixel.Green, pixel.Blue)];
-                        imageData.Add(value);
+                        if (image.PaletteOpaque || pixel.Alpha > 0)
+                        {
+                            byte index = (byte)colors[(pixel.Red, pixel.Green, pixel.Blue)];
+                            if (!image.PaletteOpaque)
+                            {
+                                index++;
+                            }
+                            imageData.Add(index);
+                        }
+                        else
+                        {
+                            imageData.Add(0);
+                        }
                     }
+                    opaque = image.PaletteOpaque;
                 }
+                // todo: if PaletteOpaque is true, index 0 is used for transparency -- so no actual color value can be accessed at that index
+                // --> in that case, we should probably 
                 foreach (KeyValuePair<(byte Red, byte Green, byte Blue), int> kvp in colors.OrderBy(c => c.Value))
                 {
                     ushort value = 0;
@@ -836,13 +900,13 @@ namespace MphRead.Utility
 
         public class TextureInfo
         {
-            public TextureFormat Format { get; set; }
-            public bool Opaque { get; set; }
-            public ushort Height { get; set; }
-            public ushort Width { get; set; }
-            public IReadOnlyList<byte> Data { get; set; }
+            public TextureFormat Format { get; }
+            public bool Opaque { get; }
+            public ushort Height { get; }
+            public ushort Width { get; }
+            public IReadOnlyList<byte> Data { get; }
 
-            public TextureInfo(TextureFormat format,  bool opaque, ushort height, ushort width,
+            public TextureInfo(TextureFormat format, bool opaque, ushort height, ushort width,
                 IReadOnlyList<byte> data)
             {
                 Format = format;
@@ -865,17 +929,22 @@ namespace MphRead.Utility
 
         public class ImageInfo
         {
-            public TextureFormat Format { get; set; }
-            public ushort Height { get; set; }
-            public ushort Width { get; set; }
-            public IReadOnlyList<ColorRgba> Pixels { get; set; }
+            public TextureFormat Format { get; }
+            public ushort Height { get; }
+            public ushort Width { get; }
+            public IReadOnlyList<ColorRgba> Pixels { get; }
+            public bool PaletteOpaque { get; }
 
-            public ImageInfo(TextureFormat format, ushort height, ushort width, IReadOnlyList<ColorRgba> pixels)
+            public ImageInfo(TextureFormat format, ushort height, ushort width, IReadOnlyList<ColorRgba> pixels, bool paletteOpaque)
             {
                 Format = format;
                 Height = height;
                 Width = width;
                 Pixels = pixels;
+                if (format == TextureFormat.Palette2Bit || format == TextureFormat.Palette4Bit || format == TextureFormat.Palette8Bit)
+                {
+                    PaletteOpaque = paletteOpaque;
+                }
             }
         }
 
