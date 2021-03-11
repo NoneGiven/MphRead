@@ -12,17 +12,6 @@ namespace MphRead.Utility
         {
             foreach (ModelMetadata meta in Metadata.ModelMetadata.Values.Concat(Metadata.FirstHuntModels.Values))
             {
-                var options = new RepackOptions()
-                {
-                    IsRoom = false,
-                    Texture = RepackTexture.Inline
-                };
-                if (meta.ModelPath != meta.Recolors[0].TexturePath || meta.ModelPath != meta.Recolors[0].PalettePath)
-                {
-                    options.Texture = meta.Recolors[0].TexturePath.ToLower().Contains("share") || meta.ModelPath != meta.Recolors[0].PalettePath
-                        ? RepackTexture.Shared
-                        : RepackTexture.Separate;
-                }
                 int i = 0;
                 foreach (RecolorMetadata recolor in meta.Recolors)
                 {
@@ -37,6 +26,23 @@ namespace MphRead.Utility
                     if (meta.Name == "arcWelder1")
                     {
                         modelPath = modelPath.Replace("arcWelder1", $"arcWelder{i + 1}");
+                    }
+                    var options = new RepackOptions()
+                    {
+                        IsRoom = false,
+                        Texture = RepackTexture.Inline
+                    };
+                    if (meta.ModelPath == recolor.TexturePath && recolor.TexturePath != recolor.PalettePath)
+                    {
+                        options.Texture = recolor.TexturePath.Contains("Share") || recolor.PalettePath.Contains("AlimbicPalettes")
+                            ? RepackTexture.Shared
+                            : RepackTexture.SeparatePal;
+                    }
+                    else if (meta.ModelPath != recolor.TexturePath || meta.ModelPath != recolor.PalettePath)
+                    {
+                        options.Texture = recolor.TexturePath.Contains("Share") || meta.ModelPath != recolor.PalettePath
+                            ? RepackTexture.Shared
+                            : RepackTexture.Separate;
                     }
                     TestRepack(model, recolor: i++, modelPath, meta.FirstHunt, options);
                 }
@@ -266,6 +272,7 @@ namespace MphRead.Utility
         {
             Inline,
             Separate,
+            SeparatePal,
             Shared
         }
 
