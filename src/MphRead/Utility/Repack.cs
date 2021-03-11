@@ -36,6 +36,7 @@ namespace MphRead.Utility
         private static void TestRepack(string modelName, string modelPath, bool firstHunt, bool write)
         {
             // todo: handle recolors
+            var options = new RepackOptions();
             Model model = Read.GetModelInstance(modelName, firstHunt).Model;
             var textureInfo = new List<TextureInfo>();
             for (int i = 0; i < model.Recolors[0].Textures.Count; i++)
@@ -50,7 +51,7 @@ namespace MphRead.Utility
                 paletteInfo.Add(new PaletteInfo(data.Select(d => d.Data).ToList()));
             }
             byte[] bytes = PackModel(model.Header.ScaleBase.FloatValue, model.Header.ScaleFactor, model.NodeMatrixIds, model.NodePosCounts,
-                model.Materials, textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists);
+                model.Materials, textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists, options);
             byte[] fileBytes = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, modelPath));
             ComparePacks(bytes, fileBytes);
             if (write)
@@ -215,9 +216,21 @@ namespace MphRead.Utility
             Debug.Assert(Enumerable.SequenceEqual(bytes, otherBytes));
         }
 
+        public enum RepackTexture
+        {
+            Inline,
+            Separate,
+            Shared
+        }
+
+        public class RepackOptions
+        {
+            public RepackTexture Texture { get; set; }
+        }
+
         public static byte[] PackModel(float scaleBase, uint scaleFactor, IReadOnlyList<int> nodeMtxIds, IReadOnlyList<int> nodePosScaleCounts,
             IReadOnlyList<Material> materials, IReadOnlyList<TextureInfo> textures, IReadOnlyList<PaletteInfo> palettes, IReadOnlyList<Node> nodes,
-            IReadOnlyList<Mesh> meshes, IReadOnlyList<IReadOnlyList<RenderInstruction>> renders, IReadOnlyList<DisplayList> dlists)
+            IReadOnlyList<Mesh> meshes, IReadOnlyList<IReadOnlyList<RenderInstruction>> renders, IReadOnlyList<DisplayList> dlists, RepackOptions options)
         {
             byte padByte = 0;
             ushort padShort = 0;

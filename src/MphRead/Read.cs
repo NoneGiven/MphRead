@@ -147,11 +147,8 @@ namespace MphRead
                 if (meta.PalettePath != meta.TexturePath && meta.ReplaceIds.Count == 0)
                 {
                     paletteBytes = ReadBytes(meta.PalettePath, firstHunt);
-                    if (meta.SeparatePaletteHeader)
-                    {
-                        Header paletteHeader = ReadStruct<Header>(paletteBytes[0..Sizes.Header]);
-                        palettes = DoOffsets<Palette>(paletteBytes, paletteHeader.PaletteOffset, paletteHeader.PaletteCount);
-                    }
+                    Header paletteHeader = ReadStruct<Header>(paletteBytes[0..Sizes.Header]);
+                    palettes = DoOffsets<Palette>(paletteBytes, paletteHeader.PaletteOffset, paletteHeader.PaletteCount);
                 }
                 var textureData = new List<IReadOnlyList<TextureData>>();
                 var paletteData = new List<IReadOnlyList<PaletteData>>();

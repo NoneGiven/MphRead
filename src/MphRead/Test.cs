@@ -11,7 +11,7 @@ namespace MphRead
     {
         public static void ParseAllModels()
         {
-            GetAllModels();
+            GetAllModels().ToList();
         }
 
         public static void TestAllModels()
