@@ -89,6 +89,7 @@ namespace MphRead.Utility
                 Debug.Assert(tex.ImageSize == otherTex.ImageSize);
                 Debug.Assert(tex.Opaque == otherTex.Opaque);
             }
+            // sktodo: sequence compare texture, palette, and dlist data
             IReadOnlyList<Palette> pals = Read.DoOffsets<Palette>(span, header.PaletteOffset, header.PaletteCount);
             IReadOnlyList<Palette> otherPals = Read.DoOffsets<Palette>(fileBytes, other.PaletteOffset, other.PaletteCount);
             for (int i = 0; i < pals.Count; i++)
@@ -176,7 +177,7 @@ namespace MphRead.Utility
             Debug.Assert(Enumerable.SequenceEqual(bytes, fileBytes));
             if (write)
             {
-                File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}.bin"), bytes);
+                //File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}.bin"), bytes);
             }
             Nop();
         }
@@ -476,15 +477,20 @@ namespace MphRead.Utility
 
         public static TextureInfo ConvertData(Texture texture, IReadOnlyList<TextureData> data)
         {
-            bool opaque = data.All(d => d.Alpha > 0);
+            bool opaque = true;
             var imageData = new List<byte>();
 
             if (texture.Format == TextureFormat.DirectRgb)
             {
                 foreach (TextureData entry in data)
                 {
+                    // alpha bit is already present in the ushort value
                     imageData.Add((byte)(entry.Data & 0xFF));
                     imageData.Add((byte)(entry.Data >> 8));
+                    if (entry.Alpha != 255)
+                    {
+                        opaque = false;
+                    }
                 }
             }
             else if (texture.Format == TextureFormat.PaletteA3I5)
@@ -495,6 +501,10 @@ namespace MphRead.Utility
                     byte alpha = (byte)Math.Round(entry.Alpha * 7f / 255f);
                     value |= (byte)(alpha << 5);
                     imageData.Add(value);
+                    if (entry.Alpha != 255)
+                    {
+                        opaque = false;
+                    }
                 }
             }
             else if (texture.Format == TextureFormat.PaletteA5I3)
@@ -505,6 +515,10 @@ namespace MphRead.Utility
                     byte alpha = (byte)Math.Round(entry.Alpha * 31f / 255f);
                     value |= (byte)(alpha << 3);
                     imageData.Add(value);
+                    if (entry.Alpha != 255)
+                    {
+                        opaque = false;
+                    }
                 }
             }
             else if (texture.Format == TextureFormat.Palette2Bit)
