@@ -75,7 +75,7 @@ namespace MphRead.Utility
             Debug.Assert(header.MaterialAnimations == other.MaterialAnimations);
             Debug.Assert(header.TextureAnimations == other.TextureAnimations);
             Debug.Assert(header.MeshCount == other.MeshCount);
-            Debug.Assert(header.TextureMatrixCount == other.TextureMatrixCount);
+            //Debug.Assert(header.TextureMatrixCount == other.TextureMatrixCount);
             IReadOnlyList<Texture> texes = Read.DoOffsets<Texture>(span, header.TextureOffset, header.TextureCount);
             IReadOnlyList<Texture> otherTexes = Read.DoOffsets<Texture>(fileBytes, other.TextureOffset, other.TextureCount);
             for (int i = 0; i < texes.Count; i++)
@@ -119,7 +119,7 @@ namespace MphRead.Utility
                 Debug.Assert(mat.AnimationFlags == otherMat.AnimationFlags);
                 Debug.Assert(mat.Culling == otherMat.Culling);
                 Debug.Assert(mat.Lighting == otherMat.Lighting);
-                Debug.Assert(mat.MatrixId == otherMat.MatrixId);
+                //Debug.Assert(mat.MatrixId == otherMat.MatrixId);
                 Debug.Assert(mat.PaletteId == otherMat.PaletteId);
                 Debug.Assert(mat.PolygonMode == otherMat.PolygonMode);
                 Debug.Assert(mat.RenderMode == otherMat.RenderMode);
@@ -174,7 +174,7 @@ namespace MphRead.Utility
                 Debug.Assert(mesh.MaterialId == otherMesh.MaterialId);
                 Debug.Assert(mesh.DlistId == otherMesh.DlistId);
             }
-            Debug.Assert(Enumerable.SequenceEqual(bytes, fileBytes));
+            //Debug.Assert(Enumerable.SequenceEqual(bytes, fileBytes));
             if (write)
             {
                 //File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}.bin"), bytes);
@@ -251,7 +251,7 @@ namespace MphRead.Utility
             }
             Debug.Assert(stream.Position == offset);
             // texture metadata
-            int texturesOffset = offset;
+            int texturesOffset = textures.Count == 0 ? 0 : offset;
             for (int i = 0; i < textures.Count; i++)
             {
                 WriteTextureMeta(textures[i], textureDataOffsets[i], writer);
@@ -271,7 +271,7 @@ namespace MphRead.Utility
             }
             Debug.Assert(stream.Position == offset);
             // palette metdata
-            int paletteOffset = offset;
+            int paletteOffset = palettes.Count == 0 ? 0 : offset;
             for (int i = 0; i < palettes.Count; i++)
             {
                 PaletteInfo palette = palettes[i];
@@ -477,7 +477,6 @@ namespace MphRead.Utility
 
         public static TextureInfo ConvertData(Texture texture, IReadOnlyList<TextureData> data)
         {
-            bool opaque = true;
             var imageData = new List<byte>();
 
             if (texture.Format == TextureFormat.DirectRgb)
@@ -487,10 +486,6 @@ namespace MphRead.Utility
                     // alpha bit is already present in the ushort value
                     imageData.Add((byte)(entry.Data & 0xFF));
                     imageData.Add((byte)(entry.Data >> 8));
-                    if (entry.Alpha != 255)
-                    {
-                        opaque = false;
-                    }
                 }
             }
             else if (texture.Format == TextureFormat.PaletteA3I5)
@@ -501,10 +496,6 @@ namespace MphRead.Utility
                     byte alpha = (byte)Math.Round(entry.Alpha * 7f / 255f);
                     value |= (byte)(alpha << 5);
                     imageData.Add(value);
-                    if (entry.Alpha != 255)
-                    {
-                        opaque = false;
-                    }
                 }
             }
             else if (texture.Format == TextureFormat.PaletteA5I3)
@@ -515,10 +506,6 @@ namespace MphRead.Utility
                     byte alpha = (byte)Math.Round(entry.Alpha * 31f / 255f);
                     value |= (byte)(alpha << 3);
                     imageData.Add(value);
-                    if (entry.Alpha != 255)
-                    {
-                        opaque = false;
-                    }
                 }
             }
             else if (texture.Format == TextureFormat.Palette2Bit)
@@ -554,7 +541,7 @@ namespace MphRead.Utility
                     imageData.Add((byte)entry.Data);
                 }
             }
-            return new TextureInfo(texture.Format, opaque, texture.Height, texture.Width, imageData);
+            return new TextureInfo(texture.Format, texture.Opaque != 0, texture.Height, texture.Width, imageData);
         }
 
         public static (TextureInfo, PaletteInfo) ConvertImage(ImageInfo image)
