@@ -32,7 +32,13 @@ namespace MphRead.Utility
                         break;
                     }
                     Model model = Read.GetModelInstance(meta.Name, meta.FirstHunt).Model;
-                    TestRepack(model, recolor: i++, meta.ModelPath, meta.FirstHunt, options);
+                    string modelPath = meta.ModelPath;
+                    // also not real recolors -- data is from separate models which won't get tested
+                    if (meta.Name == "arcWelder1")
+                    {
+                        modelPath = modelPath.Replace("arcWelder1", $"arcWelder{i + 1}");
+                    }
+                    TestRepack(model, recolor: i++, modelPath, meta.FirstHunt, options);
                 }
             }
             foreach (RoomMetadata meta in Metadata.RoomMetadata.Values)
