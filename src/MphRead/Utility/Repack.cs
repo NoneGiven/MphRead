@@ -198,10 +198,10 @@ namespace MphRead.Utility
                 IReadOnlyList<byte> otherDlistData = Read.DoOffsets<byte>(fileBytes, otherDlist.Offset, otherDlist.Size);
                 Debug.Assert(Enumerable.SequenceEqual(dlistData, otherDlistData));
             }
-            //Debug.Assert(Enumerable.SequenceEqual(bytes, fileBytes));
+            Debug.Assert(Enumerable.SequenceEqual(bytes, fileBytes));
             if (write)
             {
-                //File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}.bin"), bytes);
+                File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}.bin"), bytes);
             }
             Nop();
         }
@@ -415,7 +415,8 @@ namespace MphRead.Utility
                 int padCount = nodePosScaleCounts.Count == 0 ? 1 : nodePosScaleCounts.Count;
                 for (int i = 0; i < padCount; i++)
                 {
-                    writer.Write(padInt);
+                    // basically just a hack to differentiate between goreaLaser and arcWelder
+                    writer.Write(nodes.Count <= 1 ? 0 : i + 1);
                 }
             }
             else
