@@ -10,35 +10,52 @@ namespace MphRead.Utility
     {
         public static void TestRepack()
         {
-            foreach (ModelMetadata meta in Metadata.ModelMetadata.Values)
+            foreach (ModelMetadata meta in Metadata.ModelMetadata.Values.Concat(Metadata.FirstHuntModels.Values))
             {
-                //TestRepack(meta.Name, meta.ModelPath, meta.FirstHunt, room: false, write: false);
-            }
-            foreach (ModelMetadata meta in Metadata.FirstHuntModels.Values)
-            {
-                //TestRepack(meta.Name, meta.ModelPath, meta.FirstHunt, room: false, write: false);
+                var options = new RepackOptions()
+                {
+                    IsRoom = false,
+                    Texture = RepackTexture.Inline
+                };
+                if (meta.ModelPath != meta.Recolors[0].TexturePath)
+                {
+                    options.Texture = meta.Recolors[0].TexturePath.ToLower().Contains("share")
+                        ? RepackTexture.Shared
+                        : RepackTexture.Separate;
+                }
+                TestRepack(meta.Name, meta.ModelPath, meta.FirstHunt, options);
             }
             foreach (RoomMetadata meta in Metadata.RoomMetadata.Values)
             {
-                TestRepack(meta.Name, meta.ModelPath, meta.FirstHunt || meta.Hybrid, room: true, write: false);
+                var options = new RepackOptions()
+                {
+                    IsRoom = true,
+                    Texture = meta.ModelPath == meta.TexturePath ? RepackTexture.Inline  : RepackTexture.Separate
+                };
+                TestRepack(meta.Name, meta.ModelPath, meta.FirstHunt || meta.Hybrid, options);
             }
         }
 
         public static void TestRepack(string name, bool firstHunt = false)
         {
-            ModelMetadata meta = Metadata.ModelMetadata[name];
-            TestRepack(meta.Name, meta.ModelPath, firstHunt, room: false, write: true);
-        }
-
-        private static void TestRepack(string modelName, string modelPath, bool firstHunt, bool room, bool write)
-        {
-            // todo: handle recolors
             var options = new RepackOptions()
             {
-                IsRoom = room
+                IsRoom = false,
+                WriteFile = true
             };
+            ModelMetadata meta = Metadata.ModelMetadata[name];
+            TestRepack(meta.Name, meta.ModelPath, firstHunt, options);
+        }
+
+        private static void TestRepack(string modelName, string modelPath, bool firstHunt, RepackOptions options)
+        {
+            if (options.Texture == RepackTexture.Shared)
+            {
+                return;
+            }
+            // todo: handle recolors
             Model model;
-            if (room)
+            if (options.IsRoom)
             {
                 model = Read.GetRoomModelInstance(modelName).Model;
             }
@@ -62,7 +79,7 @@ namespace MphRead.Utility
                 model.Materials, textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists, options);
             byte[] fileBytes = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, modelPath));
             ComparePacks(modelName, bytes, fileBytes);
-            if (write)
+            if (options.WriteFile)
             {
                 File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}.bin"), bytes);
             }
@@ -71,6 +88,7 @@ namespace MphRead.Utility
 
         private static void ComparePacks(string name, byte[] bytes, byte[] otherBytes)
         {
+            string temp = name;
             Debug.Assert(bytes.Length == otherBytes.Length);
             Header header = Read.ReadStruct<Header>(bytes);
             Header other = Read.ReadStruct<Header>(otherBytes);
@@ -236,6 +254,7 @@ namespace MphRead.Utility
         {
             public RepackTexture Texture { get; set; }
             public bool IsRoom { get; set; }
+            public bool WriteFile { get; set; }
         }
 
         public static byte[] PackModel(float scaleBase, uint scaleFactor, IReadOnlyList<int> nodeMtxIds, IReadOnlyList<int> nodePosScaleCounts,
@@ -247,6 +266,8 @@ namespace MphRead.Utility
             uint padInt = 0;
             using var stream = new MemoryStream();
             using var writer = new BinaryWriter(stream);
+            //using MemoryStream texStream = options.Texture == RepackTexture.Inline ? stream : new MemoryStream();
+            //using BinaryWriter texWriter = options.Texture == RepackTexture.Inline ? writer : new BinaryWriter(texStream);
             int primitiveCount = 0;
             int vertexCount = 0;
             Debug.Assert(renders.Count == dlists.Count);
@@ -293,6 +314,7 @@ namespace MphRead.Utility
                 nodePosCountOffset = offset;
                 offset += nodePosScaleCounts.Count * sizeof(uint);
             }
+            // todo: handle tex/pal share
             // texture data
             stream.Position = offset;
             var textureDataOffsets = new List<int>();
