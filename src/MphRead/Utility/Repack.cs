@@ -10,27 +10,33 @@ namespace MphRead.Utility
     {
         public static void TestRepack()
         {
+            //foreach (ModelMetadata meta in Metadata.FirstHuntModels.Values)
             foreach (ModelMetadata meta in Metadata.ModelMetadata.Values)
             {
                 // todo: these
                 if (meta.Recolors[0].ModelPath == meta.ModelPath && meta.Recolors[0].TexturePath == meta.ModelPath
                     && meta.Recolors[0].SeparatePaletteHeader == false)
                 {
-                    TestRepack(meta.Name, meta.ModelPath, write: false);
+                    TestRepack(meta.Name, meta.ModelPath, meta.FirstHunt, write: false);
+                    //Console.WriteLine($"[x] {meta.Name}");
+                }
+                else
+                {
+                    //Console.WriteLine($"[ ] {meta.Name}");
                 }
             }
         }
 
-        public static void TestRepack(string name)
+        public static void TestRepack(string name, bool firstHunt = false)
         {
             ModelMetadata meta = Metadata.ModelMetadata[name];
-            TestRepack(meta.Name, meta.ModelPath, write: true);
+            TestRepack(meta.Name, meta.ModelPath, firstHunt, write: true);
         }
 
-        private static void TestRepack(string modelName, string modelPath, bool write)
+        private static void TestRepack(string modelName, string modelPath, bool firstHunt, bool write)
         {
             // todo: handle recolors
-            Model model = Read.GetModelInstance(modelName).Model;
+            Model model = Read.GetModelInstance(modelName, firstHunt).Model;
             var textureInfo = new List<TextureInfo>();
             for (int i = 0; i < model.Recolors[0].Textures.Count; i++)
             {
@@ -45,11 +51,20 @@ namespace MphRead.Utility
             }
             byte[] bytes = PackModel(model.Header.ScaleBase.FloatValue, model.Header.ScaleFactor, model.NodeMatrixIds, model.NodePosCounts,
                 model.Materials, textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists);
-            byte[] fileBytes = File.ReadAllBytes(Path.Combine(Paths.FileSystem, modelPath));
-            Debug.Assert(bytes.Length == fileBytes.Length);
-            var span = new ReadOnlySpan<byte>(bytes);
-            Header header = Read.ReadStruct<Header>(span);
-            Header other = model.Header;
+            byte[] fileBytes = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, modelPath));
+            ComparePacks(bytes, fileBytes);
+            if (write)
+            {
+                File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}.bin"), bytes);
+            }
+            Nop();
+        }
+
+        private static void ComparePacks(byte[] bytes, byte[] otherBytes)
+        {
+            Debug.Assert(bytes.Length == otherBytes.Length);
+            Header header = Read.ReadStruct<Header>(bytes);
+            Header other = Read.ReadStruct<Header>(otherBytes);
             Debug.Assert(header.ScaleFactor == other.ScaleFactor);
             Debug.Assert(header.ScaleBase.Value == other.ScaleBase.Value);
             Debug.Assert(header.PrimitiveCount == other.PrimitiveCount);
@@ -76,8 +91,8 @@ namespace MphRead.Utility
             Debug.Assert(header.TextureAnimations == other.TextureAnimations);
             Debug.Assert(header.MeshCount == other.MeshCount);
             Debug.Assert(header.TextureMatrixCount == other.TextureMatrixCount);
-            IReadOnlyList<Texture> texes = Read.DoOffsets<Texture>(span, header.TextureOffset, header.TextureCount);
-            IReadOnlyList<Texture> otherTexes = Read.DoOffsets<Texture>(fileBytes, other.TextureOffset, other.TextureCount);
+            IReadOnlyList<Texture> texes = Read.DoOffsets<Texture>(bytes, header.TextureOffset, header.TextureCount);
+            IReadOnlyList<Texture> otherTexes = Read.DoOffsets<Texture>(otherBytes, other.TextureOffset, other.TextureCount);
             for (int i = 0; i < texes.Count; i++)
             {
                 Texture tex = texes[i];
@@ -88,24 +103,24 @@ namespace MphRead.Utility
                 Debug.Assert(tex.ImageOffset == otherTex.ImageOffset);
                 Debug.Assert(tex.ImageSize == otherTex.ImageSize);
                 Debug.Assert(tex.Opaque == otherTex.Opaque);
-                IReadOnlyList<byte> texData = Read.DoOffsets<byte>(span, tex.ImageOffset, tex.ImageSize);
-                IReadOnlyList<byte> otherTexData = Read.DoOffsets<byte>(fileBytes, otherTex.ImageOffset, otherTex.ImageSize);
+                IReadOnlyList<byte> texData = Read.DoOffsets<byte>(bytes, tex.ImageOffset, tex.ImageSize);
+                IReadOnlyList<byte> otherTexData = Read.DoOffsets<byte>(otherBytes, otherTex.ImageOffset, otherTex.ImageSize);
                 Debug.Assert(Enumerable.SequenceEqual(texData, otherTexData));
             }
-            IReadOnlyList<Palette> pals = Read.DoOffsets<Palette>(span, header.PaletteOffset, header.PaletteCount);
-            IReadOnlyList<Palette> otherPals = Read.DoOffsets<Palette>(fileBytes, other.PaletteOffset, other.PaletteCount);
+            IReadOnlyList<Palette> pals = Read.DoOffsets<Palette>(bytes, header.PaletteOffset, header.PaletteCount);
+            IReadOnlyList<Palette> otherPals = Read.DoOffsets<Palette>(otherBytes, other.PaletteOffset, other.PaletteCount);
             for (int i = 0; i < pals.Count; i++)
             {
                 Palette pal = pals[i];
                 Palette otherPal = otherPals[i];
                 Debug.Assert(pal.Offset == otherPal.Offset);
                 Debug.Assert(pal.Size == otherPal.Size);
-                IReadOnlyList<byte> palData = Read.DoOffsets<byte>(span, pal.Offset, pal.Size);
-                IReadOnlyList<byte> otherPalData = Read.DoOffsets<byte>(fileBytes, otherPal.Offset, otherPal.Size);
+                IReadOnlyList<byte> palData = Read.DoOffsets<byte>(bytes, pal.Offset, pal.Size);
+                IReadOnlyList<byte> otherPalData = Read.DoOffsets<byte>(otherBytes, otherPal.Offset, otherPal.Size);
                 Debug.Assert(Enumerable.SequenceEqual(palData, otherPalData));
             }
-            IReadOnlyList<RawMaterial> mats = Read.DoOffsets<RawMaterial>(span, header.MaterialOffset, header.MaterialCount);
-            IReadOnlyList<RawMaterial> otherMats = Read.DoOffsets<RawMaterial>(fileBytes, other.MaterialOffset, other.MaterialCount);
+            IReadOnlyList<RawMaterial> mats = Read.DoOffsets<RawMaterial>(bytes, header.MaterialOffset, header.MaterialCount);
+            IReadOnlyList<RawMaterial> otherMats = Read.DoOffsets<RawMaterial>(otherBytes, other.MaterialOffset, other.MaterialCount);
             for (int i = 0; i < mats.Count; i++)
             {
                 RawMaterial mat = mats[i];
@@ -139,8 +154,8 @@ namespace MphRead.Utility
                 Debug.Assert(mat.XRepeat == otherMat.XRepeat);
                 Debug.Assert(mat.YRepeat == otherMat.YRepeat);
             }
-            IReadOnlyList<RawNode> nodes = Read.DoOffsets<RawNode>(span, header.NodeOffset, header.NodeCount);
-            IReadOnlyList<RawNode> otherNodes = Read.DoOffsets<RawNode>(fileBytes, other.NodeOffset, other.NodeCount);
+            IReadOnlyList<RawNode> nodes = Read.DoOffsets<RawNode>(bytes, header.NodeOffset, header.NodeCount);
+            IReadOnlyList<RawNode> otherNodes = Read.DoOffsets<RawNode>(otherBytes, other.NodeOffset, other.NodeCount);
             for (int i = 0; i < nodes.Count; i++)
             {
                 RawNode node = nodes[i];
@@ -170,8 +185,8 @@ namespace MphRead.Utility
                 Debug.Assert(node.Scale.Y.Value == otherNode.Scale.Y.Value);
                 Debug.Assert(node.Scale.Z.Value == otherNode.Scale.Z.Value);
             }
-            IReadOnlyList<RawMesh> meshes = Read.DoOffsets<RawMesh>(span, header.MeshOffset, header.MeshCount);
-            IReadOnlyList<RawMesh> otherMeshes = Read.DoOffsets<RawMesh>(fileBytes, other.MeshOffset, other.MeshCount);
+            IReadOnlyList<RawMesh> meshes = Read.DoOffsets<RawMesh>(bytes, header.MeshOffset, header.MeshCount);
+            IReadOnlyList<RawMesh> otherMeshes = Read.DoOffsets<RawMesh>(otherBytes, other.MeshOffset, other.MeshCount);
             for (int i = 0; i < meshes.Count; i++)
             {
                 RawMesh mesh = meshes[i];
@@ -179,8 +194,8 @@ namespace MphRead.Utility
                 Debug.Assert(mesh.MaterialId == otherMesh.MaterialId);
                 Debug.Assert(mesh.DlistId == otherMesh.DlistId);
             }
-            IReadOnlyList<DisplayList> dlists = Read.DoOffsets<DisplayList>(span, header.DlistOffset, header.MeshCount);
-            IReadOnlyList<DisplayList> otherDlists = Read.DoOffsets<DisplayList>(fileBytes, other.DlistOffset, other.MeshCount);
+            IReadOnlyList<DisplayList> dlists = Read.DoOffsets<DisplayList>(bytes, header.DlistOffset, header.MeshCount);
+            IReadOnlyList<DisplayList> otherDlists = Read.DoOffsets<DisplayList>(otherBytes, other.DlistOffset, other.MeshCount);
             for (int i = 0; i < dlists.Count; i++)
             {
                 DisplayList dlist = dlists[i];
@@ -193,16 +208,11 @@ namespace MphRead.Utility
                 Debug.Assert(dlist.MaxBounds.X.Value == otherDlist.MaxBounds.X.Value);
                 Debug.Assert(dlist.MaxBounds.Y.Value == otherDlist.MaxBounds.Y.Value);
                 Debug.Assert(dlist.MaxBounds.Z.Value == otherDlist.MaxBounds.Z.Value);
-                IReadOnlyList<byte> dlistData = Read.DoOffsets<byte>(span, dlist.Offset, dlist.Size);
-                IReadOnlyList<byte> otherDlistData = Read.DoOffsets<byte>(fileBytes, otherDlist.Offset, otherDlist.Size);
+                IReadOnlyList<byte> dlistData = Read.DoOffsets<byte>(bytes, dlist.Offset, dlist.Size);
+                IReadOnlyList<byte> otherDlistData = Read.DoOffsets<byte>(otherBytes, otherDlist.Offset, otherDlist.Size);
                 Debug.Assert(Enumerable.SequenceEqual(dlistData, otherDlistData));
             }
-            Debug.Assert(Enumerable.SequenceEqual(bytes, fileBytes));
-            if (write)
-            {
-                File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}.bin"), bytes);
-            }
-            Nop();
+            Debug.Assert(Enumerable.SequenceEqual(bytes, otherBytes));
         }
 
         public static byte[] PackModel(float scaleBase, uint scaleFactor, IReadOnlyList<int> nodeMtxIds, IReadOnlyList<int> nodePosScaleCounts,
