@@ -108,7 +108,7 @@ namespace MphRead
         public readonly ushort TextureIdCount;
         public readonly ushort PaletteIdCount;
         public readonly ushort AnimationCount;
-        public readonly ushort PaddingA;
+        public readonly ushort UnusedA;
         public readonly uint FrameIndexOffset;
         public readonly uint TextureIdOffset;
         public readonly uint PaletteIdOffset;
