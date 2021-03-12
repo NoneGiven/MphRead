@@ -265,6 +265,7 @@ namespace MphRead
     {
         public int FrameCount { get; }
         public int CurrentFrame { get; set; }
+        public int UnusedFrame { get; }
         public int Count { get; }
         public IReadOnlyList<float> Scales { get; }
         public IReadOnlyList<float> Rotations { get; }
@@ -276,6 +277,7 @@ namespace MphRead
         {
             FrameCount = (int)raw.FrameCount;
             CurrentFrame = raw.AnimationFrame;
+            UnusedFrame = raw.Unused1A;
             Count = (int)raw.AnimationCount;
             Scales = scales;
             Rotations = rotations;
@@ -289,23 +291,27 @@ namespace MphRead
     {
         public int FrameCount { get; }
         public int CurrentFrame { get; set; }
+        public int UnusedFrame { get; }
         public int Count { get; }
         public IReadOnlyList<ushort> FrameIndices { get; }
         public IReadOnlyList<ushort> TextureIds { get; }
         public IReadOnlyList<ushort> PaletteIds { get; }
         public IReadOnlyDictionary<string, TextureAnimation> Animations { get; }
+        public ushort UnusedA { get; }
 
         public TextureAnimationGroup(RawTextureAnimationGroup raw, IReadOnlyList<ushort> frameIndices, IReadOnlyList<ushort> textureIds,
             IReadOnlyList<ushort> paletteIds, IReadOnlyDictionary<string, TextureAnimation> animations)
         {
             FrameCount = raw.FrameCount;
             CurrentFrame = raw.AnimationFrame;
+            UnusedFrame = raw.Unused1E;
             Count = raw.AnimationCount;
             FrameIndices = frameIndices;
             TextureIds = textureIds;
             PaletteIds = paletteIds;
             Animations = animations;
             Debug.Assert(Count == Animations.Count);
+            UnusedA = raw.UnusedA;
         }
     }
 
@@ -313,6 +319,7 @@ namespace MphRead
     {
         public int FrameCount { get; }
         public int CurrentFrame { get; set; }
+        public int UnusedFrame { get; }
         public int Count { get; }
         public IReadOnlyList<float> Colors { get; }
         public IReadOnlyDictionary<string, MaterialAnimation> Animations { get; }
@@ -322,6 +329,7 @@ namespace MphRead
         {
             FrameCount = (int)raw.FrameCount;
             CurrentFrame = raw.AnimationFrame;
+            UnusedFrame = raw.Unused12;
             Count = (int)raw.AnimationCount;
             Colors = colors;
             Animations = animations;
