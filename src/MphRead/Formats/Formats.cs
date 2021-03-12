@@ -23,8 +23,8 @@ namespace MphRead
         public Vector3 Angle { get; set; }
         public Vector3 Position { get; set; }
         public float BoundingRadius { get; }
-        public Vector3 Vector1 { get; }
-        public Vector3 Vector2 { get; }
+        public Vector3 MinBounds { get; }
+        public Vector3 MaxBounds { get; }
         public BillboardMode BillboardMode { get; }
         public Matrix4 Transform { get; set; } = Matrix4.Identity;
         public Matrix4 Animation { get; set; } = Matrix4.Identity;
@@ -35,6 +35,36 @@ namespace MphRead
             for (int i = 0; i < MeshCount; i++)
             {
                 yield return start + i;
+            }
+        }
+
+        public IEnumerable<int> GetAllMeshIds(Model model, bool root)
+        {
+            static IEnumerable<int> Yield(Node node)
+            {
+                int start = node.MeshId / 2;
+                for (int i = 0; i < node.MeshCount; i++)
+                {
+                    yield return start + i;
+                }
+            }
+            foreach (int value in Yield(this))
+            {
+                yield return value;
+            }
+            if (!root && NextIndex != UInt16.MaxValue)
+            {
+                foreach (int value in model.Nodes[NextIndex].GetAllMeshIds(model, root: false))
+                {
+                    yield return value;
+                }
+            }
+            if (ChildIndex != UInt16.MaxValue)
+            {
+                foreach (int value in model.Nodes[ChildIndex].GetAllMeshIds(model, root: false))
+                {
+                    yield return value;
+                }
             }
         }
 
@@ -57,8 +87,8 @@ namespace MphRead
             );
             Position = raw.Position.ToFloatVector();
             BoundingRadius = raw.BoundingRadius.FloatValue;
-            Vector1 = raw.Vector1.ToFloatVector();
-            Vector2 = raw.Vector2.ToFloatVector();
+            MinBounds = raw.MinBounds.ToFloatVector();
+            MaxBounds = raw.MaxBounds.ToFloatVector();
             BillboardMode = raw.BillboardMode;
         }
     }
@@ -125,7 +155,7 @@ namespace MphRead
     public class Material
     {
         public string Name { get; }
-        public byte Lighting { get; set; } // todo: what do lighting values 3 and 5 mean?
+        public byte Lighting { get; set; }
         public CullingMode Culling { get; }
         public byte Alpha { get; }
         public float CurrentAlpha { get; set; }
@@ -144,7 +174,7 @@ namespace MphRead
         public Vector3 CurrentAmbient { get; set; }
         public Vector3 CurrentSpecular { get; set; }
         public PolygonMode PolygonMode { get; set; }
-        public RenderMode RenderMode { get; set; }
+        public RenderMode RenderMode { get; set; } // todo: revisit the use as a polygon ID
         public AnimationFlags AnimationFlags { get; set; }
         public TexgenMode TexgenMode { get; set; }
         public int TexcoordAnimationId { get; set; }
@@ -235,6 +265,7 @@ namespace MphRead
     {
         public int FrameCount { get; }
         public int CurrentFrame { get; set; }
+        public int UnusedFrame { get; }
         public int Count { get; }
         public IReadOnlyList<float> Scales { get; }
         public IReadOnlyList<float> Rotations { get; }
@@ -246,6 +277,7 @@ namespace MphRead
         {
             FrameCount = (int)raw.FrameCount;
             CurrentFrame = raw.AnimationFrame;
+            UnusedFrame = raw.Unused1A;
             Count = (int)raw.AnimationCount;
             Scales = scales;
             Rotations = rotations;
@@ -259,23 +291,27 @@ namespace MphRead
     {
         public int FrameCount { get; }
         public int CurrentFrame { get; set; }
+        public int UnusedFrame { get; }
         public int Count { get; }
         public IReadOnlyList<ushort> FrameIndices { get; }
         public IReadOnlyList<ushort> TextureIds { get; }
         public IReadOnlyList<ushort> PaletteIds { get; }
         public IReadOnlyDictionary<string, TextureAnimation> Animations { get; }
+        public ushort UnusedA { get; }
 
         public TextureAnimationGroup(RawTextureAnimationGroup raw, IReadOnlyList<ushort> frameIndices, IReadOnlyList<ushort> textureIds,
             IReadOnlyList<ushort> paletteIds, IReadOnlyDictionary<string, TextureAnimation> animations)
         {
             FrameCount = raw.FrameCount;
             CurrentFrame = raw.AnimationFrame;
+            UnusedFrame = raw.Unused1C;
             Count = raw.AnimationCount;
             FrameIndices = frameIndices;
             TextureIds = textureIds;
             PaletteIds = paletteIds;
             Animations = animations;
             Debug.Assert(Count == Animations.Count);
+            UnusedA = raw.UnusedA;
         }
     }
 
@@ -283,6 +319,7 @@ namespace MphRead
     {
         public int FrameCount { get; }
         public int CurrentFrame { get; set; }
+        public int UnusedFrame { get; }
         public int Count { get; }
         public IReadOnlyList<float> Colors { get; }
         public IReadOnlyDictionary<string, MaterialAnimation> Animations { get; }
@@ -292,6 +329,7 @@ namespace MphRead
         {
             FrameCount = (int)raw.FrameCount;
             CurrentFrame = raw.AnimationFrame;
+            UnusedFrame = raw.Unused12;
             Count = (int)raw.AnimationCount;
             Colors = colors;
             Animations = animations;

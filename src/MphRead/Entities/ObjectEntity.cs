@@ -178,9 +178,9 @@ namespace MphRead.Entities
                             if ((_data.EffectFlags & 2) != 0)
                             {
                                 Vector3 offset = _data.EffectPositionOffset.ToFloatVector();
-                                offset.X *= Fixed.ToFloat(2 * (Test.GetRandomInt1(0x1000u) - 2048));
-                                offset.Y *= Fixed.ToFloat(2 * (Test.GetRandomInt1(0x1000u) - 2048));
-                                offset.Z *= Fixed.ToFloat(2 * (Test.GetRandomInt1(0x1000u) - 2048));
+                                offset.X *= Fixed.ToFloat(2 * (Rng.GetRandomInt1(0x1000u) - 2048));
+                                offset.Y *= Fixed.ToFloat(2 * (Rng.GetRandomInt1(0x1000u) - 2048));
+                                offset.Z *= Fixed.ToFloat(2 * (Rng.GetRandomInt1(0x1000u) - 2048));
                                 offset = Matrix.Vec3MultMtx3(offset, Transform.ClearScale());
                                 spawnTransform = new Matrix4(
                                     spawnTransform.Row0,

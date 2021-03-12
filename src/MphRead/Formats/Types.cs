@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using OpenTK.Mathematics;
 
 namespace MphRead
@@ -108,6 +109,11 @@ namespace MphRead
         public static float ToFloat(string value)
         {
             return ToFloat(Int32.Parse(value, System.Globalization.NumberStyles.HexNumber));
+        }
+
+        public static int ToInt(float value)
+        {
+            return (int)(value * 4096);
         }
 
         public override string? ToString()
@@ -479,6 +485,21 @@ namespace MphRead
 
     public static class MarshalExtensions
     {
+        public static string MarshalString(this byte[] array)
+        {
+            if (array == null)
+            {
+                throw new ArgumentNullException(nameof(array));
+            }
+            string result = new string(array.Select(a => (char)a).ToArray());
+            int index = result.IndexOf('\0');
+            if (index != -1)
+            {
+                return result.Substring(0, index);
+            }
+            return result;
+        }
+
         public static string MarshalString(this char[] array)
         {
             if (array == null)

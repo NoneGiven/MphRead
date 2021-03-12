@@ -454,9 +454,9 @@ namespace MphRead.Entities
 
                 if (i > 0 && i < segments - 1)
                 {
-                    x += Test.CallRng(ref rng, range) / 4096f - halfRange;
-                    y += Test.CallRng(ref rng, range) / 4096f - halfRange;
-                    z += Test.CallRng(ref rng, range) / 4096f - halfRange;
+                    x += Rng.CallRng(ref rng, range) / 4096f - halfRange;
+                    y += Rng.CallRng(ref rng, range) / 4096f - halfRange;
+                    z += Rng.CallRng(ref rng, range) / 4096f - halfRange;
                 }
 
                 uvsAndVerts[4 * i] = new Vector3(uvS, 0, 0);
@@ -726,8 +726,8 @@ namespace MphRead.Entities
                 }
                 if (maxSpread > 0)
                 {
-                    float angle1 = MathHelper.DegreesToRadians(Test.GetRandomInt2((uint)maxSpread) / 4096f);
-                    float angle2 = MathHelper.DegreesToRadians(Test.GetRandomInt2(0x168000) / 4096f);
+                    float angle1 = MathHelper.DegreesToRadians(Rng.GetRandomInt2((uint)maxSpread) / 4096f);
+                    float angle2 = MathHelper.DegreesToRadians(Rng.GetRandomInt2(0x168000) / 4096f);
                     float sin1 = MathF.Sin(angle1);
                     float cos1 = MathF.Cos(angle1);
                     float sin2 = MathF.Sin(angle2);

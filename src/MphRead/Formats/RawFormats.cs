@@ -6,12 +6,19 @@ namespace MphRead
     public static class Sizes
     {
         public static readonly int Header = Marshal.SizeOf(typeof(Header));
+        public static readonly int Texture = Marshal.SizeOf(typeof(Texture));
+        public static readonly int Palette = Marshal.SizeOf(typeof(Palette));
+        public static readonly int Material = Marshal.SizeOf(typeof(RawMaterial));
+        public static readonly int Node = Marshal.SizeOf(typeof(RawNode));
+        public static readonly int Mesh = Marshal.SizeOf(typeof(RawMesh));
+        public static readonly int Dlist = Marshal.SizeOf(typeof(DisplayList));
         public static readonly int EntityHeader = Marshal.SizeOf(typeof(EntityHeader));
         public static readonly int EntityEntry = Marshal.SizeOf(typeof(EntityEntry));
         public static readonly int FhEntityEntry = Marshal.SizeOf(typeof(FhEntityEntry));
         public static readonly int EntityDataHeader = Marshal.SizeOf(typeof(EntityDataHeader));
         public static readonly int JumpPadEntityData = Marshal.SizeOf(typeof(JumpPadEntityData));
         public static readonly int ItemEntityData = Marshal.SizeOf(typeof(ItemEntityData));
+        public static readonly int AnimationHeader = Marshal.SizeOf(typeof(AnimationHeader));
         public static readonly int NodeAnimation = Marshal.SizeOf(typeof(NodeAnimation));
         public static readonly int CameraSequenceHeader = Marshal.SizeOf(typeof(CameraSequenceHeader));
         public static readonly int CameraSequenceKeyframe = Marshal.SizeOf(typeof(RawCameraSequenceKeyframe));
@@ -29,15 +36,15 @@ namespace MphRead
     {
         public readonly uint Offset;
         public readonly uint Size;
-        public readonly Vector3Fx MinCoordinates;
-        public readonly Vector3Fx MaxCoordinates;
+        public readonly Vector3Fx MinBounds;
+        public readonly Vector3Fx MaxBounds;
     }
 
     // size: 132
     public readonly struct RawMaterial
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
-        public readonly char[] Name;
+        public readonly byte[] Name;
         public readonly byte Lighting;
         public readonly CullingMode Culling;
         public readonly byte Alpha;
@@ -49,26 +56,28 @@ namespace MphRead
         public readonly ColorRgb Diffuse;
         public readonly ColorRgb Ambient;
         public readonly ColorRgb Specular;
-        public readonly byte Field53;
+        public readonly byte Padding53;
         public readonly PolygonMode PolygonMode;
         public readonly RenderMode RenderMode;
         public readonly byte AnimationFlags;
-        public readonly ushort Field5A;
+        public readonly ushort Padding5A;
         public readonly TexgenMode TexcoordTransformMode;
-        public readonly ushort TexcoordAnimationId;
-        public readonly ushort Field62;
+        public readonly ushort TexcoordAnimationId; // set at runtime
+        public readonly ushort Padding62;
         public readonly uint MatrixId;
         public readonly Fixed ScaleS;
         public readonly Fixed ScaleT;
         public readonly ushort RotateZ;
-        public readonly ushort Field72;
+        public readonly ushort Padding72;
         public readonly Fixed TranslateS;
         public readonly Fixed TranslateT;
-        public readonly ushort MaterialAnimationId;
-        public readonly ushort Field7E;
+        public readonly ushort MaterialAnimationId; // set at runtime
+        public readonly ushort TextureAnimationId; // set at runtime
         public readonly byte PackedRepeatMode;
-        public readonly byte Field81;
-        public readonly ushort Field82;
+        public readonly byte Padding81;
+        public readonly ushort Padding82;
+
+        public string NameString => Name.MarshalString();
     }
 
     // size: 24
@@ -80,7 +89,7 @@ namespace MphRead
         public readonly uint TexcoordGroupOffset;
         public readonly uint TextureGroupOffset;
         public readonly ushort Count;
-        public readonly ushort Field16; // always 0 except for testlevel_Anim (FH), where it's 52428
+        public readonly ushort Padding16; // always 0 except for testlevel_Anim (FH), where it's 0xCCCC
     }
 
     // size: 20
@@ -90,8 +99,8 @@ namespace MphRead
         public readonly uint ColorLutOffset;
         public readonly uint AnimationCount;
         public readonly uint AnimationOffset;
-        public readonly ushort AnimationFrame;
-        public readonly ushort Field12;
+        public readonly ushort AnimationFrame; // uint in FH
+        public readonly ushort Unused12;
     }
 
     // size: 32
@@ -102,13 +111,13 @@ namespace MphRead
         public readonly ushort TextureIdCount;
         public readonly ushort PaletteIdCount;
         public readonly ushort AnimationCount;
-        public readonly ushort FieldA;
+        public readonly ushort UnusedA;
         public readonly uint FrameIndexOffset;
         public readonly uint TextureIdOffset;
         public readonly uint PaletteIdOffset;
         public readonly uint AnimationOffset;
-        public readonly ushort AnimationFrame;
-        public readonly ushort Field1E;
+        public readonly ushort AnimationFrame; // uint in FH
+        public readonly ushort Unused1C;
     }
 
     // size: 28
@@ -120,8 +129,8 @@ namespace MphRead
         public readonly uint TranslateLutOffset;
         public readonly uint AnimationCount;
         public readonly uint AnimationOffset;
-        public readonly ushort AnimationFrame;
-        public readonly ushort Field1A;
+        public readonly ushort AnimationFrame; // uint in FH
+        public readonly ushort Unused1A;
     }
 
     // size: 20
@@ -138,12 +147,12 @@ namespace MphRead
     public readonly struct MaterialAnimation
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
-        public readonly char[] Name;
-        public readonly uint Field40;
+        public readonly byte[] Name;
+        public readonly uint Unused40; // always 0x01
         public readonly byte DiffuseBlendR;
         public readonly byte DiffuseBlendG;
         public readonly byte DiffuseBlendB;
-        public readonly byte Field47; // todo: use more properties (this one is always 0 or 255)
+        public readonly byte Unused47; // always 0x00
         public readonly ushort DiffuseLutLengthR;
         public readonly ushort DiffuseLutLengthG;
         public readonly ushort DiffuseLutLengthB;
@@ -153,7 +162,7 @@ namespace MphRead
         public readonly byte AmbientBlendR;
         public readonly byte AmbientBlendG;
         public readonly byte AmbientBlendB;
-        public readonly byte Field57; // same as 47
+        public readonly byte Unused57; // always 0xFF
         public readonly ushort AmbientLutLengthR;
         public readonly ushort AmbientLutLengthG;
         public readonly ushort AmbientLutLengthB;
@@ -163,29 +172,31 @@ namespace MphRead
         public readonly byte SpecularBlendR;
         public readonly byte SpecularBlendG;
         public readonly byte SpecularBlendB;
-        public readonly byte Field67; // same as 47
+        public readonly byte Unused67; // always 0x00
         public readonly ushort SpecularLutLengthR;
         public readonly ushort SpecularLutLengthG;
         public readonly ushort SpecularLutLengthB;
         public readonly ushort SpecularLutIndexR;
         public readonly ushort SpecularLutIndexG;
         public readonly ushort SpecularLutIndexB;
-        public readonly uint Field74;
-        public readonly uint Field78;
-        public readonly uint Field7C;
-        public readonly uint Field80;
+        public readonly uint Unused74; // always 0x10101
+        public readonly uint Unused78;
+        public readonly uint Unused7C;
+        public readonly uint Unused80;
         public readonly byte AlphaBlend;
-        public readonly byte Field85;
+        public readonly byte Unused85; // 0x01 in FH, 0xC1 in MPH
         public readonly ushort AlphaLutLength;
         public readonly ushort AlphaLutIndex;
         public readonly ushort MaterialId;
+
+        public string NameString => Name.MarshalString();
     }
 
     // size: 44
     public readonly struct TextureAnimation
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-        public readonly char[] Name;
+        public readonly byte[] Name;
         public readonly ushort Count;
         public readonly ushort StartIndex;
         public readonly ushort MinimumPaletteId; // todo: do these need to be used?
@@ -198,7 +209,7 @@ namespace MphRead
     public readonly struct TexcoordAnimation
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-        public readonly char[] Name;
+        public readonly byte[] Name;
         public readonly byte ScaleBlendS;
         public readonly byte ScaleBlendT;
         public readonly ushort ScaleLutLengthS;
@@ -206,7 +217,7 @@ namespace MphRead
         public readonly ushort ScaleLutIndexS;
         public readonly ushort ScaleLutIndexT;
         public readonly byte RotateBlendZ;
-        public readonly byte Field2B;
+        public readonly byte Unused2B; // 0x00 in FH, 0xFF in MPH
         public readonly ushort RotateLutLengthZ;
         public readonly ushort RotateLutIndexZ;
         public readonly byte TranslateBlendS;
@@ -215,7 +226,9 @@ namespace MphRead
         public readonly ushort TranslateLutLengthT;
         public readonly ushort TranslateLutIndexS;
         public readonly ushort TranslateLutIndexT;
-        public readonly ushort Field3A;
+        public readonly ushort Padding3A;
+
+        public string NameString => Name.MarshalString();
     }
 
     // size: 48
@@ -234,7 +247,7 @@ namespace MphRead
         public readonly byte RotateBlendX;
         public readonly byte RotateBlendY;
         public readonly byte RotateBlendZ;
-        public readonly byte Field13; // padding?
+        public readonly byte Padding13; // 0xCC in testLevel anim
         public readonly ushort RotateLutLengthX;
         public readonly ushort RotateLutLengthY;
         public readonly ushort RotateLutLengthZ;
@@ -244,7 +257,7 @@ namespace MphRead
         public readonly byte TranslateBlendX;
         public readonly byte TranslateBlendY;
         public readonly byte TranslateBlendZ;
-        public readonly byte Field23; // padding?
+        public readonly byte Padding23; // 0xCC in testLevel anim
         public readonly ushort TranslateLutLengthX;
         public readonly ushort TranslateLutLengthY;
         public readonly ushort TranslateLutLengthZ;
@@ -257,19 +270,20 @@ namespace MphRead
     public readonly struct Texture
     {
         public readonly TextureFormat Format;
+        public readonly byte Padding1;
         public readonly ushort Width;
         public readonly ushort Height;
-        public readonly ushort Padding;
+        public readonly ushort Padding6;
         public readonly uint ImageOffset;
         public readonly uint ImageSize;
-        public readonly uint Unknown7;
-        public readonly uint Unknown8;
+        public readonly uint UnusedOffset; // offset into image data
+        public readonly uint UnusedCount; // probably count for previous field
         public readonly uint VramOffset;
         public readonly uint Opaque;
-        public readonly uint Unknown11;
+        public readonly uint SkipVram;
         public readonly byte PackedSize;
         public readonly byte NativeTextureFormat;
-        public readonly ushort TextureObjRef;
+        public readonly ushort ObjectRef;
     }
 
     // size: 16
@@ -277,8 +291,8 @@ namespace MphRead
     {
         public readonly uint Offset;
         public readonly uint Size;
-        public readonly uint Unknown4;
-        public readonly uint UnknownReference5;
+        public readonly uint VramOffset;
+        public readonly uint ObjectRef;
     }
 
     // size: 100
@@ -286,24 +300,24 @@ namespace MphRead
     {
         public readonly uint ScaleFactor;
         public readonly Fixed ScaleBase;
-        public readonly uint Unknown3;
-        public readonly uint Unknown4;
+        public readonly uint PrimitiveCount;
+        public readonly uint VertexCount;
         public readonly uint MaterialOffset;
         public readonly uint DlistOffset;
         public readonly uint NodeOffset;
         public readonly ushort NodeWeightCount;
         public readonly byte Flags; // always 0 in the file
-        public readonly byte Field1F;
+        public readonly byte Padding1F;
         public readonly uint NodeWeightOffset;
         public readonly uint MeshOffset;
         public readonly ushort TextureCount;
-        public readonly ushort Field2A;
+        public readonly ushort Padding2A;
         public readonly uint TextureOffset;
         public readonly ushort PaletteCount;
-        public readonly ushort Field32;
+        public readonly ushort Padding32;
         public readonly uint PaletteOffset;
-        public readonly uint UnknownAnimationCount;
-        public readonly uint Unknown8;
+        public readonly uint NodePosCounts;
+        public readonly uint NodePosScales;
         public readonly uint NodeInitialPosition;
         public readonly uint NodePosition;
         public readonly ushort MaterialCount;
@@ -321,11 +335,11 @@ namespace MphRead
     public readonly struct RawNode
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
-        public readonly char[] Name;
+        public readonly byte[] Name;
         public readonly ushort ParentId;
         public readonly ushort ChildId;
         public readonly ushort NextId;
-        public readonly ushort Field46;
+        public readonly ushort Padding46;
         public readonly uint Enabled;
         public readonly ushort MeshCount;
         public readonly ushort MeshId;
@@ -333,27 +347,29 @@ namespace MphRead
         public readonly short AngleX;
         public readonly short AngleY;
         public readonly short AngleZ;
-        public readonly ushort Field62;
+        public readonly ushort Padding62;
         public readonly Vector3Fx Position;
         public readonly Fixed BoundingRadius;
-        public readonly Vector3Fx Vector1;
-        public readonly Vector3Fx Vector2;
+        public readonly Vector3Fx MinBounds;
+        public readonly Vector3Fx MaxBounds;
         public readonly BillboardMode BillboardMode;
-        public readonly byte Field8D;
-        public readonly ushort Field8E;
-        public readonly Matrix43Fx Transform; // scratch space
-        public readonly uint FieldC0;
-        public readonly uint FieldC4;
-        public readonly uint FieldC8;
-        public readonly uint FieldCC;
-        public readonly uint FieldD0;
-        public readonly uint FieldD4;
-        public readonly uint FieldD8;
-        public readonly uint FieldDC;
-        public readonly uint FieldE0;
-        public readonly uint FieldE4;
-        public readonly uint FieldE8;
-        public readonly uint FieldEC;
+        public readonly byte Padding8D;
+        public readonly ushort Padding8E;
+        public readonly Matrix43Fx Transform; // set at runtime
+        public readonly uint BeforeTransform; // MtxFx43* set at runtime
+        public readonly uint AfterTransform; // MtxFx43* set at runtime
+        public readonly uint UnusedC8;
+        public readonly uint UnusedCC;
+        public readonly uint UnusedD0;
+        public readonly uint UnusedD4;
+        public readonly uint UnusedD8;
+        public readonly uint UnusedDC;
+        public readonly uint UnusedE0;
+        public readonly uint UnusedE4;
+        public readonly uint UnusedE8;
+        public readonly uint UnusedEC;
+
+        public string NameString => Name.MarshalString();
     }
 
     // size: 64
@@ -469,7 +485,9 @@ namespace MphRead
         public readonly uint Unused4C;
         public readonly uint Unused50;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public readonly char[] NodeName;
+        public readonly byte[] NodeName;
+
+        public string NodeNameString => NodeName.MarshalString();
     }
 
     // size: 28
@@ -489,9 +507,9 @@ namespace MphRead
     public readonly struct RawEffectElement
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-        public readonly char[] Name;
+        public readonly byte[] Name;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-        public readonly char[] ModelName;
+        public readonly byte[] ModelName;
         public readonly uint ParticleCount;
         public readonly uint ParticleOffset;
         public readonly EffElemFlags Flags;
@@ -503,16 +521,21 @@ namespace MphRead
         public readonly int DrawType;
         public readonly uint FuncCount;
         public readonly uint FuncOffset;
+
+        public string NameString => Name.MarshalString();
+        public string ModelNameString => ModelName.MarshalString();
     }
 
     // size: 11
     public readonly struct RawStringTableEntry
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public readonly char[] Id; // need all 4 characters (no terminator)
+        public readonly byte[] Id; // need all 4 characters (no terminator)
         public readonly uint Offset;
         public readonly ushort Length;
         public readonly byte Speed;
         public readonly char Category;
+
+        public string IdString => Id.MarshalString();
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using OpenTK.Mathematics;
 
@@ -193,7 +192,6 @@ namespace MphRead
         public string TexturePath { get; }
         public string PalettePath { get; }
         public string? ReplacePath { get; }
-        public bool SeparatePaletteHeader { get; }
         private readonly Dictionary<int, IEnumerable<int>> _replaceIds = new Dictionary<int, IEnumerable<int>>();
         public IReadOnlyDictionary<int, IEnumerable<int>> ReplaceIds => _replaceIds;
 
@@ -214,7 +212,7 @@ namespace MphRead
         }
 
         public RecolorMetadata(string name, string modelPath, string texturePath, string palettePath,
-            bool separatePaletteHeader = false, Dictionary<int, IEnumerable<int>>? replaceIds = null, bool separateReplace = false)
+            Dictionary<int, IEnumerable<int>>? replaceIds = null, bool separateReplace = false)
         {
             Name = name;
             ModelPath = modelPath;
@@ -228,10 +226,8 @@ namespace MphRead
             {
                 PalettePath = palettePath;
             }
-            SeparatePaletteHeader = separatePaletteHeader;
             if (replaceIds != null)
             {
-                Debug.Assert(separatePaletteHeader);
                 foreach (KeyValuePair<int, IEnumerable<int>> kvp in replaceIds)
                 {
                     _replaceIds.Add(kvp.Key, kvp.Value);
@@ -532,6 +528,10 @@ namespace MphRead
 
         public static ModelMetadata? GetModelByName(string name)
         {
+            if (name == "doubleDamage_img")
+            {
+                return DoubleDamageImg;
+            }
             if (ModelMetadata.TryGetValue(name, out ModelMetadata? metadata))
             {
                 return metadata;
@@ -1276,6 +1276,9 @@ namespace MphRead
 
         public static readonly Vector4 WhitePalette = new Vector4(1f, 1f, 1f, 1f);
 
+        public static readonly ModelMetadata DoubleDamageImg
+            = new ModelMetadata("doubleDamage_img", animation: false, archive: "common");
+
         public static readonly IReadOnlyDictionary<string, ModelMetadata> ModelMetadata
             = new Dictionary<string, ModelMetadata>()
             {
@@ -1319,49 +1322,41 @@ namespace MphRead
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_02",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_03",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_04",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_05",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_06",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_07",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_08",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 1 } } })
                         })
                 },
@@ -1413,49 +1408,41 @@ namespace MphRead
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_02",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_03",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_04",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_05",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_06",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_07",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_08",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 1, 2 } } })
                         })
                 },
@@ -1663,7 +1650,7 @@ namespace MphRead
                 },
                 {
                     "Chomtroid",
-                    new ModelMetadata("Chomtroid", animation: false)
+                    new ModelMetadata("Chomtroid", animation: true, animationPath: @"models\Mochtroid_Anim.bin")
                 },
                 {
                     "Crate01",
@@ -1708,10 +1695,6 @@ namespace MphRead
                 {
                     "Door_Unit4_RM1",
                     new ModelMetadata("Door_Unit4_RM1", animation: false, collision: true)
-                },
-                {
-                    "doubleDamage_img",
-                    new ModelMetadata("doubleDamage_img", animation: false, archive: "common")
                 },
                 {
                     "DripStank_lod0",
@@ -1775,49 +1758,41 @@ namespace MphRead
                                 modelPath: @"models\ForceField_Model.bin",
                                 texturePath: @"models\ForceField_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_02",
                                 modelPath: @"models\ForceField_Model.bin",
                                 texturePath: @"models\ForceField_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_03",
                                 modelPath: @"models\ForceField_Model.bin",
                                 texturePath: @"models\ForceField_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_04",
                                 modelPath: @"models\ForceField_Model.bin",
                                 texturePath: @"models\ForceField_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_05",
                                 modelPath: @"models\ForceField_Model.bin",
                                 texturePath: @"models\ForceField_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_06",
                                 modelPath: @"models\ForceField_Model.bin",
                                 texturePath: @"models\ForceField_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_07",
                                 modelPath: @"models\ForceField_Model.bin",
                                 texturePath: @"models\ForceField_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_08",
                                 modelPath: @"models\ForceField_Model.bin",
                                 texturePath: @"models\ForceField_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 0 } } })
                         })
                 },
@@ -1833,56 +1808,48 @@ namespace MphRead
                                 modelPath: @"models\AlimbicTextureShare_img_Model.bin",
                                 texturePath: @"models\AlimbicTextureShare_img_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 separateReplace: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_02",
                                 modelPath: @"models\AlimbicTextureShare_img_Model.bin",
                                 texturePath: @"models\AlimbicTextureShare_img_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 separateReplace: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_03",
                                 modelPath: @"models\AlimbicTextureShare_img_Model.bin",
                                 texturePath: @"models\AlimbicTextureShare_img_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 separateReplace: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_04",
                                 modelPath: @"models\AlimbicTextureShare_img_Model.bin",
                                 texturePath: @"models\AlimbicTextureShare_img_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 separateReplace: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_05",
                                 modelPath: @"models\AlimbicTextureShare_img_Model.bin",
                                 texturePath: @"models\AlimbicTextureShare_img_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 separateReplace: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_06",
                                 modelPath: @"models\AlimbicTextureShare_img_Model.bin",
                                 texturePath: @"models\AlimbicTextureShare_img_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 separateReplace: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_07",
                                 modelPath: @"models\AlimbicTextureShare_img_Model.bin",
                                 texturePath: @"models\AlimbicTextureShare_img_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 separateReplace: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_08",
                                 modelPath: @"models\AlimbicTextureShare_img_Model.bin",
                                 texturePath: @"models\AlimbicTextureShare_img_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                separatePaletteHeader: true,
                                 separateReplace: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 3 } } })
                         })
@@ -2720,7 +2687,13 @@ namespace MphRead
                             new RecolorMetadata("default",
                                 modelPath: @"_archives\common\samus_ice_img_Model.bin",
                                 texturePath: @"_archives\common\samus_ice_img_Model.bin",
-                                palettePath: @"_archives\common\samus_ice_img_Model.bin")
+                                palettePath: @"_archives\common\samus_ice_img_Model.bin"),
+                            // header values indicate that doubleDamage_img_Model.bin was generated as a recolor of samus_ice,
+                            // although it's not used as one in practice -- note that the viewer uses the standalone member above
+                            new RecolorMetadata("dbl_dmg",
+                                modelPath: @"_archives\common\doubleDamage_img_Model.bin",
+                                texturePath: @"_archives\common\doubleDamage_img_Model.bin",
+                                palettePath: @"_archives\common\doubleDamage_img_Model.bin")
                         }, useLightSources: true)
                 },
                 {
@@ -2739,33 +2712,27 @@ namespace MphRead
                             new RecolorMetadata("pal_01",
                                 modelPath: @"models\SecretSwitch_Model.bin",
                                 texturePath: @"models\SecretSwitch_Model.bin",
-                                palettePath: @"models\SecretSwitch_pal_01_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\SecretSwitch_pal_01_Model.bin"),
                             new RecolorMetadata("pal_02",
                                 modelPath: @"models\SecretSwitch_Model.bin",
                                 texturePath: @"models\SecretSwitch_Model.bin",
-                                palettePath: @"models\SecretSwitch_pal_02_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\SecretSwitch_pal_02_Model.bin"),
                             new RecolorMetadata("pal_03",
                                 modelPath: @"models\SecretSwitch_Model.bin",
                                 texturePath: @"models\SecretSwitch_Model.bin",
-                                palettePath: @"models\SecretSwitch_pal_03_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\SecretSwitch_pal_03_Model.bin"),
                             new RecolorMetadata("pal_04",
                                 modelPath: @"models\SecretSwitch_Model.bin",
                                 texturePath: @"models\SecretSwitch_Model.bin",
-                                palettePath: @"models\SecretSwitch_pal_04_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\SecretSwitch_pal_04_Model.bin"),
                             new RecolorMetadata("pal_05",
                                 modelPath: @"models\SecretSwitch_Model.bin",
                                 texturePath: @"models\SecretSwitch_Model.bin",
-                                palettePath: @"models\SecretSwitch_pal_05_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\SecretSwitch_pal_05_Model.bin"),
                             new RecolorMetadata("pal_06",
                                 modelPath: @"models\SecretSwitch_Model.bin",
                                 texturePath: @"models\SecretSwitch_Model.bin",
-                                palettePath: @"models\SecretSwitch_pal_06_Model.bin",
-                                separatePaletteHeader: true)
+                                palettePath: @"models\SecretSwitch_pal_06_Model.bin")
                         })
                 },
                 {
@@ -2970,48 +2937,39 @@ namespace MphRead
                             new RecolorMetadata("pal_01",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_01_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\Teleporter_pal_01_Model.bin"),
                             new RecolorMetadata("pal_02",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_02_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\Teleporter_pal_02_Model.bin"),
                             new RecolorMetadata("pal_03",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_03_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\Teleporter_pal_03_Model.bin"),
                             new RecolorMetadata("pal_04",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_04_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\Teleporter_pal_04_Model.bin"),
                             new RecolorMetadata("pal_05",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_05_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\Teleporter_pal_05_Model.bin"),
                             new RecolorMetadata("pal_06",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_06_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\Teleporter_pal_06_Model.bin"),
                             new RecolorMetadata("pal_07",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_07_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\Teleporter_pal_07_Model.bin"),
                             new RecolorMetadata("pal_08",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_08_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\Teleporter_pal_08_Model.bin"),
                             new RecolorMetadata("pal_09",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_09_Model.bin",
-                                separatePaletteHeader: true)
+                                palettePath: @"models\Teleporter_pal_09_Model.bin")
                         })
                 },
                 {
@@ -3025,48 +2983,39 @@ namespace MphRead
                             new RecolorMetadata("pal_01",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_01_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\Teleporter_pal_01_Model.bin"),
                             new RecolorMetadata("pal_02",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_02_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\Teleporter_pal_02_Model.bin"),
                             new RecolorMetadata("pal_03",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_03_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\Teleporter_pal_03_Model.bin"),
                             new RecolorMetadata("pal_04",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_04_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\Teleporter_pal_04_Model.bin"),
                             new RecolorMetadata("pal_05",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_05_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\Teleporter_pal_05_Model.bin"),
                             new RecolorMetadata("pal_06",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_06_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\Teleporter_pal_06_Model.bin"),
                             new RecolorMetadata("pal_07",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_07_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\Teleporter_pal_07_Model.bin"),
                             new RecolorMetadata("pal_08",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_08_Model.bin",
-                                separatePaletteHeader: true),
+                                palettePath: @"models\Teleporter_pal_08_Model.bin"),
                             new RecolorMetadata("pal_09",
                                 modelPath: @"models\TeleporterTextureShare_img_Model.bin",
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_09_Model.bin",
-                                separatePaletteHeader: true)
+                                palettePath: @"models\Teleporter_pal_09_Model.bin")
                         })
                 },
                 {

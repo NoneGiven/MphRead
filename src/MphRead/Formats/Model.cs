@@ -149,20 +149,41 @@ namespace MphRead
         }
     }
 
-    public readonly struct AnimationGroups
+    public class AnimationGroups
     {
-        public readonly IReadOnlyList<NodeAnimationGroup> Node;
-        public readonly IReadOnlyList<MaterialAnimationGroup> Material;
-        public readonly IReadOnlyList<TexcoordAnimationGroup> Texcoord;
-        public readonly IReadOnlyList<TextureAnimationGroup> Texture;
+        public IReadOnlyList<NodeAnimationGroup> Node { get; }
+        public IReadOnlyList<MaterialAnimationGroup> Material { get; }
+        public IReadOnlyList<TexcoordAnimationGroup> Texcoord { get; }
+        public IReadOnlyList<TextureAnimationGroup> Texture { get; }
+        public AnimationOffsets Offsets { get; }
 
-        public AnimationGroups(IReadOnlyList<NodeAnimationGroup> nodes, IReadOnlyList<MaterialAnimationGroup> materials,
-            IReadOnlyList<TexcoordAnimationGroup> texcoords, IReadOnlyList<TextureAnimationGroup> textures)
+        public AnimationGroups(AnimationResults animations)
         {
-            Node = nodes;
-            Material = materials;
-            Texcoord = texcoords;
-            Texture = textures;
+            Node = animations.NodeAnimationGroups;
+            Material = animations.MaterialAnimationGroups;
+            Texcoord = animations.TexcoordAnimationGroups;
+            Texture = animations.TextureAnimationGroups;
+            Offsets = new AnimationOffsets(animations);
+            Debug.Assert(Offsets.Node.Count >= Node.Count);
+            Debug.Assert(Offsets.Material.Count >= Material.Count);
+            Debug.Assert(Offsets.Texcoord.Count >= Texcoord.Count);
+            Debug.Assert(Offsets.Texture.Count >= Texture.Count);
+        }
+    }
+
+    public class AnimationOffsets
+    {
+        public IReadOnlyList<uint> Node { get; }
+        public IReadOnlyList<uint> Material { get; }
+        public IReadOnlyList<uint> Texcoord { get; }
+        public IReadOnlyList<uint> Texture { get; }
+
+        public AnimationOffsets(AnimationResults animations)
+        {
+            Node = animations.NodeGroupOffsets;
+            Material = animations.MaterialGroupOffsets;
+            Texcoord = animations.TexcoordGroupOffsets;
+            Texture = animations.TextureGroupOffsets;
         }
     }
 
@@ -223,19 +244,29 @@ namespace MphRead
         public IReadOnlyList<float> MatrixStackValues => _matrixStackValues;
         public AnimationGroups AnimationGroups { get; }
 
+        public IReadOnlyList<RawNode> RawNodes { get; }
+        public IReadOnlyList<Vector3Fx> NodePos { get; }
+        public IReadOnlyList<Vector3Fx> NodeInitPos { get; }
+        public IReadOnlyList<int> NodePosCounts { get; }
+        public IReadOnlyList<Fixed> NodePosScales { get; }
+
         public Vector3 Scale { get; }
 
         public Model(string name, bool firstHunt, Header header, IEnumerable<RawNode> nodes, IEnumerable<RawMesh> meshes,
             IEnumerable<RawMaterial> materials, IReadOnlyList<DisplayList> dlists,
-            IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions,
-            IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> materialGroups,
-            IReadOnlyList<TexcoordAnimationGroup> texcoordGroups, IReadOnlyList<TextureAnimationGroup> textureGroups,
-            IReadOnlyList<Matrix4> textureMatrices, IReadOnlyList<Recolor> recolors, IReadOnlyList<int> nodeWeights)
+            IReadOnlyList<IReadOnlyList<RenderInstruction>> renderInstructions, AnimationResults animations,
+            IReadOnlyList<Matrix4> textureMatrices, IReadOnlyList<Recolor> recolors, IReadOnlyList<int> nodeWeights,
+            IReadOnlyList<Vector3Fx> nodePos, IReadOnlyList<Vector3Fx> nodeInitPos, IReadOnlyList<int> posCounts, IReadOnlyList<Fixed> posScales)
         {
             Name = name;
             FirstHunt = firstHunt;
             Header = header;
             Nodes = nodes.Select(n => new Node(n)).ToList();
+            RawNodes = nodes.ToList();
+            NodePos = nodePos;
+            NodeInitPos = nodeInitPos;
+            NodePosCounts = posCounts;
+            NodePosScales = posScales;
             Meshes = meshes.Select(m => new Mesh(m)).ToList();
             Materials = materials.Select(m => new Material(m)).ToList();
             DisplayLists = dlists;
@@ -257,7 +288,7 @@ namespace MphRead
             {
                 _matrixStackValues = Array.Empty<float>();
             }
-            AnimationGroups = new AnimationGroups(nodeGroups, materialGroups, texcoordGroups, textureGroups);
+            AnimationGroups = new AnimationGroups(animations);
             float scale = Header.ScaleBase.FloatValue * (1 << (int)Header.ScaleFactor);
             Scale = new Vector3(scale, scale, scale);
         }

@@ -245,7 +245,7 @@ namespace MphRead
         Back = 2
     }
 
-    public enum TextureFormat : ushort
+    public enum TextureFormat : byte
     {
         Palette2Bit = 0, // RGB4
         Palette4Bit = 1, // RGB16
