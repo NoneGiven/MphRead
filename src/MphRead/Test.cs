@@ -510,7 +510,6 @@ namespace MphRead
                     int scale = (int)model.Scale.X;
                     if (model.NodeMatrixIds.Count == 0 && model.Name != "Level MP5")
                     {
-                        // uncapped, scale multiplied
                         minX *= scale;
                         maxX *= scale;
                         minY *= scale;
@@ -574,7 +573,7 @@ namespace MphRead
                     List<int> ids;
                     if (node.MeshCount == 0)
                     {
-                        ids = node.GetAllMeshIds(model, root: true).ToList();
+                        ids = node.GetAllMeshIds(model.Nodes, root: true).ToList();
                     }
                     else
                     {

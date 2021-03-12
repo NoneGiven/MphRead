@@ -13,6 +13,7 @@ namespace MphRead.Utility
         {
             foreach (ModelMetadata meta in Metadata.ModelMetadata.Values.Concat(Metadata.FirstHuntModels.Values))
             {
+                // sktodo: support texture shares
                 Model model = Read.GetModelInstance(meta.Name, meta.FirstHunt).Model;
                 int i = 0;
                 foreach (RecolorMetadata recolor in meta.Recolors)
@@ -31,7 +32,8 @@ namespace MphRead.Utility
                     var options = new RepackOptions()
                     {
                         IsRoom = false,
-                        Texture = RepackTexture.Inline
+                        Texture = RepackTexture.Inline,
+                        ComputeBounds = ComputeBounds.None
                     };
                     if (meta.ModelPath != recolor.TexturePath || meta.ModelPath != recolor.PalettePath)
                     {
@@ -39,12 +41,23 @@ namespace MphRead.Utility
                             ? RepackTexture.Shared
                             : RepackTexture.Separate;
                     }
+                    if (model.NodeMatrixIds.Count == 0 && model.Name != "Level MP5")
+                    {
+                        if (model.Name == "filter" || model.Name == "trail")
+                        {
+                            options.ComputeBounds = ComputeBounds.Uncapped;
+                        }
+                        else
+                        {
+                            options.ComputeBounds = ComputeBounds.Capped;
+                        }
+                    }
                     TestModelRepack(model, recolor: i++, modelPath, recolor.TexturePath, meta.FirstHunt, options);
                 }
-                // sktodo: support animation shares, I guess
+                // todo: support animation shares, I guess
                 if (meta.AnimationPath != null && meta.AnimationShare == null)
                 {
-                    TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt);
+                    //TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt);
                 }
             }
             foreach (RoomMetadata meta in Metadata.RoomMetadata.Values)
@@ -54,13 +67,14 @@ namespace MphRead.Utility
                     IsRoom = true,
                     Texture = meta.TexturePath == null || meta.ModelPath == meta.TexturePath
                         ? RepackTexture.Inline
-                        : RepackTexture.Separate
+                        : RepackTexture.Separate,
+                    ComputeBounds = ComputeBounds.Capped
                 };
                 Model model = Read.GetRoomModelInstance(meta.Name).Model;
                 TestModelRepack(model, recolor: 0, meta.ModelPath, meta.TexturePath, meta.FirstHunt || meta.Hybrid, options);
                 if (meta.AnimationPath != null)
                 {
-                    TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt | meta.Hybrid);
+                    //TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt || meta.Hybrid);
                 }
             }
         }
@@ -70,10 +84,22 @@ namespace MphRead.Utility
             var options = new RepackOptions()
             {
                 IsRoom = false,
-                WriteFile = true
+                WriteFile = true,
+                ComputeBounds = ComputeBounds.None
             };
             ModelMetadata meta = firstHunt ? Metadata.FirstHuntModels[name] : Metadata.ModelMetadata[name];
             Model model = Read.GetModelInstance(meta.Name, meta.FirstHunt).Model;
+            if (model.NodeMatrixIds.Count == 0 && model.Name != "Level MP5")
+            {
+                if (model.Name == "filter" || model.Name == "trail")
+                {
+                    options.ComputeBounds = ComputeBounds.Uncapped;
+                }
+                else
+                {
+                    options.ComputeBounds = ComputeBounds.Capped;
+                }
+            }
             TestModelRepack(model, recolor, meta.ModelPath, meta.Recolors[recolor].TexturePath, meta.FirstHunt, options);
             if (meta.AnimationPath != null && meta.AnimationShare == null)
             {
@@ -116,7 +142,6 @@ namespace MphRead.Utility
 
         private static void TestModelRepack(Model model, int recolor, string modelPath, string? texPath, bool firstHunt, RepackOptions options)
         {
-            // sktodo: share
             if (options.Texture == RepackTexture.Shared)
             {
                 return;
@@ -133,9 +158,10 @@ namespace MphRead.Utility
             {
                 paletteInfo.Add(new PaletteInfo(data.Select(d => d.Data).ToList()));
             }
-            (byte[] bytes, byte[] tex) = PackModel(model.Header.ScaleBase.FloatValue, model.Header.ScaleFactor, model.NodeMatrixIds,
-                model.NodePosCounts, model.Materials, textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists,
-                model.DisplayLists, options);
+            Debug.Assert(model.Scale.X == model.Scale.Y && model.Scale.Y == model.Scale.Z);
+            Debug.Assert(model.Scale.X == (int)model.Scale.X);
+            (byte[] bytes, byte[] tex) = PackModel((int)model.Scale.X, model.NodeMatrixIds, model.NodePosCounts, model.Materials,
+                textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists, options);
             byte[] fileBytes = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, modelPath));
             CompareModels(model.Name, bytes, fileBytes, options);
             if (options.Texture == RepackTexture.Separate)
@@ -581,11 +607,18 @@ namespace MphRead.Utility
             Shared
         }
 
+        public enum ComputeBounds
+        {
+            None,
+            Capped,
+            Uncapped
+        }
+
         public class RepackOptions
         {
             public RepackTexture Texture { get; set; }
             public bool IsRoom { get; set; }
-            public bool ComputeBounds { get; set; }
+            public ComputeBounds ComputeBounds { get; set; }
             public bool WriteFile { get; set; }
         }
 
@@ -922,11 +955,170 @@ namespace MphRead.Utility
             return groupOffset;
         }
 
-        public static (byte[], byte[]) PackModel(float scaleBase, uint scaleFactor, IReadOnlyList<int> nodeMtxIds,
-            IReadOnlyList<int> nodePosScaleCounts, IReadOnlyList<Material> materials, IReadOnlyList<TextureInfo> textures,
-            IReadOnlyList<PaletteInfo> palettes, IReadOnlyList<Node> nodes, IReadOnlyList<Mesh> meshes,
-            IReadOnlyList<IReadOnlyList<RenderInstruction>> renders, IReadOnlyList<DisplayList> dlists,
-            RepackOptions options)
+        private static (Vector3i, Vector3i) CalculateBounds(IReadOnlyList<RenderInstruction> insts)
+        {
+            var verts = new List<Vector3i>();
+            int vtxX = 0;
+            int vtxY = 0;
+            int vtxZ = 0;
+            void Update()
+            {
+                verts.Add(new Vector3i(vtxX, vtxY, vtxZ));
+            }
+            foreach (RenderInstruction instruction in insts)
+            {
+                switch (instruction.Code)
+                {
+                case InstructionCode.VTX_16:
+                    {
+                        uint xy = instruction.Arguments[0];
+                        int x = (int)((xy >> 0) & 0xFFFF);
+                        if ((x & 0x8000) > 0)
+                        {
+                            x = (int)(x | 0xFFFF0000);
+                        }
+                        int y = (int)((xy >> 16) & 0xFFFF);
+                        if ((y & 0x8000) > 0)
+                        {
+                            y = (int)(y | 0xFFFF0000);
+                        }
+                        int z = (int)(instruction.Arguments[1] & 0xFFFF);
+                        if ((z & 0x8000) > 0)
+                        {
+                            z = (int)(z | 0xFFFF0000);
+                        }
+                        vtxX = x;
+                        vtxY = y;
+                        vtxZ = z;
+                        Update();
+                    }
+                    break;
+                case InstructionCode.VTX_10:
+                    {
+                        uint xyz = instruction.Arguments[0];
+                        int x = (int)((xyz >> 0) & 0x3FF);
+                        if ((x & 0x200) > 0)
+                        {
+                            x = (int)(x | 0xFFFFFC00);
+                        }
+                        int y = (int)((xyz >> 10) & 0x3FF);
+                        if ((y & 0x200) > 0)
+                        {
+                            y = (int)(y | 0xFFFFFC00);
+                        }
+                        int z = (int)((xyz >> 20) & 0x3FF);
+                        if ((z & 0x200) > 0)
+                        {
+                            z = (int)(z | 0xFFFFFC00);
+                        }
+                        vtxX = x << 6;
+                        vtxY = y << 6;
+                        vtxZ = z << 6;
+                        Update();
+                    }
+                    break;
+                case InstructionCode.VTX_XY:
+                    {
+                        uint xy = instruction.Arguments[0];
+                        int x = (int)((xy >> 0) & 0xFFFF);
+                        if ((x & 0x8000) > 0)
+                        {
+                            x = (int)(x | 0xFFFF0000);
+                        }
+                        int y = (int)((xy >> 16) & 0xFFFF);
+                        if ((y & 0x8000) > 0)
+                        {
+                            y = (int)(y | 0xFFFF0000);
+                        }
+                        vtxX = x;
+                        vtxY = y;
+                        Update();
+                    }
+                    break;
+                case InstructionCode.VTX_XZ:
+                    {
+                        uint xz = instruction.Arguments[0];
+                        int x = (int)((xz >> 0) & 0xFFFF);
+                        if ((x & 0x8000) > 0)
+                        {
+                            x = (int)(x | 0xFFFF0000);
+                        }
+                        int z = (int)((xz >> 16) & 0xFFFF);
+                        if ((z & 0x8000) > 0)
+                        {
+                            z = (int)(z | 0xFFFF0000);
+                        }
+                        vtxX = x;
+                        vtxZ = z;
+                        Update();
+                    }
+                    break;
+                case InstructionCode.VTX_YZ:
+                    {
+                        uint yz = instruction.Arguments[0];
+                        int y = (int)((yz >> 0) & 0xFFFF);
+                        if ((y & 0x8000) > 0)
+                        {
+                            y = (int)(y | 0xFFFF0000);
+                        }
+                        int z = (int)((yz >> 16) & 0xFFFF);
+                        if ((z & 0x8000) > 0)
+                        {
+                            z = (int)(z | 0xFFFF0000);
+                        }
+                        vtxY = y;
+                        vtxZ = z;
+                        Update();
+                    }
+                    break;
+                case InstructionCode.VTX_DIFF:
+                    {
+                        uint xyz = instruction.Arguments[0];
+                        int x = (int)((xyz >> 0) & 0x3FF);
+                        if ((x & 0x200) > 0)
+                        {
+                            x = (int)(x | 0xFFFFFC00);
+                        }
+                        int y = (int)((xyz >> 10) & 0x3FF);
+                        if ((y & 0x200) > 0)
+                        {
+                            y = (int)(y | 0xFFFFFC00);
+                        }
+                        int z = (int)((xyz >> 20) & 0x3FF);
+                        if ((z & 0x200) > 0)
+                        {
+                            z = (int)(z | 0xFFFFFC00);
+                        }
+                        vtxX += x;
+                        vtxY += y;
+                        vtxZ += z;
+                        Update();
+                    }
+                    break;
+                }
+            }
+            int minX = Int32.MaxValue;
+            int maxX = Int32.MinValue;
+            int minY = Int32.MaxValue;
+            int maxY = Int32.MinValue;
+            int minZ = Int32.MaxValue;
+            int maxZ = Int32.MinValue;
+            foreach (Vector3i vert in verts)
+            {
+                minX = Math.Min(minX, vert.X);
+                maxX = Math.Max(maxX, vert.X);
+                minY = Math.Min(minY, vert.Y);
+                maxY = Math.Max(maxY, vert.Y);
+                minZ = Math.Min(minZ, vert.Z);
+                maxZ = Math.Max(maxZ, vert.Z);
+            }
+            return (new Vector3i(minX, minY, minZ), new Vector3i(maxX, maxY, maxZ));
+        }
+
+        public static (byte[], byte[]) PackModel(int scale, IReadOnlyList<int> nodeMtxIds, IReadOnlyList<int> nodePosScaleCounts,
+            IReadOnlyList<Material> materials, IReadOnlyList<TextureInfo> textures, IReadOnlyList<PaletteInfo> palettes,
+            IReadOnlyList<Node> nodes, IReadOnlyList<Mesh> meshes, IReadOnlyList<IReadOnlyList<RenderInstruction>> renders,
+            IReadOnlyList<DisplayList> dlists, RepackOptions options)
         {
             byte padByte = 0;
             ushort padShort = 0;
@@ -941,6 +1133,7 @@ namespace MphRead.Utility
             var dlistMax = new List<Vector3i>();
             var nodeMin = new List<Vector3i>();
             var nodeMax = new List<Vector3i>();
+            Debug.Assert(scale > 0);
             Debug.Assert(renders.Count == dlists.Count);
             foreach (IReadOnlyList<RenderInstruction> render in renders)
             {
@@ -948,16 +1141,78 @@ namespace MphRead.Utility
                 primitiveCount += primitives;
                 vertexCount += vertices;
             }
-            if (options.ComputeBounds)
-            {
-
-            }
-            else
+            if (options.ComputeBounds == ComputeBounds.None)
             {
                 dlistMin.AddRange(dlists.Select(d => d.MinBounds.ToIntVector()));
                 dlistMax.AddRange(dlists.Select(d => d.MaxBounds.ToIntVector()));
-                nodeMin.AddRange(nodes.Select(n => new Vector3i(Fixed.ToInt(n.MinBounds.X), Fixed.ToInt(n.MinBounds.Y), Fixed.ToInt(n.MinBounds.Z))));
-                nodeMax.AddRange(nodes.Select(n => new Vector3i(Fixed.ToInt(n.MaxBounds.X), Fixed.ToInt(n.MaxBounds.Y), Fixed.ToInt(n.MaxBounds.Z))));
+                nodeMin.AddRange(nodes.Select(n => n.MinBounds.ToFixedVector()));
+                nodeMax.AddRange(nodes.Select(n => n.MaxBounds.ToFixedVector()));
+            }
+            else
+            {
+                // todo: support bounds calculation for models with weighted transforms
+                Debug.Assert(nodeMtxIds.Count == 0);
+                var allMin = new List<Vector3i>();
+                var allMax = new List<Vector3i>();
+                foreach (IReadOnlyList<RenderInstruction> insts in renders)
+                {
+                    (Vector3i min, Vector3i max) = CalculateBounds(insts);
+                    allMin.Add(min);
+                    allMax.Add(max);
+                }
+                foreach (Node node in nodes)
+                {
+                    IEnumerable<int> ids = node.MeshCount == 0 ? node.GetAllMeshIds(nodes, root: true) : node.GetMeshIds();
+                    if (ids.Count() == 0)
+                    {
+                        nodeMin.Add(new Vector3i(0, 0, 0));
+                        nodeMax.Add(new Vector3i(0, 0, 0));
+                    }
+                    else
+                    {
+                        var min = new Vector3i(Int32.MaxValue, Int32.MaxValue, Int32.MaxValue);
+                        var max = new Vector3i(Int32.MinValue, Int32.MinValue, Int32.MinValue);
+                        foreach (int id in ids)
+                        {
+                            int dlistId = meshes[id].DlistId;
+                            Vector3i meshMin = allMin[dlistId];
+                            Vector3i meshMax = allMax[dlistId];
+                            min.X = Math.Min(min.X, meshMin.X);
+                            min.Y = Math.Min(min.Y, meshMin.Y);
+                            min.Z = Math.Min(min.Z, meshMin.Z);
+                            max.X = Math.Max(max.X, meshMax.X);
+                            max.Y = Math.Max(max.Y, meshMax.Y);
+                            max.Z = Math.Max(max.Z, meshMax.Z);
+                        }
+                        nodeMin.Add(min * scale);
+                        nodeMax.Add(max * scale);
+                    }
+                }
+                int clampMin = Int16.MinValue * scale;
+                int clampMax = Int16.MaxValue * scale;
+                for (int i = 0; i < allMin.Count; i++)
+                {
+                    Vector3i min = allMin[i];
+                    Vector3i max = allMax[i];
+                    if (options.ComputeBounds == ComputeBounds.Capped)
+                    {
+                        dlistMin.Add(new Vector3i(
+                            Math.Clamp(min.X * scale, clampMin, clampMax),
+                            Math.Clamp(min.Y * scale, clampMin, clampMax),
+                            Math.Clamp(min.Z * scale, clampMin, clampMax)
+                        ));
+                        dlistMax.Add(new Vector3i(
+                            Math.Clamp(max.X * scale, clampMin, clampMax),
+                            Math.Clamp(max.Y * scale, clampMin, clampMax),
+                            Math.Clamp(max.Z * scale, clampMin, clampMax)
+                        ));
+                    }
+                    else
+                    {
+                        dlistMin.Add(min);
+                        dlistMax.Add(max);
+                    }
+                }
             }
             // header is written last
             stream.Position = Sizes.Header;
@@ -1029,7 +1284,6 @@ namespace MphRead.Utility
             {
                 writer.Write(value);
             }
-            // sktodo: handle tex/pal share
             // texture data
             var textureDataOffsets = new List<int>();
             foreach (TextureInfo texture in textures)
@@ -1117,13 +1371,15 @@ namespace MphRead.Utility
             }
             stream.Position = 0;
             // header
-            // sktodo: handle animation (file)
+            int scaleFactor = (int)Math.Log2(scale);
+            Debug.Assert(Math.Pow(2, scaleFactor) == scale);
+            int scaleBase = 4096;
             int nodeAnimOffset = 0;
             int uvAnimOffset = 0;
             int matAnimOffset = 0;
             int texAnimOffset = 0;
             writer.Write(scaleFactor);
-            writer.Write(Fixed.ToInt(scaleBase));
+            writer.Write(scaleBase);
             writer.Write(primitiveCount);
             writer.Write(vertexCount);
             writer.Write(materialsOffset);
@@ -1459,8 +1715,6 @@ namespace MphRead.Utility
                     }
                     opaque = image.PaletteOpaque;
                 }
-                // todo: if PaletteOpaque is true, index 0 is used for transparency -- so no actual color value can be accessed at that index
-                // --> in that case, we should probably 
                 foreach (KeyValuePair<(byte Red, byte Green, byte Blue), int> kvp in colors.OrderBy(c => c.Value))
                 {
                     ushort value = 0;

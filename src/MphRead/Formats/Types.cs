@@ -452,6 +452,11 @@ namespace MphRead
             return new Vector3(vector.X, vector.Y, vector.Z + z);
         }
 
+        public static Vector3i ToFixedVector(this Vector3 vector)
+        {
+            return new Vector3i(Fixed.ToInt(vector.X), Fixed.ToInt(vector.Y), Fixed.ToInt(vector.Z));
+        }
+
         public static Matrix3 AsMatrix3(this Matrix4x3 matrix)
         {
             return new Matrix3(matrix.Row0, matrix.Row1, matrix.Row2);

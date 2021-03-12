@@ -38,7 +38,7 @@ namespace MphRead
             }
         }
 
-        public IEnumerable<int> GetAllMeshIds(Model model, bool root)
+        public IEnumerable<int> GetAllMeshIds(IReadOnlyList<Node> nodes, bool root)
         {
             static IEnumerable<int> Yield(Node node)
             {
@@ -54,14 +54,14 @@ namespace MphRead
             }
             if (!root && NextIndex != UInt16.MaxValue)
             {
-                foreach (int value in model.Nodes[NextIndex].GetAllMeshIds(model, root: false))
+                foreach (int value in nodes[NextIndex].GetAllMeshIds(nodes, root: false))
                 {
                     yield return value;
                 }
             }
             if (ChildIndex != UInt16.MaxValue)
             {
-                foreach (int value in model.Nodes[ChildIndex].GetAllMeshIds(model, root: false))
+                foreach (int value in nodes[ChildIndex].GetAllMeshIds(nodes, root: false))
                 {
                     yield return value;
                 }
