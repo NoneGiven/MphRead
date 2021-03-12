@@ -59,7 +59,7 @@ namespace MphRead.Utility
                 TestModelRepack(model, recolor: 0, meta.ModelPath, meta.FirstHunt || meta.Hybrid, options);
                 if (meta.AnimationPath != null)
                 {
-                    TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt);
+                    TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt | meta.Hybrid);
                 }
             }
         }
@@ -601,10 +601,10 @@ namespace MphRead.Utility
                 nodeGroupOffsets.Add(nodeGroup == null ? 0 : WriteNodeGroup(nodeGroup, writer));
                 MaterialAnimationGroup? matGroup = matGroups[i];
                 matGroupOffsets.Add(matGroup == null ? 0 : WriteMatGroup(matGroup, writer));
-                TexcoordAnimationGroup? uvGroup = uvGroups[i];
-                uvGroupOffsets.Add(uvGroup == null ? 0 : WriteUvGroup(uvGroup, writer));
                 TextureAnimationGroup? texGroup = texGroups[i];
                 texGroupOffsets.Add(texGroup == null ? 0 : WriteTexGroup(texGroup, writer));
+                TexcoordAnimationGroup? uvGroup = uvGroups[i];
+                uvGroupOffsets.Add(uvGroup == null ? 0 : WriteUvGroup(uvGroup, writer));
                 unusedGroupOffsets.Add(0);
             }
             // offset lists

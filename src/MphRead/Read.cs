@@ -207,6 +207,10 @@ namespace MphRead
                 shared.MaterialAnimationGroups.AddRange(animations.MaterialAnimationGroups);
                 shared.TexcoordAnimationGroups.AddRange(animations.TexcoordAnimationGroups);
                 shared.TextureAnimationGroups.AddRange(animations.TextureAnimationGroups);
+                shared.NodeGroupOffsets.AddRange(animations.NodeGroupOffsets);
+                shared.MaterialGroupOffsets.AddRange(animations.MaterialGroupOffsets);
+                shared.TexcoordGroupOffsets.AddRange(animations.TexcoordGroupOffsets);
+                shared.TextureGroupOffsets.AddRange(animations.TextureGroupOffsets);
                 animations = shared;
             }
             // NodePosition and NodeInitialPosition are always 0
@@ -242,6 +246,7 @@ namespace MphRead
 
         private static AnimationResults LoadAnimation(string model, string? path, IReadOnlyList<RawNode> nodes, bool firstHunt)
         {
+            string temp = model;
             var results = new AnimationResults();
             if (path == null)
             {
@@ -281,19 +286,14 @@ namespace MphRead
                 Debug.Assert((rawGroup.TranslateLutOffset - rawGroup.RotateLutOffset) % 2 == 0);
                 Debug.Assert(rawGroup.AnimationOffset > rawGroup.TranslateLutOffset);
                 Debug.Assert((rawGroup.AnimationOffset - rawGroup.TranslateLutOffset) % 4 == 0);
-                int count = nodes.Count;
-                // this group has one less animation than the model has nodes
-                // todo: figure out if this is necessary
-                if (model == "GuardBot1" && offset == 2300)
-                {
-                    count--;
-                }
+                int count = (int)(offset - rawGroup.AnimationOffset) / Sizes.NodeAnimation;
+                // note: some groups have more animations than the model has nodes, and one of GuardBot1's groups has one less
                 IReadOnlyList<NodeAnimation> rawAnimations = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, count);
                 var animations = new Dictionary<string, NodeAnimation>();
-                int i = 0;
-                foreach (NodeAnimation animation in rawAnimations)
+                for (int i = 0; i < rawAnimations.Count; i++)
                 {
-                    animations.Add(nodes[i++].Name.MarshalString(), animation);
+                    string name = i < nodes.Count ? nodes[i].Name.MarshalString() : $"__no_node_{i.ToString().PadLeft(2, '0')}";
+                    animations.Add(name, rawAnimations[i]);
                 }
                 int scaleCount = (int)(rawGroup.RotateLutOffset - rawGroup.ScaleLutOffset) / 4;
                 int rotCount = (int)(rawGroup.TranslateLutOffset - rawGroup.RotateLutOffset) / 2; // might include padding
