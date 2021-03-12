@@ -225,7 +225,7 @@ namespace MphRead
             else
             {
                 posCounts = DoOffsets<int>(initialBytes, header.NodePosCounts, header.NodeWeightCount);
-            } 
+            }
             int maxIndex = -1;
             if (header.NodePosCounts != 0)
             {

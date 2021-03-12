@@ -113,7 +113,7 @@ namespace MphRead.Utility
             Nop();
         }
 
-        private static void TestModelRepack(Model model, int recolor, string modelPath, string texPath, bool firstHunt, RepackOptions options)
+        private static void TestModelRepack(Model model, int recolor, string modelPath, string? texPath, bool firstHunt, RepackOptions options)
         {
             // sktodo: share
             if (options.Texture == RepackTexture.Shared)
@@ -139,6 +139,7 @@ namespace MphRead.Utility
             CompareModels(model.Name, bytes, fileBytes, options);
             if (options.Texture == RepackTexture.Separate)
             {
+                Debug.Assert(texPath != null);
                 byte[] texFile = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, texPath));
                 Debug.Assert(tex.Length == texFile.Length);
                 Debug.Assert(Enumerable.SequenceEqual(tex, texFile));
@@ -1365,7 +1366,7 @@ namespace MphRead.Utility
                             else
                             {
                                 index = 0;
-                            } 
+                            }
                             value |= (byte)(index << (2 * j));
                         }
                         imageData.Add(value);
