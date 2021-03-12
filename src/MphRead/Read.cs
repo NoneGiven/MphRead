@@ -386,6 +386,15 @@ namespace MphRead
                     continue;
                 }
                 RawTextureAnimationGroup rawGroup = DoOffset<RawTextureAnimationGroup>(bytes, offset);
+                if (rawGroup.AnimationCount == 0)
+                {
+                    Debug.Assert(offset == rawGroup.FrameIndexOffset && offset == rawGroup.TextureIdOffset
+                        && offset == rawGroup.PaletteIdOffset && offset == rawGroup.AnimationOffset);
+                    Debug.Assert(rawGroup.FrameIndexCount == 0 && rawGroup.TextureIdCount == 0 && rawGroup.PaletteIdCount == 0);
+                    results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, new List<ushort>(),
+                        new List<ushort>(), new List<ushort>(), new Dictionary<string, TextureAnimation>()));
+                    continue;
+                }
                 IReadOnlyList<TextureAnimation> rawAnimations
                     = DoOffsets<TextureAnimation>(bytes, rawGroup.AnimationOffset, rawGroup.AnimationCount);
                 var animations = new Dictionary<string, TextureAnimation>();
