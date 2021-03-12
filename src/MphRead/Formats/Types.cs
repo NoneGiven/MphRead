@@ -140,6 +140,11 @@ namespace MphRead
         {
             return new Vector3(X.FloatValue, Y.FloatValue, Z.FloatValue);
         }
+
+        public Vector3i ToIntVector()
+        {
+            return new Vector3i(X.Value, Y.Value, Z.Value);
+        }
     }
 
     // size: 16

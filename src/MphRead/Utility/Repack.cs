@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using OpenTK.Mathematics;
 
 namespace MphRead.Utility
 {
@@ -584,6 +585,7 @@ namespace MphRead.Utility
         {
             public RepackTexture Texture { get; set; }
             public bool IsRoom { get; set; }
+            public bool ComputeBounds { get; set; }
             public bool WriteFile { get; set; }
         }
 
@@ -920,9 +922,11 @@ namespace MphRead.Utility
             return groupOffset;
         }
 
-        public static (byte[], byte[]) PackModel(float scaleBase, uint scaleFactor, IReadOnlyList<int> nodeMtxIds, IReadOnlyList<int> nodePosScaleCounts,
-            IReadOnlyList<Material> materials, IReadOnlyList<TextureInfo> textures, IReadOnlyList<PaletteInfo> palettes, IReadOnlyList<Node> nodes,
-            IReadOnlyList<Mesh> meshes, IReadOnlyList<IReadOnlyList<RenderInstruction>> renders, IReadOnlyList<DisplayList> dlists, RepackOptions options)
+        public static (byte[], byte[]) PackModel(float scaleBase, uint scaleFactor, IReadOnlyList<int> nodeMtxIds,
+            IReadOnlyList<int> nodePosScaleCounts, IReadOnlyList<Material> materials, IReadOnlyList<TextureInfo> textures,
+            IReadOnlyList<PaletteInfo> palettes, IReadOnlyList<Node> nodes, IReadOnlyList<Mesh> meshes,
+            IReadOnlyList<IReadOnlyList<RenderInstruction>> renders, IReadOnlyList<DisplayList> dlists,
+            RepackOptions options)
         {
             byte padByte = 0;
             ushort padShort = 0;
@@ -933,12 +937,27 @@ namespace MphRead.Utility
             using BinaryWriter texWriter = options.Texture == RepackTexture.Inline ? writer : new BinaryWriter(texStream);
             int primitiveCount = 0;
             int vertexCount = 0;
+            var dlistMin = new List<Vector3i>();
+            var dlistMax = new List<Vector3i>();
+            var nodeMin = new List<Vector3i>();
+            var nodeMax = new List<Vector3i>();
             Debug.Assert(renders.Count == dlists.Count);
             foreach (IReadOnlyList<RenderInstruction> render in renders)
             {
                 (int primitives, int vertices) = GetDlistCounts(render);
                 primitiveCount += primitives;
                 vertexCount += vertices;
+            }
+            if (options.ComputeBounds)
+            {
+
+            }
+            else
+            {
+                dlistMin.AddRange(dlists.Select(d => d.MinBounds.ToIntVector()));
+                dlistMax.AddRange(dlists.Select(d => d.MaxBounds.ToIntVector()));
+                nodeMin.AddRange(nodes.Select(n => new Vector3i(Fixed.ToInt(n.MinBounds.X), Fixed.ToInt(n.MinBounds.Y), Fixed.ToInt(n.MinBounds.Z))));
+                nodeMax.AddRange(nodes.Select(n => new Vector3i(Fixed.ToInt(n.MaxBounds.X), Fixed.ToInt(n.MaxBounds.Y), Fixed.ToInt(n.MaxBounds.Z))));
             }
             // header is written last
             stream.Position = Sizes.Header;
@@ -1060,16 +1079,17 @@ namespace MphRead.Utility
             for (int i = 0; i < dlists.Count; i++)
             {
                 DisplayList dlist = dlists[i];
+                Vector3i minBounds = dlistMin[i];
+                Vector3i maxBounds = dlistMax[i];
                 (int off, int size) = dlistResults[i];
-                // todo: (attmept to) calculate dlist bounds instead of relying on existing values
                 writer.Write(off);
                 writer.Write(size);
-                writer.Write(dlist.MinBounds.X.Value);
-                writer.Write(dlist.MinBounds.Y.Value);
-                writer.Write(dlist.MinBounds.Z.Value);
-                writer.Write(dlist.MaxBounds.X.Value);
-                writer.Write(dlist.MaxBounds.Y.Value);
-                writer.Write(dlist.MaxBounds.Z.Value);
+                writer.Write(minBounds.X);
+                writer.Write(minBounds.Y);
+                writer.Write(minBounds.Z);
+                writer.Write(maxBounds.X);
+                writer.Write(maxBounds.Y);
+                writer.Write(maxBounds.Z);
             }
             // materials
             int matrixIdCount = 0;
@@ -1081,9 +1101,12 @@ namespace MphRead.Utility
             }
             // nodes
             int nodesOffset = (int)stream.Position;
-            foreach (Node node in nodes)
+            for (int i = 0; i < nodes.Count; i++)
             {
-                WriteNode(node, writer);
+                Node node = nodes[i];
+                Vector3i minBounds = nodeMin[i];
+                Vector3i maxBounds = nodeMax[i];
+                WriteNode(node, minBounds, maxBounds, writer);
             }
             // meshes
             int meshesOffset = (int)stream.Position;
@@ -1564,7 +1587,7 @@ namespace MphRead.Utility
             writer.Write(padShort);
         }
 
-        private static void WriteNode(Node node, BinaryWriter writer)
+        private static void WriteNode(Node node, Vector3i minBounds, Vector3i maxBounds, BinaryWriter writer)
         {
             byte padByte = 0;
             ushort padShort = 0;
@@ -1588,13 +1611,12 @@ namespace MphRead.Utility
             writer.Write(Fixed.ToInt(node.Position.Y));
             writer.Write(Fixed.ToInt(node.Position.Z));
             writer.Write(Fixed.ToInt(node.BoundingRadius));
-            // todo: (attmept to) calculate node bounds instead of relying on existing values
-            writer.Write(Fixed.ToInt(node.MinBounds.X));
-            writer.Write(Fixed.ToInt(node.MinBounds.Y));
-            writer.Write(Fixed.ToInt(node.MinBounds.Z));
-            writer.Write(Fixed.ToInt(node.MaxBounds.X));
-            writer.Write(Fixed.ToInt(node.MaxBounds.Y));
-            writer.Write(Fixed.ToInt(node.MaxBounds.Z));
+            writer.Write(minBounds.X);
+            writer.Write(minBounds.Y);
+            writer.Write(minBounds.Z);
+            writer.Write(maxBounds.X);
+            writer.Write(maxBounds.Y);
+            writer.Write(maxBounds.Z);
             writer.Write((byte)node.BillboardMode);
             writer.Write(padByte);
             writer.Write(padShort);
