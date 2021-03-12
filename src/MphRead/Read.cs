@@ -162,7 +162,7 @@ namespace MphRead
                 }
                 if (name == "Lava_Power")
                 {
-                    // file32Material uses texture+palette 8, but there are only 8 of each in LavaEquipTextureShare
+                    // file32Material uses texture/palette ID 8, but there are only 8 of each in LavaEquipTextureShare
                     // --> the reconstructed "R" version fixes this issue
                     var extraTex = new List<Texture>();
                     extraTex.AddRange(textures);
