@@ -41,23 +41,12 @@ namespace MphRead.Utility
                             ? RepackTexture.Shared
                             : RepackTexture.Separate;
                     }
-                    if (model.NodeMatrixIds.Count == 0 && model.Name != "Level MP5")
-                    {
-                        if (model.Name == "filter" || model.Name == "trail")
-                        {
-                            options.ComputeBounds = ComputeBounds.Uncapped;
-                        }
-                        else
-                        {
-                            options.ComputeBounds = ComputeBounds.Capped;
-                        }
-                    }
                     TestModelRepack(model, recolor: i++, modelPath, recolor.TexturePath, meta.FirstHunt, options);
                 }
                 // todo: support animation shares, I guess
                 if (meta.AnimationPath != null && meta.AnimationShare == null)
                 {
-                    //TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt);
+                    TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt);
                 }
             }
             foreach (RoomMetadata meta in Metadata.RoomMetadata.Values)
@@ -68,13 +57,13 @@ namespace MphRead.Utility
                     Texture = meta.TexturePath == null || meta.ModelPath == meta.TexturePath
                         ? RepackTexture.Inline
                         : RepackTexture.Separate,
-                    ComputeBounds = ComputeBounds.Capped
+                    ComputeBounds = ComputeBounds.None
                 };
                 Model model = Read.GetRoomModelInstance(meta.Name).Model;
                 TestModelRepack(model, recolor: 0, meta.ModelPath, meta.TexturePath, meta.FirstHunt || meta.Hybrid, options);
                 if (meta.AnimationPath != null)
                 {
-                    //TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt || meta.Hybrid);
+                    TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt || meta.Hybrid);
                 }
             }
         }
@@ -89,17 +78,6 @@ namespace MphRead.Utility
             };
             ModelMetadata meta = firstHunt ? Metadata.FirstHuntModels[name] : Metadata.ModelMetadata[name];
             Model model = Read.GetModelInstance(meta.Name, meta.FirstHunt).Model;
-            if (model.NodeMatrixIds.Count == 0 && model.Name != "Level MP5")
-            {
-                if (model.Name == "filter" || model.Name == "trail")
-                {
-                    options.ComputeBounds = ComputeBounds.Uncapped;
-                }
-                else
-                {
-                    options.ComputeBounds = ComputeBounds.Capped;
-                }
-            }
             TestModelRepack(model, recolor, meta.ModelPath, meta.Recolors[recolor].TexturePath, meta.FirstHunt, options);
             if (meta.AnimationPath != null && meta.AnimationShare == null)
             {
