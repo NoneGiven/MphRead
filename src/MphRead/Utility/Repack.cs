@@ -13,7 +13,7 @@ namespace MphRead.Utility
         {
             foreach (ModelMetadata meta in Metadata.ModelMetadata.Values.Concat(Metadata.FirstHuntModels.Values))
             {
-                // sktodo: support texture shares
+                // todo: support texture shares
                 Model model = Read.GetModelInstance(meta.Name, meta.FirstHunt).Model;
                 int i = 0;
                 foreach (RecolorMetadata recolor in meta.Recolors)
@@ -1119,6 +1119,11 @@ namespace MphRead.Utility
                 primitiveCount += primitives;
                 vertexCount += vertices;
             }
+            // todo: support bounds calculation for models with weighted transforms
+            if (nodeMtxIds.Count > 0)
+            {
+                options.ComputeBounds = ComputeBounds.None;
+            }
             if (options.ComputeBounds == ComputeBounds.None)
             {
                 dlistMin.AddRange(dlists.Select(d => d.MinBounds.ToIntVector()));
@@ -1128,8 +1133,6 @@ namespace MphRead.Utility
             }
             else
             {
-                // todo: support bounds calculation for models with weighted transforms
-                Debug.Assert(nodeMtxIds.Count == 0);
                 var allMin = new List<Vector3i>();
                 var allMax = new List<Vector3i>();
                 foreach (IReadOnlyList<RenderInstruction> insts in renders)
