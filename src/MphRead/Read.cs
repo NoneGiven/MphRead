@@ -173,7 +173,7 @@ namespace MphRead
                     extraPal.AddRange(palettes);
                     extraPal.Add(new Palette());
                     palettes = extraPal;
-                    paletteData.Add(new List<PaletteData>() { new PaletteData(0) });
+                    paletteData.Add(new List<PaletteData>() { new PaletteData(0x7FFF) });
                 }
                 string replacePath = meta.ReplacePath ?? meta.PalettePath;
                 if (replacePath != meta.TexturePath && meta.ReplaceIds.Count > 0)
