@@ -82,8 +82,31 @@ namespace MphRead.Utility
 
         private static void TestAnimRepack(Model model, string animPath, bool firstHunt)
         {
-            byte[] bytes = PackAnim(model.AnimationGroups.Node, model.AnimationGroups.Material,
-                model.AnimationGroups.Texcoord, model.AnimationGroups.Texture);
+            var node = new List<NodeAnimationGroup?>();
+            var mat = new List<MaterialAnimationGroup?>();
+            var uv = new List<TexcoordAnimationGroup?>();
+            var tex = new List<TextureAnimationGroup?>();
+            int index = 0;
+            foreach (int offset in model.AnimationGroups.Offsets.Node)
+            {
+                node.Add(offset == 0 ? null : model.AnimationGroups.Node[index++]);
+            }
+            index = 0;
+            foreach (int offset in model.AnimationGroups.Offsets.Material)
+            {
+                mat.Add(offset == 0 ? null : model.AnimationGroups.Material[index++]);
+            }
+            index = 0;
+            foreach (int offset in model.AnimationGroups.Offsets.Texcoord)
+            {
+                uv.Add(offset == 0 ? null : model.AnimationGroups.Texcoord[index++]);
+            }
+            index = 0;
+            foreach (int offset in model.AnimationGroups.Offsets.Texture)
+            {
+                tex.Add(offset == 0 ? null : model.AnimationGroups.Texture[index++]);
+            }
+            byte[] bytes = PackAnim(node, mat, uv, tex);
             byte[] fileBytes = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, animPath));
             CompareAnims(model.Name, bytes, fileBytes);
             Nop();
@@ -557,15 +580,14 @@ namespace MphRead.Utility
             public bool WriteFile { get; set; }
         }
 
-        public static byte[] PackAnim(IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> matGroups,
-            IReadOnlyList<TexcoordAnimationGroup> uvGroups, IReadOnlyList<TextureAnimationGroup> texGroups)
+        public static byte[] PackAnim(IReadOnlyList<NodeAnimationGroup?> nodeGroups, IReadOnlyList<MaterialAnimationGroup?> matGroups,
+            IReadOnlyList<TexcoordAnimationGroup?> uvGroups, IReadOnlyList<TextureAnimationGroup?> texGroups)
         {
             ushort padShort = 0;
             using var stream = new MemoryStream();
             using var writer = new BinaryWriter(stream);
-            int maxCount = Math.Max(nodeGroups.Count, matGroups.Count);
-            maxCount = Math.Max(maxCount, uvGroups.Count);
-            maxCount = Math.Max(maxCount, texGroups.Count);
+            Debug.Assert(nodeGroups.Count == matGroups.Count && matGroups.Count == uvGroups.Count && uvGroups.Count == texGroups.Count);
+            int count = nodeGroups.Count;
             var nodeGroupOffsets = new List<int>();
             var matGroupOffsets = new List<int>();
             var uvGroupOffsets = new List<int>();
@@ -573,12 +595,16 @@ namespace MphRead.Utility
             var texGroupOffsets = new List<int>();
             // data, animation, groups
             stream.Position = Sizes.AnimationHeader;
-            for (int i = 0; i < maxCount; i++)
+            for (int i = 0; i < count; i++)
             {
-                nodeGroupOffsets.Add(i >= nodeGroups.Count ? 0 : WriteNodeGroup(nodeGroups[i], writer));
-                matGroupOffsets.Add(i >= matGroups.Count ? 0 : WriteMatGroup(matGroups[i], writer));
-                uvGroupOffsets.Add(i >= uvGroups.Count ? 0 : WriteUvGroup(uvGroups[i], writer));
-                texGroupOffsets.Add(i >= texGroups.Count ? 0 : WriteTexGroup(texGroups[i], writer));
+                NodeAnimationGroup? nodeGroup = nodeGroups[i];
+                nodeGroupOffsets.Add(nodeGroup == null ? 0 : WriteNodeGroup(nodeGroup, writer));
+                MaterialAnimationGroup? matGroup = matGroups[i];
+                matGroupOffsets.Add(matGroup == null ? 0 : WriteMatGroup(matGroup, writer));
+                TexcoordAnimationGroup? uvGroup = uvGroups[i];
+                uvGroupOffsets.Add(uvGroup == null ? 0 : WriteUvGroup(uvGroup, writer));
+                TextureAnimationGroup? texGroup = texGroups[i];
+                texGroupOffsets.Add(texGroup == null ? 0 : WriteTexGroup(texGroup, writer));
                 unusedGroupOffsets.Add(0);
             }
             // offset lists
@@ -614,7 +640,7 @@ namespace MphRead.Utility
             writer.Write(matGroupList);
             writer.Write(uvGroupList);
             writer.Write(texGroupList);
-            writer.Write((ushort)maxCount);
+            writer.Write((ushort)count);
             writer.Write(padShort);
             Debug.Assert(stream.Position == Sizes.AnimationHeader);
             return stream.ToArray();

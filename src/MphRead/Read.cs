@@ -236,17 +236,8 @@ namespace MphRead
             }
             // NodePosScales is never set, and it would only be used if an entry in posCounts is greater than 1, which also never happens
             IReadOnlyList<Fixed> posScales = DoOffsets<Fixed>(initialBytes, header.NodePosScales, maxIndex + 1);
-            return new Model(name, firstHunt, header, nodes, meshes, materials, dlists, instructions, animations.NodeAnimationGroups,
-                animations.MaterialAnimationGroups, animations.TexcoordAnimationGroups, animations.TextureAnimationGroups,
+            return new Model(name, firstHunt, header, nodes, meshes, materials, dlists, instructions, animations,
                 textureMatrices, recolors, nodeWeights, nodePos, nodeInitPos, posCounts, posScales);
-        }
-
-        private class AnimationResults
-        {
-            public List<NodeAnimationGroup> NodeAnimationGroups { get; } = new List<NodeAnimationGroup>();
-            public List<MaterialAnimationGroup> MaterialAnimationGroups { get; } = new List<MaterialAnimationGroup>();
-            public List<TexcoordAnimationGroup> TexcoordAnimationGroups { get; } = new List<TexcoordAnimationGroup>();
-            public List<TextureAnimationGroup> TextureAnimationGroups { get; } = new List<TextureAnimationGroup>();
         }
 
         private static AnimationResults LoadAnimation(string model, string? path, IReadOnlyList<RawNode> nodes, bool firstHunt)
@@ -263,6 +254,10 @@ namespace MphRead
             IReadOnlyList<uint> materialGroupOffsets = DoOffsets<uint>(bytes, header.MaterialGroupOffset, header.Count);
             IReadOnlyList<uint> texcoordGroupOffsets = DoOffsets<uint>(bytes, header.TexcoordGroupOffset, header.Count);
             IReadOnlyList<uint> textureGroupOffsets = DoOffsets<uint>(bytes, header.TextureGroupOffset, header.Count);
+            results.NodeGroupOffsets.AddRange(nodeGroupOffsets);
+            results.MaterialGroupOffsets.AddRange(materialGroupOffsets);
+            results.TexcoordGroupOffsets.AddRange(texcoordGroupOffsets);
+            results.TextureGroupOffsets.AddRange(textureGroupOffsets);
             foreach (uint offset in nodeGroupOffsets)
             {
                 if (offset == 0)
@@ -1075,5 +1070,17 @@ namespace MphRead
                 Console.WriteLine(entity.Type);
             }
         }
+    }
+
+    public class AnimationResults
+    {
+        public List<NodeAnimationGroup> NodeAnimationGroups { get; } = new List<NodeAnimationGroup>();
+        public List<MaterialAnimationGroup> MaterialAnimationGroups { get; } = new List<MaterialAnimationGroup>();
+        public List<TexcoordAnimationGroup> TexcoordAnimationGroups { get; } = new List<TexcoordAnimationGroup>();
+        public List<TextureAnimationGroup> TextureAnimationGroups { get; } = new List<TextureAnimationGroup>();
+        public List<uint> NodeGroupOffsets { get; } = new List<uint>();
+        public List<uint> MaterialGroupOffsets { get; } = new List<uint>();
+        public List<uint> TexcoordGroupOffsets { get; } = new List<uint>();
+        public List<uint> TextureGroupOffsets { get; } = new List<uint>();
     }
 }
