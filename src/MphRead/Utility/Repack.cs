@@ -106,7 +106,8 @@ namespace MphRead.Utility
             {
                 tex.Add(offset == 0 ? null : model.AnimationGroups.Texture[index++]);
             }
-            byte[] bytes = PackAnim(node, mat, uv, tex);
+            bool fhPad = animPath.EndsWith("testlevel_Anim.bin");
+            byte[] bytes = PackAnim(node, mat, uv, tex, fhPad);
             byte[] fileBytes = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, animPath));
             CompareAnims(model.Name, bytes, fileBytes);
             Nop();
@@ -581,9 +582,9 @@ namespace MphRead.Utility
         }
 
         public static byte[] PackAnim(IReadOnlyList<NodeAnimationGroup?> nodeGroups, IReadOnlyList<MaterialAnimationGroup?> matGroups,
-            IReadOnlyList<TexcoordAnimationGroup?> uvGroups, IReadOnlyList<TextureAnimationGroup?> texGroups)
+            IReadOnlyList<TexcoordAnimationGroup?> uvGroups, IReadOnlyList<TextureAnimationGroup?> texGroups, bool fhPad)
         {
-            ushort padShort = 0;
+            ushort padShort = fhPad ? (ushort)0xCCCC : (ushort)0;
             using var stream = new MemoryStream();
             using var writer = new BinaryWriter(stream);
             Debug.Assert(nodeGroups.Count == matGroups.Count && matGroups.Count == uvGroups.Count && uvGroups.Count == texGroups.Count);
@@ -598,13 +599,13 @@ namespace MphRead.Utility
             for (int i = 0; i < count; i++)
             {
                 NodeAnimationGroup? nodeGroup = nodeGroups[i];
-                nodeGroupOffsets.Add(nodeGroup == null ? 0 : WriteNodeGroup(nodeGroup, writer));
+                nodeGroupOffsets.Add(nodeGroup == null ? 0 : WriteNodeGroup(nodeGroup, fhPad, writer));
                 MaterialAnimationGroup? matGroup = matGroups[i];
-                matGroupOffsets.Add(matGroup == null ? 0 : WriteMatGroup(matGroup, writer));
+                matGroupOffsets.Add(matGroup == null ? 0 : WriteMatGroup(matGroup, fhPad, writer));
                 TextureAnimationGroup? texGroup = texGroups[i];
-                texGroupOffsets.Add(texGroup == null ? 0 : WriteTexGroup(texGroup, writer));
+                texGroupOffsets.Add(texGroup == null ? 0 : WriteTexGroup(texGroup, fhPad, writer));
                 TexcoordAnimationGroup? uvGroup = uvGroups[i];
-                uvGroupOffsets.Add(uvGroup == null ? 0 : WriteUvGroup(uvGroup, writer));
+                uvGroupOffsets.Add(uvGroup == null ? 0 : WriteUvGroup(uvGroup, fhPad, writer));
                 unusedGroupOffsets.Add(0);
             }
             // offset lists
@@ -646,9 +647,9 @@ namespace MphRead.Utility
             return stream.ToArray();
         }
 
-        private static int WriteNodeGroup(NodeAnimationGroup group, BinaryWriter writer)
+        private static int WriteNodeGroup(NodeAnimationGroup group, bool fhPad, BinaryWriter writer)
         {
-            ushort padShort = 0;
+            ushort padShort = fhPad ? (ushort)0xCCCC : (ushort)0;
             // scale LUT
             int scaleOffset = (int)writer.BaseStream.Position;
             foreach (float value in group.Scales)
@@ -716,9 +717,9 @@ namespace MphRead.Utility
             return groupOffset;
         }
 
-        private static int WriteMatGroup(MaterialAnimationGroup group, BinaryWriter writer)
+        private static int WriteMatGroup(MaterialAnimationGroup group, bool fhPad, BinaryWriter writer)
         {
-            byte padByte = 0;
+            byte padByte = fhPad ? (byte)0xCC : (byte)0;
             // color LUT
             int colorOffset = (int)writer.BaseStream.Position;
             foreach (float value in group.Colors)
@@ -790,9 +791,9 @@ namespace MphRead.Utility
             return groupOffset;
         }
 
-        private static int WriteUvGroup(TexcoordAnimationGroup group, BinaryWriter writer)
+        private static int WriteUvGroup(TexcoordAnimationGroup group, bool fhPad, BinaryWriter writer)
         {
-            ushort padShort = 0;
+            ushort padShort = fhPad ? (ushort)0xCCCC : (ushort)0;
             // scale LUT
             int scaleOffset = (int)writer.BaseStream.Position;
             foreach (float value in group.Scales)
@@ -855,9 +856,9 @@ namespace MphRead.Utility
             return groupOffset;
         }
 
-        private static int WriteTexGroup(TextureAnimationGroup group, BinaryWriter writer)
+        private static int WriteTexGroup(TextureAnimationGroup group, bool fhPad, BinaryWriter writer)
         {
-            ushort padShort = 0;
+            ushort padShort = fhPad ? (ushort)0xCCCC : (ushort)0;
             // frame list
             int frameOffset = (int)writer.BaseStream.Position;
             foreach (ushort value in group.FrameIndices)
