@@ -303,8 +303,7 @@ namespace MphRead
                 var rotations = new List<float>();
                 foreach (ushort value in DoOffsets<ushort>(bytes, rawGroup.RotateLutOffset, maxRotation))
                 {
-                    long radians = (0x6487FL * value + 0x80000) >> 20;
-                    rotations.Add(Fixed.ToFloat(radians));
+                    rotations.Add(value / 65536.0f * 2.0f * MathF.PI);
                 }
                 var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, maxTranslation).Select(f => f.FloatValue).ToList();
                 results.NodeAnimationGroups.Add(new NodeAnimationGroup(rawGroup, scales, rotations, translations, animations));
@@ -368,8 +367,7 @@ namespace MphRead
                 var rotations = new List<float>();
                 foreach (ushort value in DoOffsets<ushort>(bytes, rawGroup.RotateLutOffset, maxRotation))
                 {
-                    long radians = (0x6487FL * value + 0x80000) >> 20;
-                    rotations.Add(Fixed.ToFloat(radians));
+                    rotations.Add(value / 65536.0f * 2.0f * MathF.PI);
                 }
                 var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, maxTranslation).Select(f => f.FloatValue).ToList();
                 results.TexcoordAnimationGroups.Add(new TexcoordAnimationGroup(rawGroup, scales, rotations, translations, animations));

@@ -286,6 +286,179 @@ namespace MphRead.Utility
             public bool WriteFile { get; set; }
         }
 
+        public static byte[] PackAnim(List<NodeAnimationGroup> nodeGroups, List<MaterialAnimationGroup> matGroups,
+            List<TexcoordAnimationGroup> uvGroups, List<TextureAnimationGroup> texGroups)
+        {
+            ushort padShort = 0;
+            using var stream = new MemoryStream();
+            using var writer = new BinaryWriter(stream);
+            int maxCount = Math.Max(nodeGroups.Count, matGroups.Count);
+            maxCount = Math.Max(maxCount, uvGroups.Count);
+            maxCount = Math.Max(maxCount, texGroups.Count);
+            var nodeGroupOffsets = new List<int>();
+            var matGroupOffsets = new List<int>();
+            var uvGroupOffsets = new List<int>();
+            var unusedGroupOffsets = new List<int>();
+            var texGroupOffsets = new List<int>();
+            // data, animation, groups
+            stream.Position = Sizes.AnimationHeader;
+            for (int i = 0; i < maxCount; i++)
+            {
+                if (i >= nodeGroups.Count)
+                {
+                    nodeGroupOffsets.Add(0);
+                }
+                else
+                {
+                    nodeGroupOffsets.Add((int)stream.Position);
+                    WriteNodeGroup(nodeGroups[i], writer);
+                }
+                if (i >= matGroups.Count)
+                {
+                    matGroupOffsets.Add(0);
+                }
+                else
+                {
+                    matGroupOffsets.Add((int)stream.Position);
+                    WriteMatGroup(matGroups[i], writer);
+                }
+                if (i >= uvGroups.Count)
+                {
+                    uvGroupOffsets.Add(0);
+                }
+                else
+                {
+                    uvGroupOffsets.Add((int)stream.Position);
+                    WriteUvGroup(uvGroups[i], writer);
+                }
+                unusedGroupOffsets.Add(0);
+                if (i >= texGroups.Count)
+                {
+                    texGroupOffsets.Add(0);
+                }
+                else
+                {
+                    texGroupOffsets.Add((int)stream.Position);
+                    WriteTexGroup(texGroups[i], writer);
+                }
+            }
+            // offset lists
+            int nodeGroupList = (int)stream.Position;
+            foreach (int offset in nodeGroupOffsets)
+            {
+                writer.Write(offset);
+            }
+            int matGroupList = (int)stream.Position;
+            foreach (int offset in matGroupOffsets)
+            {
+                writer.Write(offset);
+            }
+            int uvGroupList = (int)stream.Position;
+            foreach (int offset in uvGroupOffsets)
+            {
+                writer.Write(offset);
+            }
+            int unusedGroupList = (int)stream.Position;
+            foreach (int offset in unusedGroupOffsets)
+            {
+                writer.Write(offset);
+            }
+            int texGroupList = (int)stream.Position;
+            foreach (int offset in texGroupOffsets)
+            {
+                writer.Write(offset);
+            }
+            // header
+            stream.Position = 0;
+            writer.Write(nodeGroupList);
+            writer.Write(unusedGroupList);
+            writer.Write(matGroupList);
+            writer.Write(uvGroupList);
+            writer.Write(texGroupList);
+            writer.Write((ushort)maxCount);
+            writer.Write(padShort);
+            Debug.Assert(stream.Position == Sizes.AnimationHeader);
+            return stream.ToArray();
+        }
+
+        private static void WriteNodeGroup(NodeAnimationGroup group, BinaryWriter writer)
+        {
+            // scale LUT
+            int scaleOffset = (int)writer.BaseStream.Position;
+            foreach (float value in group.Scales)
+            {
+                writer.Write(Fixed.ToInt(value));
+            }
+            // rotation LUT
+            int rotateOffset = (int)writer.BaseStream.Position;
+            foreach (float value in group.Rotations)
+            {
+
+            }
+            // translation LUT
+            int transOffset = (int)writer.BaseStream.Position;
+            foreach (float value in group.Translations)
+            {
+                writer.Write(Fixed.ToInt(value));
+            }
+            // animations
+            int animOffset = (int)writer.BaseStream.Position;
+            foreach (NodeAnimation anim in group.Animations.Values)
+            {
+                writer.Write(anim.ScaleBlendX);
+                writer.Write(anim.ScaleBlendY);
+                writer.Write(anim.ScaleBlendZ);
+                writer.Write(anim.Flags);
+                writer.Write(anim.ScaleLutLengthX);
+                writer.Write(anim.ScaleLutLengthY);
+                writer.Write(anim.ScaleLutLengthZ);
+                writer.Write(anim.ScaleLutIndexX);
+                writer.Write(anim.ScaleLutIndexY);
+                writer.Write(anim.ScaleLutIndexZ);
+                writer.Write(anim.RotateBlendX);
+                writer.Write(anim.RotateBlendY);
+                writer.Write(anim.RotateBlendZ);
+                writer.Write(anim.Padding13);
+                writer.Write(anim.RotateLutLengthX);
+                writer.Write(anim.RotateLutLengthY);
+                writer.Write(anim.RotateLutLengthZ);
+                writer.Write(anim.RotateLutIndexX);
+                writer.Write(anim.RotateLutIndexY);
+                writer.Write(anim.RotateLutIndexZ);
+                writer.Write(anim.TranslateBlendX);
+                writer.Write(anim.TranslateBlendY);
+                writer.Write(anim.TranslateBlendZ);
+                writer.Write(anim.Padding23);
+                writer.Write(anim.TranslateLutLengthX);
+                writer.Write(anim.TranslateLutLengthY);
+                writer.Write(anim.TranslateLutLengthZ);
+                writer.Write(anim.TranslateLutIndexX);
+                writer.Write(anim.TranslateLutIndexY);
+                writer.Write(anim.TranslateLutIndexZ);
+            }
+            // group
+            writer.Write(group.FrameCount);
+            writer.Write(scaleOffset);
+            writer.Write(rotateOffset);
+            writer.Write(transOffset);
+            writer.Write(animOffset);
+        }
+
+        private static void WriteMatGroup(MaterialAnimationGroup group, BinaryWriter writer)
+        {
+            // color, animations, group
+        }
+
+        private static void WriteUvGroup(TexcoordAnimationGroup group, BinaryWriter writer)
+        {
+            // scale, rotation, translation, animations, group
+        }
+
+        private static void WriteTexGroup(TextureAnimationGroup group, BinaryWriter writer)
+        {
+            // frames, texids, palids, animations, group
+        }
+
         public static byte[] PackModel(float scaleBase, uint scaleFactor, IReadOnlyList<int> nodeMtxIds, IReadOnlyList<int> nodePosScaleCounts,
             IReadOnlyList<Material> materials, IReadOnlyList<TextureInfo> textures, IReadOnlyList<PaletteInfo> palettes, IReadOnlyList<Node> nodes,
             IReadOnlyList<Mesh> meshes, IReadOnlyList<IReadOnlyList<RenderInstruction>> renders, IReadOnlyList<DisplayList> dlists, RepackOptions options)
