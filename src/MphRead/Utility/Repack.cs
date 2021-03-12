@@ -32,15 +32,9 @@ namespace MphRead.Utility
                         IsRoom = false,
                         Texture = RepackTexture.Inline
                     };
-                    if (meta.ModelPath == recolor.TexturePath && recolor.TexturePath != recolor.PalettePath)
+                    if (meta.ModelPath != recolor.TexturePath || meta.ModelPath != recolor.PalettePath)
                     {
-                        options.Texture = recolor.TexturePath.Contains("Share") || recolor.PalettePath.Contains("AlimbicPalettes")
-                            ? RepackTexture.Shared
-                            : RepackTexture.SeparatePal;
-                    }
-                    else if (meta.ModelPath != recolor.TexturePath || meta.ModelPath != recolor.PalettePath)
-                    {
-                        options.Texture = recolor.TexturePath.Contains("Share") || meta.ModelPath != recolor.PalettePath
+                        options.Texture = recolor.TexturePath.ToLower().Contains("share") || meta.ModelPath != recolor.PalettePath
                             ? RepackTexture.Shared
                             : RepackTexture.Separate;
                     }
@@ -272,7 +266,6 @@ namespace MphRead.Utility
         {
             Inline,
             Separate,
-            SeparatePal,
             Shared
         }
 
