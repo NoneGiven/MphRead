@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using MphRead.Utility;
 
 namespace MphRead
 {
@@ -18,6 +19,7 @@ namespace MphRead
             IReadOnlyList<Argument> arguments = ParseArguments(args);
             if (arguments.Count == 0)
             {
+                Repack.TestRepack();
                 using var renderer = new RenderWindow();
                 renderer.AddRoom("MP3 PROVING GROUND");
                 //renderer.AddModel("Crate01");
