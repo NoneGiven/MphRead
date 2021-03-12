@@ -13,6 +13,8 @@ namespace MphRead
 {
     public static class Read
     {
+        public static bool ApplyFixes { get; set; } = true;
+
         private static readonly Dictionary<string, Model> _modelCache = new Dictionary<string, Model>();
         private static readonly Dictionary<string, Model> _fhModelCache = new Dictionary<string, Model>();
 
@@ -138,7 +140,7 @@ namespace MphRead
                 }
                 IReadOnlyList<Texture> textures = DoOffsets<Texture>(modelBytes, modelHeader.TextureOffset, modelHeader.TextureCount);
                 IReadOnlyList<Palette> palettes = DoOffsets<Palette>(modelBytes, modelHeader.PaletteOffset, modelHeader.PaletteCount);
-                if ((name == "Guardian_lod0" || name == "Guardian_lod1") && meta.Name != "pal_01")
+                if ((name == "Guardian_lod0" || name == "Guardian_lod1") && meta.Name != "pal_01" && ApplyFixes)
                 {
                     var extraTex = new List<Texture>();
                     var extraPal = new List<Palette>();
@@ -206,7 +208,11 @@ namespace MphRead
                 {
                     paletteData.Add(GetPaletteData(palette, paletteBytes));
                 }
-                if (name == "Lava_Power")
+                if (ApplyFixes)
+                {
+
+                }
+                else if (name == "Lava_Power")
                 {
                     // file32Material uses texture/palette ID 8, but there are only 8 of each in LavaEquipTextureShare
                     var extraTex = new List<Texture>();

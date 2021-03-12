@@ -11,6 +11,7 @@ namespace MphRead.Utility
     {
         public static void TestRepack()
         {
+            Read.ApplyFixes = false;
             foreach (ModelMetadata meta in Metadata.ModelMetadata.Values.Concat(Metadata.FirstHuntModels.Values))
             {
                 // todo: support texture shares
@@ -66,10 +67,12 @@ namespace MphRead.Utility
                     TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt || meta.Hybrid);
                 }
             }
+            Read.ApplyFixes = true;
         }
 
         public static void TestRepack(string name, int recolor = 0, bool firstHunt = false)
         {
+            Read.ApplyFixes = false;
             var options = new RepackOptions()
             {
                 IsRoom = false,
@@ -83,6 +86,7 @@ namespace MphRead.Utility
             {
                 TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt);
             }
+            Read.ApplyFixes = true;
         }
 
         private static void TestAnimRepack(Model model, string animPath, bool firstHunt)
