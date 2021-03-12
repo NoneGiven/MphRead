@@ -12,6 +12,7 @@ namespace MphRead.Utility
         {
             foreach (ModelMetadata meta in Metadata.ModelMetadata.Values.Concat(Metadata.FirstHuntModels.Values))
             {
+                Model model = Read.GetModelInstance(meta.Name, meta.FirstHunt).Model;
                 int i = 0;
                 foreach (RecolorMetadata recolor in meta.Recolors)
                 {
@@ -20,7 +21,6 @@ namespace MphRead.Utility
                     {
                         break;
                     }
-                    Model model = Read.GetModelInstance(meta.Name, meta.FirstHunt).Model;
                     string modelPath = meta.ModelPath;
                     // also not real recolors -- data is from separate models which won't get tested
                     if (meta.Name == "arcWelder1")
@@ -40,6 +40,11 @@ namespace MphRead.Utility
                     }
                     TestModelRepack(model, recolor: i++, modelPath, meta.FirstHunt, options);
                 }
+                // sktodo: support animation shares, I guess
+                if (meta.AnimationPath != null && meta.AnimationShare == null)
+                {
+                    TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt);
+                }
             }
             foreach (RoomMetadata meta in Metadata.RoomMetadata.Values)
             {
@@ -52,6 +57,10 @@ namespace MphRead.Utility
                 };
                 Model model = Read.GetRoomModelInstance(meta.Name).Model;
                 TestModelRepack(model, recolor: 0, meta.ModelPath, meta.FirstHunt || meta.Hybrid, options);
+                if (meta.AnimationPath != null)
+                {
+                    TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt);
+                }
             }
         }
 
@@ -65,16 +74,19 @@ namespace MphRead.Utility
             ModelMetadata meta = firstHunt ? Metadata.FirstHuntModels[name] : Metadata.ModelMetadata[name];
             Model model = Read.GetModelInstance(meta.Name, meta.FirstHunt).Model;
             TestModelRepack(model, recolor, meta.ModelPath, meta.FirstHunt, options);
-            // sktodo: support animation shares, I guess
             if (meta.AnimationPath != null && meta.AnimationShare == null)
             {
-
+                TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt);
             }
         }
 
-        private static void TestAnimRepack(Model model)
+        private static void TestAnimRepack(Model model, string animPath, bool firstHunt)
         {
-
+            byte[] bytes = PackAnim(model.AnimationGroups.Node, model.AnimationGroups.Material,
+                model.AnimationGroups.Texcoord, model.AnimationGroups.Texture);
+            byte[] fileBytes = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, animPath));
+            CompareAnims(model.Name, bytes, fileBytes);
+            Nop();
         }
 
         private static void TestModelRepack(Model model, int recolor, string modelPath, bool firstHunt, RepackOptions options)
@@ -272,6 +284,83 @@ namespace MphRead.Utility
             Nop();
         }
 
+        private static void CompareAnims(string name, byte[] bytes, byte[] otherBytes)
+        {
+            string temp = name;
+            Debug.Assert(bytes.Length == otherBytes.Length);
+            AnimationHeader header = Read.ReadStruct<AnimationHeader>(bytes);
+            AnimationHeader other = Read.ReadStruct<AnimationHeader>(otherBytes);
+            Debug.Assert(header.NodeGroupOffset == other.NodeGroupOffset);
+            Debug.Assert(header.UnusedGroupOffset == other.UnusedGroupOffset);
+            Debug.Assert(header.MaterialGroupOffset == other.MaterialGroupOffset);
+            Debug.Assert(header.TexcoordGroupOffset == other.TexcoordGroupOffset);
+            Debug.Assert(header.TextureGroupOffset == other.TextureGroupOffset);
+            Debug.Assert(header.Count == other.Count);
+            IReadOnlyList<uint> nodes = Read.DoOffsets<uint>(bytes, header.NodeGroupOffset, header.Count);
+            IReadOnlyList<uint> otherNodes = Read.DoOffsets<uint>(otherBytes, other.NodeGroupOffset, other.Count);
+            IReadOnlyList<uint> mats = Read.DoOffsets<uint>(bytes, header.MaterialGroupOffset, header.Count);
+            IReadOnlyList<uint> otherMats = Read.DoOffsets<uint>(otherBytes, other.MaterialGroupOffset, other.Count);
+            IReadOnlyList<uint> uvs = Read.DoOffsets<uint>(bytes, header.TexcoordGroupOffset, header.Count);
+            IReadOnlyList<uint> otherUvs = Read.DoOffsets<uint>(otherBytes, other.TexcoordGroupOffset, other.Count);
+            IReadOnlyList<uint> texes = Read.DoOffsets<uint>(bytes, header.TextureGroupOffset, header.Count);
+            IReadOnlyList<uint> otherTexes = Read.DoOffsets<uint>(otherBytes, other.TextureGroupOffset, other.Count);
+            for (int i = 0; i < header.Count; i++)
+            {
+                uint node = nodes[i];
+                uint otherNode = otherNodes[i];
+                Debug.Assert(node == otherNode);
+                RawNodeAnimationGroup nodeGroup = Read.DoOffset<RawNodeAnimationGroup>(bytes, node);
+                RawNodeAnimationGroup otherNodeGroup = Read.DoOffset<RawNodeAnimationGroup>(otherBytes, otherNode);
+                Debug.Assert(nodeGroup.FrameCount == otherNodeGroup.FrameCount);
+                Debug.Assert(nodeGroup.ScaleLutOffset == otherNodeGroup.ScaleLutOffset);
+                Debug.Assert(nodeGroup.RotateLutOffset == otherNodeGroup.RotateLutOffset);
+                Debug.Assert(nodeGroup.TranslateLutOffset == otherNodeGroup.TranslateLutOffset);
+                Debug.Assert(nodeGroup.AnimationOffset == otherNodeGroup.AnimationOffset);
+                uint mat = mats[i];
+                uint otherMat = otherMats[i];
+                Debug.Assert(node == otherNode);
+                RawMaterialAnimationGroup matGroup = Read.DoOffset<RawMaterialAnimationGroup>(bytes, mat);
+                RawMaterialAnimationGroup otherMatGroup = Read.DoOffset<RawMaterialAnimationGroup>(otherBytes, otherMat);
+                Debug.Assert(matGroup.FrameCount == otherMatGroup.FrameCount);
+                Debug.Assert(matGroup.ColorLutOffset == otherMatGroup.ColorLutOffset);
+                Debug.Assert(matGroup.AnimationCount == otherMatGroup.AnimationCount);
+                Debug.Assert(matGroup.AnimationOffset == otherMatGroup.AnimationOffset);
+                Debug.Assert(matGroup.AnimationFrame == otherMatGroup.AnimationFrame);
+                Debug.Assert(matGroup.Unused12 == otherMatGroup.Unused12);
+                uint uv = uvs[i];
+                uint otherUv = otherUvs[i];
+                Debug.Assert(node == otherNode);
+                RawTexcoordAnimationGroup uvGroup = Read.DoOffset<RawTexcoordAnimationGroup>(bytes, uv);
+                RawTexcoordAnimationGroup otherUvGroup = Read.DoOffset<RawTexcoordAnimationGroup>(otherBytes, otherUv);
+                Debug.Assert(uvGroup.FrameCount == otherUvGroup.FrameCount);
+                Debug.Assert(uvGroup.ScaleLutOffset == otherUvGroup.ScaleLutOffset);
+                Debug.Assert(uvGroup.RotateLutOffset == otherUvGroup.RotateLutOffset);
+                Debug.Assert(uvGroup.TranslateLutOffset == otherUvGroup.TranslateLutOffset);
+                Debug.Assert(uvGroup.AnimationCount == otherUvGroup.AnimationCount);
+                Debug.Assert(uvGroup.AnimationOffset == otherUvGroup.AnimationOffset);
+                Debug.Assert(uvGroup.AnimationFrame == otherUvGroup.AnimationFrame);
+                Debug.Assert(uvGroup.Unused1A == otherUvGroup.Unused1A);
+                uint tex = texes[i];
+                uint otherTex = otherTexes[i];
+                Debug.Assert(node == otherNode);
+                RawTextureAnimationGroup texGroup = Read.DoOffset<RawTextureAnimationGroup>(bytes, tex);
+                RawTextureAnimationGroup otherTexGroup = Read.DoOffset<RawTextureAnimationGroup>(otherBytes, otherTex);
+                Debug.Assert(texGroup.FrameCount == otherTexGroup.FrameCount);
+                Debug.Assert(texGroup.FrameIndexCount == otherTexGroup.FrameIndexCount);
+                Debug.Assert(texGroup.TextureIdCount == otherTexGroup.TextureIdCount);
+                Debug.Assert(texGroup.PaletteIdCount == otherTexGroup.PaletteIdCount);
+                Debug.Assert(texGroup.AnimationCount == otherTexGroup.AnimationCount);
+                Debug.Assert(texGroup.UnusedA == otherTexGroup.UnusedA);
+                Debug.Assert(texGroup.FrameIndexOffset == otherTexGroup.FrameIndexOffset);
+                Debug.Assert(texGroup.TextureIdOffset == otherTexGroup.TextureIdOffset);
+                Debug.Assert(texGroup.PaletteIdOffset == otherTexGroup.PaletteIdOffset);
+                Debug.Assert(texGroup.AnimationOffset == otherTexGroup.AnimationOffset);
+                Debug.Assert(texGroup.AnimationFrame == otherTexGroup.AnimationFrame);
+                Debug.Assert(texGroup.Unused1C == otherTexGroup.Unused1C);
+            }
+            Nop();
+        }
+
         public enum RepackTexture
         {
             Inline,
@@ -286,8 +375,8 @@ namespace MphRead.Utility
             public bool WriteFile { get; set; }
         }
 
-        public static byte[] PackAnim(List<NodeAnimationGroup> nodeGroups, List<MaterialAnimationGroup> matGroups,
-            List<TexcoordAnimationGroup> uvGroups, List<TextureAnimationGroup> texGroups)
+        public static byte[] PackAnim(IReadOnlyList<NodeAnimationGroup> nodeGroups, IReadOnlyList<MaterialAnimationGroup> matGroups,
+            IReadOnlyList<TexcoordAnimationGroup> uvGroups, IReadOnlyList<TextureAnimationGroup> texGroups)
         {
             ushort padShort = 0;
             using var stream = new MemoryStream();
@@ -351,6 +440,7 @@ namespace MphRead.Utility
 
         private static int WriteNodeGroup(NodeAnimationGroup group, BinaryWriter writer)
         {
+            ushort padShort = 0;
             // scale LUT
             int scaleOffset = (int)writer.BaseStream.Position;
             foreach (float value in group.Scales)
@@ -362,6 +452,10 @@ namespace MphRead.Utility
             foreach (float value in group.Rotations)
             {
                 writer.Write((ushort)Math.Round(value / MathF.PI / 2f * 65536f));
+            }
+            while (writer.BaseStream.Position % 4 != 0)
+            {
+                writer.Write(padShort);
             }
             // translation LUT
             int transOffset = (int)writer.BaseStream.Position;
@@ -416,11 +510,16 @@ namespace MphRead.Utility
 
         private static int WriteMatGroup(MaterialAnimationGroup group, BinaryWriter writer)
         {
+            byte padByte = 0;
             // color LUT
             int colorOffset = (int)writer.BaseStream.Position;
             foreach (float value in group.Colors)
             {
                 writer.Write((byte)value);
+            }
+            while (writer.BaseStream.Position % 4 != 0)
+            {
+                writer.Write(padByte);
             }
             // animations
             int animOffset = (int)writer.BaseStream.Position;
@@ -494,6 +593,10 @@ namespace MphRead.Utility
             {
                 writer.Write((ushort)Math.Round(value / MathF.PI / 2f * 65536f));
             }
+            while (writer.BaseStream.Position % 4 != 0)
+            {
+                writer.Write(padShort);
+            }
             // translation LUT
             int transOffset = (int)writer.BaseStream.Position;
             foreach (float value in group.Translations)
@@ -556,6 +659,10 @@ namespace MphRead.Utility
             foreach (ushort value in group.PaletteIds)
             {
                 writer.Write(value);
+            }
+            while (writer.BaseStream.Position % 4 != 0)
+            {
+                writer.Write(padShort);
             }
             // animations
             int animOffset = (int)writer.BaseStream.Position;

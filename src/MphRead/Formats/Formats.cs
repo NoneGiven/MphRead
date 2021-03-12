@@ -304,7 +304,7 @@ namespace MphRead
         {
             FrameCount = raw.FrameCount;
             CurrentFrame = raw.AnimationFrame;
-            UnusedFrame = raw.Unused1E;
+            UnusedFrame = raw.Unused1C;
             Count = raw.AnimationCount;
             FrameIndices = frameIndices;
             TextureIds = textureIds;

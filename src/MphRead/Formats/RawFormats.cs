@@ -115,7 +115,7 @@ namespace MphRead
         public readonly uint PaletteIdOffset;
         public readonly uint AnimationOffset;
         public readonly ushort AnimationFrame; // uint in FH
-        public readonly ushort Unused1E;
+        public readonly ushort Unused1C;
     }
 
     // size: 28

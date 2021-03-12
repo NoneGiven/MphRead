@@ -269,12 +269,23 @@ namespace MphRead
                 {
                     continue;
                 }
-                int maxScale = 0;
-                int maxRotation = 0;
-                int maxTranslation = 0;
                 RawNodeAnimationGroup rawGroup = DoOffset<RawNodeAnimationGroup>(bytes, offset);
+                if (nodes.Count == 0)
+                {
+                    Debug.Assert(offset == rawGroup.ScaleLutOffset && offset == rawGroup.RotateLutOffset
+                        && offset == rawGroup.TranslateLutOffset && offset == rawGroup.AnimationOffset);
+                    results.NodeAnimationGroups.Add(new NodeAnimationGroup(rawGroup, new List<float>(),
+                        new List<float>(), new List<float>(), new Dictionary<string, NodeAnimation>()));
+                    continue;
+                }
                 Debug.Assert(offset > rawGroup.AnimationOffset);
                 Debug.Assert((offset - rawGroup.AnimationOffset) % Sizes.NodeAnimation == 0);
+                Debug.Assert(rawGroup.RotateLutOffset > rawGroup.ScaleLutOffset);
+                Debug.Assert((rawGroup.RotateLutOffset - rawGroup.ScaleLutOffset) % 4 == 0);
+                Debug.Assert(rawGroup.TranslateLutOffset > rawGroup.RotateLutOffset);
+                Debug.Assert((rawGroup.TranslateLutOffset - rawGroup.RotateLutOffset) % 2 == 0);
+                Debug.Assert(rawGroup.AnimationOffset > rawGroup.TranslateLutOffset);
+                Debug.Assert((rawGroup.AnimationOffset - rawGroup.TranslateLutOffset) % 4 == 0);
                 int count = nodes.Count;
                 // this group has one less animation than the model has nodes
                 // todo: figure out if this is necessary
@@ -282,30 +293,23 @@ namespace MphRead
                 {
                     count--;
                 }
-                IReadOnlyList<NodeAnimation> rawAnimations
-                    = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, count);
+                IReadOnlyList<NodeAnimation> rawAnimations = DoOffsets<NodeAnimation>(bytes, rawGroup.AnimationOffset, count);
                 var animations = new Dictionary<string, NodeAnimation>();
                 int i = 0;
                 foreach (NodeAnimation animation in rawAnimations)
                 {
-                    maxScale = Math.Max(maxScale, animation.ScaleLutIndexX + animation.ScaleLutLengthX);
-                    maxScale = Math.Max(maxScale, animation.ScaleLutIndexY + animation.ScaleLutLengthY);
-                    maxScale = Math.Max(maxScale, animation.ScaleLutIndexZ + animation.ScaleLutLengthZ);
-                    maxRotation = Math.Max(maxRotation, animation.RotateLutIndexX + animation.RotateLutLengthX);
-                    maxRotation = Math.Max(maxRotation, animation.RotateLutIndexY + animation.RotateLutLengthY);
-                    maxRotation = Math.Max(maxRotation, animation.RotateLutIndexZ + animation.RotateLutLengthZ);
-                    maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexX + animation.TranslateLutLengthX);
-                    maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexY + animation.TranslateLutLengthY);
-                    maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexZ + animation.TranslateLutLengthZ);
                     animations.Add(nodes[i++].Name.MarshalString(), animation);
                 }
-                var scales = DoOffsets<Fixed>(bytes, rawGroup.ScaleLutOffset, maxScale).Select(f => f.FloatValue).ToList();
+                int scaleCount = (int)(rawGroup.RotateLutOffset - rawGroup.ScaleLutOffset) / 4;
+                int rotCount = (int)(rawGroup.TranslateLutOffset - rawGroup.RotateLutOffset) / 2; // might include padding
+                int transCount = (int)(rawGroup.AnimationOffset - rawGroup.TranslateLutOffset) / 4;
+                var scales = DoOffsets<Fixed>(bytes, rawGroup.ScaleLutOffset, scaleCount).Select(f => f.FloatValue).ToList();
                 var rotations = new List<float>();
-                foreach (ushort value in DoOffsets<ushort>(bytes, rawGroup.RotateLutOffset, maxRotation))
+                foreach (ushort value in DoOffsets<ushort>(bytes, rawGroup.RotateLutOffset, rotCount))
                 {
                     rotations.Add(value / 65536.0f * 2.0f * MathF.PI);
                 }
-                var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, maxTranslation).Select(f => f.FloatValue).ToList();
+                var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, transCount).Select(f => f.FloatValue).ToList();
                 results.NodeAnimationGroups.Add(new NodeAnimationGroup(rawGroup, scales, rotations, translations, animations));
             }
             foreach (uint offset in materialGroupOffsets)
@@ -314,31 +318,25 @@ namespace MphRead
                 {
                     continue;
                 }
-                int maxColor = 0;
                 RawMaterialAnimationGroup rawGroup = DoOffset<RawMaterialAnimationGroup>(bytes, offset);
+                if (rawGroup.AnimationCount == 0)
+                {
+                    Debug.Assert(offset == rawGroup.ColorLutOffset && offset == rawGroup.AnimationOffset);
+                    results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup,
+                        new List<float>(), new Dictionary<string, MaterialAnimation>()));
+                    continue;
+                }
+                Debug.Assert(rawGroup.AnimationOffset > rawGroup.ColorLutOffset);
                 IReadOnlyList<MaterialAnimation> rawAnimations
                     = DoOffsets<MaterialAnimation>(bytes, rawGroup.AnimationOffset, (int)rawGroup.AnimationCount);
                 var animations = new Dictionary<string, MaterialAnimation>();
                 foreach (MaterialAnimation animation in rawAnimations)
                 {
-                    maxColor = Math.Max(maxColor, animation.DiffuseLutIndexR + animation.DiffuseLutLengthR);
-                    maxColor = Math.Max(maxColor, animation.DiffuseLutIndexG + animation.DiffuseLutLengthG);
-                    maxColor = Math.Max(maxColor, animation.DiffuseLutIndexB + animation.DiffuseLutLengthB);
-                    maxColor = Math.Max(maxColor, animation.AmbientLutIndexR + animation.AmbientLutLengthR);
-                    maxColor = Math.Max(maxColor, animation.AmbientLutIndexG + animation.AmbientLutLengthG);
-                    maxColor = Math.Max(maxColor, animation.AmbientLutIndexB + animation.AmbientLutLengthB);
-                    maxColor = Math.Max(maxColor, animation.SpecularLutIndexR + animation.SpecularLutLengthR);
-                    maxColor = Math.Max(maxColor, animation.SpecularLutIndexG + animation.SpecularLutLengthG);
-                    maxColor = Math.Max(maxColor, animation.SpecularLutIndexB + animation.SpecularLutLengthB);
-                    maxColor = Math.Max(maxColor, animation.AlphaLutIndex + animation.AlphaLutLength);
                     animations.Add(animation.Name.MarshalString(), animation);
                 }
-                // the lambert3 LUT has one too few values for the diffuse blue channel's animation, so we need to read an extra byte
-                if (model == "NoxGun" && offset == 48688)
-                {
-                    maxColor++;
-                }
-                var colors = DoOffsets<byte>(bytes, rawGroup.ColorLutOffset, maxColor).Select(b => (float)b).ToList();
+                // note: the NoxGun lambert3 blue channel LUT length is one too short -- colorCount takes care of this
+                int colorCount = (int)(rawGroup.AnimationOffset - rawGroup.ColorLutOffset); // might include padding
+                var colors = DoOffsets<byte>(bytes, rawGroup.ColorLutOffset, colorCount).Select(b => (float)b).ToList();
                 results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup, colors, animations));
             }
             foreach (uint offset in texcoordGroupOffsets)
@@ -347,29 +345,38 @@ namespace MphRead
                 {
                     continue;
                 }
-                int maxScale = 0;
-                int maxRotation = 0;
-                int maxTranslation = 0;
                 RawTexcoordAnimationGroup rawGroup = DoOffset<RawTexcoordAnimationGroup>(bytes, offset);
+                if (rawGroup.AnimationCount == 0)
+                {
+                    Debug.Assert(offset == rawGroup.ScaleLutOffset && offset == rawGroup.RotateLutOffset
+                        && offset == rawGroup.TranslateLutOffset && offset == rawGroup.AnimationOffset);
+                    results.TexcoordAnimationGroups.Add(new TexcoordAnimationGroup(rawGroup, new List<float>(),
+                        new List<float>(), new List<float>(), new Dictionary<string, TexcoordAnimation>()));
+                    continue;
+                }
+                Debug.Assert(rawGroup.RotateLutOffset > rawGroup.ScaleLutOffset);
+                Debug.Assert((rawGroup.RotateLutOffset - rawGroup.ScaleLutOffset) % 4 == 0);
+                Debug.Assert(rawGroup.TranslateLutOffset > rawGroup.RotateLutOffset);
+                Debug.Assert((rawGroup.TranslateLutOffset - rawGroup.RotateLutOffset) % 2 == 0);
+                Debug.Assert(rawGroup.AnimationOffset > rawGroup.TranslateLutOffset);
+                Debug.Assert((rawGroup.AnimationOffset - rawGroup.TranslateLutOffset) % 4 == 0);
                 IReadOnlyList<TexcoordAnimation> rawAnimations
                     = DoOffsets<TexcoordAnimation>(bytes, rawGroup.AnimationOffset, (int)rawGroup.AnimationCount);
                 var animations = new Dictionary<string, TexcoordAnimation>();
                 foreach (TexcoordAnimation animation in rawAnimations)
                 {
-                    maxScale = Math.Max(maxScale, animation.ScaleLutIndexS + animation.ScaleLutLengthS);
-                    maxScale = Math.Max(maxScale, animation.ScaleLutIndexT + animation.ScaleLutLengthT);
-                    maxRotation = Math.Max(maxRotation, animation.RotateLutIndexZ + animation.RotateLutLengthZ);
-                    maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexS + animation.TranslateLutLengthS);
-                    maxTranslation = Math.Max(maxTranslation, animation.TranslateLutIndexT + animation.TranslateLutLengthT);
                     animations.Add(animation.Name.MarshalString(), animation);
                 }
-                var scales = DoOffsets<Fixed>(bytes, rawGroup.ScaleLutOffset, maxScale).Select(f => f.FloatValue).ToList();
+                int scaleCount = (int)(rawGroup.RotateLutOffset - rawGroup.ScaleLutOffset) / 4;
+                int rotCount = (int)(rawGroup.TranslateLutOffset - rawGroup.RotateLutOffset) / 2; // might include padding
+                int transCount = (int)(rawGroup.AnimationOffset - rawGroup.TranslateLutOffset) / 4;
+                var scales = DoOffsets<Fixed>(bytes, rawGroup.ScaleLutOffset, scaleCount).Select(f => f.FloatValue).ToList();
                 var rotations = new List<float>();
-                foreach (ushort value in DoOffsets<ushort>(bytes, rawGroup.RotateLutOffset, maxRotation))
+                foreach (ushort value in DoOffsets<ushort>(bytes, rawGroup.RotateLutOffset, rotCount))
                 {
                     rotations.Add(value / 65536.0f * 2.0f * MathF.PI);
                 }
-                var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, maxTranslation).Select(f => f.FloatValue).ToList();
+                var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, transCount).Select(f => f.FloatValue).ToList();
                 results.TexcoordAnimationGroups.Add(new TexcoordAnimationGroup(rawGroup, scales, rotations, translations, animations));
             }
             foreach (uint offset in textureGroupOffsets)
