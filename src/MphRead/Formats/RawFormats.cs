@@ -86,7 +86,7 @@ namespace MphRead
         public readonly uint TexcoordGroupOffset;
         public readonly uint TextureGroupOffset;
         public readonly ushort Count;
-        public readonly ushort Field16; // always 0 except for testlevel_Anim (FH), where it's 52428
+        public readonly ushort Padding16; // always 0 except for testlevel_Anim (FH), where it's 0xCCCC
     }
 
     // size: 20

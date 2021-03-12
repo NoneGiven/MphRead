@@ -259,26 +259,10 @@ namespace MphRead
             path = Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path);
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             AnimationHeader header = ReadStruct<AnimationHeader>(bytes);
-            var nodeGroupOffsets = new List<uint>();
-            var materialGroupOffsets = new List<uint>();
-            var texcoordGroupOffsets = new List<uint>();
-            var textureGroupOffsets = new List<uint>();
-            for (int i = 0; i < header.Count; i++)
-            {
-                nodeGroupOffsets.Add(SpanReadUint(bytes, (int)header.NodeGroupOffset + i * sizeof(uint)));
-            }
-            for (int i = 0; i < header.Count; i++)
-            {
-                materialGroupOffsets.Add(SpanReadUint(bytes, (int)header.MaterialGroupOffset + i * sizeof(uint)));
-            }
-            for (int i = 0; i < header.Count; i++)
-            {
-                texcoordGroupOffsets.Add(SpanReadUint(bytes, (int)header.TexcoordGroupOffset + i * sizeof(uint)));
-            }
-            for (int i = 0; i < header.Count; i++)
-            {
-                textureGroupOffsets.Add(SpanReadUint(bytes, (int)header.TextureGroupOffset + i * sizeof(uint)));
-            }
+            IReadOnlyList<uint> nodeGroupOffsets = DoOffsets<uint>(bytes, header.NodeGroupOffset, header.Count);
+            IReadOnlyList<uint> materialGroupOffsets = DoOffsets<uint>(bytes, header.MaterialGroupOffset, header.Count);
+            IReadOnlyList<uint> texcoordGroupOffsets = DoOffsets<uint>(bytes, header.TexcoordGroupOffset, header.Count);
+            IReadOnlyList<uint> textureGroupOffsets = DoOffsets<uint>(bytes, header.TextureGroupOffset, header.Count);
             foreach (uint offset in nodeGroupOffsets)
             {
                 if (offset == 0)

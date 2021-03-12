@@ -38,7 +38,7 @@ namespace MphRead.Utility
                             ? RepackTexture.Shared
                             : RepackTexture.Separate;
                     }
-                    TestRepack(model, recolor: i++, modelPath, meta.FirstHunt, options);
+                    TestModelRepack(model, recolor: i++, modelPath, meta.FirstHunt, options);
                 }
             }
             foreach (RoomMetadata meta in Metadata.RoomMetadata.Values)
@@ -51,7 +51,7 @@ namespace MphRead.Utility
                         : RepackTexture.Separate
                 };
                 Model model = Read.GetRoomModelInstance(meta.Name).Model;
-                TestRepack(model, recolor: 0, meta.ModelPath, meta.FirstHunt || meta.Hybrid, options);
+                TestModelRepack(model, recolor: 0, meta.ModelPath, meta.FirstHunt || meta.Hybrid, options);
             }
         }
 
@@ -64,10 +64,20 @@ namespace MphRead.Utility
             };
             ModelMetadata meta = firstHunt ? Metadata.FirstHuntModels[name] : Metadata.ModelMetadata[name];
             Model model = Read.GetModelInstance(meta.Name, meta.FirstHunt).Model;
-            TestRepack(model, recolor, meta.ModelPath, meta.FirstHunt, options);
+            TestModelRepack(model, recolor, meta.ModelPath, meta.FirstHunt, options);
+            // sktodo: support animation shares, I guess
+            if (meta.AnimationPath != null && meta.AnimationShare == null)
+            {
+
+            }
         }
 
-        private static void TestRepack(Model model, int recolor, string modelPath, bool firstHunt, RepackOptions options)
+        private static void TestAnimRepack(Model model)
+        {
+
+        }
+
+        private static void TestModelRepack(Model model, int recolor, string modelPath, bool firstHunt, RepackOptions options)
         {
             // sktodo: share
             if (options.Texture == RepackTexture.Shared)
@@ -89,7 +99,7 @@ namespace MphRead.Utility
             byte[] bytes = PackModel(model.Header.ScaleBase.FloatValue, model.Header.ScaleFactor, model.NodeMatrixIds, model.NodePosCounts,
                 model.Materials, textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists, options);
             byte[] fileBytes = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, modelPath));
-            ComparePacks(model.Name, bytes, fileBytes, options);
+            CompareModels(model.Name, bytes, fileBytes, options);
             if (options.WriteFile)
             {
                 File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}_{model.Recolors[recolor].Name}.bin"), bytes);
@@ -97,7 +107,7 @@ namespace MphRead.Utility
             Nop();
         }
 
-        private static void ComparePacks(string name, byte[] bytes, byte[] otherBytes, RepackOptions options)
+        private static void CompareModels(string name, byte[] bytes, byte[] otherBytes, RepackOptions options)
         {
             string temp = name;
             Debug.Assert(bytes.Length == otherBytes.Length);
