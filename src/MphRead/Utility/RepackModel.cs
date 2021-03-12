@@ -7,7 +7,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Utility
 {
-    public static class Repack
+    public static partial class Repack
     {
         public static void TestRepack()
         {

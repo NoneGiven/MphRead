@@ -160,6 +160,21 @@ namespace MphRead
                 {
                     paletteData.Add(GetPaletteData(palette, paletteBytes));
                 }
+                if (name == "Lava_Power")
+                {
+                    // file32Material uses texture+palette 8, but there are only 8 of each in LavaEquipTextureShare
+                    // --> the reconstructed "R" version fixes this issue
+                    var extraTex = new List<Texture>();
+                    extraTex.AddRange(textures);
+                    extraTex.Add(new Texture(TextureFormat.Palette8Bit, 1, 1));
+                    textures = extraTex;
+                    textureData.Add(new List<TextureData>() { new TextureData(0, 255) });
+                    var extraPal = new List<Palette>();
+                    extraPal.AddRange(palettes);
+                    extraPal.Add(new Palette());
+                    palettes = extraPal;
+                    paletteData.Add(new List<PaletteData>() { new PaletteData(0) });
+                }
                 string replacePath = meta.ReplacePath ?? meta.PalettePath;
                 if (replacePath != meta.TexturePath && meta.ReplaceIds.Count > 0)
                 {

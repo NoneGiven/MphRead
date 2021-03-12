@@ -2285,14 +2285,10 @@ namespace MphRead
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
-                // todo: file32Material uses texture+palette 8, but there are only 8 of each in LavaEquipTextureShare
-                // --> in the other "_Power" models, there are 9 of each in the texture share, so index 8 works for them
-                // --> need to do some in-game checking to see if this share is actually used, and if so, how it works
-                // for now, referencing RuinsEquipTextureShare here to get it to render
                 {
                     "Lava_Power",
                     new ModelMetadata("Lava_Power",
-                        share: @"models\RuinsEquipTextureShare_img_Model.bin",
+                        share: @"models\LavaEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {

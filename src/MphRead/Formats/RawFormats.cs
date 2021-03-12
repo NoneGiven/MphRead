@@ -284,6 +284,25 @@ namespace MphRead
         public readonly byte PackedSize;
         public readonly byte NativeTextureFormat;
         public readonly ushort ObjectRef;
+
+        public Texture(TextureFormat format, ushort width, ushort height)
+        {
+            Format = format;
+            Padding1 = 0;
+            Width = width;
+            Height = height;
+            Padding6 = 0;
+            ImageOffset = 0;
+            ImageSize = 0;
+            UnusedOffset = 0;
+            UnusedCount = 0;
+            VramOffset = 0;
+            Opaque = 1;
+            SkipVram = 0;
+            PackedSize = 0;
+            NativeTextureFormat = 0;
+            ObjectRef = 0;
+        }
     }
 
     // size: 16
