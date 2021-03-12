@@ -212,7 +212,7 @@ namespace MphRead
         public readonly ushort ScaleLutIndexS;
         public readonly ushort ScaleLutIndexT;
         public readonly byte RotateBlendZ;
-        public readonly byte Field2B;
+        public readonly byte Unused2B; // 0x00 in FH, 0xFF in MPH
         public readonly ushort RotateLutLengthZ;
         public readonly ushort RotateLutIndexZ;
         public readonly byte TranslateBlendS;
@@ -221,7 +221,7 @@ namespace MphRead
         public readonly ushort TranslateLutLengthT;
         public readonly ushort TranslateLutIndexS;
         public readonly ushort TranslateLutIndexT;
-        public readonly ushort Field3A;
+        public readonly ushort Padding3A;
     }
 
     // size: 48
@@ -240,7 +240,7 @@ namespace MphRead
         public readonly byte RotateBlendX;
         public readonly byte RotateBlendY;
         public readonly byte RotateBlendZ;
-        public readonly byte Field13; // padding?
+        public readonly byte Padding13; // 0xCC in testLevel anim
         public readonly ushort RotateLutLengthX;
         public readonly ushort RotateLutLengthY;
         public readonly ushort RotateLutLengthZ;
@@ -250,7 +250,7 @@ namespace MphRead
         public readonly byte TranslateBlendX;
         public readonly byte TranslateBlendY;
         public readonly byte TranslateBlendZ;
-        public readonly byte Field23; // padding?
+        public readonly byte Padding23; // 0xCC in testLevel anim
         public readonly ushort TranslateLutLengthX;
         public readonly ushort TranslateLutLengthY;
         public readonly ushort TranslateLutLengthZ;
