@@ -290,12 +290,12 @@ namespace MphRead.Utility
             Debug.Assert(bytes.Length == otherBytes.Length);
             AnimationHeader header = Read.ReadStruct<AnimationHeader>(bytes);
             AnimationHeader other = Read.ReadStruct<AnimationHeader>(otherBytes);
+            Debug.Assert(header.Count == other.Count);
             Debug.Assert(header.NodeGroupOffset == other.NodeGroupOffset);
             Debug.Assert(header.UnusedGroupOffset == other.UnusedGroupOffset);
             Debug.Assert(header.MaterialGroupOffset == other.MaterialGroupOffset);
             Debug.Assert(header.TexcoordGroupOffset == other.TexcoordGroupOffset);
             Debug.Assert(header.TextureGroupOffset == other.TextureGroupOffset);
-            Debug.Assert(header.Count == other.Count);
             IReadOnlyList<uint> nodes = Read.DoOffsets<uint>(bytes, header.NodeGroupOffset, header.Count);
             IReadOnlyList<uint> otherNodes = Read.DoOffsets<uint>(otherBytes, other.NodeGroupOffset, other.Count);
             IReadOnlyList<uint> mats = Read.DoOffsets<uint>(bytes, header.MaterialGroupOffset, header.Count);
@@ -309,55 +309,175 @@ namespace MphRead.Utility
                 uint node = nodes[i];
                 uint otherNode = otherNodes[i];
                 Debug.Assert(node == otherNode);
-                RawNodeAnimationGroup nodeGroup = Read.DoOffset<RawNodeAnimationGroup>(bytes, node);
-                RawNodeAnimationGroup otherNodeGroup = Read.DoOffset<RawNodeAnimationGroup>(otherBytes, otherNode);
-                Debug.Assert(nodeGroup.FrameCount == otherNodeGroup.FrameCount);
-                Debug.Assert(nodeGroup.ScaleLutOffset == otherNodeGroup.ScaleLutOffset);
-                Debug.Assert(nodeGroup.RotateLutOffset == otherNodeGroup.RotateLutOffset);
-                Debug.Assert(nodeGroup.TranslateLutOffset == otherNodeGroup.TranslateLutOffset);
-                Debug.Assert(nodeGroup.AnimationOffset == otherNodeGroup.AnimationOffset);
+                if (node != 0)
+                {
+                    RawNodeAnimationGroup nodeGroup = Read.DoOffset<RawNodeAnimationGroup>(bytes, node);
+                    RawNodeAnimationGroup otherGroup = Read.DoOffset<RawNodeAnimationGroup>(otherBytes, otherNode);
+                    Debug.Assert(nodeGroup.FrameCount == otherGroup.FrameCount);
+                    Debug.Assert(nodeGroup.ScaleLutOffset == otherGroup.ScaleLutOffset);
+                    Debug.Assert(nodeGroup.RotateLutOffset == otherGroup.RotateLutOffset);
+                    Debug.Assert(nodeGroup.TranslateLutOffset == otherGroup.TranslateLutOffset);
+                    Debug.Assert(nodeGroup.AnimationOffset == otherGroup.AnimationOffset);
+                    int scaleCount = (int)(nodeGroup.RotateLutOffset - nodeGroup.ScaleLutOffset) / 4;
+                    int rotCount = (int)(nodeGroup.TranslateLutOffset - nodeGroup.RotateLutOffset) / 2;
+                    int transCount = (int)(nodeGroup.AnimationOffset - nodeGroup.TranslateLutOffset) / 4;
+                    IReadOnlyList<uint> scales = Read.DoOffsets<uint>(bytes, nodeGroup.ScaleLutOffset, scaleCount);
+                    IReadOnlyList<uint> otherScales = Read.DoOffsets<uint>(otherBytes, otherGroup.ScaleLutOffset, scaleCount);
+                    Debug.Assert(Enumerable.SequenceEqual(scales, otherScales));
+                    IReadOnlyList<ushort> rots = Read.DoOffsets<ushort>(bytes, nodeGroup.RotateLutOffset, rotCount);
+                    IReadOnlyList<ushort> otherRots = Read.DoOffsets<ushort>(otherBytes, otherGroup.RotateLutOffset, rotCount);
+                    Debug.Assert(Enumerable.SequenceEqual(rots, otherRots));
+                    IReadOnlyList<uint> poses = Read.DoOffsets<uint>(bytes, nodeGroup.TranslateLutOffset, transCount);
+                    IReadOnlyList<uint> otherPoses = Read.DoOffsets<uint>(otherBytes, otherGroup.TranslateLutOffset, transCount);
+                    Debug.Assert(Enumerable.SequenceEqual(poses, otherPoses));
+                }
                 uint mat = mats[i];
                 uint otherMat = otherMats[i];
-                Debug.Assert(node == otherNode);
-                RawMaterialAnimationGroup matGroup = Read.DoOffset<RawMaterialAnimationGroup>(bytes, mat);
-                RawMaterialAnimationGroup otherMatGroup = Read.DoOffset<RawMaterialAnimationGroup>(otherBytes, otherMat);
-                Debug.Assert(matGroup.FrameCount == otherMatGroup.FrameCount);
-                Debug.Assert(matGroup.ColorLutOffset == otherMatGroup.ColorLutOffset);
-                Debug.Assert(matGroup.AnimationCount == otherMatGroup.AnimationCount);
-                Debug.Assert(matGroup.AnimationOffset == otherMatGroup.AnimationOffset);
-                Debug.Assert(matGroup.AnimationFrame == otherMatGroup.AnimationFrame);
-                Debug.Assert(matGroup.Unused12 == otherMatGroup.Unused12);
+                Debug.Assert(mat == otherMat);
+                if (mat != 0)
+                {
+                    RawMaterialAnimationGroup matGroup = Read.DoOffset<RawMaterialAnimationGroup>(bytes, mat);
+                    RawMaterialAnimationGroup otherGroup = Read.DoOffset<RawMaterialAnimationGroup>(otherBytes, otherMat);
+                    Debug.Assert(matGroup.FrameCount == otherGroup.FrameCount);
+                    Debug.Assert(matGroup.ColorLutOffset == otherGroup.ColorLutOffset);
+                    Debug.Assert(matGroup.AnimationCount == otherGroup.AnimationCount);
+                    Debug.Assert(matGroup.AnimationOffset == otherGroup.AnimationOffset);
+                    Debug.Assert(matGroup.AnimationFrame == otherGroup.AnimationFrame);
+                    Debug.Assert(matGroup.Unused12 == otherGroup.Unused12);
+                    int colorCount = (int)(matGroup.AnimationOffset - matGroup.ColorLutOffset);
+                    IReadOnlyList<byte> colors = Read.DoOffsets<byte>(bytes, matGroup.ColorLutOffset, colorCount);
+                    IReadOnlyList<byte> otherColors = Read.DoOffsets<byte>(otherBytes, otherGroup.ColorLutOffset, colorCount);
+                    Debug.Assert(Enumerable.SequenceEqual(colors, otherColors));
+                    IReadOnlyList<MaterialAnimation> anims
+                        = Read.DoOffsets<MaterialAnimation>(bytes, matGroup.AnimationOffset, matGroup.AnimationCount);
+                    IReadOnlyList<MaterialAnimation> otherAnims
+                        = Read.DoOffsets<MaterialAnimation>(otherBytes, otherGroup.AnimationOffset, otherGroup.AnimationCount);
+                    for (int j = 0; j < anims.Count; j++)
+                    {
+                        MaterialAnimation anim = anims[j];
+                        MaterialAnimation otherAnim = otherAnims[j];
+                        Debug.Assert(Enumerable.SequenceEqual(anim.Name, otherAnim.Name));
+                        Debug.Assert(anim.Unused40 == otherAnim.Unused40);
+                        Debug.Assert(anim.DiffuseBlendR == otherAnim.DiffuseBlendR);
+                        Debug.Assert(anim.DiffuseBlendG == otherAnim.DiffuseBlendG);
+                        Debug.Assert(anim.DiffuseBlendB == otherAnim.DiffuseBlendB);
+                        Debug.Assert(anim.Unused47 == otherAnim.Unused47);
+                        Debug.Assert(anim.DiffuseLutLengthR == otherAnim.DiffuseLutLengthR);
+                        Debug.Assert(anim.DiffuseLutLengthG == otherAnim.DiffuseLutLengthG);
+                        Debug.Assert(anim.DiffuseLutLengthB == otherAnim.DiffuseLutLengthB);
+                        Debug.Assert(anim.DiffuseLutIndexR == otherAnim.DiffuseLutIndexR);
+                        Debug.Assert(anim.DiffuseLutIndexG == otherAnim.DiffuseLutIndexG);
+                        Debug.Assert(anim.DiffuseLutIndexB == otherAnim.DiffuseLutIndexB);
+                        Debug.Assert(anim.AmbientBlendR == otherAnim.AmbientBlendR);
+                        Debug.Assert(anim.AmbientBlendG == otherAnim.AmbientBlendG);
+                        Debug.Assert(anim.AmbientBlendB == otherAnim.AmbientBlendB);
+                        Debug.Assert(anim.Unused57 == otherAnim.Unused57);
+                        Debug.Assert(anim.AmbientLutLengthR == otherAnim.AmbientLutLengthR);
+                        Debug.Assert(anim.AmbientLutLengthG == otherAnim.AmbientLutLengthG);
+                        Debug.Assert(anim.AmbientLutLengthB == otherAnim.AmbientLutLengthB);
+                        Debug.Assert(anim.AmbientLutIndexR == otherAnim.AmbientLutIndexR);
+                        Debug.Assert(anim.AmbientLutIndexG == otherAnim.AmbientLutIndexG);
+                        Debug.Assert(anim.AmbientLutIndexB == otherAnim.AmbientLutIndexB);
+                        Debug.Assert(anim.SpecularBlendR == otherAnim.SpecularBlendR);
+                        Debug.Assert(anim.SpecularBlendG == otherAnim.SpecularBlendG);
+                        Debug.Assert(anim.SpecularBlendB == otherAnim.SpecularBlendB);
+                        Debug.Assert(anim.Unused67 == otherAnim.Unused67);
+                        Debug.Assert(anim.SpecularLutLengthR == otherAnim.SpecularLutLengthR);
+                        Debug.Assert(anim.SpecularLutLengthG == otherAnim.SpecularLutLengthG);
+                        Debug.Assert(anim.SpecularLutLengthB == otherAnim.SpecularLutLengthB);
+                        Debug.Assert(anim.SpecularLutIndexR == otherAnim.SpecularLutIndexR);
+                        Debug.Assert(anim.SpecularLutIndexG == otherAnim.SpecularLutIndexG);
+                        Debug.Assert(anim.SpecularLutIndexB == otherAnim.SpecularLutIndexB);
+                        Debug.Assert(anim.Unused74 == otherAnim.Unused74);
+                        Debug.Assert(anim.Unused78 == otherAnim.Unused78);
+                        Debug.Assert(anim.Unused7C == otherAnim.Unused7C);
+                        Debug.Assert(anim.Unused80 == otherAnim.Unused80);
+                        Debug.Assert(anim.AlphaBlend == otherAnim.AlphaBlend);
+                        Debug.Assert(anim.Unused85 == otherAnim.Unused85);
+                        Debug.Assert(anim.AlphaLutLength == otherAnim.AlphaLutLength);
+                        Debug.Assert(anim.AlphaLutIndex == otherAnim.AlphaLutIndex);
+                        Debug.Assert(anim.MaterialId == otherAnim.MaterialId);
+                    }
+                }
                 uint uv = uvs[i];
                 uint otherUv = otherUvs[i];
-                Debug.Assert(node == otherNode);
-                RawTexcoordAnimationGroup uvGroup = Read.DoOffset<RawTexcoordAnimationGroup>(bytes, uv);
-                RawTexcoordAnimationGroup otherUvGroup = Read.DoOffset<RawTexcoordAnimationGroup>(otherBytes, otherUv);
-                Debug.Assert(uvGroup.FrameCount == otherUvGroup.FrameCount);
-                Debug.Assert(uvGroup.ScaleLutOffset == otherUvGroup.ScaleLutOffset);
-                Debug.Assert(uvGroup.RotateLutOffset == otherUvGroup.RotateLutOffset);
-                Debug.Assert(uvGroup.TranslateLutOffset == otherUvGroup.TranslateLutOffset);
-                Debug.Assert(uvGroup.AnimationCount == otherUvGroup.AnimationCount);
-                Debug.Assert(uvGroup.AnimationOffset == otherUvGroup.AnimationOffset);
-                Debug.Assert(uvGroup.AnimationFrame == otherUvGroup.AnimationFrame);
-                Debug.Assert(uvGroup.Unused1A == otherUvGroup.Unused1A);
+                Debug.Assert(uv == otherUv);
+                if (uv != 0)
+                {
+                    RawTexcoordAnimationGroup uvGroup = Read.DoOffset<RawTexcoordAnimationGroup>(bytes, uv);
+                    RawTexcoordAnimationGroup otherGroup = Read.DoOffset<RawTexcoordAnimationGroup>(otherBytes, otherUv);
+                    Debug.Assert(uvGroup.FrameCount == otherGroup.FrameCount);
+                    Debug.Assert(uvGroup.ScaleLutOffset == otherGroup.ScaleLutOffset);
+                    Debug.Assert(uvGroup.RotateLutOffset == otherGroup.RotateLutOffset);
+                    Debug.Assert(uvGroup.TranslateLutOffset == otherGroup.TranslateLutOffset);
+                    Debug.Assert(uvGroup.AnimationCount == otherGroup.AnimationCount);
+                    Debug.Assert(uvGroup.AnimationOffset == otherGroup.AnimationOffset);
+                    Debug.Assert(uvGroup.AnimationFrame == otherGroup.AnimationFrame);
+                    Debug.Assert(uvGroup.Unused1A == otherGroup.Unused1A);
+                    int scaleCount = (int)(uvGroup.RotateLutOffset - uvGroup.ScaleLutOffset) / 4;
+                    int rotCount = (int)(uvGroup.TranslateLutOffset - uvGroup.RotateLutOffset) / 2;
+                    int transCount = (int)(uvGroup.AnimationOffset - uvGroup.TranslateLutOffset) / 4;
+                    IReadOnlyList<uint> scales = Read.DoOffsets<uint>(bytes, uvGroup.ScaleLutOffset, scaleCount);
+                    IReadOnlyList<uint> otherScales = Read.DoOffsets<uint>(otherBytes, otherGroup.ScaleLutOffset, scaleCount);
+                    Debug.Assert(Enumerable.SequenceEqual(scales, otherScales));
+                    IReadOnlyList<ushort> rots = Read.DoOffsets<ushort>(bytes, uvGroup.RotateLutOffset, rotCount);
+                    IReadOnlyList<ushort> otherRots = Read.DoOffsets<ushort>(otherBytes, otherGroup.RotateLutOffset, rotCount);
+                    Debug.Assert(Enumerable.SequenceEqual(rots, otherRots));
+                    IReadOnlyList<uint> poses = Read.DoOffsets<uint>(bytes, uvGroup.TranslateLutOffset, transCount);
+                    IReadOnlyList<uint> otherPoses = Read.DoOffsets<uint>(otherBytes, otherGroup.TranslateLutOffset, transCount);
+                    Debug.Assert(Enumerable.SequenceEqual(poses, otherPoses));
+                    IReadOnlyList<TexcoordAnimation> anims
+                        = Read.DoOffsets<TexcoordAnimation>(bytes, uvGroup.AnimationOffset, uvGroup.AnimationCount);
+                    IReadOnlyList<TexcoordAnimation> otherAnims
+                        = Read.DoOffsets<TexcoordAnimation>(otherBytes, otherGroup.AnimationOffset, otherGroup.AnimationCount);
+                    for (int j = 0; j < anims.Count; j++)
+                    {
+                        TexcoordAnimation anim = anims[j];
+                        TexcoordAnimation otherAnim = otherAnims[j];
+                        Debug.Assert(Enumerable.SequenceEqual(anim.Name, otherAnim.Name));
+                    }
+                }
                 uint tex = texes[i];
                 uint otherTex = otherTexes[i];
-                Debug.Assert(node == otherNode);
-                RawTextureAnimationGroup texGroup = Read.DoOffset<RawTextureAnimationGroup>(bytes, tex);
-                RawTextureAnimationGroup otherTexGroup = Read.DoOffset<RawTextureAnimationGroup>(otherBytes, otherTex);
-                Debug.Assert(texGroup.FrameCount == otherTexGroup.FrameCount);
-                Debug.Assert(texGroup.FrameIndexCount == otherTexGroup.FrameIndexCount);
-                Debug.Assert(texGroup.TextureIdCount == otherTexGroup.TextureIdCount);
-                Debug.Assert(texGroup.PaletteIdCount == otherTexGroup.PaletteIdCount);
-                Debug.Assert(texGroup.AnimationCount == otherTexGroup.AnimationCount);
-                Debug.Assert(texGroup.UnusedA == otherTexGroup.UnusedA);
-                Debug.Assert(texGroup.FrameIndexOffset == otherTexGroup.FrameIndexOffset);
-                Debug.Assert(texGroup.TextureIdOffset == otherTexGroup.TextureIdOffset);
-                Debug.Assert(texGroup.PaletteIdOffset == otherTexGroup.PaletteIdOffset);
-                Debug.Assert(texGroup.AnimationOffset == otherTexGroup.AnimationOffset);
-                Debug.Assert(texGroup.AnimationFrame == otherTexGroup.AnimationFrame);
-                Debug.Assert(texGroup.Unused1C == otherTexGroup.Unused1C);
+                Debug.Assert(tex == otherTex);
+                if (tex != 0)
+                {
+                    RawTextureAnimationGroup texGroup = Read.DoOffset<RawTextureAnimationGroup>(bytes, tex);
+                    RawTextureAnimationGroup otherGroup = Read.DoOffset<RawTextureAnimationGroup>(otherBytes, otherTex);
+                    Debug.Assert(texGroup.FrameCount == otherGroup.FrameCount);
+                    Debug.Assert(texGroup.FrameIndexCount == otherGroup.FrameIndexCount);
+                    Debug.Assert(texGroup.TextureIdCount == otherGroup.TextureIdCount);
+                    Debug.Assert(texGroup.PaletteIdCount == otherGroup.PaletteIdCount);
+                    Debug.Assert(texGroup.AnimationCount == otherGroup.AnimationCount);
+                    Debug.Assert(texGroup.UnusedA == otherGroup.UnusedA);
+                    Debug.Assert(texGroup.FrameIndexOffset == otherGroup.FrameIndexOffset);
+                    Debug.Assert(texGroup.TextureIdOffset == otherGroup.TextureIdOffset);
+                    Debug.Assert(texGroup.PaletteIdOffset == otherGroup.PaletteIdOffset);
+                    Debug.Assert(texGroup.AnimationOffset == otherGroup.AnimationOffset);
+                    Debug.Assert(texGroup.AnimationFrame == otherGroup.AnimationFrame);
+                    Debug.Assert(texGroup.Unused1C == otherGroup.Unused1C);
+                    IReadOnlyList<ushort> frameIds = Read.DoOffsets<ushort>(bytes, texGroup.FrameIndexOffset, texGroup.FrameIndexCount);
+                    IReadOnlyList<ushort> otherFrameIds = Read.DoOffsets<ushort>(otherBytes, otherGroup.FrameIndexOffset, otherGroup.FrameIndexCount);
+                    Debug.Assert(Enumerable.SequenceEqual(frameIds, otherFrameIds));
+                    IReadOnlyList<ushort> texIds = Read.DoOffsets<ushort>(bytes, texGroup.TextureIdOffset, texGroup.TextureIdCount);
+                    IReadOnlyList<ushort> otherTexIds = Read.DoOffsets<ushort>(otherBytes, otherGroup.TextureIdOffset, otherGroup.TextureIdCount);
+                    Debug.Assert(Enumerable.SequenceEqual(texIds, otherTexIds));
+                    IReadOnlyList<ushort> palIds = Read.DoOffsets<ushort>(bytes, texGroup.PaletteIdOffset, texGroup.PaletteIdCount);
+                    IReadOnlyList<ushort> otherPalIds = Read.DoOffsets<ushort>(otherBytes, otherGroup.PaletteIdOffset, otherGroup.PaletteIdCount);
+                    Debug.Assert(Enumerable.SequenceEqual(palIds, otherPalIds));
+                    IReadOnlyList<TextureAnimation> anims
+                        = Read.DoOffsets<TextureAnimation>(bytes, texGroup.AnimationOffset, texGroup.AnimationCount);
+                    IReadOnlyList<TextureAnimation> otherAnims
+                        = Read.DoOffsets<TextureAnimation>(otherBytes, otherGroup.AnimationOffset, otherGroup.AnimationCount);
+                    for (int j = 0; j < anims.Count; j++)
+                    {
+                        TextureAnimation anim = anims[j];
+                        TextureAnimation otherAnim = otherAnims[j];
+                        Debug.Assert(Enumerable.SequenceEqual(anim.Name, otherAnim.Name));
+                    }
+                }
             }
+            Debug.Assert(Enumerable.SequenceEqual(bytes, otherBytes));
             Nop();
         }
 
@@ -405,6 +525,11 @@ namespace MphRead.Utility
             {
                 writer.Write(offset);
             }
+            int unusedGroupList = (int)stream.Position;
+            foreach (int offset in unusedGroupOffsets)
+            {
+                writer.Write(offset);
+            }
             int matGroupList = (int)stream.Position;
             foreach (int offset in matGroupOffsets)
             {
@@ -412,11 +537,6 @@ namespace MphRead.Utility
             }
             int uvGroupList = (int)stream.Position;
             foreach (int offset in uvGroupOffsets)
-            {
-                writer.Write(offset);
-            }
-            int unusedGroupList = (int)stream.Position;
-            foreach (int offset in unusedGroupOffsets)
             {
                 writer.Write(offset);
             }
@@ -525,7 +645,11 @@ namespace MphRead.Utility
             int animOffset = (int)writer.BaseStream.Position;
             foreach (MaterialAnimation anim in group.Animations.Values)
             {
-                WriteString(anim.Name.MarshalString(), 64, writer);
+                for (int i = 0; i < anim.Name.Length; i++)
+                {
+                    writer.Write((byte)anim.Name[i]);
+                }
+                Debug.Assert(writer.BaseStream.Position % 4 == 0);
                 writer.Write(anim.Unused40);
                 writer.Write(anim.DiffuseBlendR);
                 writer.Write(anim.DiffuseBlendG);
@@ -607,7 +731,11 @@ namespace MphRead.Utility
             int animOffset = (int)writer.BaseStream.Position;
             foreach (TexcoordAnimation anim in group.Animations.Values)
             {
-                WriteString(anim.Name.MarshalString(), 32, writer);
+                for (int i = 0; i < anim.Name.Length; i++)
+                {
+                    writer.Write((byte)anim.Name[i]);
+                }
+                Debug.Assert(writer.BaseStream.Position % 4 == 0);
                 writer.Write(anim.ScaleBlendS);
                 writer.Write(anim.ScaleBlendT);
                 writer.Write(anim.ScaleLutLengthS);
@@ -668,7 +796,11 @@ namespace MphRead.Utility
             int animOffset = (int)writer.BaseStream.Position;
             foreach (TextureAnimation anim in group.Animations.Values)
             {
-                WriteString(anim.Name.MarshalString(), 32, writer);
+                for (int i = 0; i < anim.Name.Length; i++)
+                {
+                    writer.Write((byte)anim.Name[i]);
+                }
+                Debug.Assert(writer.BaseStream.Position % 4 == 0);
                 writer.Write(anim.Count);
                 writer.Write(anim.StartIndex);
                 writer.Write(anim.MinimumPaletteId);
@@ -913,7 +1045,7 @@ namespace MphRead.Utility
             int i = 0;
             for (; i < value.Length; i++)
             {
-                writer.Write(value[i]);
+                writer.Write((byte)value[i]);
             }
             for (; i < length; i++)
             {

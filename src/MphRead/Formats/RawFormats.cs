@@ -44,7 +44,7 @@ namespace MphRead
     public readonly struct RawMaterial
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
-        public readonly char[] Name;
+        public readonly byte[] Name;
         public readonly byte Lighting;
         public readonly CullingMode Culling;
         public readonly byte Alpha;
@@ -76,6 +76,8 @@ namespace MphRead
         public readonly byte PackedRepeatMode;
         public readonly byte Padding81;
         public readonly ushort Padding82;
+
+        public string NameString => Name.MarshalString();
     }
 
     // size: 24
@@ -145,7 +147,7 @@ namespace MphRead
     public readonly struct MaterialAnimation
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
-        public readonly char[] Name;
+        public readonly byte[] Name;
         public readonly uint Unused40; // always 0x01
         public readonly byte DiffuseBlendR;
         public readonly byte DiffuseBlendG;
@@ -186,13 +188,15 @@ namespace MphRead
         public readonly ushort AlphaLutLength;
         public readonly ushort AlphaLutIndex;
         public readonly ushort MaterialId;
+
+        public string NameString => Name.MarshalString();
     }
 
     // size: 44
     public readonly struct TextureAnimation
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-        public readonly char[] Name;
+        public readonly byte[] Name;
         public readonly ushort Count;
         public readonly ushort StartIndex;
         public readonly ushort MinimumPaletteId; // todo: do these need to be used?
@@ -205,7 +209,7 @@ namespace MphRead
     public readonly struct TexcoordAnimation
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-        public readonly char[] Name;
+        public readonly byte[] Name;
         public readonly byte ScaleBlendS;
         public readonly byte ScaleBlendT;
         public readonly ushort ScaleLutLengthS;
@@ -223,6 +227,8 @@ namespace MphRead
         public readonly ushort TranslateLutIndexS;
         public readonly ushort TranslateLutIndexT;
         public readonly ushort Padding3A;
+
+        public string NameString => Name.MarshalString();
     }
 
     // size: 48
@@ -329,7 +335,7 @@ namespace MphRead
     public readonly struct RawNode
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
-        public readonly char[] Name;
+        public readonly byte[] Name;
         public readonly ushort ParentId;
         public readonly ushort ChildId;
         public readonly ushort NextId;
@@ -362,6 +368,8 @@ namespace MphRead
         public readonly uint UnusedE4;
         public readonly uint UnusedE8;
         public readonly uint UnusedEC;
+
+        public string NameString => Name.MarshalString();
     }
 
     // size: 64
@@ -477,7 +485,9 @@ namespace MphRead
         public readonly uint Unused4C;
         public readonly uint Unused50;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public readonly char[] NodeName;
+        public readonly byte[] NodeName;
+
+        public string NodeNameString => NodeName.MarshalString();
     }
 
     // size: 28
@@ -497,9 +507,9 @@ namespace MphRead
     public readonly struct RawEffectElement
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-        public readonly char[] Name;
+        public readonly byte[] Name;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-        public readonly char[] ModelName;
+        public readonly byte[] ModelName;
         public readonly uint ParticleCount;
         public readonly uint ParticleOffset;
         public readonly EffElemFlags Flags;
@@ -511,16 +521,21 @@ namespace MphRead
         public readonly int DrawType;
         public readonly uint FuncCount;
         public readonly uint FuncOffset;
+
+        public string NameString => Name.MarshalString();
+        public string ModelNameString => ModelName.MarshalString();
     }
 
     // size: 11
     public readonly struct RawStringTableEntry
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public readonly char[] Id; // need all 4 characters (no terminator)
+        public readonly byte[] Id; // need all 4 characters (no terminator)
         public readonly uint Offset;
         public readonly ushort Length;
         public readonly byte Speed;
         public readonly char Category;
+
+        public string IdString => Id.MarshalString();
     }
 }
