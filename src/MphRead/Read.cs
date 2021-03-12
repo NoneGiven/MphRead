@@ -140,51 +140,74 @@ namespace MphRead
                 }
                 IReadOnlyList<Texture> textures = DoOffsets<Texture>(modelBytes, modelHeader.TextureOffset, modelHeader.TextureCount);
                 IReadOnlyList<Palette> palettes = DoOffsets<Palette>(modelBytes, modelHeader.PaletteOffset, modelHeader.PaletteCount);
-                if ((name == "Guardian_lod0" || name == "Guardian_lod1") && meta.Name != "pal_01" && ApplyFixes)
+                if (ApplyFixes)
                 {
-                    var extraTex = new List<Texture>();
-                    var extraPal = new List<Palette>();
-                    if (meta.Name == "pal_02" || meta.Name == "pal_03" || meta.Name == "pal_04")
+                    if ((name == "Guardian_lod0" || name == "Guardian_lod1") && meta.Name != "pal_01")
                     {
+                        var extraTex = new List<Texture>();
+                        var extraPal = new List<Palette>();
+                        if (meta.Name == "pal_02" || meta.Name == "pal_03" || meta.Name == "pal_04")
+                        {
+                            extraTex.AddRange(textures);
+                            extraPal.AddRange(palettes);
+                            if (meta.Name == "pal_02")
+                            {
+                                extraTex[0] = extraTex[5];
+                                extraTex[1] = extraTex[4];
+                                extraPal[7] = extraPal[4];
+                                extraPal[3] = extraPal[0];
+                            }
+                            else if (meta.Name == "pal_03")
+                            {
+                                extraTex[0] = extraTex[6];
+                                extraTex[1] = extraTex[3];
+                                extraPal[7] = extraPal[5];
+                                extraPal[3] = extraPal[1];
+                            }
+                            else if (meta.Name == "pal_04")
+                            {
+                                extraTex[0] = extraTex[7];
+                                extraTex[1] = extraTex[2];
+                                extraPal[7] = extraPal[6];
+                                extraPal[3] = extraPal[2];
+                            }
+                        }
+                        else if (meta.Name == "pal_Team01" || meta.Name == "pal_Team02")
+                        {
+                            extraTex.Add(textures[1]); // 0
+                            extraTex.Add(textures[0]); // 1
+                            extraPal.Add(new Palette());
+                            extraPal.Add(new Palette());
+                            extraPal.Add(new Palette());
+                            extraPal.Add(palettes[0]); // 3
+                            extraPal.Add(new Palette());
+                            extraPal.Add(new Palette());
+                            extraPal.Add(new Palette());
+                            extraPal.Add(palettes[1]); // 7
+                        }
+                        textures = extraTex;
+                        palettes = extraPal;
+                    }
+                    else if (name == "Alimbic_Power" || name == "Generic_Power" || name == "Ice_Power"
+                        || name == "Lava_Power" || name == "Ruins_Power")
+                    {
+                        var extraTex = new List<Texture>();
                         extraTex.AddRange(textures);
+                        var extraPal = new List<Palette>();
                         extraPal.AddRange(palettes);
-                        if (meta.Name == "pal_02")
+                        if (name == "Lava_Power")
                         {
-                            extraTex[0] = extraTex[5];
-                            extraTex[1] = extraTex[4];
-                            extraPal[7] = extraPal[4];
-                            extraPal[3] = extraPal[0];
-                        }
-                        else if (meta.Name == "pal_03")
-                        {
-                            extraTex[0] = extraTex[6];
-                            extraTex[1] = extraTex[3];
-                            extraPal[7] = extraPal[5];
-                            extraPal[3] = extraPal[1];
-                        }
-                        else if (meta.Name == "pal_04")
-                        {
-                            extraTex[0] = extraTex[7];
                             extraTex[1] = extraTex[2];
-                            extraPal[7] = extraPal[6];
-                            extraPal[3] = extraPal[2];
+                            extraPal[1] = extraPal[2];
                         }
+                        else if (name == "Ruins_Power")
+                        {
+                            extraTex[0] = extraTex[1];
+                            extraPal[0] = extraPal[1];
+                        }
+                        textures = extraTex;
+                        palettes = extraPal;
                     }
-                    else if (meta.Name == "pal_Team01" || meta.Name == "pal_Team02")
-                    {
-                        extraTex.Add(textures[1]); // 0
-                        extraTex.Add(textures[0]); // 1
-                        extraPal.Add(new Palette());
-                        extraPal.Add(new Palette());
-                        extraPal.Add(new Palette());
-                        extraPal.Add(palettes[0]); // 3
-                        extraPal.Add(new Palette());
-                        extraPal.Add(new Palette());
-                        extraPal.Add(new Palette());
-                        extraPal.Add(palettes[1]); // 7
-                    }
-                    textures = extraTex;
-                    palettes = extraPal;
                 }
                 ReadOnlySpan<byte> textureBytes = modelBytes;
                 if (meta.TexturePath != meta.ModelPath)
@@ -208,11 +231,7 @@ namespace MphRead
                 {
                     paletteData.Add(GetPaletteData(palette, paletteBytes));
                 }
-                if (ApplyFixes)
-                {
-
-                }
-                else if (name == "Lava_Power")
+                if (name == "Lava_Power" && !ApplyFixes)
                 {
                     // file32Material uses texture/palette ID 8, but there are only 8 of each in LavaEquipTextureShare
                     var extraTex = new List<Texture>();
