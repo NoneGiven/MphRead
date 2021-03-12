@@ -38,7 +38,7 @@ namespace MphRead.Utility
                             ? RepackTexture.Shared
                             : RepackTexture.Separate;
                     }
-                    TestModelRepack(model, recolor: i++, modelPath, meta.FirstHunt, options);
+                    TestModelRepack(model, recolor: i++, modelPath, recolor.TexturePath, meta.FirstHunt, options);
                 }
                 // sktodo: support animation shares, I guess
                 if (meta.AnimationPath != null && meta.AnimationShare == null)
@@ -56,7 +56,7 @@ namespace MphRead.Utility
                         : RepackTexture.Separate
                 };
                 Model model = Read.GetRoomModelInstance(meta.Name).Model;
-                TestModelRepack(model, recolor: 0, meta.ModelPath, meta.FirstHunt || meta.Hybrid, options);
+                TestModelRepack(model, recolor: 0, meta.ModelPath, meta.TexturePath, meta.FirstHunt || meta.Hybrid, options);
                 if (meta.AnimationPath != null)
                 {
                     TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt | meta.Hybrid);
@@ -73,7 +73,7 @@ namespace MphRead.Utility
             };
             ModelMetadata meta = firstHunt ? Metadata.FirstHuntModels[name] : Metadata.ModelMetadata[name];
             Model model = Read.GetModelInstance(meta.Name, meta.FirstHunt).Model;
-            TestModelRepack(model, recolor, meta.ModelPath, meta.FirstHunt, options);
+            TestModelRepack(model, recolor, meta.ModelPath, meta.Recolors[recolor].TexturePath, meta.FirstHunt, options);
             if (meta.AnimationPath != null && meta.AnimationShare == null)
             {
                 TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt);
@@ -113,7 +113,7 @@ namespace MphRead.Utility
             Nop();
         }
 
-        private static void TestModelRepack(Model model, int recolor, string modelPath, bool firstHunt, RepackOptions options)
+        private static void TestModelRepack(Model model, int recolor, string modelPath, string texPath, bool firstHunt, RepackOptions options)
         {
             // sktodo: share
             if (options.Texture == RepackTexture.Shared)
@@ -132,10 +132,17 @@ namespace MphRead.Utility
             {
                 paletteInfo.Add(new PaletteInfo(data.Select(d => d.Data).ToList()));
             }
-            byte[] bytes = PackModel(model.Header.ScaleBase.FloatValue, model.Header.ScaleFactor, model.NodeMatrixIds, model.NodePosCounts,
-                model.Materials, textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists, options);
+            (byte[] bytes, byte[] tex) = PackModel(model.Header.ScaleBase.FloatValue, model.Header.ScaleFactor, model.NodeMatrixIds,
+                model.NodePosCounts, model.Materials, textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists,
+                model.DisplayLists, options);
             byte[] fileBytes = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, modelPath));
             CompareModels(model.Name, bytes, fileBytes, options);
+            if (options.Texture == RepackTexture.Separate)
+            {
+                byte[] texFile = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, texPath));
+                Debug.Assert(tex.Length == texFile.Length);
+                Debug.Assert(Enumerable.SequenceEqual(tex, texFile));
+            }
             if (options.WriteFile)
             {
                 File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}_{model.Recolors[recolor].Name}.bin"), bytes);
@@ -187,7 +194,6 @@ namespace MphRead.Utility
                 Debug.Assert(tex.ImageOffset == otherTex.ImageOffset);
                 Debug.Assert(tex.ImageSize == otherTex.ImageSize);
                 Debug.Assert(tex.Opaque == otherTex.Opaque);
-                // sktodo
                 if (options.Texture == RepackTexture.Inline)
                 {
                     IReadOnlyList<byte> texData = Read.DoOffsets<byte>(bytes, tex.ImageOffset, tex.ImageSize);
@@ -203,7 +209,6 @@ namespace MphRead.Utility
                 Palette otherPal = otherPals[i];
                 Debug.Assert(pal.Offset == otherPal.Offset);
                 Debug.Assert(pal.Size == otherPal.Size);
-                // sktodo
                 if (options.Texture == RepackTexture.Inline)
                 {
                     IReadOnlyList<byte> palData = Read.DoOffsets<byte>(bytes, pal.Offset, pal.Size);
@@ -914,7 +919,7 @@ namespace MphRead.Utility
             return groupOffset;
         }
 
-        public static byte[] PackModel(float scaleBase, uint scaleFactor, IReadOnlyList<int> nodeMtxIds, IReadOnlyList<int> nodePosScaleCounts,
+        public static (byte[], byte[]) PackModel(float scaleBase, uint scaleFactor, IReadOnlyList<int> nodeMtxIds, IReadOnlyList<int> nodePosScaleCounts,
             IReadOnlyList<Material> materials, IReadOnlyList<TextureInfo> textures, IReadOnlyList<PaletteInfo> palettes, IReadOnlyList<Node> nodes,
             IReadOnlyList<Mesh> meshes, IReadOnlyList<IReadOnlyList<RenderInstruction>> renders, IReadOnlyList<DisplayList> dlists, RepackOptions options)
         {
@@ -1125,7 +1130,7 @@ namespace MphRead.Utility
             writer.Write((ushort)meshes.Count);
             writer.Write((ushort)matrixIdCount);
             Debug.Assert(stream.Position == Sizes.Header);
-            return stream.ToArray();
+            return (stream.ToArray(), texStream == stream ? new byte[0] : texStream.ToArray());
         }
 
         private static void WriteString(string value, int length, BinaryWriter writer)
