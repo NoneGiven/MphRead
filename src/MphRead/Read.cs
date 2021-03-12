@@ -188,14 +188,18 @@ namespace MphRead
                         textures = extraTex;
                         palettes = extraPal;
                     }
-                    else if (name == "Alimbic_Power" || name == "Generic_Power" || name == "Ice_Power"
-                        || name == "Lava_Power" || name == "Ruins_Power")
+                    else if (name == "Alimbic_Power" || name == "Generic_Power" || name == "Ice_Power" || name == "Lava_Power" || name == "Ruins_Power")
                     {
                         var extraTex = new List<Texture>();
                         extraTex.AddRange(textures);
                         var extraPal = new List<Palette>();
                         extraPal.AddRange(palettes);
-                        if (name == "Lava_Power")
+                        if (name == "Alimbic_Power")
+                        {
+                            extraTex[1] = extraTex[0];
+                            extraPal[1] = extraPal[0];
+                        }
+                        else if (name == "Lava_Power")
                         {
                             extraTex[1] = extraTex[2];
                             extraPal[1] = extraPal[2];
@@ -231,19 +235,55 @@ namespace MphRead
                 {
                     paletteData.Add(GetPaletteData(palette, paletteBytes));
                 }
-                if (name == "Lava_Power" && !ApplyFixes)
+                if (ApplyFixes)
+                {
+                    if (name == "Alimbic_Power" || name == "Generic_Power" || name == "Ice_Power" || name == "Lava_Power")
+                    {
+                        Recolor recolor = GetModelInstance("Ruins_Power").Model.Recolors[0];
+                        Texture newTexture = recolor.Textures[8];
+                        IReadOnlyList<TextureData> newTexData = recolor.TextureData[8];
+                        var newPalette = Metadata.PowerPalettes[name];
+                        Debug.Assert(newPalette.Count == 8);
+                        var extraTex = new List<Texture>();
+                        extraTex.AddRange(textures);
+                        if (name == "Lava_Power")
+                        {
+                            textureData.Add(newTexData);
+                            extraTex.Add(newTexture);
+                        }
+                        else
+                        {
+                            textureData[8] = newTexData;
+                            extraTex[8] = newTexture;
+                        } 
+                        var extraPal = new List<Palette>();
+                        extraPal.AddRange(palettes);
+                        if (name == "Lava_Power")
+                        {
+                            paletteData.Add(newPalette);
+                            extraPal.Add(new Palette());
+                        }
+                        else
+                        {
+                            paletteData[8] = newPalette;
+                        } 
+                        textures = extraTex;
+                        palettes = extraPal;
+                    }
+                }
+                else if (name == "Lava_Power")
                 {
                     // file32Material uses texture/palette ID 8, but there are only 8 of each in LavaEquipTextureShare
                     var extraTex = new List<Texture>();
                     extraTex.AddRange(textures);
                     extraTex.Add(new Texture(TextureFormat.Palette8Bit, 1, 1));
-                    textures = extraTex;
                     textureData.Add(new List<TextureData>() { new TextureData(0, 255) });
                     var extraPal = new List<Palette>();
                     extraPal.AddRange(palettes);
                     extraPal.Add(new Palette());
-                    palettes = extraPal;
                     paletteData.Add(new List<PaletteData>() { new PaletteData(0x7FFF) });
+                    textures = extraTex;
+                    palettes = extraPal;
                 }
                 string replacePath = meta.ReplacePath ?? meta.PalettePath;
                 if (replacePath != meta.TexturePath && meta.ReplaceIds.Count > 0)

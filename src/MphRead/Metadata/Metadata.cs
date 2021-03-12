@@ -392,6 +392,55 @@ namespace MphRead
             return new Vector3(r / 31.0f, g / 31.0f, b / 31.0f);
         }
 
+        public static readonly IReadOnlyDictionary<string, IReadOnlyList<PaletteData>> PowerPalettes
+            = new Dictionary<string, IReadOnlyList<PaletteData>>()
+            {
+                ["Alimbic_Power"] = new List<PaletteData>()
+                {
+                    new PaletteData(32576),
+                    new PaletteData(32576),
+                    new PaletteData(32608),
+                    new PaletteData(32640),
+                    new PaletteData(32711),
+                    new PaletteData(32719),
+                    new PaletteData(32758),
+                    new PaletteData(32733)
+                },
+                ["Generic_Power"] = new List<PaletteData>()
+                {
+                    new PaletteData(19393),
+                    new PaletteData(18369),
+                    new PaletteData(17345),
+                    new PaletteData(16321),
+                    new PaletteData(19400),
+                    new PaletteData(23535),
+                    new PaletteData(26614),
+                    new PaletteData(31741)
+                },
+                ["Ice_Power"] = new List<PaletteData>()
+                {
+                    new PaletteData(29453),
+                    new PaletteData(29453),
+                    new PaletteData(29485),
+                    new PaletteData(29517),
+                    new PaletteData(30578),
+                    new PaletteData(30614),
+                    new PaletteData(31705),
+                    new PaletteData(32734)
+                },
+                ["Lava_Power"] = new List<PaletteData>()
+                {
+                    new PaletteData(671),
+                    new PaletteData(639),
+                    new PaletteData(607),
+                    new PaletteData(575),
+                    new PaletteData(7807),
+                    new PaletteData(16127),
+                    new PaletteData(23391),
+                    new PaletteData(30719)
+                }
+            };
+
         public static readonly IReadOnlyDictionary<Hunter, float> HunterScales = new Dictionary<Hunter, float>
         {
             { Hunter.Samus, 1.0f },
