@@ -25,6 +25,7 @@ namespace MphRead.Entities
         private readonly EquipInfo? _equipInfo;
         private readonly Vector3 _beamSpawnPos;
         private readonly Vector3 _beamSpawnDir;
+        private readonly Vector3 _posOffset;
 
         private static readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(64); // in-game: 18
 
@@ -73,6 +74,7 @@ namespace MphRead.Entities
                 _beamSpawnDir = data.BeamSpawnDir.ToFloatVector();
                 _beamIntervalIndex = 15;
             }
+            _posOffset = data.PositionOffset.ToFloatVector();
         }
 
         public override void Initialize(Scene scene)
@@ -196,6 +198,16 @@ namespace MphRead.Entities
                 }
             }
             return base.Process(scene);
+        }
+
+        protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
+        {
+            Matrix4 transform = base.GetModelTransform(inst, index);
+            if (_posOffset != Vector3.Zero)
+            {
+                transform.Row3.Xyz += Matrix.Vec3MultMtx3(_posOffset, transform);
+            }
+            return transform;
         }
     }
 

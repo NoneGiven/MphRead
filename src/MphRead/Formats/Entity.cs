@@ -99,7 +99,7 @@ namespace MphRead
         public readonly uint Field148;
         public readonly uint Field14C;
         public readonly uint Field150;
-        public readonly Vector3Fx Field154;
+        public readonly Vector3Fx PositionOffset;
         public readonly uint Field160;
         public readonly uint Field164;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
