@@ -96,8 +96,8 @@ namespace MphRead
         public readonly uint ColorLutOffset;
         public readonly uint AnimationCount;
         public readonly uint AnimationOffset;
-        public readonly ushort AnimationFrame;
-        public readonly ushort Field12;
+        public readonly ushort AnimationFrame; // uint in FH
+        public readonly ushort Unused12;
     }
 
     // size: 32
@@ -113,8 +113,8 @@ namespace MphRead
         public readonly uint TextureIdOffset;
         public readonly uint PaletteIdOffset;
         public readonly uint AnimationOffset;
-        public readonly ushort AnimationFrame;
-        public readonly ushort Field1E;
+        public readonly ushort AnimationFrame; // uint in FH
+        public readonly ushort Unused1E;
     }
 
     // size: 28
@@ -126,8 +126,8 @@ namespace MphRead
         public readonly uint TranslateLutOffset;
         public readonly uint AnimationCount;
         public readonly uint AnimationOffset;
-        public readonly ushort AnimationFrame;
-        public readonly ushort Field1A;
+        public readonly ushort AnimationFrame; // uint in FH
+        public readonly ushort Unused1A;
     }
 
     // size: 20
@@ -145,11 +145,11 @@ namespace MphRead
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
         public readonly char[] Name;
-        public readonly uint Field40;
+        public readonly uint Unused40; // always 0x01
         public readonly byte DiffuseBlendR;
         public readonly byte DiffuseBlendG;
         public readonly byte DiffuseBlendB;
-        public readonly byte Field47; // todo: use more properties (this one is always 0 or 255)
+        public readonly byte Unused47; // always 0x00
         public readonly ushort DiffuseLutLengthR;
         public readonly ushort DiffuseLutLengthG;
         public readonly ushort DiffuseLutLengthB;
@@ -159,7 +159,7 @@ namespace MphRead
         public readonly byte AmbientBlendR;
         public readonly byte AmbientBlendG;
         public readonly byte AmbientBlendB;
-        public readonly byte Field57; // same as 47
+        public readonly byte Unused57; // always 0xFF
         public readonly ushort AmbientLutLengthR;
         public readonly ushort AmbientLutLengthG;
         public readonly ushort AmbientLutLengthB;
@@ -169,19 +169,19 @@ namespace MphRead
         public readonly byte SpecularBlendR;
         public readonly byte SpecularBlendG;
         public readonly byte SpecularBlendB;
-        public readonly byte Field67; // same as 47
+        public readonly byte Unused67; // always 0x00
         public readonly ushort SpecularLutLengthR;
         public readonly ushort SpecularLutLengthG;
         public readonly ushort SpecularLutLengthB;
         public readonly ushort SpecularLutIndexR;
         public readonly ushort SpecularLutIndexG;
         public readonly ushort SpecularLutIndexB;
-        public readonly uint Field74;
-        public readonly uint Field78;
-        public readonly uint Field7C;
-        public readonly uint Field80;
+        public readonly uint Unused74; // always 0x10101
+        public readonly uint Unused78;
+        public readonly uint Unused7C;
+        public readonly uint Unused80;
         public readonly byte AlphaBlend;
-        public readonly byte Field85;
+        public readonly byte Unused85; // 0x01 in FH, 0xC1 in MPH
         public readonly ushort AlphaLutLength;
         public readonly ushort AlphaLutIndex;
         public readonly ushort MaterialId;
