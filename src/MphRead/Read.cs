@@ -138,6 +138,52 @@ namespace MphRead
                 }
                 IReadOnlyList<Texture> textures = DoOffsets<Texture>(modelBytes, modelHeader.TextureOffset, modelHeader.TextureCount);
                 IReadOnlyList<Palette> palettes = DoOffsets<Palette>(modelBytes, modelHeader.PaletteOffset, modelHeader.PaletteCount);
+                if ((name == "Guardian_lod0" || name == "Guardian_lod1") && meta.Name != "pal_01")
+                {
+                    var extraTex = new List<Texture>();
+                    var extraPal = new List<Palette>();
+                    if (meta.Name == "pal_02" || meta.Name == "pal_03" || meta.Name == "pal_04")
+                    {
+                        extraTex.AddRange(textures);
+                        extraPal.AddRange(palettes);
+                        if (meta.Name == "pal_02")
+                        {
+                            extraTex[0] = extraTex[5];
+                            extraTex[1] = extraTex[4];
+                            extraPal[7] = extraPal[4];
+                            extraPal[3] = extraPal[0];
+                        }
+                        else if (meta.Name == "pal_03")
+                        {
+                            extraTex[0] = extraTex[6];
+                            extraTex[1] = extraTex[3];
+                            extraPal[7] = extraPal[5];
+                            extraPal[3] = extraPal[1];
+                        }
+                        else if (meta.Name == "pal_04")
+                        {
+                            extraTex[0] = extraTex[7];
+                            extraTex[1] = extraTex[2];
+                            extraPal[7] = extraPal[6];
+                            extraPal[3] = extraPal[2];
+                        }
+                    }
+                    else if (meta.Name == "pal_Team01" || meta.Name == "pal_Team02")
+                    {
+                        extraTex.Add(textures[1]); // 0
+                        extraTex.Add(textures[0]); // 1
+                        extraPal.Add(new Palette());
+                        extraPal.Add(new Palette());
+                        extraPal.Add(new Palette());
+                        extraPal.Add(palettes[0]); // 3
+                        extraPal.Add(new Palette());
+                        extraPal.Add(new Palette());
+                        extraPal.Add(new Palette());
+                        extraPal.Add(palettes[1]); // 7
+                    }
+                    textures = extraTex;
+                    palettes = extraPal;
+                }
                 ReadOnlySpan<byte> textureBytes = modelBytes;
                 if (meta.TexturePath != meta.ModelPath)
                 {
@@ -163,7 +209,6 @@ namespace MphRead
                 if (name == "Lava_Power")
                 {
                     // file32Material uses texture/palette ID 8, but there are only 8 of each in LavaEquipTextureShare
-                    // --> the reconstructed "R" version fixes this issue
                     var extraTex = new List<Texture>();
                     extraTex.AddRange(textures);
                     extraTex.Add(new Texture(TextureFormat.Palette8Bit, 1, 1));

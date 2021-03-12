@@ -436,7 +436,7 @@ namespace MphRead
             },
             {
                 Hunter.Guardian,
-                new List<string>() { "GuardianR_lod0", "SamusAlt_lod0", "SamusGun" }
+                new List<string>() { "Guardian_lod0", "SamusAlt_lod0", "SamusGun" }
             }
         };
 
@@ -1985,7 +1985,12 @@ namespace MphRead
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
-                            "pal_01"
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
                         },
                         texture: true,
                         archive: "Guardian",
@@ -1999,83 +2004,15 @@ namespace MphRead
                         remove: "_lod1",
                         recolors: new List<string>()
                         {
-                            "pal_01"
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
                         },
                         texture: true,
                         animationPath: @"_archives\Guardian\Guardian_Anim.bin",
-                        animationShare: @"models\SamusSharedAnim_Anim.bin",
-                        useLightSources: true)
-                },
-                // next two not part of the game's files, edited to allow choosing the unused recolors
-                {
-                    "GuardianR_lod0",
-                    new ModelMetadata("GuardianR_lod0",
-                        modelPath: @"_archives\Guardian\Guardian_lod0_Model.bin",
-                        animationPath: @"_archives\Guardian\Guardian_Anim.bin",
-                        collisionPath: null,
-                        new List<RecolorMetadata>()
-                        {
-                            new RecolorMetadata("pal_01",
-                                modelPath: @"models\GuardianR_pal_01_Model.bin",
-                                texturePath: @"models\Guardian_pal_01_Tex.bin",
-                                palettePath: @"models\Guardian_pal_01_Tex.bin"),
-                            new RecolorMetadata("pal_02",
-                                modelPath: @"models\GuardianR_pal_02_Model.bin",
-                                texturePath: @"models\Guardian_pal_02_Tex.bin",
-                                palettePath: @"models\Guardian_pal_02_Tex.bin"),
-                            new RecolorMetadata("pal_03",
-                                modelPath: @"models\GuardianR_pal_03_Model.bin",
-                                texturePath: @"models\Guardian_pal_03_Tex.bin",
-                                palettePath: @"models\Guardian_pal_03_Tex.bin"),
-                            new RecolorMetadata("pal_04",
-                                modelPath: @"models\GuardianR_pal_04_Model.bin",
-                                texturePath: @"models\Guardian_pal_04_Tex.bin",
-                                palettePath: @"models\Guardian_pal_04_Tex.bin"),
-                            new RecolorMetadata("pal_Team01",
-                                modelPath: @"models\GuardianR_pal_Team01_Model.bin",
-                                texturePath: @"models\GuardianR_pal_Team01_Tex.bin",
-                                palettePath: @"models\GuardianR_pal_Team01_Tex.bin"),
-                            new RecolorMetadata("pal_Team02",
-                                modelPath: @"models\GuardianR_pal_Team02_Model.bin",
-                                texturePath: @"models\GuardianR_pal_Team02_Tex.bin",
-                                palettePath: @"models\GuardianR_pal_Team02_Tex.bin")
-                        },
-                        animationShare: @"models\SamusSharedAnim_Anim.bin",
-                        useLightSources: true)
-                },
-                {
-                    "GuardianR_lod1",
-                    new ModelMetadata("GuardianR_lod1",
-                        modelPath: @"models\Guardian_lod1_Model.bin",
-                        animationPath: @"_archives\Guardian\Guardian_Anim.bin",
-                        collisionPath: null,
-                        new List<RecolorMetadata>()
-                        {
-                            new RecolorMetadata("pal_01",
-                                modelPath: @"models\GuardianR_pal_01_Model.bin",
-                                texturePath: @"models\Guardian_pal_01_Tex.bin",
-                                palettePath: @"models\Guardian_pal_01_Tex.bin"),
-                            new RecolorMetadata("pal_02",
-                                modelPath: @"models\GuardianR_pal_02_Model.bin",
-                                texturePath: @"models\Guardian_pal_02_Tex.bin",
-                                palettePath: @"models\Guardian_pal_02_Tex.bin"),
-                            new RecolorMetadata("pal_03",
-                                modelPath: @"models\GuardianR_pal_03_Model.bin",
-                                texturePath: @"models\Guardian_pal_03_Tex.bin",
-                                palettePath: @"models\Guardian_pal_03_Tex.bin"),
-                            new RecolorMetadata("pal_04",
-                                modelPath: @"models\GuardianR_pal_04_Model.bin",
-                                texturePath: @"models\Guardian_pal_04_Tex.bin",
-                                palettePath: @"models\Guardian_pal_04_Tex.bin"),
-                            new RecolorMetadata("pal_Team01",
-                                modelPath: @"models\GuardianR_pal_Team01_Model.bin",
-                                texturePath: @"models\GuardianR_pal_Team01_Tex.bin",
-                                palettePath: @"models\GuardianR_pal_Team01_Tex.bin"),
-                            new RecolorMetadata("pal_Team02",
-                                modelPath: @"models\GuardianR_pal_Team02_Model.bin",
-                                texturePath: @"models\GuardianR_pal_Team02_Tex.bin",
-                                palettePath: @"models\GuardianR_pal_Team02_Tex.bin")
-                        },
                         animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
