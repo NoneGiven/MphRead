@@ -330,6 +330,47 @@ namespace MphRead.Utility
                     IReadOnlyList<uint> poses = Read.DoOffsets<uint>(bytes, nodeGroup.TranslateLutOffset, transCount);
                     IReadOnlyList<uint> otherPoses = Read.DoOffsets<uint>(otherBytes, otherGroup.TranslateLutOffset, transCount);
                     Debug.Assert(Enumerable.SequenceEqual(poses, otherPoses));
+                    if (nodeGroup.AnimationOffset != node)
+                    {
+                        Debug.Assert(node > nodeGroup.AnimationOffset);
+                        Debug.Assert((node - nodeGroup.AnimationOffset) % Sizes.NodeAnimation == 0);
+                        int animCount = (int)(node - nodeGroup.AnimationOffset) / Sizes.NodeAnimation;
+                        IReadOnlyList<NodeAnimation> anims = Read.DoOffsets<NodeAnimation>(bytes, nodeGroup.AnimationOffset, animCount);
+                        IReadOnlyList<NodeAnimation> otherAnims = Read.DoOffsets<NodeAnimation>(otherBytes, otherGroup.AnimationOffset, animCount);
+                        for (int j = 0; j < anims.Count; j++)
+                        {
+                            NodeAnimation anim = anims[j];
+                            NodeAnimation otherAnim = otherAnims[j];
+                            Debug.Assert(anim.ScaleBlendX == otherAnim.ScaleBlendX);
+                            Debug.Assert(anim.ScaleBlendY == otherAnim.ScaleBlendY);
+                            Debug.Assert(anim.ScaleBlendZ == otherAnim.ScaleBlendZ);
+                            Debug.Assert(anim.Flags == otherAnim.Flags);
+                            Debug.Assert(anim.ScaleLutLengthX == otherAnim.ScaleLutLengthX);
+                            Debug.Assert(anim.ScaleLutLengthY == otherAnim.ScaleLutLengthY);
+                            Debug.Assert(anim.ScaleLutLengthZ == otherAnim.ScaleLutLengthZ);
+                            Debug.Assert(anim.ScaleLutIndexX == otherAnim.ScaleLutIndexX);
+                            Debug.Assert(anim.ScaleLutIndexY == otherAnim.ScaleLutIndexY);
+                            Debug.Assert(anim.ScaleLutIndexZ == otherAnim.ScaleLutIndexZ);
+                            Debug.Assert(anim.RotateBlendX == otherAnim.RotateBlendX);
+                            Debug.Assert(anim.RotateBlendY == otherAnim.RotateBlendY);
+                            Debug.Assert(anim.RotateBlendZ == otherAnim.RotateBlendZ);
+                            Debug.Assert(anim.RotateLutLengthX == otherAnim.RotateLutLengthX);
+                            Debug.Assert(anim.RotateLutLengthY == otherAnim.RotateLutLengthY);
+                            Debug.Assert(anim.RotateLutLengthZ == otherAnim.RotateLutLengthZ);
+                            Debug.Assert(anim.RotateLutIndexX == otherAnim.RotateLutIndexX);
+                            Debug.Assert(anim.RotateLutIndexY == otherAnim.RotateLutIndexY);
+                            Debug.Assert(anim.RotateLutIndexZ == otherAnim.RotateLutIndexZ);
+                            Debug.Assert(anim.TranslateBlendX == otherAnim.TranslateBlendX);
+                            Debug.Assert(anim.TranslateBlendY == otherAnim.TranslateBlendY);
+                            Debug.Assert(anim.TranslateBlendZ == otherAnim.TranslateBlendZ);
+                            Debug.Assert(anim.TranslateLutLengthX == otherAnim.TranslateLutLengthX);
+                            Debug.Assert(anim.TranslateLutLengthY == otherAnim.TranslateLutLengthY);
+                            Debug.Assert(anim.TranslateLutLengthZ == otherAnim.TranslateLutLengthZ);
+                            Debug.Assert(anim.TranslateLutIndexX == otherAnim.TranslateLutIndexX);
+                            Debug.Assert(anim.TranslateLutIndexY == otherAnim.TranslateLutIndexY);
+                            Debug.Assert(anim.TranslateLutIndexZ == otherAnim.TranslateLutIndexZ);
+                        }
+                    }
                 }
                 uint mat = mats[i];
                 uint otherMat = otherMats[i];
@@ -435,6 +476,22 @@ namespace MphRead.Utility
                         TexcoordAnimation anim = anims[j];
                         TexcoordAnimation otherAnim = otherAnims[j];
                         Debug.Assert(Enumerable.SequenceEqual(anim.Name, otherAnim.Name));
+                        Debug.Assert(anim.ScaleBlendS == otherAnim.ScaleBlendS);
+                        Debug.Assert(anim.ScaleBlendT == otherAnim.ScaleBlendT);
+                        Debug.Assert(anim.ScaleLutLengthS == otherAnim.ScaleLutLengthS);
+                        Debug.Assert(anim.ScaleLutLengthT == otherAnim.ScaleLutLengthT);
+                        Debug.Assert(anim.ScaleLutIndexS == otherAnim.ScaleLutIndexS);
+                        Debug.Assert(anim.ScaleLutIndexT == otherAnim.ScaleLutIndexT);
+                        Debug.Assert(anim.RotateBlendZ == otherAnim.RotateBlendZ);
+                        Debug.Assert(anim.Unused2B == otherAnim.Unused2B);
+                        Debug.Assert(anim.RotateLutLengthZ == otherAnim.RotateLutLengthZ);
+                        Debug.Assert(anim.RotateLutIndexZ == otherAnim.RotateLutIndexZ);
+                        Debug.Assert(anim.TranslateBlendS == otherAnim.TranslateBlendS);
+                        Debug.Assert(anim.TranslateBlendT == otherAnim.TranslateBlendT);
+                        Debug.Assert(anim.TranslateLutLengthS == otherAnim.TranslateLutLengthS);
+                        Debug.Assert(anim.TranslateLutLengthT == otherAnim.TranslateLutLengthT);
+                        Debug.Assert(anim.TranslateLutIndexS == otherAnim.TranslateLutIndexS);
+                        Debug.Assert(anim.TranslateLutIndexT == otherAnim.TranslateLutIndexT);
                     }
                 }
                 uint tex = texes[i];
@@ -474,6 +531,11 @@ namespace MphRead.Utility
                         TextureAnimation anim = anims[j];
                         TextureAnimation otherAnim = otherAnims[j];
                         Debug.Assert(Enumerable.SequenceEqual(anim.Name, otherAnim.Name));
+                        Debug.Assert(anim.Count == otherAnim.Count);
+                        Debug.Assert(anim.StartIndex == otherAnim.StartIndex);
+                        Debug.Assert(anim.MinimumPaletteId == otherAnim.MinimumPaletteId);
+                        Debug.Assert(anim.MaterialId == otherAnim.MaterialId);
+                        Debug.Assert(anim.MinimumTextureId == otherAnim.MinimumTextureId);
                     }
                 }
             }
