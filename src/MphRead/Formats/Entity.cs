@@ -54,26 +54,8 @@ namespace MphRead
         public readonly uint ScanEventId;
         public readonly ushort ScanData2;
         public readonly ushort Field3A;
-        public readonly Vector3Fx Position0;
-        public readonly Vector3Fx Position1;
-        public readonly Vector3Fx Position2;
-        public readonly Vector3Fx Position3;
-        public readonly Vector3Fx Position4;
-        public readonly Vector3Fx Position5;
-        public readonly Vector3Fx Position6;
-        public readonly Vector3Fx Position7;
-        public readonly Vector3Fx Position8;
-        public readonly Vector3Fx Position9;
-        public readonly Vector4Fx Rotation0;
-        public readonly Vector4Fx Rotation1;
-        public readonly Vector4Fx Rotation2;
-        public readonly Vector4Fx Rotation3;
-        public readonly Vector4Fx Rotation4;
-        public readonly Vector4Fx Rotation5;
-        public readonly Vector4Fx Rotation6;
-        public readonly Vector4Fx Rotation7;
-        public readonly Vector4Fx Rotation8;
-        public readonly Vector4Fx Rotation9;
+        public readonly Vector3FxArray Positions;
+        public readonly Vector4FxArray Rotations;
         public readonly Vector3Fx PositionOffset;
         public readonly uint Field160;
         public readonly uint Field164;
@@ -779,7 +761,133 @@ namespace MphRead
         public readonly byte Active; // boolean
     }
 
-    // size: 32
+    // size: 120 (12 x 10)
+    public readonly struct Vector3FxArray
+    {
+        public readonly Vector3Fx Vector0;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
+        public readonly Vector3Fx Vector3;
+        public readonly Vector3Fx Vector4;
+        public readonly Vector3Fx Vector5;
+        public readonly Vector3Fx Vector6;
+        public readonly Vector3Fx Vector7;
+        public readonly Vector3Fx Vector8;
+        public readonly Vector3Fx Vector9;
+
+        public Vector3Fx this[int index]
+        {
+            get
+            {
+                if (index == 0)
+                {
+                    return Vector0;
+                }
+                else if (index == 1)
+                {
+                    return Vector1;
+                }
+                else if (index == 2)
+                {
+                    return Vector2;
+                }
+                else if (index == 3)
+                {
+                    return Vector3;
+                }
+                else if (index == 4)
+                {
+                    return Vector4;
+                }
+                else if (index == 5)
+                {
+                    return Vector5;
+                }
+                else if (index == 6)
+                {
+                    return Vector6;
+                }
+                else if (index == 7)
+                {
+                    return Vector7;
+                }
+                else if (index == 8)
+                {
+                    return Vector8;
+                }
+                else if (index == 9)
+                {
+                    return Vector9;
+                }
+                throw new IndexOutOfRangeException();
+            }
+        }
+    }
+
+    // size: 160 (16 x 10)
+    public readonly struct Vector4FxArray
+    {
+        public readonly Vector4Fx Vector0;
+        public readonly Vector4Fx Vector1;
+        public readonly Vector4Fx Vector2;
+        public readonly Vector4Fx Vector3;
+        public readonly Vector4Fx Vector4;
+        public readonly Vector4Fx Vector5;
+        public readonly Vector4Fx Vector6;
+        public readonly Vector4Fx Vector7;
+        public readonly Vector4Fx Vector8;
+        public readonly Vector4Fx Vector9;
+
+        public Vector4Fx this[int index]
+        {
+            get
+            {
+                if (index == 0)
+                {
+                    return Vector0;
+                }
+                else if (index == 1)
+                {
+                    return Vector1;
+                }
+                else if (index == 2)
+                {
+                    return Vector2;
+                }
+                else if (index == 3)
+                {
+                    return Vector3;
+                }
+                else if (index == 4)
+                {
+                    return Vector4;
+                }
+                else if (index == 5)
+                {
+                    return Vector5;
+                }
+                else if (index == 6)
+                {
+                    return Vector6;
+                }
+                else if (index == 7)
+                {
+                    return Vector7;
+                }
+                else if (index == 8)
+                {
+                    return Vector8;
+                }
+                else if (index == 9)
+                {
+                    return Vector9;
+                }
+                throw new IndexOutOfRangeException();
+            }
+        }
+    }
+
+    // size: 32 (2 x 16)
     public readonly struct EntityLengthArray
     {
         public readonly ushort Length00;
