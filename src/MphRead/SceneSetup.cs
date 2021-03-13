@@ -118,7 +118,7 @@ namespace MphRead
                 {
                     results.Add(new ItemSpawnEntity(((Entity<ItemSpawnEntityData>)entity).Data));
                 }
-                else if (entity.Type == EntityType.FhItem)
+                else if (entity.Type == EntityType.FhItemSpawn)
                 {
                     results.Add(new FhItemSpawnEntity(((Entity<FhItemSpawnEntityData>)entity).Data));
                 }
@@ -126,7 +126,7 @@ namespace MphRead
                 {
                     results.Add(new EnemySpawnEntity(((Entity<EnemySpawnEntityData>)entity).Data));
                 }
-                else if (entity.Type == EntityType.FhEnemy)
+                else if (entity.Type == EntityType.FhEnemySpawn)
                 {
                     results.Add(new FhEnemySpawnEntity(((Entity<FhEnemySpawnEntityData>)entity).Data));
                 }
