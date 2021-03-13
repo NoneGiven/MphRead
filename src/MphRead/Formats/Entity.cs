@@ -251,7 +251,7 @@ namespace MphRead
     }
 
     // size: 72
-    public readonly struct ItemEntityData
+    public readonly struct ItemSpawnEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly uint ParentId;
@@ -271,7 +271,7 @@ namespace MphRead
 
     // size: 50
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public readonly struct FhItemEntityData
+    public readonly struct FhItemSpawnEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly FhItemType ItemType;
@@ -281,7 +281,7 @@ namespace MphRead
     }
 
     // size: 512
-    public readonly struct EnemyEntityData
+    public readonly struct EnemySpawnEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly EnemyType Type;
@@ -293,8 +293,7 @@ namespace MphRead
         public readonly ushort Health;
         public readonly ushort HealthMax;
         public readonly ushort Field38;
-        public readonly byte Field3A;
-        public readonly byte SpawnChance;
+        public readonly ushort Field3A;
         public readonly uint Field3C;
         public readonly uint Field40;
         public readonly uint Field44;
@@ -403,7 +402,7 @@ namespace MphRead
     }
 
     // size: 268
-    public readonly struct FhEnemyEntityData
+    public readonly struct FhEnemySpawnEntityData
     {
         public readonly EntityDataHeader Header;
         public readonly uint Field24;

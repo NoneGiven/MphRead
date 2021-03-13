@@ -116,19 +116,19 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.ItemSpawn)
                 {
-                    results.Add(new ItemSpawnEntity(((Entity<ItemEntityData>)entity).Data));
+                    results.Add(new ItemSpawnEntity(((Entity<ItemSpawnEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhItem)
                 {
-                    results.Add(new FhItemSpawnEntity(((Entity<FhItemEntityData>)entity).Data));
+                    results.Add(new FhItemSpawnEntity(((Entity<FhItemSpawnEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.EnemySpawn)
                 {
-                    results.Add(new EnemySpawnEntity(((Entity<EnemyEntityData>)entity).Data));
+                    results.Add(new EnemySpawnEntity(((Entity<EnemySpawnEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.FhEnemy)
                 {
-                    results.Add(new FhEnemySpawnEntity(((Entity<FhEnemyEntityData>)entity).Data));
+                    results.Add(new FhEnemySpawnEntity(((Entity<FhEnemySpawnEntityData>)entity).Data));
                 }
                 else if (entity.Type == EntityType.TriggerVolume)
                 {

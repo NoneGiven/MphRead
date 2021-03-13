@@ -4,7 +4,7 @@ namespace MphRead.Entities
 {
     public class ItemSpawnEntity : EntityBase
     {
-        private readonly ItemEntityData _data;
+        private readonly ItemSpawnEntityData _data;
         private bool _enabled;
         private bool _spawn = true;
 
@@ -12,7 +12,7 @@ namespace MphRead.Entities
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xC8, 0x00, 0xC8).AsVector4();
 
         // todo: preload items and effects (including for enemies and platforms)
-        public ItemSpawnEntity(ItemEntityData data) : base(EntityType.ItemSpawn)
+        public ItemSpawnEntity(ItemSpawnEntityData data) : base(EntityType.ItemSpawn)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -49,12 +49,12 @@ namespace MphRead.Entities
 
     public class FhItemSpawnEntity : EntityBase
     {
-        private readonly FhItemEntityData _data;
+        private readonly FhItemSpawnEntityData _data;
         private bool _spawn = true;
 
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xC8, 0x00, 0xC8).AsVector4();
 
-        public FhItemSpawnEntity(FhItemEntityData data) : base(EntityType.ItemSpawn)
+        public FhItemSpawnEntity(FhItemSpawnEntityData data) : base(EntityType.ItemSpawn)
         {
             _data = data;
             Id = data.Header.EntityId;
