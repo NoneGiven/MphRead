@@ -257,7 +257,7 @@ namespace MphRead
         public readonly byte Enabled; // boolean
         public readonly byte HasBase; // boolean
         public readonly byte AlwaysActive; // boolean -- set flags bit 0 based on Active boolean only and ignore room state
-        public readonly byte Field2F;
+        public readonly byte Padding2F;
         public readonly ushort MaxSpawnCount;
         public readonly ushort SpawnInterval;
         public readonly ushort SpawnDelay;
@@ -596,15 +596,15 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly uint ParentId;
-        public readonly uint Field28;
+        public readonly uint Unused28; // usually 0, occasionally 2
         public readonly RawCollisionVolume Volume;
         public readonly Vector3Fx BeamVector;
         public readonly Fixed Speed;
-        public readonly ushort Field7C;
+        public readonly ushort ControlLockTime;
         public readonly ushort CooldownTime;
         public readonly byte Active; // boolean
-        public readonly byte Field81;
-        public readonly ushort Field82;
+        public readonly byte Padding81;
+        public readonly ushort Padding82;
         public readonly uint ModelId;
         public readonly uint BeamType;
         public readonly uint Flags;
