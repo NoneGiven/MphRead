@@ -44,15 +44,15 @@ namespace MphRead
     public readonly struct PlatformEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Field24;
+        public readonly uint NoPort;
         public readonly uint ModelId;
         public readonly ushort ParentId;
         public readonly byte Field2E;
         public readonly byte Field2F;
-        public readonly ushort Field30;
+        public readonly ushort ScanData1;
         public readonly ushort ScanEventTarget;
         public readonly uint ScanEventId;
-        public readonly ushort Field38;
+        public readonly ushort ScanData2;
         public readonly ushort Field3A;
         public readonly Vector3Fx Position0;
         public readonly Vector3Fx Position1;
@@ -89,30 +89,27 @@ namespace MphRead
         public readonly int BeamId;
         public readonly uint BeamInterval;
         public readonly uint BeamOnIntervals; // 16 bits are used
-        public readonly uint Field1B0;
+        public readonly uint Unused1B0; // always UInt16.MaxValue
         public readonly int EffectId1;
         public readonly uint Health;
         public readonly uint Field1BC;
         public readonly int EffectId2;
         public readonly int EffectId3;
         public readonly byte ItemChance;
-        public readonly byte Field1C9;
-        public readonly ushort Field1CA;
+        public readonly byte Padding1C9;
+        public readonly ushort Padding1CA;
         public readonly uint ItemModel;
         public readonly uint Field1D0;
         public readonly uint Field1D4;
-        public readonly ushort Message1Target;
-        public readonly ushort Padding1DA;
+        public readonly uint Message1Target;
         public readonly uint Message1Id;
         public readonly uint Message1Param1;
         public readonly uint Message1Param2;
-        public readonly ushort Message2Target;
-        public readonly ushort Padding1EA;
+        public readonly uint Message2Target;
         public readonly uint Message2Id;
         public readonly uint Message2Param1;
         public readonly uint Message2Param2;
-        public readonly ushort Message3Target;
-        public readonly ushort Padding1FA;
+        public readonly uint Message3Target;
         public readonly uint Message3Id;
         public readonly uint Message3Param1;
         public readonly uint Message3Param2;
