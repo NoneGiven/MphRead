@@ -479,8 +479,8 @@ namespace MphRead
         public readonly byte AlwaysActive; // boolean -- set flags bit 0 based on Active boolean only and ignore room state
         public readonly byte DeactivateAfterUse; // boolean -- set flags bit 1
         public readonly byte Padding6D;
-        public readonly ushort RefreshDelay;
-        public readonly ushort InitialDelay;
+        public readonly ushort RepeatDelay;
+        public readonly ushort CheckDelay;
         public readonly ushort RequiredStateBit; // for subtype 4
         public readonly ushort TriggerFlags; // in-game this is treated as uint, but the extra bits are never set/checked
         public readonly ushort Padding76;
