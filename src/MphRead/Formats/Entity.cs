@@ -194,7 +194,9 @@ namespace MphRead
     public readonly struct ObjectEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint Flags;
+        public readonly byte Flags;
+        public readonly byte Padding25;
+        public readonly ushort Padding26;
         public readonly uint EffectFlags;
         public readonly uint ModelId;
         public readonly ushort LinkedEntity;
@@ -698,7 +700,8 @@ namespace MphRead
         public readonly byte Invisible;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 15)]
         public readonly char[] TargetRoom;
-        public readonly uint Field38;
+        public readonly ushort Unused38; // always 0
+        public readonly ushort Unused3A; // always UInt16.MaxValue
         public readonly Vector3Fx TargetPosition;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;
