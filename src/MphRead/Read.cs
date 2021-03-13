@@ -727,8 +727,8 @@ namespace MphRead
             {
                 EntityType.FhPlayerSpawn => ReadFirstHuntEntity<PlayerSpawnEntityData>(bytes, entry, header),
                 EntityType.FhDoor => ReadFirstHuntEntity<FhDoorEntityData>(bytes, entry, header),
-                EntityType.FhItem => ReadFirstHuntEntity<FhItemSpawnEntityData>(bytes, entry, header),
-                EntityType.FhEnemy => ReadFirstHuntEntity<FhEnemySpawnEntityData>(bytes, entry, header),
+                EntityType.FhItemSpawn => ReadFirstHuntEntity<FhItemSpawnEntityData>(bytes, entry, header),
+                EntityType.FhEnemySpawn => ReadFirstHuntEntity<FhEnemySpawnEntityData>(bytes, entry, header),
                 EntityType.FhTriggerVolume => ReadFirstHuntEntity<FhTriggerVolumeEntityData>(bytes, entry, header),
                 EntityType.FhAreaVolume => ReadFirstHuntEntity<FhAreaVolumeEntityData>(bytes, entry, header),
                 EntityType.FhPlatform => ReadFirstHuntEntity<FhPlatformEntityData>(bytes, entry, header),
