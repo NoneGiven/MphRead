@@ -677,13 +677,13 @@ namespace MphRead.Utility
             int scaleOffset = (int)writer.BaseStream.Position;
             foreach (float value in group.Scales)
             {
-                writer.Write(Fixed.ToInt(value));
+                writer.WriteFloat(value);
             }
             // rotation LUT
             int rotOffset = (int)writer.BaseStream.Position;
             foreach (float value in group.Rotations)
             {
-                writer.Write((ushort)Math.Round(value / MathF.PI / 2f * 65536f));
+                writer.WriteAngle(value);
             }
             while (writer.BaseStream.Position % 4 != 0)
             {
@@ -693,7 +693,7 @@ namespace MphRead.Utility
             int transOffset = (int)writer.BaseStream.Position;
             foreach (float value in group.Translations)
             {
-                writer.Write(Fixed.ToInt(value));
+                writer.WriteFloat(value);
             }
             // animations
             int animOffset = (int)writer.BaseStream.Position;
@@ -821,13 +821,13 @@ namespace MphRead.Utility
             int scaleOffset = (int)writer.BaseStream.Position;
             foreach (float value in group.Scales)
             {
-                writer.Write(Fixed.ToInt(value));
+                writer.WriteFloat(value);
             }
             // rotation LUT
             int rotOffset = (int)writer.BaseStream.Position;
             foreach (float value in group.Rotations)
             {
-                writer.Write((ushort)Math.Round(value / MathF.PI / 2f * 65536f));
+                writer.WriteAngle(value);
             }
             while (writer.BaseStream.Position % 4 != 0)
             {
@@ -837,7 +837,7 @@ namespace MphRead.Utility
             int transOffset = (int)writer.BaseStream.Position;
             foreach (float value in group.Translations)
             {
-                writer.Write(Fixed.ToInt(value));
+                writer.WriteFloat(value);
             }
             // animations
             int animOffset = (int)writer.BaseStream.Position;
@@ -1398,20 +1398,6 @@ namespace MphRead.Utility
             return (stream.ToArray(), texStream == stream ? new byte[0] : texStream.ToArray());
         }
 
-        private static void WriteString(string value, int length, BinaryWriter writer)
-        {
-            Debug.Assert(value.Length <= length);
-            int i = 0;
-            for (; i < value.Length; i++)
-            {
-                writer.Write((byte)value[i]);
-            }
-            for (; i < length; i++)
-            {
-                writer.Write('\0');
-            }
-        }
-
         private static (int primitives, int vertices) GetDlistCounts(IReadOnlyList<RenderInstruction> dlist)
         {
             int primitiveCount = 0;
@@ -1720,7 +1706,6 @@ namespace MphRead.Utility
             byte padByte = 0;
             ushort padShort = 0;
             uint padInt = 0;
-            int opacity = texture.Opaque ? 1 : 0;
             writer.Write((byte)texture.Format);
             writer.Write(padByte);
             writer.Write(texture.Width);
@@ -1731,7 +1716,7 @@ namespace MphRead.Utility
             writer.Write(padInt); // UnusedOffset
             writer.Write(padInt); // UnusedCount
             writer.Write(padInt); // VramOffset
-            writer.Write(opacity);
+            writer.WriteInt(texture.Opaque);
             writer.Write(padInt); // SkipVram
             writer.Write(padByte); // PackedSize
             writer.Write(padByte); // NativeTextureFormat
@@ -1786,13 +1771,13 @@ namespace MphRead.Utility
         {
             byte padByte = 0;
             ushort padShort = 0;
-            WriteString(material.Name, length: 64, writer);
+            writer.WriteString(material.Name, length: 64);
             writer.Write(material.Lighting);
             writer.Write((byte)material.Culling);
             writer.Write(material.Alpha);
             writer.Write(material.Wireframe);
-            writer.Write((ushort)material.PaletteId);
-            writer.Write((ushort)material.TextureId);
+            writer.Write((short)material.PaletteId);
+            writer.Write((short)material.TextureId);
             writer.Write((byte)material.XRepeat);
             writer.Write((byte)material.YRepeat);
             writer.Write(material.Diffuse.Red);
@@ -1813,12 +1798,12 @@ namespace MphRead.Utility
             writer.Write(padShort); // TexcoordAnimationId
             writer.Write(padShort);
             writer.Write(matrixId == -1 ? 0 : matrixId);
-            writer.Write(Fixed.ToInt(material.ScaleS));
-            writer.Write(Fixed.ToInt(material.ScaleT));
-            writer.Write((ushort)Math.Round(material.RotateZ / MathF.PI / 2f * 65536f));
+            writer.WriteFloat(material.ScaleS);
+            writer.WriteFloat(material.ScaleT);
+            writer.WriteAngle(material.RotateZ);
             writer.Write(padShort);
-            writer.Write(Fixed.ToInt(material.TranslateS));
-            writer.Write(Fixed.ToInt(material.TranslateT));
+            writer.WriteFloat(material.TranslateS);
+            writer.WriteFloat(material.TranslateT);
             writer.Write(padShort); // MaterialAnimationId
             writer.Write(padShort); // TextureAnimationId
             writer.Write(padByte); // PackedRepeatMode
@@ -1831,25 +1816,19 @@ namespace MphRead.Utility
             byte padByte = 0;
             ushort padShort = 0;
             uint padInt = 0;
-            WriteString(node.Name, length: 64, writer);
-            writer.Write((ushort)node.ParentIndex);
-            writer.Write((ushort)node.ChildIndex);
-            writer.Write((ushort)node.NextIndex);
+            writer.WriteString(node.Name, length: 64);
+            writer.Write((short)node.ParentIndex);
+            writer.Write((short)node.ChildIndex);
+            writer.Write((short)node.NextIndex);
             writer.Write(padShort);
-            writer.Write(node.Enabled ? 1 : 0);
-            writer.Write((ushort)node.MeshCount);
-            writer.Write((ushort)node.MeshId);
-            writer.Write(Fixed.ToInt(node.Scale.X));
-            writer.Write(Fixed.ToInt(node.Scale.Y));
-            writer.Write(Fixed.ToInt(node.Scale.Z));
-            writer.Write((ushort)Math.Round(node.Angle.X / MathF.PI / 2f * 65536f));
-            writer.Write((ushort)Math.Round(node.Angle.Y / MathF.PI / 2f * 65536f));
-            writer.Write((ushort)Math.Round(node.Angle.Z / MathF.PI / 2f * 65536f));
+            writer.WriteInt(node.Enabled);
+            writer.Write((short)node.MeshCount);
+            writer.Write((short)node.MeshId);
+            writer.WriteVector3(node.Scale);
+            writer.WriteAngles(node.Angle);
             writer.Write(padShort);
-            writer.Write(Fixed.ToInt(node.Position.X));
-            writer.Write(Fixed.ToInt(node.Position.Y));
-            writer.Write(Fixed.ToInt(node.Position.Z));
-            writer.Write(Fixed.ToInt(node.BoundingRadius));
+            writer.WriteVector3(node.Position);
+            writer.WriteFloat(node.BoundingRadius);
             writer.Write(minBounds.X);
             writer.Write(minBounds.Y);
             writer.Write(minBounds.Z);
@@ -1947,6 +1926,73 @@ namespace MphRead.Utility
             {
                 _dict.Add((width, height, scaleS, scaleT, rotZ, transS, transT), index);
             }
+        }
+
+        public static void WriteString(this BinaryWriter writer, string value, int length)
+        {
+            Debug.Assert(value.Length <= length);
+            int i = 0;
+            for (; i < value.Length; i++)
+            {
+                writer.Write((byte)value[i]);
+            }
+            for (; i < length; i++)
+            {
+                writer.Write('\0');
+            }
+        }
+
+        public static void WriteFloat(this BinaryWriter writer, float value)
+        {
+            writer.Write(Fixed.ToInt(value));
+        }
+
+        public static void WriteVector3(this BinaryWriter writer, Vector3 vector)
+        {
+            writer.WriteFloat(vector.X);
+            writer.WriteFloat(vector.Y);
+            writer.WriteFloat(vector.Z);
+        }
+
+        public static void WriteVector4(this BinaryWriter writer, Vector4 vector)
+        {
+            writer.WriteFloat(vector.X);
+            writer.WriteFloat(vector.Y);
+            writer.WriteFloat(vector.Z);
+            writer.WriteFloat(vector.W);
+        }
+
+        public static void WriteColorRgb(this BinaryWriter writer, ColorRgb color)
+        {
+            writer.Write(color.Red);
+            writer.Write(color.Green);
+            writer.Write(color.Blue);
+        }
+
+        public static void WriteAngle(this BinaryWriter writer, float angle)
+        {
+            writer.Write((ushort)Math.Round(angle / MathF.PI / 2f * 65536f));
+        }
+
+        public static void WriteAngles(this BinaryWriter writer, Vector3 angles)
+        {
+            writer.WriteAngle(angles.X);
+            writer.WriteAngle(angles.Y);
+            writer.WriteAngle(angles.Z);
+        }
+
+        public static void WriteByte(this BinaryWriter writer, bool value)
+        {
+            byte yes = 1;
+            byte no = 0;
+            writer.Write(value ? yes : no);
+        }
+
+        public static void WriteInt(this BinaryWriter writer, bool value)
+        {
+            uint yes = 1;
+            uint no = 0;
+            writer.Write(value ? yes : no);
         }
     }
 }

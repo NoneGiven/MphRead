@@ -153,6 +153,48 @@ namespace MphRead
             Nop();
         }
 
+        public static void PrintEntityEditor(Type type)
+        {
+            string name = type.Name;
+            string rawName = type.Name.Replace("Editor", "Data");
+            Console.WriteLine($"public {name}(Entity header, {rawName} raw) : base(header)");
+            Console.WriteLine("        {");
+            foreach (System.Reflection.PropertyInfo prop in type.GetProperties())
+            {
+                string propName = prop.Name;
+                string srcName = prop.Name;
+                if (prop.PropertyType == typeof(bool))
+                {
+                    Console.WriteLine($"            {propName} = raw.{srcName} != 0;");
+                }
+                else if (prop.PropertyType == typeof(CollisionVolume))
+                {
+                    Console.WriteLine($"            {propName} = new CollisionVolume(raw.{srcName});");
+                }
+                else
+                {
+                    string prefix = "";
+                    string suffix = "";
+                    if (prop.PropertyType == typeof(Vector3))
+                    {
+                        suffix = ".ToFloatVector()";
+                    }
+                    else if (prop.PropertyType == typeof(string))
+                    {
+                        suffix = ".MarshalString()";
+                    }
+                    if (prop.Name == "Id" || prop.Name == "Type" || prop.Name == "LayerMask" || prop.Name == "NodeName"
+                         || prop.Name == "Position" || prop.Name == "Up" || prop.Name == "Facing")
+                    {
+                        continue;
+                    }
+                    Console.WriteLine($"            {propName} = {prefix}raw.{srcName}{suffix};");
+                }
+            }
+            Console.WriteLine("        }");
+            Nop();
+        }
+
         public static void TestTriggerVolumes()
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)

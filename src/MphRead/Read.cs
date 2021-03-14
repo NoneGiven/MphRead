@@ -1004,6 +1004,11 @@ namespace MphRead
             return Path.GetFileNameWithoutExtension(path);
         }
 
+        public static T DoOffset<T>(ReadOnlySpan<byte> bytes, int offset) where T : struct
+        {
+            return DoOffset<T>(bytes, (uint)offset);
+        }
+
         public static T DoOffset<T>(ReadOnlySpan<byte> bytes, uint offset) where T : struct
         {
             return DoOffsets<T>(bytes, offset, 1).First();

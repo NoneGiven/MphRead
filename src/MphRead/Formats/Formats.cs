@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using MphRead.Effects;
 using MphRead.Entities;
 using OpenTK.Mathematics;
@@ -471,8 +472,8 @@ namespace MphRead
         public bool FirstHunt { get; }
 
         public Vector3 Position { get; }
-        public readonly Vector3 UpVector;
-        public readonly Vector3 FacingVector;
+        public Vector3 UpVector { get; }
+        public Vector3 FacingVector { get; }
 
         public Entity(EntityEntry entry, EntityType type, short entityId, EntityDataHeader header)
         {
@@ -584,21 +585,39 @@ namespace MphRead
         }
     }
 
-    public readonly struct CollisionVolume
+    [StructLayout(LayoutKind.Explicit)]
+    public struct CollisionVolume
     {
+        [FieldOffset(0)]
         public readonly VolumeType Type;
+        // box
+        [FieldOffset(4)]
         public readonly Vector3 BoxVector1;
+        [FieldOffset(16)]
         public readonly Vector3 BoxVector2;
+        [FieldOffset(28)]
         public readonly Vector3 BoxVector3;
+        [FieldOffset(40)]
         public readonly Vector3 BoxPosition;
+        [FieldOffset(52)]
         public readonly float BoxDot1;
+        [FieldOffset(56)]
         public readonly float BoxDot2;
+        [FieldOffset(60)]
         public readonly float BoxDot3;
+        // cylinder
+        [FieldOffset(4)]
         public readonly Vector3 CylinderVector;
+        [FieldOffset(16)]
         public readonly Vector3 CylinderPosition;
+        [FieldOffset(28)]
         public readonly float CylinderRadius;
+        [FieldOffset(32)]
         public readonly float CylinderDot;
+        // sphere
+        [FieldOffset(4)]
         public readonly Vector3 SpherePosition;
+        [FieldOffset(16)]
         public readonly float SphereRadius;
 
         public CollisionVolume(RawCollisionVolume raw)

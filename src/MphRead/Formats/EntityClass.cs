@@ -8,18 +8,33 @@ namespace MphRead.Editor
     // - message enum
     public abstract class EntityEditorBase
     {
-        public string NodeName { get; set; } = "";
-        public ushort LayerMask { get; set; }
         public EntityType Type { get; set; }
         public short Id { get; set; }
+        public ushort LayerMask { get; set; }
         public Vector3 Position { get; set; }
         public Vector3 Up { get; set; }
         public Vector3 Facing { get; set; }
+        public string NodeName { get; set; } = "";
+
+        public EntityEditorBase()
+        {
+        }
+
+        public EntityEditorBase(Entity header)
+        {
+            Type = header.Type;
+            Id = header.EntityId;
+            LayerMask = header.LayerMask;
+            Position = header.Position;
+            Up = header.UpVector;
+            Facing = header.FacingVector;
+            NodeName = header.NodeName;
+        }
     }
 
     public class PlatformEntityEditor : EntityEditorBase
     {
-        public bool NoPort { get; set; }
+        public uint NoPort { get; set; }
         public uint ModelId { get; set; }
         public short ParentId { get; set; }
         public byte Field2E { get; set; }
@@ -31,7 +46,7 @@ namespace MphRead.Editor
         public ushort Field3A { get; set; }
         public List<Vector3> Positions { get; set; } = new List<Vector3>();
         public List<Vector4> Rotations { get; set; } = new List<Vector4>();
-        public Vector3Fx PositionOffset { get; set; }
+        public Vector3 PositionOffset { get; set; }
         public uint Field160 { get; set; }
         public uint Field164 { get; set; }
         public string PortalName { get; set; } = "";
@@ -40,12 +55,11 @@ namespace MphRead.Editor
         public uint Field180 { get; set; }
         public PlatformFlags Flags { get; set; }
         public uint ContactDamage { get; set; }
-        public Vector3Fx BeamSpawnDir { get; set; }
-        public Vector3Fx BeamSpawnPos { get; set; }
+        public Vector3 BeamSpawnDir { get; set; }
+        public Vector3 BeamSpawnPos { get; set; }
         public int BeamId { get; set; }
         public uint BeamInterval { get; set; }
         public uint BeamOnIntervals { get; set; } // 16 bits are used
-        public uint Unused1B0 { get; set; } // always UInt16.MaxValue
         public int EffectId1 { get; set; }
         public uint Health { get; set; }
         public uint Field1BC { get; set; }
@@ -87,11 +101,88 @@ namespace MphRead.Editor
         public uint Msg32Message4 { get; set; }
         public uint Msg32Param14 { get; set; }
         public uint Msg32Param24 { get; set; }
+
+        public PlatformEntityEditor(Entity header, PlatformEntityData raw) : base(header)
+        {
+            NoPort = raw.NoPort;
+            ModelId = raw.ModelId;
+            ParentId = raw.ParentId;
+            Field2E = raw.Field2E;
+            Field2F = raw.Field2F;
+            ScanData1 = raw.ScanData1;
+            ScanEventTarget = raw.ScanEventTarget;
+            ScanEventId = raw.ScanEventId;
+            ScanData2 = raw.ScanData2;
+            Field3A = raw.Field3A;
+            for (int i = 0; i < 10; i++)
+            {
+                Positions.Add(raw.Positions[i].ToFloatVector());
+            }
+            for (int i = 0; i < 10; i++)
+            {
+                Rotations.Add(raw.Rotations[i].ToFloatVector());
+            }
+            PositionOffset = raw.PositionOffset.ToFloatVector();
+            Field160 = raw.Field160;
+            Field164 = raw.Field164;
+            PortalName = raw.PortalName.MarshalString();
+            Field178 = raw.Field178;
+            Field17C = raw.Field17C;
+            Field180 = raw.Field180;
+            Flags = raw.Flags;
+            ContactDamage = raw.ContactDamage;
+            BeamSpawnDir = raw.BeamSpawnDir.ToFloatVector();
+            BeamSpawnPos = raw.BeamSpawnPos.ToFloatVector();
+            BeamId = raw.BeamId;
+            BeamInterval = raw.BeamInterval;
+            BeamOnIntervals = raw.BeamOnIntervals;
+            EffectId1 = raw.EffectId1;
+            Health = raw.Health;
+            Field1BC = raw.Field1BC;
+            EffectId2 = raw.EffectId2;
+            EffectId3 = raw.EffectId3;
+            ItemChance = raw.ItemChance;
+            ItemModel = raw.ItemModel;
+            Field1D0 = raw.Field1D0;
+            Field1D4 = raw.Field1D4;
+            Message1Target = raw.Message1Target;
+            Message1Id = raw.Message1Id;
+            Message1Param1 = raw.Message1Param1;
+            Message1Param2 = raw.Message1Param2;
+            Message2Target = raw.Message2Target;
+            Message2Id = raw.Message2Id;
+            Message2Param1 = raw.Message2Param1;
+            Message2Param2 = raw.Message2Param2;
+            Message3Target = raw.Message3Target;
+            Message3Id = raw.Message3Id;
+            Message3Param1 = raw.Message3Param1;
+            Message3Param2 = raw.Message3Param2;
+            Field208 = raw.Field208;
+            Msg32Target1 = raw.Msg32Target1;
+            Msg32Message1 = raw.Msg32Message1;
+            Msg32Param11 = raw.Msg32Param11;
+            Msg32Param21 = raw.Msg32Param21;
+            Field218 = raw.Field218;
+            Msg32Target2 = raw.Msg32Target2;
+            Msg32Message2 = raw.Msg32Message2;
+            Msg32Param12 = raw.Msg32Param12;
+            Msg32Param22 = raw.Msg32Param22;
+            Field228 = raw.Field228;
+            Msg32Target3 = raw.Msg32Target3;
+            Msg32Message3 = raw.Msg32Message3;
+            Msg32Param13 = raw.Msg32Param13;
+            Msg32Param23 = raw.Msg32Param23;
+            Field238 = raw.Field238;
+            Msg32Target4 = raw.Msg32Target4;
+            Msg32Message4 = raw.Msg32Message4;
+            Msg32Param14 = raw.Msg32Param14;
+            Msg32Param24 = raw.Msg32Param24;
+        }
     }
 
     public class FhPlatformEntityEditor : EntityEditorBase
     {
-        public bool NoPortal { get; set; }
+        public uint NoPortal { get; set; }
         public uint Field28 { get; set; }
         public uint Field2C { get; set; }
         public byte Field30 { get; set; }
@@ -116,6 +207,22 @@ namespace MphRead.Editor
         public uint EffectOnIntervals { get; set; } // 16 bits are used
         public Vector3 EffectPositionOffset { get; set; } // maximum value for random offset
         public CollisionVolume Volume { get; set; }
+
+        public ObjectEntityEditor(Entity header, ObjectEntityData raw) : base(header)
+        {
+            Flags = raw.Flags;
+            EffectFlags = raw.EffectFlags;
+            ModelId = raw.ModelId;
+            LinkedEntity = raw.LinkedEntity;
+            ScanId = raw.ScanId;
+            ScanEventTargetId = raw.ScanEventTargetId;
+            ScanEventId = raw.ScanEventId;
+            EffectId = raw.EffectId;
+            EffectInterval = raw.EffectInterval;
+            EffectOnIntervals = raw.EffectOnIntervals;
+            EffectPositionOffset = raw.EffectPositionOffset.ToFloatVector();
+            Volume = new CollisionVolume(raw.Volume);
+        }
     }
 
     public class PlayerSpawnEntityEditor : EntityEditorBase
@@ -123,6 +230,13 @@ namespace MphRead.Editor
         public bool Initial { get; set; } // whether this is available to spawn at when frame count is 0
         public bool Active { get; set; }
         public sbyte TeamIndex { get; set; } // 0, 1, or -1
+
+        public PlayerSpawnEntityEditor(Entity header, PlayerSpawnEntityData raw) : base(header)
+        {
+            Initial = raw.Initial != 0;
+            Active = raw.Active != 0;
+            TeamIndex = raw.TeamIndex;
+        }
     }
 
     public class DoorEntityEditor : EntityEditorBase
@@ -137,6 +251,20 @@ namespace MphRead.Editor
         public byte Field43 { get; set; }
         public string EntityFilename { get; set; } = "";
         public string RoomName { get; set; } = "";
+
+        public DoorEntityEditor(Entity header, DoorEntityData raw) : base(header)
+        {
+            DoorNodeName = raw.NodeName.MarshalString();
+            PaletteId = raw.PaletteId;
+            ModelId = raw.ModelId;
+            TargetRoomId = raw.TargetRoomId;
+            TargetLayerId = raw.TargetLayerId;
+            Flags = raw.Flags;
+            Field42 = raw.Field42;
+            Field43 = raw.Field43;
+            EntityFilename = raw.EntityFilename.MarshalString();
+            RoomName = raw.RoomName.MarshalString();
+        }
     }
 
     public class FhDoorEntityEditor : EntityEditorBase
@@ -160,6 +288,22 @@ namespace MphRead.Editor
         public uint CollectedMessageId { get; set; }
         public uint CollectedMessageParam1 { get; set; }
         public uint CollectedMessageParam2 { get; set; }
+
+        public ItemSpawnEntityEditor(Entity header, ItemSpawnEntityData raw) : base(header)
+        {
+            ParentId = raw.ParentId;
+            ItemType = raw.ItemType;
+            Enabled = raw.Enabled != 0;
+            HasBase = raw.HasBase != 0;
+            AlwaysActive = raw.AlwaysActive != 0;
+            MaxSpawnCount = raw.MaxSpawnCount;
+            SpawnInterval = raw.SpawnInterval;
+            SpawnDelay = raw.SpawnDelay;
+            SomeEntityId = raw.SomeEntityId;
+            CollectedMessageId = raw.CollectedMessageId;
+            CollectedMessageParam1 = raw.CollectedMessageParam1;
+            CollectedMessageParam2 = raw.CollectedMessageParam2;
+        }
     }
 
     public class FhItemSpawnEntityEditor : EntityEditorBase
@@ -194,7 +338,22 @@ namespace MphRead.Editor
         public uint Field64 { get; set; }
         public uint Field68 { get; set; }
         public uint Field6C { get; set; }
-        public CollisionVolume Volume { get; set; }
+        public uint Field70 { get; set; }
+        public uint Field74 { get; set; }
+        public uint Field78 { get; set; }
+        public uint Field7C { get; set; }
+        public uint Field80 { get; set; }
+        public uint Field84 { get; set; }
+        public uint Field88 { get; set; }
+        public uint Field8C { get; set; }
+        public uint Field90 { get; set; }
+        public uint Field94 { get; set; }
+        public uint Field98 { get; set; }
+        public uint Field9C { get; set; }
+        public uint FieldA0 { get; set; }
+        public uint FieldA4 { get; set; }
+        public uint FieldA8 { get; set; }
+        public uint FieldAC { get; set; }
         public uint FieldB0 { get; set; }
         public uint FieldB4 { get; set; }
         public uint FieldB8 { get; set; }
@@ -265,13 +424,13 @@ namespace MphRead.Editor
         public byte SomeLimit { get; set; }
         public byte Field1BB { get; set; }
         public byte SpawnCount { get; set; }
-        public byte Active { get; set; }
-        public byte AlwaysActive { get; set; }
+        public bool Active { get; set; }
+        public bool AlwaysActive { get; set; }
         public byte ItemChance { get; set; }
         public ushort SpawnerModel { get; set; }
         public ushort CooldownTime { get; set; }
         public ushort InitialCooldown { get; set; }
-        public uint ActiveDistance { get; set; } // todo: display sphere
+        public float ActiveDistance { get; set; } // todo: display sphere
         public uint Field1CC { get; set; }
         public string SpawnNodeName { get; set; } = "";
         public short EntityId1 { get; set; }
@@ -284,6 +443,137 @@ namespace MphRead.Editor
         public ushort Field1F2 { get; set; }
         public uint MessageId3 { get; set; }
         public uint ItemModel { get; set; }
+
+        public EnemySpawnEntityEditor(Entity header, EnemySpawnEntityData raw) : base(header)
+        {
+            EnemyType = raw.Type;
+            Subtype = raw.Subtype;
+            TextureId = raw.TextureId;
+            HunterWeapon = raw.HunterWeapon;
+            Health = raw.Health;
+            HealthMax = raw.HealthMax;
+            Field38 = raw.Field38;
+            Field3A = raw.Field3A;
+            Field3B = raw.Field3B;
+            Field3C = raw.Field3C;
+            Field40 = raw.Field40;
+            Field44 = raw.Field44;
+            Field48 = raw.Field48;
+            Field4C = raw.Field4C;
+            Field50 = raw.Field50;
+            Field54 = raw.Field54;
+            Field58 = raw.Field58;
+            Field5C = raw.Field5C;
+            Field60 = raw.Field60;
+            Field64 = raw.Field64;
+            Field68 = raw.Field68;
+            Field6C = raw.Field6C;
+            Field70 = raw.Field70;
+            Field74 = raw.Field74;
+            Field78 = raw.Field78;
+            Field7C = raw.Field7C;
+            Field80 = raw.Field80;
+            Field84 = raw.Field84;
+            Field88 = raw.Field88;
+            Field8C = raw.Field8C;
+            Field90 = raw.Field90;
+            Field94 = raw.Field94;
+            Field98 = raw.Field98;
+            Field9C = raw.Field9C;
+            FieldA0 = raw.FieldA0;
+            FieldA4 = raw.FieldA4;
+            FieldA8 = raw.FieldA8;
+            FieldAC = raw.FieldAC;
+            FieldB0 = raw.FieldB0;
+            FieldB4 = raw.FieldB4;
+            FieldB8 = raw.FieldB8;
+            FieldBC = raw.FieldBC;
+            FieldC0 = raw.FieldC0;
+            FieldC4 = raw.FieldC4;
+            FieldC8 = raw.FieldC8;
+            FieldCC = raw.FieldCC;
+            FieldD0 = raw.FieldD0;
+            FieldD4 = raw.FieldD4;
+            FieldD8 = raw.FieldD8;
+            FieldDC = raw.FieldDC;
+            FieldE0 = raw.FieldE0;
+            FieldE4 = raw.FieldE4;
+            FieldE8 = raw.FieldE8;
+            FieldEC = raw.FieldEC;
+            FieldF0 = raw.FieldF0;
+            FieldF4 = raw.FieldF4;
+            FieldF8 = raw.FieldF8;
+            FieldFC = raw.FieldFC;
+            Field100 = raw.Field100;
+            Field104 = raw.Field104;
+            Field108 = raw.Field108;
+            Field10C = raw.Field10C;
+            Field110 = raw.Field110;
+            Field114 = raw.Field114;
+            Field118 = raw.Field118;
+            Field11C = raw.Field11C;
+            Field120 = raw.Field120;
+            Field124 = raw.Field124;
+            Field128 = raw.Field128;
+            Field12C = raw.Field12C;
+            Field130 = raw.Field130;
+            Field134 = raw.Field134;
+            Field138 = raw.Field138;
+            Field13C = raw.Field13C;
+            Field140 = raw.Field140;
+            Field144 = raw.Field144;
+            Field148 = raw.Field148;
+            Field14C = raw.Field14C;
+            Field150 = raw.Field150;
+            Field154 = raw.Field154;
+            Field158 = raw.Field158;
+            Field15C = raw.Field15C;
+            Field160 = raw.Field160;
+            Field164 = raw.Field164;
+            Field168 = raw.Field168;
+            Field16C = raw.Field16C;
+            Field170 = raw.Field170;
+            Field174 = raw.Field174;
+            Field178 = raw.Field178;
+            Field17C = raw.Field17C;
+            Field180 = raw.Field180;
+            Field184 = raw.Field184;
+            Field188 = raw.Field188;
+            Field18C = raw.Field18C;
+            Field190 = raw.Field190;
+            Field194 = raw.Field194;
+            Field198 = raw.Field198;
+            Field19C = raw.Field19C;
+            Field1A0 = raw.Field1A0;
+            Field1A4 = raw.Field1A4;
+            Field1A8 = raw.Field1A8;
+            Field1AC = raw.Field1AC;
+            Field1B0 = raw.Field1B0;
+            Field1B4 = raw.Field1B4;
+            Field1B8 = raw.Field1B8;
+            SomeLimit = raw.SomeLimit;
+            Field1BB = raw.Field1BB;
+            SpawnCount = raw.SpawnCount;
+            Active = raw.Active != 0;
+            AlwaysActive = raw.AlwaysActive != 0;
+            ItemChance = raw.ItemChance;
+            SpawnerModel = raw.SpawnerModel;
+            CooldownTime = raw.CooldownTime;
+            InitialCooldown = raw.InitialCooldown;
+            ActiveDistance = raw.ActiveDistance.FloatValue;
+            Field1CC = raw.Field1CC;
+            SpawnNodeName = raw.NodeName.MarshalString();
+            EntityId1 = raw.EntityId1;
+            Field1E2 = raw.Field1E2;
+            MessageId1 = raw.MessageId1;
+            EntityId2 = raw.EntityId2;
+            Field1EA = raw.Field1EA;
+            MessageId2 = raw.MessageId2;
+            EntityId3 = raw.EntityId3;
+            Field1F2 = raw.Field1F2;
+            MessageId3 = raw.MessageId3;
+            ItemModel = raw.ItemModel;
+        }
     }
 
     public class FhEnemySpawnEntityEditor : EntityEditorBase
@@ -353,7 +643,6 @@ namespace MphRead.Editor
     {
         public TriggerType Subtype { get; set; }
         public CollisionVolume Volume { get; set; }
-        public ushort Unused68 { get; set; } // always UInt16.MaxValue
         public bool Active { get; set; }
         public bool AlwaysActive { get; set; } // set flags bit 0 based on Active boolean only and ignore room state
         public bool DeactivateAfterUse { get; set; } // set flags bit 1
@@ -370,6 +659,28 @@ namespace MphRead.Editor
         public Message ChildEvent { get; set; }
         public uint ChildEventParam1 { get; set; }
         public uint ChildEventParam2 { get; set; }
+
+        public TriggerVolumeEntityEditor(Entity header, TriggerVolumeEntityData raw) : base(header)
+        {
+            Subtype = raw.Subtype;
+            Volume = new CollisionVolume(raw.Volume);
+            Active = raw.Active != 0;
+            AlwaysActive = raw.AlwaysActive != 0;
+            DeactivateAfterUse = raw.DeactivateAfterUse != 0;
+            RepeatDelay = raw.RepeatDelay;
+            CheckDelay = raw.CheckDelay;
+            RequiredStateBit = raw.RequiredStateBit;
+            TriggerFlags = raw.TriggerFlags;
+            TriggerThreshold = raw.TriggerThreshold;
+            ParentId = raw.ParentId;
+            ParentEvent = raw.ParentEvent;
+            ParentEventParam1 = raw.ParentEventParam1;
+            ParentEventParam2 = raw.ParentEventParam2;
+            ChildId = raw.ChildId;
+            ChildEvent = raw.ChildEvent;
+            ChildEventParam1 = raw.ChildEventParam1;
+            ChildEventParam2 = raw.ChildEventParam2;
+        }
     }
 
     public class FhTriggerVolumeEntityEditor : EntityEditorBase
@@ -393,7 +704,6 @@ namespace MphRead.Editor
     public class AreaVolumeEntityEditor : EntityEditorBase
     {
         public CollisionVolume Volume { get; set; }
-        public ushort Unused64 { get; set; } // always UInt16.MaxValue
         public bool Active { get; set; } // in 1P, may be controlled by room state bits
         public bool AlwaysActive { get; set; } // ignore 1P state bits
         public bool AllowMultiple { get; set; }
@@ -410,6 +720,27 @@ namespace MphRead.Editor
         public ushort Cooldown { get; set; }
         public uint Priority { get; set; } // always 0 or 1
         public uint Flags { get; set; } // 0x200 = affects biped, 0x400 = affects alt
+
+        public AreaVolumeEntityEditor(Entity header, AreaVolumeEntityData raw) : base(header)
+        {
+            Volume = new CollisionVolume(raw.Volume);
+            Active = raw.Active != 0;
+            AlwaysActive = raw.AlwaysActive != 0;
+            AllowMultiple = raw.AllowMultiple != 0;
+            EventDelay = raw.EventDelay;
+            Unused6A = raw.Unused6A;
+            InsideEvent = raw.InsideEvent;
+            InsideEventParam1 = raw.InsideEventParam1;
+            InsideEventParam2 = raw.InsideEventParam2;
+            ParentId = raw.ParentId;
+            ExitEvent = raw.ExitEvent;
+            ExitEventParam1 = raw.ExitEventParam1;
+            ExitEventParam2 = raw.ExitEventParam2;
+            ChildId = raw.ChildId;
+            Cooldown = raw.Cooldown;
+            Priority = raw.Priority;
+            Flags = raw.Flags;
+        }
     }
 
     public class FhAreaVolumeEntityEditor : EntityEditorBase
@@ -432,13 +763,26 @@ namespace MphRead.Editor
         public uint Unused28 { get; set; } // usually 0, occasionally 2
         public CollisionVolume Volume { get; set; }
         public Vector3 BeamVector { get; set; }
-        public Fixed Speed { get; set; }
+        public float Speed { get; set; }
         public ushort ControlLockTime { get; set; }
         public ushort CooldownTime { get; set; }
         public bool Active { get; set; }
         public uint ModelId { get; set; }
-        public uint BeamType { get; set; }
         public uint Flags { get; set; }
+
+        public JumpPadEntityEditor(Entity header, JumpPadEntityData raw) : base(header)
+        {
+            ParentId = raw.ParentId;
+            Unused28 = raw.Unused28;
+            Volume = new CollisionVolume(raw.Volume);
+            BeamVector = raw.BeamVector.ToFloatVector();
+            Speed = raw.Speed.FloatValue;
+            ControlLockTime = raw.ControlLockTime;
+            CooldownTime = raw.CooldownTime;
+            Active = raw.Active != 0;
+            ModelId = raw.ModelId;
+            Flags = raw.Flags;
+        }
     }
 
     public class FhJumpPadEntityEditor : EntityEditorBase
@@ -449,7 +793,7 @@ namespace MphRead.Editor
         public CollisionVolume Cylinder { get; set; }
         public uint CooldownTime { get; set; }
         public Vector3 BeamVector { get; set; }
-        public Fixed Speed { get; set; }
+        public float Speed { get; set; }
         public uint FieldFC { get; set; }
         public uint ModelId { get; set; }
         public uint BeamType { get; set; }
@@ -461,22 +805,45 @@ namespace MphRead.Editor
         public short NextId { get; set; }
         public short PrevId { get; set; }
         public bool Active { get; set; }
+
+        public PointModuleEntityEditor(Entity header, PointModuleEntityData raw) : base(header)
+        {
+            NextId = raw.NextId;
+            PrevId = raw.PrevId;
+            Active = raw.Active != 0;
+        }
     }
 
     public class MorphCameraEntityEditor : EntityEditorBase
     {
         public CollisionVolume Volume { get; set; }
+
+        public MorphCameraEntityEditor(Entity header, MorphCameraEntityData raw) : base(header)
+        {
+            Volume = new CollisionVolume(raw.Volume);
+        }
     }
 
     public class OctolithFlagEntityEditor : EntityEditorBase
     {
         public byte TeamId { get; set; }
+
+        public OctolithFlagEntityEditor(Entity header, OctolithFlagEntityData raw) : base(header)
+        {
+            TeamId = raw.TeamId;
+        }
     }
 
     public class FlagBaseEntityEditor : EntityEditorBase
     {
         public uint TeamId { get; set; }
         public CollisionVolume Volume { get; set; }
+
+        public FlagBaseEntityEditor(Entity header, FlagBaseEntityData raw) : base(header)
+        {
+            TeamId = raw.TeamId;
+            Volume = new CollisionVolume(raw.Volume);
+        }
     }
 
     public class TeleporterEntityEditor : EntityEditorBase
@@ -484,18 +851,33 @@ namespace MphRead.Editor
         public byte Field24 { get; set; }
         public byte Field25 { get; set; }
         public byte ArtifactId { get; set; }
-        public byte Active { get; set; }
-        public byte Invisible { get; set; }
+        public bool Active { get; set; }
+        public bool Invisible { get; set; }
         public string TargetRoom { get; set; } = "";
-        public ushort Unused38 { get; set; } // always 0
-        public ushort Unused3A { get; set; } // always UInt16.MaxValue
         public Vector3 TargetPosition { get; set; }
         public string TeleporterNodeName { get; set; } = "";
+
+        public TeleporterEntityEditor(Entity header, TeleporterEntityData raw) : base(header)
+        {
+            Field24 = raw.Field24;
+            Field25 = raw.Field25;
+            ArtifactId = raw.ArtifactId;
+            Active = raw.Active != 0;
+            Invisible = raw.Invisible != 0;
+            TargetRoom = raw.TargetRoom.MarshalString();
+            TargetPosition = raw.TargetPosition.ToFloatVector();
+            TeleporterNodeName = raw.NodeName.MarshalString();
+        }
     }
 
     public class NodeDefenseEntityEditor : EntityEditorBase
     {
         public CollisionVolume Volume { get; set; }
+
+        public NodeDefenseEntityEditor(Entity header, NodeDefenseEntityData raw) : base(header)
+        {
+            Volume = new CollisionVolume(raw.Volume);
+        }
     }
 
     public class LightSourceEntityEditor : EntityEditorBase
@@ -507,14 +889,25 @@ namespace MphRead.Editor
         public bool Light2Enabled { get; set; }
         public ColorRgb Light2Color { get; set; }
         public Vector3 Light2Vector { get; set; }
+
+        public LightSourceEntityEditor(Entity header, LightSourceEntityData raw) : base(header)
+        {
+            Volume = new CollisionVolume(raw.Volume);
+            Light1Enabled = raw.Light1Enabled != 0;
+            Light1Color = raw.Light1Color;
+            Light1Vector = raw.Light1Vector.ToFloatVector();
+            Light2Enabled = raw.Light2Enabled != 0;
+            Light2Color = raw.Light2Color;
+            Light2Vector = raw.Light2Vector.ToFloatVector();
+        }
     }
 
     public class ArtifactEntityEditor : EntityEditorBase
     {
         public byte ModelId { get; set; }
         public byte ArtifactId { get; set; }
-        public byte Active { get; set; }
-        public byte HasBase { get; set; }
+        public bool Active { get; set; }
+        public bool HasBase { get; set; }
         public short Message1Target { get; set; }
         public uint Message1Id { get; set; }
         public short Message2Target { get; set; }
@@ -522,13 +915,28 @@ namespace MphRead.Editor
         public short Message3Target { get; set; }
         public uint Message3Id { get; set; }
         public short LinkedEntityId { get; set; } // always -1
+
+        public ArtifactEntityEditor(Entity header, ArtifactEntityData raw) : base(header)
+        {
+            ModelId = raw.ModelId;
+            ArtifactId = raw.ArtifactId;
+            Active = raw.Active != 0;
+            HasBase = raw.HasBase != 0;
+            Message1Target = raw.Message1Target;
+            Message1Id = raw.Message1Id;
+            Message2Target = raw.Message2Target;
+            Message2Id = raw.Message2Id;
+            Message3Target = raw.Message3Target;
+            Message3Id = raw.Message3Id;
+            LinkedEntityId = raw.LinkedEntityId;
+        }
     }
 
     public class CameraSequenceEntityEditor : EntityEditorBase
     {
         public byte SequenceId { get; set; }
         public byte Field25 { get; set; }
-        public byte Loop { get; set; }
+        public bool Loop { get; set; }
         public byte Field27 { get; set; }
         public byte Field28 { get; set; }
         public byte Field29 { get; set; }
@@ -540,13 +948,39 @@ namespace MphRead.Editor
         public short MessageTargetId { get; set; }
         public uint MessageId { get; set; }
         public uint MessageParam { get; set; }
+
+        public CameraSequenceEntityEditor(Entity header, CameraSequenceEntityData raw) : base(header)
+        {
+            SequenceId = raw.SequenceId;
+            Field25 = raw.Field25;
+            Loop = raw.Loop != 0;
+            Field27 = raw.Field27;
+            Field28 = raw.Field28;
+            Field29 = raw.Field29;
+            DelayFrames = raw.DelayFrames;
+            PlayerId1 = raw.PlayerId1;
+            PlayerId2 = raw.PlayerId2;
+            Entity1 = raw.Entity1;
+            Entity2 = raw.Entity2;
+            MessageTargetId = raw.MessageTargetId;
+            MessageId = raw.MessageId;
+            MessageParam = raw.MessageParam;
+        }
     }
 
     public class ForceFieldEntityEditor : EntityEditorBase
     {
         public uint ForceFieldType { get; set; } // 0-8 beam lock, 9 no lock
-        public Fixed Width { get; set; }
-        public Fixed Height { get; set; }
+        public float Width { get; set; }
+        public float Height { get; set; }
         public bool Active { get; set; }
+
+        public ForceFieldEntityEditor(Entity header, ForceFieldEntityData raw) : base(header)
+        {
+            ForceFieldType = raw.Type;
+            Width = raw.Width.FloatValue;
+            Height = raw.Height.FloatValue;
+            Active = raw.Active != 0;
+        }
     }
 }

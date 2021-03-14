@@ -44,7 +44,7 @@ namespace MphRead
     public readonly struct PlatformEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint NoPort;
+        public readonly uint NoPort; // used as boolean, but some of the beam spawners in Frost Labyrinth have a value of 2
         public readonly uint ModelId;
         public readonly short ParentId;
         public readonly byte Field2E;
@@ -71,7 +71,8 @@ namespace MphRead
         public readonly int BeamId;
         public readonly uint BeamInterval;
         public readonly uint BeamOnIntervals; // 16 bits are used
-        public readonly uint Unused1B0; // always UInt16.MaxValue
+        public readonly ushort Unused1B0; // always UInt16.MaxValue
+        public readonly ushort Unused1B2; // always 0
         public readonly int EffectId1;
         public readonly uint Health;
         public readonly uint Field1BC;
@@ -239,6 +240,7 @@ namespace MphRead
         public readonly ushort Field38;
         public readonly byte Field3A;
         public readonly byte Field3B;
+        // union start
         public readonly uint Field3C;
         public readonly uint Field40;
         public readonly uint Field44;
@@ -252,7 +254,22 @@ namespace MphRead
         public readonly uint Field64;
         public readonly uint Field68;
         public readonly uint Field6C;
-        public readonly RawCollisionVolume Volume;
+        public readonly uint Field70;
+        public readonly uint Field74;
+        public readonly uint Field78;
+        public readonly uint Field7C;
+        public readonly uint Field80;
+        public readonly uint Field84;
+        public readonly uint Field88;
+        public readonly uint Field8C;
+        public readonly uint Field90;
+        public readonly uint Field94;
+        public readonly uint Field98;
+        public readonly uint Field9C;
+        public readonly uint FieldA0;
+        public readonly uint FieldA4;
+        public readonly uint FieldA8;
+        public readonly uint FieldAC;
         public readonly uint FieldB0;
         public readonly uint FieldB4;
         public readonly uint FieldB8;
@@ -319,23 +336,24 @@ namespace MphRead
         public readonly uint Field1AC;
         public readonly uint Field1B0;
         public readonly uint Field1B4;
+        // union end
         public readonly ushort Field1B8;
         public readonly byte SomeLimit;
         public readonly byte Field1BB;
         public readonly byte SpawnCount;
-        public readonly byte Active;
-        public readonly byte AlwaysActive;
+        public readonly byte Active; // boolean
+        public readonly byte AlwaysActive; // boolean
         public readonly byte ItemChance;
         public readonly ushort SpawnerModel;
         public readonly ushort CooldownTime;
         public readonly ushort InitialCooldown;
         public readonly ushort Padding1C6;
-        public readonly uint ActiveDistance; // todo: display sphere
+        public readonly Fixed ActiveDistance; // todo: display sphere
         public readonly uint Field1CC;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;
         public readonly short EntityId1;
-        public readonly ushort Field1E2;
+        public readonly ushort Field1E2; // todo: padding?
         public readonly uint MessageId1;
         public readonly short EntityId2;
         public readonly ushort Field1EA;
@@ -552,7 +570,7 @@ namespace MphRead
         public readonly byte Padding81;
         public readonly ushort Padding82;
         public readonly uint ModelId;
-        public readonly uint BeamType;
+        public readonly uint BeamType; // always 0, has no imapct
         public readonly uint Flags;
     }
 
@@ -640,8 +658,8 @@ namespace MphRead
         public readonly byte Field24;
         public readonly byte Field25;
         public readonly byte ArtifactId;
-        public readonly byte Active;
-        public readonly byte Invisible;
+        public readonly byte Active; // boolean
+        public readonly byte Invisible; // bolean
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 15)]
         public readonly char[] TargetRoom;
         public readonly ushort Unused38; // always 0
@@ -678,8 +696,8 @@ namespace MphRead
         public readonly EntityDataHeader Header;
         public readonly byte ModelId;
         public readonly byte ArtifactId;
-        public readonly byte Active;
-        public readonly byte HasBase;
+        public readonly byte Active; // boolean
+        public readonly byte HasBase; // boolean
         public readonly short Message1Target;
         public readonly ushort Padding2A;
         public readonly uint Message1Id;
@@ -698,7 +716,7 @@ namespace MphRead
         public readonly EntityDataHeader Header;
         public readonly byte SequenceId;
         public readonly byte Field25;
-        public readonly byte Loop;
+        public readonly byte Loop; // boolean
         public readonly byte Field27;
         public readonly byte Field28;
         public readonly byte Field29;
