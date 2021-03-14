@@ -6,20 +6,19 @@ namespace MphRead.Editor
 {
     // todo:
     // - message enum
-    public abstract class EntityDataBase
+    public abstract class EntityEditorBase
     {
         public string NodeName { get; set; } = "";
         public ushort LayerMask { get; set; }
         public EntityType Type { get; set; }
-        public ushort Id { get; set; }
+        public short Id { get; set; }
         public Vector3 Position { get; set; }
         public Vector3 Up { get; set; }
         public Vector3 Facing { get; set; }
     }
 
-    public class PlatformEntityData : EntityDataBase
+    public class PlatformEntityEditor : EntityEditorBase
     {
-        public EntityDataHeader Header { get; set; }
         public bool NoPort { get; set; }
         public uint ModelId { get; set; }
         public ushort ParentId { get; set; }
@@ -90,7 +89,7 @@ namespace MphRead.Editor
         public uint Msg32Param24 { get; set; }
     }
 
-    public class FhPlatformEntityData : EntityDataBase
+    public class FhPlatformEntityEditor : EntityEditorBase
     {
         public bool NoPortal { get; set; }
         public uint Field28 { get; set; }
@@ -103,7 +102,7 @@ namespace MphRead.Editor
         public string PortalName { get; set; } = "";
     }
 
-    public class ObjectEntityData : EntityDataBase
+    public class ObjectEntityEditor : EntityEditorBase
     {
         public byte Flags { get; set; }
         public uint EffectFlags { get; set; }
@@ -119,14 +118,14 @@ namespace MphRead.Editor
         public CollisionVolume Volume { get; set; }
     }
 
-    public class PlayerSpawnEntityData : EntityDataBase
+    public class PlayerSpawnEntityEditor : EntityEditorBase
     {
         public bool Initial { get; set; } // whether this is available to spawn at when frame count is 0
         public bool Active { get; set; }
         public sbyte TeamIndex { get; set; } // 0, 1, or -1
     }
 
-    public class DoorEntityData : EntityDataBase
+    public class DoorEntityEditor : EntityEditorBase
     {
         public string DoorNodeName { get; set; } = "";
         public uint PaletteId { get; set; }
@@ -140,14 +139,14 @@ namespace MphRead.Editor
         public string RoomName { get; set; } = "";
     }
 
-    public class FhDoorEntityData : EntityDataBase
+    public class FhDoorEntityEditor : EntityEditorBase
     {
         public string RoomName { get; set; } = "";
         public uint Flags { get; set; }
         public uint ModelId { get; set; }
     }
 
-    public class ItemSpawnEntityData : EntityDataBase
+    public class ItemSpawnEntityEditor : EntityEditorBase
     {
         public uint ParentId { get; set; }
         public ItemType ItemType { get; set; }
@@ -163,7 +162,7 @@ namespace MphRead.Editor
         public uint CollectedMessageParam2 { get; set; }
     }
 
-    public class FhItemSpawnEntityData : EntityDataBase
+    public class FhItemSpawnEntityEditor : EntityEditorBase
     {
         public FhItemType ItemType { get; set; }
         public ushort SpawnLimit { get; set; }
@@ -171,7 +170,7 @@ namespace MphRead.Editor
         public ushort Field2C { get; set; }
     }
 
-    public class EnemySpawnEntityData : EntityDataBase
+    public class EnemySpawnEntityEditor : EntityEditorBase
     {
         public EnemyType EnemyType { get; set; }
         public uint Subtype { get; set; }
@@ -287,7 +286,7 @@ namespace MphRead.Editor
         public uint ItemModel { get; set; }
     }
 
-    public class FhEnemySpawnEntityData : EntityDataBase
+    public class FhEnemySpawnEntityEditor : EntityEditorBase
     {
         public uint Field24 { get; set; }
         public uint Field28 { get; set; }
@@ -350,7 +349,7 @@ namespace MphRead.Editor
         public uint Field104 { get; set; }
     }
 
-    public class TriggerVolumeEntityData : EntityDataBase
+    public class TriggerVolumeEntityEditor : EntityEditorBase
     {
         public TriggerType Subtype { get; set; }
         public CollisionVolume Volume { get; set; }
@@ -373,7 +372,7 @@ namespace MphRead.Editor
         public uint ChildEventParam2 { get; set; }
     }
 
-    public class FhTriggerVolumeEntityData : EntityDataBase
+    public class FhTriggerVolumeEntityEditor : EntityEditorBase
     {
         public FhTriggerType Subtype { get; set; } // 0/1/2 - sphere/box/cylinder, 3 - threshold
         public CollisionVolume Box { get; set; }
@@ -391,7 +390,7 @@ namespace MphRead.Editor
         public uint ChildParam1 { get; set; }
     }
 
-    public class AreaVolumeEntityData : EntityDataBase
+    public class AreaVolumeEntityEditor : EntityEditorBase
     {
         public CollisionVolume Volume { get; set; }
         public ushort Unused64 { get; set; } // always UInt16.MaxValue
@@ -413,7 +412,7 @@ namespace MphRead.Editor
         public uint Flags { get; set; } // 0x200 = affects biped, 0x400 = affects alt
     }
 
-    public class FhAreaVolumeEntityData : EntityDataBase
+    public class FhAreaVolumeEntityEditor : EntityEditorBase
     {
         public FhTriggerType Subtype { get; set; } // 0/1 - sphere/box
         public CollisionVolume Box { get; set; }
@@ -427,7 +426,7 @@ namespace MphRead.Editor
         public uint Flags { get; set; }
     }
 
-    public class JumpPadEntityData : EntityDataBase
+    public class JumpPadEntityEditor : EntityEditorBase
     {
         public uint ParentId { get; set; }
         public uint Unused28 { get; set; } // usually 0, occasionally 2
@@ -442,7 +441,7 @@ namespace MphRead.Editor
         public uint Flags { get; set; }
     }
 
-    public class FhJumpPadEntityData : EntityDataBase
+    public class FhJumpPadEntityEditor : EntityEditorBase
     {
         public uint VolumeId { get; set; }
         public CollisionVolume Box { get; set; }
@@ -457,30 +456,30 @@ namespace MphRead.Editor
         public uint Flags { get; set; }
     }
 
-    public class PointModuleEntityData : EntityDataBase
+    public class PointModuleEntityEditor : EntityEditorBase
     {
         public ushort NextId { get; set; }
         public ushort PrevId { get; set; }
         public bool Active { get; set; }
     }
 
-    public class MorphCameraEntityData : EntityDataBase
+    public class MorphCameraEntityEditor : EntityEditorBase
     {
         public CollisionVolume Volume { get; set; }
     }
 
-    public class OctolithFlagEntityData : EntityDataBase
+    public class OctolithFlagEntityEditor : EntityEditorBase
     {
         public byte TeamId { get; set; }
     }
 
-    public class FlagBaseEntityData : EntityDataBase
+    public class FlagBaseEntityEditor : EntityEditorBase
     {
         public uint TeamId { get; set; }
         public CollisionVolume Volume { get; set; }
     }
 
-    public class TeleporterEntityData : EntityDataBase
+    public class TeleporterEntityEditor : EntityEditorBase
     {
         public byte Field24 { get; set; }
         public byte Field25 { get; set; }
@@ -494,12 +493,12 @@ namespace MphRead.Editor
         public string TeleporterNodeName { get; set; } = "";
     }
 
-    public class NodeDefenseEntityData : EntityDataBase
+    public class NodeDefenseEntityEditor : EntityEditorBase
     {
         public CollisionVolume Volume { get; set; }
     }
 
-    public class LightSourceEntityData : EntityDataBase
+    public class LightSourceEntityEditor : EntityEditorBase
     {
         public CollisionVolume Volume { get; set; }
         public bool Light1Enabled { get; set; }
@@ -510,7 +509,7 @@ namespace MphRead.Editor
         public Vector3 Light2Vector { get; set; }
     }
 
-    public class ArtifactEntityData : EntityDataBase
+    public class ArtifactEntityEditor : EntityEditorBase
     {
         public byte ModelId { get; set; }
         public byte ArtifactId { get; set; }
@@ -525,7 +524,7 @@ namespace MphRead.Editor
         public ushort LinkedEntityId { get; set; } // always UInt16.MaxValue
     }
 
-    public class CameraSequenceEntityData : EntityDataBase
+    public class CameraSequenceEntityEditor : EntityEditorBase
     {
         public byte SequenceId { get; set; }
         public byte Field25 { get; set; }
@@ -543,7 +542,7 @@ namespace MphRead.Editor
         public uint MessageParam { get; set; }
     }
 
-    public class ForceFieldEntityData : EntityDataBase
+    public class ForceFieldEntityEditor : EntityEditorBase
     {
         public uint ForceFieldType { get; set; } // 0-8 beam lock, 9 no lock
         public Fixed Width { get; set; }
