@@ -48,8 +48,8 @@ namespace MphRead
         public readonly CullingMode Culling;
         public readonly byte Alpha;
         public readonly byte Wireframe;
-        public readonly ushort PaletteId;
-        public readonly ushort TextureId;
+        public readonly short PaletteId;
+        public readonly short TextureId;
         public readonly RepeatMode XRepeat;
         public readonly RepeatMode YRepeat;
         public readonly ColorRgb Diffuse;
@@ -354,9 +354,9 @@ namespace MphRead
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
         public readonly byte[] Name;
-        public readonly ushort ParentId;
-        public readonly ushort ChildId;
-        public readonly ushort NextId;
+        public readonly short ParentId;
+        public readonly short ChildId;
+        public readonly short NextId;
         public readonly ushort Padding46;
         public readonly uint Enabled;
         public readonly ushort MeshCount;
@@ -491,11 +491,11 @@ namespace MphRead
         public readonly byte UseEntityTransform;
         public readonly byte Padding35;
         public readonly ushort Padding36;
-        public readonly ushort PosEntityType;
+        public readonly short PosEntityType;
         public readonly ushort PosEntityId;
-        public readonly ushort TargetEntityType;
+        public readonly short TargetEntityType;
         public readonly ushort TargetEntityId;
-        public readonly ushort MessageTargetType;
+        public readonly short MessageTargetType;
         public readonly ushort MessageTargetId;
         public readonly ushort MessageId;
         public readonly ushort MessageParam;

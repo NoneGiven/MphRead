@@ -295,11 +295,11 @@ namespace MphRead
 
         public void ComputeNodeMatrices(int index)
         {
-            if (Nodes.Count == 0 || index == UInt16.MaxValue)
+            if (Nodes.Count == 0 || index == -1)
             {
                 return;
             }
-            for (int i = index; i != UInt16.MaxValue;)
+            for (int i = index; i != -1;)
             {
                 Node node = Nodes[i];
                 // the scale division isn't done by the game, which is why transforms on room nodes don't work,
@@ -310,7 +310,7 @@ namespace MphRead
                     node.Position.Z / Scale.Z
                 );
                 Matrix4 transform = ComputeNodeTransforms(node.Scale, node.Angle, position);
-                if (node.ParentIndex == UInt16.MaxValue)
+                if (node.ParentIndex == -1)
                 {
                     node.Transform = transform;
                 }
@@ -318,7 +318,7 @@ namespace MphRead
                 {
                     node.Transform = transform * Nodes[node.ParentIndex].Transform;
                 }
-                if (node.ChildIndex != UInt16.MaxValue)
+                if (node.ChildIndex != -1)
                 {
                     ComputeNodeMatrices(node.ChildIndex);
                 }
@@ -372,7 +372,7 @@ namespace MphRead
 
         public void AnimateNodes(int index, bool useNodeTransform, Matrix4 parentTansform, Vector3 scale, NodeAnimationInfo info)
         {
-            for (int i = index; i != UInt16.MaxValue;)
+            for (int i = index; i != -1;)
             {
                 Node node = Nodes[i];
                 Matrix4 transform = useNodeTransform ? node.Transform : Matrix4.Identity;
@@ -380,13 +380,13 @@ namespace MphRead
                 if (group != null && group.Animations.TryGetValue(node.Name, out NodeAnimation animation))
                 {
                     transform = AnimateNode(group, animation, scale, info.CurrentFrame);
-                    if (node.ParentIndex != UInt16.MaxValue)
+                    if (node.ParentIndex != -1)
                     {
                         transform *= Nodes[node.ParentIndex].Animation;
                     }
                 }
                 node.Animation = transform;
-                if (node.ChildIndex != UInt16.MaxValue)
+                if (node.ChildIndex != -1)
                 {
                     AnimateNodes(node.ChildIndex, useNodeTransform, parentTansform, scale, info);
                 }
@@ -592,7 +592,7 @@ namespace MphRead
         public bool NodeParentsEnabled(Node node)
         {
             int parentIndex = node.ParentIndex;
-            while (parentIndex != UInt16.MaxValue)
+            while (parentIndex != -1)
             {
                 Node parent = Nodes[parentIndex];
                 if (!parent.Enabled)

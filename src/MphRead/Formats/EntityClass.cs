@@ -21,11 +21,11 @@ namespace MphRead.Editor
     {
         public bool NoPort { get; set; }
         public uint ModelId { get; set; }
-        public ushort ParentId { get; set; }
+        public short ParentId { get; set; }
         public byte Field2E { get; set; }
         public byte Field2F { get; set; }
         public ushort ScanData1 { get; set; }
-        public ushort ScanEventTarget { get; set; }
+        public short ScanEventTarget { get; set; }
         public uint ScanEventId { get; set; }
         public ushort ScanData2 { get; set; }
         public ushort Field3A { get; set; }
@@ -68,22 +68,22 @@ namespace MphRead.Editor
         public uint Message3Param1 { get; set; }
         public uint Message3Param2 { get; set; }
         public ushort Field208 { get; set; }
-        public ushort Msg32Target1 { get; set; }
+        public short Msg32Target1 { get; set; }
         public uint Msg32Message1 { get; set; }
         public uint Msg32Param11 { get; set; }
         public uint Msg32Param21 { get; set; }
         public ushort Field218 { get; set; }
-        public ushort Msg32Target2 { get; set; }
+        public short Msg32Target2 { get; set; }
         public uint Msg32Message2 { get; set; }
         public uint Msg32Param12 { get; set; }
         public uint Msg32Param22 { get; set; }
         public ushort Field228 { get; set; }
-        public ushort Msg32Target3 { get; set; }
+        public short Msg32Target3 { get; set; }
         public uint Msg32Message3 { get; set; }
         public uint Msg32Param13 { get; set; }
         public uint Msg32Param23 { get; set; }
         public ushort Field238 { get; set; }
-        public ushort Msg32Target4 { get; set; }
+        public short Msg32Target4 { get; set; }
         public uint Msg32Message4 { get; set; }
         public uint Msg32Param14 { get; set; }
         public uint Msg32Param24 { get; set; }
@@ -107,9 +107,9 @@ namespace MphRead.Editor
         public byte Flags { get; set; }
         public uint EffectFlags { get; set; }
         public uint ModelId { get; set; }
-        public ushort LinkedEntity { get; set; }
+        public short LinkedEntity { get; set; }
         public ushort ScanId { get; set; }
-        public ushort ScanEventTargetId { get; set; }
+        public short ScanEventTargetId { get; set; }
         public uint ScanEventId { get; set; }
         public uint EffectId { get; set; }
         public uint EffectInterval { get; set; }
@@ -156,7 +156,7 @@ namespace MphRead.Editor
         public ushort MaxSpawnCount { get; set; }
         public ushort SpawnInterval { get; set; }
         public ushort SpawnDelay { get; set; }
-        public ushort SomeEntityId { get; set; } // todo: parent? child?
+        public short SomeEntityId { get; set; } // todo: parent? child?
         public uint CollectedMessageId { get; set; }
         public uint CollectedMessageParam1 { get; set; }
         public uint CollectedMessageParam2 { get; set; }
@@ -274,13 +274,13 @@ namespace MphRead.Editor
         public uint ActiveDistance { get; set; } // todo: display sphere
         public uint Field1CC { get; set; }
         public string SpawnNodeName { get; set; } = "";
-        public ushort EntityId1 { get; set; }
+        public short EntityId1 { get; set; }
         public ushort Field1E2 { get; set; }
         public uint MessageId1 { get; set; }
-        public ushort EntityId2 { get; set; }
+        public short EntityId2 { get; set; }
         public ushort Field1EA { get; set; }
         public uint MessageId2 { get; set; }
-        public ushort EntityId3 { get; set; }
+        public short EntityId3 { get; set; }
         public ushort Field1F2 { get; set; }
         public uint MessageId3 { get; set; }
         public uint ItemModel { get; set; }
@@ -344,7 +344,7 @@ namespace MphRead.Editor
         public ushort Cooldown { get; set; }
         public ushort FieldEE { get; set; }
         public string SpawnNodeName { get; set; } = "";
-        public ushort ParentId { get; set; }
+        public short ParentId { get; set; }
         public ushort Field102 { get; set; }
         public uint Field104 { get; set; }
     }
@@ -362,11 +362,11 @@ namespace MphRead.Editor
         public ushort RequiredStateBit { get; set; } // for subtype 4
         public ushort TriggerFlags { get; set; } // in-game this is treated as uint, but the extra bits are never set/checked
         public uint TriggerThreshold { get; set; } // for subtype 1
-        public ushort ParentId { get; set; }
+        public short ParentId { get; set; }
         public Message ParentEvent { get; set; }
         public uint ParentEventParam1 { get; set; }
         public uint ParentEventParam2 { get; set; }
-        public ushort ChildId { get; set; }
+        public short ChildId { get; set; }
         public Message ChildEvent { get; set; }
         public uint ChildEventParam1 { get; set; }
         public uint ChildEventParam2 { get; set; }
@@ -382,10 +382,10 @@ namespace MphRead.Editor
         public ushort Cooldown { get; set; }
         public uint Flags { get; set; }
         public uint Threshold { get; set; }
-        public ushort ParentId { get; set; }
+        public short ParentId { get; set; }
         public FhMessage ParentEvent { get; set; }
         public uint ParentParam1 { get; set; }
-        public ushort ChildId { get; set; }
+        public short ChildId { get; set; }
         public FhMessage ChildEvent { get; set; }
         public uint ChildParam1 { get; set; }
     }
@@ -402,11 +402,11 @@ namespace MphRead.Editor
         public Message InsideEvent { get; set; }
         public uint InsideEventParam1 { get; set; } // seconds for escape sequence, gravity/jump assist values, etc.
         public uint InsideEventParam2 { get; set; } // always 0 except for type 15, where it's always 2
-        public ushort ParentId { get; set; }
+        public short ParentId { get; set; }
         public Message ExitEvent { get; set; }
         public uint ExitEventParam1 { get; set; } // always 0
         public uint ExitEventParam2 { get; set; } // always 0
-        public ushort ChildId { get; set; } // always the same as ParentId
+        public short ChildId { get; set; } // always the same as ParentId
         public ushort Cooldown { get; set; }
         public uint Priority { get; set; } // always 0 or 1
         public uint Flags { get; set; } // 0x200 = affects biped, 0x400 = affects alt
@@ -458,8 +458,8 @@ namespace MphRead.Editor
 
     public class PointModuleEntityEditor : EntityEditorBase
     {
-        public ushort NextId { get; set; }
-        public ushort PrevId { get; set; }
+        public short NextId { get; set; }
+        public short PrevId { get; set; }
         public bool Active { get; set; }
     }
 
@@ -515,13 +515,13 @@ namespace MphRead.Editor
         public byte ArtifactId { get; set; }
         public byte Active { get; set; }
         public byte HasBase { get; set; }
-        public ushort Message1Target { get; set; }
+        public short Message1Target { get; set; }
         public uint Message1Id { get; set; }
-        public ushort Message2Target { get; set; }
+        public short Message2Target { get; set; }
         public uint Message2Id { get; set; }
-        public ushort Message3Target { get; set; }
+        public short Message3Target { get; set; }
         public uint Message3Id { get; set; }
-        public ushort LinkedEntityId { get; set; } // always UInt16.MaxValue
+        public short LinkedEntityId { get; set; } // always -1
     }
 
     public class CameraSequenceEntityEditor : EntityEditorBase
@@ -535,9 +535,9 @@ namespace MphRead.Editor
         public ushort DelayFrames { get; set; }
         public byte PlayerId1 { get; set; }
         public byte PlayerId2 { get; set; }
-        public ushort Entity1 { get; set; }
-        public ushort Entity2 { get; set; }
-        public ushort MessageTargetId { get; set; }
+        public short Entity1 { get; set; }
+        public short Entity2 { get; set; }
+        public short MessageTargetId { get; set; }
         public uint MessageId { get; set; }
         public uint MessageParam { get; set; }
     }

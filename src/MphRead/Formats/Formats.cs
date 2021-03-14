@@ -52,14 +52,14 @@ namespace MphRead
             {
                 yield return value;
             }
-            if (!root && NextIndex != UInt16.MaxValue)
+            if (!root && NextIndex != -1)
             {
                 foreach (int value in nodes[NextIndex].GetAllMeshIds(nodes, root: false))
                 {
                     yield return value;
                 }
             }
-            if (ChildIndex != UInt16.MaxValue)
+            if (ChildIndex != -1)
             {
                 foreach (int value in nodes[ChildIndex].GetAllMeshIds(nodes, root: false))
                 {
@@ -467,14 +467,14 @@ namespace MphRead
         public ushort LayerMask { get; }
         public ushort Length { get; }
         public EntityType Type { get; }
-        public ushort EntityId { get; }
+        public short EntityId { get; }
         public bool FirstHunt { get; }
 
         public Vector3 Position { get; }
         public readonly Vector3 UpVector;
         public readonly Vector3 FacingVector;
 
-        public Entity(EntityEntry entry, EntityType type, ushort entityId, EntityDataHeader header)
+        public Entity(EntityEntry entry, EntityType type, short entityId, EntityDataHeader header)
         {
             NodeName = entry.NodeName.MarshalString();
             LayerMask = entry.LayerMask;
@@ -491,7 +491,7 @@ namespace MphRead
             FacingVector = header.FacingVector.ToFloatVector();
         }
 
-        public Entity(FhEntityEntry entry, EntityType type, ushort entityId, EntityDataHeader header)
+        public Entity(FhEntityEntry entry, EntityType type, short entityId, EntityDataHeader header)
         {
             NodeName = entry.NodeName.MarshalString();
             if (!Enum.IsDefined(typeof(EntityType), type))
@@ -506,14 +506,14 @@ namespace MphRead
             FacingVector = header.FacingVector.ToFloatVector();
         }
 
-        public virtual ushort GetParentId()
+        public virtual short GetParentId()
         {
-            return UInt16.MaxValue;
+            return -1;
         }
 
-        public virtual ushort GetChildId()
+        public virtual short GetChildId()
         {
-            return UInt16.MaxValue;
+            return -1;
         }
     }
 
@@ -521,19 +521,19 @@ namespace MphRead
     {
         public T Data { get; }
 
-        public Entity(EntityEntry entry, EntityType type, ushort entityId, T data, EntityDataHeader header)
+        public Entity(EntityEntry entry, EntityType type, short entityId, T data, EntityDataHeader header)
             : base(entry, type, entityId, header)
         {
             Data = data;
         }
 
-        public Entity(FhEntityEntry entry, EntityType type, ushort entityId, T data, EntityDataHeader header)
+        public Entity(FhEntityEntry entry, EntityType type, short entityId, T data, EntityDataHeader header)
             : base(entry, type, entityId, header)
         {
             Data = data;
         }
 
-        public override ushort GetParentId()
+        public override short GetParentId()
         {
             if (Data is TriggerVolumeEntityData triggerData)
             {
@@ -551,14 +551,14 @@ namespace MphRead
             {
                 if (pointModule.PrevId == pointModule.Header.EntityId)
                 {
-                    return UInt16.MaxValue;
+                    return -1;
                 }
                 return pointModule.PrevId;
             }
             return base.GetParentId();
         }
 
-        public override ushort GetChildId()
+        public override short GetChildId()
         {
             if (Data is TriggerVolumeEntityData triggerData)
             {
@@ -576,7 +576,7 @@ namespace MphRead
             {
                 if (pointModule.NextId == pointModule.Header.EntityId)
                 {
-                    return UInt16.MaxValue;
+                    return -1;
                 }
                 return pointModule.NextId;
             }
@@ -1072,11 +1072,11 @@ namespace MphRead
         public byte PrevFrameInfluence { get; } // flag bits 0/1
         public byte AfterFrameInfluence { get; } // flag bits 0/1
         public bool UseEntityTransform { get; }
-        public ushort PosEntityType { get; }
+        public short PosEntityType { get; }
         public ushort PosEntityId { get; }
-        public ushort TargetEntityType { get; }
+        public short TargetEntityType { get; }
         public ushort TargetEntityId { get; }
-        public ushort MessageTargetType { get; }
+        public short MessageTargetType { get; }
         public ushort MessageTargetId { get; }
         public ushort MessageId { get; }
         public ushort MessageParam { get; }

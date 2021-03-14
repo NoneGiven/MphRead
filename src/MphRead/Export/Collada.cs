@@ -94,7 +94,7 @@ namespace MphRead.Export
             var imagesInLibrary = new HashSet<(int, int)>();
             void AddLibraryImage(int textureId, int paletteId, string name)
             {
-                if (textureId != UInt16.MaxValue && !imagesInLibrary.Contains((textureId, paletteId)))
+                if (textureId != -1 && !imagesInLibrary.Contains((textureId, paletteId)))
                 {
                     imagesInLibrary.Add((textureId, paletteId));
                     sb.Append($"\n\t\t<image id=\"{name}\" name=\"{name}\">");
@@ -168,7 +168,7 @@ namespace MphRead.Export
                 DisplayList dlist = model.DisplayLists[mesh.DlistId];
                 Material material = model.Materials[mesh.MaterialId];
                 Texture tex = default;
-                if (material.TextureId != UInt16.MaxValue)
+                if (material.TextureId != -1)
                 {
                     tex = recolor.Textures[material.TextureId];
                 }
@@ -320,7 +320,7 @@ namespace MphRead.Export
                 {
                     Vertex vert = meshVerts[i];
                     // compensate for glScalef(1.0f / tex->texture->getWidth()) of texture space which is applied during rendering
-                    if (material.TextureId != UInt16.MaxValue)
+                    if (material.TextureId != -1)
                     {
                         float factorS = 1;
                         float factorT = 1;
@@ -514,7 +514,7 @@ namespace MphRead.Export
             sb.Append("\n\t\t<visual_scene id=\"Scene\" name=\"Scene\">\n");
             if (Metadata.RoomMetadata.ContainsKey(model.Name))
             {
-                ExportRoomNodes(model, UInt16.MaxValue, sb, 3, transformRoom);
+                ExportRoomNodes(model, -1, sb, 3, transformRoom);
             }
             else
             {
@@ -568,7 +568,7 @@ namespace MphRead.Export
                     sb.Append('\t', indent + 1);
                     sb.Append($"<translate>{FloatFormat(position)}</translate>\n");
                     ExportNodeMeshes(model, i, sb, indent + 1);
-                    if (node.ChildIndex != UInt16.MaxValue)
+                    if (node.ChildIndex != -1)
                     {
                         ExportRoomNodes(model, i, sb, indent + 1, transformRoom);
                     }

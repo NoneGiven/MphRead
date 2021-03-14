@@ -58,7 +58,7 @@ namespace MphRead.Entities
                     || model.Name == "biodefense chamber 04" || model.Name == "biodefense chamber 07");
             }
             else if (meta.RoomNodeName != null
-                && model.Nodes.TryFind(n => n.Name == meta.RoomNodeName && n.ChildIndex != UInt16.MaxValue, out Node? roomNode))
+                && model.Nodes.TryFind(n => n.Name == meta.RoomNodeName && n.ChildIndex != -1, out Node? roomNode))
             {
                 roomNode.IsRoomPartNode = true;
             }
@@ -143,13 +143,13 @@ namespace MphRead.Entities
                     else if (pnode.IsRoomPartNode)
                     {
                         int childIndex = pnode.ChildIndex;
-                        if (childIndex != UInt16.MaxValue)
+                        if (childIndex != -1)
                         {
                             Node node = Nodes[childIndex];
-                            Debug.Assert(node.ChildIndex == UInt16.MaxValue);
+                            Debug.Assert(node.ChildIndex == -1);
                             GetItems(inst, node);
                             int nextIndex = node.NextIndex;
-                            while (nextIndex != UInt16.MaxValue)
+                            while (nextIndex != -1)
                             {
                                 node = Nodes[nextIndex];
                                 GetItems(inst, node);
@@ -164,12 +164,12 @@ namespace MphRead.Entities
                     {
                         PortalNodeRef forceField = _forceFields[i];
                         Node pnode = Nodes[forceField.NodeIndex];
-                        if (pnode.ChildIndex != UInt16.MaxValue)
+                        if (pnode.ChildIndex != -1)
                         {
                             Node node = Nodes[pnode.ChildIndex];
                             GetItems(inst, node, forceField.Portal);
                             int nextIndex = node.NextIndex;
-                            while (nextIndex != UInt16.MaxValue)
+                            while (nextIndex != -1)
                             {
                                 node = Nodes[nextIndex];
                                 GetItems(inst, node, forceField.Portal);
@@ -204,7 +204,7 @@ namespace MphRead.Entities
                     float alpha = 1.0f;
                     if (portal != null)
                     {
-                        polygonId = UInt16.MaxValue;
+                        polygonId = scene.GetNextPolygonId();
                         alpha = GetPortalAlpha(portal.Position, scene.CameraPosition);
                     }
                     else if (material.RenderMode == RenderMode.Translucent)

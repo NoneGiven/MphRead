@@ -183,7 +183,7 @@ namespace MphRead.Export
             for (int i = 0; i < model.Materials.Count; i++)
             {
                 Material material = model.Materials[i];
-                if (material.TextureId != UInt16.MaxValue)
+                if (material.TextureId != -1)
                 {
                     sb.AppendIndent();
                     // this assumes this is the same between all recolors, which is the case in MPH
@@ -291,7 +291,7 @@ bpy.ops.armature.delete()");
                 sb.AppendIndent("bpy.ops.armature.select_all(action='DESELECT')");
                 sb.AppendIndent("bones = bpy.data.armatures[0].edit_bones");
 
-                foreach (Node child in model.Nodes.Where(n => n.ParentIndex != UInt16.MaxValue))
+                foreach (Node child in model.Nodes.Where(n => n.ParentIndex != -1))
                 {
                     Node parent = model.Nodes[child.ParentIndex];
                     sb.AppendIndent($"bones.get('{child.Name}').parent = bones.get('{parent.Name}')");

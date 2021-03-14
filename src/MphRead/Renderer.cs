@@ -389,7 +389,7 @@ namespace MphRead
                     int textureWidth = 0;
                     int textureHeight = 0;
                     Material material = model.Materials[mesh.MaterialId];
-                    if (material.TextureId != UInt16.MaxValue)
+                    if (material.TextureId != -1)
                     {
                         Texture texture = model.Recolors[0].Textures[material.TextureId];
                         textureWidth = texture.Width;
@@ -683,7 +683,7 @@ namespace MphRead
             var combos = new HashSet<(int, int, int)>();
             foreach (Material material in model.Materials)
             {
-                if (material.TextureId == UInt16.MaxValue)
+                if (material.TextureId == -1)
                 {
                     continue;
                 }
@@ -755,7 +755,7 @@ namespace MphRead
             {
                 Material material = model.Materials[i];
                 int textureId = material.CurrentTextureId;
-                if (textureId == UInt16.MaxValue)
+                if (textureId == -1)
                 {
                     continue;
                 }
@@ -1647,7 +1647,7 @@ namespace MphRead
                 item.TexgenMode = material.TexgenMode;
                 item.XRepeat = material.XRepeat;
                 item.YRepeat = material.YRepeat;
-                item.HasTexture = material.TextureId != UInt16.MaxValue;
+                item.HasTexture = material.TextureId != -1;
                 item.TextureBindingId = material.TextureBindingId;
             }
             item.TexcoordMatrix = texcoordMatrix;
@@ -3438,7 +3438,7 @@ namespace MphRead
         {
             static string FormatNode(Model model, int otherId)
             {
-                if (otherId == UInt16.MaxValue)
+                if (otherId == -1)
                 {
                     return "None";
                 }
@@ -3624,7 +3624,7 @@ namespace MphRead
     {
         private int GetKey(int textureId, int paletteId, int recolorId)
         {
-            if (paletteId == UInt16.MaxValue)
+            if (paletteId == -1)
             {
                 paletteId = 4095;
             }

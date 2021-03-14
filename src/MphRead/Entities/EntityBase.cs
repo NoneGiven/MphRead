@@ -276,12 +276,12 @@ namespace MphRead.Entities
                             texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
                             inst.IsPlaceholder ? GetOverrideColor(inst, index) : null, PaletteOverride, selectionType, bindingOverride);
                     }
-                    if (node.ChildIndex != UInt16.MaxValue)
+                    if (node.ChildIndex != -1)
                     {
                         GetItems(inst, index, model.Nodes[node.ChildIndex], polygonId);
                     }
                 }
-                if (node.NextIndex != UInt16.MaxValue)
+                if (node.NextIndex != -1)
                 {
                     GetItems(inst, index, model.Nodes[node.NextIndex], polygonId);
                 }
@@ -593,7 +593,7 @@ namespace MphRead.Entities
 
         private static float GetItemRotation()
         {
-            float rotation = _nextItemRotation / (float)(UInt16.MaxValue + 1) * 360f;
+            float rotation = _nextItemRotation / (float)0x10000 * 360f;
             _nextItemRotation += 0x2000;
             return rotation;
         }

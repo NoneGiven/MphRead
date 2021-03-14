@@ -316,7 +316,7 @@ namespace MphRead.Entities
                 Node node = _bipedModel.Model.Nodes[j];
                 var nodePos = new Vector3(node.Animation.Row3);
                 nodePos.Y += offset;
-                if (node.ChildIndex != UInt16.MaxValue)
+                if (node.ChildIndex != -1)
                 {
                     Debug.Assert(node.ChildIndex > 0);
                     var childPos = new Vector3(_bipedModel.Model.Nodes[node.ChildIndex].Animation.Row3);
@@ -332,7 +332,7 @@ namespace MphRead.Entities
                         scene.AddSingleParticle(SingleType.Death, segPos, Vector3.One, 1 - timePct, scale);
                     }
                 }
-                if (node.NextIndex != UInt16.MaxValue)
+                if (node.NextIndex != -1)
                 {
                     Debug.Assert(node.NextIndex > 0);
                     var nextPos = new Vector3(_bipedModel.Model.Nodes[node.NextIndex].Animation.Row3);

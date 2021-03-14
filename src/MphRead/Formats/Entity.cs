@@ -34,7 +34,7 @@ namespace MphRead
     public readonly struct EntityDataHeader
     {
         public readonly ushort Type;
-        public readonly ushort EntityId; // counts up
+        public readonly short EntityId; // counts up
         public readonly Vector3Fx Position;
         public readonly Vector3Fx UpVector;
         public readonly Vector3Fx FacingVector;
@@ -46,11 +46,11 @@ namespace MphRead
         public readonly EntityDataHeader Header;
         public readonly uint NoPort;
         public readonly uint ModelId;
-        public readonly ushort ParentId;
+        public readonly short ParentId;
         public readonly byte Field2E;
         public readonly byte Field2F;
         public readonly ushort ScanData1;
-        public readonly ushort ScanEventTarget;
+        public readonly short ScanEventTarget;
         public readonly uint ScanEventId;
         public readonly ushort ScanData2;
         public readonly ushort Field3A;
@@ -96,22 +96,22 @@ namespace MphRead
         public readonly uint Message3Param1;
         public readonly uint Message3Param2;
         public readonly ushort Field208;
-        public readonly ushort Msg32Target1;
+        public readonly short Msg32Target1;
         public readonly uint Msg32Message1;
         public readonly uint Msg32Param11;
         public readonly uint Msg32Param21;
         public readonly ushort Field218;
-        public readonly ushort Msg32Target2;
+        public readonly short Msg32Target2;
         public readonly uint Msg32Message2;
         public readonly uint Msg32Param12;
         public readonly uint Msg32Param22;
         public readonly ushort Field228;
-        public readonly ushort Msg32Target3;
+        public readonly short Msg32Target3;
         public readonly uint Msg32Message3;
         public readonly uint Msg32Param13;
         public readonly uint Msg32Param23;
         public readonly ushort Field238;
-        public readonly ushort Msg32Target4;
+        public readonly short Msg32Target4;
         public readonly uint Msg32Message4;
         public readonly uint Msg32Param14;
         public readonly uint Msg32Param24;
@@ -143,9 +143,9 @@ namespace MphRead
         public readonly ushort Padding26;
         public readonly uint EffectFlags;
         public readonly uint ModelId;
-        public readonly ushort LinkedEntity;
+        public readonly short LinkedEntity;
         public readonly ushort ScanId;
-        public readonly ushort ScanEventTargetId;
+        public readonly short ScanEventTargetId;
         public readonly ushort Padding36;
         public readonly uint ScanEventId;
         public readonly uint EffectId;
@@ -207,7 +207,7 @@ namespace MphRead
         public readonly ushort MaxSpawnCount;
         public readonly ushort SpawnInterval;
         public readonly ushort SpawnDelay;
-        public readonly ushort SomeEntityId; // todo: parent? child?
+        public readonly short SomeEntityId; // todo: parent? child?
         public readonly uint CollectedMessageId;
         public readonly uint CollectedMessageParam1;
         public readonly uint CollectedMessageParam2;
@@ -334,13 +334,13 @@ namespace MphRead
         public readonly uint Field1CC;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;
-        public readonly ushort EntityId1;
+        public readonly short EntityId1;
         public readonly ushort Field1E2;
         public readonly uint MessageId1;
-        public readonly ushort EntityId2;
+        public readonly short EntityId2;
         public readonly ushort Field1EA;
         public readonly uint MessageId2;
-        public readonly ushort EntityId3;
+        public readonly short EntityId3;
         public readonly ushort Field1F2;
         public readonly uint MessageId3;
         public readonly uint ItemModel;
@@ -407,7 +407,7 @@ namespace MphRead
         public readonly ushort FieldEE;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;
-        public readonly ushort ParentId;
+        public readonly short ParentId;
         public readonly ushort Field102;
         public readonly uint Field104;
     }
@@ -429,12 +429,12 @@ namespace MphRead
         public readonly ushort TriggerFlags; // in-game this is treated as uint, but the extra bits are never set/checked
         public readonly ushort Padding76;
         public readonly uint TriggerThreshold; // for subtype 1
-        public readonly ushort ParentId;
+        public readonly short ParentId;
         public readonly ushort Padding7E;
         public readonly Message ParentEvent;
         public readonly uint ParentEventParam1;
         public readonly uint ParentEventParam2;
-        public readonly ushort ChildId;
+        public readonly short ChildId;
         public readonly ushort Padding8E;
         public readonly Message ChildEvent;
         public readonly uint ChildEventParam1;
@@ -453,11 +453,11 @@ namespace MphRead
         public readonly ushort Cooldown;
         public readonly uint Flags;
         public readonly uint Threshold;
-        public readonly ushort ParentId;
+        public readonly short ParentId;
         public readonly ushort PaddingF6;
         public readonly FhMessage ParentEvent;
         public readonly uint ParentParam1;
-        public readonly ushort ChildId;
+        public readonly short ChildId;
         public readonly ushort Padding102;
         public readonly FhMessage ChildEvent;
         public readonly uint ChildParam1;
@@ -493,12 +493,12 @@ namespace MphRead
         public readonly Message InsideEvent;
         public readonly uint InsideEventParam1; // seconds for escape sequence, gravity/jump assist values, etc.
         public readonly uint InsideEventParam2; // always 0 except for type 15, where it's always 2
-        public readonly ushort ParentId;
+        public readonly short ParentId;
         public readonly ushort Padding7A;
         public readonly Message ExitEvent;
         public readonly uint ExitEventParam1; // always 0
         public readonly uint ExitEventParam2; // always 0
-        public readonly ushort ChildId; // always the same as ParentId
+        public readonly short ChildId; // always the same as ParentId
         public readonly ushort Cooldown;
         public readonly uint Priority; // always 0 or 1
         public readonly uint Flags; // 0x200 = affects biped, 0x400 = affects alt
@@ -598,8 +598,8 @@ namespace MphRead
     public readonly struct PointModuleEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly ushort NextId;
-        public readonly ushort PrevId;
+        public readonly short NextId;
+        public readonly short PrevId;
         public readonly byte Active; // boolean
     }
 
@@ -680,16 +680,16 @@ namespace MphRead
         public readonly byte ArtifactId;
         public readonly byte Active;
         public readonly byte HasBase;
-        public readonly ushort Message1Target;
+        public readonly short Message1Target;
         public readonly ushort Padding2A;
         public readonly uint Message1Id;
-        public readonly ushort Message2Target;
+        public readonly short Message2Target;
         public readonly ushort Padding32;
         public readonly uint Message2Id;
-        public readonly ushort Message3Target;
+        public readonly short Message3Target;
         public readonly ushort Padding3A;
         public readonly uint Message3Id;
-        public readonly ushort LinkedEntityId; // always UInt16.MaxValue
+        public readonly short LinkedEntityId; // always -1
     }
 
     // size: 64
@@ -705,9 +705,9 @@ namespace MphRead
         public readonly ushort DelayFrames;
         public readonly byte PlayerId1;
         public readonly byte PlayerId2;
-        public readonly ushort Entity1;
-        public readonly ushort Entity2;
-        public readonly ushort MessageTargetId;
+        public readonly short Entity1;
+        public readonly short Entity2;
+        public readonly short MessageTargetId;
         public readonly uint MessageId;
         public readonly uint MessageParam;
     }
