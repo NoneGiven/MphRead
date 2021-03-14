@@ -54,8 +54,8 @@ namespace MphRead
         public readonly uint ScanEventId;
         public readonly ushort ScanData2;
         public readonly ushort Field3A;
-        public readonly Vector3FxArray Positions;
-        public readonly Vector4FxArray Rotations;
+        public readonly Vector3FxArray10 Positions;
+        public readonly Vector4FxArray10 Rotations;
         public readonly Vector3Fx PositionOffset;
         public readonly uint Field160;
         public readonly uint Field164;
@@ -126,47 +126,9 @@ namespace MphRead
         public readonly uint Field2C;
         public readonly byte Field30;
         public readonly byte Field31;
-        public readonly ushort Field32;
-        public readonly uint Field34;
-        public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
-        public readonly uint Field58;
-        public readonly uint Field5C;
-        public readonly uint Field60;
-        public readonly uint Field64;
-        public readonly uint Field68;
-        public readonly uint Field6C;
-        public readonly uint Field70;
-        public readonly uint Field74;
-        public readonly uint Field78;
-        public readonly uint Field7C;
-        public readonly uint Field80;
-        public readonly uint Field84;
-        public readonly uint Field88;
-        public readonly uint Field8C;
-        public readonly uint Field90;
-        public readonly uint Field94;
-        public readonly uint Field98;
-        public readonly uint Field9C;
-        public readonly uint FieldA0;
-        public readonly uint FieldA4;
-        public readonly uint FieldA8;
-        public readonly uint FieldAC;
-        public readonly uint FieldB0;
-        public readonly uint FieldB4;
-        public readonly uint FieldB8;
-        public readonly uint FieldBC;
-        public readonly uint FieldC0;
-        public readonly uint FieldC4;
-        public readonly uint FieldC8;
-        public readonly uint FieldCC;
-        public readonly uint FieldD0;
+        public readonly ushort Padding32;
+        public readonly FhRawCollisionVolume Volume; // unused
+        public readonly Vector3FxArray8 Vectors;
         public readonly uint FieldD4;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] PortalName;
@@ -761,8 +723,61 @@ namespace MphRead
         public readonly byte Active; // boolean
     }
 
+    // size: 96 (12 x 8)
+    public readonly struct Vector3FxArray8
+    {
+        public readonly Vector3Fx Vector0;
+        public readonly Vector3Fx Vector1;
+        public readonly Vector3Fx Vector2;
+        public readonly Vector3Fx Vector3;
+        public readonly Vector3Fx Vector4;
+        public readonly Vector3Fx Vector5;
+        public readonly Vector3Fx Vector6;
+        public readonly Vector3Fx Vector7;
+
+        public Vector3Fx this[int index]
+        {
+            get
+            {
+                if (index == 0)
+                {
+                    return Vector0;
+                }
+                else if (index == 1)
+                {
+                    return Vector1;
+                }
+                else if (index == 2)
+                {
+                    return Vector2;
+                }
+                else if (index == 3)
+                {
+                    return Vector3;
+                }
+                else if (index == 4)
+                {
+                    return Vector4;
+                }
+                else if (index == 5)
+                {
+                    return Vector5;
+                }
+                else if (index == 6)
+                {
+                    return Vector6;
+                }
+                else if (index == 7)
+                {
+                    return Vector7;
+                }
+                throw new IndexOutOfRangeException();
+            }
+        }
+    }
+
     // size: 120 (12 x 10)
-    public readonly struct Vector3FxArray
+    public readonly struct Vector3FxArray10
     {
         public readonly Vector3Fx Vector0;
         public readonly Vector3Fx Vector1;
@@ -825,7 +840,7 @@ namespace MphRead
     }
 
     // size: 160 (16 x 10)
-    public readonly struct Vector4FxArray
+    public readonly struct Vector4FxArray10
     {
         public readonly Vector4Fx Vector0;
         public readonly Vector4Fx Vector1;
