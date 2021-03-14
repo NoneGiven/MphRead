@@ -20,10 +20,58 @@ namespace MphRead.Utility
                 }
                 if (meta.FirstHunt) // hybrid uses MPH entities
                 {
-                    //RepackFhEntities();
+                    var entities = new List<EntityEditorBase>();
+                    foreach (Entity entity in Read.GetEntities(meta.EntityPath, layerId: -1, firstHunt: true))
+                    {
+                        if (entity.Type == EntityType.FhPlatform)
+                        {
+                            entities.Add(new FhPlatformEntityEditor(entity, ((Entity<FhPlatformEntityData>)entity).Data));
+                        }
+                        else if (entity.Type == EntityType.FhPlayerSpawn)
+                        {
+                            entities.Add(new PlayerSpawnEntityEditor(entity, ((Entity<PlayerSpawnEntityData>)entity).Data));
+                        }
+                        else if (entity.Type == EntityType.FhDoor)
+                        {
+                            entities.Add(new FhDoorEntityEditor(entity, ((Entity<FhDoorEntityData>)entity).Data));
+                        }
+                        else if (entity.Type == EntityType.FhItemSpawn)
+                        {
+                            entities.Add(new FhItemSpawnEntityEditor(entity, ((Entity<FhItemSpawnEntityData>)entity).Data));
+                        }
+                        else if (entity.Type == EntityType.FhEnemySpawn)
+                        {
+                            entities.Add(new FhEnemySpawnEntityEditor(entity, ((Entity<FhEnemySpawnEntityData>)entity).Data));
+                        }
+                        else if (entity.Type == EntityType.FhTriggerVolume)
+                        {
+                            entities.Add(new FhTriggerVolumeEntityEditor(entity, ((Entity<FhTriggerVolumeEntityData>)entity).Data));
+                        }
+                        else if (entity.Type == EntityType.FhAreaVolume)
+                        {
+                            entities.Add(new FhAreaVolumeEntityEditor(entity, ((Entity<FhAreaVolumeEntityData>)entity).Data));
+                        }
+                        else if (entity.Type == EntityType.FhJumpPad)
+                        {
+                            entities.Add(new FhJumpPadEntityEditor(entity, ((Entity<FhJumpPadEntityData>)entity).Data));
+                        }
+                        else if (entity.Type == EntityType.FhPointModule)
+                        {
+                            entities.Add(new PointModuleEntityEditor(entity, ((Entity<PointModuleEntityData>)entity).Data));
+                        }
+                        else if (entity.Type == EntityType.FhMorphCamera)
+                        {
+                            entities.Add(new MorphCameraEntityEditor(entity, ((Entity<FhMorphCameraEntityData>)entity).Data));
+                        }
+                    }
+                    byte[] bytes = RepackFhEntities(entities, padEnd: meta.Name == "Level SP Survivor");
+                    byte[] fileBytes = File.ReadAllBytes(Path.Combine(Paths.FhFileSystem, meta.EntityPath));
+                    CompareFhEntities(bytes, fileBytes);
+                    Nop();
                 }
                 else
                 {
+                    continue;
                     var entities = new List<EntityEditorBase>();
                     foreach (Entity entity in Read.GetEntities(meta.EntityPath, layerId: -1, firstHunt: false))
                     {
@@ -161,6 +209,48 @@ namespace MphRead.Utility
             return entries;
         }
 
+        private static void CompareFhEntities(byte[] pack, byte[] file)
+        {
+            Debug.Assert(pack.Length == file.Length);
+            uint packVersion = Read.ReadStruct<uint>(pack);
+            uint fileVersion = Read.ReadStruct<uint>(file);
+            Debug.Assert(packVersion == fileVersion);
+            IReadOnlyList<FhEntityEntry> packEntries = GetFhEntries(pack);
+            IReadOnlyList<FhEntityEntry> fileEntries = GetFhEntries(file);
+            Debug.Assert(packEntries.Count == fileEntries.Count);
+            for (int i = 0; i < packEntries.Count; i++)
+            {
+                FhEntityEntry packEntry = packEntries[i];
+                FhEntityEntry fileEntry = fileEntries[i];
+                Debug.Assert(packEntry.DataOffset == fileEntry.DataOffset);
+                Debug.Assert(Enumerable.SequenceEqual(packEntry.NodeName, fileEntry.NodeName));
+            }
+            Debug.Assert(Enumerable.SequenceEqual(pack, file));
+            Nop();
+        }
+
+        private static IReadOnlyList<FhEntityEntry> GetFhEntries(byte[] bytes)
+        {
+            var entries = new List<FhEntityEntry>();
+            int position = sizeof(uint);
+            while (true)
+            {
+                FhEntityEntry entry = Read.DoOffset<FhEntityEntry>(bytes, position);
+                if (entry.DataOffset == 0)
+                {
+                    break;
+                }
+                entries.Add(entry);
+                position += Sizes.FhEntityEntry;
+                if (position > bytes.Length)
+                {
+                    Debug.Assert(false);
+                    break;
+                }
+            }
+            return entries;
+        }
+
         private static readonly HashSet<EntityType> _validTypesMph = new HashSet<EntityType>()
         {
             EntityType.Platform,
@@ -232,7 +322,7 @@ namespace MphRead.Utility
             using var stream = new MemoryStream();
             using var writer = new BinaryWriter(stream);
             // header
-            int version = 2;
+            uint version = 2;
             ushort[] lengths = new ushort[16];
             foreach (EntityEditorBase entity in entities)
             {
@@ -252,7 +342,7 @@ namespace MphRead.Utility
             }
             Debug.Assert(stream.Position == Sizes.EntityHeader);
             // entity data
-            stream.Position += Sizes.EntityEntry * (entities.Count() + 1);
+            stream.Position += Sizes.EntityEntry * (entities.Count + 1);
             var results = new List<(int, int)>();
             for (int i = 0; i < entities.Count; i++)
             {
@@ -337,7 +427,7 @@ namespace MphRead.Utility
             }
             else if (entity.Type == EntityType.MorphCamera)
             {
-                WriteMphMorphCamera((MorphCameraEntityEditor)entity, writer);
+                WriteMorphCamera((MorphCameraEntityEditor)entity, writer);
             }
             else if (entity.Type == EntityType.OctolithFlag)
             {
@@ -734,7 +824,7 @@ namespace MphRead.Utility
             writer.WriteByte(entity.Active);
         }
 
-        private static void WriteMphMorphCamera(MorphCameraEntityEditor entity, BinaryWriter writer)
+        private static void WriteMorphCamera(MorphCameraEntityEditor entity, BinaryWriter writer)
         {
             writer.WriteVolume(entity.Volume);
         }
@@ -826,9 +916,235 @@ namespace MphRead.Utility
             writer.WriteByte(entity.Active);
         }
 
-        private static void RepackFhEntities()
+        private static byte[] RepackFhEntities(IReadOnlyList<EntityEditorBase> entities, bool padEnd)
         {
+            byte padByte = 0;
+            uint padInt = 0;
+            using var stream = new MemoryStream();
+            using var writer = new BinaryWriter(stream);
             // header
+            uint version = 1;
+            writer.Write(version);
+            // entity data
+            stream.Position += Sizes.FhEntityEntry * (entities.Count + 1);
+            var offsets = new List<int>();
+            for (int i = 0; i < entities.Count; i++)
+            {
+                EntityEditorBase entity = entities[i];
+                offsets.Add((int)stream.Position);
+                WriteFhEntity(entity, writer);
+                if (i < entities.Count - 1 || padEnd)
+                {
+                    while (stream.Position % 4 != 0)
+                    {
+                        writer.Write(padByte);
+                    }
+                }
+            }
+            // entity entries
+            stream.Position = sizeof(uint);
+            for (int i = 0; i < entities.Count; i++)
+            {
+                EntityEditorBase entity = entities[i];
+                writer.WriteString(entity.NodeName, 16);
+                writer.Write(offsets[i]);
+            }
+            // entry terminator
+            writer.WriteString("", 16);
+            writer.Write(padInt);
+            return stream.ToArray();
+        }
+
+        private static void WriteFhEntity(EntityEditorBase entity, BinaryWriter writer)
+        {
+            writer.Write((ushort)entity.Type);
+            writer.Write(entity.Id);
+            writer.WriteVector3(entity.Position);
+            writer.WriteVector3(entity.Up);
+            writer.WriteVector3(entity.Facing);
+            if (entity.Type == EntityType.FhPlatform)
+            {
+                WriteFhPlatform((FhPlatformEntityEditor)entity, writer);
+            }
+            else if (entity.Type == EntityType.FhPlayerSpawn)
+            {
+                WritePlayerSpawn((PlayerSpawnEntityEditor)entity, writer);
+            }
+            else if (entity.Type == EntityType.FhDoor)
+            {
+                WriteFhDoor((FhDoorEntityEditor)entity, writer);
+            }
+            else if (entity.Type == EntityType.FhItemSpawn)
+            {
+                WriteFhItemSpawn((FhItemSpawnEntityEditor)entity, writer);
+            }
+            else if (entity.Type == EntityType.FhEnemySpawn)
+            {
+                WriteFhEnemySpawn((FhEnemySpawnEntityEditor)entity, writer);
+            }
+            else if (entity.Type == EntityType.FhTriggerVolume)
+            {
+                WriteFhTriggerVolume((FhTriggerVolumeEntityEditor)entity, writer);
+            }
+            else if (entity.Type == EntityType.FhAreaVolume)
+            {
+                WriteFhAreaVolume((FhAreaVolumeEntityEditor)entity, writer);
+            }
+            else if (entity.Type == EntityType.FhJumpPad)
+            {
+                WriteFhJumpPad((FhJumpPadEntityEditor)entity, writer);
+            }
+            else if (entity.Type == EntityType.FhPointModule)
+            {
+                WritePointModule((PointModuleEntityEditor)entity, writer);
+            }
+            else if (entity.Type == EntityType.FhMorphCamera)
+            {
+                WriteMorphCamera((MorphCameraEntityEditor)entity, writer);
+            }
+        }
+
+        private static void WriteFhPlatform(FhPlatformEntityEditor entity, BinaryWriter writer)
+        {
+            ushort padShort = 0;
+            Debug.Assert(entity.Positions.Count == 8);
+            writer.Write(entity.NoPortal);
+            writer.Write(entity.Field28);
+            writer.Write(entity.Field2C);
+            writer.Write(entity.Field30);
+            writer.Write(entity.Field31);
+            writer.Write(padShort); // Padding32
+            writer.WriteFhVolume(entity.Volume);
+            foreach (Vector3 position in entity.Positions)
+            {
+                writer.WriteVector3(position);
+            }
+            writer.Write(entity.FieldD4);
+            writer.WriteString(entity.PortalName, 16);
+        }
+
+        private static void WriteFhDoor(FhDoorEntityEditor entity, BinaryWriter writer)
+        {
+            writer.WriteString(entity.RoomName, 16);
+            writer.Write(entity.Flags);
+            writer.Write(entity.ModelId);
+        }
+
+        private static void WriteFhItemSpawn(FhItemSpawnEntityEditor entity, BinaryWriter writer)
+        {
+            writer.Write((uint)entity.ItemType);
+            writer.Write(entity.SpawnLimit);
+            writer.Write(entity.CooldownTime);
+            writer.Write(entity.Field2C);
+        }
+
+        private static void WriteFhEnemySpawn(FhEnemySpawnEntityEditor entity, BinaryWriter writer)
+        {
+            writer.Write(entity.Field24);
+            writer.Write(entity.Field28);
+            writer.Write(entity.Field2C);
+            writer.Write(entity.Field30);
+            writer.Write(entity.Field34);
+            writer.Write(entity.Field38);
+            writer.Write(entity.Field3C);
+            writer.Write(entity.Field40);
+            writer.Write(entity.Field44);
+            writer.Write(entity.Field48);
+            writer.Write(entity.Field4C);
+            writer.Write(entity.Field50);
+            writer.Write(entity.Field54);
+            writer.Write(entity.Field58);
+            writer.Write(entity.Field5C);
+            writer.Write(entity.Field60);
+            writer.Write(entity.Field64);
+            writer.Write(entity.Field68);
+            writer.Write(entity.Field6C);
+            writer.Write(entity.Field70);
+            writer.Write(entity.Field74);
+            writer.Write(entity.Field78);
+            writer.Write(entity.Field7C);
+            writer.Write(entity.Field80);
+            writer.Write(entity.Field84);
+            writer.Write(entity.Field88);
+            writer.Write(entity.Field8C);
+            writer.Write(entity.Field90);
+            writer.Write(entity.Field94);
+            writer.Write(entity.Field98);
+            writer.Write(entity.Field9C);
+            writer.Write(entity.FieldA0);
+            writer.Write(entity.FieldA4);
+            writer.Write(entity.FieldA8);
+            writer.Write(entity.FieldAC);
+            writer.Write(entity.FieldB0);
+            writer.Write(entity.FieldB4);
+            writer.Write(entity.FieldB8);
+            writer.Write(entity.FieldBC);
+            writer.Write(entity.FieldC0);
+            writer.Write(entity.FieldC4);
+            writer.Write(entity.FieldC8);
+            writer.Write(entity.FieldCC);
+            writer.Write(entity.FieldD0);
+            writer.Write(entity.FieldD4);
+            writer.Write(entity.FieldD8);
+            writer.Write(entity.FieldDC);
+            writer.Write(entity.FieldE0);
+            writer.Write(entity.EnemyType);
+            writer.Write(entity.FieldE8);
+            writer.Write(entity.Cooldown);
+            writer.Write(entity.FieldEE);
+            writer.WriteString(entity.SpawnNodeName, 16);
+            writer.Write(entity.ParentId);
+            writer.Write(entity.Field102);
+            writer.Write(entity.Field104);
+        }
+
+        private static void WriteFhTriggerVolume(FhTriggerVolumeEntityEditor entity, BinaryWriter writer)
+        {
+            ushort padShort = 0;
+            Debug.Assert(Enum.IsDefined(typeof(FhTriggerType), entity.Subtype));
+            writer.Write((uint)entity.Subtype);
+            writer.WriteFhVolumes(entity.Volume, entity.Subtype);
+            writer.Write(entity.OneUse);
+            writer.Write(entity.Cooldown);
+            writer.Write(entity.Flags);
+            writer.Write(entity.Threshold);
+            writer.Write(entity.ParentId);
+            writer.Write(padShort); // PaddingF6
+            writer.Write((uint)entity.ParentEvent);
+            writer.Write(entity.ParentParam1);
+            writer.Write(entity.ChildId);
+            writer.Write(padShort); // Padding102
+            writer.Write((uint)entity.ChildEvent);
+            writer.Write(entity.ChildParam1);
+        }
+
+        private static void WriteFhAreaVolume(FhAreaVolumeEntityEditor entity, BinaryWriter writer)
+        {
+            ushort padShort = 0;
+            Debug.Assert(Enum.IsDefined(typeof(FhTriggerType), entity.Subtype) && entity.Subtype != FhTriggerType.Threshold);
+            writer.Write((uint)entity.Subtype);
+            writer.WriteFhVolumes(entity.Volume, entity.Subtype);
+            writer.Write((uint)entity.InsideEvent);
+            writer.Write(entity.InsideParam1);
+            writer.Write((uint)entity.ExitEvent);
+            writer.Write(entity.ExitParam1);
+            writer.Write(entity.Cooldown);
+            writer.Write(padShort); // PaddingFA
+            writer.Write(entity.Flags);
+        }
+
+        private static void WriteFhJumpPad(FhJumpPadEntityEditor entity, BinaryWriter writer)
+        {
+            Debug.Assert(Enum.IsDefined(typeof(FhTriggerType), entity.VolumeType) && entity.VolumeType != FhTriggerType.Threshold);
+            writer.Write((uint)entity.VolumeType);
+            writer.WriteFhVolumes(entity.Volume, entity.VolumeType);
+            writer.Write(entity.CooldownTime);
+            writer.WriteVector3(entity.BeamVector);
+            writer.WriteFloat(entity.Speed);
+            writer.Write(entity.FieldFC);
+            writer.Write(entity.ModelId);
+            writer.Write(entity.BeamType);
+            writer.Write(entity.Flags);
         }
 
         public static void WriteVolume(this BinaryWriter writer, CollisionVolume volume)
@@ -868,7 +1184,7 @@ namespace MphRead.Utility
             }
         }
 
-        public static void WriteVolumeFh(this BinaryWriter writer, CollisionVolume volume)
+        public static void WriteFhVolume(this BinaryWriter writer, CollisionVolume volume)
         {
             uint padInt = 0;
             Debug.Assert(Enum.IsDefined(typeof(VolumeType), volume.Type));
@@ -905,6 +1221,28 @@ namespace MphRead.Utility
                     writer.Write(padInt);
                 }
             }
+        }
+
+        public static void WriteFhVolumes(this BinaryWriter writer, CollisionVolume volume, FhTriggerType type)
+        {
+            var box = new CollisionVolume();
+            var sphere = new CollisionVolume();
+            var cylinder = new CollisionVolume();
+            if (type == FhTriggerType.Box)
+            {
+                box = volume;
+            }
+            else if (type == FhTriggerType.Cylinder)
+            {
+                cylinder = volume;
+            }
+            else if (type == FhTriggerType.Sphere)
+            {
+                sphere = volume;
+            }
+            writer.WriteFhVolume(box);
+            writer.WriteFhVolume(cylinder);
+            writer.WriteFhVolume(sphere);
         }
     }
 }

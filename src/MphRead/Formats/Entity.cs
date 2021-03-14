@@ -129,7 +129,7 @@ namespace MphRead
         public readonly byte Field31;
         public readonly ushort Padding32;
         public readonly FhRawCollisionVolume Volume; // unused
-        public readonly Vector3FxArray8 Vectors;
+        public readonly Vector3FxArray8 Positions;
         public readonly uint FieldD4;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] PortalName;
@@ -578,7 +578,7 @@ namespace MphRead
     public readonly struct FhJumpPadEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint VolumeId;
+        public readonly FhTriggerType VolumeType; // 0/1/2 - sphere/box/cylinder
         public readonly FhRawCollisionVolume Box;
         public readonly FhRawCollisionVolume Sphere;
         public readonly FhRawCollisionVolume Cylinder;
@@ -594,15 +594,15 @@ namespace MphRead
         {
             get
             {
-                if (VolumeId == 0)
+                if (VolumeType == FhTriggerType.Sphere)
                 {
                     return Sphere;
                 }
-                if (VolumeId == 1)
+                if (VolumeType == FhTriggerType.Box)
                 {
                     return Box;
                 }
-                if (VolumeId == 2)
+                if (VolumeType == FhTriggerType.Cylinder)
                 {
                     return Cylinder;
                 }

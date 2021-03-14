@@ -4,7 +4,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Editor
 {
-    // todo:
+    // sktodo:
     // - message enum
     public abstract class EntityEditorBase
     {
@@ -188,9 +188,25 @@ namespace MphRead.Editor
         public byte Field30 { get; set; }
         public byte Field31 { get; set; }
         public CollisionVolume Volume { get; set; } // unused
-        public List<Vector3> Vectors { get; set; } = new List<Vector3>();
+        public List<Vector3> Positions { get; set; } = new List<Vector3>();
         public uint FieldD4 { get; set; }
         public string PortalName { get; set; } = "";
+
+        public FhPlatformEntityEditor(Entity header, FhPlatformEntityData raw) : base(header)
+        {
+            NoPortal = raw.NoPortal;
+            Field28 = raw.Field28;
+            Field2C = raw.Field2C;
+            Field30 = raw.Field30;
+            Field31 = raw.Field31;
+            Volume = new CollisionVolume(raw.Volume);
+            for (int i = 0; i < 8; i++)
+            {
+                Positions.Add(raw.Positions[i].ToFloatVector());
+            }
+            FieldD4 = raw.FieldD4;
+            PortalName = raw.PortalName.MarshalString();
+        }
     }
 
     public class ObjectEntityEditor : EntityEditorBase
@@ -272,6 +288,13 @@ namespace MphRead.Editor
         public string RoomName { get; set; } = "";
         public uint Flags { get; set; }
         public uint ModelId { get; set; }
+
+        public FhDoorEntityEditor(Entity header, FhDoorEntityData raw) : base(header)
+        {
+            RoomName = raw.RoomName.MarshalString();
+            Flags = raw.Flags;
+            ModelId = raw.ModelId;
+        }
     }
 
     public class ItemSpawnEntityEditor : EntityEditorBase
@@ -312,6 +335,14 @@ namespace MphRead.Editor
         public ushort SpawnLimit { get; set; }
         public ushort CooldownTime { get; set; }
         public ushort Field2C { get; set; }
+
+        public FhItemSpawnEntityEditor(Entity header, FhItemSpawnEntityData raw) : base(header)
+        {
+            ItemType = raw.ItemType;
+            SpawnLimit = raw.SpawnLimit;
+            CooldownTime = raw.CooldownTime;
+            Field2C = raw.Field2C;
+        }
     }
 
     public class EnemySpawnEntityEditor : EntityEditorBase
@@ -637,6 +668,69 @@ namespace MphRead.Editor
         public short ParentId { get; set; }
         public ushort Field102 { get; set; }
         public uint Field104 { get; set; }
+
+        public FhEnemySpawnEntityEditor(Entity header, FhEnemySpawnEntityData raw) : base(header)
+        {
+            Field24 = raw.Field24;
+            Field28 = raw.Field28;
+            Field2C = raw.Field2C;
+            Field30 = raw.Field30;
+            Field34 = raw.Field34;
+            Field38 = raw.Field38;
+            Field3C = raw.Field3C;
+            Field40 = raw.Field40;
+            Field44 = raw.Field44;
+            Field48 = raw.Field48;
+            Field4C = raw.Field4C;
+            Field50 = raw.Field50;
+            Field54 = raw.Field54;
+            Field58 = raw.Field58;
+            Field5C = raw.Field5C;
+            Field60 = raw.Field60;
+            Field64 = raw.Field64;
+            Field68 = raw.Field68;
+            Field6C = raw.Field6C;
+            Field70 = raw.Field70;
+            Field74 = raw.Field74;
+            Field78 = raw.Field78;
+            Field7C = raw.Field7C;
+            Field80 = raw.Field80;
+            Field84 = raw.Field84;
+            Field88 = raw.Field88;
+            Field8C = raw.Field8C;
+            Field90 = raw.Field90;
+            Field94 = raw.Field94;
+            Field98 = raw.Field98;
+            Field9C = raw.Field9C;
+            FieldA0 = raw.FieldA0;
+            FieldA4 = raw.FieldA4;
+            FieldA8 = raw.FieldA8;
+            FieldAC = raw.FieldAC;
+            FieldB0 = raw.FieldB0;
+            FieldB4 = raw.FieldB4;
+            FieldB8 = raw.FieldB8;
+            FieldBC = raw.FieldBC;
+            FieldC0 = raw.FieldC0;
+            FieldC4 = raw.FieldC4;
+            FieldC8 = raw.FieldC8;
+            FieldCC = raw.FieldCC;
+            FieldD0 = raw.FieldD0;
+            FieldD4 = raw.FieldD4;
+            FieldD8 = raw.FieldD8;
+            FieldDC = raw.FieldDC;
+            FieldE0 = raw.FieldE0;
+            EnemyType = raw.EnemyType;
+            FieldE8 = raw.FieldE8;
+            SpawnLimit = raw.SpawnLimit;
+            SpawnCount = raw.SpawnCount;
+            FieldEB = raw.FieldEB;
+            Cooldown = raw.Cooldown;
+            FieldEE = raw.FieldEE;
+            SpawnNodeName = raw.NodeName.MarshalString();
+            ParentId = raw.ParentId;
+            Field102 = raw.Field102;
+            Field104 = raw.Field104;
+        }
     }
 
     public class TriggerVolumeEntityEditor : EntityEditorBase
@@ -686,9 +780,7 @@ namespace MphRead.Editor
     public class FhTriggerVolumeEntityEditor : EntityEditorBase
     {
         public FhTriggerType Subtype { get; set; } // 0/1/2 - sphere/box/cylinder, 3 - threshold
-        public CollisionVolume Box { get; set; }
-        public CollisionVolume Sphere { get; set; }
-        public CollisionVolume Cylinder { get; set; }
+        public CollisionVolume Volume { get; set; }
         public ushort OneUse { get; set; }
         public ushort Cooldown { get; set; }
         public uint Flags { get; set; }
@@ -699,6 +791,33 @@ namespace MphRead.Editor
         public short ChildId { get; set; }
         public FhMessage ChildEvent { get; set; }
         public uint ChildParam1 { get; set; }
+
+        public FhTriggerVolumeEntityEditor(Entity header, FhTriggerVolumeEntityData raw) : base(header)
+        {
+            Subtype = raw.Subtype;
+            if (Subtype == FhTriggerType.Box)
+            {
+                Volume = new CollisionVolume(raw.Box);
+            }
+            else if (Subtype == FhTriggerType.Cylinder)
+            {
+                Volume = new CollisionVolume(raw.Cylinder);
+            }
+            else if (Subtype == FhTriggerType.Sphere)
+            {
+                Volume = new CollisionVolume(raw.Sphere);
+            }
+            OneUse = raw.OneUse;
+            Cooldown = raw.Cooldown;
+            Flags = raw.Flags;
+            Threshold = raw.Threshold;
+            ParentId = raw.ParentId;
+            ParentEvent = raw.ParentEvent;
+            ParentParam1 = raw.ParentParam1;
+            ChildId = raw.ChildId;
+            ChildEvent = raw.ChildEvent;
+            ChildParam1 = raw.ChildParam1;
+        }
     }
 
     public class AreaVolumeEntityEditor : EntityEditorBase
@@ -746,15 +865,36 @@ namespace MphRead.Editor
     public class FhAreaVolumeEntityEditor : EntityEditorBase
     {
         public FhTriggerType Subtype { get; set; } // 0/1 - sphere/box
-        public CollisionVolume Box { get; set; }
-        public CollisionVolume Sphere { get; set; }
-        public CollisionVolume Cylinder { get; set; }
+        public CollisionVolume Volume { get; set; }
         public FhMessage InsideEvent { get; set; }
         public uint InsideParam1 { get; set; }
         public FhMessage ExitEvent { get; set; }
         public uint ExitParam1 { get; set; }
         public ushort Cooldown { get; set; }
         public uint Flags { get; set; }
+
+        public FhAreaVolumeEntityEditor(Entity header, FhAreaVolumeEntityData raw) : base(header)
+        {
+            Subtype = raw.Subtype;
+            if (Subtype == FhTriggerType.Box)
+            {
+                Volume = new CollisionVolume(raw.Box);
+            }
+            else if (Subtype == FhTriggerType.Cylinder)
+            {
+                Volume = new CollisionVolume(raw.Cylinder);
+            }
+            else if (Subtype == FhTriggerType.Sphere)
+            {
+                Volume = new CollisionVolume(raw.Sphere);
+            }
+            InsideEvent = raw.InsideEvent;
+            InsideParam1 = raw.InsideParam1;
+            ExitEvent = raw.ExitEvent;
+            ExitParam1 = raw.ExitParam1;
+            Cooldown = raw.Cooldown;
+            Flags = raw.Flags;
+        }
     }
 
     public class JumpPadEntityEditor : EntityEditorBase
@@ -787,10 +927,8 @@ namespace MphRead.Editor
 
     public class FhJumpPadEntityEditor : EntityEditorBase
     {
-        public uint VolumeId { get; set; }
-        public CollisionVolume Box { get; set; }
-        public CollisionVolume Sphere { get; set; }
-        public CollisionVolume Cylinder { get; set; }
+        public FhTriggerType VolumeType { get; set; }
+        public CollisionVolume Volume { get; set; }
         public uint CooldownTime { get; set; }
         public Vector3 BeamVector { get; set; }
         public float Speed { get; set; }
@@ -798,6 +936,30 @@ namespace MphRead.Editor
         public uint ModelId { get; set; }
         public uint BeamType { get; set; }
         public uint Flags { get; set; }
+
+        public FhJumpPadEntityEditor(Entity header, FhJumpPadEntityData raw) : base(header)
+        {
+            VolumeType = raw.VolumeType;
+            if (VolumeType == FhTriggerType.Box)
+            {
+                Volume = new CollisionVolume(raw.Box);
+            }
+            else if (VolumeType == FhTriggerType.Cylinder)
+            {
+                Volume = new CollisionVolume(raw.Cylinder);
+            }
+            else if (VolumeType == FhTriggerType.Sphere)
+            {
+                Volume = new CollisionVolume(raw.Sphere);
+            }
+            CooldownTime = raw.CooldownTime;
+            BeamVector = raw.BeamVector.ToFloatVector();
+            Speed = raw.Speed.FloatValue;
+            FieldFC = raw.FieldFC;
+            ModelId = raw.ModelId;
+            BeamType = raw.BeamType;
+            Flags = raw.Flags;
+        }
     }
 
     public class PointModuleEntityEditor : EntityEditorBase
@@ -819,6 +981,11 @@ namespace MphRead.Editor
         public CollisionVolume Volume { get; set; }
 
         public MorphCameraEntityEditor(Entity header, MorphCameraEntityData raw) : base(header)
+        {
+            Volume = new CollisionVolume(raw.Volume);
+        }
+
+        public MorphCameraEntityEditor(Entity header, FhMorphCameraEntityData raw) : base(header)
         {
             Volume = new CollisionVolume(raw.Volume);
         }
