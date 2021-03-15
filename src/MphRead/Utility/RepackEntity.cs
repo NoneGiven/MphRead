@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using MphRead.Editor;
 using OpenTK.Mathematics;
 
@@ -224,8 +225,179 @@ namespace MphRead.Utility
                 FhEntityEntry fileEntry = fileEntries[i];
                 Debug.Assert(packEntry.DataOffset == fileEntry.DataOffset);
                 Debug.Assert(Enumerable.SequenceEqual(packEntry.NodeName, fileEntry.NodeName));
+                CompareData((int)packEntry.DataOffset, pack, file);
             }
             Debug.Assert(Enumerable.SequenceEqual(pack, file));
+            Nop();
+        }
+
+        private static void CompareData(int offset, byte[] pack, byte[] file)
+        {
+            EntityDataHeader packDataHeader = Read.DoOffset<EntityDataHeader>(pack, offset);
+            EntityDataHeader fileDataHeader = Read.DoOffset<EntityDataHeader>(file, offset);
+            Debug.Assert(packDataHeader.Type == fileDataHeader.Type);
+            Debug.Assert(packDataHeader.EntityId == fileDataHeader.EntityId);
+            Debug.Assert(packDataHeader.Position.X.Value == fileDataHeader.Position.X.Value);
+            Debug.Assert(packDataHeader.Position.Y.Value == fileDataHeader.Position.Y.Value);
+            Debug.Assert(packDataHeader.Position.Z.Value == fileDataHeader.Position.Z.Value);
+            Debug.Assert(packDataHeader.UpVector.X.Value == fileDataHeader.UpVector.X.Value);
+            Debug.Assert(packDataHeader.UpVector.Y.Value == fileDataHeader.UpVector.Y.Value);
+            Debug.Assert(packDataHeader.UpVector.Z.Value == fileDataHeader.UpVector.Z.Value);
+            Debug.Assert(packDataHeader.FacingVector.X.Value == fileDataHeader.FacingVector.X.Value);
+            Debug.Assert(packDataHeader.FacingVector.Y.Value == fileDataHeader.FacingVector.Y.Value);
+            Debug.Assert(packDataHeader.FacingVector.Z.Value == fileDataHeader.FacingVector.Z.Value);
+            int end = 0;
+            if (packDataHeader.Type + 100 == (ushort)EntityType.FhPlatform)
+            {
+                end = offset + Marshal.SizeOf<FhPlatformEntityData>();
+            }
+            else if (packDataHeader.Type + 100 == (ushort)EntityType.FhPlayerSpawn)
+            {
+                end = offset + Marshal.SizeOf<PlayerSpawnEntityData>();
+            }
+            else if (packDataHeader.Type + 100 == (ushort)EntityType.FhDoor)
+            {
+                end = offset + Marshal.SizeOf<FhDoorEntityData>();
+            }
+            else if (packDataHeader.Type + 100 == (ushort)EntityType.FhItemSpawn)
+            {
+                end = offset + Marshal.SizeOf<FhItemSpawnEntityData>();
+            }
+            else if (packDataHeader.Type + 100 == (ushort)EntityType.FhEnemySpawn)
+            {
+                end = offset + Marshal.SizeOf<FhEnemySpawnEntityData>();
+            }
+            else if (packDataHeader.Type + 100 == (ushort)EntityType.FhTriggerVolume)
+            {
+                end = offset + Marshal.SizeOf<FhTriggerVolumeEntityData>();
+            }
+            else if (packDataHeader.Type + 100 == (ushort)EntityType.FhAreaVolume)
+            {
+                end = offset + Marshal.SizeOf<FhAreaVolumeEntityData>();
+            }
+            else if (packDataHeader.Type + 100 == (ushort)EntityType.FhJumpPad)
+            {
+                end = offset + Marshal.SizeOf<FhJumpPadEntityData>();
+            }
+            else if (packDataHeader.Type + 100 == (ushort)EntityType.FhPointModule)
+            {
+                end = offset + Marshal.SizeOf<PointModuleEntityData>();
+            }
+            else if (packDataHeader.Type + 100 == (ushort)EntityType.FhMorphCamera)
+            {
+                end = offset + Marshal.SizeOf<FhMorphCameraEntityData>();
+            }
+            if (!Enumerable.SequenceEqual(pack[offset..end], file[offset..end]))
+            {
+                if (packDataHeader.Type + 100 == (ushort)EntityType.FhPlatform)
+                {
+                    FhPlatformEntityData packData = Read.DoOffset<FhPlatformEntityData>(pack, offset);
+                    FhPlatformEntityData fileData = Read.DoOffset<FhPlatformEntityData>(file, offset);
+                    Debugger.Break();
+                }
+                else if (packDataHeader.Type + 100 == (ushort)EntityType.FhPlayerSpawn)
+                {
+                    PlayerSpawnEntityData packData = Read.DoOffset<PlayerSpawnEntityData>(pack, offset);
+                    PlayerSpawnEntityData fileData = Read.DoOffset<PlayerSpawnEntityData>(file, offset);
+                    Debugger.Break();
+                }
+                else if (packDataHeader.Type + 100 == (ushort)EntityType.FhDoor)
+                {
+                    FhDoorEntityData packData = Read.DoOffset<FhDoorEntityData>(pack, offset);
+                    FhDoorEntityData fileData = Read.DoOffset<FhDoorEntityData>(file, offset);
+                    Debugger.Break();
+                }
+                else if (packDataHeader.Type + 100 == (ushort)EntityType.FhItemSpawn)
+                {
+                    FhItemSpawnEntityData packData = Read.DoOffset<FhItemSpawnEntityData>(pack, offset);
+                    FhItemSpawnEntityData fileData = Read.DoOffset<FhItemSpawnEntityData>(file, offset);
+                    Debugger.Break();
+                }
+                else if (packDataHeader.Type + 100 == (ushort)EntityType.FhEnemySpawn)
+                {
+                    FhEnemySpawnEntityData packData = Read.DoOffset<FhEnemySpawnEntityData>(pack, offset);
+                    FhEnemySpawnEntityData fileData = Read.DoOffset<FhEnemySpawnEntityData>(file, offset);
+                    Debugger.Break();
+                }
+                else if (packDataHeader.Type + 100 == (ushort)EntityType.FhTriggerVolume)
+                {
+                    FhTriggerVolumeEntityData packData = Read.DoOffset<FhTriggerVolumeEntityData>(pack, offset);
+                    FhTriggerVolumeEntityData fileData = Read.DoOffset<FhTriggerVolumeEntityData>(file, offset);
+                    Debugger.Break();
+                }
+                else if (packDataHeader.Type + 100 == (ushort)EntityType.FhAreaVolume)
+                {
+                    FhAreaVolumeEntityData packData = Read.DoOffset<FhAreaVolumeEntityData>(pack, offset);
+                    FhAreaVolumeEntityData fileData = Read.DoOffset<FhAreaVolumeEntityData>(file, offset);
+                    Debugger.Break();
+                }
+                else if (packDataHeader.Type + 100 == (ushort)EntityType.FhJumpPad)
+                {
+                    FhJumpPadEntityData packData = Read.DoOffset<FhJumpPadEntityData>(pack, offset);
+                    FhJumpPadEntityData fileData = Read.DoOffset<FhJumpPadEntityData>(file, offset);
+                    Debug.Assert(packData.VolumeType == fileData.VolumeType);
+                    Debug.Assert(packData.Box.BoxVector1.X.Value == fileData.Box.BoxVector1.X.Value);
+                    Debug.Assert(packData.Box.BoxVector1.Y.Value == fileData.Box.BoxVector1.Y.Value);
+                    Debug.Assert(packData.Box.BoxVector1.Z.Value == fileData.Box.BoxVector1.Z.Value);
+                    Debug.Assert(packData.Box.BoxVector2.X.Value == fileData.Box.BoxVector2.X.Value);
+                    Debug.Assert(packData.Box.BoxVector2.Y.Value == fileData.Box.BoxVector2.Y.Value);
+                    Debug.Assert(packData.Box.BoxVector2.Z.Value == fileData.Box.BoxVector2.Z.Value);
+                    Debug.Assert(packData.Box.BoxVector3.X.Value == fileData.Box.BoxVector3.X.Value);
+                    Debug.Assert(packData.Box.BoxVector3.Y.Value == fileData.Box.BoxVector3.Y.Value);
+                    Debug.Assert(packData.Box.BoxVector3.Z.Value == fileData.Box.BoxVector3.Z.Value);
+                    Debug.Assert(packData.Box.BoxPosition.X.Value == fileData.Box.BoxPosition.X.Value);
+                    Debug.Assert(packData.Box.BoxPosition.Y.Value == fileData.Box.BoxPosition.Y.Value);
+                    Debug.Assert(packData.Box.BoxPosition.Z.Value == fileData.Box.BoxPosition.Z.Value);
+                    Debug.Assert(packData.Box.BoxDot1.Value == fileData.Box.BoxDot1.Value);
+                    Debug.Assert(packData.Box.BoxDot2.Value == fileData.Box.BoxDot2.Value);
+                    Debug.Assert(packData.Box.BoxDot3.Value == fileData.Box.BoxDot3.Value);
+
+                    Debug.Assert(packData.Sphere.BoxVector1.X.Value == fileData.Sphere.BoxVector1.X.Value);
+                    Debug.Assert(packData.Sphere.BoxVector1.Y.Value == fileData.Sphere.BoxVector1.Y.Value);
+                    Debug.Assert(packData.Sphere.BoxVector1.Z.Value == fileData.Sphere.BoxVector1.Z.Value);
+                    Debug.Assert(packData.Sphere.BoxVector2.X.Value == fileData.Sphere.BoxVector2.X.Value);
+                    Debug.Assert(packData.Sphere.BoxVector2.Y.Value == fileData.Sphere.BoxVector2.Y.Value);
+                    Debug.Assert(packData.Sphere.BoxVector2.Z.Value == fileData.Sphere.BoxVector2.Z.Value);
+                    Debug.Assert(packData.Sphere.BoxVector3.X.Value == fileData.Sphere.BoxVector3.X.Value);
+                    Debug.Assert(packData.Sphere.BoxVector3.Y.Value == fileData.Sphere.BoxVector3.Y.Value);
+                    Debug.Assert(packData.Sphere.BoxVector3.Z.Value == fileData.Sphere.BoxVector3.Z.Value);
+                    Debug.Assert(packData.Sphere.BoxPosition.X.Value == fileData.Sphere.BoxPosition.X.Value);
+                    Debug.Assert(packData.Sphere.BoxPosition.Y.Value == fileData.Sphere.BoxPosition.Y.Value);
+                    Debug.Assert(packData.Sphere.BoxPosition.Z.Value == fileData.Sphere.BoxPosition.Z.Value);
+                    Debug.Assert(packData.Sphere.BoxDot1.Value == fileData.Sphere.BoxDot1.Value);
+                    Debug.Assert(packData.Sphere.BoxDot2.Value == fileData.Sphere.BoxDot2.Value);
+                    Debug.Assert(packData.Sphere.BoxDot3.Value == fileData.Sphere.BoxDot3.Value);
+
+                    Debug.Assert(packData.Cylinder.BoxVector1.X.Value == fileData.Cylinder.BoxVector1.X.Value);
+                    Debug.Assert(packData.Cylinder.BoxVector1.Y.Value == fileData.Cylinder.BoxVector1.Y.Value);
+                    Debug.Assert(packData.Cylinder.BoxVector1.Z.Value == fileData.Cylinder.BoxVector1.Z.Value);
+                    Debug.Assert(packData.Cylinder.BoxVector2.X.Value == fileData.Cylinder.BoxVector2.X.Value);
+                    Debug.Assert(packData.Cylinder.BoxVector2.Y.Value == fileData.Cylinder.BoxVector2.Y.Value);
+                    Debug.Assert(packData.Cylinder.BoxVector2.Z.Value == fileData.Cylinder.BoxVector2.Z.Value);
+                    Debug.Assert(packData.Cylinder.BoxVector3.X.Value == fileData.Cylinder.BoxVector3.X.Value);
+                    Debug.Assert(packData.Cylinder.BoxVector3.Y.Value == fileData.Cylinder.BoxVector3.Y.Value);
+                    Debug.Assert(packData.Cylinder.BoxVector3.Z.Value == fileData.Cylinder.BoxVector3.Z.Value);
+                    Debug.Assert(packData.Cylinder.BoxPosition.X.Value == fileData.Cylinder.BoxPosition.X.Value);
+                    Debug.Assert(packData.Cylinder.BoxPosition.Y.Value == fileData.Cylinder.BoxPosition.Y.Value);
+                    Debug.Assert(packData.Cylinder.BoxPosition.Z.Value == fileData.Cylinder.BoxPosition.Z.Value);
+                    Debug.Assert(packData.Cylinder.BoxDot1.Value == fileData.Cylinder.BoxDot1.Value);
+                    Debug.Assert(packData.Cylinder.BoxDot2.Value == fileData.Cylinder.BoxDot2.Value);
+                    Debug.Assert(packData.Cylinder.BoxDot3.Value == fileData.Cylinder.BoxDot3.Value);
+                    Debugger.Break();
+                }
+                else if (packDataHeader.Type + 100 == (ushort)EntityType.FhPointModule)
+                {
+                    PointModuleEntityData packData = Read.DoOffset<PointModuleEntityData>(pack, offset);
+                    PointModuleEntityData fileData = Read.DoOffset<PointModuleEntityData>(file, offset);
+                    Debugger.Break();
+                }
+                else if (packDataHeader.Type + 100 == (ushort)EntityType.FhMorphCamera)
+                {
+                    FhMorphCameraEntityData packData = Read.DoOffset<FhMorphCameraEntityData>(pack, offset);
+                    FhMorphCameraEntityData fileData = Read.DoOffset<FhMorphCameraEntityData>(file, offset);
+                    Debugger.Break();
+                }
+            }
             Nop();
         }
 
@@ -427,7 +599,7 @@ namespace MphRead.Utility
             }
             else if (entity.Type == EntityType.MorphCamera)
             {
-                WriteMorphCamera((MorphCameraEntityEditor)entity, writer);
+                WriteMphMorphCamera((MorphCameraEntityEditor)entity, writer);
             }
             else if (entity.Type == EntityType.OctolithFlag)
             {
@@ -824,9 +996,14 @@ namespace MphRead.Utility
             writer.WriteByte(entity.Active);
         }
 
-        private static void WriteMorphCamera(MorphCameraEntityEditor entity, BinaryWriter writer)
+        private static void WriteMphMorphCamera(MorphCameraEntityEditor entity, BinaryWriter writer)
         {
             writer.WriteVolume(entity.Volume);
+        }
+
+        private static void WriteFhMorphCamera(MorphCameraEntityEditor entity, BinaryWriter writer)
+        {
+            writer.WriteFhVolume(entity.Volume);
         }
 
         private static void WriteMphOctolithFlag(OctolithFlagEntityEditor entity, BinaryWriter writer)
@@ -957,7 +1134,7 @@ namespace MphRead.Utility
 
         private static void WriteFhEntity(EntityEditorBase entity, BinaryWriter writer)
         {
-            writer.Write((ushort)entity.Type);
+            writer.Write((ushort)((ushort)entity.Type - 100));
             writer.Write(entity.Id);
             writer.WriteVector3(entity.Position);
             writer.WriteVector3(entity.Up);
@@ -1000,7 +1177,7 @@ namespace MphRead.Utility
             }
             else if (entity.Type == EntityType.FhMorphCamera)
             {
-                WriteMorphCamera((MorphCameraEntityEditor)entity, writer);
+                WriteFhMorphCamera((MorphCameraEntityEditor)entity, writer);
             }
         }
 
@@ -1103,7 +1280,9 @@ namespace MphRead.Utility
             ushort padShort = 0;
             Debug.Assert(Enum.IsDefined(typeof(FhTriggerType), entity.Subtype));
             writer.Write((uint)entity.Subtype);
-            writer.WriteFhVolumes(entity.Volume, entity.Subtype);
+            writer.WriteFhVolume(entity.Box);
+            writer.WriteFhVolume(entity.Sphere);
+            writer.WriteFhVolume(entity.Cylinder);
             writer.Write(entity.OneUse);
             writer.Write(entity.Cooldown);
             writer.Write(entity.Flags);
@@ -1123,7 +1302,9 @@ namespace MphRead.Utility
             ushort padShort = 0;
             Debug.Assert(Enum.IsDefined(typeof(FhTriggerType), entity.Subtype) && entity.Subtype != FhTriggerType.Threshold);
             writer.Write((uint)entity.Subtype);
-            writer.WriteFhVolumes(entity.Volume, entity.Subtype);
+            writer.WriteFhVolume(entity.Box);
+            writer.WriteFhVolume(entity.Sphere);
+            writer.WriteFhVolume(entity.Cylinder);
             writer.Write((uint)entity.InsideEvent);
             writer.Write(entity.InsideParam1);
             writer.Write((uint)entity.ExitEvent);
@@ -1137,7 +1318,9 @@ namespace MphRead.Utility
         {
             Debug.Assert(Enum.IsDefined(typeof(FhTriggerType), entity.VolumeType) && entity.VolumeType != FhTriggerType.Threshold);
             writer.Write((uint)entity.VolumeType);
-            writer.WriteFhVolumes(entity.Volume, entity.VolumeType);
+            writer.WriteFhVolume(entity.Box);
+            writer.WriteFhVolume(entity.Sphere);
+            writer.WriteFhVolume(entity.Cylinder);
             writer.Write(entity.CooldownTime);
             writer.WriteVector3(entity.BeamVector);
             writer.WriteFloat(entity.Speed);
@@ -1221,28 +1404,6 @@ namespace MphRead.Utility
                     writer.Write(padInt);
                 }
             }
-        }
-
-        public static void WriteFhVolumes(this BinaryWriter writer, CollisionVolume volume, FhTriggerType type)
-        {
-            var box = new CollisionVolume();
-            var sphere = new CollisionVolume();
-            var cylinder = new CollisionVolume();
-            if (type == FhTriggerType.Box)
-            {
-                box = volume;
-            }
-            else if (type == FhTriggerType.Cylinder)
-            {
-                cylinder = volume;
-            }
-            else if (type == FhTriggerType.Sphere)
-            {
-                sphere = volume;
-            }
-            writer.WriteFhVolume(box);
-            writer.WriteFhVolume(cylinder);
-            writer.WriteFhVolume(sphere);
         }
     }
 }

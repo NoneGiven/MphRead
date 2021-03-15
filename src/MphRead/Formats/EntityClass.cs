@@ -780,7 +780,9 @@ namespace MphRead.Editor
     public class FhTriggerVolumeEntityEditor : EntityEditorBase
     {
         public FhTriggerType Subtype { get; set; } // 0/1/2 - sphere/box/cylinder, 3 - threshold
-        public CollisionVolume Volume { get; set; }
+        public CollisionVolume Box { get; set; }
+        public CollisionVolume Sphere { get; set; }
+        public CollisionVolume Cylinder { get; set; }
         public ushort OneUse { get; set; }
         public ushort Cooldown { get; set; }
         public uint Flags { get; set; }
@@ -795,18 +797,9 @@ namespace MphRead.Editor
         public FhTriggerVolumeEntityEditor(Entity header, FhTriggerVolumeEntityData raw) : base(header)
         {
             Subtype = raw.Subtype;
-            if (Subtype == FhTriggerType.Box)
-            {
-                Volume = new CollisionVolume(raw.Box);
-            }
-            else if (Subtype == FhTriggerType.Cylinder)
-            {
-                Volume = new CollisionVolume(raw.Cylinder);
-            }
-            else if (Subtype == FhTriggerType.Sphere)
-            {
-                Volume = new CollisionVolume(raw.Sphere);
-            }
+            Box = new CollisionVolume(raw.Box);
+            Sphere = new CollisionVolume(raw.Sphere);
+            Cylinder = new CollisionVolume(raw.Cylinder);
             OneUse = raw.OneUse;
             Cooldown = raw.Cooldown;
             Flags = raw.Flags;
@@ -865,7 +858,9 @@ namespace MphRead.Editor
     public class FhAreaVolumeEntityEditor : EntityEditorBase
     {
         public FhTriggerType Subtype { get; set; } // 0/1 - sphere/box
-        public CollisionVolume Volume { get; set; }
+        public CollisionVolume Box { get; set; }
+        public CollisionVolume Sphere { get; set; }
+        public CollisionVolume Cylinder { get; set; }
         public FhMessage InsideEvent { get; set; }
         public uint InsideParam1 { get; set; }
         public FhMessage ExitEvent { get; set; }
@@ -876,18 +871,9 @@ namespace MphRead.Editor
         public FhAreaVolumeEntityEditor(Entity header, FhAreaVolumeEntityData raw) : base(header)
         {
             Subtype = raw.Subtype;
-            if (Subtype == FhTriggerType.Box)
-            {
-                Volume = new CollisionVolume(raw.Box);
-            }
-            else if (Subtype == FhTriggerType.Cylinder)
-            {
-                Volume = new CollisionVolume(raw.Cylinder);
-            }
-            else if (Subtype == FhTriggerType.Sphere)
-            {
-                Volume = new CollisionVolume(raw.Sphere);
-            }
+            Box = new CollisionVolume(raw.Box);
+            Sphere = new CollisionVolume(raw.Sphere);
+            Cylinder = new CollisionVolume(raw.Cylinder);
             InsideEvent = raw.InsideEvent;
             InsideParam1 = raw.InsideParam1;
             ExitEvent = raw.ExitEvent;
@@ -928,7 +914,9 @@ namespace MphRead.Editor
     public class FhJumpPadEntityEditor : EntityEditorBase
     {
         public FhTriggerType VolumeType { get; set; }
-        public CollisionVolume Volume { get; set; }
+        public CollisionVolume Box { get; set; }
+        public CollisionVolume Sphere { get; set; }
+        public CollisionVolume Cylinder { get; set; }
         public uint CooldownTime { get; set; }
         public Vector3 BeamVector { get; set; }
         public float Speed { get; set; }
@@ -940,18 +928,9 @@ namespace MphRead.Editor
         public FhJumpPadEntityEditor(Entity header, FhJumpPadEntityData raw) : base(header)
         {
             VolumeType = raw.VolumeType;
-            if (VolumeType == FhTriggerType.Box)
-            {
-                Volume = new CollisionVolume(raw.Box);
-            }
-            else if (VolumeType == FhTriggerType.Cylinder)
-            {
-                Volume = new CollisionVolume(raw.Cylinder);
-            }
-            else if (VolumeType == FhTriggerType.Sphere)
-            {
-                Volume = new CollisionVolume(raw.Sphere);
-            }
+            Box = new CollisionVolume(raw.Box);
+            Cylinder = new CollisionVolume(raw.Cylinder);
+            Sphere = new CollisionVolume(raw.Sphere);
             CooldownTime = raw.CooldownTime;
             BeamVector = raw.BeamVector.ToFloatVector();
             Speed = raw.Speed.FloatValue;

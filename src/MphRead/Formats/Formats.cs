@@ -589,86 +589,125 @@ namespace MphRead
     public struct CollisionVolume
     {
         [FieldOffset(0)]
-        public readonly VolumeType Type;
+        public VolumeType Type;
         // box
         [FieldOffset(4)]
-        public readonly Vector3 BoxVector1;
+        public Vector3 BoxVector1;
         [FieldOffset(16)]
-        public readonly Vector3 BoxVector2;
+        public Vector3 BoxVector2;
         [FieldOffset(28)]
-        public readonly Vector3 BoxVector3;
+        public Vector3 BoxVector3;
         [FieldOffset(40)]
-        public readonly Vector3 BoxPosition;
+        public Vector3 BoxPosition;
         [FieldOffset(52)]
-        public readonly float BoxDot1;
+        public float BoxDot1;
         [FieldOffset(56)]
-        public readonly float BoxDot2;
+        public float BoxDot2;
         [FieldOffset(60)]
-        public readonly float BoxDot3;
+        public float BoxDot3;
         // cylinder
         [FieldOffset(4)]
-        public readonly Vector3 CylinderVector;
+        public Vector3 CylinderVector;
         [FieldOffset(16)]
-        public readonly Vector3 CylinderPosition;
+        public Vector3 CylinderPosition;
         [FieldOffset(28)]
-        public readonly float CylinderRadius;
+        public float CylinderRadius;
         [FieldOffset(32)]
-        public readonly float CylinderDot;
+        public float CylinderDot;
         // sphere
         [FieldOffset(4)]
-        public readonly Vector3 SpherePosition;
+        public Vector3 SpherePosition;
         [FieldOffset(16)]
-        public readonly float SphereRadius;
+        public float SphereRadius;
 
         public CollisionVolume(RawCollisionVolume raw)
         {
             Type = raw.Type;
-            BoxVector1 = raw.BoxVector1.ToFloatVector();
-            BoxVector2 = raw.BoxVector2.ToFloatVector();
-            BoxVector3 = raw.BoxVector3.ToFloatVector();
-            BoxPosition = raw.BoxPosition.ToFloatVector();
-            BoxDot1 = raw.BoxDot1.FloatValue;
-            BoxDot2 = raw.BoxDot2.FloatValue;
-            BoxDot3 = raw.BoxDot3.FloatValue;
-            CylinderVector = raw.CylinderVector.ToFloatVector();
-            CylinderPosition = raw.CylinderPosition.ToFloatVector();
-            CylinderRadius = raw.CylinderRadius.FloatValue;
-            CylinderDot = raw.CylinderDot.FloatValue;
-            SpherePosition = raw.SpherePosition.ToFloatVector();
-            SphereRadius = raw.SphereRadius.FloatValue;
-        }
-
-        public CollisionVolume(FhRawCollisionVolume raw)
-        {
-            if (raw.Type == FhVolumeType.Box)
+            BoxVector1 = Vector3.Zero;
+            BoxVector2 = Vector3.Zero;
+            BoxVector3 = Vector3.Zero;
+            BoxPosition = Vector3.Zero;
+            BoxDot1 = 0;
+            BoxDot2 = 0;
+            BoxDot3 = 0;
+            CylinderVector = Vector3.Zero;
+            CylinderPosition = Vector3.Zero;
+            CylinderRadius = 0;
+            CylinderDot = 0;
+            SpherePosition = Vector3.Zero;
+            SphereRadius = 0;
+            if (Type == VolumeType.Box)
             {
-                Type = VolumeType.Box;
+                BoxVector1 = raw.BoxVector1.ToFloatVector();
+                BoxVector2 = raw.BoxVector2.ToFloatVector();
+                BoxVector3 = raw.BoxVector3.ToFloatVector();
+                BoxPosition = raw.BoxPosition.ToFloatVector();
+                BoxDot1 = raw.BoxDot1.FloatValue;
+                BoxDot2 = raw.BoxDot2.FloatValue;
+                BoxDot3 = raw.BoxDot3.FloatValue;
             }
-            else if (raw.Type == FhVolumeType.Sphere)
+            else if (Type == VolumeType.Cylinder)
             {
-                Type = VolumeType.Sphere;
+                CylinderVector = raw.CylinderVector.ToFloatVector();
+                CylinderPosition = raw.CylinderPosition.ToFloatVector();
+                CylinderRadius = raw.CylinderRadius.FloatValue;
+                CylinderDot = raw.CylinderDot.FloatValue;
             }
-            else if (raw.Type == FhVolumeType.Cylinder)
+            else if (Type == VolumeType.Sphere)
             {
-                Type = VolumeType.Cylinder;
+                SpherePosition = raw.SpherePosition.ToFloatVector();
+                SphereRadius = raw.SphereRadius.FloatValue;
             }
             else
             {
                 throw new ProgramException($"Invalid volume type {raw.Type}.");
             }
-            BoxVector1 = raw.BoxVector1.ToFloatVector();
-            BoxVector2 = raw.BoxVector2.ToFloatVector();
-            BoxVector3 = raw.BoxVector3.ToFloatVector();
-            BoxPosition = raw.BoxPosition.ToFloatVector();
-            BoxDot1 = raw.BoxDot1.FloatValue;
-            BoxDot2 = raw.BoxDot2.FloatValue;
-            BoxDot3 = raw.BoxDot3.FloatValue;
-            CylinderVector = raw.CylinderVector.ToFloatVector();
-            CylinderPosition = raw.CylinderPosition.ToFloatVector();
-            CylinderRadius = raw.CylinderRadius.FloatValue;
-            CylinderDot = raw.CylinderDot.FloatValue;
-            SpherePosition = raw.SpherePosition.ToFloatVector();
-            SphereRadius = raw.SphereRadius.FloatValue;
+        }
+
+        public CollisionVolume(FhRawCollisionVolume raw)
+        {
+            BoxVector1 = Vector3.Zero;
+            BoxVector2 = Vector3.Zero;
+            BoxVector3 = Vector3.Zero;
+            BoxPosition = Vector3.Zero;
+            BoxDot1 = 0;
+            BoxDot2 = 0;
+            BoxDot3 = 0;
+            CylinderVector = Vector3.Zero;
+            CylinderPosition = Vector3.Zero;
+            CylinderRadius = 0;
+            CylinderDot = 0;
+            SpherePosition = Vector3.Zero;
+            SphereRadius = 0;
+            if (raw.Type == FhVolumeType.Box)
+            {
+                Type = VolumeType.Box;
+                BoxVector1 = raw.BoxVector1.ToFloatVector();
+                BoxVector2 = raw.BoxVector2.ToFloatVector();
+                BoxVector3 = raw.BoxVector3.ToFloatVector();
+                BoxPosition = raw.BoxPosition.ToFloatVector();
+                BoxDot1 = raw.BoxDot1.FloatValue;
+                BoxDot2 = raw.BoxDot2.FloatValue;
+                BoxDot3 = raw.BoxDot3.FloatValue;
+            }
+            else if (raw.Type == FhVolumeType.Cylinder)
+            {
+                Type = VolumeType.Cylinder;
+                CylinderVector = raw.CylinderVector.ToFloatVector();
+                CylinderPosition = raw.CylinderPosition.ToFloatVector();
+                CylinderRadius = raw.CylinderRadius.FloatValue;
+                CylinderDot = raw.CylinderDot.FloatValue;
+            }
+            else if (raw.Type == FhVolumeType.Sphere)
+            {
+                Type = VolumeType.Sphere;
+                SpherePosition = raw.SpherePosition.ToFloatVector();
+                SphereRadius = raw.SphereRadius.FloatValue;
+            }
+            else
+            {
+                throw new ProgramException($"Invalid volume type {raw.Type}.");
+            }
         }
 
         public CollisionVolume(Vector3 vec1, Vector3 vec2, Vector3 vec3, Vector3 pos, float dot1, float dot2, float dot3)
