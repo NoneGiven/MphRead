@@ -181,8 +181,8 @@ namespace MphRead.Editor
     public class FhPlatformEntityEditor : EntityEditorBase
     {
         public uint NoPortal { get; set; }
-        public uint Field28 { get; set; }
-        public uint Field2C { get; set; }
+        public uint PlatformId { get; set; }
+        public uint Unused2C { get; set; }
         public byte Field30 { get; set; }
         public byte Field31 { get; set; }
         public CollisionVolume Volume { get; set; } // unused
@@ -193,8 +193,8 @@ namespace MphRead.Editor
         public FhPlatformEntityEditor(Entity header, FhPlatformEntityData raw) : base(header)
         {
             NoPortal = raw.NoPortal;
-            Field28 = raw.Field28;
-            Field2C = raw.Field2C;
+            PlatformId = raw.PlatformId;
+            Unused2C = raw.Unused2C;
             Field30 = raw.Field30;
             Field31 = raw.Field31;
             Volume = new CollisionVolume(raw.Volume);

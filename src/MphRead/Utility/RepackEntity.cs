@@ -11,6 +11,36 @@ namespace MphRead.Utility
 {
     public static partial class Repack
     {
+        public static void TestEntityEdit()
+        {
+            RoomMetadata meta = Metadata.RoomMetadata["Level SP Regulator"];
+            Debug.Assert(meta.EntityPath != null);
+            List<EntityEditorBase> entities = meta.FirstHunt ? GetFhEntities(meta.EntityPath) : GetEntities(meta.EntityPath);
+            var platforms = entities.Where(e => e.Type == EntityType.FhPlatform).Select(p => (FhPlatformEntityEditor)p).ToList();
+            var doors = entities.Where(e => e.Type == EntityType.FhDoor).Select(p => (FhDoorEntityEditor)p).ToList();
+            foreach (FhDoorEntityEditor door in doors)
+            {
+                door.Flags = 0;
+            }
+            entities.RemoveAll(e => e.Type == EntityType.FhPlatform && e.Id != 55);
+            Debug.Assert(platforms[0].Id == 55);
+            var newPos = new Vector3(0, 1.5f, -2.5f);
+            Vector3 diff = newPos - platforms[0].Position;
+            platforms[0].Position = newPos;
+            for (int i = 0; i < platforms[0].Positions.Count; i++)
+            {
+                Vector3 pos = platforms[0].Positions[i];
+                if (pos != Vector3.Zero)
+                {
+                    platforms[0].Positions[i] = pos + diff;
+                }
+            }
+            byte[] bytes = meta.FirstHunt ? RepackFhEntities(entities) : RepackEntities(entities);
+            string path = Path.Combine(Paths.Export, "_pack", Path.GetFileName(meta.EntityPath));
+            File.WriteAllBytes(path, bytes);
+            Nop();
+        }
+
         public static void TestEntities()
         {
             foreach (RoomMetadata meta in Metadata.RoomMetadata.Values)
@@ -21,7 +51,7 @@ namespace MphRead.Utility
                 }
                 if (meta.FirstHunt) // hybrid uses MPH entities
                 {
-                    IReadOnlyList<EntityEditorBase> entities = GetEntities(meta.EntityPath);
+                    IReadOnlyList<EntityEditorBase> entities = GetFhEntities(meta.EntityPath);
                     byte[] bytes = RepackFhEntities(entities);
                     byte[] fileBytes = File.ReadAllBytes(Path.Combine(Paths.FhFileSystem, meta.EntityPath));
                     CompareFhEntities(bytes, fileBytes);
@@ -29,7 +59,7 @@ namespace MphRead.Utility
                 }
                 else
                 {
-                    IReadOnlyList<EntityEditorBase> entities = GetFhEntities(meta.EntityPath);
+                    IReadOnlyList<EntityEditorBase> entities = GetEntities(meta.EntityPath);
                     byte[] bytes = RepackEntities(entities);
                     byte[] fileBytes = File.ReadAllBytes(Path.Combine(Paths.FileSystem, meta.EntityPath));
                     CompareEntities(bytes, fileBytes);
@@ -39,7 +69,7 @@ namespace MphRead.Utility
             Nop();
         }
 
-        private static List<EntityEditorBase> GetEntities(string path)
+        private static List<EntityEditorBase> GetFhEntities(string path)
         {
             var entities = new List<EntityEditorBase>();
             foreach (Entity entity in Read.GetEntities(path, layerId: -1, firstHunt: true))
@@ -88,7 +118,7 @@ namespace MphRead.Utility
             return entities;
         }
 
-        private static List<EntityEditorBase> GetFhEntities(string path)
+        private static List<EntityEditorBase> GetEntities(string path)
         {
             var entities = new List<EntityEditorBase>();
             foreach (Entity entity in Read.GetEntities(path, layerId: -1, firstHunt: false))
@@ -1197,8 +1227,8 @@ namespace MphRead.Utility
             ushort padShort = 0;
             Debug.Assert(entity.Positions.Count == 8);
             writer.Write(entity.NoPortal);
-            writer.Write(entity.Field28);
-            writer.Write(entity.Field2C);
+            writer.Write(entity.PlatformId);
+            writer.Write(entity.Unused2C);
             writer.Write(entity.Field30);
             writer.Write(entity.Field31);
             writer.Write(padShort); // Padding32
