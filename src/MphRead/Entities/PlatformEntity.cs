@@ -251,6 +251,14 @@ namespace MphRead.Entities
     public class FhPlatformEntity : EntityBase
     {
         private readonly FhPlatformEntityData _data;
+        private readonly float _speed;
+        private readonly IReadOnlyList<Vector3> _positions;
+        private MoveState _state = MoveState.Sleep;
+        private int _fromIndex = 0;
+        private int _toIndex = 1;
+        private int _delay;
+        private int _moveTimer;
+        private Vector3 _velocity = Vector3.Zero;
 
         public FhPlatformEntity(FhPlatformEntityData data) : base(EntityType.Platform)
         {
@@ -264,6 +272,94 @@ namespace MphRead.Entities
             Debug.Assert(modelMeta.CollisionPath != null);
             SetCollision(Collision.GetCollision(modelMeta));
             _models.Add(inst);
+            _speed = data.Speed.FloatValue / 2f;
+            Debug.Assert(data.PositionCount >= 2 && data.PositionCount < 8);
+            var positions = new List<Vector3>(0);
+            for (int i = 0; i < data.PositionCount; i++)
+            {
+                positions.Add(data.Positions[i].ToFloatVector());
+            }
+            _positions = positions;
+            _delay = data.Delay * 2;
+            _moveTimer = _delay;
+        }
+
+        public override bool Process(Scene scene)
+        {
+            // todo: collision and stuff
+            Position += _velocity;
+            if (_moveTimer > 0)
+            {
+                _moveTimer--;
+            }
+            else
+            {
+                if (_state == MoveState.Sleep)
+                {
+                    // todo: must be active
+                    // --> which specifically means a trigger volume needs to send an Activate message to this group this frame
+                    _state = MoveState.MoveForward;
+                    UpdateMovement();
+                    _fromIndex++;
+                }
+                else if (_state == MoveState.MoveForward)
+                {
+                    _state = MoveState.Wait;
+                    _velocity = Vector3.Zero;
+                    Position = _positions[_toIndex]; // the game doesn't do this
+                    if (_fromIndex == _positions.Count - 1)
+                    {
+                        _toIndex = _fromIndex - 1;
+                    }
+                    else
+                    {
+                        _fromIndex++;
+                        _toIndex = _fromIndex + 1;
+                    } 
+                    _moveTimer = _delay;
+                }
+                else if (_state == MoveState.Wait)
+                {
+                    _state = _toIndex >= _fromIndex ? MoveState.MoveForward : MoveState.MoveBackward;
+                    UpdateMovement();
+                }
+                else if (_state == MoveState.MoveBackward)
+                {
+                    _velocity = Vector3.Zero;
+                    Position = _positions[_toIndex]; // the game doesn't do this
+                    if (_toIndex > 0)
+                    {
+                        _state = MoveState.Wait;
+                        _fromIndex--;
+                        _toIndex = _fromIndex - 1;
+                    }
+                    else
+                    {
+                        _state = MoveState.Sleep;
+                        _fromIndex = 0;
+                        _toIndex = 1;
+                    }
+                    _moveTimer = _delay;
+                }
+            }
+            return base.Process(scene);
+        }
+
+        private void UpdateMovement()
+        {
+            Vector3 velocity = _positions[_toIndex] - _positions[_fromIndex];
+            float distance = velocity.Length;
+            _moveTimer = (int)(distance / _speed);
+            float factor = _speed / distance;
+            _velocity = velocity * factor;
+        }
+
+        private enum MoveState : byte
+        {
+            Sleep,
+            MoveForward,
+            Wait,
+            MoveBackward
         }
     }
 }

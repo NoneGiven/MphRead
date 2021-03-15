@@ -13,6 +13,7 @@ namespace MphRead.Entities
         private readonly IReadOnlyList<CollisionPortal> _portals = new List<CollisionPortal>();
         private readonly IReadOnlyList<PortalNodeRef> _forceFields = new List<PortalNodeRef>();
         private IReadOnlyList<Node> Nodes => _models[0].Model.Nodes;
+        private readonly bool _firstHunt;
 
         protected override bool UseNodeTransform => false; // default -- will use transform if setting is enabled
 
@@ -26,6 +27,7 @@ namespace MphRead.Entities
                 // manually disable a decal that isn't rendered in-game because it's not on a surface
                 Nodes[46].Enabled = false;
             }
+            _firstHunt = meta.FirstHunt;
             Model model = inst.Model;
             var portals = new List<CollisionPortal>();
             var forceFields = new List<PortalNodeRef>();
@@ -246,7 +248,7 @@ namespace MphRead.Entities
                     scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Ngon, verts, count, noLines: true);
                 }
             }
-            else if (scene.ShowVolumes == VolumeDisplay.KillPlane)
+            else if (scene.ShowVolumes == VolumeDisplay.KillPlane && !_firstHunt)
             {
                 Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(4);
                 verts[0] = new Vector3(10000f, scene.KillHeight, 10000f);

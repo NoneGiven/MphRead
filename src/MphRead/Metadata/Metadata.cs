@@ -954,7 +954,7 @@ namespace MphRead
             {
                 return new Vector3(0, 0, 0);
             }
-            if (eventId == FhMessage.Unknown5) // green
+            if (eventId == FhMessage.Activate) // green
             {
                 return new Vector3(0, 1, 0);
             }

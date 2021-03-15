@@ -324,7 +324,7 @@ namespace MphRead
     public enum FhMessage : uint
     {
         None = 0,
-        Unknown5 = 5,
+        Activate = 5,
         Destroyed = 6,
         Damage = 7,
         Unknown9 = 9,
