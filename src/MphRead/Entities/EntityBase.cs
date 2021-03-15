@@ -235,16 +235,17 @@ namespace MphRead.Entities
 
         public virtual void GetDrawInfo(Scene scene)
         {
-            if (!Hidden)
+            for (int i = 0; i < _models.Count; i++)
             {
-                for (int i = 0; i < _models.Count; i++)
+                ModelInstance inst = _models[i];
+                if ((!inst.Active && !scene.ShowAllEntities) || (inst.IsPlaceholder && !scene.ShowInvisibleEntities && !scene.ShowAllEntities))
                 {
-                    ModelInstance inst = _models[i];
-                    if ((!inst.Active && !scene.ShowAllEntities) || (inst.IsPlaceholder && !scene.ShowInvisibleEntities && !scene.ShowAllEntities))
-                    {
-                        continue;
-                    }
-                    UpdateTransforms(inst, i, scene);
+                    continue;
+                }
+                UpdateTransforms(inst, i, scene);
+                if (!Hidden)
+                {
+                    // todo: hide attached effects
                     int polygonId = scene.GetNextPolygonId();
                     GetItems(inst, i, inst.Model.Nodes[0], polygonId);
                 }
