@@ -187,7 +187,7 @@ namespace MphRead.Editor
         public byte PositionCount { get; set; }
         public CollisionVolume Volume { get; set; } // unused
         public List<Vector3> Positions { get; set; } = new List<Vector3>();
-        public uint FieldD4 { get; set; }
+        public float Speed { get; set; }
         public string PortalName { get; set; } = "";
 
         public FhPlatformEntityEditor(Entity header, FhPlatformEntityData raw) : base(header)
@@ -202,7 +202,7 @@ namespace MphRead.Editor
             {
                 Positions.Add(raw.Positions[i].ToFloatVector());
             }
-            FieldD4 = raw.FieldD4;
+            Speed = raw.Speed.FloatValue;
             PortalName = raw.PortalName.MarshalString();
         }
     }

@@ -35,6 +35,7 @@ namespace MphRead.Utility
                     platforms[0].Positions[i] = pos + diff;
                 }
             }
+            platforms[0].Speed *= 2;
             var trigger = (FhTriggerVolumeEntityEditor)entities.First(e => e.Id == 54);
             trigger.Position = new Vector3(0, 0, -35f);
             byte[] bytes = meta.FirstHunt ? RepackFhEntities(entities) : RepackEntities(entities);
@@ -1240,7 +1241,7 @@ namespace MphRead.Utility
             {
                 writer.WriteVector3(position);
             }
-            writer.Write(entity.FieldD4);
+            writer.WriteFloat(entity.Speed);
             writer.WriteString(entity.PortalName, 16);
         }
 

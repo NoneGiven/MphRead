@@ -130,7 +130,7 @@ namespace MphRead
         public readonly ushort Padding32;
         public readonly FhRawCollisionVolume Volume; // unused
         public readonly Vector3FxArray8 Positions;
-        public readonly uint FieldD4;
+        public readonly Fixed Speed;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] PortalName;
     }
