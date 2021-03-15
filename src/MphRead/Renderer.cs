@@ -817,7 +817,7 @@ namespace MphRead
                 Rng.SetRng1(rng1);
                 Rng.SetRng2(rng2);
             }
-            if (!_frameAdvanceOn || _advanceOneFrame)
+            if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
             {
                 _frameCount++;
             }
