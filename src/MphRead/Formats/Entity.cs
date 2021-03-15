@@ -123,7 +123,7 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly uint NoPortal;
-        public readonly uint PlatformId;
+        public readonly uint GroupId;
         public readonly uint Unused2C;
         public readonly byte Field30;
         public readonly byte Field31;

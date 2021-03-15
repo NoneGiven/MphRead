@@ -1227,7 +1227,7 @@ namespace MphRead.Utility
             ushort padShort = 0;
             Debug.Assert(entity.Positions.Count == 8);
             writer.Write(entity.NoPortal);
-            writer.Write(entity.PlatformId);
+            writer.Write(entity.GroupId);
             writer.Write(entity.Unused2C);
             writer.Write(entity.Field30);
             writer.Write(entity.Field31);
