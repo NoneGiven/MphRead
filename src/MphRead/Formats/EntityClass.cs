@@ -183,8 +183,8 @@ namespace MphRead.Editor
         public uint NoPortal { get; set; }
         public uint GroupId { get; set; }
         public uint Unused2C { get; set; }
-        public byte Field30 { get; set; }
-        public byte Field31 { get; set; }
+        public byte Delay { get; set; }
+        public byte PositionCount { get; set; }
         public CollisionVolume Volume { get; set; } // unused
         public List<Vector3> Positions { get; set; } = new List<Vector3>();
         public uint FieldD4 { get; set; }
@@ -195,8 +195,8 @@ namespace MphRead.Editor
             NoPortal = raw.NoPortal;
             GroupId = raw.GroupId;
             Unused2C = raw.Unused2C;
-            Field30 = raw.Field30;
-            Field31 = raw.Field31;
+            Delay = raw.Delay;
+            PositionCount = raw.PositionCount;
             Volume = new CollisionVolume(raw.Volume);
             for (int i = 0; i < 8; i++)
             {

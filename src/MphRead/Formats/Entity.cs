@@ -125,8 +125,8 @@ namespace MphRead
         public readonly uint NoPortal;
         public readonly uint GroupId;
         public readonly uint Unused2C;
-        public readonly byte Field30;
-        public readonly byte Field31;
+        public readonly byte Delay;
+        public readonly byte PositionCount;
         public readonly ushort Padding32;
         public readonly FhRawCollisionVolume Volume; // unused
         public readonly Vector3FxArray8 Positions;

@@ -11,7 +11,7 @@ namespace MphRead.Utility
 {
     public static partial class Repack
     {
-        public static void TestEntityEdit()
+        public static byte[] TestEntityEdit()
         {
             RoomMetadata meta = Metadata.RoomMetadata["Level SP Regulator"];
             Debug.Assert(meta.EntityPath != null);
@@ -35,10 +35,13 @@ namespace MphRead.Utility
                     platforms[0].Positions[i] = pos + diff;
                 }
             }
+            var trigger = (FhTriggerVolumeEntityEditor)entities.First(e => e.Id == 54);
+            trigger.Position = new Vector3(0, 0, -35f);
             byte[] bytes = meta.FirstHunt ? RepackFhEntities(entities) : RepackEntities(entities);
             string path = Path.Combine(Paths.Export, "_pack", Path.GetFileName(meta.EntityPath));
             File.WriteAllBytes(path, bytes);
             Nop();
+            return bytes;
         }
 
         public static void TestEntities()
@@ -1229,8 +1232,8 @@ namespace MphRead.Utility
             writer.Write(entity.NoPortal);
             writer.Write(entity.GroupId);
             writer.Write(entity.Unused2C);
-            writer.Write(entity.Field30);
-            writer.Write(entity.Field31);
+            writer.Write(entity.Delay);
+            writer.Write(entity.PositionCount);
             writer.Write(padShort); // Padding32
             writer.WriteFhVolume(entity.Volume);
             foreach (Vector3 position in entity.Positions)
