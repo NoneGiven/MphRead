@@ -268,11 +268,10 @@ namespace MphRead
         public int SomeFlag { get; }
         public string Name { get; }
         public IReadOnlyList<int> AnimationIds { get; }
-        public uint Field20 { get; }
-        public uint Field24 { get; }
+        public int Field20 { get; }
+        public int Field24 { get; }
 
-        public PlatformMetadata(string name, int someFlag = 0, List<int>? animationIds = null,
-            uint field20 = UInt32.MaxValue, uint field24 = UInt32.MaxValue)
+        public PlatformMetadata(string name, int someFlag = 0, List<int>? animationIds = null, int field20 = -1, int field24 = -1)
         {
             Name = name;
             SomeFlag = someFlag;
