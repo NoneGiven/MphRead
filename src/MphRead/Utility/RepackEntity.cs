@@ -16,28 +16,28 @@ namespace MphRead.Utility
             RoomMetadata meta = Metadata.RoomMetadata["Level SP Regulator"];
             Debug.Assert(meta.EntityPath != null);
             List<EntityEditorBase> entities = meta.FirstHunt ? GetFhEntities(meta.EntityPath) : GetEntities(meta.EntityPath);
-            var platforms = entities.Where(e => e.Type == EntityType.FhPlatform).Select(p => (FhPlatformEntityEditor)p).ToList();
             var doors = entities.Where(e => e.Type == EntityType.FhDoor).Select(p => (FhDoorEntityEditor)p).ToList();
             foreach (FhDoorEntityEditor door in doors)
             {
                 door.Flags = 0;
             }
-            entities.RemoveAll(e => e.Type == EntityType.FhPlatform && e.Id != 55);
-            Debug.Assert(platforms[0].Id == 55);
-            var newPos = new Vector3(0, 1.5f, -2.5f);
-            Vector3 diff = newPos - platforms[0].Position;
-            platforms[0].Position = newPos;
-            for (int i = 0; i < platforms[0].Positions.Count; i++)
-            {
-                Vector3 pos = platforms[0].Positions[i];
-                if (pos != Vector3.Zero)
-                {
-                    platforms[0].Positions[i] = pos + diff;
-                }
-            }
-            platforms[0].Speed *= 2;
-            var trigger = (FhTriggerVolumeEntityEditor)entities.First(e => e.Id == 54);
-            trigger.Position = new Vector3(0, 0, -35f);
+            //var platforms = entities.Where(e => e.Type == EntityType.FhPlatform).Select(p => (FhPlatformEntityEditor)p).ToList();
+            //entities.RemoveAll(e => e.Type == EntityType.FhPlatform && e.Id != 55);
+            //Debug.Assert(platforms[0].Id == 55);
+            //var newPos = new Vector3(0, 1.5f, -2.5f);
+            //Vector3 diff = newPos - platforms[0].Position;
+            //platforms[0].Position = newPos;
+            //for (int i = 0; i < platforms[0].Positions.Count; i++)
+            //{
+            //    Vector3 pos = platforms[0].Positions[i];
+            //    if (pos != Vector3.Zero)
+            //    {
+            //        platforms[0].Positions[i] = pos + diff;
+            //    }
+            //}
+            //platforms[0].Speed *= 2;
+            //var trigger = (FhTriggerVolumeEntityEditor)entities.First(e => e.Id == 54);
+            //trigger.Position = new Vector3(0, 0, -35f);
             byte[] bytes = meta.FirstHunt ? RepackFhEntities(entities) : RepackEntities(entities);
             string path = Path.Combine(Paths.Export, "_pack", Path.GetFileName(meta.EntityPath));
             File.WriteAllBytes(path, bytes);
