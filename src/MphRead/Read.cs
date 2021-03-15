@@ -188,7 +188,8 @@ namespace MphRead
                         textures = extraTex;
                         palettes = extraPal;
                     }
-                    else if (name == "Alimbic_Power" || name == "Generic_Power" || name == "Ice_Power" || name == "Lava_Power" || name == "Ruins_Power")
+                    else if (name == "Alimbic_Power" || name == "Generic_Power"
+                        || name == "Ice_Power" || name == "Lava_Power" || name == "Ruins_Power")
                     {
                         var extraTex = new List<Texture>();
                         extraTex.AddRange(textures);
@@ -242,7 +243,7 @@ namespace MphRead
                         Recolor recolor = GetModelInstance("Ruins_Power").Model.Recolors[0];
                         Texture newTexture = recolor.Textures[8];
                         IReadOnlyList<TextureData> newTexData = recolor.TextureData[8];
-                        var newPalette = Metadata.PowerPalettes[name];
+                        IReadOnlyList<PaletteData> newPalette = Metadata.PowerPalettes[name];
                         Debug.Assert(newPalette.Count == 8);
                         var extraTex = new List<Texture>();
                         extraTex.AddRange(textures);
