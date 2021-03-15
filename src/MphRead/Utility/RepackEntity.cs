@@ -647,8 +647,8 @@ namespace MphRead.Utility
             writer.Write(entity.Field2E);
             writer.Write(entity.Field2F);
             writer.Write(entity.ScanData1);
-            writer.Write(entity.ScanEventTarget);
-            writer.Write(entity.ScanEventId);
+            writer.Write(entity.ScanMsgTarget);
+            writer.Write((uint)entity.ScanMessage);
             writer.Write(entity.ScanData2);
             writer.Write(entity.Field3A);
             foreach (Vector3 position in entity.Positions)
@@ -687,35 +687,35 @@ namespace MphRead.Utility
             writer.Write(entity.Field1D0);
             writer.Write(entity.Field1D4);
             writer.Write(entity.Message1Target);
-            writer.Write(entity.Message1Id);
+            writer.Write((uint)entity.Message1);
             writer.Write(entity.Message1Param1);
             writer.Write(entity.Message1Param2);
             writer.Write(entity.Message2Target);
-            writer.Write(entity.Message2Id);
+            writer.Write((uint)entity.Message2);
             writer.Write(entity.Message2Param1);
             writer.Write(entity.Message2Param2);
             writer.Write(entity.Message3Target);
-            writer.Write(entity.Message3Id);
+            writer.Write((uint)entity.Message3);
             writer.Write(entity.Message3Param1);
             writer.Write(entity.Message3Param2);
             writer.Write(entity.Field208);
             writer.Write(entity.Msg32Target1);
-            writer.Write(entity.Msg32Message1);
+            writer.Write((uint)entity.Msg32Message1);
             writer.Write(entity.Msg32Param11);
             writer.Write(entity.Msg32Param21);
             writer.Write(entity.Field218);
             writer.Write(entity.Msg32Target2);
-            writer.Write(entity.Msg32Message2);
+            writer.Write((uint)entity.Msg32Message2);
             writer.Write(entity.Msg32Param12);
             writer.Write(entity.Msg32Param22);
             writer.Write(entity.Field228);
             writer.Write(entity.Msg32Target3);
-            writer.Write(entity.Msg32Message3);
+            writer.Write((uint)entity.Msg32Message3);
             writer.Write(entity.Msg32Param13);
             writer.Write(entity.Msg32Param23);
             writer.Write(entity.Field238);
             writer.Write(entity.Msg32Target4);
-            writer.Write(entity.Msg32Message4);
+            writer.Write((uint)entity.Msg32Message4);
             writer.Write(entity.Msg32Param14);
             writer.Write(entity.Msg32Param24);
         }
@@ -731,9 +731,9 @@ namespace MphRead.Utility
             writer.Write(entity.ModelId);
             writer.Write(entity.LinkedEntity);
             writer.Write(entity.ScanId);
-            writer.Write(entity.ScanEventTargetId);
+            writer.Write(entity.ScanMsgTarget);
             writer.Write(padShort); // Padding36
-            writer.Write(entity.ScanEventId);
+            writer.Write((uint)entity.ScanMessage);
             writer.Write(entity.EffectId);
             writer.Write(entity.EffectInterval);
             writer.Write(entity.EffectOnIntervals);
@@ -775,9 +775,9 @@ namespace MphRead.Utility
             writer.Write(entity.SpawnInterval);
             writer.Write(entity.SpawnDelay);
             writer.Write(entity.SomeEntityId);
-            writer.Write(entity.CollectedMessageId);
-            writer.Write(entity.CollectedMessageParam1);
-            writer.Write(entity.CollectedMessageParam2);
+            writer.Write((uint)entity.CollectedMessage);
+            writer.Write(entity.CollectedMsgParam1);
+            writer.Write(entity.CollectedMsgParam2);
         }
 
         private static void WriteMphEnemySpawn(EnemySpawnEntityEditor entity, BinaryWriter writer)
@@ -905,13 +905,13 @@ namespace MphRead.Utility
             writer.WriteString(entity.SpawnNodeName, 16);
             writer.Write(entity.EntityId1);
             writer.Write(entity.Field1E2);
-            writer.Write(entity.MessageId1);
+            writer.Write((uint)entity.Message1);
             writer.Write(entity.EntityId2);
             writer.Write(entity.Field1EA);
-            writer.Write(entity.MessageId2);
+            writer.Write((uint)entity.Message2);
             writer.Write(entity.EntityId3);
             writer.Write(entity.Field1F2);
-            writer.Write(entity.MessageId3);
+            writer.Write((uint)entity.Message3);
             writer.Write(entity.ItemModel);
         }
 
@@ -934,14 +934,14 @@ namespace MphRead.Utility
             writer.Write(entity.TriggerThreshold);
             writer.Write(entity.ParentId);
             writer.Write(padShort); // Padding7E
-            writer.Write((uint)entity.ParentEvent);
-            writer.Write(entity.ParentEventParam1);
-            writer.Write(entity.ParentEventParam2);
+            writer.Write((uint)entity.ParentMessage);
+            writer.Write(entity.ParentMsgParam1);
+            writer.Write(entity.ParentMsgParam2);
             writer.Write(entity.ChildId);
             writer.Write(padShort); // Padding8E
-            writer.Write((uint)entity.ChildEvent);
-            writer.Write(entity.ChildEventParam1);
-            writer.Write(entity.ChildEventParam2);
+            writer.Write((uint)entity.ChildMessage);
+            writer.Write(entity.ChildMsgParam1);
+            writer.Write(entity.ChildMsgParam2);
         }
 
         private static void WriteMphAreaVolume(AreaVolumeEntityEditor entity, BinaryWriter writer)
@@ -952,16 +952,16 @@ namespace MphRead.Utility
             writer.WriteByte(entity.Active);
             writer.WriteByte(entity.AlwaysActive);
             writer.WriteByte(entity.AllowMultiple);
-            writer.Write(entity.EventDelay);
+            writer.Write(entity.MessageDelay);
             writer.Write(entity.Unused6A);
-            writer.Write((uint)entity.InsideEvent);
-            writer.Write(entity.InsideEventParam1);
-            writer.Write(entity.InsideEventParam2);
+            writer.Write((uint)entity.InsideMessage);
+            writer.Write(entity.InsideMsgParam1);
+            writer.Write(entity.InsideMsgParam2);
             writer.Write(entity.ParentId);
             writer.Write(padShort); // Padding7A
-            writer.Write((uint)entity.ExitEvent);
-            writer.Write(entity.ExitEventParam1);
-            writer.Write(entity.ExitEventParam2);
+            writer.Write((uint)entity.ExitMessage);
+            writer.Write(entity.ExitMsgParam1);
+            writer.Write((uint)entity.ExitMsgParam2);
             writer.Write(entity.ChildId);
             writer.Write(entity.Cooldown);
             writer.Write(entity.Priority);
@@ -1080,7 +1080,7 @@ namespace MphRead.Utility
             writer.Write(entity.Entity1);
             writer.Write(entity.Entity2);
             writer.Write(entity.MessageTargetId);
-            writer.Write(entity.MessageId);
+            writer.Write((uint)entity.Message);
             writer.Write(entity.MessageParam);
         }
 
@@ -1291,12 +1291,12 @@ namespace MphRead.Utility
             writer.Write(entity.Threshold);
             writer.Write(entity.ParentId);
             writer.Write(padShort); // PaddingF6
-            writer.Write((uint)entity.ParentEvent);
-            writer.Write(entity.ParentParam1);
+            writer.Write((uint)entity.ParentMessage);
+            writer.Write(entity.ParentMsgParam1);
             writer.Write(entity.ChildId);
             writer.Write(padShort); // Padding102
-            writer.Write((uint)entity.ChildEvent);
-            writer.Write(entity.ChildParam1);
+            writer.Write((uint)entity.ChildMessage);
+            writer.Write(entity.ChildMsgParam1);
         }
 
         private static void WriteFhAreaVolume(FhAreaVolumeEntityEditor entity, BinaryWriter writer)
@@ -1307,10 +1307,10 @@ namespace MphRead.Utility
             writer.WriteFhVolume(entity.Box);
             writer.WriteFhVolume(entity.Sphere);
             writer.WriteFhVolume(entity.Cylinder);
-            writer.Write((uint)entity.InsideEvent);
-            writer.Write(entity.InsideParam1);
-            writer.Write((uint)entity.ExitEvent);
-            writer.Write(entity.ExitParam1);
+            writer.Write((uint)entity.InsideMessage);
+            writer.Write(entity.InsideMsgParam1);
+            writer.Write((uint)entity.ExitMessage);
+            writer.Write(entity.ExitMsgParam1);
             writer.Write(entity.Cooldown);
             writer.Write(padShort); // PaddingFA
             writer.Write(entity.Flags);

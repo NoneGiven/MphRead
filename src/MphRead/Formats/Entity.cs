@@ -50,8 +50,8 @@ namespace MphRead
         public readonly byte Field2E;
         public readonly byte Field2F;
         public readonly ushort ScanData1;
-        public readonly short ScanEventTarget;
-        public readonly uint ScanEventId;
+        public readonly short ScanMsgTarget;
+        public readonly Message ScanMessage;
         public readonly ushort ScanData2;
         public readonly ushort Field3A;
         public readonly Vector3FxArray10 Positions;
@@ -85,35 +85,35 @@ namespace MphRead
         public readonly uint Field1D0;
         public readonly uint Field1D4;
         public readonly uint Message1Target;
-        public readonly uint Message1Id;
+        public readonly Message Message1;
         public readonly uint Message1Param1;
         public readonly uint Message1Param2;
         public readonly uint Message2Target;
-        public readonly uint Message2Id;
+        public readonly Message Message2;
         public readonly uint Message2Param1;
         public readonly uint Message2Param2;
         public readonly uint Message3Target;
-        public readonly uint Message3Id;
+        public readonly Message Message3;
         public readonly uint Message3Param1;
         public readonly uint Message3Param2;
         public readonly ushort Field208;
         public readonly short Msg32Target1;
-        public readonly uint Msg32Message1;
+        public readonly Message Msg32Message1;
         public readonly uint Msg32Param11;
         public readonly uint Msg32Param21;
         public readonly ushort Field218;
         public readonly short Msg32Target2;
-        public readonly uint Msg32Message2;
+        public readonly Message Msg32Message2;
         public readonly uint Msg32Param12;
         public readonly uint Msg32Param22;
         public readonly ushort Field228;
         public readonly short Msg32Target3;
-        public readonly uint Msg32Message3;
+        public readonly Message Msg32Message3;
         public readonly uint Msg32Param13;
         public readonly uint Msg32Param23;
         public readonly ushort Field238;
         public readonly short Msg32Target4;
-        public readonly uint Msg32Message4;
+        public readonly Message Msg32Message4;
         public readonly uint Msg32Param14;
         public readonly uint Msg32Param24;
     }
@@ -146,9 +146,9 @@ namespace MphRead
         public readonly uint ModelId;
         public readonly short LinkedEntity;
         public readonly ushort ScanId;
-        public readonly short ScanEventTargetId;
+        public readonly short ScanMsgTarget;
         public readonly ushort Padding36;
-        public readonly uint ScanEventId;
+        public readonly Message ScanMessage;
         public readonly uint EffectId;
         public readonly uint EffectInterval;
         public readonly uint EffectOnIntervals; // 16 bits are used
@@ -209,9 +209,9 @@ namespace MphRead
         public readonly ushort SpawnInterval;
         public readonly ushort SpawnDelay;
         public readonly short SomeEntityId; // todo: parent? child?
-        public readonly uint CollectedMessageId;
-        public readonly uint CollectedMessageParam1;
-        public readonly uint CollectedMessageParam2;
+        public readonly Message CollectedMessage;
+        public readonly uint CollectedMsgParam1;
+        public readonly uint CollectedMsgParam2;
     }
 
     // size: 50
@@ -354,13 +354,13 @@ namespace MphRead
         public readonly char[] NodeName;
         public readonly short EntityId1;
         public readonly ushort Field1E2; // todo: padding?
-        public readonly uint MessageId1;
+        public readonly Message Message1;
         public readonly short EntityId2;
         public readonly ushort Field1EA;
-        public readonly uint MessageId2;
+        public readonly Message Message2;
         public readonly short EntityId3;
         public readonly ushort Field1F2;
-        public readonly uint MessageId3;
+        public readonly Message Message3;
         public readonly uint ItemModel;
     }
 
@@ -449,14 +449,14 @@ namespace MphRead
         public readonly uint TriggerThreshold; // for subtype 1
         public readonly short ParentId;
         public readonly ushort Padding7E;
-        public readonly Message ParentEvent;
-        public readonly uint ParentEventParam1;
-        public readonly uint ParentEventParam2;
+        public readonly Message ParentMessage;
+        public readonly uint ParentMsgParam1;
+        public readonly uint ParentMsgParam2;
         public readonly short ChildId;
         public readonly ushort Padding8E;
-        public readonly Message ChildEvent;
-        public readonly uint ChildEventParam1;
-        public readonly uint ChildEventParam2;
+        public readonly Message ChildMessage;
+        public readonly uint ChildMsgParam1;
+        public readonly uint ChildMsgParam2;
     }
 
     // size: 272
@@ -473,12 +473,12 @@ namespace MphRead
         public readonly uint Threshold;
         public readonly short ParentId;
         public readonly ushort PaddingF6;
-        public readonly FhMessage ParentEvent;
-        public readonly uint ParentParam1;
+        public readonly FhMessage ParentMessage;
+        public readonly uint ParentMsgParam1;
         public readonly short ChildId;
         public readonly ushort Padding102;
-        public readonly FhMessage ChildEvent;
-        public readonly uint ChildParam1;
+        public readonly FhMessage ChildMessage;
+        public readonly uint ChildMsgParam1;
 
         public FhRawCollisionVolume ActiveVolume
         {
@@ -506,16 +506,16 @@ namespace MphRead
         public readonly byte Active; // boolean -- in 1P, may be controlled by room state bits
         public readonly byte AlwaysActive; // boolean -- ignore 1P state bits
         public readonly byte AllowMultiple; // boolean
-        public readonly byte EventDelay; // always 0 or 1
+        public readonly byte MessageDelay; // always 0 or 1
         public readonly ushort Unused6A; // always 0 or 1
-        public readonly Message InsideEvent;
-        public readonly uint InsideEventParam1; // seconds for escape sequence, gravity/jump assist values, etc.
-        public readonly uint InsideEventParam2; // always 0 except for type 15, where it's always 2
+        public readonly Message InsideMessage;
+        public readonly uint InsideMsgParam1; // seconds for escape sequence, gravity/jump assist values, etc.
+        public readonly uint InsideMsgParam2; // always 0 except for type 15, where it's always 2
         public readonly short ParentId;
         public readonly ushort Padding7A;
-        public readonly Message ExitEvent;
-        public readonly uint ExitEventParam1; // always 0
-        public readonly uint ExitEventParam2; // always 0
+        public readonly Message ExitMessage;
+        public readonly uint ExitMsgParam1; // always 0
+        public readonly uint ExitMsgParam2; // always 0
         public readonly short ChildId; // always the same as ParentId
         public readonly ushort Cooldown;
         public readonly uint Priority; // always 0 or 1
@@ -530,10 +530,10 @@ namespace MphRead
         public readonly FhRawCollisionVolume Box;
         public readonly FhRawCollisionVolume Sphere;
         public readonly FhRawCollisionVolume Cylinder;
-        public readonly FhMessage InsideEvent;
-        public readonly uint InsideParam1;
-        public readonly FhMessage ExitEvent;
-        public readonly uint ExitParam1;
+        public readonly FhMessage InsideMessage;
+        public readonly uint InsideMsgParam1;
+        public readonly FhMessage ExitMessage;
+        public readonly uint ExitMsgParam1;
         public readonly ushort Cooldown;
         public readonly ushort PaddingFA;
         public readonly uint Flags;
@@ -726,7 +726,7 @@ namespace MphRead
         public readonly short Entity1;
         public readonly short Entity2;
         public readonly short MessageTargetId;
-        public readonly uint MessageId;
+        public readonly Message Message;
         public readonly uint MessageParam;
     }
 

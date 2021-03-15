@@ -4,8 +4,6 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Editor
 {
-    // sktodo:
-    // - message enum
     public abstract class EntityEditorBase
     {
         public EntityType Type { get; set; }
@@ -40,8 +38,8 @@ namespace MphRead.Editor
         public byte Field2E { get; set; }
         public byte Field2F { get; set; }
         public ushort ScanData1 { get; set; }
-        public short ScanEventTarget { get; set; }
-        public uint ScanEventId { get; set; }
+        public short ScanMsgTarget { get; set; }
+        public Message ScanMessage { get; set; }
         public ushort ScanData2 { get; set; }
         public ushort Field3A { get; set; }
         public List<Vector3> Positions { get; set; } = new List<Vector3>();
@@ -70,35 +68,35 @@ namespace MphRead.Editor
         public uint Field1D0 { get; set; }
         public uint Field1D4 { get; set; }
         public uint Message1Target { get; set; }
-        public uint Message1Id { get; set; }
+        public Message Message1 { get; set; }
         public uint Message1Param1 { get; set; }
         public uint Message1Param2 { get; set; }
         public uint Message2Target { get; set; }
-        public uint Message2Id { get; set; }
+        public Message Message2 { get; set; }
         public uint Message2Param1 { get; set; }
         public uint Message2Param2 { get; set; }
         public uint Message3Target { get; set; }
-        public uint Message3Id { get; set; }
+        public Message Message3 { get; set; }
         public uint Message3Param1 { get; set; }
         public uint Message3Param2 { get; set; }
         public ushort Field208 { get; set; }
         public short Msg32Target1 { get; set; }
-        public uint Msg32Message1 { get; set; }
+        public Message Msg32Message1 { get; set; }
         public uint Msg32Param11 { get; set; }
         public uint Msg32Param21 { get; set; }
         public ushort Field218 { get; set; }
         public short Msg32Target2 { get; set; }
-        public uint Msg32Message2 { get; set; }
+        public Message Msg32Message2 { get; set; }
         public uint Msg32Param12 { get; set; }
         public uint Msg32Param22 { get; set; }
         public ushort Field228 { get; set; }
         public short Msg32Target3 { get; set; }
-        public uint Msg32Message3 { get; set; }
+        public Message Msg32Message3 { get; set; }
         public uint Msg32Param13 { get; set; }
         public uint Msg32Param23 { get; set; }
         public ushort Field238 { get; set; }
         public short Msg32Target4 { get; set; }
-        public uint Msg32Message4 { get; set; }
+        public Message Msg32Message4 { get; set; }
         public uint Msg32Param14 { get; set; }
         public uint Msg32Param24 { get; set; }
 
@@ -110,8 +108,8 @@ namespace MphRead.Editor
             Field2E = raw.Field2E;
             Field2F = raw.Field2F;
             ScanData1 = raw.ScanData1;
-            ScanEventTarget = raw.ScanEventTarget;
-            ScanEventId = raw.ScanEventId;
+            ScanMsgTarget = raw.ScanMsgTarget;
+            ScanMessage = raw.ScanMessage;
             ScanData2 = raw.ScanData2;
             Field3A = raw.Field3A;
             for (int i = 0; i < 10; i++)
@@ -146,15 +144,15 @@ namespace MphRead.Editor
             Field1D0 = raw.Field1D0;
             Field1D4 = raw.Field1D4;
             Message1Target = raw.Message1Target;
-            Message1Id = raw.Message1Id;
+            Message1 = raw.Message1;
             Message1Param1 = raw.Message1Param1;
             Message1Param2 = raw.Message1Param2;
             Message2Target = raw.Message2Target;
-            Message2Id = raw.Message2Id;
+            Message2 = raw.Message2;
             Message2Param1 = raw.Message2Param1;
             Message2Param2 = raw.Message2Param2;
             Message3Target = raw.Message3Target;
-            Message3Id = raw.Message3Id;
+            Message3 = raw.Message3;
             Message3Param1 = raw.Message3Param1;
             Message3Param2 = raw.Message3Param2;
             Field208 = raw.Field208;
@@ -216,8 +214,8 @@ namespace MphRead.Editor
         public uint ModelId { get; set; }
         public short LinkedEntity { get; set; }
         public ushort ScanId { get; set; }
-        public short ScanEventTargetId { get; set; }
-        public uint ScanEventId { get; set; }
+        public short ScanMsgTarget { get; set; }
+        public Message ScanMessage { get; set; }
         public uint EffectId { get; set; }
         public uint EffectInterval { get; set; }
         public uint EffectOnIntervals { get; set; } // 16 bits are used
@@ -231,8 +229,8 @@ namespace MphRead.Editor
             ModelId = raw.ModelId;
             LinkedEntity = raw.LinkedEntity;
             ScanId = raw.ScanId;
-            ScanEventTargetId = raw.ScanEventTargetId;
-            ScanEventId = raw.ScanEventId;
+            ScanMsgTarget = raw.ScanMsgTarget;
+            ScanMessage = raw.ScanMessage;
             EffectId = raw.EffectId;
             EffectInterval = raw.EffectInterval;
             EffectOnIntervals = raw.EffectOnIntervals;
@@ -308,9 +306,9 @@ namespace MphRead.Editor
         public ushort SpawnInterval { get; set; }
         public ushort SpawnDelay { get; set; }
         public short SomeEntityId { get; set; } // todo: parent? child?
-        public uint CollectedMessageId { get; set; }
-        public uint CollectedMessageParam1 { get; set; }
-        public uint CollectedMessageParam2 { get; set; }
+        public Message CollectedMessage { get; set; }
+        public uint CollectedMsgParam1 { get; set; }
+        public uint CollectedMsgParam2 { get; set; }
 
         public ItemSpawnEntityEditor(Entity header, ItemSpawnEntityData raw) : base(header)
         {
@@ -323,9 +321,9 @@ namespace MphRead.Editor
             SpawnInterval = raw.SpawnInterval;
             SpawnDelay = raw.SpawnDelay;
             SomeEntityId = raw.SomeEntityId;
-            CollectedMessageId = raw.CollectedMessageId;
-            CollectedMessageParam1 = raw.CollectedMessageParam1;
-            CollectedMessageParam2 = raw.CollectedMessageParam2;
+            CollectedMessage = raw.CollectedMessage;
+            CollectedMsgParam1 = raw.CollectedMsgParam1;
+            CollectedMsgParam2 = raw.CollectedMsgParam2;
         }
     }
 
@@ -466,13 +464,13 @@ namespace MphRead.Editor
         public string SpawnNodeName { get; set; } = "";
         public short EntityId1 { get; set; }
         public ushort Field1E2 { get; set; }
-        public uint MessageId1 { get; set; }
+        public Message Message1 { get; set; }
         public short EntityId2 { get; set; }
         public ushort Field1EA { get; set; }
-        public uint MessageId2 { get; set; }
+        public Message Message2 { get; set; }
         public short EntityId3 { get; set; }
         public ushort Field1F2 { get; set; }
-        public uint MessageId3 { get; set; }
+        public Message Message3 { get; set; }
         public uint ItemModel { get; set; }
 
         public EnemySpawnEntityEditor(Entity header, EnemySpawnEntityData raw) : base(header)
@@ -596,13 +594,13 @@ namespace MphRead.Editor
             SpawnNodeName = raw.NodeName.MarshalString();
             EntityId1 = raw.EntityId1;
             Field1E2 = raw.Field1E2;
-            MessageId1 = raw.MessageId1;
+            Message1 = raw.Message1;
             EntityId2 = raw.EntityId2;
             Field1EA = raw.Field1EA;
-            MessageId2 = raw.MessageId2;
+            Message2 = raw.Message2;
             EntityId3 = raw.EntityId3;
             Field1F2 = raw.Field1F2;
-            MessageId3 = raw.MessageId3;
+            Message3 = raw.Message3;
             ItemModel = raw.ItemModel;
         }
     }
@@ -746,13 +744,13 @@ namespace MphRead.Editor
         public ushort TriggerFlags { get; set; } // in-game this is treated as uint, but the extra bits are never set/checked
         public uint TriggerThreshold { get; set; } // for subtype 1
         public short ParentId { get; set; }
-        public Message ParentEvent { get; set; }
-        public uint ParentEventParam1 { get; set; }
-        public uint ParentEventParam2 { get; set; }
+        public Message ParentMessage { get; set; }
+        public uint ParentMsgParam1 { get; set; }
+        public uint ParentMsgParam2 { get; set; }
         public short ChildId { get; set; }
-        public Message ChildEvent { get; set; }
-        public uint ChildEventParam1 { get; set; }
-        public uint ChildEventParam2 { get; set; }
+        public Message ChildMessage { get; set; }
+        public uint ChildMsgParam1 { get; set; }
+        public uint ChildMsgParam2 { get; set; }
 
         public TriggerVolumeEntityEditor(Entity header, TriggerVolumeEntityData raw) : base(header)
         {
@@ -767,13 +765,13 @@ namespace MphRead.Editor
             TriggerFlags = raw.TriggerFlags;
             TriggerThreshold = raw.TriggerThreshold;
             ParentId = raw.ParentId;
-            ParentEvent = raw.ParentEvent;
-            ParentEventParam1 = raw.ParentEventParam1;
-            ParentEventParam2 = raw.ParentEventParam2;
+            ParentMessage = raw.ParentMessage;
+            ParentMsgParam1 = raw.ParentMsgParam1;
+            ParentMsgParam2 = raw.ParentMsgParam2;
             ChildId = raw.ChildId;
-            ChildEvent = raw.ChildEvent;
-            ChildEventParam1 = raw.ChildEventParam1;
-            ChildEventParam2 = raw.ChildEventParam2;
+            ChildMessage = raw.ChildMessage;
+            ChildMsgParam1 = raw.ChildMsgParam1;
+            ChildMsgParam2 = raw.ChildMsgParam2;
         }
     }
 
@@ -788,11 +786,11 @@ namespace MphRead.Editor
         public uint Flags { get; set; }
         public uint Threshold { get; set; }
         public short ParentId { get; set; }
-        public FhMessage ParentEvent { get; set; }
-        public uint ParentParam1 { get; set; }
+        public FhMessage ParentMessage { get; set; }
+        public uint ParentMsgParam1 { get; set; }
         public short ChildId { get; set; }
-        public FhMessage ChildEvent { get; set; }
-        public uint ChildParam1 { get; set; }
+        public FhMessage ChildMessage { get; set; }
+        public uint ChildMsgParam1 { get; set; }
 
         public FhTriggerVolumeEntityEditor(Entity header, FhTriggerVolumeEntityData raw) : base(header)
         {
@@ -805,11 +803,11 @@ namespace MphRead.Editor
             Flags = raw.Flags;
             Threshold = raw.Threshold;
             ParentId = raw.ParentId;
-            ParentEvent = raw.ParentEvent;
-            ParentParam1 = raw.ParentParam1;
+            ParentMessage = raw.ParentMessage;
+            ParentMsgParam1 = raw.ParentMsgParam1;
             ChildId = raw.ChildId;
-            ChildEvent = raw.ChildEvent;
-            ChildParam1 = raw.ChildParam1;
+            ChildMessage = raw.ChildMessage;
+            ChildMsgParam1 = raw.ChildMsgParam1;
         }
     }
 
@@ -819,15 +817,15 @@ namespace MphRead.Editor
         public bool Active { get; set; } // in 1P, may be controlled by room state bits
         public bool AlwaysActive { get; set; } // ignore 1P state bits
         public bool AllowMultiple { get; set; }
-        public byte EventDelay { get; set; } // always 0 or 1
+        public byte MessageDelay { get; set; } // always 0 or 1
         public ushort Unused6A { get; set; } // always 0 or 1
-        public Message InsideEvent { get; set; }
-        public uint InsideEventParam1 { get; set; } // seconds for escape sequence, gravity/jump assist values, etc.
-        public uint InsideEventParam2 { get; set; } // always 0 except for type 15, where it's always 2
+        public Message InsideMessage { get; set; }
+        public uint InsideMsgParam1 { get; set; } // seconds for escape sequence, gravity/jump assist values, etc.
+        public uint InsideMsgParam2 { get; set; } // always 0 except for type 15, where it's always 2
         public short ParentId { get; set; }
-        public Message ExitEvent { get; set; }
-        public uint ExitEventParam1 { get; set; } // always 0
-        public uint ExitEventParam2 { get; set; } // always 0
+        public Message ExitMessage { get; set; }
+        public uint ExitMsgParam1 { get; set; } // always 0
+        public uint ExitMsgParam2 { get; set; } // always 0
         public short ChildId { get; set; } // always the same as ParentId
         public ushort Cooldown { get; set; }
         public uint Priority { get; set; } // always 0 or 1
@@ -839,15 +837,15 @@ namespace MphRead.Editor
             Active = raw.Active != 0;
             AlwaysActive = raw.AlwaysActive != 0;
             AllowMultiple = raw.AllowMultiple != 0;
-            EventDelay = raw.EventDelay;
+            MessageDelay = raw.MessageDelay;
             Unused6A = raw.Unused6A;
-            InsideEvent = raw.InsideEvent;
-            InsideEventParam1 = raw.InsideEventParam1;
-            InsideEventParam2 = raw.InsideEventParam2;
+            InsideMessage = raw.InsideMessage;
+            InsideMsgParam1 = raw.InsideMsgParam1;
+            InsideMsgParam2 = raw.InsideMsgParam2;
             ParentId = raw.ParentId;
-            ExitEvent = raw.ExitEvent;
-            ExitEventParam1 = raw.ExitEventParam1;
-            ExitEventParam2 = raw.ExitEventParam2;
+            ExitMessage = raw.ExitMessage;
+            ExitMsgParam1 = raw.ExitMsgParam1;
+            ExitMsgParam2 = raw.ExitMsgParam2;
             ChildId = raw.ChildId;
             Cooldown = raw.Cooldown;
             Priority = raw.Priority;
@@ -861,10 +859,10 @@ namespace MphRead.Editor
         public CollisionVolume Box { get; set; }
         public CollisionVolume Sphere { get; set; }
         public CollisionVolume Cylinder { get; set; }
-        public FhMessage InsideEvent { get; set; }
-        public uint InsideParam1 { get; set; }
-        public FhMessage ExitEvent { get; set; }
-        public uint ExitParam1 { get; set; }
+        public FhMessage InsideMessage { get; set; }
+        public uint InsideMsgParam1 { get; set; }
+        public FhMessage ExitMessage { get; set; }
+        public uint ExitMsgParam1 { get; set; }
         public ushort Cooldown { get; set; }
         public uint Flags { get; set; }
 
@@ -874,10 +872,10 @@ namespace MphRead.Editor
             Box = new CollisionVolume(raw.Box);
             Sphere = new CollisionVolume(raw.Sphere);
             Cylinder = new CollisionVolume(raw.Cylinder);
-            InsideEvent = raw.InsideEvent;
-            InsideParam1 = raw.InsideParam1;
-            ExitEvent = raw.ExitEvent;
-            ExitParam1 = raw.ExitParam1;
+            InsideMessage = raw.InsideMessage;
+            InsideMsgParam1 = raw.InsideMsgParam1;
+            ExitMessage = raw.ExitMessage;
+            ExitMsgParam1 = raw.ExitMsgParam1;
             Cooldown = raw.Cooldown;
             Flags = raw.Flags;
         }
@@ -1092,7 +1090,7 @@ namespace MphRead.Editor
         public short Entity1 { get; set; }
         public short Entity2 { get; set; }
         public short MessageTargetId { get; set; }
-        public uint MessageId { get; set; }
+        public Message Message { get; set; }
         public uint MessageParam { get; set; }
 
         public CameraSequenceEntityEditor(Entity header, CameraSequenceEntityData raw) : base(header)
@@ -1109,7 +1107,7 @@ namespace MphRead.Editor
             Entity1 = raw.Entity1;
             Entity2 = raw.Entity2;
             MessageTargetId = raw.MessageTargetId;
-            MessageId = raw.MessageId;
+            Message = raw.Message;
             MessageParam = raw.MessageParam;
         }
     }

@@ -3316,11 +3316,11 @@ namespace MphRead
             else if (entity is AreaVolumeEntity area)
             {
                 _sb.AppendLine();
-                _sb.Append($"Entry: {area.Data.InsideEvent}");
-                _sb.Append($", Param1: {area.Data.InsideEventParam1}, Param2: {area.Data.InsideEventParam1}");
+                _sb.Append($"Entry: {area.Data.InsideMessage}");
+                _sb.Append($", Param1: {area.Data.InsideMsgParam1}, Param2: {area.Data.InsideMsgParam2}");
                 _sb.AppendLine();
-                _sb.Append($" Exit: {area.Data.ExitEvent}");
-                _sb.Append($", Param1: {area.Data.ExitEventParam1}, Param2: {area.Data.ExitEventParam2}");
+                _sb.Append($" Exit: {area.Data.ExitMessage}");
+                _sb.Append($", Param1: {area.Data.ExitMsgParam1}, Param2: {area.Data.ExitMsgParam2}");
                 _sb.AppendLine();
                 if (TryGetEntity(area.Data.ParentId, out EntityBase? parent))
                 {
@@ -3334,11 +3334,11 @@ namespace MphRead
             else if (entity is FhAreaVolumeEntity fhArea)
             {
                 _sb.AppendLine();
-                _sb.Append($"Entry: {fhArea.Data.InsideEvent}");
-                _sb.Append($", Param1: {fhArea.Data.InsideParam1}, Param2: 0");
+                _sb.Append($"Entry: {fhArea.Data.InsideMessage}");
+                _sb.Append($", Param1: {fhArea.Data.InsideMsgParam1}, Param2: 0");
                 _sb.AppendLine();
-                _sb.Append($" Exit: {fhArea.Data.ExitEvent}");
-                _sb.Append($", Param1: {fhArea.Data.ExitParam1}, Param2: 0");
+                _sb.Append($" Exit: {fhArea.Data.ExitMessage}");
+                _sb.Append($", Param1: {fhArea.Data.ExitMsgParam1}, Param2: 0");
                 _sb.AppendLine();
                 _sb.Append("Target: None");
             }
@@ -3351,8 +3351,8 @@ namespace MphRead
                 }
                 _sb.Append(')');
                 _sb.AppendLine();
-                _sb.Append($"Parent: {trigger.Data.ParentEvent}");
-                if (trigger.Data.ParentEvent != Message.None && TryGetEntity(trigger.Data.ParentId, out EntityBase? parent))
+                _sb.Append($"Parent: {trigger.Data.ParentMessage}");
+                if (trigger.Data.ParentMessage != Message.None && TryGetEntity(trigger.Data.ParentId, out EntityBase? parent))
                 {
                     _sb.Append($", Target: {parent.Type} ({trigger.Data.ParentId})");
                 }
@@ -3360,10 +3360,10 @@ namespace MphRead
                 {
                     _sb.Append(", Target: None");
                 }
-                _sb.Append($", Param1: {trigger.Data.ParentEventParam1}, Param2: {trigger.Data.ParentEventParam2}");
+                _sb.Append($", Param1: {trigger.Data.ParentMsgParam1}, Param2: {trigger.Data.ParentMsgParam2}");
                 _sb.AppendLine();
-                _sb.Append($" Child: {trigger.Data.ChildEvent}");
-                if (trigger.Data.ChildEvent != Message.None && TryGetEntity(trigger.Data.ChildId, out EntityBase? child))
+                _sb.Append($" Child: {trigger.Data.ChildMessage}");
+                if (trigger.Data.ChildMessage != Message.None && TryGetEntity(trigger.Data.ChildId, out EntityBase? child))
                 {
                     _sb.Append($", Target: {child.Type} ({trigger.Data.ChildId})");
                 }
@@ -3371,7 +3371,7 @@ namespace MphRead
                 {
                     _sb.Append(", Target: None");
                 }
-                _sb.Append($", Param1: {trigger.Data.ChildEventParam1}, Param2: {trigger.Data.ChildEventParam2}");
+                _sb.Append($", Param1: {trigger.Data.ChildMsgParam1}, Param2: {trigger.Data.ChildMsgParam2}");
             }
             else if (entity is FhTriggerVolumeEntity fhTrigger)
             {
@@ -3380,8 +3380,8 @@ namespace MphRead
                     _sb.Append($" x{fhTrigger.Data.Threshold}");
                 }
                 _sb.AppendLine();
-                _sb.Append($"Parent: {fhTrigger.Data.ParentEvent}");
-                if (fhTrigger.Data.ParentEvent != FhMessage.None && TryGetEntity(fhTrigger.Data.ParentId, out EntityBase? parent))
+                _sb.Append($"Parent: {fhTrigger.Data.ParentMessage}");
+                if (fhTrigger.Data.ParentMessage != FhMessage.None && TryGetEntity(fhTrigger.Data.ParentId, out EntityBase? parent))
                 {
                     _sb.Append($", Target: {parent.Type} ({fhTrigger.Data.ParentId})");
                 }
@@ -3389,10 +3389,10 @@ namespace MphRead
                 {
                     _sb.Append(", Target: None");
                 }
-                _sb.Append($", Param1: {fhTrigger.Data.ParentParam1}, Param2: 0");
+                _sb.Append($", Param1: {fhTrigger.Data.ParentMsgParam1}, Param2: 0");
                 _sb.AppendLine();
-                _sb.Append($" Child: {fhTrigger.Data.ChildEvent}");
-                if (fhTrigger.Data.ChildEvent != FhMessage.None && TryGetEntity(fhTrigger.Data.ChildId, out EntityBase? child))
+                _sb.Append($" Child: {fhTrigger.Data.ChildMessage}");
+                if (fhTrigger.Data.ChildMessage != FhMessage.None && TryGetEntity(fhTrigger.Data.ChildId, out EntityBase? child))
                 {
                     _sb.Append($", Target: {child.Type} ({fhTrigger.Data.ChildId})");
                 }
@@ -3400,7 +3400,7 @@ namespace MphRead
                 {
                     _sb.Append(", Target: None");
                 }
-                _sb.Append($", Param1: {fhTrigger.Data.ChildParam1}, Param2: 0");
+                _sb.Append($", Param1: {fhTrigger.Data.ChildMsgParam1}, Param2: 0");
             }
             else if (entity is ObjectEntity obj)
             {
