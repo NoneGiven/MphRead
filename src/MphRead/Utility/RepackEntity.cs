@@ -710,7 +710,7 @@ namespace MphRead.Utility
             writer.Write(entity.Field164);
             writer.WriteString(entity.PortalName, 16);
             writer.Write(entity.Field178);
-            writer.Write(entity.Field17C);
+            writer.WriteInt(entity.ForCutscene);
             writer.Write(entity.Field180);
             writer.Write((uint)entity.Flags);
             writer.Write(entity.ContactDamage);

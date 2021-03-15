@@ -62,7 +62,7 @@ namespace MphRead
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] PortalName;
         public readonly uint Field178;
-        public readonly uint Field17C;
+        public readonly uint ForCutscene;
         public readonly uint Field180;
         public readonly PlatformFlags Flags;
         public readonly uint ContactDamage;

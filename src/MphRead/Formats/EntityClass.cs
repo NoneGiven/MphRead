@@ -49,7 +49,7 @@ namespace MphRead.Editor
         public uint Field164 { get; set; }
         public string PortalName { get; set; } = "";
         public uint Field178 { get; set; }
-        public uint Field17C { get; set; }
+        public bool ForCutscene { get; set; }
         public uint Field180 { get; set; }
         public PlatformFlags Flags { get; set; }
         public uint ContactDamage { get; set; }
@@ -125,7 +125,7 @@ namespace MphRead.Editor
             Field164 = raw.Field164;
             PortalName = raw.PortalName.MarshalString();
             Field178 = raw.Field178;
-            Field17C = raw.Field17C;
+            ForCutscene = raw.ForCutscene != 0;
             Field180 = raw.Field180;
             Flags = raw.Flags;
             ContactDamage = raw.ContactDamage;
