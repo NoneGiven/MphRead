@@ -243,13 +243,13 @@ namespace MphRead.Editor
 
     public class PlayerSpawnEntityEditor : EntityEditorBase
     {
-        public bool Initial { get; set; } // whether this is available to spawn at when frame count is 0
+        public byte Availability { get; set; } // 0 - any time, 1 - no first frame, 2 - bot only (FH)
         public bool Active { get; set; }
         public sbyte TeamIndex { get; set; } // 0, 1, or -1
 
         public PlayerSpawnEntityEditor(Entity header, PlayerSpawnEntityData raw) : base(header)
         {
-            Initial = raw.Initial != 0;
+            Availability = raw.Availability;
             Active = raw.Active != 0;
             TeamIndex = raw.TeamIndex;
         }

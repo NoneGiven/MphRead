@@ -744,7 +744,7 @@ namespace MphRead.Utility
 
         private static void WritePlayerSpawn(PlayerSpawnEntityEditor entity, BinaryWriter writer)
         {
-            writer.WriteByte(entity.Initial);
+            writer.Write(entity.Availability);
             writer.WriteByte(entity.Active);
             writer.Write(entity.TeamIndex);
         }
