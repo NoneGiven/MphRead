@@ -712,6 +712,12 @@ namespace MphRead
 
         public CollisionVolume(Vector3 vec1, Vector3 vec2, Vector3 vec3, Vector3 pos, float dot1, float dot2, float dot3)
         {
+            CylinderVector = Vector3.Zero;
+            CylinderPosition = Vector3.Zero;
+            CylinderRadius = 0;
+            CylinderDot = 0;
+            SpherePosition = Vector3.Zero;
+            SphereRadius = 0;
             Type = VolumeType.Box;
             BoxVector1 = vec1;
             BoxVector2 = vec2;
@@ -720,17 +726,10 @@ namespace MphRead
             BoxDot1 = dot1;
             BoxDot2 = dot2;
             BoxDot3 = dot3;
-            CylinderVector = Vector3.Zero;
-            CylinderPosition = Vector3.Zero;
-            CylinderRadius = 0;
-            CylinderDot = 0;
-            SpherePosition = Vector3.Zero;
-            SphereRadius = 0;
         }
 
         public CollisionVolume(Vector3 vec, Vector3 pos, float rad, float dot)
         {
-            Type = VolumeType.Cylinder;
             BoxVector1 = Vector3.Zero;
             BoxVector2 = Vector3.Zero;
             BoxVector3 = Vector3.Zero;
@@ -738,17 +737,17 @@ namespace MphRead
             BoxDot1 = 0;
             BoxDot2 = 0;
             BoxDot3 = 0;
+            SpherePosition = Vector3.Zero;
+            SphereRadius = 0;
+            Type = VolumeType.Cylinder;
             CylinderVector = vec;
             CylinderPosition = pos;
             CylinderRadius = rad;
             CylinderDot = dot;
-            SpherePosition = Vector3.Zero;
-            SphereRadius = 0;
         }
 
         public CollisionVolume(Vector3 pos, float rad)
         {
-            Type = VolumeType.Sphere;
             BoxVector1 = Vector3.Zero;
             BoxVector2 = Vector3.Zero;
             BoxVector3 = Vector3.Zero;
@@ -760,6 +759,7 @@ namespace MphRead
             CylinderPosition = Vector3.Zero;
             CylinderRadius = 0;
             CylinderDot = 0;
+            Type = VolumeType.Sphere;
             SpherePosition = pos;
             SphereRadius = rad;
         }

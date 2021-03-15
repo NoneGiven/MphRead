@@ -1307,7 +1307,7 @@ namespace MphRead.Utility
             writer.Write(entity.FieldDC);
             writer.Write(entity.FieldE0);
             writer.Write(entity.EnemyType);
-            writer.Write(entity.FieldE8);
+            writer.Write(entity.SpawnTotal);
             writer.Write(entity.SpawnLimit);
             writer.Write(entity.SpawnCount);
             writer.Write(entity.FieldEB);
@@ -1316,7 +1316,7 @@ namespace MphRead.Utility
             writer.WriteString(entity.SpawnNodeName, 16);
             writer.Write(entity.ParentId);
             writer.Write(entity.Field102);
-            writer.Write(entity.Field104);
+            writer.Write((uint)entity.EmptyMessage);
         }
 
         private static void WriteFhTriggerVolume(FhTriggerVolumeEntityEditor entity, BinaryWriter writer)

@@ -656,7 +656,7 @@ namespace MphRead.Editor
         public uint FieldDC { get; set; }
         public uint FieldE0 { get; set; }
         public uint EnemyType { get; set; }
-        public byte FieldE8 { get; set; }
+        public byte SpawnTotal { get; set; }
         public byte SpawnLimit { get; set; }
         public byte SpawnCount { get; set; }
         public byte FieldEB { get; set; }
@@ -665,7 +665,7 @@ namespace MphRead.Editor
         public string SpawnNodeName { get; set; } = "";
         public short ParentId { get; set; }
         public ushort Field102 { get; set; }
-        public uint Field104 { get; set; }
+        public FhMessage EmptyMessage { get; set; }
 
         public FhEnemySpawnEntityEditor(Entity header, FhEnemySpawnEntityData raw) : base(header)
         {
@@ -718,7 +718,7 @@ namespace MphRead.Editor
             FieldDC = raw.FieldDC;
             FieldE0 = raw.FieldE0;
             EnemyType = raw.EnemyType;
-            FieldE8 = raw.FieldE8;
+            SpawnTotal = raw.SpawnTotal;
             SpawnLimit = raw.SpawnLimit;
             SpawnCount = raw.SpawnCount;
             FieldEB = raw.FieldEB;
@@ -727,7 +727,7 @@ namespace MphRead.Editor
             SpawnNodeName = raw.NodeName.MarshalString();
             ParentId = raw.ParentId;
             Field102 = raw.Field102;
-            Field104 = raw.Field104;
+            EmptyMessage = raw.EmptyMessage;
         }
     }
 

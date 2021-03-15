@@ -417,7 +417,7 @@ namespace MphRead
         public readonly uint FieldDC;
         public readonly uint FieldE0;
         public readonly uint EnemyType;
-        public readonly byte FieldE8;
+        public readonly byte SpawnTotal;
         public readonly byte SpawnLimit;
         public readonly byte SpawnCount;
         public readonly byte FieldEB;
@@ -427,7 +427,7 @@ namespace MphRead
         public readonly char[] NodeName;
         public readonly short ParentId;
         public readonly ushort Field102;
-        public readonly uint Field104;
+        public readonly FhMessage EmptyMessage;
     }
 
     // size: 160
