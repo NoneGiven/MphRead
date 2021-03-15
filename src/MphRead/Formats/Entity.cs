@@ -47,13 +47,13 @@ namespace MphRead
         public readonly uint NoPort; // used as boolean, but some of the beam spawners in Frost Labyrinth have a value of 2
         public readonly uint ModelId;
         public readonly short ParentId;
-        public readonly byte Field2E;
+        public readonly byte Active; // boolean
         public readonly byte Field2F;
         public readonly ushort ScanData1;
         public readonly short ScanMsgTarget;
         public readonly Message ScanMessage;
         public readonly ushort ScanData2;
-        public readonly ushort Field3A;
+        public readonly ushort PositionCount;
         public readonly Vector3FxArray10 Positions;
         public readonly Vector4FxArray10 Rotations;
         public readonly Vector3Fx PositionOffset;

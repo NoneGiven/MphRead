@@ -35,13 +35,13 @@ namespace MphRead.Editor
         public uint NoPort { get; set; }
         public uint ModelId { get; set; }
         public short ParentId { get; set; }
-        public byte Field2E { get; set; }
+        public bool Active { get; set; }
         public byte Field2F { get; set; }
         public ushort ScanData1 { get; set; }
         public short ScanMsgTarget { get; set; }
         public Message ScanMessage { get; set; }
         public ushort ScanData2 { get; set; }
-        public ushort Field3A { get; set; }
+        public ushort PositionCount { get; set; }
         public List<Vector3> Positions { get; set; } = new List<Vector3>();
         public List<Vector4> Rotations { get; set; } = new List<Vector4>();
         public Vector3 PositionOffset { get; set; }
@@ -105,13 +105,13 @@ namespace MphRead.Editor
             NoPort = raw.NoPort;
             ModelId = raw.ModelId;
             ParentId = raw.ParentId;
-            Field2E = raw.Field2E;
+            Active = raw.Active != 0;
             Field2F = raw.Field2F;
             ScanData1 = raw.ScanData1;
             ScanMsgTarget = raw.ScanMsgTarget;
             ScanMessage = raw.ScanMessage;
             ScanData2 = raw.ScanData2;
-            Field3A = raw.Field3A;
+            PositionCount = raw.PositionCount;
             for (int i = 0; i < 10; i++)
             {
                 Positions.Add(raw.Positions[i].ToFloatVector());

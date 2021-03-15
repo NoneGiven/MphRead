@@ -80,7 +80,7 @@ namespace MphRead.Entities
         public override void Initialize(Scene scene)
         {
             base.Initialize(scene);
-            if (Flags.HasFlag(PlatformFlags.NozzleEffect))
+            if (Flags.HasFlag(PlatformFlags.SamusShip))
             {
                 Model model = _models[0].Model;
                 for (int i = 0; i < model.Nodes.Count; i++)
@@ -233,7 +233,7 @@ namespace MphRead.Entities
         Bit16 = 0x10000,
         Bit17 = 0x20000,
         BeamTarget = 0x40000,
-        NozzleEffect = 0x80000,
+        SamusShip = 0x80000,
         Bit20 = 0x100000,
         Bit21 = 0x200000,
         Bit22 = 0x400000,

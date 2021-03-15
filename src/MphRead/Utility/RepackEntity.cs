@@ -690,13 +690,13 @@ namespace MphRead.Utility
             writer.Write(entity.NoPort);
             writer.Write(entity.ModelId);
             writer.Write(entity.ParentId);
-            writer.Write(entity.Field2E);
+            writer.WriteByte(entity.Active);
             writer.Write(entity.Field2F);
             writer.Write(entity.ScanData1);
             writer.Write(entity.ScanMsgTarget);
             writer.Write((uint)entity.ScanMessage);
             writer.Write(entity.ScanData2);
-            writer.Write(entity.Field3A);
+            writer.Write(entity.PositionCount);
             foreach (Vector3 position in entity.Positions)
             {
                 writer.WriteVector3(position);
