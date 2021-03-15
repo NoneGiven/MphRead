@@ -65,7 +65,7 @@ namespace MphRead.Utility
                             entities.Add(new MorphCameraEntityEditor(entity, ((Entity<FhMorphCameraEntityData>)entity).Data));
                         }
                     }
-                    byte[] bytes = RepackFhEntities(entities, padEnd: meta.Name == "Level SP Survivor");
+                    byte[] bytes = RepackFhEntities(entities);
                     byte[] fileBytes = File.ReadAllBytes(Path.Combine(Paths.FhFileSystem, meta.EntityPath));
                     CompareFhEntities(bytes, fileBytes);
                     Nop();
@@ -1093,7 +1093,7 @@ namespace MphRead.Utility
             writer.WriteByte(entity.Active);
         }
 
-        private static byte[] RepackFhEntities(IReadOnlyList<EntityEditorBase> entities, bool padEnd)
+        private static byte[] RepackFhEntities(IReadOnlyList<EntityEditorBase> entities)
         {
             byte padByte = 0;
             uint padInt = 0;
@@ -1110,7 +1110,7 @@ namespace MphRead.Utility
                 EntityEditorBase entity = entities[i];
                 offsets.Add((int)stream.Position);
                 WriteFhEntity(entity, writer);
-                if (i < entities.Count - 1 || padEnd)
+                if (i < entities.Count - 1)
                 {
                     while (stream.Position % 4 != 0)
                     {
@@ -1267,6 +1267,9 @@ namespace MphRead.Utility
             writer.Write(entity.FieldE0);
             writer.Write(entity.EnemyType);
             writer.Write(entity.FieldE8);
+            writer.Write(entity.SpawnLimit);
+            writer.Write(entity.SpawnCount);
+            writer.Write(entity.FieldEB);
             writer.Write(entity.Cooldown);
             writer.Write(entity.FieldEE);
             writer.WriteString(entity.SpawnNodeName, 16);
