@@ -21,50 +21,7 @@ namespace MphRead.Utility
                 }
                 if (meta.FirstHunt) // hybrid uses MPH entities
                 {
-                    var entities = new List<EntityEditorBase>();
-                    foreach (Entity entity in Read.GetEntities(meta.EntityPath, layerId: -1, firstHunt: true))
-                    {
-                        if (entity.Type == EntityType.FhPlatform)
-                        {
-                            entities.Add(new FhPlatformEntityEditor(entity, ((Entity<FhPlatformEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.FhPlayerSpawn)
-                        {
-                            entities.Add(new PlayerSpawnEntityEditor(entity, ((Entity<PlayerSpawnEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.FhDoor)
-                        {
-                            entities.Add(new FhDoorEntityEditor(entity, ((Entity<FhDoorEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.FhItemSpawn)
-                        {
-                            entities.Add(new FhItemSpawnEntityEditor(entity, ((Entity<FhItemSpawnEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.FhEnemySpawn)
-                        {
-                            entities.Add(new FhEnemySpawnEntityEditor(entity, ((Entity<FhEnemySpawnEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.FhTriggerVolume)
-                        {
-                            entities.Add(new FhTriggerVolumeEntityEditor(entity, ((Entity<FhTriggerVolumeEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.FhAreaVolume)
-                        {
-                            entities.Add(new FhAreaVolumeEntityEditor(entity, ((Entity<FhAreaVolumeEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.FhJumpPad)
-                        {
-                            entities.Add(new FhJumpPadEntityEditor(entity, ((Entity<FhJumpPadEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.FhPointModule)
-                        {
-                            entities.Add(new PointModuleEntityEditor(entity, ((Entity<PointModuleEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.FhMorphCamera)
-                        {
-                            entities.Add(new MorphCameraEntityEditor(entity, ((Entity<FhMorphCameraEntityData>)entity).Data));
-                        }
-                    }
+                    IReadOnlyList<EntityEditorBase> entities = GetEntities(meta.EntityPath);
                     byte[] bytes = RepackFhEntities(entities);
                     byte[] fileBytes = File.ReadAllBytes(Path.Combine(Paths.FhFileSystem, meta.EntityPath));
                     CompareFhEntities(bytes, fileBytes);
@@ -72,86 +29,7 @@ namespace MphRead.Utility
                 }
                 else
                 {
-                    var entities = new List<EntityEditorBase>();
-                    foreach (Entity entity in Read.GetEntities(meta.EntityPath, layerId: -1, firstHunt: false))
-                    {
-                        if (entity.Type == EntityType.Platform)
-                        {
-                            entities.Add(new PlatformEntityEditor(entity, ((Entity<PlatformEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.Object)
-                        {
-                            entities.Add(new ObjectEntityEditor(entity, ((Entity<ObjectEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.PlayerSpawn)
-                        {
-                            entities.Add(new PlayerSpawnEntityEditor(entity, ((Entity<PlayerSpawnEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.Door)
-                        {
-                            entities.Add(new DoorEntityEditor(entity, ((Entity<DoorEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.ItemSpawn)
-                        {
-                            entities.Add(new ItemSpawnEntityEditor(entity, ((Entity<ItemSpawnEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.EnemySpawn)
-                        {
-                            entities.Add(new EnemySpawnEntityEditor(entity, ((Entity<EnemySpawnEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.TriggerVolume)
-                        {
-                            entities.Add(new TriggerVolumeEntityEditor(entity, ((Entity<TriggerVolumeEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.AreaVolume)
-                        {
-                            entities.Add(new AreaVolumeEntityEditor(entity, ((Entity<AreaVolumeEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.JumpPad)
-                        {
-                            entities.Add(new JumpPadEntityEditor(entity, ((Entity<JumpPadEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.PointModule)
-                        {
-                            entities.Add(new PointModuleEntityEditor(entity, ((Entity<PointModuleEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.MorphCamera)
-                        {
-                            entities.Add(new MorphCameraEntityEditor(entity, ((Entity<MorphCameraEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.OctolithFlag)
-                        {
-                            entities.Add(new OctolithFlagEntityEditor(entity, ((Entity<OctolithFlagEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.FlagBase)
-                        {
-                            entities.Add(new FlagBaseEntityEditor(entity, ((Entity<FlagBaseEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.Teleporter)
-                        {
-                            entities.Add(new TeleporterEntityEditor(entity, ((Entity<TeleporterEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.NodeDefense)
-                        {
-                            entities.Add(new NodeDefenseEntityEditor(entity, ((Entity<NodeDefenseEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.LightSource)
-                        {
-                            entities.Add(new LightSourceEntityEditor(entity, ((Entity<LightSourceEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.Artifact)
-                        {
-                            entities.Add(new ArtifactEntityEditor(entity, ((Entity<ArtifactEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.CameraSequence)
-                        {
-                            entities.Add(new CameraSequenceEntityEditor(entity, ((Entity<CameraSequenceEntityData>)entity).Data));
-                        }
-                        else if (entity.Type == EntityType.ForceField)
-                        {
-                            entities.Add(new ForceFieldEntityEditor(entity, ((Entity<ForceFieldEntityData>)entity).Data));
-                        }
-                    }
+                    IReadOnlyList<EntityEditorBase> entities = GetFhEntities(meta.EntityPath);
                     byte[] bytes = RepackEntities(entities);
                     byte[] fileBytes = File.ReadAllBytes(Path.Combine(Paths.FileSystem, meta.EntityPath));
                     CompareEntities(bytes, fileBytes);
@@ -159,6 +37,140 @@ namespace MphRead.Utility
                 }
             }
             Nop();
+        }
+
+        private static List<EntityEditorBase> GetEntities(string path)
+        {
+            var entities = new List<EntityEditorBase>();
+            foreach (Entity entity in Read.GetEntities(path, layerId: -1, firstHunt: true))
+            {
+                if (entity.Type == EntityType.FhPlatform)
+                {
+                    entities.Add(new FhPlatformEntityEditor(entity, ((Entity<FhPlatformEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.FhPlayerSpawn)
+                {
+                    entities.Add(new PlayerSpawnEntityEditor(entity, ((Entity<PlayerSpawnEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.FhDoor)
+                {
+                    entities.Add(new FhDoorEntityEditor(entity, ((Entity<FhDoorEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.FhItemSpawn)
+                {
+                    entities.Add(new FhItemSpawnEntityEditor(entity, ((Entity<FhItemSpawnEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.FhEnemySpawn)
+                {
+                    entities.Add(new FhEnemySpawnEntityEditor(entity, ((Entity<FhEnemySpawnEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.FhTriggerVolume)
+                {
+                    entities.Add(new FhTriggerVolumeEntityEditor(entity, ((Entity<FhTriggerVolumeEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.FhAreaVolume)
+                {
+                    entities.Add(new FhAreaVolumeEntityEditor(entity, ((Entity<FhAreaVolumeEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.FhJumpPad)
+                {
+                    entities.Add(new FhJumpPadEntityEditor(entity, ((Entity<FhJumpPadEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.FhPointModule)
+                {
+                    entities.Add(new PointModuleEntityEditor(entity, ((Entity<PointModuleEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.FhMorphCamera)
+                {
+                    entities.Add(new MorphCameraEntityEditor(entity, ((Entity<FhMorphCameraEntityData>)entity).Data));
+                }
+            }
+            return entities;
+        }
+
+        private static List<EntityEditorBase> GetFhEntities(string path)
+        {
+            var entities = new List<EntityEditorBase>();
+            foreach (Entity entity in Read.GetEntities(path, layerId: -1, firstHunt: false))
+            {
+                if (entity.Type == EntityType.Platform)
+                {
+                    entities.Add(new PlatformEntityEditor(entity, ((Entity<PlatformEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.Object)
+                {
+                    entities.Add(new ObjectEntityEditor(entity, ((Entity<ObjectEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.PlayerSpawn)
+                {
+                    entities.Add(new PlayerSpawnEntityEditor(entity, ((Entity<PlayerSpawnEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.Door)
+                {
+                    entities.Add(new DoorEntityEditor(entity, ((Entity<DoorEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.ItemSpawn)
+                {
+                    entities.Add(new ItemSpawnEntityEditor(entity, ((Entity<ItemSpawnEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.EnemySpawn)
+                {
+                    entities.Add(new EnemySpawnEntityEditor(entity, ((Entity<EnemySpawnEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.TriggerVolume)
+                {
+                    entities.Add(new TriggerVolumeEntityEditor(entity, ((Entity<TriggerVolumeEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.AreaVolume)
+                {
+                    entities.Add(new AreaVolumeEntityEditor(entity, ((Entity<AreaVolumeEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.JumpPad)
+                {
+                    entities.Add(new JumpPadEntityEditor(entity, ((Entity<JumpPadEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.PointModule)
+                {
+                    entities.Add(new PointModuleEntityEditor(entity, ((Entity<PointModuleEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.MorphCamera)
+                {
+                    entities.Add(new MorphCameraEntityEditor(entity, ((Entity<MorphCameraEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.OctolithFlag)
+                {
+                    entities.Add(new OctolithFlagEntityEditor(entity, ((Entity<OctolithFlagEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.FlagBase)
+                {
+                    entities.Add(new FlagBaseEntityEditor(entity, ((Entity<FlagBaseEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.Teleporter)
+                {
+                    entities.Add(new TeleporterEntityEditor(entity, ((Entity<TeleporterEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.NodeDefense)
+                {
+                    entities.Add(new NodeDefenseEntityEditor(entity, ((Entity<NodeDefenseEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.LightSource)
+                {
+                    entities.Add(new LightSourceEntityEditor(entity, ((Entity<LightSourceEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.Artifact)
+                {
+                    entities.Add(new ArtifactEntityEditor(entity, ((Entity<ArtifactEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.CameraSequence)
+                {
+                    entities.Add(new CameraSequenceEntityEditor(entity, ((Entity<CameraSequenceEntityData>)entity).Data));
+                }
+                else if (entity.Type == EntityType.ForceField)
+                {
+                    entities.Add(new ForceFieldEntityEditor(entity, ((Entity<ForceFieldEntityData>)entity).Data));
+                }
+            }
+            return entities;
         }
 
         private static void CompareEntities(byte[] pack, byte[] file)
