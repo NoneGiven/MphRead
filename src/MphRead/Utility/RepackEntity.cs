@@ -72,7 +72,6 @@ namespace MphRead.Utility
                 }
                 else
                 {
-                    continue;
                     var entities = new List<EntityEditorBase>();
                     foreach (Entity entity in Read.GetEntities(meta.EntityPath, layerId: -1, firstHunt: false))
                     {
