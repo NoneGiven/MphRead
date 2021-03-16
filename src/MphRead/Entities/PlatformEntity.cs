@@ -256,7 +256,7 @@ namespace MphRead.Entities
         private MoveState _state = MoveState.Sleep;
         private int _fromIndex = 0;
         private int _toIndex = 1;
-        private int _delay;
+        private readonly int _delay;
         private int _moveTimer;
         private Vector3 _velocity = Vector3.Zero;
 
