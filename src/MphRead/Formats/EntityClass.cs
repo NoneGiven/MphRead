@@ -48,9 +48,9 @@ namespace MphRead.Editor
         public float ForwardSpeed { get; set; }
         public float BackwardSpeed { get; set; }
         public string PortalName { get; set; } = "";
-        public bool Field178 { get; set; }
+        public uint MovementType { get; set; } // always 0
         public bool ForCutscene { get; set; }
-        public uint Field180 { get; set; }
+        public uint ReverseType { get; set; }
         public PlatformFlags Flags { get; set; }
         public uint ContactDamage { get; set; }
         public Vector3 BeamSpawnDir { get; set; }
@@ -58,15 +58,15 @@ namespace MphRead.Editor
         public int BeamId { get; set; }
         public uint BeamInterval { get; set; }
         public uint BeamOnIntervals { get; set; } // 16 bits are used
-        public int EffectId1 { get; set; }
+        public int ResistEffectId { get; set; }
         public uint Health { get; set; }
-        public uint Field1BC { get; set; }
-        public int EffectId2 { get; set; }
-        public int EffectId3 { get; set; }
+        public uint Effectiveness { get; set; }
+        public int DamageEffectId { get; set; }
+        public int DeadEffectId { get; set; }
         public byte ItemChance { get; set; }
         public uint ItemModel { get; set; }
-        public uint Field1D0 { get; set; }
-        public uint Field1D4 { get; set; }
+        public uint Unused1D0 { get; set; } // always 0
+        public uint Unused1D4 { get; set; } // always UInt32.MaxValue
         public uint BeamHitMsgTarget { get; set; }
         public Message BeamHitMessage { get; set; }
         public uint BeamHitMsgParam1 { get; set; }
@@ -124,9 +124,9 @@ namespace MphRead.Editor
             ForwardSpeed = raw.ForwardSpeed.FloatValue;
             BackwardSpeed = raw.BackwardSpeed.FloatValue;
             PortalName = raw.PortalName.MarshalString();
-            Field178 = raw.Field178 != 0;
+            MovementType = raw.MovementType;
             ForCutscene = raw.ForCutscene != 0;
-            Field180 = raw.Field180;
+            ReverseType = raw.ReverseType;
             Flags = raw.Flags;
             ContactDamage = raw.ContactDamage;
             BeamSpawnDir = raw.BeamSpawnDir.ToFloatVector();
@@ -134,15 +134,15 @@ namespace MphRead.Editor
             BeamId = raw.BeamId;
             BeamInterval = raw.BeamInterval;
             BeamOnIntervals = raw.BeamOnIntervals;
-            EffectId1 = raw.EffectId1;
+            ResistEffectId = raw.ResistEffectId;
             Health = raw.Health;
-            Field1BC = raw.Field1BC;
-            EffectId2 = raw.EffectId2;
-            EffectId3 = raw.EffectId3;
+            Effectiveness = raw.Effectiveness;
+            DamageEffectId = raw.DamageEffectId;
+            DeadEffectId = raw.DeadEffectId;
             ItemChance = raw.ItemChance;
             ItemModel = raw.ItemModel;
-            Field1D0 = raw.Field1D0;
-            Field1D4 = raw.Field1D4;
+            Unused1D0 = raw.Unused1D0;
+            Unused1D4 = raw.Unused1D4;
             BeamHitMsgTarget = raw.BeamHitMsgTarget;
             BeamHitMessage = raw.BeamHitMessage;
             BeamHitMsgParam1 = raw.BeamHitMsgParam1;

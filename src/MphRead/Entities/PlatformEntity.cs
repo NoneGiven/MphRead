@@ -108,17 +108,17 @@ namespace MphRead.Entities
                     scene.LoadEffect(_nozzleEffectId);
                 }
             }
-            if (_data.EffectId1 != 0)
+            if (_data.ResistEffectId != 0)
             {
-                scene.LoadEffect(_data.EffectId1);
+                scene.LoadEffect(_data.ResistEffectId);
             }
-            if (_data.EffectId2 != 0)
+            if (_data.DamageEffectId != 0)
             {
-                scene.LoadEffect(_data.EffectId2);
+                scene.LoadEffect(_data.DamageEffectId);
             }
-            if (_data.EffectId3 != 0)
+            if (_data.DeadEffectId != 0)
             {
-                scene.LoadEffect(_data.EffectId3);
+                scene.LoadEffect(_data.DeadEffectId);
             }
             if (_data.BeamId == 0 && Flags.HasFlag(PlatformFlags.BeamSpawner))
             {
@@ -258,7 +258,7 @@ namespace MphRead.Entities
         Breakable = 0x100000,
         Bit21 = 0x200000,
         Bit22 = 0x400000,
-        Bit23 = 0x800000,
+        NoRecoil = 0x800000,
         Bit24 = 0x1000000,
         Bit25 = 0x2000000,
         Bit26 = 0x4000000,

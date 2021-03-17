@@ -709,9 +709,9 @@ namespace MphRead.Utility
             writer.WriteFloat(entity.ForwardSpeed);
             writer.WriteFloat(entity.BackwardSpeed);
             writer.WriteString(entity.PortalName, 16);
-            writer.WriteInt(entity.Field178);
+            writer.Write(entity.MovementType);
             writer.WriteInt(entity.ForCutscene);
-            writer.Write(entity.Field180);
+            writer.Write(entity.ReverseType);
             writer.Write((uint)entity.Flags);
             writer.Write(entity.ContactDamage);
             writer.WriteVector3(entity.BeamSpawnDir);
@@ -721,17 +721,17 @@ namespace MphRead.Utility
             writer.Write(entity.BeamOnIntervals);
             writer.Write(UInt16.MaxValue); // Unused1B0
             writer.Write(padShort); // Unused1B2
-            writer.Write(entity.EffectId1);
+            writer.Write(entity.ResistEffectId);
             writer.Write(entity.Health);
-            writer.Write(entity.Field1BC);
-            writer.Write(entity.EffectId2);
-            writer.Write(entity.EffectId3);
+            writer.Write(entity.Effectiveness);
+            writer.Write(entity.DamageEffectId);
+            writer.Write(entity.DeadEffectId);
             writer.Write(entity.ItemChance);
             writer.Write(padByte); // Padding1C9
             writer.Write(padShort); // Padding1CA
             writer.Write(entity.ItemModel);
-            writer.Write(entity.Field1D0);
-            writer.Write(entity.Field1D4);
+            writer.Write(entity.Unused1D0);
+            writer.Write(entity.Unused1D4);
             writer.Write(entity.BeamHitMsgTarget);
             writer.Write((uint)entity.BeamHitMessage);
             writer.Write(entity.BeamHitMsgParam1);

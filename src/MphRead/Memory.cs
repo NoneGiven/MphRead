@@ -43,7 +43,7 @@ namespace MphRead.Memory
         public static void Start()
         {
             // FF DE FF E7 FF DE FF E7 FF DE FF E7 @ 0x2004000
-            new Memory(Process.GetProcessById(22644)).Run();
+            new Memory(Process.GetProcessById(30276)).Run();
             /*var procs = Process.GetProcessesByName("NO$GBA").ToList();
             foreach (Process process in procs)
             {
@@ -61,7 +61,7 @@ namespace MphRead.Memory
 
         private void Run()
         {
-            _baseAddress = new IntPtr(0x9997100);
+            _baseAddress = new IntPtr(0x92AC100);
             Task.Run(async () =>
             {
                 // 0x137A9C Cretaphid 1 crystal
@@ -85,17 +85,22 @@ namespace MphRead.Memory
                     //var keyframe1 = new CameraSequenceKeyframe(this, keyframe0.Next);
                     //var keyframe2 = new CameraSequenceKeyframe(this, keyframe1.Next);
                     //var beams = _entities.Where(e => e.EntityType == EntityType.BeamProjectile).ToList();
-                    var player = _entities.FirstOrDefault(e => e.EntityType == EntityType.Player) as CPlayer;
-                    if (player != null)
+                    //var player = _entities.FirstOrDefault(e => e.EntityType == EntityType.Player) as CPlayer;
+                    //if (player != null)
+                    //{
+                    //    int bit0 = player.SomeFlags & 0x10;
+                    //    int bit1 = player.SomeFlags & 0x40;
+                    //    string output = $"{(bit0 == 0 ? "Cleared" : "Set")} // {(bit1 == 0 ? "Cleared" : "Set")}";
+                    //    if (output != last)
+                    //    {
+                    //        Console.Write($"\r{output}                     ");
+                    //        last = output;
+                    //    }
+                    //}
+                    Console.Clear();
+                    foreach (CPlatform plat in _entities.Where(e => e.EntityType == EntityType.Platform).Select(e => (CPlatform)e))
                     {
-                        int bit0 = player.SomeFlags & 0x10;
-                        int bit1 = player.SomeFlags & 0x40;
-                        string output = $"{(bit0 == 0 ? "Cleared" : "Set")} // {(bit1 == 0 ? "Cleared" : "Set")}";
-                        if (output != last)
-                        {
-                            Console.Write($"\r{output}                     ");
-                            last = output;
-                        }
+                        Console.WriteLine($"{plat.ModelId}: {plat.State}");
                     }
                     await Task.Delay(15);
                 }

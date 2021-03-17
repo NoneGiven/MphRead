@@ -61,9 +61,9 @@ namespace MphRead
         public readonly Fixed BackwardSpeed;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] PortalName;
-        public readonly uint Field178;
+        public readonly uint MovementType;
         public readonly uint ForCutscene;
-        public readonly uint Field180;
+        public readonly uint ReverseType;
         public readonly PlatformFlags Flags;
         public readonly uint ContactDamage;
         public readonly Vector3Fx BeamSpawnDir;
@@ -73,17 +73,17 @@ namespace MphRead
         public readonly uint BeamOnIntervals; // 16 bits are used
         public readonly ushort Unused1B0; // always UInt16.MaxValue
         public readonly ushort Unused1B2; // always 0
-        public readonly int EffectId1;
+        public readonly int ResistEffectId;
         public readonly uint Health;
-        public readonly uint Field1BC;
-        public readonly int EffectId2;
-        public readonly int EffectId3;
+        public readonly uint Effectiveness;
+        public readonly int DamageEffectId;
+        public readonly int DeadEffectId;
         public readonly byte ItemChance;
         public readonly byte Padding1C9;
         public readonly ushort Padding1CA;
         public readonly uint ItemModel;
-        public readonly uint Field1D0;
-        public readonly uint Field1D4;
+        public readonly uint Unused1D0; // always 0
+        public readonly uint Unused1D4; // always UInt32.MaxValue
         public readonly uint BeamHitMsgTarget;
         public readonly Message BeamHitMessage;
         public readonly uint BeamHitMsgParam1;

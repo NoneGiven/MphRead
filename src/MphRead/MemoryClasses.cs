@@ -271,13 +271,13 @@ namespace MphRead.Memory
         public IntPtr ScanEventTarget { get => ReadPointer(_off2); set => WritePointer(_off2, value); }
 
         private const int _off3 = 0x24;
-        public int Field24 { get => ReadInt32(_off3); set => WriteInt32(_off3, value); }
+        public int MovementType { get => ReadInt32(_off3); set => WriteInt32(_off3, value); }
 
         private const int _off4 = 0x28;
         public int ForCutscene { get => ReadInt32(_off4); set => WriteInt32(_off4, value); }
 
         private const int _off5 = 0x2C;
-        public int Field2C { get => ReadInt32(_off5); set => WriteInt32(_off5, value); }
+        public int ReverseType { get => ReadInt32(_off5); set => WriteInt32(_off5, value); }
 
         private const int _off6 = 0x30;
         public PlatformFlags Flags { get => (PlatformFlags)ReadInt32(_off6); set => WriteInt32(_off6, (int)value); }
@@ -304,22 +304,22 @@ namespace MphRead.Memory
         public int BeamOnIntervals { get => ReadInt32(_off13); set => WriteInt32(_off13, value); }
 
         private const int _off14 = 0x50;
-        public int FxId1 { get => ReadInt32(_off14); set => WriteInt32(_off14, value); }
+        public int ResistEffId { get => ReadInt32(_off14); set => WriteInt32(_off14, value); }
 
         private const int _off15 = 0x54;
-        public int Field54 { get => ReadInt32(_off15); set => WriteInt32(_off15, value); }
+        public int Effectiveness { get => ReadInt32(_off15); set => WriteInt32(_off15, value); }
 
         private const int _off16 = 0x58;
-        public int FxId2 { get => ReadInt32(_off16); set => WriteInt32(_off16, value); }
+        public int DamageEffId { get => ReadInt32(_off16); set => WriteInt32(_off16, value); }
 
         private const int _off17 = 0x5C;
-        public int FxId3 { get => ReadInt32(_off17); set => WriteInt32(_off17, value); }
+        public int DeadEffId { get => ReadInt32(_off17); set => WriteInt32(_off17, value); }
 
         private const int _off18 = 0x60;
-        public int Field60 { get => ReadInt32(_off18); set => WriteInt32(_off18, value); }
+        public int Unused60 { get => ReadInt32(_off18); set => WriteInt32(_off18, value); }
 
         private const int _off19 = 0x64;
-        public int Field64 { get => ReadInt32(_off19); set => WriteInt32(_off19, value); }
+        public int Unused64 { get => ReadInt32(_off19); set => WriteInt32(_off19, value); }
 
         private const int _off20 = 0x68;
         public PlatformState MoveState { get => (PlatformState)ReadUInt32(_off20); set => WriteUInt32(_off20, (uint)value); }
@@ -361,7 +361,7 @@ namespace MphRead.Memory
         public ushort MoveTimer { get => ReadUInt16(_off32); set => WriteUInt16(_off32, value); }
 
         private const int _off33 = 0x84;
-        public ushort Field84 { get => ReadUInt16(_off33); set => WriteUInt16(_off33, value); }
+        public ushort RecoilTimer { get => ReadUInt16(_off33); set => WriteUInt16(_off33, value); }
 
         private const int _off34 = 0x86;
         public ushort Health { get => ReadUInt16(_off34); set => WriteUInt16(_off34, value); }
