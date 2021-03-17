@@ -218,8 +218,8 @@ namespace MphRead.Entities
         DisableReflect = 0x2,
         Draw = 0x4,
         Bit03 = 0x8,
-        Bit04 = 0x10,
-        Bit05 = 0x20,
+        Bit04 = 0x10, // functionless
+        Bit05 = 0x20, // functionless
         SeekPlayerHeight = 0x40,
         WasDrawn = 0x80,
         HasAnim = 0x100,
@@ -238,10 +238,10 @@ namespace MphRead.Entities
         Hazard = 0x1,
         ContactDamage = 0x2,
         BeamSpawner = 0x4,
-        Bit03 = 0x8, // unused
+        Bit03 = 0x8, // functionless
         DamagedReflect1 = 0x10,
         DamagedReflect2 = 0x20,
-        StandingColOnly = 0x40, // only send associated message when player is standing on the platform, instead of for any collision with player
+        StandingColOnly = 0x40,
         Bit07 = 0x80,
         Bit08 = 0x100,
         Bit09 = 0x200,
@@ -267,6 +267,15 @@ namespace MphRead.Entities
         Bit29 = 0x20000000,
         Bit30 = 0x40000000,
         Bit31 = 0x80000000
+    }
+
+    public enum PlatformState : uint
+    {
+        None = 0x0,
+        Awake = 0x1,
+        Activated = 0x2,
+        Reverse = 0x4,
+        WasAwake = 0x8
     }
 
     public class FhPlatformEntity : EntityBase

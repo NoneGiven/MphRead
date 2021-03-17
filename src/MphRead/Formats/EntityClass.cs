@@ -36,7 +36,7 @@ namespace MphRead.Editor
         public uint ModelId { get; set; }
         public short ParentId { get; set; }
         public bool Active { get; set; }
-        public byte Field2F { get; set; }
+        public byte Delay { get; set; }
         public ushort ScanData1 { get; set; }
         public short ScanMsgTarget { get; set; }
         public Message ScanMessage { get; set; }
@@ -106,7 +106,7 @@ namespace MphRead.Editor
             ModelId = raw.ModelId;
             ParentId = raw.ParentId;
             Active = raw.Active != 0;
-            Field2F = raw.Field2F;
+            Delay = raw.Delay;
             ScanData1 = raw.ScanData1;
             ScanMsgTarget = raw.ScanMsgTarget;
             ScanMessage = raw.ScanMessage;

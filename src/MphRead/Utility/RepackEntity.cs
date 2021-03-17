@@ -691,7 +691,7 @@ namespace MphRead.Utility
             writer.Write(entity.ModelId);
             writer.Write(entity.ParentId);
             writer.WriteByte(entity.Active);
-            writer.Write(entity.Field2F);
+            writer.Write(entity.Delay);
             writer.Write(entity.ScanData1);
             writer.Write(entity.ScanMsgTarget);
             writer.Write((uint)entity.ScanMessage);

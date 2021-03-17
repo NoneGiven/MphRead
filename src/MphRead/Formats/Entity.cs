@@ -48,7 +48,7 @@ namespace MphRead
         public readonly uint ModelId;
         public readonly short ParentId;
         public readonly byte Active; // boolean
-        public readonly byte Field2F;
+        public readonly byte Delay;
         public readonly ushort ScanData1;
         public readonly short ScanMsgTarget;
         public readonly Message ScanMessage;
