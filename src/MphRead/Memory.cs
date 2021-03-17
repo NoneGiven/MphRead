@@ -42,6 +42,7 @@ namespace MphRead.Memory
 
         public static void Start()
         {
+            // FF DE FF E7 FF DE FF E7 FF DE FF E7 @ 0x2004000
             new Memory(Process.GetProcessById(22644)).Run();
             /*var procs = Process.GetProcessesByName("NO$GBA").ToList();
             foreach (Process process in procs)

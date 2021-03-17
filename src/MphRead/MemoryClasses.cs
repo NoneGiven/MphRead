@@ -274,7 +274,7 @@ namespace MphRead.Memory
         public int Field24 { get => ReadInt32(_off3); set => WriteInt32(_off3, value); }
 
         private const int _off4 = 0x28;
-        public int Field28 { get => ReadInt32(_off4); set => WriteInt32(_off4, value); }
+        public int ForCutscene { get => ReadInt32(_off4); set => WriteInt32(_off4, value); }
 
         private const int _off5 = 0x2C;
         public int Field2C { get => ReadInt32(_off5); set => WriteInt32(_off5, value); }
@@ -283,13 +283,13 @@ namespace MphRead.Memory
         public PlatformFlags Flags { get => (PlatformFlags)ReadInt32(_off6); set => WriteInt32(_off6, (int)value); }
 
         private const int _off7 = 0x34;
-        public ushort Field34 { get => ReadUInt16(_off7); set => WriteUInt16(_off7, value); }
+        public ushort CollisionDamage { get => ReadUInt16(_off7); set => WriteUInt16(_off7, value); }
 
         private const int _off8 = 0x36;
         public ushort Field36 { get => ReadUInt16(_off8); set => WriteUInt16(_off8, value); }
 
         private const int _off9 = 0x38;
-        public Vector3 Field38 { get => ReadVec3(_off9); set => WriteVec3(_off9, value); }
+        public Vector3 BeamSpawnDir { get => ReadVec3(_off9); set => WriteVec3(_off9, value); }
 
         private const int _off10 = 0x44;
         public int BeamIndex { get => ReadInt32(_off10); set => WriteInt32(_off10, value); }
@@ -322,16 +322,16 @@ namespace MphRead.Memory
         public int Field64 { get => ReadInt32(_off19); set => WriteInt32(_off19, value); }
 
         private const int _off20 = 0x68;
-        public int InitialState { get => ReadInt32(_off20); set => WriteInt32(_off20, value); }
+        public PlatformState MoveState { get => (PlatformState)ReadUInt32(_off20); set => WriteUInt32(_off20, (uint)value); }
 
         private const int _off21 = 0x6C;
-        public int Field6C { get => ReadInt32(_off21); set => WriteInt32(_off21, value); }
+        public int CollisionBits { get => ReadInt32(_off21); set => WriteInt32(_off21, value); }
 
         private const int _off22 = 0x70;
-        public ushort Field70 { get => ReadUInt16(_off22); set => WriteUInt16(_off22, value); }
+        public ushort TimeSincePlayerCol { get => ReadUInt16(_off22); set => WriteUInt16(_off22, value); }
 
         private const int _off23 = 0x72;
-        public ushort AnimFlags { get => ReadUInt16(_off23); set => WriteUInt16(_off23, value); }
+        public PlatAnimFlags AnimFlags { get => (PlatAnimFlags)ReadUInt16(_off23); set => WriteUInt16(_off23, (ushort)value); }
 
         private const int _off24 = 0x74;
         public int CurrentAnimId { get => ReadInt32(_off24); set => WriteInt32(_off24, value); }
@@ -340,25 +340,25 @@ namespace MphRead.Memory
         public int CurrentAnim { get => ReadInt32(_off25); set => WriteInt32(_off25, value); }
 
         private const int _off26 = 0x7C;
-        public byte Frame { get => ReadByte(_off26); set => WriteByte(_off26, value); }
+        public byte FromIndex { get => ReadByte(_off26); set => WriteByte(_off26, value); }
 
         private const int _off27 = 0x7D;
-        public byte Idx2 { get => ReadByte(_off27); set => WriteByte(_off27, value); }
+        public byte ToIndex { get => ReadByte(_off27); set => WriteByte(_off27, value); }
 
         private const int _off28 = 0x7E;
-        public byte Field7E { get => ReadByte(_off28); set => WriteByte(_off28, value); }
+        public byte State { get => ReadByte(_off28); set => WriteByte(_off28, value); }
 
         private const int _off29 = 0x7F;
-        public byte Field7F { get => ReadByte(_off29); set => WriteByte(_off29, value); }
+        public byte PrevState { get => ReadByte(_off29); set => WriteByte(_off29, value); }
 
         private const int _off30 = 0x80;
-        public byte Field80 { get => ReadByte(_off30); set => WriteByte(_off30, value); }
+        public byte PosCount { get => ReadByte(_off30); set => WriteByte(_off30, value); }
 
         private const int _off31 = 0x81;
-        public byte Field81 { get => ReadByte(_off31); set => WriteByte(_off31, value); }
+        public byte Padding81 { get => ReadByte(_off31); set => WriteByte(_off31, value); }
 
         private const int _off32 = 0x82;
-        public ushort Field82 { get => ReadUInt16(_off32); set => WriteUInt16(_off32, value); }
+        public ushort MoveTimer { get => ReadUInt16(_off32); set => WriteUInt16(_off32, value); }
 
         private const int _off33 = 0x84;
         public ushort Field84 { get => ReadUInt16(_off33); set => WriteUInt16(_off33, value); }
@@ -376,28 +376,28 @@ namespace MphRead.Memory
         public ushort ParentId { get => ReadUInt16(_off37); set => WriteUInt16(_off37, value); }
 
         private const int _off38 = 0x8E;
-        public ushort Field8E { get => ReadUInt16(_off38); set => WriteUInt16(_off38, value); }
+        public ushort Padding8E { get => ReadUInt16(_off38); set => WriteUInt16(_off38, value); }
 
         private const int _off39 = 0x90; // CPlatform*
         public IntPtr Parent { get => ReadPointer(_off39); set => WritePointer(_off39, value); }
 
         private const int _off40 = 0x94;
-        public BeamInfo BeamInfo { get; }
+        public EquipInfoPtr EquipInfo { get; }
 
         private const int _off41 = 0xA8;
-        public ushort SomethingAmmo { get => ReadUInt16(_off41); set => WriteUInt16(_off41, value); }
+        public ushort BeamAmmo { get => ReadUInt16(_off41); set => WriteUInt16(_off41, value); }
 
         private const int _off42 = 0xAA;
-        public ushort FieldAA { get => ReadUInt16(_off42); set => WriteUInt16(_off42, value); }
+        public ushort PaddingAA { get => ReadUInt16(_off42); set => WriteUInt16(_off42, value); }
 
         private const int _off43 = 0xAC;
-        public int FieldAC { get => ReadInt32(_off43); set => WriteInt32(_off43, value); }
+        public int UnusedAC { get => ReadInt32(_off43); set => WriteInt32(_off43, value); }
 
         private const int _off44 = 0xB0;
-        public int FieldB0 { get => ReadInt32(_off44); set => WriteInt32(_off44, value); }
+        public int UnusedB0 { get => ReadInt32(_off44); set => WriteInt32(_off44, value); }
 
         private const int _off45 = 0xB4;
-        public int FieldB4 { get => ReadInt32(_off45); set => WriteInt32(_off45, value); }
+        public int UnusedB4 { get => ReadInt32(_off45); set => WriteInt32(_off45, value); }
 
         private const int _off46 = 0xB8;
         public ushort BeamTimer { get => ReadUInt16(_off46); set => WriteUInt16(_off46, value); }
@@ -409,7 +409,7 @@ namespace MphRead.Memory
         public ushort DrawingBeam { get => ReadUInt16(_off48); set => WriteUInt16(_off48, value); }
 
         private const int _off49 = 0xBE;
-        public ushort FieldBE { get => ReadUInt16(_off49); set => WriteUInt16(_off49, value); }
+        public ushort PaddingBE { get => ReadUInt16(_off49); set => WriteUInt16(_off49, value); }
 
         private const int _off50 = 0xC0; // EntityData*
         public IntPtr Data { get => ReadPointer(_off50); set => WritePointer(_off50, value); }
@@ -575,7 +575,7 @@ namespace MphRead.Memory
 
         public CPlatform(Memory memory, int address) : base(memory, address)
         {
-            BeamInfo = new BeamInfo(memory, address + _off40);
+            EquipInfo = new EquipInfoPtr(memory, address + _off40);
             ColStruct = new EntityCollision(memory, address + _off77);
             Turrets = new UInt16Array(memory, address + _off80, 4);
             Effects = new IntPtrArray(memory, address + _off82, 4);
@@ -589,7 +589,7 @@ namespace MphRead.Memory
 
         public CPlatform(Memory memory, IntPtr address) : base(memory, address)
         {
-            BeamInfo = new BeamInfo(memory, address + _off40);
+            EquipInfo = new EquipInfoPtr(memory, address + _off40);
             ColStruct = new EntityCollision(memory, address + _off77);
             Turrets = new UInt16Array(memory, address + _off80, 4);
             Effects = new IntPtrArray(memory, address + _off82, 4);
@@ -2034,7 +2034,7 @@ namespace MphRead.Memory
         public byte Field67 { get => ReadByte(_off7); set => WriteByte(_off7, value); }
 
         private const int _off8 = 0x68;
-        public BeamInfo BeamInfo { get; }
+        public EquipInfoPtr EquipInfo { get; }
 
         private const int _off9 = 0x7C; // EffectEntry*
         public IntPtr BurnEffect { get => ReadPointer(_off9); set => WritePointer(_off9, value); }
@@ -2087,14 +2087,14 @@ namespace MphRead.Memory
         public CHalfturret(Memory memory, int address) : base(memory, address)
         {
             LightInfo = new LightInfo(memory, address + _off6);
-            BeamInfo = new BeamInfo(memory, address + _off8);
+            EquipInfo = new EquipInfoPtr(memory, address + _off8);
             Model = new CModel(memory, address + _off10);
         }
 
         public CHalfturret(Memory memory, IntPtr address) : base(memory, address)
         {
             LightInfo = new LightInfo(memory, address + _off6);
-            BeamInfo = new BeamInfo(memory, address + _off8);
+            EquipInfo = new EquipInfoPtr(memory, address + _off8);
             Model = new CModel(memory, address + _off10);
         }
     }
@@ -2969,7 +2969,7 @@ namespace MphRead.Memory
         public byte Field84F { get => ReadByte(_off288); set => WriteByte(_off288, value); }
 
         private const int _off289 = 0x850;
-        public BeamInfo BeamInfo { get; }
+        public EquipInfoPtr EquipInfo { get; }
 
         private const int _off290 = 0x864;
         public CBeamProjectile BeamHead { get; }
@@ -4037,7 +4037,7 @@ namespace MphRead.Memory
             Input = new PlayerInput(memory, address + _off124);
             CameraInfo = new CameraInfo(memory, address + _off184);
             LightInfo = new LightInfo(memory, address + _off190);
-            BeamInfo = new BeamInfo(memory, address + _off289);
+            EquipInfo = new EquipInfoPtr(memory, address + _off289);
             BeamHead = new CBeamProjectile(memory, address + _off290);
             SmallSfx = new SmallSfxStruct(memory, address + _off638);
         }
@@ -4058,7 +4058,7 @@ namespace MphRead.Memory
             Input = new PlayerInput(memory, address + _off124);
             CameraInfo = new CameraInfo(memory, address + _off184);
             LightInfo = new LightInfo(memory, address + _off190);
-            BeamInfo = new BeamInfo(memory, address + _off289);
+            EquipInfo = new EquipInfoPtr(memory, address + _off289);
             BeamHead = new CBeamProjectile(memory, address + _off290);
             SmallSfx = new SmallSfxStruct(memory, address + _off638);
         }
@@ -4372,16 +4372,16 @@ namespace MphRead.Memory
         }
     }
 
-    public class BeamInfo : MemoryClass
+    public class EquipInfoPtr : MemoryClass
     {
         private const int _off0 = 0x0;
-        public byte Field0 { get => ReadByte(_off0); set => WriteByte(_off0, value); }
+        public EquipFlags Flags { get => (EquipFlags)ReadByte(_off0); set => WriteByte(_off0, (byte)value); }
 
         private const int _off1 = 0x1;
         public byte Count { get => ReadByte(_off1); set => WriteByte(_off1, value); }
 
         private const int _off2 = 0x2;
-        public ushort Field2 { get => ReadUInt16(_off2); set => WriteUInt16(_off2, value); }
+        public ushort Padding2 { get => ReadUInt16(_off2); set => WriteUInt16(_off2, value); }
 
         private const int _off3 = 0x4; // CBeamProjectile*
         public IntPtr Beams { get => ReadPointer(_off3); set => WritePointer(_off3, value); }
@@ -4390,19 +4390,19 @@ namespace MphRead.Memory
         public IntPtr WeaponInfo { get => ReadPointer(_off4); set => WritePointer(_off4, value); }
 
         private const int _off5 = 0xC; // unsigned__int16*
-        public IntPtr SomethingAmmo { get => ReadPointer(_off5); set => WritePointer(_off5, value); }
+        public IntPtr AmmoPtr { get => ReadPointer(_off5); set => WritePointer(_off5, value); }
 
         private const int _off6 = 0x10;
         public ushort ChargeLevel { get => ReadUInt16(_off6); set => WriteUInt16(_off6, value); }
 
         private const int _off7 = 0x12;
-        public ushort Field12 { get => ReadUInt16(_off7); set => WriteUInt16(_off7, value); }
+        public ushort SmokeLevel { get => ReadUInt16(_off7); set => WriteUInt16(_off7, value); }
 
-        public BeamInfo(Memory memory, int address) : base(memory, address)
+        public EquipInfoPtr(Memory memory, int address) : base(memory, address)
         {
         }
 
-        public BeamInfo(Memory memory, IntPtr address) : base(memory, address)
+        public EquipInfoPtr(Memory memory, IntPtr address) : base(memory, address)
         {
         }
     }

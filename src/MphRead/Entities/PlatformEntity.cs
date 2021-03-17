@@ -211,7 +211,7 @@ namespace MphRead.Entities
         }
     }
 
-    public enum AnimFlags : ushort
+    public enum PlatAnimFlags : ushort
     {
         None = 0x0,
         Active = 0x1,
