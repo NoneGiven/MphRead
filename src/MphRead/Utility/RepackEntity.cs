@@ -709,7 +709,7 @@ namespace MphRead.Utility
             writer.Write(entity.Field160);
             writer.Write(entity.Field164);
             writer.WriteString(entity.PortalName, 16);
-            writer.Write(entity.Field178);
+            writer.WriteInt(entity.Field178);
             writer.WriteInt(entity.ForCutscene);
             writer.Write(entity.Field180);
             writer.Write((uint)entity.Flags);

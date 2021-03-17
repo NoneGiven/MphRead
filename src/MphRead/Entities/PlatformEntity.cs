@@ -220,7 +220,7 @@ namespace MphRead.Entities
         Bit03 = 0x8,
         Bit04 = 0x10,
         Bit05 = 0x20,
-        Bit06 = 0x40,
+        SeekPlayerHeight = 0x40,
         WasDrawn = 0x80,
         HasAnim = 0x100,
         Bit09 = 0x200,

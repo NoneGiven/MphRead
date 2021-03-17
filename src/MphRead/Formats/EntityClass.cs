@@ -48,7 +48,7 @@ namespace MphRead.Editor
         public uint Field160 { get; set; }
         public uint Field164 { get; set; }
         public string PortalName { get; set; } = "";
-        public uint Field178 { get; set; }
+        public bool Field178 { get; set; }
         public bool ForCutscene { get; set; }
         public uint Field180 { get; set; }
         public PlatformFlags Flags { get; set; }
@@ -79,7 +79,6 @@ namespace MphRead.Editor
         public Message DeadMessage { get; set; }
         public uint DeadMsgParam1 { get; set; }
         public uint DeadMsgParam2 { get; set; }
-
         public ushort LifetimeMsg1Index { get; set; }
         public short LifetimeMsg1Target { get; set; }
         public Message LifetimeMessage1 { get; set; }
@@ -125,7 +124,7 @@ namespace MphRead.Editor
             Field160 = raw.Field160;
             Field164 = raw.Field164;
             PortalName = raw.PortalName.MarshalString();
-            Field178 = raw.Field178;
+            Field178 = raw.Field178 != 0;
             ForCutscene = raw.ForCutscene != 0;
             Field180 = raw.Field180;
             Flags = raw.Flags;
