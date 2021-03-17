@@ -67,38 +67,39 @@ namespace MphRead.Editor
         public uint ItemModel { get; set; }
         public uint Field1D0 { get; set; }
         public uint Field1D4 { get; set; }
-        public uint Message1Target { get; set; }
-        public Message Message1 { get; set; }
-        public uint Message1Param1 { get; set; }
-        public uint Message1Param2 { get; set; }
-        public uint Message2Target { get; set; }
-        public Message Message2 { get; set; }
-        public uint Message2Param1 { get; set; }
-        public uint Message2Param2 { get; set; }
-        public uint Message3Target { get; set; }
-        public Message Message3 { get; set; }
-        public uint Message3Param1 { get; set; }
-        public uint Message3Param2 { get; set; }
-        public ushort Field208 { get; set; }
-        public short Msg32Target1 { get; set; }
-        public Message Msg32Message1 { get; set; }
-        public uint Msg32Param11 { get; set; }
-        public uint Msg32Param21 { get; set; }
-        public ushort Field218 { get; set; }
-        public short Msg32Target2 { get; set; }
-        public Message Msg32Message2 { get; set; }
-        public uint Msg32Param12 { get; set; }
-        public uint Msg32Param22 { get; set; }
-        public ushort Field228 { get; set; }
-        public short Msg32Target3 { get; set; }
-        public Message Msg32Message3 { get; set; }
-        public uint Msg32Param13 { get; set; }
-        public uint Msg32Param23 { get; set; }
-        public ushort Field238 { get; set; }
-        public short Msg32Target4 { get; set; }
-        public Message Msg32Message4 { get; set; }
-        public uint Msg32Param14 { get; set; }
-        public uint Msg32Param24 { get; set; }
+        public uint BeamHitMsgTarget { get; set; }
+        public Message BeamHitMessage { get; set; }
+        public uint BeamHitMsgParam1 { get; set; }
+        public uint BeamHitMsgParam2 { get; set; }
+        public uint PlayerColMsgTarget { get; set; }
+        public Message PlayerColMessage { get; set; }
+        public uint PlayerColMsgParam1 { get; set; }
+        public uint PlayerColMsgParam2 { get; set; }
+        public uint DeadMsgTarget { get; set; }
+        public Message DeadMessage { get; set; }
+        public uint DeadMsgParam1 { get; set; }
+        public uint DeadMsgParam2 { get; set; }
+
+        public ushort LifetimeMsg1Index { get; set; }
+        public short LifetimeMsg1Target { get; set; }
+        public Message LifetimeMessage1 { get; set; }
+        public uint LifetimeMsg1Param1 { get; set; }
+        public uint LifetimeMsg1Param2 { get; set; }
+        public ushort LifetimeMsg2Index { get; set; }
+        public short LifetimeMsg2Target { get; set; }
+        public Message LifetimeMessage2 { get; set; }
+        public uint LifetimeMsg2Param1 { get; set; }
+        public uint LifetimeMsg2Param2 { get; set; }
+        public ushort LifetimeMsg3Index { get; set; }
+        public short LifetimeMsg3Target { get; set; }
+        public Message LifetimeMessage3 { get; set; }
+        public uint LifetimeMsg3Param1 { get; set; }
+        public uint LifetimeMsg3Param2 { get; set; }
+        public ushort LifetimeMsg4Index { get; set; }
+        public short LifetimeMsg4Target { get; set; }
+        public Message LifetimeMessage4 { get; set; }
+        public uint LifetimeMsg4Param1 { get; set; }
+        public uint LifetimeMsg4Param2 { get; set; }
 
         public PlatformEntityEditor(Entity header, PlatformEntityData raw) : base(header)
         {
@@ -143,38 +144,38 @@ namespace MphRead.Editor
             ItemModel = raw.ItemModel;
             Field1D0 = raw.Field1D0;
             Field1D4 = raw.Field1D4;
-            Message1Target = raw.Message1Target;
-            Message1 = raw.Message1;
-            Message1Param1 = raw.Message1Param1;
-            Message1Param2 = raw.Message1Param2;
-            Message2Target = raw.Message2Target;
-            Message2 = raw.Message2;
-            Message2Param1 = raw.Message2Param1;
-            Message2Param2 = raw.Message2Param2;
-            Message3Target = raw.Message3Target;
-            Message3 = raw.Message3;
-            Message3Param1 = raw.Message3Param1;
-            Message3Param2 = raw.Message3Param2;
-            Field208 = raw.Field208;
-            Msg32Target1 = raw.Msg32Target1;
-            Msg32Message1 = raw.Msg32Message1;
-            Msg32Param11 = raw.Msg32Param11;
-            Msg32Param21 = raw.Msg32Param21;
-            Field218 = raw.Field218;
-            Msg32Target2 = raw.Msg32Target2;
-            Msg32Message2 = raw.Msg32Message2;
-            Msg32Param12 = raw.Msg32Param12;
-            Msg32Param22 = raw.Msg32Param22;
-            Field228 = raw.Field228;
-            Msg32Target3 = raw.Msg32Target3;
-            Msg32Message3 = raw.Msg32Message3;
-            Msg32Param13 = raw.Msg32Param13;
-            Msg32Param23 = raw.Msg32Param23;
-            Field238 = raw.Field238;
-            Msg32Target4 = raw.Msg32Target4;
-            Msg32Message4 = raw.Msg32Message4;
-            Msg32Param14 = raw.Msg32Param14;
-            Msg32Param24 = raw.Msg32Param24;
+            BeamHitMsgTarget = raw.BeamHitMsgTarget;
+            BeamHitMessage = raw.BeamHitMessage;
+            BeamHitMsgParam1 = raw.BeamHitMsgParam1;
+            BeamHitMsgParam2 = raw.BeamHitMsgParam2;
+            PlayerColMsgTarget = raw.PlayerColMsgTarget;
+            PlayerColMessage = raw.PlayerColMessage;
+            PlayerColMsgParam1 = raw.PlayerColMsgParam1;
+            PlayerColMsgParam2 = raw.PlayerColMsgParam2;
+            DeadMsgTarget = raw.DeadMsgTarget;
+            DeadMessage = raw.DeadMessage;
+            DeadMsgParam1 = raw.DeadMsgParam1;
+            DeadMsgParam2 = raw.DeadMsgParam2;
+            LifetimeMsg1Index = raw.LifetimeMsg1Index;
+            LifetimeMsg1Target = raw.LifetimeMsg1Target;
+            LifetimeMessage1 = raw.LifetimeMessage1;
+            LifetimeMsg1Param1 = raw.LifetimeMsg1Param1;
+            LifetimeMsg1Param2 = raw.LifetimeMsg1Param2;
+            LifetimeMsg2Index = raw.LifetimeMsg2Index;
+            LifetimeMsg2Target = raw.LifetimeMsg2Target;
+            LifetimeMessage2 = raw.LifetimeMessage2;
+            LifetimeMsg2Param1 = raw.LifetimeMsg2Param1;
+            LifetimeMsg2Param2 = raw.LifetimeMsg2Param2;
+            LifetimeMsg3Index = raw.LifetimeMsg3Index;
+            LifetimeMsg3Target = raw.LifetimeMsg3Target;
+            LifetimeMessage3 = raw.LifetimeMessage3;
+            LifetimeMsg3Param1 = raw.LifetimeMsg3Param1;
+            LifetimeMsg3Param2 = raw.LifetimeMsg3Param2;
+            LifetimeMsg4Index = raw.LifetimeMsg4Index;
+            LifetimeMsg4Target = raw.LifetimeMsg4Target;
+            LifetimeMessage4 = raw.LifetimeMessage4;
+            LifetimeMsg4Param1 = raw.LifetimeMsg4Param1;
+            LifetimeMsg4Param2 = raw.LifetimeMsg4Param2;
         }
     }
 

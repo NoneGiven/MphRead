@@ -34,7 +34,7 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             Flags = data.Flags;
-            if (Flags.HasFlag(PlatformFlags.Bit20))
+            if (Flags.HasFlag(PlatformFlags.Breakable))
             {
                 Flags |= PlatformFlags.Bit03;
                 Flags |= PlatformFlags.Bit13;
@@ -211,16 +211,37 @@ namespace MphRead.Entities
         }
     }
 
+    public enum AnimFlags : ushort
+    {
+        None = 0x0,
+        Active = 0x1,
+        DisableReflect = 0x2,
+        Draw = 0x4,
+        Bit03 = 0x8,
+        Bit04 = 0x10,
+        Bit05 = 0x20,
+        Bit06 = 0x40,
+        WasDrawn = 0x80,
+        HasAnim = 0x100,
+        Bit09 = 0x200,
+        Bit10 = 0x400,
+        Bit11 = 0x800,
+        Bit12 = 0x1000,
+        Bit13 = 0x2000,
+        Bit14 = 0x4000,
+        Bit15 = 0x8000
+    }
+
     public enum PlatformFlags : uint
     {
         None = 0x0,
         Hazard = 0x1,
         ContactDamage = 0x2,
         BeamSpawner = 0x4,
-        Bit03 = 0x8,
-        Bit04 = 0x10,
-        Bit05 = 0x20,
-        Bit06 = 0x40,
+        Bit03 = 0x8, // unused
+        DamagedReflect1 = 0x10,
+        DamagedReflect2 = 0x20,
+        StandingColOnly = 0x40, // only send associated message when player is standing on the platform, instead of for any collision with player
         Bit07 = 0x80,
         Bit08 = 0x100,
         Bit09 = 0x200,
@@ -228,13 +249,13 @@ namespace MphRead.Entities
         Bit11 = 0x800,
         Bit12 = 0x1000,
         Bit13 = 0x2000,
-        Bit14 = 0x4000,
+        SyluxShip = 0x4000,
         Bit15 = 0x8000,
-        Bit16 = 0x10000,
+        BeamReflection = 0x10000,
         Bit17 = 0x20000,
         BeamTarget = 0x40000,
         SamusShip = 0x80000,
-        Bit20 = 0x100000,
+        Breakable = 0x100000,
         Bit21 = 0x200000,
         Bit22 = 0x400000,
         Bit23 = 0x800000,
