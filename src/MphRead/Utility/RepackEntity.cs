@@ -706,8 +706,8 @@ namespace MphRead.Utility
                 writer.WriteVector4(rotation);
             }
             writer.WriteVector3(entity.PositionOffset);
-            writer.Write(entity.Field160);
-            writer.Write(entity.Field164);
+            writer.WriteFloat(entity.ForwardSpeed);
+            writer.WriteFloat(entity.BackwardSpeed);
             writer.WriteString(entity.PortalName, 16);
             writer.WriteInt(entity.Field178);
             writer.WriteInt(entity.ForCutscene);

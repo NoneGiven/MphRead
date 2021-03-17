@@ -57,8 +57,8 @@ namespace MphRead
         public readonly Vector3FxArray10 Positions;
         public readonly Vector4FxArray10 Rotations;
         public readonly Vector3Fx PositionOffset;
-        public readonly uint Field160;
-        public readonly uint Field164;
+        public readonly Fixed ForwardSpeed;
+        public readonly Fixed BackwardSpeed;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] PortalName;
         public readonly uint Field178;

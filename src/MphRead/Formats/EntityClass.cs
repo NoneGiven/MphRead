@@ -45,8 +45,8 @@ namespace MphRead.Editor
         public List<Vector3> Positions { get; set; } = new List<Vector3>();
         public List<Vector4> Rotations { get; set; } = new List<Vector4>();
         public Vector3 PositionOffset { get; set; }
-        public uint Field160 { get; set; }
-        public uint Field164 { get; set; }
+        public float ForwardSpeed { get; set; }
+        public float BackwardSpeed { get; set; }
         public string PortalName { get; set; } = "";
         public bool Field178 { get; set; }
         public bool ForCutscene { get; set; }
@@ -121,8 +121,8 @@ namespace MphRead.Editor
                 Rotations.Add(raw.Rotations[i].ToFloatVector());
             }
             PositionOffset = raw.PositionOffset.ToFloatVector();
-            Field160 = raw.Field160;
-            Field164 = raw.Field164;
+            ForwardSpeed = raw.ForwardSpeed.FloatValue;
+            BackwardSpeed = raw.BackwardSpeed.FloatValue;
             PortalName = raw.PortalName.MarshalString();
             Field178 = raw.Field178 != 0;
             ForCutscene = raw.ForCutscene != 0;
