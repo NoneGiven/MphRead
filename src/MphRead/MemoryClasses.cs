@@ -322,7 +322,7 @@ namespace MphRead.Memory
         public int Unused64 { get => ReadInt32(_off19); set => WriteInt32(_off19, value); }
 
         private const int _off20 = 0x68;
-        public PlatformState MoveState { get => (PlatformState)ReadUInt32(_off20); set => WriteUInt32(_off20, (uint)value); }
+        public PlatStateBits StateBits { get => (PlatStateBits)ReadUInt32(_off20); set => WriteUInt32(_off20, (uint)value); }
 
         private const int _off21 = 0x6C;
         public int CollisionBits { get => ReadInt32(_off21); set => WriteInt32(_off21, value); }
@@ -349,10 +349,10 @@ namespace MphRead.Memory
         public byte State { get => ReadByte(_off28); set => WriteByte(_off28, value); }
 
         private const int _off29 = 0x7F;
-        public byte PrevState { get => ReadByte(_off29); set => WriteByte(_off29, value); }
+        public PlatformState PrevState { get => (PlatformState)ReadByte(_off29); set => WriteByte(_off29, (byte)value); }
 
         private const int _off30 = 0x80;
-        public byte PosCount { get => ReadByte(_off30); set => WriteByte(_off30, value); }
+        public PlatformState PosCount { get => (PlatformState)ReadByte(_off30); set => WriteByte(_off30, (byte)value); }
 
         private const int _off31 = 0x81;
         public byte Padding81 { get => ReadByte(_off31); set => WriteByte(_off31, value); }

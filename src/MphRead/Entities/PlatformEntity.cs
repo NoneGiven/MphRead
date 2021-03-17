@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Effects;
@@ -211,6 +212,7 @@ namespace MphRead.Entities
         }
     }
 
+    [Flags]
     public enum PlatAnimFlags : ushort
     {
         None = 0x0,
@@ -232,6 +234,7 @@ namespace MphRead.Entities
         Bit15 = 0x8000
     }
 
+    [Flags]
     public enum PlatformFlags : uint
     {
         None = 0x0,
@@ -269,13 +272,21 @@ namespace MphRead.Entities
         Bit31 = 0x80000000
     }
 
-    public enum PlatformState : uint
+    [Flags]
+    public enum PlatStateBits : uint
     {
         None = 0x0,
         Awake = 0x1,
         Activated = 0x2,
         Reverse = 0x4,
         WasAwake = 0x8
+    }
+
+    public enum PlatformState : byte
+    {
+        Inactive = 0,
+        Moving = 1,
+        Waiting = 2
     }
 
     public class FhPlatformEntity : EntityBase
