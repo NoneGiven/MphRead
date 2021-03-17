@@ -268,7 +268,7 @@ namespace MphRead.Memory
         public int ModelId { get => ReadInt32(_off1); set => WriteInt32(_off1, value); }
 
         private const int _off2 = 0x20; // CEntity*
-        public IntPtr ScanEvTarget { get => ReadPointer(_off2); set => WritePointer(_off2, value); }
+        public IntPtr ScanEventTarget { get => ReadPointer(_off2); set => WritePointer(_off2, value); }
 
         private const int _off3 = 0x24;
         public int Field24 { get => ReadInt32(_off3); set => WriteInt32(_off3, value); }
@@ -286,7 +286,7 @@ namespace MphRead.Memory
         public ushort CollisionDamage { get => ReadUInt16(_off7); set => WriteUInt16(_off7, value); }
 
         private const int _off8 = 0x36;
-        public ushort Field36 { get => ReadUInt16(_off8); set => WriteUInt16(_off8, value); }
+        public ushort Padding36 { get => ReadUInt16(_off8); set => WriteUInt16(_off8, value); }
 
         private const int _off9 = 0x38;
         public Vector3 BeamSpawnDir { get => ReadVec3(_off9); set => WriteVec3(_off9, value); }
@@ -298,7 +298,7 @@ namespace MphRead.Memory
         public ushort BeamInterval { get => ReadUInt16(_off11); set => WriteUInt16(_off11, value); }
 
         private const int _off12 = 0x4A;
-        public ushort Field4A { get => ReadUInt16(_off12); set => WriteUInt16(_off12, value); }
+        public ushort Padding4A { get => ReadUInt16(_off12); set => WriteUInt16(_off12, value); }
 
         private const int _off13 = 0x4C;
         public int BeamOnIntervals { get => ReadInt32(_off13); set => WriteInt32(_off13, value); }
@@ -378,7 +378,7 @@ namespace MphRead.Memory
         private const int _off38 = 0x8E;
         public ushort Padding8E { get => ReadUInt16(_off38); set => WriteUInt16(_off38, value); }
 
-        private const int _off39 = 0x90; // CPlatform*
+        private const int _off39 = 0x90; // CEntity*
         public IntPtr Parent { get => ReadPointer(_off39); set => WritePointer(_off39, value); }
 
         private const int _off40 = 0x94;
@@ -421,70 +421,70 @@ namespace MphRead.Memory
         public IntPtr Rotations { get => ReadPointer(_off52); set => WritePointer(_off52, value); }
 
         private const int _off53 = 0xCC;
-        public Vector3 FieldCC { get => ReadVec3(_off53); set => WriteVec3(_off53, value); }
+        public Vector3 PosOffset { get => ReadVec3(_off53); set => WriteVec3(_off53, value); }
 
         private const int _off54 = 0xD8;
-        public Vector3 SomePos { get => ReadVec3(_off54); set => WriteVec3(_off54, value); }
+        public Vector3 VisiblePos { get => ReadVec3(_off54); set => WriteVec3(_off54, value); }
 
         private const int _off55 = 0xE4;
-        public Vector3 PrevSomePos { get => ReadVec3(_off55); set => WriteVec3(_off55, value); }
+        public Vector3 PrevVisiblePos { get => ReadVec3(_off55); set => WriteVec3(_off55, value); }
 
         private const int _off56 = 0xF0;
-        public Vector3 Pos { get => ReadVec3(_off56); set => WriteVec3(_off56, value); }
+        public Vector3 Position { get => ReadVec3(_off56); set => WriteVec3(_off56, value); }
 
         private const int _off57 = 0xFC;
-        public Vector3 PrevPosMaybe { get => ReadVec3(_off57); set => WriteVec3(_off57, value); }
+        public Vector3 PrevPosition { get => ReadVec3(_off57); set => WriteVec3(_off57, value); }
 
         private const int _off58 = 0x108;
-        public Vector4 Rotation { get => ReadVec4(_off58); set => WriteVec4(_off58, value); }
+        public Vector4 CurRotation { get => ReadVec4(_off58); set => WriteVec4(_off58, value); }
 
         private const int _off59 = 0x118;
-        public Vector4 SomeRotation { get => ReadVec4(_off59); set => WriteVec4(_off59, value); }
+        public Vector4 FromRotation { get => ReadVec4(_off59); set => WriteVec4(_off59, value); }
 
         private const int _off60 = 0x128;
-        public Vector4 Field128 { get => ReadVec4(_off60); set => WriteVec4(_off60, value); }
+        public Vector4 ToRotation { get => ReadVec4(_off60); set => WriteVec4(_off60, value); }
 
         private const int _off61 = 0x138;
-        public int Field138 { get => ReadInt32(_off61); set => WriteInt32(_off61, value); }
+        public int MovePct { get => ReadInt32(_off61); set => WriteInt32(_off61, value); }
 
         private const int _off62 = 0x13C;
-        public int Field13C { get => ReadInt32(_off62); set => WriteInt32(_off62, value); }
+        public int MoveInc { get => ReadInt32(_off62); set => WriteInt32(_off62, value); }
 
         private const int _off63 = 0x140;
-        public int Field140 { get => ReadInt32(_off63); set => WriteInt32(_off63, value); }
+        public int Unused140 { get => ReadInt32(_off63); set => WriteInt32(_off63, value); }
 
         private const int _off64 = 0x144;
-        public int Field144 { get => ReadInt32(_off64); set => WriteInt32(_off64, value); }
+        public int Unused144 { get => ReadInt32(_off64); set => WriteInt32(_off64, value); }
 
         private const int _off65 = 0x148;
-        public Vector3 Field148 { get => ReadVec3(_off65); set => WriteVec3(_off65, value); }
+        public Vector3 ColMin { get => ReadVec3(_off65); set => WriteVec3(_off65, value); }
 
         private const int _off66 = 0x154;
-        public Vector3 Field154 { get => ReadVec3(_off66); set => WriteVec3(_off66, value); }
+        public Vector3 ColW { get => ReadVec3(_off66); set => WriteVec3(_off66, value); }
 
         private const int _off67 = 0x160;
-        public Vector3 Field160 { get => ReadVec3(_off67); set => WriteVec3(_off67, value); }
+        public Vector3 ColMax { get => ReadVec3(_off67); set => WriteVec3(_off67, value); }
 
         private const int _off68 = 0x16C;
-        public Vector3 MovementVector { get => ReadVec3(_off68); set => WriteVec3(_off68, value); }
+        public Vector3 Velocity { get => ReadVec3(_off68); set => WriteVec3(_off68, value); }
 
         private const int _off69 = 0x178;
-        public int Field178 { get => ReadInt32(_off69); set => WriteInt32(_off69, value); }
+        public int Unused178 { get => ReadInt32(_off69); set => WriteInt32(_off69, value); }
 
         private const int _off70 = 0x17C;
-        public int Field17C { get => ReadInt32(_off70); set => WriteInt32(_off70, value); }
+        public int Unused17C { get => ReadInt32(_off70); set => WriteInt32(_off70, value); }
 
         private const int _off71 = 0x180;
-        public int Field180 { get => ReadInt32(_off71); set => WriteInt32(_off71, value); }
+        public int Unused180 { get => ReadInt32(_off71); set => WriteInt32(_off71, value); }
 
         private const int _off72 = 0x184;
-        public int Field184 { get => ReadInt32(_off72); set => WriteInt32(_off72, value); }
+        public int ForwardSpeed { get => ReadInt32(_off72); set => WriteInt32(_off72, value); }
 
         private const int _off73 = 0x188;
-        public int Field188 { get => ReadInt32(_off73); set => WriteInt32(_off73, value); }
+        public int BackwardSpeed { get => ReadInt32(_off73); set => WriteInt32(_off73, value); }
 
         private const int _off74 = 0x18C;
-        public int Field18C { get => ReadInt32(_off74); set => WriteInt32(_off74, value); }
+        public int SfxVolume { get => ReadInt32(_off74); set => WriteInt32(_off74, value); }
 
         private const int _off75 = 0x190;
         public Vector3 Vec2 { get => ReadVec3(_off75); set => WriteVec3(_off75, value); }
@@ -493,7 +493,7 @@ namespace MphRead.Memory
         public Vector3 Vec1 { get => ReadVec3(_off76); set => WriteVec3(_off76, value); }
 
         private const int _off77 = 0x1A8;
-        public EntityCollision ColStruct { get; }
+        public EntityCollision EntityCollision { get; }
 
         private const int _off78 = 0x25C; // MaybeColLinkedStruct*
         public IntPtr MtxObj { get => ReadPointer(_off78); set => WritePointer(_off78, value); }
@@ -505,28 +505,28 @@ namespace MphRead.Memory
         public UInt16Array Turrets { get; }
 
         private const int _off81 = 0x26A;
-        public ushort Field26A { get => ReadUInt16(_off81); set => WriteUInt16(_off81, value); }
+        public ushort Padding26A { get => ReadUInt16(_off81); set => WriteUInt16(_off81, value); }
 
         private const int _off82 = 0x26C; // EffectEntry*[4]
         public IntPtrArray Effects { get; }
 
         private const int _off83 = 0x27C;
-        public int Field27C { get => ReadInt32(_off83); set => WriteInt32(_off83, value); }
+        public int Unused27C { get => ReadInt32(_off83); set => WriteInt32(_off83, value); }
 
         private const int _off84 = 0x280;
-        public int Field280 { get => ReadInt32(_off84); set => WriteInt32(_off84, value); }
+        public int Unused280 { get => ReadInt32(_off84); set => WriteInt32(_off84, value); }
 
         private const int _off85 = 0x284;
-        public int Field284 { get => ReadInt32(_off85); set => WriteInt32(_off85, value); }
+        public int Unused284 { get => ReadInt32(_off85); set => WriteInt32(_off85, value); }
 
         private const int _off86 = 0x288;
-        public int Field288 { get => ReadInt32(_off86); set => WriteInt32(_off86, value); }
+        public int Unused288 { get => ReadInt32(_off86); set => WriteInt32(_off86, value); }
 
         private const int _off87 = 0x28C;
-        public int Field28C { get => ReadInt32(_off87); set => WriteInt32(_off87, value); }
+        public int Unused28C { get => ReadInt32(_off87); set => WriteInt32(_off87, value); }
 
         private const int _off88 = 0x290;
-        public int Field290 { get => ReadInt32(_off88); set => WriteInt32(_off88, value); }
+        public int Unused290 { get => ReadInt32(_off88); set => WriteInt32(_off88, value); }
 
         private const int _off89 = 0x294; // NodeRef*
         public IntPtr NodeRef { get => ReadPointer(_off89); set => WritePointer(_off89, value); }
@@ -538,37 +538,28 @@ namespace MphRead.Memory
         public IntPtr Port { get => ReadPointer(_off91); set => WritePointer(_off91, value); }
 
         private const int _off92 = 0x2E4; // CEntity*
-        public IntPtr Event1Target { get => ReadPointer(_off92); set => WritePointer(_off92, value); }
+        public IntPtr HitEventTarget { get => ReadPointer(_off92); set => WritePointer(_off92, value); }
 
         private const int _off93 = 0x2E8; // CEntity*
-        public IntPtr Event2Target { get => ReadPointer(_off93); set => WritePointer(_off93, value); }
+        public IntPtr PlayerColEventTarget { get => ReadPointer(_off93); set => WritePointer(_off93, value); }
 
         private const int _off94 = 0x2EC; // CEntity*
-        public IntPtr Event3Target { get => ReadPointer(_off94); set => WritePointer(_off94, value); }
+        public IntPtr DeadEventTarget { get => ReadPointer(_off94); set => WritePointer(_off94, value); }
 
-        private const int _off95 = 0x2F0;
-        public byte Field2F0 { get => ReadByte(_off95); set => WriteByte(_off95, value); }
-
-        private const int _off96 = 0x2F1;
-        public byte Field2F1 { get => ReadByte(_off96); set => WriteByte(_off96, value); }
-
-        private const int _off97 = 0x2F2;
-        public byte Field2F2 { get => ReadByte(_off97); set => WriteByte(_off97, value); }
-
-        private const int _off98 = 0x2F3;
-        public byte Field2F3 { get => ReadByte(_off98); set => WriteByte(_off98, value); }
+        private const int _off95 = 0x2F0; // byte[4]
+        public ByteArray LifetimeEventIndices { get; }
 
         private const int _off99 = 0x2F4; // CEntity*[4]
-        public IntPtrArray Ev32Targets { get; }
+        public IntPtrArray LifetimeEventTargets { get; }
 
         private const int _off100 = 0x304; // Message[4]
-        public U32EnumArray<Message> Ev32EventIds { get; }
+        public U32EnumArray<Message> LifetimeEventIds { get; }
 
         private const int _off101 = 0x314; // int[4]
-        public Int32Array Ev32Param1s { get; }
+        public Int32Array LifetimeEventParam1s { get; }
 
         private const int _off102 = 0x324; // int[4]
-        public Int32Array Ev32Param2s { get; }
+        public Int32Array LifetimeEventParam2s { get; }
 
         private const int _off103 = 0x334;
         public SmallSfxStruct SmallSfx { get; }
@@ -576,28 +567,30 @@ namespace MphRead.Memory
         public CPlatform(Memory memory, int address) : base(memory, address)
         {
             EquipInfo = new EquipInfoPtr(memory, address + _off40);
-            ColStruct = new EntityCollision(memory, address + _off77);
+            EntityCollision = new EntityCollision(memory, address + _off77);
             Turrets = new UInt16Array(memory, address + _off80, 4);
             Effects = new IntPtrArray(memory, address + _off82, 4);
             Model = new CModel(memory, address + _off90);
-            Ev32Targets = new IntPtrArray(memory, address + _off99, 4);
-            Ev32EventIds = new U32EnumArray<Message>(memory, address + _off100, 4);
-            Ev32Param1s = new Int32Array(memory, address + _off101, 4);
-            Ev32Param2s = new Int32Array(memory, address + _off102, 4);
+            LifetimeEventIndices = new ByteArray(memory, address + _off95, 4);
+            LifetimeEventTargets = new IntPtrArray(memory, address + _off99, 4);
+            LifetimeEventIds = new U32EnumArray<Message>(memory, address + _off100, 4);
+            LifetimeEventParam1s = new Int32Array(memory, address + _off101, 4);
+            LifetimeEventParam2s = new Int32Array(memory, address + _off102, 4);
             SmallSfx = new SmallSfxStruct(memory, address + _off103);
         }
 
         public CPlatform(Memory memory, IntPtr address) : base(memory, address)
         {
             EquipInfo = new EquipInfoPtr(memory, address + _off40);
-            ColStruct = new EntityCollision(memory, address + _off77);
+            EntityCollision = new EntityCollision(memory, address + _off77);
             Turrets = new UInt16Array(memory, address + _off80, 4);
             Effects = new IntPtrArray(memory, address + _off82, 4);
             Model = new CModel(memory, address + _off90);
-            Ev32Targets = new IntPtrArray(memory, address + _off99, 4);
-            Ev32EventIds = new U32EnumArray<Message>(memory, address + _off100, 4);
-            Ev32Param1s = new Int32Array(memory, address + _off101, 4);
-            Ev32Param2s = new Int32Array(memory, address + _off102, 4);
+            LifetimeEventIndices = new ByteArray(memory, address + _off95, 4);
+            LifetimeEventTargets = new IntPtrArray(memory, address + _off99, 4);
+            LifetimeEventIds = new U32EnumArray<Message>(memory, address + _off100, 4);
+            LifetimeEventParam1s = new Int32Array(memory, address + _off101, 4);
+            LifetimeEventParam2s = new Int32Array(memory, address + _off102, 4);
             SmallSfx = new SmallSfxStruct(memory, address + _off103);
         }
     }
