@@ -256,7 +256,7 @@ namespace MphRead
                         {
                             textureData[8] = newTexData;
                             extraTex[8] = newTexture;
-                        } 
+                        }
                         var extraPal = new List<Palette>();
                         extraPal.AddRange(palettes);
                         if (name == "Lava_Power")
@@ -267,7 +267,7 @@ namespace MphRead
                         else
                         {
                             paletteData[8] = newPalette;
-                        } 
+                        }
                         textures = extraTex;
                         palettes = extraPal;
                     }
