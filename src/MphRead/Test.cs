@@ -143,9 +143,18 @@ namespace MphRead
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
                     foreach (Entity entity in entities)
                     {
-                        if (entity.Type == EntityType.CameraSequence)
+                        if (entity.Type == EntityType.Platform)
                         {
-                            CameraSequenceEntityData data = ((Entity<CameraSequenceEntityData>)entity).Data;
+                            PlatformEntityData data = ((Entity<PlatformEntityData>)entity).Data;
+                            string name = "N/A";
+                            if (data.ModelId != 2)
+                            {
+                                name = Metadata.GetPlatformById((int)data.ModelId)!.Name;
+                            }
+                            if (data.ParentId != -1)
+                            {
+                                Console.WriteLine($"{meta.Key} - {name} [{data.Header.EntityId,2}]");
+                            }
                         }
                     }
                 }
