@@ -361,26 +361,91 @@ namespace MphRead.Entities
             // ptodo: player bonk stuff
             if (!_animFlags.HasFlag(PlatAnimFlags.DisableReflect))
             {
-                // ptodo: Sylux ship/turret stuff
-                if (_data.MovementType == 1)
+                bool isTurret = false;
+                bool turretAiming = false;
+                if (Flags.HasFlag(PlatformFlags.SyluxShip) && _parent != null)
                 {
-                    // never true in-game
-                    _curPosition += _velocity;
-                    _movePercent += _moveIncrement;
-                    // sktodo
+                    isTurret = true;
+                    if (_stateBits.HasFlag(PlatStateBits.Awake)
+                        && _models[0].AnimInfo.Node.Index == GetAnimation(PlatAnimId.InstantWake))
+                    {
+                        turretAiming = true;
+                    }
                 }
-                else if (_data.MovementType == 0)
+                if (Flags.HasFlag(PlatformFlags.SyluxShip)
+                    && (isTurret || _stateBits.HasFlag(PlatStateBits.Awake) || _stateBits.HasFlag(PlatStateBits.WasAwake)))
                 {
-                    UpdateState();
-                    _curPosition += _velocity;
-                    _movePercent += _moveIncrement;
-                    UpdateRotation();
+                    Vector3 target = Vector3.Zero;
+                    if (isTurret)
+                    {
+                        Debug.Assert(_parent != null);
+                        if (turretAiming)
+                        {
+                            if (PlayerEntity.PlayerCount > 0)
+                            {
+                                PlayerEntity mainPlayer = PlayerEntity.Players[PlayerEntity.MainPlayer];
+                                target = new Vector3(
+                                    mainPlayer.Position.X - _curPosition.X,
+                                    mainPlayer.Position.Y + 1 - _curPosition.Y,
+                                    mainPlayer.Position.Z - _curPosition.Z
+                                );
+                            }
+                        }
+                        else
+                        {
+                            target = Vector3.UnitZ;
+                            target = Matrix.Vec3MultMtx3(target, _parent.CollisionTransform);
+                        }
+                        target = target.Normalized();
+                    }
+                    else if (PlayerEntity.PlayerCount > 0)
+                    {
+                        PlayerEntity mainPlayer = PlayerEntity.Players[PlayerEntity.MainPlayer];
+                        target = new Vector3(
+                            mainPlayer.Position.X - _curPosition.X,
+                            0,
+                            mainPlayer.Position.Z - _curPosition.Z
+                        ).Normalized();
+                    }
+                    // sktodo: names
+                    Vector3 cross1 = Vector3.Cross(Vector3.UnitY, target).Normalized();
+                    Vector3 cross2 = Vector3.Cross(target, cross1).Normalized();
+                    Vector4 rotation = ChooseVectors(cross1, cross2, target);
+                    if (!_models[0].IsPlaceholder)
+                    {
+                        float pct = Fixed.ToFloat(_parent == null ? 64 : 256);
+                        rotation = ComputeRotation(_curRotation, rotation, pct);
+                    }
+                    _curRotation = rotation.Normalized();
+                    if (_data.MovementType == 0)
+                    {
+                        UpdateState();
+                        _curPosition += _velocity;
+                    }
                 }
-                if (_animFlags.HasFlag(PlatAnimFlags.SeekPlayerHeight) && PlayerEntity.PlayerCount > 0)
+                else
                 {
-                    // also never true in-game
-                    float offset = (PlayerEntity.Players[PlayerEntity.MainPlayer].Position.Y - _curPosition.Y) * Fixed.ToFloat(20);
-                    _curPosition.Y += offset;
+                    if (_data.MovementType == 1)
+                    {
+                        // never true in-game
+                        _curPosition += _velocity;
+                        _movePercent += _moveIncrement;
+                        // sktodo
+                    }
+                    else if (_data.MovementType == 0)
+                    {
+                        UpdateState();
+                        _curPosition += _velocity;
+                        _movePercent += _moveIncrement;
+                        _curRotation = ComputeRotation(_fromRotation, _toRotation, _movePercent);
+                    }
+                    if (_animFlags.HasFlag(PlatAnimFlags.SeekPlayerHeight) && PlayerEntity.PlayerCount > 0)
+                    {
+                        // also never true in-game
+                        PlayerEntity mainPlayer = PlayerEntity.Players[PlayerEntity.MainPlayer];
+                        float offset = (mainPlayer.Position.Y - _curPosition.Y) * Fixed.ToFloat(20);
+                        _curPosition.Y += offset;
+                    }
                 }
             }
             bool spawnBeam = true;
@@ -508,10 +573,60 @@ namespace MphRead.Entities
             _moveIncrement = factor;
         }
 
-        private void UpdateRotation()
+        private static Vector4 ChooseVectors(Vector3 vec0, Vector3 vec1, Vector3 vec2)
         {
-            float pct = Math.Clamp(_movePercent, 0, 1);
-            float dot = Vector4.Dot(_fromRotation, _toRotation);
+            float sqrt;
+            float inv;
+            if (vec2.Z + vec0.X + vec1.Y >= 0)
+            {
+                sqrt = MathF.Sqrt(vec2.Z + vec0.X + vec1.Y + 1);
+                inv = 1 / sqrt / 2f;
+                return new Vector4(
+                    (vec1.Z - vec2.Y) * inv,
+                    (vec2.X - vec0.Z) * inv,
+                    (vec0.Y - vec1.X) * inv,
+                    sqrt / 2f
+                );
+            }
+            if (vec1.Y <= vec0.X)
+            {
+                if (vec2.Z <= vec0.X)
+                {
+                    sqrt = MathF.Sqrt(vec0.X - (vec1.Y + vec2.Z) + 1);
+                    inv = 1 / sqrt / 2f;
+                    return new Vector4(
+                        sqrt / 2f,
+                        (vec1.X + vec0.Y) * inv,
+                        (vec0.Z + vec2.X) * inv,
+                        (vec1.Z - vec2.Y) * inv
+                    );
+                }
+            }
+            else if (vec2.Z <= vec1.Y)
+            {
+                sqrt = MathF.Sqrt(vec1.Y - (vec2.Z + vec0.X) + 1);
+                inv = 1 / sqrt / 2f;
+                return new Vector4(
+                    (vec1.X + vec0.Y) * inv,
+                    (vec2.Y + vec1.Z) * inv,
+                    sqrt / 2f,
+                    (vec2.X - vec0.Z) * inv
+                );
+            }
+            sqrt = MathF.Sqrt(vec2.Z - (vec0.X + vec1.Y) + 1);
+            inv = 1 / sqrt / 2f;
+            return new Vector4(
+                (vec0.Z + vec2.X) * inv,
+                (vec2.Y + vec1.Z) * inv,
+                sqrt / 2f,
+                (vec0.Y - vec1.X) * inv
+            );
+        }
+
+        private static Vector4 ComputeRotation(Vector4 fromRot, Vector4 toRot, float pct)
+        {
+            pct = Math.Clamp(pct, 0, 1);
+            float dot = Vector4.Dot(fromRot, toRot);
             bool negDot = dot < 0;
             dot = MathF.Abs(dot);
             float factor;
@@ -531,11 +646,11 @@ namespace MphRead.Entities
             {
                 pct *= -1;
             }
-            _curRotation = new Vector4(
-                factor * _fromRotation.X + pct * _toRotation.X,
-                factor * _fromRotation.Y + pct * _toRotation.Y,
-                factor * _fromRotation.Z + pct * _toRotation.Z,
-                factor * _fromRotation.W + pct * _toRotation.W
+            return new Vector4(
+                factor * fromRot.X + pct * toRot.X,
+                factor * fromRot.Y + pct * toRot.Y,
+                factor * fromRot.Z + pct * toRot.Z,
+                factor * fromRot.W + pct * toRot.W
             ).Normalized();
         }
 
