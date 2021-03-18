@@ -263,6 +263,14 @@ namespace MphRead
         }
     }
 
+    public enum PlatAnimId
+    {
+        InstantSleep = 0,
+        Wake = 1,
+        InstantWake = 2,
+        Sleep = 3
+    }
+
     public class PlatformMetadata
     {
         public int SomeFlag { get; }

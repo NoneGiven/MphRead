@@ -176,7 +176,7 @@ namespace MphRead
         public Vector3 CurrentSpecular { get; set; }
         public PolygonMode PolygonMode { get; set; }
         public RenderMode RenderMode { get; set; } // todo: revisit the use as a polygon ID
-        public AnimationFlags AnimationFlags { get; set; }
+        public MatAnimFlags AnimationFlags { get; set; }
         public TexgenMode TexgenMode { get; set; }
         public int TexcoordAnimationId { get; set; }
         public int MatrixId { get; set; }
@@ -206,7 +206,7 @@ namespace MphRead
             CurrentSpecular = raw.Specular / 31.0f;
             PolygonMode = raw.PolygonMode;
             RenderMode = raw.RenderMode;
-            AnimationFlags = (AnimationFlags)raw.AnimationFlags;
+            AnimationFlags = (MatAnimFlags)raw.AnimationFlags;
             TexgenMode = raw.TexcoordTransformMode;
             TexcoordAnimationId = raw.TexcoordAnimationId;
             MatrixId = (int)raw.MatrixId;
@@ -1194,7 +1194,7 @@ namespace MphRead
     }
 
     [Flags]
-    public enum AnimationFlags : byte
+    public enum MatAnimFlags : byte
     {
         None = 0x0,
         DisableColor = 0x1,

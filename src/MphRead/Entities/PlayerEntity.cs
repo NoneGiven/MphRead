@@ -50,6 +50,7 @@ namespace MphRead.Entities
         public static int PlayerCount { get; private set; }
         public int Slot { get; private set; }
         public const int MaxPlayers = 4;
+        public static readonly int MainPlayer = 0; // todo
         private const int _mbTrailSegments = 9;
         private static readonly Matrix4[,] _mbTrailMatrices = new Matrix4[MaxPlayers, _mbTrailSegments];
         private static readonly int[,] _mbTrailAlphas = new int[MaxPlayers, _mbTrailSegments];
