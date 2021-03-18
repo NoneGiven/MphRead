@@ -407,14 +407,13 @@ namespace MphRead.Entities
                             mainPlayer.Position.Z - _curPosition.Z
                         ).Normalized();
                     }
-                    // sktodo: names
                     Vector3 cross1 = Vector3.Cross(Vector3.UnitY, target).Normalized();
                     Vector3 cross2 = Vector3.Cross(target, cross1).Normalized();
                     Vector4 rotation = ChooseVectors(cross1, cross2, target);
                     if (!_models[0].IsPlaceholder)
                     {
                         float pct = Fixed.ToFloat(_parent == null ? 64 : 256);
-                        rotation = ComputeRotation(_curRotation, rotation, pct);
+                        rotation = ComputeRotationSin(_curRotation, rotation, pct);
                     }
                     _curRotation = rotation.Normalized();
                     if (_data.MovementType == 0)
@@ -430,14 +429,14 @@ namespace MphRead.Entities
                         // never true in-game
                         _curPosition += _velocity;
                         _movePercent += _moveIncrement;
-                        // sktodo
+                        _curRotation = ComputeRotationLinear(_fromRotation, _toRotation, _movePercent);
                     }
                     else if (_data.MovementType == 0)
                     {
                         UpdateState();
                         _curPosition += _velocity;
                         _movePercent += _moveIncrement;
-                        _curRotation = ComputeRotation(_fromRotation, _toRotation, _movePercent);
+                        _curRotation = ComputeRotationSin(_fromRotation, _toRotation, _movePercent);
                     }
                     if (_animFlags.HasFlag(PlatAnimFlags.SeekPlayerHeight) && PlayerEntity.PlayerCount > 0)
                     {
@@ -486,7 +485,7 @@ namespace MphRead.Entities
                     }
                 }
             }
-            // sktodo: does it matter if process_something_with_anim is called before the following?
+            // ptodo: does it matter if process_something_with_anim is called before the following?
             if (_currentAnim != -2 && _models[0].AnimFlags.HasFlag(AnimFlags.Bit04))
             {
                 SetAnimation(_currentAnim, AnimFlags.None);
@@ -623,7 +622,25 @@ namespace MphRead.Entities
             );
         }
 
-        private static Vector4 ComputeRotation(Vector4 fromRot, Vector4 toRot, float pct)
+        private static Vector4 ComputeRotationLinear(Vector4 fromRot, Vector4 toRot, float pct)
+        {
+            if (pct <= 0)
+            {
+                return fromRot;
+            }
+            if (pct >= 1)
+            {
+                return toRot;
+            }
+            return new Vector4(
+                ((1 - pct) * fromRot.X) + (pct * toRot.X),
+                ((1 - pct) * fromRot.Y) + (pct * toRot.Y),
+                ((1 - pct) * fromRot.Z) + (pct * toRot.Z),
+                ((1 - pct) * fromRot.W) + (pct * toRot.W)
+            );
+        }
+
+        private static Vector4 ComputeRotationSin(Vector4 fromRot, Vector4 toRot, float pct)
         {
             pct = Math.Clamp(pct, 0, 1);
             float dot = Vector4.Dot(fromRot, toRot);
@@ -685,7 +702,7 @@ namespace MphRead.Entities
                 else
                 {
                     _fromIndex = _toIndex;
-                    // sktodo: remove debug code
+                    // ptodo: remove debug code
                     ProcessLifetimeEvent(_data.LifetimeMsg1Index, _data.LifetimeMessage1, _data.LifetimeMsg1Target, _data.LifetimeMsg1Param1);
                     ProcessLifetimeEvent(_data.LifetimeMsg2Index, _data.LifetimeMessage2, _data.LifetimeMsg2Target, _data.LifetimeMsg2Param1);
                     ProcessLifetimeEvent(_data.LifetimeMsg3Index, _data.LifetimeMessage3, _data.LifetimeMsg3Target, _data.LifetimeMsg3Param1);
