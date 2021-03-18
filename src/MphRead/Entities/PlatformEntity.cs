@@ -459,7 +459,10 @@ namespace MphRead.Entities
                     }
                 }
             }
-            Position = GetTransform().Row3.Xyz;
+            if (_data.PositionCount > 0)
+            {
+                Transform = GetTransform();
+            }
             return base.Process(scene);
         }
 
@@ -667,14 +670,12 @@ namespace MphRead.Entities
                 {
                     if (_parent != null)
                     {
-                        // sktodo
-                        transform.Row3.Xyz = Matrix.Vec3MultMtx4(transform.Row3.Xyz, _parent.Transform);
+                        transform.Row3.Xyz = Matrix.Vec3MultMtx4(transform.Row3.Xyz, _parent.CollisionTransform);
                     }
                 }
                 else if (_parent != null)
                 {
-                    // sktodo
-                    transform *= _parent.Transform;
+                    transform *= _parent.CollisionTransform;
                 }
             }
             else
@@ -682,7 +683,7 @@ namespace MphRead.Entities
                 transform = Transform;
                 if (_parent != null)
                 {
-                    transform.Row3.Xyz = Matrix.Vec3MultMtx4(Position, _parent.GetTransform());
+                    transform.Row3.Xyz = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform);
                 }
             }
             return transform;

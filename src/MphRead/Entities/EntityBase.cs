@@ -18,12 +18,13 @@ namespace MphRead.Entities
         public bool Hidden { get; set; }
         public float Alpha { get; set; } = 1.0f;
 
-        private Node? _collisionNode = null;
-        private bool _collisionTransformed = true;
         protected Matrix4 _transform = Matrix4.Identity;
         protected Vector3 _scale = new Vector3(1, 1, 1);
         protected Vector3 _rotation = Vector3.Zero;
         protected Vector3 _position = Vector3.Zero;
+        protected Node? _collisionNode = null;
+        private bool _collisionTransformed = true;
+        public Matrix4 CollisionTransform => _collisionNode == null ? _transform : _collisionNode.Animation;
 
         public Matrix4 Transform
         {
@@ -148,7 +149,7 @@ namespace MphRead.Entities
         {
             if (!_collisionTransformed || _collisionNode != null)
             {
-                Matrix4 transform = _collisionNode == null ? _transform : _collisionNode.Animation;
+                Matrix4 transform = CollisionTransform;
                 for (int i = 0; i < _collision.Count; i++)
                 {
                     CollisionInfo collision = _collision[i].Info;
