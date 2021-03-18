@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -40,7 +39,6 @@ namespace MphRead.Entities
                 if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
                 {
                     _parent = parent;
-                    _invPos = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform.Inverted());
                 }
             }
         }
@@ -49,6 +47,12 @@ namespace MphRead.Entities
         {
             if (_parent != null)
             {
+                if (!_invSetUp)
+                {
+                    _parent.GetDrawInfo(scene); // force update transforms
+                    _invPos = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform.Inverted());
+                    _invSetUp = true;
+                }
                 Position = Matrix.Vec3MultMtx4(_invPos, _parent.CollisionTransform);
             }
             return base.Process(scene);

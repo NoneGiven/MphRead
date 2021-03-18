@@ -134,7 +134,8 @@ namespace MphRead.Entities
                     _parent.GetDrawInfo(scene); // force update transforms
                     _invTransform = _transform * _parent.CollisionTransform.Inverted();
                     _invSetUp = true;
-                } 
+                }
+                // todo: visible position stuff (get vecs)
                 Transform = _invTransform * _parent.CollisionTransform;
             }
             if (_data.EffectId != 0)
