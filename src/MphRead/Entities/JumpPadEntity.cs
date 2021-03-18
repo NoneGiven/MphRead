@@ -6,8 +6,9 @@ namespace MphRead.Entities
     {
         private readonly JumpPadEntityData _data;
         private readonly Matrix4 _beamTransform;
-
         private readonly CollisionVolume _volume;
+        private EntityBase? _parent = null;
+        private Vector3 _startPos;
 
         public JumpPadEntity(JumpPadEntityData data) : base(EntityType.JumpPad)
         {
@@ -26,6 +27,28 @@ namespace MphRead.Entities
             Active = data.Active != 0;
             _models.Add(beamInst);
             beamInst.Active = Active;
+        }
+
+        public override void Initialize(Scene scene)
+        {
+            base.Initialize(scene);
+            if (_data.ParentId != -1)
+            {
+                if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
+                {
+                    _parent = parent;
+                    _startPos = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform.Inverted());
+                }
+            }
+        }
+
+        public override bool Process(Scene scene)
+        {
+            if (_parent != null)
+            {
+                Position = Matrix.Vec3MultMtx4(_startPos, _parent.CollisionTransform);
+            }
+            return base.Process(scene);
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
