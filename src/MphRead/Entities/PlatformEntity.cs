@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Formats.Collision;
-using MphRead.Memory;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -17,6 +16,7 @@ namespace MphRead.Entities
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x2F, 0x4F, 0x4F).AsVector4();
 
         public PlatformFlags Flags { get; private set; }
+        public PlatStateBits StateBits => _stateBits;
         private readonly List<int> _effectNodeIds = new List<int>() { -1, -1, -1, -1 };
         private readonly List<EffectEntry?> _effects = new List<EffectEntry?>() { null, null, null, null };
         private const int _nozzleEffectId = 182; // nozzleJet
@@ -31,7 +31,7 @@ namespace MphRead.Entities
 
         private uint _health = 0;
         private uint _halfHealth = 0;
-        private EntityBase? _parent = null;
+        private PlatformEntity? _parent = null;
 
         private PlatAnimFlags _animFlags = PlatAnimFlags.None;
         private PlatStateBits _stateBits = PlatStateBits.None;
@@ -228,7 +228,10 @@ namespace MphRead.Entities
             {
                 if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
                 {
-                    _parent = parent;
+                    if (parent.Type == EntityType.Platform)
+                    {
+                        _parent = (PlatformEntity)parent;
+                    }
                 }
             }
         }
@@ -341,7 +344,6 @@ namespace MphRead.Entities
 
         public override void SetActive(bool active)
         {
-            //if (scene.FrameCount == 0 && !Flags.HasFlag(PlatformFlags.SamusShip))
             if (active)
             {
                 _stateBits |= PlatStateBits.Activated;
@@ -388,7 +390,11 @@ namespace MphRead.Entities
                 {
                     spawnBeam = false;
                 }
-                // ptodo: else check parent state bits
+                else if (_parent != null
+                    && !_parent.StateBits.HasFlag(PlatStateBits.Awake) && !_parent.StateBits.HasFlag(PlatStateBits.WasAwake))
+                {
+                    spawnBeam = false;
+                }
             }
             // btodo: 0 is valid for Sylux turret missiles, but without collision handling those would eat up the effect lists
             if (spawnBeam && _animFlags.HasFlag(PlatAnimFlags.Draw) && !_animFlags.HasFlag(PlatAnimFlags.DisableReflect)
