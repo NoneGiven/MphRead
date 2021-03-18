@@ -126,9 +126,10 @@ namespace MphRead.Entities
             Debug.Assert(slot == 0 && _collision.Count == 0 || slot == 1 && _collision.Count == 1);
             _collision.Add(collision);
             _colPoints.Add(new List<Vector3>(info.Points.Count));
+            var transform = GetTransform();
             for (int i = 0; i < info.Points.Count; i++)
             {
-                _colPoints[slot].Add(Matrix.Vec3MultMtx4(info.Points[i], Transform));
+                _colPoints[slot].Add(Matrix.Vec3MultMtx4(info.Points[i], transform));
             }
             if (attach != null)
             {
