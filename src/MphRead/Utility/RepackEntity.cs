@@ -13,14 +13,15 @@ namespace MphRead.Utility
     {
         public static byte[] TestEntityEdit()
         {
-            RoomMetadata meta = Metadata.RoomMetadata["Level SP Regulator"];
+            RoomMetadata meta = Metadata.RoomMetadata["UNIT2_LAND"];
             Debug.Assert(meta.EntityPath != null);
             List<EntityEditorBase> entities = meta.FirstHunt ? GetFhEntities(meta.EntityPath) : GetEntities(meta.EntityPath);
-            var doors = entities.Where(e => e.Type == EntityType.FhDoor).Select(p => (FhDoorEntityEditor)p).ToList();
-            foreach (FhDoorEntityEditor door in doors)
-            {
-                door.Flags = 0;
-            }
+            entities.RemoveAll(e => e.Type == EntityType.Platform && e.Id != 12);
+            //var doors = entities.Where(e => e.Type == EntityType.FhDoor).Select(p => (FhDoorEntityEditor)p).ToList();
+            //foreach (FhDoorEntityEditor door in doors)
+            //{
+            //    door.Flags = 0;
+            //}
             //var platforms = entities.Where(e => e.Type == EntityType.FhPlatform).Select(p => (FhPlatformEntityEditor)p).ToList();
             //entities.RemoveAll(e => e.Type == EntityType.FhPlatform && e.Id != 55);
             //Debug.Assert(platforms[0].Id == 55);

@@ -43,9 +43,10 @@ namespace MphRead.Entities
         private readonly float _forwardSpeed;
         private readonly float _backwardSpeed;
         private int _currentAnim = 0;
-        private int _currentAnimId = 0;
 
+        // todo: would be nice to have the ability to manipulate these transforms manually
         private readonly Vector3 _posOffset;
+        private Vector3 _curPosition;
         private Vector4 _curRotation;
         private Vector4 _fromRotation;
         private Vector4 _toRotation;
@@ -74,6 +75,7 @@ namespace MphRead.Entities
                 _halfHealth = _health / 2;
             }
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
+            _curPosition = Position;
             _posOffset = data.PositionOffset.ToFloatVector();
             var posList = new List<Vector3>();
             for (int i = 0; i < data.PositionCount; i++)
@@ -251,7 +253,6 @@ namespace MphRead.Entities
 
         private void SetAnimation(int index, AnimFlags flags)
         {
-            _currentAnimId = index;
             if (index >= 0)
             {
                 Debug.Assert(!_models[0].IsPlaceholder);
@@ -276,7 +277,6 @@ namespace MphRead.Entities
                 else
                 {
                     SetAnimation(PlatAnimId.Wake, AnimFlags.Bit03);
-                    // todo: rename cur_anim vs cur_anim_id
                     _currentAnim = GetAnimation(PlatAnimId.InstantWake);
                 }
             }
@@ -363,22 +363,22 @@ namespace MphRead.Entities
                 if (_data.MovementType == 1)
                 {
                     // never true in-game
-                    _position += _velocity;
+                    _curPosition += _velocity;
                     _movePercent += _moveIncrement;
                     // sktodo
                 }
                 else if (_data.MovementType == 0)
                 {
                     UpdateState();
-                    _position += _velocity;
+                    _curPosition += _velocity;
                     _movePercent += _moveIncrement;
                     UpdateRotation();
                 }
                 if (_animFlags.HasFlag(PlatAnimFlags.SeekPlayerHeight) && PlayerEntity.PlayerCount > 0)
                 {
                     // also never true in-game
-                    float offset = (PlayerEntity.Players[PlayerEntity.MainPlayer].Position.Y - _position.Y) * Fixed.ToFloat(20);
-                    _position.Y += offset;
+                    float offset = (PlayerEntity.Players[PlayerEntity.MainPlayer].Position.Y - _curPosition.Y) * Fixed.ToFloat(20);
+                    _curPosition.Y += offset;
                 }
             }
             bool spawnBeam = true;
@@ -469,7 +469,7 @@ namespace MphRead.Entities
         {
             if (_data.PositionCount > 0)
             {
-                _position = _posList[_fromIndex];
+                _curPosition = _posList[_fromIndex];
                 _curRotation = _fromRotation = _rotList[_fromIndex];
             }
         }
@@ -530,7 +530,7 @@ namespace MphRead.Entities
             ).Normalized();
         }
 
-        private void ProcessLifetimeEvent(int index, Message message, short targetId, uint param1, uint param2)
+        private void ProcessLifetimeEvent(int index, Message message, short targetId, uint param1)
         {
             if (_fromIndex == index && targetId == Id)
             {
@@ -562,14 +562,10 @@ namespace MphRead.Entities
                 {
                     _fromIndex = _toIndex;
                     // sktodo: remove debug code
-                    ProcessLifetimeEvent(_data.LifetimeMsg1Index, _data.LifetimeMessage1, _data.LifetimeMsg1Target,
-                        _data.LifetimeMsg1Param1, _data.LifetimeMsg1Param2);
-                    ProcessLifetimeEvent(_data.LifetimeMsg2Index, _data.LifetimeMessage2, _data.LifetimeMsg2Target,
-                        _data.LifetimeMsg2Param1, _data.LifetimeMsg2Param2);
-                    ProcessLifetimeEvent(_data.LifetimeMsg3Index, _data.LifetimeMessage3, _data.LifetimeMsg3Target,
-                        _data.LifetimeMsg3Param1, _data.LifetimeMsg3Param2);
-                    ProcessLifetimeEvent(_data.LifetimeMsg4Index, _data.LifetimeMessage4, _data.LifetimeMsg4Target,
-                        _data.LifetimeMsg4Param1, _data.LifetimeMsg4Param2);
+                    ProcessLifetimeEvent(_data.LifetimeMsg1Index, _data.LifetimeMessage1, _data.LifetimeMsg1Target, _data.LifetimeMsg1Param1);
+                    ProcessLifetimeEvent(_data.LifetimeMsg2Index, _data.LifetimeMessage2, _data.LifetimeMsg2Target, _data.LifetimeMsg2Param1);
+                    ProcessLifetimeEvent(_data.LifetimeMsg3Index, _data.LifetimeMessage3, _data.LifetimeMsg3Target, _data.LifetimeMsg3Param1);
+                    ProcessLifetimeEvent(_data.LifetimeMsg4Index, _data.LifetimeMessage4, _data.LifetimeMsg4Target, _data.LifetimeMsg4Param1);
                     // todo: messaging, room state
                     if (_state != PlatformState.Inactive)
                     {
@@ -672,7 +668,7 @@ namespace MphRead.Entities
             }
             else
             {
-                Vector3 position = _position;
+                Vector3 position = _curPosition;
                 if (_parent != null)
                 {
                     position = Matrix.Vec3MultMtx4(position, _parent.GetTransform());
@@ -711,7 +707,7 @@ namespace MphRead.Entities
                 m11, m12, m13, 0,
                 m21, m22, m23, 0,
                 m31, m32, m33, 0,
-                _position.X, _position.Y, _position.Z, 1
+                _curPosition.X, _curPosition.Y, _curPosition.Z, 1
             );
         }
     }

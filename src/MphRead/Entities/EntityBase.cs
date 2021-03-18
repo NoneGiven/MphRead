@@ -173,7 +173,7 @@ namespace MphRead.Entities
 
         protected virtual Matrix4 GetModelTransform(ModelInstance inst, int index)
         {
-            return Matrix4.CreateScale(inst.Model.Scale) * _transform;
+            return Matrix4.CreateScale(inst.Model.Scale) * GetTransform();
         }
 
         public virtual bool Process(Scene scene)
