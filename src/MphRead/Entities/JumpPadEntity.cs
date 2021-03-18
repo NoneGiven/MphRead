@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -7,8 +8,10 @@ namespace MphRead.Entities
         private readonly JumpPadEntityData _data;
         private readonly Matrix4 _beamTransform;
         private readonly CollisionVolume _volume;
+
+        private bool _invSetUp = false;
         private EntityBase? _parent = null;
-        private Vector3 _startPos;
+        private Vector3 _invPos;
 
         public JumpPadEntity(JumpPadEntityData data) : base(EntityType.JumpPad)
         {
@@ -37,7 +40,7 @@ namespace MphRead.Entities
                 if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
                 {
                     _parent = parent;
-                    _startPos = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform.Inverted());
+                    _invPos = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform.Inverted());
                 }
             }
         }
@@ -46,7 +49,7 @@ namespace MphRead.Entities
         {
             if (_parent != null)
             {
-                Position = Matrix.Vec3MultMtx4(_startPos, _parent.CollisionTransform);
+                Position = Matrix.Vec3MultMtx4(_invPos, _parent.CollisionTransform);
             }
             return base.Process(scene);
         }

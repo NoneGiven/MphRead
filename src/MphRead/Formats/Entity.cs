@@ -200,7 +200,7 @@ namespace MphRead
     public readonly struct ItemSpawnEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint ParentId;
+        public readonly int ParentId;
         public readonly ItemType ItemType;
         public readonly byte Enabled; // boolean
         public readonly byte HasBase; // boolean
@@ -560,7 +560,7 @@ namespace MphRead
     public readonly struct JumpPadEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly uint ParentId;
+        public readonly int ParentId;
         public readonly uint Unused28; // usually 0, occasionally 2
         public readonly RawCollisionVolume Volume;
         public readonly Vector3Fx BeamVector;

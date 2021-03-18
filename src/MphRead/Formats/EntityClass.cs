@@ -297,7 +297,7 @@ namespace MphRead.Editor
 
     public class ItemSpawnEntityEditor : EntityEditorBase
     {
-        public uint ParentId { get; set; }
+        public int ParentId { get; set; }
         public ItemType ItemType { get; set; }
         public bool Enabled { get; set; }
         public bool HasBase { get; set; }
@@ -883,7 +883,7 @@ namespace MphRead.Editor
 
     public class JumpPadEntityEditor : EntityEditorBase
     {
-        public uint ParentId { get; set; }
+        public int ParentId { get; set; }
         public uint Unused28 { get; set; } // usually 0, occasionally 2
         public CollisionVolume Volume { get; set; }
         public Vector3 BeamVector { get; set; }

@@ -18,6 +18,10 @@ namespace MphRead.Entities
         public bool _effectActive = false;
         private readonly bool _scanVisorOnly = false;
 
+        private bool _invSetUp = false;
+        private EntityBase? _parent = null;
+        private Matrix4 _invTransform;
+
         // used for ID -1 (scan point, effect spawner)
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x22, 0x8B, 0x22).AsVector4();
         public ObjectEntityData Data => _data;
@@ -103,6 +107,13 @@ namespace MphRead.Entities
             {
                 scene.LoadEffect((int)_data.EffectId);
             }
+            if (_data.LinkedEntity != -1)
+            {
+                if (scene.TryGetEntity(_data.LinkedEntity, out EntityBase? parent))
+                {
+                    _parent = parent;
+                }
+            }
         }
 
         public override void Destroy(Scene scene)
@@ -116,6 +127,16 @@ namespace MphRead.Entities
         public override bool Process(Scene scene)
         {
             ShouldDraw = !_scanVisorOnly || scene.ScanVisor;
+            if (_parent != null)
+            {
+                if (!_invSetUp)
+                {
+                    _parent.GetDrawInfo(scene); // force update transforms
+                    _invTransform = _transform * _parent.CollisionTransform.Inverted();
+                    _invSetUp = true;
+                } 
+                Transform = _invTransform * _parent.CollisionTransform;
+            }
             if (_data.EffectId != 0)
             {
                 bool processEffect = false;
