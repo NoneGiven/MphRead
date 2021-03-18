@@ -143,13 +143,64 @@ namespace MphRead
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
                     foreach (Entity entity in entities)
                     {
-                        if (entity.Type == EntityType.CameraSequence)
+                        if (entity.Type == EntityType.Platform)
                         {
-                            CameraSequenceEntityData data = ((Entity<CameraSequenceEntityData>)entity).Data;
+                            PlatformEntityData data = ((Entity<PlatformEntityData>)entity).Data;
+                            string name = "N/A";
+                            if (data.ModelId != 2)
+                            {
+                                name = Metadata.GetPlatformById((int)data.ModelId)!.Name;
+                            }
+                            if (data.ParentId != -1)
+                            {
+                                Console.WriteLine($"{meta.Key} - {name} [{data.Header.EntityId,2}]");
+                            }
                         }
                     }
                 }
             }
+            Nop();
+        }
+
+        public static void PrintEntityEditor(Type type)
+        {
+            string name = type.Name;
+            string rawName = type.Name.Replace("Editor", "Data");
+            Console.WriteLine($"public {name}(Entity header, {rawName} raw) : base(header)");
+            Console.WriteLine("        {");
+            foreach (System.Reflection.PropertyInfo prop in type.GetProperties())
+            {
+                string propName = prop.Name;
+                string srcName = prop.Name;
+                if (prop.PropertyType == typeof(bool))
+                {
+                    Console.WriteLine($"            {propName} = raw.{srcName} != 0;");
+                }
+                else if (prop.PropertyType == typeof(CollisionVolume))
+                {
+                    Console.WriteLine($"            {propName} = new CollisionVolume(raw.{srcName});");
+                }
+                else
+                {
+                    string prefix = "";
+                    string suffix = "";
+                    if (prop.PropertyType == typeof(Vector3))
+                    {
+                        suffix = ".ToFloatVector()";
+                    }
+                    else if (prop.PropertyType == typeof(string))
+                    {
+                        suffix = ".MarshalString()";
+                    }
+                    if (prop.Name == "Id" || prop.Name == "Type" || prop.Name == "LayerMask" || prop.Name == "NodeName"
+                         || prop.Name == "Position" || prop.Name == "Up" || prop.Name == "Facing")
+                    {
+                        continue;
+                    }
+                    Console.WriteLine($"            {propName} = {prefix}raw.{srcName}{suffix};");
+                }
+            }
+            Console.WriteLine("        }");
             Nop();
         }
 
@@ -322,6 +373,436 @@ namespace MphRead
                 lines.Add(file);
             }
             File.WriteAllLines("matches.txt", lines);
+        }
+
+        public static void TestDlistBounds()
+        {
+            foreach (Model model in GetAllModels())
+            {
+                if (model.NodeMatrixIds.Count > 0)
+                {
+                    continue;
+                }
+                for (int i = 0; i < model.DisplayLists.Count; i++)
+                {
+                    var verts = new List<Vector4i>();
+                    DisplayList dlist = model.DisplayLists[i];
+                    IReadOnlyList<RenderInstruction> list = model.RenderInstructionLists[i];
+                    int stackIndex = 0;
+                    int vtxX = 0;
+                    int vtxY = 0;
+                    int vtxZ = 0;
+                    void Update()
+                    {
+                        verts.Add(new Vector4i(vtxX, vtxY, vtxZ, stackIndex));
+                    }
+                    foreach (RenderInstruction instruction in list)
+                    {
+                        switch (instruction.Code)
+                        {
+                        case InstructionCode.MTX_RESTORE:
+                            {
+                                stackIndex = (int)instruction.Arguments[0];
+                            }
+                            break;
+                        case InstructionCode.VTX_16:
+                            {
+                                uint xy = instruction.Arguments[0];
+                                int x = (int)((xy >> 0) & 0xFFFF);
+                                if ((x & 0x8000) > 0)
+                                {
+                                    x = (int)(x | 0xFFFF0000);
+                                }
+                                int y = (int)((xy >> 16) & 0xFFFF);
+                                if ((y & 0x8000) > 0)
+                                {
+                                    y = (int)(y | 0xFFFF0000);
+                                }
+                                int z = (int)(instruction.Arguments[1] & 0xFFFF);
+                                if ((z & 0x8000) > 0)
+                                {
+                                    z = (int)(z | 0xFFFF0000);
+                                }
+                                vtxX = x;
+                                vtxY = y;
+                                vtxZ = z;
+                                Update();
+                            }
+                            break;
+                        case InstructionCode.VTX_10:
+                            {
+                                uint xyz = instruction.Arguments[0];
+                                int x = (int)((xyz >> 0) & 0x3FF);
+                                if ((x & 0x200) > 0)
+                                {
+                                    x = (int)(x | 0xFFFFFC00);
+                                }
+                                int y = (int)((xyz >> 10) & 0x3FF);
+                                if ((y & 0x200) > 0)
+                                {
+                                    y = (int)(y | 0xFFFFFC00);
+                                }
+                                int z = (int)((xyz >> 20) & 0x3FF);
+                                if ((z & 0x200) > 0)
+                                {
+                                    z = (int)(z | 0xFFFFFC00);
+                                }
+                                vtxX = x << 6;
+                                vtxY = y << 6;
+                                vtxZ = z << 6;
+                                Update();
+                            }
+                            break;
+                        case InstructionCode.VTX_XY:
+                            {
+                                uint xy = instruction.Arguments[0];
+                                int x = (int)((xy >> 0) & 0xFFFF);
+                                if ((x & 0x8000) > 0)
+                                {
+                                    x = (int)(x | 0xFFFF0000);
+                                }
+                                int y = (int)((xy >> 16) & 0xFFFF);
+                                if ((y & 0x8000) > 0)
+                                {
+                                    y = (int)(y | 0xFFFF0000);
+                                }
+                                vtxX = x;
+                                vtxY = y;
+                                Update();
+                            }
+                            break;
+                        case InstructionCode.VTX_XZ:
+                            {
+                                uint xz = instruction.Arguments[0];
+                                int x = (int)((xz >> 0) & 0xFFFF);
+                                if ((x & 0x8000) > 0)
+                                {
+                                    x = (int)(x | 0xFFFF0000);
+                                }
+                                int z = (int)((xz >> 16) & 0xFFFF);
+                                if ((z & 0x8000) > 0)
+                                {
+                                    z = (int)(z | 0xFFFF0000);
+                                }
+                                vtxX = x;
+                                vtxZ = z;
+                                Update();
+                            }
+                            break;
+                        case InstructionCode.VTX_YZ:
+                            {
+                                uint yz = instruction.Arguments[0];
+                                int y = (int)((yz >> 0) & 0xFFFF);
+                                if ((y & 0x8000) > 0)
+                                {
+                                    y = (int)(y | 0xFFFF0000);
+                                }
+                                int z = (int)((yz >> 16) & 0xFFFF);
+                                if ((z & 0x8000) > 0)
+                                {
+                                    z = (int)(z | 0xFFFF0000);
+                                }
+                                vtxY = y;
+                                vtxZ = z;
+                                Update();
+                            }
+                            break;
+                        case InstructionCode.VTX_DIFF:
+                            {
+                                uint xyz = instruction.Arguments[0];
+                                int x = (int)((xyz >> 0) & 0x3FF);
+                                if ((x & 0x200) > 0)
+                                {
+                                    x = (int)(x | 0xFFFFFC00);
+                                }
+                                int y = (int)((xyz >> 10) & 0x3FF);
+                                if ((y & 0x200) > 0)
+                                {
+                                    y = (int)(y | 0xFFFFFC00);
+                                }
+                                int z = (int)((xyz >> 20) & 0x3FF);
+                                if ((z & 0x200) > 0)
+                                {
+                                    z = (int)(z | 0xFFFFFC00);
+                                }
+                                vtxX += x;
+                                vtxY += y;
+                                vtxZ += z;
+                                Update();
+                            }
+                            break;
+                        }
+                    }
+                    var dlistMin = new Vector3i(
+                        dlist.MinBounds.X.Value,
+                        dlist.MinBounds.Y.Value,
+                        dlist.MinBounds.Z.Value
+                    );
+                    var dlistMax = new Vector3i(
+                        dlist.MaxBounds.X.Value,
+                        dlist.MaxBounds.Y.Value,
+                        dlist.MaxBounds.Z.Value
+                    );
+                    int minX = Int32.MaxValue;
+                    int maxX = Int32.MinValue;
+                    int minY = Int32.MaxValue;
+                    int maxY = Int32.MinValue;
+                    int minZ = Int32.MaxValue;
+                    int maxZ = Int32.MinValue;
+                    foreach (Vector4i vert in verts)
+                    {
+                        minX = Math.Min(minX, vert.X);
+                        maxX = Math.Max(maxX, vert.X);
+                        minY = Math.Min(minY, vert.Y);
+                        maxY = Math.Max(maxY, vert.Y);
+                        minZ = Math.Min(minZ, vert.Z);
+                        maxZ = Math.Max(maxZ, vert.Z);
+                    }
+                    int scale = (int)model.Scale.X;
+                    if (model.NodeMatrixIds.Count == 0 && model.Name != "Level MP5")
+                    {
+                        minX *= scale;
+                        maxX *= scale;
+                        minY *= scale;
+                        maxY *= scale;
+                        minZ *= scale;
+                        maxZ *= scale;
+                    }
+                    Debug.Assert(model.Scale.X - scale == 0);
+                    // off-by-one gets magnified by scale
+                    if (minX != dlistMin.X && Math.Abs(minX - dlistMin.X) != scale)
+                    {
+                        Debugger.Break();
+                    }
+                    if (maxX != dlistMax.X && Math.Abs(maxX - dlistMax.X) != scale)
+                    {
+                        Debugger.Break();
+                    }
+                    if (minY != dlistMin.Y && Math.Abs(minY - dlistMin.Y) != scale)
+                    {
+                        Debugger.Break();
+                    }
+                    if (maxY != dlistMax.Y && Math.Abs(maxY - dlistMax.Y) != scale)
+                    {
+                        Debugger.Break();
+                    }
+                    if (minZ != dlistMin.Z && Math.Abs(minZ - dlistMin.Z) != scale)
+                    {
+                        Debugger.Break();
+                    }
+                    if (maxZ != dlistMax.Z && Math.Abs(maxZ - dlistMax.Z) != scale)
+                    {
+                        Debugger.Break();
+                    }
+                }
+            }
+            Nop();
+        }
+
+        public static void TestNodeBounds()
+        {
+            foreach (Model model in GetAllModels())
+            {
+                if (model.Name == "Level MP5")
+                {
+                    // scale factor of 4 is applied to the node bounds but not the dlists
+                    // --> and then on top of that, there are some precision issues +/- 1 fx32
+                    continue;
+                }
+                bool uncapped = model.Name == "filter" || model.Name == "trail";
+                for (int i = 0; i < model.Nodes.Count; i++)
+                {
+                    Node node = model.Nodes[i];
+                    RawNode rawNode = model.RawNodes[i];
+                    int minX = Int32.MaxValue;
+                    int minY = Int32.MaxValue;
+                    int minZ = Int32.MaxValue;
+                    int maxX = Int32.MinValue;
+                    int maxY = Int32.MinValue;
+                    int maxZ = Int32.MinValue;
+                    bool anyMesh = false;
+                    List<int> ids;
+                    if (node.MeshCount == 0)
+                    {
+                        ids = node.GetAllMeshIds(model.Nodes, root: true).ToList();
+                    }
+                    else
+                    {
+                        ids = node.GetMeshIds().ToList();
+                    }
+                    var dlists = new List<int>();
+                    foreach (int meshId in ids)
+                    {
+                        anyMesh = true;
+                        dlists.Add(model.Meshes[meshId].DlistId);
+                        DisplayList dlist = model.DisplayLists[model.Meshes[meshId].DlistId];
+                        minX = Math.Min(minX, dlist.MinBounds.X.Value);
+                        minY = Math.Min(minY, dlist.MinBounds.Y.Value);
+                        minZ = Math.Min(minZ, dlist.MinBounds.Z.Value);
+                        maxX = Math.Max(maxX, dlist.MaxBounds.X.Value);
+                        maxY = Math.Max(maxY, dlist.MaxBounds.Y.Value);
+                        maxZ = Math.Max(maxZ, dlist.MaxBounds.Z.Value);
+                    }
+                    //Console.WriteLine($"[{i}] {node.Name} x{node.MeshCount}: {String.Join(", ", dlists.OrderBy(d => d))}");
+                    var nodeMin = new Vector3i(
+                        rawNode.MinBounds.X.Value,
+                        rawNode.MinBounds.Y.Value,
+                        rawNode.MinBounds.Z.Value
+                    );
+                    var nodeMax = new Vector3i(
+                        rawNode.MaxBounds.X.Value,
+                        rawNode.MaxBounds.Y.Value,
+                        rawNode.MaxBounds.Z.Value
+                    );
+                    if (anyMesh)
+                    {
+                        if (minX > Int16.MaxValue * model.Scale.X || minX < Int16.MinValue * model.Scale.X)
+                        {
+                            Debugger.Break();
+                        }
+                        if (minY > Int16.MaxValue * model.Scale.Y || minY < Int16.MinValue * model.Scale.Y)
+                        {
+                            Debugger.Break();
+                        }
+                        if (minZ > Int16.MaxValue * model.Scale.Z || minZ < Int16.MinValue * model.Scale.Z)
+                        {
+                            Debugger.Break();
+                        }
+                        if (maxX > Int16.MaxValue * model.Scale.X || maxX < Int16.MinValue * model.Scale.X)
+                        {
+                            Debugger.Break();
+                        }
+                        if (maxY > Int16.MaxValue * model.Scale.Y || maxY < Int16.MinValue * model.Scale.Y)
+                        {
+                            Debugger.Break();
+                        }
+                        if (maxZ > Int16.MaxValue * model.Scale.Z || maxZ < Int16.MinValue * model.Scale.Z)
+                        {
+                            Debugger.Break();
+                        }
+                        if (minX != nodeMin.X)
+                        {
+                            if (uncapped)
+                            {
+                                Debug.Assert(minX == nodeMin.X / model.Scale.X);
+                            }
+                            else if (nodeMin.X > Int16.MaxValue * model.Scale.X)
+                            {
+                                Debug.Assert(minX == Int16.MaxValue * model.Scale.X);
+                            }
+                            else if (nodeMin.X < Int16.MinValue * model.Scale.X)
+                            {
+                                Debug.Assert(minX == Int16.MinValue * model.Scale.X);
+                            }
+                            else
+                            {
+                                Debugger.Break();
+                            }
+                        }
+                        if (minY != nodeMin.Y)
+                        {
+                            if (uncapped)
+                            {
+                                Debug.Assert(minY == nodeMin.Y / model.Scale.Y);
+                            }
+                            else if (nodeMin.Y > Int16.MaxValue * model.Scale.Y)
+                            {
+                                Debug.Assert(minY == Int16.MaxValue * model.Scale.Y);
+                            }
+                            else if (nodeMin.Y < Int16.MinValue * model.Scale.Y)
+                            {
+                                Debug.Assert(minY == Int16.MinValue * model.Scale.Y);
+                            }
+                            else
+                            {
+                                Debugger.Break();
+                            }
+                        }
+                        if (minZ != nodeMin.Z)
+                        {
+                            if (uncapped)
+                            {
+                                Debug.Assert(minZ == nodeMin.Z / model.Scale.Z);
+                            }
+                            else if (nodeMin.Z > Int16.MaxValue * model.Scale.Z)
+                            {
+                                Debug.Assert(minZ == Int16.MaxValue * model.Scale.Z);
+                            }
+                            else if (nodeMin.Z < Int16.MinValue * model.Scale.Z)
+                            {
+                                Debug.Assert(minZ == Int16.MinValue * model.Scale.Z);
+                            }
+                            else
+                            {
+                                Debugger.Break();
+                            }
+                        }
+                        if (maxX != nodeMax.X)
+                        {
+                            if (uncapped)
+                            {
+                                Debug.Assert(maxX == nodeMax.X / model.Scale.X);
+                            }
+                            else if (nodeMax.X > Int16.MaxValue * model.Scale.X)
+                            {
+                                Debug.Assert(maxX == Int16.MaxValue * model.Scale.X);
+                            }
+                            else if (nodeMax.X < Int16.MinValue * model.Scale.X)
+                            {
+                                Debug.Assert(maxX == Int16.MinValue * model.Scale.X);
+                            }
+                            else
+                            {
+                                Debugger.Break();
+                            }
+                        }
+                        if (maxY != nodeMax.Y)
+                        {
+                            if (uncapped)
+                            {
+                                Debug.Assert(maxY == nodeMax.Y / model.Scale.Y);
+                            }
+                            else if (nodeMax.Y > Int16.MaxValue * model.Scale.Y)
+                            {
+                                Debug.Assert(maxY == Int16.MaxValue * model.Scale.Y);
+                            }
+                            else if (nodeMax.Y < Int16.MinValue * model.Scale.Y)
+                            {
+                                Debug.Assert(maxY == Int16.MinValue * model.Scale.Y);
+                            }
+                            else
+                            {
+                                Debugger.Break();
+                            }
+                        }
+                        if (maxZ != nodeMax.Z)
+                        {
+                            if (uncapped)
+                            {
+                                Debug.Assert(maxZ == nodeMax.Z / model.Scale.Z);
+                            }
+                            else if (nodeMax.Z > Int16.MaxValue * model.Scale.Z)
+                            {
+                                Debug.Assert(maxZ == Int16.MaxValue * model.Scale.Z);
+                            }
+                            else if (nodeMax.Z < Int16.MinValue * model.Scale.Z)
+                            {
+                                Debug.Assert(maxZ == Int16.MinValue * model.Scale.Z);
+                            }
+                            else
+                            {
+                                Debugger.Break();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Debug.Assert(rawNode.MinBounds.X.Value == 0 && rawNode.MinBounds.Y.Value == 0 && rawNode.MinBounds.Z.Value == 0);
+                        Debug.Assert(rawNode.MaxBounds.X.Value == 0 && rawNode.MaxBounds.Y.Value == 0 && rawNode.MaxBounds.Z.Value == 0);
+                    }
+                }
+            }
+            Nop();
         }
 
         private static void Nop()

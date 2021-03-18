@@ -228,7 +228,7 @@ namespace MphRead.Testing
                                     Console.WriteLine("Anim ID");
                                 }
                                 Console.WriteLine($"Attach: {((data.EffectFlags & 0x10) != 0 ? "Yes" : "No")}");
-                                Console.WriteLine($"Linked: {((data.LinkedEntity != UInt16.MaxValue) ? data.LinkedEntity.ToString() : "No")}");
+                                Console.WriteLine($"Linked: {((data.LinkedEntity != -1) ? data.LinkedEntity.ToString() : "No")}");
                                 Console.WriteLine();
                             }
                         }

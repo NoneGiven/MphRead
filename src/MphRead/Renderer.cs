@@ -389,7 +389,7 @@ namespace MphRead
                     int textureWidth = 0;
                     int textureHeight = 0;
                     Material material = model.Materials[mesh.MaterialId];
-                    if (material.TextureId != UInt16.MaxValue)
+                    if (material.TextureId != -1)
                     {
                         Texture texture = model.Recolors[0].Textures[material.TextureId];
                         textureWidth = texture.Width;
@@ -683,7 +683,7 @@ namespace MphRead
             var combos = new HashSet<(int, int, int)>();
             foreach (Material material in model.Materials)
             {
-                if (material.TextureId == UInt16.MaxValue)
+                if (material.TextureId == -1)
                 {
                     continue;
                 }
@@ -755,7 +755,7 @@ namespace MphRead
             {
                 Material material = model.Materials[i];
                 int textureId = material.CurrentTextureId;
-                if (textureId == UInt16.MaxValue)
+                if (textureId == -1)
                 {
                     continue;
                 }
@@ -817,7 +817,7 @@ namespace MphRead
                 Rng.SetRng1(rng1);
                 Rng.SetRng2(rng2);
             }
-            if (!_frameAdvanceOn || _advanceOneFrame)
+            if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
             {
                 _frameCount++;
             }
@@ -1165,7 +1165,7 @@ namespace MphRead
             UnlinkEffectEntry(entry);
         }
 
-        private EffectElementEntry InitEffectElement(Effect effect, EffectElement element, bool child)
+        private EffectElementEntry InitEffectElement(Effect effect, EffectElement element, EntityBase? owner, bool child)
         {
             EffectElementEntry entry = _inactiveElements.Dequeue();
             entry.EffectName = effect.Name;
@@ -1190,6 +1190,7 @@ namespace MphRead
             entry.Acceleration = element.Acceleration;
             entry.ParticleDefinitions.AddRange(element.Particles);
             entry.Parity = (int)(_frameCount % 2);
+            entry.Owner = owner;
             _activeElements.Add(entry);
             return entry;
         }
@@ -1203,6 +1204,7 @@ namespace MphRead
                 UnlinkEffectParticle(particle);
             }
             _activeElements.Remove(element);
+            element.Owner = null;
             element.Model = null!;
             element.Nodes.Clear();
             element.EffectName = "";
@@ -1246,27 +1248,27 @@ namespace MphRead
             }
         }
 
-        public EffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform)
+        public EffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform, EntityBase? owner = null)
         {
             EffectEntry entry = InitEffectEntry();
             entry.EffectId = effectId;
-            SpawnEffect(effectId, transform, child: false, entry);
+            SpawnEffect(effectId, transform, child: false, entry, owner);
             return entry;
         }
 
-        public void SpawnEffect(int effectId, Matrix4 transform, bool child = false)
+        public void SpawnEffect(int effectId, Matrix4 transform, bool child = false, EntityBase? owner = null)
         {
-            SpawnEffect(effectId, transform, child, entry: null);
+            SpawnEffect(effectId, transform, child, entry: null, owner);
         }
 
-        private void SpawnEffect(int effectId, Matrix4 transform, bool child, EffectEntry? entry)
+        private void SpawnEffect(int effectId, Matrix4 transform, bool child, EffectEntry? entry, EntityBase? owner)
         {
             Effect effect = Read.LoadEffect(effectId); // should already be loaded
             var position = new Vector3(transform.Row3);
             for (int i = 0; i < effect.Elements.Count; i++)
             {
                 EffectElement elementDef = effect.Elements[i];
-                EffectElementEntry element = InitEffectElement(effect, elementDef, child);
+                EffectElementEntry element = InitEffectElement(effect, elementDef, owner, child);
                 if (entry != null)
                 {
                     element.EffectEntry = entry;
@@ -1335,8 +1337,12 @@ namespace MphRead
                             element.ExpirationTime += element.BufferTime - element.DrainTime;
                         }
                     }
+                    if (element.Owner != null)
+                    {
+                        element.Transform = element.Owner.Transform;
+                        element.Position = element.Transform.Row3.Xyz;
+                    }
                     var times = new TimeValues(_elapsedTime, _elapsedTime - element.CreationTime, element.Lifespan);
-                    // ptodo: mtxptr stuff
                     if (_frameCount % 2 == element.Parity
                         && element.Actions.TryGetValue(FuncAction.IncreaseParticleAmount, out FxFuncInfo? info))
                     {
@@ -1647,7 +1653,7 @@ namespace MphRead
                 item.TexgenMode = material.TexgenMode;
                 item.XRepeat = material.XRepeat;
                 item.YRepeat = material.YRepeat;
-                item.HasTexture = material.TextureId != UInt16.MaxValue;
+                item.HasTexture = material.TextureId != -1;
                 item.TextureBindingId = material.TextureBindingId;
             }
             item.TexcoordMatrix = texcoordMatrix;
@@ -3316,11 +3322,11 @@ namespace MphRead
             else if (entity is AreaVolumeEntity area)
             {
                 _sb.AppendLine();
-                _sb.Append($"Entry: {area.Data.InsideEvent}");
-                _sb.Append($", Param1: {area.Data.InsideEventParam1}, Param2: {area.Data.InsideEventParam1}");
+                _sb.Append($"Entry: {area.Data.InsideMessage}");
+                _sb.Append($", Param1: {area.Data.InsideMsgParam1}, Param2: {area.Data.InsideMsgParam2}");
                 _sb.AppendLine();
-                _sb.Append($" Exit: {area.Data.ExitEvent}");
-                _sb.Append($", Param1: {area.Data.ExitEventParam1}, Param2: {area.Data.ExitEventParam2}");
+                _sb.Append($" Exit: {area.Data.ExitMessage}");
+                _sb.Append($", Param1: {area.Data.ExitMsgParam1}, Param2: {area.Data.ExitMsgParam2}");
                 _sb.AppendLine();
                 if (TryGetEntity(area.Data.ParentId, out EntityBase? parent))
                 {
@@ -3334,11 +3340,11 @@ namespace MphRead
             else if (entity is FhAreaVolumeEntity fhArea)
             {
                 _sb.AppendLine();
-                _sb.Append($"Entry: {fhArea.Data.InsideEvent}");
-                _sb.Append($", Param1: {fhArea.Data.InsideParam1}, Param2: 0");
+                _sb.Append($"Entry: {fhArea.Data.InsideMessage}");
+                _sb.Append($", Param1: {fhArea.Data.InsideMsgParam1}, Param2: 0");
                 _sb.AppendLine();
-                _sb.Append($" Exit: {fhArea.Data.ExitEvent}");
-                _sb.Append($", Param1: {fhArea.Data.ExitParam1}, Param2: 0");
+                _sb.Append($" Exit: {fhArea.Data.ExitMessage}");
+                _sb.Append($", Param1: {fhArea.Data.ExitMsgParam1}, Param2: 0");
                 _sb.AppendLine();
                 _sb.Append("Target: None");
             }
@@ -3351,8 +3357,8 @@ namespace MphRead
                 }
                 _sb.Append(')');
                 _sb.AppendLine();
-                _sb.Append($"Parent: {trigger.Data.ParentEvent}");
-                if (trigger.Data.ParentEvent != Message.None && TryGetEntity(trigger.Data.ParentId, out EntityBase? parent))
+                _sb.Append($"Parent: {trigger.Data.ParentMessage}");
+                if (trigger.Data.ParentMessage != Message.None && TryGetEntity(trigger.Data.ParentId, out EntityBase? parent))
                 {
                     _sb.Append($", Target: {parent.Type} ({trigger.Data.ParentId})");
                 }
@@ -3360,10 +3366,10 @@ namespace MphRead
                 {
                     _sb.Append(", Target: None");
                 }
-                _sb.Append($", Param1: {trigger.Data.ParentEventParam1}, Param2: {trigger.Data.ParentEventParam2}");
+                _sb.Append($", Param1: {trigger.Data.ParentMsgParam1}, Param2: {trigger.Data.ParentMsgParam2}");
                 _sb.AppendLine();
-                _sb.Append($" Child: {trigger.Data.ChildEvent}");
-                if (trigger.Data.ChildEvent != Message.None && TryGetEntity(trigger.Data.ChildId, out EntityBase? child))
+                _sb.Append($" Child: {trigger.Data.ChildMessage}");
+                if (trigger.Data.ChildMessage != Message.None && TryGetEntity(trigger.Data.ChildId, out EntityBase? child))
                 {
                     _sb.Append($", Target: {child.Type} ({trigger.Data.ChildId})");
                 }
@@ -3371,7 +3377,7 @@ namespace MphRead
                 {
                     _sb.Append(", Target: None");
                 }
-                _sb.Append($", Param1: {trigger.Data.ChildEventParam1}, Param2: {trigger.Data.ChildEventParam2}");
+                _sb.Append($", Param1: {trigger.Data.ChildMsgParam1}, Param2: {trigger.Data.ChildMsgParam2}");
             }
             else if (entity is FhTriggerVolumeEntity fhTrigger)
             {
@@ -3380,8 +3386,8 @@ namespace MphRead
                     _sb.Append($" x{fhTrigger.Data.Threshold}");
                 }
                 _sb.AppendLine();
-                _sb.Append($"Parent: {fhTrigger.Data.ParentEvent}");
-                if (fhTrigger.Data.ParentEvent != FhMessage.None && TryGetEntity(fhTrigger.Data.ParentId, out EntityBase? parent))
+                _sb.Append($"Parent: {fhTrigger.Data.ParentMessage}");
+                if (fhTrigger.Data.ParentMessage != FhMessage.None && TryGetEntity(fhTrigger.Data.ParentId, out EntityBase? parent))
                 {
                     _sb.Append($", Target: {parent.Type} ({fhTrigger.Data.ParentId})");
                 }
@@ -3389,10 +3395,10 @@ namespace MphRead
                 {
                     _sb.Append(", Target: None");
                 }
-                _sb.Append($", Param1: {fhTrigger.Data.ParentParam1}, Param2: 0");
+                _sb.Append($", Param1: {fhTrigger.Data.ParentMsgParam1}, Param2: 0");
                 _sb.AppendLine();
-                _sb.Append($" Child: {fhTrigger.Data.ChildEvent}");
-                if (fhTrigger.Data.ChildEvent != FhMessage.None && TryGetEntity(fhTrigger.Data.ChildId, out EntityBase? child))
+                _sb.Append($" Child: {fhTrigger.Data.ChildMessage}");
+                if (fhTrigger.Data.ChildMessage != FhMessage.None && TryGetEntity(fhTrigger.Data.ChildId, out EntityBase? child))
                 {
                     _sb.Append($", Target: {child.Type} ({fhTrigger.Data.ChildId})");
                 }
@@ -3400,7 +3406,7 @@ namespace MphRead
                 {
                     _sb.Append(", Target: None");
                 }
-                _sb.Append($", Param1: {fhTrigger.Data.ChildParam1}, Param2: 0");
+                _sb.Append($", Param1: {fhTrigger.Data.ChildMsgParam1}, Param2: 0");
             }
             else if (entity is ObjectEntity obj)
             {
@@ -3438,7 +3444,7 @@ namespace MphRead
         {
             static string FormatNode(Model model, int otherId)
             {
-                if (otherId == UInt16.MaxValue)
+                if (otherId == -1)
                 {
                     return "None";
                 }
@@ -3624,7 +3630,7 @@ namespace MphRead
     {
         private int GetKey(int textureId, int paletteId, int recolorId)
         {
-            if (paletteId == UInt16.MaxValue)
+            if (paletteId == -1)
             {
                 paletteId = 4095;
             }

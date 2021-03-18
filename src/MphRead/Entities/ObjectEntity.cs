@@ -9,6 +9,8 @@ namespace MphRead.Entities
     {
         private readonly ObjectEntityData _data;
         private CollisionVolume _effectVolume;
+        private Matrix4 _prevTransform;
+
         private uint _flags = 0;
         private int _effectInterval = 0;
         private int _effectIntervalTimer = 0;
@@ -17,6 +19,10 @@ namespace MphRead.Entities
         private EffectEntry? _effectEntry = null;
         public bool _effectActive = false;
         private readonly bool _scanVisorOnly = false;
+
+        private bool _invSetUp = false;
+        private EntityBase? _parent = null;
+        private Matrix4 _invTransform;
 
         // used for ID -1 (scan point, effect spawner)
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x22, 0x8B, 0x22).AsVector4();
@@ -27,6 +33,7 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
+            _prevTransform = Transform;
             _flags = data.Flags;
             // todo: bits 0 and 1 should be cleared if entity ID is -1 (and they should also be affected by room state otherwise)
             _flags &= 0xFB;
@@ -103,6 +110,13 @@ namespace MphRead.Entities
             {
                 scene.LoadEffect((int)_data.EffectId);
             }
+            if (_data.LinkedEntity != -1)
+            {
+                if (scene.TryGetEntity(_data.LinkedEntity, out EntityBase? parent))
+                {
+                    _parent = parent;
+                }
+            }
         }
 
         public override void Destroy(Scene scene)
@@ -116,6 +130,22 @@ namespace MphRead.Entities
         public override bool Process(Scene scene)
         {
             ShouldDraw = !_scanVisorOnly || scene.ScanVisor;
+            if (_parent != null)
+            {
+                if (!_invSetUp)
+                {
+                    _parent.GetDrawInfo(scene); // force update transforms
+                    _invTransform = _transform * _parent.CollisionTransform.Inverted();
+                    _invSetUp = true;
+                }
+                // todo: visible position stuff (get vecs)
+                Transform = _invTransform * _parent.CollisionTransform;
+            }
+            if (Transform != _prevTransform)
+            {
+                _effectVolume = CollisionVolume.Transform(_data.Volume, Transform);
+                _prevTransform = Transform;
+            }
             if (_data.EffectId != 0)
             {
                 bool processEffect = false;
@@ -189,7 +219,8 @@ namespace MphRead.Entities
                                     new Vector4(offset) + spawnTransform.Row3
                                 );
                             }
-                            scene.SpawnEffect((int)_data.EffectId, spawnTransform);
+                            EntityBase? owner = _parent == null ? null : this;
+                            scene.SpawnEffect((int)_data.EffectId, spawnTransform, owner: owner);
                         }
                         _effectIntervalTimer = _effectInterval;
                     }

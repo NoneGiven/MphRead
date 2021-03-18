@@ -13,6 +13,8 @@ namespace MphRead
 {
     public static class Read
     {
+        public static bool ApplyFixes { get; set; } = true;
+
         private static readonly Dictionary<string, Model> _modelCache = new Dictionary<string, Model>();
         private static readonly Dictionary<string, Model> _fhModelCache = new Dictionary<string, Model>();
 
@@ -138,6 +140,80 @@ namespace MphRead
                 }
                 IReadOnlyList<Texture> textures = DoOffsets<Texture>(modelBytes, modelHeader.TextureOffset, modelHeader.TextureCount);
                 IReadOnlyList<Palette> palettes = DoOffsets<Palette>(modelBytes, modelHeader.PaletteOffset, modelHeader.PaletteCount);
+                if (ApplyFixes)
+                {
+                    if ((name == "Guardian_lod0" || name == "Guardian_lod1") && meta.Name != "pal_01")
+                    {
+                        var extraTex = new List<Texture>();
+                        var extraPal = new List<Palette>();
+                        if (meta.Name == "pal_02" || meta.Name == "pal_03" || meta.Name == "pal_04")
+                        {
+                            extraTex.AddRange(textures);
+                            extraPal.AddRange(palettes);
+                            if (meta.Name == "pal_02")
+                            {
+                                extraTex[0] = extraTex[5];
+                                extraTex[1] = extraTex[4];
+                                extraPal[7] = extraPal[4];
+                                extraPal[3] = extraPal[0];
+                            }
+                            else if (meta.Name == "pal_03")
+                            {
+                                extraTex[0] = extraTex[6];
+                                extraTex[1] = extraTex[3];
+                                extraPal[7] = extraPal[5];
+                                extraPal[3] = extraPal[1];
+                            }
+                            else if (meta.Name == "pal_04")
+                            {
+                                extraTex[0] = extraTex[7];
+                                extraTex[1] = extraTex[2];
+                                extraPal[7] = extraPal[6];
+                                extraPal[3] = extraPal[2];
+                            }
+                        }
+                        else if (meta.Name == "pal_Team01" || meta.Name == "pal_Team02")
+                        {
+                            extraTex.Add(textures[1]); // 0
+                            extraTex.Add(textures[0]); // 1
+                            extraPal.Add(new Palette());
+                            extraPal.Add(new Palette());
+                            extraPal.Add(new Palette());
+                            extraPal.Add(palettes[0]); // 3
+                            extraPal.Add(new Palette());
+                            extraPal.Add(new Palette());
+                            extraPal.Add(new Palette());
+                            extraPal.Add(palettes[1]); // 7
+                        }
+                        textures = extraTex;
+                        palettes = extraPal;
+                    }
+                    else if (name == "Alimbic_Power" || name == "Generic_Power"
+                        || name == "Ice_Power" || name == "Lava_Power" || name == "Ruins_Power")
+                    {
+                        var extraTex = new List<Texture>();
+                        extraTex.AddRange(textures);
+                        var extraPal = new List<Palette>();
+                        extraPal.AddRange(palettes);
+                        if (name == "Alimbic_Power")
+                        {
+                            extraTex[1] = extraTex[0];
+                            extraPal[1] = extraPal[0];
+                        }
+                        else if (name == "Lava_Power")
+                        {
+                            extraTex[1] = extraTex[2];
+                            extraPal[1] = extraPal[2];
+                        }
+                        else if (name == "Ruins_Power")
+                        {
+                            extraTex[0] = extraTex[1];
+                            extraPal[0] = extraPal[1];
+                        }
+                        textures = extraTex;
+                        palettes = extraPal;
+                    }
+                }
                 ReadOnlySpan<byte> textureBytes = modelBytes;
                 if (meta.TexturePath != meta.ModelPath)
                 {
@@ -159,6 +235,56 @@ namespace MphRead
                 foreach (Palette palette in palettes)
                 {
                     paletteData.Add(GetPaletteData(palette, paletteBytes));
+                }
+                if (ApplyFixes)
+                {
+                    if (name == "Alimbic_Power" || name == "Generic_Power" || name == "Ice_Power" || name == "Lava_Power")
+                    {
+                        Recolor recolor = GetModelInstance("Ruins_Power").Model.Recolors[0];
+                        Texture newTexture = recolor.Textures[8];
+                        IReadOnlyList<TextureData> newTexData = recolor.TextureData[8];
+                        IReadOnlyList<PaletteData> newPalette = Metadata.PowerPalettes[name];
+                        Debug.Assert(newPalette.Count == 8);
+                        var extraTex = new List<Texture>();
+                        extraTex.AddRange(textures);
+                        if (name == "Lava_Power")
+                        {
+                            textureData.Add(newTexData);
+                            extraTex.Add(newTexture);
+                        }
+                        else
+                        {
+                            textureData[8] = newTexData;
+                            extraTex[8] = newTexture;
+                        }
+                        var extraPal = new List<Palette>();
+                        extraPal.AddRange(palettes);
+                        if (name == "Lava_Power")
+                        {
+                            paletteData.Add(newPalette);
+                            extraPal.Add(new Palette());
+                        }
+                        else
+                        {
+                            paletteData[8] = newPalette;
+                        }
+                        textures = extraTex;
+                        palettes = extraPal;
+                    }
+                }
+                else if (name == "Lava_Power")
+                {
+                    // file32Material uses texture/palette ID 8, but there are only 8 of each in LavaEquipTextureShare
+                    var extraTex = new List<Texture>();
+                    extraTex.AddRange(textures);
+                    extraTex.Add(new Texture(TextureFormat.Palette8Bit, 1, 1));
+                    textureData.Add(new List<TextureData>() { new TextureData(0, 255) });
+                    var extraPal = new List<Palette>();
+                    extraPal.AddRange(palettes);
+                    extraPal.Add(new Palette());
+                    paletteData.Add(new List<PaletteData>() { new PaletteData(0x7FFF) });
+                    textures = extraTex;
+                    palettes = extraPal;
                 }
                 string replacePath = meta.ReplacePath ?? meta.PalettePath;
                 if (replacePath != meta.TexturePath && meta.ReplaceIds.Count > 0)
@@ -547,8 +673,8 @@ namespace MphRead
                 EntityType.Object => ReadEntity<ObjectEntityData>(bytes, entry, header),
                 EntityType.PlayerSpawn => ReadEntity<PlayerSpawnEntityData>(bytes, entry, header),
                 EntityType.Door => ReadEntity<DoorEntityData>(bytes, entry, header),
-                EntityType.ItemSpawn => ReadEntity<ItemEntityData>(bytes, entry, header),
-                EntityType.EnemySpawn => ReadEntity<EnemyEntityData>(bytes, entry, header),
+                EntityType.ItemSpawn => ReadEntity<ItemSpawnEntityData>(bytes, entry, header),
+                EntityType.EnemySpawn => ReadEntity<EnemySpawnEntityData>(bytes, entry, header),
                 EntityType.TriggerVolume => ReadEntity<TriggerVolumeEntityData>(bytes, entry, header),
                 EntityType.AreaVolume => ReadEntity<AreaVolumeEntityData>(bytes, entry, header),
                 EntityType.JumpPad => ReadEntity<JumpPadEntityData>(bytes, entry, header),
@@ -602,8 +728,8 @@ namespace MphRead
             {
                 EntityType.FhPlayerSpawn => ReadFirstHuntEntity<PlayerSpawnEntityData>(bytes, entry, header),
                 EntityType.FhDoor => ReadFirstHuntEntity<FhDoorEntityData>(bytes, entry, header),
-                EntityType.FhItem => ReadFirstHuntEntity<FhItemEntityData>(bytes, entry, header),
-                EntityType.FhEnemy => ReadFirstHuntEntity<FhEnemyEntityData>(bytes, entry, header),
+                EntityType.FhItemSpawn => ReadFirstHuntEntity<FhItemSpawnEntityData>(bytes, entry, header),
+                EntityType.FhEnemySpawn => ReadFirstHuntEntity<FhEnemySpawnEntityData>(bytes, entry, header),
                 EntityType.FhTriggerVolume => ReadFirstHuntEntity<FhTriggerVolumeEntityData>(bytes, entry, header),
                 EntityType.FhAreaVolume => ReadFirstHuntEntity<FhAreaVolumeEntityData>(bytes, entry, header),
                 EntityType.FhPlatform => ReadFirstHuntEntity<FhPlatformEntityData>(bytes, entry, header),
@@ -877,6 +1003,11 @@ namespace MphRead
                 path = path.Replace("_model.bin", "");
             }
             return Path.GetFileNameWithoutExtension(path);
+        }
+
+        public static T DoOffset<T>(ReadOnlySpan<byte> bytes, int offset) where T : struct
+        {
+            return DoOffset<T>(bytes, (uint)offset);
         }
 
         public static T DoOffset<T>(ReadOnlySpan<byte> bytes, uint offset) where T : struct

@@ -18,12 +18,13 @@ namespace MphRead.Entities
         public bool Hidden { get; set; }
         public float Alpha { get; set; } = 1.0f;
 
-        private Node? _collisionNode = null;
-        private bool _collisionTransformed = true;
         protected Matrix4 _transform = Matrix4.Identity;
         protected Vector3 _scale = new Vector3(1, 1, 1);
         protected Vector3 _rotation = Vector3.Zero;
         protected Vector3 _position = Vector3.Zero;
+        protected Node? _collisionNode = null;
+        private bool _collisionTransformed = true;
+        public Matrix4 CollisionTransform => _collisionNode == null ? _transform : _collisionNode.Animation;
 
         public Matrix4 Transform
         {
@@ -128,7 +129,7 @@ namespace MphRead.Entities
             _colPoints.Add(new List<Vector3>(info.Points.Count));
             for (int i = 0; i < info.Points.Count; i++)
             {
-                _colPoints[slot].Add(Matrix.Vec3MultMtx4(info.Points[i], Transform));
+                _colPoints[slot].Add(Matrix.Vec3MultMtx4(info.Points[i], _transform));
             }
             if (attach != null)
             {
@@ -148,7 +149,7 @@ namespace MphRead.Entities
         {
             if (!_collisionTransformed || _collisionNode != null)
             {
-                Matrix4 transform = _collisionNode == null ? Transform : _collisionNode.Animation;
+                Matrix4 transform = CollisionTransform;
                 for (int i = 0; i < _collision.Count; i++)
                 {
                     CollisionInfo collision = _collision[i].Info;
@@ -235,16 +236,17 @@ namespace MphRead.Entities
 
         public virtual void GetDrawInfo(Scene scene)
         {
-            if (!Hidden)
+            for (int i = 0; i < _models.Count; i++)
             {
-                for (int i = 0; i < _models.Count; i++)
+                ModelInstance inst = _models[i];
+                if ((!inst.Active && !scene.ShowAllEntities) || (inst.IsPlaceholder && !scene.ShowInvisibleEntities && !scene.ShowAllEntities))
                 {
-                    ModelInstance inst = _models[i];
-                    if ((!inst.Active && !scene.ShowAllEntities) || (inst.IsPlaceholder && !scene.ShowInvisibleEntities && !scene.ShowAllEntities))
-                    {
-                        continue;
-                    }
-                    UpdateTransforms(inst, i, scene);
+                    continue;
+                }
+                UpdateTransforms(inst, i, scene);
+                if (!Hidden)
+                {
+                    // todo: hide attached effects
                     int polygonId = scene.GetNextPolygonId();
                     GetItems(inst, i, inst.Model.Nodes[0], polygonId);
                 }
@@ -276,12 +278,12 @@ namespace MphRead.Entities
                             texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
                             inst.IsPlaceholder ? GetOverrideColor(inst, index) : null, PaletteOverride, selectionType, bindingOverride);
                     }
-                    if (node.ChildIndex != UInt16.MaxValue)
+                    if (node.ChildIndex != -1)
                     {
                         GetItems(inst, index, model.Nodes[node.ChildIndex], polygonId);
                     }
                 }
-                if (node.NextIndex != UInt16.MaxValue)
+                if (node.NextIndex != -1)
                 {
                     GetItems(inst, index, model.Nodes[node.NextIndex], polygonId);
                 }
@@ -593,7 +595,7 @@ namespace MphRead.Entities
 
         private static float GetItemRotation()
         {
-            float rotation = _nextItemRotation / (float)(UInt16.MaxValue + 1) * 360f;
+            float rotation = _nextItemRotation / (float)0x10000 * 360f;
             _nextItemRotation += 0x2000;
             return rotation;
         }

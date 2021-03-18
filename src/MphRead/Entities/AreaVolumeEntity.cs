@@ -19,8 +19,8 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            _insideEventColor = Metadata.GetEventColor(data.InsideEvent);
-            _exitEventColor = Metadata.GetEventColor(data.ExitEvent);
+            _insideEventColor = Metadata.GetEventColor(data.InsideMessage);
+            _exitEventColor = Metadata.GetEventColor(data.ExitMessage);
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _volume = CollisionVolume.Move(_data.Volume, Position);
             AddPlaceholderModel();
@@ -74,8 +74,8 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            _insideEventColor = Metadata.GetEventColor(data.InsideEvent);
-            _exitEventColor = Metadata.GetEventColor(data.ExitEvent);
+            _insideEventColor = Metadata.GetEventColor(data.InsideMessage);
+            _exitEventColor = Metadata.GetEventColor(data.ExitMessage);
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _volume = CollisionVolume.Move(_data.ActiveVolume, Position);
             AddPlaceholderModel();

@@ -13,6 +13,7 @@ namespace MphRead.Entities
         private readonly IReadOnlyList<CollisionPortal> _portals = new List<CollisionPortal>();
         private readonly IReadOnlyList<PortalNodeRef> _forceFields = new List<PortalNodeRef>();
         private IReadOnlyList<Node> Nodes => _models[0].Model.Nodes;
+        private readonly bool _firstHunt;
 
         protected override bool UseNodeTransform => false; // default -- will use transform if setting is enabled
 
@@ -26,6 +27,7 @@ namespace MphRead.Entities
                 // manually disable a decal that isn't rendered in-game because it's not on a surface
                 Nodes[46].Enabled = false;
             }
+            _firstHunt = meta.FirstHunt;
             Model model = inst.Model;
             var portals = new List<CollisionPortal>();
             var forceFields = new List<PortalNodeRef>();
@@ -58,7 +60,7 @@ namespace MphRead.Entities
                     || model.Name == "biodefense chamber 04" || model.Name == "biodefense chamber 07");
             }
             else if (meta.RoomNodeName != null
-                && model.Nodes.TryFind(n => n.Name == meta.RoomNodeName && n.ChildIndex != UInt16.MaxValue, out Node? roomNode))
+                && model.Nodes.TryFind(n => n.Name == meta.RoomNodeName && n.ChildIndex != -1, out Node? roomNode))
             {
                 roomNode.IsRoomPartNode = true;
             }
@@ -143,13 +145,13 @@ namespace MphRead.Entities
                     else if (pnode.IsRoomPartNode)
                     {
                         int childIndex = pnode.ChildIndex;
-                        if (childIndex != UInt16.MaxValue)
+                        if (childIndex != -1)
                         {
                             Node node = Nodes[childIndex];
-                            Debug.Assert(node.ChildIndex == UInt16.MaxValue);
+                            Debug.Assert(node.ChildIndex == -1);
                             GetItems(inst, node);
                             int nextIndex = node.NextIndex;
-                            while (nextIndex != UInt16.MaxValue)
+                            while (nextIndex != -1)
                             {
                                 node = Nodes[nextIndex];
                                 GetItems(inst, node);
@@ -164,12 +166,12 @@ namespace MphRead.Entities
                     {
                         PortalNodeRef forceField = _forceFields[i];
                         Node pnode = Nodes[forceField.NodeIndex];
-                        if (pnode.ChildIndex != UInt16.MaxValue)
+                        if (pnode.ChildIndex != -1)
                         {
                             Node node = Nodes[pnode.ChildIndex];
                             GetItems(inst, node, forceField.Portal);
                             int nextIndex = node.NextIndex;
-                            while (nextIndex != UInt16.MaxValue)
+                            while (nextIndex != -1)
                             {
                                 node = Nodes[nextIndex];
                                 GetItems(inst, node, forceField.Portal);
@@ -204,7 +206,7 @@ namespace MphRead.Entities
                     float alpha = 1.0f;
                     if (portal != null)
                     {
-                        polygonId = UInt16.MaxValue;
+                        polygonId = scene.GetNextPolygonId();
                         alpha = GetPortalAlpha(portal.Position, scene.CameraPosition);
                     }
                     else if (material.RenderMode == RenderMode.Translucent)
@@ -246,7 +248,7 @@ namespace MphRead.Entities
                     scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Ngon, verts, count, noLines: true);
                 }
             }
-            else if (scene.ShowVolumes == VolumeDisplay.KillPlane)
+            else if (scene.ShowVolumes == VolumeDisplay.KillPlane && !_firstHunt)
             {
                 Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(4);
                 verts[0] = new Vector3(10000f, scene.KillHeight, 10000f);

@@ -10,6 +10,8 @@ namespace MphRead
     {
         public Model Model { get; }
         public AnimationInfo AnimInfo { get; } = new AnimationInfo();
+        public AnimFlags AnimFlags { get; private set; }
+        public int MaxAnimFrame { get; private set; }
         public bool IsPlaceholder { get; set; }
         public bool Active { get; set; } = true;
 
@@ -39,6 +41,38 @@ namespace MphRead
             }
         }
 
+        // sktodo: looping/reversing flags + frame selection
+        public void SetAnimation(int index, AnimFlags flags)
+        {
+            SetNodeAnim(index);
+            SetMaterialAnim(index);
+            SetTexcoordAnim(index);
+            SetTexcoordAnim(index);
+            UpdateMaxFrame();
+            AnimFlags = flags;
+        }
+
+        private void UpdateMaxFrame()
+        {
+            if (AnimInfo.Node.Group != null)
+            {
+                MaxAnimFrame = AnimInfo.Node.Group.FrameCount;
+            }
+            else if (AnimInfo.Material.Group != null)
+            {
+                MaxAnimFrame = AnimInfo.Material.Group.FrameCount;
+            }
+            else if (AnimInfo.Texture.Group != null)
+            {
+                MaxAnimFrame = AnimInfo.Texture.Group.FrameCount;
+            }
+            else if (AnimInfo.Texcoord.Group != null)
+            {
+                MaxAnimFrame = AnimInfo.Texcoord.Group.FrameCount;
+            }
+        }
+
+        // sktodo: either remove these or make them update the MaxFrame etc.
         public void SetNodeAnim(int index)
         {
             if (index <= -1 || index >= Model.AnimationGroups.Node.Count)
@@ -187,6 +221,28 @@ namespace MphRead
         }
     }
 
+    [Flags]
+    public enum AnimFlags : ushort
+    {
+        None = 0x0,
+        Bit00 = 0x1,
+        Bit01 = 0x2,
+        Bit02 = 0x4,
+        Bit03 = 0x8,
+        Bit04 = 0x10,
+        Bit05 = 0x20,
+        Bit06 = 0x40,
+        Bit07 = 0x80,
+        Bit08 = 0x100,
+        Bit09 = 0x200,
+        Bit10 = 0x400,
+        Bit11 = 0x800,
+        Bit12 = 0x1000,
+        Bit13 = 0x2000,
+        Bit14 = 0x4000,
+        Bit15 = 0x8000
+    }
+
     public class AnimationInfo
     {
         public NodeAnimationInfo Node { get; } = new NodeAnimationInfo();
@@ -295,11 +351,11 @@ namespace MphRead
 
         public void ComputeNodeMatrices(int index)
         {
-            if (Nodes.Count == 0 || index == UInt16.MaxValue)
+            if (Nodes.Count == 0 || index == -1)
             {
                 return;
             }
-            for (int i = index; i != UInt16.MaxValue;)
+            for (int i = index; i != -1;)
             {
                 Node node = Nodes[i];
                 // the scale division isn't done by the game, which is why transforms on room nodes don't work,
@@ -310,7 +366,7 @@ namespace MphRead
                     node.Position.Z / Scale.Z
                 );
                 Matrix4 transform = ComputeNodeTransforms(node.Scale, node.Angle, position);
-                if (node.ParentIndex == UInt16.MaxValue)
+                if (node.ParentIndex == -1)
                 {
                     node.Transform = transform;
                 }
@@ -318,7 +374,7 @@ namespace MphRead
                 {
                     node.Transform = transform * Nodes[node.ParentIndex].Transform;
                 }
-                if (node.ChildIndex != UInt16.MaxValue)
+                if (node.ChildIndex != -1)
                 {
                     ComputeNodeMatrices(node.ChildIndex);
                 }
@@ -372,7 +428,7 @@ namespace MphRead
 
         public void AnimateNodes(int index, bool useNodeTransform, Matrix4 parentTansform, Vector3 scale, NodeAnimationInfo info)
         {
-            for (int i = index; i != UInt16.MaxValue;)
+            for (int i = index; i != -1;)
             {
                 Node node = Nodes[i];
                 Matrix4 transform = useNodeTransform ? node.Transform : Matrix4.Identity;
@@ -380,13 +436,13 @@ namespace MphRead
                 if (group != null && group.Animations.TryGetValue(node.Name, out NodeAnimation animation))
                 {
                     transform = AnimateNode(group, animation, scale, info.CurrentFrame);
-                    if (node.ParentIndex != UInt16.MaxValue)
+                    if (node.ParentIndex != -1)
                     {
                         transform *= Nodes[node.ParentIndex].Animation;
                     }
                 }
                 node.Animation = transform;
-                if (node.ChildIndex != UInt16.MaxValue)
+                if (node.ChildIndex != -1)
                 {
                     AnimateNodes(node.ChildIndex, useNodeTransform, parentTansform, scale, info);
                 }
@@ -434,7 +490,7 @@ namespace MphRead
                 if (group != null && group.Animations.TryGetValue(material.Name, out MaterialAnimation animation))
                 {
                     int currentFrame = info.CurrentFrame;
-                    if (!material.AnimationFlags.HasFlag(AnimationFlags.DisableColor))
+                    if (!material.AnimationFlags.HasFlag(MatAnimFlags.DisableColor))
                     {
                         float diffuseR = InterpolateAnimation(group.Colors, animation.DiffuseLutIndexR, currentFrame,
                             animation.DiffuseBlendR, animation.DiffuseLutLengthR, group.FrameCount);
@@ -458,7 +514,7 @@ namespace MphRead
                         material.CurrentAmbient = new Vector3(ambientR / 31.0f, ambientG / 31.0f, ambientB / 31.0f);
                         material.CurrentSpecular = new Vector3(specularR / 31.0f, specularG / 31.0f, specularB / 31.0f);
                     }
-                    if (!material.AnimationFlags.HasFlag(AnimationFlags.DisableAlpha))
+                    if (!material.AnimationFlags.HasFlag(MatAnimFlags.DisableAlpha))
                     {
                         material.CurrentAlpha = InterpolateAnimation(group.Colors, animation.AlphaLutIndex, currentFrame,
                             animation.AlphaBlend, animation.AlphaLutLength, group.FrameCount) / 31.0f;
@@ -592,7 +648,7 @@ namespace MphRead
         public bool NodeParentsEnabled(Node node)
         {
             int parentIndex = node.ParentIndex;
-            while (parentIndex != UInt16.MaxValue)
+            while (parentIndex != -1)
             {
                 Node parent = Nodes[parentIndex];
                 if (!parent.Enabled)

@@ -17,7 +17,6 @@ namespace MphRead
         public static readonly int FhEntityEntry = Marshal.SizeOf(typeof(FhEntityEntry));
         public static readonly int EntityDataHeader = Marshal.SizeOf(typeof(EntityDataHeader));
         public static readonly int JumpPadEntityData = Marshal.SizeOf(typeof(JumpPadEntityData));
-        public static readonly int ItemEntityData = Marshal.SizeOf(typeof(ItemEntityData));
         public static readonly int AnimationHeader = Marshal.SizeOf(typeof(AnimationHeader));
         public static readonly int NodeAnimation = Marshal.SizeOf(typeof(NodeAnimation));
         public static readonly int CameraSequenceHeader = Marshal.SizeOf(typeof(CameraSequenceHeader));
@@ -49,8 +48,8 @@ namespace MphRead
         public readonly CullingMode Culling;
         public readonly byte Alpha;
         public readonly byte Wireframe;
-        public readonly ushort PaletteId;
-        public readonly ushort TextureId;
+        public readonly short PaletteId;
+        public readonly short TextureId;
         public readonly RepeatMode XRepeat;
         public readonly RepeatMode YRepeat;
         public readonly ColorRgb Diffuse;
@@ -284,6 +283,25 @@ namespace MphRead
         public readonly byte PackedSize;
         public readonly byte NativeTextureFormat;
         public readonly ushort ObjectRef;
+
+        public Texture(TextureFormat format, ushort width, ushort height)
+        {
+            Format = format;
+            Padding1 = 0;
+            Width = width;
+            Height = height;
+            Padding6 = 0;
+            ImageOffset = 0;
+            ImageSize = 0;
+            UnusedOffset = 0;
+            UnusedCount = 0;
+            VramOffset = 0;
+            Opaque = 1;
+            SkipVram = 0;
+            PackedSize = 0;
+            NativeTextureFormat = 0;
+            ObjectRef = 0;
+        }
     }
 
     // size: 16
@@ -336,9 +354,9 @@ namespace MphRead
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
         public readonly byte[] Name;
-        public readonly ushort ParentId;
-        public readonly ushort ChildId;
-        public readonly ushort NextId;
+        public readonly short ParentId;
+        public readonly short ChildId;
+        public readonly short NextId;
         public readonly ushort Padding46;
         public readonly uint Enabled;
         public readonly ushort MeshCount;
@@ -473,11 +491,11 @@ namespace MphRead
         public readonly byte UseEntityTransform;
         public readonly byte Padding35;
         public readonly ushort Padding36;
-        public readonly ushort PosEntityType;
+        public readonly short PosEntityType;
         public readonly ushort PosEntityId;
-        public readonly ushort TargetEntityType;
+        public readonly short TargetEntityType;
         public readonly ushort TargetEntityId;
-        public readonly ushort MessageTargetType;
+        public readonly short MessageTargetType;
         public readonly ushort MessageTargetId;
         public readonly ushort MessageId;
         public readonly ushort MessageParam;

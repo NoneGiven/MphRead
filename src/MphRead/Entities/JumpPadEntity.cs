@@ -6,14 +6,19 @@ namespace MphRead.Entities
     {
         private readonly JumpPadEntityData _data;
         private readonly Matrix4 _beamTransform;
+        private CollisionVolume _volume;
+        private Vector3 _prevPos;
 
-        private readonly CollisionVolume _volume;
+        private bool _invSetUp = false;
+        private EntityBase? _parent = null;
+        private Vector3 _invPos;
 
         public JumpPadEntity(JumpPadEntityData data) : base(EntityType.JumpPad)
         {
             _data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
+            _prevPos = Position;
             _volume = CollisionVolume.Move(_data.Volume, Position);
             string modelName = Metadata.JumpPads[(int)data.ModelId];
             ModelInstance baseInst = Read.GetModelInstance(modelName);
@@ -26,6 +31,38 @@ namespace MphRead.Entities
             Active = data.Active != 0;
             _models.Add(beamInst);
             beamInst.Active = Active;
+        }
+
+        public override void Initialize(Scene scene)
+        {
+            base.Initialize(scene);
+            if (_data.ParentId != -1)
+            {
+                if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
+                {
+                    _parent = parent;
+                }
+            }
+        }
+
+        public override bool Process(Scene scene)
+        {
+            if (_parent != null)
+            {
+                if (!_invSetUp)
+                {
+                    _parent.GetDrawInfo(scene); // force update transforms
+                    _invPos = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform.Inverted());
+                    _invSetUp = true;
+                }
+                Position = Matrix.Vec3MultMtx4(_invPos, _parent.CollisionTransform);
+            }
+            if (_prevPos != Position)
+            {
+                _volume = CollisionVolume.Move(_data.Volume, Position);
+                _prevPos = Position;
+            }
+            return base.Process(scene);
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)

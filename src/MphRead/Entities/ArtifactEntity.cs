@@ -7,6 +7,10 @@ namespace MphRead.Entities
         private readonly ArtifactEntityData _data;
         private readonly float _heightOffset;
 
+        private bool _invSetUp = false;
+        private EntityBase? _parent = null;
+        private Vector3 _invPos;
+
         public ArtifactEntity(ArtifactEntityData data) : base(0.25f, Vector3.UnitY, EntityType.Artifact)
         {
             _data = data;
@@ -25,6 +29,33 @@ namespace MphRead.Entities
                 ModelInstance baseInst = Read.GetModelInstance("ArtifactBase");
                 _models.Add(baseInst);
             }
+        }
+
+        public override void Initialize(Scene scene)
+        {
+            base.Initialize(scene);
+            if (_data.LinkedEntityId != -1)
+            {
+                if (scene.TryGetEntity(_data.LinkedEntityId, out EntityBase? parent))
+                {
+                    _parent = parent;
+                }
+            }
+        }
+
+        public override bool Process(Scene scene)
+        {
+            if (_parent != null)
+            {
+                if (!_invSetUp)
+                {
+                    _parent.GetDrawInfo(scene); // force update transforms
+                    _invPos = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform.Inverted());
+                    _invSetUp = true;
+                }
+                Position = Matrix.Vec3MultMtx4(_invPos, _parent.CollisionTransform);
+            }
+            return base.Process(scene);
         }
 
         protected override LightInfo GetLightInfo(Scene scene)

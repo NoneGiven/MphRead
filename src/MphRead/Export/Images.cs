@@ -38,7 +38,7 @@ namespace MphRead.Export
 
                 void DoTexture(int textureId, int paletteId)
                 {
-                    if (textureId == UInt16.MaxValue || usedCombos.Contains((textureId, paletteId)))
+                    if (textureId == -1 || usedCombos.Contains((textureId, paletteId)))
                     {
                         return;
                     }

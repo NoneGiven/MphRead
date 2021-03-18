@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using MphRead.Effects;
 using MphRead.Entities;
 using OpenTK.Mathematics;
@@ -38,7 +39,7 @@ namespace MphRead
             }
         }
 
-        public IEnumerable<int> GetAllMeshIds(Model model, bool root)
+        public IEnumerable<int> GetAllMeshIds(IReadOnlyList<Node> nodes, bool root)
         {
             static IEnumerable<int> Yield(Node node)
             {
@@ -52,16 +53,16 @@ namespace MphRead
             {
                 yield return value;
             }
-            if (!root && NextIndex != UInt16.MaxValue)
+            if (!root && NextIndex != -1)
             {
-                foreach (int value in model.Nodes[NextIndex].GetAllMeshIds(model, root: false))
+                foreach (int value in nodes[NextIndex].GetAllMeshIds(nodes, root: false))
                 {
                     yield return value;
                 }
             }
-            if (ChildIndex != UInt16.MaxValue)
+            if (ChildIndex != -1)
             {
-                foreach (int value in model.Nodes[ChildIndex].GetAllMeshIds(model, root: false))
+                foreach (int value in nodes[ChildIndex].GetAllMeshIds(nodes, root: false))
                 {
                     yield return value;
                 }
@@ -175,7 +176,7 @@ namespace MphRead
         public Vector3 CurrentSpecular { get; set; }
         public PolygonMode PolygonMode { get; set; }
         public RenderMode RenderMode { get; set; } // todo: revisit the use as a polygon ID
-        public AnimationFlags AnimationFlags { get; set; }
+        public MatAnimFlags AnimationFlags { get; set; }
         public TexgenMode TexgenMode { get; set; }
         public int TexcoordAnimationId { get; set; }
         public int MatrixId { get; set; }
@@ -205,7 +206,7 @@ namespace MphRead
             CurrentSpecular = raw.Specular / 31.0f;
             PolygonMode = raw.PolygonMode;
             RenderMode = raw.RenderMode;
-            AnimationFlags = (AnimationFlags)raw.AnimationFlags;
+            AnimationFlags = (MatAnimFlags)raw.AnimationFlags;
             TexgenMode = raw.TexcoordTransformMode;
             TexcoordAnimationId = raw.TexcoordAnimationId;
             MatrixId = (int)raw.MatrixId;
@@ -467,14 +468,14 @@ namespace MphRead
         public ushort LayerMask { get; }
         public ushort Length { get; }
         public EntityType Type { get; }
-        public ushort EntityId { get; }
+        public short EntityId { get; }
         public bool FirstHunt { get; }
 
         public Vector3 Position { get; }
-        public readonly Vector3 UpVector;
-        public readonly Vector3 FacingVector;
+        public Vector3 UpVector { get; }
+        public Vector3 FacingVector { get; }
 
-        public Entity(EntityEntry entry, EntityType type, ushort entityId, EntityDataHeader header)
+        public Entity(EntityEntry entry, EntityType type, short entityId, EntityDataHeader header)
         {
             NodeName = entry.NodeName.MarshalString();
             LayerMask = entry.LayerMask;
@@ -491,7 +492,7 @@ namespace MphRead
             FacingVector = header.FacingVector.ToFloatVector();
         }
 
-        public Entity(FhEntityEntry entry, EntityType type, ushort entityId, EntityDataHeader header)
+        public Entity(FhEntityEntry entry, EntityType type, short entityId, EntityDataHeader header)
         {
             NodeName = entry.NodeName.MarshalString();
             if (!Enum.IsDefined(typeof(EntityType), type))
@@ -506,14 +507,14 @@ namespace MphRead
             FacingVector = header.FacingVector.ToFloatVector();
         }
 
-        public virtual ushort GetParentId()
+        public virtual short GetParentId()
         {
-            return UInt16.MaxValue;
+            return -1;
         }
 
-        public virtual ushort GetChildId()
+        public virtual short GetChildId()
         {
-            return UInt16.MaxValue;
+            return -1;
         }
     }
 
@@ -521,19 +522,19 @@ namespace MphRead
     {
         public T Data { get; }
 
-        public Entity(EntityEntry entry, EntityType type, ushort entityId, T data, EntityDataHeader header)
+        public Entity(EntityEntry entry, EntityType type, short entityId, T data, EntityDataHeader header)
             : base(entry, type, entityId, header)
         {
             Data = data;
         }
 
-        public Entity(FhEntityEntry entry, EntityType type, ushort entityId, T data, EntityDataHeader header)
+        public Entity(FhEntityEntry entry, EntityType type, short entityId, T data, EntityDataHeader header)
             : base(entry, type, entityId, header)
         {
             Data = data;
         }
 
-        public override ushort GetParentId()
+        public override short GetParentId()
         {
             if (Data is TriggerVolumeEntityData triggerData)
             {
@@ -551,14 +552,14 @@ namespace MphRead
             {
                 if (pointModule.PrevId == pointModule.Header.EntityId)
                 {
-                    return UInt16.MaxValue;
+                    return -1;
                 }
                 return pointModule.PrevId;
             }
             return base.GetParentId();
         }
 
-        public override ushort GetChildId()
+        public override short GetChildId()
         {
             if (Data is TriggerVolumeEntityData triggerData)
             {
@@ -576,7 +577,7 @@ namespace MphRead
             {
                 if (pointModule.NextId == pointModule.Header.EntityId)
                 {
-                    return UInt16.MaxValue;
+                    return -1;
                 }
                 return pointModule.NextId;
             }
@@ -584,76 +585,139 @@ namespace MphRead
         }
     }
 
-    public readonly struct CollisionVolume
+    [StructLayout(LayoutKind.Explicit)]
+    public struct CollisionVolume
     {
-        public readonly VolumeType Type;
-        public readonly Vector3 BoxVector1;
-        public readonly Vector3 BoxVector2;
-        public readonly Vector3 BoxVector3;
-        public readonly Vector3 BoxPosition;
-        public readonly float BoxDot1;
-        public readonly float BoxDot2;
-        public readonly float BoxDot3;
-        public readonly Vector3 CylinderVector;
-        public readonly Vector3 CylinderPosition;
-        public readonly float CylinderRadius;
-        public readonly float CylinderDot;
-        public readonly Vector3 SpherePosition;
-        public readonly float SphereRadius;
+        [FieldOffset(0)]
+        public VolumeType Type;
+        // box
+        [FieldOffset(4)]
+        public Vector3 BoxVector1;
+        [FieldOffset(16)]
+        public Vector3 BoxVector2;
+        [FieldOffset(28)]
+        public Vector3 BoxVector3;
+        [FieldOffset(40)]
+        public Vector3 BoxPosition;
+        [FieldOffset(52)]
+        public float BoxDot1;
+        [FieldOffset(56)]
+        public float BoxDot2;
+        [FieldOffset(60)]
+        public float BoxDot3;
+        // cylinder
+        [FieldOffset(4)]
+        public Vector3 CylinderVector;
+        [FieldOffset(16)]
+        public Vector3 CylinderPosition;
+        [FieldOffset(28)]
+        public float CylinderRadius;
+        [FieldOffset(32)]
+        public float CylinderDot;
+        // sphere
+        [FieldOffset(4)]
+        public Vector3 SpherePosition;
+        [FieldOffset(16)]
+        public float SphereRadius;
 
         public CollisionVolume(RawCollisionVolume raw)
         {
             Type = raw.Type;
-            BoxVector1 = raw.BoxVector1.ToFloatVector();
-            BoxVector2 = raw.BoxVector2.ToFloatVector();
-            BoxVector3 = raw.BoxVector3.ToFloatVector();
-            BoxPosition = raw.BoxPosition.ToFloatVector();
-            BoxDot1 = raw.BoxDot1.FloatValue;
-            BoxDot2 = raw.BoxDot2.FloatValue;
-            BoxDot3 = raw.BoxDot3.FloatValue;
-            CylinderVector = raw.CylinderVector.ToFloatVector();
-            CylinderPosition = raw.CylinderPosition.ToFloatVector();
-            CylinderRadius = raw.CylinderRadius.FloatValue;
-            CylinderDot = raw.CylinderDot.FloatValue;
-            SpherePosition = raw.SpherePosition.ToFloatVector();
-            SphereRadius = raw.SphereRadius.FloatValue;
-        }
-
-        public CollisionVolume(FhRawCollisionVolume raw)
-        {
-            if (raw.Type == FhVolumeType.Box)
+            BoxVector1 = Vector3.Zero;
+            BoxVector2 = Vector3.Zero;
+            BoxVector3 = Vector3.Zero;
+            BoxPosition = Vector3.Zero;
+            BoxDot1 = 0;
+            BoxDot2 = 0;
+            BoxDot3 = 0;
+            CylinderVector = Vector3.Zero;
+            CylinderPosition = Vector3.Zero;
+            CylinderRadius = 0;
+            CylinderDot = 0;
+            SpherePosition = Vector3.Zero;
+            SphereRadius = 0;
+            if (Type == VolumeType.Box)
             {
-                Type = VolumeType.Box;
+                BoxVector1 = raw.BoxVector1.ToFloatVector();
+                BoxVector2 = raw.BoxVector2.ToFloatVector();
+                BoxVector3 = raw.BoxVector3.ToFloatVector();
+                BoxPosition = raw.BoxPosition.ToFloatVector();
+                BoxDot1 = raw.BoxDot1.FloatValue;
+                BoxDot2 = raw.BoxDot2.FloatValue;
+                BoxDot3 = raw.BoxDot3.FloatValue;
             }
-            else if (raw.Type == FhVolumeType.Sphere)
+            else if (Type == VolumeType.Cylinder)
             {
-                Type = VolumeType.Sphere;
+                CylinderVector = raw.CylinderVector.ToFloatVector();
+                CylinderPosition = raw.CylinderPosition.ToFloatVector();
+                CylinderRadius = raw.CylinderRadius.FloatValue;
+                CylinderDot = raw.CylinderDot.FloatValue;
             }
-            else if (raw.Type == FhVolumeType.Cylinder)
+            else if (Type == VolumeType.Sphere)
             {
-                Type = VolumeType.Cylinder;
+                SpherePosition = raw.SpherePosition.ToFloatVector();
+                SphereRadius = raw.SphereRadius.FloatValue;
             }
             else
             {
                 throw new ProgramException($"Invalid volume type {raw.Type}.");
             }
-            BoxVector1 = raw.BoxVector1.ToFloatVector();
-            BoxVector2 = raw.BoxVector2.ToFloatVector();
-            BoxVector3 = raw.BoxVector3.ToFloatVector();
-            BoxPosition = raw.BoxPosition.ToFloatVector();
-            BoxDot1 = raw.BoxDot1.FloatValue;
-            BoxDot2 = raw.BoxDot2.FloatValue;
-            BoxDot3 = raw.BoxDot3.FloatValue;
-            CylinderVector = raw.CylinderVector.ToFloatVector();
-            CylinderPosition = raw.CylinderPosition.ToFloatVector();
-            CylinderRadius = raw.CylinderRadius.FloatValue;
-            CylinderDot = raw.CylinderDot.FloatValue;
-            SpherePosition = raw.SpherePosition.ToFloatVector();
-            SphereRadius = raw.SphereRadius.FloatValue;
+        }
+
+        public CollisionVolume(FhRawCollisionVolume raw)
+        {
+            BoxVector1 = Vector3.Zero;
+            BoxVector2 = Vector3.Zero;
+            BoxVector3 = Vector3.Zero;
+            BoxPosition = Vector3.Zero;
+            BoxDot1 = 0;
+            BoxDot2 = 0;
+            BoxDot3 = 0;
+            CylinderVector = Vector3.Zero;
+            CylinderPosition = Vector3.Zero;
+            CylinderRadius = 0;
+            CylinderDot = 0;
+            SpherePosition = Vector3.Zero;
+            SphereRadius = 0;
+            if (raw.Type == FhVolumeType.Box)
+            {
+                Type = VolumeType.Box;
+                BoxVector1 = raw.BoxVector1.ToFloatVector();
+                BoxVector2 = raw.BoxVector2.ToFloatVector();
+                BoxVector3 = raw.BoxVector3.ToFloatVector();
+                BoxPosition = raw.BoxPosition.ToFloatVector();
+                BoxDot1 = raw.BoxDot1.FloatValue;
+                BoxDot2 = raw.BoxDot2.FloatValue;
+                BoxDot3 = raw.BoxDot3.FloatValue;
+            }
+            else if (raw.Type == FhVolumeType.Cylinder)
+            {
+                Type = VolumeType.Cylinder;
+                CylinderVector = raw.CylinderVector.ToFloatVector();
+                CylinderPosition = raw.CylinderPosition.ToFloatVector();
+                CylinderRadius = raw.CylinderRadius.FloatValue;
+                CylinderDot = raw.CylinderDot.FloatValue;
+            }
+            else if (raw.Type == FhVolumeType.Sphere)
+            {
+                Type = VolumeType.Sphere;
+                SpherePosition = raw.SpherePosition.ToFloatVector();
+                SphereRadius = raw.SphereRadius.FloatValue;
+            }
+            else
+            {
+                throw new ProgramException($"Invalid volume type {raw.Type}.");
+            }
         }
 
         public CollisionVolume(Vector3 vec1, Vector3 vec2, Vector3 vec3, Vector3 pos, float dot1, float dot2, float dot3)
         {
+            CylinderVector = Vector3.Zero;
+            CylinderPosition = Vector3.Zero;
+            CylinderRadius = 0;
+            CylinderDot = 0;
+            SpherePosition = Vector3.Zero;
+            SphereRadius = 0;
             Type = VolumeType.Box;
             BoxVector1 = vec1;
             BoxVector2 = vec2;
@@ -662,17 +726,10 @@ namespace MphRead
             BoxDot1 = dot1;
             BoxDot2 = dot2;
             BoxDot3 = dot3;
-            CylinderVector = Vector3.Zero;
-            CylinderPosition = Vector3.Zero;
-            CylinderRadius = 0;
-            CylinderDot = 0;
-            SpherePosition = Vector3.Zero;
-            SphereRadius = 0;
         }
 
         public CollisionVolume(Vector3 vec, Vector3 pos, float rad, float dot)
         {
-            Type = VolumeType.Cylinder;
             BoxVector1 = Vector3.Zero;
             BoxVector2 = Vector3.Zero;
             BoxVector3 = Vector3.Zero;
@@ -680,17 +737,17 @@ namespace MphRead
             BoxDot1 = 0;
             BoxDot2 = 0;
             BoxDot3 = 0;
+            SpherePosition = Vector3.Zero;
+            SphereRadius = 0;
+            Type = VolumeType.Cylinder;
             CylinderVector = vec;
             CylinderPosition = pos;
             CylinderRadius = rad;
             CylinderDot = dot;
-            SpherePosition = Vector3.Zero;
-            SphereRadius = 0;
         }
 
         public CollisionVolume(Vector3 pos, float rad)
         {
-            Type = VolumeType.Sphere;
             BoxVector1 = Vector3.Zero;
             BoxVector2 = Vector3.Zero;
             BoxVector3 = Vector3.Zero;
@@ -702,6 +759,7 @@ namespace MphRead
             CylinderPosition = Vector3.Zero;
             CylinderRadius = 0;
             CylinderDot = 0;
+            Type = VolumeType.Sphere;
             SpherePosition = pos;
             SphereRadius = rad;
         }
@@ -970,15 +1028,15 @@ namespace MphRead
         public TriggerVolumeDisplay(Entity<TriggerVolumeEntityData> entity, Vector3 position)
             : base(entity.Data.Volume, position)
         {
-            Color1 = Metadata.GetEventColor(entity.Data.ParentEvent);
-            Color2 = Metadata.GetEventColor(entity.Data.ChildEvent);
+            Color1 = Metadata.GetEventColor(entity.Data.ParentMessage);
+            Color2 = Metadata.GetEventColor(entity.Data.ChildMessage);
         }
 
         public TriggerVolumeDisplay(Entity<FhTriggerVolumeEntityData> entity, Vector3 position)
             : base(entity.Data.ActiveVolume, position)
         {
-            Color1 = Metadata.GetEventColor(entity.Data.ParentEvent);
-            Color2 = Metadata.GetEventColor(entity.Data.ChildEvent);
+            Color1 = Metadata.GetEventColor(entity.Data.ParentMessage);
+            Color2 = Metadata.GetEventColor(entity.Data.ChildMessage);
         }
 
         public override Vector3? GetColor(int index)
@@ -1000,15 +1058,15 @@ namespace MphRead
         public AreaVolumeDisplay(Entity<AreaVolumeEntityData> entity, Vector3 position)
             : base(entity.Data.Volume, position)
         {
-            Color1 = Metadata.GetEventColor(entity.Data.InsideEvent);
-            Color2 = Metadata.GetEventColor(entity.Data.ExitEvent);
+            Color1 = Metadata.GetEventColor(entity.Data.InsideMessage);
+            Color2 = Metadata.GetEventColor(entity.Data.ExitMessage);
         }
 
         public AreaVolumeDisplay(Entity<FhAreaVolumeEntityData> entity, Vector3 position)
             : base(entity.Data.ActiveVolume, position)
         {
-            Color1 = Metadata.GetEventColor(entity.Data.InsideEvent);
-            Color2 = Metadata.GetEventColor(entity.Data.ExitEvent);
+            Color1 = Metadata.GetEventColor(entity.Data.InsideMessage);
+            Color2 = Metadata.GetEventColor(entity.Data.ExitMessage);
         }
 
         public override Vector3? GetColor(int index)
@@ -1072,11 +1130,11 @@ namespace MphRead
         public byte PrevFrameInfluence { get; } // flag bits 0/1
         public byte AfterFrameInfluence { get; } // flag bits 0/1
         public bool UseEntityTransform { get; }
-        public ushort PosEntityType { get; }
+        public short PosEntityType { get; }
         public ushort PosEntityId { get; }
-        public ushort TargetEntityType { get; }
+        public short TargetEntityType { get; }
         public ushort TargetEntityId { get; }
-        public ushort MessageTargetType { get; }
+        public short MessageTargetType { get; }
         public ushort MessageTargetId { get; }
         public ushort MessageId { get; }
         public ushort MessageParam { get; }
@@ -1136,7 +1194,7 @@ namespace MphRead
     }
 
     [Flags]
-    public enum AnimationFlags : byte
+    public enum MatAnimFlags : byte
     {
         None = 0x0,
         DisableColor = 0x1,

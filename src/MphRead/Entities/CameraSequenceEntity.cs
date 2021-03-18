@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics;
 using MphRead.Formats;
 using OpenTK.Mathematics;
@@ -46,9 +45,9 @@ namespace MphRead.Entities
             // these would override the keyframe refs if they were used, but they aren't
             Debug.Assert(Data.PlayerId1 == 0);
             Debug.Assert(Data.PlayerId2 == 0);
-            Debug.Assert(Data.Entity1 == UInt16.MaxValue);
-            Debug.Assert(Data.Entity2 == UInt16.MaxValue);
-            if (Data.MessageTargetId != UInt16.MaxValue)
+            Debug.Assert(Data.Entity1 == -1);
+            Debug.Assert(Data.Entity2 == -1);
+            if (Data.MessageTargetId != -1)
             {
                 scene.TryGetEntity(Data.MessageTargetId, out _messageTarget);
             }
@@ -60,14 +59,14 @@ namespace MphRead.Entities
             }
         }
 
-        private EntityBase? GetKeyframeRef(ushort type, ushort id, Scene scene)
+        private EntityBase? GetKeyframeRef(short type, ushort id, Scene scene)
         {
-            if (type == 25)
+            if (type == (short)EntityType.Player)
             {
                 Debug.Assert(id < PlayerEntity.MaxPlayers);
                 return PlayerEntity.Players[id];
             }
-            if (type != UInt16.MaxValue && scene.TryGetEntity(id, out EntityBase? entity))
+            if (type != -1 && scene.TryGetEntity(id, out EntityBase? entity))
             {
                 return entity;
             }

@@ -37,9 +37,9 @@ namespace MphRead
         FhPlayerSpawn = 101,
         FhUnknown2 = 102,
         FhDoor = 103,
-        FhItem = 104,
+        FhItemSpawn = 104,
         FhItemInstance = 105,
-        FhEnemy = 106,
+        FhEnemySpawn = 106,
         FhEffectInstance = 107,
         FhBomb = 108,
         FhTriggerVolume = 109,
@@ -306,10 +306,10 @@ namespace MphRead
         Unknown42 = 42,
         Unknown43 = 43,
         Unknown44 = 44, // platform wakeup?
-        Unknown45 = 45, // platform sleep?
+        Unknown45 = 45, // platform sleep? also checked by enemies
         Unknown46 = 46,
         Unknown50 = 50,
-        Unknown52 = 52,
+        SetBeamReflection = 52, // only checked by platforms, probably never sent, and not relevant either way
         Unknown53 = 53,
         Unknown54 = 54,
         Unknown55 = 55,
@@ -324,7 +324,7 @@ namespace MphRead
     public enum FhMessage : uint
     {
         None = 0,
-        Unknown5 = 5,
+        Activate = 5,
         Destroyed = 6,
         Damage = 7,
         Unknown9 = 9,

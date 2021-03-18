@@ -263,16 +263,23 @@ namespace MphRead
         }
     }
 
+    public enum PlatAnimId
+    {
+        InstantSleep = 0,
+        Wake = 1,
+        InstantWake = 2,
+        Sleep = 3
+    }
+
     public class PlatformMetadata
     {
         public int SomeFlag { get; }
         public string Name { get; }
-        public IReadOnlyList<uint> AnimationIds { get; }
-        public uint Field20 { get; }
-        public uint Field24 { get; }
+        public IReadOnlyList<int> AnimationIds { get; }
+        public int Field20 { get; }
+        public int Field24 { get; }
 
-        public PlatformMetadata(string name, int someFlag = 0, List<uint>? animationIds = null,
-            uint field20 = UInt32.MaxValue, uint field24 = UInt32.MaxValue)
+        public PlatformMetadata(string name, int someFlag = 0, List<int>? animationIds = null, int field20 = -1, int field24 = -1)
         {
             Name = name;
             SomeFlag = someFlag;
@@ -281,7 +288,7 @@ namespace MphRead
             // instant_sleep_anim_id, wakeup_anim_id, instant_wakeup_anim_id, sleep_anim_id
             if (animationIds == null)
             {
-                AnimationIds = new List<uint>() { UInt32.MaxValue, UInt32.MaxValue, UInt32.MaxValue, UInt32.MaxValue };
+                AnimationIds = new List<int>() { -1, -1, -1, -1 };
             }
             else if (animationIds.Count != 4)
             {
@@ -392,6 +399,55 @@ namespace MphRead
             return new Vector3(r / 31.0f, g / 31.0f, b / 31.0f);
         }
 
+        public static readonly IReadOnlyDictionary<string, IReadOnlyList<PaletteData>> PowerPalettes
+            = new Dictionary<string, IReadOnlyList<PaletteData>>()
+            {
+                ["Alimbic_Power"] = new List<PaletteData>()
+                {
+                    new PaletteData(32576),
+                    new PaletteData(32576),
+                    new PaletteData(32608),
+                    new PaletteData(32640),
+                    new PaletteData(32711),
+                    new PaletteData(32719),
+                    new PaletteData(32758),
+                    new PaletteData(32733)
+                },
+                ["Generic_Power"] = new List<PaletteData>()
+                {
+                    new PaletteData(19393),
+                    new PaletteData(18369),
+                    new PaletteData(17345),
+                    new PaletteData(16321),
+                    new PaletteData(19400),
+                    new PaletteData(23535),
+                    new PaletteData(26614),
+                    new PaletteData(31741)
+                },
+                ["Ice_Power"] = new List<PaletteData>()
+                {
+                    new PaletteData(29453),
+                    new PaletteData(29453),
+                    new PaletteData(29485),
+                    new PaletteData(29517),
+                    new PaletteData(30578),
+                    new PaletteData(30614),
+                    new PaletteData(31705),
+                    new PaletteData(32734)
+                },
+                ["Lava_Power"] = new List<PaletteData>()
+                {
+                    new PaletteData(671),
+                    new PaletteData(639),
+                    new PaletteData(607),
+                    new PaletteData(575),
+                    new PaletteData(7807),
+                    new PaletteData(16127),
+                    new PaletteData(23391),
+                    new PaletteData(30719)
+                }
+            };
+
         public static readonly IReadOnlyDictionary<Hunter, float> HunterScales = new Dictionary<Hunter, float>
         {
             { Hunter.Samus, 1.0f },
@@ -436,7 +492,7 @@ namespace MphRead
             },
             {
                 Hunter.Guardian,
-                new List<string>() { "GuardianR_lod0", "SamusAlt_lod0", "SamusGun" }
+                new List<string>() { "Guardian_lod0", "SamusAlt_lod0", "SamusGun" }
             }
         };
 
@@ -704,6 +760,8 @@ namespace MphRead
             return GetObjectById((int)id);
         }
 
+        public static readonly PlatformMetadata InvisiblePlat = new PlatformMetadata("N/A");
+
         private static readonly IReadOnlyList<PlatformMetadata?> _platforms = new List<PlatformMetadata?>()
         {
             /*  0 */ new PlatformMetadata("platform"),
@@ -714,22 +772,22 @@ namespace MphRead
             /*  5 */ new PlatformMetadata("Platform_Unit4_C1", someFlag: 1),
             /*  6 */ new PlatformMetadata("pillar"),
             /*  7 */ new PlatformMetadata("Door_Unit4_RM1"),
-            /*  8 */ new PlatformMetadata("SyluxShip", animationIds: new List<uint>() { UInt32.MaxValue, 1, 0, 2 }),
+            /*  8 */ new PlatformMetadata("SyluxShip", animationIds: new List<int>() { -1, 1, 0, 2 }),
             /*  9 */ new PlatformMetadata("pistonmp7"),
-            /* 10 */ new PlatformMetadata("unit3_brain", animationIds: new List<uint>() { 0, 0, 0, 0 }),
-            /* 11 */ new PlatformMetadata("unit4_mover1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
-            /* 12 */ new PlatformMetadata("unit4_mover2", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
-            /* 13 */ new PlatformMetadata("ElectroField1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 10 */ new PlatformMetadata("unit3_brain", animationIds: new List<int>() { 0, 0, 0, 0 }),
+            /* 11 */ new PlatformMetadata("unit4_mover1", animationIds: new List<int>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 12 */ new PlatformMetadata("unit4_mover2", animationIds: new List<int>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 13 */ new PlatformMetadata("ElectroField1", animationIds: new List<int>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
             /* 14 */ new PlatformMetadata("Unit3_platform1"),
-            /* 15 */ new PlatformMetadata("unit3_pipe1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
-            /* 16 */ new PlatformMetadata("unit3_pipe2", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 15 */ new PlatformMetadata("unit3_pipe1", animationIds: new List<int>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 16 */ new PlatformMetadata("unit3_pipe2", animationIds: new List<int>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
             /* 17 */ new PlatformMetadata("cylinderbase"),
             /* 18 */ new PlatformMetadata("unit3_platform"),
             /* 19 */ new PlatformMetadata("unit3_platform2"),
-            /* 20 */ new PlatformMetadata("unit3_jar", animationIds: new List<uint>() { 0, 2, 1, 0 }, field20: 0, field24: 0),
-            /* 21 */ new PlatformMetadata("SyluxTurret", animationIds: new List<uint>() { 3, 2, 1, 0 }, field20: 0, field24: 0),
-            /* 22 */ new PlatformMetadata("unit3_jartop", animationIds: new List<uint>() { 0, 2, 1, 0 }, field20: 0, field24: 0),
-            /* 23 */ new PlatformMetadata("SamusShip", animationIds: new List<uint>() { 1, 3, 2, 4 }, field20: 0, field24: 0),
+            /* 20 */ new PlatformMetadata("unit3_jar", animationIds: new List<int>() { 0, 2, 1, 0 }, field20: 0, field24: 0),
+            /* 21 */ new PlatformMetadata("SyluxTurret", animationIds: new List<int>() { 3, 2, 1, 0 }, field20: 0, field24: 0),
+            /* 22 */ new PlatformMetadata("unit3_jartop", animationIds: new List<int>() { 0, 2, 1, 0 }, field20: 0, field24: 0),
+            /* 23 */ new PlatformMetadata("SamusShip", animationIds: new List<int>() { 1, 3, 2, 4 }, field20: 0, field24: 0),
             /* 24 */ new PlatformMetadata("unit1_land_plat1"),
             /* 25 */ new PlatformMetadata("unit1_land_plat2"),
             /* 26 */ new PlatformMetadata("unit1_land_plat3"),
@@ -738,20 +796,20 @@ namespace MphRead
             /* 29 */ new PlatformMetadata("unit2_c4_plat"),
             /* 30 */ new PlatformMetadata("unit2_land_elev"),
             /* 31 */ new PlatformMetadata("unit4_platform1"),
-            /* 32 */ new PlatformMetadata("Crate01", animationIds: new List<uint>() { UInt32.MaxValue, UInt32.MaxValue, 0, 1 }),
-            /* 33 */ new PlatformMetadata("unit1_mover1", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 32 */ new PlatformMetadata("Crate01", animationIds: new List<int>() { -1, -1, 0, 1 }),
+            /* 33 */ new PlatformMetadata("unit1_mover1", animationIds: new List<int>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
             /* 34 */ new PlatformMetadata("unit1_mover2"),
             /* 35 */ new PlatformMetadata("unit2_mover1"),
             /* 36 */ new PlatformMetadata("unit4_mover3"),
             /* 37 */ new PlatformMetadata("unit4_mover4"),
             /* 38 */ new PlatformMetadata("unit3_mover1"),
             /* 39 */ new PlatformMetadata("unit2_c1_mover"),
-            /* 40 */ new PlatformMetadata("unit3_mover2", animationIds: new List<uint>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
+            /* 40 */ new PlatformMetadata("unit3_mover2", animationIds: new List<int>() { 0, 0, 0, 0 }, field20: 0, field24: 0),
             /* 41 */ new PlatformMetadata("piston_gorealand"),
             /* 42 */ new PlatformMetadata("unit4_tp2_artifact_wo"),
             /* 43 */ new PlatformMetadata("unit4_tp1_artifact_wo"),
             // this version is used in Gorea_Land
-            /* 44 */ new PlatformMetadata("SamusShip", animationIds: new List<uint>() { 1, 0, 2, 4 }, field20: 0, field24: 0)
+            /* 44 */ new PlatformMetadata("SamusShip", animationIds: new List<int>() { 1, 0, 2, 4 }, field20: 0, field24: 0)
         };
 
         public static PlatformMetadata? GetPlatformById(int id)
@@ -905,7 +963,7 @@ namespace MphRead
             {
                 return new Vector3(0, 0, 0);
             }
-            if (eventId == FhMessage.Unknown5) // green
+            if (eventId == FhMessage.Activate) // green
             {
                 return new Vector3(0, 1, 0);
             }
@@ -1985,7 +2043,12 @@ namespace MphRead
                         remove: "_lod0",
                         recolors: new List<string>()
                         {
-                            "pal_01"
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
                         },
                         texture: true,
                         archive: "Guardian",
@@ -1999,83 +2062,15 @@ namespace MphRead
                         remove: "_lod1",
                         recolors: new List<string>()
                         {
-                            "pal_01"
+                            "pal_01",
+                            "pal_02",
+                            "pal_03",
+                            "pal_04",
+                            "pal_Team01",
+                            "pal_Team02"
                         },
                         texture: true,
                         animationPath: @"_archives\Guardian\Guardian_Anim.bin",
-                        animationShare: @"models\SamusSharedAnim_Anim.bin",
-                        useLightSources: true)
-                },
-                // next two not part of the game's files, edited to allow choosing the unused recolors
-                {
-                    "GuardianR_lod0",
-                    new ModelMetadata("GuardianR_lod0",
-                        modelPath: @"_archives\Guardian\Guardian_lod0_Model.bin",
-                        animationPath: @"_archives\Guardian\Guardian_Anim.bin",
-                        collisionPath: null,
-                        new List<RecolorMetadata>()
-                        {
-                            new RecolorMetadata("pal_01",
-                                modelPath: @"models\GuardianR_pal_01_Model.bin",
-                                texturePath: @"models\Guardian_pal_01_Tex.bin",
-                                palettePath: @"models\Guardian_pal_01_Tex.bin"),
-                            new RecolorMetadata("pal_02",
-                                modelPath: @"models\GuardianR_pal_02_Model.bin",
-                                texturePath: @"models\Guardian_pal_02_Tex.bin",
-                                palettePath: @"models\Guardian_pal_02_Tex.bin"),
-                            new RecolorMetadata("pal_03",
-                                modelPath: @"models\GuardianR_pal_03_Model.bin",
-                                texturePath: @"models\Guardian_pal_03_Tex.bin",
-                                palettePath: @"models\Guardian_pal_03_Tex.bin"),
-                            new RecolorMetadata("pal_04",
-                                modelPath: @"models\GuardianR_pal_04_Model.bin",
-                                texturePath: @"models\Guardian_pal_04_Tex.bin",
-                                palettePath: @"models\Guardian_pal_04_Tex.bin"),
-                            new RecolorMetadata("pal_Team01",
-                                modelPath: @"models\GuardianR_pal_Team01_Model.bin",
-                                texturePath: @"models\GuardianR_pal_Team01_Tex.bin",
-                                palettePath: @"models\GuardianR_pal_Team01_Tex.bin"),
-                            new RecolorMetadata("pal_Team02",
-                                modelPath: @"models\GuardianR_pal_Team02_Model.bin",
-                                texturePath: @"models\GuardianR_pal_Team02_Tex.bin",
-                                palettePath: @"models\GuardianR_pal_Team02_Tex.bin")
-                        },
-                        animationShare: @"models\SamusSharedAnim_Anim.bin",
-                        useLightSources: true)
-                },
-                {
-                    "GuardianR_lod1",
-                    new ModelMetadata("GuardianR_lod1",
-                        modelPath: @"models\Guardian_lod1_Model.bin",
-                        animationPath: @"_archives\Guardian\Guardian_Anim.bin",
-                        collisionPath: null,
-                        new List<RecolorMetadata>()
-                        {
-                            new RecolorMetadata("pal_01",
-                                modelPath: @"models\GuardianR_pal_01_Model.bin",
-                                texturePath: @"models\Guardian_pal_01_Tex.bin",
-                                palettePath: @"models\Guardian_pal_01_Tex.bin"),
-                            new RecolorMetadata("pal_02",
-                                modelPath: @"models\GuardianR_pal_02_Model.bin",
-                                texturePath: @"models\Guardian_pal_02_Tex.bin",
-                                palettePath: @"models\Guardian_pal_02_Tex.bin"),
-                            new RecolorMetadata("pal_03",
-                                modelPath: @"models\GuardianR_pal_03_Model.bin",
-                                texturePath: @"models\Guardian_pal_03_Tex.bin",
-                                palettePath: @"models\Guardian_pal_03_Tex.bin"),
-                            new RecolorMetadata("pal_04",
-                                modelPath: @"models\GuardianR_pal_04_Model.bin",
-                                texturePath: @"models\Guardian_pal_04_Tex.bin",
-                                palettePath: @"models\Guardian_pal_04_Tex.bin"),
-                            new RecolorMetadata("pal_Team01",
-                                modelPath: @"models\GuardianR_pal_Team01_Model.bin",
-                                texturePath: @"models\GuardianR_pal_Team01_Tex.bin",
-                                palettePath: @"models\GuardianR_pal_Team01_Tex.bin"),
-                            new RecolorMetadata("pal_Team02",
-                                modelPath: @"models\GuardianR_pal_Team02_Model.bin",
-                                texturePath: @"models\GuardianR_pal_Team02_Tex.bin",
-                                palettePath: @"models\GuardianR_pal_Team02_Tex.bin")
-                        },
                         animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
@@ -2285,14 +2280,10 @@ namespace MphRead
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
-                // todo: file32Material uses texture+palette 8, but there are only 8 of each in LavaEquipTextureShare
-                // --> in the other "_Power" models, there are 9 of each in the texture share, so index 8 works for them
-                // --> need to do some in-game checking to see if this share is actually used, and if so, how it works
-                // for now, referencing RuinsEquipTextureShare here to get it to render
                 {
                     "Lava_Power",
                     new ModelMetadata("Lava_Power",
-                        share: @"models\RuinsEquipTextureShare_img_Model.bin",
+                        share: @"models\LavaEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {

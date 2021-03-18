@@ -21,7 +21,7 @@ namespace MphRead
     }
 
     [Flags]
-    public enum EquipFlags
+    public enum EquipFlags : byte
     {
         None = 0x0,
         Zoomed = 0x1,

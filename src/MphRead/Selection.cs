@@ -197,9 +197,9 @@ namespace MphRead
                 }
                 else if (Entity != null)
                 {
-                    if (e.Alt)
+                    if (e.Control)
                     {
-                        Entity.SetActive(!Entity.Active);
+                        Entity.SetActive(!e.Shift);
                     }
                     else
                     {
@@ -210,12 +210,12 @@ namespace MphRead
             }
             if (e.Key == Keys.D1 || e.Key == Keys.KeyPad1)
             {
-                NextRecolor();
+                PrevRecolor();
                 return true;
             }
             if (e.Key == Keys.D2 || e.Key == Keys.KeyPad2)
             {
-                PrevRecolor();
+                NextRecolor();
                 return true;
             }
             return false;

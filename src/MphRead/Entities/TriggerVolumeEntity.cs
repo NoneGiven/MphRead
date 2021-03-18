@@ -20,8 +20,8 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             // todo: change the display/color when inactive (same for AreaVolumes)
-            _parentEventColor = Metadata.GetEventColor(data.ParentEvent);
-            _childEventColor = Metadata.GetEventColor(data.ChildEvent);
+            _parentEventColor = Metadata.GetEventColor(data.ParentMessage);
+            _childEventColor = Metadata.GetEventColor(data.ChildMessage);
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _volume = CollisionVolume.Move(_data.Volume, Position);
             AddPlaceholderModel();
@@ -93,8 +93,8 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
-            _parentEventColor = Metadata.GetEventColor(data.ParentEvent);
-            _childEventColor = Metadata.GetEventColor(data.ChildEvent);
+            _parentEventColor = Metadata.GetEventColor(data.ParentMessage);
+            _childEventColor = Metadata.GetEventColor(data.ChildMessage);
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _volume = CollisionVolume.Move(_data.ActiveVolume, Position);
             AddPlaceholderModel();
