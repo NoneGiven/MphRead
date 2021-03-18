@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Formats.Collision;
+using MphRead.Memory;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -30,6 +31,7 @@ namespace MphRead.Entities
 
         private uint _health = 0;
         private uint _halfHealth = 0;
+        private EntityBase? _parent = null;
 
         private PlatAnimFlags _animFlags = PlatAnimFlags.None;
         private PlatStateBits _stateBits = PlatStateBits.None;
@@ -44,9 +46,6 @@ namespace MphRead.Entities
         private int _currentAnimId = 0;
 
         private readonly Vector3 _posOffset;
-        private Vector3 _prevPos;
-        private Vector3 _visiblePos;
-        private Vector3 _prevVisiblePos;
         private Vector4 _curRotation;
         private Vector4 _fromRotation;
         private Vector4 _toRotation;
@@ -75,7 +74,6 @@ namespace MphRead.Entities
                 _halfHealth = _health / 2;
             }
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
-            _prevVisiblePos = _visiblePos = _prevPos = Position;
             _posOffset = data.PositionOffset.ToFloatVector();
             var posList = new List<Vector3>();
             for (int i = 0; i < data.PositionCount; i++)
@@ -136,7 +134,7 @@ namespace MphRead.Entities
                 SleepWake(wake: true, instant: true);
                 _currentAnim = -2;
                 // todo: room state for initial landed
-                // --> options are instant_wake and wake, but it seems like it should be instant sleep?
+                // --> options are instant_wake and wake, but it seems like it should be instant_sleep?
                 SetAnimation(PlatAnimId.InstantSleep, AnimFlags.None);
                 _animFlags |= PlatAnimFlags.Active;
             }
@@ -177,7 +175,6 @@ namespace MphRead.Entities
 
         public override void Initialize(Scene scene)
         {
-            // sktodo: parent/mtxptr
             base.Initialize(scene);
             if (Flags.HasFlag(PlatformFlags.SamusShip))
             {
@@ -224,6 +221,13 @@ namespace MphRead.Entities
                 scene.LoadEffect(183);
                 scene.LoadEffect(184);
                 scene.LoadEffect(185);
+            }
+            if (_data.ParentId != -1)
+            {
+                if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
+                {
+                    _parent = parent;
+                }
             }
         }
 
@@ -352,7 +356,6 @@ namespace MphRead.Entities
 
         public override bool Process(Scene scene)
         {
-            _prevVisiblePos = _visiblePos;
             // ptodo: player bonk stuff
             if (!_animFlags.HasFlag(PlatAnimFlags.DisableReflect))
             {
@@ -378,8 +381,6 @@ namespace MphRead.Entities
                     _position.Y += offset;
                 }
             }
-            UpdateTransform();
-            _visiblePos = Position;
             bool spawnBeam = true;
             if (!_models[0].IsPlaceholder && Flags.HasFlag(PlatformFlags.SyluxShip))
             {
@@ -404,8 +405,9 @@ namespace MphRead.Entities
                 if (_beamActive)
                 {
                     Debug.Assert(_equipInfo != null);
-                    Vector3 spawnPos = Matrix.Vec3MultMtx4(_beamSpawnPos, Transform);
-                    Vector3 spawnDir = Matrix.Vec3MultMtx3(_beamSpawnDir, Transform).Normalized();
+                    Matrix4 transform = GetTransform();
+                    Vector3 spawnPos = Matrix.Vec3MultMtx4(_beamSpawnPos, transform);
+                    Vector3 spawnDir = Matrix.Vec3MultMtx3(_beamSpawnDir, transform).Normalized();
                     BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, BeamSpawnFlags.None, scene);
                     if (!_equipInfo.Weapon.Flags.HasFlag(WeaponFlags.Bit10))
                     {
@@ -451,6 +453,7 @@ namespace MphRead.Entities
                     }
                 }
             }
+            Position = GetTransform().Row3.Xyz;
             return base.Process(scene);
         }
 
@@ -468,7 +471,6 @@ namespace MphRead.Entities
             {
                 _position = _posList[_fromIndex];
                 _curRotation = _fromRotation = _rotList[_fromIndex];
-                UpdateTransform();
             }
         }
 
@@ -649,24 +651,40 @@ namespace MphRead.Entities
             }
         }
 
-        private void UpdateTransform()
+        public override Matrix4 GetTransform()
         {
+            Matrix4 transform;
             if (_data.PositionCount > 0)
             {
-                Matrix4 transform = GetTransformMatrix();
+                transform = GetTransformMatrix();
                 if (_posOffset != Vector3.Zero)
                 {
                     transform.Row3.Xyz += Matrix.Vec3MultMtx3(_posOffset, transform);
-                    // ptodo: Sylux ship/turret stuff
-                    // ptodo: parent/mtxptr stuff
                 }
-                Transform = transform;
+                if (Flags.HasFlag(PlatformFlags.SyluxShip))
+                {
+                    // ptodo: Sylux ship/turret stuff (including parent/mtxptr stuff)
+                }
+                else if (_parent != null)
+                {
+                    transform *= _parent.GetTransform();
+                }
             }
             else
             {
-                // ptodo: parent/mtxptr stuff
-                Position = _position;
+                Vector3 position = _position;
+                if (_parent != null)
+                {
+                    position = Matrix.Vec3MultMtx4(position, _parent.GetTransform());
+                }
+                transform = Matrix4.CreateTranslation(position);
             }
+            return transform;
+        }
+
+        protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
+        {
+            return GetTransform();
         }
 
         private Matrix4 GetTransformMatrix()
@@ -814,7 +832,7 @@ namespace MphRead.Entities
         public override bool Process(Scene scene)
         {
             // todo: collision and stuff
-            Position += _velocity;
+            _position += _velocity;
             if (_moveTimer > 0)
             {
                 _moveTimer--;
@@ -833,7 +851,7 @@ namespace MphRead.Entities
                 {
                     _state = MoveState.Wait;
                     _velocity = Vector3.Zero;
-                    Position = _posList[_toIndex]; // the game doesn't do this
+                    _position = _posList[_toIndex]; // the game doesn't do this
                     if (_fromIndex == _posList.Count - 1)
                     {
                         _toIndex = _fromIndex - 1;
@@ -853,7 +871,7 @@ namespace MphRead.Entities
                 else if (_state == MoveState.MoveBackward)
                 {
                     _velocity = Vector3.Zero;
-                    Position = _posList[_toIndex]; // the game doesn't do this
+                    _position = _posList[_toIndex]; // the game doesn't do this
                     if (_toIndex > 0)
                     {
                         _state = MoveState.Wait;
