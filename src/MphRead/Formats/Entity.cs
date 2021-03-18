@@ -701,13 +701,13 @@ namespace MphRead
         public readonly byte HasBase; // boolean
         public readonly short Message1Target;
         public readonly ushort Padding2A;
-        public readonly uint Message1Id;
+        public readonly Message Message1;
         public readonly short Message2Target;
         public readonly ushort Padding32;
-        public readonly uint Message2Id;
+        public readonly Message Message2;
         public readonly short Message3Target;
         public readonly ushort Padding3A;
-        public readonly uint Message3Id;
+        public readonly Message Message3;
         public readonly short LinkedEntityId; // always -1
     }
 

@@ -1053,11 +1053,11 @@ namespace MphRead.Editor
         public bool Active { get; set; }
         public bool HasBase { get; set; }
         public short Message1Target { get; set; }
-        public uint Message1Id { get; set; }
+        public Message Message1 { get; set; }
         public short Message2Target { get; set; }
-        public uint Message2Id { get; set; }
+        public Message Message2 { get; set; }
         public short Message3Target { get; set; }
-        public uint Message3Id { get; set; }
+        public Message Message3 { get; set; }
         public short LinkedEntityId { get; set; } // always -1
 
         public ArtifactEntityEditor(Entity header, ArtifactEntityData raw) : base(header)
@@ -1067,11 +1067,11 @@ namespace MphRead.Editor
             Active = raw.Active != 0;
             HasBase = raw.HasBase != 0;
             Message1Target = raw.Message1Target;
-            Message1Id = raw.Message1Id;
+            Message1 = raw.Message1;
             Message2Target = raw.Message2Target;
-            Message2Id = raw.Message2Id;
+            Message2 = raw.Message2;
             Message3Target = raw.Message3Target;
-            Message3Id = raw.Message3Id;
+            Message3 = raw.Message3;
             LinkedEntityId = raw.LinkedEntityId;
         }
     }

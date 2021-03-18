@@ -1103,13 +1103,13 @@ namespace MphRead.Utility
             writer.WriteByte(entity.HasBase);
             writer.Write(entity.Message1Target);
             writer.Write(padShort); // Padding2A
-            writer.Write(entity.Message1Id);
+            writer.Write((uint)entity.Message1);
             writer.Write(entity.Message2Target);
             writer.Write(padShort); // Padding32
-            writer.Write(entity.Message2Id);
+            writer.Write((uint)entity.Message2);
             writer.Write(entity.Message3Target);
             writer.Write(padShort); // Padding3A
-            writer.Write(entity.Message3Id);
+            writer.Write((uint)entity.Message3);
             writer.Write(entity.LinkedEntityId);
         }
 
