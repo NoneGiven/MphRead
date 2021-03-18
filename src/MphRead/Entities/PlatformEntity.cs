@@ -10,7 +10,7 @@ namespace MphRead.Entities
     public class PlatformEntity : EntityBase
     {
         private readonly PlatformEntityData _data;
-        private readonly PlatformMetadata _meta = null;
+        private readonly PlatformMetadata _meta;
 
         // used for ID 2 (energyBeam, arcWelder)
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x2F, 0x4F, 0x4F).AsVector4();
