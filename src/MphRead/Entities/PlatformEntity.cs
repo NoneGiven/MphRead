@@ -35,7 +35,7 @@ namespace MphRead.Entities
         private PlatStateBits _stateBits = PlatStateBits.None;
         private PlatformState _state = PlatformState.Inactive;
         private int _fromIndex = 0;
-        private int _toIndex = 0;
+        private int _toIndex = 1;
         private readonly int _delay;
         private int _moveTimer;
         private readonly float _forwardSpeed;
@@ -351,6 +351,11 @@ namespace MphRead.Entities
                 }
                 else if (_data.MovementType == 0)
                 {
+                    // sktodo: remove debug code
+                    if (scene.FrameCount == 0 && !Flags.HasFlag(PlatformFlags.SamusShip))
+                    {
+                        _stateBits |= PlatStateBits.Activated;
+                    }
                     UpdateState();
                     _position += _velocity;
                     _movePercent += _moveIncrement;
@@ -512,7 +517,24 @@ namespace MphRead.Entities
                 factor * _fromRotation.Z + pct * _toRotation.Z,
                 factor * _fromRotation.W + pct * _toRotation.W
             ).Normalized();
-            UpdateTransform();
+        }
+
+        private void ProcessLifetimeEvent(int index, Message message, short targetId, uint param1, uint param2)
+        {
+            if (_fromIndex == index && targetId == Id)
+            {
+                if (message == Message.Activate || (message == Message.SetActive && param1 != 0))
+                {
+                    Activate();
+                    _beamIntervalTimer = _beamInterval;
+                    _beamIntervalIndex = 15;
+                    _beamActive = false;
+                }
+                else if (message == Message.SetActive && param1 == 0)
+                {
+                    Deactivate();
+                }
+            }
         }
 
         private void UpdateState()
@@ -528,6 +550,15 @@ namespace MphRead.Entities
                 else
                 {
                     _fromIndex = _toIndex;
+                    // sktodo: remove debug code
+                    ProcessLifetimeEvent(_data.LifetimeMsg1Index, _data.LifetimeMessage1, _data.LifetimeMsg1Target,
+                        _data.LifetimeMsg1Param1, _data.LifetimeMsg1Param2);
+                    ProcessLifetimeEvent(_data.LifetimeMsg2Index, _data.LifetimeMessage2, _data.LifetimeMsg2Target,
+                        _data.LifetimeMsg2Param1, _data.LifetimeMsg2Param2);
+                    ProcessLifetimeEvent(_data.LifetimeMsg3Index, _data.LifetimeMessage3, _data.LifetimeMsg3Target,
+                        _data.LifetimeMsg3Param1, _data.LifetimeMsg3Param2);
+                    ProcessLifetimeEvent(_data.LifetimeMsg4Index, _data.LifetimeMessage4, _data.LifetimeMsg4Target,
+                        _data.LifetimeMsg4Param1, _data.LifetimeMsg4Param2);
                     // todo: messaging, room state
                     _state = PlatformState.Waiting;
                     _moveTimer = _delay;
@@ -545,7 +576,6 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    // sktodo
                     if (_stateBits.HasFlag(PlatStateBits.Activated))
                     {
                         if (_data.ReverseType == 0)
@@ -588,6 +618,10 @@ namespace MphRead.Entities
                             }
                         }
                     }
+                    if (_state == PlatformState.Moving)
+                    {
+                        UpdateMovement();
+                    }
                 }
             }
             else if (_state == PlatformState.Inactive)
@@ -613,8 +647,8 @@ namespace MphRead.Entities
                     transform.Row3.Xyz += Matrix.Vec3MultMtx3(_posOffset, transform);
                     // ptodo: Sylux ship/turret stuff
                     // ptodo: parent/mtxptr stuff
-                    Transform = transform;
                 }
+                Transform = transform;
             }
             else
             {
