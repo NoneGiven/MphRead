@@ -10,7 +10,7 @@ namespace MphRead.Entities
     public class PlatformEntity : EntityBase
     {
         private readonly PlatformEntityData _data;
-        private readonly PlatformMetadata? _meta = null;
+        private readonly PlatformMetadata _meta = null;
 
         // used for ID 2 (energyBeam, arcWelder)
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x2F, 0x4F, 0x4F).AsVector4();
@@ -89,13 +89,15 @@ namespace MphRead.Entities
                 rotList.Add(data.Rotations[i].ToFloatVector());
             }
             _rotList = rotList;
-            _meta = Metadata.GetPlatformById((int)data.ModelId);
-            if (_meta == null)
+            PlatformMetadata? meta = Metadata.GetPlatformById((int)data.ModelId);
+            if (meta == null)
             {
                 AddPlaceholderModel();
+                _meta = Metadata.InvisiblePlat;
             }
             else
             {
+                _meta = meta;
                 ModelInstance inst = Read.GetModelInstance(_meta.Name);
                 _models.Add(inst);
                 ModelMetadata modelMeta = Metadata.ModelMetadata[_meta.Name];
@@ -239,7 +241,6 @@ namespace MphRead.Entities
 
         private void SetAnimation(PlatAnimId id, AnimFlags flags)
         {
-            Debug.Assert(_meta != null);
             int index = _meta.AnimationIds[(int)id];
             SetAnimation(index, flags);
         }
@@ -256,7 +257,6 @@ namespace MphRead.Entities
 
         private int GetAnimation(PlatAnimId id)
         {
-            Debug.Assert(_meta != null);
             return _meta.AnimationIds[(int)id];
         }
 

@@ -760,6 +760,8 @@ namespace MphRead
             return GetObjectById((int)id);
         }
 
+        public static readonly PlatformMetadata InvisiblePlat = new PlatformMetadata("N/A");
+
         private static readonly IReadOnlyList<PlatformMetadata?> _platforms = new List<PlatformMetadata?>()
         {
             /*  0 */ new PlatformMetadata("platform"),
