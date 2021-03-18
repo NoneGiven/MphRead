@@ -572,53 +572,53 @@ namespace MphRead.Entities
             _moveIncrement = factor;
         }
 
-        private static Vector4 ChooseVectors(Vector3 vec0, Vector3 vec1, Vector3 vec2)
+        private static Vector4 ChooseVectors(Vector3 vec1, Vector3 vec2, Vector3 vec3)
         {
             float sqrt;
             float inv;
-            if (vec2.Z + vec0.X + vec1.Y >= 0)
+            if (vec3.Z + vec1.X + vec2.Y >= 0)
             {
-                sqrt = MathF.Sqrt(vec2.Z + vec0.X + vec1.Y + 1);
+                sqrt = MathF.Sqrt(vec3.Z + vec1.X + vec2.Y + 1);
                 inv = 1 / sqrt / 2f;
                 return new Vector4(
-                    (vec1.Z - vec2.Y) * inv,
-                    (vec2.X - vec0.Z) * inv,
-                    (vec0.Y - vec1.X) * inv,
+                    (vec2.Z - vec3.Y) * inv,
+                    (vec3.X - vec1.Z) * inv,
+                    (vec1.Y - vec2.X) * inv,
                     sqrt / 2f
                 );
             }
-            if (vec1.Y <= vec0.X)
+            if (vec2.Y <= vec1.X)
             {
-                if (vec2.Z <= vec0.X)
+                if (vec3.Z <= vec1.X)
                 {
-                    sqrt = MathF.Sqrt(vec0.X - (vec1.Y + vec2.Z) + 1);
+                    sqrt = MathF.Sqrt(vec1.X - (vec2.Y + vec3.Z) + 1);
                     inv = 1 / sqrt / 2f;
                     return new Vector4(
                         sqrt / 2f,
-                        (vec1.X + vec0.Y) * inv,
-                        (vec0.Z + vec2.X) * inv,
-                        (vec1.Z - vec2.Y) * inv
+                        (vec2.X + vec1.Y) * inv,
+                        (vec1.Z + vec3.X) * inv,
+                        (vec2.Z - vec3.Y) * inv
                     );
                 }
             }
-            else if (vec2.Z <= vec1.Y)
+            else if (vec3.Z <= vec2.Y)
             {
-                sqrt = MathF.Sqrt(vec1.Y - (vec2.Z + vec0.X) + 1);
+                sqrt = MathF.Sqrt(vec2.Y - (vec3.Z + vec1.X) + 1);
                 inv = 1 / sqrt / 2f;
                 return new Vector4(
-                    (vec1.X + vec0.Y) * inv,
-                    (vec2.Y + vec1.Z) * inv,
+                    (vec2.X + vec1.Y) * inv,
+                    (vec3.Y + vec2.Z) * inv,
                     sqrt / 2f,
-                    (vec2.X - vec0.Z) * inv
+                    (vec3.X - vec1.Z) * inv
                 );
             }
-            sqrt = MathF.Sqrt(vec2.Z - (vec0.X + vec1.Y) + 1);
+            sqrt = MathF.Sqrt(vec3.Z - (vec1.X + vec2.Y) + 1);
             inv = 1 / sqrt / 2f;
             return new Vector4(
-                (vec0.Z + vec2.X) * inv,
-                (vec2.Y + vec1.Z) * inv,
+                (vec1.Z + vec3.X) * inv,
+                (vec3.Y + vec2.Z) * inv,
                 sqrt / 2f,
-                (vec0.Y - vec1.X) * inv
+                (vec1.Y - vec2.X) * inv
             );
         }
 
