@@ -1165,7 +1165,7 @@ namespace MphRead
             UnlinkEffectEntry(entry);
         }
 
-        private EffectElementEntry InitEffectElement(Effect effect, EffectElement element, bool child)
+        private EffectElementEntry InitEffectElement(Effect effect, EffectElement element, EntityBase? owner, bool child)
         {
             EffectElementEntry entry = _inactiveElements.Dequeue();
             entry.EffectName = effect.Name;
@@ -1190,6 +1190,7 @@ namespace MphRead
             entry.Acceleration = element.Acceleration;
             entry.ParticleDefinitions.AddRange(element.Particles);
             entry.Parity = (int)(_frameCount % 2);
+            entry.Owner = owner;
             _activeElements.Add(entry);
             return entry;
         }
@@ -1203,6 +1204,7 @@ namespace MphRead
                 UnlinkEffectParticle(particle);
             }
             _activeElements.Remove(element);
+            element.Owner = null;
             element.Model = null!;
             element.Nodes.Clear();
             element.EffectName = "";
@@ -1246,27 +1248,27 @@ namespace MphRead
             }
         }
 
-        public EffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform)
+        public EffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform, EntityBase? owner = null)
         {
             EffectEntry entry = InitEffectEntry();
             entry.EffectId = effectId;
-            SpawnEffect(effectId, transform, child: false, entry);
+            SpawnEffect(effectId, transform, child: false, entry, owner);
             return entry;
         }
 
-        public void SpawnEffect(int effectId, Matrix4 transform, bool child = false)
+        public void SpawnEffect(int effectId, Matrix4 transform, bool child = false, EntityBase? owner = null)
         {
-            SpawnEffect(effectId, transform, child, entry: null);
+            SpawnEffect(effectId, transform, child, entry: null, owner);
         }
 
-        private void SpawnEffect(int effectId, Matrix4 transform, bool child, EffectEntry? entry)
+        private void SpawnEffect(int effectId, Matrix4 transform, bool child, EffectEntry? entry, EntityBase? owner)
         {
             Effect effect = Read.LoadEffect(effectId); // should already be loaded
             var position = new Vector3(transform.Row3);
             for (int i = 0; i < effect.Elements.Count; i++)
             {
                 EffectElement elementDef = effect.Elements[i];
-                EffectElementEntry element = InitEffectElement(effect, elementDef, child);
+                EffectElementEntry element = InitEffectElement(effect, elementDef, owner, child);
                 if (entry != null)
                 {
                     element.EffectEntry = entry;
@@ -1335,8 +1337,12 @@ namespace MphRead
                             element.ExpirationTime += element.BufferTime - element.DrainTime;
                         }
                     }
+                    if (element.Owner != null)
+                    {
+                        element.Transform = element.Owner.Transform;
+                        element.Position = element.Transform.Row3.Xyz;
+                    }
                     var times = new TimeValues(_elapsedTime, _elapsedTime - element.CreationTime, element.Lifespan);
-                    // ptodo: mtxptr stuff
                     if (_frameCount % 2 == element.Parity
                         && element.Actions.TryGetValue(FuncAction.IncreaseParticleAmount, out FxFuncInfo? info))
                     {

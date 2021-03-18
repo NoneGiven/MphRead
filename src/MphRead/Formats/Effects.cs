@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using MphRead.Entities;
 using OpenTK.Mathematics;
 
 namespace MphRead.Effects
@@ -634,6 +635,7 @@ namespace MphRead.Effects
         public List<int> TextureBindingIds { get; } = new List<int>();
         public List<EffectParticle> Particles { get; } = new List<EffectParticle>(); // todo: pre-size?
 
+        public EntityBase? Owner { get; set; }
         public EffectEntry? EffectEntry { get; set; }
         public Model Model { get; set; } = null!;
         public List<Node> Nodes { get; } = new List<Node>(); // todo: pre-size?

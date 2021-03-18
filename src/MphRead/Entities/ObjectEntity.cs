@@ -210,7 +210,8 @@ namespace MphRead.Entities
                                     new Vector4(offset) + spawnTransform.Row3
                                 );
                             }
-                            scene.SpawnEffect((int)_data.EffectId, spawnTransform);
+                            EntityBase? owner = _parent == null ? null : this;
+                            scene.SpawnEffect((int)_data.EffectId, spawnTransform, owner: owner);
                         }
                         _effectIntervalTimer = _effectInterval;
                     }
