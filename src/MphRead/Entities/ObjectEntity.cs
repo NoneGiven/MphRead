@@ -9,6 +9,8 @@ namespace MphRead.Entities
     {
         private readonly ObjectEntityData _data;
         private CollisionVolume _effectVolume;
+        private Matrix4 _prevTransform;
+
         private uint _flags = 0;
         private int _effectInterval = 0;
         private int _effectIntervalTimer = 0;
@@ -31,6 +33,7 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
+            _prevTransform = Transform;
             _flags = data.Flags;
             // todo: bits 0 and 1 should be cleared if entity ID is -1 (and they should also be affected by room state otherwise)
             _flags &= 0xFB;
@@ -137,6 +140,11 @@ namespace MphRead.Entities
                 }
                 // todo: visible position stuff (get vecs)
                 Transform = _invTransform * _parent.CollisionTransform;
+            }
+            if (Transform != _prevTransform)
+            {
+                _effectVolume = CollisionVolume.Transform(_data.Volume, Transform);
+                _prevTransform = Transform;
             }
             if (_data.EffectId != 0)
             {
