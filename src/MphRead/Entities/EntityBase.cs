@@ -126,10 +126,9 @@ namespace MphRead.Entities
             Debug.Assert(slot == 0 && _collision.Count == 0 || slot == 1 && _collision.Count == 1);
             _collision.Add(collision);
             _colPoints.Add(new List<Vector3>(info.Points.Count));
-            var transform = GetTransform();
             for (int i = 0; i < info.Points.Count; i++)
             {
-                _colPoints[slot].Add(Matrix.Vec3MultMtx4(info.Points[i], transform));
+                _colPoints[slot].Add(Matrix.Vec3MultMtx4(info.Points[i], _transform));
             }
             if (attach != null)
             {
@@ -149,7 +148,7 @@ namespace MphRead.Entities
         {
             if (!_collisionTransformed || _collisionNode != null)
             {
-                Matrix4 transform = _collisionNode == null ? GetTransform() : _collisionNode.Animation;
+                Matrix4 transform = _collisionNode == null ? _transform : _collisionNode.Animation;
                 for (int i = 0; i < _collision.Count; i++)
                 {
                     CollisionInfo collision = _collision[i].Info;
@@ -167,14 +166,9 @@ namespace MphRead.Entities
         {
         }
 
-        public virtual Matrix4 GetTransform()
-        {
-            return Transform;
-        }
-
         protected virtual Matrix4 GetModelTransform(ModelInstance inst, int index)
         {
-            return Matrix4.CreateScale(inst.Model.Scale) * GetTransform();
+            return Matrix4.CreateScale(inst.Model.Scale) * _transform;
         }
 
         public virtual bool Process(Scene scene)

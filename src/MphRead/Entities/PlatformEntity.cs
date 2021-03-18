@@ -653,7 +653,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override Matrix4 GetTransform()
+        private Matrix4 GetTransform()
         {
             Matrix4 transform;
             if (_data.PositionCount > 0)
@@ -665,21 +665,25 @@ namespace MphRead.Entities
                 }
                 if (Flags.HasFlag(PlatformFlags.SyluxShip))
                 {
-                    // ptodo: Sylux ship/turret stuff (including parent/mtxptr stuff)
+                    if (_parent != null)
+                    {
+                        // sktodo
+                        transform.Row3.Xyz = Matrix.Vec3MultMtx4(transform.Row3.Xyz, _parent.Transform);
+                    }
                 }
                 else if (_parent != null)
                 {
-                    transform *= _parent.GetTransform();
+                    // sktodo
+                    transform *= _parent.Transform;
                 }
             }
             else
             {
-                Vector3 position = _curPosition;
+                transform = Transform;
                 if (_parent != null)
                 {
-                    position = Matrix.Vec3MultMtx4(position, _parent.GetTransform());
+                    transform.Row3.Xyz = Matrix.Vec3MultMtx4(Position, _parent.GetTransform());
                 }
-                transform = Matrix4.CreateTranslation(position);
             }
             return transform;
         }
