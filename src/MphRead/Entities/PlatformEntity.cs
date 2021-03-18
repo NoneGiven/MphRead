@@ -149,7 +149,7 @@ namespace MphRead.Entities
                     SleepWake(wake: true, instant: true);
                 }
                 // todo: more room state
-                _animFlags |= PlatAnimFlags.Active;
+                //_animFlags |= PlatAnimFlags.Active;
                 if (_animFlags.HasFlag(PlatAnimFlags.Active))
                 {
                     Activate();
@@ -282,7 +282,7 @@ namespace MphRead.Entities
                 {
                     _stateBits |= PlatStateBits.WasAwake;
                 }
-                _stateBits &= PlatStateBits.Awake;
+                _stateBits &= ~PlatStateBits.Awake;
                 if (instant)
                 {
                     SetAnimation(PlatAnimId.InstantSleep, AnimFlags.None);
@@ -295,7 +295,7 @@ namespace MphRead.Entities
                 if (Flags.HasFlag(PlatformFlags.HideOnSleep))
                 {
                     // todo: disable collision, stop sfx, room state
-                    _animFlags &= PlatAnimFlags.Draw;
+                    _animFlags &= ~PlatAnimFlags.Draw;
                 }
             }
         }
@@ -319,7 +319,7 @@ namespace MphRead.Entities
                     }
                     else
                     {
-                        _stateBits &= PlatStateBits.Reverse;
+                        _stateBits &= ~PlatStateBits.Reverse;
                     }
                 }
             }
@@ -330,8 +330,23 @@ namespace MphRead.Entities
             if (_state != PlatformState.Inactive)
             {
                 _state = PlatformState.Inactive;
-                _animFlags &= PlatAnimFlags.Active;
+                _animFlags &= ~PlatAnimFlags.Active;
                 // todo: more room state, messaging
+            }
+        }
+
+        public override void SetActive(bool active)
+        {
+            //if (scene.FrameCount == 0 && !Flags.HasFlag(PlatformFlags.SamusShip))
+            if (active)
+            {
+                _stateBits |= PlatStateBits.Activated;
+                Activate();
+            }
+            else
+            {
+                _stateBits &= ~PlatStateBits.Activated;
+                Deactivate();
             }
         }
 
@@ -351,11 +366,6 @@ namespace MphRead.Entities
                 }
                 else if (_data.MovementType == 0)
                 {
-                    // sktodo: remove debug code
-                    if (scene.FrameCount == 0 && !Flags.HasFlag(PlatformFlags.SamusShip))
-                    {
-                        _stateBits |= PlatStateBits.Activated;
-                    }
                     UpdateState();
                     _position += _velocity;
                     _movePercent += _moveIncrement;
@@ -370,7 +380,6 @@ namespace MphRead.Entities
             }
             UpdateTransform();
             _visiblePos = Position;
-
             bool spawnBeam = true;
             if (!_models[0].IsPlaceholder && Flags.HasFlag(PlatformFlags.SyluxShip))
             {
@@ -409,7 +418,7 @@ namespace MphRead.Entities
             {
                 SetAnimation(_currentAnim, AnimFlags.None);
                 _currentAnim = -2;
-                _stateBits &= PlatStateBits.WasAwake;
+                _stateBits &= ~PlatStateBits.WasAwake;
             }
             // todo: if "is_visible" returns false (and other conditions), don't draw the effects
             Model model = _models[0].Model;
@@ -560,8 +569,11 @@ namespace MphRead.Entities
                     ProcessLifetimeEvent(_data.LifetimeMsg4Index, _data.LifetimeMessage4, _data.LifetimeMsg4Target,
                         _data.LifetimeMsg4Param1, _data.LifetimeMsg4Param2);
                     // todo: messaging, room state
-                    _state = PlatformState.Waiting;
-                    _moveTimer = _delay;
+                    if (_state != PlatformState.Inactive)
+                    {
+                        _state = PlatformState.Waiting;
+                        _moveTimer = _delay;
+                    }
                     _velocity = Vector3.Zero;
                     _moveIncrement = 0;
                     _movePercent = 0;
@@ -584,7 +596,7 @@ namespace MphRead.Entities
                             {
                                 if (_fromIndex == 0)
                                 {
-                                    _stateBits &= PlatStateBits.Reverse;
+                                    _stateBits &= ~PlatStateBits.Reverse;
                                 }
                             }
                             else if (_fromIndex == _data.PositionCount - 1)

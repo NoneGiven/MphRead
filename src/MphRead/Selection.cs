@@ -197,9 +197,9 @@ namespace MphRead
                 }
                 else if (Entity != null)
                 {
-                    if (e.Alt)
+                    if (e.Control)
                     {
-                        Entity.SetActive(!Entity.Active);
+                        Entity.SetActive(!e.Shift);
                     }
                     else
                     {
