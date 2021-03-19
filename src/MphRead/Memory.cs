@@ -65,6 +65,7 @@ namespace MphRead.Memory
             Task.Run(async () =>
             {
                 // 0x137A9C Cretaphid 1 crystal
+                // 0x137B8C Cretaphid 1 laser
                 // 0x137C7C Cretaphid 2 plasma
                 // 0x13846C Slench 1 tear
                 //var results = new List<(int, int)>();

@@ -360,8 +360,8 @@ namespace MphRead
         AlimbicTurret = 18,
         Cretaphid = 19,
         CretaphidEye = 20,
-        Unknown21 = 21, // Cretaphid-related
-        Unknown22 = 22, // Cretaphid-related
+        CretaphidCrystal = 21,
+        Unknown22 = 22, // Cretaphid-related, unused
         PsychoBit1 = 23,
         Gorea1A = 24,
         Unknown25 = 25, // Gorea-related
