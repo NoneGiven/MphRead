@@ -873,7 +873,7 @@ namespace MphRead
             {
                 return new Vector3(0.5f, 0.5f, 0.5f);
             }
-            if (eventId == Message.Unknown46) // periwinkle
+            if (eventId == Message.DripMoatPlatform) // periwinkle
             {
                 return new Vector3(0.596f, 0.658f, 0.964f);
             }

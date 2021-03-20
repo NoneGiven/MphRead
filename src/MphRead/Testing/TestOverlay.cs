@@ -8,7 +8,7 @@ namespace MphRead.Testing
     {
         public static void Translate(int mask)
         {
-            mask = 0x4D00;
+            mask = 0xBD00;
             var active = new List<int>();
             for (int i = 0; i < 18; i++)
             {
