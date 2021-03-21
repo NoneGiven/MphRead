@@ -1293,37 +1293,46 @@ namespace MphRead
 
         public static int GetAreaInfo(int roomId)
         {
+            // Oubliette
             int areaId = 8;
             if (roomId >= 27 && roomId < 36)
             {
+                // Alinos 1
                 areaId = 0;
             }
             else if (roomId >= 36 && roomId < 45)
             {
+                 // Alinos 2
                 areaId = 1;
             }
             else if (roomId >= 45 && roomId < 56)
             {
+                // Celestial Archives 1
                 areaId = 2;
             }
             else if (roomId >= 56 && roomId < 65)
             {
+                // Celestial Archives 2
                 areaId = 3;
             }
             else if (roomId >= 65 && roomId < 72)
             {
+                // Vesper Defense Outpost 1
                 areaId = 4;
             }
             else if (roomId >= 72 && roomId < 77)
             {
+                // Vesper Defense Outpost 2
                 areaId = 5;
             }
             else if (roomId >= 77 && roomId < 83)
             {
+                // Arcterra 1
                 areaId = 6;
             }
             else if (roomId >= 83 && roomId < 89)
             {
+                // Arcterra 2
                 areaId = 7;
             }
             //bool multiplayer = roomId >= 93 && roomId <= 119;
