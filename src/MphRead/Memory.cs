@@ -68,6 +68,7 @@ namespace MphRead.Memory
                 // 0x137B8C Cretaphid 1 laser
                 // 0x137C7C Cretaphid 2 plasma
                 // 0x13846C Slench 1 tear
+                // 0x13855C Slench beams x4
                 //var results = new List<(int, int)>();
                 //string last = "";
                 while (true)
