@@ -39,6 +39,18 @@ namespace MphRead
             }
         }
 
+        public ModelMetadata(string name, bool cockpit)
+        {
+            Name = name;
+            string directory = cockpit ? "hud" : "models";
+            ModelPath = $@"{directory}\{name}_Model.bin";
+            AnimationPath = null;
+            Recolors = new List<RecolorMetadata>()
+            {
+                new RecolorMetadata("default", ModelPath, ModelPath)
+            };
+        }
+
         public ModelMetadata(string name, string? animationPath, string? texturePath = null)
         {
             Name = name;
@@ -3326,6 +3338,27 @@ namespace MphRead
                 {
                     "zoomer",
                     new ModelMetadata("zoomer")
+                },
+                // cockpit
+                {
+                    "unit1_land_cockpit",
+                    new ModelMetadata("unit1_land_cockpit", cockpit: true)
+                },
+                {
+                    "unit2_land_cockpit",
+                    new ModelMetadata("unit2_land_cockpit", cockpit: true)
+                },
+                {
+                    "unit3_land_cockpit",
+                    new ModelMetadata("unit3_land_cockpit", cockpit: true)
+                },
+                {
+                    "unit4_land_cockpit",
+                    new ModelMetadata("unit4_land_cockpit", cockpit: true)
+                },
+                {
+                    "gorea_land_cockpit",
+                    new ModelMetadata("gorea_land_cockpit", cockpit: true)
                 },
                 // effectsBase
                 {
