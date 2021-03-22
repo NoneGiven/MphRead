@@ -64,7 +64,7 @@ namespace MphRead.Editor
         public int DamageEffectId { get; set; }
         public int DeadEffectId { get; set; }
         public byte ItemChance { get; set; }
-        public uint ItemModel { get; set; }
+        public ItemType ItemType { get; set; }
         public uint Unused1D0 { get; set; } // always 0
         public uint Unused1D4 { get; set; } // always UInt32.MaxValue
         public uint BeamHitMsgTarget { get; set; }
@@ -140,7 +140,7 @@ namespace MphRead.Editor
             DamageEffectId = raw.DamageEffectId;
             DeadEffectId = raw.DeadEffectId;
             ItemChance = raw.ItemChance;
-            ItemModel = raw.ItemModel;
+            ItemType = raw.ItemType;
             Unused1D0 = raw.Unused1D0;
             Unused1D4 = raw.Unused1D4;
             BeamHitMsgTarget = raw.BeamHitMsgTarget;
@@ -471,7 +471,7 @@ namespace MphRead.Editor
         public short EntityId3 { get; set; }
         public ushort Field1F2 { get; set; }
         public Message Message3 { get; set; }
-        public uint ItemModel { get; set; }
+        public ItemType ItemType { get; set; }
 
         public EnemySpawnEntityEditor(Entity header, EnemySpawnEntityData raw) : base(header)
         {
@@ -601,7 +601,7 @@ namespace MphRead.Editor
             EntityId3 = raw.EntityId3;
             Field1F2 = raw.Field1F2;
             Message3 = raw.Message3;
-            ItemModel = raw.ItemModel;
+            ItemType = raw.ItemType;
         }
     }
 

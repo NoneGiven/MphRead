@@ -80,8 +80,9 @@ namespace MphRead
         Thin = 3
     }
 
-    public enum ItemType : uint
+    public enum ItemType : int
     {
+        None = -1,
         HealthMedium = 0,
         HealthSmall = 1,
         HealthBig = 2,

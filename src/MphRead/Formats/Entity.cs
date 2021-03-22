@@ -81,7 +81,7 @@ namespace MphRead
         public readonly byte ItemChance;
         public readonly byte Padding1C9;
         public readonly ushort Padding1CA;
-        public readonly uint ItemModel;
+        public readonly ItemType ItemType;
         public readonly uint Unused1D0; // always 0
         public readonly uint Unused1D4; // always UInt32.MaxValue
         public readonly uint BeamHitMsgTarget;
@@ -362,7 +362,7 @@ namespace MphRead
         public readonly short EntityId3;
         public readonly ushort Field1F2;
         public readonly Message Message3;
-        public readonly uint ItemModel;
+        public readonly ItemType ItemType;
     }
 
     // size: 268

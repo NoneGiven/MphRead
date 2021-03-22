@@ -74,12 +74,12 @@ namespace MphRead.Memory
 
         protected override sbyte Get(int index)
         {
-            return ReadSByte(index * sizeof(int));
+            return ReadSByte(index * sizeof(sbyte));
         }
 
         protected override void Set(int index, sbyte value)
         {
-            WriteSByte(index * sizeof(int), value);
+            WriteSByte(index * sizeof(sbyte), value);
         }
     }
 
@@ -95,12 +95,12 @@ namespace MphRead.Memory
 
         protected override byte Get(int index)
         {
-            return ReadByte(index * sizeof(int));
+            return ReadByte(index * sizeof(byte));
         }
 
         protected override void Set(int index, byte value)
         {
-            WriteByte(index * sizeof(int), value);
+            WriteByte(index * sizeof(byte), value);
         }
     }
 
@@ -116,12 +116,12 @@ namespace MphRead.Memory
 
         protected override short Get(int index)
         {
-            return ReadInt16(index * sizeof(int));
+            return ReadInt16(index * sizeof(short));
         }
 
         protected override void Set(int index, short value)
         {
-            WriteInt16(index * sizeof(int), value);
+            WriteInt16(index * sizeof(short), value);
         }
     }
 
@@ -137,12 +137,12 @@ namespace MphRead.Memory
 
         protected override ushort Get(int index)
         {
-            return ReadUInt16(index * sizeof(int));
+            return ReadUInt16(index * sizeof(ushort));
         }
 
         protected override void Set(int index, ushort value)
         {
-            WriteUInt16(index * sizeof(int), value);
+            WriteUInt16(index * sizeof(ushort), value);
         }
     }
 
@@ -179,12 +179,12 @@ namespace MphRead.Memory
 
         protected override uint Get(int index)
         {
-            return ReadUInt32(index * sizeof(int));
+            return ReadUInt32(index * sizeof(uint));
         }
 
         protected override void Set(int index, uint value)
         {
-            WriteUInt32(index * sizeof(int), value);
+            WriteUInt32(index * sizeof(uint), value);
         }
     }
 

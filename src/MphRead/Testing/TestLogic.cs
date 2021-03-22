@@ -1,10 +1,208 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using MphRead.Memory;
 using OpenTK.Mathematics;
 
 namespace MphRead.Testing
 {
     public static class TestLogic
     {
+        private class SaveBlock
+        {
+            public int Field0 { get; set; }
+            public int Field4 { get; set; }
+            public int Field8 { get; set; }
+            public int FieldC { get; set; }
+        }
+
+        private class SaveBufBlock
+        {
+            public int Field0 { get; set; }
+            public int Field4 { get; set; }
+            public int Field8 { get; set; }
+            public int FieldC { get; set; }
+            public int Field10 { get; set; }
+            public int Field14 { get; set; }
+            public int Field18 { get; set; }
+            public int Field1C { get; set; }
+        }
+
+        public static void TestSaveBlocks()
+        {
+            var blocks = new List<SaveBlock>();
+            for (int i = 0; i < 3; i++)
+            {
+                blocks.Add(new SaveBlock()
+                {
+                    Field0 = 0,
+                    Field4 = 128,
+                    Field8 = 4276,
+                    FieldC = -23
+                });
+            }
+            blocks.Add(new SaveBlock()
+            {
+                Field0 = 0,
+                Field4 = 128,
+                Field8 = 64,
+                FieldC = 2
+            });
+            blocks.Add(new SaveBlock()
+            {
+                Field0 = 0,
+                Field4 = 128,
+                Field8 = 164,
+                FieldC = -1
+            });
+            blocks.Add(new SaveBlock()
+            {
+                Field0 = 0,
+                Field4 = 128,
+                Field8 = 488,
+                FieldC = 9
+            });
+            blocks.Add(new SaveBlock()
+            {
+                Field0 = 0,
+                Field4 = 128,
+                Field8 = 8400,
+                FieldC = 0
+            });
+            int dword20EEFF4 = 4 * (blocks.Count - 1) + 36; // 60
+            int dword20EEFC0 = 0x100;
+            int dword20EEFBC = 0x40000;
+            var bufBlocks = new List<SaveBufBlock>();
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                bufBlocks.Add(new SaveBufBlock());
+            }
+            int size = 0;
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                SaveBlock block = blocks[i];
+                if (block.FieldC != 0)
+                {
+                    int v11 = (block.Field8 + 8 + dword20EEFC0 - 1) / dword20EEFC0 * dword20EEFC0;
+                    if (block.Field0 == 0 && block.FieldC < 0)
+                    {
+                        block.FieldC = dword20EEFBC * -block.FieldC / 100 / v11;
+                    }
+                    SaveBufBlock newBuf = bufBlocks[i];
+                    newBuf.Field0 = block.Field0;
+                    newBuf.Field4 = block.Field8;
+                    newBuf.Field8 = v11;
+                    newBuf.FieldC = 0;
+                    newBuf.Field14 = block.FieldC;
+                    newBuf.Field10 = block.FieldC * v11;
+                    size += newBuf.Field10;
+                    if (size > dword20EEFBC)
+                    {
+                        Debug.Assert(false);
+                    }
+                }
+            }
+            int v19 = dword20EEFC0 * (dword20EEFF4 + dword20EEFC0 - 1) / dword20EEFC0;
+            size += v19;
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                SaveBlock block = blocks[i];
+                if (block.FieldC == 0)
+                {
+                    int v11 = (block.Field8 + 8 + dword20EEFC0 - 1) / dword20EEFC0 * dword20EEFC0;
+                    SaveBufBlock newBuf = bufBlocks[i];
+                    newBuf.Field0 = block.Field0;
+                    newBuf.Field4 = block.Field8;
+                    newBuf.Field8 = v11;
+                    newBuf.FieldC = 0;
+                    newBuf.Field14 = (dword20EEFBC - size) / v11;
+                    newBuf.Field10 = newBuf.Field14 * v11;
+                    size += newBuf.Field10;
+                    if (size > dword20EEFBC)
+                    {
+                        Debug.Assert(false);
+                    }
+                }
+            }
+            foreach (SaveBufBlock bufBlock in bufBlocks)
+            {
+                bufBlock.FieldC = v19;
+                v19 += bufBlock.Field10;
+            }
+        }
+
+        public class CompletionValues
+        {
+            public int Completion { get; set; }
+            public int Octolith { get; set; }
+            public int EnergyTanks { get; set; }
+            public int UaExpansions { get; set; }
+            public int MissileExpansions { get; set; }
+        }
+
+        public static CompletionValues GetCompletionValues(StorySaveData save)
+        {
+            int octolithCount = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                if ((save.FoundOctos & (1 << i)) != 0)
+                {
+                    octolithCount++;
+                }
+            }
+            return new CompletionValues()
+            {
+                Completion = GetCompletionPercentage(save),
+                Octolith = 100 * octolithCount / 8,
+                EnergyTanks = save.EnergyCap / 100,
+                UaExpansions = (save.AmmoCaps[0] - 400) / 300,
+                MissileExpansions = (save.AmmoCaps[1] - 50) / 100
+            };
+        }
+
+        public static int GetCompletionPercentage(StorySaveData save)
+        {
+            if (save.MaxScanCount == 0)
+            {
+                return 0;
+            }
+            int counts = 0;
+            // some scan count?
+            counts += save.ScanCount;
+            // weapons other than PB, Ms, OC
+            for (int i = 1; i < 8; i++)
+            {
+                if (i != 2 && (save.Weapons & (1 << i)) != 0)
+                {
+                    counts++;
+                }
+            }
+            // octoliths obtained
+            for (int i = 0; i < 8; i++)
+            {
+                if ((save.FoundOctos & (1 << i)) != 0)
+                {
+                    counts++;
+                }
+            }
+            // artifacts obtained
+            for (int i = 0; i < 24; i++)
+            {
+                if ((save.Artifacts & (1 << i)) != 0)
+                {
+                    counts++;
+                }
+            }
+            // energy tanks
+            counts += save.EnergyCap / 100;
+            // UA expansions
+            counts += (save.AmmoCaps[0] - 400) / 300;
+            // missile expansions
+            counts += (save.AmmoCaps[1] - 50) / 100;
+            // 66 = weapons + octoliths + artifacts + energy + UA + missiles
+            return 100 * counts / ((int)save.MaxScanCount + 66);
+        }
+
         // 4F4 update for alt forms in sub_201DCE4
         public static void TestLogic1()
         {
