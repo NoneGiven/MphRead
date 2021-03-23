@@ -13,10 +13,18 @@ namespace MphRead.Utility
     {
         public static byte[] TestEntityEdit()
         {
-            RoomMetadata meta = Metadata.RoomMetadata["UNIT2_LAND"];
+            RoomMetadata meta = Metadata.RoomMetadata["UNIT2_RM2"];
             Debug.Assert(meta.EntityPath != null);
             List<EntityEditorBase> entities = meta.FirstHunt ? GetFhEntities(meta.EntityPath) : GetEntities(meta.EntityPath);
-            entities.RemoveAll(e => e.Type == EntityType.Platform && e.Id != 12);
+            foreach (EnemySpawnEntityEditor spawn in entities.Where(e => e.Type == EntityType.EnemySpawn))
+            {
+                if (spawn.EnemyType == EnemyType.Hunter && spawn.TextureId != 0)
+                {
+                    spawn.Subtype = 0;
+                    spawn.HunterColor = 3;
+                }
+            }
+            //entities.RemoveAll(e => e.Type == EntityType.Platform && e.Id != 12);
             //var doors = entities.Where(e => e.Type == EntityType.FhDoor).Select(p => (FhDoorEntityEditor)p).ToList();
             //foreach (FhDoorEntityEditor door in doors)
             //{
@@ -837,7 +845,7 @@ namespace MphRead.Utility
             writer.Write(entity.Health);
             writer.Write(entity.HealthMax);
             writer.Write(entity.Field38);
-            writer.Write(entity.Field3A);
+            writer.Write(entity.HunterColor);
             writer.Write(entity.Field3B);
             // union start
             writer.Write(entity.Field3C);

@@ -117,9 +117,9 @@ namespace MphRead
                             used.Add(data.Message1);
                             used.Add(data.Message2);
                             used.Add(data.Message3);
-                            if (data.Type == EnemyType.Cretaphid)
+                            if (data.Type == EnemyType.Hunter && data.TextureId != 0)
                             {
-                                Console.WriteLine(data.Subtype);
+                                Console.WriteLine($"EH {meta.Value.InGameName} {(Hunter)data.Subtype} type {data.TextureId}");
                             }
                         }
                         else if (entity.Type == EntityType.ItemSpawn)
