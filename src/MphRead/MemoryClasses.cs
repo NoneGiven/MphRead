@@ -5214,13 +5214,13 @@ namespace MphRead.Memory
         public int ScanCount { get => ReadInt32(_off60); set => WriteInt32(_off60, value); }
 
         private const int _off61 = 0x10A8;
-        public int SomeScanCount2 { get => ReadInt32(_off61); set => WriteInt32(_off61, value); }
+        public int EquipData { get => ReadInt32(_off61); set => WriteInt32(_off61, value); }
 
         private const int _off62 = 0x10AC;
         public uint MaxScanCount { get => ReadUInt32(_off62); set => WriteUInt32(_off62, value); }
 
         private const int _off63 = 0x10B0;
-        public int Field10B0 { get => ReadInt32(_off63); set => WriteInt32(_off63, value); }
+        public int MaxEquipData { get => ReadInt32(_off63); set => WriteInt32(_off63, value); }
 
         public StorySaveData(Memory memory, int address) : base(memory, address)
         {

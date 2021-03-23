@@ -730,7 +730,7 @@ namespace MphRead.Utility
             writer.Write(entity.ItemChance);
             writer.Write(padByte); // Padding1C9
             writer.Write(padShort); // Padding1CA
-            writer.Write(entity.ItemModel);
+            writer.Write((int)entity.ItemType);
             writer.Write(entity.Unused1D0);
             writer.Write(entity.Unused1D4);
             writer.Write(entity.BeamHitMsgTarget);
@@ -959,7 +959,7 @@ namespace MphRead.Utility
             writer.Write(entity.EntityId3);
             writer.Write(entity.Field1F2);
             writer.Write((uint)entity.Message3);
-            writer.Write(entity.ItemModel);
+            writer.Write((int)entity.ItemType);
         }
 
         private static void WriteMphTriggerVolume(TriggerVolumeEntityEditor entity, BinaryWriter writer)
