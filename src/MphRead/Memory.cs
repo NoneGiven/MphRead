@@ -87,6 +87,7 @@ namespace MphRead.Memory
                 var settings = new StatsAndSettings(this, Addresses.Save.Settings);
                 var license = new StorySaveData(this, Addresses.Save.License);
                 var friends = new StorySaveData(this, Addresses.Save.Friends);
+                IReadOnlyList<StringTableEntry> scans = Strings.ReadStringTable(StringTables.ScanLog);
                 while (true)
                 {
                     RefreshMemory();
@@ -121,6 +122,17 @@ namespace MphRead.Memory
                     //    Console.WriteLine($"{plat.ModelId}: {plat.State}");
                     //}
                     TestLogic.CompletionValues pcts = TestLogic.GetCompletionValues(story);
+                    for (int i = 0; i < scans.Count; i++)
+                    {
+                        StringTableEntry scan = scans[i];
+                        int id = Convert.ToInt32(scan.Id[1..]);
+                        int page = id >> 3;
+                        int entry = id & 7;
+                        bool seen = (story.Logbook[page] & (1 << entry)) != 0;
+                        Console.WriteLine($"[{(seen ? "X" : " ")}] {scan.Id} {scan.Category} p{page} n{entry}");
+                        Console.WriteLine(scan.Value);
+                        Console.WriteLine();
+                    }
                     await Task.Delay(15);
                 }
             }).GetAwaiter().GetResult();

@@ -5145,7 +5145,7 @@ namespace MphRead.Memory
         public int Field1018 { get => ReadInt32(_off37); set => WriteInt32(_off37, value); }
 
         private const int _off38 = 0x101C; // byte[64]
-        public ByteArray Logbook1 { get; }
+        public ByteArray Logbook { get; }
 
         private const int _off39 = 0x105C;
         public int Field105C { get => ReadInt32(_off39); set => WriteInt32(_off39, value); }
@@ -5233,7 +5233,7 @@ namespace MphRead.Memory
                 60, (Memory m, int a) => new RoomState(m, a));
             FieldFCC = new ByteArray(memory, address + _off19, 8);
             TriggerStateBits = new ByteArray(memory, address + _off36, 4);
-            Logbook1 = new ByteArray(memory, address + _off38, 64);
+            Logbook = new ByteArray(memory, address + _off38, 64);
             AreaHunters = new ByteArray(memory, address + _off48, 4);
         }
 
@@ -5248,7 +5248,7 @@ namespace MphRead.Memory
                 60, (Memory m, int a) => new RoomState(m, a));
             FieldFCC = new ByteArray(memory, address + _off19, 8);
             TriggerStateBits = new ByteArray(memory, address + _off36, 4);
-            Logbook1 = new ByteArray(memory, address + _off38, 64);
+            Logbook = new ByteArray(memory, address + _off38, 64);
             AreaHunters = new ByteArray(memory, address + _off48, 4);
         }
     }

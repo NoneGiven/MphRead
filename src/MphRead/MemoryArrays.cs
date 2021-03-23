@@ -6,23 +6,23 @@ namespace MphRead.Memory
 {
     public abstract class MemoryArray<T> : MemoryClass, IEnumerable, IEnumerator
     {
-        private readonly int _length;
+        public int Length { get; }
 
         protected MemoryArray(Memory memory, int address, int length) : base(memory, address)
         {
-            _length = length;
+            Length = length;
         }
 
         protected MemoryArray(Memory memory, IntPtr address, int length) : base(memory, address)
         {
-            _length = length;
+            Length = length;
         }
 
         public T this[int index]
         {
             get
             {
-                if (index < 0 || index >= _length)
+                if (index < 0 || index >= Length)
                 {
                     throw new IndexOutOfRangeException();
                 }
@@ -30,7 +30,7 @@ namespace MphRead.Memory
             }
             set
             {
-                if (index < 0 || index >= _length)
+                if (index < 0 || index >= Length)
                 {
                     throw new IndexOutOfRangeException();
                 }
@@ -53,7 +53,7 @@ namespace MphRead.Memory
         bool IEnumerator.MoveNext()
         {
             _currentIndex++;
-            return _currentIndex < _length;
+            return _currentIndex < Length;
         }
 
         void IEnumerator.Reset()
