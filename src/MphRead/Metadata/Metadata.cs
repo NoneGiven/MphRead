@@ -39,10 +39,10 @@ namespace MphRead
             }
         }
 
-        public ModelMetadata(string name, bool cockpit)
+        public ModelMetadata(string name, bool hud)
         {
             Name = name;
-            string directory = cockpit ? "hud" : "models";
+            string directory = hud ? "hud" : "models";
             ModelPath = $@"{directory}\{name}_Model.bin";
             AnimationPath = null;
             Recolors = new List<RecolorMetadata>()
@@ -3342,23 +3342,56 @@ namespace MphRead
                 // cockpit
                 {
                     "unit1_land_cockpit",
-                    new ModelMetadata("unit1_land_cockpit", cockpit: true)
+                    new ModelMetadata("unit1_land_cockpit", hud: true)
                 },
                 {
                     "unit2_land_cockpit",
-                    new ModelMetadata("unit2_land_cockpit", cockpit: true)
+                    new ModelMetadata("unit2_land_cockpit", hud: true)
                 },
                 {
                     "unit3_land_cockpit",
-                    new ModelMetadata("unit3_land_cockpit", cockpit: true)
+                    new ModelMetadata("unit3_land_cockpit", hud: true)
                 },
                 {
                     "unit4_land_cockpit",
-                    new ModelMetadata("unit4_land_cockpit", cockpit: true)
+                    new ModelMetadata("unit4_land_cockpit", hud: true)
                 },
                 {
                     "gorea_land_cockpit",
-                    new ModelMetadata("gorea_land_cockpit", cockpit: true)
+                    new ModelMetadata("gorea_land_cockpit", hud: true)
+                },
+                // nav rooms
+                {
+                    "unit1_1NAV",
+                    new ModelMetadata("unit1_1NAV", hud: true)
+                },
+                {
+                    "unit1_2NAV",
+                    new ModelMetadata("unit1_2NAV", hud: true)
+                },
+                {
+                    "unit2_1NAV",
+                    new ModelMetadata("unit2_1NAV", hud: true)
+                },
+                {
+                    "unit2_2NAV",
+                    new ModelMetadata("unit2_2NAV", hud: true)
+                },
+                {
+                    "unit3_1NAV",
+                    new ModelMetadata("unit3_1NAV", hud: true)
+                },
+                {
+                    "unit3_2NAV",
+                    new ModelMetadata("unit3_2NAV", hud: true)
+                },
+                {
+                    "unit4_1NAV",
+                    new ModelMetadata("unit4_1NAV", hud: true)
+                },
+                {
+                    "Door_NAV",
+                    new ModelMetadata("Door_NAV", hud: true)
                 },
                 // effectsBase
                 {
