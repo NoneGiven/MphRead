@@ -983,6 +983,11 @@ namespace MphRead
             return SpanReadUint(bytes, ref offset);
         }
 
+        public static ushort SpanReadUshort(ReadOnlySpan<byte> bytes, uint offset)
+        {
+            return SpanReadUshort(bytes, (int)offset);
+        }
+
         public static ushort SpanReadUshort(ReadOnlySpan<byte> bytes, int offset)
         {
             return SpanReadUshort(bytes, ref offset);
