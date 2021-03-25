@@ -36,7 +36,7 @@ namespace MphRead
                     }
                 }
             }
-            ExtractRomFs(header, bytes, rootName: isFh ? "fh" : "mph");
+            ExtractRomFs(header, bytes, rootName: isFh ? "fh" : "mph", hasArchives: !isFh);
             if (isFh)
             {
                 File.WriteAllText("paths.txt", String.Join(Environment.NewLine, Paths.FileSystem, Path.Combine("files", "fh"), Paths.Export));
@@ -48,7 +48,7 @@ namespace MphRead
             Nop();
         }
 
-        private static void ExtractRomFs(RomHeader header, byte[] bytes, string rootName)
+        private static void ExtractRomFs(RomHeader header, byte[] bytes, string rootName, bool hasArchives)
         {
             Debug.Assert(header.FntOffset > 0 && header.FatSize > 0);
             Debug.Assert(header.FatOffset > 0 && header.FatSize > 0 && header.FatSize % 8 == 0);
@@ -110,11 +110,14 @@ namespace MphRead
             var root = new DirInfo(rootName, index: 0);
             PopulateDir(root);
             WriteFiles(root, Path.Combine("files", root.Name));
-            foreach (string path in Directory.EnumerateFiles(Path.Combine("files", root.Name, "archives")))
+            if (hasArchives)
             {
-                if (Path.GetExtension(path).ToLower() == ".arc")
+                foreach (string path in Directory.EnumerateFiles(Path.Combine("files", root.Name, "archives")))
                 {
-                    Read.ExtractArchive(path);
+                    if (Path.GetExtension(path).ToLower() == ".arc")
+                    {
+                        Read.ExtractArchive(path);
+                    }
                 }
             }
             Nop();

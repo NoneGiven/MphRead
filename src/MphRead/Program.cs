@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -13,8 +12,11 @@ namespace MphRead
 
         private static void Main(string[] args)
         {
-            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
-            ConsoleColor.Setup();
+            ConsoleSetup.Run();
+            if (CheckSetup(args))
+            {
+                return;
+            }
             IReadOnlyList<Argument> arguments = ParseArguments(args);
             if (arguments.Count == 0)
             {
@@ -101,6 +103,21 @@ namespace MphRead
                 }
                 renderer.Run();
             }
+        }
+
+        private static bool CheckSetup(string[] args)
+        {
+            if (args.Length == 1 && !args[0].StartsWith('-') && File.Exists(args[0]))
+            {
+                Extract.Setup(args[0]);
+                return true;
+            }
+            if (!File.Exists("paths.txt"))
+            {
+                Console.WriteLine("Could not find paths.txt file.");
+                return true;
+            }
+            return false;
         }
 
         private readonly struct Argument
