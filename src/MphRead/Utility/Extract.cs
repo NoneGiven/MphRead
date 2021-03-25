@@ -8,45 +8,47 @@ namespace MphRead
 {
     public static class Extract
     {
-        public static void Setup()
+        public static void Setup(string path)
         {
-            //string mphPath = GetString("Enter the file path to your Metroid Prime Hunters ROM:", optional: false, checkPath: true);
-            //string fhPath = GetString("Enter the file path to your First Hunt ROM (optional):", optional: true, checkPath: true);
-            string mphPath = @"D:\Cdrv\MPH\Roms\AMHE_00_7fe4554a.nds";
-            string fhPath = @"D:\Cdrv\MPH\Roms\AMFE_00_c2fb5233.nds";
-            fhPath = "";
-            byte[] mphBytes = File.ReadAllBytes(mphPath);
-            Console.WriteLine("Reading file...");
-            RomHeader mphHeader = Read.ReadStruct<RomHeader>(mphBytes);
+            byte[] bytes = File.ReadAllBytes(path);
+            RomHeader header = Read.ReadStruct<RomHeader>(bytes);
             var mphCodes = new List<string>() { "AMHE", "AMHP", "AMHJ", "AMHK", "A76E" };
-            if (!mphCodes.Contains(mphHeader.GameCode.MarshalString()))
+            bool isFh = false;
+            if (!mphCodes.Contains(header.GameCode.MarshalString()))
             {
-                PrintExit("The file does not appear to be an MPH ROM. Please try again.");
-                return;
-            }
-            byte[] fhBytes = default!;
-            RomHeader fhHeader = default;
-            if (!String.IsNullOrWhiteSpace(fhPath))
-            {
-                Console.WriteLine("Reading file...");
-                fhBytes = File.ReadAllBytes(fhPath);
-                fhHeader = Read.ReadStruct<RomHeader>(mphBytes);
                 var fhCodes = new List<string>() { "AMFE", "AMFP" };
-                if (!fhCodes.Contains(fhHeader.GameCode.MarshalString()))
+                isFh = fhCodes.Contains(header.GameCode.MarshalString());
+                if (!isFh)
                 {
-                    PrintExit("The file does not appear to be an FH ROM. Please try again.");
+                    PrintExit("The specified file does not appear to be a valid ROM.");
                     return;
                 }
             }
-            ExtractRomFs(mphHeader, mphBytes);
-            if (!String.IsNullOrWhiteSpace(fhPath))
+            if (File.Exists("paths.txt"))
             {
-                ExtractRomFs(fhHeader, fhBytes);
+                if ((!isFh && !String.IsNullOrWhiteSpace(Paths.FileSystem)) || (isFh && !String.IsNullOrWhiteSpace(Paths.FhFileSystem)))
+                {
+                    Console.Write($"A path has already been specified for {(isFh ? "FH" : "MPH")} files. Do you want to update it? (y/n) ");
+                    string input = Console.ReadLine().Trim().ToLower();
+                    if (input != "y" && input != "yes")
+                    {
+                        return;
+                    }
+                }
+            }
+            ExtractRomFs(header, bytes, rootName: isFh ? "fh" : "mph");
+            if (isFh)
+            {
+                File.WriteAllText("paths.txt", String.Join(Environment.NewLine, Paths.FileSystem, Path.Combine("files", "fh"), Paths.Export));
+            }
+            else
+            {
+                File.WriteAllText("paths.txt", String.Join(Environment.NewLine, Path.Combine("files", "mph"), Paths.FhFileSystem, Paths.Export));
             }
             Nop();
         }
 
-        private static void ExtractRomFs(RomHeader header, byte[] bytes)
+        private static void ExtractRomFs(RomHeader header, byte[] bytes, string rootName)
         {
             Debug.Assert(header.FntOffset > 0 && header.FatSize > 0);
             Debug.Assert(header.FatOffset > 0 && header.FatSize > 0 && header.FatSize % 8 == 0);
@@ -105,10 +107,10 @@ namespace MphRead
                     WriteFiles(subdir, Path.Combine(path, subdir.Name));
                 }
             }
-            var root = new DirInfo("root", index: 0);
+            var root = new DirInfo(rootName, index: 0);
             PopulateDir(root);
-            WriteFiles(root, root.Name);
-            foreach (string path in Directory.EnumerateFiles(Path.Combine(root.Name, "archives")))
+            WriteFiles(root, Path.Combine("files", root.Name));
+            foreach (string path in Directory.EnumerateFiles(Path.Combine("files", root.Name, "archives")))
             {
                 if (Path.GetExtension(path).ToLower() == ".arc")
                 {
@@ -123,34 +125,6 @@ namespace MphRead
             Console.WriteLine(message);
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
-        }
-
-        private static string GetString(string prompt, bool optional, bool checkPath)
-        {
-            string input;
-            while (true)
-            {
-                Console.WriteLine(prompt);
-                input = Console.ReadLine();
-                if (!String.IsNullOrWhiteSpace(input))
-                {
-                    if (checkPath)
-                    {
-                        if (File.Exists(input))
-                        {
-                            break;
-                        }
-                        Console.WriteLine("Could not find the file.");
-                    }
-                }
-                else if (optional)
-                {
-                    break;
-                }
-                Console.WriteLine();
-            }
-            Console.WriteLine();
-            return input;
         }
 
         private static void Nop()
