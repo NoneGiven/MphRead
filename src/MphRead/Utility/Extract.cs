@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -13,7 +14,9 @@ namespace MphRead
             //string fhPath = GetString("Enter the file path to your First Hunt ROM (optional):", optional: true, checkPath: true);
             string mphPath = @"D:\Cdrv\MPH\Roms\AMHE_00_7fe4554a.nds";
             string fhPath = @"D:\Cdrv\MPH\Roms\AMFE_00_c2fb5233.nds";
+            fhPath = "";
             byte[] mphBytes = File.ReadAllBytes(mphPath);
+            Console.WriteLine("Reading file...");
             RomHeader mphHeader = Read.ReadStruct<RomHeader>(mphBytes);
             var mphCodes = new List<string>() { "AMHE", "AMHP", "AMHJ", "AMHK", "A76E" };
             if (!mphCodes.Contains(mphHeader.GameCode.MarshalString()))
@@ -21,17 +24,23 @@ namespace MphRead
                 PrintExit("The file does not appear to be an MPH ROM. Please try again.");
                 return;
             }
-            ExtractRomFs(mphHeader, mphBytes);
+            byte[] fhBytes = default!;
+            RomHeader fhHeader = default;
             if (!String.IsNullOrWhiteSpace(fhPath))
             {
-                byte[] fhBytes = File.ReadAllBytes(fhPath);
-                RomHeader fhHeader = Read.ReadStruct<RomHeader>(mphBytes);
+                Console.WriteLine("Reading file...");
+                fhBytes = File.ReadAllBytes(fhPath);
+                fhHeader = Read.ReadStruct<RomHeader>(mphBytes);
                 var fhCodes = new List<string>() { "AMFE", "AMFP" };
                 if (!fhCodes.Contains(fhHeader.GameCode.MarshalString()))
                 {
                     PrintExit("The file does not appear to be an FH ROM. Please try again.");
                     return;
                 }
+            }
+            ExtractRomFs(mphHeader, mphBytes);
+            if (!String.IsNullOrWhiteSpace(fhPath))
+            {
                 ExtractRomFs(fhHeader, fhBytes);
             }
             Nop();
@@ -39,13 +48,21 @@ namespace MphRead
 
         private static void ExtractRomFs(RomHeader header, byte[] bytes)
         {
+            Debug.Assert(header.FntOffset > 0 && header.FatSize > 0);
+            Debug.Assert(header.FatOffset > 0 && header.FatSize > 0 && header.FatSize % 8 == 0);
             DirTableEntry dirStart = Read.DoOffset<DirTableEntry>(bytes, header.FntOffset);
             IReadOnlyList<DirTableEntry> entries = Read.DoOffsets<DirTableEntry>(bytes, header.FntOffset, dirStart.DirNum);
-
+            var fileOffsets = new List<(int, int)>();
+            IReadOnlyList<uint> addresses = Read.DoOffsets<uint>(bytes, header.FatOffset, header.FatSize / 4);
+            for (int i = 0; i < addresses.Count; i += 2)
+            {
+                fileOffsets.Add(((int)addresses[i], (int)addresses[i + 1]));
+            }
             void PopulateDir(DirInfo dir)
             {
                 DirTableEntry entry = entries[(int)dir.Index];
                 uint offset = header.FntOffset + entry.Offset;
+                ushort fileIndex = entry.FirstFileIndex;
                 byte type = 1;
                 while (type != 0)
                 {
@@ -56,7 +73,7 @@ namespace MphRead
                         int length = type;
                         string name = Read.ReadString(bytes, offset, length);
                         offset += (uint)length;
-                        dir.Files.Add(name);
+                        dir.Files.Add(new FileInfo(name, fileIndex++));
                     }
                     else if (type >= 129 && type <= 255)
                     {
@@ -73,8 +90,31 @@ namespace MphRead
                     PopulateDir(subdir);
                 }
             }
-            var dirInfo = new DirInfo("root", index: 0);
-            PopulateDir(dirInfo);
+            void WriteFiles(DirInfo dir, string path)
+            {
+                Console.WriteLine($"Writing {path}...");
+                Directory.CreateDirectory(path);
+                foreach (FileInfo file in dir.Files)
+                {
+                    (int start, int end) = fileOffsets[(int)file.Index];
+                    Debug.Assert(start > 0 && end > start);
+                    File.WriteAllBytes(Path.Combine(path, file.Name), bytes[start..end]);
+                }
+                foreach (DirInfo subdir in dir.Subdirectories)
+                {
+                    WriteFiles(subdir, Path.Combine(path, subdir.Name));
+                }
+            }
+            var root = new DirInfo("root", index: 0);
+            PopulateDir(root);
+            WriteFiles(root, root.Name);
+            foreach (string path in Directory.EnumerateFiles(Path.Combine(root.Name, "archives")))
+            {
+                if (Path.GetExtension(path).ToLower() == ".arc")
+                {
+                    Read.ExtractArchive(path);
+                }
+            }
             Nop();
         }
 
@@ -122,9 +162,21 @@ namespace MphRead
             public string Name { get; }
             public uint Index { get; }
             public List<DirInfo> Subdirectories { get; set; } = new List<DirInfo>();
-            public List<string> Files { get; set; } = new List<string>();
+            public List<FileInfo> Files { get; set; } = new List<FileInfo>();
 
             public DirInfo(string name, uint index)
+            {
+                Name = name;
+                Index = index;
+            }
+        }
+
+        public class FileInfo
+        {
+            public string Name { get; }
+            public uint Index { get; }
+
+            public FileInfo(string name, uint index)
             {
                 Name = name;
                 Index = index;
@@ -134,7 +186,7 @@ namespace MphRead
         public readonly struct DirTableEntry
         {
             public readonly uint Offset;
-            public readonly ushort FirstFileId;
+            public readonly ushort FirstFileIndex;
             public readonly ushort DirNum;
         }
 
