@@ -13,10 +13,18 @@ namespace MphRead.Utility
     {
         public static byte[] TestEntityEdit()
         {
-            RoomMetadata meta = Metadata.RoomMetadata["UNIT2_LAND"];
+            RoomMetadata meta = Metadata.RoomMetadata["UNIT2_RM2"];
             Debug.Assert(meta.EntityPath != null);
             List<EntityEditorBase> entities = meta.FirstHunt ? GetFhEntities(meta.EntityPath) : GetEntities(meta.EntityPath);
-            entities.RemoveAll(e => e.Type == EntityType.Platform && e.Id != 12);
+            foreach (EnemySpawnEntityEditor spawn in entities.Where(e => e.Type == EntityType.EnemySpawn))
+            {
+                if (spawn.EnemyType == EnemyType.Hunter && spawn.TextureId != 0)
+                {
+                    spawn.Subtype = 0;
+                    spawn.HunterColor = 3;
+                }
+            }
+            //entities.RemoveAll(e => e.Type == EntityType.Platform && e.Id != 12);
             //var doors = entities.Where(e => e.Type == EntityType.FhDoor).Select(p => (FhDoorEntityEditor)p).ToList();
             //foreach (FhDoorEntityEditor door in doors)
             //{
@@ -730,7 +738,7 @@ namespace MphRead.Utility
             writer.Write(entity.ItemChance);
             writer.Write(padByte); // Padding1C9
             writer.Write(padShort); // Padding1CA
-            writer.Write(entity.ItemModel);
+            writer.Write((int)entity.ItemType);
             writer.Write(entity.Unused1D0);
             writer.Write(entity.Unused1D4);
             writer.Write(entity.BeamHitMsgTarget);
@@ -837,7 +845,7 @@ namespace MphRead.Utility
             writer.Write(entity.Health);
             writer.Write(entity.HealthMax);
             writer.Write(entity.Field38);
-            writer.Write(entity.Field3A);
+            writer.Write(entity.HunterColor);
             writer.Write(entity.Field3B);
             // union start
             writer.Write(entity.Field3C);
@@ -959,7 +967,7 @@ namespace MphRead.Utility
             writer.Write(entity.EntityId3);
             writer.Write(entity.Field1F2);
             writer.Write((uint)entity.Message3);
-            writer.Write(entity.ItemModel);
+            writer.Write((int)entity.ItemType);
         }
 
         private static void WriteMphTriggerVolume(TriggerVolumeEntityEditor entity, BinaryWriter writer)
@@ -1103,13 +1111,13 @@ namespace MphRead.Utility
             writer.WriteByte(entity.HasBase);
             writer.Write(entity.Message1Target);
             writer.Write(padShort); // Padding2A
-            writer.Write(entity.Message1Id);
+            writer.Write((uint)entity.Message1);
             writer.Write(entity.Message2Target);
             writer.Write(padShort); // Padding32
-            writer.Write(entity.Message2Id);
+            writer.Write((uint)entity.Message2);
             writer.Write(entity.Message3Target);
             writer.Write(padShort); // Padding3A
-            writer.Write(entity.Message3Id);
+            writer.Write((uint)entity.Message3);
             writer.Write(entity.LinkedEntityId);
         }
 

@@ -64,7 +64,7 @@ namespace MphRead.Editor
         public int DamageEffectId { get; set; }
         public int DeadEffectId { get; set; }
         public byte ItemChance { get; set; }
-        public uint ItemModel { get; set; }
+        public ItemType ItemType { get; set; }
         public uint Unused1D0 { get; set; } // always 0
         public uint Unused1D4 { get; set; } // always UInt32.MaxValue
         public uint BeamHitMsgTarget { get; set; }
@@ -140,7 +140,7 @@ namespace MphRead.Editor
             DamageEffectId = raw.DamageEffectId;
             DeadEffectId = raw.DeadEffectId;
             ItemChance = raw.ItemChance;
-            ItemModel = raw.ItemModel;
+            ItemType = raw.ItemType;
             Unused1D0 = raw.Unused1D0;
             Unused1D4 = raw.Unused1D4;
             BeamHitMsgTarget = raw.BeamHitMsgTarget;
@@ -352,7 +352,7 @@ namespace MphRead.Editor
         public ushort Health { get; set; }
         public ushort HealthMax { get; set; }
         public ushort Field38 { get; set; }
-        public byte Field3A { get; set; }
+        public byte HunterColor { get; set; }
         public byte Field3B { get; set; }
         public uint Field3C { get; set; }
         public uint Field40 { get; set; }
@@ -471,7 +471,7 @@ namespace MphRead.Editor
         public short EntityId3 { get; set; }
         public ushort Field1F2 { get; set; }
         public Message Message3 { get; set; }
-        public uint ItemModel { get; set; }
+        public ItemType ItemType { get; set; }
 
         public EnemySpawnEntityEditor(Entity header, EnemySpawnEntityData raw) : base(header)
         {
@@ -482,7 +482,7 @@ namespace MphRead.Editor
             Health = raw.Health;
             HealthMax = raw.HealthMax;
             Field38 = raw.Field38;
-            Field3A = raw.Field3A;
+            HunterColor = raw.HunterColor;
             Field3B = raw.Field3B;
             Field3C = raw.Field3C;
             Field40 = raw.Field40;
@@ -601,7 +601,7 @@ namespace MphRead.Editor
             EntityId3 = raw.EntityId3;
             Field1F2 = raw.Field1F2;
             Message3 = raw.Message3;
-            ItemModel = raw.ItemModel;
+            ItemType = raw.ItemType;
         }
     }
 
@@ -1053,11 +1053,11 @@ namespace MphRead.Editor
         public bool Active { get; set; }
         public bool HasBase { get; set; }
         public short Message1Target { get; set; }
-        public uint Message1Id { get; set; }
+        public Message Message1 { get; set; }
         public short Message2Target { get; set; }
-        public uint Message2Id { get; set; }
+        public Message Message2 { get; set; }
         public short Message3Target { get; set; }
-        public uint Message3Id { get; set; }
+        public Message Message3 { get; set; }
         public short LinkedEntityId { get; set; } // always -1
 
         public ArtifactEntityEditor(Entity header, ArtifactEntityData raw) : base(header)
@@ -1067,11 +1067,11 @@ namespace MphRead.Editor
             Active = raw.Active != 0;
             HasBase = raw.HasBase != 0;
             Message1Target = raw.Message1Target;
-            Message1Id = raw.Message1Id;
+            Message1 = raw.Message1;
             Message2Target = raw.Message2Target;
-            Message2Id = raw.Message2Id;
+            Message2 = raw.Message2;
             Message3Target = raw.Message3Target;
-            Message3Id = raw.Message3Id;
+            Message3 = raw.Message3;
             LinkedEntityId = raw.LinkedEntityId;
         }
     }

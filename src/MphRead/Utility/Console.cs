@@ -1,9 +1,11 @@
 using System;
+using System.Globalization;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace MphRead
 {
-    internal static class ConsoleColor
+    internal static class ConsoleSetup
     {
         [DllImport("kernel32.dll")]
         private static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
@@ -17,8 +19,10 @@ namespace MphRead
         [DllImport("kernel32.dll")]
         public static extern uint GetLastError();
 
-        public static void Setup()
+        public static void Run()
         {
+            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+            Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 IntPtr iStdOut = GetStdHandle(-11);

@@ -39,6 +39,18 @@ namespace MphRead
             }
         }
 
+        public ModelMetadata(string name, bool hud)
+        {
+            Name = name;
+            string directory = hud ? "hud" : "models";
+            ModelPath = $@"{directory}\{name}_Model.bin";
+            AnimationPath = null;
+            Recolors = new List<RecolorMetadata>()
+            {
+                new RecolorMetadata("default", ModelPath, ModelPath)
+            };
+        }
+
         public ModelMetadata(string name, string? animationPath, string? texturePath = null)
         {
             Name = name;
@@ -873,7 +885,7 @@ namespace MphRead
             {
                 return new Vector3(0.5f, 0.5f, 0.5f);
             }
-            if (eventId == Message.Unknown46) // periwinkle
+            if (eventId == Message.DripMoatPlatform) // periwinkle
             {
                 return new Vector3(0.596f, 0.658f, 0.964f);
             }
@@ -1293,37 +1305,46 @@ namespace MphRead
 
         public static int GetAreaInfo(int roomId)
         {
+            // Oubliette
             int areaId = 8;
             if (roomId >= 27 && roomId < 36)
             {
+                // Alinos 1
                 areaId = 0;
             }
             else if (roomId >= 36 && roomId < 45)
             {
+                 // Alinos 2
                 areaId = 1;
             }
             else if (roomId >= 45 && roomId < 56)
             {
+                // Celestial Archives 1
                 areaId = 2;
             }
             else if (roomId >= 56 && roomId < 65)
             {
+                // Celestial Archives 2
                 areaId = 3;
             }
             else if (roomId >= 65 && roomId < 72)
             {
+                // Vesper Defense Outpost 1
                 areaId = 4;
             }
             else if (roomId >= 72 && roomId < 77)
             {
+                // Vesper Defense Outpost 2
                 areaId = 5;
             }
             else if (roomId >= 77 && roomId < 83)
             {
+                // Arcterra 1
                 areaId = 6;
             }
             else if (roomId >= 83 && roomId < 89)
             {
+                // Arcterra 2
                 areaId = 7;
             }
             //bool multiplayer = roomId >= 93 && roomId <= 119;
@@ -3317,6 +3338,60 @@ namespace MphRead
                 {
                     "zoomer",
                     new ModelMetadata("zoomer")
+                },
+                // cockpit
+                {
+                    "unit1_land_cockpit",
+                    new ModelMetadata("unit1_land_cockpit", hud: true)
+                },
+                {
+                    "unit2_land_cockpit",
+                    new ModelMetadata("unit2_land_cockpit", hud: true)
+                },
+                {
+                    "unit3_land_cockpit",
+                    new ModelMetadata("unit3_land_cockpit", hud: true)
+                },
+                {
+                    "unit4_land_cockpit",
+                    new ModelMetadata("unit4_land_cockpit", hud: true)
+                },
+                {
+                    "gorea_land_cockpit",
+                    new ModelMetadata("gorea_land_cockpit", hud: true)
+                },
+                // nav rooms
+                {
+                    "unit1_1NAV",
+                    new ModelMetadata("unit1_1NAV", hud: true)
+                },
+                {
+                    "unit1_2NAV",
+                    new ModelMetadata("unit1_2NAV", hud: true)
+                },
+                {
+                    "unit2_1NAV",
+                    new ModelMetadata("unit2_1NAV", hud: true)
+                },
+                {
+                    "unit2_2NAV",
+                    new ModelMetadata("unit2_2NAV", hud: true)
+                },
+                {
+                    "unit3_1NAV",
+                    new ModelMetadata("unit3_1NAV", hud: true)
+                },
+                {
+                    "unit3_2NAV",
+                    new ModelMetadata("unit3_2NAV", hud: true)
+                },
+                {
+                    "unit4_1NAV",
+                    new ModelMetadata("unit4_1NAV", hud: true)
+                },
+                {
+                    "Door_NAV",
+                    new ModelMetadata("Door_NAV", hud: true)
                 },
                 // effectsBase
                 {

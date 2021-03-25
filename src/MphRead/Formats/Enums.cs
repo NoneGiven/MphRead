@@ -80,8 +80,9 @@ namespace MphRead
         Thin = 3
     }
 
-    public enum ItemType : uint
+    public enum ItemType : int
     {
+        None = -1,
         HealthMedium = 0,
         HealthSmall = 1,
         HealthBig = 2,
@@ -307,8 +308,11 @@ namespace MphRead
         Unknown43 = 43,
         Unknown44 = 44, // platform wakeup?
         Unknown45 = 45, // platform sleep? also checked by enemies
-        Unknown46 = 46,
+        DripMoatPlatform = 46,
+        Unknown48 = 48,
+        Unknown49 = 49,
         Unknown50 = 50,
+        Unknown51 = 51,
         SetBeamReflection = 52, // only checked by platforms, probably never sent, and not relevant either way
         Unknown53 = 53,
         Unknown54 = 54,
@@ -360,18 +364,18 @@ namespace MphRead
         AlimbicTurret = 18,
         Cretaphid = 19,
         CretaphidEye = 20,
-        Unknown21 = 21, // Cretaphid-related
-        Unknown22 = 22, // Cretaphid-related
+        CretaphidCrystal = 21,
+        Unknown22 = 22, // Cretaphid-related, unused
         PsychoBit1 = 23,
         Gorea1A = 24,
-        Unknown25 = 25, // Gorea-related
+        GoreaHead = 25,
         GoreaArm = 26,
-        Unknown27 = 27, // Gorea-related
+        GoreaLeg = 27,
         Gorea1B = 28,
-        GoreaSealSphere = 29,
+        GoreaSealSphere1 = 29,
         Trocra = 30,
         Gorea2 = 31,
-        Unknown32 = 32, // Gorea-related
+        GoreaSealSphere2 = 32,
         GoreaMeteor = 33,
         PsychoBit2 = 34,
         Voldrum2 = 35,
@@ -381,7 +385,7 @@ namespace MphRead
         FireSpawn = 39,
         Spawner = 40,
         Slench = 41,
-        Unknown42 = 42, // Slench-related
+        SlenchShield = 42,
         SlenchNest = 43,
         SlenchSynapse = 44,
         SlenchTurret = 45,

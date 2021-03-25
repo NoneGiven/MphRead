@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using MphRead.Testing;
 
 namespace MphRead.Memory
 {
@@ -15,6 +16,15 @@ namespace MphRead.Memory
             public static readonly int FrameCount = 0x20D94FC;
             public static readonly int PlayerUA = 0x20DB180;
             public static readonly int CamSeqData = 0x21335E0;
+
+            public static class Save
+            {
+                public static readonly int Story = 0x20E97B0;
+                public static readonly int Type3 = 0x20D958C;
+                public static readonly int Settings = 0x20E83B8;
+                public static readonly int License = 0x20EB948;
+                public static readonly int Friends = 0x20ECEE0;
+            }
         }
 
         [DllImport("kernel32.dll")]
@@ -43,7 +53,7 @@ namespace MphRead.Memory
         public static void Start()
         {
             // FF DE FF E7 FF DE FF E7 FF DE FF E7 @ 0x2004000
-            new Memory(Process.GetProcessById(30276)).Run();
+            new Memory(Process.GetProcessById(3984)).Run();
             /*var procs = Process.GetProcessesByName("NO$GBA").ToList();
             foreach (Process process in procs)
             {
@@ -61,18 +71,27 @@ namespace MphRead.Memory
 
         private void Run()
         {
-            _baseAddress = new IntPtr(0x92AC100);
+            _baseAddress = new IntPtr(0x998E100);
             Task.Run(async () =>
             {
                 // 0x137A9C Cretaphid 1 crystal
+                // 0x137B8C Cretaphid 1 laser
                 // 0x137C7C Cretaphid 2 plasma
                 // 0x13846C Slench 1 tear
+                // 0x13855C Slench beams x4
                 //var results = new List<(int, int)>();
                 //string last = "";
+                RefreshMemory();
+                var story = new StorySaveData(this, Addresses.Save.Story);
+                var type3 = new SaveType3(this, Addresses.Save.Type3);
+                var settings = new StatsAndSettings(this, Addresses.Save.Settings);
+                var license = new StorySaveData(this, Addresses.Save.License);
+                var friends = new StorySaveData(this, Addresses.Save.Friends);
+                IReadOnlyList<StringTableEntry> scans = Strings.ReadStringTable(StringTables.ScanLog);
                 while (true)
                 {
                     RefreshMemory();
-                    GetEntities();
+                    //GetEntities();
                     //byte[] weapon = new byte[0xF0];
                     //for (int i = 0; i < 0xF0; i++)
                     //{
@@ -97,11 +116,12 @@ namespace MphRead.Memory
                     //        last = output;
                     //    }
                     //}
-                    Console.Clear();
-                    foreach (CPlatform plat in _entities.Where(e => e.EntityType == EntityType.Platform).Select(e => (CPlatform)e))
-                    {
-                        Console.WriteLine($"{plat.ModelId}: {plat.State}");
-                    }
+                    //Console.Clear();
+                    //foreach (CPlatform plat in _entities.Where(e => e.EntityType == EntityType.Platform).Select(e => (CPlatform)e))
+                    //{
+                    //    Console.WriteLine($"{plat.ModelId}: {plat.State}");
+                    //}
+                    TestLogic.CompletionValues pcts = TestLogic.GetCompletionValues(story);
                     await Task.Delay(15);
                 }
             }).GetAwaiter().GetResult();
@@ -275,355 +295,6 @@ namespace MphRead.Memory
                 return new CBeamProjectile(this, address);
             }
             return new CEntity(this, address);
-        }
-
-        public static void ParseStruct(string className, bool entity, string data)
-        {
-            if (String.IsNullOrWhiteSpace(data))
-            {
-                return;
-            }
-            int index = 0;
-            int offset = entity ? 0x18 : 0;
-            var byteEnums = new Dictionary<string, string>()
-            {
-                { "ENEMY_TYPE", "EnemyType" },
-                { "HUNTER", "Hunter" }
-            };
-            var ushortEnums = new Dictionary<string, string>()
-            {
-                { "ITEM_TYPE", "ItemType" }
-            };
-            var uintEnums = new Dictionary<string, string>()
-            {
-                { "EVENT_TYPE", "Message" },
-                { "DOOR_TYPE", "DoorType" },
-                { "COLLISION_VOLUME_TYPE", "VolumeType" }
-            };
-            if (entity)
-            {
-                Console.WriteLine($"public class {className} : CEntity");
-            }
-            else
-            {
-                Console.WriteLine($"public class {className} : MemoryClass");
-            }
-            Console.WriteLine("    {");
-            var news = new List<string>();
-            foreach (string line in data.Split(Environment.NewLine))
-            {
-                string[] split = line.Trim().Replace("signed ", "signed").Replace(" *", "* ").Replace(";", "").Split(' ');
-                Debug.Assert(split.Length == 2);
-                string name = "";
-                foreach (string part in split[1].Split('_'))
-                {
-                    name += part[0].ToString().ToUpperInvariant() + part[1..];
-                }
-                string comment = "";
-                string type;
-                string getter;
-                string setter;
-                int size;
-                bool enums = false;
-                bool embed = false;
-                string cast = "";
-                if (split[0].Contains("*"))
-                {
-                    type = "IntPtr";
-                    getter = "ReadPointer";
-                    setter = "WritePointer";
-                    size = 4;
-                    comment = $" // {split[0]}";
-                }
-                else if (split[0] == "EntityPtrUnion")
-                {
-                    type = "IntPtr";
-                    getter = "ReadPointer";
-                    setter = "WritePointer";
-                    size = 4;
-                    comment = $" // CEntity*";
-                }
-                else if (split[0] == "EntityIdOrRef")
-                {
-                    type = "IntPtr";
-                    getter = "ReadPointer";
-                    setter = "WritePointer";
-                    size = 4;
-                    comment = $" // EntityIdOrRef";
-                }
-                else if (split[0] == "int")
-                {
-                    type = "int";
-                    getter = "ReadInt32";
-                    setter = "WriteInt32";
-                    size = 4;
-                }
-                else if (split[0] == "unsignedint")
-                {
-                    type = "uint";
-                    getter = "ReadUInt32";
-                    setter = "WriteUInt32";
-                    size = 4;
-                }
-                else if (split[0] == "signed__int16")
-                {
-                    type = "short";
-                    getter = "ReadInt16";
-                    setter = "WriteInt16";
-                    size = 2;
-                }
-                else if (split[0] == "__int16" || split[0] == "unsigned__int16")
-                {
-                    type = "ushort";
-                    getter = "ReadUInt16";
-                    setter = "WriteUInt16";
-                    size = 2;
-                }
-                else if (split[0] == "char" || split[0] == "__int8" || split[0] == "unsigned__int8")
-                {
-                    type = "byte";
-                    getter = "ReadByte";
-                    setter = "WriteByte";
-                    size = 1;
-                }
-                else if (split[0] == "signed__int8")
-                {
-                    type = "sbyte";
-                    getter = "ReadSByte";
-                    setter = "WriteSByte";
-                    size = 1;
-                }
-                else if (split[0] == "Color3")
-                {
-                    type = "ColorRgb";
-                    getter = "ReadColor3";
-                    setter = "WriteColor3";
-                    size = 3;
-                }
-                else if (split[0] == "VecFx32")
-                {
-                    type = "Vector3";
-                    getter = "ReadVec3";
-                    setter = "WriteVec3";
-                    size = 12;
-                }
-                else if (split[0] == "Vec4")
-                {
-                    type = "Vector4";
-                    getter = "ReadVec4";
-                    setter = "WriteVec4";
-                    size = 16;
-                }
-                else if (split[0] == "MtxFx43")
-                {
-                    type = "Matrix4x3";
-                    getter = "ReadMtx43";
-                    setter = "WriteMtx43";
-                    size = 48;
-                }
-                else if (split[0] == "CModel")
-                {
-                    type = "CModel";
-                    getter = "";
-                    setter = "";
-                    size = 0x48;
-                    embed = true;
-                }
-                else if (split[0] == "BeamInfo")
-                {
-                    type = "BeamInfo";
-                    getter = "";
-                    setter = "";
-                    size = 0x14;
-                    embed = true;
-                }
-                else if (split[0] == "EntityCollision")
-                {
-                    type = "EntityCollision";
-                    getter = "";
-                    setter = "";
-                    size = 0xB4;
-                    embed = true;
-                }
-                else if (split[0] == "SmallSfxStruct")
-                {
-                    type = "SmallSfxStruct";
-                    getter = "";
-                    setter = "";
-                    size = 4;
-                    embed = true;
-                }
-                else if (split[0] == "CollisionVolume")
-                {
-                    type = "CollisionVolume";
-                    getter = "";
-                    setter = "";
-                    size = 0x40;
-                    embed = true;
-                }
-                else if (split[0] == "Light")
-                {
-                    type = "Light";
-                    getter = "";
-                    setter = "";
-                    size = 0xF;
-                    embed = true;
-                }
-                else if (split[0] == "LightInfo")
-                {
-                    type = "LightInfo";
-                    getter = "";
-                    setter = "";
-                    size = 0x1F;
-                    embed = true;
-                }
-                else if (split[0] == "CameraInfo")
-                {
-                    type = "CameraInfo";
-                    getter = "";
-                    setter = "";
-                    size = 0x11C;
-                    embed = true;
-                }
-                else if (split[0] == "PlayerControlsMaybe")
-                {
-                    type = "PlayerControls";
-                    getter = "";
-                    setter = "";
-                    size = 0x9C;
-                    embed = true;
-                }
-                else if (split[0] == "PlayerInputProbably")
-                {
-                    type = "PlayerInput";
-                    getter = "";
-                    setter = "";
-                    size = 0x48;
-                    embed = true;
-                }
-                else if (split[0] == "CBeamProjectile")
-                {
-                    type = "CBeamProjectile";
-                    getter = "";
-                    setter = "";
-                    size = 0x158;
-                    embed = true;
-                }
-                else if (byteEnums.TryGetValue(split[0], out string? value))
-                {
-                    type = value;
-                    getter = "ReadByte";
-                    setter = "WriteByte";
-                    size = 1;
-                    enums = true;
-                    cast = "byte";
-                }
-                else if (ushortEnums.TryGetValue(split[0], out value))
-                {
-                    type = value;
-                    getter = "ReadUInt16";
-                    setter = "WriteUInt16";
-                    size = 2;
-                    enums = true;
-                    cast = "ushort";
-                }
-                else if (uintEnums.TryGetValue(split[0], out value))
-                {
-                    type = value;
-                    getter = "ReadUInt32";
-                    setter = "WriteUInt32";
-                    size = 4;
-                    enums = true;
-                    cast = "uint";
-                }
-                else
-                {
-                    type = split[0];
-                    getter = "Read";
-                    setter = "Write";
-                    size = 4;
-                    embed = true;
-                    Debugger.Break();
-                }
-                int number = 0;
-                bool array = name.Contains('[');
-                string param = "";
-                if (array)
-                {
-                    split = name.Split('[');
-                    number = Int32.Parse(split[1].Split(']')[0]);
-                    Debug.Assert(number > 1);
-                    name = split[0];
-                    if (comment == "")
-                    {
-                        comment = $" // {type}";
-                    }
-                    comment += $"[{number}]";
-                    if (embed)
-                    {
-                        param = $",{Environment.NewLine}                {size}, (Memory m, int a) => new {type}(m, a)";
-                        type = $"StructArray<{type}>";
-                    }
-                    else if (enums && size == 1)
-                    {
-                        type = $"U8EnumArray<{type}>";
-                    }
-                    else if (enums && size == 2)
-                    {
-                        type = $"U16EnumArray<{type}>";
-                    }
-                    else if (enums && size == 4)
-                    {
-                        type = $"U32EnumArray<{type}>";
-                    }
-                    else
-                    {
-                        type = getter.Replace("Read", "").Replace("Pointer", "IntPtr") + "Array";
-                    }
-                    size *= number;
-                }
-                Console.WriteLine($"        private const int _off{index} = 0x{offset:X1};{comment}");
-                if (array)
-                {
-                    Console.WriteLine($"        public {type} {name} {{ get; }}");
-                    news.Add($"            {name} = new {type}(memory, address + _off{index}, {number}{param});");
-                }
-                else if (embed)
-                {
-                    Console.WriteLine($"        public {type} {name} {{ get; }}");
-                    news.Add($"            {name} = new {type}(memory, address + _off{index});");
-                }
-                else if (enums)
-                {
-                    Console.WriteLine($"        public {type} {name} {{ get => ({type}){getter}(_off{index}); " +
-                        $"set => {setter}(_off{index}, ({cast})value); }}");
-                }
-                else
-                {
-                    Console.WriteLine($"        public {type} {name} {{ get => {getter}(_off{index}); " +
-                        $"set => {setter}(_off{index}, value); }}");
-                }
-                Console.WriteLine();
-                index++;
-                offset += size;
-            }
-            Console.WriteLine($"        public {className}(Memory memory, int address) : base(memory, address)");
-            Console.WriteLine("        {");
-            foreach (string line in news)
-            {
-                Console.WriteLine(line);
-            }
-            Console.WriteLine("        }");
-            Console.WriteLine();
-            Console.WriteLine($"        public {className}(Memory memory, IntPtr address) : base(memory, address)");
-            Console.WriteLine("        {");
-            foreach (string line in news)
-            {
-                Console.WriteLine(line);
-            }
-            Console.WriteLine("        }");
-            Console.WriteLine("    }");
-            Debugger.Break();
         }
     }
 }

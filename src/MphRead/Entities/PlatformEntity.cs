@@ -731,6 +731,7 @@ namespace MphRead.Entities
                     {
                         if (_data.ReverseType == 0)
                         {
+                            // reverse when reaching last position
                             if (_stateBits.HasFlag(PlatStateBits.Reverse))
                             {
                                 if (_fromIndex == 0)
@@ -747,12 +748,14 @@ namespace MphRead.Entities
                         }
                         else if (_data.ReverseType == 1)
                         {
+                            // wrap around from last position to first
                             int index = _fromIndex + (_stateBits.HasFlag(PlatStateBits.Reverse) ? -1 : 1);
                             _toIndex = index % _data.PositionCount;
                             _state = PlatformState.Moving;
                         }
                         else if (_data.ReverseType == 2)
                         {
+                            // deactivate when reaching last position and wait for another activation to reverse
                             if ((_stateBits.HasFlag(PlatStateBits.Reverse) && _fromIndex == 0)
                                 || (!_stateBits.HasFlag(PlatStateBits.Reverse) && _fromIndex == _data.PositionCount - 1))
                             {

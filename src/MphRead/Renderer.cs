@@ -71,7 +71,6 @@ namespace MphRead
         private Vector3 _cameraRight = Vector3.UnitX;
         private float _cameraFov = MathHelper.DegreesToRadians(78);
         private bool _leftMouse = false;
-        private float _wheelOffset = 0;
         private int _activeCutscene = -1;
         private Vector3 _priorCameraPos = Vector3.Zero;
         private Vector3 _priorCameraFacing = -Vector3.UnitZ;
@@ -2594,9 +2593,15 @@ namespace MphRead
         {
             if (_cameraMode == CameraMode.Pivot && AllowCameraMovement)
             {
-                float delta = _wheelOffset - offsetY;
-                _pivotDistance += delta / 1.5f;
-                _wheelOffset = offsetY;
+                _pivotDistance += offsetY / -1.5f;
+                if (_pivotDistance < 0)
+                {
+                    _pivotDistance = 0;
+                }
+                else if (_pivotDistance > 1000)
+                {
+                    _pivotDistance = 1000;
+                }
             }
         }
 

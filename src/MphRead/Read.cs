@@ -983,6 +983,11 @@ namespace MphRead
             return SpanReadUint(bytes, ref offset);
         }
 
+        public static ushort SpanReadUshort(ReadOnlySpan<byte> bytes, uint offset)
+        {
+            return SpanReadUshort(bytes, (int)offset);
+        }
+
         public static ushort SpanReadUshort(ReadOnlySpan<byte> bytes, int offset)
         {
             return SpanReadUshort(bytes, ref offset);
@@ -1125,20 +1130,20 @@ namespace MphRead
             return strings;
         }
 
-        public static void ExtractArchive(string name)
+        public static void ExtractArchive(string path)
         {
-            string input = Path.Combine(Paths.FileSystem, "archives", $"{name}.arc");
-            string output = Path.Combine(Paths.FileSystem, "_archives", name);
+            string name = Path.GetFileNameWithoutExtension(path);
+            string output = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(path) ?? "", "..", "_archives", name));
             try
             {
                 int filesWritten = 0;
                 Directory.CreateDirectory(output);
-                Console.WriteLine("Reading file...");
-                var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(input));
+                Console.Write($"Reading {name}...");
+                var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
                 if (Encoding.ASCII.GetString(bytes[0..8]) == Archiver.MagicString)
                 {
-                    Console.WriteLine("Extracting archive...");
-                    filesWritten = Archiver.Extract(input, output);
+                    Console.Write(" Extracting archive...");
+                    filesWritten = Archiver.Extract(path, output);
                 }
                 else if (bytes[0] == Lz.MagicByte)
                 {
@@ -1150,17 +1155,19 @@ namespace MphRead
                     catch { }
                     Directory.CreateDirectory(temp);
                     string destination = Path.Combine(temp, $"{name}.arc");
-                    Console.WriteLine("Decompressing...");
-                    Lz.Decompress(input, destination);
-                    Console.WriteLine("Extracting archive...");
+                    Console.Write(" Decompressing...");
+                    Lz.Decompress(path, destination);
+                    Console.Write(" Extracting archive...");
                     filesWritten = Archiver.Extract(destination, output);
                     Directory.Delete(temp, recursive: true);
                 }
-                Console.WriteLine($"Extracted {filesWritten} file{(filesWritten == 1 ? "" : "s")} to {output}.");
+                Console.WriteLine();
+                Console.WriteLine($"Extracted {filesWritten} file{(filesWritten == 1 ? "" : "s")}.");
             }
             catch
             {
-                Console.WriteLine($"Failed to extract archive. Verify an archive exists at {input}.");
+                Console.WriteLine();
+                Console.WriteLine($"Failed to extract archive. Verify an archive exists at {path}.");
             }
         }
 

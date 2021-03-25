@@ -81,7 +81,7 @@ namespace MphRead
         public readonly byte ItemChance;
         public readonly byte Padding1C9;
         public readonly ushort Padding1CA;
-        public readonly uint ItemModel;
+        public readonly ItemType ItemType;
         public readonly uint Unused1D0; // always 0
         public readonly uint Unused1D4; // always UInt32.MaxValue
         public readonly uint BeamHitMsgTarget;
@@ -239,7 +239,7 @@ namespace MphRead
         public readonly ushort Health;
         public readonly ushort HealthMax;
         public readonly ushort Field38;
-        public readonly byte Field3A;
+        public readonly byte HunterColor;
         public readonly byte Field3B;
         // union start
         public readonly uint Field3C;
@@ -362,7 +362,7 @@ namespace MphRead
         public readonly short EntityId3;
         public readonly ushort Field1F2;
         public readonly Message Message3;
-        public readonly uint ItemModel;
+        public readonly ItemType ItemType;
     }
 
     // size: 268
@@ -701,13 +701,13 @@ namespace MphRead
         public readonly byte HasBase; // boolean
         public readonly short Message1Target;
         public readonly ushort Padding2A;
-        public readonly uint Message1Id;
+        public readonly Message Message1;
         public readonly short Message2Target;
         public readonly ushort Padding32;
-        public readonly uint Message2Id;
+        public readonly Message Message2;
         public readonly short Message3Target;
         public readonly ushort Padding3A;
-        public readonly uint Message3Id;
+        public readonly Message Message3;
         public readonly short LinkedEntityId; // always -1
     }
 

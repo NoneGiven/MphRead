@@ -54,63 +54,6 @@ namespace MphRead
             }
         }
 
-        public static void GetPolygonAttrs(Model model, int polygonId)
-        {
-            foreach (Material material in model.Materials)
-            {
-                GetPolygonAttrs(model, material, polygonId);
-            }
-        }
-
-        public static void GetPolygonAttrs(Model model, Material material, int polygonId)
-        {
-            Debug.Assert(polygonId >= 0);
-            int v19 = polygonId == 1 ? 0x4000 : 0;
-            int v20 = v19 | 0x8000;
-            int attr = v20 | material.Lighting | 16 * (int)material.PolygonMode
-                | ((int)material.Culling << 6) | (polygonId << 24) | (material.Alpha << 16);
-            Console.WriteLine($"{model.Name} - {material.Name}");
-            Console.WriteLine($"light = {material.Lighting}, mode = {(int)material.PolygonMode} ({material.PolygonMode}), " +
-                $"cull = {(int)material.Culling} ({material.Culling}), alpha = {material.Alpha}, id = {polygonId}");
-            DumpPolygonAttr((uint)attr);
-        }
-
-        public static void DumpPolygonAttr(uint attr)
-        {
-            Console.WriteLine($"0x{attr:X2}");
-            string bits = Convert.ToString(attr, 2);
-            Console.WriteLine(bits);
-            Console.WriteLine($"light1: {attr & 0x1}");
-            Console.WriteLine($"light2: {(attr >> 1) & 0x1}");
-            Console.WriteLine($"light3: {(attr >> 2) & 0x1}");
-            Console.WriteLine($"light4: {(attr >> 3) & 0x1}");
-            Console.WriteLine($"mode: {(attr >> 4) & 0x2}");
-            Console.WriteLine($"back: {(attr >> 6) & 0x1}");
-            Console.WriteLine($"front: {(attr >> 7) & 0x1}");
-            Console.WriteLine($"clear: {(attr >> 11) & 0x1}");
-            Console.WriteLine($"far: {(attr >> 12) & 0x1}");
-            Console.WriteLine($"1dot: {(attr >> 13) & 0x1}");
-            Console.WriteLine($"depth: {(attr >> 14) & 0x1}");
-            Console.WriteLine($"fog: {(attr >> 15) & 0x1}");
-            Console.WriteLine($"alpha: {(attr >> 16) & 0x1F}");
-            Console.WriteLine($"id: {(attr >> 24) & 0x3F}");
-            Console.WriteLine();
-        }
-
-        public static Vector3 LightCalc(Vector3 light_vec, Vector3 light_col, Vector3 normal_vec,
-            Vector3 dif_col, Vector3 amb_col, Vector3 spe_col)
-        {
-            var sight_vec = new Vector3(0.0f, 0.0f, -1.0f);
-            float dif_factor = Math.Max(0.0f, -Vector3.Dot(light_vec, normal_vec));
-            Vector3 half_vec = (light_vec + sight_vec) / 2.0f;
-            float spe_factor = Math.Max(0.0f, Vector3.Dot(-half_vec, normal_vec));
-            spe_factor *= spe_factor;
-            Vector3 spe_out = spe_col * light_col * spe_factor;
-            Vector3 dif_out = dif_col * light_col * dif_factor;
-            Vector3 amb_out = amb_col * light_col;
-            return spe_out + dif_out + amb_out;
-        }
-
         public static void TestAllLayers()
         {
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
@@ -136,9 +79,10 @@ namespace MphRead
 
         public static void TestAllEntities()
         {
+            var used = new HashSet<Message>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
-                if (meta.Value.EntityPath != null)
+                if (meta.Value.EntityPath != null && !meta.Value.FirstHunt)
                 {
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
                     foreach (Entity entity in entities)
@@ -146,61 +90,89 @@ namespace MphRead
                         if (entity.Type == EntityType.Platform)
                         {
                             PlatformEntityData data = ((Entity<PlatformEntityData>)entity).Data;
-                            string name = "N/A";
-                            if (data.ModelId != 2)
+                            used.Add(data.ScanMessage);
+                            used.Add(data.LifetimeMessage1);
+                            used.Add(data.LifetimeMessage2);
+                            used.Add(data.LifetimeMessage3);
+                            used.Add(data.LifetimeMessage4);
+                            used.Add(data.BeamHitMessage);
+                            used.Add(data.DeadMessage);
+                            used.Add(data.PlayerColMessage);
+                        }
+                        else if (entity.Type == EntityType.Object)
+                        {
+                            ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
+                            used.Add(data.ScanMessage);
+                        }
+                        else if (entity.Type == EntityType.Artifact)
+                        {
+                            ArtifactEntityData data = ((Entity<ArtifactEntityData>)entity).Data;
+                            used.Add(data.Message1);
+                            used.Add(data.Message2);
+                            used.Add(data.Message3);
+                        }
+                        else if (entity.Type == EntityType.EnemySpawn)
+                        {
+                            EnemySpawnEntityData data = ((Entity<EnemySpawnEntityData>)entity).Data;
+                            used.Add(data.Message1);
+                            used.Add(data.Message2);
+                            used.Add(data.Message3);
+                            if (data.Type == EnemyType.Hunter && data.TextureId != 0)
                             {
-                                name = Metadata.GetPlatformById((int)data.ModelId)!.Name;
+                                Console.WriteLine($"EH {meta.Value.InGameName} {(Hunter)data.Subtype} type {data.TextureId}");
                             }
-                            if (data.ParentId != -1)
-                            {
-                                Console.WriteLine($"{meta.Key} - {name} [{data.Header.EntityId,2}]");
-                            }
+                        }
+                        else if (entity.Type == EntityType.ItemSpawn)
+                        {
+                            ItemSpawnEntityData data = ((Entity<ItemSpawnEntityData>)entity).Data;
+                            used.Add(data.CollectedMessage);
+                        }
+                        else if (entity.Type == EntityType.CameraSequence)
+                        {
+                            CameraSequenceEntityData data = ((Entity<CameraSequenceEntityData>)entity).Data;
+                            used.Add(data.Message);
+                        }
+                        else if (entity.Type == EntityType.AreaVolume)
+                        {
+                            AreaVolumeEntityData data = ((Entity<AreaVolumeEntityData>)entity).Data;
+                            used.Add(data.InsideMessage);
+                            used.Add(data.ExitMessage);
+                        }
+                        else if (entity.Type == EntityType.TriggerVolume)
+                        {
+                            TriggerVolumeEntityData data = ((Entity<TriggerVolumeEntityData>)entity).Data;
+                            used.Add(data.ParentMessage);
+                            used.Add(data.ChildMessage);
                         }
                     }
                 }
             }
-            Nop();
-        }
-
-        public static void PrintEntityEditor(Type type)
-        {
-            string name = type.Name;
-            string rawName = type.Name.Replace("Editor", "Data");
-            Console.WriteLine($"public {name}(Entity header, {rawName} raw) : base(header)");
-            Console.WriteLine("        {");
-            foreach (System.Reflection.PropertyInfo prop in type.GetProperties())
+            for (int i = 0; i < Formats.CameraSequence.Filenames.Count; i++)
             {
-                string propName = prop.Name;
-                string srcName = prop.Name;
-                if (prop.PropertyType == typeof(bool))
+                if (i != 8 && i != 66 && i != 69 && i != 84 && i != 106 && i != 122 && i != 123)
                 {
-                    Console.WriteLine($"            {propName} = raw.{srcName} != 0;");
-                }
-                else if (prop.PropertyType == typeof(CollisionVolume))
-                {
-                    Console.WriteLine($"            {propName} = new CollisionVolume(raw.{srcName});");
-                }
-                else
-                {
-                    string prefix = "";
-                    string suffix = "";
-                    if (prop.PropertyType == typeof(Vector3))
+                    var seq = Formats.CameraSequence.Load(i);
+                    foreach (CameraSequenceKeyframe frame in seq.Keyframes)
                     {
-                        suffix = ".ToFloatVector()";
+                        used.Add((Message)frame.MessageId);
                     }
-                    else if (prop.PropertyType == typeof(string))
-                    {
-                        suffix = ".MarshalString()";
-                    }
-                    if (prop.Name == "Id" || prop.Name == "Type" || prop.Name == "LayerMask" || prop.Name == "NodeName"
-                         || prop.Name == "Position" || prop.Name == "Up" || prop.Name == "Facing")
-                    {
-                        continue;
-                    }
-                    Console.WriteLine($"            {propName} = {prefix}raw.{srcName}{suffix};");
                 }
             }
-            Console.WriteLine("        }");
+            //Console.WriteLine("Used:");
+            //foreach (Message message in used.OrderBy(m => m))
+            //{
+            //    Console.WriteLine(message);
+            //}
+            //Console.WriteLine();
+            //Console.WriteLine("Unused:");
+            //for (int i = 0; i <= 61; i++)
+            //{
+            //    var message = (Message)i;
+            //    if (!used.Contains(message))
+            //    {
+            //        Console.WriteLine(message);
+            //    }
+            //}
             Nop();
         }
 
