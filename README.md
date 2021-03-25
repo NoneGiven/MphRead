@@ -11,8 +11,8 @@ This project is a model viewer, scene renderer, and general parser for file form
 
 ## Planned
 - Music and SFX playback
-- Render more things
-- Implement more gameplay logic
+- - Room editor and save editor
+- Render more things, implement more gameplay logic
 - And even more!
 
 ## Usage
@@ -27,6 +27,8 @@ At most one room may be specified, while any number of models may be specified.
 To load First Hunt models, include -fh in the argument list.
 Available room options: -mode, -players, -boss, -node, -entity
 ```
+
+If no arguments are passed, MphRead will prompt for a room name or ID.
 
 See the [full setup and export guide](https://github.com/NoneGiven/MphRead/wiki/Setup-&-Export-Guide) for details on setup and command line options.
 
