@@ -12,6 +12,13 @@ namespace MphRead
         Model
     }
 
+    public enum MetaDir
+    {
+        Models,
+        Hud,
+        Stage
+    }
+
     public class ModelMetadata
     {
         public string Name { get; }
@@ -39,12 +46,20 @@ namespace MphRead
             }
         }
 
-        public ModelMetadata(string name, bool hud)
+        public ModelMetadata(string name, MetaDir dir, bool anim = false)
         {
             Name = name;
-            string directory = hud ? "hud" : "models";
+            string directory = "models";
+            if (dir == MetaDir.Hud)
+            {
+                directory = "hud";
+            }
+            else if (dir == MetaDir.Stage)
+            {
+                directory = "stage";
+            }
             ModelPath = $@"{directory}\{name}_Model.bin";
-            AnimationPath = null;
+            AnimationPath = anim ? $@"{directory}\{name}_Anim.bin" : null;
             Recolors = new List<RecolorMetadata>()
             {
                 new RecolorMetadata("default", ModelPath, ModelPath)
@@ -3342,56 +3357,169 @@ namespace MphRead
                 // cockpit
                 {
                     "unit1_land_cockpit",
-                    new ModelMetadata("unit1_land_cockpit", hud: true)
+                    new ModelMetadata("unit1_land_cockpit", dir: MetaDir.Hud)
                 },
                 {
                     "unit2_land_cockpit",
-                    new ModelMetadata("unit2_land_cockpit", hud: true)
+                    new ModelMetadata("unit2_land_cockpit", dir: MetaDir.Hud)
                 },
                 {
                     "unit3_land_cockpit",
-                    new ModelMetadata("unit3_land_cockpit", hud: true)
+                    new ModelMetadata("unit3_land_cockpit", dir: MetaDir.Hud)
                 },
                 {
                     "unit4_land_cockpit",
-                    new ModelMetadata("unit4_land_cockpit", hud: true)
+                    new ModelMetadata("unit4_land_cockpit", dir: MetaDir.Hud)
                 },
                 {
                     "gorea_land_cockpit",
-                    new ModelMetadata("gorea_land_cockpit", hud: true)
+                    new ModelMetadata("gorea_land_cockpit", dir: MetaDir.Hud)
                 },
                 // nav rooms
                 {
                     "unit1_1NAV",
-                    new ModelMetadata("unit1_1NAV", hud: true)
+                    new ModelMetadata("unit1_1NAV", dir: MetaDir.Hud)
                 },
                 {
                     "unit1_2NAV",
-                    new ModelMetadata("unit1_2NAV", hud: true)
+                    new ModelMetadata("unit1_2NAV", dir: MetaDir.Hud)
                 },
                 {
                     "unit2_1NAV",
-                    new ModelMetadata("unit2_1NAV", hud: true)
+                    new ModelMetadata("unit2_1NAV", dir: MetaDir.Hud)
                 },
                 {
                     "unit2_2NAV",
-                    new ModelMetadata("unit2_2NAV", hud: true)
+                    new ModelMetadata("unit2_2NAV", dir: MetaDir.Hud)
                 },
                 {
                     "unit3_1NAV",
-                    new ModelMetadata("unit3_1NAV", hud: true)
+                    new ModelMetadata("unit3_1NAV", dir: MetaDir.Hud)
                 },
                 {
                     "unit3_2NAV",
-                    new ModelMetadata("unit3_2NAV", hud: true)
+                    new ModelMetadata("unit3_2NAV", dir: MetaDir.Hud)
                 },
                 {
                     "unit4_1NAV",
-                    new ModelMetadata("unit4_1NAV", hud: true)
+                    new ModelMetadata("unit4_1NAV", dir: MetaDir.Hud)
                 },
                 {
                     "Door_NAV",
-                    new ModelMetadata("Door_NAV", hud: true)
+                    new ModelMetadata("Door_NAV", dir: MetaDir.Hud)
+                },
+                // stage portrait
+                {
+                    "ad1",
+                    new ModelMetadata("ad1", dir: MetaDir.Stage)
+                },
+                {
+                    "ad1_dm1",
+                    new ModelMetadata("ad1_dm1", dir: MetaDir.Stage)
+                },
+                {
+                    "ad2",
+                    new ModelMetadata("ad2", dir: MetaDir.Stage)
+                },
+                {
+                    "ad2_dm1",
+                    new ModelMetadata("ad2_dm1", dir: MetaDir.Stage)
+                },
+                {
+                    "ctf1",
+                    new ModelMetadata("ctf1", dir: MetaDir.Stage)
+                },
+                {
+                    "ctf1_dm1",
+                    new ModelMetadata("ctf1_dm1", dir: MetaDir.Stage)
+                },
+                {
+                    "e3level",
+                    new ModelMetadata("e3level", dir: MetaDir.Stage)
+                },
+                {
+                    "goreab2",
+                    new ModelMetadata("goreab2", dir: MetaDir.Stage)
+                },
+                {
+                    "mp1",
+                    new ModelMetadata("mp1", dir: MetaDir.Stage)
+                },
+                {
+                    "mp2",
+                    new ModelMetadata("mp2", dir: MetaDir.Stage)
+                },
+                {
+                    "mp3",
+                    new ModelMetadata("mp3", dir: MetaDir.Stage)
+                },
+                {
+                    "mp4",
+                    new ModelMetadata("mp4", dir: MetaDir.Stage)
+                },
+                {
+                    "mp4_dm1",
+                    new ModelMetadata("mp4_dm1", dir: MetaDir.Stage)
+                },
+                {
+                    "mp5",
+                    new ModelMetadata("mp5", dir: MetaDir.Stage)
+                },
+                {
+                    "mp6",
+                    new ModelMetadata("mp6", dir: MetaDir.Stage)
+                },
+                {
+                    "mp7",
+                    new ModelMetadata("mp7", dir: MetaDir.Stage)
+                },
+                {
+                    "mp8",
+                    new ModelMetadata("mp8", dir: MetaDir.Stage)
+                },
+                {
+                    "mp9",
+                    new ModelMetadata("mp9", dir: MetaDir.Stage)
+                },
+                {
+                    "mp10",
+                    new ModelMetadata("mp10", dir: MetaDir.Stage)
+                },
+                {
+                    "mp11",
+                    new ModelMetadata("mp11", dir: MetaDir.Stage)
+                },
+                {
+                    "mp12",
+                    new ModelMetadata("mp12", dir: MetaDir.Stage)
+                },
+                {
+                    "mp13",
+                    new ModelMetadata("mp13", dir: MetaDir.Stage)
+                },
+                {
+                    "mp14",
+                    new ModelMetadata("mp14", dir: MetaDir.Stage)
+                },
+                {
+                    "random",
+                    new ModelMetadata("random", dir: MetaDir.Stage)
+                },
+                {
+                    "unit1land",
+                    new ModelMetadata("unit1land", dir: MetaDir.Stage)
+                },
+                {
+                    "unit2land",
+                    new ModelMetadata("unit2land", dir: MetaDir.Stage)
+                },
+                {
+                    "unit3land",
+                    new ModelMetadata("unit3land", dir: MetaDir.Stage)
+                },
+                {
+                    "unit4land",
+                    new ModelMetadata("unit4land", dir: MetaDir.Stage)
                 },
                 // effectsBase
                 {
