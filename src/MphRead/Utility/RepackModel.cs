@@ -160,6 +160,32 @@ namespace MphRead.Utility
             Nop();
         }
 
+        public static void CompareModels(string model1, string model2, string game1 = "amhe1", string game2 = "amhe1")
+        {
+            ModelMetadata meta1 = Metadata.ModelMetadata[model1];
+            ModelMetadata meta2 = Metadata.ModelMetadata[model2];
+            string path1 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, meta1.ModelPath);
+            string path2 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, meta2.ModelPath);
+            CompareModels(model1, File.ReadAllBytes(path1), File.ReadAllBytes(path2), new RepackOptions()
+            {
+                Texture = RepackTexture.Separate
+            });
+            Nop();
+        }
+
+        public static void CompareAnims(string model1, string model2, string game1 = "amhe1", string game2 = "amhe1")
+        {
+            ModelMetadata meta1 = Metadata.ModelMetadata[model1];
+            ModelMetadata meta2 = Metadata.ModelMetadata[model2];
+            if (meta1.AnimationPath != null && meta2.AnimationPath != null)
+            {
+                string path1 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, meta1.AnimationPath);
+                string path2 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, meta2.AnimationPath);
+                CompareAnims(model1, File.ReadAllBytes(path1), File.ReadAllBytes(path2));
+            }
+            Nop();
+        }
+
         private static void CompareModels(string name, byte[] bytes, byte[] otherBytes, RepackOptions options)
         {
             string temp = name;
