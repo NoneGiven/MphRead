@@ -32,7 +32,7 @@ namespace MphRead
         public ColorRgb Light2Color { get; }
         public Vector3 Light2Vector { get; }
         public float KillHeight { get; }
-        public uint Field6C { get; }
+        public uint Size { get; } // 0 - none, 2 - small, 3 - medium, 4 - large, 6 - 1P
         public bool Multiplayer { get; }
         public bool FirstHunt { get; }
         public bool Hybrid { get; }
@@ -41,7 +41,7 @@ namespace MphRead
             string? texturePath, string? entityPath, string? nodePath, string? roomNodeName, uint battleTimeLimit, uint timeLimit,
             short pointLimit, short nodeLayer, bool fogEnabled, bool clearFog, ColorRgb fogColor, int fogSlope, ushort fogOffset,
             ColorRgb light1Color, Vector3 light1Vector, ColorRgb light2Color, Vector3 light2Vector, int farClip, int killHeight,
-            uint field6C, bool multiplayer = false, bool firstHunt = false, bool hybrid = false)
+            uint size, bool multiplayer = false, bool firstHunt = false, bool hybrid = false)
         {
             Name = name;
             InGameName = inGameName;
@@ -79,7 +79,7 @@ namespace MphRead
             FarClip = Fixed.ToFloat(farClip);
             FarClipInt = farClip;
             KillHeight = Fixed.ToFloat(killHeight);
-            Field6C = field6C;
+            Size = size;
             FirstHunt = firstHunt;
             Hybrid = hybrid;
         }
@@ -269,7 +269,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: 0)
                 },
                 {
                     "UNIT1_CZ",
@@ -299,7 +299,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: 0)
                 },
                 {
                     "UNIT1_MORPH_CX",
@@ -329,7 +329,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: 0)
                 },
                 {
                     "UNIT1_MORPH_CZ",
@@ -359,7 +359,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: 0)
                 },
                 {
                     "UNIT2_CX",
@@ -389,7 +389,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: 0)
                 },
                 {
                     "UNIT2_CZ",
@@ -419,7 +419,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: 0)
                 },
                 {
                     "UNIT3_CX",
@@ -449,7 +449,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: 0)
                 },
                 {
                     "UNIT3_CZ",
@@ -479,7 +479,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: 0)
                 },
                 {
                     "UNIT4_CX",
@@ -509,7 +509,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: 0)
                 },
                 {
                     "UNIT4_CZ",
@@ -539,7 +539,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: 0)
                 },
                 {
                     "CYLINDER_C1",
@@ -569,7 +569,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: 0)
                 },
                 {
                     "BIGEYE_C1",
@@ -599,7 +599,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: 0)
                 },
                 {
                     "UNIT1_RM1_CX",
@@ -629,7 +629,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: 0)
                 },
                 {
                     "GOREA_C1",
@@ -659,7 +659,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: 0)
                 },
                 {
                     "UNIT3_MORPH_CZ",
@@ -689,7 +689,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: 0)
                 },
                 {
                     "UNIT1_LAND",
@@ -719,7 +719,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 6553600,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT1_C0",
@@ -749,7 +749,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT1_RM1",
@@ -779,7 +779,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT1_C4",
@@ -809,7 +809,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT1_RM6",
@@ -839,7 +839,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "CRYSTALROOM",
@@ -869,7 +869,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT1_RM4",
@@ -899,7 +899,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT1_TP1",
@@ -929,7 +929,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT1_B1",
@@ -959,7 +959,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT1_C1",
@@ -989,7 +989,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT1_C2",
@@ -1019,7 +1019,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT1_C5",
@@ -1049,7 +1049,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT1_RM2",
@@ -1079,7 +1079,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT1_RM3",
@@ -1109,7 +1109,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT1_RM5",
@@ -1139,7 +1139,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT1_C3",
@@ -1169,7 +1169,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT1_TP2",
@@ -1199,7 +1199,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT1_B2",
@@ -1229,7 +1229,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_LAND",
@@ -1259,7 +1259,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 6553600,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_C0",
@@ -1289,7 +1289,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 6553600,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_C1",
@@ -1319,7 +1319,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_RM1",
@@ -1349,7 +1349,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_C2",
@@ -1379,7 +1379,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_RM2",
@@ -1409,7 +1409,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_C3",
@@ -1439,7 +1439,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_RM3",
@@ -1469,7 +1469,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_C4",
@@ -1499,7 +1499,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_TP1",
@@ -1529,7 +1529,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_B1",
@@ -1559,7 +1559,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_C6",
@@ -1589,7 +1589,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 16384000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_C7",
@@ -1619,7 +1619,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 16384000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_RM4",
@@ -1649,7 +1649,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_RM5",
@@ -1679,7 +1679,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_RM6",
@@ -1709,7 +1709,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_RM7",
@@ -1739,7 +1739,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_RM8",
@@ -1769,7 +1769,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_TP2",
@@ -1799,7 +1799,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT2_B2",
@@ -1829,7 +1829,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT3_LAND",
@@ -1859,7 +1859,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 6553600,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT3_C0",
@@ -1889,7 +1889,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT3_C2",
@@ -1919,7 +1919,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT3_RM1",
@@ -1949,7 +1949,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT3_RM4",
@@ -1979,7 +1979,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT3_TP1",
@@ -2009,7 +2009,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT3_B1",
@@ -2039,7 +2039,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT3_C1",
@@ -2069,7 +2069,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT3_RM2",
@@ -2099,7 +2099,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 2457600,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT3_RM3",
@@ -2129,7 +2129,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT3_TP2",
@@ -2159,7 +2159,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT3_B2",
@@ -2189,7 +2189,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT4_LAND",
@@ -2219,7 +2219,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT4_RM1",
@@ -2249,7 +2249,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 327680,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT4_RM3",
@@ -2279,7 +2279,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT4_C0",
@@ -2309,7 +2309,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT4_TP1",
@@ -2339,7 +2339,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT4_B1",
@@ -2369,7 +2369,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT4_C1",
@@ -2399,7 +2399,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT4_RM2",
@@ -2429,7 +2429,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT4_RM4",
@@ -2459,7 +2459,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 327680,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT4_RM5",
@@ -2489,7 +2489,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT4_TP2",
@@ -2519,7 +2519,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "UNIT4_B2",
@@ -2549,7 +2549,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "Gorea_Land",
@@ -2579,7 +2579,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "Gorea_Peek",
@@ -2609,7 +2609,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -286720,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "Gorea_b1",
@@ -2639,7 +2639,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "Gorea_b2",
@@ -2669,7 +2669,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -286720,
-                        field6C: 0x6)
+                        size: 6)
                 },
                 {
                     "MP1 SANCTORUS",
@@ -2699,7 +2699,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 368640,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: 3,
                         multiplayer: true)
                 },
                 {
@@ -2730,7 +2730,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 3072000,
                         killHeight: 4096,
-                        field6C: 0x4,
+                        size: 4,
                         multiplayer: true)
                 },
                 {
@@ -2761,7 +2761,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(409, -4096, 0).ToFloatVector(),
                         farClip: 1433600,
                         killHeight: -122880,
-                        field6C: 0x2,
+                        size: 2,
                         multiplayer: true)
                 },
                 {
@@ -2792,7 +2792,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1687552,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: 4,
                         multiplayer: true)
                 },
                 {
@@ -2823,7 +2823,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1740800,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: 3,
                         multiplayer: true)
                 },
                 {
@@ -2854,7 +2854,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x2,
+                        size: 2,
                         multiplayer: true)
                 },
                 {
@@ -2885,7 +2885,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 5734400,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: 4,
                         multiplayer: true)
                 },
                 {
@@ -2916,7 +2916,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        field6C: 0x2,
+                        size: 2,
                         multiplayer: true)
                 },
                 {
@@ -2947,7 +2947,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 4096000,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: 4,
                         multiplayer: true)
                 },
                 {
@@ -2978,7 +2978,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 327680,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: 3,
                         multiplayer: true)
                 },
                 {
@@ -3009,7 +3009,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 409600,
                         killHeight: -122880,
-                        field6C: 0x2,
+                        size: 2,
                         multiplayer: true)
                 },
                 {
@@ -3040,7 +3040,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 409600,
                         killHeight: -122880,
-                        field6C: 0x2,
+                        size: 2,
                         multiplayer: true)
                 },
                 {
@@ -3071,7 +3071,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: 3,
                         multiplayer: true)
                 },
                 {
@@ -3102,7 +3102,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: 4,
                         multiplayer: true)
                 },
                 {
@@ -3133,7 +3133,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 4915200,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: 3,
                         multiplayer: true)
                 },
                 {
@@ -3164,7 +3164,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: 4,
                         multiplayer: true)
                 },
                 {
@@ -3195,7 +3195,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: 3,
                         multiplayer: true)
                 },
                 {
@@ -3226,7 +3226,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 5734400,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: 4,
                         multiplayer: true)
                 },
                 {
@@ -3257,7 +3257,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 3276800,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: 3,
                         multiplayer: true)
                 },
                 {
@@ -3288,7 +3288,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: 4,
                         multiplayer: true)
                 },
                 {
@@ -3319,7 +3319,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: 4,
                         multiplayer: true)
                 },
                 {
@@ -3350,7 +3350,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 4915200,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: 4,
                         multiplayer: true)
                 },
                 {
@@ -3381,7 +3381,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 5734400,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: 3,
                         multiplayer: true)
                 },
                 {
@@ -3412,7 +3412,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: 4,
                         multiplayer: true)
                 },
                 {
@@ -3443,7 +3443,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: 4,
                         multiplayer: true)
                 },
                 {
@@ -3474,7 +3474,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -286720,
-                        field6C: 0x4,
+                        size: 4,
                         multiplayer: true)
                 },
                 {
@@ -3505,7 +3505,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: 3,
                         multiplayer: true)
                 },
                 {
@@ -3536,7 +3536,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        field6C: 0x6,
+                        size: 6,
                         hybrid: true)
                 },
                 {
@@ -3567,7 +3567,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        field6C: 0x6,
+                        size: 6,
                         hybrid: true)
                 },
                 // these levels are unused/unreferenced in the game, so some values are guesses
@@ -3599,7 +3599,7 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0,
+                        size: 0,
                         multiplayer: true)
                 },
                 {
@@ -3630,7 +3630,7 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0,
+                        size: 0,
                         multiplayer: true)
                 },
                 {
@@ -3661,7 +3661,7 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0,
+                        size: 0,
                         multiplayer: true)
                 },
                 {
@@ -3692,7 +3692,7 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0,
+                        size: 0,
                         multiplayer: true)
                 },
                 {
@@ -3723,7 +3723,7 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0,
+                        size: 0,
                         multiplayer: true)
                 },
                 {
@@ -3754,7 +3754,7 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0,
+                        size: 0,
                         multiplayer: true)
                 },
                 // todo: room ID 8 has the same files as MP1, but a few different parameters
@@ -3787,7 +3787,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 368640,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: 0,
                         multiplayer: true,
                         firstHunt: true)
                 },
@@ -3819,7 +3819,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: 0,
                         multiplayer: true,
                         firstHunt: true)
                 },
@@ -3851,7 +3851,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 81920000,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: 0,
                         multiplayer: true,
                         firstHunt: true)
                 },
@@ -3883,7 +3883,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: 0,
                         firstHunt: true)
                 },
                 {
@@ -3914,7 +3914,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: 0,
                         firstHunt: true)
                 },
                 {
@@ -3945,7 +3945,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: 0,
                         firstHunt: true)
                 },
                 {
@@ -3976,7 +3976,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: 0,
                         firstHunt: true)
                 },
                 {
@@ -4007,7 +4007,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: 0,
                         multiplayer: true,
                         firstHunt: true)
                 },
@@ -4039,7 +4039,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: 0,
                         multiplayer: true,
                         firstHunt: true)
                 }

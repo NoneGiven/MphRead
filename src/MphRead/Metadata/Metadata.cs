@@ -615,6 +615,10 @@ namespace MphRead
             {
                 return DoubleDamageImg;
             }
+            if (name == "ad2_dm2")
+            {
+                return Ad2Dm2;
+            }
             if (ModelMetadata.TryGetValue(name, out ModelMetadata? metadata))
             {
                 return metadata;
@@ -1372,6 +1376,10 @@ namespace MphRead
 
         public static readonly ModelMetadata DoubleDamageImg
             = new ModelMetadata("doubleDamage_img", animation: false, archive: "common");
+
+        // only in A76E
+        public static readonly ModelMetadata Ad2Dm2
+            = new ModelMetadata("ad2_dm2", dir: MetaDir.Stage);
 
         public static readonly IReadOnlyDictionary<string, ModelMetadata> ModelMetadata
             = new Dictionary<string, ModelMetadata>()
