@@ -216,6 +216,17 @@ namespace MphRead.Utility
             return entities;
         }
 
+        public static void CompareRooms(string room1, string room2, string game1 = "amhe1", string game2 = "amhe1")
+        {
+            RoomMetadata meta1 = Metadata.RoomMetadata[room1];
+            RoomMetadata meta2 = Metadata.RoomMetadata[room2];
+            Debug.Assert(meta1.EntityPath != null && meta2.EntityPath != null);
+            string path1 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, meta1.EntityPath);
+            string path2 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, meta2.EntityPath);
+            CompareEntities(File.ReadAllBytes(path1), File.ReadAllBytes(path2));
+            Nop();
+        }
+
         private static void CompareEntities(byte[] pack, byte[] file)
         {
             Debug.Assert(pack.Length == file.Length);
