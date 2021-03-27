@@ -10,22 +10,74 @@ namespace MphRead.Memory
 {
     public class Memory
     {
-        private static class Addresses
+        private class AddressInfo
         {
-            public static readonly int EntityListHead = 0x20E3EE0;
-            public static readonly int FrameCount = 0x20D94FC;
-            public static readonly int PlayerUA = 0x20DB180;
-            public static readonly int CamSeqData = 0x21335E0;
+            public int EntityListHead { get; }
+            public int FrameCount { get; }
+            public int PlayerUA { get; }
+            public int CamSeqData { get; }
 
-            public static class Save
+            public SaveAddressInfo Save { get; }
+
+            public class SaveAddressInfo
             {
-                public static readonly int Story = 0x20E97B0;
-                public static readonly int Type3 = 0x20D958C;
-                public static readonly int Settings = 0x20E83B8;
-                public static readonly int License = 0x20EB948;
-                public static readonly int Friends = 0x20ECEE0;
+                public int Story { get; }
+                public int Type3 { get; }
+                public int Settings { get; }
+                public int License { get; }
+                public int Friends { get; }
+
+                public SaveAddressInfo(int story, int type3, int settings, int license, int friends)
+                {
+                    Story = story;
+                    Type3 = type3;
+                    Settings = settings;
+                    License = license;
+                    Friends = friends;
+                }
+            }
+
+            public AddressInfo(int entityListHead, int frameCount, int playerUa, int camSeqData, SaveAddressInfo save)
+            {
+                EntityListHead = entityListHead;
+                FrameCount = frameCount;
+                PlayerUA = playerUa;
+                CamSeqData = camSeqData;
+                Save = save;
             }
         }
+
+        private static AddressInfo Addresses { get; set; } = null!;
+
+        private static readonly IReadOnlyDictionary<string, AddressInfo> AllAddresses = new Dictionary<string, AddressInfo>()
+        {
+            ["a76e"] = new AddressInfo(
+                entityListHead: 0x20B85F8,
+                frameCount: 0x20AE514,
+                playerUa: 0x20B00D4,
+                camSeqData: 0x2103760,
+                new AddressInfo.SaveAddressInfo(
+                    story: 0x20BD798,
+                    type3: 0x20D958C, // todo
+                    settings: 0x20BC364,
+                    license: 0x20EB948, // todo
+                    friends: 0x20ECEE0 // todo
+                )
+            ),
+            ["amhp1"] = new AddressInfo(
+                entityListHead: 0x20E3EE0,
+                frameCount: 0x20D94FC,
+                playerUa: 0x20DB180,
+                camSeqData: 0x21335E0,
+                new AddressInfo.SaveAddressInfo(
+                    story: 0x20E97B0,
+                    type3: 0x20D958C,
+                    settings: 0x20E83B8,
+                    license: 0x20EB948,
+                    friends: 0x20ECEE0
+                )
+            )
+        };
 
         [DllImport("kernel32.dll")]
         private static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress,
@@ -71,6 +123,7 @@ namespace MphRead.Memory
 
         private void Run()
         {
+            Addresses = AllAddresses["a76e"];
             _baseAddress = new IntPtr(0x998E100);
             Task.Run(async () =>
             {
