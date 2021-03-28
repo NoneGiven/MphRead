@@ -151,26 +151,26 @@ namespace MphRead.Testing
     }
 
     [Flags]
-    public enum Overlay
+    public enum MphOverlay
     {
         None = 0x0,
         WiFiPlay = 0x1,
         DownloadPlay = 0x2,
-        Unknown02 = 0x4,
+        Bit02 = 0x4, // 20 bytes
         VoiceChat = 0x8,
-        Unknown04 = 0x10,
+        Bit04 = 0x10, // 20 bytes
         Frontend = 0x20,
-        Unknown06 = 0x40,
+        Bit06 = 0x40, // ?
         Movies = 0x80,
-        ModelsEffects = 0x100,
-        Unknown09 = 0x200,
-        Bit10 = 0x400,
-        Bit11 = 0x800,
-        Bit12 = 0x1000,
-        Bit13 = 0x2000,
-        Bit14 = 0x4000,
-        Bit15 = 0x8000,
-        Bit16 = 0x10000,
-        Bit17 = 0x20000
+        Gameplay = 0x100,
+        MpEntities = 0x200,
+        SpEntities1 = 0x400,
+        SpEntities2 = 0x800,
+        Enemies = 0x1000,
+        BotAi = 0x2000,
+        Cretaphid = 0x4000,
+        Gorea = 0x8000,
+        Slench = 0x10000,
+        Bit17 = 0x20000 // 20 bytes
     }
 }

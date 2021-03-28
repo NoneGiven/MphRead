@@ -79,6 +79,25 @@ namespace MphRead
 
         public static void TestAllEntities()
         {
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                if (meta.Value.EntityPath != null && !meta.Value.FirstHunt)
+                {
+                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
+                    foreach (Entity entity in entities)
+                    {
+                        if (entity.Type == EntityType.Platform)
+                        {
+                            PlatformEntityData data = ((Entity<PlatformEntityData>)entity).Data;
+                        }
+                    }
+                }
+            }
+            Nop();
+        }
+
+        public static void TestAllEntityMessages()
+        {
             var used = new HashSet<Message>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
