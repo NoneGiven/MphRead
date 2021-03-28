@@ -156,21 +156,21 @@ namespace MphRead.Testing
         None = 0x0,
         WiFiPlay = 0x1,
         DownloadPlay = 0x2,
-        Bit02 = 0x4, // 20 bytes
+        Bit02 = 0x4, // unused
         VoiceChat = 0x8,
-        Bit04 = 0x10, // 20 bytes
+        Bit04 = 0x10, // unused
         Frontend = 0x20,
-        Bit06 = 0x40, // ?
+        Bit06 = 0x40, // unused
         Movies = 0x80,
         Gameplay = 0x100,
         MpEntities = 0x200,
-        SpEntities1 = 0x400,
+        SpEnt1Pause = 0x400,
         SpEntities2 = 0x800,
         Enemies = 0x1000,
         BotAi = 0x2000,
         Cretaphid = 0x4000,
         Gorea = 0x8000,
         Slench = 0x10000,
-        Bit17 = 0x20000 // 20 bytes
+        Bit17 = 0x20000 // unused
     }
 }
