@@ -16,7 +16,8 @@ namespace MphRead
     {
         Models,
         Hud,
-        Stage
+        Stage,
+        MainMenu
     }
 
     public class ModelMetadata
@@ -46,7 +47,7 @@ namespace MphRead
             }
         }
 
-        public ModelMetadata(string name, MetaDir dir, bool anim = false)
+        public ModelMetadata(string name, MetaDir dir, string anim = null)
         {
             Name = name;
             string directory = "models";
@@ -58,8 +59,12 @@ namespace MphRead
             {
                 directory = "stage";
             }
+            else if (dir == MetaDir.MainMenu)
+            {
+                directory = "main menu";
+            }
             ModelPath = $@"{directory}\{name}_Model.bin";
-            AnimationPath = anim ? $@"{directory}\{name}_Anim.bin" : null;
+            AnimationPath = anim != null ? $@"{directory}\{anim}_Anim.bin" : null;
             Recolors = new List<RecolorMetadata>()
             {
                 new RecolorMetadata("default", ModelPath, ModelPath)
@@ -609,7 +614,7 @@ namespace MphRead
             "SEQ_FLY_IN_GOREA"
         };
 
-        public static ModelMetadata? GetModelByName(string name)
+        public static ModelMetadata? GetModelByName(string name, MetaDir dir = MetaDir.Models)
         {
             if (name == "doubleDamage_img")
             {
@@ -619,7 +624,14 @@ namespace MphRead
             {
                 return Ad2Dm2;
             }
-            if (ModelMetadata.TryGetValue(name, out ModelMetadata? metadata))
+            if (dir == MetaDir.MainMenu || dir == MetaDir.Stage)
+            {
+                if (FrontendModels.TryGetValue(name, out ModelMetadata? metadata))
+                {
+                    return metadata;
+                }
+            }
+            else if (ModelMetadata.TryGetValue(name, out ModelMetadata? metadata))
             {
                 return metadata;
             }
@@ -1376,10 +1388,6 @@ namespace MphRead
 
         public static readonly ModelMetadata DoubleDamageImg
             = new ModelMetadata("doubleDamage_img", animation: false, archive: "common");
-
-        // only in A76E
-        public static readonly ModelMetadata Ad2Dm2
-            = new ModelMetadata("ad2_dm2", dir: MetaDir.Stage);
 
         public static readonly IReadOnlyDictionary<string, ModelMetadata> ModelMetadata
             = new Dictionary<string, ModelMetadata>()
@@ -3415,119 +3423,6 @@ namespace MphRead
                 {
                     "Door_NAV",
                     new ModelMetadata("Door_NAV", dir: MetaDir.Hud)
-                },
-                // stage portrait
-                {
-                    "ad1",
-                    new ModelMetadata("ad1", dir: MetaDir.Stage)
-                },
-                {
-                    "ad1_dm1",
-                    new ModelMetadata("ad1_dm1", dir: MetaDir.Stage)
-                },
-                {
-                    "ad2",
-                    new ModelMetadata("ad2", dir: MetaDir.Stage)
-                },
-                {
-                    "ad2_dm1",
-                    new ModelMetadata("ad2_dm1", dir: MetaDir.Stage)
-                },
-                {
-                    "ctf1",
-                    new ModelMetadata("ctf1", dir: MetaDir.Stage)
-                },
-                {
-                    "ctf1_dm1",
-                    new ModelMetadata("ctf1_dm1", dir: MetaDir.Stage)
-                },
-                {
-                    "e3level",
-                    new ModelMetadata("e3level", dir: MetaDir.Stage)
-                },
-                {
-                    "goreab2",
-                    new ModelMetadata("goreab2", dir: MetaDir.Stage)
-                },
-                {
-                    "mp1",
-                    new ModelMetadata("mp1", dir: MetaDir.Stage)
-                },
-                {
-                    "mp2",
-                    new ModelMetadata("mp2", dir: MetaDir.Stage)
-                },
-                {
-                    "mp3",
-                    new ModelMetadata("mp3", dir: MetaDir.Stage)
-                },
-                {
-                    "mp4",
-                    new ModelMetadata("mp4", dir: MetaDir.Stage)
-                },
-                {
-                    "mp4_dm1",
-                    new ModelMetadata("mp4_dm1", dir: MetaDir.Stage)
-                },
-                {
-                    "mp5",
-                    new ModelMetadata("mp5", dir: MetaDir.Stage)
-                },
-                {
-                    "mp6",
-                    new ModelMetadata("mp6", dir: MetaDir.Stage)
-                },
-                {
-                    "mp7",
-                    new ModelMetadata("mp7", dir: MetaDir.Stage)
-                },
-                {
-                    "mp8",
-                    new ModelMetadata("mp8", dir: MetaDir.Stage)
-                },
-                {
-                    "mp9",
-                    new ModelMetadata("mp9", dir: MetaDir.Stage)
-                },
-                {
-                    "mp10",
-                    new ModelMetadata("mp10", dir: MetaDir.Stage)
-                },
-                {
-                    "mp11",
-                    new ModelMetadata("mp11", dir: MetaDir.Stage)
-                },
-                {
-                    "mp12",
-                    new ModelMetadata("mp12", dir: MetaDir.Stage)
-                },
-                {
-                    "mp13",
-                    new ModelMetadata("mp13", dir: MetaDir.Stage)
-                },
-                {
-                    "mp14",
-                    new ModelMetadata("mp14", dir: MetaDir.Stage)
-                },
-                {
-                    "random",
-                    new ModelMetadata("random", dir: MetaDir.Stage)
-                },
-                {
-                    "unit1land",
-                    new ModelMetadata("unit1land", dir: MetaDir.Stage)
-                },
-                {
-                    "unit2land",
-                    new ModelMetadata("unit2land", dir: MetaDir.Stage)
-                },
-                {
-                    "unit3land",
-                    new ModelMetadata("unit3land", dir: MetaDir.Stage)
-                },
-                {
-                    "unit4land",
-                    new ModelMetadata("unit4land", dir: MetaDir.Stage)
                 },
                 // effectsBase
                 {

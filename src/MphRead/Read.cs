@@ -18,9 +18,9 @@ namespace MphRead
         private static readonly Dictionary<string, Model> _modelCache = new Dictionary<string, Model>();
         private static readonly Dictionary<string, Model> _fhModelCache = new Dictionary<string, Model>();
 
-        public static ModelInstance GetModelInstance(string name, bool firstHunt = false)
+        public static ModelInstance GetModelInstance(string name, bool firstHunt = false, MetaDir dir = MetaDir.Models)
         {
-            ModelInstance? inst = GetModelInstanceOrNull(name, firstHunt);
+            ModelInstance? inst = GetModelInstanceOrNull(name, firstHunt, dir);
             if (inst == null)
             {
                 throw new ProgramException("No model with this name is known.");
@@ -28,12 +28,12 @@ namespace MphRead
             return inst;
         }
 
-        private static ModelInstance? GetModelInstanceOrNull(string name, bool firstHunt)
+        private static ModelInstance? GetModelInstanceOrNull(string name, bool firstHunt, MetaDir dir)
         {
             Dictionary<string, Model> cache = firstHunt ? _fhModelCache : _modelCache;
             if (!cache.TryGetValue(name, out Model? model))
             {
-                model = GetModel(name, firstHunt);
+                model = GetModel(name, firstHunt, dir);
                 if (model == null)
                 {
                     return null;
@@ -43,7 +43,7 @@ namespace MphRead
             return new ModelInstance(model);
         }
 
-        private static Model? GetModel(string name, bool firstHunt)
+        private static Model? GetModel(string name, bool firstHunt, MetaDir dir)
         {
             ModelMetadata? meta;
             if (firstHunt)
@@ -52,7 +52,7 @@ namespace MphRead
             }
             else
             {
-                meta = Metadata.GetModelByName(name);
+                meta = Metadata.GetModelByName(name, dir);
             }
             if (meta == null)
             {
@@ -1171,9 +1171,9 @@ namespace MphRead
             }
         }
 
-        public static void ReadAndExport(string name, bool firstHunt = false)
+        public static void ReadAndExport(string name, bool firstHunt = false, MetaDir dir = MetaDir.Models)
         {
-            Model? model = GetModelInstanceOrNull(name, firstHunt)?.Model;
+            Model? model = GetModelInstanceOrNull(name, firstHunt, dir)?.Model;
             if (model == null)
             {
                 model = GetRoomModelInstanceOrNull(name)?.Model;

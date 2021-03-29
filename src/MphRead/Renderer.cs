@@ -224,9 +224,9 @@ namespace MphRead
         }
 
         // called before load
-        public EntityBase AddModel(string name, int recolor = 0, bool firstHunt = false)
+        public EntityBase AddModel(string name, int recolor = 0, bool firstHunt = false, MetaDir dir = MetaDir.Models)
         {
-            ModelInstance model = Read.GetModelInstance(name, firstHunt);
+            ModelInstance model = Read.GetModelInstance(name, firstHunt, dir);
             var entity = new ModelEntity(model, recolor);
             _entities.Add(entity);
             if (entity.Id != -1)
@@ -3556,9 +3556,9 @@ namespace MphRead
             Scene.AddRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
         }
 
-        public void AddModel(string name, int recolor = 0, bool firstHunt = false)
+        public void AddModel(string name, int recolor = 0, bool firstHunt = false, MetaDir dir = MetaDir.Models)
         {
-            Scene.AddModel(name, recolor, firstHunt);
+            Scene.AddModel(name, recolor, firstHunt, dir);
         }
 
         public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null)
