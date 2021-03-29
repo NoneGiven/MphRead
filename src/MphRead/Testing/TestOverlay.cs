@@ -160,7 +160,7 @@ namespace MphRead.Testing
         VoiceChat = 0x8,
         Bit04 = 0x10, // unused
         Frontend = 0x20,
-        Bit06 = 0x40, // unused
+        DownloadStation = 0x40,
         Movies = 0x80,
         Gameplay = 0x100,
         MpEntities = 0x200,
