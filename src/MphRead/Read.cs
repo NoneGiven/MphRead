@@ -1045,6 +1045,26 @@ namespace MphRead
             return results;
         }
 
+        public static IReadOnlyList<uint> DoListNullEnd(ReadOnlySpan<byte> bytes, uint offset)
+        {
+            int ioffset = (int)offset;
+            var results = new List<uint>();
+            if (offset != 0)
+            {
+                int size = sizeof(uint);
+                for (uint i = 0; ; i++, ioffset += size)
+                {
+                    uint result = ReadStruct<uint>(bytes[ioffset..(ioffset + size)]);
+                    if (result == 0)
+                    {
+                        break;
+                    }
+                    results.Add(result);
+                }
+            }
+            return results;
+        }
+
         public static T ReadStruct<T>(ReadOnlySpan<byte> bytes) where T : struct
         {
             var handle = GCHandle.Alloc(bytes.ToArray(), GCHandleType.Pinned);

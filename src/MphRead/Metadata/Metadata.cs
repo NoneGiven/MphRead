@@ -47,7 +47,7 @@ namespace MphRead
             }
         }
 
-        public ModelMetadata(string name, MetaDir dir, string anim = null)
+        public ModelMetadata(string name, MetaDir dir, string? anim = null)
         {
             Name = name;
             string directory = "models";
