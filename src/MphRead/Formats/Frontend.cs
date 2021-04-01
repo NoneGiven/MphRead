@@ -28,12 +28,13 @@ namespace MphRead.Formats
         public readonly uint Offset2; // ntl of MenuStruct1A*
         public readonly uint Offset3; // ntl of MenuStruct1A1*
         public readonly uint Offset4; // ntl of MenuStruct1B*
-        public readonly uint Field14;
+        public readonly ushort Field14; // index into this struct's list of MenuStruct1A*
+        public readonly ushort Field16;
         public readonly uint Field18;
-        public readonly byte Field1C;
+        public readonly byte Index; // position in the list of MenuStruct1
         public readonly byte Field1D;
         public readonly byte Field1E;
-        public readonly byte Field1F;
+        public readonly byte Flags;
     }
 
     // size: 60
@@ -41,16 +42,16 @@ namespace MphRead.Formats
     {
         public readonly uint Offset1; // unused in metroidhunters.bin
         public readonly uint Offset2; // ntl of MenuStruct1A1*
-        public readonly uint Offset3; // ntl of pointers to single(?) ints
+        public readonly uint Offset3; // ntl of MenuStruct1A5*
         public readonly uint Offset4; // ntl of MenuStruct1A2*
-        public readonly uint Field10; // (?) runtime single pointer to a MenuStruct1A2?
+        public readonly uint Field10; // runtime single pointer to a MenuStruct1A2
         public readonly uint Field14;
         public readonly uint Field18;
         public readonly uint Field1C; // (?) runtime single pointer, maybe?
         public readonly uint Field20;
         public readonly uint Field24;
         public readonly uint Field28;
-        public readonly uint Offset5; // pointer to list of ints -- only set for one MenuStruct1A in metroidhunters.bin (22140BC)
+        public readonly uint Offset5; // MenuStruct1A6 -- only set for one MenuStruct1A in metroidhunters.bin (22140BC)
         public readonly uint Offset6; // pointer to list of ints, can be external
         public readonly byte Field34;
         public readonly byte Field35;
@@ -60,15 +61,43 @@ namespace MphRead.Formats
         public readonly ushort Field3A;
     }
 
+    // size: 4
+    public readonly struct MenuStruct1A5
+    {
+        public readonly byte Field0;
+        public readonly byte Field1;
+        public readonly ushort Field2; // index into the list of MenuStruct1A* on the parent of MenuStruct1 of the parent MenuStruct1A
+    }
+
+    // size: 44
+    public readonly struct MenuStruct1A6
+    {
+        public readonly int Field0;
+        public readonly int Field4;
+        public readonly int Field8;
+        public readonly int FieldC;
+        public readonly int Field10;
+        public readonly int Field14;
+        public readonly int Field18;
+        public readonly int Field1C;
+        public readonly int Field20;
+        public readonly int Field24;
+        public readonly int Field28;
+    }
+
     // size: 24
     public readonly struct MenuStruct1A1
     {
-        public readonly uint Field0;
+        public readonly ushort Field0;
+        public readonly byte Field2;
+        public readonly byte Flags;
         public readonly uint Field4;
         public readonly uint Field8;
         public readonly uint FieldC;
-        public readonly uint Offset1; // ntl of pointers to int pairs
-        public readonly uint Field14;
+        public readonly uint Offset1; // ntl of pointers to int pairs -- passed to call_pair_func_ptr
+        public readonly ushort Field14;
+        public readonly byte Field16;
+        public readonly byte Field17;
     }
 
     // size: 8
@@ -77,14 +106,27 @@ namespace MphRead.Formats
         public readonly byte Field0; // if 1, Offset1 is converted to MenuStruct1A3*
         public readonly byte Field1;
         public readonly ushort Field2;
-        public readonly uint Offset1;
+        public readonly uint Offset1; // else, this is a ushort index into the MenuStruct2* list (if not 0xFFFF) and another ushort value (flags?)
     }
 
     // size: 4
     public readonly struct MenuStruct1A3
     {
         public readonly uint Field0;
-        public readonly uint Offset1; // pointer to list of ints, can be external
+        public readonly uint Offset1; // MenuStruct1A4*
+    }
+
+    // size: 24
+    public readonly struct MenuStruct1A4
+    {
+        public readonly int Field0;
+        public readonly int Field4;
+        public readonly int Field8;
+        public readonly int FieldC;
+        public readonly int Field10;
+        public readonly byte Flags;
+        public readonly byte Field15;
+        public readonly ushort Field16;
     }
 
     // size: 32
@@ -92,15 +134,17 @@ namespace MphRead.Formats
     {
         public readonly uint Field0;
         public readonly MenuStruct1A1 Struct1A1;
-        public readonly uint Field1C;
+        public readonly byte Flags;
+        public readonly byte Field1D;
+        public readonly ushort Field1E;
     }
 
     // size: 12
     public readonly struct MenuStruct2
     {
         public readonly uint Field0;
-        public readonly uint Field4;
-        public readonly uint Offset1; // ntl of MenuStruct2A*
+        public readonly uint Field4; // CModel*
+        public readonly uint Offset1; // ntl of pairs of MenuStruct2A* -- first for model, second for animation
     }
 
     // size: 12
@@ -110,7 +154,7 @@ namespace MphRead.Formats
         public readonly byte FilenameLength; // includes terminator and 0xBB padding to multiple of 4 bytes
         public readonly ushort Field2;
         public readonly uint Field4;
-        public readonly uint FilenameOffset; // char*
+        public readonly uint FilenameOffset; // char* (becomes pointer to model/animation in download play version)
     }
 
     public static class Frontend

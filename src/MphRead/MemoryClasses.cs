@@ -5012,6 +5012,841 @@ namespace MphRead.Memory
         }
     }
 
+    public class GameState : MemoryClass
+    {
+        private const int _off0 = 0x0;
+        public GameMode GameMode { get => (GameMode)ReadByte(_off0); set => WriteByte(_off0, (byte)value); }
+
+        private const int _off1 = 0x1;
+        public byte RoomId { get => ReadByte(_off1); set => WriteByte(_off1, value); }
+
+        private const int _off2 = 0x2;
+        public byte AreaId { get => ReadByte(_off2); set => WriteByte(_off2, value); }
+
+        private const int _off3 = 0x3;
+        public byte PlayerCount { get => ReadByte(_off3); set => WriteByte(_off3, value); }
+
+        private const int _off4 = 0x4;
+        public byte MaxPlayers { get => ReadByte(_off4); set => WriteByte(_off4, value); }
+
+        private const int _off5 = 0x5;
+        public byte CountOfBitsOfSomething { get => ReadByte(_off5); set => WriteByte(_off5, value); }
+
+        private const int _off6 = 0x6;
+        public byte BotCount { get => ReadByte(_off6); set => WriteByte(_off6, value); }
+
+        private const int _off7 = 0x7;
+        public byte Field7 { get => ReadByte(_off7); set => WriteByte(_off7, value); }
+
+        private const int _off8 = 0x8; // byte[4]
+        public ByteArray Field8 { get; }
+
+        private const int _off9 = 0xC;
+        public byte DmgMultIdx { get => ReadByte(_off9); set => WriteByte(_off9, value); }
+
+        private const int _off10 = 0xD;
+        public byte FieldD { get => ReadByte(_off10); set => WriteByte(_off10, value); }
+
+        private const int _off11 = 0xE;
+        public ushort SomeFlags { get => ReadUInt16(_off11); set => WriteUInt16(_off11, value); }
+
+        private const int _off12 = 0x10;
+        public ushort Field10 { get => ReadUInt16(_off12); set => WriteUInt16(_off12, value); }
+
+        private const int _off13 = 0x12;
+        public ushort Field12 { get => ReadUInt16(_off13); set => WriteUInt16(_off13, value); }
+
+        private const int _off14 = 0x14;
+        public ushort PointLimit { get => ReadUInt16(_off14); set => WriteUInt16(_off14, value); }
+
+        private const int _off15 = 0x16;
+        public ushort Field16 { get => ReadUInt16(_off15); set => WriteUInt16(_off15, value); }
+
+        private const int _off16 = 0x18;
+        public int BattleTimeLimit { get => ReadInt32(_off16); set => WriteInt32(_off16, value); }
+
+        private const int _off17 = 0x1C;
+        public int EscapeState { get => ReadInt32(_off17); set => WriteInt32(_off17, value); }
+
+        private const int _off18 = 0x20;
+        public int TimeLimit { get => ReadInt32(_off18); set => WriteInt32(_off18, value); }
+
+        private const int _off19 = 0x24; // int[4]
+        public Int32Array Sensitivity { get; }
+
+        private const int _off20 = 0x34; // byte[4]
+        public ByteArray InvertSomething { get; }
+
+        private const int _off21 = 0x38; // byte[4]
+        public ByteArray Field38 { get; }
+
+        private const int _off22 = 0x3C; // byte[4]
+        public ByteArray Hunters { get; }
+
+        private const int _off23 = 0x40; // byte[4]
+        public ByteArray SuitColors { get; }
+
+        private const int _off24 = 0x44; // byte[4]
+        public ByteArray PlayerNames { get; }
+
+        private const int _off25 = 0x48; // byte[4]
+        public ByteArray BotEncounterState { get; }
+
+        private const int _off26 = 0x4C; // byte[4]
+        public ByteArray TeamIds { get; }
+
+        private const int _off27 = 0x50; // byte[4]
+        public ByteArray FieldA0 { get; }
+
+        private const int _off28 = 0x54; // ushort[4]
+        public UInt16Array BotSpawnerEntIds { get; }
+
+        private const int _off29 = 0x5C;
+        public byte PrimeHunterStats { get => ReadByte(_off29); set => WriteByte(_off29, value); }
+
+        private const int _off30 = 0x5D;
+        public byte PrimeHunter { get => ReadByte(_off30); set => WriteByte(_off30, value); }
+
+        private const int _off31 = 0x5E;
+        public byte RadShowPlayers { get => ReadByte(_off31); set => WriteByte(_off31, value); }
+
+        private const int _off32 = 0x5F;
+        public byte FieldAF { get => ReadByte(_off32); set => WriteByte(_off32, value); }
+
+        private const int _off33 = 0x60; // int[4]
+        public Int32Array PrimeTime { get; }
+
+        private const int _off34 = 0x70; // int[4]
+        public Int32Array FieldC0 { get; }
+
+        private const int _off35 = 0x80;
+        public int FieldD0 { get => ReadInt32(_off35); set => WriteInt32(_off35, value); }
+
+        private const int _off36 = 0x84;
+        public int FieldD4 { get => ReadInt32(_off36); set => WriteInt32(_off36, value); }
+
+        private const int _off37 = 0x88;
+        public int FieldD8 { get => ReadInt32(_off37); set => WriteInt32(_off37, value); }
+
+        private const int _off38 = 0x8C;
+        public int FieldDC { get => ReadInt32(_off38); set => WriteInt32(_off38, value); }
+
+        private const int _off39 = 0x90;
+        public int FieldE0 { get => ReadInt32(_off39); set => WriteInt32(_off39, value); }
+
+        private const int _off40 = 0x94;
+        public int FieldE4 { get => ReadInt32(_off40); set => WriteInt32(_off40, value); }
+
+        private const int _off41 = 0x98;
+        public int FieldE8 { get => ReadInt32(_off41); set => WriteInt32(_off41, value); }
+
+        private const int _off42 = 0x9C;
+        public int FieldEC { get => ReadInt32(_off42); set => WriteInt32(_off42, value); }
+
+        private const int _off43 = 0xA0;
+        public int FieldF0 { get => ReadInt32(_off43); set => WriteInt32(_off43, value); }
+
+        private const int _off44 = 0xA4;
+        public int FieldF4 { get => ReadInt32(_off44); set => WriteInt32(_off44, value); }
+
+        private const int _off45 = 0xA8;
+        public int FieldF8 { get => ReadInt32(_off45); set => WriteInt32(_off45, value); }
+
+        private const int _off46 = 0xAC;
+        public int FieldFC { get => ReadInt32(_off46); set => WriteInt32(_off46, value); }
+
+        private const int _off47 = 0xB0;
+        public int Field100 { get => ReadInt32(_off47); set => WriteInt32(_off47, value); }
+
+        private const int _off48 = 0xB4;
+        public int Field104 { get => ReadInt32(_off48); set => WriteInt32(_off48, value); }
+
+        private const int _off49 = 0xB8;
+        public int Field108 { get => ReadInt32(_off49); set => WriteInt32(_off49, value); }
+
+        private const int _off50 = 0xBC;
+        public int Field10C { get => ReadInt32(_off50); set => WriteInt32(_off50, value); }
+
+        private const int _off51 = 0xC0;
+        public int Field110 { get => ReadInt32(_off51); set => WriteInt32(_off51, value); }
+
+        private const int _off52 = 0xC4;
+        public int Field114 { get => ReadInt32(_off52); set => WriteInt32(_off52, value); }
+
+        private const int _off53 = 0xC8;
+        public int Field118 { get => ReadInt32(_off53); set => WriteInt32(_off53, value); }
+
+        private const int _off54 = 0xCC;
+        public int Field11C { get => ReadInt32(_off54); set => WriteInt32(_off54, value); }
+
+        private const int _off55 = 0xD0;
+        public int Field120 { get => ReadInt32(_off55); set => WriteInt32(_off55, value); }
+
+        private const int _off56 = 0xD4;
+        public int Field124 { get => ReadInt32(_off56); set => WriteInt32(_off56, value); }
+
+        private const int _off57 = 0xD8;
+        public int Field128 { get => ReadInt32(_off57); set => WriteInt32(_off57, value); }
+
+        private const int _off58 = 0xDC;
+        public int Field12C { get => ReadInt32(_off58); set => WriteInt32(_off58, value); }
+
+        private const int _off59 = 0xE0;
+        public int Field130 { get => ReadInt32(_off59); set => WriteInt32(_off59, value); }
+
+        private const int _off60 = 0xE4;
+        public int Field134 { get => ReadInt32(_off60); set => WriteInt32(_off60, value); }
+
+        private const int _off61 = 0xE8;
+        public int Field138 { get => ReadInt32(_off61); set => WriteInt32(_off61, value); }
+
+        private const int _off62 = 0xEC;
+        public int Field13C { get => ReadInt32(_off62); set => WriteInt32(_off62, value); }
+
+        private const int _off63 = 0xF0;
+        public int Field140 { get => ReadInt32(_off63); set => WriteInt32(_off63, value); }
+
+        private const int _off64 = 0xF4;
+        public int Field144 { get => ReadInt32(_off64); set => WriteInt32(_off64, value); }
+
+        private const int _off65 = 0xF8;
+        public int Field148 { get => ReadInt32(_off65); set => WriteInt32(_off65, value); }
+
+        private const int _off66 = 0xFC;
+        public int Field14C { get => ReadInt32(_off66); set => WriteInt32(_off66, value); }
+
+        private const int _off67 = 0x100;
+        public int Field150 { get => ReadInt32(_off67); set => WriteInt32(_off67, value); }
+
+        private const int _off68 = 0x104;
+        public int Field154 { get => ReadInt32(_off68); set => WriteInt32(_off68, value); }
+
+        private const int _off69 = 0x108;
+        public int Field158 { get => ReadInt32(_off69); set => WriteInt32(_off69, value); }
+
+        private const int _off70 = 0x10C;
+        public int Field15C { get => ReadInt32(_off70); set => WriteInt32(_off70, value); }
+
+        private const int _off71 = 0x110; // int[4]
+        public Int32Array Field160 { get; }
+
+        private const int _off72 = 0x120;
+        public int Field170 { get => ReadInt32(_off72); set => WriteInt32(_off72, value); }
+
+        private const int _off73 = 0x124;
+        public int Field174 { get => ReadInt32(_off73); set => WriteInt32(_off73, value); }
+
+        private const int _off74 = 0x128;
+        public int Field178 { get => ReadInt32(_off74); set => WriteInt32(_off74, value); }
+
+        private const int _off75 = 0x12C;
+        public int Field17C { get => ReadInt32(_off75); set => WriteInt32(_off75, value); }
+
+        private const int _off76 = 0x130; // int[4]
+        public Int32Array Field180 { get; }
+
+        private const int _off77 = 0x140; // int[4]
+        public Int32Array Deaths { get; }
+
+        private const int _off78 = 0x150; // int[4]
+        public Int32Array Field1A0 { get; }
+
+        private const int _off79 = 0x160;
+        public int Field1B0 { get => ReadInt32(_off79); set => WriteInt32(_off79, value); }
+
+        private const int _off80 = 0x164;
+        public int Field1B4 { get => ReadInt32(_off80); set => WriteInt32(_off80, value); }
+
+        private const int _off81 = 0x168;
+        public int Field1B8 { get => ReadInt32(_off81); set => WriteInt32(_off81, value); }
+
+        private const int _off82 = 0x16C;
+        public int Field1BC { get => ReadInt32(_off82); set => WriteInt32(_off82, value); }
+
+        private const int _off83 = 0x170; // int[4]
+        public Int32Array TeamkillsMaybe { get; }
+
+        private const int _off84 = 0x180; // int[4]
+        public Int32Array SuicidesMaybe { get; }
+
+        private const int _off85 = 0x190; // int[4]
+        public Int32Array Field1E0 { get; }
+
+        private const int _off86 = 0x1A0; // int[4]
+        public Int32Array HeadshotsMaybe { get; }
+
+        private const int _off87 = 0x1B0; // int[4]
+        public Int32Array Field200 { get; }
+
+        private const int _off88 = 0x1C0; // int[4]
+        public Int32Array DmgDealt { get; }
+
+        private const int _off89 = 0x1D0; // int[4]
+        public Int32Array DmgMax { get; }
+
+        private const int _off90 = 0x1E0; // int[4]
+        public Int32Array BattlePoints { get; }
+
+        private const int _off91 = 0x1F0;
+        public int Field240 { get => ReadInt32(_off91); set => WriteInt32(_off91, value); }
+
+        private const int _off92 = 0x1F4;
+        public int Field244 { get => ReadInt32(_off92); set => WriteInt32(_off92, value); }
+
+        private const int _off93 = 0x1F8;
+        public int Field248 { get => ReadInt32(_off93); set => WriteInt32(_off93, value); }
+
+        private const int _off94 = 0x1FC;
+        public int Field24C { get => ReadInt32(_off94); set => WriteInt32(_off94, value); }
+
+        private const int _off95 = 0x200; // byte[4]
+        public ByteArray Standings { get; }
+
+        private const int _off96 = 0x204;
+        public int Field254 { get => ReadInt32(_off96); set => WriteInt32(_off96, value); }
+
+        private const int _off97 = 0x208;
+        public byte Field258 { get => ReadByte(_off97); set => WriteByte(_off97, value); }
+
+        private const int _off98 = 0x209;
+        public byte Field259 { get => ReadByte(_off98); set => WriteByte(_off98, value); }
+
+        private const int _off99 = 0x20A;
+        public ushort Field25A { get => ReadUInt16(_off99); set => WriteUInt16(_off99, value); }
+
+        private const int _off100 = 0x20C; // byte[4]
+        public ByteArray KillStreaks { get; }
+
+        private const int _off101 = 0x210; // ushort[4]
+        public UInt16Array Field260 { get; }
+
+        private const int _off102 = 0x218; // ushort[4]
+        public UInt16Array Field268 { get; }
+
+        private const int _off103 = 0x220; // ushort[4]
+        public UInt16Array Field270 { get; }
+
+        private const int _off104 = 0x228;
+        public int Field278 { get => ReadInt32(_off104); set => WriteInt32(_off104, value); }
+
+        private const int _off105 = 0x22C;
+        public int Frames { get => ReadInt32(_off105); set => WriteInt32(_off105, value); }
+
+        private const int _off106 = 0x230;
+        public int Field280 { get => ReadInt32(_off106); set => WriteInt32(_off106, value); }
+
+        private const int _off107 = 0x234;
+        public int Field284 { get => ReadInt32(_off107); set => WriteInt32(_off107, value); }
+
+        private const int _off108 = 0x238;
+        public int Field288 { get => ReadInt32(_off108); set => WriteInt32(_off108, value); }
+
+        private const int _off109 = 0x23C;
+        public byte LayerId { get => ReadByte(_off109); set => WriteByte(_off109, value); }
+
+        private const int _off110 = 0x23D;
+        public byte Field28D { get => ReadByte(_off110); set => WriteByte(_off110, value); }
+
+        private const int _off111 = 0x23E;
+        public ushort Field28E { get => ReadUInt16(_off111); set => WriteUInt16(_off111, value); }
+
+        public GameState(Memory memory, int address) : base(memory, address)
+        {
+            Field8 = new ByteArray(memory, address + _off8, 4);
+            Sensitivity = new Int32Array(memory, address + _off19, 4);
+            InvertSomething = new ByteArray(memory, address + _off20, 4);
+            Field38 = new ByteArray(memory, address + _off21, 4);
+            Hunters = new ByteArray(memory, address + _off22, 4);
+            SuitColors = new ByteArray(memory, address + _off23, 4);
+            PlayerNames = new ByteArray(memory, address + _off24, 4);
+            BotEncounterState = new ByteArray(memory, address + _off25, 4);
+            TeamIds = new ByteArray(memory, address + _off26, 4);
+            FieldA0 = new ByteArray(memory, address + _off27, 4);
+            BotSpawnerEntIds = new UInt16Array(memory, address + _off28, 4);
+            PrimeTime = new Int32Array(memory, address + _off33, 4);
+            FieldC0 = new Int32Array(memory, address + _off34, 4);
+            Field160 = new Int32Array(memory, address + _off71, 4);
+            Field180 = new Int32Array(memory, address + _off76, 4);
+            Deaths = new Int32Array(memory, address + _off77, 4);
+            Field1A0 = new Int32Array(memory, address + _off78, 4);
+            TeamkillsMaybe = new Int32Array(memory, address + _off83, 4);
+            SuicidesMaybe = new Int32Array(memory, address + _off84, 4);
+            Field1E0 = new Int32Array(memory, address + _off85, 4);
+            HeadshotsMaybe = new Int32Array(memory, address + _off86, 4);
+            Field200 = new Int32Array(memory, address + _off87, 4);
+            DmgDealt = new Int32Array(memory, address + _off88, 4);
+            DmgMax = new Int32Array(memory, address + _off89, 4);
+            BattlePoints = new Int32Array(memory, address + _off90, 4);
+            Standings = new ByteArray(memory, address + _off95, 4);
+            KillStreaks = new ByteArray(memory, address + _off100, 4);
+            Field260 = new UInt16Array(memory, address + _off101, 4);
+            Field268 = new UInt16Array(memory, address + _off102, 4);
+            Field270 = new UInt16Array(memory, address + _off103, 4);
+        }
+
+        public GameState(Memory memory, IntPtr address) : base(memory, address)
+        {
+            Field8 = new ByteArray(memory, address + _off8, 4);
+            Sensitivity = new Int32Array(memory, address + _off19, 4);
+            InvertSomething = new ByteArray(memory, address + _off20, 4);
+            Field38 = new ByteArray(memory, address + _off21, 4);
+            Hunters = new ByteArray(memory, address + _off22, 4);
+            SuitColors = new ByteArray(memory, address + _off23, 4);
+            PlayerNames = new ByteArray(memory, address + _off24, 4);
+            BotEncounterState = new ByteArray(memory, address + _off25, 4);
+            TeamIds = new ByteArray(memory, address + _off26, 4);
+            FieldA0 = new ByteArray(memory, address + _off27, 4);
+            BotSpawnerEntIds = new UInt16Array(memory, address + _off28, 4);
+            PrimeTime = new Int32Array(memory, address + _off33, 4);
+            FieldC0 = new Int32Array(memory, address + _off34, 4);
+            Field160 = new Int32Array(memory, address + _off71, 4);
+            Field180 = new Int32Array(memory, address + _off76, 4);
+            Deaths = new Int32Array(memory, address + _off77, 4);
+            Field1A0 = new Int32Array(memory, address + _off78, 4);
+            TeamkillsMaybe = new Int32Array(memory, address + _off83, 4);
+            SuicidesMaybe = new Int32Array(memory, address + _off84, 4);
+            Field1E0 = new Int32Array(memory, address + _off85, 4);
+            HeadshotsMaybe = new Int32Array(memory, address + _off86, 4);
+            Field200 = new Int32Array(memory, address + _off87, 4);
+            DmgDealt = new Int32Array(memory, address + _off88, 4);
+            DmgMax = new Int32Array(memory, address + _off89, 4);
+            BattlePoints = new Int32Array(memory, address + _off90, 4);
+            Standings = new ByteArray(memory, address + _off95, 4);
+            KillStreaks = new ByteArray(memory, address + _off100, 4);
+            Field260 = new UInt16Array(memory, address + _off101, 4);
+            Field268 = new UInt16Array(memory, address + _off102, 4);
+            Field270 = new UInt16Array(memory, address + _off103, 4);
+        }
+    }
+
+    public class KioskGameState : MemoryClass
+    {
+        private const int _off0 = 0x0;
+        public GameMode GameMode { get => (GameMode)ReadByte(_off0); set => WriteByte(_off0, (byte)value); }
+
+        private const int _off1 = 0x1;
+        public byte RoomId { get => ReadByte(_off1); set => WriteByte(_off1, value); }
+
+        private const int _off2 = 0x2;
+        public byte AreaId { get => ReadByte(_off2); set => WriteByte(_off2, value); }
+
+        private const int _off3 = 0x3;
+        public byte PlayerCount { get => ReadByte(_off3); set => WriteByte(_off3, value); }
+
+        private const int _off4 = 0x4;
+        public byte MaxPlayers { get => ReadByte(_off4); set => WriteByte(_off4, value); }
+
+        private const int _off5 = 0x5;
+        public byte BotCount { get => ReadByte(_off5); set => WriteByte(_off5, value); }
+
+        private const int _off6 = 0x6; // byte[4]
+        public ByteArray Field6 { get; }
+
+        private const int _off7 = 0xA;
+        public byte DmgMultIdx { get => ReadByte(_off7); set => WriteByte(_off7, value); }
+
+        private const int _off8 = 0xB;
+        public byte FieldB { get => ReadByte(_off8); set => WriteByte(_off8, value); }
+
+        private const int _off9 = 0xC;
+        public ushort SomeFlags { get => ReadUInt16(_off9); set => WriteUInt16(_off9, value); }
+
+        private const int _off10 = 0xE;
+        public ushort FieldE { get => ReadUInt16(_off10); set => WriteUInt16(_off10, value); }
+
+        private const int _off11 = 0x10;
+        public ushort Field10 { get => ReadUInt16(_off11); set => WriteUInt16(_off11, value); }
+
+        private const int _off12 = 0x12;
+        public ushort PointLimit { get => ReadUInt16(_off12); set => WriteUInt16(_off12, value); }
+
+        private const int _off13 = 0x14;
+        public int BattleTimeLimit { get => ReadInt32(_off13); set => WriteInt32(_off13, value); }
+
+        private const int _off14 = 0x18;
+        public int EscapeState { get => ReadInt32(_off14); set => WriteInt32(_off14, value); }
+
+        private const int _off15 = 0x1C;
+        public int TimeLimit { get => ReadInt32(_off15); set => WriteInt32(_off15, value); }
+
+        private const int _off16 = 0x20; // int[4]
+        public Int32Array Sensitivity { get; }
+
+        private const int _off17 = 0x30; // byte[4]
+        public ByteArray InvertSomething { get; }
+
+        private const int _off18 = 0x34; // byte[4]
+        public ByteArray Field34 { get; }
+
+        private const int _off19 = 0x38; // byte[4]
+        public ByteArray Hunters { get; }
+
+        private const int _off20 = 0x3C; // byte[4]
+        public ByteArray SuitColors { get; }
+
+        private const int _off21 = 0x40; // byte[4]
+        public ByteArray PlayerNames { get; }
+
+        private const int _off22 = 0x44; // byte[4]
+        public ByteArray BotEncounterState { get; }
+
+        private const int _off23 = 0x48; // byte[4]
+        public ByteArray TeamIds { get; }
+
+        private const int _off24 = 0x4C; // byte[4]
+        public ByteArray Field9C { get; }
+
+        private const int _off25 = 0x50; // ushort[4]
+        public UInt16Array BotSpawnerEntIds { get; }
+
+        private const int _off26 = 0x58;
+        public byte PrimeHunterStats { get => ReadByte(_off26); set => WriteByte(_off26, value); }
+
+        private const int _off27 = 0x59;
+        public byte PrimeHunter { get => ReadByte(_off27); set => WriteByte(_off27, value); }
+
+        private const int _off28 = 0x5A;
+        public byte RadShowPlayers { get => ReadByte(_off28); set => WriteByte(_off28, value); }
+
+        private const int _off29 = 0x5B;
+        public byte FieldAB { get => ReadByte(_off29); set => WriteByte(_off29, value); }
+
+        private const int _off30 = 0x5C; // int[4]
+        public Int32Array PrimeTime { get; }
+
+        private const int _off31 = 0x6C; // int[4]
+        public Int32Array FieldBC { get; }
+
+        private const int _off32 = 0x7C;
+        public int FieldCC { get => ReadInt32(_off32); set => WriteInt32(_off32, value); }
+
+        private const int _off33 = 0x80;
+        public int FieldD0 { get => ReadInt32(_off33); set => WriteInt32(_off33, value); }
+
+        private const int _off34 = 0x84;
+        public int FieldD4 { get => ReadInt32(_off34); set => WriteInt32(_off34, value); }
+
+        private const int _off35 = 0x88;
+        public int FieldD8 { get => ReadInt32(_off35); set => WriteInt32(_off35, value); }
+
+        private const int _off36 = 0x8C;
+        public int FieldDC { get => ReadInt32(_off36); set => WriteInt32(_off36, value); }
+
+        private const int _off37 = 0x90;
+        public int FieldE0 { get => ReadInt32(_off37); set => WriteInt32(_off37, value); }
+
+        private const int _off38 = 0x94;
+        public int FieldE4 { get => ReadInt32(_off38); set => WriteInt32(_off38, value); }
+
+        private const int _off39 = 0x98;
+        public int FieldE9 { get => ReadInt32(_off39); set => WriteInt32(_off39, value); }
+
+        private const int _off40 = 0x9C;
+        public int FieldEC { get => ReadInt32(_off40); set => WriteInt32(_off40, value); }
+
+        private const int _off41 = 0xA0;
+        public int FieldF0 { get => ReadInt32(_off41); set => WriteInt32(_off41, value); }
+
+        private const int _off42 = 0xA4;
+        public int FieldF4 { get => ReadInt32(_off42); set => WriteInt32(_off42, value); }
+
+        private const int _off43 = 0xA8;
+        public int FieldF8 { get => ReadInt32(_off43); set => WriteInt32(_off43, value); }
+
+        private const int _off44 = 0xAC;
+        public int FieldFC { get => ReadInt32(_off44); set => WriteInt32(_off44, value); }
+
+        private const int _off45 = 0xB0;
+        public int Field100 { get => ReadInt32(_off45); set => WriteInt32(_off45, value); }
+
+        private const int _off46 = 0xB4;
+        public int Field104 { get => ReadInt32(_off46); set => WriteInt32(_off46, value); }
+
+        private const int _off47 = 0xB8;
+        public int Field108 { get => ReadInt32(_off47); set => WriteInt32(_off47, value); }
+
+        private const int _off48 = 0xBC;
+        public int Field10C { get => ReadInt32(_off48); set => WriteInt32(_off48, value); }
+
+        private const int _off49 = 0xC0;
+        public int Field110 { get => ReadInt32(_off49); set => WriteInt32(_off49, value); }
+
+        private const int _off50 = 0xC4;
+        public int Field114 { get => ReadInt32(_off50); set => WriteInt32(_off50, value); }
+
+        private const int _off51 = 0xC8;
+        public int Field118 { get => ReadInt32(_off51); set => WriteInt32(_off51, value); }
+
+        private const int _off52 = 0xCC;
+        public int Field11C { get => ReadInt32(_off52); set => WriteInt32(_off52, value); }
+
+        private const int _off53 = 0xD0;
+        public int Field120 { get => ReadInt32(_off53); set => WriteInt32(_off53, value); }
+
+        private const int _off54 = 0xD4;
+        public int Field124 { get => ReadInt32(_off54); set => WriteInt32(_off54, value); }
+
+        private const int _off55 = 0xD8;
+        public int Field128 { get => ReadInt32(_off55); set => WriteInt32(_off55, value); }
+
+        private const int _off56 = 0xDC;
+        public int Field12C { get => ReadInt32(_off56); set => WriteInt32(_off56, value); }
+
+        private const int _off57 = 0xE0;
+        public int Field130 { get => ReadInt32(_off57); set => WriteInt32(_off57, value); }
+
+        private const int _off58 = 0xE4;
+        public int Field134 { get => ReadInt32(_off58); set => WriteInt32(_off58, value); }
+
+        private const int _off59 = 0xE8;
+        public int Field138 { get => ReadInt32(_off59); set => WriteInt32(_off59, value); }
+
+        private const int _off60 = 0xEC;
+        public int Field13C { get => ReadInt32(_off60); set => WriteInt32(_off60, value); }
+
+        private const int _off61 = 0xF0;
+        public int Field140 { get => ReadInt32(_off61); set => WriteInt32(_off61, value); }
+
+        private const int _off62 = 0xF4;
+        public int Field144 { get => ReadInt32(_off62); set => WriteInt32(_off62, value); }
+
+        private const int _off63 = 0xF8;
+        public int Field148 { get => ReadInt32(_off63); set => WriteInt32(_off63, value); }
+
+        private const int _off64 = 0xFC;
+        public int Field14C { get => ReadInt32(_off64); set => WriteInt32(_off64, value); }
+
+        private const int _off65 = 0x100;
+        public int Field150 { get => ReadInt32(_off65); set => WriteInt32(_off65, value); }
+
+        private const int _off66 = 0x104;
+        public int Field154 { get => ReadInt32(_off66); set => WriteInt32(_off66, value); }
+
+        private const int _off67 = 0x108;
+        public int Field158 { get => ReadInt32(_off67); set => WriteInt32(_off67, value); }
+
+        private const int _off68 = 0x10C;
+        public int Field15C { get => ReadInt32(_off68); set => WriteInt32(_off68, value); }
+
+        private const int _off69 = 0x110;
+        public int Field160 { get => ReadInt32(_off69); set => WriteInt32(_off69, value); }
+
+        private const int _off70 = 0x114;
+        public int Field164 { get => ReadInt32(_off70); set => WriteInt32(_off70, value); }
+
+        private const int _off71 = 0x118;
+        public int Field168 { get => ReadInt32(_off71); set => WriteInt32(_off71, value); }
+
+        private const int _off72 = 0x11C;
+        public int Field16C { get => ReadInt32(_off72); set => WriteInt32(_off72, value); }
+
+        private const int _off73 = 0x120;
+        public int Field170 { get => ReadInt32(_off73); set => WriteInt32(_off73, value); }
+
+        private const int _off74 = 0x124;
+        public int Field174 { get => ReadInt32(_off74); set => WriteInt32(_off74, value); }
+
+        private const int _off75 = 0x128;
+        public int Field178 { get => ReadInt32(_off75); set => WriteInt32(_off75, value); }
+
+        private const int _off76 = 0x12C; // int[4]
+        public Int32Array Field17C { get; }
+
+        private const int _off77 = 0x13C;
+        public int Field18C { get => ReadInt32(_off77); set => WriteInt32(_off77, value); }
+
+        private const int _off78 = 0x140;
+        public int Field190 { get => ReadInt32(_off78); set => WriteInt32(_off78, value); }
+
+        private const int _off79 = 0x144;
+        public int Field194 { get => ReadInt32(_off79); set => WriteInt32(_off79, value); }
+
+        private const int _off80 = 0x148;
+        public int Field198 { get => ReadInt32(_off80); set => WriteInt32(_off80, value); }
+
+        private const int _off81 = 0x14C; // int[4]
+        public Int32Array Field19C { get; }
+
+        private const int _off82 = 0x15C; // int[4]
+        public Int32Array Deaths { get; }
+
+        private const int _off83 = 0x16C; // int[4]
+        public Int32Array Field1BC { get; }
+
+        private const int _off84 = 0x17C; // int[4]
+        public Int32Array Field1CC { get; }
+
+        private const int _off85 = 0x18C; // int[4]
+        public Int32Array SuicidesMaybe { get; }
+
+        private const int _off86 = 0x19C;
+        public int Field1EC { get => ReadInt32(_off86); set => WriteInt32(_off86, value); }
+
+        private const int _off87 = 0x1A0;
+        public int Field1F0 { get => ReadInt32(_off87); set => WriteInt32(_off87, value); }
+
+        private const int _off88 = 0x1A4;
+        public int Field1F4 { get => ReadInt32(_off88); set => WriteInt32(_off88, value); }
+
+        private const int _off89 = 0x1A8;
+        public int Field1F8 { get => ReadInt32(_off89); set => WriteInt32(_off89, value); }
+
+        private const int _off90 = 0x1AC; // int[4]
+        public Int32Array Field1FC { get; }
+
+        private const int _off91 = 0x1BC; // int[4]
+        public Int32Array HeadshotsMaybe { get; }
+
+        private const int _off92 = 0x1CC; // int[4]
+        public Int32Array Field21C { get; }
+
+        private const int _off93 = 0x1DC; // int[4]
+        public Int32Array DmgDealt { get; }
+
+        private const int _off94 = 0x1EC; // int[4]
+        public Int32Array DmgMax { get; }
+
+        private const int _off95 = 0x1FC; // int[4]
+        public Int32Array BattlePoints { get; }
+
+        private const int _off96 = 0x20C;
+        public int Field25C { get => ReadInt32(_off96); set => WriteInt32(_off96, value); }
+
+        private const int _off97 = 0x210;
+        public int Field260 { get => ReadInt32(_off97); set => WriteInt32(_off97, value); }
+
+        private const int _off98 = 0x214;
+        public int Field264 { get => ReadInt32(_off98); set => WriteInt32(_off98, value); }
+
+        private const int _off99 = 0x218;
+        public int Field268 { get => ReadInt32(_off99); set => WriteInt32(_off99, value); }
+
+        private const int _off100 = 0x21C; // byte[4]
+        public ByteArray Field26C { get; }
+
+        private const int _off101 = 0x220;
+        public int Field270 { get => ReadInt32(_off101); set => WriteInt32(_off101, value); }
+
+        private const int _off102 = 0x224;
+        public byte Field274 { get => ReadByte(_off102); set => WriteByte(_off102, value); }
+
+        private const int _off103 = 0x225;
+        public byte Field275 { get => ReadByte(_off103); set => WriteByte(_off103, value); }
+
+        private const int _off104 = 0x226;
+        public ushort Field276 { get => ReadUInt16(_off104); set => WriteUInt16(_off104, value); }
+
+        private const int _off105 = 0x228; // byte[4]
+        public ByteArray KillStreaks { get; }
+
+        private const int _off106 = 0x22C; // ushort[4]
+        public UInt16Array Field27C { get; }
+
+        private const int _off107 = 0x234; // ushort[4]
+        public UInt16Array Field284 { get; }
+
+        private const int _off108 = 0x23C; // ushort[4]
+        public UInt16Array Field28C { get; }
+
+        private const int _off109 = 0x244;
+        public int Field294 { get => ReadInt32(_off109); set => WriteInt32(_off109, value); }
+
+        private const int _off110 = 0x248;
+        public int Frames { get => ReadInt32(_off110); set => WriteInt32(_off110, value); }
+
+        private const int _off111 = 0x24C;
+        public int Field29C { get => ReadInt32(_off111); set => WriteInt32(_off111, value); }
+
+        private const int _off112 = 0x250;
+        public int Field2A0 { get => ReadInt32(_off112); set => WriteInt32(_off112, value); }
+
+        private const int _off113 = 0x254;
+        public int Field2A4 { get => ReadInt32(_off113); set => WriteInt32(_off113, value); }
+
+        private const int _off114 = 0x258;
+        public int Field2A8 { get => ReadInt32(_off114); set => WriteInt32(_off114, value); }
+
+        private const int _off115 = 0x25C;
+        public int Field2AC { get => ReadInt32(_off115); set => WriteInt32(_off115, value); }
+
+        private const int _off116 = 0x260;
+        public byte LayerId { get => ReadByte(_off116); set => WriteByte(_off116, value); }
+
+        private const int _off117 = 0x261;
+        public byte Field2B1 { get => ReadByte(_off117); set => WriteByte(_off117, value); }
+
+        private const int _off118 = 0x262;
+        public ushort Field2B2 { get => ReadUInt16(_off118); set => WriteUInt16(_off118, value); }
+
+        public KioskGameState(Memory memory, int address) : base(memory, address)
+        {
+            Field6 = new ByteArray(memory, address + _off6, 4);
+            Sensitivity = new Int32Array(memory, address + _off16, 4);
+            InvertSomething = new ByteArray(memory, address + _off17, 4);
+            Field34 = new ByteArray(memory, address + _off18, 4);
+            Hunters = new ByteArray(memory, address + _off19, 4);
+            SuitColors = new ByteArray(memory, address + _off20, 4);
+            PlayerNames = new ByteArray(memory, address + _off21, 4);
+            BotEncounterState = new ByteArray(memory, address + _off22, 4);
+            TeamIds = new ByteArray(memory, address + _off23, 4);
+            Field9C = new ByteArray(memory, address + _off24, 4);
+            BotSpawnerEntIds = new UInt16Array(memory, address + _off25, 4);
+            PrimeTime = new Int32Array(memory, address + _off30, 4);
+            FieldBC = new Int32Array(memory, address + _off31, 4);
+            Field17C = new Int32Array(memory, address + _off76, 4);
+            Field19C = new Int32Array(memory, address + _off81, 4);
+            Deaths = new Int32Array(memory, address + _off82, 4);
+            Field1BC = new Int32Array(memory, address + _off83, 4);
+            Field1CC = new Int32Array(memory, address + _off84, 4);
+            SuicidesMaybe = new Int32Array(memory, address + _off85, 4);
+            Field1FC = new Int32Array(memory, address + _off90, 4);
+            HeadshotsMaybe = new Int32Array(memory, address + _off91, 4);
+            Field21C = new Int32Array(memory, address + _off92, 4);
+            DmgDealt = new Int32Array(memory, address + _off93, 4);
+            DmgMax = new Int32Array(memory, address + _off94, 4);
+            BattlePoints = new Int32Array(memory, address + _off95, 4);
+            Field26C = new ByteArray(memory, address + _off100, 4);
+            KillStreaks = new ByteArray(memory, address + _off105, 4);
+            Field27C = new UInt16Array(memory, address + _off106, 4);
+            Field284 = new UInt16Array(memory, address + _off107, 4);
+            Field28C = new UInt16Array(memory, address + _off108, 4);
+        }
+
+        public KioskGameState(Memory memory, IntPtr address) : base(memory, address)
+        {
+            Field6 = new ByteArray(memory, address + _off6, 4);
+            Sensitivity = new Int32Array(memory, address + _off16, 4);
+            InvertSomething = new ByteArray(memory, address + _off17, 4);
+            Field34 = new ByteArray(memory, address + _off18, 4);
+            Hunters = new ByteArray(memory, address + _off19, 4);
+            SuitColors = new ByteArray(memory, address + _off20, 4);
+            PlayerNames = new ByteArray(memory, address + _off21, 4);
+            BotEncounterState = new ByteArray(memory, address + _off22, 4);
+            TeamIds = new ByteArray(memory, address + _off23, 4);
+            Field9C = new ByteArray(memory, address + _off24, 4);
+            BotSpawnerEntIds = new UInt16Array(memory, address + _off25, 4);
+            PrimeTime = new Int32Array(memory, address + _off30, 4);
+            FieldBC = new Int32Array(memory, address + _off31, 4);
+            Field17C = new Int32Array(memory, address + _off76, 4);
+            Field19C = new Int32Array(memory, address + _off81, 4);
+            Deaths = new Int32Array(memory, address + _off82, 4);
+            Field1BC = new Int32Array(memory, address + _off83, 4);
+            Field1CC = new Int32Array(memory, address + _off84, 4);
+            SuicidesMaybe = new Int32Array(memory, address + _off85, 4);
+            Field1FC = new Int32Array(memory, address + _off90, 4);
+            HeadshotsMaybe = new Int32Array(memory, address + _off91, 4);
+            Field21C = new Int32Array(memory, address + _off92, 4);
+            DmgDealt = new Int32Array(memory, address + _off93, 4);
+            DmgMax = new Int32Array(memory, address + _off94, 4);
+            BattlePoints = new Int32Array(memory, address + _off95, 4);
+            Field26C = new ByteArray(memory, address + _off100, 4);
+            KillStreaks = new ByteArray(memory, address + _off105, 4);
+            Field27C = new UInt16Array(memory, address + _off106, 4);
+            Field284 = new UInt16Array(memory, address + _off107, 4);
+            Field28C = new UInt16Array(memory, address + _off108, 4);
+        }
+    }
+
     public class RoomState : MemoryClass
     {
         private const int _off0 = 0x0; // byte[60]

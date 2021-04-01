@@ -131,7 +131,8 @@ namespace MphRead.Testing
             var byteEnums = new Dictionary<string, string>()
             {
                 { "ENEMY_TYPE", "EnemyType" },
-                { "HUNTER", "Hunter" }
+                { "HUNTER", "Hunter" },
+                { "GAME_MODE", "GameMode" }
             };
             var ushortEnums = new Dictionary<string, string>()
             {

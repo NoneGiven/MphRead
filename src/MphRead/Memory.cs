@@ -16,6 +16,7 @@ namespace MphRead.Memory
             public int FrameCount { get; }
             public int PlayerUA { get; }
             public int CamSeqData { get; }
+            public int GameState { get; }
 
             public SaveAddressInfo Save { get; }
 
@@ -37,8 +38,9 @@ namespace MphRead.Memory
                 }
             }
 
-            public AddressInfo(int entityListHead, int frameCount, int playerUa, int camSeqData, SaveAddressInfo save)
+            public AddressInfo(int gameState, int entityListHead, int frameCount, int playerUa, int camSeqData, SaveAddressInfo save)
             {
+                GameState = gameState;
                 EntityListHead = entityListHead;
                 FrameCount = frameCount;
                 PlayerUA = playerUa;
@@ -52,6 +54,7 @@ namespace MphRead.Memory
         private static readonly IReadOnlyDictionary<string, AddressInfo> AllAddresses = new Dictionary<string, AddressInfo>()
         {
             ["a76e"] = new AddressInfo(
+                gameState: 0x20BC420, // todo: class
                 entityListHead: 0x20B85F8,
                 frameCount: 0x20AE514,
                 playerUa: 0x20B00D4,
@@ -65,6 +68,7 @@ namespace MphRead.Memory
                 )
             ),
             ["amhp1"] = new AddressInfo(
+                gameState: 0x20E845C,
                 entityListHead: 0x20E3EE0,
                 frameCount: 0x20D94FC,
                 playerUa: 0x20DB180,
@@ -105,7 +109,7 @@ namespace MphRead.Memory
         public static void Start()
         {
             // FF DE FF E7 FF DE FF E7 FF DE FF E7 @ 0x2004000
-            new Memory(Process.GetProcessById(56776)).Run();
+            new Memory(Process.GetProcessById(21748)).Run();
             /*var procs = Process.GetProcessesByName("NO$GBA").ToList();
             foreach (Process process in procs)
             {
@@ -121,10 +125,12 @@ namespace MphRead.Memory
         private readonly List<CEntity> _entities = new List<CEntity>();
         private readonly Dictionary<IntPtr, CEntity> _temp = new Dictionary<IntPtr, CEntity>();
 
+        private byte _curIndex = 0xFF;
+
         private void Run()
         {
             Addresses = AllAddresses["a76e"];
-            _baseAddress = new IntPtr(0xC039100);
+            _baseAddress = new IntPtr(0xB343100);
             Task.Run(async () =>
             {
                 // 0x137A9C Cretaphid 1 crystal
@@ -135,16 +141,18 @@ namespace MphRead.Memory
                 //var results = new List<(int, int)>();
                 //string last = "";
                 RefreshMemory();
-                var story = new StorySaveData(this, Addresses.Save.Story);
-                var type3 = new SaveType3(this, Addresses.Save.Type3);
-                var settings = new StatsAndSettings(this, Addresses.Save.Settings);
-                var license = new StorySaveData(this, Addresses.Save.License);
-                var friends = new StorySaveData(this, Addresses.Save.Friends);
+                //var story = new StorySaveData(this, Addresses.Save.Story);
+                //var type3 = new SaveType3(this, Addresses.Save.Type3);
+                //var settings = new StatsAndSettings(this, Addresses.Save.Settings);
+                //var license = new StorySaveData(this, Addresses.Save.License);
+                //var friends = new StorySaveData(this, Addresses.Save.Friends);
+                //var state = new GameState(this, Addresses.GameState);
+                var state = new KioskGameState(this, Addresses.GameState);
                 IReadOnlyList<StringTableEntry> scans = Strings.ReadStringTable(StringTables.ScanLog);
                 while (true)
                 {
                     RefreshMemory();
-                    GetEntities();
+                    //GetEntities();
                     //byte[] weapon = new byte[0xF0];
                     //for (int i = 0; i < 0xF0; i++)
                     //{
@@ -157,13 +165,13 @@ namespace MphRead.Memory
                     //var keyframe1 = new CameraSequenceKeyframe(this, keyframe0.Next);
                     //var keyframe2 = new CameraSequenceKeyframe(this, keyframe1.Next);
                     //var beams = _entities.Where(e => e.EntityType == EntityType.BeamProjectile).ToList();
-                    var player = _entities.FirstOrDefault(e => e.EntityType == EntityType.Player) as CPlayer;
-                    if (player != null)
-                    {
-                        player.AvailableWeapons = 0xFF;
-                        player.AvailableCharges = 0xFF;
-                        player.Energy += 99;
-                    }
+                    //var player = _entities.FirstOrDefault(e => e.EntityType == EntityType.Player) as CPlayer;
+                    //if (player != null)
+                    //{
+                    //    player.AvailableWeapons = 0xFF;
+                    //    player.AvailableCharges = 0xFF;
+                    //    player.Energy += 99;
+                    //}
                     //if (player != null)
                     //{
                     //    int bit0 = player.SomeFlags & 0x10;
@@ -180,7 +188,21 @@ namespace MphRead.Memory
                     //{
                     //    Console.WriteLine($"{plat.ModelId}: {plat.State}");
                     //}
-                    TestLogic.CompletionValues pcts = TestLogic.GetCompletionValues(story);
+                    //TestLogic.CompletionValues pcts = TestLogic.GetCompletionValues(story);
+                    state.AreaId = 8;
+                    state.BattleTimeLimit = 25200;
+                    state.TimeLimit = 25200;
+                    //state.BotCount = 1; // todo: work around the allocation thing
+                    //state.Field6[1] = 0;
+                    state.GameMode = GameMode.Battle;
+                    state.Hunters[1] = 1;
+                    state.SuitColors[1] = 1;
+                    state.MaxPlayers = 2;
+                    state.PlayerCount = 2;
+                    state.PointLimit = 7;
+                    state.RoomId = 105;
+                    state.SomeFlags = 6160;
+                    state.LayerId = 255;
                     await Task.Delay(15);
                 }
             }).GetAwaiter().GetResult();
