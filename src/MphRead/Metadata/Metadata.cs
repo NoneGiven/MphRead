@@ -17,7 +17,8 @@ namespace MphRead
         Models,
         Hud,
         Stage,
-        MainMenu
+        MainMenu,
+        Logo
     }
 
     public class ModelMetadata
@@ -62,6 +63,10 @@ namespace MphRead
             else if (dir == MetaDir.MainMenu)
             {
                 directory = "main menu";
+            }
+            else if (dir == MetaDir.Logo)
+            {
+                directory = @"logo_screen\MAYA";
             }
             ModelPath = $@"{directory}\{name}_Model.bin";
             AnimationPath = anim != null ? $@"{directory}\{anim}_Anim.bin" : null;
@@ -624,7 +629,14 @@ namespace MphRead
             {
                 return Ad2Dm2;
             }
-            if (dir == MetaDir.MainMenu || dir == MetaDir.Stage)
+            if (dir == MetaDir.Logo)
+            {
+                if (LogoModels.TryGetValue(name, out ModelMetadata? metadata))
+                {
+                    return metadata;
+                }
+            }
+            else if (dir == MetaDir.MainMenu || dir == MetaDir.Stage)
             {
                 if (FrontendModels.TryGetValue(name, out ModelMetadata? metadata))
                 {

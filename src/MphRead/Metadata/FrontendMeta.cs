@@ -8,6 +8,56 @@ namespace MphRead
         public static readonly ModelMetadata Ad2Dm2
             = new ModelMetadata("ad2_dm2", dir: MetaDir.Stage);
 
+        public static readonly IReadOnlyDictionary<string, ModelMetadata> LogoModels
+            = new Dictionary<string, ModelMetadata>()
+            {
+                // logos
+                {
+                    "flare",
+                    new ModelMetadata("flare", dir: MetaDir.Logo)
+                },
+                {
+                    "flare2",
+                    new ModelMetadata("flare2", dir: MetaDir.Logo)
+                },
+                {
+                    "flare3",
+                    new ModelMetadata("flare3", dir: MetaDir.Logo)
+                },
+                {
+                    "logo1",
+                    new ModelMetadata("logo1", dir: MetaDir.Logo)
+                },
+                {
+                    "logo2",
+                    new ModelMetadata("logo2", dir: MetaDir.Logo)
+                },
+                {
+                    "logo3",
+                    new ModelMetadata("logo3", dir: MetaDir.Logo)
+                },
+                {
+                    "logos",
+                    new ModelMetadata("logos", dir: MetaDir.Logo)
+                },
+                {
+                    "name",
+                    new ModelMetadata("name", dir: MetaDir.Logo)
+                },
+                {
+                    "nameflare",
+                    new ModelMetadata("nameflare", dir: MetaDir.Logo)
+                },
+                {
+                    "nst",
+                    new ModelMetadata("nst", dir: MetaDir.Logo)
+                },
+                {
+                    "whitelogo",
+                    new ModelMetadata("whitelogo", dir: MetaDir.Logo)
+                }
+            };
+
         // sktodo: multiple animation files
         public static readonly IReadOnlyDictionary<string, ModelMetadata> FrontendModels
             = new Dictionary<string, ModelMetadata>()
