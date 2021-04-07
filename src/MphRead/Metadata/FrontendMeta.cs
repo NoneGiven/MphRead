@@ -8,6 +8,78 @@ namespace MphRead
         public static readonly ModelMetadata Ad2Dm2
             = new ModelMetadata("ad2_dm2", dir: MetaDir.Stage);
 
+        public static readonly IReadOnlyDictionary<string, ModelMetadata> TouchToStartModels
+            = new Dictionary<string, ModelMetadata>()
+            {
+                // touchtostart
+                {
+                    "touch_bg",
+                    new ModelMetadata("touch_bg", dir: MetaDir.TouchToStart)
+                },
+            };
+
+        public static readonly IReadOnlyDictionary<string, ModelMetadata> MultiplayerModels
+            = new Dictionary<string, ModelMetadata>()
+            {
+                // multiplayer
+                {
+                    "bigdeathmatch",
+                    new ModelMetadata("bigdeathmatch", dir: MetaDir.Multiplayer)
+                },
+                {
+                    "bounty",
+                    new ModelMetadata("bounty", dir: MetaDir.Multiplayer)
+                },
+                {
+                    "capture",
+                    new ModelMetadata("capture", dir: MetaDir.Multiplayer)
+                },
+                {
+                    "challenge",
+                    new ModelMetadata("challenge", dir: MetaDir.Multiplayer)
+                },
+                {
+                    "friendconfig",
+                    new ModelMetadata("friendconfig", dir: MetaDir.Multiplayer)
+                },
+                {
+                    "med_highlight",
+                    new ModelMetadata("med_highlight", dir: MetaDir.Multiplayer)
+                },
+                {
+                    "multiplayer",
+                    new ModelMetadata("multiplayer", dir: MetaDir.Multiplayer)
+                },
+                {
+                    "nodes",
+                    new ModelMetadata("nodes", dir: MetaDir.Multiplayer)
+                },
+                {
+                    "primehunter",
+                    new ModelMetadata("primehunter", dir: MetaDir.Multiplayer)
+                },
+                {
+                    "rivalradar",
+                    new ModelMetadata("rivalradar", dir: MetaDir.Multiplayer)
+                },
+                {
+                    "singlecart",
+                    new ModelMetadata("singlecart", dir: MetaDir.Multiplayer)
+                },
+                {
+                    "survival",
+                    new ModelMetadata("survival", dir: MetaDir.Multiplayer)
+                },
+                {
+                    "wificonfig",
+                    new ModelMetadata("wificonfig", dir: MetaDir.Multiplayer)
+                },
+                {
+                    "wifi",
+                    new ModelMetadata("wifi", dir: MetaDir.Multiplayer)
+                }
+            };
+
         public static readonly IReadOnlyDictionary<string, ModelMetadata> LogoModels
             = new Dictionary<string, ModelMetadata>()
             {
@@ -62,6 +134,687 @@ namespace MphRead
         public static readonly IReadOnlyDictionary<string, ModelMetadata> FrontendModels
             = new Dictionary<string, ModelMetadata>()
             {
+                // characterselect
+                {
+                    "big_kanden",
+                    new ModelMetadata("big_kanden", dir: MetaDir.CharSelect)
+                },
+                {
+                    "big_noxus",
+                    new ModelMetadata("big_noxus", dir: MetaDir.CharSelect)
+                },
+                {
+                    "big_samus",
+                    new ModelMetadata("big_samus", dir: MetaDir.CharSelect)
+                },
+                {
+                    "big_spire",
+                    new ModelMetadata("big_spire", dir: MetaDir.CharSelect)
+                },
+                {
+                    "big_sylux",
+                    new ModelMetadata("big_sylux", dir: MetaDir.CharSelect)
+                },
+                {
+                    "big_trace",
+                    new ModelMetadata("big_trace", dir: MetaDir.CharSelect)
+                },
+                {
+                    "big_weavel",
+                    new ModelMetadata("big_weavel", dir: MetaDir.CharSelect)
+                },
+                {
+                    "character_grid",
+                    new ModelMetadata("character_grid", dir: MetaDir.CharSelect)
+                },
+                {
+                    "kandenoff",
+                    new ModelMetadata("kandenoff", dir: MetaDir.CharSelect)
+                },
+                {
+                    "kanden",
+                    new ModelMetadata("kanden", dir: MetaDir.CharSelect)
+                },
+                {
+                    "noxusoff",
+                    new ModelMetadata("noxusoff", dir: MetaDir.CharSelect)
+                },
+                {
+                    "noxus",
+                    new ModelMetadata("noxus", dir: MetaDir.CharSelect)
+                },
+                {
+                    "samus",
+                    new ModelMetadata("samus", dir: MetaDir.CharSelect)
+                },
+                {
+                    "spireoff",
+                    new ModelMetadata("spireoff", dir: MetaDir.CharSelect)
+                },
+                {
+                    "spire",
+                    new ModelMetadata("spire", dir: MetaDir.CharSelect)
+                },
+                {
+                    "syluxoff",
+                    new ModelMetadata("syluxoff", dir: MetaDir.CharSelect)
+                },
+                {
+                    "sylux",
+                    new ModelMetadata("sylux", dir: MetaDir.CharSelect)
+                },
+                {
+                    "traceoff",
+                    new ModelMetadata("traceoff", dir: MetaDir.CharSelect)
+                },
+                {
+                    "trace",
+                    new ModelMetadata("trace", dir: MetaDir.CharSelect)
+                },
+                {
+                    "weaveloff",
+                    new ModelMetadata("weaveloff", dir: MetaDir.CharSelect)
+                },
+                {
+                    "weavel",
+                    new ModelMetadata("weavel", dir: MetaDir.CharSelect)
+                },
+                // createjoin
+                {
+                    "create",
+                    new ModelMetadata("create", dir: MetaDir.CreateJoin)
+                },
+                {
+                    "join_highlight",
+                    new ModelMetadata("join_highlight", dir: MetaDir.CreateJoin)
+                },
+                {
+                    "join",
+                    new ModelMetadata("join", dir: MetaDir.CreateJoin)
+                },
+                {
+                    "redbar",
+                    new ModelMetadata("redbar", dir: MetaDir.CreateJoin)
+                },
+                // gameoptions
+                {
+                    "arrows_option",
+                    new ModelMetadata("arrows_option", dir: MetaDir.GameOption)
+                },
+                {
+                    "arrows_type",
+                    new ModelMetadata("arrows_type", dir: MetaDir.GameOption)
+                },
+                {
+                    "box_arrowsdouble",
+                    new ModelMetadata("box_arrowsdouble", dir: MetaDir.GameOption)
+                },
+                {
+                    "box_arrows",
+                    new ModelMetadata("box_arrows", dir: MetaDir.GameOption)
+                },
+                {
+                    "box_type",
+                    new ModelMetadata("box_type", dir: MetaDir.GameOption)
+                },
+                {
+                    "cancel",
+                    new ModelMetadata("cancel", dir: MetaDir.GameOption)
+                },
+                {
+                    "chat",
+                    new ModelMetadata("chat", dir: MetaDir.GameOption)
+                },
+                {
+                    "connected",
+                    new ModelMetadata("connected", dir: MetaDir.GameOption)
+                },
+                {
+                    "empty",
+                    new ModelMetadata("empty", dir: MetaDir.GameOption)
+                },
+                {
+                    "headphones",
+                    new ModelMetadata("headphones", dir: MetaDir.GameOption)
+                },
+                {
+                    "highlight_arrowleft",
+                    new ModelMetadata("highlight_arrowleft", dir: MetaDir.GameOption)
+                },
+                {
+                    "highlight_arrowright",
+                    new ModelMetadata("highlight_arrowright", dir: MetaDir.GameOption)
+                },
+                {
+                    "ok",
+                    new ModelMetadata("ok", dir: MetaDir.GameOption)
+                },
+                {
+                    "playmask",
+                    new ModelMetadata("playmask", dir: MetaDir.GameOption)
+                },
+                {
+                    "play",
+                    new ModelMetadata("play", dir: MetaDir.GameOption)
+                },
+                {
+                    "stereo",
+                    new ModelMetadata("stereo", dir: MetaDir.GameOption)
+                },
+                {
+                    "surround",
+                    new ModelMetadata("surround", dir: MetaDir.GameOption)
+                },
+                {
+                    "wifiicon",
+                    new ModelMetadata("wifiicon", dir: MetaDir.GameOption)
+                },
+                {
+                    "wifionlineicon",
+                    new ModelMetadata("wifionlineicon", dir: MetaDir.GameOption)
+                },
+                // gamerscard
+                {
+                    "alimbicswirl",
+                    new ModelMetadata("alimbicswirl", dir: MetaDir.GamersCard)
+                },
+                {
+                    "blackstar",
+                    new ModelMetadata("blackstar", dir: MetaDir.GamersCard)
+                },
+                {
+                    "bronzemedal",
+                    new ModelMetadata("bronzemedal", dir: MetaDir.GamersCard)
+                },
+                {
+                    "bronzestar",
+                    new ModelMetadata("bronzestar", dir: MetaDir.GamersCard)
+                },
+                {
+                    "cardbgEURO",
+                    new ModelMetadata("cardbgEURO", dir: MetaDir.GamersCard)
+                },
+                {
+                    "cardbgJAP",
+                    new ModelMetadata("cardbgJAP", dir: MetaDir.GamersCard)
+                },
+                {
+                    "cardbgUS",
+                    new ModelMetadata("cardbgUS", dir: MetaDir.GamersCard)
+                },
+                {
+                    "cardbg",
+                    new ModelMetadata("cardbg", dir: MetaDir.GamersCard)
+                },
+                {
+                    "cardheadergold",
+                    new ModelMetadata("cardheadergold", dir: MetaDir.GamersCard)
+                },
+                {
+                    "cardmessage",
+                    new ModelMetadata("cardmessage", dir: MetaDir.GamersCard)
+                },
+                {
+                    "frame200gold",
+                    new ModelMetadata("frame200gold", dir: MetaDir.GamersCard)
+                },
+                {
+                    "frame200",
+                    new ModelMetadata("frame200", dir: MetaDir.GamersCard)
+                },
+                {
+                    "goldmedal",
+                    new ModelMetadata("goldmedal", dir: MetaDir.GamersCard)
+                },
+                {
+                    "goldstar",
+                    new ModelMetadata("goldstar", dir: MetaDir.GamersCard)
+                },
+                {
+                    "kandenmost",
+                    new ModelMetadata("kandenmost", dir: MetaDir.GamersCard)
+                },
+                {
+                    "lricons",
+                    new ModelMetadata("lricons", dir: MetaDir.GamersCard)
+                },
+                {
+                    "noxmost",
+                    new ModelMetadata("noxmost", dir: MetaDir.GamersCard)
+                },
+                {
+                    "octolith",
+                    new ModelMetadata("octolith", dir: MetaDir.GamersCard)
+                },
+                {
+                    "redstar",
+                    new ModelMetadata("redstar", dir: MetaDir.GamersCard)
+                },
+                {
+                    "samusmost",
+                    new ModelMetadata("samusmost", dir: MetaDir.GamersCard)
+                },
+                {
+                    "silvermedal",
+                    new ModelMetadata("silvermedal", dir: MetaDir.GamersCard)
+                },
+                {
+                    "silverstar",
+                    new ModelMetadata("silverstar", dir: MetaDir.GamersCard)
+                },
+                {
+                    "spiremost",
+                    new ModelMetadata("spiremost", dir: MetaDir.GamersCard)
+                },
+                {
+                    "syluxmost",
+                    new ModelMetadata("syluxmost", dir: MetaDir.GamersCard)
+                },
+                {
+                    "tab1",
+                    new ModelMetadata("tab1", dir: MetaDir.GamersCard)
+                },
+                {
+                    "tab2",
+                    new ModelMetadata("tab2", dir: MetaDir.GamersCard)
+                },
+                {
+                    "tab3",
+                    new ModelMetadata("tab3", dir: MetaDir.GamersCard)
+                },
+                {
+                    "tab4",
+                    new ModelMetadata("tab4", dir: MetaDir.GamersCard)
+                },
+                {
+                    "tab5",
+                    new ModelMetadata("tab5", dir: MetaDir.GamersCard)
+                },
+                {
+                    "textarea",
+                    new ModelMetadata("textarea", dir: MetaDir.GamersCard)
+                },
+                {
+                    "tracemost",
+                    new ModelMetadata("tracemost", dir: MetaDir.GamersCard)
+                },
+                {
+                    "weavelmost",
+                    new ModelMetadata("weavelmost", dir: MetaDir.GamersCard)
+                },
+                // keyboard
+                {
+                    "EURO",
+                    new ModelMetadata("EURO", dir: MetaDir.Keyboard)
+                },
+                {
+                    "hl_key",
+                    new ModelMetadata("hl_key", dir: MetaDir.Keyboard)
+                },
+                {
+                    "JAP_1",
+                    new ModelMetadata("JAP_1", dir: MetaDir.Keyboard)
+                },
+                {
+                    "JAP_2",
+                    new ModelMetadata("JAP_2", dir: MetaDir.Keyboard)
+                },
+                {
+                    "keyboardmask",
+                    new ModelMetadata("keyboardmask", dir: MetaDir.Keyboard)
+                },
+                {
+                    "keytoggle",
+                    new ModelMetadata("keytoggle", dir: MetaDir.Keyboard)
+                },
+                {
+                    "messagebox",
+                    new ModelMetadata("messagebox", dir: MetaDir.Keyboard)
+                },
+                {
+                    "US_caps",
+                    new ModelMetadata("US_caps", dir: MetaDir.Keyboard)
+                },
+                {
+                    "US_lower",
+                    new ModelMetadata("US_lower", dir: MetaDir.Keyboard)
+                },
+                {
+                    "US_upper",
+                    new ModelMetadata("US_upper", dir: MetaDir.Keyboard)
+                },
+                // keypad
+                {
+                    "numback",
+                    new ModelMetadata("numback", dir: MetaDir.Keypad)
+                },
+                {
+                    "numkey",
+                    new ModelMetadata("numkey", dir: MetaDir.Keypad)
+                },
+                // movieplayer
+                {
+                    "cover",
+                    new ModelMetadata("cover", dir: MetaDir.MoviePlayer)
+                },
+                {
+                    "hotspot",
+                    new ModelMetadata("hotspot", dir: MetaDir.MoviePlayer)
+                },
+                {
+                    "thumbnails1",
+                    new ModelMetadata("thumbnails1", dir: MetaDir.MoviePlayer)
+                },
+                {
+                    "thumbnails2",
+                    new ModelMetadata("thumbnails2", dir: MetaDir.MoviePlayer)
+                },
+                // multimaster
+                {
+                    "bluedot",
+                    new ModelMetadata("bluedot", dir: MetaDir.MultiMaster)
+                },
+                {
+                    "tab",
+                    new ModelMetadata("tab", dir: MetaDir.MultiMaster)
+                },
+                {
+                    "topsettings",
+                    new ModelMetadata("topsettings", dir: MetaDir.MultiMaster)
+                },
+                {
+                    "topstatus",
+                    new ModelMetadata("topstatus", dir: MetaDir.MultiMaster)
+                },
+                // pax_controls
+                {
+                    "dmleft",
+                    new ModelMetadata("dmleft", dir: MetaDir.PaxControls)
+                },
+                {
+                    "dmright",
+                    new ModelMetadata("dmright", dir: MetaDir.PaxControls)
+                },
+                {
+                    "selectAoff",
+                    new ModelMetadata("selectAoff", dir: MetaDir.PaxControls)
+                },
+                {
+                    "selectAon",
+                    new ModelMetadata("selectAon", dir: MetaDir.PaxControls)
+                },
+                {
+                    "stylusleft",
+                    new ModelMetadata("stylusleft", dir: MetaDir.PaxControls)
+                },
+                {
+                    "stylusright",
+                    new ModelMetadata("stylusright", dir: MetaDir.PaxControls)
+                },
+                // popup
+                {
+                    "popup",
+                    new ModelMetadata("popup", dir: MetaDir.Popup)
+                },
+                // results
+                {
+                    "blackarrowleft",
+                    new ModelMetadata("blackarrowleft", dir: MetaDir.Results)
+                },
+                {
+                    "blackarrowright",
+                    new ModelMetadata("blackarrowright", dir: MetaDir.Results)
+                },
+                {
+                    "crossbar",
+                    new ModelMetadata("crossbar", dir: MetaDir.Results)
+                },
+                {
+                    "lightning",
+                    new ModelMetadata("lightning", dir: MetaDir.Results)
+                },
+                {
+                    "medalbg",
+                    new ModelMetadata("medalbg", dir: MetaDir.Results)
+                },
+                {
+                    "medalbronze",
+                    new ModelMetadata("medalbronze", dir: MetaDir.Results)
+                },
+                {
+                    "medalgold",
+                    new ModelMetadata("medalgold", dir: MetaDir.Results)
+                },
+                {
+                    "medallast",
+                    new ModelMetadata("medallast", dir: MetaDir.Results)
+                },
+                {
+                    "medalsilver",
+                    new ModelMetadata("medalsilver", dir: MetaDir.Results)
+                },
+                {
+                    "playagain",
+                    new ModelMetadata("playagain", dir: MetaDir.Results)
+                },
+                {
+                    "quit",
+                    new ModelMetadata("quit", dir: MetaDir.Results)
+                },
+                {
+                    "results",
+                    new ModelMetadata("results", dir: MetaDir.Results)
+                },
+                {
+                    "rivalboxoff",
+                    new ModelMetadata("rivalboxoff", dir: MetaDir.Results)
+                },
+                {
+                    "rivalboxon",
+                    new ModelMetadata("rivalboxon", dir: MetaDir.Results)
+                },
+                {
+                    "teamdivide",
+                    new ModelMetadata("teamdivide", dir: MetaDir.Results)
+                },
+                {
+                    "topbar",
+                    new ModelMetadata("topbar", dir: MetaDir.Results)
+                },
+                {
+                    "wincondition",
+                    new ModelMetadata("wincondition", dir: MetaDir.Results)
+                },
+                // sc_startgame
+                {
+                    "dssystem",
+                    new ModelMetadata("dssystem", dir: MetaDir.ScStartGame)
+                },
+                {
+                    "readybox",
+                    new ModelMetadata("readybox", dir: MetaDir.ScStartGame)
+                },
+                // startgame
+                {
+                    "adbot",
+                    new ModelMetadata("adbot", dir: MetaDir.StartGame)
+                },
+                {
+                    "botminus",
+                    new ModelMetadata("botminus", dir: MetaDir.StartGame)
+                },
+                {
+                    "chatout",
+                    new ModelMetadata("chatout", dir: MetaDir.StartGame)
+                },
+                {
+                    "choicekanden",
+                    new ModelMetadata("choicekanden", dir: MetaDir.StartGame)
+                },
+                {
+                    "choicenoxus",
+                    new ModelMetadata("choicenoxus", dir: MetaDir.StartGame)
+                },
+                {
+                    "choicesamus",
+                    new ModelMetadata("choicesamus", dir: MetaDir.StartGame)
+                },
+                {
+                    "choicespire",
+                    new ModelMetadata("choicespire", dir: MetaDir.StartGame)
+                },
+                {
+                    "choicesylux",
+                    new ModelMetadata("choicesylux", dir: MetaDir.StartGame)
+                },
+                {
+                    "choicetrace",
+                    new ModelMetadata("choicetrace", dir: MetaDir.StartGame)
+                },
+                {
+                    "choiceweavel",
+                    new ModelMetadata("choiceweavel", dir: MetaDir.StartGame)
+                },
+                {
+                    "playergrid",
+                    new ModelMetadata("playergrid", dir: MetaDir.StartGame)
+                },
+                {
+                    "player_highlight",
+                    new ModelMetadata("player_highlight", dir: MetaDir.StartGame)
+                },
+                {
+                    "spicy_1",
+                    new ModelMetadata("spicy_1", dir: MetaDir.StartGame)
+                },
+                {
+                    "spicy_2",
+                    new ModelMetadata("spicy_2", dir: MetaDir.StartGame)
+                },
+                {
+                    "spicy_3",
+                    new ModelMetadata("spicy_3", dir: MetaDir.StartGame)
+                },
+                {
+                    "startgame_highlight",
+                    new ModelMetadata("startgame_highlight", dir: MetaDir.StartGame)
+                },
+                {
+                    "startgame",
+                    new ModelMetadata("startgame", dir: MetaDir.StartGame)
+                },
+                {
+                    "team_blue",
+                    new ModelMetadata("team_blue", dir: MetaDir.StartGame)
+                },
+                {
+                    "team_red",
+                    new ModelMetadata("team_red", dir: MetaDir.StartGame)
+                },
+                // tostart
+                {
+                    "logofinal",
+                    new ModelMetadata("logofinal", dir: MetaDir.ToStart)
+                },
+                // touchtostart_2
+                {
+                    "splashers",
+                    new ModelMetadata("splashers", dir: MetaDir.TouchToStart2)
+                },
+                {
+                    "touch_bg",
+                    new ModelMetadata("touch_bg", dir: MetaDir.TouchToStart2)
+                },
+                // wifi_createjoin
+                {
+                    "splitter",
+                    new ModelMetadata("splitter", dir: MetaDir.WifiCreate)
+                },
+                {
+                    "wififriend",
+                    new ModelMetadata("wififriend", dir: MetaDir.WifiCreate)
+                },
+                {
+                    "wifijoin",
+                    new ModelMetadata("wifijoin", dir: MetaDir.WifiCreate)
+                },
+                // wifi_games
+                {
+                    "bigpanel",
+                    new ModelMetadata("bigpanel", dir: MetaDir.WifiGames)
+                },
+                {
+                    "creategame",
+                    new ModelMetadata("creategame", dir: MetaDir.WifiGames)
+                },
+                {
+                    "downarrow",
+                    new ModelMetadata("downarrow", dir: MetaDir.WifiGames)
+                },
+                {
+                    "friendbar_long",
+                    new ModelMetadata("friendbar_long", dir: MetaDir.WifiGames)
+                },
+                {
+                    "friendbar_short",
+                    new ModelMetadata("friendbar_short", dir: MetaDir.WifiGames)
+                },
+                {
+                    "gamepanel",
+                    new ModelMetadata("gamepanel", dir: MetaDir.WifiGames)
+                },
+                {
+                    "gotofriends",
+                    new ModelMetadata("gotofriends", dir: MetaDir.WifiGames)
+                },
+                {
+                    "gotogames",
+                    new ModelMetadata("gotogames", dir: MetaDir.WifiGames)
+                },
+                {
+                    "joingame",
+                    new ModelMetadata("joingame", dir: MetaDir.WifiGames)
+                },
+                {
+                    "locked",
+                    new ModelMetadata("locked", dir: MetaDir.WifiGames)
+                },
+                {
+                    "mainframe",
+                    new ModelMetadata("mainframe", dir: MetaDir.WifiGames)
+                },
+                {
+                    "namepanel",
+                    new ModelMetadata("namepanel", dir: MetaDir.WifiGames)
+                },
+                {
+                    "pending",
+                    new ModelMetadata("pending", dir: MetaDir.WifiGames)
+                },
+                {
+                    "rivalbar_long",
+                    new ModelMetadata("rivalbar_long", dir: MetaDir.WifiGames)
+                },
+                {
+                    "rivalbar_short",
+                    new ModelMetadata("rivalbar_short", dir: MetaDir.WifiGames)
+                },
+                {
+                    "secondframe",
+                    new ModelMetadata("secondframe", dir: MetaDir.WifiGames)
+                },
+                {
+                    "unlocked",
+                    new ModelMetadata("unlocked", dir: MetaDir.WifiGames)
+                },
+                {
+                    "uparrow",
+                    new ModelMetadata("uparrow", dir: MetaDir.WifiGames)
+                },
+                {
+                    "yourpanel",
+                    new ModelMetadata("yourpanel", dir: MetaDir.WifiGames)
+                },
                 // main menu
                 {
                     "audio",

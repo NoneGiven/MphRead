@@ -18,7 +18,26 @@ namespace MphRead
         Hud,
         Stage,
         MainMenu,
-        Logo
+        Logo,
+        CharSelect,
+        CreateJoin,
+        GameOption,
+        GamersCard,
+        Keyboard,
+        Keypad,
+        MoviePlayer,
+        MultiMaster,
+        Multiplayer,
+        PaxControls,
+        Popup,
+        Results,
+        ScStartGame,
+        StartGame,
+        ToStart,
+        TouchToStart,
+        TouchToStart2,
+        WifiCreate,
+        WifiGames
     }
 
     public class ModelMetadata
@@ -48,26 +67,38 @@ namespace MphRead
             }
         }
 
+        private readonly IReadOnlyDictionary<MetaDir, string> _dirs = new Dictionary<MetaDir, string>()
+        {
+            [MetaDir.CharSelect] = "characterselect",
+            [MetaDir.CreateJoin] = "createjoin",
+            [MetaDir.GameOption] = "gameoptions",
+            [MetaDir.GamersCard] = "gamerscard",
+            [MetaDir.Hud] = "hud",
+            [MetaDir.Keyboard] = "keyboard",
+            [MetaDir.Keypad] = "keypad",
+            [MetaDir.Logo] = @"logo_screen\MAYA",
+            [MetaDir.MainMenu] = "main menu",
+            [MetaDir.Models] = "models",
+            [MetaDir.MoviePlayer] = "movieplayer",
+            [MetaDir.MultiMaster] = "multimaster",
+            [MetaDir.Multiplayer] = "multiplayer",
+            [MetaDir.PaxControls] = "pax_controls",
+            [MetaDir.Popup] = "popup",
+            [MetaDir.Results] = "results",
+            [MetaDir.ScStartGame] = "sc_startgame",
+            [MetaDir.Stage] = "stage",
+            [MetaDir.StartGame] = "startgame",
+            [MetaDir.ToStart] = "tostart",
+            [MetaDir.TouchToStart] = "touchtostart",
+            [MetaDir.TouchToStart2] = "touchtostart_2",
+            [MetaDir.WifiCreate] = "wifi_createjoin",
+            [MetaDir.WifiGames] = "wifi_games",
+        };
+
         public ModelMetadata(string name, MetaDir dir, string? anim = null)
         {
             Name = name;
-            string directory = "models";
-            if (dir == MetaDir.Hud)
-            {
-                directory = "hud";
-            }
-            else if (dir == MetaDir.Stage)
-            {
-                directory = "stage";
-            }
-            else if (dir == MetaDir.MainMenu)
-            {
-                directory = "main menu";
-            }
-            else if (dir == MetaDir.Logo)
-            {
-                directory = @"logo_screen\MAYA";
-            }
+            string directory = _dirs[dir];
             ModelPath = $@"{directory}\{name}_Model.bin";
             AnimationPath = anim != null ? $@"{directory}\{anim}_Anim.bin" : null;
             Recolors = new List<RecolorMetadata>()
@@ -636,7 +667,21 @@ namespace MphRead
                     return metadata;
                 }
             }
-            else if (dir == MetaDir.MainMenu || dir == MetaDir.Stage)
+            else if (dir == MetaDir.Multiplayer)
+            {
+                if (MultiplayerModels.TryGetValue(name, out ModelMetadata? metadata))
+                {
+                    return metadata;
+                }
+            }
+            else if (dir == MetaDir.TouchToStart)
+            {
+                if (TouchToStartModels.TryGetValue(name, out ModelMetadata? metadata))
+                {
+                    return metadata;
+                }
+            }
+            else if (dir != MetaDir.Models)
             {
                 if (FrontendModels.TryGetValue(name, out ModelMetadata? metadata))
                 {
