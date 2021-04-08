@@ -1080,7 +1080,7 @@ namespace MphRead
                     "wireless4",
                     new ModelMetadata("wireless4", dir: MetaDir.MainMenu)
                 },
-                // stage portrait
+                // stage
                 {
                     "ad1",
                     new ModelMetadata("ad1", dir: MetaDir.Stage)
@@ -1192,6 +1192,30 @@ namespace MphRead
                 {
                     "unit4land",
                     new ModelMetadata("unit4land", dir: MetaDir.Stage)
+                },
+                {
+                    "blackout",
+                    new ModelMetadata("blackout", dir: MetaDir.Stage)
+                },
+                {
+                    "screenshot",
+                    new ModelMetadata("screenshot", dir: MetaDir.Stage)
+                },
+                {
+                    "stage_left",
+                    new ModelMetadata("stage_left", dir: MetaDir.Stage)
+                },
+                {
+                    "stage_right",
+                    new ModelMetadata("stage_right", dir: MetaDir.Stage)
+                },
+                {
+                    "stageleft_highlight",
+                    new ModelMetadata("stageleft_highlight", dir: MetaDir.Stage)
+                },
+                {
+                    "stageright_highlight",
+                    new ModelMetadata("stageright_highlight", dir: MetaDir.Stage)
                 }
             };
     }
