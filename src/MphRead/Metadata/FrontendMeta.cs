@@ -8,6 +8,94 @@ namespace MphRead
         public static readonly ModelMetadata Ad2Dm2
             = new ModelMetadata("ad2_dm2", dir: MetaDir.Stage);
 
+        public static readonly IReadOnlyDictionary<string, ModelMetadata> HudModels
+            = new Dictionary<string, ModelMetadata>()
+            {
+                // cockpit
+                {
+                    "unit1_land_cockpit",
+                    new ModelMetadata("unit1_land_cockpit", dir: MetaDir.Hud)
+                },
+                {
+                    "unit2_land_cockpit",
+                    new ModelMetadata("unit2_land_cockpit", dir: MetaDir.Hud)
+                },
+                {
+                    "unit3_land_cockpit",
+                    new ModelMetadata("unit3_land_cockpit", dir: MetaDir.Hud)
+                },
+                {
+                    "unit4_land_cockpit",
+                    new ModelMetadata("unit4_land_cockpit", dir: MetaDir.Hud)
+                },
+                {
+                    "gorea_land_cockpit",
+                    new ModelMetadata("gorea_land_cockpit", dir: MetaDir.Hud)
+                },
+                // nav rooms
+                {
+                    "unit1_1NAV",
+                    new ModelMetadata("unit1_1NAV", dir: MetaDir.Hud)
+                },
+                {
+                    "unit1_2NAV",
+                    new ModelMetadata("unit1_2NAV", dir: MetaDir.Hud)
+                },
+                {
+                    "unit2_1NAV",
+                    new ModelMetadata("unit2_1NAV", dir: MetaDir.Hud)
+                },
+                {
+                    "unit2_2NAV",
+                    new ModelMetadata("unit2_2NAV", dir: MetaDir.Hud)
+                },
+                {
+                    "unit3_1NAV",
+                    new ModelMetadata("unit3_1NAV", dir: MetaDir.Hud)
+                },
+                {
+                    "unit3_2NAV",
+                    new ModelMetadata("unit3_2NAV", dir: MetaDir.Hud)
+                },
+                {
+                    "unit4_1NAV",
+                    new ModelMetadata("unit4_1NAV", dir: MetaDir.Hud)
+                },
+                {
+                    "Door_NAV",
+                    new ModelMetadata("Door_NAV", dir: MetaDir.Hud)
+                },
+                {
+                    "PlayerPos_NAV",
+                    new ModelMetadata("PlayerPos_NAV", dir: MetaDir.Hud, anim: "PlayerPos")
+                },
+                {
+                    "damage",
+                    new ModelMetadata("damage", dir: MetaDir.Hud)
+                },
+                // todo: can't parse some out of bounds texture/palette offsets from this
+                //{
+                //    "icons",
+                //    new ModelMetadata("icons", dir: MetaDir.Hud)
+                //},
+                {
+                    "hud_icon_arrow",
+                    new ModelMetadata("hud_icon_arrow", dir: MetaDir.Hud)
+                },
+                {
+                    "hud_icon_nodes",
+                    new ModelMetadata("hud_icon_nodes", dir: MetaDir.Hud)
+                },
+                {
+                    "hud_icon_octolith",
+                    new ModelMetadata("hud_icon_octolith", dir: MetaDir.Hud)
+                },
+                {
+                    "hud_icon_player",
+                    new ModelMetadata("hud_icon_player", dir: MetaDir.Hud)
+                }
+            };
+
         public static readonly IReadOnlyDictionary<string, ModelMetadata> TouchToStartModels
             = new Dictionary<string, ModelMetadata>()
             {

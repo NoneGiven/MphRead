@@ -681,6 +681,13 @@ namespace MphRead
                     return metadata;
                 }
             }
+            else if (dir == MetaDir.Hud)
+            {
+                if (HudModels.TryGetValue(name, out ModelMetadata? metadata))
+                {
+                    return metadata;
+                }
+            }
             else if (dir != MetaDir.Models)
             {
                 if (FrontendModels.TryGetValue(name, out ModelMetadata? metadata))
@@ -3426,60 +3433,6 @@ namespace MphRead
                 {
                     "zoomer",
                     new ModelMetadata("zoomer")
-                },
-                // cockpit
-                {
-                    "unit1_land_cockpit",
-                    new ModelMetadata("unit1_land_cockpit", dir: MetaDir.Hud)
-                },
-                {
-                    "unit2_land_cockpit",
-                    new ModelMetadata("unit2_land_cockpit", dir: MetaDir.Hud)
-                },
-                {
-                    "unit3_land_cockpit",
-                    new ModelMetadata("unit3_land_cockpit", dir: MetaDir.Hud)
-                },
-                {
-                    "unit4_land_cockpit",
-                    new ModelMetadata("unit4_land_cockpit", dir: MetaDir.Hud)
-                },
-                {
-                    "gorea_land_cockpit",
-                    new ModelMetadata("gorea_land_cockpit", dir: MetaDir.Hud)
-                },
-                // nav rooms
-                {
-                    "unit1_1NAV",
-                    new ModelMetadata("unit1_1NAV", dir: MetaDir.Hud)
-                },
-                {
-                    "unit1_2NAV",
-                    new ModelMetadata("unit1_2NAV", dir: MetaDir.Hud)
-                },
-                {
-                    "unit2_1NAV",
-                    new ModelMetadata("unit2_1NAV", dir: MetaDir.Hud)
-                },
-                {
-                    "unit2_2NAV",
-                    new ModelMetadata("unit2_2NAV", dir: MetaDir.Hud)
-                },
-                {
-                    "unit3_1NAV",
-                    new ModelMetadata("unit3_1NAV", dir: MetaDir.Hud)
-                },
-                {
-                    "unit3_2NAV",
-                    new ModelMetadata("unit3_2NAV", dir: MetaDir.Hud)
-                },
-                {
-                    "unit4_1NAV",
-                    new ModelMetadata("unit4_1NAV", dir: MetaDir.Hud)
-                },
-                {
-                    "Door_NAV",
-                    new ModelMetadata("Door_NAV", dir: MetaDir.Hud)
                 },
                 // effectsBase
                 {
