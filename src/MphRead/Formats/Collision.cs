@@ -519,6 +519,7 @@ namespace MphRead.Formats.Collision
         public override void GetDrawInfo(List<Vector3> points, EntityType entityType, Scene scene)
         {
             var color = new Vector4(Vector3.UnitX, 0.5f);
+            color.W = scene.ColDisplayAlpha;
             int polygonId = scene.GetNextPolygonId();
             for (int i = 0; i < Header.DataCount; i++)
             {

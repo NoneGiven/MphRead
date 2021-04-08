@@ -857,7 +857,7 @@ namespace MphRead.Utility
             writer.Write(entity.HealthMax);
             writer.Write(entity.Field38);
             writer.Write(entity.HunterColor);
-            writer.Write(entity.Field3B);
+            writer.Write(entity.HunterChance);
             // union start
             writer.Write(entity.Field3C);
             writer.Write(entity.Field40);

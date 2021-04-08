@@ -240,7 +240,7 @@ namespace MphRead
         public readonly ushort HealthMax;
         public readonly ushort Field38;
         public readonly byte HunterColor;
-        public readonly byte Field3B;
+        public readonly byte HunterChance;
         // union start
         public readonly uint Field3C;
         public readonly uint Field40;

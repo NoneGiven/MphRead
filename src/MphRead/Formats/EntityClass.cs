@@ -353,7 +353,7 @@ namespace MphRead.Editor
         public ushort HealthMax { get; set; }
         public ushort Field38 { get; set; }
         public byte HunterColor { get; set; }
-        public byte Field3B { get; set; }
+        public byte HunterChance { get; set; }
         public uint Field3C { get; set; }
         public uint Field40 { get; set; }
         public uint Field44 { get; set; }
@@ -483,7 +483,7 @@ namespace MphRead.Editor
             HealthMax = raw.HealthMax;
             Field38 = raw.Field38;
             HunterColor = raw.HunterColor;
-            Field3B = raw.Field3B;
+            HunterChance = raw.HunterChance;
             Field3C = raw.Field3C;
             Field40 = raw.Field40;
             Field44 = raw.Field44;
