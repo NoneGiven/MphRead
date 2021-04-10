@@ -63,9 +63,9 @@ namespace MphRead.Formats.Collision
         {
             IReadOnlyList<Vector3Fx> points = Read.DoOffsets<Vector3Fx>(bytes, header.PointOffset, header.PointCount);
             IReadOnlyList<CollisionPlane> planes = Read.DoOffsets<CollisionPlane>(bytes, header.PlaneOffset, header.PlaneCount);
-            IReadOnlyList<ushort> shorts = Read.DoOffsets<ushort>(bytes, header.VectorIndexOffset, header.VectorIndexCount);
+            IReadOnlyList<ushort> pointIdxs = Read.DoOffsets<ushort>(bytes, header.PointIndexOffset, header.PointIndexCount);
             IReadOnlyList<CollisionData> data = Read.DoOffsets<CollisionData>(bytes, header.DataOffset, header.DataCount);
-            IReadOnlyList<ushort> indices = Read.DoOffsets<ushort>(bytes, header.DataIndexOffset, header.DataIndexCount);
+            IReadOnlyList<ushort> dataIdxs = Read.DoOffsets<ushort>(bytes, header.DataIndexOffset, header.DataIndexCount);
             IReadOnlyList<CollisionEntry> entries = Read.DoOffsets<CollisionEntry>(bytes, header.EntryOffset, header.EntryCount);
             var portals = new List<CollisionPortal>();
             foreach (RawCollisionPortal portal in Read.DoOffsets<RawCollisionPortal>(bytes, header.PortalOffset, header.PortalCount))
@@ -85,7 +85,7 @@ namespace MphRead.Formats.Collision
                 ushort newStartIndex = (ushort)finalIndices.Count;
                 for (int i = 0; i < entry.DataCount; i++)
                 {
-                    ushort oldIndex = indices[entry.DataStartIndex + i];
+                    ushort oldIndex = dataIdxs[entry.DataStartIndex + i];
                     if (indexMap.TryGetValue(oldIndex, out ushort newIndex))
                     {
                         finalIndices.Add(newIndex);
@@ -107,9 +107,9 @@ namespace MphRead.Formats.Collision
                 finalEntries.Add(new CollisionEntry(newCount, newStartIndex));
             }
             data = finalData;
-            indices = finalIndices;
+            dataIdxs = finalIndices;
             entries = finalEntries;
-            return new MphCollisionInfo(header, points, planes, shorts, data, indices, entries, portals);
+            return new MphCollisionInfo(header, points, planes, pointIdxs, data, dataIdxs, entries, portals);
         }
 
         private static FhCollisionInfo ReadFhCollision(ReadOnlySpan<byte> bytes)
@@ -138,8 +138,8 @@ namespace MphRead.Formats.Collision
         public readonly uint PointOffset;
         public readonly uint PlaneCount;
         public readonly uint PlaneOffset;
-        public readonly uint VectorIndexCount;
-        public readonly uint VectorIndexOffset;
+        public readonly uint PointIndexCount;
+        public readonly uint PointIndexOffset;
         public readonly uint DataCount;
         public readonly uint DataOffset;
         public readonly uint DataIndexCount;
@@ -164,7 +164,7 @@ namespace MphRead.Formats.Collision
     // size: 16
     public readonly struct CollisionData
     {
-        public readonly uint Counter; // only set at runtime
+        public readonly int Counter; // only set at runtime
         public readonly ushort PlaneIndex;
         public readonly CollisionFlags Flags;
         public readonly ushort LayerMask;
@@ -207,20 +207,15 @@ namespace MphRead.Formats.Collision
         public readonly char[] NodeName1; // side 0 room node
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 24)]
         public readonly char[] NodeName2; // side 1 room node
-        public readonly Vector3Fx Vector1;
-        public readonly Vector3Fx Vector2;
-        public readonly Vector3Fx Vector3;
-        public readonly Vector3Fx Vector4;
-        public readonly Vector3Fx Vector5;
-        public readonly uint Field94;
-        public readonly Vector3Fx Vector6;
-        public readonly uint FieldA4;
-        public readonly Vector3Fx Vector7;
-        public readonly uint FieldB4;
-        public readonly Vector3Fx Vector8;
-        public readonly uint FieldC4;
-        public readonly Vector3Fx Normal;
-        public readonly uint Plane;
+        public readonly Vector3Fx Point1;
+        public readonly Vector3Fx Point2;
+        public readonly Vector3Fx Point3;
+        public readonly Vector3Fx Point4;
+        public readonly Vector4Fx Vector1;
+        public readonly Vector4Fx Vector2;
+        public readonly Vector4Fx Vector3;
+        public readonly Vector4Fx Vector4;
+        public readonly Vector4Fx Plane;
         public readonly ushort Flags;
         public readonly ushort LayerMask;
         public readonly ushort VectorCount;
@@ -235,6 +230,8 @@ namespace MphRead.Formats.Collision
         public ushort LayerMask { get; }
         public bool IsForceField { get; }
         public IReadOnlyList<Vector3> Points { get; }
+        public IReadOnlyList<Vector4> Vectors { get; }
+        public Vector4 Plane { get; }
         public Vector3 Position { get; }
 
         public CollisionPortal(RawCollisionPortal raw)
@@ -246,16 +243,23 @@ namespace MphRead.Formats.Collision
             LayerMask = raw.LayerMask;
             IsForceField = Name.StartsWith("pmag");
             var points = new List<Vector3>();
-            points.Add(raw.Vector1.ToFloatVector());
-            points.Add(raw.Vector2.ToFloatVector());
-            points.Add(raw.Vector3.ToFloatVector());
-            points.Add(raw.Vector4.ToFloatVector());
+            points.Add(raw.Point1.ToFloatVector());
+            points.Add(raw.Point2.ToFloatVector());
+            points.Add(raw.Point3.ToFloatVector());
+            points.Add(raw.Point4.ToFloatVector());
             Points = points;
             Position = new Vector3(
                 points.Sum(p => p.X) / points.Count,
                 points.Sum(p => p.Y) / points.Count,
                 points.Sum(p => p.Z) / points.Count
             );
+            var vectors = new List<Vector4>();
+            vectors.Add(raw.Vector1.ToFloatVector());
+            vectors.Add(raw.Vector2.ToFloatVector());
+            vectors.Add(raw.Vector3.ToFloatVector());
+            vectors.Add(raw.Vector4.ToFloatVector());
+            Vectors = vectors;
+            Plane = raw.Plane.ToFloatVector();
         }
 
         public CollisionPortal(FhCollisionPortal raw, IReadOnlyList<FhCollisionVector> rawVectors, IReadOnlyList<Vector3Fx> rawPoints)
@@ -265,9 +269,9 @@ namespace MphRead.Formats.Collision
             NodeName2 = raw.NodeName2.MarshalString();
             LayerMask = 4; // always on
             var points = new List<Vector3>();
-            for (int i = 0; i < raw.VectorCount; i++)
+            for (int i = 0; i < raw.PointCount; i++)
             {
-                FhCollisionVector vector = rawVectors[raw.VectorStartIndex + i];
+                FhCollisionVector vector = rawVectors[raw.PointStartIndex + i];
                 Vector3Fx point = rawPoints[vector.Point1Index];
                 points.Add(point.ToFloatVector());
             }
@@ -277,6 +281,8 @@ namespace MphRead.Formats.Collision
                 points.Sum(p => p.Y) / points.Count,
                 points.Sum(p => p.Z) / points.Count
             );
+            Vectors = new List<Vector4>(); // todo: can probably derive these from FhCollisionVector
+            Plane = new Vector4(raw.Plane.Normal.ToFloatVector(), raw.Plane.Homogenous.FloatValue);
         }
     }
 
@@ -452,8 +458,8 @@ namespace MphRead.Formats.Collision
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName2; // side 1 room node
         public readonly CollisionPlane Plane;
-        public readonly ushort VectorCount;
-        public readonly ushort VectorStartIndex;
+        public readonly ushort PointCount;
+        public readonly ushort PointStartIndex;
         public readonly byte Field5C;
         public readonly byte Field5D;
         public readonly ushort Padding5E;
