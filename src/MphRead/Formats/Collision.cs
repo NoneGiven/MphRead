@@ -219,7 +219,7 @@ namespace MphRead.Formats.Collision
         public readonly ushort Flags;
         public readonly ushort LayerMask;
         public readonly ushort VectorCount;
-        public readonly ushort FieldDE;
+        public readonly ushort PaddingDE;
     }
 
     public class CollisionPortal
