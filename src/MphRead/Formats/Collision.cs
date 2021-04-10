@@ -387,7 +387,6 @@ namespace MphRead.Formats.Collision
             int polygonId = scene.GetNextPolygonId();
             for (int i = 0; i < Data.Count; i++)
             {
-                // todo?: what is the purpose of CollisionEntry? why are there so many and why do they reference the same CollisionData?
                 CollisionData data = Data[i];
                 if (scene.ColTerDisplay != Terrain.All && scene.ColTerDisplay != data.Terrain)
                 {
