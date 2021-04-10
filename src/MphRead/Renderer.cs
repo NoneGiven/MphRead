@@ -2811,7 +2811,14 @@ namespace MphRead
             {
                 if (e.Alt)
                 {
-                    _outputCameraPos = !_outputCameraPos;
+                    if (e.Shift)
+                    {
+                        _promptState = PromptState.CameraPos;
+                    }
+                    else
+                    {
+                        _outputCameraPos = !_outputCameraPos;
+                    }
                 }
                 else
                 {
@@ -2986,7 +2993,7 @@ namespace MphRead
             }
             else if (e.Control && e.Key == Keys.O)
             {
-                _showLoadPrompt = true;
+                _promptState = PromptState.Load;
             }
             else if (e.Control && e.Key == Keys.U)
             {
@@ -3119,7 +3126,14 @@ namespace MphRead
             }
         }
 
-        private bool _showLoadPrompt = false;
+        private enum PromptState
+        {
+            None,
+            Load,
+            CameraPos
+        }
+
+        private PromptState _promptState = PromptState.None;
         private readonly ConcurrentQueue<(string Name, int Recolor, bool FirstHunt)> _loadQueue = new ConcurrentQueue<(string, int, bool)>();
         private readonly ConcurrentQueue<EntityBase> _unloadQueue = new ConcurrentQueue<EntityBase>();
 
@@ -3136,10 +3150,16 @@ namespace MphRead
         {
             while (!token.IsCancellationRequested)
             {
-                if (_showLoadPrompt)
+                if (_promptState == PromptState.Load)
                 {
-                    OutputDoPrompt();
-                    _showLoadPrompt = false;
+                    OutputLoadPrompt();
+                    _promptState = PromptState.None;
+                    _currentOutput = "";
+                }
+                else if (_promptState == PromptState.CameraPos)
+                {
+                    OutputCameraPrompt();
+                    _promptState = PromptState.None;
                     _currentOutput = "";
                 }
                 string output = OutputGetAll();
@@ -3153,7 +3173,7 @@ namespace MphRead
             }
         }
 
-        private void OutputDoPrompt()
+        private void OutputLoadPrompt()
         {
             Console.Clear();
             Console.Write("Enter model name: ");
@@ -3176,6 +3196,45 @@ namespace MphRead
                 }
                 _loadQueue.Enqueue((name, recolor, firstHunt));
             }
+        }
+
+        private void OutputCameraPrompt()
+        {
+            Console.Clear();
+            Console.Write("Enter camera position: ");
+            string[] input = Console.ReadLine().Trim().Split(' ');
+            float x = 0;
+            float y = 0;
+            float z = 0;
+            for (int i = 0; i < input.Length && i < 3; i++)
+            {
+                string item = input[i];
+                float coord = 0;
+                if (item.StartsWith("0x"))
+                {
+                    if (Int32.TryParse(item.Replace("0x", ""), System.Globalization.NumberStyles.HexNumber, null, out int value))
+                    {
+                        coord = value / 4096f;
+                    }
+                }
+                else if (Single.TryParse(item, out float value))
+                {
+                    coord = value;
+                }
+                if (i == 0)
+                {
+                    x = coord;
+                }
+                else if (i == 1)
+                {
+                    y = coord;
+                }
+                else if (i == 2)
+                {
+                    z = coord;
+                }
+            }
+            _cameraPosition = new Vector3(x, y, z);
         }
 
         private string OutputGetAll()
