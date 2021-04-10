@@ -144,10 +144,10 @@ namespace MphRead.Formats.Collision
         public readonly uint DataOffset;
         public readonly uint DataIndexCount;
         public readonly uint DataIndexOffset;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly Vector3Fx BasePosition;
+        public readonly uint SizeX;
+        public readonly uint SizeY;
+        public readonly uint SizeZ;
+        public readonly Vector3Fx MinPosition;
         public readonly uint EntryCount;
         public readonly uint EntryOffset;
         public readonly uint PortalCount;
