@@ -218,7 +218,7 @@ namespace MphRead.Formats.Collision
         public readonly Vector4Fx Plane;
         public readonly ushort Flags;
         public readonly ushort LayerMask;
-        public readonly ushort VectorCount;
+        public readonly ushort PointCount;
         public readonly ushort PaddingDE;
     }
 
@@ -233,10 +233,11 @@ namespace MphRead.Formats.Collision
         public IReadOnlyList<Vector4> Vectors { get; }
         public Vector4 Plane { get; }
         public Vector3 Position { get; }
+        public ushort Flags { get; }
 
         public CollisionPortal(RawCollisionPortal raw)
         {
-            Debug.Assert(raw.VectorCount == 4);
+            Debug.Assert(raw.PointCount == 4);
             Name = raw.Name.MarshalString();
             NodeName1 = raw.NodeName1.MarshalString();
             NodeName2 = raw.NodeName2.MarshalString();
@@ -260,6 +261,7 @@ namespace MphRead.Formats.Collision
             vectors.Add(raw.Vector4.ToFloatVector());
             Vectors = vectors;
             Plane = raw.Plane.ToFloatVector();
+            Flags = raw.Flags;
         }
 
         public CollisionPortal(FhCollisionPortal raw, IReadOnlyList<FhCollisionVector> rawVectors, IReadOnlyList<Vector3Fx> rawPoints)
