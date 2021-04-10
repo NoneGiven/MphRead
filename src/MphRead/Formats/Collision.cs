@@ -79,32 +79,39 @@ namespace MphRead.Formats.Collision
             var finalData = new List<CollisionData>();
             var finalIndices = new List<ushort>();
             var finalEntries = new List<CollisionEntry>();
-            foreach (CollisionEntry entry in entries.Where(e => e.DataCount > 0))
+            foreach (CollisionEntry entry in entries)
             {
-                ushort newCount = 0;
-                ushort newStartIndex = (ushort)finalIndices.Count;
-                for (int i = 0; i < entry.DataCount; i++)
+                if (entry.DataCount > 0)
                 {
-                    ushort oldIndex = dataIdxs[entry.DataStartIndex + i];
-                    if (indexMap.TryGetValue(oldIndex, out ushort newIndex))
+                    ushort newCount = 0;
+                    ushort newStartIndex = (ushort)finalIndices.Count;
+                    for (int i = 0; i < entry.DataCount; i++)
                     {
-                        finalIndices.Add(newIndex);
-                        newCount++;
-                    }
-                    else
-                    {
-                        CollisionData item = data[oldIndex];
-                        if ((item.LayerMask & 4) != 0 || roomLayerMask == -1 || (item.LayerMask & roomLayerMask) != 0)
+                        ushort oldIndex = dataIdxs[entry.DataStartIndex + i];
+                        if (indexMap.TryGetValue(oldIndex, out ushort newIndex))
                         {
-                            newIndex = (ushort)finalData.Count;
                             finalIndices.Add(newIndex);
-                            finalData.Add(item);
                             newCount++;
-                            indexMap.Add(oldIndex, newIndex);
+                        }
+                        else
+                        {
+                            CollisionData item = data[oldIndex];
+                            if ((item.LayerMask & 4) != 0 || roomLayerMask == -1 || (item.LayerMask & roomLayerMask) != 0)
+                            {
+                                newIndex = (ushort)finalData.Count;
+                                finalIndices.Add(newIndex);
+                                finalData.Add(item);
+                                newCount++;
+                                indexMap.Add(oldIndex, newIndex);
+                            }
                         }
                     }
+                    finalEntries.Add(new CollisionEntry(newCount, newStartIndex));
                 }
-                finalEntries.Add(new CollisionEntry(newCount, newStartIndex));
+                else
+                {
+                    finalEntries.Add(entry);
+                } 
             }
             data = finalData;
             dataIdxs = finalIndices;
