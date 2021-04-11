@@ -125,8 +125,6 @@ namespace MphRead.Memory
         private readonly List<CEntity> _entities = new List<CEntity>();
         private readonly Dictionary<IntPtr, CEntity> _temp = new Dictionary<IntPtr, CEntity>();
 
-        private byte _curIndex = 0xFF;
-
         private void Run()
         {
             Addresses = AllAddresses["a76e"];
