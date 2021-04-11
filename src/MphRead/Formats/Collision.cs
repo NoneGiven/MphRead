@@ -151,9 +151,9 @@ namespace MphRead.Formats.Collision
         public readonly uint DataOffset;
         public readonly uint DataIndexCount;
         public readonly uint DataIndexOffset;
-        public readonly uint SizeX;
-        public readonly uint SizeY;
-        public readonly uint SizeZ;
+        public readonly int PartsX;
+        public readonly int PartsY;
+        public readonly int PartsZ;
         public readonly Vector3Fx MinPosition;
         public readonly uint EntryCount;
         public readonly uint EntryOffset;
@@ -352,6 +352,7 @@ namespace MphRead.Formats.Collision
         public IReadOnlyList<CollisionData> Data { get; }
         public IReadOnlyList<ushort> DataIndices { get; }
         public IReadOnlyList<CollisionEntry> Entries { get; }
+        public Vector3 MinPosition { get; }
 
         public MphCollisionInfo(CollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
             IReadOnlyList<ushort> ptIdxs, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> dataIdxs, IReadOnlyList<CollisionEntry> entries,
@@ -363,6 +364,7 @@ namespace MphRead.Formats.Collision
             Data = data;
             DataIndices = dataIdxs;
             Entries = entries;
+            MinPosition = header.MinPosition.ToFloatVector();
         }
 
         private static readonly IReadOnlyList<Vector4> _colors = new List<Vector4>()
@@ -453,6 +455,125 @@ namespace MphRead.Formats.Collision
                 }
                 scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.PointIndexCount);
             }
+        }
+
+        public Vector3i PartIndexFromEntry(int index)
+        {
+            int x = Header.PartsX;
+            int xz = x * Header.PartsZ;
+            int yInc = index / xz;
+            int zInc = (index - yInc * xz) / x;
+            int xInc = index - yInc * xz - zInc * x;
+            return new Vector3i(xInc, yInc, zInc);
+        }
+
+        public int EntryIndexFromPoint(Vector3 point)
+        {
+            if (point.X < MinPosition.X || point.Y < MinPosition.Y || point.Z < MinPosition.Z)
+            {
+                return -1;
+            }
+            int xInc = (int)((point.X - MinPosition.X) / 4f);
+            int yInc = (int)((point.Y - MinPosition.Y) / 4f);
+            int zInc = (int)((point.Z - MinPosition.Z) / 4f);
+            if (xInc >= Header.PartsX || yInc >= Header.PartsY || zInc >= Header.PartsZ)
+            {
+                return -1;
+            }
+            return yInc * Header.PartsX * Header.PartsZ + zInc * Header.PartsX + xInc;
+        }
+
+        public void GetPartition(Vector3 point, List<Vector3> points, EntityType entityType, Scene scene)
+        {
+            int entryIndex = EntryIndexFromPoint(point);
+            int polygonId = scene.GetNextPolygonId();
+            CollisionEntry entry = Entries[entryIndex];
+            for (int i = 0; i < entry.DataCount; i++)
+            {
+                CollisionData data = Data[DataIndices[entry.DataStartIndex + i]];
+                if (scene.ColTerDisplay != Terrain.All && scene.ColTerDisplay != data.Terrain)
+                {
+                    continue;
+                }
+                if ((scene.ColTypeDisplay == CollisionType.Player && data.IgnorePlayers)
+                    || (scene.ColTypeDisplay == CollisionType.Beam && data.IgnoreBeams)
+                    || (scene.ColTypeDisplay == CollisionType.Both && (data.IgnorePlayers || data.IgnoreBeams)))
+                {
+                    continue;
+                }
+                Vector4 color;
+                if (scene.ColDisplayColor == CollisionColor.Entity)
+                {
+                    if (entityType == EntityType.Platform)
+                    {
+                        // teal
+                        color = new Vector4(0.109f, 0.768f, 0.850f, 1f);
+                    }
+                    else if (entityType == EntityType.Object)
+                    {
+                        // magenta
+                        color = new Vector4(0.952f, 0.105f, 0.635f, 1f);
+                    }
+                    else
+                    {
+                        // orange (room)
+                        color = new Vector4(0.952f, 0.694f, 0.105f, 1f);
+                    }
+                }
+                else if (scene.ColDisplayColor == CollisionColor.Terrain)
+                {
+                    color = _colors[(int)data.Terrain];
+                }
+                else if (scene.ColDisplayColor == CollisionColor.Type)
+                {
+                    if (data.IgnoreBeams)
+                    {
+                        // yellow
+                        color = new Vector4(0.956f, 0.933f, 0.203f, 1f);
+                    }
+                    else if (data.IgnorePlayers)
+                    {
+                        // green
+                        color = new Vector4(0.250f, 0.807f, 0.250f, 1f);
+                    }
+                    else
+                    {
+                        // purple (both)
+                        color = new Vector4(0.807f, 0.250f, 0.776f, 1f);
+                    }
+                }
+                else
+                {
+                    color = new Vector4(1, 0, 0, 1);
+                }
+                color.W = scene.ColDisplayAlpha;
+                Debug.Assert(data.PointIndexCount >= 3 && data.PointIndexCount <= 10);
+                Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.PointIndexCount);
+                for (int j = 0; j < data.PointIndexCount; j++)
+                {
+                    ushort pointIndex = PointIndices[data.PointStartIndex + j];
+                    verts[j] = points[pointIndex];
+                }
+                scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.PointIndexCount);
+            }
+            Vector3[] bverts = ArrayPool<Vector3>.Shared.Rent(8);
+            Vector3 point0 = MinPosition;
+            Vector3i partInc = PartIndexFromEntry(entryIndex);
+            point0 = point0.AddX(partInc.X * 4).AddY(partInc.Y * 4).AddZ(partInc.Z * 4);
+            var sideX = new Vector3(4, 0, 0);
+            var sideY = new Vector3(0, 4, 0);
+            var sideZ = new Vector3(0, 0, 4);
+            bverts[0] = point0;
+            bverts[1] = point0 + sideZ;
+            bverts[2] = point0 + sideX;
+            bverts[3] = point0 + sideX + sideZ;
+            bverts[4] = point0 + sideY;
+            bverts[5] = point0 + sideY + sideZ;
+            bverts[6] = point0 + sideX + sideY;
+            bverts[7] = point0 + sideX + sideY + sideZ;
+            polygonId = scene.GetNextPolygonId();
+            var bcolor = new Vector4(1, 0.3f, 1, 0.5f);
+            scene.AddRenderItem(CullingMode.Front, polygonId, bcolor, RenderItemType.Box, bverts, 8);
         }
     }
 
