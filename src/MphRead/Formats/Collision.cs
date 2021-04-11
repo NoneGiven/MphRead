@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using MphRead.Entities;
 using OpenTK.Mathematics;
 
 namespace MphRead.Formats.Collision
@@ -60,7 +59,7 @@ namespace MphRead.Formats.Collision
             return new CollisionInstance(name, info);
         }
 
-        private static MphCollisionInfo ReadMphCollision(CollisionHeader header, ReadOnlySpan<byte> bytes, int roomLayerMask)
+        public static MphCollisionInfo ReadMphCollision(CollisionHeader header, ReadOnlySpan<byte> bytes, int roomLayerMask)
         {
             IReadOnlyList<Vector3Fx> points = Read.DoOffsets<Vector3Fx>(bytes, header.PointOffset, header.PointCount);
             IReadOnlyList<CollisionPlane> planes = Read.DoOffsets<CollisionPlane>(bytes, header.PlaneOffset, header.PlaneCount);
@@ -80,44 +79,51 @@ namespace MphRead.Formats.Collision
             var finalData = new List<CollisionData>();
             var finalIndices = new List<ushort>();
             var finalEntries = new List<CollisionEntry>();
-            foreach (CollisionEntry entry in entries)
+            if (roomLayerMask == -1)
             {
-                if (entry.DataCount > 0)
+                // preserve order
+                finalData.AddRange(data);
+                finalIndices.AddRange(dataIdxs);
+                finalEntries.AddRange(entries);
+            }
+            else
+            {
+                foreach (CollisionEntry entry in entries)
                 {
-                    ushort newCount = 0;
-                    ushort newStartIndex = (ushort)finalIndices.Count;
-                    for (int i = 0; i < entry.DataCount; i++)
+                    if (entry.DataCount > 0)
                     {
-                        ushort oldIndex = dataIdxs[entry.DataStartIndex + i];
-                        if (indexMap.TryGetValue(oldIndex, out ushort newIndex))
+                        ushort newCount = 0;
+                        ushort newStartIndex = (ushort)finalIndices.Count;
+                        for (int i = 0; i < entry.DataCount; i++)
                         {
-                            finalIndices.Add(newIndex);
-                            newCount++;
-                        }
-                        else
-                        {
-                            CollisionData item = data[oldIndex];
-                            if ((item.LayerMask & 4) != 0 || roomLayerMask == -1 || (item.LayerMask & roomLayerMask) != 0)
+                            ushort oldIndex = dataIdxs[entry.DataStartIndex + i];
+                            if (indexMap.TryGetValue(oldIndex, out ushort newIndex))
                             {
-                                newIndex = (ushort)finalData.Count;
                                 finalIndices.Add(newIndex);
-                                finalData.Add(item);
                                 newCount++;
-                                indexMap.Add(oldIndex, newIndex);
+                            }
+                            else
+                            {
+                                CollisionData item = data[oldIndex];
+                                if ((item.LayerMask & 4) != 0 || (item.LayerMask & roomLayerMask) != 0)
+                                {
+                                    newIndex = (ushort)finalData.Count;
+                                    finalIndices.Add(newIndex);
+                                    finalData.Add(item);
+                                    newCount++;
+                                    indexMap.Add(oldIndex, newIndex);
+                                }
                             }
                         }
+                        finalEntries.Add(new CollisionEntry(newCount, newStartIndex));
                     }
-                    finalEntries.Add(new CollisionEntry(newCount, newStartIndex));
+                    else
+                    {
+                        finalEntries.Add(entry);
+                    }
                 }
-                else
-                {
-                    finalEntries.Add(entry);
-                } 
             }
-            data = finalData;
-            dataIdxs = finalIndices;
-            entries = finalEntries;
-            return new MphCollisionInfo(header, points, planes, pointIdxs, data, dataIdxs, entries, portals);
+            return new MphCollisionInfo(header, points, planes, pointIdxs, finalData, finalIndices, finalEntries, portals);
         }
 
         private static FhCollisionInfo ReadFhCollision(ReadOnlySpan<byte> bytes)
@@ -207,10 +213,8 @@ namespace MphRead.Formats.Collision
     // size: 224
     public readonly struct RawCollisionPortal
     {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 40)]
         public readonly char[] Name;
-        public readonly uint Field20;
-        public readonly uint Field24;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 24)]
         public readonly char[] NodeName1; // side 0 room node
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 24)]
@@ -227,7 +231,8 @@ namespace MphRead.Formats.Collision
         public readonly ushort Flags;
         public readonly ushort LayerMask;
         public readonly ushort PointCount;
-        public readonly ushort PaddingDE;
+        public readonly byte UnusedDE;
+        public readonly byte UnusedDF;
     }
 
     public class CollisionPortal
@@ -242,6 +247,8 @@ namespace MphRead.Formats.Collision
         public Vector4 Plane { get; }
         public Vector3 Position { get; }
         public ushort Flags { get; }
+        public byte UnusedDE { get; }
+        public byte UnusedDF { get; }
 
         public CollisionPortal(RawCollisionPortal raw)
         {
@@ -270,6 +277,8 @@ namespace MphRead.Formats.Collision
             Vectors = vectors;
             Plane = raw.Plane.ToFloatVector();
             Flags = raw.Flags;
+            UnusedDE = raw.UnusedDE;
+            UnusedDF = raw.UnusedDF;
         }
 
         public CollisionPortal(FhCollisionPortal raw, IReadOnlyList<FhCollisionVector> rawVectors, IReadOnlyList<Vector3Fx> rawPoints)
@@ -356,8 +365,8 @@ namespace MphRead.Formats.Collision
         public Vector3 MinPosition { get; }
 
         public MphCollisionInfo(CollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
-            IReadOnlyList<ushort> ptIdxs, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> dataIdxs, IReadOnlyList<CollisionEntry> entries,
-            IReadOnlyList<CollisionPortal> portals)
+            IReadOnlyList<ushort> ptIdxs, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> dataIdxs,
+            IReadOnlyList<CollisionEntry> entries, IReadOnlyList<CollisionPortal> portals)
             : base(points, planes, portals, firstHunt: false)
         {
             Header = header;

@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using MphRead.Effects;
+using MphRead.Formats.Collision;
 
 namespace MphRead
 {
@@ -21,6 +22,7 @@ namespace MphRead
         public static readonly int NodeAnimation = Marshal.SizeOf(typeof(NodeAnimation));
         public static readonly int CameraSequenceHeader = Marshal.SizeOf(typeof(CameraSequenceHeader));
         public static readonly int CameraSequenceKeyframe = Marshal.SizeOf(typeof(RawCameraSequenceKeyframe));
+        public static readonly int CollisionHeader = Marshal.SizeOf(typeof(CollisionHeader));
     }
 
     // size: 4
