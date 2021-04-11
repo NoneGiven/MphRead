@@ -142,6 +142,7 @@ namespace MphRead.Utility
                     Debug.Assert(portal.LayerMask == other.LayerMask);
                     Debug.Assert(portal.PointCount == other.PointCount);
                     Debug.Assert(portal.UnusedDE == other.UnusedDE);
+                    Debug.Assert(portal.UnusedDF == other.UnusedDF);
                 }
                 Debug.Assert(bytes.Length == file.Length);
                 Debug.Assert(Enumerable.SequenceEqual(bytes, file));
