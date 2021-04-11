@@ -2555,7 +2555,7 @@ namespace MphRead.Memory
         public byte Field4D5 { get => ReadByte(_off153); set => WriteByte(_off153, value); }
 
         private const int _off154 = 0x4D6;
-        public byte Field4D6 { get => ReadByte(_off154); set => WriteByte(_off154, value); }
+        public byte ViewType { get => ReadByte(_off154); set => WriteByte(_off154, value); }
 
         private const int _off155 = 0x4D7;
         public byte Field4D7 { get => ReadByte(_off155); set => WriteByte(_off155, value); }
