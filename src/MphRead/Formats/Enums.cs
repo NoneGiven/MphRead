@@ -162,7 +162,7 @@ namespace MphRead
         FadeOutInWhite = 6
     }
 
-    public enum Terrain
+    public enum Terrain : byte
     {
         Metal = 0,
         OrangeHolo = 1,
