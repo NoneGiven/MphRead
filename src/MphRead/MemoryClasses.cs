@@ -1435,8 +1435,8 @@ namespace MphRead.Memory
         private const int _off12 = 0xA4;
         public CModel OctoModel { get; }
 
-        private const int _off13 = 0xEC;
-        public int NodedataRelated { get => ReadInt32(_off13); set => WriteInt32(_off13, value); }
+        private const int _off13 = 0xEC; // NodeDataStruct3*
+        public IntPtr NodedataRelated { get => ReadPointer(_off13); set => WritePointer(_off13, value); }
 
         private const int _off14 = 0xF0;
         public int FieldF0 { get => ReadInt32(_off14); set => WriteInt32(_off14, value); }
@@ -1480,8 +1480,8 @@ namespace MphRead.Memory
         private const int _off7 = 0x80;
         public CModel Model { get; }
 
-        private const int _off8 = 0xC8;
-        public int NodedataRelated { get => ReadInt32(_off8); set => WriteInt32(_off8, value); }
+        private const int _off8 = 0xC8; // NodeDataStruct3*
+        public IntPtr NodedataRelated { get => ReadPointer(_off8); set => WritePointer(_off8, value); }
 
         public CFlagBase(Memory memory, int address) : base(memory, address)
         {
@@ -1623,8 +1623,8 @@ namespace MphRead.Memory
         private const int _off18 = 0xE4;
         public CModel NodeModel { get; }
 
-        private const int _off19 = 0x12C;
-        public int NodedataRelated { get => ReadInt32(_off19); set => WriteInt32(_off19, value); }
+        private const int _off19 = 0x12C; // NodeDataStruct3*
+        public IntPtr NodedataRelated { get => ReadPointer(_off19); set => WritePointer(_off19, value); }
 
         public CNodeDefense(Memory memory, int address) : base(memory, address)
         {
@@ -2954,7 +2954,7 @@ namespace MphRead.Memory
         public byte SlotIndex { get => ReadByte(_off286); set => WriteByte(_off286, value); }
 
         private const int _off287 = 0x84E;
-        public byte BotIndex { get => ReadByte(_off287); set => WriteByte(_off287, value); }
+        public byte IsBot { get => ReadByte(_off287); set => WriteByte(_off287, value); }
 
         private const int _off288 = 0x84F;
         public byte Field84F { get => ReadByte(_off288); set => WriteByte(_off288, value); }
