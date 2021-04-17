@@ -3613,7 +3613,7 @@ namespace MphRead
                         collisionPath: "unit2_b2_Collision.bin",
                         texturePath: null,
                         entityPath: null, // Unit2_b2_Ent is used in Slench boss room
-                        nodePath: null, // unit2_b2_node is used in Slench boos room
+                        nodePath: null, // unit2_b2_node is used in Slench boss room
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(10, 0, 0),
                         timeLimit: TimeLimit(2, 0, 0),
