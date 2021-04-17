@@ -675,7 +675,7 @@ namespace MphRead.Formats.Collision
                     continue;
                 }
                 FhCollisionData data = Data[dataIndex];
-                Debug.Assert(data.VectorCount >= 3 && data.VectorCount <= 6);
+                Debug.Assert(data.VectorCount >= 3 && data.VectorCount <= 8);
                 Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.VectorCount);
                 for (int j = 0; j < data.VectorCount; j++)
                 {
