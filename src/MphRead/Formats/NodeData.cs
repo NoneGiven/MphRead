@@ -42,28 +42,50 @@ namespace MphRead.Formats
                 Debug.Assert(header.Offset1 == header.Offset0 + 2);
                 shortCount = 1;
             }
+            var types = new HashSet<uint>();
+            uint min = UInt32.MaxValue;
             IReadOnlyList<ushort> shorts = Read.DoOffsets<ushort>(bytes, header.Offset0, shortCount);
-            var data = new List<IReadOnlyList<IReadOnlyList<NodeData3>>>();
+            var data = new List<IReadOnlyList<IReadOnlyList<NodeDataStruct3>>>();
             IReadOnlyList<NodeDataStruct1> str1s = Read.DoOffsets<NodeDataStruct1>(bytes, header.Offset1, header.Count);
             foreach (NodeDataStruct1 str1 in str1s)
             {
-                var sub = new List<IReadOnlyList<NodeData3>>();
+                var sub = new List<IReadOnlyList<NodeDataStruct3>>();
                 IReadOnlyList<NodeDataStruct2> str2s = Read.DoOffsets<NodeDataStruct2>(bytes, str1.Offset2, str1.Count);
                 foreach (NodeDataStruct2 str2 in str2s)
                 {
                     IReadOnlyList<NodeDataStruct3> str3s = Read.DoOffsets<NodeDataStruct3>(bytes, str2.Offset3, str2.Count);
-                    // sktodo: determine how to parse index list (and what level is it at -- file, str1, or str2?) and get start indices here
-                    var cast = new List<NodeData3>();
                     foreach (NodeDataStruct3 str3 in str3s)
                     {
-                        cast.Add(new NodeData3(str3));
+                        min = Math.Min(min, str3.Offset1);
+                        types.Add(str3.Field0);
                     }
-                    sub.Add(cast);
+                    sub.Add(str3s);
                 }
                 data.Add(sub);
             }
-            var nodeData = new NodeData(header, shorts, data);
-            Nop();
+            Console.WriteLine(path);
+            Console.WriteLine(String.Join(", ", types.OrderBy(t => t)));
+            Console.WriteLine();
+            int indexCount = (int)((bytes.Length - min) / 2);
+            IReadOnlyList<ushort> indices = Read.DoOffsets<ushort>(bytes, min, indexCount);
+            var cast = new List<IReadOnlyList<IReadOnlyList<NodeData3>>>();
+            foreach (IReadOnlyList<IReadOnlyList<NodeDataStruct3>> sub in data)
+            {
+                var newSub = new List<IReadOnlyList<NodeData3>>();
+                foreach (IReadOnlyList<NodeDataStruct3> str3s in sub)
+                {
+                    var cast3s = new List<NodeData3>();
+                    foreach (NodeDataStruct3 str3 in str3s)
+                    {
+                        int index1 = (int)((str3.Offset1 - min) / 2);
+                        int index2 = (int)((str3.Offset2 - min) / 2);
+                        cast3s.Add(new NodeData3(str3, index1, index2));
+                    }
+                    newSub.Add(cast3s);
+                }
+                cast.Add(newSub);
+            }
+            var nodeData = new NodeData(header, shorts, indices, cast);
             return nodeData;
         }
 
@@ -86,13 +108,15 @@ namespace MphRead.Formats
     {
         public NodeDataHeader Header { get; }
         public IReadOnlyList<ushort> Shorts { get; }
+        public IReadOnlyList<ushort> Indices { get; }
         public IReadOnlyList<IReadOnlyList<IReadOnlyList<NodeData3>>> Data { get; }
 
-        public NodeData(NodeDataHeader header, IReadOnlyList<ushort> shorts,
+        public NodeData(NodeDataHeader header, IReadOnlyList<ushort> shorts, IReadOnlyList<ushort> indices,
             IReadOnlyList<IReadOnlyList<IReadOnlyList<NodeData3>>> data)
         {
             Header = header;
             Shorts = shorts;
+            Indices = indices;
             Data = data;
         }
     }
@@ -107,13 +131,30 @@ namespace MphRead.Formats
         public int Index1 { get; }
         public int Index2 { get; }
 
-        public NodeData3(NodeDataStruct3 raw)
+        public Matrix4 Transform { get; }
+        public Vector4 Color { get; }
+
+        private static readonly IReadOnlyList<Vector4> _nodeDataColors = new List<Vector4>()
+        {
+            new Vector4(1, 0, 0, 1), // 0 - red
+            new Vector4(0, 1, 0, 1), // 1 - green
+            new Vector4(0, 0, 1, 1), // 2 - blue
+            new Vector4(0, 1, 1, 1), // 3 - cyan
+            new Vector4(1, 0, 1, 1), // 4 - magenta
+            new Vector4(1, 1, 0, 1), // 5 - yellow
+        };
+
+        public NodeData3(NodeDataStruct3 raw, int index1, int index2)
         {
             Field0 = raw.Field0;
             Field2 = raw.Field2;
             Field4 = raw.Field4;
             Position = raw.Position.ToFloatVector();
             Field14 = raw.Field14;
+            Index1 = index1;
+            Index2 = index2;
+            Transform = Matrix4.CreateTranslation(Position);
+            Color = _nodeDataColors[Field0];
         }
     }
 

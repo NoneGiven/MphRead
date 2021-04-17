@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using MphRead.Entities;
+using MphRead.Formats;
 using MphRead.Formats.Collision;
 
 namespace MphRead
@@ -74,8 +76,13 @@ namespace MphRead
             }
             IReadOnlyList<EntityBase> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
             CollisionInstance collision = Collision.GetCollision(metadata, nodeLayerMask);
+            NodeData? nodeData = null;
+            if (metadata.NodePath != null)
+            {
+                nodeData = ReadNodeData.ReadData(Path.Combine(@"", metadata.NodePath));
+            }
             LoadResources(scene);
-            var room = new RoomEntity(name, metadata, collision, nodeLayerMask);
+            var room = new RoomEntity(name, metadata, collision, nodeData, nodeLayerMask);
             return (room, metadata, collision, entities);
         }
 

@@ -86,6 +86,7 @@ namespace MphRead
         private bool _lighting = false;
         private bool _scanVisor = false;
         private int _showInvisible = 0;
+        private bool _showNodeData = false;
         private VolumeDisplay _showVolumes = VolumeDisplay.None;
         private bool _showCollision = false;
         private bool _showAllNodes = false;
@@ -131,6 +132,7 @@ namespace MphRead
         public Matrix4 ViewInvRotMatrix => _viewInvRotMatrix;
         public Matrix4 ViewInvRotYMatrix => _viewInvRotYMatrix;
         public Vector3 CameraPosition => _cameraPosition;
+        public bool ShowNodeData => _showNodeData;
         public bool ShowInvisibleEntities => _showInvisible != 0;
         public bool ShowAllEntities => _showInvisible == 2;
         public bool TransformRoomNodes => _transformRoomNodes;
@@ -2948,6 +2950,10 @@ namespace MphRead
                 {
                     _showInvisible = 0;
                 }
+            }
+            else if (e.Key == Keys.Y)
+            {
+                _showNodeData = !_showNodeData;
             }
             else if (e.Key == Keys.E && !e.Alt)
             {

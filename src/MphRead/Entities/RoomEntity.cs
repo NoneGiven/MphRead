@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using MphRead.Formats;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
@@ -14,10 +15,12 @@ namespace MphRead.Entities
         private readonly IReadOnlyList<PortalNodeRef> _forceFields = new List<PortalNodeRef>();
         private IReadOnlyList<Node> Nodes => _models[0].Model.Nodes;
         private readonly bool _firstHunt;
+        private readonly NodeData? _nodeData;
+        private readonly float[]? _emptyMatrixStack;
 
         protected override bool UseNodeTransform => false; // default -- will use transform if setting is enabled
 
-        public RoomEntity(string name, RoomMetadata meta, CollisionInstance collision, int layerMask) : base(EntityType.Room)
+        public RoomEntity(string name, RoomMetadata meta, CollisionInstance collision, NodeData? nodeData, int layerMask) : base(EntityType.Room)
         {
             ModelInstance inst = Read.GetRoomModelInstance(name);
             _models.Add(inst);
@@ -29,6 +32,12 @@ namespace MphRead.Entities
             }
             _firstHunt = meta.FirstHunt;
             Model model = inst.Model;
+            _nodeData = nodeData;
+            if (nodeData != null)
+            {
+                _models.Add(Read.GetModelInstance("pick_wpn_missile"));
+                _emptyMatrixStack = new float[0];
+            }
             var portals = new List<CollisionPortal>();
             var forceFields = new List<PortalNodeRef>();
             // portals are already filtered by layer mask
@@ -184,6 +193,47 @@ namespace MphRead.Entities
             if (scene.ShowCollision && (scene.ColEntDisplay == EntityType.All || scene.ColEntDisplay == Type))
             {
                 GetCollisionDrawInfo(scene);
+            }
+            if (_nodeData != null && scene.ShowNodeData)
+            {
+                Debug.Assert(_emptyMatrixStack != null);
+                Debug.Assert(_models.Count == 2);
+                ModelInstance inst = _models[1];
+                int polygonId = scene.GetNextPolygonId();
+                for (int i = 0; i < _nodeData.Data.Count; i++)
+                {
+                    IReadOnlyList<IReadOnlyList<NodeData3>> str1 = _nodeData.Data[i];
+                    for (int j = 0; j < str1.Count; j++)
+                    {
+                        IReadOnlyList<NodeData3> str2 = str1[j];
+                        for (int k = 0; k < str2.Count; k++)
+                        {
+                            NodeData3 str3 = str2[k];
+                            GetNodeDataItem(inst, str3.Transform, str3.Color, polygonId);
+                        }
+                    }
+                }
+            }
+
+            void GetNodeDataItem(ModelInstance inst, Matrix4 transform, Vector4 color, int polygonId)
+            {
+                Model model = inst.Model;
+                Node node = model.Nodes[3];
+                if (node.Enabled)
+                {
+                    int start = node.MeshId / 2;
+                    for (int k = 0; k < node.MeshCount; k++)
+                    {
+                        Mesh mesh = model.Meshes[start + k];
+                        if (!mesh.Visible)
+                        {
+                            continue;
+                        }
+                        Material material = model.Materials[mesh.MaterialId];
+                        scene.AddRenderItem(material, polygonId, 1, Vector3.Zero, GetLightInfo(scene), Matrix4.Identity,
+                            transform, mesh.ListId, 0, _emptyMatrixStack, color, null, SelectionType.None);
+                    }
+                }
             }
 
             void GetItems(ModelInstance inst, Node node, CollisionPortal? portal = null)
