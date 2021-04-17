@@ -395,6 +395,12 @@ namespace MphRead.Formats.Collision
 
         public override void GetDrawInfo(List<Vector3> points, EntityType entityType, Scene scene)
         {
+            //EntityBase? target = scene.Entities.FirstOrDefault(e => e.Type == EntityType.Model);
+            //if (target != null)
+            //{
+            //    GetPartition(target.Position, points, entityType, scene);
+            //    return;
+            //}
             // todo: visualize extra things like slipperiness, reflection, damage
             int polygonId = scene.GetNextPolygonId();
             for (int i = 0; i < Data.Count; i++)
