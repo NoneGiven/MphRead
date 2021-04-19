@@ -124,17 +124,34 @@ namespace MphRead.Utility
             Nop();
         }
 
+        private static int GetPrimaryAxis(Vector3 normal)
+        {
+            float x = MathF.Abs(normal.X);
+            float y = MathF.Abs(normal.Y);
+            float z = MathF.Abs(normal.Z);
+            if (y > x && y >= z)
+            {
+                return 1;
+            }
+            if (z > x && z > y)
+            {
+                return 2;
+            }
+            return 0;
+        }
+
         private static List<CollisionDataEditor> GetEditors(MphCollisionInfo info)
         {
             var editors = new List<CollisionDataEditor>();
             foreach (CollisionData data in info.Data)
             {
                 CollisionPlane plane = info.Planes[data.PlaneIndex];
+                Vector3 normal = plane.Normal.ToFloatVector();
                 var editor = new CollisionDataEditor()
                 {
-                    LayerMask = data.LayerMask,
+                    LayerMask = (ushort)(data.LayerMask & 0xFFFC & GetPrimaryAxis(normal)),
                     Flags = data.Flags,
-                    Plane = new Vector4(plane.Normal.ToFloatVector(), plane.Homogenous.FloatValue)
+                    Plane = new Vector4(normal, plane.Homogenous.FloatValue)
                 };
                 for (int i = 0; i < data.PointIndexCount; i++)
                 {
@@ -151,10 +168,12 @@ namespace MphRead.Utility
             foreach (FhCollisionData data in info.Data)
             {
                 CollisionPlane plane = info.Planes[data.PlaneIndex];
+                Vector3 normal = plane.Normal.ToFloatVector();
+                int axis = GetPrimaryAxis(normal);
                 var editor = new CollisionDataEditor()
                 {
-                    LayerMask = 5, // always on, type 1
-                    Plane = new Vector4(plane.Normal.ToFloatVector(), plane.Homogenous.FloatValue)
+                    LayerMask = (ushort)(4 & axis),
+                    Plane = new Vector4(normal, plane.Homogenous.FloatValue)
                 };
                 for (int i = 0; i < data.VectorCount; i++)
                 {
