@@ -3493,6 +3493,10 @@ namespace MphRead
             {
                 _sb.Append($" ({enemySpawn.Data.EnemyType}, {enemySpawn.Data.EnemySubtype} / {enemySpawn.Data.EnemyVersion})");
             }
+            else if (entity is ItemSpawnEntity itemSpawn)
+            {
+                _sb.Append($" ({itemSpawn.Data.ItemType})");
+            }
             else if (entity is ObjectEntity obj)
             {
                 if (obj.Data.EffectId != 0)

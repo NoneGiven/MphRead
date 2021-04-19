@@ -18,9 +18,10 @@ namespace MphRead
         private static readonly Dictionary<string, Model> _modelCache = new Dictionary<string, Model>();
         private static readonly Dictionary<string, Model> _fhModelCache = new Dictionary<string, Model>();
 
-        public static ModelInstance GetModelInstance(string name, bool firstHunt = false, MetaDir dir = MetaDir.Models)
+        public static ModelInstance GetModelInstance(string name, bool firstHunt = false,
+            MetaDir dir = MetaDir.Models, bool noCache = false)
         {
-            ModelInstance? inst = GetModelInstanceOrNull(name, firstHunt, dir);
+            ModelInstance? inst = GetModelInstanceOrNull(name, firstHunt, dir, noCache);
             if (inst == null)
             {
                 throw new ProgramException("No model with this name is known.");
@@ -28,17 +29,20 @@ namespace MphRead
             return inst;
         }
 
-        private static ModelInstance? GetModelInstanceOrNull(string name, bool firstHunt, MetaDir dir)
+        private static ModelInstance? GetModelInstanceOrNull(string name, bool firstHunt, MetaDir dir, bool noCache)
         {
             Dictionary<string, Model> cache = firstHunt ? _fhModelCache : _modelCache;
-            if (!cache.TryGetValue(name, out Model? model))
+            if (noCache || !cache.TryGetValue(name, out Model? model))
             {
                 model = GetModel(name, firstHunt, dir);
                 if (model == null)
                 {
                     return null;
                 }
-                cache.Add(name, model);
+                if (!noCache)
+                {
+                    cache.Add(name, model);
+                }
             }
             return new ModelInstance(model);
         }
@@ -1193,7 +1197,7 @@ namespace MphRead
 
         public static void ReadAndExport(string name, bool firstHunt = false, MetaDir dir = MetaDir.Models)
         {
-            Model? model = GetModelInstanceOrNull(name, firstHunt, dir)?.Model;
+            Model? model = GetModelInstanceOrNull(name, firstHunt, dir, noCache: true)?.Model;
             if (model == null)
             {
                 model = GetRoomModelInstanceOrNull(name)?.Model;
