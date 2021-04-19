@@ -63,9 +63,6 @@ namespace MphRead.Formats
                 }
                 data.Add(sub);
             }
-            Console.WriteLine(path);
-            Console.WriteLine(String.Join(", ", types.OrderBy(t => t)));
-            Console.WriteLine();
             int indexCount = (int)((bytes.Length - min) / 2);
             IReadOnlyList<ushort> indices = Read.DoOffsets<ushort>(bytes, min, indexCount);
             var cast = new List<IReadOnlyList<IReadOnlyList<NodeData3>>>();
