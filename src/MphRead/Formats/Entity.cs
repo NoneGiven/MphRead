@@ -230,14 +230,14 @@ namespace MphRead
     public readonly struct EnemySpawnEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly EnemyType Type;
+        public readonly EnemyType EnemyType;
         public readonly byte Padding25; // in-game, the type is 4 bytes on this struct (but is 1 byte on the class),
         public readonly ushort Padding26; // so this padding isn't actually there
-        public readonly uint Subtype;
-        public readonly uint TextureId;
-        public readonly uint HunterWeapon;
-        public readonly ushort Health;
-        public readonly ushort HealthMax;
+        public readonly uint EnemySubtype;
+        public readonly uint EnemyVersion;
+        public readonly uint EnemyWeapon;
+        public readonly ushort EnemyHealth;
+        public readonly ushort EnemyHealthMax;
         public readonly ushort Field38;
         public readonly byte HunterColor;
         public readonly byte HunterChance;

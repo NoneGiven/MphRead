@@ -136,9 +136,9 @@ namespace MphRead
                             used.Add(data.Message1);
                             used.Add(data.Message2);
                             used.Add(data.Message3);
-                            if (data.Type == EnemyType.Hunter && data.TextureId != 0)
+                            if (data.EnemyType == EnemyType.Hunter && data.EnemyVersion != 0)
                             {
-                                Console.WriteLine($"EH {meta.Value.InGameName} {(Hunter)data.Subtype} type {data.TextureId}");
+                                Console.WriteLine($"EH {meta.Value.InGameName} {(Hunter)data.EnemySubtype} type {data.EnemyVersion}");
                             }
                         }
                         else if (entity.Type == EntityType.ItemSpawn)

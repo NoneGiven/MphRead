@@ -22,7 +22,7 @@ namespace MphRead.Entities
             if (data.SpawnerModel != 0)
             {
                 string spawner = "EnemySpawner";
-                if (data.Type == EnemyType.WarWasp || data.Type == EnemyType.BarbedWarWasp)
+                if (data.EnemyType == EnemyType.WarWasp || data.EnemyType == EnemyType.BarbedWarWasp)
                 {
                     spawner = "PlantCarnivarous_Pod";
                 }
@@ -45,9 +45,9 @@ namespace MphRead.Entities
         public override void Initialize(Scene scene)
         {
             base.Initialize(scene);
-            if (_data.Type == EnemyType.Hunter)
+            if (_data.EnemyType == EnemyType.Hunter)
             {
-                var hunter = (Hunter)_data.Subtype;
+                var hunter = (Hunter)_data.EnemySubtype;
                 Debug.Assert(Enum.IsDefined(typeof(Hunter), hunter));
                 // todo: random encounter setup
                 if (hunter != Hunter.Random)
@@ -68,7 +68,7 @@ namespace MphRead.Entities
             if (_spawn)
             {
                 _spawn = false;
-                EnemyInstanceEntity? enemy = SpawnEnemy(this, _data.Type);
+                EnemyInstanceEntity? enemy = SpawnEnemy(this, _data.EnemyType);
                 if (enemy != null)
                 {
                     scene.AddEntity(enemy);

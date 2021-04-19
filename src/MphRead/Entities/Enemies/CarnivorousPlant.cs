@@ -7,7 +7,7 @@ namespace MphRead.Entities.Enemies
             Transform = data.Spawner.Transform;
             _initialPosition = Position;
             var spawner = (EnemySpawnEntity)data.Spawner;
-            ObjectMetadata meta = Metadata.GetObjectById(spawner.Data.TextureId);
+            ObjectMetadata meta = Metadata.GetObjectById(spawner.Data.EnemyVersion);
             // todo: enemy spawners need to load these initially
             ModelInstance inst = Read.GetModelInstance(meta.Name);
             _models.Add(inst);

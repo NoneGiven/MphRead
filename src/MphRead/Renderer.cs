@@ -3491,7 +3491,7 @@ namespace MphRead
             }
             else if (entity is EnemySpawnEntity enemySpawn)
             {
-                _sb.Append($" ({enemySpawn.Data.Type}, {enemySpawn.Data.Subtype} / {enemySpawn.Data.TextureId})");
+                _sb.Append($" ({enemySpawn.Data.EnemyType}, {enemySpawn.Data.EnemySubtype} / {enemySpawn.Data.EnemyVersion})");
             }
             else if (entity is ObjectEntity obj)
             {

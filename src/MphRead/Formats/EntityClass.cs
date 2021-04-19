@@ -346,11 +346,11 @@ namespace MphRead.Editor
     public class EnemySpawnEntityEditor : EntityEditorBase
     {
         public EnemyType EnemyType { get; set; }
-        public uint Subtype { get; set; }
-        public uint TextureId { get; set; }
+        public uint EnemySubtype { get; set; }
+        public uint EnemyVersion { get; set; }
         public uint HunterWeapon { get; set; }
-        public ushort Health { get; set; }
-        public ushort HealthMax { get; set; }
+        public ushort EnemyHealth { get; set; }
+        public ushort EnemyHealthMax { get; set; }
         public ushort Field38 { get; set; }
         public byte HunterColor { get; set; }
         public byte HunterChance { get; set; }
@@ -475,12 +475,12 @@ namespace MphRead.Editor
 
         public EnemySpawnEntityEditor(Entity header, EnemySpawnEntityData raw) : base(header)
         {
-            EnemyType = raw.Type;
-            Subtype = raw.Subtype;
-            TextureId = raw.TextureId;
-            HunterWeapon = raw.HunterWeapon;
-            Health = raw.Health;
-            HealthMax = raw.HealthMax;
+            EnemyType = raw.EnemyType;
+            EnemySubtype = raw.EnemySubtype;
+            EnemyVersion = raw.EnemyVersion;
+            HunterWeapon = raw.EnemyWeapon;
+            EnemyHealth = raw.EnemyHealth;
+            EnemyHealthMax = raw.EnemyHealthMax;
             Field38 = raw.Field38;
             HunterColor = raw.HunterColor;
             HunterChance = raw.HunterChance;
