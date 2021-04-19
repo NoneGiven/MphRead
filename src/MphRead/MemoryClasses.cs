@@ -6424,4 +6424,102 @@ namespace MphRead.Memory
             Fields = new Int32Array(memory, address + _off0, 834);
         }
     }
+
+    public class RoomDescription : MemoryClass
+    {
+        private const int _off0 = 0x0; // char*
+        public IntPtr Name { get => ReadPointer(_off0); set => WritePointer(_off0, value); }
+
+        private const int _off1 = 0x4; // char*
+        public IntPtr Model { get => ReadPointer(_off1); set => WritePointer(_off1, value); }
+
+        private const int _off2 = 0x8; // char*
+        public IntPtr Anim { get => ReadPointer(_off2); set => WritePointer(_off2, value); }
+
+        private const int _off3 = 0xC; // char*
+        public IntPtr Tex { get => ReadPointer(_off3); set => WritePointer(_off3, value); }
+
+        private const int _off4 = 0x10; // char*
+        public IntPtr Collision { get => ReadPointer(_off4); set => WritePointer(_off4, value); }
+
+        private const int _off5 = 0x14; // char*
+        public IntPtr Ent { get => ReadPointer(_off5); set => WritePointer(_off5, value); }
+
+        private const int _off6 = 0x18; // char*
+        public IntPtr Nodedata { get => ReadPointer(_off6); set => WritePointer(_off6, value); }
+
+        private const int _off7 = 0x1C; // char*
+        public IntPtr RoomNodeName { get => ReadPointer(_off7); set => WritePointer(_off7, value); }
+
+        private const int _off8 = 0x20;
+        public int BattleTimeLimit { get => ReadInt32(_off8); set => WriteInt32(_off8, value); }
+
+        private const int _off9 = 0x24;
+        public int TimeLimit { get => ReadInt32(_off9); set => WriteInt32(_off9, value); }
+
+        private const int _off10 = 0x28;
+        public ushort PointLimit { get => ReadUInt16(_off10); set => WriteUInt16(_off10, value); }
+
+        private const int _off11 = 0x2A;
+        public ushort LayerId { get => ReadUInt16(_off11); set => WriteUInt16(_off11, value); }
+
+        private const int _off12 = 0x2C;
+        public int FarClipDist { get => ReadInt32(_off12); set => WriteInt32(_off12, value); }
+
+        private const int _off13 = 0x30;
+        public ushort FogEnable { get => ReadUInt16(_off13); set => WriteUInt16(_off13, value); }
+
+        private const int _off14 = 0x32;
+        public ushort ClearFog { get => ReadUInt16(_off14); set => WriteUInt16(_off14, value); }
+
+        private const int _off15 = 0x34;
+        public ushort FogColor { get => ReadUInt16(_off15); set => WriteUInt16(_off15, value); }
+
+        private const int _off16 = 0x36;
+        public ushort Padding36 { get => ReadUInt16(_off16); set => WriteUInt16(_off16, value); }
+
+        private const int _off17 = 0x38;
+        public uint FogSlope { get => ReadUInt32(_off17); set => WriteUInt32(_off17, value); }
+
+        private const int _off18 = 0x3C;
+        public int FogOffset { get => ReadInt32(_off18); set => WriteInt32(_off18, value); }
+
+        private const int _off19 = 0x40;
+        public ColorRgb Light1Color { get => ReadColor3(_off19); set => WriteColor3(_off19, value); }
+
+        private const int _off20 = 0x43;
+        public byte Padding43 { get => ReadByte(_off20); set => WriteByte(_off20, value); }
+
+        private const int _off21 = 0x44;
+        public Vector3 Light1Vec { get => ReadVec3(_off21); set => WriteVec3(_off21, value); }
+
+        private const int _off22 = 0x50;
+        public ColorRgb Light2Color { get => ReadColor3(_off22); set => WriteColor3(_off22, value); }
+
+        private const int _off23 = 0x53;
+        public byte Padding53 { get => ReadByte(_off23); set => WriteByte(_off23, value); }
+
+        private const int _off24 = 0x54;
+        public Vector3 Light2Vec { get => ReadVec3(_off24); set => WriteVec3(_off24, value); }
+
+        private const int _off25 = 0x60; // char*
+        public IntPtr InternalName { get => ReadPointer(_off25); set => WritePointer(_off25, value); }
+
+        private const int _off26 = 0x64; // char*
+        public IntPtr Archive { get => ReadPointer(_off26); set => WritePointer(_off26, value); }
+
+        private const int _off27 = 0x68;
+        public int KillHeight { get => ReadInt32(_off27); set => WriteInt32(_off27, value); }
+
+        private const int _off28 = 0x6C;
+        public int Size { get => ReadInt32(_off28); set => WriteInt32(_off28, value); }
+
+        public RoomDescription(Memory memory, int address) : base(memory, address)
+        {
+        }
+
+        public RoomDescription(Memory memory, IntPtr address) : base(memory, address)
+        {
+        }
+    }
 }

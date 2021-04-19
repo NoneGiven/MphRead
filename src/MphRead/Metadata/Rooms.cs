@@ -3,6 +3,15 @@ using OpenTK.Mathematics;
 
 namespace MphRead
 {
+    public enum RoomSize : uint
+    {
+        None = 0,
+        Small = 2,
+        Medium = 3,
+        Large = 4,
+        SinglePlayer = 6
+    }
+
     public class RoomMetadata
     {
         public string Name { get; }
@@ -32,7 +41,7 @@ namespace MphRead
         public ColorRgb Light2Color { get; }
         public Vector3 Light2Vector { get; }
         public float KillHeight { get; }
-        public uint Size { get; } // 0 - none, 2 - small, 3 - medium, 4 - large, 6 - 1P
+        public RoomSize Size { get; }
         public bool Multiplayer { get; }
         public bool FirstHunt { get; }
         public bool Hybrid { get; }
@@ -41,7 +50,7 @@ namespace MphRead
             string? texturePath, string? entityPath, string? nodePath, string? roomNodeName, uint battleTimeLimit, uint timeLimit,
             short pointLimit, short nodeLayer, bool fogEnabled, bool clearFog, ColorRgb fogColor, int fogSlope, ushort fogOffset,
             ColorRgb light1Color, Vector3 light1Vector, ColorRgb light2Color, Vector3 light2Vector, int farClip, int killHeight,
-            uint size, bool multiplayer = false, bool firstHunt = false, bool hybrid = false)
+            RoomSize size, bool multiplayer = false, bool firstHunt = false, bool hybrid = false)
         {
             Name = name;
             InGameName = inGameName;
@@ -269,7 +278,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT1_CZ",
@@ -299,7 +308,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT1_MORPH_CX",
@@ -329,7 +338,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT1_MORPH_CZ",
@@ -359,7 +368,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT2_CX",
@@ -389,7 +398,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT2_CZ",
@@ -419,7 +428,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT3_CX",
@@ -449,7 +458,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT3_CZ",
@@ -479,7 +488,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT4_CX",
@@ -509,7 +518,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT4_CZ",
@@ -539,7 +548,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0)
+                        size: RoomSize.None)
                 },
                 {
                     "CYLINDER_C1",
@@ -569,7 +578,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0)
+                        size: RoomSize.None)
                 },
                 {
                     "BIGEYE_C1",
@@ -599,7 +608,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT1_RM1_CX",
@@ -629,7 +638,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0)
+                        size: RoomSize.None)
                 },
                 {
                     "GOREA_C1",
@@ -659,7 +668,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT3_MORPH_CZ",
@@ -689,7 +698,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT1_LAND",
@@ -719,7 +728,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 6553600,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_C0",
@@ -749,7 +758,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_RM1",
@@ -779,7 +788,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_C4",
@@ -809,7 +818,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_RM6",
@@ -839,7 +848,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "CRYSTALROOM",
@@ -869,7 +878,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_RM4",
@@ -899,7 +908,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_TP1",
@@ -929,7 +938,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_B1",
@@ -959,7 +968,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_C1",
@@ -989,7 +998,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_C2",
@@ -1019,7 +1028,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_C5",
@@ -1049,7 +1058,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_RM2",
@@ -1079,7 +1088,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_RM3",
@@ -1109,7 +1118,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_RM5",
@@ -1139,7 +1148,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_C3",
@@ -1169,7 +1178,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_TP2",
@@ -1199,7 +1208,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_B2",
@@ -1229,7 +1238,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_LAND",
@@ -1259,7 +1268,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 6553600,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_C0",
@@ -1289,7 +1298,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 6553600,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_C1",
@@ -1319,7 +1328,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_RM1",
@@ -1349,7 +1358,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_C2",
@@ -1379,7 +1388,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_RM2",
@@ -1409,7 +1418,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_C3",
@@ -1439,7 +1448,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_RM3",
@@ -1469,7 +1478,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_C4",
@@ -1499,7 +1508,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_TP1",
@@ -1529,7 +1538,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_B1",
@@ -1559,7 +1568,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_C6",
@@ -1589,7 +1598,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 16384000,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_C7",
@@ -1619,7 +1628,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 16384000,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_RM4",
@@ -1649,7 +1658,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_RM5",
@@ -1679,7 +1688,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_RM6",
@@ -1709,7 +1718,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_RM7",
@@ -1739,7 +1748,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_RM8",
@@ -1769,7 +1778,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_TP2",
@@ -1799,7 +1808,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_B2",
@@ -1829,7 +1838,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_LAND",
@@ -1859,7 +1868,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 6553600,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_C0",
@@ -1889,7 +1898,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_C2",
@@ -1919,7 +1928,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_RM1",
@@ -1949,7 +1958,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_RM4",
@@ -1979,7 +1988,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_TP1",
@@ -2009,7 +2018,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_B1",
@@ -2039,7 +2048,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_C1",
@@ -2069,7 +2078,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_RM2",
@@ -2099,7 +2108,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 2457600,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_RM3",
@@ -2129,7 +2138,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_TP2",
@@ -2159,7 +2168,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_B2",
@@ -2189,7 +2198,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_LAND",
@@ -2219,7 +2228,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_RM1",
@@ -2249,7 +2258,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 327680,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_RM3",
@@ -2279,7 +2288,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_C0",
@@ -2309,7 +2318,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_TP1",
@@ -2339,7 +2348,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_B1",
@@ -2369,7 +2378,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_C1",
@@ -2399,7 +2408,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_RM2",
@@ -2429,7 +2438,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_RM4",
@@ -2459,7 +2468,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 327680,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_RM5",
@@ -2489,7 +2498,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_TP2",
@@ -2519,7 +2528,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_B2",
@@ -2549,7 +2558,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "Gorea_Land",
@@ -2579,7 +2588,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "Gorea_Peek",
@@ -2609,7 +2618,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -286720,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "Gorea_b1",
@@ -2639,7 +2648,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "Gorea_b2",
@@ -2669,7 +2678,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -286720,
-                        size: 6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "MP1 SANCTORUS",
@@ -2699,7 +2708,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 368640,
                         killHeight: -122880,
-                        size: 3,
+                        size: RoomSize.Medium,
                         multiplayer: true)
                 },
                 {
@@ -2730,7 +2739,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 3072000,
                         killHeight: 4096,
-                        size: 4,
+                        size: RoomSize.Large,
                         multiplayer: true)
                 },
                 {
@@ -2761,7 +2770,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(409, -4096, 0).ToFloatVector(),
                         farClip: 1433600,
                         killHeight: -122880,
-                        size: 2,
+                        size: RoomSize.Small,
                         multiplayer: true)
                 },
                 {
@@ -2792,7 +2801,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1687552,
                         killHeight: -122880,
-                        size: 4,
+                        size: RoomSize.Large,
                         multiplayer: true)
                 },
                 {
@@ -2823,7 +2832,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1740800,
                         killHeight: -122880,
-                        size: 3,
+                        size: RoomSize.Medium,
                         multiplayer: true)
                 },
                 {
@@ -2854,7 +2863,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 2,
+                        size: RoomSize.Small,
                         multiplayer: true)
                 },
                 {
@@ -2885,7 +2894,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 5734400,
                         killHeight: -122880,
-                        size: 4,
+                        size: RoomSize.Large,
                         multiplayer: true)
                 },
                 {
@@ -2916,7 +2925,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        size: 2,
+                        size: RoomSize.Small,
                         multiplayer: true)
                 },
                 {
@@ -2947,7 +2956,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 4096000,
                         killHeight: -122880,
-                        size: 4,
+                        size: RoomSize.Large,
                         multiplayer: true)
                 },
                 {
@@ -2978,7 +2987,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 327680,
                         killHeight: -122880,
-                        size: 3,
+                        size: RoomSize.Medium,
                         multiplayer: true)
                 },
                 {
@@ -3009,7 +3018,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 409600,
                         killHeight: -122880,
-                        size: 2,
+                        size: RoomSize.Small,
                         multiplayer: true)
                 },
                 {
@@ -3040,7 +3049,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 409600,
                         killHeight: -122880,
-                        size: 2,
+                        size: RoomSize.Small,
                         multiplayer: true)
                 },
                 {
@@ -3071,7 +3080,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        size: 3,
+                        size: RoomSize.Medium,
                         multiplayer: true)
                 },
                 {
@@ -3102,7 +3111,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 4,
+                        size: RoomSize.Large,
                         multiplayer: true)
                 },
                 {
@@ -3133,7 +3142,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 4915200,
                         killHeight: -122880,
-                        size: 3,
+                        size: RoomSize.Medium,
                         multiplayer: true)
                 },
                 {
@@ -3164,7 +3173,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 4,
+                        size: RoomSize.Large,
                         multiplayer: true)
                 },
                 {
@@ -3195,7 +3204,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 3,
+                        size: RoomSize.Medium,
                         multiplayer: true)
                 },
                 {
@@ -3226,7 +3235,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 5734400,
                         killHeight: -122880,
-                        size: 4,
+                        size: RoomSize.Large,
                         multiplayer: true)
                 },
                 {
@@ -3257,7 +3266,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 3276800,
                         killHeight: -122880,
-                        size: 3,
+                        size: RoomSize.Medium,
                         multiplayer: true)
                 },
                 {
@@ -3288,7 +3297,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 4,
+                        size: RoomSize.Large,
                         multiplayer: true)
                 },
                 {
@@ -3319,7 +3328,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 4,
+                        size: RoomSize.Large,
                         multiplayer: true)
                 },
                 {
@@ -3350,7 +3359,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 4915200,
                         killHeight: -122880,
-                        size: 4,
+                        size: RoomSize.Large,
                         multiplayer: true)
                 },
                 {
@@ -3381,7 +3390,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 5734400,
                         killHeight: -122880,
-                        size: 3,
+                        size: RoomSize.Medium,
                         multiplayer: true)
                 },
                 {
@@ -3412,7 +3421,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 4,
+                        size: RoomSize.Large,
                         multiplayer: true)
                 },
                 {
@@ -3443,7 +3452,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 4,
+                        size: RoomSize.Large,
                         multiplayer: true)
                 },
                 {
@@ -3474,7 +3483,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -286720,
-                        size: 4,
+                        size: RoomSize.Large,
                         multiplayer: true)
                 },
                 {
@@ -3505,7 +3514,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 3,
+                        size: RoomSize.Medium,
                         multiplayer: true)
                 },
                 {
@@ -3536,7 +3545,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        size: 6,
+                        size: RoomSize.SinglePlayer,
                         hybrid: true)
                 },
                 {
@@ -3567,7 +3576,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        size: 6,
+                        size: RoomSize.SinglePlayer,
                         hybrid: true)
                 },
                 // these levels are unused/unreferenced in the game, so some values are guesses
@@ -3599,7 +3608,7 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0,
+                        size: RoomSize.None,
                         multiplayer: true)
                 },
                 {
@@ -3630,7 +3639,7 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0,
+                        size: RoomSize.None,
                         multiplayer: true)
                 },
                 {
@@ -3661,7 +3670,7 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0,
+                        size: RoomSize.None,
                         multiplayer: true)
                 },
                 {
@@ -3692,7 +3701,7 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0,
+                        size: RoomSize.None,
                         multiplayer: true)
                 },
                 {
@@ -3723,7 +3732,7 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0,
+                        size: RoomSize.None,
                         multiplayer: true)
                 },
                 {
@@ -3754,7 +3763,7 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        size: 0,
+                        size: RoomSize.SinglePlayer,
                         multiplayer: true)
                 },
                 {
@@ -3785,7 +3794,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: -122880,
-                        size: 0,
+                        size: RoomSize.SinglePlayer,
                         hybrid: true)
                 },
                 {
@@ -3816,7 +3825,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: -122880,
-                        size: 0,
+                        size: RoomSize.SinglePlayer,
                         hybrid: true)
                 },
                 {
@@ -3847,7 +3856,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: -122880,
-                        size: 0,
+                        size: RoomSize.SinglePlayer,
                         hybrid: true)
                 },
                 // todo: room ID 8 has the same files as MP1, but a few different parameters
@@ -3880,7 +3889,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 368640,
                         killHeight: 0,
-                        size: 0,
+                        size: RoomSize.SinglePlayer,
                         multiplayer: true,
                         firstHunt: true)
                 },
@@ -3912,7 +3921,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        size: 0,
+                        size: RoomSize.SinglePlayer,
                         multiplayer: true,
                         firstHunt: true)
                 },
@@ -3944,7 +3953,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 81920000,
                         killHeight: 0,
-                        size: 0,
+                        size: RoomSize.SinglePlayer,
                         multiplayer: true,
                         firstHunt: true)
                 },
@@ -3976,7 +3985,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        size: 0,
+                        size: RoomSize.SinglePlayer,
                         firstHunt: true)
                 },
                 {
@@ -4007,7 +4016,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        size: 0,
+                        size: RoomSize.SinglePlayer,
                         firstHunt: true)
                 },
                 {
@@ -4038,7 +4047,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        size: 0,
+                        size: RoomSize.SinglePlayer,
                         firstHunt: true)
                 },
                 {
@@ -4069,7 +4078,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        size: 0,
+                        size: RoomSize.SinglePlayer,
                         firstHunt: true)
                 },
                 {
@@ -4100,7 +4109,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        size: 0,
+                        size: RoomSize.SinglePlayer,
                         multiplayer: true,
                         firstHunt: true)
                 },
@@ -4132,7 +4141,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        size: 0,
+                        size: RoomSize.SinglePlayer,
                         multiplayer: true,
                         firstHunt: true)
                 }

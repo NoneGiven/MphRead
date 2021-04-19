@@ -5,7 +5,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using MphRead.Testing;
 
 namespace MphRead.Memory
 {
@@ -18,6 +17,7 @@ namespace MphRead.Memory
             public int PlayerUA { get; }
             public int CamSeqData { get; }
             public int GameState { get; }
+            public int RoomDesc { get; }
 
             public SaveAddressInfo Save { get; }
 
@@ -39,13 +39,15 @@ namespace MphRead.Memory
                 }
             }
 
-            public AddressInfo(int gameState, int entityListHead, int frameCount, int playerUa, int camSeqData, SaveAddressInfo save)
+            public AddressInfo(int gameState, int entityListHead, int frameCount, int playerUa,
+                int camSeqData, int roomDesc, SaveAddressInfo save)
             {
                 GameState = gameState;
                 EntityListHead = entityListHead;
                 FrameCount = frameCount;
                 PlayerUA = playerUa;
                 CamSeqData = camSeqData;
+                RoomDesc = roomDesc;
                 Save = save;
             }
         }
@@ -60,6 +62,7 @@ namespace MphRead.Memory
                 frameCount: 0x20AE514,
                 playerUa: 0x20B00D4,
                 camSeqData: 0x2103760,
+                roomDesc: 0x20B84C4, // todo
                 new AddressInfo.SaveAddressInfo(
                     story: 0x20BD798,
                     type3: 0x20D958C, // todo
@@ -74,6 +77,7 @@ namespace MphRead.Memory
                 frameCount: 0x20D94FC,
                 playerUa: 0x20DB180,
                 camSeqData: 0x21335E0,
+                roomDesc: 0x20B84C4,
                 new AddressInfo.SaveAddressInfo(
                     story: 0x20E97B0,
                     type3: 0x20D958C,
