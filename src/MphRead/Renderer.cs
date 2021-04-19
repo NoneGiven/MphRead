@@ -3372,11 +3372,18 @@ namespace MphRead
             }
             _sb.AppendLine();
             _sb.Append($"Entity: {entity.Type}");
+            IReadOnlyList<ModelInstance> models = entity.GetModels();
             if (entity.Type == EntityType.Model)
             {
-                _sb.Append($" ({entity.GetModels()[0].Model.Name})");
+                Debug.Assert(models.Count > 0);
+                _sb.Append($" ({models[0].Model.Name})");
             }
-            _sb.Append($" [{entity.Id}] {(entity.Active ? "On " : "Off")} - Color {entity.Recolor}");
+            string color = "";
+            if (models.Count > 0 && !models[0].IsPlaceholder)
+            {
+                color = $" - Color {entity.Recolor}";
+            }
+            _sb.Append($" [{entity.Id}] {(entity.Active ? "On " : "Off")}{color}");
             if (entity.Type == EntityType.Room)
             {
                 _sb.Append($" ({entity.GetModels()[0].Model.Nodes.Count(n => n.IsRoomPartNode)})");
@@ -3484,7 +3491,7 @@ namespace MphRead
             }
             else if (entity is EnemySpawnEntity enemySpawn)
             {
-                _sb.Append($" ({enemySpawn.Data.Type})");
+                _sb.Append($" ({enemySpawn.Data.Type}, {enemySpawn.Data.Subtype} / {enemySpawn.Data.TextureId})");
             }
             else if (entity is ObjectEntity obj)
             {
