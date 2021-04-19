@@ -71,14 +71,14 @@ namespace MphRead.Testing
             var allCollision = new List<(bool, CollisionInstance)>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
-                if (!meta.Value.FirstHunt && !meta.Value.Hybrid)
+                if (!meta.Value.Hybrid)
                 {
                     allCollision.Add((true, Collision.GetCollision(meta.Value)));
                 }
             }
             foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.ModelMetadata)
             {
-                if (meta.Value.CollisionPath != null && !meta.Value.FirstHunt)
+                if (meta.Value.CollisionPath != null)
                 {
                     allCollision.Add((false, Collision.GetCollision(meta.Value)));
                     if (meta.Value.ExtraCollisionPath != null)
@@ -89,8 +89,13 @@ namespace MphRead.Testing
             }
             foreach ((bool room, CollisionInstance instance) in allCollision)
             {
-                var collision = (MphCollisionInfo)instance.Info;
-                foreach (CollisionData data in collision.Data)
+                if (instance.Info is MphCollisionInfo collision)
+                {
+                    foreach (CollisionData data in collision.Data)
+                    {
+                    }
+                }
+                else if (instance.Info is FhCollisionInfo fhCollision)
                 {
                 }
             }
@@ -119,6 +124,11 @@ namespace MphRead.Testing
                 var collision = (FhCollisionInfo)instance.Info;
             }
             Nop();
+        }
+
+        public static void ConvertFhRoomToMph()
+        {
+
         }
 
         private static void Nop()
