@@ -195,6 +195,9 @@ namespace MphRead.Formats.Collision
         public bool IgnorePlayers => Flags.HasFlag(CollisionFlags.IgnorePlayers);
 
         public bool IgnoreBeams => Flags.HasFlag(CollisionFlags.IgnoreBeams);
+
+        // bits 0-1
+        public int Type => LayerMask & 3;
     }
 
     // size: 4
@@ -401,7 +404,7 @@ namespace MphRead.Formats.Collision
             //    GetPartition(target.Position, points, entityType, scene);
             //    return;
             //}
-            // todo: visualize extra things like slipperiness, reflection, damage
+            // todo: visualize extra things like slipperiness, reflection, damage, beam behavior type
             int polygonId = scene.GetNextPolygonId();
             for (int i = 0; i < Data.Count; i++)
             {
