@@ -149,7 +149,7 @@ namespace MphRead.Utility
                 Vector3 normal = plane.Normal.ToFloatVector();
                 var editor = new CollisionDataEditor()
                 {
-                    LayerMask = (ushort)(data.LayerMask & 0xFFFC & GetPrimaryAxis(normal)),
+                    LayerMask = (ushort)((data.LayerMask & 0xFFFC) | GetPrimaryAxis(normal)),
                     Flags = data.Flags,
                     Plane = new Vector4(normal, plane.Homogenous.FloatValue)
                 };
@@ -172,7 +172,7 @@ namespace MphRead.Utility
                 int axis = GetPrimaryAxis(normal);
                 var editor = new CollisionDataEditor()
                 {
-                    LayerMask = (ushort)(4 & axis),
+                    LayerMask = (ushort)(4 | axis),
                     Plane = new Vector4(normal, plane.Homogenous.FloatValue)
                 };
                 for (int i = 0; i < data.VectorCount; i++)
