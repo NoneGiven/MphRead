@@ -1902,7 +1902,7 @@ namespace MphRead
                         collisionPath: "unit3_c2_collision.bin",
                         texturePath: "unit3_c2_tex.bin",
                         entityPath: "Unit3_C2_Ent.bin",
-                        nodePath: "unit3_c2_Node.bin",
+                        nodePath: null, // references unit3_c2_Node.bin, which doesn't exist
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(20, 0, 0),
                         timeLimit: TimeLimit(4, 0, 0),
