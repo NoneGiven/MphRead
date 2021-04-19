@@ -245,6 +245,10 @@ namespace MphRead.Editor
         public bool Active { get; set; }
         public sbyte TeamIndex { get; set; } // 0, 1, or -1
 
+        public PlayerSpawnEntityEditor()
+        {
+        }
+
         public PlayerSpawnEntityEditor(Entity header, PlayerSpawnEntityData raw) : base(header)
         {
             Availability = raw.Availability;

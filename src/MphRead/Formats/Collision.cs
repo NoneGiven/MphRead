@@ -134,12 +134,15 @@ namespace MphRead.Formats.Collision
             IReadOnlyList<ushort> dataIndices = Read.DoOffsets<ushort>(bytes, header.DataIndexOffset, header.DataIndexCount);
             IReadOnlyList<Vector3Fx> points = Read.DoOffsets<Vector3Fx>(bytes, header.PointOffset, header.PointCount);
             IReadOnlyList<CollisionPlane> planes = Read.DoOffsets<CollisionPlane>(bytes, header.PlaneOffset, header.PlaneCount);
+            IReadOnlyList<FhCollisionEntry> entryIndices = Read.DoOffsets<FhCollisionEntry>(bytes, header.EntryOffset, header.EntryCount);
+            IReadOnlyList<int> treeNodeIndices = Read.DoOffsets<int>(bytes, header.TreeNodeIndexOffset, header.TreeNodeIndexCount);
+            IReadOnlyList<FhCollisionTreeNode> treeNodes = Read.DoOffsets<FhCollisionTreeNode>(bytes, header.TreeNodeOffset, header.TreeNodeCount);
             var portals = new List<CollisionPortal>();
             foreach (FhCollisionPortal portal in Read.DoOffsets<FhCollisionPortal>(bytes, header.PortalOffset, header.PortalCount))
             {
                 portals.Add(new CollisionPortal(portal, vectors, points));
             }
-            return new FhCollisionInfo(header, points, planes, data, vectors, dataIndices, portals);
+            return new FhCollisionInfo(header, points, planes, data, vectors, dataIndices, portals, entryIndices, treeNodeIndices, treeNodes);
         }
     }
 
@@ -627,12 +630,12 @@ namespace MphRead.Formats.Collision
         public readonly uint DataOffset;
         public readonly uint DataIndexCount;
         public readonly uint DataIndexOffset;
-        public readonly uint Count6; // size: 28
-        public readonly uint Offset6; // link-related
-        public readonly uint Count7; // size: 4
-        public readonly uint Offset7; // link-related
-        public readonly uint Count8; // size: 28
-        public readonly uint Offset8; // link-related
+        public readonly uint EntryCount;
+        public readonly uint EntryOffset;
+        public readonly uint TreeNodeIndexCount;
+        public readonly uint TreeNodeIndexOffset;
+        public readonly uint TreeNodeCount;
+        public readonly uint TreeNodeOffset;
         public readonly uint PortalCount;
         public readonly uint PortalOffset;
     }
@@ -653,6 +656,24 @@ namespace MphRead.Formats.Collision
         public readonly ushort PlaneIndex;
     }
 
+    // size: 28
+    public readonly struct FhCollisionEntry
+    {
+        public readonly Vector3Fx MinBounds;
+        public readonly Vector3Fx MaxBounds;
+        public readonly ushort LeftIndex;
+        public readonly ushort RightIndex;
+    }
+
+    // size: 28
+    public readonly struct FhCollisionTreeNode
+    {
+        public readonly Vector3Fx MinBounds;
+        public readonly Vector3Fx MaxBounds;
+        public readonly ushort DataCount;
+        public readonly ushort DataStartIndex;
+    }
+
     public class FhCollisionInfo : CollisionInfo
     {
         public FhCollisionHeader Header { get; }
@@ -660,14 +681,22 @@ namespace MphRead.Formats.Collision
         public IReadOnlyList<FhCollisionVector> Vectors { get; }
         public IReadOnlyList<ushort> DataIndices { get; }
 
+        public IReadOnlyList<FhCollisionEntry> EntryIndices { get; }
+        public IReadOnlyList<int> TreeNodeIndices { get; }
+        public IReadOnlyList<FhCollisionTreeNode> TreeNodes { get; }
+
         public FhCollisionInfo(FhCollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
             IReadOnlyList<FhCollisionData> data, IReadOnlyList<FhCollisionVector> vectors, IReadOnlyList<ushort> dataIndices,
-            IReadOnlyList<CollisionPortal> portals) : base(points, planes, portals, firstHunt: true)
+            IReadOnlyList<CollisionPortal> portals, IReadOnlyList<FhCollisionEntry> entryIndices, IReadOnlyList<int> treeNodeIndices,
+            IReadOnlyList<FhCollisionTreeNode> treeNodes) : base(points, planes, portals, firstHunt: true)
         {
             Header = header;
             Data = data;
             Vectors = vectors;
             DataIndices = dataIndices;
+            EntryIndices = entryIndices;
+            TreeNodeIndices = treeNodeIndices;
+            TreeNodes = treeNodes;
         }
 
         public override void GetDrawInfo(List<Vector3> points, EntityType entityType, Scene scene)

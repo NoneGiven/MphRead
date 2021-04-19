@@ -238,7 +238,7 @@ namespace MphRead
                 /* 133, 5 */ "Level SP Survivor",
                 /* 134, 6 */ "Level FhTestLevel",
                 /* 135, 7 */ "Level MP5",
-                /* 136, 8 */ "Level MP1", // todo
+                /* 136, 8 */ "Level MP1b",
                 /* 137, 9 */ "E3 level"
             };
 
@@ -3888,6 +3888,38 @@ namespace MphRead
                         light2Color: new ColorRgb(4, 4, 16),
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 368640,
+                        killHeight: 0,
+                        size: RoomSize.SinglePlayer,
+                        multiplayer: true,
+                        firstHunt: true)
+                },
+                {
+                    "Level MP1b",
+                    new RoomMetadata(
+                        name: "Level MP1b", // copy of Level MP1 with a few different params and no name string
+                        inGameName: "Trooper Module",
+                        archive: "mp1",
+                        modelPath: "mp1_Model.bin",
+                        animationPath: "mp1_Anim.bin",
+                        collisionPath: "mp1_Collision.bin",
+                        texturePath: null,
+                        entityPath: "mp1_Ent.bin",
+                        nodePath: "mp1_Node.bin",
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: true,
+                        clearFog: false,
+                        fogColor: new ColorRgb(8, 16, 31),
+                        fogSlope: 5,
+                        fogOffset: 65152,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(0.25f, -0.5f, -0.25f),
+                        light2Color:  new ColorRgb(4, 4, 16),
+                        light2Vector: new Vector3(0, 1, -0.25f),
+                        farClip: 245760,
                         killHeight: 0,
                         size: RoomSize.SinglePlayer,
                         multiplayer: true,
