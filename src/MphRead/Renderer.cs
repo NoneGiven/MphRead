@@ -3482,6 +3482,10 @@ namespace MphRead
                 }
                 _sb.Append($", Param1: {fhTrigger.Data.ChildMsgParam1}, Param2: 0");
             }
+            else if (entity is EnemySpawnEntity enemySpawn)
+            {
+                _sb.Append($"({enemySpawn.Data.Type})");
+            }
             else if (entity is ObjectEntity obj)
             {
                 if (obj.Data.EffectId != 0)
