@@ -13,15 +13,23 @@ namespace MphRead.Utility
     {
         public static byte[] TestEntityEdit()
         {
-            RoomMetadata meta = Metadata.RoomMetadata["UNIT2_RM2"];
+            RoomMetadata meta = Metadata.RoomMetadata["Level TestLevel"];
             Debug.Assert(meta.EntityPath != null);
             List<EntityEditorBase> entities = meta.FirstHunt ? GetFhEntities(meta.EntityPath) : GetEntities(meta.EntityPath);
-            foreach (EnemySpawnEntityEditor spawn in entities.Where(e => e.Type == EntityType.EnemySpawn))
+            foreach (EntityEditorBase entity in entities)
             {
-                if (spawn.EnemyType == EnemyType.Hunter && spawn.TextureId != 0)
+                if (entity.LayerMask == 0)
                 {
-                    spawn.Subtype = 0;
-                    spawn.HunterColor = 3;
+                    Debugger.Break();
+                }
+                if (entity.Type == EntityType.Artifact || entity.Type == EntityType.CameraSequence || entity.Type == EntityType.EnemySpawn
+                    || entity.Type == EntityType.ForceField || entity.Type == EntityType.Object || entity.Type == EntityType.Platform)
+                {
+                    entity.LayerMask = 0;
+                }
+                else
+                {
+                    entity.LayerMask = 0xFFFF;
                 }
             }
             //entities.RemoveAll(e => e.Type == EntityType.Platform && e.Id != 12);
@@ -551,6 +559,90 @@ namespace MphRead.Utility
             }
         }
 
+        private static void PrintLayers(ushort mask)
+        {
+            var sp = new List<string>();
+            var mp = new List<string>();
+            if ((mask & 1) != 0)
+            {
+                sp.Add("Initial");
+                mp.Add("Battle/Prime Hunter 2P");
+            }
+            if ((mask & 2) != 0)
+            {
+                sp.Add("Cleared");
+                mp.Add("Battle/Prime Hunter 3P");
+            }
+            if ((mask & 4) != 0)
+            {
+                sp.Add("Layer 2");
+                mp.Add("Battle/Prime Hunter 4P");
+            }
+            if ((mask & 8) != 0)
+            {
+                sp.Add("Layer 3");
+                mp.Add("Battle Teams");
+            }
+            if ((mask & 0x10) != 0)
+            {
+                mp.Add("Nodes 2P");
+            }
+            if ((mask & 0x20) != 0)
+            {
+                mp.Add("Nodes 3P");
+            }
+            if ((mask & 0x40) != 0)
+            {
+                mp.Add("Nodes 4P");
+            }
+            if ((mask & 0x80) != 0)
+            {
+                mp.Add("Nodes Teams");
+            }
+            if ((mask & 0x100) != 0)
+            {
+                mp.Add("Bounty 2P");
+            }
+            if ((mask & 0x200) != 0)
+            {
+                mp.Add("Bounty 3P");
+            }
+            if ((mask & 0x400) != 0)
+            {
+                mp.Add("Bounty 4P");
+            }
+            if ((mask & 0x800) != 0)
+            {
+                mp.Add("Bounty Teams");
+            }
+            if ((mask & 0x1000) != 0)
+            {
+                mp.Add("Capture");
+            }
+            if ((mask & 0x2000) != 0)
+            {
+                mp.Add("Mode 15");
+            }
+            if ((mask & 0x4000) != 0)
+            {
+                mp.Add("Defender");
+            }
+            if ((mask & 0x8000) != 0)
+            {
+                mp.Add("Survival");
+            }
+            if (sp.Count == 0)
+            {
+                sp.Add("None");
+            }
+            if (mp.Count == 0)
+            {
+                mp.Add("None");
+            }
+            Console.WriteLine($"1P: {String.Join(", ", sp)}");
+            Console.WriteLine($"MP: {String.Join(", ", mp)}");
+        }
+
         private static byte[] RepackEntities(IReadOnlyList<EntityEditorBase> entities)
         {
             byte padByte = 0;
@@ -850,11 +942,11 @@ namespace MphRead.Utility
         {
             ushort padShort = 0;
             writer.Write((uint)entity.EnemyType);
-            writer.Write(entity.Subtype);
-            writer.Write(entity.TextureId);
+            writer.Write(entity.EnemySubtype);
+            writer.Write(entity.EnemyVersion);
             writer.Write(entity.HunterWeapon);
-            writer.Write(entity.Health);
-            writer.Write(entity.HealthMax);
+            writer.Write(entity.EnemyHealth);
+            writer.Write(entity.EnemyHealthMax);
             writer.Write(entity.Field38);
             writer.Write(entity.HunterColor);
             writer.Write(entity.HunterChance);
