@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using MphRead.Archive;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
@@ -75,60 +74,97 @@ namespace MphRead.Utility
 
     public static class RepackCollision
     {
-        public static void TestCollision()
+        public static void TestCollision(string? room = null)
         {
             var allCollision = new List<(CollisionInstance, string)>();
-            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            if (room == null)
             {
-                if (!meta.Value.FirstHunt && !meta.Value.Hybrid && !allCollision.Any(a => a.Item2 == meta.Value.CollisionPath))
+
+                foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
                 {
-                    allCollision.Add((Collision.GetCollision(meta.Value, roomLayerMask: -1), meta.Value.CollisionPath));
+                    if (!meta.Value.FirstHunt && !meta.Value.Hybrid && !allCollision.Any(a => a.Item2 == meta.Value.CollisionPath))
+                    {
+                        allCollision.Add((Collision.GetCollision(meta.Value, roomLayerMask: -1), meta.Value.CollisionPath));
+                    }
+                }
+                foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.ModelMetadata)
+                {
+                    if (meta.Value.CollisionPath != null && !meta.Value.FirstHunt)
+                    {
+                        allCollision.Add((Collision.GetCollision(meta.Value), meta.Value.CollisionPath));
+                        if (meta.Value.ExtraCollisionPath != null)
+                        {
+                            allCollision.Add((Collision.GetCollision(meta.Value, extra: true), meta.Value.ExtraCollisionPath));
+                        }
+                    }
                 }
             }
-            //foreach (KeyValuePair<string, ModelMetadata> meta in Metadata.ModelMetadata)
-            //{
-            //    if (meta.Value.CollisionPath != null && !meta.Value.FirstHunt)
-            //    {
-            //        allCollision.Add((Collision.GetCollision(meta.Value), meta.Value.CollisionPath));
-            //        if (meta.Value.ExtraCollisionPath != null)
-            //        {
-            //            allCollision.Add((Collision.GetCollision(meta.Value, extra: true), meta.Value.ExtraCollisionPath));
-            //        }
-            //    }
-            //}
-            allCollision.RemoveAll(a => !a.Item2.Contains("mp3_"));
+            else
+            {
+                RoomMetadata meta = Metadata.RoomMetadata[room];
+                allCollision.Add((Collision.GetCollision(meta, roomLayerMask: -1), meta.CollisionPath));
+            }
             foreach ((CollisionInstance collision, string path) in allCollision)
             {
-                var info = (MphCollisionInfo)collision.Info;
-                var editors = new List<CollisionDataEditor>();
-                foreach (CollisionData data in info.Data)
+                List<CollisionDataEditor> editors;
+                if (collision.Info is MphCollisionInfo mphInfo)
                 {
-                    var editor = new CollisionDataEditor()
-                    {
-                        LayerMask = data.LayerMask,
-                        Flags = data.Flags
-                    };
-                    for (int i = 0; i < data.PointIndexCount; i++)
-                    {
-                        editor.Points.Add(info.Points[info.PointIndices[data.PointStartIndex + i]]);
-                    }
-                    editors.Add(editor);
+                    editors = GetEditors(mphInfo);
                 }
-                byte[] bytes = RepackMphCollision(editors, info.Portals, info);
-                //byte[] bytes = RepackMphCollisionSimple(info);
-                byte[] file = File.ReadAllBytes(Path.Combine(Paths.FileSystem, path));
-                string outPath = Path.Combine(Paths.Export, "_pack", "mp3_Collision.bin");
-                File.WriteAllBytes(outPath, bytes);
-                var files = new List<string>()
+                else
                 {
-                    @"D:\Cdrv\MPH\_FS\amhp1\_archives\mp3\mp3_Anim.bin",
-                    @"D:\Cdrv\MPH\Data\_Export\_pack\mp3_Collision.bin",
-                    @"D:\Cdrv\MPH\_FS\amhp1\_archives\mp3\mp3_Model.bin"
-                };
-                Archiver.Archive(outPath.Replace("mp3_Collision.bin", "out.arc"), files);
-                CompareCollision(info, bytes, file);
+                    editors = GetEditors((FhCollisionInfo)collision.Info);
+                }
+                byte[] bytes = RepackMphCollision(editors, collision.Info.Portals);
+                //byte[] bytes = RepackMphCollisionSimple(info);
+                //byte[] file = File.ReadAllBytes(Path.Combine(Paths.FileSystem, path));
+                string outPath = Path.Combine(Paths.Export, "_pack", $"out{Path.GetFileName(path)}");
+                File.WriteAllBytes(outPath, bytes);
+                //CompareCollision(info, bytes, file);
             }
             Nop();
+        }
+
+        private static List<CollisionDataEditor> GetEditors(MphCollisionInfo info)
+        {
+            var editors = new List<CollisionDataEditor>();
+            foreach (CollisionData data in info.Data)
+            {
+                CollisionPlane plane = info.Planes[data.PlaneIndex];
+                var editor = new CollisionDataEditor()
+                {
+                    LayerMask = data.LayerMask,
+                    Flags = data.Flags,
+                    Plane = new Vector4(plane.Normal.ToFloatVector(), plane.Homogenous.FloatValue)
+                };
+                for (int i = 0; i < data.PointIndexCount; i++)
+                {
+                    editor.Points.Add(info.Points[info.PointIndices[data.PointStartIndex + i]]);
+                }
+                editors.Add(editor);
+            }
+            return editors;
+        }
+
+        private static List<CollisionDataEditor> GetEditors(FhCollisionInfo info)
+        {
+            var editors = new List<CollisionDataEditor>();
+            foreach (FhCollisionData data in info.Data)
+            {
+                CollisionPlane plane = info.Planes[data.PlaneIndex];
+                var editor = new CollisionDataEditor()
+                {
+                    LayerMask = 5, // always on, type 1
+                    Plane = new Vector4(plane.Normal.ToFloatVector(), plane.Homogenous.FloatValue)
+                };
+                for (int i = 0; i < data.VectorCount; i++)
+                {
+                    // use Point2Index so vertex order is the same as MPH
+                    editor.Points.Add(info.Points[info.Vectors[data.VectorStartIndex + i].Point2Index]);
+                }
+                editors.Add(editor);
+            }
+            return editors;
         }
 
         private static void CompareCollision(MphCollisionInfo info, byte[] bytes, byte[] file)
@@ -452,8 +488,7 @@ namespace MphRead.Utility
             }
         }
 
-        private static byte[] RepackMphCollision(IReadOnlyList<CollisionDataEditor> data,
-            IReadOnlyList<CollisionPortal> portals, MphCollisionInfo info)
+        private static byte[] RepackMphCollision(IReadOnlyList<CollisionDataEditor> data, IReadOnlyList<CollisionPortal> portals)
         {
             uint padInt = 0;
             ushort padShort = 0;
@@ -511,9 +546,8 @@ namespace MphRead.Utility
                 //float w = normal.X * item.Points[^1].X + normal.Y * item.Points[^1].Y + normal.Z * item.Points[^1].Z;
                 //var plane = new Vector4(normal, w);
                 Vector4 plane = item.Plane;
-                // sktodo
-                CollisionPlane orig = info.Planes[info.Data[i].PlaneIndex];
-                plane = new Vector4(orig.Normal.ToFloatVector(), orig.Homogenous.FloatValue);
+                //CollisionPlane orig = info.Planes[info.Data[i].PlaneIndex];
+                //plane = new Vector4(orig.Normal.ToFloatVector(), orig.Homogenous.FloatValue);
                 int planeIndex = planes.IndexOf(p => p == plane);
                 if (planeIndex == -1)
                 {
@@ -543,39 +577,39 @@ namespace MphRead.Utility
             }
 
             // sktodo: (re)move all inline testing code
-            Debug.Assert(minX == info.MinPosition.X);
-            Debug.Assert(minY == info.MinPosition.Y);
-            Debug.Assert(minZ == info.MinPosition.Z);
-            Debug.Assert(partsX == info.Header.PartsX);
-            Debug.Assert(partsY == info.Header.PartsY);
-            Debug.Assert(partsZ == info.Header.PartsZ);
+            //Debug.Assert(minX == info.MinPosition.X);
+            //Debug.Assert(minY == info.MinPosition.Y);
+            //Debug.Assert(minZ == info.MinPosition.Z);
+            //Debug.Assert(partsX == info.Header.PartsX);
+            //Debug.Assert(partsY == info.Header.PartsY);
+            //Debug.Assert(partsZ == info.Header.PartsZ);
 
-            Debug.Assert(dataPack.Count == info.Data.Count);
-            for (int i = 0; i < dataPack.Count; i++)
-            {
-                CollisionDataPack pack = dataPack[i];
-                CollisionData orig = info.Data[i];
-                Debug.Assert(pack.Editor.LayerMask == orig.LayerMask);
-                Debug.Assert(pack.Editor.Flags == orig.Flags);
-                Vector4 plane = planes[pack.PlaneIndex];
-                CollisionPlane old = info.Planes[orig.PlaneIndex];
-                int planeX = (int)(plane.X * 4096f);
-                int planeY = (int)(plane.Y * 4096f);
-                int planeZ = (int)(plane.Z * 4096f);
-                int planeW = (int)(plane.W * 4096f);
-                //Debug.Assert(Math.Abs(planeX - old.Normal.X.Value) <= 1);
-                //Debug.Assert(Math.Abs(planeY - old.Normal.Y.Value) <= 1);
-                //Debug.Assert(Math.Abs(planeZ - old.Normal.Z.Value) <= 1);
-                //Debug.Assert(Math.Abs(planeW - old.Homogenous.Value) <= 1);
-                Debug.Assert(pack.PointIndexCount == orig.PointIndexCount);
-                //Debug.Assert(pack.PointStartIndex == orig.PointStartIndex);
-                for (int j = 0; j < pack.PointIndexCount; j++)
-                {
-                    Vector3 point = points[pointIdxs[pack.PointStartIndex + j]];
-                    Vector3 prev = info.Points[info.PointIndices[orig.PointStartIndex + j]];
-                    Debug.Assert(point == prev);
-                }
-            }
+            //Debug.Assert(dataPack.Count == info.Data.Count);
+            //for (int i = 0; i < dataPack.Count; i++)
+            //{
+            //    CollisionDataPack pack = dataPack[i];
+            //    CollisionData orig = info.Data[i];
+            //    Debug.Assert(pack.Editor.LayerMask == orig.LayerMask);
+            //    Debug.Assert(pack.Editor.Flags == orig.Flags);
+            //    Vector4 plane = planes[pack.PlaneIndex];
+            //    CollisionPlane old = info.Planes[orig.PlaneIndex];
+            //    int planeX = (int)(plane.X * 4096f);
+            //    int planeY = (int)(plane.Y * 4096f);
+            //    int planeZ = (int)(plane.Z * 4096f);
+            //    int planeW = (int)(plane.W * 4096f);
+            //    //Debug.Assert(Math.Abs(planeX - old.Normal.X.Value) <= 1);
+            //    //Debug.Assert(Math.Abs(planeY - old.Normal.Y.Value) <= 1);
+            //    //Debug.Assert(Math.Abs(planeZ - old.Normal.Z.Value) <= 1);
+            //    //Debug.Assert(Math.Abs(planeW - old.Homogenous.Value) <= 1);
+            //    Debug.Assert(pack.PointIndexCount == orig.PointIndexCount);
+            //    //Debug.Assert(pack.PointStartIndex == orig.PointStartIndex);
+            //    for (int j = 0; j < pack.PointIndexCount; j++)
+            //    {
+            //        Vector3 point = points[pointIdxs[pack.PointStartIndex + j]];
+            //        Vector3 prev = info.Points[info.PointIndices[orig.PointStartIndex + j]];
+            //        Debug.Assert(point == prev);
+            //    }
+            //}
             Nop();
 
             for (int py = 0; py < partsY; py++)
@@ -732,22 +766,22 @@ namespace MphRead.Utility
                     }
                 }
             }
-            Debug.Assert(entries.Count == info.Entries.Count);
-            for (int i = 0; i < entries.Count; i++)
-            {
-                (ushort Count, ushort Index) entry = entries[i];
-                CollisionEntry orig = info.Entries[i];
-                Debug.Assert(entry.Count >= orig.DataCount);
-                var newIdxs = new List<ushort>();
-                for (int j = 0; j < entry.Count; j++)
-                {
-                    newIdxs.Add(dataIdxs[entry.Index + j]);
-                }
-                for (int j = 0; j < orig.DataCount; j++)
-                {
-                    Debug.Assert(newIdxs.Contains(info.DataIndices[orig.DataStartIndex + j]));
-                }
-            }
+            //Debug.Assert(entries.Count == info.Entries.Count);
+            //for (int i = 0; i < entries.Count; i++)
+            //{
+            //    (ushort Count, ushort Index) entry = entries[i];
+            //    CollisionEntry orig = info.Entries[i];
+            //    Debug.Assert(entry.Count >= orig.DataCount);
+            //    var newIdxs = new List<ushort>();
+            //    for (int j = 0; j < entry.Count; j++)
+            //    {
+            //        newIdxs.Add(dataIdxs[entry.Index + j]);
+            //    }
+            //    for (int j = 0; j < orig.DataCount; j++)
+            //    {
+            //        Debug.Assert(newIdxs.Contains(info.DataIndices[orig.DataStartIndex + j]));
+            //    }
+            //}
             Nop();
 
             stream.Position = Sizes.CollisionHeader;
