@@ -79,7 +79,6 @@ namespace MphRead.Utility
             var allCollision = new List<(CollisionInstance, string)>();
             if (room == null)
             {
-
                 foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
                 {
                     if (!meta.Value.FirstHunt && !meta.Value.Hybrid && !allCollision.Any(a => a.Item2 == meta.Value.CollisionPath))

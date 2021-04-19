@@ -395,7 +395,7 @@ namespace MphRead.Formats.Collision
 
         public override void GetDrawInfo(List<Vector3> points, EntityType entityType, Scene scene)
         {
-            //EntityBase? target = scene.Entities.FirstOrDefault(e => e.Type == EntityType.Model);
+            //Entities.EntityBase? target = scene.Entities.FirstOrDefault(e => e.Type == EntityType.Model);
             //if (target != null)
             //{
             //    GetPartition(target.Position, points, entityType, scene);
