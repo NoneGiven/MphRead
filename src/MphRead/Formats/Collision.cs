@@ -134,7 +134,7 @@ namespace MphRead.Formats.Collision
             IReadOnlyList<ushort> dataIndices = Read.DoOffsets<ushort>(bytes, header.DataIndexOffset, header.DataIndexCount);
             IReadOnlyList<Vector3Fx> points = Read.DoOffsets<Vector3Fx>(bytes, header.PointOffset, header.PointCount);
             IReadOnlyList<CollisionPlane> planes = Read.DoOffsets<CollisionPlane>(bytes, header.PlaneOffset, header.PlaneCount);
-            IReadOnlyList<FhCollisionEntry> entryIndices = Read.DoOffsets<FhCollisionEntry>(bytes, header.EntryOffset, header.EntryCount);
+            IReadOnlyList<FhCollisionEntry> entries = Read.DoOffsets<FhCollisionEntry>(bytes, header.EntryOffset, header.EntryCount);
             IReadOnlyList<int> treeNodeIndices = Read.DoOffsets<int>(bytes, header.TreeNodeIndexOffset, header.TreeNodeIndexCount);
             IReadOnlyList<FhCollisionTreeNode> treeNodes = Read.DoOffsets<FhCollisionTreeNode>(bytes, header.TreeNodeOffset, header.TreeNodeCount);
             var portals = new List<CollisionPortal>();
@@ -142,7 +142,7 @@ namespace MphRead.Formats.Collision
             {
                 portals.Add(new CollisionPortal(portal, vectors, points));
             }
-            return new FhCollisionInfo(header, points, planes, data, vectors, dataIndices, portals, entryIndices, treeNodeIndices, treeNodes);
+            return new FhCollisionInfo(header, points, planes, data, vectors, dataIndices, portals, entries, treeNodeIndices, treeNodes);
         }
     }
 
@@ -661,8 +661,8 @@ namespace MphRead.Formats.Collision
     {
         public readonly Vector3Fx MinBounds;
         public readonly Vector3Fx MaxBounds;
-        public readonly ushort LeftIndex;
-        public readonly ushort RightIndex;
+        public readonly ushort DataCount;
+        public readonly ushort DataStartIndex;
     }
 
     // size: 28
@@ -682,27 +682,47 @@ namespace MphRead.Formats.Collision
         public IReadOnlyList<FhCollisionData> Data { get; }
         public IReadOnlyList<FhCollisionVector> Vectors { get; }
         public IReadOnlyList<ushort> DataIndices { get; }
-
-        public IReadOnlyList<FhCollisionEntry> EntryIndices { get; }
+        public IReadOnlyList<FhCollisionEntry> Entries { get; }
         public IReadOnlyList<int> TreeNodeIndices { get; }
         public IReadOnlyList<FhCollisionTreeNode> TreeNodes { get; }
 
         public FhCollisionInfo(FhCollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
             IReadOnlyList<FhCollisionData> data, IReadOnlyList<FhCollisionVector> vectors, IReadOnlyList<ushort> dataIndices,
-            IReadOnlyList<CollisionPortal> portals, IReadOnlyList<FhCollisionEntry> entryIndices, IReadOnlyList<int> treeNodeIndices,
+            IReadOnlyList<CollisionPortal> portals, IReadOnlyList<FhCollisionEntry> entries, IReadOnlyList<int> treeNodeIndices,
             IReadOnlyList<FhCollisionTreeNode> treeNodes) : base(points, planes, portals, firstHunt: true)
         {
             Header = header;
             Data = data;
             Vectors = vectors;
             DataIndices = dataIndices;
-            EntryIndices = entryIndices;
+            Entries = entries;
             TreeNodeIndices = treeNodeIndices;
             TreeNodes = treeNodes;
         }
 
+        private static readonly IReadOnlyList<Vector4> _colors = new List<Vector4>()
+        {
+            /*  0 */ new Vector4(0.69f, 0.69f, 0.69f, 1f), // gray
+            /*  1 */ new Vector4(1f, 0.612f, 0.153f, 1f), // orange
+            /*  2 */ new Vector4(0f, 1f, 0f, 1f), // green
+            /*  3 */ new Vector4(0f, 0f, 0.858f, 1f), // blue
+            /*  4 */ new Vector4(0.141f, 1f, 1f, 1f), // light blue
+            /*  5 */ new Vector4(1f, 1f, 1f, 1f), // white
+            /*  6 */ new Vector4(0.964f, 1f, 0.058f, 1f), // yellow
+            /*  7 */ new Vector4(0.505f, 0.364f, 0.211f, 1f), // brown
+            /*  8 */ new Vector4(0.984f, 0.701f, 0.576f, 1f), // salmon
+            /*  9 */ new Vector4(0.988f, 0.463f, 0.824f, 1f), // pink
+            /* 10 */ new Vector4(0.615f, 0f, 0.909f, 1f), // purple
+        };
+
         public override void GetDrawInfo(List<Vector3> points, EntityType entityType, Scene scene)
         {
+            float minX = Single.MaxValue;
+            float minY = Single.MaxValue;
+            float minZ = Single.MaxValue;
+            float maxX = Single.MinValue;
+            float maxY = Single.MinValue;
+            float maxZ = Single.MinValue;
             var color = new Vector4(Vector3.UnitX, 0.5f);
             color.W = scene.ColDisplayAlpha;
             int polygonId = scene.GetNextPolygonId();
@@ -721,8 +741,40 @@ namespace MphRead.Formats.Collision
                 {
                     FhCollisionVector vector = Vectors[data.VectorStartIndex + j];
                     verts[j] = points[vector.Point1Index];
+                    minX = MathF.Min(minX, verts[j].X);
+                    maxX = MathF.Max(maxX, verts[j].X);
+                    minY = MathF.Min(minY, verts[j].Y);
+                    maxY = MathF.Max(maxY, verts[j].Y);
+                    minZ = MathF.Min(minZ, verts[j].Z);
+                    maxZ = MathF.Max(maxZ, verts[j].Z);
                 }
                 scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.VectorCount);
+            }
+            // sktodo: pre-size big enoguh to hold the whole "path" through the tree
+            // --> have "depth" variable, allow increasing/decreasing depth, and allow switching between left/right at current depth
+            // --> next: show all data which are children of the current depth + branch selection
+            // sktodo: move to partition method
+            for (int i = 0; i < TreeNodeIndices.Count; i++)
+            {
+                FhCollisionTreeNode treeNode = TreeNodes[TreeNodeIndices[i]];
+                //treeNode = TreeNodes[treeNode.LeftIndex];
+                Vector3[] bverts = ArrayPool<Vector3>.Shared.Rent(8);
+                Vector3 minPoint = treeNode.MinBounds.ToFloatVector();
+                Vector3 maxPoint = treeNode.MaxBounds.ToFloatVector();
+                var sideX = new Vector3(maxPoint.X - minPoint.X, 0, 0);
+                var sideY = new Vector3(0, maxPoint.Y - minPoint.Y, 0);
+                var sideZ = new Vector3(0, 0, maxPoint.Z - minPoint.Z);
+                bverts[0] = minPoint;
+                bverts[1] = minPoint + sideZ;
+                bverts[2] = minPoint + sideX;
+                bverts[3] = minPoint + sideX + sideZ;
+                bverts[4] = minPoint + sideY;
+                bverts[5] = minPoint + sideY + sideZ;
+                bverts[6] = minPoint + sideX + sideY;
+                bverts[7] = minPoint + sideX + sideY + sideZ;
+                polygonId = scene.GetNextPolygonId();
+                var bcolor = new Vector4(1, 0.3f, 1, 0.5f);
+                scene.AddRenderItem(CullingMode.Front, polygonId, bcolor, RenderItemType.Box, bverts, 8);
             }
         }
     }
