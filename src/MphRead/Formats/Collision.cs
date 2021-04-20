@@ -670,8 +670,10 @@ namespace MphRead.Formats.Collision
     {
         public readonly Vector3Fx MinBounds;
         public readonly Vector3Fx MaxBounds;
-        public readonly ushort DataCount;
-        public readonly ushort DataStartIndex;
+        // for rooms, a RightIndex value of 0x8000 indicates the last node in a branch, and LeftIndex is then used as an entry index;
+        // for entities, RightIndex and LeftIndex are always 0x8000 as there is no hierarchy to entity collision
+        public readonly ushort LeftIndex;
+        public readonly ushort RightIndex;
     }
 
     public class FhCollisionInfo : CollisionInfo
