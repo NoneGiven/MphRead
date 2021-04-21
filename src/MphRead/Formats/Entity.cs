@@ -175,7 +175,7 @@ namespace MphRead
         public readonly char[] NodeName;
         public readonly uint PaletteId;
         public readonly uint ModelId;
-        public readonly uint TargetRoomId;
+        public readonly uint ConnectorId;
         public readonly byte TargetLayerId;
         public readonly byte Flags; // bit 0 - locked
         public readonly byte Field42;

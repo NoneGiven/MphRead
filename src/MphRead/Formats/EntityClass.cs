@@ -14,8 +14,9 @@ namespace MphRead.Editor
         public Vector3 Facing { get; set; }
         public string NodeName { get; set; } = "";
 
-        public EntityEditorBase()
+        public EntityEditorBase(EntityType type)
         {
+            Type = type;
         }
 
         public EntityEditorBase(Entity header)
@@ -242,10 +243,10 @@ namespace MphRead.Editor
     public class PlayerSpawnEntityEditor : EntityEditorBase
     {
         public byte Availability { get; set; } // 0 - any time, 1 - no first frame, 2 - bot only (FH)
-        public bool Active { get; set; }
-        public sbyte TeamIndex { get; set; } // 0, 1, or -1
+        public bool Active { get; set; } = true;
+        public sbyte TeamIndex { get; set; } = -1; // 0, 1, or -1 (only used in CTF)
 
-        public PlayerSpawnEntityEditor()
+        public PlayerSpawnEntityEditor() : base(EntityType.PlayerSpawn)
         {
         }
 
@@ -262,7 +263,7 @@ namespace MphRead.Editor
         public string DoorNodeName { get; set; } = "";
         public uint PaletteId { get; set; }
         public uint ModelId { get; set; }
-        public uint TargetRoomId { get; set; }
+        public uint ConnectorId { get; set; }
         public byte TargetLayerId { get; set; }
         public byte Flags { get; set; } // bit 0 - locked
         public byte Field42 { get; set; }
@@ -275,7 +276,7 @@ namespace MphRead.Editor
             DoorNodeName = raw.NodeName.MarshalString();
             PaletteId = raw.PaletteId;
             ModelId = raw.ModelId;
-            TargetRoomId = raw.TargetRoomId;
+            ConnectorId = raw.ConnectorId;
             TargetLayerId = raw.TargetLayerId;
             Flags = raw.Flags;
             Field42 = raw.Field42;

@@ -911,7 +911,7 @@ namespace MphRead.Utility
             writer.WriteString(entity.DoorNodeName, 16);
             writer.Write(entity.PaletteId);
             writer.Write(entity.ModelId);
-            writer.Write(entity.TargetRoomId);
+            writer.Write(entity.ConnectorId);
             writer.Write(entity.TargetLayerId);
             writer.Write(entity.Flags);
             writer.Write(entity.Field42);

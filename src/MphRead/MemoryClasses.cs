@@ -1532,7 +1532,7 @@ namespace MphRead.Memory
         public ushort Field4E { get => ReadUInt16(_off10); set => WriteUInt16(_off10, value); }
 
         private const int _off11 = 0x50;
-        public int TargetRoomId { get => ReadInt32(_off11); set => WriteInt32(_off11, value); }
+        public int ConnectorId { get => ReadInt32(_off11); set => WriteInt32(_off11, value); }
 
         private const int _off12 = 0x54; // NodeRef*
         public IntPtr NodeRef { get => ReadPointer(_off12); set => WritePointer(_off12, value); }
