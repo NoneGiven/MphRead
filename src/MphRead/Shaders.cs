@@ -127,7 +127,7 @@ void main()
         }
         else if (mat_mode == 2) {
             vec4 toon = toon_color(color);
-            col = vec4(texcolor.rgb * toon.rgb + toon.rgb, mat_alpha * texcolor.a * color.a);
+            col = vec4(texcolor.rgb * color.r + toon.rgb, mat_alpha * texcolor.a * color.a);
         }
         else {
             col = color * vec4(texcolor.rgb, mat_alpha * texcolor.a);
