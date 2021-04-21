@@ -3805,9 +3805,9 @@ namespace MphRead
                         killHeight: -122880,
                         size: RoomSize.None,
                         cameraMin: new Vector3Fx(-200704, 0, -200704).ToFloatVector(),
-                        cameraMax: new Vector3Fx(196608, 292159, 192512).ToFloatVector(), // max y values increased from 48 to 71.3
+                        cameraMax: new Vector3Fx(196608, 294912, 192512).ToFloatVector(), // y 48 to 72
                         playerMin: new Vector3Fx(-286720, -86949, -286720).ToFloatVector(),
-                        playerMax: new Vector3Fx(286720, 292159, 286720).ToFloatVector(),
+                        playerMax: new Vector3Fx(286720, 294912, 286720).ToFloatVector(), // same as above
                         multiplayer: true)
                 },
                 {
@@ -3840,7 +3840,7 @@ namespace MphRead
                         killHeight: -122880,
                         size: RoomSize.None,
                         cameraMin: new Vector3Fx(-94208, -118784, -110592).ToFloatVector(),
-                        cameraMax: new Vector3Fx(167936, 122880, 172032).ToFloatVector(),
+                        cameraMax: new Vector3Fx(245760, 200704, 172032).ToFloatVector(), // x 41 to 60, y 30 to 49
                         playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
                         playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
