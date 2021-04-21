@@ -14,7 +14,7 @@ namespace MphRead.Entities
         private readonly IReadOnlyList<CollisionPortal> _portals = new List<CollisionPortal>();
         private readonly IReadOnlyList<PortalNodeRef> _forceFields = new List<PortalNodeRef>();
         private IReadOnlyList<Node> Nodes => _models[0].Model.Nodes;
-        private readonly bool _firstHunt;
+        private readonly RoomMetadata _meta;
         private readonly NodeData? _nodeData;
         private readonly float[]? _emptyMatrixStack;
 
@@ -30,7 +30,7 @@ namespace MphRead.Entities
                 // manually disable a decal that isn't rendered in-game because it's not on a surface
                 Nodes[46].Enabled = false;
             }
-            _firstHunt = meta.FirstHunt;
+            _meta = meta;
             Model model = inst.Model;
             _nodeData = nodeData;
             if (nodeData != null)
@@ -299,7 +299,7 @@ namespace MphRead.Entities
                     scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Ngon, verts, count, noLines: true);
                 }
             }
-            else if (scene.ShowVolumes == VolumeDisplay.KillPlane && !_firstHunt)
+            else if (scene.ShowVolumes == VolumeDisplay.KillPlane && !_meta.FirstHunt)
             {
                 Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(4);
                 verts[0] = new Vector3(10000f, scene.KillHeight, 10000f);
@@ -308,6 +308,27 @@ namespace MphRead.Entities
                 verts[3] = new Vector3(-10000f, scene.KillHeight, 10000f);
                 var color = new Vector4(1f, 0f, 1f, 0.5f);
                 scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Quad, verts, noLines: true);
+            }
+            else if ((scene.ShowVolumes == VolumeDisplay.CameraLimit || scene.ShowVolumes == VolumeDisplay.PlayerLimit)
+                && _meta.Multiplayer && !_meta.FirstHunt)
+            {
+                Vector3 minLimit = scene.ShowVolumes == VolumeDisplay.CameraLimit ? _meta.CameraMin : _meta.PlayerMin;
+                Vector3 maxLimit = scene.ShowVolumes == VolumeDisplay.CameraLimit ? _meta.CameraMax : _meta.PlayerMax;
+                Vector3[] bverts = ArrayPool<Vector3>.Shared.Rent(8);
+                Vector3 point0 = minLimit;
+                var sideX = new Vector3(maxLimit.X - minLimit.X, 0, 0);
+                var sideY = new Vector3(0, maxLimit.Y - minLimit.Y, 0);
+                var sideZ = new Vector3(0, 0, maxLimit.Z - minLimit.Z);
+                bverts[0] = point0;
+                bverts[1] = point0 + sideZ;
+                bverts[2] = point0 + sideX;
+                bverts[3] = point0 + sideX + sideZ;
+                bverts[4] = point0 + sideY;
+                bverts[5] = point0 + sideY + sideZ;
+                bverts[6] = point0 + sideX + sideY;
+                bverts[7] = point0 + sideX + sideY + sideZ;
+                Vector4 color = scene.ShowVolumes == VolumeDisplay.CameraLimit ? new Vector4(1, 0, 0.69f, 0.5f) : new Vector4(1, 0, 0, 0.5f);
+                scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Box, bverts, 8);
             }
         }
 

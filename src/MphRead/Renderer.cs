@@ -35,6 +35,8 @@ namespace MphRead
         FlagBase,
         DefenseNode,
         KillPlane,
+        PlayerLimit,
+        CameraLimit,
         Portal
     }
 
@@ -3318,6 +3320,8 @@ namespace MphRead
                 VolumeDisplay.FlagBase => "flag bases",
                 VolumeDisplay.DefenseNode => "defense nodes",
                 VolumeDisplay.KillPlane => "kill plane",
+                VolumeDisplay.PlayerLimit => "room limits (player)",
+                VolumeDisplay.CameraLimit => "room limits (camera)",
                 VolumeDisplay.Portal => "portals",
                 _ => "off"
             };
