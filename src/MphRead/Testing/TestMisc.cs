@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using MphRead.Entities;
@@ -128,7 +129,40 @@ namespace MphRead.Testing
 
         public static void ConvertFhRoomToMph()
         {
+            //Utility.RepackCollision.TestCollision("Level FhTestLevel");
+            //Utility.Repack.TestRepack();
+            //var files = new List<string>()
+            //{
+            //    @"D:\Cdrv\MPH\Data\_Export\_pack\mp12_anim.bin",
+            //    @"D:\Cdrv\MPH\Data\_Export\_pack\mp12_collision.bin",
+            //    @"D:\Cdrv\MPH\Data\_Export\_pack\mp12_model.bin"
+            //};
+            //string outPath = @"D:\Cdrv\MPH\Data\_Export\_pack\out.arc";
+            //Archive.Archiver.Archive(outPath, files);
+            //Lz.Compress(outPath, outPath.Replace("out.arc", "mp12.arc"));
+            //File.Delete(outPath);
+            //Testing.TestMisc.TestAllCollision();
+            //Utility.Repack.TestEntityEdit();
+        }
 
+        public static void TestCameraShake()
+        {
+            for (int i = 0; i < 1; i++)
+            {
+                Rng.DoCameraShake(204);
+            }
+            Console.WriteLine();
+            var chances = new List<int>() { 50, 50, 50 };
+            foreach (int chance in chances)
+            {
+                bool spawn = Rng.GetRandomInt2(100) < chance;
+                Console.WriteLine(spawn);
+                if (spawn)
+                {
+                    Rng.GetRandomInt2(1);
+                }
+            }
+            Console.ReadLine();
         }
 
         private static void Nop()
