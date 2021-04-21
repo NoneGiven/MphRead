@@ -926,7 +926,7 @@ namespace MphRead
                     "UNIT1_TP1",
                     new RoomMetadata(
                         name: "UNIT1_TP1",
-                        inGameName: null,
+                        inGameName: "Stronghold Void A",
                         archive: "TeleportRoom",
                         modelPath: "TeleportRoom_model.bin",
                         animationPath: "TeleportRoom_anim.bin",
@@ -956,7 +956,7 @@ namespace MphRead
                     "UNIT1_B1",
                     new RoomMetadata(
                         name: "UNIT1_B1",
-                        inGameName: null,
+                        inGameName: "Biodefense Chamber 02",
                         archive: "bigeyeroom",
                         modelPath: "bigeyeroom_model.bin",
                         animationPath: "bigeyeroom_anim.bin",
@@ -1196,7 +1196,7 @@ namespace MphRead
                     "UNIT1_TP2",
                     new RoomMetadata(
                         name: "UNIT1_TP2",
-                        inGameName: null,
+                        inGameName: "Stronghold Void B",
                         archive: "TeleportRoom",
                         modelPath: "TeleportRoom_model.bin",
                         animationPath: "TeleportRoom_anim.bin",
@@ -1226,7 +1226,7 @@ namespace MphRead
                     "UNIT1_B2",
                     new RoomMetadata(
                         name: "UNIT1_B2",
-                        inGameName: null,
+                        inGameName: "Biodefense Chamber 06",
                         archive: "cylinderroom",
                         modelPath: "cylinderroom_model.bin",
                         animationPath: "cylinderroom_anim.bin",
@@ -1526,7 +1526,7 @@ namespace MphRead
                     "UNIT2_TP1",
                     new RoomMetadata(
                         name: "UNIT2_TP1",
-                        inGameName: null,
+                        inGameName: "Stronghold Void A",
                         archive: "TeleportRoom",
                         modelPath: "TeleportRoom_model.bin",
                         animationPath: "TeleportRoom_anim.bin",
@@ -1556,7 +1556,7 @@ namespace MphRead
                     "UNIT2_B1",
                     new RoomMetadata(
                         name: "UNIT2_B1",
-                        inGameName: null,
+                        inGameName: "Biodefense Chamber 01",
                         archive: "cylinderroom",
                         modelPath: "cylinderroom_model.bin",
                         animationPath: "cylinderroom_anim.bin",
@@ -1796,7 +1796,7 @@ namespace MphRead
                     "UNIT2_TP2",
                     new RoomMetadata(
                         name: "UNIT2_TP2",
-                        inGameName: null,
+                        inGameName: "Stronghold Void B",
                         archive: "TeleportRoom",
                         modelPath: "TeleportRoom_model.bin",
                         animationPath: "TeleportRoom_anim.bin",
@@ -1826,7 +1826,7 @@ namespace MphRead
                     "UNIT2_B2",
                     new RoomMetadata(
                         name: "UNIT2_B2",
-                        inGameName: null,
+                        inGameName: "Biodefense Chamber 05",
                         archive: "bigeyeroom",
                         modelPath: "bigeyeroom_model.bin",
                         animationPath: "bigeyeroom_anim.bin",
@@ -2006,7 +2006,7 @@ namespace MphRead
                     "UNIT3_TP1",
                     new RoomMetadata(
                         name: "UNIT3_TP1",
-                        inGameName: null,
+                        inGameName: "Stronghold Void A",
                         archive: "TeleportRoom",
                         modelPath: "TeleportRoom_model.bin",
                         animationPath: "TeleportRoom_anim.bin",
@@ -2036,7 +2036,7 @@ namespace MphRead
                     "UNIT3_B1",
                     new RoomMetadata(
                         name: "UNIT3_B1",
-                        inGameName: null,
+                        inGameName: "Biodefense Chamber 03",
                         archive: "cylinderroom",
                         modelPath: "cylinderroom_model.bin",
                         animationPath: "cylinderroom_anim.bin",
@@ -2156,7 +2156,7 @@ namespace MphRead
                     "UNIT3_TP2",
                     new RoomMetadata(
                         name: "UNIT3_TP2",
-                        inGameName: null,
+                        inGameName: "Stronghold Void B",
                         archive: "TeleportRoom",
                         modelPath: "TeleportRoom_model.bin",
                         animationPath: "TeleportRoom_anim.bin",
@@ -2186,7 +2186,7 @@ namespace MphRead
                     "UNIT3_B2",
                     new RoomMetadata(
                         name: "UNIT3_B2",
-                        inGameName: null,
+                        inGameName: "Biodefense Chamber 08",
                         archive: "bigeyeroom",
                         modelPath: "bigeyeroom_model.bin",
                         animationPath: "bigeyeroom_anim.bin",
@@ -2336,7 +2336,7 @@ namespace MphRead
                     "UNIT4_TP1",
                     new RoomMetadata(
                         name: "UNIT4_TP1",
-                        inGameName: null,
+                        inGameName: "Stronghold Void A",
                         archive: "TeleportRoom",
                         modelPath: "TeleportRoom_model.bin",
                         animationPath: "TeleportRoom_anim.bin",
@@ -2366,7 +2366,7 @@ namespace MphRead
                     "UNIT4_B1",
                     new RoomMetadata(
                         name: "UNIT4_B1",
-                        inGameName: null,
+                        inGameName: "Biodefense Chamber 04",
                         archive: "bigeyeroom",
                         modelPath: "bigeyeroom_model.bin",
                         animationPath: "bigeyeroom_anim.bin",
@@ -2516,7 +2516,7 @@ namespace MphRead
                     "UNIT4_TP2",
                     new RoomMetadata(
                         name: "UNIT4_TP2",
-                        inGameName: null,
+                        inGameName: "Stronghold Void B",
                         archive: "TeleportRoom",
                         modelPath: "TeleportRoom_model.bin",
                         animationPath: "TeleportRoom_anim.bin",
@@ -2546,7 +2546,7 @@ namespace MphRead
                     "UNIT4_B2",
                     new RoomMetadata(
                         name: "UNIT4_B2",
-                        inGameName: null,
+                        inGameName: "Biodefense Chamber 07",
                         archive: "cylinderroom",
                         modelPath: "cylinderroom_model.bin",
                         animationPath: "cylinderroom_anim.bin",
