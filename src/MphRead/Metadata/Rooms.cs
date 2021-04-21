@@ -956,7 +956,7 @@ namespace MphRead
                     "UNIT1_B1",
                     new RoomMetadata(
                         name: "UNIT1_B1",
-                        inGameName: "Biodefense Chamber 02",
+                        inGameName: "Biodefense Chamber 02", // Biodefense Chamber A
                         archive: "bigeyeroom",
                         modelPath: "bigeyeroom_model.bin",
                         animationPath: "bigeyeroom_anim.bin",
@@ -1226,7 +1226,7 @@ namespace MphRead
                     "UNIT1_B2",
                     new RoomMetadata(
                         name: "UNIT1_B2",
-                        inGameName: "Biodefense Chamber 06",
+                        inGameName: "Biodefense Chamber 06", // Biodefense Chamber B
                         archive: "cylinderroom",
                         modelPath: "cylinderroom_model.bin",
                         animationPath: "cylinderroom_anim.bin",
@@ -1556,7 +1556,7 @@ namespace MphRead
                     "UNIT2_B1",
                     new RoomMetadata(
                         name: "UNIT2_B1",
-                        inGameName: "Biodefense Chamber 01",
+                        inGameName: "Biodefense Chamber 01", // Biodefense Chamber A
                         archive: "cylinderroom",
                         modelPath: "cylinderroom_model.bin",
                         animationPath: "cylinderroom_anim.bin",
@@ -1826,7 +1826,7 @@ namespace MphRead
                     "UNIT2_B2",
                     new RoomMetadata(
                         name: "UNIT2_B2",
-                        inGameName: "Biodefense Chamber 05",
+                        inGameName: "Biodefense Chamber 05", // Biodefense Chamber B
                         archive: "bigeyeroom",
                         modelPath: "bigeyeroom_model.bin",
                         animationPath: "bigeyeroom_anim.bin",
@@ -2036,7 +2036,7 @@ namespace MphRead
                     "UNIT3_B1",
                     new RoomMetadata(
                         name: "UNIT3_B1",
-                        inGameName: "Biodefense Chamber 03",
+                        inGameName: "Biodefense Chamber 03", // Biodefense Chamber A
                         archive: "cylinderroom",
                         modelPath: "cylinderroom_model.bin",
                         animationPath: "cylinderroom_anim.bin",
@@ -2186,7 +2186,7 @@ namespace MphRead
                     "UNIT3_B2",
                     new RoomMetadata(
                         name: "UNIT3_B2",
-                        inGameName: "Biodefense Chamber 08",
+                        inGameName: "Biodefense Chamber 08", // Biodefense Chamber B
                         archive: "bigeyeroom",
                         modelPath: "bigeyeroom_model.bin",
                         animationPath: "bigeyeroom_anim.bin",
@@ -2366,7 +2366,7 @@ namespace MphRead
                     "UNIT4_B1",
                     new RoomMetadata(
                         name: "UNIT4_B1",
-                        inGameName: "Biodefense Chamber 04",
+                        inGameName: "Biodefense Chamber 04", // Biodefense Chamber A
                         archive: "bigeyeroom",
                         modelPath: "bigeyeroom_model.bin",
                         animationPath: "bigeyeroom_anim.bin",
@@ -2546,7 +2546,7 @@ namespace MphRead
                     "UNIT4_B2",
                     new RoomMetadata(
                         name: "UNIT4_B2",
-                        inGameName: "Biodefense Chamber 07",
+                        inGameName: "Biodefense Chamber 07", // Biodefense Chamber B
                         archive: "cylinderroom",
                         modelPath: "cylinderroom_model.bin",
                         animationPath: "cylinderroom_anim.bin",
