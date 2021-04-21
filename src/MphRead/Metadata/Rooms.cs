@@ -45,12 +45,17 @@ namespace MphRead
         public bool Multiplayer { get; }
         public bool FirstHunt { get; }
         public bool Hybrid { get; }
+        public Vector3 CameraMin { get; }
+        public Vector3 CameraMax { get; }
+        public Vector3 PlayerMin { get; }
+        public Vector3 PlayerMax { get; }
 
         public RoomMetadata(string name, string? inGameName, string archive, string modelPath, string animationPath, string collisionPath,
             string? texturePath, string? entityPath, string? nodePath, string? roomNodeName, uint battleTimeLimit, uint timeLimit,
             short pointLimit, short nodeLayer, bool fogEnabled, bool clearFog, ColorRgb fogColor, int fogSlope, ushort fogOffset,
             ColorRgb light1Color, Vector3 light1Vector, ColorRgb light2Color, Vector3 light2Vector, int farClip, int killHeight,
-            RoomSize size, bool multiplayer = false, bool firstHunt = false, bool hybrid = false)
+            RoomSize size, Vector3 cameraMin = default, Vector3 cameraMax = default, Vector3 playerMin = default, Vector3 playerMax = default,
+            bool multiplayer = false, bool firstHunt = false, bool hybrid = false)
         {
             Name = name;
             InGameName = inGameName;
@@ -89,6 +94,10 @@ namespace MphRead
             FarClipInt = farClip;
             KillHeight = Fixed.ToFloat(killHeight);
             Size = size;
+            CameraMin = cameraMin;
+            CameraMax = cameraMax;
+            PlayerMin = playerMin;
+            PlayerMax = playerMax;
             FirstHunt = firstHunt;
             Hybrid = hybrid;
         }
@@ -2709,6 +2718,10 @@ namespace MphRead
                         farClip: 368640,
                         killHeight: -122880,
                         size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2740,6 +2753,10 @@ namespace MphRead
                         farClip: 3072000,
                         killHeight: 4096,
                         size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-167936, 24576, -294912).ToFloatVector(),
+                        cameraMax: new Vector3Fx(167936, 131072, 294912).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2771,6 +2788,10 @@ namespace MphRead
                         farClip: 1433600,
                         killHeight: -122880,
                         size: RoomSize.Small,
+                        cameraMin: new Vector3Fx(-45056, 0, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(40960, 53248, 106496).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2802,6 +2823,10 @@ namespace MphRead
                         farClip: 1687552,
                         killHeight: -122880,
                         size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-151552, -4096, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(184320, 102400, 81920).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2833,6 +2858,10 @@ namespace MphRead
                         farClip: 1740800,
                         killHeight: -122880,
                         size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-151552, -4096, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(184320, 102400, 81920).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2864,6 +2893,10 @@ namespace MphRead
                         farClip: 1638400,
                         killHeight: -122880,
                         size: RoomSize.Small,
+                        cameraMin: new Vector3Fx(-98304, 0, -57344).ToFloatVector(),
+                        cameraMax: new Vector3Fx(110592, 69632, 57344).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2895,6 +2928,10 @@ namespace MphRead
                         farClip: 5734400,
                         killHeight: -122880,
                         size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-200704, 0, -200704).ToFloatVector(),
+                        cameraMax: new Vector3Fx(196608, 196608, 192512).ToFloatVector(),
+                        playerMin: new Vector3Fx(-286720, -86949, -286720).ToFloatVector(),
+                        playerMax: new Vector3Fx(286720, 196608, 286720).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2926,6 +2963,10 @@ namespace MphRead
                         farClip: 819200,
                         killHeight: -122880,
                         size: RoomSize.Small,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2957,6 +2998,10 @@ namespace MphRead
                         farClip: 4096000,
                         killHeight: -122880,
                         size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-176128, 0, -135168).ToFloatVector(),
+                        cameraMax: new Vector3Fx(180224, 135168, 225280).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2988,6 +3033,10 @@ namespace MphRead
                         farClip: 327680,
                         killHeight: -122880,
                         size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3019,6 +3068,10 @@ namespace MphRead
                         farClip: 409600,
                         killHeight: -122880,
                         size: RoomSize.Small,
+                        cameraMin: new Vector3Fx(-90112, -8192, -61440).ToFloatVector(),
+                        cameraMax: new Vector3Fx(73728, 54476, 45056).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3050,6 +3103,10 @@ namespace MphRead
                         farClip: 409600,
                         killHeight: -122880,
                         size: RoomSize.Small,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3081,6 +3138,10 @@ namespace MphRead
                         farClip: 819200,
                         killHeight: -122880,
                         size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-77824, -4096, -118784).ToFloatVector(),
+                        cameraMax: new Vector3Fx(110592, 61440, 106496).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3112,6 +3173,10 @@ namespace MphRead
                         farClip: 1638400,
                         killHeight: -122880,
                         size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-94208, -118784, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(167936, 122880, 172032).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3143,6 +3208,10 @@ namespace MphRead
                         farClip: 4915200,
                         killHeight: -122880,
                         size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-131072, -14745, -122880).ToFloatVector(),
+                        cameraMax: new Vector3Fx(126976, 98304, 118784).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3174,6 +3243,10 @@ namespace MphRead
                         farClip: 1638400,
                         killHeight: -122880,
                         size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-294912, 0, -106496).ToFloatVector(),
+                        cameraMax: new Vector3Fx(286720, 96256, 106496).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3205,6 +3278,10 @@ namespace MphRead
                         farClip: 1638400,
                         killHeight: -122880,
                         size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-294912, 0, -106496).ToFloatVector(),
+                        cameraMax: new Vector3Fx(286720, 96256, 106496).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3236,6 +3313,10 @@ namespace MphRead
                         farClip: 5734400,
                         killHeight: -122880,
                         size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-311296, -29196, -172032).ToFloatVector(),
+                        cameraMax: new Vector3Fx(331776, 131072, 126976).ToFloatVector(),
+                        playerMin: new Vector3Fx(-311296, -29196, -166907).ToFloatVector(),
+                        playerMax: new Vector3Fx(331776, 131072, 126976).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3267,6 +3348,10 @@ namespace MphRead
                         farClip: 3276800,
                         killHeight: -122880,
                         size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-294912, -12288, -172032).ToFloatVector(),
+                        cameraMax: new Vector3Fx(294912, 94208, 172032).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3298,6 +3383,10 @@ namespace MphRead
                         farClip: 1638400,
                         killHeight: -122880,
                         size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-278528, 0, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(245760, 147456, 106496).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3329,6 +3418,10 @@ namespace MphRead
                         farClip: 1638400,
                         killHeight: -122880,
                         size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-278528, 0, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(245760, 159744, 106496).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3360,6 +3453,10 @@ namespace MphRead
                         farClip: 4915200,
                         killHeight: -122880,
                         size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-290816, 8192, -217088).ToFloatVector(),
+                        cameraMax: new Vector3Fx(348160, 86016, 241664).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3391,6 +3488,10 @@ namespace MphRead
                         farClip: 5734400,
                         killHeight: -122880,
                         size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-94208, -45056, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(102400, 114688, 106496).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3422,6 +3523,10 @@ namespace MphRead
                         farClip: 1638400,
                         killHeight: -122880,
                         size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-180224, -20480, -172032).ToFloatVector(),
+                        cameraMax: new Vector3Fx(172032, 118784, 172032).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3453,6 +3558,10 @@ namespace MphRead
                         farClip: 1638400,
                         killHeight: -122880,
                         size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-90112, -20480, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(122880, 155648, 106496).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3484,6 +3593,10 @@ namespace MphRead
                         farClip: 1638400,
                         killHeight: -286720,
                         size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3515,6 +3628,10 @@ namespace MphRead
                         farClip: 1638400,
                         killHeight: -122880,
                         size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3546,6 +3663,10 @@ namespace MphRead
                         farClip: 819200,
                         killHeight: -122880,
                         size: RoomSize.SinglePlayer,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         hybrid: true)
                 },
                 {
@@ -3577,6 +3698,10 @@ namespace MphRead
                         farClip: 819200,
                         killHeight: -122880,
                         size: RoomSize.SinglePlayer,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         hybrid: true)
                 },
                 // these levels are unused/unreferenced in the game, so some values are guesses
@@ -3609,6 +3734,10 @@ namespace MphRead
                         farClip: 1638400,
                         killHeight: -122880,
                         size: RoomSize.None,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3640,6 +3769,10 @@ namespace MphRead
                         farClip: 1638400,
                         killHeight: -122880,
                         size: RoomSize.None,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3671,6 +3804,10 @@ namespace MphRead
                         farClip: 1638400,
                         killHeight: -122880,
                         size: RoomSize.None,
+                        cameraMin: new Vector3Fx(-200704, 0, -200704).ToFloatVector(),
+                        cameraMax: new Vector3Fx(196608, 292159, 192512).ToFloatVector(), // max y values increased from 48 to 71.3
+                        playerMin: new Vector3Fx(-286720, -86949, -286720).ToFloatVector(),
+                        playerMax: new Vector3Fx(286720, 292159, 286720).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3702,6 +3839,10 @@ namespace MphRead
                         farClip: 1638400,
                         killHeight: -122880,
                         size: RoomSize.None,
+                        cameraMin: new Vector3Fx(-94208, -118784, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(167936, 122880, 172032).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3733,6 +3874,10 @@ namespace MphRead
                         farClip: 1638400,
                         killHeight: -122880,
                         size: RoomSize.None,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3764,6 +3909,10 @@ namespace MphRead
                         farClip: 1638400,
                         killHeight: -122880,
                         size: RoomSize.SinglePlayer,
+                        cameraMin: new Vector3Fx(-77824, -4096, -118784).ToFloatVector(),
+                        cameraMax: new Vector3Fx(110592, 61440, 106496).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
