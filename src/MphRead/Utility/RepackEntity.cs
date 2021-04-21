@@ -13,50 +13,34 @@ namespace MphRead.Utility
     {
         public static byte[] TestEntityEdit()
         {
-            RoomMetadata meta = Metadata.RoomMetadata["Level TestLevel"];
-            Debug.Assert(meta.EntityPath != null);
-            List<EntityEditorBase> entities = meta.FirstHunt ? GetFhEntities(meta.EntityPath) : GetEntities(meta.EntityPath);
+            RoomMetadata meta = Metadata.RoomMetadata["biodefense chamber 07"];
+            RoomMetadata meta2 = Metadata.RoomMetadata["MP12 SIC TRANSIT"];
+            string? entityPath = meta.EntityPath;
+            List<EntityEditorBase> entities;
+            if (entityPath != null)
+            {
+                entities = meta.FirstHunt ? GetFhEntities(entityPath) : GetEntities(entityPath);
+            }
+            else
+            {
+                entityPath = $"{meta.Name}_ent.bin";
+                entities = new List<EntityEditorBase>();
+            }
+            Debug.Assert(meta2.EntityPath != null);
+            List<EntityEditorBase> entities2 = meta2.FirstHunt ? GetFhEntities(meta2.EntityPath) : GetEntities(meta2.EntityPath);
             foreach (EntityEditorBase entity in entities)
             {
-                if (entity.LayerMask == 0)
-                {
-                    Debugger.Break();
-                }
-                if (entity.Type == EntityType.Artifact || entity.Type == EntityType.CameraSequence || entity.Type == EntityType.EnemySpawn
-                    || entity.Type == EntityType.ForceField || entity.Type == EntityType.Object || entity.Type == EntityType.Platform)
-                {
-                    entity.LayerMask = 0;
-                }
-                else
-                {
-                    entity.LayerMask = 0xFFFF;
-                }
             }
-            //entities.RemoveAll(e => e.Type == EntityType.Platform && e.Id != 12);
-            //var doors = entities.Where(e => e.Type == EntityType.FhDoor).Select(p => (FhDoorEntityEditor)p).ToList();
-            //foreach (FhDoorEntityEditor door in doors)
-            //{
-            //    door.Flags = 0;
-            //}
-            //var platforms = entities.Where(e => e.Type == EntityType.FhPlatform).Select(p => (FhPlatformEntityEditor)p).ToList();
-            //entities.RemoveAll(e => e.Type == EntityType.FhPlatform && e.Id != 55);
-            //Debug.Assert(platforms[0].Id == 55);
-            //var newPos = new Vector3(0, 1.5f, -2.5f);
-            //Vector3 diff = newPos - platforms[0].Position;
-            //platforms[0].Position = newPos;
-            //for (int i = 0; i < platforms[0].Positions.Count; i++)
-            //{
-            //    Vector3 pos = platforms[0].Positions[i];
-            //    if (pos != Vector3.Zero)
-            //    {
-            //        platforms[0].Positions[i] = pos + diff;
-            //    }
-            //}
-            //platforms[0].Speed *= 2;
-            //var trigger = (FhTriggerVolumeEntityEditor)entities.First(e => e.Id == 54);
-            //trigger.Position = new Vector3(0, 0, -35f);
+            short id = 0;
+            foreach (EntityEditorBase entity in entities2.Where(e => e.Type == EntityType.PlayerSpawn))
+            {
+                entity.NodeName = "rmMain";
+                entity.LayerMask = 0xFFFF;
+                entity.Id = id++;
+                entities.Add(entity);
+            }
             byte[] bytes = meta.FirstHunt ? RepackFhEntities(entities) : RepackEntities(entities);
-            string path = Path.Combine(Paths.Export, "_pack", Path.GetFileName(meta.EntityPath));
+            string path = Path.Combine(Paths.Export, "_pack", Path.GetFileName(entityPath));
             File.WriteAllBytes(path, bytes);
             Nop();
             return bytes;
