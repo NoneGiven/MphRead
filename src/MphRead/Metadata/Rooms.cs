@@ -49,6 +49,7 @@ namespace MphRead
         public Vector3 CameraMax { get; }
         public Vector3 PlayerMin { get; }
         public Vector3 PlayerMax { get; }
+        public bool HasLimits { get; }
 
         public RoomMetadata(string name, string? inGameName, string archive, string modelPath, string animationPath, string collisionPath,
             string? texturePath, string? entityPath, string? nodePath, string? roomNodeName, uint battleTimeLimit, uint timeLimit,
@@ -100,6 +101,8 @@ namespace MphRead
             PlayerMax = playerMax;
             FirstHunt = firstHunt;
             Hybrid = hybrid;
+            HasLimits = cameraMin != Vector3.Zero || cameraMax != Vector3.Zero
+                || playerMin != Vector3.Zero || playerMax != Vector3.Zero;
         }
     }
 
@@ -3944,6 +3947,10 @@ namespace MphRead
                         farClip: 245760,
                         killHeight: -122880,
                         size: RoomSize.SinglePlayer,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         hybrid: true)
                 },
                 {
@@ -3975,6 +3982,10 @@ namespace MphRead
                         farClip: 245760,
                         killHeight: -122880,
                         size: RoomSize.SinglePlayer,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         hybrid: true)
                 },
                 {
@@ -4006,6 +4017,10 @@ namespace MphRead
                         farClip: 245760,
                         killHeight: -122880,
                         size: RoomSize.SinglePlayer,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         hybrid: true)
                 },
                 // todo: room ID 8 has the same files as MP1, but a few different parameters

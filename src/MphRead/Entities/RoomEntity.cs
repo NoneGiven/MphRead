@@ -309,8 +309,7 @@ namespace MphRead.Entities
                 var color = new Vector4(1f, 0f, 1f, 0.5f);
                 scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Quad, verts, noLines: true);
             }
-            else if ((scene.ShowVolumes == VolumeDisplay.CameraLimit || scene.ShowVolumes == VolumeDisplay.PlayerLimit)
-                && _meta.Multiplayer && !_meta.FirstHunt)
+            else if ((scene.ShowVolumes == VolumeDisplay.CameraLimit || scene.ShowVolumes == VolumeDisplay.PlayerLimit) && _meta.HasLimits)
             {
                 Vector3 minLimit = scene.ShowVolumes == VolumeDisplay.CameraLimit ? _meta.CameraMin : _meta.PlayerMin;
                 Vector3 maxLimit = scene.ShowVolumes == VolumeDisplay.CameraLimit ? _meta.CameraMax : _meta.PlayerMax;
