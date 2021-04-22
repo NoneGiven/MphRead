@@ -140,6 +140,7 @@ namespace MphRead.Testing
             Debug.Assert(meta.FirstHunt || meta.Hybrid);
             Debug.Assert(meta.EntityPath != null && meta.NodePath != null);
             string folder = Path.Combine(Paths.Export, "_pack");
+            Console.WriteLine("Converting model...");
             // model, texure
             (byte[] model, byte[] texture) = Repack.SeparateRoomTextures(room);
             string modelPath = Path.GetFileName(overMeta?.ModelPath ?? meta.ModelPath);
@@ -147,17 +148,21 @@ namespace MphRead.Testing
             string texDest = Path.Combine(folder, modelPath.Replace("_Model.bin", "_Tex.bin").Replace("_model.bin", "_tex.bin"));
             File.WriteAllBytes(modelDest, model);
             File.WriteAllBytes(texDest, texture);
+            Console.WriteLine("Converting collision...");
             // collision
             byte[] collision = RepackCollision.RepackMphRoom(room);
             string colDest = Path.Combine(folder, Path.GetFileName(overMeta?.CollisionPath ?? meta.CollisionPath));
             File.WriteAllBytes(colDest, collision);
+            Console.WriteLine("Converting animation...");
             // animation
             string animSrc = Path.Combine(Paths.FileSystem, $@"_archives\{meta.Archive}", Path.GetFileName(meta.AnimationPath));
             string animDest = Path.Combine(folder, Path.GetFileName(overMeta?.AnimationPath ?? meta.AnimationPath));
-            File.Copy(animSrc, animDest);
+            File.Copy(animSrc, animDest, overwrite: true);
             //entity, nodedata
             if (meta.Hybrid)
             {
+                Console.WriteLine("Copying entities...");
+                Console.WriteLine("Copying nodedata...");
                 string entSrc = Path.Combine(Paths.FileSystem, @"levels\entities", meta.EntityPath);
                 string nodeSrc = Path.Combine(Paths.FileSystem, @"levels\nodeData", meta.NodePath);
                 string entDest = Path.Combine(folder, meta.EntityPath);
@@ -168,16 +173,18 @@ namespace MphRead.Testing
                     entDest = Path.Combine(folder, overMeta.EntityPath);
                     nodeDest = Path.Combine(folder, overMeta.NodePath);
                 }
-                File.Copy(entSrc, entDest);
-                File.Copy(nodeSrc, nodeDest);
+                File.Copy(entSrc, entDest, overwrite: true);
+                File.Copy(nodeSrc, nodeDest, overwrite: true);
             }
             else
             {
+                Console.WriteLine("Converting entities...");
                 byte[] entity = Repack.RepackMphEntities(room);
                 string entDest = Path.Combine(folder, Path.GetFileName(overMeta?.EntityPath ?? meta.EntityPath));
                 File.WriteAllBytes(entDest, entity);
                 // sktodo: nodedata
             }
+            Console.Write("Creating archive...");
             // archive
             var files = new List<string>()
             {
@@ -188,8 +195,10 @@ namespace MphRead.Testing
             string outPath = Path.Combine(folder, "out.arc");
             Archive.Archiver.Archive(outPath, files);
             string archiveName = overMeta?.Archive ?? meta.Archive;
+            Console.WriteLine(" Compressing...");
             Lz.Compress(outPath, outPath.Replace("out.arc", $"{archiveName}.arc"));
             File.Delete(outPath);
+            Console.WriteLine("Done.");
             Nop();
         }
 

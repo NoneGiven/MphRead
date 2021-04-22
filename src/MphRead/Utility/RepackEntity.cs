@@ -18,10 +18,6 @@ namespace MphRead.Utility
             Debug.Assert(meta.FirstHunt && meta.EntityPath != null);
             // sktodo: remove testing code
             List<EntityEditorBase>? ent = GetEntities(Metadata.RoomMetadata["Level MPH Regulator"].EntityPath!);
-            if (ent.Any(e => e is EnemySpawnEntityEditor ed && ed.InitialCooldown != 0))
-            {
-                Debugger.Break();
-            }
             List<EntityEditorBase>? ent2 = GetFhEntities(meta.EntityPath);
             List<EntityEditorBase> entities = ConvertFhToMph(ent2);
             return RepackEntities(entities);
@@ -627,6 +623,13 @@ namespace MphRead.Utility
                 }
                 else if (entity is PlayerSpawnEntityEditor || entity is PointModuleEntityEditor || entity is MorphCameraEntityEditor)
                 {
+                    entity.Type = entity.Type switch
+                    {
+                        EntityType.FhPlayerSpawn => EntityType.PlayerSpawn,
+                        EntityType.FhPointModule => EntityType.PointModule,
+                        EntityType.FhMorphCamera => EntityType.MorphCamera,
+                        _ => throw new InvalidOperationException()
+                    };
                     entity.LayerMask = 0xFFFF;
                     converted.Add(entity);
                 }
