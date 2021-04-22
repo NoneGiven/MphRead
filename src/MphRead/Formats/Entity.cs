@@ -417,7 +417,7 @@ namespace MphRead
         public readonly uint FieldD8;
         public readonly uint FieldDC;
         public readonly uint FieldE0;
-        public readonly uint EnemyType;
+        public readonly FhEnemyType EnemyType;
         public readonly byte SpawnTotal;
         public readonly byte SpawnLimit;
         public readonly byte SpawnCount;
@@ -445,8 +445,7 @@ namespace MphRead
         public readonly ushort RepeatDelay;
         public readonly ushort CheckDelay;
         public readonly ushort RequiredStateBit; // for subtype 4
-        public readonly ushort TriggerFlags; // in-game this is treated as uint, but the extra bits are never set/checked
-        public readonly ushort Padding76;
+        public readonly TriggerFlags TriggerFlags;
         public readonly uint TriggerThreshold; // for subtype 1
         public readonly short ParentId;
         public readonly ushort Padding7E;
@@ -470,7 +469,7 @@ namespace MphRead
         public readonly FhRawCollisionVolume Cylinder;
         public readonly ushort OneUse;
         public readonly ushort Cooldown;
-        public readonly uint Flags;
+        public readonly FhTriggerFlags TriggerFlags;
         public readonly uint Threshold;
         public readonly short ParentId;
         public readonly ushort PaddingF6;
@@ -520,7 +519,7 @@ namespace MphRead
         public readonly short ChildId; // always the same as ParentId
         public readonly ushort Cooldown;
         public readonly uint Priority; // always 0 or 1
-        public readonly uint Flags; // 0x200 = affects biped, 0x400 = affects alt
+        public readonly TriggerFlags TriggerFlags;
     }
 
     // size: 260
@@ -537,7 +536,7 @@ namespace MphRead
         public readonly uint ExitMsgParam1;
         public readonly ushort Cooldown;
         public readonly ushort PaddingFA;
-        public readonly uint Flags;
+        public readonly FhTriggerFlags TriggerFlags;
 
         public FhRawCollisionVolume ActiveVolume
         {
@@ -572,7 +571,7 @@ namespace MphRead
         public readonly ushort Padding82;
         public readonly uint ModelId;
         public readonly uint BeamType; // always 0, has no imapct
-        public readonly uint Flags;
+        public readonly TriggerFlags TriggerFlags;
     }
 
     // size: 272
@@ -586,10 +585,10 @@ namespace MphRead
         public readonly uint CooldownTime;
         public readonly Vector3Fx BeamVector;
         public readonly Fixed Speed;
-        public readonly uint FieldFC;
+        public readonly uint ControlLockTime;
         public readonly uint ModelId;
         public readonly uint BeamType;
-        public readonly uint Flags;
+        public readonly FhTriggerFlags TriggerFlags;
 
         public FhRawCollisionVolume ActiveVolume
         {

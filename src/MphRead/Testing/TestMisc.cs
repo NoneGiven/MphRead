@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using MphRead.Entities;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
+using MphRead.Utility;
 
 namespace MphRead.Testing
 {
@@ -127,22 +129,65 @@ namespace MphRead.Testing
             Nop();
         }
 
-        public static void ConvertFhRoomToMph()
+        public static void ConvertFhRoomToMph(string room, string? over = null)
         {
-            //Utility.RepackCollision.TestCollision("Level FhTestLevel");
-            //Utility.Repack.TestRepack();
-            //var files = new List<string>()
-            //{
-            //    @"D:\Cdrv\MPH\Data\_Export\_pack\mp12_anim.bin",
-            //    @"D:\Cdrv\MPH\Data\_Export\_pack\mp12_collision.bin",
-            //    @"D:\Cdrv\MPH\Data\_Export\_pack\mp12_model.bin"
-            //};
-            //string outPath = @"D:\Cdrv\MPH\Data\_Export\_pack\out.arc";
-            //Archive.Archiver.Archive(outPath, files);
-            //Lz.Compress(outPath, outPath.Replace("out.arc", "mp12.arc"));
-            //File.Delete(outPath);
-            //Testing.TestMisc.TestAllCollision();
-            //Utility.Repack.TestEntityEdit();
+            RoomMetadata meta = Metadata.RoomMetadata[room];
+            RoomMetadata? overMeta = null;
+            if (over != null)
+            {
+                overMeta = Metadata.RoomMetadata[over];
+            }
+            Debug.Assert(meta.FirstHunt || meta.Hybrid);
+            Debug.Assert(meta.EntityPath != null && meta.NodePath != null);
+            string folder = Path.Combine(Paths.Export, "_pack");
+            // model, texure
+            (byte[] model, byte[] texture) = Repack.SeparateRoomTextures(room);
+            string modelPath = Path.GetFileName(overMeta?.ModelPath ?? meta.ModelPath);
+            string modelDest = Path.Combine(folder, modelPath);
+            string texDest = Path.Combine(folder, modelPath.Replace("_Model.bin", "_Tex.bin").Replace("_model.bin", "_tex.bin"));
+            File.WriteAllBytes(modelDest, model);
+            File.WriteAllBytes(texDest, texture);
+            // collision
+            byte[] collision = RepackCollision.RepackMphRoom(room);
+            string colDest = Path.Combine(folder, Path.GetFileName(overMeta?.CollisionPath ?? meta.CollisionPath));
+            File.WriteAllBytes(colDest, collision);
+            // animation
+            string animSrc = Path.Combine(Paths.FileSystem, $@"_archives\{meta.Archive}", Path.GetFileName(meta.AnimationPath));
+            string animDest = Path.Combine(folder, Path.GetFileName(overMeta?.AnimationPath ?? meta.AnimationPath));
+            File.Copy(animSrc, animDest);
+            //entity, nodedata
+            if (meta.Hybrid)
+            {
+                string entSrc = Path.Combine(Paths.FileSystem, @"levels\entities", meta.EntityPath);
+                string nodeSrc = Path.Combine(Paths.FileSystem, @"levels\nodeData", meta.NodePath);
+                string entDest = Path.Combine(folder, meta.EntityPath);
+                string nodeDest = Path.Combine(folder, meta.NodePath);
+                if (overMeta != null)
+                {
+                    Debug.Assert(overMeta.EntityPath != null && overMeta.NodePath != null);
+                    entDest = Path.Combine(folder, overMeta.EntityPath);
+                    nodeDest = Path.Combine(folder, overMeta.NodePath);
+                }
+                File.Copy(entSrc, entDest);
+                File.Copy(nodeSrc, nodeDest);
+            }
+            else
+            {
+                // sktodo
+            }
+            // archive
+            var files = new List<string>()
+            {
+                animDest,
+                colDest,
+                modelDest
+            };
+            string outPath = Path.Combine(folder, "out.arc");
+            Archive.Archiver.Archive(outPath, files);
+            string archiveName = overMeta?.Archive ?? meta.Archive;
+            Lz.Compress(outPath, outPath.Replace("out.arc", $"{archiveName}.arc"));
+            File.Delete(outPath);
+            Nop();
         }
 
         public static void TestCameraShake()

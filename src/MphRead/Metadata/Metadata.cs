@@ -1004,11 +1004,11 @@ namespace MphRead
             {
                 return new Vector3(0.094f, 0.506f, 0.51f);
             }
-            if (eventId == Message.Unknown16) // navy blue
+            if (eventId == Message.Unlock) // navy blue
             {
                 return new Vector3(0.094f, 0.094f, 0.557f);
             }
-            if (eventId == Message.Unknown17) // olive
+            if (eventId == Message.Lock) // olive
             {
                 return new Vector3(0.647f, 0.663f, 0.169f);
             }

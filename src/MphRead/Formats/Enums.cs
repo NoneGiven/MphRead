@@ -282,10 +282,10 @@ namespace MphRead
         Trigger = 9,
         Unknown12 = 12,
         Gravity = 15,
-        Unknown16 = 16, // unlock?
-        Unknown17 = 17, // lock?
+        Unlock = 16,
+        Lock = 17,
         Activate = 18,
-        Unknown19 = 19, // match over?
+        Complete = 19,
         Impact = 20,
         Death = 21,
         Unknown22 = 22,
@@ -331,14 +331,14 @@ namespace MphRead
         Activate = 5,
         Destroyed = 6,
         Damage = 7,
-        Unknown9 = 9,
-        Unknown15 = 15,
+        Trigger = 9,
+        Gravity = 15,
         Unlock = 16,
         SetActive = 17,
         Complete = 18,
-        Unknown19 = 19,
+        Impact = 19,
         Death = 20,
-        Unknown21 = 21
+        Unknown21 = 21 // same as MPH Unknown22
     }
 
     public enum EnemyType : byte // see note on enemy spawn entity struct
@@ -395,6 +395,17 @@ namespace MphRead
         ForceFieldLock = 49,
         WeakSpot = 50, // used by 39/46/47
         CarnivorousPlant = 51
+    }
+
+    public enum FhEnemyType : uint
+    {
+        WarWasp = 0,
+        Zoomer = 1,
+        Metroid = 2,
+        Mochtroid1 = 3,
+        Mochtroid2 = 4,
+        Mochtroid3 = 5,
+        Mochtroid4 = 6
     }
 
     public enum Hunter : byte

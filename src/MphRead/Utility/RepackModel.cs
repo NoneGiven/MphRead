@@ -9,6 +9,38 @@ namespace MphRead.Utility
 {
     public static partial class Repack
     {
+        public static (byte[], byte[]) SeparateRoomTextures(string room)
+        {
+            RoomMetadata meta = Metadata.RoomMetadata[room];
+            if (meta.TexturePath != null)
+            {
+                throw new ProgramException($"Room {room} already has a separate texture file.");
+            }
+            Model model = Read.GetRoomModelInstance(meta.Name).Model;
+            Debug.Assert(model.Scale.X == model.Scale.Y && model.Scale.Y == model.Scale.Z);
+            Debug.Assert(model.Scale.X == (int)model.Scale.X);
+            var textureInfo = new List<TextureInfo>();
+            for (int i = 0; i < model.Recolors[0].Textures.Count; i++)
+            {
+                Texture texture = model.Recolors[0].Textures[i];
+                IReadOnlyList<TextureData> data = model.Recolors[0].TextureData[i];
+                textureInfo.Add(ConvertData(texture, data));
+            }
+            var paletteInfo = new List<PaletteInfo>();
+            foreach (IReadOnlyList<PaletteData> data in model.Recolors[0].PaletteData)
+            {
+                paletteInfo.Add(new PaletteInfo(data.Select(d => d.Data).ToList()));
+            }
+            var options = new RepackOptions()
+            {
+                IsRoom = true,
+                Texture = RepackTexture.Separate,
+                ComputeBounds = ComputeBounds.None
+            };
+            return PackModel((int)model.Scale.X, model.NodeMatrixIds, model.NodePosCounts, model.Materials,
+                textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists, options);
+        }
+
         public static void TestRepack()
         {
             Read.ApplyFixes = false;

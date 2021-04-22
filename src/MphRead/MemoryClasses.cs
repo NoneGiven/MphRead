@@ -1103,7 +1103,7 @@ namespace MphRead.Memory
         public int TriggersNeeded { get => ReadInt32(_off6); set => WriteInt32(_off6, value); }
 
         private const int _off7 = 0x28;
-        public int TriggerFlags { get => ReadInt32(_off7); set => WriteInt32(_off7, value); }
+        public TriggerFlags TriggerFlags { get => (TriggerFlags)ReadUInt32(_off7); set => WriteUInt32(_off7, (uint)value); }
 
         private const int _off8 = 0x2C; // EntityData*
         public IntPtr Data { get => ReadPointer(_off8); set => WritePointer(_off8, value); }
@@ -1176,7 +1176,7 @@ namespace MphRead.Memory
         public int ExitEventParam2 { get => ReadInt32(_off14); set => WriteInt32(_off14, value); }
 
         private const int _off15 = 0x60;
-        public int Flags { get => ReadInt32(_off15); set => WriteInt32(_off15, value); }
+        public TriggerFlags TriggerFlags { get => (TriggerFlags)ReadUInt32(_off15); set => WriteUInt32(_off15, (uint)value); }
 
         private const int _off16 = 0x64;
         public ushort Priority { get => ReadUInt16(_off16); set => WriteUInt16(_off16, value); }
@@ -1279,7 +1279,7 @@ namespace MphRead.Memory
         public ushort FieldCE { get => ReadUInt16(_off19); set => WriteUInt16(_off19, value); }
 
         private const int _off20 = 0xD0;
-        public int Flags2 { get => ReadInt32(_off20); set => WriteInt32(_off20, value); }
+        public TriggerFlags TriggerFlags { get => (TriggerFlags)ReadUInt32(_off20); set => WriteUInt32(_off20, (uint)value); }
 
         private const int _off21 = 0xD4;
         public ushort FieldD4 { get => ReadUInt16(_off21); set => WriteUInt16(_off21, value); }

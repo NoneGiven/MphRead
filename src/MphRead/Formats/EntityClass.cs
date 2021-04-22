@@ -101,6 +101,10 @@ namespace MphRead.Editor
         public uint LifetimeMsg4Param1 { get; set; }
         public uint LifetimeMsg4Param2 { get; set; }
 
+        public PlatformEntityEditor() : base(EntityType.Platform)
+        {
+        }
+
         public PlatformEntityEditor(Entity header, PlatformEntityData raw) : base(header)
         {
             NoPort = raw.NoPort;
@@ -271,6 +275,10 @@ namespace MphRead.Editor
         public string EntityFilename { get; set; } = "";
         public string RoomName { get; set; } = "";
 
+        public DoorEntityEditor() : base(EntityType.Door)
+        {
+        }
+
         public DoorEntityEditor(Entity header, DoorEntityData raw) : base(header)
         {
             DoorNodeName = raw.NodeName.MarshalString();
@@ -314,6 +322,10 @@ namespace MphRead.Editor
         public Message CollectedMessage { get; set; }
         public uint CollectedMsgParam1 { get; set; }
         public uint CollectedMsgParam2 { get; set; }
+
+        public ItemSpawnEntityEditor() : base(EntityType.ItemSpawn)
+        {
+        }
 
         public ItemSpawnEntityEditor(Entity header, ItemSpawnEntityData raw) : base(header)
         {
@@ -660,7 +672,7 @@ namespace MphRead.Editor
         public uint FieldD8 { get; set; }
         public uint FieldDC { get; set; }
         public uint FieldE0 { get; set; }
-        public uint EnemyType { get; set; }
+        public FhEnemyType EnemyType { get; set; }
         public byte SpawnTotal { get; set; }
         public byte SpawnLimit { get; set; }
         public byte SpawnCount { get; set; }
@@ -746,7 +758,7 @@ namespace MphRead.Editor
         public ushort RepeatDelay { get; set; }
         public ushort CheckDelay { get; set; }
         public ushort RequiredStateBit { get; set; } // for subtype 4
-        public ushort TriggerFlags { get; set; } // in-game this is treated as uint, but the extra bits are never set/checked
+        public TriggerFlags TriggerFlags { get; set; }
         public uint TriggerThreshold { get; set; } // for subtype 1
         public short ParentId { get; set; }
         public Message ParentMessage { get; set; }
@@ -756,6 +768,10 @@ namespace MphRead.Editor
         public Message ChildMessage { get; set; }
         public uint ChildMsgParam1 { get; set; }
         public uint ChildMsgParam2 { get; set; }
+
+        public TriggerVolumeEntityEditor() : base(EntityType.TriggerVolume)
+        {
+        }
 
         public TriggerVolumeEntityEditor(Entity header, TriggerVolumeEntityData raw) : base(header)
         {
@@ -788,7 +804,7 @@ namespace MphRead.Editor
         public CollisionVolume Cylinder { get; set; }
         public ushort OneUse { get; set; }
         public ushort Cooldown { get; set; }
-        public uint Flags { get; set; }
+        public FhTriggerFlags TriggerFlags { get; set; }
         public uint Threshold { get; set; }
         public short ParentId { get; set; }
         public FhMessage ParentMessage { get; set; }
@@ -805,7 +821,7 @@ namespace MphRead.Editor
             Cylinder = new CollisionVolume(raw.Cylinder);
             OneUse = raw.OneUse;
             Cooldown = raw.Cooldown;
-            Flags = raw.Flags;
+            TriggerFlags = raw.TriggerFlags;
             Threshold = raw.Threshold;
             ParentId = raw.ParentId;
             ParentMessage = raw.ParentMessage;
@@ -834,7 +850,11 @@ namespace MphRead.Editor
         public short ChildId { get; set; } // always the same as ParentId
         public ushort Cooldown { get; set; }
         public uint Priority { get; set; } // always 0 or 1
-        public uint Flags { get; set; } // 0x200 = affects biped, 0x400 = affects alt
+        public TriggerFlags TriggerFlags { get; set; }
+
+        public AreaVolumeEntityEditor() : base(EntityType.AreaVolume)
+        {
+        }
 
         public AreaVolumeEntityEditor(Entity header, AreaVolumeEntityData raw) : base(header)
         {
@@ -854,7 +874,7 @@ namespace MphRead.Editor
             ChildId = raw.ChildId;
             Cooldown = raw.Cooldown;
             Priority = raw.Priority;
-            Flags = raw.Flags;
+            TriggerFlags = raw.TriggerFlags;
         }
     }
 
@@ -869,7 +889,7 @@ namespace MphRead.Editor
         public FhMessage ExitMessage { get; set; }
         public uint ExitMsgParam1 { get; set; }
         public ushort Cooldown { get; set; }
-        public uint Flags { get; set; }
+        public FhTriggerFlags TriggerFlags { get; set; }
 
         public FhAreaVolumeEntityEditor(Entity header, FhAreaVolumeEntityData raw) : base(header)
         {
@@ -882,7 +902,7 @@ namespace MphRead.Editor
             ExitMessage = raw.ExitMessage;
             ExitMsgParam1 = raw.ExitMsgParam1;
             Cooldown = raw.Cooldown;
-            Flags = raw.Flags;
+            TriggerFlags = raw.TriggerFlags;
         }
     }
 
@@ -897,7 +917,11 @@ namespace MphRead.Editor
         public ushort CooldownTime { get; set; }
         public bool Active { get; set; }
         public uint ModelId { get; set; }
-        public uint Flags { get; set; }
+        public TriggerFlags TriggerFlags { get; set; }
+
+        public JumpPadEntityEditor() : base(EntityType.JumpPad)
+        {
+        }
 
         public JumpPadEntityEditor(Entity header, JumpPadEntityData raw) : base(header)
         {
@@ -910,7 +934,7 @@ namespace MphRead.Editor
             CooldownTime = raw.CooldownTime;
             Active = raw.Active != 0;
             ModelId = raw.ModelId;
-            Flags = raw.Flags;
+            TriggerFlags = raw.TriggerFlags;
         }
     }
 
@@ -923,10 +947,10 @@ namespace MphRead.Editor
         public uint CooldownTime { get; set; }
         public Vector3 BeamVector { get; set; }
         public float Speed { get; set; }
-        public uint FieldFC { get; set; }
+        public uint ControlLockTime { get; set; }
         public uint ModelId { get; set; }
         public uint BeamType { get; set; }
-        public uint Flags { get; set; }
+        public FhTriggerFlags TriggerFlags { get; set; }
 
         public FhJumpPadEntityEditor(Entity header, FhJumpPadEntityData raw) : base(header)
         {
@@ -937,10 +961,10 @@ namespace MphRead.Editor
             CooldownTime = raw.CooldownTime;
             BeamVector = raw.BeamVector.ToFloatVector();
             Speed = raw.Speed.FloatValue;
-            FieldFC = raw.FieldFC;
+            ControlLockTime = raw.ControlLockTime;
             ModelId = raw.ModelId;
             BeamType = raw.BeamType;
-            Flags = raw.Flags;
+            TriggerFlags = raw.TriggerFlags;
         }
     }
 

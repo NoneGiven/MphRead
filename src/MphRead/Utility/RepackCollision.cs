@@ -74,6 +74,22 @@ namespace MphRead.Utility
 
     public static class RepackCollision
     {
+        public static byte[] RepackMphRoom(string room)
+        {
+            RoomMetadata meta = Metadata.RoomMetadata[room];
+            CollisionInstance collision = Collision.GetCollision(meta, roomLayerMask: -1);
+            List<CollisionDataEditor> editors = GetEditors(collision);
+            return RepackMphCollision(editors, collision.Info.Portals);
+        }
+
+        //public static byte[] RepackFhRoom(string room)
+        //{
+        //    RoomMetadata meta = Metadata.RoomMetadata[room];
+        //    CollisionInstance collision = Collision.GetCollision(meta, roomLayerMask: -1);
+        //    List<CollisionDataEditor> editors = GetEditors(collision);
+        //    return RepackFhCollision(editors, collision.Info.Portals);
+        //}
+
         public static void TestCollision(string? room = null)
         {
             var allCollision = new List<(CollisionInstance, string)>();
@@ -105,15 +121,7 @@ namespace MphRead.Utility
             }
             foreach ((CollisionInstance collision, string path) in allCollision)
             {
-                List<CollisionDataEditor> editors;
-                if (collision.Info is MphCollisionInfo mphInfo)
-                {
-                    editors = GetEditors(mphInfo);
-                }
-                else
-                {
-                    editors = GetEditors((FhCollisionInfo)collision.Info);
-                }
+                List<CollisionDataEditor> editors = GetEditors(collision);
                 byte[] bytes = RepackMphCollision(editors, collision.Info.Portals);
                 //byte[] bytes = RepackMphCollisionSimple(info);
                 //byte[] file = File.ReadAllBytes(Path.Combine(Paths.FileSystem, path));
@@ -122,6 +130,15 @@ namespace MphRead.Utility
                 //CompareCollision(info, bytes, file);
             }
             Nop();
+        }
+
+        private static List<CollisionDataEditor> GetEditors(CollisionInstance collision)
+        {
+            if (collision.Info is MphCollisionInfo mphInfo)
+            {
+                return GetEditors(mphInfo);
+            }
+            return GetEditors((FhCollisionInfo)collision.Info);
         }
 
         private static int GetPrimaryAxis(Vector3 normal)
