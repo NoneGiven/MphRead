@@ -624,126 +624,32 @@ namespace MphRead.Editor
 
     public class FhEnemySpawnEntityEditor : EntityEditorBase
     {
-        public uint Field24 { get; set; }
-        public uint Field28 { get; set; }
-        public uint Field2C { get; set; }
-        public uint Field30 { get; set; }
-        public uint Field34 { get; set; }
-        public uint Field38 { get; set; }
-        public uint Field3C { get; set; }
-        public uint Field40 { get; set; }
-        public uint Field44 { get; set; }
-        public uint Field48 { get; set; }
-        public uint Field4C { get; set; }
-        public uint Field50 { get; set; }
-        public uint Field54 { get; set; }
-        public uint Field58 { get; set; }
-        public uint Field5C { get; set; }
-        public uint Field60 { get; set; }
-        public uint Field64 { get; set; }
-        public uint Field68 { get; set; }
-        public uint Field6C { get; set; }
-        public uint Field70 { get; set; }
-        public uint Field74 { get; set; }
-        public uint Field78 { get; set; }
-        public uint Field7C { get; set; }
-        public uint Field80 { get; set; }
-        public uint Field84 { get; set; }
-        public uint Field88 { get; set; }
-        public uint Field8C { get; set; }
-        public uint Field90 { get; set; }
-        public uint Field94 { get; set; }
-        public uint Field98 { get; set; }
-        public uint Field9C { get; set; }
-        public uint FieldA0 { get; set; }
-        public uint FieldA4 { get; set; }
-        public uint FieldA8 { get; set; }
-        public uint FieldAC { get; set; }
-        public uint FieldB0 { get; set; }
-        public uint FieldB4 { get; set; }
-        public uint FieldB8 { get; set; }
-        public uint FieldBC { get; set; }
-        public uint FieldC0 { get; set; }
-        public uint FieldC4 { get; set; }
-        public uint FieldC8 { get; set; }
-        public uint FieldCC { get; set; }
-        public uint FieldD0 { get; set; }
-        public uint FieldD4 { get; set; }
-        public uint FieldD8 { get; set; }
-        public uint FieldDC { get; set; }
-        public uint FieldE0 { get; set; }
+        public CollisionVolume Volume1 { get; set; }
+        public CollisionVolume Volume2 { get; set; }
+        public CollisionVolume Volume3 { get; set; }
         public FhEnemyType EnemyType { get; set; }
         public byte SpawnTotal { get; set; }
         public byte SpawnLimit { get; set; }
         public byte SpawnCount { get; set; }
-        public byte FieldEB { get; set; }
         public ushort Cooldown { get; set; }
-        public ushort FieldEE { get; set; }
+        public ushort EndFrame { get; set; }
         public string SpawnNodeName { get; set; } = "";
         public short ParentId { get; set; }
-        public ushort Field102 { get; set; }
         public FhMessage EmptyMessage { get; set; }
 
         public FhEnemySpawnEntityEditor(Entity header, FhEnemySpawnEntityData raw) : base(header)
         {
-            Field24 = raw.Field24;
-            Field28 = raw.Field28;
-            Field2C = raw.Field2C;
-            Field30 = raw.Field30;
-            Field34 = raw.Field34;
-            Field38 = raw.Field38;
-            Field3C = raw.Field3C;
-            Field40 = raw.Field40;
-            Field44 = raw.Field44;
-            Field48 = raw.Field48;
-            Field4C = raw.Field4C;
-            Field50 = raw.Field50;
-            Field54 = raw.Field54;
-            Field58 = raw.Field58;
-            Field5C = raw.Field5C;
-            Field60 = raw.Field60;
-            Field64 = raw.Field64;
-            Field68 = raw.Field68;
-            Field6C = raw.Field6C;
-            Field70 = raw.Field70;
-            Field74 = raw.Field74;
-            Field78 = raw.Field78;
-            Field7C = raw.Field7C;
-            Field80 = raw.Field80;
-            Field84 = raw.Field84;
-            Field88 = raw.Field88;
-            Field8C = raw.Field8C;
-            Field90 = raw.Field90;
-            Field94 = raw.Field94;
-            Field98 = raw.Field98;
-            Field9C = raw.Field9C;
-            FieldA0 = raw.FieldA0;
-            FieldA4 = raw.FieldA4;
-            FieldA8 = raw.FieldA8;
-            FieldAC = raw.FieldAC;
-            FieldB0 = raw.FieldB0;
-            FieldB4 = raw.FieldB4;
-            FieldB8 = raw.FieldB8;
-            FieldBC = raw.FieldBC;
-            FieldC0 = raw.FieldC0;
-            FieldC4 = raw.FieldC4;
-            FieldC8 = raw.FieldC8;
-            FieldCC = raw.FieldCC;
-            FieldD0 = raw.FieldD0;
-            FieldD4 = raw.FieldD4;
-            FieldD8 = raw.FieldD8;
-            FieldDC = raw.FieldDC;
-            FieldE0 = raw.FieldE0;
+            Volume1 = new CollisionVolume(raw.Volume1);
+            Volume2 = new CollisionVolume(raw.Volume2);
+            Volume3 = new CollisionVolume(raw.Volume3);
             EnemyType = raw.EnemyType;
             SpawnTotal = raw.SpawnTotal;
             SpawnLimit = raw.SpawnLimit;
             SpawnCount = raw.SpawnCount;
-            FieldEB = raw.FieldEB;
             Cooldown = raw.Cooldown;
-            FieldEE = raw.FieldEE;
+            EndFrame = raw.FieldEE;
             SpawnNodeName = raw.NodeName.MarshalString();
             ParentId = raw.ParentId;
-            Field102 = raw.Field102;
             EmptyMessage = raw.EmptyMessage;
         }
     }

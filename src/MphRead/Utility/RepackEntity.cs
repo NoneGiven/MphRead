@@ -1732,64 +1732,21 @@ namespace MphRead.Utility
 
         private static void WriteFhEnemySpawn(FhEnemySpawnEntityEditor entity, BinaryWriter writer)
         {
-            writer.Write(entity.Field24);
-            writer.Write(entity.Field28);
-            writer.Write(entity.Field2C);
-            writer.Write(entity.Field30);
-            writer.Write(entity.Field34);
-            writer.Write(entity.Field38);
-            writer.Write(entity.Field3C);
-            writer.Write(entity.Field40);
-            writer.Write(entity.Field44);
-            writer.Write(entity.Field48);
-            writer.Write(entity.Field4C);
-            writer.Write(entity.Field50);
-            writer.Write(entity.Field54);
-            writer.Write(entity.Field58);
-            writer.Write(entity.Field5C);
-            writer.Write(entity.Field60);
-            writer.Write(entity.Field64);
-            writer.Write(entity.Field68);
-            writer.Write(entity.Field6C);
-            writer.Write(entity.Field70);
-            writer.Write(entity.Field74);
-            writer.Write(entity.Field78);
-            writer.Write(entity.Field7C);
-            writer.Write(entity.Field80);
-            writer.Write(entity.Field84);
-            writer.Write(entity.Field88);
-            writer.Write(entity.Field8C);
-            writer.Write(entity.Field90);
-            writer.Write(entity.Field94);
-            writer.Write(entity.Field98);
-            writer.Write(entity.Field9C);
-            writer.Write(entity.FieldA0);
-            writer.Write(entity.FieldA4);
-            writer.Write(entity.FieldA8);
-            writer.Write(entity.FieldAC);
-            writer.Write(entity.FieldB0);
-            writer.Write(entity.FieldB4);
-            writer.Write(entity.FieldB8);
-            writer.Write(entity.FieldBC);
-            writer.Write(entity.FieldC0);
-            writer.Write(entity.FieldC4);
-            writer.Write(entity.FieldC8);
-            writer.Write(entity.FieldCC);
-            writer.Write(entity.FieldD0);
-            writer.Write(entity.FieldD4);
-            writer.Write(entity.FieldD8);
-            writer.Write(entity.FieldDC);
-            writer.Write(entity.FieldE0);
+            byte padByte = 0;
+            ushort padShort = 0;
+            writer.WriteFhVolume(entity.Volume1);
+            writer.WriteFhVolume(entity.Volume2);
+            writer.WriteFhVolume(entity.Volume3);
             writer.Write((uint)entity.EnemyType);
             writer.Write(entity.SpawnTotal);
             writer.Write(entity.SpawnLimit);
             writer.Write(entity.SpawnCount);
-            writer.Write(entity.FieldEB);
+            writer.Write(padByte); // PaddingEB
             writer.Write(entity.Cooldown);
-            writer.Write(entity.FieldEE);
+            writer.Write(entity.EndFrame);
             writer.WriteString(entity.SpawnNodeName, 16);
             writer.Write(entity.ParentId);
-            writer.Write(entity.Field102);
+            writer.Write(padShort); // Padding102
             writer.Write((uint)entity.EmptyMessage);
         }
 
