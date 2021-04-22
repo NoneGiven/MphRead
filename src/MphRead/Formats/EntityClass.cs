@@ -624,9 +624,9 @@ namespace MphRead.Editor
 
     public class FhEnemySpawnEntityEditor : EntityEditorBase
     {
-        public CollisionVolume Volume1 { get; set; }
-        public CollisionVolume Volume2 { get; set; }
-        public CollisionVolume Volume3 { get; set; }
+        public CollisionVolume Box { get; set; }
+        public CollisionVolume Cylinder { get; set; }
+        public CollisionVolume Sphere { get; set; }
         public FhEnemyType EnemyType { get; set; }
         public byte SpawnTotal { get; set; }
         public byte SpawnLimit { get; set; }
@@ -639,9 +639,9 @@ namespace MphRead.Editor
 
         public FhEnemySpawnEntityEditor(Entity header, FhEnemySpawnEntityData raw) : base(header)
         {
-            Volume1 = new CollisionVolume(raw.Volume1);
-            Volume2 = new CollisionVolume(raw.Volume2);
-            Volume3 = new CollisionVolume(raw.Volume3);
+            Box = new CollisionVolume(raw.Box);
+            Cylinder = new CollisionVolume(raw.Cylinder);
+            Sphere = new CollisionVolume(raw.Sphere);
             EnemyType = raw.EnemyType;
             SpawnTotal = raw.SpawnTotal;
             SpawnLimit = raw.SpawnLimit;

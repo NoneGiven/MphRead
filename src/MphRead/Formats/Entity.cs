@@ -369,9 +369,9 @@ namespace MphRead
     public readonly struct FhEnemySpawnEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly FhRawCollisionVolume Volume1;
-        public readonly FhRawCollisionVolume Volume2;
-        public readonly FhRawCollisionVolume Volume3;
+        public readonly FhRawCollisionVolume Box;
+        public readonly FhRawCollisionVolume Cylinder;
+        public readonly FhRawCollisionVolume Sphere;
         public readonly FhEnemyType EnemyType;
         public readonly byte SpawnTotal;
         public readonly byte SpawnLimit;

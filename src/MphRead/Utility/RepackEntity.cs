@@ -1734,9 +1734,9 @@ namespace MphRead.Utility
         {
             byte padByte = 0;
             ushort padShort = 0;
-            writer.WriteFhVolume(entity.Volume1);
-            writer.WriteFhVolume(entity.Volume2);
-            writer.WriteFhVolume(entity.Volume3);
+            writer.WriteFhVolume(entity.Box);
+            writer.WriteFhVolume(entity.Cylinder);
+            writer.WriteFhVolume(entity.Sphere);
             writer.Write((uint)entity.EnemyType);
             writer.Write(entity.SpawnTotal);
             writer.Write(entity.SpawnLimit);
