@@ -369,16 +369,16 @@ namespace MphRead
     public readonly struct FhEnemySpawnEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly FhRawCollisionVolume Box;
-        public readonly FhRawCollisionVolume Cylinder;
-        public readonly FhRawCollisionVolume Sphere;
+        public readonly FhRawCollisionVolume Box; // used by Mochtroid1 and Metroid
+        public readonly FhRawCollisionVolume Cylinder; // used by Mochtroid2/3/4
+        public readonly FhRawCollisionVolume Sphere; // used by Zoomer
         public readonly FhEnemyType EnemyType;
         public readonly byte SpawnTotal;
         public readonly byte SpawnLimit;
         public readonly byte SpawnCount;
         public readonly byte PaddingEB;
         public readonly ushort Cooldown;
-        public readonly ushort FieldEE;
+        public readonly ushort EndFrame;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;
         public readonly short ParentId;

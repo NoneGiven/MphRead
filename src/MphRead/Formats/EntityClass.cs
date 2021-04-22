@@ -647,7 +647,7 @@ namespace MphRead.Editor
             SpawnLimit = raw.SpawnLimit;
             SpawnCount = raw.SpawnCount;
             Cooldown = raw.Cooldown;
-            EndFrame = raw.FieldEE;
+            EndFrame = raw.EndFrame;
             SpawnNodeName = raw.NodeName.MarshalString();
             ParentId = raw.ParentId;
             EmptyMessage = raw.EmptyMessage;
