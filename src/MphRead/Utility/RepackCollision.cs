@@ -653,10 +653,6 @@ namespace MphRead.Utility
                     for (int px = 0; px < partsX; px++)
                     {
                         int index = py * partsX * partsZ + pz * partsX + px;
-                        if (index == 846)
-                        {
-                            //Debugger.Break();
-                        }
                         float xStart = minX + px * 4;
                         float xEnd = xStart + 4;
                         float yStart = minY + py * 4;
@@ -749,11 +745,16 @@ namespace MphRead.Utility
                         int idxStart = dataIdxs.Count;
                         for (int i = 0; i < data.Count; i++)
                         {
-                            if (index == 846 && i == 1242)
-                            {
-                                //Debugger.Break();
-                            }
                             CollisionDataEditor item = data[i];
+                            if (item.Points.Select(p => p.X).Min() > xStart
+                                || item.Points.Select(p => p.X).Max() < xEnd
+                                || item.Points.Select(p => p.Y).Min() > yStart
+                                || item.Points.Select(p => p.Y).Max() < yEnd
+                                || item.Points.Select(p => p.Z).Min() > zStart
+                                || item.Points.Select(p => p.Z).Max() < zEnd)
+                            {
+                                continue;
+                            }
                             bool intersects = false;
                             foreach (Vector3 point in item.Points)
                             {
