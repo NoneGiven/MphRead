@@ -173,7 +173,10 @@ namespace MphRead.Testing
             }
             else
             {
-                // sktodo
+                byte[] entity = Repack.RepackMphEntities(room);
+                string entDest = Path.Combine(folder, Path.GetFileName(overMeta?.EntityPath ?? meta.EntityPath));
+                File.WriteAllBytes(entDest, entity);
+                // sktodo: nodedata
             }
             // archive
             var files = new List<string>()

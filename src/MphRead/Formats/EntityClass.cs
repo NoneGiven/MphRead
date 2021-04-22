@@ -498,7 +498,7 @@ namespace MphRead.Editor
             Field5C = raw.Field5C;
             Field60 = raw.Field60;
             Field64 = raw.Field64;
-            Volume = raw.Volume;
+            Volume = new CollisionVolume(raw.Volume);
             FieldA8 = raw.FieldA8;
             FieldAC = raw.FieldAC;
             FieldB0 = raw.FieldB0;
