@@ -238,7 +238,7 @@ namespace MphRead
         public readonly uint EnemyWeapon;
         public readonly ushort EnemyHealth;
         public readonly ushort EnemyHealthMax;
-        public readonly ushort Field38;
+        public readonly ushort Field38; // set in AI data for enemy hunters, other uses seem like junk data
         public readonly byte HunterColor;
         public readonly byte HunterChance;
         // union start
@@ -338,9 +338,9 @@ namespace MphRead
         public readonly uint Field1B0;
         public readonly uint Field1B4;
         // union end
-        public readonly ushort Field1B8;
-        public readonly byte SomeLimit;
-        public readonly byte Field1BB;
+        public readonly short LinkedEntityId; // always -1 except for Cretaphid 4
+        public readonly byte SpawnLimit;
+        public readonly byte SpawnTotal;
         public readonly byte SpawnCount;
         public readonly byte Active; // boolean
         public readonly byte AlwaysActive; // boolean
@@ -350,17 +350,17 @@ namespace MphRead
         public readonly ushort InitialCooldown;
         public readonly ushort Padding1C6;
         public readonly Fixed ActiveDistance; // todo: display sphere
-        public readonly uint Field1CC;
+        public readonly uint Field1CC; // unused?
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;
         public readonly short EntityId1;
-        public readonly ushort Field1E2; // todo: padding?
+        public readonly ushort Padding1E2;
         public readonly Message Message1;
         public readonly short EntityId2;
-        public readonly ushort Field1EA;
+        public readonly ushort Padding1EA;
         public readonly Message Message2;
         public readonly short EntityId3;
-        public readonly ushort Field1F2;
+        public readonly ushort Padding1F2;
         public readonly Message Message3;
         public readonly ItemType ItemType;
     }

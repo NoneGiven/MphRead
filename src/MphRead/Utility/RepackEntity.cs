@@ -18,6 +18,10 @@ namespace MphRead.Utility
             Debug.Assert(meta.FirstHunt && meta.EntityPath != null);
             // sktodo: remove testing code
             List<EntityEditorBase>? ent = GetEntities(Metadata.RoomMetadata["Level MPH Regulator"].EntityPath!);
+            if (ent.Any(e => e is EnemySpawnEntityEditor ed && ed.InitialCooldown != 0))
+            {
+                Debugger.Break();
+            }
             List<EntityEditorBase>? ent2 = GetFhEntities(meta.EntityPath);
             List<EntityEditorBase> entities = ConvertFhToMph(ent2);
             return RepackEntities(entities);
@@ -430,7 +434,46 @@ namespace MphRead.Utility
                 }
                 else if (entity is FhEnemySpawnEntityEditor enemySpawn)
                 {
-
+                    // EndFrame is ignored
+                    converted.Add(new EnemySpawnEntityEditor()
+                    {
+                        Id = enemySpawn.Id,
+                        Active = true,
+                        ActiveDistance = 30,
+                        AlwaysActive = true,
+                        CooldownTime = enemySpawn.Cooldown,
+                        EnemyHealth = 0,
+                        EnemyHealthMax = 0,
+                        EnemySubtype = 2,
+                        EnemyType = (EnemyType)enemySpawn.EnemyType,
+                        EnemyVersion = 0,
+                        EnemyWeapon = 0,
+                        EntityId1 = enemySpawn.ParentId,
+                        EntityId2 = -1,
+                        EntityId3 = -1,
+                        Facing = enemySpawn.Facing,
+                        // sktodo: ?
+                        Field38 = 4096,
+                        Field1CC = 143360,
+                        HunterChance = 0,
+                        HunterColor = 0,
+                        InitialCooldown = 0,
+                        ItemChance = 100,
+                        ItemType = ItemType.None,
+                        LayerMask = 0xFFFF,
+                        Message1 = GetMessage(enemySpawn.EmptyMessage),
+                        Message2 = Message.None,
+                        Message3 = Message.None,
+                        NodeName = enemySpawn.NodeName,
+                        Position = enemySpawn.Position,
+                        LinkedEntityId = -1,
+                        SpawnCount = enemySpawn.SpawnCount,
+                        SpawnLimit = enemySpawn.SpawnLimit,
+                        SpawnTotal = enemySpawn.SpawnTotal,
+                        SpawnNodeName = enemySpawn.SpawnNodeName,
+                        SpawnerModel = 0,
+                        Up = enemySpawn.Up
+                    });
                 }
                 else if (entity is FhTriggerVolumeEntityEditor trigger)
                 {
@@ -1303,7 +1346,7 @@ namespace MphRead.Utility
             writer.Write((uint)entity.EnemyType);
             writer.Write(entity.EnemySubtype);
             writer.Write(entity.EnemyVersion);
-            writer.Write(entity.HunterWeapon);
+            writer.Write(entity.EnemyWeapon);
             writer.Write(entity.EnemyHealth);
             writer.Write(entity.EnemyHealthMax);
             writer.Write(entity.Field38);
@@ -1406,9 +1449,9 @@ namespace MphRead.Utility
             writer.Write(entity.Field1B0);
             writer.Write(entity.Field1B4);
             // union end
-            writer.Write(entity.Field1B8);
-            writer.Write(entity.SomeLimit);
-            writer.Write(entity.Field1BB);
+            writer.Write(entity.LinkedEntityId);
+            writer.Write(entity.SpawnLimit);
+            writer.Write(entity.SpawnTotal);
             writer.Write(entity.SpawnCount);
             writer.WriteByte(entity.Active);
             writer.WriteByte(entity.AlwaysActive);
@@ -1421,13 +1464,13 @@ namespace MphRead.Utility
             writer.Write(entity.Field1CC);
             writer.WriteString(entity.SpawnNodeName, 16);
             writer.Write(entity.EntityId1);
-            writer.Write(entity.Field1E2);
+            writer.Write(padShort); // Padding1E2
             writer.Write((uint)entity.Message1);
             writer.Write(entity.EntityId2);
-            writer.Write(entity.Field1EA);
+            writer.Write(padShort); // Padding1EA
             writer.Write((uint)entity.Message2);
             writer.Write(entity.EntityId3);
-            writer.Write(entity.Field1F2);
+            writer.Write(padShort); // Padding1F2
             writer.Write((uint)entity.Message3);
             writer.Write((int)entity.ItemType);
         }

@@ -365,7 +365,7 @@ namespace MphRead.Editor
         public EnemyType EnemyType { get; set; }
         public uint EnemySubtype { get; set; }
         public uint EnemyVersion { get; set; }
-        public uint HunterWeapon { get; set; }
+        public uint EnemyWeapon { get; set; }
         public ushort EnemyHealth { get; set; }
         public ushort EnemyHealthMax { get; set; }
         public ushort Field38 { get; set; }
@@ -466,9 +466,9 @@ namespace MphRead.Editor
         public uint Field1AC { get; set; }
         public uint Field1B0 { get; set; }
         public uint Field1B4 { get; set; }
-        public ushort Field1B8 { get; set; }
-        public byte SomeLimit { get; set; }
-        public byte Field1BB { get; set; }
+        public short LinkedEntityId { get; set; } // always -1 except for Cretaphid 4
+        public byte SpawnLimit { get; set; }
+        public byte SpawnTotal { get; set; }
         public byte SpawnCount { get; set; }
         public bool Active { get; set; }
         public bool AlwaysActive { get; set; }
@@ -480,22 +480,23 @@ namespace MphRead.Editor
         public uint Field1CC { get; set; }
         public string SpawnNodeName { get; set; } = "";
         public short EntityId1 { get; set; }
-        public ushort Field1E2 { get; set; }
         public Message Message1 { get; set; }
         public short EntityId2 { get; set; }
-        public ushort Field1EA { get; set; }
         public Message Message2 { get; set; }
         public short EntityId3 { get; set; }
-        public ushort Field1F2 { get; set; }
         public Message Message3 { get; set; }
         public ItemType ItemType { get; set; }
+
+        public EnemySpawnEntityEditor() : base(EntityType.EnemySpawn)
+        {
+        }
 
         public EnemySpawnEntityEditor(Entity header, EnemySpawnEntityData raw) : base(header)
         {
             EnemyType = raw.EnemyType;
             EnemySubtype = raw.EnemySubtype;
             EnemyVersion = raw.EnemyVersion;
-            HunterWeapon = raw.EnemyWeapon;
+            EnemyWeapon = raw.EnemyWeapon;
             EnemyHealth = raw.EnemyHealth;
             EnemyHealthMax = raw.EnemyHealthMax;
             Field38 = raw.Field38;
@@ -596,9 +597,9 @@ namespace MphRead.Editor
             Field1AC = raw.Field1AC;
             Field1B0 = raw.Field1B0;
             Field1B4 = raw.Field1B4;
-            Field1B8 = raw.Field1B8;
-            SomeLimit = raw.SomeLimit;
-            Field1BB = raw.Field1BB;
+            LinkedEntityId = raw.LinkedEntityId;
+            SpawnLimit = raw.SpawnLimit;
+            SpawnTotal = raw.SpawnTotal;
             SpawnCount = raw.SpawnCount;
             Active = raw.Active != 0;
             AlwaysActive = raw.AlwaysActive != 0;
@@ -610,13 +611,10 @@ namespace MphRead.Editor
             Field1CC = raw.Field1CC;
             SpawnNodeName = raw.NodeName.MarshalString();
             EntityId1 = raw.EntityId1;
-            Field1E2 = raw.Field1E2;
             Message1 = raw.Message1;
             EntityId2 = raw.EntityId2;
-            Field1EA = raw.Field1EA;
             Message2 = raw.Message2;
             EntityId3 = raw.EntityId3;
-            Field1F2 = raw.Field1F2;
             Message3 = raw.Message3;
             ItemType = raw.ItemType;
         }
