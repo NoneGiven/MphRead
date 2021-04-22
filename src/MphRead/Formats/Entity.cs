@@ -253,22 +253,7 @@ namespace MphRead
         public readonly uint Field5C;
         public readonly uint Field60;
         public readonly uint Field64;
-        public readonly uint Field68;
-        public readonly uint Field6C;
-        public readonly uint Field70;
-        public readonly uint Field74;
-        public readonly uint Field78;
-        public readonly uint Field7C;
-        public readonly uint Field80;
-        public readonly uint Field84;
-        public readonly uint Field88;
-        public readonly uint Field8C;
-        public readonly uint Field90;
-        public readonly uint Field94;
-        public readonly uint Field98;
-        public readonly uint Field9C;
-        public readonly uint FieldA0;
-        public readonly uint FieldA4;
+        public readonly RawCollisionVolume Volume; // applies to at least FH enemy types
         public readonly uint FieldA8;
         public readonly uint FieldAC;
         public readonly uint FieldB0;

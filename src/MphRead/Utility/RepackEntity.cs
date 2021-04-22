@@ -453,8 +453,20 @@ namespace MphRead.Utility
                         EntityId3 = -1,
                         Facing = enemySpawn.Facing,
                         // sktodo: ?
-                        Field38 = 4096,
+                        Field38 = enemySpawn.EnemyType == FhEnemyType.Zoomer ? (ushort)1832 : (ushort)4096,
                         Field1CC = 143360,
+                        Volume = enemySpawn.EnemyType switch
+                        {
+                            FhEnemyType.WarWasp => enemySpawn.Box,
+                            FhEnemyType.Metroid => enemySpawn.Box,
+                            FhEnemyType.Mochtroid1 => enemySpawn.Box,
+                            FhEnemyType.Mochtroid2 => enemySpawn.Cylinder,
+                            FhEnemyType.Mochtroid3 => enemySpawn.Cylinder,
+                            FhEnemyType.Mochtroid4 => enemySpawn.Cylinder,
+                            FhEnemyType.Zoomer => enemySpawn.Sphere,
+                            _ => throw new ProgramException($"Invalid FH enemy type {enemySpawn.EnemyType}")
+                        },
+                        // sktodo: ^
                         HunterChance = 0,
                         HunterColor = 0,
                         InitialCooldown = 0,
@@ -1364,22 +1376,7 @@ namespace MphRead.Utility
             writer.Write(entity.Field5C);
             writer.Write(entity.Field60);
             writer.Write(entity.Field64);
-            writer.Write(entity.Field68);
-            writer.Write(entity.Field6C);
-            writer.Write(entity.Field70);
-            writer.Write(entity.Field74);
-            writer.Write(entity.Field78);
-            writer.Write(entity.Field7C);
-            writer.Write(entity.Field80);
-            writer.Write(entity.Field84);
-            writer.Write(entity.Field88);
-            writer.Write(entity.Field8C);
-            writer.Write(entity.Field90);
-            writer.Write(entity.Field94);
-            writer.Write(entity.Field98);
-            writer.Write(entity.Field9C);
-            writer.Write(entity.FieldA0);
-            writer.Write(entity.FieldA4);
+            writer.WriteVolume(entity.Volume);
             writer.Write(entity.FieldA8);
             writer.Write(entity.FieldAC);
             writer.Write(entity.FieldB0);

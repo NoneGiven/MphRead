@@ -382,22 +382,7 @@ namespace MphRead.Editor
         public uint Field5C { get; set; }
         public uint Field60 { get; set; }
         public uint Field64 { get; set; }
-        public uint Field68 { get; set; }
-        public uint Field6C { get; set; }
-        public uint Field70 { get; set; }
-        public uint Field74 { get; set; }
-        public uint Field78 { get; set; }
-        public uint Field7C { get; set; }
-        public uint Field80 { get; set; }
-        public uint Field84 { get; set; }
-        public uint Field88 { get; set; }
-        public uint Field8C { get; set; }
-        public uint Field90 { get; set; }
-        public uint Field94 { get; set; }
-        public uint Field98 { get; set; }
-        public uint Field9C { get; set; }
-        public uint FieldA0 { get; set; }
-        public uint FieldA4 { get; set; }
+        public CollisionVolume Volume { get; set; } // applies to at least FH enemy types
         public uint FieldA8 { get; set; }
         public uint FieldAC { get; set; }
         public uint FieldB0 { get; set; }
@@ -513,22 +498,7 @@ namespace MphRead.Editor
             Field5C = raw.Field5C;
             Field60 = raw.Field60;
             Field64 = raw.Field64;
-            Field68 = raw.Field68;
-            Field6C = raw.Field6C;
-            Field70 = raw.Field70;
-            Field74 = raw.Field74;
-            Field78 = raw.Field78;
-            Field7C = raw.Field7C;
-            Field80 = raw.Field80;
-            Field84 = raw.Field84;
-            Field88 = raw.Field88;
-            Field8C = raw.Field8C;
-            Field90 = raw.Field90;
-            Field94 = raw.Field94;
-            Field98 = raw.Field98;
-            Field9C = raw.Field9C;
-            FieldA0 = raw.FieldA0;
-            FieldA4 = raw.FieldA4;
+            Volume = raw.Volume;
             FieldA8 = raw.FieldA8;
             FieldAC = raw.FieldAC;
             FieldB0 = raw.FieldB0;
