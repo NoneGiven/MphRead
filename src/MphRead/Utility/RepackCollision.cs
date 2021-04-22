@@ -162,13 +162,13 @@ namespace MphRead.Utility
             var editors = new List<CollisionDataEditor>();
             foreach (CollisionData data in info.Data)
             {
-                CollisionPlane plane = info.Planes[data.PlaneIndex];
-                Vector3 normal = plane.Normal.ToFloatVector();
+                Vector4 plane = info.Planes[data.PlaneIndex];
+                Vector3 normal = plane.Xyz;
                 var editor = new CollisionDataEditor()
                 {
                     LayerMask = (ushort)((data.LayerMask & 0xFFFC) | GetPrimaryAxis(normal)),
                     Flags = data.Flags,
-                    Plane = new Vector4(normal, plane.Homogenous.FloatValue)
+                    Plane = new Vector4(normal, plane.W)
                 };
                 for (int i = 0; i < data.PointIndexCount; i++)
                 {
@@ -184,13 +184,13 @@ namespace MphRead.Utility
             var editors = new List<CollisionDataEditor>();
             foreach (FhCollisionData data in info.Data)
             {
-                CollisionPlane plane = info.Planes[data.PlaneIndex];
-                Vector3 normal = plane.Normal.ToFloatVector();
+                Vector4 plane = info.Planes[data.PlaneIndex];
+                Vector3 normal = plane.Xyz;
                 int axis = GetPrimaryAxis(normal);
                 var editor = new CollisionDataEditor()
                 {
                     LayerMask = (ushort)(4 | axis),
-                    Plane = new Vector4(normal, plane.Homogenous.FloatValue)
+                    Plane = new Vector4(normal, plane.W)
                 };
                 for (int i = 0; i < data.VectorCount; i++)
                 {
@@ -236,10 +236,10 @@ namespace MphRead.Utility
             Debug.Assert(pack.Planes.Count == info.Planes.Count);
             for (int i = 0; i < pack.Planes.Count; i++)
             {
-                Debug.Assert(pack.Planes[i].Normal.X.Value == info.Planes[i].Normal.X.Value);
-                Debug.Assert(pack.Planes[i].Normal.Y.Value == info.Planes[i].Normal.Y.Value);
-                Debug.Assert(pack.Planes[i].Normal.Z.Value == info.Planes[i].Normal.Z.Value);
-                Debug.Assert(pack.Planes[i].Homogenous.Value == info.Planes[i].Homogenous.Value);
+                Debug.Assert(pack.Planes[i].X == info.Planes[i].X);
+                Debug.Assert(pack.Planes[i].Y == info.Planes[i].Y);
+                Debug.Assert(pack.Planes[i].Z == info.Planes[i].Z);
+                Debug.Assert(pack.Planes[i].W == info.Planes[i].W);
             }
             Debug.Assert(pack.PointIndices.Count == info.PointIndices.Count);
             Debug.Assert(Enumerable.SequenceEqual(pack.PointIndices, info.PointIndices));
@@ -339,10 +339,9 @@ namespace MphRead.Utility
             }
             // planes
             int planeOffset = (int)stream.Position;
-            foreach (CollisionPlane plane in info.Planes)
+            foreach (Vector4 plane in info.Planes)
             {
-                writer.WriteVector3(plane.Normal.ToFloatVector());
-                writer.WriteFloat(plane.Homogenous.FloatValue);
+                writer.WriteVector4(plane);
             }
             // point indices
             int pointIdxOffset = (int)stream.Position;

@@ -62,7 +62,7 @@ namespace MphRead.Formats.Collision
         public static MphCollisionInfo ReadMphCollision(CollisionHeader header, ReadOnlySpan<byte> bytes, int roomLayerMask)
         {
             IReadOnlyList<Vector3Fx> points = Read.DoOffsets<Vector3Fx>(bytes, header.PointOffset, header.PointCount);
-            IReadOnlyList<CollisionPlane> planes = Read.DoOffsets<CollisionPlane>(bytes, header.PlaneOffset, header.PlaneCount);
+            IReadOnlyList<Vector4Fx> planes = Read.DoOffsets<Vector4Fx>(bytes, header.PlaneOffset, header.PlaneCount);
             IReadOnlyList<ushort> pointIdxs = Read.DoOffsets<ushort>(bytes, header.PointIndexOffset, header.PointIndexCount);
             IReadOnlyList<CollisionData> data = Read.DoOffsets<CollisionData>(bytes, header.DataOffset, header.DataCount);
             IReadOnlyList<ushort> dataIdxs = Read.DoOffsets<ushort>(bytes, header.DataIndexOffset, header.DataIndexCount);
@@ -133,14 +133,14 @@ namespace MphRead.Formats.Collision
             IReadOnlyList<FhCollisionVector> vectors = Read.DoOffsets<FhCollisionVector>(bytes, header.VectorOffset, header.VectorCount);
             IReadOnlyList<ushort> dataIndices = Read.DoOffsets<ushort>(bytes, header.DataIndexOffset, header.DataIndexCount);
             IReadOnlyList<Vector3Fx> points = Read.DoOffsets<Vector3Fx>(bytes, header.PointOffset, header.PointCount);
-            IReadOnlyList<CollisionPlane> planes = Read.DoOffsets<CollisionPlane>(bytes, header.PlaneOffset, header.PlaneCount);
+            IReadOnlyList<Vector4Fx> planes = Read.DoOffsets<Vector4Fx>(bytes, header.PlaneOffset, header.PlaneCount);
             IReadOnlyList<FhCollisionEntry> entries = Read.DoOffsets<FhCollisionEntry>(bytes, header.EntryOffset, header.EntryCount);
             IReadOnlyList<int> treeNodeIndices = Read.DoOffsets<int>(bytes, header.TreeNodeIndexOffset, header.TreeNodeIndexCount);
             IReadOnlyList<FhCollisionTreeNode> treeNodes = Read.DoOffsets<FhCollisionTreeNode>(bytes, header.TreeNodeOffset, header.TreeNodeCount);
             var portals = new List<CollisionPortal>();
             foreach (FhCollisionPortal portal in Read.DoOffsets<FhCollisionPortal>(bytes, header.PortalOffset, header.PortalCount))
             {
-                portals.Add(new CollisionPortal(portal, vectors, points));
+                portals.Add(new CollisionPortal(portal, vectors, points, planes));
             }
             return new FhCollisionInfo(header, points, planes, data, vectors, dataIndices, portals, entries, treeNodeIndices, treeNodes);
         }
@@ -169,13 +169,6 @@ namespace MphRead.Formats.Collision
         public readonly uint EntryOffset;
         public readonly uint PortalCount;
         public readonly uint PortalOffset;
-    }
-
-    // size: 16
-    public readonly struct CollisionPlane
-    {
-        public readonly Vector3Fx Normal;
-        public readonly Fixed Homogenous;
     }
 
     // size: 16
@@ -287,18 +280,20 @@ namespace MphRead.Formats.Collision
             UnusedDF = raw.UnusedDF;
         }
 
-        public CollisionPortal(FhCollisionPortal raw, IReadOnlyList<FhCollisionVector> rawVectors, IReadOnlyList<Vector3Fx> rawPoints)
+        public CollisionPortal(FhCollisionPortal raw, IReadOnlyList<FhCollisionVector> rawVectors,
+            IReadOnlyList<Vector3Fx> rawPoints, IReadOnlyList<Vector4Fx> rawPlanes)
         {
             Name = raw.Name.MarshalString();
             NodeName1 = raw.NodeName1.MarshalString();
             NodeName2 = raw.NodeName2.MarshalString();
             LayerMask = 4; // always on
             var points = new List<Vector3>();
+            var vectors = new List<Vector4>();
             for (int i = 0; i < raw.PointCount; i++)
             {
                 FhCollisionVector vector = rawVectors[raw.PointStartIndex + i];
-                Vector3Fx point = rawPoints[vector.Point1Index];
-                points.Add(point.ToFloatVector());
+                points.Add(rawPoints[vector.Point1Index].ToFloatVector());
+                vectors.Add(rawPlanes[vector.PlaneIndex].ToFloatVector());
             }
             Points = points;
             Position = new Vector3(
@@ -306,8 +301,8 @@ namespace MphRead.Formats.Collision
                 points.Sum(p => p.Y) / points.Count,
                 points.Sum(p => p.Z) / points.Count
             );
-            Vectors = new List<Vector4>(); // todo: can probably derive these from FhCollisionVector
-            Plane = new Vector4(raw.Plane.Normal.ToFloatVector(), raw.Plane.Homogenous.FloatValue);
+            Vectors = vectors;
+            Plane = raw.Plane.ToFloatVector();
         }
     }
 
@@ -346,14 +341,14 @@ namespace MphRead.Formats.Collision
     {
         public bool FirstHunt { get; }
         public IReadOnlyList<Vector3> Points { get; }
-        public IReadOnlyList<CollisionPlane> Planes { get; }
+        public IReadOnlyList<Vector4> Planes { get; }
         public IReadOnlyList<CollisionPortal> Portals { get; }
 
-        public CollisionInfo(IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
+        public CollisionInfo(IReadOnlyList<Vector3Fx> points, IReadOnlyList<Vector4Fx> planes,
             IReadOnlyList<CollisionPortal> portals, bool firstHunt)
         {
             Points = points.Select(v => v.ToFloatVector()).ToList();
-            Planes = planes;
+            Planes = planes.Select(p => p.ToFloatVector()).ToList();
             Portals = portals;
             FirstHunt = firstHunt;
         }
@@ -370,7 +365,7 @@ namespace MphRead.Formats.Collision
         public IReadOnlyList<CollisionEntry> Entries { get; }
         public Vector3 MinPosition { get; }
 
-        public MphCollisionInfo(CollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
+        public MphCollisionInfo(CollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<Vector4Fx> planes,
             IReadOnlyList<ushort> ptIdxs, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> dataIdxs,
             IReadOnlyList<CollisionEntry> entries, IReadOnlyList<CollisionPortal> portals)
             : base(points, planes, portals, firstHunt: false)
@@ -608,7 +603,7 @@ namespace MphRead.Formats.Collision
         public readonly char[] NodeName1; // side 0 room node
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName2; // side 1 room node
-        public readonly CollisionPlane Plane;
+        public readonly Vector4Fx Plane;
         public readonly ushort PointCount;
         public readonly ushort PointStartIndex;
         public readonly byte Field5C;
@@ -686,7 +681,7 @@ namespace MphRead.Formats.Collision
         public IReadOnlyList<int> TreeNodeIndices { get; }
         public IReadOnlyList<FhCollisionTreeNode> TreeNodes { get; }
 
-        public FhCollisionInfo(FhCollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
+        public FhCollisionInfo(FhCollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<Vector4Fx> planes,
             IReadOnlyList<FhCollisionData> data, IReadOnlyList<FhCollisionVector> vectors, IReadOnlyList<ushort> dataIndices,
             IReadOnlyList<CollisionPortal> portals, IReadOnlyList<FhCollisionEntry> entries, IReadOnlyList<int> treeNodeIndices,
             IReadOnlyList<FhCollisionTreeNode> treeNodes) : base(points, planes, portals, firstHunt: true)
@@ -750,7 +745,7 @@ namespace MphRead.Formats.Collision
                 }
                 scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.VectorCount);
             }
-            // sktodo: pre-size big enoguh to hold the whole "path" through the tree
+            // sktodo: pre-size big enough to hold the whole "path" through the tree
             // --> have "depth" variable, allow increasing/decreasing depth, and allow switching between left/right at current depth
             // --> next: show all data which are children of the current depth + branch selection
             // sktodo: move to partition method
