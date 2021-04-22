@@ -157,7 +157,8 @@ namespace MphRead.Testing
             // animation
             string animSrc = Path.Combine(Paths.FileSystem, $@"_archives\{meta.Archive}", Path.GetFileName(meta.AnimationPath));
             string animDest = Path.Combine(folder, Path.GetFileName(overMeta?.AnimationPath ?? meta.AnimationPath));
-            File.Copy(animSrc, animDest, overwrite: true);
+            File.Delete(animDest);
+            File.Copy(animSrc, animDest);
             //entity, nodedata
             if (meta.Hybrid)
             {
@@ -173,8 +174,10 @@ namespace MphRead.Testing
                     entDest = Path.Combine(folder, overMeta.EntityPath);
                     nodeDest = Path.Combine(folder, overMeta.NodePath);
                 }
-                File.Copy(entSrc, entDest, overwrite: true);
-                File.Copy(nodeSrc, nodeDest, overwrite: true);
+                File.Delete(entDest);
+                File.Delete(nodeDest);
+                File.Copy(entSrc, entDest);
+                File.Copy(nodeSrc, nodeDest);
             }
             else
             {
