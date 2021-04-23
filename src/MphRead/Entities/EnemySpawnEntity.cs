@@ -47,7 +47,7 @@ namespace MphRead.Entities
             base.Initialize(scene);
             if (_data.EnemyType == EnemyType.Hunter)
             {
-                var hunter = (Hunter)_data.EnemySubtype;
+                var hunter = (Hunter)_data.Fields.S09.HunterId;
                 Debug.Assert(Enum.IsDefined(typeof(Hunter), hunter));
                 // todo: random encounter setup
                 if (hunter != Hunter.Random)

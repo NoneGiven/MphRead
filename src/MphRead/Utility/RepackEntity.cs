@@ -431,40 +431,19 @@ namespace MphRead.Utility
                 else if (entity is FhEnemySpawnEntityEditor enemySpawn)
                 {
                     // EndFrame is ignored
-                    converted.Add(new EnemySpawnEntityEditor()
+                    var mphSpawn = new EnemySpawnEntityEditor()
                     {
                         Id = enemySpawn.Id,
                         Active = true,
                         ActiveDistance = 30,
                         AlwaysActive = true,
                         CooldownTime = enemySpawn.Cooldown,
-                        EnemyHealth = 0,
-                        EnemyHealthMax = 0,
-                        EnemySubtype = 2,
                         EnemyType = (EnemyType)enemySpawn.EnemyType,
-                        EnemyVersion = 0,
-                        EnemyWeapon = 0,
                         EntityId1 = enemySpawn.ParentId,
                         EntityId2 = -1,
                         EntityId3 = -1,
                         Facing = enemySpawn.Facing,
-                        // sktodo: ?
-                        Field38 = enemySpawn.EnemyType == FhEnemyType.Zoomer ? (ushort)1832 : (ushort)4096,
                         Field1CC = 143360,
-                        Volume = enemySpawn.EnemyType switch
-                        {
-                            FhEnemyType.WarWasp => enemySpawn.Box,
-                            FhEnemyType.Metroid => enemySpawn.Box,
-                            FhEnemyType.Mochtroid1 => enemySpawn.Box,
-                            FhEnemyType.Mochtroid2 => enemySpawn.Cylinder,
-                            FhEnemyType.Mochtroid3 => enemySpawn.Cylinder,
-                            FhEnemyType.Mochtroid4 => enemySpawn.Cylinder,
-                            FhEnemyType.Zoomer => enemySpawn.Sphere,
-                            _ => throw new ProgramException($"Invalid FH enemy type {enemySpawn.EnemyType}")
-                        },
-                        // sktodo: ^
-                        HunterChance = 0,
-                        HunterColor = 0,
                         InitialCooldown = 0,
                         ItemChance = 100,
                         ItemType = ItemType.None,
@@ -481,7 +460,36 @@ namespace MphRead.Utility
                         SpawnNodeName = enemySpawn.SpawnNodeName,
                         SpawnerModel = 0,
                         Up = enemySpawn.Up
-                    });
+                    };
+                    if (enemySpawn.EnemyType == FhEnemyType.Metroid || enemySpawn.EnemyType == FhEnemyType.Mochtroid1)
+                    {
+                        mphSpawn.Volume0 = new CollisionVolume(Vector3.Zero, 1);
+                        mphSpawn.Volume1 = enemySpawn.Box;
+                        mphSpawn.Facing = Vector3.UnitZ;
+                        mphSpawn.Position = Vector3.Zero;
+                        mphSpawn.Unknown00 = 0;
+                        mphSpawn.Unknown01 = 0;
+                    }
+                    else if (enemySpawn.EnemyType == FhEnemyType.Mochtroid2 || enemySpawn.EnemyType == FhEnemyType.Mochtroid3
+                        || enemySpawn.EnemyType == FhEnemyType.Mochtroid4)
+                    {
+                        mphSpawn.Volume0 = new CollisionVolume(Vector3.Zero, 1);
+                        mphSpawn.Volume1 = enemySpawn.Cylinder;
+                        mphSpawn.Position = Vector3.Zero;
+                        mphSpawn.Unknown00 = 0;
+                        mphSpawn.Unknown01 = 0;
+                    }
+                    else if (enemySpawn.EnemyType == FhEnemyType.Zoomer)
+                    {
+                        mphSpawn.Volume0 = new CollisionVolume(Vector3.Zero, 1);
+                        mphSpawn.Volume1 = enemySpawn.Sphere;
+                    }
+                    else
+                    {
+                        // no need to convert war wasp
+                        throw new ProgramException($"Invalid FH enemy type {enemySpawn.EnemyType}");
+                    }
+                    converted.Add(mphSpawn);
                 }
                 else if (entity is FhTriggerVolumeEntityEditor trigger)
                 {
@@ -1366,96 +1374,44 @@ namespace MphRead.Utility
         {
             ushort padShort = 0;
             writer.Write((uint)entity.EnemyType);
-            writer.Write(entity.EnemySubtype);
-            writer.Write(entity.EnemyVersion);
-            writer.Write(entity.EnemyWeapon);
-            writer.Write(entity.EnemyHealth);
-            writer.Write(entity.EnemyHealthMax);
-            writer.Write(entity.Field38);
-            writer.Write(entity.HunterColor);
-            writer.Write(entity.HunterChance);
-            // union start
-            writer.Write(entity.Field3C);
-            writer.Write(entity.Field40);
-            writer.Write(entity.Field44);
-            writer.Write(entity.Field48);
-            writer.Write(entity.Field4C);
-            writer.Write(entity.Field50);
-            writer.Write(entity.Field54);
-            writer.Write(entity.Field58);
-            writer.Write(entity.Field5C);
-            writer.Write(entity.Field60);
-            writer.Write(entity.Field64);
-            writer.WriteVolume(entity.Volume);
-            writer.Write(entity.FieldA8);
-            writer.Write(entity.FieldAC);
-            writer.Write(entity.FieldB0);
-            writer.Write(entity.FieldB4);
-            writer.Write(entity.FieldB8);
-            writer.Write(entity.FieldBC);
-            writer.Write(entity.FieldC0);
-            writer.Write(entity.FieldC4);
-            writer.Write(entity.FieldC8);
-            writer.Write(entity.FieldCC);
-            writer.Write(entity.FieldD0);
-            writer.Write(entity.FieldD4);
-            writer.Write(entity.FieldD8);
-            writer.Write(entity.FieldDC);
-            writer.Write(entity.FieldE0);
-            writer.Write(entity.FieldE4);
-            writer.Write(entity.FieldE8);
-            writer.Write(entity.FieldEC);
-            writer.Write(entity.FieldF0);
-            writer.Write(entity.FieldF4);
-            writer.Write(entity.FieldF8);
-            writer.Write(entity.FieldFC);
-            writer.Write(entity.Field100);
-            writer.Write(entity.Field104);
-            writer.Write(entity.Field108);
-            writer.Write(entity.Field10C);
-            writer.Write(entity.Field110);
-            writer.Write(entity.Field114);
-            writer.Write(entity.Field118);
-            writer.Write(entity.Field11C);
-            writer.Write(entity.Field120);
-            writer.Write(entity.Field124);
-            writer.Write(entity.Field128);
-            writer.Write(entity.Field12C);
-            writer.Write(entity.Field130);
-            writer.Write(entity.Field134);
-            writer.Write(entity.Field138);
-            writer.Write(entity.Field13C);
-            writer.Write(entity.Field140);
-            writer.Write(entity.Field144);
-            writer.Write(entity.Field148);
-            writer.Write(entity.Field14C);
-            writer.Write(entity.Field150);
-            writer.Write(entity.Field154);
-            writer.Write(entity.Field158);
-            writer.Write(entity.Field15C);
-            writer.Write(entity.Field160);
-            writer.Write(entity.Field164);
-            writer.Write(entity.Field168);
-            writer.Write(entity.Field16C);
-            writer.Write(entity.Field170);
-            writer.Write(entity.Field174);
-            writer.Write(entity.Field178);
-            writer.Write(entity.Field17C);
-            writer.Write(entity.Field180);
-            writer.Write(entity.Field184);
-            writer.Write(entity.Field188);
-            writer.Write(entity.Field18C);
-            writer.Write(entity.Field190);
-            writer.Write(entity.Field194);
-            writer.Write(entity.Field198);
-            writer.Write(entity.Field19C);
-            writer.Write(entity.Field1A0);
-            writer.Write(entity.Field1A4);
-            writer.Write(entity.Field1A8);
-            writer.Write(entity.Field1AC);
-            writer.Write(entity.Field1B0);
-            writer.Write(entity.Field1B4);
-            // union end
+            if (entity.EnemyType == EnemyType.Shriekbat)
+            {
+            }
+            else if (entity.EnemyType == EnemyType.Temroid || entity.EnemyType == EnemyType.Petrasyl1)
+            {
+            }
+            else if (entity.EnemyType == EnemyType.Petrasyl2 || entity.EnemyType == EnemyType.Petrasyl3
+                || entity.EnemyType == EnemyType.Petrasyl4)
+            {
+            }
+            else if (entity.EnemyType == EnemyType.WarWasp || entity.EnemyType == EnemyType.BarbedWarWasp)
+            {
+            }
+            else if (entity.EnemyType == EnemyType.Cretaphid || entity.EnemyType == EnemyType.GreaterIthrak)
+            {
+            }
+            else if (entity.EnemyType == EnemyType.AlimbicTurret || entity.EnemyType == EnemyType.PsychoBit1
+                || entity.EnemyType == EnemyType.PsychoBit1 || entity.EnemyType == EnemyType.FireSpawn)
+            {
+            }
+            else if (entity.EnemyType == EnemyType.CarnivorousPlant)
+            {
+            }
+            else if (entity.EnemyType == EnemyType.Hunter)
+            {
+            }
+            else if (entity.EnemyType == EnemyType.SlenchTurret)
+            {
+            }
+            else if (entity.EnemyType == EnemyType.Gorea1A)
+            {
+            }
+            else if (entity.EnemyType == EnemyType.Gorea2)
+            {
+            }
+            else
+            {
+            } 
             writer.Write(entity.LinkedEntityId);
             writer.Write(entity.SpawnLimit);
             writer.Write(entity.SpawnTotal);

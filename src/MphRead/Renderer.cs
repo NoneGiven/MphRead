@@ -3495,7 +3495,7 @@ namespace MphRead
             }
             else if (entity is EnemySpawnEntity enemySpawn)
             {
-                _sb.Append($" ({enemySpawn.Data.EnemyType}, {enemySpawn.Data.EnemySubtype} / {enemySpawn.Data.EnemyVersion})");
+                _sb.Append($" ({enemySpawn.Data.EnemyType})");
             }
             else if (entity is ItemSpawnEntity itemSpawn)
             {

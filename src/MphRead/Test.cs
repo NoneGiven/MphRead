@@ -136,9 +136,10 @@ namespace MphRead
                             used.Add(data.Message1);
                             used.Add(data.Message2);
                             used.Add(data.Message3);
-                            if (data.EnemyType == EnemyType.Hunter && data.EnemyVersion != 0)
+                            if (data.EnemyType == EnemyType.Hunter && data.Fields.S09.EncounterType != 0)
                             {
-                                Console.WriteLine($"EH {meta.Value.InGameName} {(Hunter)data.EnemySubtype} type {data.EnemyVersion}");
+                                Console.WriteLine($"EH {meta.Value.InGameName} {(Hunter)data.Fields.S09.HunterId}" +
+                                    $" type {data.Fields.S09.EncounterType}");
                             }
                         }
                         else if (entity.Type == EntityType.ItemSpawn)

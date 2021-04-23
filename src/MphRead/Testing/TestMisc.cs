@@ -129,7 +129,7 @@ namespace MphRead.Testing
             Nop();
         }
 
-        public static void ConvertFhRoomToMph(string room, string? over = null)
+        public static void ConvertRoomToMph(string room, string? over = null)
         {
             RoomMetadata meta = Metadata.RoomMetadata[room];
             RoomMetadata? overMeta = null;
@@ -204,6 +204,10 @@ namespace MphRead.Testing
             File.Delete(outPath);
             Console.WriteLine("Done.");
             Nop();
+        }
+
+        public static void ConvertRoomToFh(string room, string? over = null)
+        {
         }
 
         public static void TestCameraShake()
