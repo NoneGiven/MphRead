@@ -155,7 +155,8 @@ namespace MphRead.Testing
             File.WriteAllBytes(colDest, collision);
             Console.WriteLine("Converting animation...");
             // animation
-            string animSrc = Path.Combine(Paths.FileSystem, $@"_archives\{meta.Archive}", Path.GetFileName(meta.AnimationPath));
+            string archive = meta.FirstHunt ? "" : $@"_archives\{meta.Archive}";
+            string animSrc = Path.Combine(Paths.FileSystem, archive, Path.GetFileName(meta.AnimationPath));
             string animDest = Path.Combine(folder, Path.GetFileName(overMeta?.AnimationPath ?? meta.AnimationPath));
             File.Delete(animDest);
             File.Copy(animSrc, animDest);
