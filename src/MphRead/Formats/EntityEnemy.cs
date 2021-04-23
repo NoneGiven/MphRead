@@ -5,15 +5,13 @@ using OpenTK.Mathematics;
 
 namespace MphRead
 {
-    // size: 400
+    // size: 400 (256 + 36 * 4)
     public readonly struct EnemySpawnFields00
     {
         public readonly RawCollisionVolume Volume0;
         public readonly RawCollisionVolume Volume1;
         public readonly RawCollisionVolume Volume2;
         public readonly RawCollisionVolume Volume3;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 36)]
-        public readonly uint[] Padding128;
     }
 
     // size: 400
@@ -24,18 +22,16 @@ namespace MphRead
         public readonly uint Padding1B4;
     }
 
-    // size: 400
+    // size: 400 (204 + 49 * 4)
     public readonly struct EnemySpawnFields02
     {
         public readonly RawCollisionVolume Volume0;
         public readonly Vector3Fx PathVector;
         public readonly RawCollisionVolume Volume1;
         public readonly RawCollisionVolume Volume2;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 49)]
-        public readonly uint[] PaddingF4;
     }
 
-    // size: 400
+    // size: 400 (128 + 68 * 4)
     public readonly struct EnemySpawnFields03
     {
         public readonly RawCollisionVolume Volume0;
@@ -51,11 +47,9 @@ namespace MphRead
         public readonly uint Field9C;
         public readonly uint UnusedA0;
         public readonly uint FieldA4;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 68)]
-        public readonly uint[] PaddingA8;
     }
 
-    // size: 400
+    // size: 400 (100 + 75 * 4)
     public readonly struct EnemySpawnFields04
     {
         public readonly RawCollisionVolume Volume0;
@@ -66,11 +60,9 @@ namespace MphRead
         public readonly Vector3Fx Position;
         public readonly uint Field84;
         public readonly uint Field88;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 75)]
-        public readonly uint[] Padding8C;
     }
 
-    // size: 400
+    // size: 400 (260 + 35 * 4)
     public readonly struct EnemySpawnFields05
     {
         public readonly uint EnemySubtype;
@@ -78,11 +70,9 @@ namespace MphRead
         public readonly RawCollisionVolume Volume1;
         public readonly RawCollisionVolume Volume2;
         public readonly RawCollisionVolume Volume3;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 35)]
-        public readonly uint[] Padding12C;
     }
 
-    // size: 400
+    // size: 400 (264 + 34 * 4)
     public readonly struct EnemySpawnFields06
     {
         public readonly uint EnemySubtype;
@@ -91,18 +81,14 @@ namespace MphRead
         public readonly RawCollisionVolume Volume1;
         public readonly RawCollisionVolume Volume2;
         public readonly RawCollisionVolume Volume3;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 34)]
-        public readonly uint[] Padding130;
     }
 
-    // size: 400
+    // size: 400 (8 + 98 * 4)
     public readonly struct EnemySpawnFields07
     {
         public readonly ushort EnemyHealth;
         public readonly ushort EnemyDamage;
         public readonly uint EnemySubtype;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 98)]
-        public readonly uint[] Padding30;
     }
 
     // size: 400
@@ -113,7 +99,7 @@ namespace MphRead
         public readonly EnemySpawnFieldsWW WarWasp;
     }
 
-    // size: 400
+    // size: 400 (20 + 95 * 4)
     public readonly struct EnemySpawnFields09
     {
         public readonly uint HunterId;
@@ -124,11 +110,9 @@ namespace MphRead
         public readonly ushort Field38; // set in AI data
         public readonly byte HunterColor;
         public readonly byte HunterChance;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 95)]
-        public readonly uint[] Padding3C;
     }
 
-    // size: 400
+    // size: 400 (140 + 65 * 4)
     public readonly struct EnemySpawnFields10
     {
         public readonly uint EnemySubtype;
@@ -136,29 +120,23 @@ namespace MphRead
         public readonly RawCollisionVolume Volume0;
         public readonly RawCollisionVolume Volume1;
         public readonly uint FieldB0;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 65)]
-        public readonly uint[] PaddingB4;
     }
 
-    // size: 400
+    // size: 400 (32 + 92 * 4)
     public readonly struct EnemySpawnFields11
     {
         public readonly Vector3Fx Sphere1Position;
         public readonly Fixed Sphere1Radius;
         public readonly Vector3Fx Sphere2Position;
         public readonly Fixed Sphere2Radius;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 92)]
-        public readonly uint[] Padding48;
     }
 
-    // size: 400
+    // size: 400 (20 + 95 * 4)
     public readonly struct EnemySpawnFields12
     {
         public readonly Vector3Fx Field28;
         public readonly uint Field34;
         public readonly uint Field38;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 95)]
-        public readonly uint[] Padding3C;
     }
 
     // size: 400
@@ -167,8 +145,22 @@ namespace MphRead
         public readonly RawCollisionVolume Volume0;
         public readonly RawCollisionVolume Volume1;
         public readonly RawCollisionVolume Volume2;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public readonly Vector3Fx[] MovementVectors;
+        public readonly Vector3Fx MovementVector00;
+        public readonly Vector3Fx MovementVector01;
+        public readonly Vector3Fx MovementVector02;
+        public readonly Vector3Fx MovementVector03;
+        public readonly Vector3Fx MovementVector04;
+        public readonly Vector3Fx MovementVector05;
+        public readonly Vector3Fx MovementVector06;
+        public readonly Vector3Fx MovementVector07;
+        public readonly Vector3Fx MovementVector08;
+        public readonly Vector3Fx MovementVector09;
+        public readonly Vector3Fx MovementVector10;
+        public readonly Vector3Fx MovementVector11;
+        public readonly Vector3Fx MovementVector12;
+        public readonly Vector3Fx MovementVector13;
+        public readonly Vector3Fx MovementVector14;
+        public readonly Vector3Fx MovementVector15;
         public readonly byte Field1A8;
         public readonly byte Padding1A9;
         public readonly ushort Padding1AA;
@@ -364,8 +356,8 @@ namespace MphRead.Editor
             {
                 return 5;
             }
-            if (type == EnemyType.AlimbicTurret || type == EnemyType.PsychoBit1
-                || type == EnemyType.PsychoBit1 || type == EnemyType.FireSpawn)
+            if (type == EnemyType.AlimbicTurret || type == EnemyType.PsychoBit1 || type == EnemyType.PsychoBit1
+                || type == EnemyType.Voldrum1 || type == EnemyType.FireSpawn)
             {
                 return 6;
             }
@@ -441,7 +433,7 @@ namespace MphRead.Editor
             }
             else if (spawnerType == 3)
             {
-                // sktodo: check unused fields
+                // sktodo: set and write unused fields
                 Volume0 = new CollisionVolume(raw.Fields.S03.Volume0);
                 EnemyPosition = raw.Fields.S03.Position.ToFloatVector();
                 EnemyFacing = raw.Fields.S03.Facing.ToFloatVector();
@@ -462,10 +454,22 @@ namespace MphRead.Editor
                     Volume0 = new CollisionVolume(fields.Volume0);
                     Volume1 = new CollisionVolume(fields.Volume1);
                     Volume2 = new CollisionVolume(fields.Volume2);
-                    foreach (Vector3Fx vector in fields.MovementVectors)
-                    {
-                        MovementVectors.Add(vector.ToFloatVector());
-                    }
+                    MovementVectors.Add(fields.MovementVector00.ToFloatVector());
+                    MovementVectors.Add(fields.MovementVector01.ToFloatVector());
+                    MovementVectors.Add(fields.MovementVector02.ToFloatVector());
+                    MovementVectors.Add(fields.MovementVector03.ToFloatVector());
+                    MovementVectors.Add(fields.MovementVector04.ToFloatVector());
+                    MovementVectors.Add(fields.MovementVector05.ToFloatVector());
+                    MovementVectors.Add(fields.MovementVector06.ToFloatVector());
+                    MovementVectors.Add(fields.MovementVector07.ToFloatVector());
+                    MovementVectors.Add(fields.MovementVector08.ToFloatVector());
+                    MovementVectors.Add(fields.MovementVector09.ToFloatVector());
+                    MovementVectors.Add(fields.MovementVector10.ToFloatVector());
+                    MovementVectors.Add(fields.MovementVector11.ToFloatVector());
+                    MovementVectors.Add(fields.MovementVector12.ToFloatVector());
+                    MovementVectors.Add(fields.MovementVector13.ToFloatVector());
+                    MovementVectors.Add(fields.MovementVector14.ToFloatVector());
+                    MovementVectors.Add(fields.MovementVector15.ToFloatVector());
                     Unknown02 = fields.Field1A8;
                     MovementType = fields.MovementType;
                 }
