@@ -1401,17 +1401,17 @@ namespace MphRead.Utility
             else if (entity.SpawnerType == 3)
             {
                 writer.WriteVolume(entity.Volume0);
-                writer.Write(padInt); // Unused68
-                writer.Write(padInt); // Unused6C
-                writer.Write(padInt); // Unused70
-                writer.Write(padInt); // Unused74
-                writer.Write(padInt); // Unused78
-                writer.Write(padInt); // Unused7C
-                writer.Write(padInt); // Unused80
+                writer.Write(entity.Unused68);
+                writer.Write(entity.Unused6C);
+                writer.Write(entity.Unused70);
+                writer.Write(entity.Unused74);
+                writer.Write(entity.Unused78);
+                writer.Write(entity.Unused7C);
+                writer.Write(entity.Unused80);
                 writer.WriteVector3(entity.EnemyFacing);
                 writer.WriteVector3(entity.EnemyPosition);
                 writer.Write(entity.Unknown00);
-                writer.Write(padInt); // UnusedA0
+                writer.Write(entity.UnusedA0);
                 writer.Write(entity.Unknown01);
                 for (int i = 0; i < 68; i++)
                 {
@@ -1421,10 +1421,10 @@ namespace MphRead.Utility
             else if (entity.SpawnerType == 4)
             {
                 writer.WriteVolume(entity.Volume0);
-                writer.Write(padInt); // Unused68
-                writer.Write(padInt); // Unused6C
-                writer.Write(padInt); // Unused70
-                writer.Write(padInt); // Unused74
+                writer.Write(entity.Unused68);
+                writer.Write(entity.Unused6C);
+                writer.Write(entity.Unused70);
+                writer.Write(entity.Unused74);
                 writer.WriteVector3(entity.EnemyPosition);
                 writer.Write(entity.Unknown00);
                 writer.Write(entity.Unknown01);

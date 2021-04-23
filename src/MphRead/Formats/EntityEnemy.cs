@@ -298,6 +298,14 @@ namespace MphRead.Editor
         public Vector3 EnemyPosition { get; set; }
         public uint Unknown00 { get; set; }
         public uint Unknown01 { get; set; }
+        public uint Unused68 { get; set; }
+        public uint Unused6C { get; set; }
+        public uint Unused70 { get; set; }
+        public uint Unused74 { get; set; }
+        public uint Unused78 { get; set; }
+        public uint Unused7C { get; set; }
+        public uint Unused80 { get; set; }
+        public uint UnusedA0 { get; set; }
 
         // carnivorous plant
         public ushort EnemyHealth { get; set; }
@@ -439,6 +447,14 @@ namespace MphRead.Editor
                 EnemyFacing = raw.Fields.S03.Facing.ToFloatVector();
                 Unknown00 = raw.Fields.S03.Field9C;
                 Unknown01 = raw.Fields.S03.FieldA4;
+                Unused68 = raw.Fields.S03.Unused68;
+                Unused6C = raw.Fields.S03.Unused6C;
+                Unused70 = raw.Fields.S03.Unused70;
+                Unused74 = raw.Fields.S03.Unused74;
+                Unused78 = raw.Fields.S03.Unused78;
+                Unused7C = raw.Fields.S03.Unused7C;
+                Unused80 = raw.Fields.S03.Unused80;
+                UnusedA0 = raw.Fields.S03.UnusedA0;
             }
             else if (spawnerType == 4)
             {
@@ -446,6 +462,10 @@ namespace MphRead.Editor
                 EnemyPosition = raw.Fields.S04.Position.ToFloatVector();
                 Unknown00 = raw.Fields.S04.Field84;
                 Unknown01 = raw.Fields.S04.Field88;
+                Unused68 = raw.Fields.S04.Unused68;
+                Unused6C = raw.Fields.S04.Unused6C;
+                Unused70 = raw.Fields.S04.Unused70;
+                Unused74 = raw.Fields.S04.Unused74;
             }
             else if (spawnerType == 1 || spawnerType == 8)
             {
