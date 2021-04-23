@@ -1372,46 +1372,184 @@ namespace MphRead.Utility
 
         private static void WriteMphEnemySpawn(EnemySpawnEntityEditor entity, BinaryWriter writer)
         {
+            byte padByte = 0;
             ushort padShort = 0;
+            uint padInt = 0;
             writer.Write((uint)entity.EnemyType);
             if (entity.EnemyType == EnemyType.Shriekbat)
             {
+                writer.WriteVolume(entity.Volume0);
+                writer.WriteVector3(entity.PathVector);
+                writer.WriteVolume(entity.Volume1);
+                writer.WriteVolume(entity.Volume2);
+                for (int i = 0; i < 49; i++)
+                {
+                    writer.Write(padInt);
+                }
             }
             else if (entity.EnemyType == EnemyType.Temroid || entity.EnemyType == EnemyType.Petrasyl1)
             {
+                writer.WriteVolume(entity.Volume0);
+                writer.Write(padInt); // Unused68
+                writer.Write(padInt); // Unused6C
+                writer.Write(padInt); // Unused70
+                writer.Write(padInt); // Unused74
+                writer.Write(padInt); // Unused78
+                writer.Write(padInt); // Unused7C
+                writer.Write(padInt); // Unused80
+                writer.WriteVector3(entity.EnemyFacing);
+                writer.WriteVector3(entity.EnemyPosition);
+                writer.Write(entity.Unknown00);
+                writer.Write(padInt); // UnusedA0
+                writer.Write(entity.Unknown01);
+                for (int i = 0; i < 68; i++)
+                {
+                    writer.Write(padInt);
+                }
             }
             else if (entity.EnemyType == EnemyType.Petrasyl2 || entity.EnemyType == EnemyType.Petrasyl3
                 || entity.EnemyType == EnemyType.Petrasyl4)
             {
+                writer.WriteVolume(entity.Volume0);
+                writer.Write(padInt); // Unused68
+                writer.Write(padInt); // Unused6C
+                writer.Write(padInt); // Unused70
+                writer.Write(padInt); // Unused74
+                writer.WriteVector3(entity.EnemyPosition);
+                writer.Write(entity.Unknown00);
+                writer.Write(entity.Unknown01);
+                for (int i = 0; i < 75; i++)
+                {
+                    writer.Write(padInt);
+                }
             }
             else if (entity.EnemyType == EnemyType.WarWasp || entity.EnemyType == EnemyType.BarbedWarWasp)
             {
+                Debug.Assert(entity.MovementVectors.Count == 16);
+                void WriteWarWaspFields()
+                {
+                    writer.WriteVolume(entity.Volume0);
+                    writer.WriteVolume(entity.Volume1);
+                    writer.WriteVolume(entity.Volume2);
+                    foreach (Vector3 vector in entity.MovementVectors)
+                    {
+                        writer.WriteVector3(vector);
+                    }
+                    writer.Write(entity.Unknown02);
+                    writer.Write(padByte); // Padding1A9
+                    writer.Write(padShort); // Padding1AA
+                    writer.Write(entity.MovementType);
+                }
+                if (entity.EnemyType == EnemyType.WarWasp)
+                {
+                    WriteWarWaspFields();
+                    writer.Write(padInt); // Padding1B0;
+                    writer.Write(padInt); // Padding1B4;
+                }
+                else
+                {
+                    writer.Write(entity.EnemySubtype);
+                    writer.Write(entity.EnemyVersion);
+                    WriteWarWaspFields();
+                }
             }
             else if (entity.EnemyType == EnemyType.Cretaphid || entity.EnemyType == EnemyType.GreaterIthrak)
             {
+                writer.Write(entity.EnemySubtype);
+                writer.WriteVolume(entity.Volume0);
+                writer.WriteVolume(entity.Volume1);
+                writer.WriteVolume(entity.Volume2);
+                writer.WriteVolume(entity.Volume3);
+                for (int i = 0; i < 35; i++)
+                {
+                    writer.Write(padInt);
+                }
             }
             else if (entity.EnemyType == EnemyType.AlimbicTurret || entity.EnemyType == EnemyType.PsychoBit1
                 || entity.EnemyType == EnemyType.PsychoBit1 || entity.EnemyType == EnemyType.FireSpawn)
             {
+                writer.Write(entity.EnemySubtype);
+                writer.Write(entity.EnemyVersion);
+                writer.WriteVolume(entity.Volume0);
+                writer.WriteVolume(entity.Volume1);
+                writer.WriteVolume(entity.Volume2);
+                writer.WriteVolume(entity.Volume3);
+                for (int i = 0; i < 34; i++)
+                {
+                    writer.Write(padInt);
+                }
             }
             else if (entity.EnemyType == EnemyType.CarnivorousPlant)
             {
+                writer.Write(entity.EnemyHealth);
+                writer.Write(entity.EnemyDamage);
+                writer.Write(entity.EnemySubtype);
+                for (int i = 0; i < 98; i++)
+                {
+                    writer.Write(padInt);
+                }
             }
             else if (entity.EnemyType == EnemyType.Hunter)
             {
+                writer.Write((uint)entity.Hunter);
+                writer.Write(entity.EncounterType);
+                writer.Write(entity.HunterWeapon);
+                writer.Write(entity.HunterHealth);
+                writer.Write(entity.HunterHealthMax);
+                writer.Write(entity.Unknown03);
+                writer.Write(entity.HunterColor);
+                writer.Write(entity.HunterChance);
+                for (int i = 0; i < 95; i++)
+                {
+                    writer.Write(padInt);
+                }
             }
             else if (entity.EnemyType == EnemyType.SlenchTurret)
             {
+                writer.Write(entity.EnemySubtype);
+                writer.Write(entity.EnemyVersion);
+                writer.WriteVolume(entity.Volume0);
+                writer.WriteVolume(entity.Volume1);
+                writer.Write(entity.Unknown04);
+                for (int i = 0; i < 65; i++)
+                {
+                    writer.Write(padInt);
+                }
             }
             else if (entity.EnemyType == EnemyType.Gorea1A)
             {
+                Debug.Assert(entity.Volume0.Type == VolumeType.Sphere);
+                Debug.Assert(entity.Volume1.Type == VolumeType.Sphere);
+                writer.WriteVector3(entity.Volume0.SpherePosition);
+                writer.WriteFloat(entity.Volume0.SphereRadius);
+                writer.WriteVector3(entity.Volume1.SpherePosition);
+                writer.WriteFloat(entity.Volume1.SphereRadius);
+                for (int i = 0; i < 92; i++)
+                {
+                    writer.Write(padInt);
+                }
             }
             else if (entity.EnemyType == EnemyType.Gorea2)
             {
+                writer.WriteVector3(entity.Unknown05);
+                writer.Write(entity.Unknown06);
+                writer.Write(entity.Unknown07);
+                for (int i = 0; i < 95; i++)
+                {
+                    writer.Write(padInt);
+                }
             }
             else
             {
-            } 
+                writer.WriteVolume(entity.Volume0);
+                writer.WriteVolume(entity.Volume1);
+                writer.WriteVolume(entity.Volume2);
+                writer.WriteVolume(entity.Volume3);
+                for (int i = 0; i < 36; i++)
+                {
+                    writer.Write(padInt);
+                }
+            }
             writer.Write(entity.LinkedEntityId);
             writer.Write(entity.SpawnLimit);
             writer.Write(entity.SpawnTotal);
