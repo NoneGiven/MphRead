@@ -156,8 +156,7 @@ namespace MphRead.Testing
             File.WriteAllBytes(colDest, collision);
             Console.WriteLine("Converting animation...");
             // animation
-            string archive = meta.FirstHunt ? "" : $@"_archives\{meta.Archive}";
-            string animSrc = Path.Combine(fileSystem, archive, Path.GetFileName(meta.AnimationPath));
+            string animSrc = Path.Combine(fileSystem, meta.AnimationPath);
             string animDest = Path.Combine(folder, Path.GetFileName(overMeta?.AnimationPath ?? meta.AnimationPath));
             File.Delete(animDest);
             File.Copy(animSrc, animDest);
@@ -166,8 +165,8 @@ namespace MphRead.Testing
             {
                 Console.WriteLine("Copying entities...");
                 Console.WriteLine("Copying nodedata...");
-                string entSrc = Path.Combine(fileSystem, @"levels\entities", meta.EntityPath);
-                string nodeSrc = Path.Combine(fileSystem, @"levels\nodeData", meta.NodePath);
+                string entSrc = Path.Combine(fileSystem, meta.EntityPath);
+                string nodeSrc = Path.Combine(fileSystem, meta.NodePath);
                 string entDest = Path.Combine(folder, meta.EntityPath);
                 string nodeDest = Path.Combine(folder, meta.NodePath);
                 if (overMeta != null)
