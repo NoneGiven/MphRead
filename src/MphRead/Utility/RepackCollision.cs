@@ -182,8 +182,15 @@ namespace MphRead.Utility
         private static List<CollisionDataEditor> GetEditors(FhCollisionInfo info)
         {
             var editors = new List<CollisionDataEditor>();
-            foreach (FhCollisionData data in info.Data)
+            for (int i = 0; i < info.Header.DataCount; i++)
             {
+                ushort dataIndex = info.DataIndices[info.Header.DataStartIndex + i];
+                if (dataIndex > info.Data.Count)
+                {
+                    // this happens in FH_E3
+                    continue;
+                }
+                FhCollisionData data = info.Data[dataIndex];
                 Vector4 plane = info.Planes[data.PlaneIndex];
                 Vector3 normal = plane.Xyz;
                 int axis = GetPrimaryAxis(normal);
@@ -192,10 +199,10 @@ namespace MphRead.Utility
                     LayerMask = (ushort)(4 | axis),
                     Plane = new Vector4(normal, plane.W)
                 };
-                for (int i = 0; i < data.VectorCount; i++)
+                for (int j = 0; j < data.VectorCount; j++)
                 {
                     // use Point2Index so vertex order is the same as MPH
-                    editor.Points.Add(info.Points[info.Vectors[data.VectorStartIndex + i].Point2Index]);
+                    editor.Points.Add(info.Points[info.Vectors[data.VectorStartIndex + j].Point2Index]);
                 }
                 editors.Add(editor);
             }
