@@ -2643,7 +2643,7 @@ namespace MphRead
                         collisionPath: "Gorea_b1_collision.bin",
                         texturePath: "Gorea_b1_tex.bin",
                         entityPath: "Gorea_b1_Ent.bin",
-                        nodePath: "Gorea_b1_Node.bin",
+                        nodePath: null, // metadata has Gorea_b1_Node.bin, but there's no such file
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(40, 0, 0),
                         timeLimit: TimeLimit(4, 0, 0),
