@@ -1376,7 +1376,18 @@ namespace MphRead.Utility
             ushort padShort = 0;
             uint padInt = 0;
             writer.Write((uint)entity.EnemyType);
-            if (entity.EnemyType == EnemyType.Shriekbat)
+            if (entity.SpawnerType == 0)
+            {
+                writer.WriteVolume(entity.Volume0);
+                writer.WriteVolume(entity.Volume1);
+                writer.WriteVolume(entity.Volume2);
+                writer.WriteVolume(entity.Volume3);
+                for (int i = 0; i < 36; i++)
+                {
+                    writer.Write(padInt);
+                }
+            }
+            else if (entity.SpawnerType == 1)
             {
                 writer.WriteVolume(entity.Volume0);
                 writer.WriteVector3(entity.PathVector);
@@ -1387,7 +1398,7 @@ namespace MphRead.Utility
                     writer.Write(padInt);
                 }
             }
-            else if (entity.EnemyType == EnemyType.Temroid || entity.EnemyType == EnemyType.Petrasyl1)
+            else if (entity.SpawnerType == 3)
             {
                 writer.WriteVolume(entity.Volume0);
                 writer.Write(padInt); // Unused68
@@ -1407,8 +1418,7 @@ namespace MphRead.Utility
                     writer.Write(padInt);
                 }
             }
-            else if (entity.EnemyType == EnemyType.Petrasyl2 || entity.EnemyType == EnemyType.Petrasyl3
-                || entity.EnemyType == EnemyType.Petrasyl4)
+            else if (entity.SpawnerType == 4)
             {
                 writer.WriteVolume(entity.Volume0);
                 writer.Write(padInt); // Unused68
@@ -1423,7 +1433,7 @@ namespace MphRead.Utility
                     writer.Write(padInt);
                 }
             }
-            else if (entity.EnemyType == EnemyType.WarWasp || entity.EnemyType == EnemyType.BarbedWarWasp)
+            else if (entity.SpawnerType == 1 || entity.SpawnerType == 8)
             {
                 Debug.Assert(entity.MovementVectors.Count == 16);
                 void WriteWarWaspFields()
@@ -1440,7 +1450,7 @@ namespace MphRead.Utility
                     writer.Write(padShort); // Padding1AA
                     writer.Write(entity.MovementType);
                 }
-                if (entity.EnemyType == EnemyType.WarWasp)
+                if (entity.SpawnerType == 1)
                 {
                     WriteWarWaspFields();
                     writer.Write(padInt); // Padding1B0;
@@ -1453,7 +1463,7 @@ namespace MphRead.Utility
                     WriteWarWaspFields();
                 }
             }
-            else if (entity.EnemyType == EnemyType.Cretaphid || entity.EnemyType == EnemyType.GreaterIthrak)
+            else if (entity.SpawnerType == 5)
             {
                 writer.Write(entity.EnemySubtype);
                 writer.WriteVolume(entity.Volume0);
@@ -1465,8 +1475,7 @@ namespace MphRead.Utility
                     writer.Write(padInt);
                 }
             }
-            else if (entity.EnemyType == EnemyType.AlimbicTurret || entity.EnemyType == EnemyType.PsychoBit1
-                || entity.EnemyType == EnemyType.PsychoBit1 || entity.EnemyType == EnemyType.FireSpawn)
+            else if (entity.SpawnerType == 6)
             {
                 writer.Write(entity.EnemySubtype);
                 writer.Write(entity.EnemyVersion);
@@ -1479,7 +1488,7 @@ namespace MphRead.Utility
                     writer.Write(padInt);
                 }
             }
-            else if (entity.EnemyType == EnemyType.CarnivorousPlant)
+            else if (entity.SpawnerType == 7)
             {
                 writer.Write(entity.EnemyHealth);
                 writer.Write(entity.EnemyDamage);
@@ -1489,7 +1498,7 @@ namespace MphRead.Utility
                     writer.Write(padInt);
                 }
             }
-            else if (entity.EnemyType == EnemyType.Hunter)
+            else if (entity.SpawnerType == 9)
             {
                 writer.Write((uint)entity.Hunter);
                 writer.Write(entity.EncounterType);
@@ -1504,7 +1513,7 @@ namespace MphRead.Utility
                     writer.Write(padInt);
                 }
             }
-            else if (entity.EnemyType == EnemyType.SlenchTurret)
+            else if (entity.SpawnerType == 10)
             {
                 writer.Write(entity.EnemySubtype);
                 writer.Write(entity.EnemyVersion);
@@ -1516,7 +1525,7 @@ namespace MphRead.Utility
                     writer.Write(padInt);
                 }
             }
-            else if (entity.EnemyType == EnemyType.Gorea1A)
+            else if (entity.SpawnerType == 11)
             {
                 Debug.Assert(entity.Volume0.Type == VolumeType.Sphere);
                 Debug.Assert(entity.Volume1.Type == VolumeType.Sphere);
@@ -1529,7 +1538,7 @@ namespace MphRead.Utility
                     writer.Write(padInt);
                 }
             }
-            else if (entity.EnemyType == EnemyType.Gorea2)
+            else if (entity.SpawnerType == 12)
             {
                 writer.WriteVector3(entity.Unknown05);
                 writer.Write(entity.Unknown06);
@@ -1541,14 +1550,7 @@ namespace MphRead.Utility
             }
             else
             {
-                writer.WriteVolume(entity.Volume0);
-                writer.WriteVolume(entity.Volume1);
-                writer.WriteVolume(entity.Volume2);
-                writer.WriteVolume(entity.Volume3);
-                for (int i = 0; i < 36; i++)
-                {
-                    writer.Write(padInt);
-                }
+                throw new InvalidOperationException();
             }
             writer.Write(entity.LinkedEntityId);
             writer.Write(entity.SpawnLimit);

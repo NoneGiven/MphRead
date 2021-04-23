@@ -334,6 +334,69 @@ namespace MphRead.Editor
         public uint Unknown06 { get; set; }
         public uint Unknown07 { get; set; }
 
+        public int SpawnerType => GetSpawnerType(EnemyType);
+
+        public static int GetSpawnerType(EnemyType type)
+        {
+            if (type == EnemyType.Zoomer || type == EnemyType.Geemer || type == EnemyType.Blastcap
+                || type == EnemyType.Voldrum2 || type == EnemyType.Quadtroid || type == EnemyType.CrashPillar
+                || type == EnemyType.Slench || type == EnemyType.LesserIthrak || type == EnemyType.Trocra)
+            {
+                return 0;
+            }
+            if (type == EnemyType.WarWasp)
+            {
+                return 1;
+            }
+            if (type == EnemyType.Shriekbat)
+            {
+                return 2;
+            }
+            if (type == EnemyType.Temroid || type == EnemyType.Petrasyl1)
+            {
+                return 3;
+            }
+            if (type == EnemyType.Petrasyl2 || type == EnemyType.Petrasyl3 || type == EnemyType.Petrasyl4)
+            {
+                return 4;
+            }
+            if (type == EnemyType.Cretaphid || type == EnemyType.GreaterIthrak)
+            {
+                return 5;
+            }
+            if (type == EnemyType.AlimbicTurret || type == EnemyType.PsychoBit1
+                || type == EnemyType.PsychoBit1 || type == EnemyType.FireSpawn)
+            {
+                return 6;
+            }
+            if (type == EnemyType.CarnivorousPlant)
+            {
+                return 7;
+            }
+            if (type == EnemyType.BarbedWarWasp)
+            {
+                return 8;
+            }
+            if (type == EnemyType.Hunter)
+            {
+                return 9;
+            }
+            if (type == EnemyType.SlenchTurret)
+            {
+                return 10;
+            }
+            if (type == EnemyType.Gorea1A)
+            {
+                return 11;
+            }
+            if (type == EnemyType.Gorea2)
+            {
+                return 12;
+            }
+            Debug.Assert(false, $"Unexpected enemy type {type} for spawner entity.");
+            return 0;
+        }
+
         public EnemySpawnEntityEditor() : base(EntityType.EnemySpawn)
         {
         }
@@ -361,23 +424,22 @@ namespace MphRead.Editor
             EntityId3 = raw.EntityId3;
             Message3 = raw.Message3;
             ItemType = raw.ItemType;
-            if (EnemyType == EnemyType.Zoomer || EnemyType == EnemyType.Geemer || EnemyType == EnemyType.Blastcap
-                || EnemyType == EnemyType.Voldrum2 || EnemyType == EnemyType.Quadtroid || EnemyType == EnemyType.CrashPillar
-                || EnemyType == EnemyType.Slench || EnemyType == EnemyType.LesserIthrak || EnemyType == EnemyType.Trocra)
+            int spawnerType = GetSpawnerType(EnemyType);
+            if (spawnerType == 0)
             {
                 Volume0 = new CollisionVolume(raw.Fields.S00.Volume0);
                 Volume1 = new CollisionVolume(raw.Fields.S00.Volume1);
                 Volume2 = new CollisionVolume(raw.Fields.S00.Volume2);
                 Volume3 = new CollisionVolume(raw.Fields.S00.Volume3);
             }
-            else if (EnemyType == EnemyType.Shriekbat)
+            else if (spawnerType == 2)
             {
                 Volume0 = new CollisionVolume(raw.Fields.S02.Volume0);
                 Volume1 = new CollisionVolume(raw.Fields.S02.Volume1);
                 Volume2 = new CollisionVolume(raw.Fields.S02.Volume2);
                 PathVector = raw.Fields.S02.PathVector.ToFloatVector();
             }
-            else if (EnemyType == EnemyType.Temroid || EnemyType == EnemyType.Petrasyl1)
+            else if (spawnerType == 3)
             {
                 // sktodo: check unused fields
                 Volume0 = new CollisionVolume(raw.Fields.S03.Volume0);
@@ -386,14 +448,14 @@ namespace MphRead.Editor
                 Unknown00 = raw.Fields.S03.Field9C;
                 Unknown01 = raw.Fields.S03.FieldA4;
             }
-            else if (EnemyType == EnemyType.Petrasyl2 || EnemyType == EnemyType.Petrasyl3 || EnemyType == EnemyType.Petrasyl4)
+            else if (spawnerType == 4)
             {
                 Volume0 = new CollisionVolume(raw.Fields.S04.Volume0);
                 EnemyPosition = raw.Fields.S04.Position.ToFloatVector();
                 Unknown00 = raw.Fields.S04.Field84;
                 Unknown01 = raw.Fields.S04.Field88;
             }
-            else if (EnemyType == EnemyType.WarWasp || EnemyType == EnemyType.BarbedWarWasp)
+            else if (spawnerType == 1 || spawnerType == 8)
             {
                 void SetWarWaspFields(EnemySpawnFieldsWW fields)
                 {
@@ -418,7 +480,7 @@ namespace MphRead.Editor
                     SetWarWaspFields(raw.Fields.S08.WarWasp);
                 }
             }
-            else if (EnemyType == EnemyType.Cretaphid || EnemyType == EnemyType.GreaterIthrak)
+            else if (spawnerType == 5)
             {
                 EnemySubtype = raw.Fields.S05.EnemySubtype;
                 Volume0 = new CollisionVolume(raw.Fields.S05.Volume0);
@@ -426,8 +488,7 @@ namespace MphRead.Editor
                 Volume2 = new CollisionVolume(raw.Fields.S05.Volume2);
                 Volume3 = new CollisionVolume(raw.Fields.S05.Volume3);
             }
-            else if (EnemyType == EnemyType.AlimbicTurret || EnemyType == EnemyType.PsychoBit1
-                || EnemyType == EnemyType.PsychoBit1 || EnemyType == EnemyType.FireSpawn)
+            else if (spawnerType == 6)
             {
                 EnemySubtype = raw.Fields.S06.EnemySubtype;
                 EnemyVersion = raw.Fields.S06.EnemyVersion;
@@ -436,13 +497,13 @@ namespace MphRead.Editor
                 Volume2 = new CollisionVolume(raw.Fields.S06.Volume2);
                 Volume3 = new CollisionVolume(raw.Fields.S06.Volume3);
             }
-            else if (EnemyType == EnemyType.CarnivorousPlant)
+            else if (spawnerType == 7)
             {
                 EnemySubtype = raw.Fields.S07.EnemySubtype;
                 EnemyHealth = raw.Fields.S07.EnemyHealth;
                 EnemyDamage = raw.Fields.S07.EnemyDamage;
             }
-            else if (EnemyType == EnemyType.Hunter)
+            else if (spawnerType == 9)
             {
                 Hunter = (Hunter)raw.Fields.S09.HunterId;
                 EncounterType = raw.Fields.S09.EncounterType;
@@ -453,7 +514,7 @@ namespace MphRead.Editor
                 HunterColor = raw.Fields.S09.HunterColor;
                 HunterChance = raw.Fields.S09.HunterChance;
             }
-            else if (EnemyType == EnemyType.SlenchTurret)
+            else if (spawnerType == 10)
             {
                 EnemySubtype = raw.Fields.S10.EnemySubtype;
                 EnemyVersion = raw.Fields.S10.EnemyVersion;
@@ -461,21 +522,17 @@ namespace MphRead.Editor
                 Volume1 = new CollisionVolume(raw.Fields.S10.Volume1);
                 Unknown04 = raw.Fields.S10.FieldB0;
             }
-            else if (EnemyType == EnemyType.Gorea1A)
+            else if (spawnerType == 11)
             {
                 Volume0 = new CollisionVolume(raw.Fields.S11.Sphere1Position.ToFloatVector(), raw.Fields.S11.Sphere1Radius.FloatValue);
                 Volume1 = new CollisionVolume(raw.Fields.S11.Sphere2Position.ToFloatVector(), raw.Fields.S11.Sphere2Radius.FloatValue);
             }
-            else if (EnemyType == EnemyType.Gorea2)
+            else if (spawnerType == 12)
             {
                 Unknown05 = raw.Fields.S12.Field28.ToFloatVector();
                 Unknown06 = raw.Fields.S12.Field34;
                 Unknown07 = raw.Fields.S12.Field38;
             }
-            else
-            {
-                Debug.Assert(false, $"Unexpected enemy type {EnemyType} on spawner entity.");
-            } 
         }
     }
 
