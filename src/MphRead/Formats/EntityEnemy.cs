@@ -83,12 +83,13 @@ namespace MphRead
         public readonly RawCollisionVolume Volume3;
     }
 
-    // size: 400 (8 + 98 * 4)
+    // size: 400 (72 + 82 * 4)
     public readonly struct EnemySpawnFields07
     {
         public readonly ushort EnemyHealth;
         public readonly ushort EnemyDamage;
         public readonly uint EnemySubtype;
+        public readonly RawCollisionVolume Volume0; // unused
     }
 
     // size: 400
@@ -526,6 +527,7 @@ namespace MphRead.Editor
                 EnemySubtype = raw.Fields.S07.EnemySubtype;
                 EnemyHealth = raw.Fields.S07.EnemyHealth;
                 EnemyDamage = raw.Fields.S07.EnemyDamage;
+                Volume0 = new CollisionVolume(raw.Fields.S07.Volume0);
             }
             else if (spawnerType == 9)
             {

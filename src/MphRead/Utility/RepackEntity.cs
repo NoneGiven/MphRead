@@ -1387,7 +1387,7 @@ namespace MphRead.Utility
                     writer.Write(padInt);
                 }
             }
-            else if (entity.SpawnerType == 1)
+            else if (entity.SpawnerType == 2)
             {
                 writer.WriteVolume(entity.Volume0);
                 writer.WriteVector3(entity.PathVector);
@@ -1493,7 +1493,8 @@ namespace MphRead.Utility
                 writer.Write(entity.EnemyHealth);
                 writer.Write(entity.EnemyDamage);
                 writer.Write(entity.EnemySubtype);
-                for (int i = 0; i < 98; i++)
+                writer.WriteVolume(entity.Volume0);
+                for (int i = 0; i < 82; i++)
                 {
                     writer.Write(padInt);
                 }
