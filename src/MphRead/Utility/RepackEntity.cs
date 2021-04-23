@@ -600,12 +600,19 @@ namespace MphRead.Utility
                         FhTriggerType.Sphere => jumpPad.Sphere,
                         _ => throw new ProgramException($"Invalid FH jump pad volume type {jumpPad.VolumeType}")
                     };
+                    // FH beam vectors are absolute, so we need to make it relative to the parent transform
+                    var transform = new Matrix3(EntityBase.GetTransformMatrix(jumpPad.Facing, jumpPad.Up));
+                    Vector3 beamVector = jumpPad.BeamVector;
+                    if (transform != Matrix3.Identity)
+                    {
+                        beamVector *= transform.Inverted();
+                    }
                     //BeamType is ignored
                     converted.Add(new JumpPadEntityEditor()
                     {
                         Id = jumpPad.Id,
                         Active = true,
-                        BeamVector = jumpPad.BeamVector,
+                        BeamVector = beamVector,
                         ControlLockTime = (ushort)jumpPad.ControlLockTime,
                         CooldownTime = (ushort)jumpPad.CooldownTime,
                         Facing = jumpPad.Facing,
