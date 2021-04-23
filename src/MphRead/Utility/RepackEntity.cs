@@ -237,7 +237,7 @@ namespace MphRead.Utility
                     FhMessage.SetActive => Message.SetActive,
                     FhMessage.Complete => Message.Complete,
                     FhMessage.Impact => Message.Impact,
-                    FhMessage.Death => Message.Destroyed,
+                    FhMessage.Death => Message.Death,
                     FhMessage.Unknown21 => Message.Unknown22,
                     _ => Message.UnlockOubliette
                 };
@@ -628,7 +628,7 @@ namespace MphRead.Utility
                         Volume = volume
                     });
                 }
-                else if (entity is PlayerSpawnEntityEditor || entity is PointModuleEntityEditor || entity is MorphCameraEntityEditor)
+                else if (entity is PlayerSpawnEntityEditor || entity is MorphCameraEntityEditor)
                 {
                     entity.Type = entity.Type switch
                     {
