@@ -140,6 +140,7 @@ namespace MphRead.Testing
             Debug.Assert(meta.FirstHunt || meta.Hybrid);
             Debug.Assert(meta.EntityPath != null && meta.NodePath != null);
             string folder = Path.Combine(Paths.Export, "_pack");
+            string fileSystem = meta.FirstHunt ? Paths.FhFileSystem : Paths.FileSystem;
             Console.WriteLine("Converting model...");
             // model, texure
             (byte[] model, byte[] texture) = Repack.SeparateRoomTextures(room);
@@ -156,7 +157,7 @@ namespace MphRead.Testing
             Console.WriteLine("Converting animation...");
             // animation
             string archive = meta.FirstHunt ? "" : $@"_archives\{meta.Archive}";
-            string animSrc = Path.Combine(Paths.FileSystem, archive, Path.GetFileName(meta.AnimationPath));
+            string animSrc = Path.Combine(fileSystem, archive, Path.GetFileName(meta.AnimationPath));
             string animDest = Path.Combine(folder, Path.GetFileName(overMeta?.AnimationPath ?? meta.AnimationPath));
             File.Delete(animDest);
             File.Copy(animSrc, animDest);
@@ -165,8 +166,8 @@ namespace MphRead.Testing
             {
                 Console.WriteLine("Copying entities...");
                 Console.WriteLine("Copying nodedata...");
-                string entSrc = Path.Combine(Paths.FileSystem, @"levels\entities", meta.EntityPath);
-                string nodeSrc = Path.Combine(Paths.FileSystem, @"levels\nodeData", meta.NodePath);
+                string entSrc = Path.Combine(fileSystem, @"levels\entities", meta.EntityPath);
+                string nodeSrc = Path.Combine(fileSystem, @"levels\nodeData", meta.NodePath);
                 string entDest = Path.Combine(folder, meta.EntityPath);
                 string nodeDest = Path.Combine(folder, meta.NodePath);
                 if (overMeta != null)
