@@ -746,12 +746,12 @@ namespace MphRead.Utility
                         for (int i = 0; i < data.Count; i++)
                         {
                             CollisionDataEditor item = data[i];
-                            if (item.Points.Select(p => p.X).Min() > xStart
-                                || item.Points.Select(p => p.X).Max() < xEnd
-                                || item.Points.Select(p => p.Y).Min() > yStart
-                                || item.Points.Select(p => p.Y).Max() < yEnd
-                                || item.Points.Select(p => p.Z).Min() > zStart
-                                || item.Points.Select(p => p.Z).Max() < zEnd)
+                            if (item.Points.Select(p => p.X).Min() > xEnd
+                                || item.Points.Select(p => p.X).Max() < xStart
+                                || item.Points.Select(p => p.Y).Min() > yEnd
+                                || item.Points.Select(p => p.Y).Max() < yStart
+                                || item.Points.Select(p => p.Z).Min() > zEnd
+                                || item.Points.Select(p => p.Z).Max() < zStart)
                             {
                                 continue;
                             }
