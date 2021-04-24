@@ -146,22 +146,7 @@ namespace MphRead
         public readonly RawCollisionVolume Volume0;
         public readonly RawCollisionVolume Volume1;
         public readonly RawCollisionVolume Volume2;
-        public readonly Vector3Fx MovementVector00;
-        public readonly Vector3Fx MovementVector01;
-        public readonly Vector3Fx MovementVector02;
-        public readonly Vector3Fx MovementVector03;
-        public readonly Vector3Fx MovementVector04;
-        public readonly Vector3Fx MovementVector05;
-        public readonly Vector3Fx MovementVector06;
-        public readonly Vector3Fx MovementVector07;
-        public readonly Vector3Fx MovementVector08;
-        public readonly Vector3Fx MovementVector09;
-        public readonly Vector3Fx MovementVector10;
-        public readonly Vector3Fx MovementVector11;
-        public readonly Vector3Fx MovementVector12;
-        public readonly Vector3Fx MovementVector13;
-        public readonly Vector3Fx MovementVector14;
-        public readonly Vector3Fx MovementVector15;
+        public readonly Vector3FxArray16 MovementVectors;
         public readonly byte Field1A8;
         public readonly byte Padding1A9;
         public readonly ushort Padding1AA;
@@ -475,22 +460,10 @@ namespace MphRead.Editor
                     Volume0 = new CollisionVolume(fields.Volume0);
                     Volume1 = new CollisionVolume(fields.Volume1);
                     Volume2 = new CollisionVolume(fields.Volume2);
-                    MovementVectors.Add(fields.MovementVector00.ToFloatVector());
-                    MovementVectors.Add(fields.MovementVector01.ToFloatVector());
-                    MovementVectors.Add(fields.MovementVector02.ToFloatVector());
-                    MovementVectors.Add(fields.MovementVector03.ToFloatVector());
-                    MovementVectors.Add(fields.MovementVector04.ToFloatVector());
-                    MovementVectors.Add(fields.MovementVector05.ToFloatVector());
-                    MovementVectors.Add(fields.MovementVector06.ToFloatVector());
-                    MovementVectors.Add(fields.MovementVector07.ToFloatVector());
-                    MovementVectors.Add(fields.MovementVector08.ToFloatVector());
-                    MovementVectors.Add(fields.MovementVector09.ToFloatVector());
-                    MovementVectors.Add(fields.MovementVector10.ToFloatVector());
-                    MovementVectors.Add(fields.MovementVector11.ToFloatVector());
-                    MovementVectors.Add(fields.MovementVector12.ToFloatVector());
-                    MovementVectors.Add(fields.MovementVector13.ToFloatVector());
-                    MovementVectors.Add(fields.MovementVector14.ToFloatVector());
-                    MovementVectors.Add(fields.MovementVector15.ToFloatVector());
+                    for (int i = 0; i < 16; i++)
+                    {
+                        MovementVectors.Add(fields.MovementVectors[i].ToFloatVector());
+                    }
                     Unknown02 = fields.Field1A8;
                     MovementType = fields.MovementType;
                 }

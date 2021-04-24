@@ -96,7 +96,6 @@ namespace MphRead
         public readonly Message DeadMessage;
         public readonly uint DeadMsgParam1;
         public readonly uint DeadMsgParam2;
-
         public readonly ushort LifetimeMsg1Index;
         public readonly short LifetimeMsg1Target;
         public readonly Message LifetimeMessage1;
@@ -223,7 +222,7 @@ namespace MphRead
         public readonly FhItemType ItemType;
         public readonly ushort SpawnLimit;
         public readonly ushort CooldownTime;
-        public readonly ushort Field2C;
+        public readonly ushort Unused2C;
     }
 
     // size: 160
@@ -709,6 +708,99 @@ namespace MphRead
                 else if (index == 9)
                 {
                     return Vector9;
+                }
+                throw new IndexOutOfRangeException();
+            }
+        }
+    }
+
+    // size: 160 (12 x 16)
+    public readonly struct Vector3FxArray16
+    {
+        public readonly Vector3Fx Vector00;
+        public readonly Vector3Fx Vector01;
+        public readonly Vector3Fx Vector02;
+        public readonly Vector3Fx Vector03;
+        public readonly Vector3Fx Vector04;
+        public readonly Vector3Fx Vector05;
+        public readonly Vector3Fx Vector06;
+        public readonly Vector3Fx Vector07;
+        public readonly Vector3Fx Vector08;
+        public readonly Vector3Fx Vector09;
+        public readonly Vector3Fx Vector10;
+        public readonly Vector3Fx Vector11;
+        public readonly Vector3Fx Vector12;
+        public readonly Vector3Fx Vector13;
+        public readonly Vector3Fx Vector14;
+        public readonly Vector3Fx Vector15;
+
+        public Vector3Fx this[int index]
+        {
+            get
+            {
+                if (index == 0)
+                {
+                    return Vector00;
+                }
+                else if (index == 1)
+                {
+                    return Vector01;
+                }
+                else if (index == 2)
+                {
+                    return Vector02;
+                }
+                else if (index == 3)
+                {
+                    return Vector03;
+                }
+                else if (index == 4)
+                {
+                    return Vector04;
+                }
+                else if (index == 5)
+                {
+                    return Vector05;
+                }
+                else if (index == 6)
+                {
+                    return Vector06;
+                }
+                else if (index == 7)
+                {
+                    return Vector07;
+                }
+                else if (index == 8)
+                {
+                    return Vector08;
+                }
+                else if (index == 9)
+                {
+                    return Vector09;
+                }
+                else if (index == 10)
+                {
+                    return Vector10;
+                }
+                else if (index == 11)
+                {
+                    return Vector11;
+                }
+                else if (index == 12)
+                {
+                    return Vector12;
+                }
+                else if (index == 13)
+                {
+                    return Vector13;
+                }
+                else if (index == 14)
+                {
+                    return Vector14;
+                }
+                else if (index == 15)
+                {
+                    return Vector15;
                 }
                 throw new IndexOutOfRangeException();
             }

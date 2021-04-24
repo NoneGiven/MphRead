@@ -108,8 +108,9 @@ namespace MphRead
         PickWpnMissile = 22
     }
 
-    public enum FhItemType : uint
+    public enum FhItemType : int
     {
+        None = -1,
         AmmoSmall = 0,
         AmmoBig = 1,
         HealthSmall = 2,

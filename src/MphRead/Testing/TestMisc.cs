@@ -137,13 +137,12 @@ namespace MphRead.Testing
             {
                 overMeta = Metadata.RoomMetadata[over];
             }
-            Debug.Assert(meta.FirstHunt || meta.Hybrid);
             Debug.Assert(meta.EntityPath != null && meta.NodePath != null);
             string folder = Path.Combine(Paths.Export, "_pack");
             string fileSystem = meta.FirstHunt ? Paths.FhFileSystem : Paths.FileSystem;
             Console.WriteLine("Converting model...");
             // model, texure
-            (byte[] model, byte[] texture) = Repack.SeparateRoomTextures(room);
+            (byte[] model, byte[] texture) = Repack.RepackRoomTextures(room, separate: true);
             string modelPath = Path.GetFileName(overMeta?.ModelPath ?? meta.ModelPath);
             string modelDest = Path.Combine(folder, modelPath);
             string texDest = Path.Combine(folder, modelPath.Replace("_Model.bin", "_Tex.bin").Replace("_model.bin", "_tex.bin"));
@@ -208,6 +207,62 @@ namespace MphRead.Testing
 
         public static void ConvertRoomToFh(string room, string? over = null)
         {
+            RoomMetadata meta = Metadata.RoomMetadata[room];
+            RoomMetadata? overMeta = null;
+            if (over != null)
+            {
+                overMeta = Metadata.RoomMetadata[over];
+            }
+            Debug.Assert(meta.EntityPath != null && meta.NodePath != null);
+            string folder = Path.Combine(Paths.Export, "_pack");
+            string fileSystem = meta.FirstHunt ? Paths.FhFileSystem : Paths.FileSystem;
+            Console.WriteLine("Converting model...");
+            // model, texure
+            (byte[] model, _) = Repack.RepackRoomTextures(room, separate: false);
+            string modelPath = Path.GetFileName(overMeta?.ModelPath ?? meta.ModelPath);
+            string modelDest = Path.Combine(folder, modelPath);
+            File.WriteAllBytes(modelDest, model);
+            Console.WriteLine("Converting collision...");
+            // collision
+            byte[] collision = RepackCollision.RepackFhRoom(room);
+            string colDest = Path.Combine(folder, Path.GetFileName(overMeta?.CollisionPath ?? meta.CollisionPath));
+            File.WriteAllBytes(colDest, collision);
+            Console.WriteLine("Converting animation...");
+            // animation
+            string animSrc = Path.Combine(fileSystem, meta.AnimationPath);
+            string animDest = Path.Combine(folder, Path.GetFileName(overMeta?.AnimationPath ?? meta.AnimationPath));
+            File.Delete(animDest);
+            File.Copy(animSrc, animDest);
+            //entity, nodedata
+            if (meta.Hybrid)
+            {
+                Console.WriteLine("Copying entities...");
+                Console.WriteLine("Copying nodedata...");
+                string entSrc = Path.Combine(fileSystem, meta.EntityPath);
+                string nodeSrc = Path.Combine(fileSystem, meta.NodePath);
+                string entDest = Path.Combine(folder, meta.EntityPath);
+                string nodeDest = Path.Combine(folder, meta.NodePath);
+                if (overMeta != null)
+                {
+                    Debug.Assert(overMeta.EntityPath != null && overMeta.NodePath != null);
+                    entDest = Path.Combine(folder, overMeta.EntityPath);
+                    nodeDest = Path.Combine(folder, overMeta.NodePath);
+                }
+                File.Delete(entDest);
+                File.Delete(nodeDest);
+                File.Copy(entSrc, entDest);
+                File.Copy(nodeSrc, nodeDest);
+            }
+            else
+            {
+                Console.WriteLine("Converting entities...");
+                byte[] entity = Repack.RepackFhEntities(room);
+                string entDest = Path.Combine(folder, Path.GetFileName(overMeta?.EntityPath ?? meta.EntityPath));
+                File.WriteAllBytes(entDest, entity);
+                // sktodo: nodedata
+            }
+            Console.WriteLine("Done.");
+            Nop();
         }
 
         public static void TestCameraShake()

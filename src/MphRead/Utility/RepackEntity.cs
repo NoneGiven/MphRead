@@ -16,11 +16,18 @@ namespace MphRead.Utility
         {
             RoomMetadata meta = Metadata.RoomMetadata[room];
             Debug.Assert(meta.FirstHunt && meta.EntityPath != null);
-            // sktodo: remove testing code
-            List<EntityEditorBase>? ent = GetEntities(Metadata.RoomMetadata["Level MPH Regulator"].EntityPath!);
-            List<EntityEditorBase>? ent2 = GetFhEntities(meta.EntityPath);
-            List<EntityEditorBase> entities = ConvertFhToMph(ent2);
-            return RepackEntities(entities);
+            List<EntityEditorBase> entities = meta.FirstHunt ? GetFhEntities(meta.EntityPath) : GetEntities(meta.EntityPath);
+            List<EntityEditorBase> converted = ConvertFhToMph(entities);
+            return RepackEntities(converted);
+        }
+
+        public static byte[] RepackFhEntities(string room)
+        {
+            RoomMetadata meta = Metadata.RoomMetadata[room];
+            Debug.Assert(meta.FirstHunt && meta.EntityPath != null);
+            List<EntityEditorBase> entities = meta.FirstHunt ? GetFhEntities(meta.EntityPath) : GetEntities(meta.EntityPath);
+            List<EntityEditorBase> converted = ConvertMphToFh(entities);
+            return RepackEntities(converted);
         }
 
         public static byte[] TestEntityEdit()
@@ -392,7 +399,7 @@ namespace MphRead.Utility
                     ItemType itemType = itemSpawn.ItemType switch
                     {
                         FhItemType.AmmoSmall => ItemType.UASmall,
-                        FhItemType.AmmoBig => ItemType.UASmall,
+                        FhItemType.AmmoBig => ItemType.UABig,
                         FhItemType.HealthSmall => ItemType.HealthSmall,
                         FhItemType.HealthBig => ItemType.HealthBig,
                         FhItemType.DoubleDamage => ItemType.DoubleDamage,
@@ -641,7 +648,6 @@ namespace MphRead.Utility
                     entity.Type = entity.Type switch
                     {
                         EntityType.FhPlayerSpawn => EntityType.PlayerSpawn,
-                        EntityType.FhPointModule => EntityType.PointModule,
                         EntityType.FhMorphCamera => EntityType.MorphCamera,
                         _ => throw new InvalidOperationException()
                     };
@@ -650,7 +656,298 @@ namespace MphRead.Utility
                 }
                 else
                 {
+                    // point modules won't load in MPH
                     Console.WriteLine($"FH to MPH: Skipping entity ID {entity.Id} of type {entity.Type}.");
+                }
+            }
+            return converted;
+        }
+
+        private static List<EntityEditorBase> ConvertMphToFh(List<EntityEditorBase> entities)
+        {
+            static FhMessage GetMessage(Message message)
+            {
+                return message switch
+                {
+                    Message.None => FhMessage.None,
+                    Message.Activate => FhMessage.Activate,
+                    Message.Destroyed => FhMessage.Destroyed,
+                    Message.Damage => FhMessage.Damage,
+                    Message.Trigger => FhMessage.Trigger,
+                    Message.Gravity => FhMessage.Gravity,
+                    Message.Unlock => FhMessage.Unlock,
+                    Message.SetActive => FhMessage.SetActive,
+                    Message.Complete => FhMessage.Complete,
+                    Message.Impact => FhMessage.Impact,
+                    Message.Death => FhMessage.Death,
+                    Message.Unknown22 => FhMessage.Unknown21,
+                    _ => (FhMessage)255
+                };
+            }
+            static FhTriggerFlags GetFlags(TriggerFlags mphFlags, TriggerType subtype)
+            {
+                FhTriggerFlags flags = FhTriggerFlags.None;
+                if (subtype == TriggerType.Normal)
+                {
+                    if (mphFlags.HasFlag(TriggerFlags.PowerBeam) || mphFlags.HasFlag(TriggerFlags.VoltDriver)
+                        || mphFlags.HasFlag(TriggerFlags.Missile) || mphFlags.HasFlag(TriggerFlags.Battlehammer)
+                        || mphFlags.HasFlag(TriggerFlags.Imperialist) || mphFlags.HasFlag(TriggerFlags.Judicator)
+                        || mphFlags.HasFlag(TriggerFlags.ShockCoil) || mphFlags.HasFlag(TriggerFlags.ShockCoil))
+                    {
+                        flags |= FhTriggerFlags.Beam;
+                    }
+                    if (mphFlags.HasFlag(TriggerFlags.PlayerBiped))
+                    {
+                        flags |= FhTriggerFlags.PlayerBiped;
+                    }
+                    if (mphFlags.HasFlag(TriggerFlags.PlayerAlt))
+                    {
+                        flags |= FhTriggerFlags.PlayerAlt;
+                    }
+                }
+                return flags;
+            }
+            var converted = new List<EntityEditorBase>();
+            foreach (EntityEditorBase entity in entities)
+            {
+                if (entity is PlatformEntityEditor platform)
+                {
+                    if (platform.PositionCount > 8)
+                    {
+                        Console.WriteLine($"MPH to FH: Skipping platform entity ID {entity.Id} with more than 8 positions.");
+                        continue;
+                    }
+                    while (platform.Positions.Count > 8)
+                    {
+                        platform.Positions.RemoveAt(platform.Positions.Count - 1);
+                    }
+                    while (platform.Rotations.Count > 8)
+                    {
+                        platform.Rotations.RemoveAt(platform.Rotations.Count - 1);
+                    }
+                    if (platform.Rotations.Distinct().Count() > 1)
+                    {
+                        Console.WriteLine($"MPH to FH: Warning: Platform entity ID {entity.Id} has rotation values that will not be preserved.");
+                    }
+                    converted.Add(new FhPlatformEntityEditor()
+                    {
+                        Id = platform.Id,
+                        Delay = platform.Delay,
+                        Facing = platform.Facing,
+                        GroupId = 0,
+                        NodeName = platform.NodeName,
+                        NoPortal = platform.NoPort,
+                        PortalName = platform.PortalName,
+                        Position = platform.Position,
+                        PositionCount = (byte)platform.PositionCount,
+                        Positions = platform.Positions,
+                        Speed = platform.ForwardSpeed,
+                        Up = platform.Up,
+                        Volume = new CollisionVolume(Vector3.Zero, 1)
+                    });
+                }
+                else if (entity is DoorEntityEditor door)
+                {
+                    converted.Add(new FhDoorEntityEditor()
+                    {
+                        Id = door.Id,
+                        Facing = door.Facing,
+                        Flags = door.Flags,
+                        ModelId = 0,
+                        NodeName = door.NodeName,
+                        Position = door.Position,
+                        RoomName = door.RoomName,
+                        Up = door.Up
+                    });
+                }
+                else if (entity is ItemSpawnEntityEditor itemSpawn)
+                {
+                    FhItemType itemType = itemSpawn.ItemType switch
+                    {
+                        ItemType.AffinityWeapon => FhItemType.AmmoBig,
+                        ItemType.Battlehammer => FhItemType.ElectroLob,
+                        ItemType.DoubleDamage => FhItemType.DoubleDamage,
+                        ItemType.HealthBig => FhItemType.HealthBig,
+                        ItemType.HealthMedium => FhItemType.HealthSmall,
+                        ItemType.HealthSmall => FhItemType.HealthSmall,
+                        ItemType.Imperialist => FhItemType.ElectroLob,
+                        ItemType.Judicator => FhItemType.ElectroLob,
+                        ItemType.Magmaul => FhItemType.ElectroLob,
+                        ItemType.MissileBig => FhItemType.Missile,
+                        ItemType.MissileSmall => FhItemType.Missile,
+                        ItemType.ShockCoil => FhItemType.ElectroLob,
+                        ItemType.UABig => FhItemType.AmmoBig,
+                        ItemType.UASmall => FhItemType.AmmoSmall,
+                        ItemType.VoltDriver => FhItemType.ElectroLob,
+                        ItemType.Cloak => FhItemType.DoubleDamage,
+                        ItemType.Deathalt => FhItemType.DoubleDamage,
+                        ItemType.EnergyTank => FhItemType.HealthBig,
+                        ItemType.MissileExpansion => FhItemType.Missile,
+                        ItemType.OmegaCannon => FhItemType.AmmoBig,
+                        ItemType.UAExpansion => FhItemType.AmmoBig,
+                        _ => FhItemType.None
+                    };
+                    converted.Add(new FhItemSpawnEntityEditor()
+                    {
+                        Id = itemSpawn.Id,
+                        CooldownTime = itemSpawn.SpawnInterval,
+                        Facing = itemSpawn.Facing,
+                        Unused2C = 0,
+                        ItemType = itemType,
+                        NodeName = itemSpawn.NodeName,
+                        Position = itemSpawn.Position,
+                        SpawnLimit = itemSpawn.MaxSpawnCount,
+                        Up = itemSpawn.Up
+                    });
+                }
+                else if (entity is EnemySpawnEntityEditor enemySpawn)
+                {
+                }
+                else if (entity is TriggerVolumeEntityEditor trigger)
+                {
+                    if (trigger.Subtype == TriggerType.Relay || trigger.Subtype == TriggerType.Automatic
+                        || trigger.Subtype == TriggerType.StateBits)
+                    {
+                        Console.WriteLine($"MPH to FH: Skipping trigger entity ID {entity.Id} with subtype {trigger.Subtype}.");
+                        continue;
+                    }
+                    var volume = new CollisionVolume(Vector3.Zero, 1);
+                    FhTriggerType subtype = FhTriggerType.Threshold;
+                    if (trigger.Subtype != TriggerType.Threshold)
+                    {
+                        subtype = trigger.Volume.Type switch
+                        {
+                            VolumeType.Box => FhTriggerType.Box,
+                            VolumeType.Cylinder => FhTriggerType.Cylinder,
+                            VolumeType.Sphere => FhTriggerType.Sphere,
+                            _ => throw new InvalidOperationException()
+                        };
+                        volume = trigger.Volume;
+                    }
+                    FhMessage childMsg = GetMessage(trigger.ChildMessage);
+                    FhMessage parentMsg = GetMessage(trigger.ParentMessage);
+                    if ((int)childMsg == 255)
+                    {
+                        Console.WriteLine($"MPH to FH: Skipping trigger entity ID {entity.Id} with child message {trigger.ChildMessage}.");
+                        continue;
+                    }
+                    if ((int)parentMsg == 255)
+                    {
+                        Console.WriteLine($"MPH to FH: Skipping trigger entity ID {entity.Id} with parent message {trigger.ParentMessage}.");
+                    }
+                    converted.Add(new FhTriggerVolumeEntityEditor()
+                    {
+                        Id = trigger.Id,
+                        Box = trigger.Volume,
+                        ChildId = trigger.ChildId,
+                        ChildMessage = childMsg,
+                        ChildMsgParam1 = trigger.ChildMsgParam1,
+                        Cooldown = trigger.RepeatDelay,
+                        Cylinder = trigger.Volume,
+                        Facing = trigger.Facing,
+                        NodeName = trigger.NodeName,
+                        OneUse = trigger.DeactivateAfterUse ? (ushort)1 : (ushort)0,
+                        ParentId = trigger.ParentId,
+                        ParentMessage = parentMsg,
+                        ParentMsgParam1 = trigger.ParentMsgParam1,
+                        Position = trigger.Position,
+                        Sphere = trigger.Volume,
+                        Subtype = subtype,
+                        Threshold = trigger.TriggerThreshold,
+                        TriggerFlags = GetFlags(trigger.TriggerFlags, trigger.Subtype),
+                        Up = trigger.Up
+                    });
+                }
+                else if (entity is AreaVolumeEntityEditor areaVolume)
+                {
+                    FhTriggerType subtype = areaVolume.Volume.Type switch
+                    {
+                        VolumeType.Box => FhTriggerType.Box,
+                        VolumeType.Cylinder => FhTriggerType.Cylinder,
+                        VolumeType.Sphere => FhTriggerType.Sphere,
+                        _ => throw new InvalidOperationException()
+                    };
+                    CollisionVolume volume = areaVolume.Volume;
+                    FhMessage insideMsg = GetMessage(areaVolume.InsideMessage);
+                    FhMessage exitMsg = GetMessage(areaVolume.ExitMessage);
+                    if ((int)insideMsg == 255)
+                    {
+                        Console.WriteLine($"MPH to FH: Skipping area volume entity ID {entity.Id} with inside message {areaVolume.InsideMessage}.");
+                        continue;
+                    }
+                    if ((int)exitMsg == 255)
+                    {
+                        Console.WriteLine($"MPH to FH: Skipping area volume entity ID {entity.Id} with exit message {areaVolume.ExitMessage}.");
+                    }
+                    // set the volume is all three fields -- avoids issue with cylinder
+                    converted.Add(new FhAreaVolumeEntityEditor()
+                    {
+                        Id = areaVolume.Id,
+                        Box = volume,
+                        Cooldown = areaVolume.Cooldown,
+                        Cylinder = volume,
+                        ExitMessage = exitMsg,
+                        ExitMsgParam1 = areaVolume.ExitMsgParam1,
+                        Facing = areaVolume.Facing,
+                        InsideMessage = insideMsg,
+                        InsideMsgParam1 = areaVolume.InsideMsgParam1,
+                        NodeName = areaVolume.NodeName,
+                        Position = areaVolume.Position,
+                        Sphere = volume,
+                        Subtype = subtype,
+                        TriggerFlags = GetFlags(areaVolume.TriggerFlags, TriggerType.Normal),
+                        Up = areaVolume.Up
+                    });
+                }
+                else if (entity is JumpPadEntityEditor jumpPad)
+                {
+                    FhTriggerType volumeType = jumpPad.Volume.Type switch
+                    {
+                        VolumeType.Box => FhTriggerType.Box,
+                        VolumeType.Cylinder => FhTriggerType.Cylinder,
+                        VolumeType.Sphere => FhTriggerType.Sphere,
+                        _ => throw new InvalidOperationException()
+                    };
+                    // FH beam vectors need to be absolute
+                    var transform = new Matrix3(EntityBase.GetTransformMatrix(jumpPad.Facing, jumpPad.Up));
+                    Vector3 beamVector = jumpPad.BeamVector;
+                    if (transform != Matrix3.Identity)
+                    {
+                        beamVector *= transform;
+                    }
+                    converted.Add(new FhJumpPadEntityEditor()
+                    {
+                        Id = jumpPad.Id,
+                        BeamType = 0,
+                        BeamVector = beamVector,
+                        Box = jumpPad.Volume,
+                        ControlLockTime = jumpPad.ControlLockTime,
+                        CooldownTime = jumpPad.CooldownTime,
+                        Cylinder = jumpPad.Volume,
+                        Facing = jumpPad.Facing,
+                        ModelId = 0,
+                        NodeName = jumpPad.NodeName,
+                        Position = jumpPad.Position,
+                        Speed = jumpPad.Speed,
+                        Sphere = jumpPad.Volume,
+                        TriggerFlags = GetFlags(jumpPad.TriggerFlags, TriggerType.Normal),
+                        Up = jumpPad.Up,
+                        VolumeType = volumeType
+                    });
+                }
+                else if (entity is PlayerSpawnEntityEditor || entity is MorphCameraEntityEditor)
+                {
+                    entity.Type = entity.Type switch
+                    {
+                        EntityType.PlayerSpawn => EntityType.FhPlayerSpawn,
+                        EntityType.MorphCamera => EntityType.FhMorphCamera,
+                        _ => throw new InvalidOperationException()
+                    };
+                    converted.Add(entity);
+                }
+                else
+                {
+                    Console.WriteLine($"MPH to FH: Skipping entity ID {entity.Id} of type {entity.Type}.");
                 }
             }
             return converted;
@@ -1873,7 +2170,7 @@ namespace MphRead.Utility
             writer.Write((uint)entity.ItemType);
             writer.Write(entity.SpawnLimit);
             writer.Write(entity.CooldownTime);
-            writer.Write(entity.Field2C);
+            writer.Write(entity.Unused2C);
         }
 
         private static void WriteFhEnemySpawn(FhEnemySpawnEntityEditor entity, BinaryWriter writer)

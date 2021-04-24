@@ -82,13 +82,14 @@ namespace MphRead.Utility
             return RepackMphCollision(editors, collision.Info.Portals);
         }
 
-        //public static byte[] RepackFhRoom(string room)
-        //{
-        //    RoomMetadata meta = Metadata.RoomMetadata[room];
-        //    CollisionInstance collision = Collision.GetCollision(meta, roomLayerMask: -1);
-        //    List<CollisionDataEditor> editors = GetEditors(collision);
-        //    return RepackFhCollision(editors, collision.Info.Portals);
-        //}
+        public static byte[] RepackFhRoom(string room)
+        {
+            RoomMetadata meta = Metadata.RoomMetadata[room];
+            CollisionInstance collision = Collision.GetCollision(meta, roomLayerMask: -1);
+            List<CollisionDataEditor> editors = GetEditors(collision);
+            //return RepackFhCollision(editors, collision.Info.Portals); // sktodo
+            return new byte[0];
+        }
 
         public static void TestCollision(string? room = null)
         {

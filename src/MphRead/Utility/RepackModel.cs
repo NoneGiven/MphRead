@@ -9,7 +9,7 @@ namespace MphRead.Utility
 {
     public static partial class Repack
     {
-        public static (byte[], byte[]) SeparateRoomTextures(string room)
+        public static (byte[], byte[]) RepackRoomTextures(string room, bool separate)
         {
             RoomMetadata meta = Metadata.RoomMetadata[room];
             if (meta.TexturePath != null)
@@ -34,7 +34,7 @@ namespace MphRead.Utility
             var options = new RepackOptions()
             {
                 IsRoom = true,
-                Texture = RepackTexture.Separate,
+                Texture = separate ? RepackTexture.Separate : RepackTexture.Inline,
                 ComputeBounds = ComputeBounds.None
             };
             return PackModel((int)model.Scale.X, model.NodeMatrixIds, model.NodePosCounts, model.Materials,

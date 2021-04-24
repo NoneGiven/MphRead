@@ -195,6 +195,10 @@ namespace MphRead.Editor
         public float Speed { get; set; }
         public string PortalName { get; set; } = "";
 
+        public FhPlatformEntityEditor() : base(EntityType.FhPlatform)
+        {
+        }
+
         public FhPlatformEntityEditor(Entity header, FhPlatformEntityData raw) : base(header)
         {
             NoPortal = raw.NoPortal;
@@ -300,6 +304,10 @@ namespace MphRead.Editor
         public uint Flags { get; set; }
         public uint ModelId { get; set; }
 
+        public FhDoorEntityEditor() : base(EntityType.FhDoor)
+        {
+        }
+
         public FhDoorEntityEditor(Entity header, FhDoorEntityData raw) : base(header)
         {
             RoomName = raw.RoomName.MarshalString();
@@ -349,14 +357,18 @@ namespace MphRead.Editor
         public FhItemType ItemType { get; set; }
         public ushort SpawnLimit { get; set; }
         public ushort CooldownTime { get; set; }
-        public ushort Field2C { get; set; }
+        public ushort Unused2C { get; set; }
+
+        public FhItemSpawnEntityEditor() : base(EntityType.FhItemSpawn)
+        {
+        }
 
         public FhItemSpawnEntityEditor(Entity header, FhItemSpawnEntityData raw) : base(header)
         {
             ItemType = raw.ItemType;
             SpawnLimit = raw.SpawnLimit;
             CooldownTime = raw.CooldownTime;
-            Field2C = raw.Field2C;
+            Unused2C = raw.Unused2C;
         }
     }
 
@@ -424,6 +436,10 @@ namespace MphRead.Editor
         public short ChildId { get; set; }
         public FhMessage ChildMessage { get; set; }
         public uint ChildMsgParam1 { get; set; }
+
+        public FhTriggerVolumeEntityEditor() : base(EntityType.FhTriggerVolume)
+        {
+        }
 
         public FhTriggerVolumeEntityEditor(Entity header, FhTriggerVolumeEntityData raw) : base(header)
         {
@@ -503,6 +519,10 @@ namespace MphRead.Editor
         public ushort Cooldown { get; set; }
         public FhTriggerFlags TriggerFlags { get; set; }
 
+        public FhAreaVolumeEntityEditor() : base(EntityType.FhAreaVolume)
+        {
+        }
+
         public FhAreaVolumeEntityEditor(Entity header, FhAreaVolumeEntityData raw) : base(header)
         {
             Subtype = raw.Subtype;
@@ -565,6 +585,10 @@ namespace MphRead.Editor
         public uint ModelId { get; set; }
         public uint BeamType { get; set; }
         public FhTriggerFlags TriggerFlags { get; set; }
+
+        public FhJumpPadEntityEditor() : base(EntityType.FhJumpPad)
+        {
+        }
 
         public FhJumpPadEntityEditor(Entity header, FhJumpPadEntityData raw) : base(header)
         {
