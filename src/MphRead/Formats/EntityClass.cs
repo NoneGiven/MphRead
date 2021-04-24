@@ -529,6 +529,7 @@ namespace MphRead.Editor
         public ushort CooldownTime { get; set; }
         public bool Active { get; set; }
         public uint ModelId { get; set; }
+        public uint BeamType { get; set; }
         public TriggerFlags TriggerFlags { get; set; }
 
         public JumpPadEntityEditor() : base(EntityType.JumpPad)
@@ -546,6 +547,7 @@ namespace MphRead.Editor
             CooldownTime = raw.CooldownTime;
             Active = raw.Active != 0;
             ModelId = raw.ModelId;
+            BeamType = raw.BeamType;
             TriggerFlags = raw.TriggerFlags;
         }
     }

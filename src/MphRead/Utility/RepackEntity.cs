@@ -1635,7 +1635,6 @@ namespace MphRead.Utility
         {
             byte padByte = 0;
             ushort padShort = 0;
-            uint beamType = 0;
             writer.Write(entity.ParentId);
             writer.Write(entity.Unused28);
             writer.WriteVolume(entity.Volume);
@@ -1647,7 +1646,7 @@ namespace MphRead.Utility
             writer.Write(padByte); // Padding81
             writer.Write(padShort); // Padding82
             writer.Write(entity.ModelId);
-            writer.Write(beamType);
+            writer.Write(entity.BeamType);
             writer.Write((uint)entity.TriggerFlags);
         }
 
