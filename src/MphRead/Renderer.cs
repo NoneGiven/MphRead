@@ -2697,7 +2697,7 @@ namespace MphRead
                     else if (e.Shift)
                     {
                         ColTerDisplay--;
-                        if (ColTerDisplay < 0)
+                        if ((byte)ColTerDisplay == 255)
                         {
                             ColTerDisplay = Terrain.All;
                         }
