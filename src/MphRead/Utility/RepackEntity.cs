@@ -32,8 +32,7 @@ namespace MphRead.Utility
 
         public static byte[] TestEntityEdit()
         {
-            RoomMetadata meta = Metadata.RoomMetadata["MP3 PROVING GROUND"];
-            RoomMetadata meta2 = Metadata.RoomMetadata["MP12 SIC TRANSIT"];
+            RoomMetadata meta = Metadata.RoomMetadata["Level SP Regulator"];
             string? entityPath = meta.EntityPath;
             List<EntityEditorBase> entities;
             if (entityPath != null)
@@ -45,11 +44,13 @@ namespace MphRead.Utility
                 entityPath = $"{meta.Name}_ent.bin";
                 entities = new List<EntityEditorBase>();
             }
-            Debug.Assert(meta2.EntityPath != null);
-            List<EntityEditorBase> entities2 = meta2.FirstHunt ? GetFhEntities(meta2.EntityPath) : GetEntities(meta2.EntityPath);
             foreach (EntityEditorBase entity in entities)
             {
-                entity.NodeName = "rmMain";
+                if (entity is FhEnemySpawnEntityEditor editor)
+                {
+                    editor.EnemyType = FhEnemyType.WarWasp;
+                    editor.SpawnLimit = 1;
+                }
             }
             //short id = 0;
             //foreach (EntityEditorBase entity in entities2.Where(e => e.Type == EntityType.PlayerSpawn))
