@@ -87,7 +87,7 @@ namespace MphRead.Utility
             RoomMetadata meta = Metadata.RoomMetadata[room];
             CollisionInstance collision = Collision.GetCollision(meta, roomLayerMask: -1);
             List<CollisionDataEditor> editors = GetEditors(collision);
-            return RepackFhCollision(editors, collision.Info.Portals, (FhCollisionInfo)collision.Info);
+            return RepackFhCollision(editors, collision.Info.Portals);
         }
 
         public static void TestCollision(string? room = null)
@@ -547,6 +547,99 @@ namespace MphRead.Utility
             }
         }
 
+        private static List<ushort> GetDataInRegion(Vector3 minBounds, Vector3 maxBounds, IReadOnlyList<CollisionDataEditor> data)
+        {
+            var indices = new List<ushort>();
+            float xStart = minBounds.X;
+            float yStart = minBounds.Y;
+            float zStart = minBounds.Z;
+            float xEnd = maxBounds.X;
+            float yEnd = maxBounds.Y;
+            float zEnd = maxBounds.Z;
+            var p1 = new Vector3(xStart, yStart, zStart);
+            var p2 = new Vector3(xEnd, yStart, zStart);
+            var p3 = new Vector3(xStart, yStart, zEnd);
+            var p4 = new Vector3(xEnd, yStart, zEnd);
+            var p5 = new Vector3(xStart, yEnd, zStart);
+            var p6 = new Vector3(xEnd, yEnd, zStart);
+            var p7 = new Vector3(xStart, yEnd, zEnd);
+            var p8 = new Vector3(xEnd, yEnd, zEnd);
+            var faces = new List<List<Vector3>>();
+            faces.Add(new List<Vector3>() { p1, p5, p6, p2 });
+            faces.Add(new List<Vector3>() { p1, p3, p4, p2 });
+            faces.Add(new List<Vector3>() { p1, p5, p7, p3 });
+            faces.Add(new List<Vector3>() { p3, p7, p8, p4 });
+            faces.Add(new List<Vector3>() { p2, p6, p8, p4 });
+            faces.Add(new List<Vector3>() { p5, p7, p8, p6 });
+            var edges = new List<List<Vector3>>();
+            edges.Add(new List<Vector3>() { p1, p5 });
+            edges.Add(new List<Vector3>() { p3, p7 });
+            edges.Add(new List<Vector3>() { p2, p6 });
+            edges.Add(new List<Vector3>() { p4, p8 });
+            edges.Add(new List<Vector3>() { p1, p3 });
+            edges.Add(new List<Vector3>() { p2, p4 });
+            edges.Add(new List<Vector3>() { p5, p7 });
+            edges.Add(new List<Vector3>() { p6, p8 });
+            edges.Add(new List<Vector3>() { p1, p2 });
+            edges.Add(new List<Vector3>() { p5, p6 });
+            edges.Add(new List<Vector3>() { p3, p4 });
+            edges.Add(new List<Vector3>() { p7, p8 });
+            for (int i = 0; i < data.Count; i++)
+            {
+                CollisionDataEditor item = data[i];
+                if (item.Points.Select(p => p.X).Min() > xEnd
+                    || item.Points.Select(p => p.X).Max() < xStart
+                    || item.Points.Select(p => p.Y).Min() > yEnd
+                    || item.Points.Select(p => p.Y).Max() < yStart
+                    || item.Points.Select(p => p.Z).Min() > zEnd
+                    || item.Points.Select(p => p.Z).Max() < zStart)
+                {
+                    continue;
+                }
+                bool intersects = false;
+                foreach (Vector3 point in item.Points)
+                {
+                    if (point.X >= xStart && point.X < xEnd && point.Y >= yStart && point.Y < yEnd
+                        && point.Z >= zStart && point.Z < zEnd)
+                    {
+                        intersects = true;
+                        break;
+                    }
+                }
+                if (!intersects)
+                {
+                    for (int j = 0; j < faces.Count && !intersects; j++)
+                    {
+                        List<Vector3> face = faces[j];
+                        for (int k = 0; k < item.Points.Count - 1 && !intersects; k++)
+                        {
+                            intersects |= CheckIntersection(item.Points[k], item.Points[k + 1], face);
+                        }
+                        if (!intersects)
+                        {
+                            intersects |= CheckIntersection(item.Points[^1], item.Points[0], face);
+                        }
+                    }
+                }
+                if (!intersects)
+                {
+                    foreach (List<Vector3> edge in edges)
+                    {
+                        intersects |= CheckIntersection(edge[0], edge[1], item.Points);
+                        if (intersects)
+                        {
+                            break;
+                        }
+                    }
+                }
+                if (intersects)
+                {
+                    indices.Add((ushort)i);
+                }
+            }
+            return indices;
+        }
+
         private static byte[] RepackMphCollision(IReadOnlyList<CollisionDataEditor> data, IReadOnlyList<CollisionPortal> portals)
         {
             uint padInt = 0;
@@ -684,144 +777,11 @@ namespace MphRead.Utility
                         float yEnd = yStart + 4;
                         float zStart = minZ + pz * 4;
                         float zEnd = zStart + 4;
-                        var p1 = new Vector3(xStart, yStart, zStart);
-                        var p2 = new Vector3(xEnd, yStart, zStart);
-                        var p3 = new Vector3(xStart, yStart, zEnd);
-                        var p4 = new Vector3(xEnd, yStart, zEnd);
-                        var p5 = new Vector3(xStart, yEnd, zStart);
-                        var p6 = new Vector3(xEnd, yEnd, zStart);
-                        var p7 = new Vector3(xStart, yEnd, zEnd);
-                        var p8 = new Vector3(xEnd, yEnd, zEnd);
-                        var faces = new List<List<Vector3>>();
-                        faces.Add(new List<Vector3>()
-                        {
-                            p1, p5, p6, p2
-                        });
-                        faces.Add(new List<Vector3>()
-                        {
-                            p1, p3, p4, p2
-                        });
-                        faces.Add(new List<Vector3>()
-                        {
-                            p1, p5, p7, p3
-                        });
-                        faces.Add(new List<Vector3>()
-                        {
-                            p3, p7, p8, p4
-                        });
-                        faces.Add(new List<Vector3>()
-                        {
-                            p2, p6, p8, p4
-                        });
-                        faces.Add(new List<Vector3>()
-                        {
-                            p5, p7, p8, p6
-                        });
-                        var edges = new List<List<Vector3>>();
-                        edges.Add(new List<Vector3>()
-                        {
-                            p1, p5
-                        });
-                        edges.Add(new List<Vector3>()
-                        {
-                            p3, p7
-                        });
-                        edges.Add(new List<Vector3>()
-                        {
-                            p2, p6
-                        });
-                        edges.Add(new List<Vector3>()
-                        {
-                            p4, p8
-                        });
-                        edges.Add(new List<Vector3>()
-                        {
-                            p1, p3
-                        });
-                        edges.Add(new List<Vector3>()
-                        {
-                            p2, p4
-                        });
-                        edges.Add(new List<Vector3>()
-                        {
-                            p5, p7
-                        });
-                        edges.Add(new List<Vector3>()
-                        {
-                            p6, p8
-                        });
-                        edges.Add(new List<Vector3>()
-                        {
-                            p1, p2
-                        });
-                        edges.Add(new List<Vector3>()
-                        {
-                            p5, p6
-                        });
-                        edges.Add(new List<Vector3>()
-                        {
-                            p3, p4
-                        });
-                        edges.Add(new List<Vector3>()
-                        {
-                            p7, p8
-                        });
-                        int idxCount = 0;
+                        var minBounds = new Vector3(xStart, yStart, zStart);
+                        var maxBounds = new Vector3(xEnd, yEnd, zEnd);
                         int idxStart = dataIdxs.Count;
-                        for (int i = 0; i < data.Count; i++)
-                        {
-                            CollisionDataEditor item = data[i];
-                            if (item.Points.Select(p => p.X).Min() > xEnd
-                                || item.Points.Select(p => p.X).Max() < xStart
-                                || item.Points.Select(p => p.Y).Min() > yEnd
-                                || item.Points.Select(p => p.Y).Max() < yStart
-                                || item.Points.Select(p => p.Z).Min() > zEnd
-                                || item.Points.Select(p => p.Z).Max() < zStart)
-                            {
-                                continue;
-                            }
-                            bool intersects = false;
-                            foreach (Vector3 point in item.Points)
-                            {
-                                if (point.X >= xStart && point.X < xEnd && point.Y >= yStart && point.Y < yEnd
-                                    && point.Z >= zStart && point.Z < zEnd)
-                                {
-                                    intersects = true;
-                                    break;
-                                }
-                            }
-                            if (!intersects)
-                            {
-                                for (int j = 0; j < faces.Count && !intersects; j++)
-                                {
-                                    List<Vector3> face = faces[j];
-                                    for (int k = 0; k < item.Points.Count - 1 && !intersects; k++)
-                                    {
-                                        intersects |= CheckIntersection(item.Points[k], item.Points[k + 1], face);
-                                    }
-                                    if (!intersects)
-                                    {
-                                        intersects |= CheckIntersection(item.Points[^1], item.Points[0], face);
-                                    }
-                                }
-                            }
-                            if (!intersects)
-                            {
-                                foreach (List<Vector3> edge in edges)
-                                {
-                                    intersects |= CheckIntersection(edge[0], edge[1], item.Points);
-                                    if (intersects)
-                                    {
-                                        break;
-                                    }
-                                }
-                            }
-                            if (intersects)
-                            {
-                                dataIdxs.Add((ushort)i);
-                                idxCount++;
-                            }
-                        }
+                        dataIdxs.AddRange(GetDataInRegion(minBounds, maxBounds, data));
+                        int idxCount = dataIdxs.Count - idxStart;
                         entries.Add(((ushort)idxCount, (ushort)idxStart));
                     }
                 }
@@ -957,13 +917,26 @@ namespace MphRead.Utility
             return new Vector4(cross, dist);
         }
 
-        private static byte[] RepackFhCollision(IReadOnlyList<CollisionDataEditor> data, IReadOnlyList<CollisionPortal> portals,
-            FhCollisionInfo info)
+        private class TreeNodePack
+        {
+            public Vector3 MinBounds { get; set; }
+            public Vector3 MaxBounds { get; set; }
+            public int LeftIndex { get; set; }
+            public int RightIndex { get; set; }
+        }
+
+        private static byte[] RepackFhCollision(IReadOnlyList<CollisionDataEditor> data, IReadOnlyList<CollisionPortal> portals)
         {
             byte padByte = 0;
             ushort padShort = 0;
             using var stream = new MemoryStream();
             using var writer = new BinaryWriter(stream);
+            float minX = Single.MaxValue;
+            float minY = Single.MaxValue;
+            float minZ = Single.MaxValue;
+            float maxX = Single.MinValue;
+            float maxY = Single.MinValue;
+            float maxZ = Single.MinValue;
             var portalPacks = new List<CollisionPortalPack>();
             var dataPacks = new List<CollisionDataPack>();
             var points = new List<Vector3>();
@@ -996,6 +969,18 @@ namespace MphRead.Utility
                         planes.Add(plane);
                     }
                     vectors.Add((point1Index, point2Index, planeIndex));
+                    minX = MathF.Min(minX, point1.X);
+                    minY = MathF.Min(minY, point1.Y);
+                    minZ = MathF.Min(minZ, point1.Z);
+                    maxX = MathF.Max(maxX, point1.X);
+                    maxY = MathF.Max(maxY, point1.Y);
+                    maxZ = MathF.Max(maxZ, point1.Z);
+                    minX = MathF.Min(minX, point2.X);
+                    minY = MathF.Min(minY, point2.Y);
+                    minZ = MathF.Min(minZ, point2.Z);
+                    maxX = MathF.Max(maxX, point2.X);
+                    maxY = MathF.Max(maxY, point2.Y);
+                    maxZ = MathF.Max(maxZ, point2.Z);
                 }
             }
 
@@ -1022,6 +1007,78 @@ namespace MphRead.Utility
                 int vectorIndex = vectors.Count;
                 AddItems(item.Points, item.Plane.Xyz);
                 dataPacks.Add(new CollisionDataPack(item, planeIndex, vectorIndex, item.Points.Count));
+            }
+
+            var treeNodes = new List<TreeNodePack>();
+            treeNodes.Add(new TreeNodePack());
+            // sktodo: entities should skip these steps, and always have 1 entry/data idx/tree idx/tree node
+            // start with box covering entire collision, then split in two for the biggest dimension
+            // repeat until the boxes have side lengths of 4-ish
+            // for each of those boxes, do intersection tests and create the entry
+
+            void MakeNodes(TreeNodePack parent)
+            {
+                float sizeX = parent.MaxBounds.X - parent.MinBounds.X;
+                float sizeY = parent.MaxBounds.Y - parent.MinBounds.Y;
+                float sizeZ = parent.MaxBounds.Z - parent.MinBounds.Z;
+                if (sizeX < 8 && sizeY < 8 && sizeZ < 8)
+                {
+                    parent.LeftIndex = parent.RightIndex = 0x8000; // todo: entry index
+                    return;
+                }
+                Vector3 middle;
+                if (sizeX >= sizeY && sizeX >= sizeZ)
+                {
+                    middle = new Vector3(parent.MinBounds.X + sizeX / 2f, parent.MaxBounds.Y, parent.MaxBounds.Z);
+                }
+                else if (sizeY > sizeX && sizeY >= sizeZ)
+                {
+                    middle = new Vector3(parent.MaxBounds.X, parent.MinBounds.Y + sizeY / 2f, parent.MaxBounds.Z);
+                }
+                else
+                {
+                    middle = new Vector3(parent.MaxBounds.X, parent.MaxBounds.Y, parent.MinBounds.Z + sizeZ / 2f);
+                }
+                parent.LeftIndex = treeNodes.Count;
+                var leftNode = new TreeNodePack()
+                {
+                    MinBounds = parent.MinBounds,
+                    MaxBounds = middle
+                };
+                treeNodes.Add(leftNode);
+                parent.RightIndex = treeNodes.Count;
+                var rightNode = new TreeNodePack()
+                {
+                    MinBounds = middle,
+                    MaxBounds = parent.MaxBounds
+                };
+                treeNodes.Add(rightNode);
+                MakeNodes(leftNode);
+                MakeNodes(rightNode);
+            }
+
+            var startNode = new TreeNodePack()
+            {
+                MinBounds = new Vector3(minX, minY, minZ),
+                MaxBounds = new Vector3(maxX, maxY, maxZ),
+            };
+            treeNodes.Add(startNode);
+            MakeNodes(startNode);
+
+            var dataIdxs = new List<ushort>();
+            var entries = new List<TreeNodePack>(); // this class's properties are convenient for entries too
+            foreach (TreeNodePack node in treeNodes.Where(t => t.RightIndex == 0x8000))
+            {
+                node.LeftIndex = entries.Count;
+                int idxStart = dataIdxs.Count;
+                dataIdxs.AddRange(GetDataInRegion(node.MinBounds, node.MaxBounds, data));
+                int idxCount = dataIdxs.Count - idxStart;
+                var entry = new TreeNodePack();
+                entry.MinBounds = node.MinBounds;
+                entry.MaxBounds = node.MaxBounds;
+                entry.LeftIndex = idxCount; // entries containing no data will be included
+                entry.RightIndex = idxStart;
+                entries.Add(entry);
             }
 
             stream.Position = Sizes.FhCollisionHeader;
@@ -1067,19 +1124,39 @@ namespace MphRead.Utility
             {
                 writer.Write(padByte);
             }
-
             // data indices
             int dataIndexOffset = (int)stream.Position;
-
+            foreach (ushort index in dataIdxs)
+            {
+                writer.Write(index);
+            }
+            while (stream.Position % 4 != 0)
+            {
+                writer.Write(padByte);
+            }
             // entries
             int entryOffset = (int)stream.Position;
-
+            foreach (TreeNodePack entry in entries)
+            {
+                writer.WriteVector3(entry.MinBounds);
+                writer.WriteVector3(entry.MaxBounds);
+                writer.Write(entry.LeftIndex);
+                writer.Write(entry.RightIndex);
+            }
             // tree node indices
             int treeNodeIndexOffset = (int)stream.Position;
-
+            int treeNodeIndexCount = 1;
+            writer.Write((ushort)1);
+            writer.Write(padShort);
             // tree nodes
             int treeNodeOffset = (int)stream.Position;
-
+            foreach (TreeNodePack treeNode in treeNodes)
+            {
+                writer.WriteVector3(treeNode.MinBounds);
+                writer.WriteVector3(treeNode.MaxBounds);
+                writer.Write(treeNode.LeftIndex);
+                writer.Write(treeNode.RightIndex);
+            }
             // portals
             int portalOffset = (int)stream.Position;
             foreach (CollisionPortalPack portal in portalPacks)
@@ -1105,13 +1182,13 @@ namespace MphRead.Utility
             writer.Write((ushort)(data.Count + portals.Count));
             writer.Write(padShort); // DataStartIndex
             writer.Write(dataOffset);
-            //writer.Write(null); // DataIndexCount
+            writer.Write(dataIdxs.Count);
             writer.Write(dataIndexOffset);
-            //writer.Write(null); // EntryCount
+            writer.Write(entries.Count);
             writer.Write(entryOffset);
-            //writer.Write(null); // TreeNodeIndexCount
+            writer.Write(treeNodeIndexCount);
             writer.Write(treeNodeIndexOffset);
-            //writer.Write(null); // TreeNodeCount
+            writer.Write(treeNodes.Count);
             writer.Write(treeNodeOffset);
             writer.Write(portals.Count);
             writer.Write(portalOffset);

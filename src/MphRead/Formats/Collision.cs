@@ -715,65 +715,64 @@ namespace MphRead.Formats.Collision
 
         public override void GetDrawInfo(List<Vector3> points, EntityType entityType, Scene scene)
         {
-            //float minX = Single.MaxValue;
-            //float minY = Single.MaxValue;
-            //float minZ = Single.MaxValue;
-            //float maxX = Single.MinValue;
-            //float maxY = Single.MinValue;
-            //float maxZ = Single.MinValue;
             var color = new Vector4(Vector3.UnitX, 0.5f);
             color.W = scene.ColDisplayAlpha;
             int polygonId = scene.GetNextPolygonId();
-            for (int i = 0; i < Header.DataCount; i++)
+            for (int i = Portals.Count; i < Data.Count; i++)
             {
-                ushort dataIndex = DataIndices[Header.DataStartIndex + i];
-                if (dataIndex > Data.Count)
+                FhCollisionData data = Data[i];
+                Debug.Assert(data.VectorCount >= 3 && data.VectorCount <= 8);
+                Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.VectorCount);
+                for (int j = 0; j < data.VectorCount; j++)
                 {
-                    // this happens in FH_E3
-                    continue;
+                    FhCollisionVector vector = Vectors[data.VectorStartIndex + j];
+                    verts[j] = points[vector.Point2Index];
                 }
+                scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.VectorCount);
+            }
+        }
+
+        public void GetPartitions(List<Vector3> points, EntityType entityType, Scene scene)
+        {
+            int entryIndex = (int)scene.ShowVolumes;
+            if (entryIndex <= 0)
+            {
+                return;
+            }
+            var color = new Vector4(Vector3.UnitX, 0.5f);
+            color.W = scene.ColDisplayAlpha;
+            int polygonId = scene.GetNextPolygonId();
+            FhCollisionEntry entry = Entries[entryIndex];
+            for (int i = 0; i < entry.DataCount; i++)
+            {
+                int dataIndex = DataIndices[entry.DataStartIndex + i];
                 FhCollisionData data = Data[dataIndex];
                 Debug.Assert(data.VectorCount >= 3 && data.VectorCount <= 8);
                 Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.VectorCount);
                 for (int j = 0; j < data.VectorCount; j++)
                 {
                     FhCollisionVector vector = Vectors[data.VectorStartIndex + j];
-                    verts[j] = points[vector.Point1Index];
-                    //minX = MathF.Min(minX, verts[j].X);
-                    //maxX = MathF.Max(maxX, verts[j].X);
-                    //minY = MathF.Min(minY, verts[j].Y);
-                    //maxY = MathF.Max(maxY, verts[j].Y);
-                    //minZ = MathF.Min(minZ, verts[j].Z);
-                    //maxZ = MathF.Max(maxZ, verts[j].Z);
+                    verts[j] = points[vector.Point2Index];
                 }
                 scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.VectorCount);
             }
-            // sktodo: pre-size big enough to hold the whole "path" through the tree
-            // --> have "depth" variable, allow increasing/decreasing depth, and allow switching between left/right at current depth
-            // --> next: show all data which are children of the current depth + branch selection
-            // sktodo: move to partition method
-            //for (int i = 0; i < TreeNodeIndices.Count; i++)
-            //{
-            //    FhCollisionTreeNode treeNode = TreeNodes[TreeNodeIndices[i]];
-            //    //treeNode = TreeNodes[treeNode.LeftIndex];
-            //    Vector3[] bverts = ArrayPool<Vector3>.Shared.Rent(8);
-            //    Vector3 minPoint = treeNode.MinBounds.ToFloatVector();
-            //    Vector3 maxPoint = treeNode.MaxBounds.ToFloatVector();
-            //    var sideX = new Vector3(maxPoint.X - minPoint.X, 0, 0);
-            //    var sideY = new Vector3(0, maxPoint.Y - minPoint.Y, 0);
-            //    var sideZ = new Vector3(0, 0, maxPoint.Z - minPoint.Z);
-            //    bverts[0] = minPoint;
-            //    bverts[1] = minPoint + sideZ;
-            //    bverts[2] = minPoint + sideX;
-            //    bverts[3] = minPoint + sideX + sideZ;
-            //    bverts[4] = minPoint + sideY;
-            //    bverts[5] = minPoint + sideY + sideZ;
-            //    bverts[6] = minPoint + sideX + sideY;
-            //    bverts[7] = minPoint + sideX + sideY + sideZ;
-            //    polygonId = scene.GetNextPolygonId();
-            //    var bcolor = new Vector4(1, 0.3f, 1, 0.5f);
-            //    scene.AddRenderItem(CullingMode.Front, polygonId, bcolor, RenderItemType.Box, bverts, 8);
-            //}
+            Vector3[] bverts = ArrayPool<Vector3>.Shared.Rent(8);
+            Vector3 minPoint = entry.MinBounds.ToFloatVector();
+            Vector3 maxPoint = entry.MaxBounds.ToFloatVector();
+            var sideX = new Vector3(maxPoint.X - minPoint.X, 0, 0);
+            var sideY = new Vector3(0, maxPoint.Y - minPoint.Y, 0);
+            var sideZ = new Vector3(0, 0, maxPoint.Z - minPoint.Z);
+            bverts[0] = minPoint;
+            bverts[1] = minPoint + sideZ;
+            bverts[2] = minPoint + sideX;
+            bverts[3] = minPoint + sideX + sideZ;
+            bverts[4] = minPoint + sideY;
+            bverts[5] = minPoint + sideY + sideZ;
+            bverts[6] = minPoint + sideX + sideY;
+            bverts[7] = minPoint + sideX + sideY + sideZ;
+            polygonId = scene.GetNextPolygonId();
+            var bcolor = new Vector4(1, 0.3f, 1, 0.5f);
+            scene.AddRenderItem(CullingMode.Front, polygonId, bcolor, RenderItemType.Box, bverts, 8);
         }
     }
 }
