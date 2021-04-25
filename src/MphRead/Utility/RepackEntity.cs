@@ -735,9 +735,9 @@ namespace MphRead.Utility
                     {
                         platform.Rotations.RemoveAt(platform.Rotations.Count - 1);
                     }
-                    if (platform.Rotations.Distinct().Count() > 1)
+                    if (platform.Rotations.Take(platform.PositionCount).Distinct().Count() > 1)
                     {
-                        Console.WriteLine($"MPH to FH: Warning: Platform entity ID {entity.Id} has rotation values that will not be preserved.");
+                        Console.WriteLine($"MPH to FH: Warning: Platform entity ID {entity.Id} has multiple rotation values.");
                     }
                     converted.Add(new FhPlatformEntityEditor()
                     {
