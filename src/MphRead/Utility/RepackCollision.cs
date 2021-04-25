@@ -1012,8 +1012,17 @@ namespace MphRead.Utility
             // start with box covering entire collision, then split in two for the biggest dimension
             // repeat until the boxes have side lengths of 4-ish
             // for each of those boxes, do intersection tests and create the entry
+            // note: first tree node entry is always a dummy/unreferenced item with the following values
             var treeNodes = new List<TreeNodePack>();
-            treeNodes.Add(new TreeNodePack());
+            int min = 0x50000000;
+            int max = unchecked((int)0xB0000000);
+            treeNodes.Add(new TreeNodePack()
+            {
+                MinBounds = new Vector3(min, min, min),
+                MaxBounds = new Vector3(max, max, max),
+                LeftIndex = 0xCDCD,
+                RightIndex = 0xCDCD
+            });
 
             void MakeNodes(TreeNodePack parent)
             {
