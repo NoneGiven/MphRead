@@ -781,7 +781,7 @@ namespace MphRead.Utility
                 {
                     FhItemType itemType = itemSpawn.ItemType switch
                     {
-                        ItemType.AffinityWeapon => FhItemType.AmmoBig,
+                        ItemType.AffinityWeapon => FhItemType.ElectroLob,
                         ItemType.Battlehammer => FhItemType.ElectroLob,
                         ItemType.DoubleDamage => FhItemType.DoubleDamage,
                         ItemType.HealthBig => FhItemType.HealthBig,
