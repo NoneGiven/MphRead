@@ -12,7 +12,7 @@ namespace MphRead.Utility
         public static (byte[], byte[]) RepackRoomTextures(string room, bool separate)
         {
             RoomMetadata meta = Metadata.RoomMetadata[room];
-            if (sepaate && meta.TexturePath != null)
+            if (separate && meta.TexturePath != null)
             {
                 throw new ProgramException($"Room {room} already has a separate texture file.");
             }
