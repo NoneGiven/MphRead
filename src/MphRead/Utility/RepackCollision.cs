@@ -186,7 +186,7 @@ namespace MphRead.Utility
             return editors;
         }
 
-        // sktodo: handle Level MP5
+        // todo: handle Level MP5
         private static List<CollisionDataEditor> GetEditors(FhCollisionInfo info)
         {
             // data index list has the same count as the data list, contains indices of all non-portal data,
@@ -689,24 +689,7 @@ namespace MphRead.Utility
                         maxZ = MathF.Max(maxZ, point.Z);
                     }
                 }
-                //Vector3 normal = Vector3.Cross(item.Points[^2] - item.Points[^3], item.Points[^1] - item.Points[^2]).Normalized();
-                //if (Single.IsNaN(normal.X))
-                //{
-                //    Debugger.Break();
-                //    if (item.Points.Count > 3)
-                //    {
-                //        normal = Vector3.Cross(item.Points[1] - item.Points[0], item.Points[3] - item.Points[0]).Normalized();
-                //    }
-                //    if (Single.IsNaN(normal.X))
-                //    {
-                //        normal = Vector3.Zero;
-                //    }
-                //}
-                //float w = normal.X * item.Points[^1].X + normal.Y * item.Points[^1].Y + normal.Z * item.Points[^1].Z;
-                //var plane = new Vector4(normal, w);
                 Vector4 plane = item.Plane;
-                //CollisionPlane orig = info.Planes[info.Data[i].PlaneIndex];
-                //plane = new Vector4(orig.Normal.ToFloatVector(), orig.Homogenous.FloatValue);
                 int planeIndex = planes.IndexOf(p => p == plane);
                 if (planeIndex == -1)
                 {
@@ -735,42 +718,6 @@ namespace MphRead.Utility
                 partsZ++;
             }
 
-            // sktodo: (re)move all inline testing code
-            //Debug.Assert(minX == info.MinPosition.X);
-            //Debug.Assert(minY == info.MinPosition.Y);
-            //Debug.Assert(minZ == info.MinPosition.Z);
-            //Debug.Assert(partsX == info.Header.PartsX);
-            //Debug.Assert(partsY == info.Header.PartsY);
-            //Debug.Assert(partsZ == info.Header.PartsZ);
-
-            //Debug.Assert(dataPack.Count == info.Data.Count);
-            //for (int i = 0; i < dataPack.Count; i++)
-            //{
-            //    CollisionDataPack pack = dataPack[i];
-            //    CollisionData orig = info.Data[i];
-            //    Debug.Assert(pack.Editor.LayerMask == orig.LayerMask);
-            //    Debug.Assert(pack.Editor.Flags == orig.Flags);
-            //    Vector4 plane = planes[pack.PlaneIndex];
-            //    CollisionPlane old = info.Planes[orig.PlaneIndex];
-            //    int planeX = (int)(plane.X * 4096f);
-            //    int planeY = (int)(plane.Y * 4096f);
-            //    int planeZ = (int)(plane.Z * 4096f);
-            //    int planeW = (int)(plane.W * 4096f);
-            //    //Debug.Assert(Math.Abs(planeX - old.Normal.X.Value) <= 1);
-            //    //Debug.Assert(Math.Abs(planeY - old.Normal.Y.Value) <= 1);
-            //    //Debug.Assert(Math.Abs(planeZ - old.Normal.Z.Value) <= 1);
-            //    //Debug.Assert(Math.Abs(planeW - old.Homogenous.Value) <= 1);
-            //    Debug.Assert(pack.PointIndexCount == orig.PointIndexCount);
-            //    //Debug.Assert(pack.PointStartIndex == orig.PointStartIndex);
-            //    for (int j = 0; j < pack.PointIndexCount; j++)
-            //    {
-            //        Vector3 point = points[pointIdxs[pack.PointStartIndex + j]];
-            //        Vector3 prev = info.Points[info.PointIndices[orig.PointStartIndex + j]];
-            //        Debug.Assert(point == prev);
-            //    }
-            //}
-            Nop();
-
             for (int py = 0; py < partsY; py++)
             {
                 for (int pz = 0; pz < partsZ; pz++)
@@ -793,23 +740,6 @@ namespace MphRead.Utility
                     }
                 }
             }
-            //Debug.Assert(entries.Count == info.Entries.Count);
-            //for (int i = 0; i < entries.Count; i++)
-            //{
-            //    (ushort Count, ushort Index) entry = entries[i];
-            //    CollisionEntry orig = info.Entries[i];
-            //    Debug.Assert(entry.Count >= orig.DataCount);
-            //    var newIdxs = new List<ushort>();
-            //    for (int j = 0; j < entry.Count; j++)
-            //    {
-            //        newIdxs.Add(dataIdxs[entry.Index + j]);
-            //    }
-            //    for (int j = 0; j < orig.DataCount; j++)
-            //    {
-            //        Debug.Assert(newIdxs.Contains(info.DataIndices[orig.DataStartIndex + j]));
-            //    }
-            //}
-            Nop();
 
             stream.Position = Sizes.CollisionHeader;
             // points

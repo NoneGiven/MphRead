@@ -427,7 +427,6 @@ namespace MphRead.Editor
             }
             else if (spawnerType == 3)
             {
-                // sktodo: set and write unused fields
                 Volume0 = new CollisionVolume(raw.Fields.S03.Volume0);
                 EnemyPosition = raw.Fields.S03.Position.ToFloatVector();
                 EnemyFacing = raw.Fields.S03.Facing.ToFloatVector();

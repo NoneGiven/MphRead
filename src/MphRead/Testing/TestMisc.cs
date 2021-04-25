@@ -185,7 +185,7 @@ namespace MphRead.Testing
                 byte[] entity = Repack.RepackMphEntities(room);
                 string entDest = Path.Combine(folder, Path.GetFileName(overMeta?.EntityPath ?? meta.EntityPath));
                 File.WriteAllBytes(entDest, entity);
-                // sktodo: nodedata
+                // todo: nodedata
             }
             Console.Write("Creating archive...");
             // archive
@@ -264,7 +264,7 @@ namespace MphRead.Testing
                 byte[] entity = Repack.RepackFhEntities(room, filter);
                 string entDest = Path.Combine(folder, Path.GetFileName(overMeta?.EntityPath ?? meta.EntityPath));
                 File.WriteAllBytes(entDest, entity);
-                // sktodo: nodedata
+                // todo: nodedata
             }
             Console.WriteLine("Done.");
             Nop();
