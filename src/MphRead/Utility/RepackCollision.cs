@@ -1014,8 +1014,8 @@ namespace MphRead.Utility
             // for each of those boxes, do intersection tests and create the entry
             // note: first tree node entry is always a dummy/unreferenced item with the following values
             var treeNodes = new List<TreeNodePack>();
-            int min = 0x50000000;
-            int max = unchecked((int)0xB0000000);
+            float min = Fixed.ToFloat(0x50000000);
+            float max = Fixed.ToFloat(unchecked((int)0xB0000000));
             treeNodes.Add(new TreeNodePack()
             {
                 MinBounds = new Vector3(min, min, min),
