@@ -7,7 +7,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Utility
 {
-    public enum RepackNodes
+    public enum RepackFilter
     {
         All,
         SinglePlayer,
@@ -16,10 +16,10 @@ namespace MphRead.Utility
 
     public static partial class Repack
     {
-        public static (byte[], byte[]) RepackRoomModel(string room, bool separate, RepackNodes nodes = RepackNodes.All)
+        public static (byte[], byte[]) RepackRoomModel(string room, bool separateTextures, RepackFilter filter = RepackFilter.All)
         {
             RoomMetadata meta = Metadata.RoomMetadata[room];
-            if (separate && meta.TexturePath != null)
+            if (separateTextures && meta.TexturePath != null)
             {
                 throw new ProgramException($"Room {room} already has a separate texture file.");
             }
@@ -38,10 +38,10 @@ namespace MphRead.Utility
             {
                 paletteInfo.Add(new PaletteInfo(data.Select(d => d.Data).ToList()));
             }
-            if (nodes != RepackNodes.All)
+            if (filter != RepackFilter.All)
             {
                 int layerMask;
-                if (nodes == RepackNodes.Multiplayer)
+                if (filter == RepackFilter.Multiplayer)
                 {
                     layerMask = SceneSetup.GetNodeLayer(GameMode.Battle, roomLayer: 0, playerCount: 2);
                 }
@@ -54,7 +54,7 @@ namespace MphRead.Utility
             var options = new RepackOptions()
             {
                 IsRoom = true,
-                Texture = separate ? RepackTexture.Separate : RepackTexture.Inline,
+                Texture = separateTextures ? RepackTexture.Separate : RepackTexture.Inline,
                 ComputeBounds = ComputeBounds.None
             };
             return PackModel((int)model.Scale.X, model.NodeMatrixIds, model.NodePosCounts, model.Materials,

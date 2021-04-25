@@ -82,10 +82,22 @@ namespace MphRead.Utility
             return RepackMphCollision(editors, collision.Info.Portals);
         }
 
-        public static byte[] RepackFhRoom(string room)
+        public static byte[] RepackFhRoom(string room, RepackFilter filter = RepackFilter.All)
         {
             RoomMetadata meta = Metadata.RoomMetadata[room];
-            CollisionInstance collision = Collision.GetCollision(meta, roomLayerMask: -1);
+            int roomLayerMask = -1;
+            if (filter != RepackFilter.All)
+            {
+                if (filter == RepackFilter.Multiplayer)
+                {
+                    roomLayerMask = SceneSetup.GetNodeLayer(GameMode.Battle, roomLayer: 0, playerCount: 2);
+                }
+                else
+                {
+                    roomLayerMask = SceneSetup.GetNodeLayer(GameMode.SinglePlayer, meta.NodeLayer, playerCount: 1);
+                }
+            }
+            CollisionInstance collision = Collision.GetCollision(meta, roomLayerMask);
             List<CollisionDataEditor> editors = GetEditors(collision);
             return RepackFhCollision(editors, collision.Info.Portals);
         }

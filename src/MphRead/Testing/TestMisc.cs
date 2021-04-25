@@ -142,7 +142,7 @@ namespace MphRead.Testing
             string fileSystem = meta.FirstHunt ? Paths.FhFileSystem : Paths.FileSystem;
             Console.WriteLine("Converting model...");
             // model, texure
-            (byte[] model, byte[] texture) = Repack.RepackRoomModel(room, separate: true);
+            (byte[] model, byte[] texture) = Repack.RepackRoomModel(room, separateTextures: true);
             string modelPath = Path.GetFileName(overMeta?.ModelPath ?? meta.ModelPath);
             string modelDest = Path.Combine(folder, modelPath);
             string texDest = Path.Combine(folder, modelPath.Replace("_Model.bin", "_Tex.bin").Replace("_model.bin", "_tex.bin"));
@@ -216,20 +216,20 @@ namespace MphRead.Testing
             Debug.Assert(meta.EntityPath != null && meta.NodePath != null);
             string folder = Path.Combine(Paths.Export, "_pack");
             string fileSystem = meta.FirstHunt ? Paths.FhFileSystem : Paths.FileSystem;
-            Console.WriteLine("Converting model...");
-            // model, texure
-            RepackNodes nodes = RepackNodes.All;
+            RepackFilter filter = RepackFilter.All;
             if (!meta.FirstHunt && !meta.Hybrid)
             {
-                nodes = meta.Multiplayer ? RepackNodes.Multiplayer : RepackNodes.SinglePlayer;
+                filter = meta.Multiplayer ? RepackFilter.Multiplayer : RepackFilter.SinglePlayer;
             }
-            (byte[] model, _) = Repack.RepackRoomModel(room, separate: false, nodes);
+            Console.WriteLine("Converting model...");
+            // model, texure
+            (byte[] model, _) = Repack.RepackRoomModel(room, separateTextures: false, filter);
             string modelPath = Path.GetFileName(overMeta?.ModelPath ?? meta.ModelPath);
             string modelDest = Path.Combine(folder, modelPath);
             File.WriteAllBytes(modelDest, model);
             Console.WriteLine("Converting collision...");
             // collision
-            byte[] collision = RepackCollision.RepackFhRoom(room);
+            byte[] collision = RepackCollision.RepackFhRoom(room, filter);
             string colDest = Path.Combine(folder, Path.GetFileName(overMeta?.CollisionPath ?? meta.CollisionPath));
             File.WriteAllBytes(colDest, collision);
             Console.WriteLine("Converting animation...");
