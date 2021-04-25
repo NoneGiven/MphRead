@@ -444,7 +444,7 @@ namespace MphRead.Utility
                 }
                 else if (entity is FhEnemySpawnEntityEditor enemySpawn)
                 {
-                    // EndFrame is ignored
+                    // StartFrame is ignored
                     var mphSpawn = new EnemySpawnEntityEditor()
                     {
                         Id = enemySpawn.Id,
@@ -844,7 +844,7 @@ namespace MphRead.Utility
                         Cooldown = enemySpawn.CooldownTime,
                         Cylinder = enemySpawn.Volume1,
                         EmptyMessage = GetMessage(enemySpawn.Message1),
-                        EndFrame = 0,
+                        StartFrame = 0,
                         EnemyType = enemyType,
                         Facing = enemySpawn.Facing,
                         NodeName = enemySpawn.NodeName,
@@ -2266,7 +2266,7 @@ namespace MphRead.Utility
             writer.Write(entity.SpawnCount);
             writer.Write(padByte); // PaddingEB
             writer.Write(entity.Cooldown);
-            writer.Write(entity.EndFrame);
+            writer.Write(entity.StartFrame);
             writer.WriteString(entity.SpawnNodeName, 16);
             writer.Write(entity.ParentId);
             writer.Write(padShort); // Padding102

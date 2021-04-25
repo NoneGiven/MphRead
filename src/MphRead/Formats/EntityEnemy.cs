@@ -233,7 +233,7 @@ namespace MphRead
         public readonly byte SpawnCount;
         public readonly byte PaddingEB;
         public readonly ushort Cooldown;
-        public readonly ushort EndFrame;
+        public readonly ushort StartFrame;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;
         public readonly short ParentId;
@@ -545,7 +545,7 @@ namespace MphRead.Editor
         public byte SpawnLimit { get; set; }
         public byte SpawnCount { get; set; }
         public ushort Cooldown { get; set; }
-        public ushort EndFrame { get; set; }
+        public ushort StartFrame { get; set; }
         public string SpawnNodeName { get; set; } = "";
         public short ParentId { get; set; }
         public FhMessage EmptyMessage { get; set; }
@@ -564,7 +564,7 @@ namespace MphRead.Editor
             SpawnLimit = raw.SpawnLimit;
             SpawnCount = raw.SpawnCount;
             Cooldown = raw.Cooldown;
-            EndFrame = raw.EndFrame;
+            StartFrame = raw.StartFrame;
             SpawnNodeName = raw.NodeName.MarshalString();
             ParentId = raw.ParentId;
             EmptyMessage = raw.EmptyMessage;
