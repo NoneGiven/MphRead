@@ -550,6 +550,10 @@ namespace MphRead.Editor
         public short ParentId { get; set; }
         public FhMessage EmptyMessage { get; set; }
 
+        public FhEnemySpawnEntityEditor() : base(EntityType.FhEnemySpawn)
+        {
+        }
+
         public FhEnemySpawnEntityEditor(Entity header, FhEnemySpawnEntityData raw) : base(header)
         {
             Box = new CollisionVolume(raw.Box);

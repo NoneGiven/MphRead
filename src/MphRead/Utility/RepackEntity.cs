@@ -802,7 +802,45 @@ namespace MphRead.Utility
                 }
                 else if (entity is EnemySpawnEntityEditor enemySpawn)
                 {
-                    // sktodo
+                    if (!_validEnemiesFh.Contains(enemySpawn.EnemyType))
+                    {
+                        Console.WriteLine($"MPH to FH: Skipping enemy spawn entity ID {entity.Id} with enemy type {enemySpawn.EnemyType}.");
+                        continue;
+                    }
+                    FhEnemyType enemyType = enemySpawn.EnemyType switch
+                    {
+                        EnemyType.WarWasp => FhEnemyType.WarWasp,
+                        EnemyType.BarbedWarWasp => FhEnemyType.WarWasp,
+                        EnemyType.Zoomer => FhEnemyType.Zoomer,
+                        EnemyType.Geemer => FhEnemyType.Zoomer,
+                        EnemyType.Temroid => FhEnemyType.Metroid,
+                        EnemyType.Petrasyl1 => FhEnemyType.Mochtroid1,
+                        EnemyType.Petrasyl2 => FhEnemyType.Mochtroid2,
+                        EnemyType.Petrasyl3 => FhEnemyType.Mochtroid3,
+                        EnemyType.Petrasyl4 => FhEnemyType.Mochtroid4,
+                        _ => throw new InvalidOperationException()
+                    };
+                    var fhSpawn = new FhEnemySpawnEntityEditor()
+                    {
+                        Id = enemySpawn.Id,
+                        Box = enemySpawn.Volume1,
+                        Cooldown = enemySpawn.CooldownTime,
+                        Cylinder = enemySpawn.Volume1,
+                        EmptyMessage = GetMessage(enemySpawn.Message1),
+                        EndFrame = 0,
+                        EnemyType = enemyType,
+                        Facing = enemySpawn.Facing,
+                        NodeName = enemySpawn.NodeName,
+                        ParentId = enemySpawn.EntityId1,
+                        Position = enemySpawn.Position,
+                        SpawnCount = enemySpawn.SpawnCount,
+                        SpawnLimit = enemySpawn.SpawnLimit,
+                        SpawnNodeName = enemySpawn.SpawnNodeName,
+                        SpawnTotal = enemySpawn.SpawnTotal,
+                        Sphere = enemySpawn.Volume1,
+                        Up = enemySpawn.Up
+                    };
+                    converted.Add(fhSpawn);
                 }
                 else if (entity is TriggerVolumeEntityEditor trigger)
                 {
@@ -1265,6 +1303,19 @@ namespace MphRead.Utility
             EntityType.FhMorphCamera
         };
 
+        private static readonly HashSet<EnemyType> _validEnemiesFh = new HashSet<EnemyType>()
+        {
+            EnemyType.WarWasp,
+            EnemyType.BarbedWarWasp,
+            EnemyType.Zoomer,
+            EnemyType.Geemer,
+            EnemyType.Temroid,
+            EnemyType.Petrasyl1,
+            EnemyType.Petrasyl2,
+            EnemyType.Petrasyl3,
+            EnemyType.Petrasyl4
+        };
+
         private static void ThrowIfInvalid(EntityEditorBase entity, bool firstHunt)
         {
             if (entity.Id < 0)
@@ -1289,7 +1340,7 @@ namespace MphRead.Utility
             }
         }
 
-        private static void PrintLayers(ushort mask)
+        public static void PrintLayers(ushort mask)
         {
             var sp = new List<string>();
             var mp = new List<string>();
