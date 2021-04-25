@@ -15,7 +15,7 @@ namespace MphRead.Utility
         public static byte[] RepackMphEntities(string room)
         {
             RoomMetadata meta = Metadata.RoomMetadata[room];
-            Debug.Assert(meta.FirstHunt && meta.EntityPath != null);
+            Debug.Assert(meta.EntityPath != null);
             List<EntityEditorBase> entities = meta.FirstHunt ? GetFhEntities(meta.EntityPath) : GetEntities(meta.EntityPath);
             List<EntityEditorBase> converted = ConvertFhToMph(entities);
             return RepackEntities(converted);
@@ -24,10 +24,10 @@ namespace MphRead.Utility
         public static byte[] RepackFhEntities(string room)
         {
             RoomMetadata meta = Metadata.RoomMetadata[room];
-            Debug.Assert(meta.FirstHunt && meta.EntityPath != null);
+            Debug.Assert(meta.EntityPath != null);
             List<EntityEditorBase> entities = meta.FirstHunt ? GetFhEntities(meta.EntityPath) : GetEntities(meta.EntityPath);
             List<EntityEditorBase> converted = ConvertMphToFh(entities);
-            return RepackEntities(converted);
+            return RepackFhEntities(converted);
         }
 
         public static byte[] TestEntityEdit()
@@ -2067,6 +2067,7 @@ namespace MphRead.Utility
             for (int i = 0; i < entities.Count; i++)
             {
                 EntityEditorBase entity = entities[i];
+                ThrowIfInvalid(entity, firstHunt: true);
                 offsets.Add((int)stream.Position);
                 WriteFhEntity(entity, writer);
                 if (i < entities.Count - 1)
