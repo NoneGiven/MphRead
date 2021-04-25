@@ -1409,7 +1409,7 @@ namespace MphRead
             }
             else if (roomId >= 36 && roomId < 45)
             {
-                 // Alinos 2
+                // Alinos 2
                 areaId = 1;
             }
             else if (roomId >= 45 && roomId < 56)

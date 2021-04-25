@@ -320,7 +320,7 @@ namespace MphRead.Memory
                         output = newOutput;
                         Console.Clear();
                         Console.Write(output);
-                    } 
+                    }
                     await Task.Delay(15);
                 }
             }).GetAwaiter().GetResult();
