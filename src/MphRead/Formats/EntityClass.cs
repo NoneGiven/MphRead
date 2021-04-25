@@ -14,8 +14,9 @@ namespace MphRead.Editor
         public Vector3 Facing { get; set; }
         public string NodeName { get; set; } = "";
 
-        public EntityEditorBase()
+        public EntityEditorBase(EntityType type)
         {
+            Type = type;
         }
 
         public EntityEditorBase(Entity header)
@@ -99,6 +100,10 @@ namespace MphRead.Editor
         public Message LifetimeMessage4 { get; set; }
         public uint LifetimeMsg4Param1 { get; set; }
         public uint LifetimeMsg4Param2 { get; set; }
+
+        public PlatformEntityEditor() : base(EntityType.Platform)
+        {
+        }
 
         public PlatformEntityEditor(Entity header, PlatformEntityData raw) : base(header)
         {
@@ -190,6 +195,10 @@ namespace MphRead.Editor
         public float Speed { get; set; }
         public string PortalName { get; set; } = "";
 
+        public FhPlatformEntityEditor() : base(EntityType.FhPlatform)
+        {
+        }
+
         public FhPlatformEntityEditor(Entity header, FhPlatformEntityData raw) : base(header)
         {
             NoPortal = raw.NoPortal;
@@ -242,8 +251,12 @@ namespace MphRead.Editor
     public class PlayerSpawnEntityEditor : EntityEditorBase
     {
         public byte Availability { get; set; } // 0 - any time, 1 - no first frame, 2 - bot only (FH)
-        public bool Active { get; set; }
-        public sbyte TeamIndex { get; set; } // 0, 1, or -1
+        public bool Active { get; set; } = true;
+        public sbyte TeamIndex { get; set; } = -1; // 0, 1, or -1 (only used in CTF)
+
+        public PlayerSpawnEntityEditor() : base(EntityType.PlayerSpawn)
+        {
+        }
 
         public PlayerSpawnEntityEditor(Entity header, PlayerSpawnEntityData raw) : base(header)
         {
@@ -258,7 +271,7 @@ namespace MphRead.Editor
         public string DoorNodeName { get; set; } = "";
         public uint PaletteId { get; set; }
         public uint ModelId { get; set; }
-        public uint TargetRoomId { get; set; }
+        public uint ConnectorId { get; set; }
         public byte TargetLayerId { get; set; }
         public byte Flags { get; set; } // bit 0 - locked
         public byte Field42 { get; set; }
@@ -266,12 +279,16 @@ namespace MphRead.Editor
         public string EntityFilename { get; set; } = "";
         public string RoomName { get; set; } = "";
 
+        public DoorEntityEditor() : base(EntityType.Door)
+        {
+        }
+
         public DoorEntityEditor(Entity header, DoorEntityData raw) : base(header)
         {
             DoorNodeName = raw.NodeName.MarshalString();
             PaletteId = raw.PaletteId;
             ModelId = raw.ModelId;
-            TargetRoomId = raw.TargetRoomId;
+            ConnectorId = raw.ConnectorId;
             TargetLayerId = raw.TargetLayerId;
             Flags = raw.Flags;
             Field42 = raw.Field42;
@@ -286,6 +303,10 @@ namespace MphRead.Editor
         public string RoomName { get; set; } = "";
         public uint Flags { get; set; }
         public uint ModelId { get; set; }
+
+        public FhDoorEntityEditor() : base(EntityType.FhDoor)
+        {
+        }
 
         public FhDoorEntityEditor(Entity header, FhDoorEntityData raw) : base(header)
         {
@@ -310,6 +331,10 @@ namespace MphRead.Editor
         public uint CollectedMsgParam1 { get; set; }
         public uint CollectedMsgParam2 { get; set; }
 
+        public ItemSpawnEntityEditor() : base(EntityType.ItemSpawn)
+        {
+        }
+
         public ItemSpawnEntityEditor(Entity header, ItemSpawnEntityData raw) : base(header)
         {
             ParentId = raw.ParentId;
@@ -332,402 +357,18 @@ namespace MphRead.Editor
         public FhItemType ItemType { get; set; }
         public ushort SpawnLimit { get; set; }
         public ushort CooldownTime { get; set; }
-        public ushort Field2C { get; set; }
+        public ushort Unused2C { get; set; }
+
+        public FhItemSpawnEntityEditor() : base(EntityType.FhItemSpawn)
+        {
+        }
 
         public FhItemSpawnEntityEditor(Entity header, FhItemSpawnEntityData raw) : base(header)
         {
             ItemType = raw.ItemType;
             SpawnLimit = raw.SpawnLimit;
             CooldownTime = raw.CooldownTime;
-            Field2C = raw.Field2C;
-        }
-    }
-
-    public class EnemySpawnEntityEditor : EntityEditorBase
-    {
-        public EnemyType EnemyType { get; set; }
-        public uint Subtype { get; set; }
-        public uint TextureId { get; set; }
-        public uint HunterWeapon { get; set; }
-        public ushort Health { get; set; }
-        public ushort HealthMax { get; set; }
-        public ushort Field38 { get; set; }
-        public byte HunterColor { get; set; }
-        public byte Field3B { get; set; }
-        public uint Field3C { get; set; }
-        public uint Field40 { get; set; }
-        public uint Field44 { get; set; }
-        public uint Field48 { get; set; }
-        public uint Field4C { get; set; }
-        public uint Field50 { get; set; }
-        public uint Field54 { get; set; }
-        public uint Field58 { get; set; }
-        public uint Field5C { get; set; }
-        public uint Field60 { get; set; }
-        public uint Field64 { get; set; }
-        public uint Field68 { get; set; }
-        public uint Field6C { get; set; }
-        public uint Field70 { get; set; }
-        public uint Field74 { get; set; }
-        public uint Field78 { get; set; }
-        public uint Field7C { get; set; }
-        public uint Field80 { get; set; }
-        public uint Field84 { get; set; }
-        public uint Field88 { get; set; }
-        public uint Field8C { get; set; }
-        public uint Field90 { get; set; }
-        public uint Field94 { get; set; }
-        public uint Field98 { get; set; }
-        public uint Field9C { get; set; }
-        public uint FieldA0 { get; set; }
-        public uint FieldA4 { get; set; }
-        public uint FieldA8 { get; set; }
-        public uint FieldAC { get; set; }
-        public uint FieldB0 { get; set; }
-        public uint FieldB4 { get; set; }
-        public uint FieldB8 { get; set; }
-        public uint FieldBC { get; set; }
-        public uint FieldC0 { get; set; }
-        public uint FieldC4 { get; set; }
-        public uint FieldC8 { get; set; }
-        public uint FieldCC { get; set; }
-        public uint FieldD0 { get; set; }
-        public uint FieldD4 { get; set; }
-        public uint FieldD8 { get; set; }
-        public uint FieldDC { get; set; }
-        public uint FieldE0 { get; set; }
-        public uint FieldE4 { get; set; }
-        public uint FieldE8 { get; set; }
-        public uint FieldEC { get; set; }
-        public uint FieldF0 { get; set; }
-        public uint FieldF4 { get; set; }
-        public uint FieldF8 { get; set; }
-        public uint FieldFC { get; set; }
-        public uint Field100 { get; set; }
-        public uint Field104 { get; set; }
-        public uint Field108 { get; set; }
-        public uint Field10C { get; set; }
-        public uint Field110 { get; set; }
-        public uint Field114 { get; set; }
-        public uint Field118 { get; set; }
-        public uint Field11C { get; set; }
-        public uint Field120 { get; set; }
-        public uint Field124 { get; set; }
-        public uint Field128 { get; set; }
-        public uint Field12C { get; set; }
-        public uint Field130 { get; set; }
-        public uint Field134 { get; set; }
-        public uint Field138 { get; set; }
-        public uint Field13C { get; set; }
-        public uint Field140 { get; set; }
-        public uint Field144 { get; set; }
-        public uint Field148 { get; set; }
-        public uint Field14C { get; set; }
-        public uint Field150 { get; set; }
-        public uint Field154 { get; set; }
-        public uint Field158 { get; set; }
-        public uint Field15C { get; set; }
-        public uint Field160 { get; set; }
-        public uint Field164 { get; set; }
-        public uint Field168 { get; set; }
-        public uint Field16C { get; set; }
-        public uint Field170 { get; set; }
-        public uint Field174 { get; set; }
-        public uint Field178 { get; set; }
-        public uint Field17C { get; set; }
-        public uint Field180 { get; set; }
-        public uint Field184 { get; set; }
-        public uint Field188 { get; set; }
-        public uint Field18C { get; set; }
-        public uint Field190 { get; set; }
-        public uint Field194 { get; set; }
-        public uint Field198 { get; set; }
-        public uint Field19C { get; set; }
-        public uint Field1A0 { get; set; }
-        public uint Field1A4 { get; set; }
-        public uint Field1A8 { get; set; }
-        public uint Field1AC { get; set; }
-        public uint Field1B0 { get; set; }
-        public uint Field1B4 { get; set; }
-        public ushort Field1B8 { get; set; }
-        public byte SomeLimit { get; set; }
-        public byte Field1BB { get; set; }
-        public byte SpawnCount { get; set; }
-        public bool Active { get; set; }
-        public bool AlwaysActive { get; set; }
-        public byte ItemChance { get; set; }
-        public ushort SpawnerModel { get; set; }
-        public ushort CooldownTime { get; set; }
-        public ushort InitialCooldown { get; set; }
-        public float ActiveDistance { get; set; } // todo: display sphere
-        public uint Field1CC { get; set; }
-        public string SpawnNodeName { get; set; } = "";
-        public short EntityId1 { get; set; }
-        public ushort Field1E2 { get; set; }
-        public Message Message1 { get; set; }
-        public short EntityId2 { get; set; }
-        public ushort Field1EA { get; set; }
-        public Message Message2 { get; set; }
-        public short EntityId3 { get; set; }
-        public ushort Field1F2 { get; set; }
-        public Message Message3 { get; set; }
-        public ItemType ItemType { get; set; }
-
-        public EnemySpawnEntityEditor(Entity header, EnemySpawnEntityData raw) : base(header)
-        {
-            EnemyType = raw.Type;
-            Subtype = raw.Subtype;
-            TextureId = raw.TextureId;
-            HunterWeapon = raw.HunterWeapon;
-            Health = raw.Health;
-            HealthMax = raw.HealthMax;
-            Field38 = raw.Field38;
-            HunterColor = raw.HunterColor;
-            Field3B = raw.Field3B;
-            Field3C = raw.Field3C;
-            Field40 = raw.Field40;
-            Field44 = raw.Field44;
-            Field48 = raw.Field48;
-            Field4C = raw.Field4C;
-            Field50 = raw.Field50;
-            Field54 = raw.Field54;
-            Field58 = raw.Field58;
-            Field5C = raw.Field5C;
-            Field60 = raw.Field60;
-            Field64 = raw.Field64;
-            Field68 = raw.Field68;
-            Field6C = raw.Field6C;
-            Field70 = raw.Field70;
-            Field74 = raw.Field74;
-            Field78 = raw.Field78;
-            Field7C = raw.Field7C;
-            Field80 = raw.Field80;
-            Field84 = raw.Field84;
-            Field88 = raw.Field88;
-            Field8C = raw.Field8C;
-            Field90 = raw.Field90;
-            Field94 = raw.Field94;
-            Field98 = raw.Field98;
-            Field9C = raw.Field9C;
-            FieldA0 = raw.FieldA0;
-            FieldA4 = raw.FieldA4;
-            FieldA8 = raw.FieldA8;
-            FieldAC = raw.FieldAC;
-            FieldB0 = raw.FieldB0;
-            FieldB4 = raw.FieldB4;
-            FieldB8 = raw.FieldB8;
-            FieldBC = raw.FieldBC;
-            FieldC0 = raw.FieldC0;
-            FieldC4 = raw.FieldC4;
-            FieldC8 = raw.FieldC8;
-            FieldCC = raw.FieldCC;
-            FieldD0 = raw.FieldD0;
-            FieldD4 = raw.FieldD4;
-            FieldD8 = raw.FieldD8;
-            FieldDC = raw.FieldDC;
-            FieldE0 = raw.FieldE0;
-            FieldE4 = raw.FieldE4;
-            FieldE8 = raw.FieldE8;
-            FieldEC = raw.FieldEC;
-            FieldF0 = raw.FieldF0;
-            FieldF4 = raw.FieldF4;
-            FieldF8 = raw.FieldF8;
-            FieldFC = raw.FieldFC;
-            Field100 = raw.Field100;
-            Field104 = raw.Field104;
-            Field108 = raw.Field108;
-            Field10C = raw.Field10C;
-            Field110 = raw.Field110;
-            Field114 = raw.Field114;
-            Field118 = raw.Field118;
-            Field11C = raw.Field11C;
-            Field120 = raw.Field120;
-            Field124 = raw.Field124;
-            Field128 = raw.Field128;
-            Field12C = raw.Field12C;
-            Field130 = raw.Field130;
-            Field134 = raw.Field134;
-            Field138 = raw.Field138;
-            Field13C = raw.Field13C;
-            Field140 = raw.Field140;
-            Field144 = raw.Field144;
-            Field148 = raw.Field148;
-            Field14C = raw.Field14C;
-            Field150 = raw.Field150;
-            Field154 = raw.Field154;
-            Field158 = raw.Field158;
-            Field15C = raw.Field15C;
-            Field160 = raw.Field160;
-            Field164 = raw.Field164;
-            Field168 = raw.Field168;
-            Field16C = raw.Field16C;
-            Field170 = raw.Field170;
-            Field174 = raw.Field174;
-            Field178 = raw.Field178;
-            Field17C = raw.Field17C;
-            Field180 = raw.Field180;
-            Field184 = raw.Field184;
-            Field188 = raw.Field188;
-            Field18C = raw.Field18C;
-            Field190 = raw.Field190;
-            Field194 = raw.Field194;
-            Field198 = raw.Field198;
-            Field19C = raw.Field19C;
-            Field1A0 = raw.Field1A0;
-            Field1A4 = raw.Field1A4;
-            Field1A8 = raw.Field1A8;
-            Field1AC = raw.Field1AC;
-            Field1B0 = raw.Field1B0;
-            Field1B4 = raw.Field1B4;
-            Field1B8 = raw.Field1B8;
-            SomeLimit = raw.SomeLimit;
-            Field1BB = raw.Field1BB;
-            SpawnCount = raw.SpawnCount;
-            Active = raw.Active != 0;
-            AlwaysActive = raw.AlwaysActive != 0;
-            ItemChance = raw.ItemChance;
-            SpawnerModel = raw.SpawnerModel;
-            CooldownTime = raw.CooldownTime;
-            InitialCooldown = raw.InitialCooldown;
-            ActiveDistance = raw.ActiveDistance.FloatValue;
-            Field1CC = raw.Field1CC;
-            SpawnNodeName = raw.NodeName.MarshalString();
-            EntityId1 = raw.EntityId1;
-            Field1E2 = raw.Field1E2;
-            Message1 = raw.Message1;
-            EntityId2 = raw.EntityId2;
-            Field1EA = raw.Field1EA;
-            Message2 = raw.Message2;
-            EntityId3 = raw.EntityId3;
-            Field1F2 = raw.Field1F2;
-            Message3 = raw.Message3;
-            ItemType = raw.ItemType;
-        }
-    }
-
-    public class FhEnemySpawnEntityEditor : EntityEditorBase
-    {
-        public uint Field24 { get; set; }
-        public uint Field28 { get; set; }
-        public uint Field2C { get; set; }
-        public uint Field30 { get; set; }
-        public uint Field34 { get; set; }
-        public uint Field38 { get; set; }
-        public uint Field3C { get; set; }
-        public uint Field40 { get; set; }
-        public uint Field44 { get; set; }
-        public uint Field48 { get; set; }
-        public uint Field4C { get; set; }
-        public uint Field50 { get; set; }
-        public uint Field54 { get; set; }
-        public uint Field58 { get; set; }
-        public uint Field5C { get; set; }
-        public uint Field60 { get; set; }
-        public uint Field64 { get; set; }
-        public uint Field68 { get; set; }
-        public uint Field6C { get; set; }
-        public uint Field70 { get; set; }
-        public uint Field74 { get; set; }
-        public uint Field78 { get; set; }
-        public uint Field7C { get; set; }
-        public uint Field80 { get; set; }
-        public uint Field84 { get; set; }
-        public uint Field88 { get; set; }
-        public uint Field8C { get; set; }
-        public uint Field90 { get; set; }
-        public uint Field94 { get; set; }
-        public uint Field98 { get; set; }
-        public uint Field9C { get; set; }
-        public uint FieldA0 { get; set; }
-        public uint FieldA4 { get; set; }
-        public uint FieldA8 { get; set; }
-        public uint FieldAC { get; set; }
-        public uint FieldB0 { get; set; }
-        public uint FieldB4 { get; set; }
-        public uint FieldB8 { get; set; }
-        public uint FieldBC { get; set; }
-        public uint FieldC0 { get; set; }
-        public uint FieldC4 { get; set; }
-        public uint FieldC8 { get; set; }
-        public uint FieldCC { get; set; }
-        public uint FieldD0 { get; set; }
-        public uint FieldD4 { get; set; }
-        public uint FieldD8 { get; set; }
-        public uint FieldDC { get; set; }
-        public uint FieldE0 { get; set; }
-        public uint EnemyType { get; set; }
-        public byte SpawnTotal { get; set; }
-        public byte SpawnLimit { get; set; }
-        public byte SpawnCount { get; set; }
-        public byte FieldEB { get; set; }
-        public ushort Cooldown { get; set; }
-        public ushort FieldEE { get; set; }
-        public string SpawnNodeName { get; set; } = "";
-        public short ParentId { get; set; }
-        public ushort Field102 { get; set; }
-        public FhMessage EmptyMessage { get; set; }
-
-        public FhEnemySpawnEntityEditor(Entity header, FhEnemySpawnEntityData raw) : base(header)
-        {
-            Field24 = raw.Field24;
-            Field28 = raw.Field28;
-            Field2C = raw.Field2C;
-            Field30 = raw.Field30;
-            Field34 = raw.Field34;
-            Field38 = raw.Field38;
-            Field3C = raw.Field3C;
-            Field40 = raw.Field40;
-            Field44 = raw.Field44;
-            Field48 = raw.Field48;
-            Field4C = raw.Field4C;
-            Field50 = raw.Field50;
-            Field54 = raw.Field54;
-            Field58 = raw.Field58;
-            Field5C = raw.Field5C;
-            Field60 = raw.Field60;
-            Field64 = raw.Field64;
-            Field68 = raw.Field68;
-            Field6C = raw.Field6C;
-            Field70 = raw.Field70;
-            Field74 = raw.Field74;
-            Field78 = raw.Field78;
-            Field7C = raw.Field7C;
-            Field80 = raw.Field80;
-            Field84 = raw.Field84;
-            Field88 = raw.Field88;
-            Field8C = raw.Field8C;
-            Field90 = raw.Field90;
-            Field94 = raw.Field94;
-            Field98 = raw.Field98;
-            Field9C = raw.Field9C;
-            FieldA0 = raw.FieldA0;
-            FieldA4 = raw.FieldA4;
-            FieldA8 = raw.FieldA8;
-            FieldAC = raw.FieldAC;
-            FieldB0 = raw.FieldB0;
-            FieldB4 = raw.FieldB4;
-            FieldB8 = raw.FieldB8;
-            FieldBC = raw.FieldBC;
-            FieldC0 = raw.FieldC0;
-            FieldC4 = raw.FieldC4;
-            FieldC8 = raw.FieldC8;
-            FieldCC = raw.FieldCC;
-            FieldD0 = raw.FieldD0;
-            FieldD4 = raw.FieldD4;
-            FieldD8 = raw.FieldD8;
-            FieldDC = raw.FieldDC;
-            FieldE0 = raw.FieldE0;
-            EnemyType = raw.EnemyType;
-            SpawnTotal = raw.SpawnTotal;
-            SpawnLimit = raw.SpawnLimit;
-            SpawnCount = raw.SpawnCount;
-            FieldEB = raw.FieldEB;
-            Cooldown = raw.Cooldown;
-            FieldEE = raw.FieldEE;
-            SpawnNodeName = raw.NodeName.MarshalString();
-            ParentId = raw.ParentId;
-            Field102 = raw.Field102;
-            EmptyMessage = raw.EmptyMessage;
+            Unused2C = raw.Unused2C;
         }
     }
 
@@ -741,7 +382,7 @@ namespace MphRead.Editor
         public ushort RepeatDelay { get; set; }
         public ushort CheckDelay { get; set; }
         public ushort RequiredStateBit { get; set; } // for subtype 4
-        public ushort TriggerFlags { get; set; } // in-game this is treated as uint, but the extra bits are never set/checked
+        public TriggerFlags TriggerFlags { get; set; }
         public uint TriggerThreshold { get; set; } // for subtype 1
         public short ParentId { get; set; }
         public Message ParentMessage { get; set; }
@@ -751,6 +392,10 @@ namespace MphRead.Editor
         public Message ChildMessage { get; set; }
         public uint ChildMsgParam1 { get; set; }
         public uint ChildMsgParam2 { get; set; }
+
+        public TriggerVolumeEntityEditor() : base(EntityType.TriggerVolume)
+        {
+        }
 
         public TriggerVolumeEntityEditor(Entity header, TriggerVolumeEntityData raw) : base(header)
         {
@@ -783,7 +428,7 @@ namespace MphRead.Editor
         public CollisionVolume Cylinder { get; set; }
         public ushort OneUse { get; set; }
         public ushort Cooldown { get; set; }
-        public uint Flags { get; set; }
+        public FhTriggerFlags TriggerFlags { get; set; }
         public uint Threshold { get; set; }
         public short ParentId { get; set; }
         public FhMessage ParentMessage { get; set; }
@@ -791,6 +436,10 @@ namespace MphRead.Editor
         public short ChildId { get; set; }
         public FhMessage ChildMessage { get; set; }
         public uint ChildMsgParam1 { get; set; }
+
+        public FhTriggerVolumeEntityEditor() : base(EntityType.FhTriggerVolume)
+        {
+        }
 
         public FhTriggerVolumeEntityEditor(Entity header, FhTriggerVolumeEntityData raw) : base(header)
         {
@@ -800,7 +449,7 @@ namespace MphRead.Editor
             Cylinder = new CollisionVolume(raw.Cylinder);
             OneUse = raw.OneUse;
             Cooldown = raw.Cooldown;
-            Flags = raw.Flags;
+            TriggerFlags = raw.TriggerFlags;
             Threshold = raw.Threshold;
             ParentId = raw.ParentId;
             ParentMessage = raw.ParentMessage;
@@ -829,7 +478,11 @@ namespace MphRead.Editor
         public short ChildId { get; set; } // always the same as ParentId
         public ushort Cooldown { get; set; }
         public uint Priority { get; set; } // always 0 or 1
-        public uint Flags { get; set; } // 0x200 = affects biped, 0x400 = affects alt
+        public TriggerFlags TriggerFlags { get; set; }
+
+        public AreaVolumeEntityEditor() : base(EntityType.AreaVolume)
+        {
+        }
 
         public AreaVolumeEntityEditor(Entity header, AreaVolumeEntityData raw) : base(header)
         {
@@ -849,7 +502,7 @@ namespace MphRead.Editor
             ChildId = raw.ChildId;
             Cooldown = raw.Cooldown;
             Priority = raw.Priority;
-            Flags = raw.Flags;
+            TriggerFlags = raw.TriggerFlags;
         }
     }
 
@@ -864,7 +517,11 @@ namespace MphRead.Editor
         public FhMessage ExitMessage { get; set; }
         public uint ExitMsgParam1 { get; set; }
         public ushort Cooldown { get; set; }
-        public uint Flags { get; set; }
+        public FhTriggerFlags TriggerFlags { get; set; }
+
+        public FhAreaVolumeEntityEditor() : base(EntityType.FhAreaVolume)
+        {
+        }
 
         public FhAreaVolumeEntityEditor(Entity header, FhAreaVolumeEntityData raw) : base(header)
         {
@@ -877,7 +534,7 @@ namespace MphRead.Editor
             ExitMessage = raw.ExitMessage;
             ExitMsgParam1 = raw.ExitMsgParam1;
             Cooldown = raw.Cooldown;
-            Flags = raw.Flags;
+            TriggerFlags = raw.TriggerFlags;
         }
     }
 
@@ -892,7 +549,12 @@ namespace MphRead.Editor
         public ushort CooldownTime { get; set; }
         public bool Active { get; set; }
         public uint ModelId { get; set; }
-        public uint Flags { get; set; }
+        public uint BeamType { get; set; }
+        public TriggerFlags TriggerFlags { get; set; }
+
+        public JumpPadEntityEditor() : base(EntityType.JumpPad)
+        {
+        }
 
         public JumpPadEntityEditor(Entity header, JumpPadEntityData raw) : base(header)
         {
@@ -905,7 +567,8 @@ namespace MphRead.Editor
             CooldownTime = raw.CooldownTime;
             Active = raw.Active != 0;
             ModelId = raw.ModelId;
-            Flags = raw.Flags;
+            BeamType = raw.BeamType;
+            TriggerFlags = raw.TriggerFlags;
         }
     }
 
@@ -918,10 +581,14 @@ namespace MphRead.Editor
         public uint CooldownTime { get; set; }
         public Vector3 BeamVector { get; set; }
         public float Speed { get; set; }
-        public uint FieldFC { get; set; }
+        public uint ControlLockTime { get; set; }
         public uint ModelId { get; set; }
         public uint BeamType { get; set; }
-        public uint Flags { get; set; }
+        public FhTriggerFlags TriggerFlags { get; set; }
+
+        public FhJumpPadEntityEditor() : base(EntityType.FhJumpPad)
+        {
+        }
 
         public FhJumpPadEntityEditor(Entity header, FhJumpPadEntityData raw) : base(header)
         {
@@ -932,10 +599,10 @@ namespace MphRead.Editor
             CooldownTime = raw.CooldownTime;
             BeamVector = raw.BeamVector.ToFloatVector();
             Speed = raw.Speed.FloatValue;
-            FieldFC = raw.FieldFC;
+            ControlLockTime = raw.ControlLockTime;
             ModelId = raw.ModelId;
             BeamType = raw.BeamType;
-            Flags = raw.Flags;
+            TriggerFlags = raw.TriggerFlags;
         }
     }
 

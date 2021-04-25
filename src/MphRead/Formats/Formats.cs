@@ -1174,7 +1174,7 @@ namespace MphRead
     }
 
     // todo: FH game modes
-    public enum GameMode
+    public enum GameMode : byte
     {
         None = 0,
         SinglePlayer = 2,

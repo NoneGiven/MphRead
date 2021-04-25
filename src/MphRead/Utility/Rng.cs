@@ -41,5 +41,37 @@ namespace MphRead
         {
             Rng2 = value;
         }
+
+        public static void DoDamageShake(int damage)
+        {
+            int shake = (int)(damage * 40.96f);
+            if (shake < 204)
+            {
+                shake = 204;
+            }
+            DoCameraShake(shake);
+        }
+
+        public static void DoCameraShake(int shake)
+        {
+            Console.WriteLine($"shake {shake}");
+            uint rng = Rng2;
+            int frames = 0;
+            while (shake > 0)
+            {
+                frames++;
+                GetRandomInt2(1);
+                GetRandomInt2(1);
+                GetRandomInt2(1);
+                shake = (int)((3481L * shake + 2048) >> 12);
+                if (shake < 41)
+                {
+                    shake = 0;
+                }
+            }
+            int calls = frames * 3;
+            Console.WriteLine($"{frames} frame{(frames == 1 ? "" : "s")}, {calls} calls");
+            Console.WriteLine($"rng {rng:X8} --> {Rng2:X8}");
+        }
     }
 }

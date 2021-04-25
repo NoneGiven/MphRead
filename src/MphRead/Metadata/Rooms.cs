@@ -3,6 +3,15 @@ using OpenTK.Mathematics;
 
 namespace MphRead
 {
+    public enum RoomSize : uint
+    {
+        None = 0,
+        Small = 2,
+        Medium = 3,
+        Large = 4,
+        SinglePlayer = 6
+    }
+
     public class RoomMetadata
     {
         public string Name { get; }
@@ -32,16 +41,22 @@ namespace MphRead
         public ColorRgb Light2Color { get; }
         public Vector3 Light2Vector { get; }
         public float KillHeight { get; }
-        public uint Field6C { get; }
+        public RoomSize Size { get; }
         public bool Multiplayer { get; }
         public bool FirstHunt { get; }
         public bool Hybrid { get; }
+        public Vector3 CameraMin { get; }
+        public Vector3 CameraMax { get; }
+        public Vector3 PlayerMin { get; }
+        public Vector3 PlayerMax { get; }
+        public bool HasLimits { get; }
 
         public RoomMetadata(string name, string? inGameName, string archive, string modelPath, string animationPath, string collisionPath,
             string? texturePath, string? entityPath, string? nodePath, string? roomNodeName, uint battleTimeLimit, uint timeLimit,
             short pointLimit, short nodeLayer, bool fogEnabled, bool clearFog, ColorRgb fogColor, int fogSlope, ushort fogOffset,
             ColorRgb light1Color, Vector3 light1Vector, ColorRgb light2Color, Vector3 light2Vector, int farClip, int killHeight,
-            uint field6C, bool multiplayer = false, bool firstHunt = false, bool hybrid = false)
+            RoomSize size, Vector3 cameraMin = default, Vector3 cameraMax = default, Vector3 playerMin = default, Vector3 playerMax = default,
+            bool multiplayer = false, bool firstHunt = false, bool hybrid = false)
         {
             Name = name;
             InGameName = inGameName;
@@ -79,9 +94,15 @@ namespace MphRead
             FarClip = Fixed.ToFloat(farClip);
             FarClipInt = farClip;
             KillHeight = Fixed.ToFloat(killHeight);
-            Field6C = field6C;
+            Size = size;
+            CameraMin = cameraMin;
+            CameraMax = cameraMax;
+            PlayerMin = playerMin;
+            PlayerMax = playerMax;
             FirstHunt = firstHunt;
             Hybrid = hybrid;
+            HasLimits = cameraMin != Vector3.Zero || cameraMax != Vector3.Zero
+                || playerMin != Vector3.Zero || playerMax != Vector3.Zero;
         }
     }
 
@@ -229,7 +250,7 @@ namespace MphRead
                 /* 133, 5 */ "Level SP Survivor",
                 /* 134, 6 */ "Level FhTestLevel",
                 /* 135, 7 */ "Level MP5",
-                /* 136, 8 */ "Level MP1", // todo
+                /* 136, 8 */ "Level MP1b",
                 /* 137, 9 */ "E3 level"
             };
 
@@ -269,7 +290,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT1_CZ",
@@ -299,7 +320,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT1_MORPH_CX",
@@ -329,7 +350,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT1_MORPH_CZ",
@@ -359,7 +380,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT2_CX",
@@ -389,7 +410,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT2_CZ",
@@ -419,7 +440,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT3_CX",
@@ -449,7 +470,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT3_CZ",
@@ -479,7 +500,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT4_CX",
@@ -509,7 +530,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT4_CZ",
@@ -539,7 +560,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: RoomSize.None)
                 },
                 {
                     "CYLINDER_C1",
@@ -569,7 +590,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: RoomSize.None)
                 },
                 {
                     "BIGEYE_C1",
@@ -599,7 +620,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT1_RM1_CX",
@@ -629,7 +650,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: RoomSize.None)
                 },
                 {
                     "GOREA_C1",
@@ -659,7 +680,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT3_MORPH_CZ",
@@ -689,7 +710,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0)
+                        size: RoomSize.None)
                 },
                 {
                     "UNIT1_LAND",
@@ -719,7 +740,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 6553600,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_C0",
@@ -749,7 +770,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_RM1",
@@ -779,7 +800,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_C4",
@@ -809,7 +830,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_RM6",
@@ -839,7 +860,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "CRYSTALROOM",
@@ -869,7 +890,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_RM4",
@@ -899,13 +920,13 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_TP1",
                     new RoomMetadata(
                         name: "UNIT1_TP1",
-                        inGameName: null,
+                        inGameName: "Stronghold Void A",
                         archive: "TeleportRoom",
                         modelPath: "TeleportRoom_model.bin",
                         animationPath: "TeleportRoom_anim.bin",
@@ -929,13 +950,13 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_B1",
                     new RoomMetadata(
                         name: "UNIT1_B1",
-                        inGameName: null,
+                        inGameName: "Biodefense Chamber 02", // Biodefense Chamber A
                         archive: "bigeyeroom",
                         modelPath: "bigeyeroom_model.bin",
                         animationPath: "bigeyeroom_anim.bin",
@@ -959,7 +980,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_C1",
@@ -989,7 +1010,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_C2",
@@ -1019,7 +1040,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_C5",
@@ -1049,7 +1070,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_RM2",
@@ -1079,7 +1100,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_RM3",
@@ -1109,7 +1130,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_RM5",
@@ -1139,7 +1160,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_C3",
@@ -1169,13 +1190,13 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_TP2",
                     new RoomMetadata(
                         name: "UNIT1_TP2",
-                        inGameName: null,
+                        inGameName: "Stronghold Void B",
                         archive: "TeleportRoom",
                         modelPath: "TeleportRoom_model.bin",
                         animationPath: "TeleportRoom_anim.bin",
@@ -1199,13 +1220,13 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT1_B2",
                     new RoomMetadata(
                         name: "UNIT1_B2",
-                        inGameName: null,
+                        inGameName: "Biodefense Chamber 06", // Biodefense Chamber B
                         archive: "cylinderroom",
                         modelPath: "cylinderroom_model.bin",
                         animationPath: "cylinderroom_anim.bin",
@@ -1229,7 +1250,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_LAND",
@@ -1259,7 +1280,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 6553600,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_C0",
@@ -1289,7 +1310,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 6553600,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_C1",
@@ -1319,7 +1340,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_RM1",
@@ -1349,7 +1370,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_C2",
@@ -1379,7 +1400,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_RM2",
@@ -1409,7 +1430,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_C3",
@@ -1439,7 +1460,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_RM3",
@@ -1469,7 +1490,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_C4",
@@ -1499,13 +1520,13 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_TP1",
                     new RoomMetadata(
                         name: "UNIT2_TP1",
-                        inGameName: null,
+                        inGameName: "Stronghold Void A",
                         archive: "TeleportRoom",
                         modelPath: "TeleportRoom_model.bin",
                         animationPath: "TeleportRoom_anim.bin",
@@ -1529,13 +1550,13 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_B1",
                     new RoomMetadata(
                         name: "UNIT2_B1",
-                        inGameName: null,
+                        inGameName: "Biodefense Chamber 01", // Biodefense Chamber A
                         archive: "cylinderroom",
                         modelPath: "cylinderroom_model.bin",
                         animationPath: "cylinderroom_anim.bin",
@@ -1559,7 +1580,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_C6",
@@ -1589,7 +1610,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 16384000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_C7",
@@ -1619,7 +1640,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 16384000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_RM4",
@@ -1649,7 +1670,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_RM5",
@@ -1679,7 +1700,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_RM6",
@@ -1709,7 +1730,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_RM7",
@@ -1739,7 +1760,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_RM8",
@@ -1769,13 +1790,13 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_TP2",
                     new RoomMetadata(
                         name: "UNIT2_TP2",
-                        inGameName: null,
+                        inGameName: "Stronghold Void B",
                         archive: "TeleportRoom",
                         modelPath: "TeleportRoom_model.bin",
                         animationPath: "TeleportRoom_anim.bin",
@@ -1799,13 +1820,13 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT2_B2",
                     new RoomMetadata(
                         name: "UNIT2_B2",
-                        inGameName: null,
+                        inGameName: "Biodefense Chamber 05", // Biodefense Chamber B
                         archive: "bigeyeroom",
                         modelPath: "bigeyeroom_model.bin",
                         animationPath: "bigeyeroom_anim.bin",
@@ -1829,7 +1850,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_LAND",
@@ -1859,7 +1880,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 6553600,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_C0",
@@ -1889,7 +1910,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_C2",
@@ -1902,7 +1923,7 @@ namespace MphRead
                         collisionPath: "unit3_c2_collision.bin",
                         texturePath: "unit3_c2_tex.bin",
                         entityPath: "Unit3_C2_Ent.bin",
-                        nodePath: "unit3_c2_Node.bin",
+                        nodePath: null, // references unit3_c2_Node.bin, which doesn't exist
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(20, 0, 0),
                         timeLimit: TimeLimit(4, 0, 0),
@@ -1919,7 +1940,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_RM1",
@@ -1949,7 +1970,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_RM4",
@@ -1979,13 +2000,13 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_TP1",
                     new RoomMetadata(
                         name: "UNIT3_TP1",
-                        inGameName: null,
+                        inGameName: "Stronghold Void A",
                         archive: "TeleportRoom",
                         modelPath: "TeleportRoom_model.bin",
                         animationPath: "TeleportRoom_anim.bin",
@@ -2009,13 +2030,13 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_B1",
                     new RoomMetadata(
                         name: "UNIT3_B1",
-                        inGameName: null,
+                        inGameName: "Biodefense Chamber 03", // Biodefense Chamber A
                         archive: "cylinderroom",
                         modelPath: "cylinderroom_model.bin",
                         animationPath: "cylinderroom_anim.bin",
@@ -2039,7 +2060,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_C1",
@@ -2069,7 +2090,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_RM2",
@@ -2099,7 +2120,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 2457600,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_RM3",
@@ -2129,13 +2150,13 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_TP2",
                     new RoomMetadata(
                         name: "UNIT3_TP2",
-                        inGameName: null,
+                        inGameName: "Stronghold Void B",
                         archive: "TeleportRoom",
                         modelPath: "TeleportRoom_model.bin",
                         animationPath: "TeleportRoom_anim.bin",
@@ -2159,13 +2180,13 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT3_B2",
                     new RoomMetadata(
                         name: "UNIT3_B2",
-                        inGameName: null,
+                        inGameName: "Biodefense Chamber 08", // Biodefense Chamber B
                         archive: "bigeyeroom",
                         modelPath: "bigeyeroom_model.bin",
                         animationPath: "bigeyeroom_anim.bin",
@@ -2189,7 +2210,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_LAND",
@@ -2219,7 +2240,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_RM1",
@@ -2249,7 +2270,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 327680,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_RM3",
@@ -2279,7 +2300,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_C0",
@@ -2309,13 +2330,13 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_TP1",
                     new RoomMetadata(
                         name: "UNIT4_TP1",
-                        inGameName: null,
+                        inGameName: "Stronghold Void A",
                         archive: "TeleportRoom",
                         modelPath: "TeleportRoom_model.bin",
                         animationPath: "TeleportRoom_anim.bin",
@@ -2339,13 +2360,13 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_B1",
                     new RoomMetadata(
                         name: "UNIT4_B1",
-                        inGameName: null,
+                        inGameName: "Biodefense Chamber 04", // Biodefense Chamber A
                         archive: "bigeyeroom",
                         modelPath: "bigeyeroom_model.bin",
                         animationPath: "bigeyeroom_anim.bin",
@@ -2369,7 +2390,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_C1",
@@ -2399,7 +2420,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_RM2",
@@ -2429,7 +2450,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_RM4",
@@ -2459,7 +2480,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 327680,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_RM5",
@@ -2489,13 +2510,13 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_TP2",
                     new RoomMetadata(
                         name: "UNIT4_TP2",
-                        inGameName: null,
+                        inGameName: "Stronghold Void B",
                         archive: "TeleportRoom",
                         modelPath: "TeleportRoom_model.bin",
                         animationPath: "TeleportRoom_anim.bin",
@@ -2519,13 +2540,13 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "UNIT4_B2",
                     new RoomMetadata(
                         name: "UNIT4_B2",
-                        inGameName: null,
+                        inGameName: "Biodefense Chamber 07", // Biodefense Chamber B
                         archive: "cylinderroom",
                         modelPath: "cylinderroom_model.bin",
                         animationPath: "cylinderroom_anim.bin",
@@ -2549,7 +2570,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "Gorea_Land",
@@ -2579,7 +2600,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 8192000,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "Gorea_Peek",
@@ -2609,7 +2630,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -286720,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "Gorea_b1",
@@ -2622,7 +2643,7 @@ namespace MphRead
                         collisionPath: "Gorea_b1_collision.bin",
                         texturePath: "Gorea_b1_tex.bin",
                         entityPath: "Gorea_b1_Ent.bin",
-                        nodePath: "Gorea_b1_Node.bin",
+                        nodePath: null, // metadata has Gorea_b1_Node.bin, but there's no such file
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(40, 0, 0),
                         timeLimit: TimeLimit(4, 0, 0),
@@ -2639,7 +2660,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "Gorea_b2",
@@ -2669,7 +2690,7 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -286720,
-                        field6C: 0x6)
+                        size: RoomSize.SinglePlayer)
                 },
                 {
                     "MP1 SANCTORUS",
@@ -2699,7 +2720,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 368640,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2730,7 +2755,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 3072000,
                         killHeight: 4096,
-                        field6C: 0x4,
+                        size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-167936, 24576, -294912).ToFloatVector(),
+                        cameraMax: new Vector3Fx(167936, 131072, 294912).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2761,7 +2790,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(409, -4096, 0).ToFloatVector(),
                         farClip: 1433600,
                         killHeight: -122880,
-                        field6C: 0x2,
+                        size: RoomSize.Small,
+                        cameraMin: new Vector3Fx(-45056, 0, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(40960, 53248, 106496).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2792,7 +2825,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1687552,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-151552, -4096, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(184320, 102400, 81920).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2823,7 +2860,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1740800,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-151552, -4096, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(184320, 102400, 81920).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2854,7 +2895,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x2,
+                        size: RoomSize.Small,
+                        cameraMin: new Vector3Fx(-98304, 0, -57344).ToFloatVector(),
+                        cameraMax: new Vector3Fx(110592, 69632, 57344).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2885,7 +2930,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 5734400,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-200704, 0, -200704).ToFloatVector(),
+                        cameraMax: new Vector3Fx(196608, 196608, 192512).ToFloatVector(),
+                        playerMin: new Vector3Fx(-286720, -86949, -286720).ToFloatVector(),
+                        playerMax: new Vector3Fx(286720, 196608, 286720).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2916,7 +2965,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        field6C: 0x2,
+                        size: RoomSize.Small,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2947,7 +3000,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 4096000,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-176128, 0, -135168).ToFloatVector(),
+                        cameraMax: new Vector3Fx(180224, 135168, 225280).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -2978,7 +3035,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 327680,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3009,7 +3070,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 409600,
                         killHeight: -122880,
-                        field6C: 0x2,
+                        size: RoomSize.Small,
+                        cameraMin: new Vector3Fx(-90112, -8192, -61440).ToFloatVector(),
+                        cameraMax: new Vector3Fx(73728, 54476, 45056).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3040,7 +3105,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 409600,
                         killHeight: -122880,
-                        field6C: 0x2,
+                        size: RoomSize.Small,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3071,7 +3140,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-77824, -4096, -118784).ToFloatVector(),
+                        cameraMax: new Vector3Fx(110592, 61440, 106496).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3102,7 +3175,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-94208, -118784, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(167936, 122880, 172032).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3133,7 +3210,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 4915200,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-131072, -14745, -122880).ToFloatVector(),
+                        cameraMax: new Vector3Fx(126976, 98304, 118784).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3164,7 +3245,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-294912, 0, -106496).ToFloatVector(),
+                        cameraMax: new Vector3Fx(286720, 96256, 106496).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3195,7 +3280,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-294912, 0, -106496).ToFloatVector(),
+                        cameraMax: new Vector3Fx(286720, 96256, 106496).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3226,7 +3315,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 5734400,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-311296, -29196, -172032).ToFloatVector(),
+                        cameraMax: new Vector3Fx(331776, 131072, 126976).ToFloatVector(),
+                        playerMin: new Vector3Fx(-311296, -29196, -166907).ToFloatVector(),
+                        playerMax: new Vector3Fx(331776, 131072, 126976).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3257,7 +3350,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 3276800,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-294912, -12288, -172032).ToFloatVector(),
+                        cameraMax: new Vector3Fx(294912, 94208, 172032).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3288,7 +3385,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-278528, 0, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(245760, 147456, 106496).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3319,7 +3420,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-278528, 0, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(245760, 159744, 106496).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3350,7 +3455,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 4915200,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-290816, 8192, -217088).ToFloatVector(),
+                        cameraMax: new Vector3Fx(348160, 86016, 241664).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3381,7 +3490,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 5734400,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-94208, -45056, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(102400, 114688, 106496).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3412,7 +3525,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-180224, -20480, -172032).ToFloatVector(),
+                        cameraMax: new Vector3Fx(172032, 118784, 172032).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3443,7 +3560,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x4,
+                        size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-90112, -20480, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(122880, 155648, 106496).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3474,7 +3595,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -286720,
-                        field6C: 0x4,
+                        size: RoomSize.Large,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3505,7 +3630,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x3,
+                        size: RoomSize.Medium,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3536,7 +3665,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        field6C: 0x6,
+                        size: RoomSize.SinglePlayer,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         hybrid: true)
                 },
                 {
@@ -3567,7 +3700,11 @@ namespace MphRead
                         light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                         farClip: 819200,
                         killHeight: -122880,
-                        field6C: 0x6,
+                        size: RoomSize.SinglePlayer,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         hybrid: true)
                 },
                 // these levels are unused/unreferenced in the game, so some values are guesses
@@ -3599,7 +3736,11 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0,
+                        size: RoomSize.None,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3613,7 +3754,7 @@ namespace MphRead
                         collisionPath: "unit2_b2_Collision.bin",
                         texturePath: null,
                         entityPath: null, // Unit2_b2_Ent is used in Slench boss room
-                        nodePath: null, // unit2_b2_node is used in Slench boos room
+                        nodePath: null, // unit2_b2_node is used in Slench boss room
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(10, 0, 0),
                         timeLimit: TimeLimit(2, 0, 0),
@@ -3630,7 +3771,11 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0,
+                        size: RoomSize.None,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3661,7 +3806,11 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0,
+                        size: RoomSize.None,
+                        cameraMin: new Vector3Fx(-200704, 0, -200704).ToFloatVector(),
+                        cameraMax: new Vector3Fx(196608, 294912, 192512).ToFloatVector(), // y 48 to 72
+                        playerMin: new Vector3Fx(-286720, -86949, -286720).ToFloatVector(),
+                        playerMax: new Vector3Fx(286720, 294912, 286720).ToFloatVector(), // same as above
                         multiplayer: true)
                 },
                 {
@@ -3692,7 +3841,11 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0,
+                        size: RoomSize.None,
+                        cameraMin: new Vector3Fx(-94208, -118784, -110592).ToFloatVector(),
+                        cameraMax: new Vector3Fx(245760, 200704, 172032).ToFloatVector(), // x 41 to 60, y 30 to 49
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3723,7 +3876,11 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0,
+                        size: RoomSize.None,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
                         multiplayer: true)
                 },
                 {
@@ -3754,8 +3911,105 @@ namespace MphRead
                         light2Vector: new Vector3(0f, -1f, 0f),
                         farClip: 1638400,
                         killHeight: -122880,
-                        field6C: 0x0,
+                        size: RoomSize.SinglePlayer,
                         multiplayer: true)
+                },
+                {
+                    "Level MPH Morphball",
+                    new RoomMetadata(
+                        name: "Level MPH Morphball",
+                        inGameName: "Morph Ball",
+                        archive: "e3Level",
+                        modelPath: "e3Level_Model.bin",
+                        animationPath: "e3Level_Anim.bin",
+                        collisionPath: "e3Level_Collision.bin",
+                        texturePath: null,
+                        entityPath: "morphBall_Ent.bin",
+                        nodePath: "morphBall_Node.bin",
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: true,
+                        clearFog: false,
+                        fogColor: new ColorRgb(8, 16, 31),
+                        fogSlope: 5,
+                        fogOffset: 65152,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(0.25f, -0.5f, -0.25f),
+                        light2Color: new ColorRgb(4, 4, 16),
+                        light2Vector: new Vector3(0, 1, -0.25f),
+                        farClip: 245760,
+                        killHeight: -122880,
+                        size: RoomSize.SinglePlayer,
+                        hybrid: true)
+                },
+                {
+                    "Level MPH Regulator",
+                    new RoomMetadata(
+                        name: "Level MPH Regulator",
+                        inGameName: "Regulator",
+                        archive: "blueRoom",
+                        modelPath: "blueRoom_Model.bin",
+                        animationPath: "blueRoom_Anim.bin",
+                        collisionPath: "blueRoom_Collision.bin",
+                        texturePath: null,
+                        entityPath: "regulator_Ent.bin",
+                        nodePath: "regulator_Node.bin",
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: false,
+                        clearFog: false,
+                        fogColor: new ColorRgb(8, 16, 31),
+                        fogSlope: 5,
+                        fogOffset: 65152,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(0.25f, -0.5f, -0.25f),
+                        light2Color: new ColorRgb(4, 4, 16),
+                        light2Vector: new Vector3(0, 1, -0.25f),
+                        farClip: 245760,
+                        killHeight: -122880,
+                        size: RoomSize.SinglePlayer,
+                        hybrid: true)
+                },
+                {
+                    "Level MPH Survivor",
+                    new RoomMetadata(
+                        name: "Level MPH Survivor",
+                        inGameName: "Survivor",
+                        archive: "mp2",
+                        modelPath: "mp2_Model.bin",
+                        animationPath: "mp2_Anim.bin",
+                        collisionPath: "mp2_Collision.bin",
+                        texturePath: null,
+                        entityPath: "survivor_Ent.bin",
+                        nodePath: "survivor_Node.bin",
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: true,
+                        clearFog: true,
+                        fogColor: new ColorRgb(1, 6, 5),
+                        fogSlope: 5,
+                        fogOffset: 64900,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(0.25f, -0.5f, -0.25f),
+                        light2Color: new ColorRgb(4, 4, 16),
+                        light2Vector: new Vector3(0, 1, -0.25f),
+                        farClip: 245760,
+                        killHeight: -122880,
+                        size: RoomSize.SinglePlayer,
+                        cameraMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        cameraMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        playerMin: new Vector3Fx(-1228800, -1228800, -1228800).ToFloatVector(),
+                        playerMax: new Vector3Fx(1228800, 1228800, 1228800).ToFloatVector(),
+                        hybrid: true)
                 },
                 // todo: room ID 8 has the same files as MP1, but a few different parameters
                 // First Hunt
@@ -3787,7 +4041,39 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 368640,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: RoomSize.SinglePlayer,
+                        multiplayer: true,
+                        firstHunt: true)
+                },
+                {
+                    "Level MP1b",
+                    new RoomMetadata(
+                        name: "Level MP1b", // copy of Level MP1 with a few different params and no name string
+                        inGameName: "Trooper Module",
+                        archive: "mp1",
+                        modelPath: "mp1_Model.bin",
+                        animationPath: "mp1_Anim.bin",
+                        collisionPath: "mp1_Collision.bin",
+                        texturePath: null,
+                        entityPath: "mp1_Ent.bin",
+                        nodePath: "mp1_Node.bin",
+                        roomNodeName: null,
+                        battleTimeLimit: TimeLimit(10, 0, 0),
+                        timeLimit: TimeLimit(2, 0, 0),
+                        pointLimit: 0,
+                        nodeLayer: 0,
+                        fogEnabled: true,
+                        clearFog: false,
+                        fogColor: new ColorRgb(8, 16, 31),
+                        fogSlope: 5,
+                        fogOffset: 65152,
+                        light1Color: new ColorRgb(31, 31, 31),
+                        light1Vector: new Vector3(0.25f, -0.5f, -0.25f),
+                        light2Color:  new ColorRgb(4, 4, 16),
+                        light2Vector: new Vector3(0, 1, -0.25f),
+                        farClip: 245760,
+                        killHeight: 0,
+                        size: RoomSize.SinglePlayer,
                         multiplayer: true,
                         firstHunt: true)
                 },
@@ -3819,7 +4105,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: RoomSize.SinglePlayer,
                         multiplayer: true,
                         firstHunt: true)
                 },
@@ -3851,7 +4137,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 81920000,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: RoomSize.SinglePlayer,
                         multiplayer: true,
                         firstHunt: true)
                 },
@@ -3883,7 +4169,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: RoomSize.SinglePlayer,
                         firstHunt: true)
                 },
                 {
@@ -3914,7 +4200,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: RoomSize.SinglePlayer,
                         firstHunt: true)
                 },
                 {
@@ -3945,7 +4231,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: RoomSize.SinglePlayer,
                         firstHunt: true)
                 },
                 {
@@ -3976,7 +4262,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: RoomSize.SinglePlayer,
                         firstHunt: true)
                 },
                 {
@@ -4007,7 +4293,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: RoomSize.SinglePlayer,
                         multiplayer: true,
                         firstHunt: true)
                 },
@@ -4039,7 +4325,7 @@ namespace MphRead
                         light2Vector: new Vector3(0, 1, -0.25f),
                         farClip: 245760,
                         killHeight: 0,
-                        field6C: 0x0,
+                        size: RoomSize.SinglePlayer,
                         multiplayer: true,
                         firstHunt: true)
                 }

@@ -108,8 +108,9 @@ namespace MphRead
         PickWpnMissile = 22
     }
 
-    public enum FhItemType : uint
+    public enum FhItemType : int
     {
+        None = -1,
         AmmoSmall = 0,
         AmmoBig = 1,
         HealthSmall = 2,
@@ -162,7 +163,7 @@ namespace MphRead
         FadeOutInWhite = 6
     }
 
-    public enum Terrain
+    public enum Terrain : byte
     {
         Metal = 0,
         OrangeHolo = 1,
@@ -282,10 +283,10 @@ namespace MphRead
         Trigger = 9,
         Unknown12 = 12,
         Gravity = 15,
-        Unknown16 = 16, // unlock?
-        Unknown17 = 17, // lock?
+        Unlock = 16,
+        Lock = 17,
         Activate = 18,
-        Unknown19 = 19, // match over?
+        Complete = 19,
         Impact = 20,
         Death = 21,
         Unknown22 = 22,
@@ -331,14 +332,14 @@ namespace MphRead
         Activate = 5,
         Destroyed = 6,
         Damage = 7,
-        Unknown9 = 9,
-        Unknown15 = 15,
+        Trigger = 9,
+        Gravity = 15,
         Unlock = 16,
         SetActive = 17,
         Complete = 18,
-        Unknown19 = 19,
+        Impact = 19,
         Death = 20,
-        Unknown21 = 21
+        Unknown21 = 21 // same as MPH Unknown22
     }
 
     public enum EnemyType : byte // see note on enemy spawn entity struct
@@ -350,22 +351,22 @@ namespace MphRead
         Petrasyl2 = 4,
         Petrasyl3 = 5,
         Petrasyl4 = 6,
-        Unknown7 = 7,
-        Unknown8 = 8,
-        Unknown9 = 9,
+        Unknown7 = 7, // unused
+        Unknown8 = 8, // unused
+        Unknown9 = 9, // unused
         BarbedWarWasp = 10,
         Shriekbat = 11,
         Geemer = 12,
-        Unknown13 = 13,
-        Unknown14 = 14,
-        Unknown15 = 15,
+        Unknown13 = 13, // unused
+        Unknown14 = 14, // unused
+        Unknown15 = 15, // unused
         Blastcap = 16,
-        Unknown17 = 17,
+        Unknown17 = 17, // unused
         AlimbicTurret = 18,
         Cretaphid = 19,
         CretaphidEye = 20,
         CretaphidCrystal = 21,
-        Unknown22 = 22, // Cretaphid-related, unused
+        Unknown22 = 22, // unused (Cretaphid-related)
         PsychoBit1 = 23,
         Gorea1A = 24,
         GoreaHead = 25,
@@ -393,8 +394,19 @@ namespace MphRead
         GreaterIthrak = 47,
         Hunter = 48,
         ForceFieldLock = 49,
-        Unknown50 = 50, // weak spot for 46/47/39
+        WeakSpot = 50, // used by 39/46/47
         CarnivorousPlant = 51
+    }
+
+    public enum FhEnemyType : uint
+    {
+        WarWasp = 0,
+        Zoomer = 1,
+        Metroid = 2,
+        Mochtroid1 = 3,
+        Mochtroid2 = 4,
+        Mochtroid3 = 5,
+        Mochtroid4 = 6
     }
 
     public enum Hunter : byte

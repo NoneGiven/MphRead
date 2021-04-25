@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using MphRead.Formats;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
@@ -13,22 +14,31 @@ namespace MphRead.Entities
         private readonly IReadOnlyList<CollisionPortal> _portals = new List<CollisionPortal>();
         private readonly IReadOnlyList<PortalNodeRef> _forceFields = new List<PortalNodeRef>();
         private IReadOnlyList<Node> Nodes => _models[0].Model.Nodes;
-        private readonly bool _firstHunt;
+        private readonly RoomMetadata _meta;
+        private readonly NodeData? _nodeData;
+        private readonly float[]? _emptyMatrixStack;
 
         protected override bool UseNodeTransform => false; // default -- will use transform if setting is enabled
 
-        public RoomEntity(string name, RoomMetadata meta, CollisionInstance collision, int layerMask) : base(EntityType.Room)
+        public RoomEntity(string name, RoomMetadata meta, CollisionInstance collision, NodeData? nodeData, int layerMask) : base(EntityType.Room)
         {
             ModelInstance inst = Read.GetRoomModelInstance(name);
             _models.Add(inst);
-            FilterNodes(layerMask);
+            inst.Model.FilterNodes(layerMask);
             if (meta.Name == "UNIT2_C6")
             {
                 // manually disable a decal that isn't rendered in-game because it's not on a surface
                 Nodes[46].Enabled = false;
             }
-            _firstHunt = meta.FirstHunt;
+            _meta = meta;
             Model model = inst.Model;
+            _nodeData = nodeData;
+            if (nodeData != null)
+            {
+                // using cached instance messes with placeholders since room entity doesn't update its instances normally
+                _models.Add(Read.GetModelInstance("pick_wpn_missile", noCache: true));
+                _emptyMatrixStack = new float[0];
+            }
             var portals = new List<CollisionPortal>();
             var forceFields = new List<PortalNodeRef>();
             // portals are already filtered by layer mask
@@ -79,50 +89,6 @@ namespace MphRead.Entities
             _portals = portals;
             _forceFields = forceFields;
             SetCollision(collision);
-        }
-
-        private void FilterNodes(int layerMask)
-        {
-            foreach (Node node in Nodes)
-            {
-                if (!node.Name.StartsWith("_"))
-                {
-                    continue;
-                }
-                // todo: refactor this
-                int flags = 0;
-                // we actually have to step through 4 characters at a time rather than using Contains,
-                // based on the game's behavior with e.g. "_ml_s010blocks", which is not visible in SP or MP;
-                // while it presumably would be in SP since it contains "_s01", that isn't picked up
-                for (int i = 0; node.Name.Length - i >= 4; i += 4)
-                {
-                    string chunk = node.Name.Substring(i, 4);
-                    if (chunk.StartsWith("_s") && Int32.TryParse(chunk[2..], out int id))
-                    {
-                        flags = (int)((uint)flags & 0xC03F | (((uint)flags << 18 >> 24) | (uint)(1 << id)) << 6);
-                    }
-                    else if (chunk == "_ml0")
-                    {
-                        flags |= (int)NodeLayer.MultiplayerLod0;
-                    }
-                    else if (chunk == "_ml1")
-                    {
-                        flags |= (int)NodeLayer.MultiplayerLod1;
-                    }
-                    else if (chunk == "_mpu")
-                    {
-                        flags |= (int)NodeLayer.MultiplayerU;
-                    }
-                    else if (chunk == "_ctf")
-                    {
-                        flags |= (int)NodeLayer.CaptureTheFlag;
-                    }
-                }
-                if ((flags & layerMask) == 0)
-                {
-                    node.Enabled = false;
-                }
-            }
         }
 
         public override void GetDrawInfo(Scene scene)
@@ -184,6 +150,47 @@ namespace MphRead.Entities
             if (scene.ShowCollision && (scene.ColEntDisplay == EntityType.All || scene.ColEntDisplay == Type))
             {
                 GetCollisionDrawInfo(scene);
+            }
+            if (_nodeData != null && scene.ShowNodeData)
+            {
+                Debug.Assert(_emptyMatrixStack != null);
+                Debug.Assert(_models.Count == 2);
+                ModelInstance inst = _models[1];
+                int polygonId = scene.GetNextPolygonId();
+                for (int i = 0; i < _nodeData.Data.Count; i++)
+                {
+                    IReadOnlyList<IReadOnlyList<NodeData3>> str1 = _nodeData.Data[i];
+                    for (int j = 0; j < str1.Count; j++)
+                    {
+                        IReadOnlyList<NodeData3> str2 = str1[j];
+                        for (int k = 0; k < str2.Count; k++)
+                        {
+                            NodeData3 str3 = str2[k];
+                            GetNodeDataItem(inst, str3.Transform, str3.Color, polygonId);
+                        }
+                    }
+                }
+            }
+
+            void GetNodeDataItem(ModelInstance inst, Matrix4 transform, Vector4 color, int polygonId)
+            {
+                Model model = inst.Model;
+                Node node = model.Nodes[3];
+                if (node.Enabled)
+                {
+                    int start = node.MeshId / 2;
+                    for (int k = 0; k < node.MeshCount; k++)
+                    {
+                        Mesh mesh = model.Meshes[start + k];
+                        if (!mesh.Visible)
+                        {
+                            continue;
+                        }
+                        Material material = model.Materials[mesh.MaterialId];
+                        scene.AddRenderItem(material, polygonId, 1, Vector3.Zero, GetLightInfo(scene), Matrix4.Identity,
+                            transform, mesh.ListId, 0, _emptyMatrixStack, color, null, SelectionType.None);
+                    }
+                }
             }
 
             void GetItems(ModelInstance inst, Node node, CollisionPortal? portal = null)
@@ -248,7 +255,7 @@ namespace MphRead.Entities
                     scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Ngon, verts, count, noLines: true);
                 }
             }
-            else if (scene.ShowVolumes == VolumeDisplay.KillPlane && !_firstHunt)
+            else if (scene.ShowVolumes == VolumeDisplay.KillPlane && !_meta.FirstHunt)
             {
                 Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(4);
                 verts[0] = new Vector3(10000f, scene.KillHeight, 10000f);
@@ -257,6 +264,26 @@ namespace MphRead.Entities
                 verts[3] = new Vector3(-10000f, scene.KillHeight, 10000f);
                 var color = new Vector4(1f, 0f, 1f, 0.5f);
                 scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Quad, verts, noLines: true);
+            }
+            else if ((scene.ShowVolumes == VolumeDisplay.CameraLimit || scene.ShowVolumes == VolumeDisplay.PlayerLimit) && _meta.HasLimits)
+            {
+                Vector3 minLimit = scene.ShowVolumes == VolumeDisplay.CameraLimit ? _meta.CameraMin : _meta.PlayerMin;
+                Vector3 maxLimit = scene.ShowVolumes == VolumeDisplay.CameraLimit ? _meta.CameraMax : _meta.PlayerMax;
+                Vector3[] bverts = ArrayPool<Vector3>.Shared.Rent(8);
+                Vector3 point0 = minLimit;
+                var sideX = new Vector3(maxLimit.X - minLimit.X, 0, 0);
+                var sideY = new Vector3(0, maxLimit.Y - minLimit.Y, 0);
+                var sideZ = new Vector3(0, 0, maxLimit.Z - minLimit.Z);
+                bverts[0] = point0;
+                bverts[1] = point0 + sideZ;
+                bverts[2] = point0 + sideX;
+                bverts[3] = point0 + sideX + sideZ;
+                bverts[4] = point0 + sideY;
+                bverts[5] = point0 + sideY + sideZ;
+                bverts[6] = point0 + sideX + sideY;
+                bverts[7] = point0 + sideX + sideY + sideZ;
+                Vector4 color = scene.ShowVolumes == VolumeDisplay.CameraLimit ? new Vector4(1, 0, 0.69f, 0.5f) : new Vector4(1, 0, 0, 0.5f);
+                scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Box, bverts, 8);
             }
         }
 

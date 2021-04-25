@@ -76,6 +76,25 @@ namespace MphRead.Entities
         }
     }
 
+    // area volumes don't use IncludeBots; jump pads only use PlayerBiped and PlayerAlt
+    public enum TriggerFlags : uint
+    {
+        None = 0x0,
+        PowerBeam = 0x1,
+        VoltDriver = 0x2,
+        Missile = 0x4,
+        Battlehammer = 0x8,
+        Imperialist = 0x10,
+        Judicator = 0x20,
+        Magmaul = 0x40,
+        ShockCoil = 0x80,
+        BeamCharged = 0x100,
+        PlayerBiped = 0x200,
+        PlayerAlt = 0x400,
+        Bit11 = 0x800, // unused
+        IncludeBots = 0x1000
+    }
+
     public class FhTriggerVolumeEntity : EntityBase
     {
         private readonly FhTriggerVolumeEntityData _data;
@@ -132,5 +151,14 @@ namespace MphRead.Entities
         {
             return _child;
         }
+    }
+
+    // jump pads only use PlayerBiped and PlayerAlt
+    public enum FhTriggerFlags : uint
+    {
+        None = 0x0,
+        Beam = 0x1,
+        PlayerBiped = 0x2,
+        PlayerAlt = 0x4
     }
 }

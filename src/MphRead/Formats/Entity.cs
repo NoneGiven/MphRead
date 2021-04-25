@@ -96,7 +96,6 @@ namespace MphRead
         public readonly Message DeadMessage;
         public readonly uint DeadMsgParam1;
         public readonly uint DeadMsgParam2;
-
         public readonly ushort LifetimeMsg1Index;
         public readonly short LifetimeMsg1Target;
         public readonly Message LifetimeMessage1;
@@ -175,7 +174,7 @@ namespace MphRead
         public readonly char[] NodeName;
         public readonly uint PaletteId;
         public readonly uint ModelId;
-        public readonly uint TargetRoomId;
+        public readonly uint ConnectorId;
         public readonly byte TargetLayerId;
         public readonly byte Flags; // bit 0 - locked
         public readonly byte Field42;
@@ -223,212 +222,7 @@ namespace MphRead
         public readonly FhItemType ItemType;
         public readonly ushort SpawnLimit;
         public readonly ushort CooldownTime;
-        public readonly ushort Field2C;
-    }
-
-    // size: 512
-    public readonly struct EnemySpawnEntityData
-    {
-        public readonly EntityDataHeader Header;
-        public readonly EnemyType Type;
-        public readonly byte Padding25; // in-game, the type is 4 bytes on this struct (but is 1 byte on the class),
-        public readonly ushort Padding26; // so this padding isn't actually there
-        public readonly uint Subtype;
-        public readonly uint TextureId;
-        public readonly uint HunterWeapon;
-        public readonly ushort Health;
-        public readonly ushort HealthMax;
-        public readonly ushort Field38;
-        public readonly byte HunterColor;
-        public readonly byte Field3B;
-        // union start
-        public readonly uint Field3C;
-        public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
-        public readonly uint Field58;
-        public readonly uint Field5C;
-        public readonly uint Field60;
-        public readonly uint Field64;
-        public readonly uint Field68;
-        public readonly uint Field6C;
-        public readonly uint Field70;
-        public readonly uint Field74;
-        public readonly uint Field78;
-        public readonly uint Field7C;
-        public readonly uint Field80;
-        public readonly uint Field84;
-        public readonly uint Field88;
-        public readonly uint Field8C;
-        public readonly uint Field90;
-        public readonly uint Field94;
-        public readonly uint Field98;
-        public readonly uint Field9C;
-        public readonly uint FieldA0;
-        public readonly uint FieldA4;
-        public readonly uint FieldA8;
-        public readonly uint FieldAC;
-        public readonly uint FieldB0;
-        public readonly uint FieldB4;
-        public readonly uint FieldB8;
-        public readonly uint FieldBC;
-        public readonly uint FieldC0;
-        public readonly uint FieldC4;
-        public readonly uint FieldC8;
-        public readonly uint FieldCC;
-        public readonly uint FieldD0;
-        public readonly uint FieldD4;
-        public readonly uint FieldD8;
-        public readonly uint FieldDC;
-        public readonly uint FieldE0;
-        public readonly uint FieldE4;
-        public readonly uint FieldE8;
-        public readonly uint FieldEC;
-        public readonly uint FieldF0;
-        public readonly uint FieldF4;
-        public readonly uint FieldF8;
-        public readonly uint FieldFC;
-        public readonly uint Field100;
-        public readonly uint Field104;
-        public readonly uint Field108;
-        public readonly uint Field10C;
-        public readonly uint Field110;
-        public readonly uint Field114;
-        public readonly uint Field118;
-        public readonly uint Field11C;
-        public readonly uint Field120;
-        public readonly uint Field124;
-        public readonly uint Field128;
-        public readonly uint Field12C;
-        public readonly uint Field130;
-        public readonly uint Field134;
-        public readonly uint Field138;
-        public readonly uint Field13C;
-        public readonly uint Field140;
-        public readonly uint Field144;
-        public readonly uint Field148;
-        public readonly uint Field14C;
-        public readonly uint Field150;
-        public readonly uint Field154;
-        public readonly uint Field158;
-        public readonly uint Field15C;
-        public readonly uint Field160;
-        public readonly uint Field164;
-        public readonly uint Field168;
-        public readonly uint Field16C;
-        public readonly uint Field170;
-        public readonly uint Field174;
-        public readonly uint Field178;
-        public readonly uint Field17C;
-        public readonly uint Field180;
-        public readonly uint Field184;
-        public readonly uint Field188;
-        public readonly uint Field18C;
-        public readonly uint Field190;
-        public readonly uint Field194;
-        public readonly uint Field198;
-        public readonly uint Field19C;
-        public readonly uint Field1A0;
-        public readonly uint Field1A4;
-        public readonly uint Field1A8;
-        public readonly uint Field1AC;
-        public readonly uint Field1B0;
-        public readonly uint Field1B4;
-        // union end
-        public readonly ushort Field1B8;
-        public readonly byte SomeLimit;
-        public readonly byte Field1BB;
-        public readonly byte SpawnCount;
-        public readonly byte Active; // boolean
-        public readonly byte AlwaysActive; // boolean
-        public readonly byte ItemChance;
-        public readonly ushort SpawnerModel;
-        public readonly ushort CooldownTime;
-        public readonly ushort InitialCooldown;
-        public readonly ushort Padding1C6;
-        public readonly Fixed ActiveDistance; // todo: display sphere
-        public readonly uint Field1CC;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public readonly char[] NodeName;
-        public readonly short EntityId1;
-        public readonly ushort Field1E2; // todo: padding?
-        public readonly Message Message1;
-        public readonly short EntityId2;
-        public readonly ushort Field1EA;
-        public readonly Message Message2;
-        public readonly short EntityId3;
-        public readonly ushort Field1F2;
-        public readonly Message Message3;
-        public readonly ItemType ItemType;
-    }
-
-    // size: 268
-    public readonly struct FhEnemySpawnEntityData
-    {
-        public readonly EntityDataHeader Header;
-        public readonly uint Field24;
-        public readonly uint Field28;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly uint Field38;
-        public readonly uint Field3C;
-        public readonly uint Field40;
-        public readonly uint Field44;
-        public readonly uint Field48;
-        public readonly uint Field4C;
-        public readonly uint Field50;
-        public readonly uint Field54;
-        public readonly uint Field58;
-        public readonly uint Field5C;
-        public readonly uint Field60;
-        public readonly uint Field64;
-        public readonly uint Field68;
-        public readonly uint Field6C;
-        public readonly uint Field70;
-        public readonly uint Field74;
-        public readonly uint Field78;
-        public readonly uint Field7C;
-        public readonly uint Field80;
-        public readonly uint Field84;
-        public readonly uint Field88;
-        public readonly uint Field8C;
-        public readonly uint Field90;
-        public readonly uint Field94;
-        public readonly uint Field98;
-        public readonly uint Field9C;
-        public readonly uint FieldA0;
-        public readonly uint FieldA4;
-        public readonly uint FieldA8;
-        public readonly uint FieldAC;
-        public readonly uint FieldB0;
-        public readonly uint FieldB4;
-        public readonly uint FieldB8;
-        public readonly uint FieldBC;
-        public readonly uint FieldC0;
-        public readonly uint FieldC4;
-        public readonly uint FieldC8;
-        public readonly uint FieldCC;
-        public readonly uint FieldD0;
-        public readonly uint FieldD4;
-        public readonly uint FieldD8;
-        public readonly uint FieldDC;
-        public readonly uint FieldE0;
-        public readonly uint EnemyType;
-        public readonly byte SpawnTotal;
-        public readonly byte SpawnLimit;
-        public readonly byte SpawnCount;
-        public readonly byte FieldEB;
-        public readonly ushort Cooldown;
-        public readonly ushort FieldEE;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public readonly char[] NodeName;
-        public readonly short ParentId;
-        public readonly ushort Field102;
-        public readonly FhMessage EmptyMessage;
+        public readonly ushort Unused2C;
     }
 
     // size: 160
@@ -445,8 +239,7 @@ namespace MphRead
         public readonly ushort RepeatDelay;
         public readonly ushort CheckDelay;
         public readonly ushort RequiredStateBit; // for subtype 4
-        public readonly ushort TriggerFlags; // in-game this is treated as uint, but the extra bits are never set/checked
-        public readonly ushort Padding76;
+        public readonly TriggerFlags TriggerFlags;
         public readonly uint TriggerThreshold; // for subtype 1
         public readonly short ParentId;
         public readonly ushort Padding7E;
@@ -470,7 +263,7 @@ namespace MphRead
         public readonly FhRawCollisionVolume Cylinder;
         public readonly ushort OneUse;
         public readonly ushort Cooldown;
-        public readonly uint Flags;
+        public readonly FhTriggerFlags TriggerFlags;
         public readonly uint Threshold;
         public readonly short ParentId;
         public readonly ushort PaddingF6;
@@ -520,7 +313,7 @@ namespace MphRead
         public readonly short ChildId; // always the same as ParentId
         public readonly ushort Cooldown;
         public readonly uint Priority; // always 0 or 1
-        public readonly uint Flags; // 0x200 = affects biped, 0x400 = affects alt
+        public readonly TriggerFlags TriggerFlags;
     }
 
     // size: 260
@@ -537,7 +330,7 @@ namespace MphRead
         public readonly uint ExitMsgParam1;
         public readonly ushort Cooldown;
         public readonly ushort PaddingFA;
-        public readonly uint Flags;
+        public readonly FhTriggerFlags TriggerFlags;
 
         public FhRawCollisionVolume ActiveVolume
         {
@@ -572,7 +365,7 @@ namespace MphRead
         public readonly ushort Padding82;
         public readonly uint ModelId;
         public readonly uint BeamType; // always 0, has no imapct
-        public readonly uint Flags;
+        public readonly TriggerFlags TriggerFlags;
     }
 
     // size: 272
@@ -586,10 +379,10 @@ namespace MphRead
         public readonly uint CooldownTime;
         public readonly Vector3Fx BeamVector;
         public readonly Fixed Speed;
-        public readonly uint FieldFC;
+        public readonly uint ControlLockTime;
         public readonly uint ModelId;
         public readonly uint BeamType;
-        public readonly uint Flags;
+        public readonly FhTriggerFlags TriggerFlags;
 
         public FhRawCollisionVolume ActiveVolume
         {
@@ -915,6 +708,99 @@ namespace MphRead
                 else if (index == 9)
                 {
                     return Vector9;
+                }
+                throw new IndexOutOfRangeException();
+            }
+        }
+    }
+
+    // size: 160 (12 x 16)
+    public readonly struct Vector3FxArray16
+    {
+        public readonly Vector3Fx Vector00;
+        public readonly Vector3Fx Vector01;
+        public readonly Vector3Fx Vector02;
+        public readonly Vector3Fx Vector03;
+        public readonly Vector3Fx Vector04;
+        public readonly Vector3Fx Vector05;
+        public readonly Vector3Fx Vector06;
+        public readonly Vector3Fx Vector07;
+        public readonly Vector3Fx Vector08;
+        public readonly Vector3Fx Vector09;
+        public readonly Vector3Fx Vector10;
+        public readonly Vector3Fx Vector11;
+        public readonly Vector3Fx Vector12;
+        public readonly Vector3Fx Vector13;
+        public readonly Vector3Fx Vector14;
+        public readonly Vector3Fx Vector15;
+
+        public Vector3Fx this[int index]
+        {
+            get
+            {
+                if (index == 0)
+                {
+                    return Vector00;
+                }
+                else if (index == 1)
+                {
+                    return Vector01;
+                }
+                else if (index == 2)
+                {
+                    return Vector02;
+                }
+                else if (index == 3)
+                {
+                    return Vector03;
+                }
+                else if (index == 4)
+                {
+                    return Vector04;
+                }
+                else if (index == 5)
+                {
+                    return Vector05;
+                }
+                else if (index == 6)
+                {
+                    return Vector06;
+                }
+                else if (index == 7)
+                {
+                    return Vector07;
+                }
+                else if (index == 8)
+                {
+                    return Vector08;
+                }
+                else if (index == 9)
+                {
+                    return Vector09;
+                }
+                else if (index == 10)
+                {
+                    return Vector10;
+                }
+                else if (index == 11)
+                {
+                    return Vector11;
+                }
+                else if (index == 12)
+                {
+                    return Vector12;
+                }
+                else if (index == 13)
+                {
+                    return Vector13;
+                }
+                else if (index == 14)
+                {
+                    return Vector14;
+                }
+                else if (index == 15)
+                {
+                    return Vector15;
                 }
                 throw new IndexOutOfRangeException();
             }

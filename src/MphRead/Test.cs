@@ -79,6 +79,25 @@ namespace MphRead
 
         public static void TestAllEntities()
         {
+            foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
+            {
+                if (meta.Value.EntityPath != null && !meta.Value.FirstHunt)
+                {
+                    IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
+                    foreach (Entity entity in entities)
+                    {
+                        if (entity.Type == EntityType.Platform)
+                        {
+                            PlatformEntityData data = ((Entity<PlatformEntityData>)entity).Data;
+                        }
+                    }
+                }
+            }
+            Nop();
+        }
+
+        public static void TestAllEntityMessages()
+        {
             var used = new HashSet<Message>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
@@ -117,9 +136,10 @@ namespace MphRead
                             used.Add(data.Message1);
                             used.Add(data.Message2);
                             used.Add(data.Message3);
-                            if (data.Type == EnemyType.Hunter && data.TextureId != 0)
+                            if (data.EnemyType == EnemyType.Hunter && data.Fields.S09.EncounterType != 0)
                             {
-                                Console.WriteLine($"EH {meta.Value.InGameName} {(Hunter)data.Subtype} type {data.TextureId}");
+                                Console.WriteLine($"EH {meta.Value.InGameName} {(Hunter)data.Fields.S09.HunterId}" +
+                                    $" type {data.Fields.S09.EncounterType}");
                             }
                         }
                         else if (entity.Type == EntityType.ItemSpawn)

@@ -7,8 +7,54 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Utility
 {
+    public enum RepackFilter
+    {
+        All,
+        SinglePlayer,
+        Multiplayer
+    }
+
     public static partial class Repack
     {
+        public static (byte[], byte[]) RepackRoomModel(string room, bool separateTextures, RepackFilter filter = RepackFilter.All)
+        {
+            RoomMetadata meta = Metadata.RoomMetadata[room];
+            if (separateTextures && meta.TexturePath != null)
+            {
+                throw new ProgramException($"Room {room} already has a separate texture file.");
+            }
+            Model model = Read.GetRoomModelInstance(meta.Name).Model;
+            Debug.Assert(model.Scale.X == model.Scale.Y && model.Scale.Y == model.Scale.Z);
+            Debug.Assert(model.Scale.X == (int)model.Scale.X);
+            var textureInfo = new List<TextureInfo>();
+            for (int i = 0; i < model.Recolors[0].Textures.Count; i++)
+            {
+                Texture texture = model.Recolors[0].Textures[i];
+                IReadOnlyList<TextureData> data = model.Recolors[0].TextureData[i];
+                textureInfo.Add(ConvertData(texture, data));
+            }
+            var paletteInfo = new List<PaletteInfo>();
+            foreach (IReadOnlyList<PaletteData> data in model.Recolors[0].PaletteData)
+            {
+                paletteInfo.Add(new PaletteInfo(data.Select(d => d.Data).ToList()));
+            }
+            if (filter != RepackFilter.All)
+            {
+                int layerMask = filter == RepackFilter.Multiplayer
+                    ? SceneSetup.GetNodeLayer(GameMode.Battle, roomLayer: 0, playerCount: 2)
+                    : SceneSetup.GetNodeLayer(GameMode.SinglePlayer, meta.NodeLayer, playerCount: 1);
+                model.FilterNodes(layerMask);
+            }
+            var options = new RepackOptions()
+            {
+                IsRoom = true,
+                Texture = separateTextures ? RepackTexture.Separate : RepackTexture.Inline,
+                ComputeBounds = ComputeBounds.None
+            };
+            return PackModel((int)model.Scale.X, model.NodeMatrixIds, model.NodePosCounts, model.Materials,
+                textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists, options);
+        }
+
         public static void TestRepack()
         {
             Read.ApplyFixes = false;
@@ -47,7 +93,7 @@ namespace MphRead.Utility
                 // todo: support animation shares, I guess
                 if (meta.AnimationPath != null && meta.AnimationShare == null)
                 {
-                    TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt);
+                    TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt, writeFile: false);
                 }
             }
             foreach (RoomMetadata meta in Metadata.RoomMetadata.Values)
@@ -60,11 +106,13 @@ namespace MphRead.Utility
                         : RepackTexture.Separate,
                     ComputeBounds = ComputeBounds.None
                 };
+                //options.Texture = RepackTexture.Separate;
+                //options.WriteFile = true;
                 Model model = Read.GetRoomModelInstance(meta.Name).Model;
                 TestModelRepack(model, recolor: 0, meta.ModelPath, meta.TexturePath, meta.FirstHunt || meta.Hybrid, options);
                 if (meta.AnimationPath != null)
                 {
-                    TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt || meta.Hybrid);
+                    TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt || meta.Hybrid, options.WriteFile);
                 }
             }
             Read.ApplyFixes = true;
@@ -84,12 +132,12 @@ namespace MphRead.Utility
             TestModelRepack(model, recolor, meta.ModelPath, meta.Recolors[recolor].TexturePath, meta.FirstHunt, options);
             if (meta.AnimationPath != null && meta.AnimationShare == null)
             {
-                TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt);
+                TestAnimRepack(model, meta.AnimationPath, meta.FirstHunt, options.WriteFile);
             }
             Read.ApplyFixes = true;
         }
 
-        private static void TestAnimRepack(Model model, string animPath, bool firstHunt)
+        private static void TestAnimRepack(Model model, string animPath, bool firstHunt, bool writeFile)
         {
             var node = new List<NodeAnimationGroup?>();
             var mat = new List<MaterialAnimationGroup?>();
@@ -119,6 +167,10 @@ namespace MphRead.Utility
             byte[] bytes = PackAnim(node, mat, uv, tex, fhPad);
             byte[] fileBytes = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, animPath));
             CompareAnims(model.Name, bytes, fileBytes);
+            if (writeFile)
+            {
+                File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}_Anim.bin"), bytes);
+            }
             Nop();
         }
 
@@ -145,17 +197,50 @@ namespace MphRead.Utility
             (byte[] bytes, byte[] tex) = PackModel((int)model.Scale.X, model.NodeMatrixIds, model.NodePosCounts, model.Materials,
                 textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists, options);
             byte[] fileBytes = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, modelPath));
-            CompareModels(model.Name, bytes, fileBytes, options);
-            if (options.Texture == RepackTexture.Separate)
+            if (options.Compare)
             {
-                Debug.Assert(texPath != null);
-                byte[] texFile = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, texPath));
-                Debug.Assert(tex.Length == texFile.Length);
-                Debug.Assert(Enumerable.SequenceEqual(tex, texFile));
+                CompareModels(model.Name, bytes, fileBytes, options);
+                if (options.Texture == RepackTexture.Separate)
+                {
+                    Debug.Assert(texPath != null);
+                    byte[] texFile = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, texPath));
+                    Debug.Assert(tex.Length == texFile.Length);
+                    Debug.Assert(Enumerable.SequenceEqual(tex, texFile));
+                }
             }
             if (options.WriteFile)
             {
                 File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}_{model.Recolors[recolor].Name}.bin"), bytes);
+                if (options.Texture == RepackTexture.Separate)
+                {
+                    File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}_Tex.bin"), tex);
+                }
+            }
+            Nop();
+        }
+
+        public static void CompareModels(string model1, string model2, string game1 = "amhe1", string game2 = "amhe1")
+        {
+            ModelMetadata meta1 = Metadata.ModelMetadata[model1];
+            ModelMetadata meta2 = Metadata.ModelMetadata[model2];
+            string path1 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, meta1.ModelPath);
+            string path2 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, meta2.ModelPath);
+            CompareModels(model1, File.ReadAllBytes(path1), File.ReadAllBytes(path2), new RepackOptions()
+            {
+                Texture = RepackTexture.Separate
+            });
+            Nop();
+        }
+
+        public static void CompareAnims(string model1, string model2, string game1 = "amhe1", string game2 = "amhe1")
+        {
+            ModelMetadata meta1 = Metadata.ModelMetadata[model1];
+            ModelMetadata meta2 = Metadata.ModelMetadata[model2];
+            if (meta1.AnimationPath != null && meta2.AnimationPath != null)
+            {
+                string path1 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, meta1.AnimationPath);
+                string path2 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, meta2.AnimationPath);
+                CompareAnims(model1, File.ReadAllBytes(path1), File.ReadAllBytes(path2));
             }
             Nop();
         }
@@ -602,6 +687,7 @@ namespace MphRead.Utility
             public bool IsRoom { get; set; }
             public ComputeBounds ComputeBounds { get; set; }
             public bool WriteFile { get; set; }
+            public bool Compare { get; set; }
         }
 
         public static byte[] PackAnim(IReadOnlyList<NodeAnimationGroup?> nodeGroups, IReadOnlyList<MaterialAnimationGroup?> matGroups,

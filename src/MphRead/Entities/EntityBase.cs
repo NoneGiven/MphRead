@@ -397,7 +397,7 @@ namespace MphRead.Entities
             Position = position;
         }
 
-        protected static Matrix4 GetTransformMatrix(Vector3 facing, Vector3 up)
+        public static Matrix4 GetTransformMatrix(Vector3 facing, Vector3 up)
         {
             Vector3 cross1 = Vector3.Cross(up, facing).Normalized();
             var cross2 = Vector3.Cross(facing, cross1);

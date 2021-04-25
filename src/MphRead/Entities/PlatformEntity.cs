@@ -826,7 +826,7 @@ namespace MphRead.Entities
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
         {
-            return GetTransform();
+            return Matrix4.CreateScale(inst.Model.Scale) * GetTransform();
         }
 
         private Matrix4 GetTransformMatrix()

@@ -35,6 +35,8 @@ namespace MphRead
         FlagBase,
         DefenseNode,
         KillPlane,
+        PlayerLimit,
+        CameraLimit,
         Portal
     }
 
@@ -86,6 +88,7 @@ namespace MphRead
         private bool _lighting = false;
         private bool _scanVisor = false;
         private int _showInvisible = 0;
+        private bool _showNodeData = false;
         private VolumeDisplay _showVolumes = VolumeDisplay.None;
         private bool _showCollision = false;
         private bool _showAllNodes = false;
@@ -131,6 +134,7 @@ namespace MphRead
         public Matrix4 ViewInvRotMatrix => _viewInvRotMatrix;
         public Matrix4 ViewInvRotYMatrix => _viewInvRotYMatrix;
         public Vector3 CameraPosition => _cameraPosition;
+        public bool ShowNodeData => _showNodeData;
         public bool ShowInvisibleEntities => _showInvisible != 0;
         public bool ShowAllEntities => _showInvisible == 2;
         public bool TransformRoomNodes => _transformRoomNodes;
@@ -224,9 +228,9 @@ namespace MphRead
         }
 
         // called before load
-        public EntityBase AddModel(string name, int recolor = 0, bool firstHunt = false)
+        public EntityBase AddModel(string name, int recolor = 0, bool firstHunt = false, MetaDir dir = MetaDir.Models, Vector3? pos = null)
         {
-            ModelInstance model = Read.GetModelInstance(name, firstHunt);
+            ModelInstance model = Read.GetModelInstance(name, firstHunt, dir);
             var entity = new ModelEntity(model, recolor);
             _entities.Add(entity);
             if (entity.Id != -1)
@@ -234,6 +238,10 @@ namespace MphRead
                 _entityMap.Add(entity.Id, entity);
             }
             InitEntity(entity);
+            if (pos.HasValue)
+            {
+                entity.Position = pos.Value;
+            }
             return entity;
         }
 
@@ -2689,7 +2697,7 @@ namespace MphRead
                     else if (e.Shift)
                     {
                         ColTerDisplay--;
-                        if (ColTerDisplay < 0)
+                        if ((byte)ColTerDisplay == 255)
                         {
                             ColTerDisplay = Terrain.All;
                         }
@@ -2811,7 +2819,14 @@ namespace MphRead
             {
                 if (e.Alt)
                 {
-                    _outputCameraPos = !_outputCameraPos;
+                    if (e.Shift)
+                    {
+                        _promptState = PromptState.CameraPos;
+                    }
+                    else
+                    {
+                        _outputCameraPos = !_outputCameraPos;
+                    }
                 }
                 else
                 {
@@ -2938,6 +2953,10 @@ namespace MphRead
                     _showInvisible = 0;
                 }
             }
+            else if (e.Key == Keys.Y)
+            {
+                _showNodeData = !_showNodeData;
+            }
             else if (e.Key == Keys.E && !e.Alt)
             {
                 _scanVisor = !_scanVisor;
@@ -2986,7 +3005,7 @@ namespace MphRead
             }
             else if (e.Control && e.Key == Keys.O)
             {
-                _showLoadPrompt = true;
+                _promptState = PromptState.Load;
             }
             else if (e.Control && e.Key == Keys.U)
             {
@@ -3119,7 +3138,14 @@ namespace MphRead
             }
         }
 
-        private bool _showLoadPrompt = false;
+        private enum PromptState
+        {
+            None,
+            Load,
+            CameraPos
+        }
+
+        private PromptState _promptState = PromptState.None;
         private readonly ConcurrentQueue<(string Name, int Recolor, bool FirstHunt)> _loadQueue = new ConcurrentQueue<(string, int, bool)>();
         private readonly ConcurrentQueue<EntityBase> _unloadQueue = new ConcurrentQueue<EntityBase>();
 
@@ -3136,10 +3162,16 @@ namespace MphRead
         {
             while (!token.IsCancellationRequested)
             {
-                if (_showLoadPrompt)
+                if (_promptState == PromptState.Load)
                 {
-                    OutputDoPrompt();
-                    _showLoadPrompt = false;
+                    OutputLoadPrompt();
+                    _promptState = PromptState.None;
+                    _currentOutput = "";
+                }
+                else if (_promptState == PromptState.CameraPos)
+                {
+                    OutputCameraPrompt();
+                    _promptState = PromptState.None;
                     _currentOutput = "";
                 }
                 string output = OutputGetAll();
@@ -3153,7 +3185,7 @@ namespace MphRead
             }
         }
 
-        private void OutputDoPrompt()
+        private void OutputLoadPrompt()
         {
             Console.Clear();
             Console.Write("Enter model name: ");
@@ -3176,6 +3208,45 @@ namespace MphRead
                 }
                 _loadQueue.Enqueue((name, recolor, firstHunt));
             }
+        }
+
+        private void OutputCameraPrompt()
+        {
+            Console.Clear();
+            Console.Write("Enter camera position: ");
+            string[] input = Console.ReadLine().Trim().Split(' ');
+            float x = 0;
+            float y = 0;
+            float z = 0;
+            for (int i = 0; i < input.Length && i < 3; i++)
+            {
+                string item = input[i];
+                float coord = 0;
+                if (item.StartsWith("0x"))
+                {
+                    if (Int32.TryParse(item.Replace("0x", ""), System.Globalization.NumberStyles.HexNumber, null, out int value))
+                    {
+                        coord = value / 4096f;
+                    }
+                }
+                else if (Single.TryParse(item, out float value))
+                {
+                    coord = value;
+                }
+                if (i == 0)
+                {
+                    x = coord;
+                }
+                else if (i == 1)
+                {
+                    y = coord;
+                }
+                else if (i == 2)
+                {
+                    z = coord;
+                }
+            }
+            _cameraPosition = new Vector3(x, y, z);
         }
 
         private string OutputGetAll()
@@ -3249,6 +3320,8 @@ namespace MphRead
                 VolumeDisplay.FlagBase => "flag bases",
                 VolumeDisplay.DefenseNode => "defense nodes",
                 VolumeDisplay.KillPlane => "kill plane",
+                VolumeDisplay.PlayerLimit => "room limits (player)",
+                VolumeDisplay.CameraLimit => "room limits (camera)",
                 VolumeDisplay.Portal => "portals",
                 _ => "off"
             };
@@ -3303,11 +3376,18 @@ namespace MphRead
             }
             _sb.AppendLine();
             _sb.Append($"Entity: {entity.Type}");
+            IReadOnlyList<ModelInstance> models = entity.GetModels();
             if (entity.Type == EntityType.Model)
             {
-                _sb.Append($" ({entity.GetModels()[0].Model.Name})");
+                Debug.Assert(models.Count > 0);
+                _sb.Append($" ({models[0].Model.Name})");
             }
-            _sb.Append($" [{entity.Id}] {(entity.Active ? "On " : "Off")} - Color {entity.Recolor}");
+            string color = "";
+            if (models.Count > 0 && !models[0].IsPlaceholder)
+            {
+                color = $" - Color {entity.Recolor}";
+            }
+            _sb.Append($" [{entity.Id}] {(entity.Active ? "On " : "Off")}{color}");
             if (entity.Type == EntityType.Room)
             {
                 _sb.Append($" ({entity.GetModels()[0].Model.Nodes.Count(n => n.IsRoomPartNode)})");
@@ -3412,6 +3492,14 @@ namespace MphRead
                     _sb.Append(", Target: None");
                 }
                 _sb.Append($", Param1: {fhTrigger.Data.ChildMsgParam1}, Param2: 0");
+            }
+            else if (entity is EnemySpawnEntity enemySpawn)
+            {
+                _sb.Append($" ({enemySpawn.Data.EnemyType})");
+            }
+            else if (entity is ItemSpawnEntity itemSpawn)
+            {
+                _sb.Append($" ({itemSpawn.Data.ItemType})");
             }
             else if (entity is ObjectEntity obj)
             {
@@ -3556,9 +3644,9 @@ namespace MphRead
             Scene.AddRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
         }
 
-        public void AddModel(string name, int recolor = 0, bool firstHunt = false)
+        public void AddModel(string name, int recolor = 0, bool firstHunt = false, MetaDir dir = MetaDir.Models, Vector3? pos = null)
         {
-            Scene.AddModel(name, recolor, firstHunt);
+            Scene.AddModel(name, recolor, firstHunt, dir, pos);
         }
 
         public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null)

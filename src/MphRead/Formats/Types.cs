@@ -457,6 +457,26 @@ namespace MphRead
             return new Vector3i(Fixed.ToInt(vector.X), Fixed.ToInt(vector.Y), Fixed.ToInt(vector.Z));
         }
 
+        public static Vector4 WithX(this Vector4 vector, float x)
+        {
+            return new Vector4(x, vector.Y, vector.Z, vector.W);
+        }
+
+        public static Vector4 WithY(this Vector4 vector, float y)
+        {
+            return new Vector4(vector.X, y, vector.Z, vector.W);
+        }
+
+        public static Vector4 WithZ(this Vector4 vector, float z)
+        {
+            return new Vector4(vector.X, vector.Y, z, vector.W);
+        }
+
+        public static Vector4 WithW(this Vector4 vector, float w)
+        {
+            return new Vector4(vector.X, vector.Y, vector.Z, w);
+        }
+
         public static Matrix3 AsMatrix3(this Matrix4x3 matrix)
         {
             return new Matrix3(matrix.Row0, matrix.Row1, matrix.Row2);

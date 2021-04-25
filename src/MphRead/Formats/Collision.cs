@@ -59,13 +59,13 @@ namespace MphRead.Formats.Collision
             return new CollisionInstance(name, info);
         }
 
-        private static MphCollisionInfo ReadMphCollision(CollisionHeader header, ReadOnlySpan<byte> bytes, int roomLayerMask)
+        public static MphCollisionInfo ReadMphCollision(CollisionHeader header, ReadOnlySpan<byte> bytes, int roomLayerMask)
         {
             IReadOnlyList<Vector3Fx> points = Read.DoOffsets<Vector3Fx>(bytes, header.PointOffset, header.PointCount);
-            IReadOnlyList<CollisionPlane> planes = Read.DoOffsets<CollisionPlane>(bytes, header.PlaneOffset, header.PlaneCount);
-            IReadOnlyList<ushort> shorts = Read.DoOffsets<ushort>(bytes, header.VectorIndexOffset, header.VectorIndexCount);
+            IReadOnlyList<Vector4Fx> planes = Read.DoOffsets<Vector4Fx>(bytes, header.PlaneOffset, header.PlaneCount);
+            IReadOnlyList<ushort> pointIdxs = Read.DoOffsets<ushort>(bytes, header.PointIndexOffset, header.PointIndexCount);
             IReadOnlyList<CollisionData> data = Read.DoOffsets<CollisionData>(bytes, header.DataOffset, header.DataCount);
-            IReadOnlyList<ushort> indices = Read.DoOffsets<ushort>(bytes, header.DataIndexOffset, header.DataIndexCount);
+            IReadOnlyList<ushort> dataIdxs = Read.DoOffsets<ushort>(bytes, header.DataIndexOffset, header.DataIndexCount);
             IReadOnlyList<CollisionEntry> entries = Read.DoOffsets<CollisionEntry>(bytes, header.EntryOffset, header.EntryCount);
             var portals = new List<CollisionPortal>();
             foreach (RawCollisionPortal portal in Read.DoOffsets<RawCollisionPortal>(bytes, header.PortalOffset, header.PortalCount))
@@ -79,37 +79,51 @@ namespace MphRead.Formats.Collision
             var finalData = new List<CollisionData>();
             var finalIndices = new List<ushort>();
             var finalEntries = new List<CollisionEntry>();
-            foreach (CollisionEntry entry in entries.Where(e => e.DataCount > 0))
+            if (roomLayerMask == -1)
             {
-                ushort newCount = 0;
-                ushort newStartIndex = (ushort)finalIndices.Count;
-                for (int i = 0; i < entry.DataCount; i++)
+                // preserve order
+                finalData.AddRange(data);
+                finalIndices.AddRange(dataIdxs);
+                finalEntries.AddRange(entries);
+            }
+            else
+            {
+                foreach (CollisionEntry entry in entries)
                 {
-                    ushort oldIndex = indices[entry.DataStartIndex + i];
-                    if (indexMap.TryGetValue(oldIndex, out ushort newIndex))
+                    if (entry.DataCount > 0)
                     {
-                        finalIndices.Add(newIndex);
-                        newCount++;
+                        ushort newCount = 0;
+                        ushort newStartIndex = (ushort)finalIndices.Count;
+                        for (int i = 0; i < entry.DataCount; i++)
+                        {
+                            ushort oldIndex = dataIdxs[entry.DataStartIndex + i];
+                            if (indexMap.TryGetValue(oldIndex, out ushort newIndex))
+                            {
+                                finalIndices.Add(newIndex);
+                                newCount++;
+                            }
+                            else
+                            {
+                                CollisionData item = data[oldIndex];
+                                if ((item.LayerMask & 4) != 0 || (item.LayerMask & roomLayerMask) != 0)
+                                {
+                                    newIndex = (ushort)finalData.Count;
+                                    finalIndices.Add(newIndex);
+                                    finalData.Add(item);
+                                    newCount++;
+                                    indexMap.Add(oldIndex, newIndex);
+                                }
+                            }
+                        }
+                        finalEntries.Add(new CollisionEntry(newCount, newStartIndex));
                     }
                     else
                     {
-                        CollisionData item = data[oldIndex];
-                        if ((item.LayerMask & 4) != 0 || roomLayerMask == -1 || (item.LayerMask & roomLayerMask) != 0)
-                        {
-                            newIndex = (ushort)finalData.Count;
-                            finalIndices.Add(newIndex);
-                            finalData.Add(item);
-                            newCount++;
-                            indexMap.Add(oldIndex, newIndex);
-                        }
+                        finalEntries.Add(entry);
                     }
                 }
-                finalEntries.Add(new CollisionEntry(newCount, newStartIndex));
             }
-            data = finalData;
-            indices = finalIndices;
-            entries = finalEntries;
-            return new MphCollisionInfo(header, points, planes, shorts, data, indices, entries, portals);
+            return new MphCollisionInfo(header, points, planes, pointIdxs, finalData, finalIndices, finalEntries, portals);
         }
 
         private static FhCollisionInfo ReadFhCollision(ReadOnlySpan<byte> bytes)
@@ -119,13 +133,16 @@ namespace MphRead.Formats.Collision
             IReadOnlyList<FhCollisionVector> vectors = Read.DoOffsets<FhCollisionVector>(bytes, header.VectorOffset, header.VectorCount);
             IReadOnlyList<ushort> dataIndices = Read.DoOffsets<ushort>(bytes, header.DataIndexOffset, header.DataIndexCount);
             IReadOnlyList<Vector3Fx> points = Read.DoOffsets<Vector3Fx>(bytes, header.PointOffset, header.PointCount);
-            IReadOnlyList<CollisionPlane> planes = Read.DoOffsets<CollisionPlane>(bytes, header.PlaneOffset, header.PlaneCount);
+            IReadOnlyList<Vector4Fx> planes = Read.DoOffsets<Vector4Fx>(bytes, header.PlaneOffset, header.PlaneCount);
+            IReadOnlyList<FhCollisionEntry> entries = Read.DoOffsets<FhCollisionEntry>(bytes, header.EntryOffset, header.EntryCount);
+            IReadOnlyList<int> treeNodeIndices = Read.DoOffsets<int>(bytes, header.TreeNodeIndexOffset, header.TreeNodeIndexCount);
+            IReadOnlyList<FhCollisionTreeNode> treeNodes = Read.DoOffsets<FhCollisionTreeNode>(bytes, header.TreeNodeOffset, header.TreeNodeCount);
             var portals = new List<CollisionPortal>();
             foreach (FhCollisionPortal portal in Read.DoOffsets<FhCollisionPortal>(bytes, header.PortalOffset, header.PortalCount))
             {
-                portals.Add(new CollisionPortal(portal, vectors, points));
+                portals.Add(new CollisionPortal(portal, vectors, points, planes));
             }
-            return new FhCollisionInfo(header, points, planes, data, vectors, dataIndices, portals);
+            return new FhCollisionInfo(header, points, planes, data, vectors, dataIndices, portals, entries, treeNodeIndices, treeNodes);
         }
     }
 
@@ -138,16 +155,16 @@ namespace MphRead.Formats.Collision
         public readonly uint PointOffset;
         public readonly uint PlaneCount;
         public readonly uint PlaneOffset;
-        public readonly uint VectorIndexCount;
-        public readonly uint VectorIndexOffset;
+        public readonly uint PointIndexCount;
+        public readonly uint PointIndexOffset;
         public readonly uint DataCount;
         public readonly uint DataOffset;
         public readonly uint DataIndexCount;
         public readonly uint DataIndexOffset;
-        public readonly uint Field2C;
-        public readonly uint Field30;
-        public readonly uint Field34;
-        public readonly Vector3Fx BasePosition;
+        public readonly int PartsX;
+        public readonly int PartsY;
+        public readonly int PartsZ;
+        public readonly Vector3Fx MinPosition;
         public readonly uint EntryCount;
         public readonly uint EntryOffset;
         public readonly uint PortalCount;
@@ -155,16 +172,9 @@ namespace MphRead.Formats.Collision
     }
 
     // size: 16
-    public readonly struct CollisionPlane
-    {
-        public readonly Vector3Fx Normal;
-        public readonly Fixed Homogenous;
-    }
-
-    // size: 16
     public readonly struct CollisionData
     {
-        public readonly uint Counter; // only set at runtime
+        public readonly int Counter; // only set at runtime
         public readonly ushort PlaneIndex;
         public readonly CollisionFlags Flags;
         public readonly ushort LayerMask;
@@ -181,6 +191,9 @@ namespace MphRead.Formats.Collision
         public bool IgnorePlayers => Flags.HasFlag(CollisionFlags.IgnorePlayers);
 
         public bool IgnoreBeams => Flags.HasFlag(CollisionFlags.IgnoreBeams);
+
+        // bits 0-1
+        public int Axis => LayerMask & 3;
     }
 
     // size: 4
@@ -199,32 +212,26 @@ namespace MphRead.Formats.Collision
     // size: 224
     public readonly struct RawCollisionPortal
     {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 40)]
         public readonly char[] Name;
-        public readonly uint Field20;
-        public readonly uint Field24;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 24)]
         public readonly char[] NodeName1; // side 0 room node
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 24)]
         public readonly char[] NodeName2; // side 1 room node
-        public readonly Vector3Fx Vector1;
-        public readonly Vector3Fx Vector2;
-        public readonly Vector3Fx Vector3;
-        public readonly Vector3Fx Vector4;
-        public readonly Vector3Fx Vector5;
-        public readonly uint Field94;
-        public readonly Vector3Fx Vector6;
-        public readonly uint FieldA4;
-        public readonly Vector3Fx Vector7;
-        public readonly uint FieldB4;
-        public readonly Vector3Fx Vector8;
-        public readonly uint FieldC4;
-        public readonly Vector3Fx Normal;
-        public readonly uint Plane;
+        public readonly Vector3Fx Point1;
+        public readonly Vector3Fx Point2;
+        public readonly Vector3Fx Point3;
+        public readonly Vector3Fx Point4;
+        public readonly Vector4Fx Plane1;
+        public readonly Vector4Fx Plane2;
+        public readonly Vector4Fx Plane3;
+        public readonly Vector4Fx Plane4;
+        public readonly Vector4Fx Plane;
         public readonly ushort Flags;
         public readonly ushort LayerMask;
-        public readonly ushort VectorCount;
-        public readonly ushort FieldDE;
+        public readonly ushort PointCount;
+        public readonly byte UnusedDE;
+        public readonly byte UnusedDF;
     }
 
     public class CollisionPortal
@@ -235,41 +242,59 @@ namespace MphRead.Formats.Collision
         public ushort LayerMask { get; }
         public bool IsForceField { get; }
         public IReadOnlyList<Vector3> Points { get; }
+        public IReadOnlyList<Vector4> Planes { get; }
+        public Vector4 Plane { get; }
         public Vector3 Position { get; }
+        public ushort Flags { get; }
+        public byte Unknown00 { get; }
+        public byte Unknown01 { get; }
 
         public CollisionPortal(RawCollisionPortal raw)
         {
-            Debug.Assert(raw.VectorCount == 4);
+            Debug.Assert(raw.PointCount == 4);
             Name = raw.Name.MarshalString();
             NodeName1 = raw.NodeName1.MarshalString();
             NodeName2 = raw.NodeName2.MarshalString();
             LayerMask = raw.LayerMask;
             IsForceField = Name.StartsWith("pmag");
             var points = new List<Vector3>();
-            points.Add(raw.Vector1.ToFloatVector());
-            points.Add(raw.Vector2.ToFloatVector());
-            points.Add(raw.Vector3.ToFloatVector());
-            points.Add(raw.Vector4.ToFloatVector());
+            points.Add(raw.Point1.ToFloatVector());
+            points.Add(raw.Point2.ToFloatVector());
+            points.Add(raw.Point3.ToFloatVector());
+            points.Add(raw.Point4.ToFloatVector());
             Points = points;
             Position = new Vector3(
                 points.Sum(p => p.X) / points.Count,
                 points.Sum(p => p.Y) / points.Count,
                 points.Sum(p => p.Z) / points.Count
             );
+            var planes = new List<Vector4>();
+            planes.Add(raw.Plane1.ToFloatVector());
+            planes.Add(raw.Plane2.ToFloatVector());
+            planes.Add(raw.Plane3.ToFloatVector());
+            planes.Add(raw.Plane4.ToFloatVector());
+            Planes = planes;
+            Plane = raw.Plane.ToFloatVector();
+            Flags = raw.Flags;
+            Unknown00 = raw.UnusedDE;
+            Unknown01 = raw.UnusedDF;
         }
 
-        public CollisionPortal(FhCollisionPortal raw, IReadOnlyList<FhCollisionVector> rawVectors, IReadOnlyList<Vector3Fx> rawPoints)
+        public CollisionPortal(FhCollisionPortal raw, IReadOnlyList<FhCollisionVector> rawVectors,
+            IReadOnlyList<Vector3Fx> rawPoints, IReadOnlyList<Vector4Fx> rawPlanes)
         {
             Name = raw.Name.MarshalString();
             NodeName1 = raw.NodeName1.MarshalString();
             NodeName2 = raw.NodeName2.MarshalString();
             LayerMask = 4; // always on
             var points = new List<Vector3>();
+            var planes = new List<Vector4>();
             for (int i = 0; i < raw.VectorCount; i++)
             {
                 FhCollisionVector vector = rawVectors[raw.VectorStartIndex + i];
-                Vector3Fx point = rawPoints[vector.Point1Index];
-                points.Add(point.ToFloatVector());
+                // use Point2Index so vertex order is the same as MPH
+                points.Add(rawPoints[vector.Point2Index].ToFloatVector());
+                planes.Add(rawPlanes[vector.PlaneIndex].ToFloatVector());
             }
             Points = points;
             Position = new Vector3(
@@ -277,6 +302,10 @@ namespace MphRead.Formats.Collision
                 points.Sum(p => p.Y) / points.Count,
                 points.Sum(p => p.Z) / points.Count
             );
+            Planes = planes;
+            Plane = raw.Plane.ToFloatVector();
+            Unknown00 = raw.Field5C;
+            Unknown01 = raw.Field5D;
         }
     }
 
@@ -315,14 +344,14 @@ namespace MphRead.Formats.Collision
     {
         public bool FirstHunt { get; }
         public IReadOnlyList<Vector3> Points { get; }
-        public IReadOnlyList<CollisionPlane> Planes { get; }
+        public IReadOnlyList<Vector4> Planes { get; }
         public IReadOnlyList<CollisionPortal> Portals { get; }
 
-        public CollisionInfo(IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
+        public CollisionInfo(IReadOnlyList<Vector3Fx> points, IReadOnlyList<Vector4Fx> planes,
             IReadOnlyList<CollisionPortal> portals, bool firstHunt)
         {
             Points = points.Select(v => v.ToFloatVector()).ToList();
-            Planes = planes;
+            Planes = planes.Select(p => p.ToFloatVector()).ToList();
             Portals = portals;
             FirstHunt = firstHunt;
         }
@@ -337,10 +366,11 @@ namespace MphRead.Formats.Collision
         public IReadOnlyList<CollisionData> Data { get; }
         public IReadOnlyList<ushort> DataIndices { get; }
         public IReadOnlyList<CollisionEntry> Entries { get; }
+        public Vector3 MinPosition { get; }
 
-        public MphCollisionInfo(CollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
-            IReadOnlyList<ushort> ptIdxs, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> dataIdxs, IReadOnlyList<CollisionEntry> entries,
-            IReadOnlyList<CollisionPortal> portals)
+        public MphCollisionInfo(CollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<Vector4Fx> planes,
+            IReadOnlyList<ushort> ptIdxs, IReadOnlyList<CollisionData> data, IReadOnlyList<ushort> dataIdxs,
+            IReadOnlyList<CollisionEntry> entries, IReadOnlyList<CollisionPortal> portals)
             : base(points, planes, portals, firstHunt: false)
         {
             Header = header;
@@ -348,6 +378,7 @@ namespace MphRead.Formats.Collision
             Data = data;
             DataIndices = dataIdxs;
             Entries = entries;
+            MinPosition = header.MinPosition.ToFloatVector();
         }
 
         private static readonly IReadOnlyList<Vector4> _colors = new List<Vector4>()
@@ -368,11 +399,16 @@ namespace MphRead.Formats.Collision
 
         public override void GetDrawInfo(List<Vector3> points, EntityType entityType, Scene scene)
         {
+            //Entities.EntityBase? target = scene.Entities.FirstOrDefault(e => e.Type == EntityType.Model);
+            //if (target != null)
+            //{
+            //    GetPartition(target.Position, points, entityType, scene);
+            //    return;
+            //}
             // todo: visualize extra things like slipperiness, reflection, damage
             int polygonId = scene.GetNextPolygonId();
             for (int i = 0; i < Data.Count; i++)
             {
-                // todo?: what is the purpose of CollisionEntry? why are there so many and why do they reference the same CollisionData?
                 CollisionData data = Data[i];
                 if (scene.ColTerDisplay != Terrain.All && scene.ColTerDisplay != data.Terrain)
                 {
@@ -440,6 +476,125 @@ namespace MphRead.Formats.Collision
                 scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.PointIndexCount);
             }
         }
+
+        public Vector3i PartIndexFromEntry(int index)
+        {
+            int x = Header.PartsX;
+            int xz = x * Header.PartsZ;
+            int yInc = index / xz;
+            int zInc = (index - yInc * xz) / x;
+            int xInc = index - yInc * xz - zInc * x;
+            return new Vector3i(xInc, yInc, zInc);
+        }
+
+        public int EntryIndexFromPoint(Vector3 point)
+        {
+            if (point.X < MinPosition.X || point.Y < MinPosition.Y || point.Z < MinPosition.Z)
+            {
+                return -1;
+            }
+            int xInc = (int)((point.X - MinPosition.X) / 4f);
+            int yInc = (int)((point.Y - MinPosition.Y) / 4f);
+            int zInc = (int)((point.Z - MinPosition.Z) / 4f);
+            if (xInc >= Header.PartsX || yInc >= Header.PartsY || zInc >= Header.PartsZ)
+            {
+                return -1;
+            }
+            return yInc * Header.PartsX * Header.PartsZ + zInc * Header.PartsX + xInc;
+        }
+
+        public void GetPartition(Vector3 point, List<Vector3> points, EntityType entityType, Scene scene)
+        {
+            int entryIndex = EntryIndexFromPoint(point);
+            int polygonId = scene.GetNextPolygonId();
+            CollisionEntry entry = Entries[entryIndex];
+            for (int i = 0; i < entry.DataCount; i++)
+            {
+                CollisionData data = Data[DataIndices[entry.DataStartIndex + i]];
+                if (scene.ColTerDisplay != Terrain.All && scene.ColTerDisplay != data.Terrain)
+                {
+                    continue;
+                }
+                if ((scene.ColTypeDisplay == CollisionType.Player && data.IgnorePlayers)
+                    || (scene.ColTypeDisplay == CollisionType.Beam && data.IgnoreBeams)
+                    || (scene.ColTypeDisplay == CollisionType.Both && (data.IgnorePlayers || data.IgnoreBeams)))
+                {
+                    continue;
+                }
+                Vector4 color;
+                if (scene.ColDisplayColor == CollisionColor.Entity)
+                {
+                    if (entityType == EntityType.Platform)
+                    {
+                        // teal
+                        color = new Vector4(0.109f, 0.768f, 0.850f, 1f);
+                    }
+                    else if (entityType == EntityType.Object)
+                    {
+                        // magenta
+                        color = new Vector4(0.952f, 0.105f, 0.635f, 1f);
+                    }
+                    else
+                    {
+                        // orange (room)
+                        color = new Vector4(0.952f, 0.694f, 0.105f, 1f);
+                    }
+                }
+                else if (scene.ColDisplayColor == CollisionColor.Terrain)
+                {
+                    color = _colors[(int)data.Terrain];
+                }
+                else if (scene.ColDisplayColor == CollisionColor.Type)
+                {
+                    if (data.IgnoreBeams)
+                    {
+                        // yellow
+                        color = new Vector4(0.956f, 0.933f, 0.203f, 1f);
+                    }
+                    else if (data.IgnorePlayers)
+                    {
+                        // green
+                        color = new Vector4(0.250f, 0.807f, 0.250f, 1f);
+                    }
+                    else
+                    {
+                        // purple (both)
+                        color = new Vector4(0.807f, 0.250f, 0.776f, 1f);
+                    }
+                }
+                else
+                {
+                    color = new Vector4(1, 0, 0, 1);
+                }
+                color.W = scene.ColDisplayAlpha;
+                Debug.Assert(data.PointIndexCount >= 3 && data.PointIndexCount <= 10);
+                Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.PointIndexCount);
+                for (int j = 0; j < data.PointIndexCount; j++)
+                {
+                    ushort pointIndex = PointIndices[data.PointStartIndex + j];
+                    verts[j] = points[pointIndex];
+                }
+                scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.PointIndexCount);
+            }
+            Vector3[] bverts = ArrayPool<Vector3>.Shared.Rent(8);
+            Vector3 point0 = MinPosition;
+            Vector3i partInc = PartIndexFromEntry(entryIndex);
+            point0 = point0.AddX(partInc.X * 4).AddY(partInc.Y * 4).AddZ(partInc.Z * 4);
+            var sideX = new Vector3(4, 0, 0);
+            var sideY = new Vector3(0, 4, 0);
+            var sideZ = new Vector3(0, 0, 4);
+            bverts[0] = point0;
+            bverts[1] = point0 + sideZ;
+            bverts[2] = point0 + sideX;
+            bverts[3] = point0 + sideX + sideZ;
+            bverts[4] = point0 + sideY;
+            bverts[5] = point0 + sideY + sideZ;
+            bverts[6] = point0 + sideX + sideY;
+            bverts[7] = point0 + sideX + sideY + sideZ;
+            polygonId = scene.GetNextPolygonId();
+            var bcolor = new Vector4(1, 0.3f, 1, 0.5f);
+            scene.AddRenderItem(CullingMode.Front, polygonId, bcolor, RenderItemType.Box, bverts, 8);
+        }
     }
 
     // size: 96
@@ -451,7 +606,7 @@ namespace MphRead.Formats.Collision
         public readonly char[] NodeName1; // side 0 room node
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName2; // side 1 room node
-        public readonly CollisionPlane Plane;
+        public readonly Vector4Fx Plane;
         public readonly ushort VectorCount;
         public readonly ushort VectorStartIndex;
         public readonly byte Field5C;
@@ -473,12 +628,12 @@ namespace MphRead.Formats.Collision
         public readonly uint DataOffset;
         public readonly uint DataIndexCount;
         public readonly uint DataIndexOffset;
-        public readonly uint Count6; // size: 28
-        public readonly uint Offset6; // link-related
-        public readonly uint Count7; // size: 4
-        public readonly uint Offset7; // link-related
-        public readonly uint Count8; // size: 28
-        public readonly uint Offset8; // link-related
+        public readonly uint EntryCount;
+        public readonly uint EntryOffset;
+        public readonly uint TreeNodeIndexCount;
+        public readonly uint TreeNodeIndexOffset;
+        public readonly uint TreeNodeCount;
+        public readonly uint TreeNodeOffset;
         public readonly uint PortalCount;
         public readonly uint PortalOffset;
     }
@@ -499,45 +654,112 @@ namespace MphRead.Formats.Collision
         public readonly ushort PlaneIndex;
     }
 
+    // size: 28
+    public readonly struct FhCollisionEntry
+    {
+        public readonly Vector3Fx MinBounds;
+        public readonly Vector3Fx MaxBounds;
+        public readonly ushort DataCount;
+        public readonly ushort DataStartIndex;
+    }
+
+    // size: 28
+    public readonly struct FhCollisionTreeNode
+    {
+        public readonly Vector3Fx MinBounds;
+        public readonly Vector3Fx MaxBounds;
+        // for rooms, a RightIndex value of 0x8000 indicates the last node in a branch, and LeftIndex is then used as an entry index;
+        // for entities, RightIndex and LeftIndex are always 0x8000 as there is no hierarchy to entity collision
+        public readonly ushort LeftIndex;
+        public readonly ushort RightIndex;
+    }
+
     public class FhCollisionInfo : CollisionInfo
     {
         public FhCollisionHeader Header { get; }
         public IReadOnlyList<FhCollisionData> Data { get; }
         public IReadOnlyList<FhCollisionVector> Vectors { get; }
         public IReadOnlyList<ushort> DataIndices { get; }
+        public IReadOnlyList<FhCollisionEntry> Entries { get; }
+        public IReadOnlyList<int> TreeNodeIndices { get; }
+        public IReadOnlyList<FhCollisionTreeNode> TreeNodes { get; }
 
-        public FhCollisionInfo(FhCollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<CollisionPlane> planes,
+        public FhCollisionInfo(FhCollisionHeader header, IReadOnlyList<Vector3Fx> points, IReadOnlyList<Vector4Fx> planes,
             IReadOnlyList<FhCollisionData> data, IReadOnlyList<FhCollisionVector> vectors, IReadOnlyList<ushort> dataIndices,
-            IReadOnlyList<CollisionPortal> portals) : base(points, planes, portals, firstHunt: true)
+            IReadOnlyList<CollisionPortal> portals, IReadOnlyList<FhCollisionEntry> entries, IReadOnlyList<int> treeNodeIndices,
+            IReadOnlyList<FhCollisionTreeNode> treeNodes) : base(points, planes, portals, firstHunt: true)
         {
             Header = header;
             Data = data;
             Vectors = vectors;
             DataIndices = dataIndices;
+            Entries = entries;
+            TreeNodeIndices = treeNodeIndices;
+            TreeNodes = treeNodes;
         }
 
         public override void GetDrawInfo(List<Vector3> points, EntityType entityType, Scene scene)
         {
+            //GetPartition(points, scene);
+            //return;
             var color = new Vector4(Vector3.UnitX, 0.5f);
+            color.W = scene.ColDisplayAlpha;
             int polygonId = scene.GetNextPolygonId();
-            for (int i = 0; i < Header.DataCount; i++)
+            for (int i = Portals.Count; i < Data.Count; i++)
             {
-                ushort dataIndex = DataIndices[Header.DataStartIndex + i];
-                if (dataIndex > Data.Count)
-                {
-                    // this happens in FH_E3
-                    continue;
-                }
-                FhCollisionData data = Data[dataIndex];
-                Debug.Assert(data.VectorCount >= 3 && data.VectorCount <= 6);
+                FhCollisionData data = Data[i];
+                Debug.Assert(data.VectorCount >= 3 && data.VectorCount <= 8);
                 Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.VectorCount);
                 for (int j = 0; j < data.VectorCount; j++)
                 {
                     FhCollisionVector vector = Vectors[data.VectorStartIndex + j];
-                    verts[j] = points[vector.Point1Index];
+                    verts[j] = points[vector.Point2Index];
                 }
                 scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.VectorCount);
             }
+        }
+
+        public void GetPartition(List<Vector3> points, Scene scene)
+        {
+            int entryIndex = (int)scene.ShowVolumes;
+            if (entryIndex <= 0)
+            {
+                return;
+            }
+            var color = new Vector4(Vector3.UnitX, 0.5f);
+            color.W = scene.ColDisplayAlpha;
+            int polygonId = scene.GetNextPolygonId();
+            FhCollisionEntry entry = Entries[entryIndex];
+            for (int i = 0; i < entry.DataCount; i++)
+            {
+                int dataIndex = DataIndices[entry.DataStartIndex + i];
+                FhCollisionData data = Data[dataIndex];
+                Debug.Assert(data.VectorCount >= 3 && data.VectorCount <= 8);
+                Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(data.VectorCount);
+                for (int j = 0; j < data.VectorCount; j++)
+                {
+                    FhCollisionVector vector = Vectors[data.VectorStartIndex + j];
+                    verts[j] = points[vector.Point2Index];
+                }
+                scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.VectorCount);
+            }
+            Vector3[] bverts = ArrayPool<Vector3>.Shared.Rent(8);
+            Vector3 minPoint = entry.MinBounds.ToFloatVector();
+            Vector3 maxPoint = entry.MaxBounds.ToFloatVector();
+            var sideX = new Vector3(maxPoint.X - minPoint.X, 0, 0);
+            var sideY = new Vector3(0, maxPoint.Y - minPoint.Y, 0);
+            var sideZ = new Vector3(0, 0, maxPoint.Z - minPoint.Z);
+            bverts[0] = minPoint;
+            bverts[1] = minPoint + sideZ;
+            bverts[2] = minPoint + sideX;
+            bverts[3] = minPoint + sideX + sideZ;
+            bverts[4] = minPoint + sideY;
+            bverts[5] = minPoint + sideY + sideZ;
+            bverts[6] = minPoint + sideX + sideY;
+            bverts[7] = minPoint + sideX + sideY + sideZ;
+            polygonId = scene.GetNextPolygonId();
+            var bcolor = new Vector4(1, 0.3f, 1, 0.5f);
+            scene.AddRenderItem(CullingMode.Front, polygonId, bcolor, RenderItemType.Box, bverts, 8);
         }
     }
 }

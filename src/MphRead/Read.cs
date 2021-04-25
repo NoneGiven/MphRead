@@ -18,9 +18,10 @@ namespace MphRead
         private static readonly Dictionary<string, Model> _modelCache = new Dictionary<string, Model>();
         private static readonly Dictionary<string, Model> _fhModelCache = new Dictionary<string, Model>();
 
-        public static ModelInstance GetModelInstance(string name, bool firstHunt = false)
+        public static ModelInstance GetModelInstance(string name, bool firstHunt = false,
+            MetaDir dir = MetaDir.Models, bool noCache = false)
         {
-            ModelInstance? inst = GetModelInstanceOrNull(name, firstHunt);
+            ModelInstance? inst = GetModelInstanceOrNull(name, firstHunt, dir, noCache);
             if (inst == null)
             {
                 throw new ProgramException("No model with this name is known.");
@@ -28,22 +29,25 @@ namespace MphRead
             return inst;
         }
 
-        private static ModelInstance? GetModelInstanceOrNull(string name, bool firstHunt)
+        private static ModelInstance? GetModelInstanceOrNull(string name, bool firstHunt, MetaDir dir, bool noCache)
         {
             Dictionary<string, Model> cache = firstHunt ? _fhModelCache : _modelCache;
-            if (!cache.TryGetValue(name, out Model? model))
+            if (noCache || !cache.TryGetValue(name, out Model? model))
             {
-                model = GetModel(name, firstHunt);
+                model = GetModel(name, firstHunt, dir);
                 if (model == null)
                 {
                     return null;
                 }
-                cache.Add(name, model);
+                if (!noCache)
+                {
+                    cache.Add(name, model);
+                }
             }
             return new ModelInstance(model);
         }
 
-        private static Model? GetModel(string name, bool firstHunt)
+        private static Model? GetModel(string name, bool firstHunt, MetaDir dir)
         {
             ModelMetadata? meta;
             if (firstHunt)
@@ -52,7 +56,7 @@ namespace MphRead
             }
             else
             {
-                meta = Metadata.GetModelByName(name);
+                meta = Metadata.GetModelByName(name, dir);
             }
             if (meta == null)
             {
@@ -1045,6 +1049,26 @@ namespace MphRead
             return results;
         }
 
+        public static IReadOnlyList<uint> DoListNullEnd(ReadOnlySpan<byte> bytes, uint offset)
+        {
+            int ioffset = (int)offset;
+            var results = new List<uint>();
+            if (offset != 0)
+            {
+                int size = sizeof(uint);
+                for (uint i = 0; ; i++, ioffset += size)
+                {
+                    uint result = ReadStruct<uint>(bytes[ioffset..(ioffset + size)]);
+                    if (result == 0)
+                    {
+                        break;
+                    }
+                    results.Add(result);
+                }
+            }
+            return results;
+        }
+
         public static T ReadStruct<T>(ReadOnlySpan<byte> bytes) where T : struct
         {
             var handle = GCHandle.Alloc(bytes.ToArray(), GCHandleType.Pinned);
@@ -1171,9 +1195,9 @@ namespace MphRead
             }
         }
 
-        public static void ReadAndExport(string name, bool firstHunt = false)
+        public static void ReadAndExport(string name, bool firstHunt = false, MetaDir dir = MetaDir.Models)
         {
-            Model? model = GetModelInstanceOrNull(name, firstHunt)?.Model;
+            Model? model = GetModelInstanceOrNull(name, firstHunt, dir, noCache: true)?.Model;
             if (model == null)
             {
                 model = GetRoomModelInstanceOrNull(name)?.Model;

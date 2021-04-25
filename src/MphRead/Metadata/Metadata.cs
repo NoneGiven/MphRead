@@ -12,6 +12,34 @@ namespace MphRead
         Model
     }
 
+    public enum MetaDir
+    {
+        Models,
+        Hud,
+        Stage,
+        MainMenu,
+        Logo,
+        CharSelect,
+        CreateJoin,
+        GameOption,
+        GamersCard,
+        Keyboard,
+        Keypad,
+        MoviePlayer,
+        MultiMaster,
+        Multiplayer,
+        PaxControls,
+        Popup,
+        Results,
+        ScStartGame,
+        StartGame,
+        ToStart,
+        TouchToStart,
+        TouchToStart2,
+        WifiCreate,
+        WifiGames
+    }
+
     public class ModelMetadata
     {
         public string Name { get; }
@@ -39,12 +67,40 @@ namespace MphRead
             }
         }
 
-        public ModelMetadata(string name, bool hud)
+        private readonly IReadOnlyDictionary<MetaDir, string> _dirs = new Dictionary<MetaDir, string>()
+        {
+            [MetaDir.CharSelect] = "characterselect",
+            [MetaDir.CreateJoin] = "createjoin",
+            [MetaDir.GameOption] = "gameoptions",
+            [MetaDir.GamersCard] = "gamerscard",
+            [MetaDir.Hud] = "hud",
+            [MetaDir.Keyboard] = "keyboard",
+            [MetaDir.Keypad] = "keypad",
+            [MetaDir.Logo] = @"logo_screen\MAYA",
+            [MetaDir.MainMenu] = "main menu",
+            [MetaDir.Models] = "models",
+            [MetaDir.MoviePlayer] = "movieplayer",
+            [MetaDir.MultiMaster] = "multimaster",
+            [MetaDir.Multiplayer] = "multiplayer",
+            [MetaDir.PaxControls] = "pax_controls",
+            [MetaDir.Popup] = "popup",
+            [MetaDir.Results] = "results",
+            [MetaDir.ScStartGame] = "sc_startgame",
+            [MetaDir.Stage] = "stage",
+            [MetaDir.StartGame] = "startgame",
+            [MetaDir.ToStart] = "tostart",
+            [MetaDir.TouchToStart] = "touchtostart",
+            [MetaDir.TouchToStart2] = "touchtostart_2",
+            [MetaDir.WifiCreate] = "wifi_createjoin",
+            [MetaDir.WifiGames] = "wifi_games",
+        };
+
+        public ModelMetadata(string name, MetaDir dir, string? anim = null)
         {
             Name = name;
-            string directory = hud ? "hud" : "models";
+            string directory = _dirs[dir];
             ModelPath = $@"{directory}\{name}_Model.bin";
-            AnimationPath = null;
+            AnimationPath = anim != null ? $@"{directory}\{anim}_Anim.bin" : null;
             Recolors = new List<RecolorMetadata>()
             {
                 new RecolorMetadata("default", ModelPath, ModelPath)
@@ -594,13 +650,52 @@ namespace MphRead
             "SEQ_FLY_IN_GOREA"
         };
 
-        public static ModelMetadata? GetModelByName(string name)
+        public static ModelMetadata? GetModelByName(string name, MetaDir dir = MetaDir.Models)
         {
             if (name == "doubleDamage_img")
             {
                 return DoubleDamageImg;
             }
-            if (ModelMetadata.TryGetValue(name, out ModelMetadata? metadata))
+            if (name == "ad2_dm2")
+            {
+                return Ad2Dm2;
+            }
+            if (dir == MetaDir.Logo)
+            {
+                if (LogoModels.TryGetValue(name, out ModelMetadata? metadata))
+                {
+                    return metadata;
+                }
+            }
+            else if (dir == MetaDir.Multiplayer)
+            {
+                if (MultiplayerModels.TryGetValue(name, out ModelMetadata? metadata))
+                {
+                    return metadata;
+                }
+            }
+            else if (dir == MetaDir.TouchToStart)
+            {
+                if (TouchToStartModels.TryGetValue(name, out ModelMetadata? metadata))
+                {
+                    return metadata;
+                }
+            }
+            else if (dir == MetaDir.Hud)
+            {
+                if (HudModels.TryGetValue(name, out ModelMetadata? metadata))
+                {
+                    return metadata;
+                }
+            }
+            else if (dir != MetaDir.Models)
+            {
+                if (FrontendModels.TryGetValue(name, out ModelMetadata? metadata))
+                {
+                    return metadata;
+                }
+            }
+            else if (ModelMetadata.TryGetValue(name, out ModelMetadata? metadata))
             {
                 return metadata;
             }
@@ -909,11 +1004,11 @@ namespace MphRead
             {
                 return new Vector3(0.094f, 0.506f, 0.51f);
             }
-            if (eventId == Message.Unknown16) // navy blue
+            if (eventId == Message.Unlock) // navy blue
             {
                 return new Vector3(0.094f, 0.094f, 0.557f);
             }
-            if (eventId == Message.Unknown17) // olive
+            if (eventId == Message.Lock) // olive
             {
                 return new Vector3(0.647f, 0.663f, 0.169f);
             }
@@ -1314,7 +1409,7 @@ namespace MphRead
             }
             else if (roomId >= 36 && roomId < 45)
             {
-                 // Alinos 2
+                // Alinos 2
                 areaId = 1;
             }
             else if (roomId >= 45 && roomId < 56)
@@ -3338,60 +3433,6 @@ namespace MphRead
                 {
                     "zoomer",
                     new ModelMetadata("zoomer")
-                },
-                // cockpit
-                {
-                    "unit1_land_cockpit",
-                    new ModelMetadata("unit1_land_cockpit", hud: true)
-                },
-                {
-                    "unit2_land_cockpit",
-                    new ModelMetadata("unit2_land_cockpit", hud: true)
-                },
-                {
-                    "unit3_land_cockpit",
-                    new ModelMetadata("unit3_land_cockpit", hud: true)
-                },
-                {
-                    "unit4_land_cockpit",
-                    new ModelMetadata("unit4_land_cockpit", hud: true)
-                },
-                {
-                    "gorea_land_cockpit",
-                    new ModelMetadata("gorea_land_cockpit", hud: true)
-                },
-                // nav rooms
-                {
-                    "unit1_1NAV",
-                    new ModelMetadata("unit1_1NAV", hud: true)
-                },
-                {
-                    "unit1_2NAV",
-                    new ModelMetadata("unit1_2NAV", hud: true)
-                },
-                {
-                    "unit2_1NAV",
-                    new ModelMetadata("unit2_1NAV", hud: true)
-                },
-                {
-                    "unit2_2NAV",
-                    new ModelMetadata("unit2_2NAV", hud: true)
-                },
-                {
-                    "unit3_1NAV",
-                    new ModelMetadata("unit3_1NAV", hud: true)
-                },
-                {
-                    "unit3_2NAV",
-                    new ModelMetadata("unit3_2NAV", hud: true)
-                },
-                {
-                    "unit4_1NAV",
-                    new ModelMetadata("unit4_1NAV", hud: true)
-                },
-                {
-                    "Door_NAV",
-                    new ModelMetadata("Door_NAV", hud: true)
                 },
                 // effectsBase
                 {
