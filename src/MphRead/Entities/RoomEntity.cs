@@ -24,7 +24,7 @@ namespace MphRead.Entities
         {
             ModelInstance inst = Read.GetRoomModelInstance(name);
             _models.Add(inst);
-            FilterNodes(layerMask);
+            inst.Model.FilterNodes(layerMask);
             if (meta.Name == "UNIT2_C6")
             {
                 // manually disable a decal that isn't rendered in-game because it's not on a surface
@@ -89,50 +89,6 @@ namespace MphRead.Entities
             _portals = portals;
             _forceFields = forceFields;
             SetCollision(collision);
-        }
-
-        private void FilterNodes(int layerMask)
-        {
-            foreach (Node node in Nodes)
-            {
-                if (!node.Name.StartsWith("_"))
-                {
-                    continue;
-                }
-                // todo: refactor this
-                int flags = 0;
-                // we actually have to step through 4 characters at a time rather than using Contains,
-                // based on the game's behavior with e.g. "_ml_s010blocks", which is not visible in SP or MP;
-                // while it presumably would be in SP since it contains "_s01", that isn't picked up
-                for (int i = 0; node.Name.Length - i >= 4; i += 4)
-                {
-                    string chunk = node.Name.Substring(i, 4);
-                    if (chunk.StartsWith("_s") && Int32.TryParse(chunk[2..], out int id))
-                    {
-                        flags = (int)((uint)flags & 0xC03F | (((uint)flags << 18 >> 24) | (uint)(1 << id)) << 6);
-                    }
-                    else if (chunk == "_ml0")
-                    {
-                        flags |= (int)NodeLayer.MultiplayerLod0;
-                    }
-                    else if (chunk == "_ml1")
-                    {
-                        flags |= (int)NodeLayer.MultiplayerLod1;
-                    }
-                    else if (chunk == "_mpu")
-                    {
-                        flags |= (int)NodeLayer.MultiplayerU;
-                    }
-                    else if (chunk == "_ctf")
-                    {
-                        flags |= (int)NodeLayer.CaptureTheFlag;
-                    }
-                }
-                if ((flags & layerMask) == 0)
-                {
-                    node.Enabled = false;
-                }
-            }
         }
 
         public override void GetDrawInfo(Scene scene)

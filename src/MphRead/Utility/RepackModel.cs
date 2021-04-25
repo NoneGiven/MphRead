@@ -7,9 +7,16 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Utility
 {
+    public enum RepackNodes
+    {
+        All,
+        SinglePlayer,
+        Multiplayer
+    }
+
     public static partial class Repack
     {
-        public static (byte[], byte[]) RepackRoomTextures(string room, bool separate)
+        public static (byte[], byte[]) RepackRoomModel(string room, bool separate, RepackNodes nodes = RepackNodes.All)
         {
             RoomMetadata meta = Metadata.RoomMetadata[room];
             if (separate && meta.TexturePath != null)
@@ -30,6 +37,19 @@ namespace MphRead.Utility
             foreach (IReadOnlyList<PaletteData> data in model.Recolors[0].PaletteData)
             {
                 paletteInfo.Add(new PaletteInfo(data.Select(d => d.Data).ToList()));
+            }
+            if (nodes != RepackNodes.All)
+            {
+                int layerMask;
+                if (nodes == RepackNodes.Multiplayer)
+                {
+                    layerMask = SceneSetup.GetNodeLayer(GameMode.Battle, roomLayer: 0, playerCount: 2);
+                }
+                else
+                {
+                    layerMask = SceneSetup.GetNodeLayer(GameMode.SinglePlayer, meta.NodeLayer, playerCount: 1);
+                }
+                model.FilterNodes(layerMask);
             }
             var options = new RepackOptions()
             {

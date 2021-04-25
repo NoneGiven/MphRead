@@ -50,29 +50,7 @@ namespace MphRead
             }
             if (nodeLayerMask == 0)
             {
-                if (mode == GameMode.SinglePlayer)
-                {
-                    if (metadata.NodeLayer > 0)
-                    {
-                        nodeLayerMask = nodeLayerMask & 0xC03F | (((1 << metadata.NodeLayer) & 0xFF) << 6);
-                    }
-                }
-                else
-                {
-                    nodeLayerMask |= (int)NodeLayer.MultiplayerU;
-                    if (playerCount <= 2)
-                    {
-                        nodeLayerMask |= (int)NodeLayer.MultiplayerLod0;
-                    }
-                    else
-                    {
-                        nodeLayerMask |= (int)NodeLayer.MultiplayerLod1;
-                    }
-                    if (mode == GameMode.Capture)
-                    {
-                        nodeLayerMask |= (int)NodeLayer.CaptureTheFlag;
-                    }
-                }
+                nodeLayerMask = GetNodeLayer(mode, metadata.NodeLayer, playerCount);
             }
             IReadOnlyList<EntityBase> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
             CollisionInstance collision = Collision.GetCollision(metadata, nodeLayerMask);
@@ -84,6 +62,35 @@ namespace MphRead
             LoadResources(scene);
             var room = new RoomEntity(name, metadata, collision, nodeData, nodeLayerMask);
             return (room, metadata, collision, entities);
+        }
+
+        public static int GetNodeLayer(GameMode mode, int roomLayer, int playerCount)
+        {
+            int nodeLayerMask = 0;
+            if (mode == GameMode.SinglePlayer)
+            {
+                if (roomLayer > 0)
+                {
+                    nodeLayerMask = nodeLayerMask & 0xC03F | (((1 << roomLayer) & 0xFF) << 6);
+                }
+            }
+            else
+            {
+                nodeLayerMask |= (int)NodeLayer.MultiplayerU;
+                if (playerCount <= 2)
+                {
+                    nodeLayerMask |= (int)NodeLayer.MultiplayerLod0;
+                }
+                else
+                {
+                    nodeLayerMask |= (int)NodeLayer.MultiplayerLod1;
+                }
+                if (mode == GameMode.Capture)
+                {
+                    nodeLayerMask |= (int)NodeLayer.CaptureTheFlag;
+                }
+            }
+            return nodeLayerMask;
         }
 
         private static IReadOnlyList<EntityBase> LoadEntities(RoomMetadata metadata, int areaId, int layerId, GameMode mode)

@@ -142,7 +142,7 @@ namespace MphRead.Testing
             string fileSystem = meta.FirstHunt ? Paths.FhFileSystem : Paths.FileSystem;
             Console.WriteLine("Converting model...");
             // model, texure
-            (byte[] model, byte[] texture) = Repack.RepackRoomTextures(room, separate: true);
+            (byte[] model, byte[] texture) = Repack.RepackRoomModel(room, separate: true);
             string modelPath = Path.GetFileName(overMeta?.ModelPath ?? meta.ModelPath);
             string modelDest = Path.Combine(folder, modelPath);
             string texDest = Path.Combine(folder, modelPath.Replace("_Model.bin", "_Tex.bin").Replace("_model.bin", "_tex.bin"));
@@ -218,7 +218,12 @@ namespace MphRead.Testing
             string fileSystem = meta.FirstHunt ? Paths.FhFileSystem : Paths.FileSystem;
             Console.WriteLine("Converting model...");
             // model, texure
-            (byte[] model, _) = Repack.RepackRoomTextures(room, separate: false);
+            RepackNodes nodes = RepackNodes.All;
+            if (!meta.FirstHunt && !meta.Hybrid)
+            {
+                nodes = meta.Multiplayer ? RepackNodes.Multiplayer : RepackNodes.SinglePlayer;
+            }
+            (byte[] model, _) = Repack.RepackRoomModel(room, separate: false, nodes);
             string modelPath = Path.GetFileName(overMeta?.ModelPath ?? meta.ModelPath);
             string modelDest = Path.Combine(folder, modelPath);
             File.WriteAllBytes(modelDest, model);
