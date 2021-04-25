@@ -149,14 +149,9 @@ namespace MphRead.Utility
             int layerId = -1;
             if (filter != RepackFilter.All)
             {
-                if (filter == RepackFilter.Multiplayer)
-                {
-                    layerId = Metadata.GetMultiplayerEntityLayer(GameMode.Battle, playerCount: 2);
-                }
-                else
-                {
-                    layerId = 0;
-                }
+                layerId = filter == RepackFilter.Multiplayer
+                    ? Metadata.GetMultiplayerEntityLayer(GameMode.Battle, playerCount: 2)
+                    : 0;
             }
             foreach (Entity entity in Read.GetEntities(path, layerId, firstHunt: false))
             {

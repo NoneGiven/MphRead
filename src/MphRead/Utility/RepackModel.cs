@@ -40,15 +40,9 @@ namespace MphRead.Utility
             }
             if (filter != RepackFilter.All)
             {
-                int layerMask;
-                if (filter == RepackFilter.Multiplayer)
-                {
-                    layerMask = SceneSetup.GetNodeLayer(GameMode.Battle, roomLayer: 0, playerCount: 2);
-                }
-                else
-                {
-                    layerMask = SceneSetup.GetNodeLayer(GameMode.SinglePlayer, meta.NodeLayer, playerCount: 1);
-                }
+                int layerMask = filter == RepackFilter.Multiplayer
+                    ? SceneSetup.GetNodeLayer(GameMode.Battle, roomLayer: 0, playerCount: 2)
+                    : SceneSetup.GetNodeLayer(GameMode.SinglePlayer, meta.NodeLayer, playerCount: 1);
                 model.FilterNodes(layerMask);
             }
             var options = new RepackOptions()

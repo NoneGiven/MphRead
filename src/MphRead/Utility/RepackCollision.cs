@@ -88,14 +88,9 @@ namespace MphRead.Utility
             int roomLayerMask = -1;
             if (filter != RepackFilter.All)
             {
-                if (filter == RepackFilter.Multiplayer)
-                {
-                    roomLayerMask = SceneSetup.GetNodeLayer(GameMode.Battle, roomLayer: 0, playerCount: 2);
-                }
-                else
-                {
-                    roomLayerMask = SceneSetup.GetNodeLayer(GameMode.SinglePlayer, meta.NodeLayer, playerCount: 1);
-                }
+                roomLayerMask = filter == RepackFilter.Multiplayer
+                    ? SceneSetup.GetNodeLayer(GameMode.Battle, roomLayer: 0, playerCount: 2)
+                    : SceneSetup.GetNodeLayer(GameMode.SinglePlayer, meta.NodeLayer, playerCount: 1);
             }
             CollisionInstance collision = Collision.GetCollision(meta, roomLayerMask);
             List<CollisionDataEditor> editors = GetEditors(collision);
