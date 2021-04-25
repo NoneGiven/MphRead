@@ -660,6 +660,16 @@ namespace MphRead.Utility
                     Console.WriteLine($"FH to MPH: Skipping entity ID {entity.Id} of type {entity.Type}.");
                 }
             }
+            IEnumerable<PlayerSpawnEntityEditor> playerSpawns = converted
+                .Where(c => c.Type == EntityType.PlayerSpawn).Select(c => (PlayerSpawnEntityEditor)c);
+            if (!playerSpawns.Any())
+            {
+                Console.WriteLine("FH to MPH: Warning: No player spawn entities are present.");
+            }
+            else if (!playerSpawns.Any(p => p.Active))
+            {
+                playerSpawns.First().Active = true;
+            }
             return converted;
         }
 
@@ -988,6 +998,16 @@ namespace MphRead.Utility
                 {
                     Console.WriteLine($"MPH to FH: Skipping entity ID {entity.Id} of type {entity.Type}.");
                 }
+            }
+            IEnumerable<PlayerSpawnEntityEditor> playerSpawns = converted
+                .Where(c => c.Type == EntityType.FhPlayerSpawn).Select(c => (PlayerSpawnEntityEditor)c);
+            if (!playerSpawns.Any())
+            {
+                Console.WriteLine("MPH to FH: Warning: No player spawn entities are present.");
+            }
+            else if (!playerSpawns.Any(p => p.Active))
+            {
+                playerSpawns.First().Active = true;
             }
             return converted;
         }
