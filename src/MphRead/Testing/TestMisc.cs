@@ -261,7 +261,7 @@ namespace MphRead.Testing
             else
             {
                 Console.WriteLine("Converting entities...");
-                byte[] entity = Repack.RepackFhEntities(room);
+                byte[] entity = Repack.RepackFhEntities(room, filter);
                 string entDest = Path.Combine(folder, Path.GetFileName(overMeta?.EntityPath ?? meta.EntityPath));
                 File.WriteAllBytes(entDest, entity);
                 // sktodo: nodedata

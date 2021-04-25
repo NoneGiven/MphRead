@@ -21,11 +21,11 @@ namespace MphRead.Utility
             return RepackEntities(converted);
         }
 
-        public static byte[] RepackFhEntities(string room)
+        public static byte[] RepackFhEntities(string room, RepackFilter filter = RepackFilter.All)
         {
             RoomMetadata meta = Metadata.RoomMetadata[room];
             Debug.Assert(meta.EntityPath != null);
-            List<EntityEditorBase> entities = meta.FirstHunt ? GetFhEntities(meta.EntityPath) : GetEntities(meta.EntityPath);
+            List<EntityEditorBase> entities = meta.FirstHunt ? GetFhEntities(meta.EntityPath) : GetEntities(meta.EntityPath, filter);
             List<EntityEditorBase> converted = ConvertMphToFh(entities);
             return RepackFhEntities(converted);
         }
@@ -143,10 +143,22 @@ namespace MphRead.Utility
             return entities;
         }
 
-        private static List<EntityEditorBase> GetEntities(string path)
+        private static List<EntityEditorBase> GetEntities(string path, RepackFilter filter = RepackFilter.All)
         {
             var entities = new List<EntityEditorBase>();
-            foreach (Entity entity in Read.GetEntities(path, layerId: -1, firstHunt: false))
+            int layerId = -1;
+            if (filter != RepackFilter.All)
+            {
+                if (filter == RepackFilter.Multiplayer)
+                {
+                    layerId = Metadata.GetMultiplayerEntityLayer(GameMode.Battle, playerCount: 2);
+                }
+                else
+                {
+                    layerId = 0;
+                }
+            }
+            foreach (Entity entity in Read.GetEntities(path, layerId, firstHunt: false))
             {
                 if (entity.Type == EntityType.Platform)
                 {
