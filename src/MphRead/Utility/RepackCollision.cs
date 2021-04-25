@@ -1009,12 +1009,11 @@ namespace MphRead.Utility
                 dataPacks.Add(new CollisionDataPack(item, planeIndex, vectorIndex, item.Points.Count));
             }
 
-            var treeNodes = new List<TreeNodePack>();
-            treeNodes.Add(new TreeNodePack());
-            // sktodo: entities should skip these steps, and always have 1 entry/data idx/tree idx/tree node
             // start with box covering entire collision, then split in two for the biggest dimension
             // repeat until the boxes have side lengths of 4-ish
             // for each of those boxes, do intersection tests and create the entry
+            var treeNodes = new List<TreeNodePack>();
+            treeNodes.Add(new TreeNodePack());
 
             void MakeNodes(TreeNodePack parent)
             {
