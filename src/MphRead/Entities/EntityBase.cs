@@ -231,7 +231,12 @@ namespace MphRead.Entities
             model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
             // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
             scene.UpdateMaterials(model, GetModelRecolor(inst, index));
-            UpdateCollision();
+            if (scene.ShowCollision)
+            {
+                // if collision is not shown, the "needs update" state will persist until it is
+                // --> this is fine since _colPoints are only for display, not detection
+                UpdateCollision();
+            }
         }
 
         public virtual void GetDrawInfo(Scene scene)

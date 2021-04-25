@@ -28,9 +28,11 @@ namespace MphRead.Formats
             ushort version = Read.SpanReadUshort(bytes, 0);
             if (version == 0)
             {
+                // todo: this
                 ReadFhNodeData(bytes);
                 return null!;
             }
+            // todo: version 4 (unit2_Land_Node.bin)
             if (version != 6)
             {
                 throw new ProgramException($"Unexpected node data version {version}.");
