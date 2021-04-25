@@ -79,6 +79,7 @@ namespace MphRead.Utility
             RoomMetadata meta = Metadata.RoomMetadata[room];
             CollisionInstance collision = Collision.GetCollision(meta, roomLayerMask: -1);
             List<CollisionDataEditor> editors = GetEditors(collision);
+            // todo: once portal editing is supported, calculate planes etc. instead of preserving values
             return RepackMphCollision(editors, collision.Info.Portals);
         }
 
