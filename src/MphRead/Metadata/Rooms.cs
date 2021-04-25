@@ -1263,7 +1263,7 @@ namespace MphRead
                         collisionPath: "unit2_Land_collision.bin",
                         texturePath: "unit2_land_tex.bin",
                         entityPath: "unit2_Land_Ent.bin",
-                        nodePath: "unit2_Land_Node.bin",
+                        nodePath: null, // metadata has unit2_Land_Node.bin, but it's version 4 (won't load anyway due to no bots)
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(40, 0, 0),
                         timeLimit: TimeLimit(4, 0, 0),
