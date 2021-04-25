@@ -813,7 +813,7 @@ namespace MphRead
                         collisionPath: "unit1_c4_collision.bin",
                         texturePath: "unit1_c4_tex.bin",
                         entityPath: "Unit1_C4_Ent.bin",
-                        nodePath: "unit1_C4_Node.bin",
+                        nodePath: null, // metadata has unit1_C4_Node.bin, but there's no such file
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(40, 0, 0),
                         timeLimit: TimeLimit(4, 0, 0),
@@ -933,7 +933,7 @@ namespace MphRead
                         collisionPath: "TeleportRoom_collision.bin",
                         texturePath: "teleportroom_tex.bin",
                         entityPath: "Unit1_TP1_Ent.bin",
-                        nodePath: "unit1_TP1_Node.bin",
+                        nodePath: null, // metadata has unit1_TP1_Node.bin, but there's no such file
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(40, 0, 0),
                         timeLimit: TimeLimit(4, 0, 0),
@@ -1203,7 +1203,7 @@ namespace MphRead
                         collisionPath: "TeleportRoom_collision.bin",
                         texturePath: "teleportroom_tex.bin",
                         entityPath: "Unit1_TP2_Ent.bin",
-                        nodePath: "unit1_TP2_Node.bin",
+                        nodePath: null, // metadata has unit1_TP2_Node.bin, but there's no such file
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(40, 0, 0),
                         timeLimit: TimeLimit(4, 0, 0),
@@ -1533,7 +1533,7 @@ namespace MphRead
                         collisionPath: "TeleportRoom_collision.bin",
                         texturePath: "teleportroom_tex.bin",
                         entityPath: "Unit2_TP1_Ent.bin",
-                        nodePath: "unit2_TP1_Node.bin",
+                        nodePath: null, // metadata has unit2_TP1_Node.bin, but there's no such file
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(40, 0, 0),
                         timeLimit: TimeLimit(4, 0, 0),
@@ -1803,7 +1803,7 @@ namespace MphRead
                         collisionPath: "TeleportRoom_collision.bin",
                         texturePath: "teleportroom_tex.bin",
                         entityPath: "Unit2_TP2_Ent.bin",
-                        nodePath: "unit2_TP2_Node.bin",
+                        nodePath: null, // metadata has unit2_TP2_Node.bin, but there's no such file
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(40, 0, 0),
                         timeLimit: TimeLimit(4, 0, 0),
@@ -2013,7 +2013,7 @@ namespace MphRead
                         collisionPath: "TeleportRoom_collision.bin",
                         texturePath: "teleportroom_tex.bin",
                         entityPath: "Unit3_TP1_Ent.bin",
-                        nodePath: "unit3_TP1_Node.bin",
+                        nodePath: null, // metadata has unit3_TP1_Node.bin, but there's no such file
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(40, 0, 0),
                         timeLimit: TimeLimit(4, 0, 0),
@@ -2163,7 +2163,7 @@ namespace MphRead
                         collisionPath: "TeleportRoom_collision.bin",
                         texturePath: "teleportroom_tex.bin",
                         entityPath: "Unit3_TP2_Ent.bin",
-                        nodePath: "unit3_TP2_Node.bin",
+                        nodePath: null, // metadata has unit3_TP2_Node.bin, but there's no such file
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(40, 0, 0),
                         timeLimit: TimeLimit(4, 0, 0),
@@ -2343,7 +2343,7 @@ namespace MphRead
                         collisionPath: "TeleportRoom_collision.bin",
                         texturePath: "teleportroom_tex.bin",
                         entityPath: "Unit4_TP1_Ent.bin",
-                        nodePath: "unit4_TP1_Node.bin",
+                        nodePath: null, // metadata has unit4_TP1_Node.bin, but there's no such file
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(40, 0, 0),
                         timeLimit: TimeLimit(4, 0, 0),
@@ -2403,7 +2403,7 @@ namespace MphRead
                         collisionPath: "unit4_c1_collision.bin",
                         texturePath: "unit4_c1_tex.bin",
                         entityPath: "unit4_C1_Ent.bin",
-                        nodePath: "unit4_c1_Node.bin",
+                        nodePath: null, // metadata has unit4_c1_Node.bin, but there's no such file
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(10, 0, 0),
                         timeLimit: TimeLimit(4, 0, 0),
@@ -2523,7 +2523,7 @@ namespace MphRead
                         collisionPath: "TeleportRoom_collision.bin",
                         texturePath: "teleportroom_tex.bin",
                         entityPath: "Unit4_TP2_Ent.bin",
-                        nodePath: "unit4_TP2_Node.bin",
+                        nodePath: null, // metadata has unit4_TP2_Node.bin, but there's no such file
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(40, 0, 0),
                         timeLimit: TimeLimit(4, 0, 0),
@@ -2583,7 +2583,7 @@ namespace MphRead
                         collisionPath: "Gorea_Land_collision.bin",
                         texturePath: "Gorea_Land_tex.bin",
                         entityPath: "Gorea_Land_Ent.bin",
-                        nodePath: "Gorea_Land_Node.bin",
+                        nodePath: null,// metadata has Gorea_Land_Node.bin, but there's no such file
                         roomNodeName: null,
                         battleTimeLimit: TimeLimit(40, 0, 0),
                         timeLimit: TimeLimit(4, 0, 0),
