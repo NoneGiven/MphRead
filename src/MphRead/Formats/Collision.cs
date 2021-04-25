@@ -698,23 +698,10 @@ namespace MphRead.Formats.Collision
             TreeNodes = treeNodes;
         }
 
-        private static readonly IReadOnlyList<Vector4> _colors = new List<Vector4>()
-        {
-            /*  0 */ new Vector4(0.69f, 0.69f, 0.69f, 1f), // gray
-            /*  1 */ new Vector4(1f, 0.612f, 0.153f, 1f), // orange
-            /*  2 */ new Vector4(0f, 1f, 0f, 1f), // green
-            /*  3 */ new Vector4(0f, 0f, 0.858f, 1f), // blue
-            /*  4 */ new Vector4(0.141f, 1f, 1f, 1f), // light blue
-            /*  5 */ new Vector4(1f, 1f, 1f, 1f), // white
-            /*  6 */ new Vector4(0.964f, 1f, 0.058f, 1f), // yellow
-            /*  7 */ new Vector4(0.505f, 0.364f, 0.211f, 1f), // brown
-            /*  8 */ new Vector4(0.984f, 0.701f, 0.576f, 1f), // salmon
-            /*  9 */ new Vector4(0.988f, 0.463f, 0.824f, 1f), // pink
-            /* 10 */ new Vector4(0.615f, 0f, 0.909f, 1f), // purple
-        };
-
         public override void GetDrawInfo(List<Vector3> points, EntityType entityType, Scene scene)
         {
+            //GetPartition(points, scene);
+            //return;
             var color = new Vector4(Vector3.UnitX, 0.5f);
             color.W = scene.ColDisplayAlpha;
             int polygonId = scene.GetNextPolygonId();
@@ -732,7 +719,7 @@ namespace MphRead.Formats.Collision
             }
         }
 
-        public void GetPartitions(List<Vector3> points, EntityType entityType, Scene scene)
+        public void GetPartition(List<Vector3> points, Scene scene)
         {
             int entryIndex = (int)scene.ShowVolumes;
             if (entryIndex <= 0)

@@ -969,12 +969,6 @@ namespace MphRead.Utility
                         planes.Add(plane);
                     }
                     vectors.Add((point1Index, point2Index, planeIndex));
-                    minX = MathF.Min(minX, point1.X);
-                    minY = MathF.Min(minY, point1.Y);
-                    minZ = MathF.Min(minZ, point1.Z);
-                    maxX = MathF.Max(maxX, point1.X);
-                    maxY = MathF.Max(maxY, point1.Y);
-                    maxZ = MathF.Max(maxZ, point1.Z);
                     minX = MathF.Min(minX, point2.X);
                     minY = MathF.Min(minY, point2.Y);
                     minZ = MathF.Min(minZ, point2.Z);
@@ -994,7 +988,7 @@ namespace MphRead.Utility
                 }
                 int vectorIndex = vectors.Count;
                 AddItems(portal.Points, portal.Plane.Xyz);
-                portalPacks.Add(new CollisionPortalPack(portal, planeIndex, vectorIndex, portal.Points.Count));
+                portalPacks.Add(new CollisionPortalPack(portal, planeIndex, portal.Points.Count, vectorIndex));
             }
             foreach (CollisionDataEditor item in data)
             {
@@ -1006,7 +1000,7 @@ namespace MphRead.Utility
                 }
                 int vectorIndex = vectors.Count;
                 AddItems(item.Points, item.Plane.Xyz);
-                dataPacks.Add(new CollisionDataPack(item, planeIndex, vectorIndex, item.Points.Count));
+                dataPacks.Add(new CollisionDataPack(item, planeIndex, item.Points.Count, vectorIndex));
             }
 
             // start with box covering entire collision, then split in two for the biggest dimension
@@ -1034,30 +1028,34 @@ namespace MphRead.Utility
                     parent.LeftIndex = parent.RightIndex = 0x8000; // todo: entry index
                     return;
                 }
-                Vector3 middle;
+                Vector3 newMax;
+                Vector3 newMin;
                 if (sizeX >= sizeY && sizeX >= sizeZ)
                 {
-                    middle = new Vector3(parent.MinBounds.X + sizeX / 2f, parent.MaxBounds.Y, parent.MaxBounds.Z);
+                    newMax = new Vector3(parent.MaxBounds.X - sizeX / 2f, parent.MaxBounds.Y, parent.MaxBounds.Z);
+                    newMin = new Vector3(parent.MinBounds.X + sizeX / 2f, parent.MinBounds.Y, parent.MinBounds.Z);
                 }
                 else if (sizeY > sizeX && sizeY >= sizeZ)
                 {
-                    middle = new Vector3(parent.MaxBounds.X, parent.MinBounds.Y + sizeY / 2f, parent.MaxBounds.Z);
+                    newMax = new Vector3(parent.MaxBounds.X, parent.MaxBounds.Y - sizeY / 2f, parent.MaxBounds.Z);
+                    newMin = new Vector3(parent.MinBounds.X, parent.MinBounds.Y + sizeY / 2f, parent.MinBounds.Z);
                 }
                 else
                 {
-                    middle = new Vector3(parent.MaxBounds.X, parent.MaxBounds.Y, parent.MinBounds.Z + sizeZ / 2f);
+                    newMax = new Vector3(parent.MaxBounds.X, parent.MaxBounds.Y, parent.MaxBounds.Z - sizeZ / 2f);
+                    newMin = new Vector3(parent.MinBounds.X, parent.MinBounds.Y, parent.MinBounds.Z + sizeZ / 2f);
                 }
                 parent.LeftIndex = treeNodes.Count;
                 var leftNode = new TreeNodePack()
                 {
                     MinBounds = parent.MinBounds,
-                    MaxBounds = middle
+                    MaxBounds = newMax
                 };
                 treeNodes.Add(leftNode);
                 parent.RightIndex = treeNodes.Count;
                 var rightNode = new TreeNodePack()
                 {
-                    MinBounds = middle,
+                    MinBounds = newMin,
                     MaxBounds = parent.MaxBounds
                 };
                 treeNodes.Add(rightNode);
@@ -1068,7 +1066,7 @@ namespace MphRead.Utility
             var startNode = new TreeNodePack()
             {
                 MinBounds = new Vector3(minX, minY, minZ),
-                MaxBounds = new Vector3(maxX, maxY, maxZ),
+                MaxBounds = new Vector3(maxX, maxY, maxZ)
             };
             treeNodes.Add(startNode);
             MakeNodes(startNode);
@@ -1087,6 +1085,10 @@ namespace MphRead.Utility
                 entry.LeftIndex = idxCount; // entries containing no data will be included
                 entry.RightIndex = idxStart;
                 entries.Add(entry);
+            }
+            for (int i = 0; i < dataIdxs.Count; i++)
+            {
+                dataIdxs[i] = (ushort)(dataIdxs[i] + portals.Count);
             }
 
             stream.Position = Sizes.FhCollisionHeader;
@@ -1148,8 +1150,8 @@ namespace MphRead.Utility
             {
                 writer.WriteVector3(entry.MinBounds);
                 writer.WriteVector3(entry.MaxBounds);
-                writer.Write(entry.LeftIndex);
-                writer.Write(entry.RightIndex);
+                writer.Write((ushort)entry.LeftIndex);
+                writer.Write((ushort)entry.RightIndex);
             }
             // tree node indices
             int treeNodeIndexOffset = (int)stream.Position;
@@ -1162,8 +1164,8 @@ namespace MphRead.Utility
             {
                 writer.WriteVector3(treeNode.MinBounds);
                 writer.WriteVector3(treeNode.MaxBounds);
-                writer.Write(treeNode.LeftIndex);
-                writer.Write(treeNode.RightIndex);
+                writer.Write((ushort)treeNode.LeftIndex);
+                writer.Write((ushort)treeNode.RightIndex);
             }
             // portals
             int portalOffset = (int)stream.Position;
