@@ -23,6 +23,7 @@ namespace MphRead
         public static readonly int CameraSequenceHeader = Marshal.SizeOf(typeof(CameraSequenceHeader));
         public static readonly int CameraSequenceKeyframe = Marshal.SizeOf(typeof(RawCameraSequenceKeyframe));
         public static readonly int CollisionHeader = Marshal.SizeOf(typeof(CollisionHeader));
+        public static readonly int FhCollisionHeader = Marshal.SizeOf(typeof(FhCollisionHeader));
     }
 
     // size: 4

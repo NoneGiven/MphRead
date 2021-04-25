@@ -802,6 +802,7 @@ namespace MphRead.Utility
                 }
                 else if (entity is EnemySpawnEntityEditor enemySpawn)
                 {
+                    // sktodo
                 }
                 else if (entity is TriggerVolumeEntityEditor trigger)
                 {

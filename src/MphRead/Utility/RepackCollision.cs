@@ -87,8 +87,7 @@ namespace MphRead.Utility
             RoomMetadata meta = Metadata.RoomMetadata[room];
             CollisionInstance collision = Collision.GetCollision(meta, roomLayerMask: -1);
             List<CollisionDataEditor> editors = GetEditors(collision);
-            //return RepackFhCollision(editors, collision.Info.Portals); // sktodo
-            return new byte[0];
+            return RepackFhCollision(editors, collision.Info.Portals, (FhCollisionInfo)collision.Info);
         }
 
         public static void TestCollision(string? room = null)
@@ -180,18 +179,20 @@ namespace MphRead.Utility
             return editors;
         }
 
+        // sktodo: handle Level MP5
         private static List<CollisionDataEditor> GetEditors(FhCollisionInfo info)
         {
+            // data index list has the same count as the data list, contains indices of all non-portal data,
+            // and has 0xCDCD entries "padding" the end of the list equal to the number of portals (allocation bug)
+            Debug.Assert(info.Header.DataCount == info.DataIndices.Count);
+            Debug.Assert(info.Header.DataCount == info.Data.Count);
+            Debug.Assert(info.Header.DataCount - info.Header.PortalCount == info.DataIndices.Count(d => d != 0xCDCD));
+            Debug.Assert(info.Header.PortalCount == info.DataIndices.Count(d => d == 0xCDCD));
+            Debug.Assert(info.DataIndices.Count(d => d != 0xCDCD) == info.DataIndices.Distinct().Count(d => d != 0xCDCD));
             var editors = new List<CollisionDataEditor>();
-            for (int i = 0; i < info.Header.DataCount; i++)
+            for (int i = 0; i < info.Header.DataCount - info.Header.PortalCount; i++)
             {
-                ushort dataIndex = info.DataIndices[info.Header.DataStartIndex + i];
-                if (dataIndex > info.Data.Count)
-                {
-                    // this happens in FH_E3
-                    continue;
-                }
-                FhCollisionData data = info.Data[dataIndex];
+                FhCollisionData data = info.Data[i + (int)info.Header.PortalCount];
                 Vector4 plane = info.Planes[data.PlaneIndex];
                 Vector3 normal = plane.Xyz;
                 int axis = GetPrimaryAxis(normal);
@@ -295,22 +296,22 @@ namespace MphRead.Utility
                 Debug.Assert(portal.Point4.X.Value == other.Point4.X.Value);
                 Debug.Assert(portal.Point4.Y.Value == other.Point4.Y.Value);
                 Debug.Assert(portal.Point4.Z.Value == other.Point4.Z.Value);
-                Debug.Assert(portal.Vector1.X.Value == other.Vector1.X.Value);
-                Debug.Assert(portal.Vector1.Y.Value == other.Vector1.Y.Value);
-                Debug.Assert(portal.Vector1.Z.Value == other.Vector1.Z.Value);
-                Debug.Assert(portal.Vector1.W.Value == other.Vector1.W.Value);
-                Debug.Assert(portal.Vector2.X.Value == other.Vector2.X.Value);
-                Debug.Assert(portal.Vector2.Y.Value == other.Vector2.Y.Value);
-                Debug.Assert(portal.Vector2.Z.Value == other.Vector2.Z.Value);
-                Debug.Assert(portal.Vector2.W.Value == other.Vector2.W.Value);
-                Debug.Assert(portal.Vector3.X.Value == other.Vector3.X.Value);
-                Debug.Assert(portal.Vector3.Y.Value == other.Vector3.Y.Value);
-                Debug.Assert(portal.Vector3.Z.Value == other.Vector3.Z.Value);
-                Debug.Assert(portal.Vector3.W.Value == other.Vector3.W.Value);
-                Debug.Assert(portal.Vector4.X.Value == other.Vector4.X.Value);
-                Debug.Assert(portal.Vector4.Y.Value == other.Vector4.Y.Value);
-                Debug.Assert(portal.Vector4.Z.Value == other.Vector4.Z.Value);
-                Debug.Assert(portal.Vector4.W.Value == other.Vector4.W.Value);
+                Debug.Assert(portal.Plane1.X.Value == other.Plane1.X.Value);
+                Debug.Assert(portal.Plane1.Y.Value == other.Plane1.Y.Value);
+                Debug.Assert(portal.Plane1.Z.Value == other.Plane1.Z.Value);
+                Debug.Assert(portal.Plane1.W.Value == other.Plane1.W.Value);
+                Debug.Assert(portal.Plane2.X.Value == other.Plane2.X.Value);
+                Debug.Assert(portal.Plane2.Y.Value == other.Plane2.Y.Value);
+                Debug.Assert(portal.Plane2.Z.Value == other.Plane2.Z.Value);
+                Debug.Assert(portal.Plane2.W.Value == other.Plane2.W.Value);
+                Debug.Assert(portal.Plane3.X.Value == other.Plane3.X.Value);
+                Debug.Assert(portal.Plane3.Y.Value == other.Plane3.Y.Value);
+                Debug.Assert(portal.Plane3.Z.Value == other.Plane3.Z.Value);
+                Debug.Assert(portal.Plane3.W.Value == other.Plane3.W.Value);
+                Debug.Assert(portal.Plane4.X.Value == other.Plane4.X.Value);
+                Debug.Assert(portal.Plane4.Y.Value == other.Plane4.Y.Value);
+                Debug.Assert(portal.Plane4.Z.Value == other.Plane4.Z.Value);
+                Debug.Assert(portal.Plane4.W.Value == other.Plane4.W.Value);
                 Debug.Assert(portal.Plane.X.Value == other.Plane.X.Value);
                 Debug.Assert(portal.Plane.Y.Value == other.Plane.Y.Value);
                 Debug.Assert(portal.Plane.Z.Value == other.Plane.Z.Value);
@@ -395,7 +396,7 @@ namespace MphRead.Utility
             foreach (CollisionPortal portal in info.Portals)
             {
                 Debug.Assert(portal.Points.Count == 4);
-                Debug.Assert(portal.Vectors.Count == 4);
+                Debug.Assert(portal.Planes.Count == 4);
                 writer.WriteString(portal.Name, 40);
                 writer.WriteString(portal.NodeName1, 24);
                 writer.WriteString(portal.NodeName2, 24);
@@ -403,7 +404,7 @@ namespace MphRead.Utility
                 {
                     writer.WriteVector3(point);
                 }
-                foreach (Vector4 vector in portal.Vectors)
+                foreach (Vector4 vector in portal.Planes)
                 {
                     writer.WriteVector4(vector);
                 }
@@ -411,8 +412,8 @@ namespace MphRead.Utility
                 writer.Write(padShort); // Flags
                 writer.Write(portal.LayerMask);
                 writer.Write((ushort)portal.Points.Count);
-                writer.Write(portal.UnusedDE);
-                writer.Write(portal.UnusedDF);
+                writer.Write(portal.Unknown00);
+                writer.Write(portal.Unknown01);
             }
             stream.Position = 0;
             // header
@@ -448,6 +449,22 @@ namespace MphRead.Utility
             public CollisionDataPack(CollisionDataEditor editor, int planeIndex, int pointIndexCount, int pointStartIndex)
             {
                 Editor = editor;
+                PlaneIndex = (ushort)planeIndex;
+                PointIndexCount = (ushort)pointIndexCount;
+                PointStartIndex = (ushort)pointStartIndex;
+            }
+        }
+
+        private class CollisionPortalPack
+        {
+            public CollisionPortal Portal { get; }
+            public ushort PlaneIndex { get; set; }
+            public ushort PointIndexCount { get; set; }
+            public ushort PointStartIndex { get; set; }
+
+            public CollisionPortalPack(CollisionPortal portal, int planeIndex, int pointIndexCount, int pointStartIndex)
+            {
+                Portal = portal;
                 PlaneIndex = (ushort)planeIndex;
                 PointIndexCount = (ushort)pointIndexCount;
                 PointStartIndex = (ushort)pointStartIndex;
@@ -884,7 +901,7 @@ namespace MphRead.Utility
             foreach (CollisionPortal portal in portals)
             {
                 Debug.Assert(portal.Points.Count == 4);
-                Debug.Assert(portal.Vectors.Count == 4);
+                Debug.Assert(portal.Planes.Count == 4);
                 writer.WriteString(portal.Name, 40);
                 writer.WriteString(portal.NodeName1, 24);
                 writer.WriteString(portal.NodeName2, 24);
@@ -892,7 +909,7 @@ namespace MphRead.Utility
                 {
                     writer.WriteVector3(point);
                 }
-                foreach (Vector4 vector in portal.Vectors)
+                foreach (Vector4 vector in portal.Planes)
                 {
                     writer.WriteVector4(vector);
                 }
@@ -900,8 +917,8 @@ namespace MphRead.Utility
                 writer.Write(padShort); // Flags
                 writer.Write(portal.LayerMask);
                 writer.Write((ushort)portal.Points.Count);
-                writer.Write(portal.UnusedDE);
-                writer.Write(portal.UnusedDF);
+                writer.Write(portal.Unknown00); // UnusedDE
+                writer.Write(portal.Unknown01); // UnusedDF
             }
             stream.Position = 0;
             // header
@@ -924,6 +941,178 @@ namespace MphRead.Utility
             writer.WriteFloat(minZ);
             writer.Write(entries.Count);
             writer.Write(entryOffset);
+            writer.Write(portals.Count);
+            writer.Write(portalOffset);
+            return stream.ToArray();
+        }
+
+        private static Vector4 GetPlane(Vector3 point1, Vector3 point2, Vector3 normal)
+        {
+            // get plane perpendicular to normal in which vector between point2 and point1 lies
+            // (and whose normal points away from the interior of the portal/plane)
+            Vector3 p2to1 = point1 - point2;
+            Vector3 p2to1n = p2to1.Normalized();
+            Vector3 cross = Vector3.Cross(p2to1n, normal).Normalized();
+            float dist = cross.X * point1.X + cross.Y * point1.Y + cross.Z * point1.Z;
+            return new Vector4(cross, dist);
+        }
+
+        private static byte[] RepackFhCollision(IReadOnlyList<CollisionDataEditor> data, IReadOnlyList<CollisionPortal> portals,
+            FhCollisionInfo info)
+        {
+            byte padByte = 0;
+            ushort padShort = 0;
+            using var stream = new MemoryStream();
+            using var writer = new BinaryWriter(stream);
+            var portalPacks = new List<CollisionPortalPack>();
+            var dataPacks = new List<CollisionDataPack>();
+            var points = new List<Vector3>();
+            var vectors = new List<(int, int, int)>();
+            var planes = new List<Vector4>();
+
+            void AddItems(IReadOnlyList<Vector3> verts, Vector3 normal)
+            {
+                for (int i = 0; i < verts.Count; i++)
+                {
+                    Vector3 point1 = verts[i == 0 ? verts.Count - 1 : i - 1];
+                    Vector3 point2 = verts[i];
+                    Vector4 plane = GetPlane(point1, point2, normal);
+                    int point1Index = points.IndexOf(p => p == point1);
+                    int point2Index = points.IndexOf(p => p == point2);
+                    int planeIndex = planes.IndexOf(p => p == plane);
+                    if (point1Index == -1)
+                    {
+                        point1Index = points.Count;
+                        points.Add(point1);
+                    }
+                    if (point2Index == -1)
+                    {
+                        point2Index = points.Count;
+                        points.Add(point2);
+                    }
+                    if (planeIndex == -1)
+                    {
+                        planeIndex = planes.Count;
+                        planes.Add(plane);
+                    }
+                    vectors.Add((point1Index, point2Index, planeIndex));
+                }
+            }
+
+            foreach (CollisionPortal portal in portals)
+            {
+                int planeIndex = planes.IndexOf(p => p == portal.Plane);
+                if (planeIndex == -1)
+                {
+                    planeIndex = planes.Count;
+                    planes.Add(portal.Plane);
+                }
+                int vectorIndex = vectors.Count;
+                AddItems(portal.Points, portal.Plane.Xyz);
+                portalPacks.Add(new CollisionPortalPack(portal, planeIndex, vectorIndex, portal.Points.Count));
+            }
+            foreach (CollisionDataEditor item in data)
+            {
+                int planeIndex = planes.IndexOf(p => p == item.Plane);
+                if (planeIndex == -1)
+                {
+                    planeIndex = planes.Count;
+                    planes.Add(item.Plane);
+                }
+                int vectorIndex = vectors.Count;
+                AddItems(item.Points, item.Plane.Xyz);
+                dataPacks.Add(new CollisionDataPack(item, planeIndex, vectorIndex, item.Points.Count));
+            }
+
+            stream.Position = Sizes.FhCollisionHeader;
+            // points
+            int pointOffset = (int)stream.Position;
+            foreach (Vector3 point in points)
+            {
+                writer.WriteVector3(point);
+            }
+            // planes
+            int planeOffset = (int)stream.Position;
+            foreach (Vector4 plane in planes)
+            {
+                writer.WriteVector4(plane);
+            }
+            // vectors
+            int vectorOffset = (int)stream.Position;
+            foreach ((int point1Index, int point2Index, int planeIndex) in vectors)
+            {
+                writer.Write((ushort)point1Index);
+                writer.Write((ushort)point2Index);
+                writer.Write((ushort)planeIndex);
+            }
+            while (stream.Position % 4 != 0)
+            {
+                writer.Write(padByte);
+            }
+            // data
+            int dataOffset = (int)stream.Position;
+            foreach (CollisionPortalPack portal in portalPacks)
+            {
+                writer.Write(portal.PlaneIndex);
+                writer.Write(portal.PointIndexCount);
+                writer.Write(portal.PointStartIndex);
+            }
+            foreach (CollisionDataPack item in dataPacks)
+            {
+                writer.Write(item.PlaneIndex);
+                writer.Write(item.PointIndexCount);
+                writer.Write(item.PointStartIndex);
+            }
+            while (stream.Position % 4 != 0)
+            {
+                writer.Write(padByte);
+            }
+
+            // data indices
+            int dataIndexOffset = (int)stream.Position;
+
+            // entries
+            int entryOffset = (int)stream.Position;
+
+            // tree node indices
+            int treeNodeIndexOffset = (int)stream.Position;
+
+            // tree nodes
+            int treeNodeOffset = (int)stream.Position;
+
+            // portals
+            int portalOffset = (int)stream.Position;
+            foreach (CollisionPortalPack portal in portalPacks)
+            {
+                writer.WriteString(portal.Portal.Name, 40);
+                writer.WriteString(portal.Portal.NodeName1, 16);
+                writer.WriteString(portal.Portal.NodeName2, 16);
+                writer.WriteVector4(portal.Portal.Plane);
+                writer.Write(portal.PointIndexCount);
+                writer.Write(portal.PointStartIndex);
+                writer.Write(portal.Portal.Unknown00); // Field5C
+                writer.Write(portal.Portal.Unknown01); // Field5D
+                writer.Write(padShort); // Padding5E
+            }
+            // header
+            stream.Position = 0;
+            writer.Write(points.Count);
+            writer.Write(pointOffset);
+            writer.Write(planes.Count);
+            writer.Write(planeOffset);
+            writer.Write(vectors.Count);
+            writer.Write(vectorOffset);
+            writer.Write((ushort)(data.Count + portals.Count));
+            writer.Write(padShort); // DataStartIndex
+            writer.Write(dataOffset);
+            //writer.Write(null); // DataIndexCount
+            writer.Write(dataIndexOffset);
+            //writer.Write(null); // EntryCount
+            writer.Write(entryOffset);
+            //writer.Write(null); // TreeNodeIndexCount
+            writer.Write(treeNodeIndexOffset);
+            //writer.Write(null); // TreeNodeCount
+            writer.Write(treeNodeOffset);
             writer.Write(portals.Count);
             writer.Write(portalOffset);
             return stream.ToArray();
