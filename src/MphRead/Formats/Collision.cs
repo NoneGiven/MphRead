@@ -509,6 +509,10 @@ namespace MphRead.Formats.Collision
         {
             int entryIndex = EntryIndexFromPoint(point);
             int polygonId = scene.GetNextPolygonId();
+            if (entryIndex < 0 || entryIndex > Entries.Count)
+            {
+                return;
+            }
             CollisionEntry entry = Entries[entryIndex];
             for (int i = 0; i < entry.DataCount; i++)
             {

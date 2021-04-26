@@ -289,6 +289,7 @@ namespace MphRead.Formats
             {
                 return _activeItems;
             }
+            // sktodo: handle FH collision
             var info = (MphCollisionInfo)scene.Collision[0].Info;
             float size = 4;
             int partsX = info.Header.PartsX;
@@ -466,18 +467,18 @@ namespace MphRead.Formats
             int xSign = dir.X <= 0 ? -1 : 1;
             int xLimit = dir.X <= 0 ? -1 : partsX;
             float xStart = dir.X <= 0
-                ? curX * step + minPos.X
-                : (curX + 1) * step + minPos.X;
+                ? curX * size + minPos.X
+                : (curX + 1) * size + minPos.X;
             int ySign = dir.Y <= 0 ? -1 : 1;
             int yLimit = dir.Y <= 0 ? -1 : partsY;
             float yStart = dir.Y <= 0
-                ? curY * step + minPos.Y
-                : (curY + 1) * step + minPos.Y;
+                ? curY * size + minPos.Y
+                : (curY + 1) * size + minPos.Y;
             int zSign = dir.Z <= 0 ? -1 : 1;
             int zLimit = dir.Z <= 0 ? -1 : partsZ;
             float zStart = dir.Z <= 0
-                ? curZ * step + minPos.Z
-                : (curZ + 1) * step + minPos.Z;
+                ? curZ * size + minPos.Z
+                : (curZ + 1) * size + minPos.Z;
             float xNext = 1000000;
             float yNext = 1000000;
             float zNext = 1000000;

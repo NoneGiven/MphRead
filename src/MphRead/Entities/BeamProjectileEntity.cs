@@ -1013,7 +1013,7 @@ namespace MphRead.Entities
                 Matrix4 transform = GetTransformMatrix(vec2, vec1);
                 transform.Row3.Xyz = spawnPos;
                 // somehwat redundant logic, game uses "511" bits which accomplish the same thing as this terrain type check
-                if (scene.GameMode != GameMode.SinglePlayer || colRes.Terrain >= Terrain.Lava)
+                if (scene.GameMode != GameMode.SinglePlayer || colRes.Terrain <= Terrain.Lava)
                 {
                     var ent = BeamEffectEntity.Create(new BeamEffectEntityData(CollisionEffect, noSplat, transform), scene);
                     if (ent != null)

@@ -3231,7 +3231,7 @@ namespace MphRead
         {
             Console.Clear();
             Console.Write("Enter camera position: ");
-            string[] input = Console.ReadLine().Trim().Split(' ');
+            string[] input = Console.ReadLine().Trim().Replace(",", "").Split(' ');
             float x = 0;
             float y = 0;
             float z = 0;
