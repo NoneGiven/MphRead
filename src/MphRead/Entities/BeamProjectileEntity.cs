@@ -47,6 +47,7 @@ namespace MphRead.Entities
         public WeaponInfo? RicochetWeapon { get; set; }
         public EffectEntry? Effect { get; set; }
         public EntityBase? Target { get; set; }
+        public EquipInfo? Equip { get; set; }
 
         public float DamageInterpolation { get; set; }
         public int SpeedInterpolation { get; set; }
@@ -57,7 +58,9 @@ namespace MphRead.Entities
         public float FieldE0 { get; set; }
         public float RicochetLossH { get; set; }
         public float RicochetLossV { get; set; }
-        public float FieldF0 { get; set; }
+        public float CylinderRadius { get; set; }
+
+        private static readonly EquipInfo _ricochetEquip = new EquipInfo();
 
         private ModelInstance? _trailModel;
         private int _bindingId = 0;
@@ -308,8 +311,29 @@ namespace MphRead.Entities
             }
             if (SplashDamage > 0 && colRes.Terrain <= Terrain.Lava)
             {
+                Debug.Assert(Equip != null);
+                Debug.Assert(Owner != null);
                 // btodo: splash damage
-                // sktodo: ricochet weapon
+                if (RicochetWeapon != null)
+                {
+                    // btodo: don't spawn ricochet when hitting player
+                    Vector3 factor = Velocity * 7;
+                    float dot = Vector3.Dot(colRes.Plane.Xyz, factor);
+                    // colRes.Plane.X + factor.X - colRes.Plane.X * 2 * dot
+                    Vector3 spawnDir = new Vector3(
+                        colRes.Plane.X + factor.X - colRes.Plane.X * 2 * dot,
+                        colRes.Plane.Y + factor.Y - colRes.Plane.Y * 2 * dot,
+                        colRes.Plane.Z + factor.Z - colRes.Plane.Z * 2 * dot
+                    ).Normalized();
+                    _ricochetEquip.Beams = Equip.Beams;
+                    _ricochetEquip.Weapon = RicochetWeapon;
+                    BeamSpawnFlags flags = BeamSpawnFlags.None;
+                    if (Flags.HasFlag(BeamFlags.Charged))
+                    {
+                        flags |= BeamSpawnFlags.Charged;
+                    }
+                    Spawn(Owner, _ricochetEquip, colRes.Position, spawnDir, flags, scene);
+                }
             }
             if (!Flags.HasFlag(BeamFlags.Continuous))
             {
@@ -636,6 +660,7 @@ namespace MphRead.Entities
             Effect = null;
             Target = null;
             RicochetWeapon = null;
+            Equip = null;
             _trailModel = null;
         }
 
@@ -795,7 +820,7 @@ namespace MphRead.Entities
             ushort damageInterpolation = weapon.DamageInterpolations[charged ? 1 : 0];
             float maxDist = GetAmount(weapon.UnchargedDistance, weapon.MinChargeDistance, weapon.ChargedDistance) / 4096f;
             Affliction afflictions = weapon.Afflictions[charged ? 1 : 0];
-            float fieldF0 = GetAmount(weapon.Field58, weapon.Field5C, weapon.Field60);
+            float cylinderRadius = GetAmount(weapon.UnchargedCylRadius, weapon.MinChargeCylRadius, weapon.ChargedCylRadius);
             float lifespan = GetAmount(weapon.UnchargedLifespan, weapon.MinChargeLifespan, weapon.ChargedLifespan) * (1 / 30f);
             if (weapon.Flags.HasFlag(WeaponFlags.Continuous))
             {
@@ -810,7 +835,7 @@ namespace MphRead.Entities
             float ricochetLossH = GetAmount(weapon.UnchargedRicochetLossH, weapon.MinChargeRicochetLossH, weapon.ChargedRicochetLossH) / 4096f;
             float ricochetLossV = GetAmount(weapon.UnchargedRicochetLossV, weapon.MinChargeRicochetLossV, weapon.ChargedRicochetLossV) / 4096f;
             int maxSpread = (int)GetAmount(weapon.UnchargedSpread, weapon.MinChargeSpread, weapon.ChargedSpread);
-            WeaponInfo? ricochetWeapon = charged ? weapon.RicochetWeapon1 : weapon.RicochetWeapon0;
+            WeaponInfo? ricochetWeapon = charged ? weapon.ChargedRicochetWeapon : weapon.UnchargedRicochetWeapon;
             Vector3 vec1 = direction;
             Vector3 vecC;
             if (vec1.X != 0 || vec1.Z != 0)
@@ -883,11 +908,12 @@ namespace MphRead.Entities
                 beam.DamageInterpolation = damageInterpolation;
                 beam.MaxDistance = maxDist;
                 beam.Afflictions = afflictions;
-                beam.FieldF0 = fieldF0;
+                beam.CylinderRadius = cylinderRadius;
                 beam.Lifespan = lifespan;
                 beam.RicochetLossH = ricochetLossH;
                 beam.RicochetLossV = ricochetLossV;
                 beam.RicochetWeapon = ricochetWeapon;
+                beam.Equip = equip;
                 // todo: game state max damage stuff (efficiency?)
                 if (instant)
                 {
