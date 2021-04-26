@@ -6,6 +6,12 @@ namespace MphRead.Utility
 {
     public static class Parser
     {
+        public static void ParseFloat(ulong value)
+        {
+            double d = BitConverter.ToDouble(BitConverter.GetBytes(value), 0);
+            Console.WriteLine($"{d} ({d / 4096f})");
+        }
+
         private enum ThingType
         {
             General,

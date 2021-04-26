@@ -55,8 +55,8 @@ namespace MphRead.Entities
         public float InitialSpeed { get; set; }
         public float FinalSpeed { get; set; }
         public float FieldE0 { get; set; }
-        public float FieldE8 { get; set; }
-        public float FieldEC { get; set; }
+        public float RicochetLossH { get; set; }
+        public float RicochetLossV { get; set; }
         public float FieldF0 { get; set; }
 
         private ModelInstance? _trailModel;
@@ -265,7 +265,7 @@ namespace MphRead.Entities
                 }
                 if (ricochet)
                 {
-                    // sktodo: process ricochet
+                    ProcessRicochet(anyRes);
                 }
                 if (DrawFuncId == 8)
                 {
@@ -274,7 +274,32 @@ namespace MphRead.Entities
             }
         }
 
-        private void OnCollision(CollisionResult colRes, Scene scene)
+        private void ProcessRicochet(CollisionResult colRes)
+        {
+            float dot1 = Vector3.Dot(Velocity, colRes.Plane.Xyz);
+            Velocity = new Vector3(
+                (Velocity.X - 2 * colRes.Plane.X * dot1) * RicochetLossH,
+                (Velocity.Y - 2 * colRes.Plane.Y * dot1) * RicochetLossV,
+                (Velocity.Z - 2 * colRes.Plane.Z * dot1) * RicochetLossH
+            );
+            Speed = Velocity.Length;
+            float dot2 = Vector3.Dot(Direction, colRes.Plane.Xyz);
+            Direction = new Vector3(
+                Direction.X - 2 * colRes.Plane.X * dot2,
+                Direction.Y - 2 * colRes.Plane.Y * dot2,
+                Direction.Z - 2 * colRes.Plane.Z * dot2
+            );
+            float dot3 = Vector3.Dot(colRes.Position, colRes.Plane.Xyz);
+            float factor = dot3 - colRes.Plane.W - 0.01f;
+            BackPosition = Position = new Vector3(
+                colRes.Position.X + colRes.Plane.X * factor,
+                colRes.Position.Y + colRes.Plane.Y * factor,
+                colRes.Position.Z + colRes.Plane.Z * factor
+            );
+            // btodo: sfx
+        }
+
+        public void OnCollision(CollisionResult colRes, Scene scene)
         {
             if (Effect != null)
             {
@@ -710,7 +735,7 @@ namespace MphRead.Entities
                 flags |= BeamFlags.Charged;
             }
             if ((charged && weapon.Flags.HasFlag(WeaponFlags.RicochetCharged))
-                || (!charged && weapon.Flags.HasFlag(WeaponFlags.RicochetCharged)))
+                || (!charged && weapon.Flags.HasFlag(WeaponFlags.RicochetUncharged)))
             {
                 flags |= BeamFlags.Ricochet;
             }
@@ -782,8 +807,8 @@ namespace MphRead.Entities
             }
             uint radiusIndex = (((uint)weapon.Flags) >> (charged ? 26 : 24)) & 3; // bits 24/25 or 26/27
             flags = (BeamFlags)((ushort)flags | (radiusIndex << 9)); // bits 9/10
-            float fieldE8 = GetAmount(weapon.FieldC0, weapon.FieldC4, weapon.FieldC8);
-            float fieldEC = GetAmount(weapon.FieldCC, weapon.FieldD0, weapon.FieldD4);
+            float ricochetLossH = GetAmount(weapon.UnchargedRicochetLossH, weapon.MinChargeRicochetLossH, weapon.ChargedRicochetLossH) / 4096f;
+            float ricochetLossV = GetAmount(weapon.UnchargedRicochetLossV, weapon.MinChargeRicochetLossV, weapon.ChargedRicochetLossV) / 4096f;
             int maxSpread = (int)GetAmount(weapon.UnchargedSpread, weapon.MinChargeSpread, weapon.ChargedSpread);
             WeaponInfo? ricochetWeapon = charged ? weapon.RicochetWeapon1 : weapon.RicochetWeapon0;
             Vector3 vec1 = direction;
@@ -805,7 +830,14 @@ namespace MphRead.Entities
             for (int i = 0; i < projectiles; i++)
             {
                 BeamProjectileEntity beam = ChooseBeamSlot(equip, owner);
-                // btodo: call collision function if the beam we chose had a lifespan
+                if (beam.Lifespan > 0 && !beam.Flags.HasFlag(BeamFlags.Collided))
+                {
+                    CollisionResult colRes = default;
+                    colRes.Position = beam.Position;
+                    colRes.Plane = new Vector4(-beam.Direction);
+                    beam.RicochetWeapon = null;
+                    beam.OnCollision(colRes, scene);
+                }
                 beam.Destroy(scene);
                 scene.RemoveEntity(beam);
                 beam._models.Clear();
@@ -853,8 +885,8 @@ namespace MphRead.Entities
                 beam.Afflictions = afflictions;
                 beam.FieldF0 = fieldF0;
                 beam.Lifespan = lifespan;
-                beam.FieldE8 = fieldE8;
-                beam.FieldEC = fieldEC;
+                beam.RicochetLossH = ricochetLossH;
+                beam.RicochetLossV = ricochetLossV;
                 beam.RicochetWeapon = ricochetWeapon;
                 // todo: game state max damage stuff (efficiency?)
                 if (instant)
