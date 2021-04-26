@@ -52,8 +52,7 @@ namespace MphRead.Formats
         }
 
         // sktodo: allow passing in a candidate list, query if not passed
-        public static bool CheckCollisionBetweenPoints(Vector3 point1, Vector3 point2, TestFlags flags,
-            Scene scene, ref CollisionResult result)
+        public static bool CheckBetweenPoints(Vector3 point1, Vector3 point2, TestFlags flags, Scene scene, ref CollisionResult result)
         {
             bool collided = false;
             ushort mask = 0;

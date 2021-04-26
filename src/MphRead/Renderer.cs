@@ -1592,9 +1592,12 @@ namespace MphRead
                         );
                         if (element.Flags.HasFlag(EffElemFlags.CheckCollision))
                         {
-                            // ptodo: collision check between previous and new positions
-                            // --> set position to intersection point
-                            //particle.ExpirationTime = _elapsedTime;
+                            CollisionResult res = default;
+                            if (CollisionDetection.CheckBetweenPoints(prevPos, particle.Position, TestFlags.None, this, ref res))
+                            {
+                                particle.Position = res.Position;
+                                particle.ExpirationTime = _elapsedTime;
+                            }
                         }
                     }
                     else
