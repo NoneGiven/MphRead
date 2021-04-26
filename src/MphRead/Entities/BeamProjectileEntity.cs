@@ -19,7 +19,6 @@ namespace MphRead.Entities
         public Vector3 Acceleration { get; set; } // only used for gravity
         public Vector3 BackPosition { get; set; }
         public Vector3 SpawnPosition { get; set; }
-        public Vector3 Direction { get; set; }
         public Vector3[] PastPositions { get; } = new Vector3[10];
         public Vector3 VecCross { get; set; }
 
@@ -33,8 +32,8 @@ namespace MphRead.Entities
         public byte SplashDamageType { get; set; }
         public float Homing { get; set; }
 
-        public Vector3 Vec1 { get; set; }
-        public Vector3 Vec2 { get; set; }
+        public Vector3 Direction { get; set; }
+        public Vector3 Up { get; set; }
 
         public float Damage { get; set; }
         public float HeadshotDamage { get; set; }
@@ -635,7 +634,7 @@ namespace MphRead.Entities
         {
             if (DrawFuncId == 3)
             {
-                Matrix4 transform = GetTransformMatrix(Vec1, Vec2);
+                Matrix4 transform = GetTransformMatrix(Direction, Up);
                 transform.Row3.Xyz = Position;
                 return transform;
             }
@@ -891,15 +890,14 @@ namespace MphRead.Entities
                 beam.DamageDirType = dmgDirType;
                 beam.SplashDamageType = splashDmgType;
                 beam.FieldE0 = fieldE0;
-                beam.Direction = direction;
                 beam.SpawnPosition = beam.BackPosition = beam.Position = position;
                 for (int j = 0; j < 10; j++)
                 {
                     beam.PastPositions[j] = position;
                 }
                 // btodo: transform
-                beam.Vec1 = vec1;
-                beam.Vec2 = vec2;
+                beam.Direction = vec1;
+                beam.Up = vec2;
                 beam.VecCross = vecC;
                 beam.Damage = damage;
                 beam.HeadshotDamage = hsDamage;
@@ -933,9 +931,9 @@ namespace MphRead.Entities
                     float cos1 = MathF.Cos(angle1);
                     float sin2 = MathF.Sin(angle2);
                     float cos2 = MathF.Cos(angle2);
-                    velocity.X = direction.X * cos1 + (beam.Vec2.X * cos2 + beam.VecCross.X * sin2) * sin1;
-                    velocity.Y = direction.Y * cos1 + (beam.Vec2.Y * cos2 + beam.VecCross.Y * sin2) * sin1;
-                    velocity.Z = direction.Z * cos1 + (beam.Vec2.Z * cos2 + beam.VecCross.Z * sin2) * sin1;
+                    velocity.X = direction.X * cos1 + (beam.Up.X * cos2 + beam.VecCross.X * sin2) * sin1;
+                    velocity.Y = direction.Y * cos1 + (beam.Up.Y * cos2 + beam.VecCross.Y * sin2) * sin1;
+                    velocity.Z = direction.Z * cos1 + (beam.Up.Z * cos2 + beam.VecCross.Z * sin2) * sin1;
                     velocity *= beam.Speed;
                 }
                 beam.Velocity = velocity;
@@ -950,7 +948,7 @@ namespace MphRead.Entities
                     beam.Flags |= BeamFlags.HasModel;
                     ModelInstance model = Read.GetModelInstance("energyBeam");
                     beam._models.Add(model);
-                    Matrix4 transform = GetTransformMatrix(beam.Vec1, beam.Vec2);
+                    Matrix4 transform = GetTransformMatrix(beam.Direction, beam.Up);
                     transform.Row3.Xyz = position;
                     beam.Transform = transform;
                     Debug.Assert(model.AnimInfo.Node.Group != null);
@@ -961,7 +959,7 @@ namespace MphRead.Entities
                     int effectId = Metadata.BeamDrawEffects[beam.DrawFuncId];
                     if (effectId != 0)
                     {
-                        Vector3 effVec1 = beam.Vec1;
+                        Vector3 effVec1 = beam.Direction;
                         Vector3 effVec2 = GetCrossVector(effVec1);
                         Matrix4 transform = GetTransformMatrix(effVec2, effVec1);
                         transform.Row3.Xyz = beam.Position;
@@ -1030,7 +1028,7 @@ namespace MphRead.Entities
             angle /= 4096f;
             Debug.Assert(angle == 60);
             // btodo: collision check with player and halfturret
-            Vector3 vec1 = Vec1;
+            Vector3 vec1 = Direction;
             Vector3 vec2;
             if (vec1.X != 0 || vec1.Z != 0)
             {
