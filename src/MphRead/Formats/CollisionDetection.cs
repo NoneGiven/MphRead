@@ -36,6 +36,8 @@ namespace MphRead.Formats
         public Vector4 Plane;
         public CollisionFlags Flags;
 
+        // bits 5-8
+        public Terrain Terrain => (Terrain)(((ushort)Flags & 0x1E0) >> 5);
     }
 
     public static class CollisionDetection

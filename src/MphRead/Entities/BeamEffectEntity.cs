@@ -44,6 +44,7 @@ namespace MphRead.Entities
             {
                 throw new ProgramException("Invalid beam effect type.");
             }
+            // btodo: use anim ID
             _models.Add(model);
             _lifespan = 0;
             // in-game all the group types are checked, but we're just checking what's actually used
