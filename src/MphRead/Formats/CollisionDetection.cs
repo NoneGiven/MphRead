@@ -21,6 +21,7 @@ namespace MphRead.Formats
 
     public enum TestFlags
     {
+        None = 0x0,
         AffectsPlayers = 0x2000,
         AffectsBeams = 0x4000,
         IncludeEntities = 0x4000,
@@ -50,10 +51,9 @@ namespace MphRead.Formats
             }
         }
 
-        // sktodo: access "global" collision list for rooms/entities
         // sktodo: allow passing in a candidate list, query if not passed
-        public static bool CheckCollisionBetweenPoints(Vector3 point1, Vector3 point2, MphCollisionInfo info,
-            TestFlags flags, ref CollisionResult result)
+        public static bool CheckCollisionBetweenPoints(Vector3 point1, Vector3 point2, TestFlags flags,
+            Scene scene, ref CollisionResult result)
         {
             bool collided = false;
             ushort mask = 0;
@@ -66,10 +66,11 @@ namespace MphRead.Formats
                 mask |= (ushort)CollisionFlags.IgnoreBeams;
             }
             float minDist = Single.MaxValue;
-            IReadOnlyList<CollisionCandidate> candidates = GetRoomCandidatesForPoints(point1, point2, info);
+            IReadOnlyList<CollisionCandidate> candidates = GetRoomCandidatesForPoints(point1, point2, scene);
             for (int i = 0; i < candidates.Count; i++)
             {
                 CollisionCandidate candidate = candidates[i];
+                MphCollisionInfo info = candidate.Collision;
                 Debug.Assert(candidate.Entry.DataCount > 0);
                 for (int j = 0; j < candidate.Entry.DataCount; j++)
                 {
@@ -275,7 +276,7 @@ namespace MphRead.Formats
             return false;
         }
 
-        private static IReadOnlyList<CollisionCandidate> GetRoomCandidatesForPoints(Vector3 point1, Vector3 point2, MphCollisionInfo info)
+        private static IReadOnlyList<CollisionCandidate> GetRoomCandidatesForPoints(Vector3 point1, Vector3 point2, Scene scene)
         {
             while (_activeItems.Count > 0)
             {
@@ -283,6 +284,11 @@ namespace MphRead.Formats
                 _activeItems.Remove(item);
                 _inactiveItems.Enqueue(item);
             }
+            if (scene.Collision.Count == 0 || scene.Collision[0].IsEntity)
+            {
+                return _activeItems;
+            }
+            var info = (MphCollisionInfo)scene.Collision[0].Info;
             float size = 4;
             int partsX = info.Header.PartsX;
             int partsY = info.Header.PartsY;

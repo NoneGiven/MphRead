@@ -23,7 +23,7 @@ namespace MphRead.Formats.Collision
             {
                 name = "AlmbCapsuleShld";
             }
-            return GetCollision(path, name, meta.FirstHunt, roomLayerMask: -1);
+            return GetCollision(path, name, meta.FirstHunt, roomLayerMask: -1, isEntity: true);
         }
 
         public static CollisionInstance GetCollision(RoomMetadata meta, int roomLayerMask = 0)
@@ -32,15 +32,15 @@ namespace MphRead.Formats.Collision
             {
                 roomLayerMask = ((1 << meta.NodeLayer) & 0xFF) << 6;
             }
-            return GetCollision(meta.CollisionPath, meta.Name, meta.FirstHunt || meta.Hybrid, roomLayerMask);
+            return GetCollision(meta.CollisionPath, meta.Name, meta.FirstHunt || meta.Hybrid, roomLayerMask, isEntity: false);
         }
 
-        private static CollisionInstance GetCollision(string path, string name, bool firstHunt, int roomLayerMask)
+        private static CollisionInstance GetCollision(string path, string name, bool firstHunt, int roomLayerMask, bool isEntity)
         {
             Dictionary<string, CollisionInfo> cache = firstHunt ? _fhCache : _cache;
             if (roomLayerMask == -1 && cache.TryGetValue(path, out CollisionInfo? info))
             {
-                return new CollisionInstance(name, info);
+                return new CollisionInstance(name, info, isEntity);
             }
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path)));
             CollisionHeader header = Read.ReadStruct<CollisionHeader>(bytes);
@@ -56,7 +56,7 @@ namespace MphRead.Formats.Collision
             {
                 cache.Add(path, info);
             }
-            return new CollisionInstance(name, info);
+            return new CollisionInstance(name, info, isEntity);
         }
 
         public static MphCollisionInfo ReadMphCollision(CollisionHeader header, ReadOnlySpan<byte> bytes, int roomLayerMask)
@@ -332,11 +332,13 @@ namespace MphRead.Formats.Collision
         public string Name { get; }
         public bool Active { get; set; } = true;
         public CollisionInfo Info { get; }
+        public bool IsEntity { get; }
 
-        public CollisionInstance(string name, CollisionInfo info)
+        public CollisionInstance(string name, CollisionInfo info, bool isEntity)
         {
             Name = name;
             Info = info;
+            IsEntity = isEntity;
         }
     }
 

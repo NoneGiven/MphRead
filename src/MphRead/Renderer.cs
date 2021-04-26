@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using MphRead.Effects;
 using MphRead.Entities;
 using MphRead.Export;
+using MphRead.Formats;
 using MphRead.Formats.Collision;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
@@ -101,6 +102,7 @@ namespace MphRead
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
         private readonly Dictionary<int, TextureMap> _texPalMap = new Dictionary<int, TextureMap>();
+        private readonly List<CollisionInstance> _collision = new List<CollisionInstance>();
 
         private int _shaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
@@ -150,6 +152,7 @@ namespace MphRead
         public Vector3 Light2Vector => _light2Vector;
         public Vector3 Light2Color => _light2Color;
         public IReadOnlyList<EntityBase> Entities => _entities;
+        public IReadOnlyList<CollisionInstance> Collision => _collision;
         public int ActiveCutscene => _activeCutscene;
         // todo: disallow if camera roll is not zero?
         public bool AllowCameraMovement => _activeCutscene == -1 || (_frameAdvanceOn && !_advanceOneFrame);
@@ -279,6 +282,16 @@ namespace MphRead
             _entities.Remove(entity);
         }
 
+        public void AddCollision(CollisionInstance inst)
+        {
+            _collision.Add(inst);
+        }
+
+        public void RemoveCollision(CollisionInstance inst)
+        {
+            _collision.Remove(inst);
+        }
+
         public void OnLoad()
         {
             GL.ClearColor(_clearColor);
@@ -287,6 +300,7 @@ namespace MphRead
             GL.DepthFunc(DepthFunction.Lequal);
             InitShaders();
             AllocateEffects();
+            CollisionDetection.Init();
             for (int i = 0; i < _renderItemAlloc; i++)
             {
                 _freeRenderItems.Enqueue(new RenderItem());
