@@ -196,12 +196,12 @@ namespace MphRead.Entities
 
         private void TestSpawnBeam(int type, Scene scene)
         {
-            Vector3 gunPos = Position + new Vector3(0.37203538f, 1.2936982f, -1.0930165f);
-            //Vector3 direction = new Vector3(0, 2, -5).Normalized();
-            Vector3 direction = -Vector3.UnitZ;
+            Vector3 gunPos = (new Vector4(0.37203538f, 1.2936982f, -1.0930165f, 1) * Transform).Xyz;
+            var spawnTransform = new Matrix3(Transform.Row0.Xyz, Transform.Row1.Xyz, Transform.Row2.Xyz);
+            Vector3 direction = (-Vector3.UnitZ * spawnTransform).Normalized();
             if (type == -1)
             {
-                WeaponInfo weapon = Weapons.WeaponsMP[5];
+                WeaponInfo weapon = Weapons.Weapons1P[17];
                 bool charged = true;
                 BeamProjectileEntity.Spawn(this, new EquipInfo(weapon, _beams) { ChargeLevel = charged ? weapon.FullCharge : (ushort)0 },
                     gunPos, direction, BeamSpawnFlags.NoMuzzle, scene);
