@@ -334,6 +334,10 @@ namespace MphRead.Entities
                 Debug.Assert(Equip != null);
                 Debug.Assert(Owner != null);
                 // btodo: splash damage
+                if (Weapon == BeamType.OmegaCannon)
+                {
+                    scene.SetFade(FadeType.FadeInWhite, 15 * (1 / 30f), overwrite: false);
+                }
                 if (RicochetWeapon != null)
                 {
                     // btodo: don't spawn ricochet when hitting player
@@ -907,6 +911,7 @@ namespace MphRead.Entities
                 beam.Homing = homing;
                 beam.DrawFuncId = drawFuncId;
                 beam.Color = color;
+                // btodo: load all collision effects, splat effects, etc. in room setup
                 beam.CollisionEffect = colEffect;
                 beam.DamageDirType = dmgDirType;
                 beam.SplashDamageType = splashDmgType;
