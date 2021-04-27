@@ -2,6 +2,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
+using MphRead.Formats;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -56,7 +57,8 @@ namespace MphRead.Entities
         private static readonly int[,] _mbTrailAlphas = new int[MaxPlayers, _mbTrailSegments];
         private static readonly int[] _mbTrailIndices = new int[MaxPlayers];
         private ModelInstance? _trailModel = null;
-        private int _bindingId = 0;
+        private int _bindingId1 = 0;
+        private int _bindingId2 = 0;
 
         public Vector3 PrevPosition1 { get; private set; }
         public Vector3 PrevPosition2 { get; private set; }
@@ -142,12 +144,11 @@ namespace MphRead.Entities
             _light1Color = scene.Light1Color;
             _light2Vector = scene.Light2Vector;
             _light2Color = scene.Light2Color;
-            if (Hunter == Hunter.Samus)
-            {
-                _trailModel = Read.GetModelInstance("trail");
-                Material material = _trailModel.Model.Materials[0];
-                _bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
-            }
+            _trailModel = Read.GetModelInstance("trail");
+            Material material = _trailModel.Model.Materials[0];
+            _bindingId1 = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
+            material = _trailModel.Model.Materials[1];
+            _bindingId2 = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
             ResetMorphBallTrail();
             if (_respawning)
             {
@@ -281,8 +282,14 @@ namespace MphRead.Entities
 
         public override void GetDrawInfo(Scene scene)
         {
+            DrawShadow(scene);
             if (_dead)
             {
+                Alpha -= 2 / 31f;
+                if (Alpha < 2 / 31f)
+                {
+                    Alpha = 0;
+                }
                 if (!_altForm)
                 {
                     DrawDeathParticles(scene);
@@ -290,6 +297,8 @@ namespace MphRead.Entities
             }
             else
             {
+                // todo: cloaking and other stuff
+                Alpha = 1;
                 base.GetDrawInfo(scene);
                 if (_altForm && Hunter == Hunter.Samus)
                 {
@@ -600,6 +609,64 @@ namespace MphRead.Entities
             }
         }
 
+        private void DrawShadow(Scene scene)
+        {
+            Debug.Assert(_trailModel != null);
+            Material material = _trailModel.Model.Materials[1];
+            // todo: use collision sphere
+            Vector3 point1 = Position.AddY(0.5f);
+            Vector3 point2 = point1.AddY(-10);
+            // todo: don't draw if main player in first person
+            CollisionResult colRes = default;
+            if (CollisionDetection.CheckBetweenPoints(point1, point2, TestFlags.None, scene, ref colRes))
+            {
+                float height = point1.Y - colRes.Position.Y;
+                if (height < 10)
+                {
+                    float pct = 1 - height / 10;
+                    float alpha = Alpha * pct;
+                    if (_dead)
+                    {
+                        // sktodo: extra alpha factor
+                    }
+                    if (alpha > 0)
+                    {
+                        Vector3 row1 = Vector3.Cross(colRes.Plane.Xyz, Vector3.UnitZ).Normalized();
+                        Vector3 row2 = colRes.Plane.Xyz;
+                        var row3 = Vector3.Cross(row1, colRes.Plane.Xyz);
+                        row1 *= pct;
+                        row2 *= pct;
+                        row3 *= pct;
+                        float factor = Fixed.ToFloat(100);
+                        var row4 = new Vector3(
+                            colRes.Position.X + colRes.Plane.X * factor,
+                            colRes.Position.Y + colRes.Plane.Y * factor,
+                            colRes.Position.Z + colRes.Plane.Z * factor
+                        );
+                        var transform = new Matrix4(
+                            row1.X, row1.Y, row1.Z, 0,
+                            row2.X, row2.Y, row2.Z, 0,
+                            row3.X, row3.Y, row3.Z, 0,
+                            row4.X, row4.Y, row4.Z, 1
+                        );
+                        Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(8);
+                        uvsAndVerts[0] = new Vector3(0, 0, 0);
+                        uvsAndVerts[1] = new Vector3(-0.75f, 0.03125f, -0.75f);
+                        uvsAndVerts[2] = new Vector3(0, 1, 0);
+                        uvsAndVerts[3] = new Vector3(-0.75f, 0.03125f, 0.75f);
+                        uvsAndVerts[4] = new Vector3(1, 1, 0);
+                        uvsAndVerts[5] = new Vector3(0.75f, 0.03125f, 0.75f);
+                        uvsAndVerts[6] = new Vector3(1, 0, 0);
+                        uvsAndVerts[7] = new Vector3(0.75f, 0.03125f, -0.75f);
+                        int polygonId = scene.GetNextPolygonId();
+                        var color = new Vector3(0, 0, 0);
+                        scene.AddRenderItem(RenderItemType.Particle, alpha, polygonId, color, material.XRepeat, material.YRepeat,
+                            material.ScaleS, material.ScaleT, transform, uvsAndVerts, _bindingId2);
+                    }
+                }
+            }
+        }
+
         private void DrawMorphBallTrail(Scene scene)
         {
             Debug.Assert(_trailModel != null);
@@ -655,7 +722,7 @@ namespace MphRead.Entities
             {
                 var color = new Vector3(1, 27 / 31f, 11 / 31f);
                 scene.AddRenderItem(RenderItemType.TrailStack, scene.GetNextPolygonId(), color, material.XRepeat, material.YRepeat,
-                    material.ScaleS, material.ScaleT, _mbTrailSegments, matrixStack, uvsAndVerts, count, _bindingId);
+                    material.ScaleS, material.ScaleT, _mbTrailSegments, matrixStack, uvsAndVerts, count, _bindingId1);
             }
             ArrayPool<float>.Shared.Return(matrixStack);
         }
