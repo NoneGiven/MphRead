@@ -103,6 +103,12 @@ namespace MphRead.Entities
                 return true;
             }
             bool firstFrame = Age == 0;
+            if (Flags.HasFlag(BeamFlags.Continuous) && Age > 0)
+            {
+                // avoid any frame time issues by just getting rid of continuous beams as soon as they're no longer being replaced
+                // --> in game they stick around for a frame or two, but their lifespan will have already made it so they can't interact
+                return false;
+            }
             Age += scene.FrameTime;
             BackPosition = Position;
             // the game does this every other frame at 30 fps and keeps 5 past positions; we do it every other frame at 60 fps and keep 10,
