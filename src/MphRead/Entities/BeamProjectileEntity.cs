@@ -267,7 +267,7 @@ namespace MphRead.Entities
                 }
                 if (ricochet)
                 {
-                    ProcessRicochet(anyRes);
+                    ProcessRicochet(anyRes, scene);
                 }
                 if (DrawFuncId == 8)
                 {
@@ -276,7 +276,7 @@ namespace MphRead.Entities
             }
         }
 
-        private void ProcessRicochet(CollisionResult colRes)
+        private void ProcessRicochet(CollisionResult colRes, Scene scene)
         {
             float dot1 = Vector3.Dot(Velocity, colRes.Plane.Xyz);
             Velocity = new Vector3(
@@ -298,6 +298,21 @@ namespace MphRead.Entities
                 colRes.Position.Y + colRes.Plane.Y * factor,
                 colRes.Position.Z + colRes.Plane.Z * factor
             );
+            // hack to fix past positions after ricochet
+            for (int i = 9; i > 0; i--)
+            {
+                PastPositions[i] = PastPositions[i - 1];
+            }
+            PastPositions[0] = Position;
+            if (scene.FrameCount % 2 == 0)
+            {
+                for (int i = 9; i > 0; i--)
+                {
+                    PastPositions[i] = PastPositions[i - 1];
+                }
+                PastPositions[0] = Position;
+            }
+            Console.WriteLine(scene.FrameCount % 2);
             // btodo: sfx
         }
 
