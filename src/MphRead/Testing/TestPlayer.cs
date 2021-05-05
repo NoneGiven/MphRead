@@ -107,7 +107,7 @@ namespace MphRead.Testing
             public readonly uint FieldB4;
             public readonly uint FieldB8;
             public readonly uint FieldBC;
-            public readonly uint FieldC0;
+            public readonly uint BombCooldown;
             public readonly uint FieldC4;
             public readonly uint FieldC8; // C4 * C4 -- set in load_some_hunter_stuff
             public readonly uint FieldCC;

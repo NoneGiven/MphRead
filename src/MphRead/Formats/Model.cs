@@ -19,29 +19,29 @@ namespace MphRead
         {
             Model = model;
             // todo: once we have proper animation selection, this can be removed
-            NodeAnimationGroup? nodeGroup = Model.AnimationGroups.Node.FirstOrDefault(n => n.Count > 0);
-            if (nodeGroup != null)
+            int nodeIndex = Model.AnimationGroups.Node.IndexOf(n => n.Count > 0);
+            if (nodeIndex != -1)
             {
-                AnimInfo.Node.Index = 0;
-                AnimInfo.Node.Group = nodeGroup;
+                AnimInfo.Node.Index = nodeIndex;
+                AnimInfo.Node.Group = Model.AnimationGroups.Node[nodeIndex];
             }
-            MaterialAnimationGroup? matGroup = Model.AnimationGroups.Material.FirstOrDefault(n => n.Count > 0);
-            if (matGroup != null)
+            int matIndex = Model.AnimationGroups.Material.IndexOf(n => n.Count > 0);
+            if (matIndex != -1)
             {
-                AnimInfo.Material.Index = 0;
-                AnimInfo.Material.Group = matGroup;
+                AnimInfo.Material.Index = matIndex;
+                AnimInfo.Material.Group = Model.AnimationGroups.Material[matIndex];
             }
-            TexcoordAnimationGroup? uvGroup = Model.AnimationGroups.Texcoord.FirstOrDefault(n => n.Count > 0);
-            if (uvGroup != null)
+            int uvIndex = Model.AnimationGroups.Texcoord.IndexOf(n => n.Count > 0);
+            if (uvIndex != -1)
             {
-                AnimInfo.Texcoord.Index = 0;
-                AnimInfo.Texcoord.Group = uvGroup;
+                AnimInfo.Texcoord.Index = uvIndex;
+                AnimInfo.Texcoord.Group = Model.AnimationGroups.Texcoord[uvIndex];
             }
-            TextureAnimationGroup? texGroup = Model.AnimationGroups.Texture.FirstOrDefault(n => n.Count > 0);
-            if (texGroup != null)
+            int texIndex = Model.AnimationGroups.Texture.IndexOf(n => n.Count > 0);
+            if (texIndex != -1)
             {
-                AnimInfo.Texture.Index = 0;
-                AnimInfo.Texture.Group = texGroup;
+                AnimInfo.Texture.Index = texIndex;
+                AnimInfo.Texture.Group = Model.AnimationGroups.Texture[texIndex];
             }
         }
 
