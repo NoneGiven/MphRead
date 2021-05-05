@@ -126,6 +126,7 @@ namespace MphRead.Entities
             }
             _bipedIceModel = Read.GetModelInstance(Hunter == Hunter.Noxus || Hunter == Hunter.Trace ? "nox_ice" : "samus_ice");
             _models.Add(_bipedIceModel);
+            // todo: scale is applied so as not to mess up the min collision height/y offset
             _scaleMtx = Matrix4.CreateScale(Metadata.HunterScales[Hunter]);
             _respawning = respawn;
             // temporary

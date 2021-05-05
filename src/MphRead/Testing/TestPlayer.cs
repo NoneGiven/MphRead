@@ -71,17 +71,17 @@ namespace MphRead.Testing
             public readonly uint Field30;
             public readonly uint Field34;
             public readonly uint Field38;
-            public readonly uint Field3C;
+            public readonly uint Field3C; // alt touch movement factor when grounded gravity
             public readonly Fixed AltCollisionRadius;
             public readonly Fixed AltCollisionY;
             public readonly ushort BoostChargeMin;
             public readonly ushort BoostChargeMax;
-            public readonly uint Field4C;
-            public readonly uint Field50;
+            public readonly Fixed BoostSpeedMin;
+            public readonly Fixed BoostSpeedMax;
             public readonly Fixed AltSpeedCapHInc; // if player's h speed is greater than the cap, reduce it by this amount
             public readonly uint Field58;
             public readonly uint Field5C;
-            public readonly uint Field60;
+            public readonly Fixed WalkViewBob;
             public readonly uint Field64;
             public readonly ushort Field68; // gun idle time -- but also FieldFC
             public readonly ushort Field6A;
@@ -102,19 +102,20 @@ namespace MphRead.Testing
             public readonly uint FieldA4;
             public readonly uint FieldA8;
             public readonly ushort FieldAC;
-            public readonly ushort DamageFlashDurationMaybe;
-            public readonly uint FieldB0;
-            public readonly uint FieldB4;
-            public readonly uint FieldB8;
-            public readonly uint FieldBC;
+            public readonly ushort DamageFlashDuration;
+            public readonly Fixed FieldB0; // gun draw offset/factor - gun eff_vec_2
+            public readonly Fixed FieldB4; // gun draw offset/factor - player vec_1
+            public readonly Fixed FieldB8; // gun draw offset/factor - player vec_2
+            public readonly Fixed SmokeZOffset;
             public readonly uint BombCooldown;
-            public readonly uint FieldC4;
-            public readonly uint FieldC8; // C4 * C4 -- set in load_some_hunter_stuff
-            public readonly uint FieldCC;
-            public readonly uint FieldD0; // CC * CC -- set in load_some_hunter_stuff
-            public readonly uint FieldD4;
-            public readonly uint FieldD8;
-            public readonly uint FieldDC;
+            public readonly Fixed BombSelfRadius;
+            public readonly Fixed BombSelfRadiusSquared; // set in load_some_hunter_stuff
+            public readonly Fixed BombRadius;
+            public readonly Fixed BombRadiusSquared; // set in load_some_hunter_stuff
+            public readonly Fixed BombJumpSpeed;
+            public readonly uint BombRefillTime;
+            public readonly Fixed RegularFov; // 39
+            public readonly ushort BombEnemyDamage;
             public readonly ushort FieldE0;
             public readonly ushort FieldE2;
             public readonly ushort FieldE4; // some touch duration threshold
@@ -124,8 +125,10 @@ namespace MphRead.Testing
             public readonly uint ViewSwayStartTime;
             public readonly uint SwayTimeIncrement;
             public readonly uint SwayLimit;
-            public readonly uint FieldFC;
-            public readonly uint Field100;
+            public readonly uint FieldFC; // gun idle time -- but also Field68
+            public readonly ushort MpAmmoCap;
+            public readonly byte AmmoRecharge; // FH leftover, non-functional due to empty weapons being automatically unequipped
+            public readonly byte Padding103;
             public readonly ushort EnergyStart;
             public readonly ushort Field106;
             public readonly byte AltGroundNoGravity; // don't apply gravity to alt form on ground unless terrain is slippery
@@ -133,7 +136,7 @@ namespace MphRead.Testing
             public readonly ushort Field10A;
             public readonly uint Field10C;
             public readonly uint Field110;
-            public readonly uint Field114;
+            public readonly uint Field114; // some kind of camera bob value for movement
             public readonly uint Field118;
             public readonly Fixed JumpPadSlideFactor;
             public readonly uint Field120;
@@ -147,13 +150,13 @@ namespace MphRead.Testing
             public readonly uint Field140;
             public readonly uint Field144;
             public readonly uint Field148;
-            public readonly uint Field14C;
-            public readonly ushort Field150;
-            public readonly ushort Field152;
+            public readonly uint Field14C; // speed loss value
+            public readonly ushort Field150; // speed counter value
+            public readonly ushort NoxusAltAttackStartup; // SFX played at halfway time, anim frame based on elapsed percentage
             public readonly uint Field154;
             public readonly uint Field158;
-            public readonly uint Field15C;
-            public readonly uint Field160;
+            public readonly Fixed LungeHSpeed; // lunge = trave/weavel
+            public readonly Fixed LungeVSpeed;
             public readonly ushort AltAttackDamage; // includes boost
             public readonly ushort AltAttackCooldown; // includes boost
         }
