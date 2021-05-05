@@ -14,10 +14,10 @@ namespace MphRead.Testing
         public readonly struct PlayerControls
         {
             public readonly uint Flags;
-            public readonly ButtonControl Field4;
-            public readonly ButtonControl Field8;
-            public readonly ButtonControl FieldC;
-            public readonly ButtonControl Field10;
+            public readonly ButtonControl Left;
+            public readonly ButtonControl Right;
+            public readonly ButtonControl Up;
+            public readonly ButtonControl Down;
             public readonly ButtonControl Field14;
             public readonly ButtonControl Field18;
             public readonly ButtonControl Field1C;
@@ -28,25 +28,25 @@ namespace MphRead.Testing
             public readonly ButtonControl Field30;
             public readonly ButtonControl Shoot;
             public readonly ButtonControl Jump; // repeated touch is checked separately
-            public readonly ButtonControl Field3C;
+            public readonly ButtonControl Morph;
             public readonly ButtonControl Field40;
             public readonly ButtonControl Field44;
-            public readonly ButtonControl Field48;
-            public readonly ButtonControl Field4C;
-            public readonly ButtonControl Field50;
-            public readonly ButtonControl Field54;
-            public readonly ButtonControl Field58;
-            public readonly ButtonControl Field5C;
-            public readonly ButtonControl Field60;
-            public readonly ButtonControl Field64;
-            public readonly ButtonControl Field68;
-            public readonly ButtonControl Field6C;
-            public readonly ButtonControl Field70;
-            public readonly ButtonControl Field74;
-            public readonly ButtonControl Field78;
-            public readonly ButtonControl Field7C;
-            public readonly ButtonControl Field80;
-            public readonly int Field84;
+            public readonly ButtonControl Bomb;
+            public readonly ButtonControl Unused4C;
+            public readonly ButtonControl BoostCharge;
+            public readonly ButtonControl Unused54;
+            public readonly ButtonControl Unused58;
+            public readonly ButtonControl Unused5C;
+            public readonly ButtonControl Unused60;
+            public readonly ButtonControl NoxusAltAttack;
+            public readonly ButtonControl Unused68; // unused alt attack
+            public readonly ButtonControl SpireAltAttack;
+            public readonly ButtonControl TraceAltAttack;
+            public readonly ButtonControl Unused74; // unused alt attack
+            public readonly ButtonControl WeavelAltAttack;
+            public readonly ButtonControl Zoom;
+            public readonly ButtonControl Respawn;
+            public readonly ButtonControl Unused84;
             public readonly int Field88;
             public readonly int Field8C;
             public readonly int Field90;
@@ -56,12 +56,12 @@ namespace MphRead.Testing
 
         public readonly struct PlayerValues
         {
-            public readonly uint Field0;
-            public readonly uint Field4;
-            public readonly uint Field8;
-            public readonly uint FieldC;
-            public readonly uint Field10;
-            public readonly uint Field14;
+            public readonly Fixed BipedTractionLr;
+            public readonly Fixed BipedTractionFb;
+            public readonly Fixed WalkHSpeedCap;
+            public readonly Fixed StrafeHSpeedCap;
+            public readonly Fixed MinAltHSpeed; // boost is considered over if speed drops below this -- also minimum(?) for alt movement SFX
+            public readonly Fixed BoostHSpeedCap;
             public readonly Fixed BipedGravity; // gravity to apply to biped form in the air or on slippery terrain
             public readonly Fixed AltGravityAir; // gravity to apply to alt form in the air
             public readonly Fixed AltGravityGround; // gravity to apply to alt form on the ground
@@ -74,11 +74,11 @@ namespace MphRead.Testing
             public readonly uint Field3C;
             public readonly Fixed AltCollisionRadius;
             public readonly Fixed AltCollisionY;
-            public readonly ushort Field48;
-            public readonly ushort Field4A;
+            public readonly ushort BoostChargeMin;
+            public readonly ushort BoostChargeMax;
             public readonly uint Field4C;
             public readonly uint Field50;
-            public readonly uint Field54;
+            public readonly Fixed AltSpeedCapHInc; // if player's h speed is greater than the cap, reduce it by this amount
             public readonly uint Field58;
             public readonly uint Field5C;
             public readonly uint Field60;
@@ -135,7 +135,7 @@ namespace MphRead.Testing
             public readonly uint Field110;
             public readonly uint Field114;
             public readonly uint Field118;
-            public readonly Fixed JumpPadSlideFactor; // 
+            public readonly Fixed JumpPadSlideFactor;
             public readonly uint Field120;
             public readonly uint Field124;
             public readonly uint Field128;
@@ -154,8 +154,8 @@ namespace MphRead.Testing
             public readonly uint Field158;
             public readonly uint Field15C;
             public readonly uint Field160;
-            public readonly ushort Field164;
-            public readonly ushort Field166;
+            public readonly ushort AltAttackDamage; // includes boost
+            public readonly ushort AltAttackCooldown; // includes boost
         }
 
         public static IReadOnlyList<PlayerControls> GetPlayerControls()
