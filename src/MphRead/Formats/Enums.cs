@@ -180,6 +180,50 @@ namespace MphRead
         All = 12 // viewer only
     }
 
+    public enum Button
+    {
+        A = 0,
+        B = 1,
+        Select = 2,
+        Start = 3,
+        Right = 4,
+        Left = 5,
+        Up = 6,
+        Down = 7,
+        R = 8,
+        L = 9,
+        X = 10,
+        Y = 11
+    }
+
+    [Flags]
+    public enum ButtonFlags : ushort
+    {
+        None = 0x0,
+        A = 0x1,
+        B = 0x2,
+        Select = 0x4,
+        Start = 0x8,
+        Right = 0x10,
+        Left = 0x20,
+        Up = 0x40,
+        Down = 0x80,
+        R = 0x100,
+        L = 0x200,
+        X = 0x400,
+        Y = 0x800
+    }
+
+    [Flags]
+    public enum PressFlags : ushort
+    {
+        None = 0x0,
+        Touch = 0x1, // 0x10000
+        Pressed = 0x4, // 0x40000
+        Released = 0x8, // 0x80000
+        Repeated = 0x10 // 0x100000
+    }
+
     public enum ModelType
     {
         Generic,

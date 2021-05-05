@@ -129,15 +129,20 @@ namespace MphRead.Entities
             _scaleMtx = Matrix4.CreateScale(Metadata.HunterScales[Hunter]);
             _respawning = respawn;
             // temporary
-            _bipedModel.SetNodeAnim(4);
+            _bipedModel.SetNodeAnim(8);
             if (Hunter == Hunter.Weavel)
             {
                 _bipedModel.SetMaterialAnim(-1);
             }
         }
 
+        private CollisionVolume _sphere; // bounding sphere for capsule check
+        private CollisionVolume _cylinder; // collision cylinder/capsule
+
         public override void Initialize(Scene scene)
         {
+            _sphere = new CollisionVolume(new Vector3(0, 0.8f, 0), 0.8f);
+            _cylinder = new CollisionVolume(Vector3.UnitY, Vector3.Zero, 0.5f + 0.45f, 1.6f);
             base.Initialize(scene);
             _dblDmgBindingId = scene.BindGetTexture(_dblDmgModel.Model, 0, 0, 0);
             _light1Vector = scene.Light1Vector;
@@ -280,6 +285,7 @@ namespace MphRead.Entities
             }
         }
 
+        // todo: player Y position is 0.5 when standing on ground at 0.0
         public override void GetDrawInfo(Scene scene)
         {
             DrawShadow(scene);
@@ -304,6 +310,8 @@ namespace MphRead.Entities
                 {
                     DrawMorphBallTrail(scene);
                 }
+                //AddVolumeItem(_cylinder, Vector3.UnitX, scene);
+                //AddVolumeItem(_sphere, Vector3.UnitZ, scene);
             }
         }
 

@@ -333,15 +333,14 @@ namespace MphRead
             if (animationShare != null)
             {
                 AnimationResults shared = LoadAnimation(name, animationShare, nodes, firstHunt);
-                shared.NodeAnimationGroups.AddRange(animations.NodeAnimationGroups);
-                shared.MaterialAnimationGroups.AddRange(animations.MaterialAnimationGroups);
-                shared.TexcoordAnimationGroups.AddRange(animations.TexcoordAnimationGroups);
-                shared.TextureAnimationGroups.AddRange(animations.TextureAnimationGroups);
-                shared.NodeGroupOffsets.AddRange(animations.NodeGroupOffsets);
-                shared.MaterialGroupOffsets.AddRange(animations.MaterialGroupOffsets);
-                shared.TexcoordGroupOffsets.AddRange(animations.TexcoordGroupOffsets);
-                shared.TextureGroupOffsets.AddRange(animations.TextureGroupOffsets);
-                animations = shared;
+                animations.NodeAnimationGroups.AddRange(shared.NodeAnimationGroups);
+                animations.MaterialAnimationGroups.AddRange(shared.MaterialAnimationGroups);
+                animations.TexcoordAnimationGroups.AddRange(shared.TexcoordAnimationGroups);
+                animations.TextureAnimationGroups.AddRange(shared.TextureAnimationGroups);
+                animations.NodeGroupOffsets.AddRange(shared.NodeGroupOffsets);
+                animations.MaterialGroupOffsets.AddRange(shared.MaterialGroupOffsets);
+                animations.TexcoordGroupOffsets.AddRange(shared.TexcoordGroupOffsets);
+                animations.TextureGroupOffsets.AddRange(shared.TextureGroupOffsets);
             }
             // NodePosition and NodeInitialPosition are always 0
             IReadOnlyList<Vector3Fx> nodePos = DoOffsets<Vector3Fx>(initialBytes, header.NodePosition, header.NodeCount);
@@ -397,6 +396,7 @@ namespace MphRead
             {
                 if (offset == 0)
                 {
+                    results.NodeAnimationGroups.Add(NodeAnimationGroup.Empty());
                     continue;
                 }
                 RawNodeAnimationGroup rawGroup = DoOffset<RawNodeAnimationGroup>(bytes, offset);
@@ -441,6 +441,7 @@ namespace MphRead
             {
                 if (offset == 0)
                 {
+                    results.MaterialAnimationGroups.Add(MaterialAnimationGroup.Empty());
                     continue;
                 }
                 RawMaterialAnimationGroup rawGroup = DoOffset<RawMaterialAnimationGroup>(bytes, offset);
@@ -468,6 +469,7 @@ namespace MphRead
             {
                 if (offset == 0)
                 {
+                    results.TexcoordAnimationGroups.Add(TexcoordAnimationGroup.Empty());
                     continue;
                 }
                 RawTexcoordAnimationGroup rawGroup = DoOffset<RawTexcoordAnimationGroup>(bytes, offset);
@@ -508,6 +510,7 @@ namespace MphRead
             {
                 if (offset == 0)
                 {
+                    results.TextureAnimationGroups.Add(TextureAnimationGroup.Empty());
                     continue;
                 }
                 RawTextureAnimationGroup rawGroup = DoOffset<RawTextureAnimationGroup>(bytes, offset);

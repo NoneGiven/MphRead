@@ -54,19 +54,19 @@ namespace MphRead
 
         private void UpdateMaxFrame()
         {
-            if (AnimInfo.Node.Group != null)
+            if (AnimInfo.Node.Group?.Count > 0)
             {
                 MaxAnimFrame = AnimInfo.Node.Group.FrameCount;
             }
-            else if (AnimInfo.Material.Group != null)
+            else if (AnimInfo.Material.Group?.Count > 0)
             {
                 MaxAnimFrame = AnimInfo.Material.Group.FrameCount;
             }
-            else if (AnimInfo.Texture.Group != null)
+            else if (AnimInfo.Texture.Group?.Count > 0)
             {
                 MaxAnimFrame = AnimInfo.Texture.Group.FrameCount;
             }
-            else if (AnimInfo.Texcoord.Group != null)
+            else if (AnimInfo.Texcoord.Group?.Count > 0)
             {
                 MaxAnimFrame = AnimInfo.Texcoord.Group.FrameCount;
             }
@@ -135,22 +135,22 @@ namespace MphRead
 
         public void UpdateAnimFrames()
         {
-            if (AnimInfo.Node.Group != null)
+            if (AnimInfo.Node.Group?.Count > 0)
             {
                 AnimInfo.Node.CurrentFrame++;
                 AnimInfo.Node.CurrentFrame %= AnimInfo.Node.Group.FrameCount;
             }
-            if (AnimInfo.Material.Group != null)
+            if (AnimInfo.Material.Group?.Count > 0)
             {
                 AnimInfo.Material.CurrentFrame++;
                 AnimInfo.Material.CurrentFrame %= AnimInfo.Material.Group.FrameCount;
             }
-            if (AnimInfo.Texcoord.Group != null)
+            if (AnimInfo.Texcoord.Group?.Count > 0)
             {
                 AnimInfo.Texcoord.CurrentFrame++;
                 AnimInfo.Texcoord.CurrentFrame %= AnimInfo.Texcoord.Group.FrameCount;
             }
-            if (AnimInfo.Texture.Group != null)
+            if (AnimInfo.Texture.Group?.Count > 0)
             {
                 AnimInfo.Texture.CurrentFrame++;
                 AnimInfo.Texture.CurrentFrame %= AnimInfo.Texture.Group.FrameCount;
@@ -160,22 +160,22 @@ namespace MphRead
         public void UpdateAnimFrames(int frame)
         {
             //Debug.Assert(frame >= 0);
-            if (AnimInfo.Node.Group != null)
+            if (AnimInfo.Node.Group?.Count > 0)
             {
                 Debug.Assert(frame < AnimInfo.Node.Group.FrameCount);
                 AnimInfo.Node.CurrentFrame = frame;
             }
-            if (AnimInfo.Material.Group != null)
+            if (AnimInfo.Material.Group?.Count > 0)
             {
                 Debug.Assert(frame < AnimInfo.Material.Group.FrameCount);
                 AnimInfo.Material.CurrentFrame = frame;
             }
-            if (AnimInfo.Texcoord.Group != null)
+            if (AnimInfo.Texcoord.Group?.Count > 0)
             {
                 Debug.Assert(frame < AnimInfo.Texcoord.Group.FrameCount);
                 AnimInfo.Texcoord.CurrentFrame = frame;
             }
-            if (AnimInfo.Texture.Group != null)
+            if (AnimInfo.Texture.Group?.Count > 0)
             {
                 Debug.Assert(frame < AnimInfo.Texture.Group.FrameCount);
                 AnimInfo.Texture.CurrentFrame = frame;
