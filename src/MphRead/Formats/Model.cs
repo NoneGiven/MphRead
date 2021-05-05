@@ -19,25 +19,29 @@ namespace MphRead
         {
             Model = model;
             // todo: once we have proper animation selection, this can be removed
-            if (Model.AnimationGroups.Node.Count > 0)
+            NodeAnimationGroup? nodeGroup = Model.AnimationGroups.Node.FirstOrDefault(n => n.Count > 0);
+            if (nodeGroup != null)
             {
                 AnimInfo.Node.Index = 0;
-                AnimInfo.Node.Group = Model.AnimationGroups.Node[0];
+                AnimInfo.Node.Group = nodeGroup;
             }
-            if (Model.AnimationGroups.Material.Count > 0)
+            MaterialAnimationGroup? matGroup = Model.AnimationGroups.Material.FirstOrDefault(n => n.Count > 0);
+            if (matGroup != null)
             {
                 AnimInfo.Material.Index = 0;
-                AnimInfo.Material.Group = Model.AnimationGroups.Material[0];
+                AnimInfo.Material.Group = matGroup;
             }
-            if (Model.AnimationGroups.Texcoord.Count > 0)
+            TexcoordAnimationGroup? uvGroup = Model.AnimationGroups.Texcoord.FirstOrDefault(n => n.Count > 0);
+            if (uvGroup != null)
             {
                 AnimInfo.Texcoord.Index = 0;
-                AnimInfo.Texcoord.Group = Model.AnimationGroups.Texcoord[0];
+                AnimInfo.Texcoord.Group = uvGroup;
             }
-            if (Model.AnimationGroups.Texture.Count > 0)
+            TextureAnimationGroup? texGroup = Model.AnimationGroups.Texture.FirstOrDefault(n => n.Count > 0);
+            if (texGroup != null)
             {
                 AnimInfo.Texture.Index = 0;
-                AnimInfo.Texture.Group = Model.AnimationGroups.Texture[0];
+                AnimInfo.Texture.Group = texGroup;
             }
         }
 

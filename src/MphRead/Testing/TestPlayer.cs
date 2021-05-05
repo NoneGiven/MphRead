@@ -83,7 +83,7 @@ namespace MphRead.Testing
             public readonly uint Field5C;
             public readonly uint Field60;
             public readonly uint Field64;
-            public readonly ushort Field68;
+            public readonly ushort Field68; // gun idle time -- but also FieldFC
             public readonly ushort Field6A;
             public readonly uint Field6C;
             public readonly uint Field70;
