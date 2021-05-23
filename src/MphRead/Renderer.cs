@@ -3540,14 +3540,17 @@ namespace MphRead
             ModelInstance? inst = Selection.Instance;
             Debug.Assert(inst != null);
             _sb.AppendLine();
-            _sb.AppendLine($"Model: {inst.Model.Name}, Scale: {inst.Model.Scale.X}, Active: {YesNo(inst.Active)}," +
-                $"{(inst.IsPlaceholder ? " Placeholder" : "")}");
+            _sb.AppendLine($"Model: {inst.Model.Name}, Scale: {inst.Model.Scale.X}, Active: {YesNo(inst.Active)}" +
+                $"{(inst.IsPlaceholder ? ", Placeholder" : "")}");
             _sb.AppendLine($"Nodes {inst.Model.Nodes.Count}, Meshes {inst.Model.Meshes.Count}, Materials {inst.Model.Materials.Count}," +
                 $" Textures {inst.Model.Recolors[0].Textures.Count}, Palettes {inst.Model.Recolors[0].Palettes.Count}");
             AnimationInfo a = inst.AnimInfo;
             AnimationGroups g = inst.Model.AnimationGroups;
-            _sb.AppendLine($"Anim: Node {a.Node.Index} / {g.Node.Count}, Material {a.Material.Index} / {g.Material.Count}," +
-                $" Texcoord {a.Texcoord.Index} / {g.Texcoord.Count}, Texture {a.Texture.Index} / {g.Texture.Count}");
+            _sb.AppendLine($"Anim: {a.Index[0]}, {a.Frame[1]}" +
+                $" (Node {(a.Node.Group?.Count > 0 ? a.NodeIndex : -1)} / {g.Node.Count}," +
+                $" Mat {(a.Material.Group?.Count > 0 ? a.MaterialIndex : -1)} / {g.Material.Count}," +
+                $" UV {(a.Texcoord.Group?.Count > 0 ? a.TexcoordIndex : -1)} / {g.Texcoord.Count}," +
+                $" Tex {(a.Texture.Group?.Count > 0 ? a.TextureIndex : -1)} / {g.Texture.Count})");
         }
 
         private void OutputGetNode()

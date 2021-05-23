@@ -21,19 +21,17 @@ namespace MphRead.Entities
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             if (data.SpawnerModel != 0)
             {
+                // todo: spawner models are actually enemy instances
                 string spawner = "EnemySpawner";
                 if (data.EnemyType == EnemyType.WarWasp || data.EnemyType == EnemyType.BarbedWarWasp)
                 {
                     spawner = "PlantCarnivarous_Pod";
                 }
-                ModelInstance inst = Read.GetModelInstance(spawner);
-                _models.Add(inst);
+                ModelInstance inst = SetUpModel(spawner);
                 // temporary
                 if (spawner == "EnemySpawner")
                 {
-                    inst.SetNodeAnim(-1);
-                    inst.SetMaterialAnim(-1);
-                    inst.SetTexcoordAnim(-1);
+                    inst.SetAnimation(-1);
                 }
             }
             else

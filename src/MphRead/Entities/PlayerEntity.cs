@@ -109,8 +109,7 @@ namespace MphRead.Entities
             Debug.Assert(models.Count == 3);
             for (int i = 0; i < models.Count; i++)
             {
-                ModelInstance inst = Read.GetModelInstance(models[i]);
-                _models.Add(inst);
+                ModelInstance inst = SetUpModel(models[i]);
                 if (i == 0)
                 {
                     _bipedModel = inst;
@@ -124,16 +123,15 @@ namespace MphRead.Entities
                     _gunModel = inst;
                 }
             }
-            _bipedIceModel = Read.GetModelInstance(Hunter == Hunter.Noxus || Hunter == Hunter.Trace ? "nox_ice" : "samus_ice");
-            _models.Add(_bipedIceModel);
+            _bipedIceModel = SetUpModel(Hunter == Hunter.Noxus || Hunter == Hunter.Trace ? "nox_ice" : "samus_ice");
             // todo: scale is applied so as not to mess up the min collision height/y offset
             _scaleMtx = Matrix4.CreateScale(Metadata.HunterScales[Hunter]);
             _respawning = respawn;
             // temporary
-            _bipedModel.SetNodeAnim(8);
+            _bipedModel.SetAnimation(8, 0, SetFlags.Node);
             if (Hunter == Hunter.Weavel)
             {
-                _bipedModel.SetMaterialAnim(-1);
+                //_bipedModel.SetMaterialAnim(-1);
             }
         }
 
@@ -207,7 +205,7 @@ namespace MphRead.Entities
             Vector3 direction = (-Vector3.UnitZ * spawnTransform).Normalized();
             if (type == -1)
             {
-                WeaponInfo weapon = Weapons.Weapons1P[17];
+                WeaponInfo weapon = Weapons.Weapons1P[14];
                 bool charged = true;
                 BeamProjectileEntity.Spawn(this, new EquipInfo(weapon, _beams) { ChargeLevel = charged ? weapon.FullCharge : (ushort)0 },
                     gunPos, direction, BeamSpawnFlags.NoMuzzle, scene);

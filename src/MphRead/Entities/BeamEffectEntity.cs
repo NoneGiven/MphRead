@@ -4,7 +4,9 @@ namespace MphRead.Entities
 {
     public readonly struct BeamEffectEntityData
     {
+        // used as a type for icewave/sniperbeam/cylburn, or subtract 3 to get an effect ID to spawn
         public readonly int Type;
+        // in game this is treated as an anim ID for icewave/sniperbeam/cylburn, but all of those only have one animation anyway
         public readonly bool NoSplat;
         public readonly Matrix4 Transform;
 
@@ -30,22 +32,20 @@ namespace MphRead.Entities
             ModelInstance model;
             if (data.Type == 0)
             {
-                model = Read.GetModelInstance("iceWave");
+                model = SetUpModel("iceWave", 0, AnimFlags.NoLoop);
             }
             else if (data.Type == 1)
             {
-                model = Read.GetModelInstance("sniperBeam");
+                model = SetUpModel("sniperBeam", 0, AnimFlags.NoLoop);
             }
             else if (data.Type == 2)
             {
-                model = Read.GetModelInstance("cylBossLaserBurn");
+                model = SetUpModel("cylBossLaserBurn");
             }
             else
             {
                 throw new ProgramException("Invalid beam effect type.");
             }
-            // btodo: use anim ID
-            _models.Add(model);
             _lifespan = 0;
             // in-game all the group types are checked, but we're just checking what's actually used
             if (model.Model.AnimationGroups.Node.Count > 0)

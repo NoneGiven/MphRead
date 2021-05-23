@@ -154,7 +154,11 @@ namespace MphRead.Entities
                 CheckCollision(scene);
             }
             // btodo: target/homing stuff
-            if (Effect != null)
+            if (Flags.HasFlag(BeamFlags.HasModel))
+            {
+                UpdateAnimFrames(_models[0], scene);
+            }
+            else if (Effect != null)
             {
                 for (int i = 0; i < Effect.Elements.Count; i++)
                 {
@@ -172,12 +176,7 @@ namespace MphRead.Entities
                 OnCollision(colRes, scene);
                 // btodo: sfx etc.
             }
-            if (DrawFuncId == 17)
-            {
-                // don't interfere with the animation frames set from the global frame count
-                return true;
-            }
-            return base.Process(scene);
+            return true;
         }
 
         private void CheckCollision(Scene scene)
@@ -973,12 +972,12 @@ namespace MphRead.Entities
                 {
                     beam.Flags |= BeamFlags.HasModel;
                     ModelInstance model = Read.GetModelInstance("energyBeam");
+                    model.SetAnimation(0);
                     beam._models.Add(model);
                     Matrix4 transform = GetTransformMatrix(beam.Direction, beam.Up);
                     transform.Row3.Xyz = position;
                     beam.Transform = transform;
-                    Debug.Assert(model.AnimInfo.Node.Group != null);
-                    model.UpdateAnimFrames((int)scene.FrameCount / 2 % model.AnimInfo.Node.Group.FrameCount);
+                    model.AnimInfo.Frame[0] = (int)scene.FrameCount / 2 % model.AnimInfo.FrameCount[0];
                 }
                 else
                 {

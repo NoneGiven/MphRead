@@ -9,8 +9,7 @@ namespace MphRead.Entities.Enemies
             var spawner = (EnemySpawnEntity)data.Spawner;
             ObjectMetadata meta = Metadata.GetObjectById(spawner.Data.Fields.S07.EnemySubtype);
             // todo: enemy spawners need to load these initially
-            ModelInstance inst = Read.GetModelInstance(meta.Name);
-            _models.Add(inst);
+            SetUpModel(meta.Name);
         }
     }
 }

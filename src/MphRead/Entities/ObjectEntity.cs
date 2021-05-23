@@ -59,10 +59,7 @@ namespace MphRead.Entities
                 ModelInstance inst = Read.GetModelInstance(meta.Name);
                 if (meta.AnimationIds[0] == 0xFF)
                 {
-                    inst.SetNodeAnim(-1);
-                    inst.SetMaterialAnim(-1);
-                    inst.SetTexcoordAnim(-1);
-                    inst.SetTexcoordAnim(-1);
+                    inst.SetAnimation(-1);
                 }
                 // AlimbicGhost_01, GhostSwitch
                 if (data.ModelId == 0 || data.ModelId == 41)
@@ -83,22 +80,19 @@ namespace MphRead.Entities
                 // temporary
                 if (inst.Model.Name == "AlimbicCapsule")
                 {
-                    inst.SetNodeAnim(-1);
-                    inst.SetMaterialAnim(-1);
+                    inst.SetAnimation(-1);
                 }
                 else if (inst.Model.Name == "WallSwitch")
                 {
-                    inst.SetNodeAnim(-1);
-                    inst.SetMaterialAnim(-1);
+                    inst.SetAnimation(-1);
                 }
                 else if (inst.Model.Name == "SniperTarget")
                 {
-                    inst.SetNodeAnim(-1);
+                    inst.SetAnimation(-1);
                 }
                 else if (inst.Model.Name == "SecretSwitch")
                 {
-                    inst.SetNodeAnim(-1);
-                    inst.SetMaterialAnim(-1);
+                    inst.SetAnimation(-1);
                 }
             }
         }

@@ -24,6 +24,7 @@ namespace MphRead.Entities
         {
             ModelInstance inst = Read.GetRoomModelInstance(name);
             _models.Add(inst);
+            inst.SetAnimation(0);
             inst.Model.FilterNodes(layerMask);
             if (meta.Name == "UNIT2_C6")
             {

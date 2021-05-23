@@ -121,6 +121,14 @@ namespace MphRead.Entities
             _anyLighting = _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));
         }
 
+        protected ModelInstance SetUpModel(string name, int animIndex = 0, AnimFlags animFlags = AnimFlags.None, bool firstHunt = false)
+        {
+            ModelInstance inst = Read.GetModelInstance(name, firstHunt);
+            inst.SetAnimation(animIndex, animFlags);
+            _models.Add(inst);
+            return inst;
+        }
+
         protected void SetCollision(CollisionInstance collision, int slot = 0, ModelInstance? attach = null)
         {
             CollisionInfo info = collision.Info;
@@ -174,18 +182,25 @@ namespace MphRead.Entities
 
         public virtual bool Process(Scene scene)
         {
-            for (int i = 0; i < _models.Count; i++)
+            if (Active)
             {
-                ModelInstance inst = _models[i];
-                if (inst.Active || scene.ShowAllEntities)
+                for (int i = 0; i < _models.Count; i++)
                 {
-                    if (scene.FrameCount != 0 && scene.FrameCount % 2 == 0)
-                    {
-                        inst.UpdateAnimFrames();
-                    }
+                    UpdateAnimFrames(_models[i], scene);
                 }
             }
             return true;
+        }
+
+        protected void UpdateAnimFrames(ModelInstance inst, Scene scene)
+        {
+            if (inst.Active || scene.ShowAllEntities)
+            {
+                if (scene.FrameCount != 0 && scene.FrameCount % 2 == 0)
+                {
+                    inst.UpdateAnimFrames();
+                }
+            }
         }
 
         protected virtual int GetModelRecolor(ModelInstance inst, int index)
@@ -223,11 +238,11 @@ namespace MphRead.Entities
         protected virtual void UpdateTransforms(ModelInstance inst, int index, Scene scene)
         {
             Model model = inst.Model;
-            model.AnimateMaterials(inst.AnimInfo.Material);
-            model.AnimateTextures(inst.AnimInfo.Texture);
+            model.AnimateMaterials(inst.AnimInfo);
+            model.AnimateTextures(inst.AnimInfo);
             model.ComputeNodeMatrices(index: 0);
             Matrix4 transform = GetModelTransform(inst, index);
-            model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, inst.AnimInfo.Node);
+            model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, inst.AnimInfo);
             model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
             // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
             scene.UpdateMaterials(model, GetModelRecolor(inst, index));
@@ -327,7 +342,7 @@ namespace MphRead.Entities
             }
             if (group != null && animation != null)
             {
-                texcoordMatrix = model.AnimateTexcoords(group, animation.Value, inst.AnimInfo.Texcoord.CurrentFrame);
+                texcoordMatrix = model.AnimateTexcoords(group, animation.Value, inst.AnimInfo.TexcoordFrame);
             }
             if (material.TexgenMode != TexgenMode.None)
             {
@@ -612,6 +627,12 @@ namespace MphRead.Entities
         {
             Recolor = recolor;
             _models.Add(model);
+        }
+
+        public override void Initialize(Scene scene)
+        {
+            base.Initialize(scene);
+            _models[0].SetAnimation(0);
         }
     }
 }

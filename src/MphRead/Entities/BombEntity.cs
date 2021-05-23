@@ -30,7 +30,7 @@ namespace MphRead.Entities
             int effectId = 0;
             if (BombType == BombType.Stinglarva)
             {
-                _models.Add(Read.GetModelInstance("KandenAlt_TailBomb"));
+                SetUpModel("KandenAlt_TailBomb");
                 Flags |= BombFlags.HasModel;
                 Countdown = 43 * 2; // todo: FPS stuff
             }
@@ -129,7 +129,7 @@ namespace MphRead.Entities
                     scene.SpawnEffect(145, Transform);
                 }
             }
-            else if (Effect != null)
+            if (Effect != null)
             {
                 for (int i = 0; i < Effect.Elements.Count; i++)
                 {

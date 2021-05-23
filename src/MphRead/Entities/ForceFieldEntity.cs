@@ -16,8 +16,7 @@ namespace MphRead.Entities
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             Scale = new Vector3(data.Width.FloatValue, data.Height.FloatValue, 1.0f);
             Recolor = Metadata.DoorPalettes[(int)data.Type];
-            ModelInstance inst = Read.GetModelInstance("ForceField");
-            _models.Add(inst);
+            SetUpModel("ForceField");
             // todo: fade in/out "animation"
             Active = data.Active != 0;
         }

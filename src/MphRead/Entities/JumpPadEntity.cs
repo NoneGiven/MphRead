@@ -21,15 +21,13 @@ namespace MphRead.Entities
             _prevPos = Position;
             _volume = CollisionVolume.Move(_data.Volume, Position);
             string modelName = Metadata.JumpPads[(int)data.ModelId];
-            ModelInstance baseInst = Read.GetModelInstance(modelName);
-            _models.Add(baseInst);
-            ModelInstance beamInst = Read.GetModelInstance("JumpPad_Beam");
+            SetUpModel(modelName);
+            ModelInstance beamInst = SetUpModel("JumpPad_Beam");
             Vector3 beamVector = data.BeamVector.ToFloatVector().Normalized();
             _beamTransform = GetTransformMatrix(beamVector, beamVector.X != 0 || beamVector.Z != 0 ? Vector3.UnitY : Vector3.UnitX);
             _beamTransform.Row3.Y = 0.25f;
             // todo: room state
             Active = data.Active != 0;
-            _models.Add(beamInst);
             beamInst.Active = Active;
         }
 
@@ -109,7 +107,9 @@ namespace MphRead.Entities
             ModelInstance beamInst = Read.GetModelInstance(name, firstHunt: true);
             Vector3 beamVector = data.BeamVector.ToFloatVector().Normalized();
             _beamTransform = GetTransformMatrix(beamVector, beamVector.X != 0 || beamVector.Z != 0 ? Vector3.UnitY : Vector3.UnitX);
-            beamInst.SetTexcoordAnim(-1); // the game doesn't enable this animation
+            // the game doesn't enable the texcoord animation
+            beamInst.SetAnimation(-1);
+            beamInst.SetAnimation(0, 0, SetFlags.Node | SetFlags.Material | SetFlags.Texture);
             _models.Add(beamInst);
         }
 

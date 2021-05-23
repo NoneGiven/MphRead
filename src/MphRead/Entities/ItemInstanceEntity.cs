@@ -25,8 +25,7 @@ namespace MphRead.Entities
         public ItemInstanceEntity(ItemInstanceEntityData data) : base(0.35f, Vector3.UnitY, 0, 0, EntityType.ItemInstance)
         {
             Position = data.Position.AddY(0.65f);
-            ModelInstance inst = Read.GetModelInstance(Metadata.Items[(int)data.ItemType]);
-            _models.Add(inst);
+            SetUpModel(Metadata.Items[(int)data.ItemType]);
             ItemType = data.ItemType;
         }
 
@@ -74,8 +73,7 @@ namespace MphRead.Entities
             // note: the actual height at creation is 1.0f greater than the spawner's,
             // but 0.5f is subtracted when drawing (after the floating calculation)
             Position = data.Position.AddY(0.5f);
-            ModelInstance inst = Read.GetModelInstance(Metadata.FhItems[(int)data.ItemType], firstHunt: true);
-            _models.Add(inst);
+            SetUpModel(Metadata.FhItems[(int)data.ItemType], firstHunt: true);
         }
     }
 }
