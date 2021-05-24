@@ -262,7 +262,7 @@ namespace MphRead.Utility
                 TriggerFlags flags = TriggerFlags.None;
                 if (subtype != FhTriggerType.Threshold)
                 {
-                    if (fhFlags.HasFlag(FhTriggerFlags.Beam))
+                    if (fhFlags.TestFlag(FhTriggerFlags.Beam))
                     {
                         flags |= TriggerFlags.PowerBeam;
                         flags |= TriggerFlags.VoltDriver;
@@ -273,11 +273,11 @@ namespace MphRead.Utility
                         flags |= TriggerFlags.Magmaul;
                         flags |= TriggerFlags.ShockCoil;
                     }
-                    if (fhFlags.HasFlag(FhTriggerFlags.PlayerBiped))
+                    if (fhFlags.TestFlag(FhTriggerFlags.PlayerBiped))
                     {
                         flags |= TriggerFlags.PlayerBiped;
                     }
-                    if (fhFlags.HasFlag(FhTriggerFlags.PlayerAlt))
+                    if (fhFlags.TestFlag(FhTriggerFlags.PlayerAlt))
                     {
                         flags |= TriggerFlags.PlayerAlt;
                     }
@@ -707,18 +707,18 @@ namespace MphRead.Utility
                 FhTriggerFlags flags = FhTriggerFlags.None;
                 if (subtype == TriggerType.Normal)
                 {
-                    if (mphFlags.HasFlag(TriggerFlags.PowerBeam) || mphFlags.HasFlag(TriggerFlags.VoltDriver)
-                        || mphFlags.HasFlag(TriggerFlags.Missile) || mphFlags.HasFlag(TriggerFlags.Battlehammer)
-                        || mphFlags.HasFlag(TriggerFlags.Imperialist) || mphFlags.HasFlag(TriggerFlags.Judicator)
-                        || mphFlags.HasFlag(TriggerFlags.ShockCoil) || mphFlags.HasFlag(TriggerFlags.ShockCoil))
+                    if (mphFlags.TestFlag(TriggerFlags.PowerBeam) || mphFlags.TestFlag(TriggerFlags.VoltDriver)
+                        || mphFlags.TestFlag(TriggerFlags.Missile) || mphFlags.TestFlag(TriggerFlags.Battlehammer)
+                        || mphFlags.TestFlag(TriggerFlags.Imperialist) || mphFlags.TestFlag(TriggerFlags.Judicator)
+                        || mphFlags.TestFlag(TriggerFlags.ShockCoil) || mphFlags.TestFlag(TriggerFlags.ShockCoil))
                     {
                         flags |= FhTriggerFlags.Beam;
                     }
-                    if (mphFlags.HasFlag(TriggerFlags.PlayerBiped))
+                    if (mphFlags.TestFlag(TriggerFlags.PlayerBiped))
                     {
                         flags |= FhTriggerFlags.PlayerBiped;
                     }
-                    if (mphFlags.HasFlag(TriggerFlags.PlayerAlt))
+                    if (mphFlags.TestFlag(TriggerFlags.PlayerAlt))
                     {
                         flags |= FhTriggerFlags.PlayerAlt;
                     }

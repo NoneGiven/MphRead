@@ -56,7 +56,7 @@ namespace MphRead.Utility
 
         private bool Check(CollisionFlags flag)
         {
-            return Flags.HasFlag(flag);
+            return Flags.TestFlag(flag);
         }
 
         private void Update(CollisionFlags flag, bool value)

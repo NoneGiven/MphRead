@@ -425,9 +425,9 @@ namespace MphRead.Testing
         // model draw calls in draw_player
         public static void TestLogic2(CPlayer player, int playerId)
         {
-            if (!player.MoreFlags.HasFlag(MoreFlags.HideModel))
+            if (!player.MoreFlags.TestFlag(MoreFlags.HideModel))
             {
-                if (player.Hunter == Hunter.Spire && player.MoreFlags.HasFlag(MoreFlags.AltFormAttack))
+                if (player.Hunter == Hunter.Spire && player.MoreFlags.TestFlag(MoreFlags.AltFormAttack))
                 {
                     CModelInitializeAnimationData(player.Model);
                 }
@@ -441,7 +441,7 @@ namespace MphRead.Testing
                         || player.Field550 < player.Field46C
                         || _mem20DA5D0 != 0
                     );
-                    if (player.SomeFlags.HasFlag(SomeFlags.AltForm))
+                    if (player.SomeFlags.TestFlag(SomeFlags.AltForm))
                     {
                         if (player.Hunter == Hunter.Kanden)
                         {
@@ -451,7 +451,7 @@ namespace MphRead.Testing
                         }
                         else if (player.Hunter == Hunter.Spire)
                         {
-                            if (player.MoreFlags.HasFlag(MoreFlags.AltFormAttack))
+                            if (player.MoreFlags.TestFlag(MoreFlags.AltFormAttack))
                             {
                                 CModelInitializeAnimationData(player.Model);
                                 CNodeAnimationSetData(player.Model.Model, UIntPtr.Zero);
@@ -502,7 +502,7 @@ namespace MphRead.Testing
                             Matrix3 transform = Matrix.GetTransform3(player.Field64, player.FieldB4);
                             var matrix = new Matrix4x3(transform.Row0, transform.Row1, transform.Row2, new Vector3());
                             CModelDraw(player.Gun, matrix);
-                            if (player.SomeFlags.HasFlag(SomeFlags.DrawGunSmoke))
+                            if (player.SomeFlags.TestFlag(SomeFlags.DrawGunSmoke))
                             {
                                 CModelDraw(player.GunSmoke, matrix);
                             }

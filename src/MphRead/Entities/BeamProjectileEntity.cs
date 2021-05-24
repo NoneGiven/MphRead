@@ -98,12 +98,12 @@ namespace MphRead.Entities
                 return false;
             }
             Lifespan -= scene.FrameTime;
-            if (Flags.HasFlag(BeamFlags.Collided))
+            if (Flags.TestFlag(BeamFlags.Collided))
             {
                 return true;
             }
             bool firstFrame = Age == 0;
-            if (Flags.HasFlag(BeamFlags.Continuous) && Age > 0)
+            if (Flags.TestFlag(BeamFlags.Continuous) && Age > 0)
             {
                 // avoid any frame time issues by just getting rid of continuous beams as soon as they're no longer being replaced
                 // --> in game they stick around for a frame or two, but their lifespan will have already made it so they can't interact
@@ -122,7 +122,7 @@ namespace MphRead.Entities
                 }
                 PastPositions[0] = Position;
             }
-            if (Flags.HasFlag(BeamFlags.Homing) && Flags.HasFlag(BeamFlags.Continuous))
+            if (Flags.TestFlag(BeamFlags.Homing) && Flags.TestFlag(BeamFlags.Continuous))
             {
                 if (Target != null)
                 {
@@ -149,12 +149,12 @@ namespace MphRead.Entities
                 }
             }
             // todo: beam SFX, node refs
-            if (!Flags.HasFlag(BeamFlags.Continuous) || firstFrame)
+            if (!Flags.TestFlag(BeamFlags.Continuous) || firstFrame)
             {
                 CheckCollision(scene);
             }
             // btodo: target/homing stuff
-            if (Flags.HasFlag(BeamFlags.HasModel))
+            if (Flags.TestFlag(BeamFlags.HasModel))
             {
                 UpdateAnimFrames(_models[0], scene);
             }
@@ -219,7 +219,7 @@ namespace MphRead.Entities
                     }
                 }
             }
-            if (Flags.HasFlag(BeamFlags.SurfaceCollision))
+            if (Flags.TestFlag(BeamFlags.SurfaceCollision))
             {
                 // btodo: collide with doors and force fields
                 CollisionResult colRes = default;
@@ -256,12 +256,12 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    bool reflected = anyRes.Flags.HasFlag(CollisionFlags.ReflectBeams);
+                    bool reflected = anyRes.Flags.TestFlag(CollisionFlags.ReflectBeams);
                     // btodo: if colliding with platform or object, check beam reflection
-                    if ((!Flags.HasFlag(BeamFlags.Ricochet) && !reflected)
+                    if ((!Flags.TestFlag(BeamFlags.Ricochet) && !reflected)
                         || DrawFuncId == 8 || anyRes.Terrain >= Terrain.Acid)
                     {
-                        if (!noColEff || Flags.HasFlag(BeamFlags.ForceEffect))
+                        if (!noColEff || Flags.TestFlag(BeamFlags.ForceEffect))
                         {
                             bool noSplat = anyRes.Terrain == Terrain.Lava; // btodo: or if entity collision
                             SpawnCollisionEffect(anyRes, noSplat, scene);
@@ -351,14 +351,14 @@ namespace MphRead.Entities
                     _ricochetEquip.Beams = Equip.Beams;
                     _ricochetEquip.Weapon = RicochetWeapon;
                     BeamSpawnFlags flags = BeamSpawnFlags.None;
-                    if (Flags.HasFlag(BeamFlags.Charged))
+                    if (Flags.TestFlag(BeamFlags.Charged))
                     {
                         flags |= BeamSpawnFlags.Charged;
                     }
                     Spawn(Owner, _ricochetEquip, colRes.Position, spawnDir, flags, scene);
                 }
             }
-            if (!Flags.HasFlag(BeamFlags.Continuous))
+            if (!Flags.TestFlag(BeamFlags.Continuous))
             {
                 Flags |= BeamFlags.Collided;
                 Lifespan = 4 * (1 / 30f); // todo: frame time stuff
@@ -439,7 +439,7 @@ namespace MphRead.Entities
         // Power Beam
         private void Draw00(Scene scene)
         {
-            if (!Flags.HasFlag(BeamFlags.Collided))
+            if (!Flags.TestFlag(BeamFlags.Collided))
             {
                 scene.AddSingleParticle(SingleType.Fuzzball, Position, Color, alpha: 1, scale: 1 / 4f);
             }
@@ -461,7 +461,7 @@ namespace MphRead.Entities
         // non-affinity Judicator
         private void Draw03(Scene scene)
         {
-            if (!Flags.HasFlag(BeamFlags.Collided))
+            if (!Flags.TestFlag(BeamFlags.Collided))
             {
                 base.GetDrawInfo(scene);
             }
@@ -471,7 +471,7 @@ namespace MphRead.Entities
         // enemy tear/Judicator
         private void Draw06(Scene scene)
         {
-            if (!Flags.HasFlag(BeamFlags.Collided))
+            if (!Flags.TestFlag(BeamFlags.Collided))
             {
                 scene.AddSingleParticle(SingleType.Fuzzball, Position, Vector3.One, alpha: 1, scale: 1 / 4f);
             }
@@ -481,7 +481,7 @@ namespace MphRead.Entities
         // Missile
         private void Draw07(Scene scene)
         {
-            if (!Flags.HasFlag(BeamFlags.Collided))
+            if (!Flags.TestFlag(BeamFlags.Collided))
             {
                 scene.AddSingleParticle(SingleType.Fuzzball, Position, Vector3.One, alpha: 1, scale: 1 / 4f);
             }
@@ -491,7 +491,7 @@ namespace MphRead.Entities
         // Shock Coil
         private void Draw09(Scene scene)
         {
-            if (!Flags.HasFlag(BeamFlags.Collided))
+            if (!Flags.TestFlag(BeamFlags.Collided))
             {
                 if (Target != null)
                 {
@@ -514,7 +514,7 @@ namespace MphRead.Entities
         // green energy beam
         private void Draw17(Scene scene)
         {
-            if (!Flags.HasFlag(BeamFlags.Collided))
+            if (!Flags.TestFlag(BeamFlags.Collided))
             {
                 base.GetDrawInfo(scene);
             }
@@ -689,12 +689,12 @@ namespace MphRead.Entities
 
         private static BeamProjectileEntity ChooseBeamSlot(EquipInfo equip, EntityBase owner)
         {
-            if (equip.Weapon.Flags.HasFlag(WeaponFlags.Continuous))
+            if (equip.Weapon.Flags.TestFlag(WeaponFlags.Continuous))
             {
                 for (int i = 0; i < equip.Beams.Length; i++)
                 {
                     BeamProjectileEntity beam = equip.Beams[i];
-                    if (beam.Flags.HasFlag(BeamFlags.Continuous) && beam.WeaponType == equip.Weapon.WeaponType
+                    if (beam.Flags.TestFlag(BeamFlags.Continuous) && beam.WeaponType == equip.Weapon.WeaponType
                         && beam.Owner == owner && beam.Lifespan < equip.Weapon.UnchargedLifespan)
                     {
                         return beam;
@@ -708,7 +708,7 @@ namespace MphRead.Entities
                 {
                     return beam;
                 }
-                if (beam.Flags.HasFlag(BeamFlags.Continuous) && beam.WeaponType == equip.Weapon.WeaponType
+                if (beam.Flags.TestFlag(BeamFlags.Continuous) && beam.WeaponType == equip.Weapon.WeaponType
                     && beam.Owner == owner && beam.Lifespan < equip.Weapon.UnchargedLifespan)
                 {
                     return beam;
@@ -722,9 +722,9 @@ namespace MphRead.Entities
             WeaponInfo weapon = equip.Weapon;
             bool charged = false;
             float chargePct = 0;
-            if (weapon.Flags.HasFlag(WeaponFlags.CanCharge))
+            if (weapon.Flags.TestFlag(WeaponFlags.CanCharge))
             {
-                if (weapon.Flags.HasFlag(WeaponFlags.PartialCharge))
+                if (weapon.Flags.TestFlag(WeaponFlags.PartialCharge))
                 {
                     if (equip.ChargeLevel >= weapon.MinCharge)
                     {
@@ -743,7 +743,7 @@ namespace MphRead.Entities
                 return chargePct <= 0 ? unchargedAmt : minChargeAmt + ((fullChargeAmt - minChargeAmt) * chargePct);
             }
             // btodo: calculate cost, Shock Coil frame stuff, pointer to ammo, return false if not enough
-            if (!spawnFlags.HasFlag(BeamSpawnFlags.NoMuzzle))
+            if (!spawnFlags.TestFlag(BeamSpawnFlags.NoMuzzle))
             {
                 byte effectId = weapon.MuzzleEffects[charged ? 1 : 0];
                 if (effectId != 255)
@@ -763,8 +763,8 @@ namespace MphRead.Entities
                 return;
             }
 
-            bool instant = (charged && weapon.Flags.HasFlag(WeaponFlags.InstantCharged))
-                || (!charged && weapon.Flags.HasFlag(WeaponFlags.InstantUncharged));
+            bool instant = (charged && weapon.Flags.TestFlag(WeaponFlags.InstantCharged))
+                || (!charged && weapon.Flags.TestFlag(WeaponFlags.InstantUncharged));
 
             BeamFlags flags = BeamFlags.None;
             float speed = GetAmount(weapon.UnchargedSpeed, weapon.MinChargeSpeed, weapon.ChargedSpeed) / 4096f / 2; // todo: FPS stuff
@@ -778,32 +778,32 @@ namespace MphRead.Entities
             {
                 flags |= BeamFlags.Homing;
             }
-            if (charged || spawnFlags.HasFlag(BeamSpawnFlags.Charged))
+            if (charged || spawnFlags.TestFlag(BeamSpawnFlags.Charged))
             {
                 flags |= BeamFlags.Charged;
             }
-            if ((charged && weapon.Flags.HasFlag(WeaponFlags.RicochetCharged))
-                || (!charged && weapon.Flags.HasFlag(WeaponFlags.RicochetUncharged)))
+            if ((charged && weapon.Flags.TestFlag(WeaponFlags.RicochetCharged))
+                || (!charged && weapon.Flags.TestFlag(WeaponFlags.RicochetUncharged)))
             {
                 flags |= BeamFlags.Ricochet;
             }
-            if ((charged && weapon.Flags.HasFlag(WeaponFlags.SelfDamageCharged))
-                || (!charged && weapon.Flags.HasFlag(WeaponFlags.SelfDamageUncharged)))
+            if ((charged && weapon.Flags.TestFlag(WeaponFlags.SelfDamageCharged))
+                || (!charged && weapon.Flags.TestFlag(WeaponFlags.SelfDamageUncharged)))
             {
                 flags |= BeamFlags.SelfDamage;
             }
-            if ((charged && weapon.Flags.HasFlag(WeaponFlags.ForceEffectCharged))
-                || (!charged && weapon.Flags.HasFlag(WeaponFlags.ForceEffectUncharged)))
+            if ((charged && weapon.Flags.TestFlag(WeaponFlags.ForceEffectCharged))
+                || (!charged && weapon.Flags.TestFlag(WeaponFlags.ForceEffectUncharged)))
             {
                 flags |= BeamFlags.ForceEffect;
             }
-            if ((charged && weapon.Flags.HasFlag(WeaponFlags.DestroyableCharged))
-                || (!charged && weapon.Flags.HasFlag(WeaponFlags.DestroyableUncharged)))
+            if ((charged && weapon.Flags.TestFlag(WeaponFlags.DestroyableCharged))
+                || (!charged && weapon.Flags.TestFlag(WeaponFlags.DestroyableUncharged)))
             {
                 flags |= BeamFlags.Destroyable;
             }
-            if ((charged && weapon.Flags.HasFlag(WeaponFlags.LifeDrainCharged))
-                || (!charged && weapon.Flags.HasFlag(WeaponFlags.LifeDrainUncharged)))
+            if ((charged && weapon.Flags.TestFlag(WeaponFlags.LifeDrainCharged))
+                || (!charged && weapon.Flags.TestFlag(WeaponFlags.LifeDrainUncharged)))
             {
                 flags |= BeamFlags.Destroyable;
             }
@@ -821,19 +821,19 @@ namespace MphRead.Entities
             int splashDmg = (int)GetAmount(weapon.SplashDamage, weapon.MinChargeSplashDamage, weapon.ChargedSplashDamage);
             float scale = GetAmount(weapon.UnchargedScale, weapon.MinChargeScale, weapon.ChargedScale);
             byte splashDmgType = weapon.SplashDamageTypes[charged ? 1 : 0];
-            if (spawnFlags.HasFlag(BeamSpawnFlags.DoubleDamage))
+            if (spawnFlags.TestFlag(BeamSpawnFlags.DoubleDamage))
             {
                 damage *= 2;
                 hsDamage *= 2;
                 splashDmg *= 2;
             }
-            else if (spawnFlags.HasFlag(BeamSpawnFlags.PrimeHunter))
+            else if (spawnFlags.TestFlag(BeamSpawnFlags.PrimeHunter))
             {
                 damage = 150 * damage / 100;
                 hsDamage = 150 * hsDamage / 100;
                 splashDmg = 150 * splashDmg / 100;
             }
-            if (weapon.Weapon == BeamType.Imperialist && !equip.Flags.HasFlag(EquipFlags.Zoomed))
+            if (weapon.Weapon == BeamType.Imperialist && !equip.Flags.TestFlag(EquipFlags.Zoomed))
             {
                 damage /= 2;
                 hsDamage /= 2;
@@ -845,11 +845,11 @@ namespace MphRead.Entities
             Affliction afflictions = weapon.Afflictions[charged ? 1 : 0];
             float cylinderRadius = GetAmount(weapon.UnchargedCylRadius, weapon.MinChargeCylRadius, weapon.ChargedCylRadius);
             float lifespan = GetAmount(weapon.UnchargedLifespan, weapon.MinChargeLifespan, weapon.ChargedLifespan) * (1 / 30f);
-            if (weapon.Flags.HasFlag(WeaponFlags.Continuous))
+            if (weapon.Flags.TestFlag(WeaponFlags.Continuous))
             {
                 flags |= BeamFlags.Continuous;
             }
-            if (weapon.Flags.HasFlag(WeaponFlags.SurfaceCollision))
+            if (weapon.Flags.TestFlag(WeaponFlags.SurfaceCollision))
             {
                 flags |= BeamFlags.SurfaceCollision;
             }
@@ -878,7 +878,7 @@ namespace MphRead.Entities
             for (int i = 0; i < projectiles; i++)
             {
                 BeamProjectileEntity beam = ChooseBeamSlot(equip, owner);
-                if (beam.Lifespan > 0 && !beam.Flags.HasFlag(BeamFlags.Collided))
+                if (beam.Lifespan > 0 && !beam.Flags.TestFlag(BeamFlags.Collided))
                 {
                     CollisionResult colRes = default;
                     colRes.Position = beam.Position;
@@ -997,8 +997,8 @@ namespace MphRead.Entities
                     }
                 }
                 // btodo: the latter two parts of this condition are just one code path
-                if (beam.Flags.HasFlag(BeamFlags.Homing)
-                    && weapon.Flags.HasFlag(WeaponFlags.Continuous) && beam.WeaponType == BeamType.Platform)
+                if (beam.Flags.TestFlag(BeamFlags.Homing)
+                    && weapon.Flags.TestFlag(WeaponFlags.Continuous) && beam.WeaponType == BeamType.Platform)
                 {
                     // btodo: check for entities of other types
                     // btodo: implement the "get alive" check
@@ -1010,7 +1010,7 @@ namespace MphRead.Entities
                         if (entity.Type == EntityType.Platform && entity != beam.Owner)
                         {
                             var platform = (PlatformEntity)entity;
-                            if (platform.Flags.HasFlag(PlatformFlags.BeamTarget))
+                            if (platform.Flags.TestFlag(PlatformFlags.BeamTarget))
                             {
                                 Vector3 between = platform.Position - beam.Position;
                                 float dot1 = Vector3.Dot(between, between);

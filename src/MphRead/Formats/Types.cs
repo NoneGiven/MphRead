@@ -514,7 +514,7 @@ namespace MphRead
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe bool TestFlags<T>(this T value, T flags) where T : unmanaged, Enum
+        public static unsafe bool TestFlag<T>(this T value, T flags) where T : unmanaged, Enum
         {
             if (sizeof(T) == 1)
             {

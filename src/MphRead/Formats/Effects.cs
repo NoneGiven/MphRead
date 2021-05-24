@@ -518,14 +518,14 @@ namespace MphRead.Effects
         {
             int drawId;
             int setVecsId;
-            if (flags.HasFlag(EffElemFlags.UseMesh))
+            if (flags.TestFlag(EffElemFlags.UseMesh))
             {
                 drawId = 7;
                 setVecsId = (drawType == 3 ? 4 : 5);
             }
             else
             {
-                bool alternate = flags.HasFlag(EffElemFlags.UseTransform);
+                bool alternate = flags.TestFlag(EffElemFlags.UseTransform);
                 switch (drawType)
                 {
                 case 1:
@@ -1147,7 +1147,7 @@ namespace MphRead.Effects
                 DrawNode = true;
                 Color = new Vector3(Red, Green, Blue);
                 Vector4 ev4;
-                if (Owner.Flags.HasFlag(EffElemFlags.UseTransform))
+                if (Owner.Flags.TestFlag(EffElemFlags.UseTransform))
                 {
                     ev4 = new Vector4(Position + Owner.Position, 1);
                 }
@@ -1313,7 +1313,7 @@ namespace MphRead.Effects
                     scaleT = material.ScaleT;
                 }
                 Matrix4 transform = Matrix4.Identity;
-                if (Owner.Flags.HasFlag(EffElemFlags.UseTransform))
+                if (Owner.Flags.TestFlag(EffElemFlags.UseTransform))
                 {
                     transform = Owner.Transform;
                 }
