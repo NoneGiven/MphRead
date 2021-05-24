@@ -21,15 +21,13 @@ namespace MphRead.Entities
             _prevPos = Position;
             _volume = CollisionVolume.Move(_data.Volume, Position);
             string modelName = Metadata.JumpPads[(int)data.ModelId];
-            ModelInstance baseInst = Read.GetModelInstance(modelName);
-            _models.Add(baseInst);
-            ModelInstance beamInst = Read.GetModelInstance("JumpPad_Beam");
+            SetUpModel(modelName);
+            ModelInstance beamInst = SetUpModel("JumpPad_Beam");
             Vector3 beamVector = data.BeamVector.ToFloatVector().Normalized();
             _beamTransform = GetTransformMatrix(beamVector, beamVector.X != 0 || beamVector.Z != 0 ? Vector3.UnitY : Vector3.UnitX);
             _beamTransform.Row3.Y = 0.25f;
             // todo: room state
             Active = data.Active != 0;
-            _models.Add(beamInst);
             beamInst.Active = Active;
         }
 
@@ -103,14 +101,14 @@ namespace MphRead.Entities
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _volume = CollisionVolume.Move(_data.ActiveVolume, Position);
             string name = data.ModelId == 1 ? "balljump" : "jumppad_base";
-            ModelInstance baseInst = Read.GetModelInstance(name, firstHunt: true);
-            _models.Add(baseInst);
+            SetUpModel(name, firstHunt: true);
             name = data.ModelId == 1 ? "balljump_ray" : "jumppad_ray";
-            ModelInstance beamInst = Read.GetModelInstance(name, firstHunt: true);
+            ModelInstance beamInst = SetUpModel(name, firstHunt: true);
             Vector3 beamVector = data.BeamVector.ToFloatVector().Normalized();
             _beamTransform = GetTransformMatrix(beamVector, beamVector.X != 0 || beamVector.Z != 0 ? Vector3.UnitY : Vector3.UnitX);
-            beamInst.SetTexcoordAnim(-1); // the game doesn't enable this animation
-            _models.Add(beamInst);
+            // anitodo: what prevents the texcoord animation from playing in game?
+            beamInst.SetAnimation(-1);
+            beamInst.SetAnimation(0, 0, SetFlags.Node | SetFlags.Material | SetFlags.Texture);
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)

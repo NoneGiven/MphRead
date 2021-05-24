@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using MphRead.Effects;
 using MphRead.Entities;
 using MphRead.Export;
+using MphRead.Formats;
 using MphRead.Formats.Collision;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
@@ -101,6 +102,7 @@ namespace MphRead
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
         private readonly Dictionary<int, TextureMap> _texPalMap = new Dictionary<int, TextureMap>();
+        private readonly List<CollisionInstance> _collision = new List<CollisionInstance>();
 
         private int _shaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
@@ -150,6 +152,7 @@ namespace MphRead
         public Vector3 Light2Vector => _light2Vector;
         public Vector3 Light2Color => _light2Color;
         public IReadOnlyList<EntityBase> Entities => _entities;
+        public IReadOnlyList<CollisionInstance> Collision => _collision;
         public int ActiveCutscene => _activeCutscene;
         // todo: disallow if camera roll is not zero?
         public bool AllowCameraMovement => _activeCutscene == -1 || (_frameAdvanceOn && !_advanceOneFrame);
@@ -279,6 +282,16 @@ namespace MphRead
             _entities.Remove(entity);
         }
 
+        public void AddCollision(CollisionInstance inst)
+        {
+            _collision.Add(inst);
+        }
+
+        public void RemoveCollision(CollisionInstance inst)
+        {
+            _collision.Remove(inst);
+        }
+
         public void OnLoad()
         {
             GL.ClearColor(_clearColor);
@@ -287,6 +300,7 @@ namespace MphRead
             GL.DepthFunc(DepthFunction.Lequal);
             InitShaders();
             AllocateEffects();
+            CollisionDetection.Init();
             for (int i = 0; i < _renderItemAlloc; i++)
             {
                 _freeRenderItems.Enqueue(new RenderItem());
@@ -1578,9 +1592,12 @@ namespace MphRead
                         );
                         if (element.Flags.HasFlag(EffElemFlags.CheckCollision))
                         {
-                            // ptodo: collision check between previous and new positions
-                            // --> set position to intersection point
-                            //particle.ExpirationTime = _elapsedTime;
+                            CollisionResult res = default;
+                            if (CollisionDetection.CheckBetweenPoints(prevPos, particle.Position, TestFlags.None, this, ref res))
+                            {
+                                particle.Position = res.Position;
+                                particle.ExpirationTime = _elapsedTime;
+                            }
                         }
                     }
                     else
@@ -3214,7 +3231,7 @@ namespace MphRead
         {
             Console.Clear();
             Console.Write("Enter camera position: ");
-            string[] input = Console.ReadLine().Trim().Split(' ');
+            string[] input = Console.ReadLine().Trim().Replace(",", "").Split(' ');
             float x = 0;
             float y = 0;
             float z = 0;
@@ -3503,9 +3520,9 @@ namespace MphRead
             }
             else if (entity is ObjectEntity obj)
             {
-                if (obj.Data.EffectId != 0)
+                if (obj.Data.EffectId > 0)
                 {
-                    _sb.Append($" ({obj.Data.EffectId}, {Metadata.Effects[(int)obj.Data.EffectId].Name})");
+                    _sb.Append($" ({obj.Data.EffectId}, {Metadata.Effects[obj.Data.EffectId].Name})");
                 }
             }
             else if (entity is CameraSequenceEntity cam)
@@ -3523,14 +3540,17 @@ namespace MphRead
             ModelInstance? inst = Selection.Instance;
             Debug.Assert(inst != null);
             _sb.AppendLine();
-            _sb.AppendLine($"Model: {inst.Model.Name}, Scale: {inst.Model.Scale.X}, Active: {YesNo(inst.Active)}," +
-                $"{(inst.IsPlaceholder ? " Placeholder" : "")}");
+            _sb.AppendLine($"Model: {inst.Model.Name}, Scale: {inst.Model.Scale.X}, Active: {YesNo(inst.Active)}" +
+                $"{(inst.IsPlaceholder ? ", Placeholder" : "")}");
             _sb.AppendLine($"Nodes {inst.Model.Nodes.Count}, Meshes {inst.Model.Meshes.Count}, Materials {inst.Model.Materials.Count}," +
                 $" Textures {inst.Model.Recolors[0].Textures.Count}, Palettes {inst.Model.Recolors[0].Palettes.Count}");
             AnimationInfo a = inst.AnimInfo;
             AnimationGroups g = inst.Model.AnimationGroups;
-            _sb.AppendLine($"Anim: Node {a.Node.Index} / {g.Node.Count}, Material {a.Material.Index} / {g.Material.Count}," +
-                $" Texcoord {a.Texcoord.Index} / {g.Texcoord.Count}, Texture {a.Texture.Index} / {g.Texture.Count}");
+            _sb.AppendLine($"Anim: {a.Index[0]}, {a.Frame[1]}" +
+                $" (Node {(a.Node.Group?.Count > 0 ? a.NodeIndex : -1)} / {g.Node.Count}," +
+                $" Mat {(a.Material.Group?.Count > 0 ? a.MaterialIndex : -1)} / {g.Material.Count}," +
+                $" UV {(a.Texcoord.Group?.Count > 0 ? a.TexcoordIndex : -1)} / {g.Texcoord.Count}," +
+                $" Tex {(a.Texture.Group?.Count > 0 ? a.TextureIndex : -1)} / {g.Texture.Count})");
         }
 
         private void OutputGetNode()

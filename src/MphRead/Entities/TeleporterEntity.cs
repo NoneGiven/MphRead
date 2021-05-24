@@ -37,29 +37,22 @@ namespace MphRead.Entities
                 {
                     modelName = "Teleporter";
                 }
-                ModelInstance inst = Read.GetModelInstance(modelName);
-                _models.Add(inst);
+                SetUpModel(modelName);
             }
             // 0-7 = big teleporter using the corresponding artifact model
             // 8, 10, 11, 255 = small teleporter (no apparent meaning to each value beyond that)
             if (data.ArtifactId < 8)
             {
                 string name = $"Artifact0{data.ArtifactId + 1}";
-                ModelInstance inst = Read.GetModelInstance(name);
+                ModelInstance inst = SetUpModel(name);
                 inst.Active = false;
-                inst.SetNodeAnim(-1);
-                inst.SetTexcoordAnim(-1);
-                _models.Add(inst);
-                inst = Read.GetModelInstance(name);
+                inst.SetAnimation(0, AnimFlags.Paused);
+                inst = SetUpModel(name);
                 inst.Active = false;
-                inst.SetNodeAnim(-1);
-                inst.SetTexcoordAnim(-1);
-                _models.Add(inst);
-                inst = Read.GetModelInstance(name);
+                inst.SetAnimation(0, AnimFlags.Paused);
+                inst = SetUpModel(name);
                 inst.Active = false;
-                inst.SetNodeAnim(-1);
-                inst.SetTexcoordAnim(-1);
-                _models.Add(inst);
+                inst.SetAnimation(0, AnimFlags.Paused);
                 float angleY = MathHelper.DegreesToRadians(337 * (360 / 4096f));
                 float angleZ = MathHelper.DegreesToRadians(360 * (360 / 4096f));
                 Matrix4 transform = Matrix4.CreateRotationY(angleY) * Matrix4.CreateRotationZ(angleZ);

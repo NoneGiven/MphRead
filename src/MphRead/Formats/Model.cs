@@ -10,181 +10,230 @@ namespace MphRead
     {
         public Model Model { get; }
         public AnimationInfo AnimInfo { get; } = new AnimationInfo();
-        public AnimFlags AnimFlags { get; private set; }
-        public int MaxAnimFrame { get; private set; }
         public bool IsPlaceholder { get; set; }
         public bool Active { get; set; } = true;
 
         public ModelInstance(Model model)
         {
             Model = model;
-            // todo: once we have proper animation selection, this can be removed
-            if (Model.AnimationGroups.Node.Count > 0)
-            {
-                AnimInfo.Node.Index = 0;
-                AnimInfo.Node.Group = Model.AnimationGroups.Node[0];
-            }
-            if (Model.AnimationGroups.Material.Count > 0)
-            {
-                AnimInfo.Material.Index = 0;
-                AnimInfo.Material.Group = Model.AnimationGroups.Material[0];
-            }
-            if (Model.AnimationGroups.Texcoord.Count > 0)
-            {
-                AnimInfo.Texcoord.Index = 0;
-                AnimInfo.Texcoord.Group = Model.AnimationGroups.Texcoord[0];
-            }
-            if (Model.AnimationGroups.Texture.Count > 0)
-            {
-                AnimInfo.Texture.Index = 0;
-                AnimInfo.Texture.Group = Model.AnimationGroups.Texture[0];
-            }
         }
 
-        // sktodo: looping/reversing flags + frame selection
-        public void SetAnimation(int index, AnimFlags flags)
+        // these overloads could almost share code, but the precedence for the frame count is different
+        // -- anim2 is node > mat > tex > uv, anim1 is node > tex > uv > mat
+        public void SetAnimation(int index, AnimFlags animFlags = AnimFlags.None)
         {
-            SetNodeAnim(index);
-            SetMaterialAnim(index);
-            SetTexcoordAnim(index);
-            SetTexcoordAnim(index);
-            UpdateMaxFrame();
-            AnimFlags = flags;
+            if (Model.AnimationGroups.Any && index >= 0)
+            {
+                AnimInfo.Step[0] = 1;
+                AnimInfo.Flags[0] = animFlags;
+                AnimInfo.PrevIndex[0] = AnimInfo.Index[0];
+                AnimInfo.Index[0] = index;
+                AnimInfo.Material.Slot = 0;
+                AnimInfo.Texture.Slot = 0;
+                AnimInfo.Texcoord.Slot = 0;
+                AnimInfo.Node.Slot = 0;
+                AnimInfo.Material.Group = Model.AnimationGroups.Material[index];
+                AnimInfo.Texture.Group = Model.AnimationGroups.Texture[index];
+                AnimInfo.Texcoord.Group = Model.AnimationGroups.Texcoord[index];
+                AnimInfo.Node.Group = Model.AnimationGroups.Node[index];
+                if (AnimInfo.Node.Group.Count > 0)
+                {
+                    AnimInfo.FrameCount[0] = AnimInfo.Node.Group.FrameCount;
+                }
+                else if (AnimInfo.Material.Group.Count > 0)
+                {
+                    AnimInfo.FrameCount[0] = AnimInfo.Material.Group.FrameCount;
+                }
+                else if (AnimInfo.Texture.Group.Count > 0)
+                {
+                    AnimInfo.FrameCount[0] = AnimInfo.Texture.Group.FrameCount;
+                }
+                else if (AnimInfo.Texcoord.Group.Count > 0)
+                {
+                    AnimInfo.FrameCount[0] = AnimInfo.Texcoord.Group.FrameCount;
+                }
+                AnimInfo.Frame[0] = animFlags.HasFlag(AnimFlags.Reverse) ? AnimInfo.FrameCount[0] - 1 : 0;
+            }
+            else
+            {
+                AnimInfo.Material.Group = null;
+                AnimInfo.Texture.Group = null;
+                AnimInfo.Texcoord.Group = null;
+                AnimInfo.Node.Group = null;
+            }
         }
 
-        private void UpdateMaxFrame()
+        public void SetAnimation(int index, int slot, SetFlags setFlags, AnimFlags animFlags = AnimFlags.None)
         {
-            if (AnimInfo.Node.Group != null)
+            if (Model.AnimationGroups.Any && index >= 0)
             {
-                MaxAnimFrame = AnimInfo.Node.Group.FrameCount;
+                AnimInfo.Step[slot] = 1;
+                AnimInfo.Flags[slot] = animFlags;
+                AnimInfo.PrevIndex[slot] = AnimInfo.Index[slot];
+                AnimInfo.Index[slot] = index;
+                if (setFlags.HasFlag(SetFlags.Material))
+                {
+                    AnimInfo.Material.Slot = slot;
+                    AnimInfo.Material.Group = Model.AnimationGroups.Material[index];
+                    if (AnimInfo.Material.Group.Count > 0)
+                    {
+                        AnimInfo.FrameCount[slot] = AnimInfo.Material.Group.FrameCount;
+                    }
+                }
+                if (setFlags.HasFlag(SetFlags.Texcoord))
+                {
+                    AnimInfo.Texcoord.Slot = slot;
+                    AnimInfo.Texcoord.Group = Model.AnimationGroups.Texcoord[index];
+                    if (AnimInfo.Texcoord.Group.Count > 0)
+                    {
+                        AnimInfo.FrameCount[slot] = AnimInfo.Texcoord.Group.FrameCount;
+                    }
+                }
+                if (setFlags.HasFlag(SetFlags.Texture))
+                {
+                    AnimInfo.Texture.Slot = slot;
+                    AnimInfo.Texture.Group = Model.AnimationGroups.Texture[index];
+                    if (AnimInfo.Texture.Group.Count > 0)
+                    {
+                        AnimInfo.FrameCount[slot] = AnimInfo.Texture.Group.FrameCount;
+                    }
+                }
+                if (setFlags.HasFlag(SetFlags.Node))
+                {
+                    AnimInfo.Node.Slot = slot;
+                    AnimInfo.Node.Group = Model.AnimationGroups.Node[index];
+                    if (AnimInfo.Node.Group.Count > 0)
+                    {
+                        AnimInfo.FrameCount[slot] = AnimInfo.Node.Group.FrameCount;
+                    }
+                }
+                AnimInfo.Frame[slot] = animFlags.HasFlag(AnimFlags.Reverse) ? AnimInfo.FrameCount[slot] - 1 : 0;
             }
-            else if (AnimInfo.Material.Group != null)
+            else
             {
-                MaxAnimFrame = AnimInfo.Material.Group.FrameCount;
-            }
-            else if (AnimInfo.Texture.Group != null)
-            {
-                MaxAnimFrame = AnimInfo.Texture.Group.FrameCount;
-            }
-            else if (AnimInfo.Texcoord.Group != null)
-            {
-                MaxAnimFrame = AnimInfo.Texcoord.Group.FrameCount;
+                AnimInfo.Material.Group = null;
+                AnimInfo.Texture.Group = null;
+                AnimInfo.Texcoord.Group = null;
+                AnimInfo.Node.Group = null;
             }
         }
 
-        // sktodo: either remove these or make them update the MaxFrame etc.
+        public void UpdateAnimFrames()
+        {
+            if (AnimInfo.Node.Slot == 0 || AnimInfo.Material.Slot == 0 || AnimInfo.Texcoord.Slot == 0 || AnimInfo.Texture.Slot == 0)
+            {
+                UpdateAnimFrames(slot: 0);
+            }
+            if (AnimInfo.Node.Slot == 1 || AnimInfo.Material.Slot == 1 || AnimInfo.Texcoord.Slot == 1 || AnimInfo.Texture.Slot == 1)
+            {
+                UpdateAnimFrames(slot: 1);
+            }
+        }
+
+        private void UpdateAnimFrames(int slot)
+        {
+            AnimFlags flags = AnimInfo.Flags[slot];
+            int frame = AnimInfo.Frame[slot];
+            int step = AnimInfo.Step[slot];
+            int frameCount = AnimInfo.FrameCount[slot];
+            if (!flags.HasFlag(AnimFlags.Paused) && !flags.HasFlag(AnimFlags.Ended))
+            {
+                if (flags.HasFlag(AnimFlags.PingPong))
+                {
+                    if (flags.HasFlag(AnimFlags.Reverse))
+                    {
+                        if (frame <= step)
+                        {
+                            AnimInfo.Frame[slot] = step - frame;
+                            AnimInfo.Flags[slot] ^= AnimFlags.Reverse;
+                        }
+                        else
+                        {
+                            AnimInfo.Frame[slot] = frame - step;
+                        } 
+                    }
+                    else
+                    {
+                        frame += step;
+                        AnimInfo.Frame[slot] = frame;
+                        if (frame >= frameCount - 1)
+                        {
+                            AnimInfo.Frame[slot] = 2 * frameCount - frame - 2;
+                            AnimInfo.Flags[slot] ^= AnimFlags.Reverse;
+                        }
+                    }
+                }
+                else if (flags.HasFlag(AnimFlags.Reverse))
+                {
+                    if (frame > step)
+                    {
+                        AnimInfo.Frame[slot] = frame - step;
+                    }
+                    else if (flags.HasFlag(AnimFlags.NoLoop))
+                    {
+                        AnimInfo.Frame[slot] = 0;
+                        AnimInfo.Flags[slot] |= AnimFlags.Ended;
+                    }
+                    else if (frame == step)
+                    {
+                        AnimInfo.Frame[slot] = 0;
+                    }
+                    else
+                    {
+                        AnimInfo.Frame[slot] = frameCount - (step - frame);
+                    }
+                }
+                else
+                {
+                    frame += step;
+                    AnimInfo.Frame[slot] = frame;
+                    if (frame >= frameCount - 1)
+                    {
+                        if (flags.HasFlag(AnimFlags.NoLoop))
+                        {
+                            AnimInfo.Frame[slot] = frameCount - 1;
+                            AnimInfo.Flags[slot] |= AnimFlags.Ended;
+                        }
+                        else if (frame >= frameCount)
+                        {
+                            AnimInfo.Frame[slot] = frame - frameCount;
+                        }
+                    }
+                }
+            }
+        }
+
+        // viewer manipulation only
         public void SetNodeAnim(int index)
         {
             if (index <= -1 || index >= Model.AnimationGroups.Node.Count)
             {
-                AnimInfo.Node.Index = -1;
+                AnimInfo.Index[AnimInfo.Node.Slot] = -1;
                 AnimInfo.Node.Group = null;
             }
             else
             {
-                AnimInfo.Node.Index = index;
-                AnimInfo.Node.Group = Model.AnimationGroups.Node[index];
+                SetAnimation(index, AnimInfo.Node.Slot, SetFlags.Node);
             }
-            AnimInfo.Node.CurrentFrame = 0;
         }
 
         public void SetMaterialAnim(int index)
         {
             if (index <= -1 || index >= Model.AnimationGroups.Material.Count)
             {
-                AnimInfo.Material.Index = -1;
+                AnimInfo.Index[AnimInfo.Material.Slot] = -1;
                 AnimInfo.Material.Group = null;
             }
             else
             {
-                AnimInfo.Material.Index = index;
-                AnimInfo.Material.Group = Model.AnimationGroups.Material[index];
-            }
-            AnimInfo.Material.CurrentFrame = 0;
-        }
-
-        public void SetTexcoordAnim(int index)
-        {
-            if (index <= -1 || index >= Model.AnimationGroups.Texcoord.Count)
-            {
-                AnimInfo.Texcoord.Index = -1;
-                AnimInfo.Texcoord.Group = null;
-            }
-            else
-            {
-                AnimInfo.Texcoord.Index = index;
-                AnimInfo.Texcoord.Group = Model.AnimationGroups.Texcoord[index];
-            }
-            AnimInfo.Texcoord.CurrentFrame = 0;
-        }
-
-        public void SeTextureAnim(int index)
-        {
-            if (index <= -1 || index >= Model.AnimationGroups.Texture.Count)
-            {
-                AnimInfo.Texture.Index = -1;
-                AnimInfo.Texture.Group = null;
-            }
-            else
-            {
-                AnimInfo.Texture.Index = index;
-                AnimInfo.Texture.Group = Model.AnimationGroups.Texture[index];
-            }
-            AnimInfo.Texture.CurrentFrame = 0;
-        }
-
-        public void UpdateAnimFrames()
-        {
-            if (AnimInfo.Node.Group != null)
-            {
-                AnimInfo.Node.CurrentFrame++;
-                AnimInfo.Node.CurrentFrame %= AnimInfo.Node.Group.FrameCount;
-            }
-            if (AnimInfo.Material.Group != null)
-            {
-                AnimInfo.Material.CurrentFrame++;
-                AnimInfo.Material.CurrentFrame %= AnimInfo.Material.Group.FrameCount;
-            }
-            if (AnimInfo.Texcoord.Group != null)
-            {
-                AnimInfo.Texcoord.CurrentFrame++;
-                AnimInfo.Texcoord.CurrentFrame %= AnimInfo.Texcoord.Group.FrameCount;
-            }
-            if (AnimInfo.Texture.Group != null)
-            {
-                AnimInfo.Texture.CurrentFrame++;
-                AnimInfo.Texture.CurrentFrame %= AnimInfo.Texture.Group.FrameCount;
-            }
-        }
-
-        public void UpdateAnimFrames(int frame)
-        {
-            //Debug.Assert(frame >= 0);
-            if (AnimInfo.Node.Group != null)
-            {
-                Debug.Assert(frame < AnimInfo.Node.Group.FrameCount);
-                AnimInfo.Node.CurrentFrame = frame;
-            }
-            if (AnimInfo.Material.Group != null)
-            {
-                Debug.Assert(frame < AnimInfo.Material.Group.FrameCount);
-                AnimInfo.Material.CurrentFrame = frame;
-            }
-            if (AnimInfo.Texcoord.Group != null)
-            {
-                Debug.Assert(frame < AnimInfo.Texcoord.Group.FrameCount);
-                AnimInfo.Texcoord.CurrentFrame = frame;
-            }
-            if (AnimInfo.Texture.Group != null)
-            {
-                Debug.Assert(frame < AnimInfo.Texture.Group.FrameCount);
-                AnimInfo.Texture.CurrentFrame = frame;
+                SetAnimation(index, AnimInfo.Material.Slot, SetFlags.Material);
             }
         }
     }
 
     public class AnimationGroups
     {
+        public bool Any { get; }
         public IReadOnlyList<NodeAnimationGroup> Node { get; }
         public IReadOnlyList<MaterialAnimationGroup> Material { get; }
         public IReadOnlyList<TexcoordAnimationGroup> Texcoord { get; }
@@ -197,6 +246,7 @@ namespace MphRead
             Material = animations.MaterialAnimationGroups;
             Texcoord = animations.TexcoordAnimationGroups;
             Texture = animations.TextureAnimationGroups;
+            Any = Node.Count > 0 || Material.Count > 0 || Texcoord.Count > 0 || Texture.Count > 0;
             Offsets = new AnimationOffsets(animations);
             Debug.Assert(Offsets.Node.Count >= Node.Count);
             Debug.Assert(Offsets.Material.Count >= Material.Count);
@@ -225,59 +275,70 @@ namespace MphRead
     public enum AnimFlags : ushort
     {
         None = 0x0,
-        Bit00 = 0x1,
-        Bit01 = 0x2,
-        Bit02 = 0x4,
-        Bit03 = 0x8,
-        Bit04 = 0x10,
-        Bit05 = 0x20,
-        Bit06 = 0x40,
-        Bit07 = 0x80,
-        Bit08 = 0x100,
-        Bit09 = 0x200,
-        Bit10 = 0x400,
-        Bit11 = 0x800,
-        Bit12 = 0x1000,
-        Bit13 = 0x2000,
-        Bit14 = 0x4000,
-        Bit15 = 0x8000
+        PingPong = 0x1,
+        Reverse = 0x2,
+        Paused = 0x4,
+        NoLoop = 0x8,
+        Ended = 0x10
     }
 
+    [Flags]
+    public enum SetFlags : ushort
+    {
+        None = 0x0,
+        Node = 0x2,
+        Unused = 0x4, // presumably
+        Material = 0x8,
+        Texcoord = 0x10,
+        Texture = 0x20
+    }
+
+    // anitodo: node_anim_ignore_root
     public class AnimationInfo
     {
+        public int[] Index { get; } = new int[2] { -1, -1 };
+        public int[] PrevIndex { get; } = new int[2] { -1, -1 };
+        public int[] Frame { get; } = new int[2] { 0, 0 };
+        public int[] FrameCount { get; } = new int[2] { 0, 0 };
+        public AnimFlags[] Flags { get; } = new AnimFlags[2] { AnimFlags.None, AnimFlags.None };
+        public int[] Step { get; } = new int[2] { 1, 1 };
         public NodeAnimationInfo Node { get; } = new NodeAnimationInfo();
         public MaterialAnimationInfo Material { get; } = new MaterialAnimationInfo();
         public TexcoordAnimationInfo Texcoord { get; } = new TexcoordAnimationInfo();
         public TextureAnimationInfo Texture { get; } = new TextureAnimationInfo();
+        public int NodeFrame => Frame[Node.Slot];
+        public int MaterialFrame => Frame[Material.Slot];
+        public int TextureFrame => Frame[Texture.Slot];
+        public int TexcoordFrame => Frame[Texcoord.Slot];
+        public int NodeIndex => Index[Node.Slot];
+        public int MaterialIndex => Index[Material.Slot];
+        public int TextureIndex => Index[Texture.Slot];
+        public int TexcoordIndex => Index[Texcoord.Slot];
     }
 
     // none of these setters should be called outside of ModelInstance
     public class NodeAnimationInfo
     {
-        public int Index { get; set; } = -1;
+        public int Slot { get; set; }
         public NodeAnimationGroup? Group { get; set; }
-        public int CurrentFrame { get; set; }
     }
 
     public class MaterialAnimationInfo
     {
-        public int Index { get; set; } = -1;
+        public int Slot { get; set; }
         public MaterialAnimationGroup? Group { get; set; }
-        public int CurrentFrame { get; set; }
     }
 
     public class TexcoordAnimationInfo
     {
-        public int Index { get; set; } = -1;
+        public int Slot { get; set; }
         public TexcoordAnimationGroup? Group { get; set; }
-        public int CurrentFrame { get; set; }
     }
 
     public class TextureAnimationInfo
     {
-        public int Index { get; set; } = -1;
+        public int Slot { get; set; }
         public TextureAnimationGroup? Group { get; set; }
-        public int CurrentFrame { get; set; }
     }
 
     public class Model
@@ -470,16 +531,16 @@ namespace MphRead
             return transform;
         }
 
-        public void AnimateNodes(int index, bool useNodeTransform, Matrix4 parentTansform, Vector3 scale, NodeAnimationInfo info)
+        public void AnimateNodes(int index, bool useNodeTransform, Matrix4 parentTansform, Vector3 scale, AnimationInfo info)
         {
             for (int i = index; i != -1;)
             {
                 Node node = Nodes[i];
                 Matrix4 transform = useNodeTransform ? node.Transform : Matrix4.Identity;
-                NodeAnimationGroup? group = info.Group;
+                NodeAnimationGroup? group = info.Node.Group;
                 if (group != null && group.Animations.TryGetValue(node.Name, out NodeAnimation animation))
                 {
-                    transform = AnimateNode(group, animation, scale, info.CurrentFrame);
+                    transform = AnimateNode(group, animation, scale, info.NodeFrame);
                     if (node.ParentIndex != -1)
                     {
                         transform *= Nodes[node.ParentIndex].Animation;
@@ -521,7 +582,7 @@ namespace MphRead
             return nodeMatrix;
         }
 
-        public void AnimateMaterials(MaterialAnimationInfo info)
+        public void AnimateMaterials(AnimationInfo info)
         {
             for (int i = 0; i < Materials.Count; i++)
             {
@@ -530,10 +591,10 @@ namespace MphRead
                 material.CurrentAmbient = material.Ambient / 31.0f;
                 material.CurrentSpecular = material.Specular / 31.0f;
                 material.CurrentAlpha = material.Alpha / 31.0f;
-                MaterialAnimationGroup? group = info.Group;
+                MaterialAnimationGroup? group = info.Material.Group;
                 if (group != null && group.Animations.TryGetValue(material.Name, out MaterialAnimation animation))
                 {
-                    int currentFrame = info.CurrentFrame;
+                    int currentFrame = info.MaterialFrame;
                     if (!material.AnimationFlags.HasFlag(MatAnimFlags.DisableColor))
                     {
                         float diffuseR = InterpolateAnimation(group.Colors, animation.DiffuseLutIndexR, currentFrame,
@@ -590,19 +651,19 @@ namespace MphRead
             return textureMatrix;
         }
 
-        public void AnimateTextures(TextureAnimationInfo info)
+        public void AnimateTextures(AnimationInfo info)
         {
             for (int i = 0; i < Materials.Count; i++)
             {
                 Material material = Materials[i];
                 material.CurrentTextureId = material.TextureId;
                 material.CurrentPaletteId = material.PaletteId;
-                TextureAnimationGroup? group = info.Group;
+                TextureAnimationGroup? group = info.Texture.Group;
                 if (group != null && group.Animations.TryGetValue(material.Name, out TextureAnimation animation))
                 {
                     for (int j = animation.StartIndex; j < animation.StartIndex + animation.Count; j++)
                     {
-                        if (group.FrameIndices[j] == info.CurrentFrame)
+                        if (group.FrameIndices[j] == info.TextureFrame)
                         {
                             material.CurrentTextureId = group.TextureIds[j];
                             material.CurrentPaletteId = group.PaletteIds[j];

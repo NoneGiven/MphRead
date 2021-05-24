@@ -24,6 +24,7 @@ namespace MphRead.Entities
         {
             ModelInstance inst = Read.GetRoomModelInstance(name);
             _models.Add(inst);
+            inst.SetAnimation(0);
             inst.Model.FilterNodes(layerMask);
             if (meta.Name == "UNIT2_C6")
             {
@@ -35,7 +36,7 @@ namespace MphRead.Entities
             _nodeData = nodeData;
             if (nodeData != null)
             {
-                // using cached instance messes with placeholders since room entity doesn't update its instances normally
+                // using cached instance messes with placeholders since the room entity doesn't update its instances normally
                 _models.Add(Read.GetModelInstance("pick_wpn_missile", noCache: true));
                 _emptyMatrixStack = new float[0];
             }
@@ -89,6 +90,16 @@ namespace MphRead.Entities
             _portals = portals;
             _forceFields = forceFields;
             SetCollision(collision);
+        }
+
+        public override void Initialize(Scene scene)
+        {
+            base.Initialize(scene);
+            if (_collision.Count > 0)
+            {
+                Debug.Assert(_collision.Count == 1);
+                scene.AddCollision(_collision[0]);
+            }
         }
 
         public override void GetDrawInfo(Scene scene)

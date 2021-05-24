@@ -1,11 +1,34 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.InteropServices;
 
 namespace MphRead.Utility
 {
     public static class Parser
     {
+        public static IReadOnlyList<T> ParseBytes<T>(int size, int count, byte[] array) where T : struct
+        {
+            Debug.Assert(size == Marshal.SizeOf<T>());
+            var results = new List<T>();
+            var bytes = new ReadOnlySpan<byte>(array);
+            Debug.Assert(bytes.Length == count * size);
+            for (int i = 0; i < count; i++)
+            {
+                int start = i * size;
+                int end = start + size;
+                results.Add(Read.ReadStruct<T>(bytes[start..end]));
+            }
+            return results;
+        }
+
+        public static void ParseFloat(ulong value)
+        {
+            double d = BitConverter.ToDouble(BitConverter.GetBytes(value), 0);
+            Console.WriteLine($"{d} ({d / 4096f})");
+        }
+
         private enum ThingType
         {
             General,

@@ -143,13 +143,13 @@ namespace MphRead
         public readonly byte Padding25;
         public readonly ushort Padding26;
         public readonly uint EffectFlags;
-        public readonly uint ModelId;
+        public readonly int ModelId;
         public readonly short LinkedEntity;
         public readonly ushort ScanId;
         public readonly short ScanMsgTarget;
         public readonly ushort Padding36;
         public readonly Message ScanMessage;
-        public readonly uint EffectId;
+        public readonly int EffectId;
         public readonly uint EffectInterval;
         public readonly uint EffectOnIntervals; // 16 bits are used
         public readonly Vector3Fx EffectPositionOffset; // maximum value for random offset

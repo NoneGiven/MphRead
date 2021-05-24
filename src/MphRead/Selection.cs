@@ -379,11 +379,23 @@ namespace MphRead
             {
                 if (control)
                 {
-                    inst.SetMaterialAnim(inst.AnimInfo.Material.Index + 1);
+                    int index = inst.AnimInfo.MaterialIndex + 1;
+                    do
+                    {
+                        inst.SetMaterialAnim(index);
+                        index++;
+                    }
+                    while (inst.AnimInfo.MaterialIndex != -1 && inst.AnimInfo.Material.Group?.Count == 0);
                 }
                 else
                 {
-                    inst.SetNodeAnim(inst.AnimInfo.Node.Index + 1);
+                    int index = inst.AnimInfo.NodeIndex + 1;
+                    do
+                    {
+                        inst.SetNodeAnim(index);
+                        index++;
+                    }
+                    while (inst.AnimInfo.NodeIndex != -1 && inst.AnimInfo.Node.Group?.Count == 0);
                 }
             }
         }
@@ -403,21 +415,31 @@ namespace MphRead
             {
                 if (control)
                 {
-                    int index = inst.AnimInfo.Material.Index - 1;
+                    int index = inst.AnimInfo.MaterialIndex - 1;
                     if (index < -1)
                     {
                         index = inst.Model.AnimationGroups.Material.Count - 1;
                     }
-                    inst.SetMaterialAnim(index);
+                    do
+                    {
+                        inst.SetMaterialAnim(index);
+                        index--;
+                    }
+                    while (inst.AnimInfo.MaterialIndex != -1 && inst.AnimInfo.Material.Group?.Count == 0);
                 }
                 else
                 {
-                    int index = inst.AnimInfo.Node.Index - 1;
+                    int index = inst.AnimInfo.NodeIndex - 1;
                     if (index < -1)
                     {
                         index = inst.Model.AnimationGroups.Node.Count - 1;
                     }
-                    inst.SetNodeAnim(index);
+                    do
+                    {
+                        inst.SetNodeAnim(index);
+                        index--;
+                    }
+                    while (inst.AnimInfo.NodeIndex != -1 && inst.AnimInfo.Node.Group?.Count == 0);
                 }
             }
         }

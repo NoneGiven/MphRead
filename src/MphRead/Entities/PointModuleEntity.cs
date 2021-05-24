@@ -16,10 +16,9 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
-            ModelInstance inst = Read.GetModelInstance("pick_morphball", firstHunt: true);
-            _models.Add(inst);
+            ModelInstance inst = SetUpModel("pick_morphball", firstHunt: true);
             Active = false;
-            _models[0].Active = false;
+            inst.Active = false;
         }
 
         public override void Initialize(Scene scene)

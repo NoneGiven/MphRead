@@ -24,8 +24,7 @@ namespace MphRead.Entities
             }
             else if (mode == GameMode.Bounty || mode == GameMode.BountyTeams)
             {
-                ModelInstance inst = Read.GetModelInstance("flagbase_cap");
-                _models.Add(inst);
+                SetUpModel("flagbase_cap");
             }
         }
 

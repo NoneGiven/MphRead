@@ -22,7 +22,7 @@ namespace MphRead.Entities
             _enabled = data.Enabled != 0;
             if (data.HasBase != 0)
             {
-                _models.Add(Read.GetModelInstance("items_base"));
+                SetUpModel("items_base");
             }
             else
             {

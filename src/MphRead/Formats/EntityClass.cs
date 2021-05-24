@@ -220,12 +220,12 @@ namespace MphRead.Editor
     {
         public byte Flags { get; set; }
         public uint EffectFlags { get; set; }
-        public uint ModelId { get; set; }
+        public int ModelId { get; set; }
         public short LinkedEntity { get; set; }
         public ushort ScanId { get; set; }
         public short ScanMsgTarget { get; set; }
         public Message ScanMessage { get; set; }
-        public uint EffectId { get; set; }
+        public int EffectId { get; set; }
         public uint EffectInterval { get; set; }
         public uint EffectOnIntervals { get; set; } // 16 bits are used
         public Vector3 EffectPositionOffset { get; set; } // maximum value for random offset

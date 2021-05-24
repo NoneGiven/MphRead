@@ -98,8 +98,11 @@ namespace MphRead.Entities
             else
             {
                 _meta = meta;
-                ModelInstance inst = Read.GetModelInstance(_meta.Name);
-                _models.Add(inst);
+                if (_meta.Lighting)
+                {
+                    _anyLighting = true;
+                }
+                ModelInstance inst = SetUpModel(_meta.Name);
                 ModelMetadata modelMeta = Metadata.ModelMetadata[_meta.Name];
                 if (modelMeta.AnimationPath != null)
                 {
@@ -112,7 +115,7 @@ namespace MphRead.Entities
                 // temporary
                 if (_meta.Name == "SyluxTurret")
                 {
-                    inst.SetNodeAnim(-1);
+                    inst.SetAnimation(-1);
                 }
             }
             _beamInterval = (int)data.BeamInterval * 2;
@@ -137,7 +140,7 @@ namespace MphRead.Entities
                 _currentAnim = -2;
                 // todo: room state for initial landed
                 // --> options are instant_wake and wake, but it seems like it should be instant_sleep?
-                SetAnimation(PlatAnimId.InstantSleep, AnimFlags.None);
+                SetPlatAnimation(PlatAnimId.InstantSleep, AnimFlags.None);
                 _animFlags |= PlatAnimFlags.Active;
             }
             else
@@ -165,11 +168,11 @@ namespace MphRead.Entities
                 {
                     if (_animFlags.HasFlag(PlatAnimFlags.Active))
                     {
-                        SetAnimation(PlatAnimId.InstantWake, AnimFlags.None);
+                        SetPlatAnimation(PlatAnimId.InstantWake, AnimFlags.None);
                     }
                     else
                     {
-                        SetAnimation(PlatAnimId.InstantSleep, AnimFlags.None);
+                        SetPlatAnimation(PlatAnimId.InstantSleep, AnimFlags.None);
                     }
                 }
             }
@@ -248,14 +251,15 @@ namespace MphRead.Entities
             }
         }
 
-        private void SetAnimation(PlatAnimId id, AnimFlags flags)
+        private void SetPlatAnimation(PlatAnimId id, AnimFlags flags)
         {
             int index = _meta.AnimationIds[(int)id];
-            SetAnimation(index, flags);
+            SetPlatAnimation(index, flags);
         }
 
-        private void SetAnimation(int index, AnimFlags flags)
+        private void SetPlatAnimation(int index, AnimFlags flags)
         {
+            _currentAnim = index;
             if (index >= 0)
             {
                 Debug.Assert(!_models[0].IsPlaceholder);
@@ -275,11 +279,11 @@ namespace MphRead.Entities
                 _stateBits |= PlatStateBits.Awake;
                 if (instant)
                 {
-                    SetAnimation(PlatAnimId.InstantWake, AnimFlags.None);
+                    SetPlatAnimation(PlatAnimId.InstantWake, AnimFlags.None);
                 }
                 else
                 {
-                    SetAnimation(PlatAnimId.Wake, AnimFlags.Bit03);
+                    SetPlatAnimation(PlatAnimId.Wake, AnimFlags.NoLoop);
                     _currentAnim = GetAnimation(PlatAnimId.InstantWake);
                 }
             }
@@ -292,11 +296,11 @@ namespace MphRead.Entities
                 _stateBits &= ~PlatStateBits.Awake;
                 if (instant)
                 {
-                    SetAnimation(PlatAnimId.InstantSleep, AnimFlags.None);
+                    SetPlatAnimation(PlatAnimId.InstantSleep, AnimFlags.None);
                 }
                 else
                 {
-                    SetAnimation(PlatAnimId.Sleep, AnimFlags.Bit03);
+                    SetPlatAnimation(PlatAnimId.Sleep, AnimFlags.NoLoop);
                     _currentAnim = GetAnimation(PlatAnimId.InstantSleep);
                 }
                 if (Flags.HasFlag(PlatformFlags.HideOnSleep))
@@ -367,7 +371,7 @@ namespace MphRead.Entities
                 {
                     isTurret = true;
                     if (_stateBits.HasFlag(PlatStateBits.Awake)
-                        && _models[0].AnimInfo.Node.Index == GetAnimation(PlatAnimId.InstantWake))
+                        && _models[0].AnimInfo.Index[0] == GetAnimation(PlatAnimId.InstantWake))
                     {
                         turretAiming = true;
                     }
@@ -460,6 +464,7 @@ namespace MphRead.Entities
                     spawnBeam = false;
                 }
             }
+            _stateBits |= PlatStateBits.Awake;
             // btodo: 0 is valid for Sylux turret missiles, but without collision handling those would eat up the effect lists
             if (spawnBeam && _animFlags.HasFlag(PlatAnimFlags.Draw) && !_animFlags.HasFlag(PlatAnimFlags.DisableReflect)
                 && _stateBits.HasFlag(PlatStateBits.Awake) && Flags.HasFlag(PlatformFlags.BeamSpawner) && _data.BeamId > 0)
@@ -485,10 +490,13 @@ namespace MphRead.Entities
                     }
                 }
             }
-            // ptodo: does it matter if process_something_with_anim is called before the following?
-            if (_currentAnim != -2 && _models[0].AnimFlags.HasFlag(AnimFlags.Bit04))
+            if (!_models[0].IsPlaceholder && _animFlags.HasFlag(PlatAnimFlags.HasAnim) && _currentAnim >= 0)
             {
-                SetAnimation(_currentAnim, AnimFlags.None);
+                UpdateAnimFrames(_models[0], scene);
+            }
+            if (_currentAnim != -2 && _models[0].AnimInfo.Flags[0].HasFlag(AnimFlags.Ended))
+            {
+                SetPlatAnimation(_currentAnim, AnimFlags.None);
                 _currentAnim = -2;
                 _stateBits &= ~PlatStateBits.WasAwake;
             }
@@ -527,7 +535,7 @@ namespace MphRead.Entities
             {
                 Transform = GetTransform();
             }
-            return base.Process(scene);
+            return true;
         }
 
         public override void GetDrawInfo(Scene scene)
@@ -954,11 +962,10 @@ namespace MphRead.Entities
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             // todo: support loading genericmover, and do something similar for unused MPH models
             string name = "platform";
-            ModelInstance inst = Read.GetModelInstance(name, firstHunt: true);
+            SetUpModel(name, firstHunt: true);
             ModelMetadata modelMeta = Metadata.FirstHuntModels[name];
             Debug.Assert(modelMeta.CollisionPath != null);
             SetCollision(Collision.GetCollision(modelMeta));
-            _models.Add(inst);
             _speed = data.Speed.FloatValue / 2f;
             Debug.Assert(data.PositionCount >= 2 && data.PositionCount < 8);
             var posList = new List<Vector3>();

@@ -250,6 +250,12 @@ namespace MphRead
         public IReadOnlyList<float> Translations { get; }
         public IReadOnlyDictionary<string, NodeAnimation> Animations { get; }
 
+        private NodeAnimationGroup()
+        {
+            Translations = Rotations = Scales = Enumerable.Empty<float>().ToList();
+            Animations = new Dictionary<string, NodeAnimation>();
+        }
+
         public NodeAnimationGroup(RawNodeAnimationGroup raw, IReadOnlyList<float> scales, IReadOnlyList<float> rotations,
             IReadOnlyList<float> translations, IReadOnlyDictionary<string, NodeAnimation> animations)
         {
@@ -259,6 +265,11 @@ namespace MphRead
             Translations = translations;
             Animations = animations;
             Count = Animations.Count;
+        }
+
+        public static NodeAnimationGroup Empty()
+        {
+            return new NodeAnimationGroup();
         }
     }
 
@@ -273,6 +284,12 @@ namespace MphRead
         public IReadOnlyList<float> Translations { get; }
         public IReadOnlyDictionary<string, TexcoordAnimation> Animations { get; }
 
+        private TexcoordAnimationGroup()
+        {
+            Translations = Rotations = Scales = Enumerable.Empty<float>().ToList();
+            Animations = new Dictionary<string, TexcoordAnimation>();
+        }
+
         public TexcoordAnimationGroup(RawTexcoordAnimationGroup raw, IReadOnlyList<float> scales, IReadOnlyList<float> rotations,
             IReadOnlyList<float> translations, IReadOnlyDictionary<string, TexcoordAnimation> animations)
         {
@@ -285,6 +302,11 @@ namespace MphRead
             Translations = translations;
             Animations = animations;
             Debug.Assert(Count == Animations.Count);
+        }
+
+        public static TexcoordAnimationGroup Empty()
+        {
+            return new TexcoordAnimationGroup();
         }
     }
 
@@ -300,6 +322,12 @@ namespace MphRead
         public IReadOnlyDictionary<string, TextureAnimation> Animations { get; }
         public ushort UnusedA { get; }
 
+        private TextureAnimationGroup()
+        {
+            PaletteIds = TextureIds = FrameIndices = Enumerable.Empty<ushort>().ToList();
+            Animations = new Dictionary<string, TextureAnimation>();
+        }
+
         public TextureAnimationGroup(RawTextureAnimationGroup raw, IReadOnlyList<ushort> frameIndices, IReadOnlyList<ushort> textureIds,
             IReadOnlyList<ushort> paletteIds, IReadOnlyDictionary<string, TextureAnimation> animations)
         {
@@ -314,6 +342,11 @@ namespace MphRead
             Debug.Assert(Count == Animations.Count);
             UnusedA = raw.UnusedA;
         }
+
+        public static TextureAnimationGroup Empty()
+        {
+            return new TextureAnimationGroup();
+        }
     }
 
     public class MaterialAnimationGroup
@@ -325,6 +358,12 @@ namespace MphRead
         public IReadOnlyList<float> Colors { get; }
         public IReadOnlyDictionary<string, MaterialAnimation> Animations { get; }
 
+        private MaterialAnimationGroup()
+        {
+            Colors = Enumerable.Empty<float>().ToList();
+            Animations = new Dictionary<string, MaterialAnimation>();
+        }
+
         public MaterialAnimationGroup(RawMaterialAnimationGroup raw, IReadOnlyList<float> colors,
             IReadOnlyDictionary<string, MaterialAnimation> animations)
         {
@@ -335,6 +374,11 @@ namespace MphRead
             Colors = colors;
             Animations = animations;
             Debug.Assert(Count == Animations.Count);
+        }
+
+        public static MaterialAnimationGroup Empty()
+        {
+            return new MaterialAnimationGroup();
         }
     }
 

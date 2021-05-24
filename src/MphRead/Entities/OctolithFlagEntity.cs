@@ -17,11 +17,8 @@ namespace MphRead.Entities
             _bounty = mode != GameMode.Capture;
             if (mode == GameMode.Capture || mode == GameMode.Bounty || mode == GameMode.BountyTeams)
             {
-                ModelInstance octolithInst = Read.GetModelInstance("octolith_ctf");
-                _models.Add(octolithInst);
-                string name = mode == GameMode.Capture ? "flagbase_ctf" : "flagbase_bounty";
-                ModelInstance flagBaseInst = Read.GetModelInstance(name);
-                _models.Add(flagBaseInst);
+                SetUpModel("octolith_ctf");
+                SetUpModel(mode == GameMode.Capture ? "flagbase_ctf" : "flagbase_bounty");
                 _basePosition = Position;
                 SetAtBase();
             }

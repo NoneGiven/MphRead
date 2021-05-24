@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using MphRead.Utility;
 
 namespace MphRead.Testing
 {
@@ -136,23 +137,6 @@ namespace MphRead.Testing
             //}
         }
 
-        public static IReadOnlyList<RawWeaponInfo> ParseWeaponInfo(int count, byte[] array)
-        {
-            int size = Marshal.SizeOf<RawWeaponInfo>();
-            Debug.Assert(size == 0xF0);
-            var results = new List<RawWeaponInfo>();
-            var bytes = new ReadOnlySpan<byte>(array);
-            Debug.Assert(bytes.Length == count * size);
-            for (int i = 0; i < count; i++)
-            {
-                int start = i * size;
-                int end = start + size;
-                results.Add(Read.ReadStruct<RawWeaponInfo>(bytes[start..end]));
-                //results.Add(MemoryMarshal.Read<WeaponInfo>(bytes[start..end]));
-            }
-            return results;
-        }
-
         public static void DumpWeaponInfo(RawWeaponInfo weapon)
         {
             Console.WriteLine($@"            new WeaponInfo(
@@ -242,7 +226,7 @@ namespace MphRead.Testing
 
         private static IReadOnlyList<RawWeaponInfo> GetRicochets()
         {
-            return ParseWeaponInfo(count: 4, new byte[]
+            return Parser.ParseBytes<RawWeaponInfo>(size: 0xF0, count: 4, new byte[]
             {
                 // 0 - 0x20BDAB0 - Judicator
                 0x05, 0x05, 0x03, 0x03, 0x94, 0x7E, 0x94, 0x7E, 0x02, 0x12, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00,
@@ -313,7 +297,7 @@ namespace MphRead.Testing
 
         private static IReadOnlyList<RawWeaponInfo> Get1PWeapons()
         {
-            return ParseWeaponInfo(count: 18, new byte[]
+            return Parser.ParseBytes<RawWeaponInfo>(size: 0xF0, count: 18, new byte[]
             {
                 0x00, 0x00, 0x00, 0x00, 0x5F, 0x23, 0x9F, 0x53, 0x01, 0x07, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00,
                 0x00, 0x00, 0x00, 0x00, 0x05, 0x05, 0x00, 0x04, 0x5F, 0x41, 0x41, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -590,7 +574,7 @@ namespace MphRead.Testing
 
         private static IReadOnlyList<RawWeaponInfo> GetMPWeapons()
         {
-            return ParseWeaponInfo(count: 18, new byte[]
+            return Parser.ParseBytes<RawWeaponInfo>(size: 0xF0, count: 18, new byte[]
             {
                 0x00, 0x00, 0x00, 0x00,
                 0x5F, 0x23, 0x9F, 0x53, 0x01, 0x07, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -868,7 +852,7 @@ namespace MphRead.Testing
 
         private static IReadOnlyList<RawWeaponInfo> GetEnemyWeapons()
         {
-            return ParseWeaponInfo(count: 11, new byte[]
+            return Parser.ParseBytes<RawWeaponInfo>(size: 0xF0, count: 11, new byte[]
             {
                 0x00, 0x0A, 0x15, 0x15, 0x5F, 0x23, 0x9F, 0x53, 0x01, 0x07, 0x06, 0x40, 0x00, 0x00, 0x00, 0x00,
                 0x00, 0x00, 0x00, 0x00, 0x03, 0x03, 0x00, 0xF2, 0xF2, 0x41, 0x41, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1040,7 +1024,7 @@ namespace MphRead.Testing
 
         private static IReadOnlyList<RawWeaponInfo> GetPlatformWeapons()
         {
-            return ParseWeaponInfo(count: 4, new byte[]
+            return Parser.ParseBytes<RawWeaponInfo>(size: 0xF0, count: 4, new byte[]
             {
                 0x02, 0x09, 0x14, 0x14,
                 0x8C, 0x7D, 0x8C, 0x7D, 0x02, 0x03, 0x06, 0x40, 0x02, 0x00, 0x02, 0x00, 0x02, 0x00, 0x02, 0x02,

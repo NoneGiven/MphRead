@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using OpenTK.Mathematics;
 
 namespace MphRead
@@ -510,6 +511,24 @@ namespace MphRead
                 new Vector4(matrix.Row2.Xyz, 0.0f),
                 Vector4.Zero
             );
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe bool TestFlags<T>(this T value, T flags) where T : unmanaged, Enum
+        {
+            if (sizeof(T) == 1)
+            {
+                return (Unsafe.As<T, byte>(ref value) | Unsafe.As<T, byte>(ref flags)) == Unsafe.As<T, byte>(ref value);
+            }
+            if (sizeof(T) == 2)
+            {
+                return (Unsafe.As<T, short>(ref value) | Unsafe.As<T, short>(ref flags)) == Unsafe.As<T, short>(ref value);
+            }
+            if (sizeof(T) == 4)
+            {
+                return (Unsafe.As<T, int>(ref value) | Unsafe.As<T, int>(ref flags)) == Unsafe.As<T, int>(ref value);
+            }
+            return (Unsafe.As<T, long>(ref value) | Unsafe.As<T, long>(ref flags)) == Unsafe.As<T, long>(ref value);
         }
     }
 
