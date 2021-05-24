@@ -150,7 +150,7 @@ namespace MphRead
                         else
                         {
                             AnimInfo.Frame[slot] = frame - step;
-                        } 
+                        }
                     }
                     else
                     {

@@ -113,7 +113,7 @@ namespace MphRead.Formats
                                         result.Flags = data.Flags;
                                         result.Distance = dist;
                                         collided = true;
-                                    } 
+                                    }
                                 }
                             }
                         }

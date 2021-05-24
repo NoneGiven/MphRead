@@ -367,7 +367,7 @@ namespace MphRead.Entities
             if (Owner != null)
             {
                 // todo: send event
-            } 
+            }
         }
 
         private float GetInterpolatedValue(int type, float value1, float value2, float ratio)
