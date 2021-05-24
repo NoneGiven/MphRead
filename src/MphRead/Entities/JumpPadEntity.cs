@@ -101,16 +101,14 @@ namespace MphRead.Entities
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _volume = CollisionVolume.Move(_data.ActiveVolume, Position);
             string name = data.ModelId == 1 ? "balljump" : "jumppad_base";
-            ModelInstance baseInst = Read.GetModelInstance(name, firstHunt: true);
-            _models.Add(baseInst);
+            SetUpModel(name, firstHunt: true);
             name = data.ModelId == 1 ? "balljump_ray" : "jumppad_ray";
-            ModelInstance beamInst = Read.GetModelInstance(name, firstHunt: true);
+            ModelInstance beamInst = SetUpModel(name, firstHunt: true);
             Vector3 beamVector = data.BeamVector.ToFloatVector().Normalized();
             _beamTransform = GetTransformMatrix(beamVector, beamVector.X != 0 || beamVector.Z != 0 ? Vector3.UnitY : Vector3.UnitX);
-            // the game doesn't enable the texcoord animation
+            // anitodo: what prevents the texcoord animation from playing in game?
             beamInst.SetAnimation(-1);
             beamInst.SetAnimation(0, 0, SetFlags.Node | SetFlags.Material | SetFlags.Texture);
-            _models.Add(beamInst);
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)

@@ -36,7 +36,7 @@ namespace MphRead.Entities
             _nodeData = nodeData;
             if (nodeData != null)
             {
-                // using cached instance messes with placeholders since room entity doesn't update its instances normally
+                // using cached instance messes with placeholders since the room entity doesn't update its instances normally
                 _models.Add(Read.GetModelInstance("pick_wpn_missile", noCache: true));
                 _emptyMatrixStack = new float[0];
             }

@@ -78,10 +78,8 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
-            ModelInstance inst = Read.GetModelInstance(Metadata.FhDoors[(int)data.ModelId], firstHunt: true);
-            _models.Add(inst);
-            // temporary
-            inst.SetAnimation(-1);
+            ModelInstance inst = SetUpModel(Metadata.FhDoors[(int)data.ModelId], firstHunt: true);
+            inst.SetAnimation(0, AnimFlags.Ended | AnimFlags.NoLoop);
         }
     }
 }

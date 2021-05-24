@@ -627,12 +627,7 @@ namespace MphRead.Entities
         {
             Recolor = recolor;
             _models.Add(model);
-        }
-
-        public override void Initialize(Scene scene)
-        {
-            base.Initialize(scene);
-            _models[0].SetAnimation(0);
+            model.SetAnimation(0);
         }
     }
 }

@@ -962,11 +962,10 @@ namespace MphRead.Entities
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             // todo: support loading genericmover, and do something similar for unused MPH models
             string name = "platform";
-            ModelInstance inst = Read.GetModelInstance(name, firstHunt: true);
+            SetUpModel(name, firstHunt: true);
             ModelMetadata modelMeta = Metadata.FirstHuntModels[name];
             Debug.Assert(modelMeta.CollisionPath != null);
             SetCollision(Collision.GetCollision(modelMeta));
-            _models.Add(inst);
             _speed = data.Speed.FloatValue / 2f;
             Debug.Assert(data.PositionCount >= 2 && data.PositionCount < 8);
             var posList = new List<Vector3>();
