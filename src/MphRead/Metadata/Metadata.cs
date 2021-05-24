@@ -306,15 +306,15 @@ namespace MphRead
 
     public class ObjectMetadata
     {
-        public int SomeFlag { get; }
+        public bool Lighting { get; }
         public string Name { get; }
         public IReadOnlyList<int> AnimationIds { get; }
         public int RecolorId { get; }
 
-        public ObjectMetadata(string name, int someFlag, int paletteId = 0, List<int>? animationIds = null)
+        public ObjectMetadata(string name, bool lighting = false, int paletteId = 0, List<int>? animationIds = null)
         {
             Name = name;
-            SomeFlag = someFlag;
+            Lighting = lighting;
             RecolorId = paletteId;
             if (animationIds == null)
             {
@@ -797,60 +797,60 @@ namespace MphRead
 
         private static readonly IReadOnlyList<ObjectMetadata> _objects = new List<ObjectMetadata>()
         {
-            /*  0 */ new ObjectMetadata("AlimbicGhost_01", 0),
-            /*  1 */ new ObjectMetadata("AlimbicLightPole", 0),
-            /*  2 */ new ObjectMetadata("AlimbicStationShieldControl", 0),
-            /*  3 */ new ObjectMetadata("AlimbicComputerStationControl", 0),
-            /*  4 */ new ObjectMetadata("AlimbicEnergySensor", 0),
-            /*  5 */ new ObjectMetadata("SamusShip", 0), // unused
-            /*  6 */ new ObjectMetadata("Guardbot01_Dead", 0),
-            /*  7 */ new ObjectMetadata("Guardbot02_Dead", 0),
-            /*  8 */ new ObjectMetadata("Guardian_Dead", 0),
-            /*  9 */ new ObjectMetadata("Psychobit_Dead", 0),
-            /* 10 */ new ObjectMetadata("AlimbicLightPole02", 0),
-            /* 11 */ new ObjectMetadata("AlimbicComputerStationControl02", 0),
-            /* 12 */ new ObjectMetadata("Generic_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 13 */ new ObjectMetadata("Generic_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 14 */ new ObjectMetadata("Generic_Power", 0),
-            /* 15 */ new ObjectMetadata("Generic_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 16 */ new ObjectMetadata("Generic_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 17 */ new ObjectMetadata("Alimbic_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 18 */ new ObjectMetadata("Alimbic_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 19 */ new ObjectMetadata("Alimbic_Power", 0),
-            /* 20 */ new ObjectMetadata("Alimbic_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 21 */ new ObjectMetadata("Alimbic_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 22 */ new ObjectMetadata("Lava_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 23 */ new ObjectMetadata("Lava_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 24 */ new ObjectMetadata("Lava_Power", 0),
-            /* 25 */ new ObjectMetadata("Lava_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 26 */ new ObjectMetadata("Lava_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 27 */ new ObjectMetadata("Ice_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 28 */ new ObjectMetadata("Ice_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 29 */ new ObjectMetadata("Ice_Power", 0),
-            /* 30 */ new ObjectMetadata("Ice_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 31 */ new ObjectMetadata("Ice_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 32 */ new ObjectMetadata("Ruins_Console", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 33 */ new ObjectMetadata("Ruins_Monitor", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 34 */ new ObjectMetadata("Ruins_Power", 0),
-            /* 35 */ new ObjectMetadata("Ruins_Scanner", 0, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 36 */ new ObjectMetadata("Ruins_Switch", 1, animationIds: new List<int>() { 2, 1, 0, 0 }),
-            /* 37 */ new ObjectMetadata("PlantCarnivarous_Branched", 0),
-            /* 38 */ new ObjectMetadata("PlantCarnivarous_Pod", 0),
-            /* 39 */ new ObjectMetadata("PlantCarnivarous_PodLeaves", 0),
-            /* 40 */ new ObjectMetadata("PlantCarnivarous_Vine", 0),
-            /* 41 */ new ObjectMetadata("GhostSwitch", 0),
-            /* 42 */ new ObjectMetadata("Switch", 1),
-            /* 43 */ new ObjectMetadata("Guardian_Stasis", 0, animationIds: new List<int>() { 0xFF, 0, 0, 0 }),
-            /* 44 */ new ObjectMetadata("AlimbicStatue_lod0", 0, animationIds: new List<int>() { 0xFF, 0, 0, 0 }),
-            /* 45 */ new ObjectMetadata("AlimbicCapsule", 0),
-            /* 46 */ new ObjectMetadata("SniperTarget", 1, animationIds: new List<int>() { 0, 2, 1, 0 }),
-            /* 47 */ new ObjectMetadata("SecretSwitch", 0, 1, animationIds: new List<int>() { 1, 2, 0, 0 }),
-            /* 48 */ new ObjectMetadata("SecretSwitch", 0, 2, animationIds: new List<int>() { 1, 2, 0, 0 }),
-            /* 49 */ new ObjectMetadata("SecretSwitch", 0, 3, animationIds: new List<int>() { 1, 2, 0, 0 }),
-            /* 50 */ new ObjectMetadata("SecretSwitch", 0, 4, animationIds: new List<int>() { 1, 2, 0, 0 }),
-            /* 51 */ new ObjectMetadata("SecretSwitch", 0, 5, animationIds: new List<int>() { 1, 2, 0, 0 }),
-            /* 52 */ new ObjectMetadata("SecretSwitch", 0, 6, animationIds: new List<int>() { 1, 2, 0, 0 }),
-            /* 53 */ new ObjectMetadata("WallSwitch", 1, animationIds: new List<int>() { 2, 0, 1, 0 })
+            /*  0 */ new ObjectMetadata("AlimbicGhost_01"),
+            /*  1 */ new ObjectMetadata("AlimbicLightPole"),
+            /*  2 */ new ObjectMetadata("AlimbicStationShieldControl"),
+            /*  3 */ new ObjectMetadata("AlimbicComputerStationControl"),
+            /*  4 */ new ObjectMetadata("AlimbicEnergySensor"),
+            /*  5 */ new ObjectMetadata("SamusShip"), // unused
+            /*  6 */ new ObjectMetadata("Guardbot01_Dead"),
+            /*  7 */ new ObjectMetadata("Guardbot02_Dead"),
+            /*  8 */ new ObjectMetadata("Guardian_Dead"),
+            /*  9 */ new ObjectMetadata("Psychobit_Dead"),
+            /* 10 */ new ObjectMetadata("AlimbicLightPole02"),
+            /* 11 */ new ObjectMetadata("AlimbicComputerStationControl02"),
+            /* 12 */ new ObjectMetadata("Generic_Console", animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 13 */ new ObjectMetadata("Generic_Monitor", animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 14 */ new ObjectMetadata("Generic_Power"),
+            /* 15 */ new ObjectMetadata("Generic_Scanner", animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 16 */ new ObjectMetadata("Generic_Switch", lighting: true, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 17 */ new ObjectMetadata("Alimbic_Console", animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 18 */ new ObjectMetadata("Alimbic_Monitor", animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 19 */ new ObjectMetadata("Alimbic_Power"),
+            /* 20 */ new ObjectMetadata("Alimbic_Scanner", animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 21 */ new ObjectMetadata("Alimbic_Switch", lighting: true, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 22 */ new ObjectMetadata("Lava_Console", animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 23 */ new ObjectMetadata("Lava_Monitor", animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 24 */ new ObjectMetadata("Lava_Power"),
+            /* 25 */ new ObjectMetadata("Lava_Scanner",animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 26 */ new ObjectMetadata("Lava_Switch", lighting: true, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 27 */ new ObjectMetadata("Ice_Console", animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 28 */ new ObjectMetadata("Ice_Monitor", animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 29 */ new ObjectMetadata("Ice_Power"),
+            /* 30 */ new ObjectMetadata("Ice_Scanner", animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 31 */ new ObjectMetadata("Ice_Switch", lighting: true, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 32 */ new ObjectMetadata("Ruins_Console", animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 33 */ new ObjectMetadata("Ruins_Monitor", animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 34 */ new ObjectMetadata("Ruins_Power"),
+            /* 35 */ new ObjectMetadata("Ruins_Scanner", animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 36 */ new ObjectMetadata("Ruins_Switch", lighting: true, animationIds: new List<int>() { 2, 1, 0, 0 }),
+            /* 37 */ new ObjectMetadata("PlantCarnivarous_Branched"),
+            /* 38 */ new ObjectMetadata("PlantCarnivarous_Pod"),
+            /* 39 */ new ObjectMetadata("PlantCarnivarous_PodLeaves"),
+            /* 40 */ new ObjectMetadata("PlantCarnivarous_Vine"),
+            /* 41 */ new ObjectMetadata("GhostSwitch"),
+            /* 42 */ new ObjectMetadata("Switch", lighting: true),
+            /* 43 */ new ObjectMetadata("Guardian_Stasis", animationIds: new List<int>() { 0xFF, 0, 0, 0 }),
+            /* 44 */ new ObjectMetadata("AlimbicStatue_lod0", animationIds: new List<int>() { 0xFF, 0, 0, 0 }),
+            /* 45 */ new ObjectMetadata("AlimbicCapsule"),
+            /* 46 */ new ObjectMetadata("SniperTarget", lighting: true, animationIds: new List<int>() { 0, 2, 1, 0 }),
+            /* 47 */ new ObjectMetadata("SecretSwitch", paletteId: 1, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            /* 48 */ new ObjectMetadata("SecretSwitch", paletteId: 2, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            /* 49 */ new ObjectMetadata("SecretSwitch", paletteId: 3, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            /* 50 */ new ObjectMetadata("SecretSwitch", paletteId: 4, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            /* 51 */ new ObjectMetadata("SecretSwitch", paletteId: 5, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            /* 52 */ new ObjectMetadata("SecretSwitch", paletteId: 6, animationIds: new List<int>() { 1, 2, 0, 0 }),
+            /* 53 */ new ObjectMetadata("WallSwitch", lighting: true, animationIds: new List<int>() { 2, 0, 1, 0 })
         };
 
         public static ObjectMetadata GetObjectById(int id)

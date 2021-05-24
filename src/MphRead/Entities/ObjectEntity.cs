@@ -55,6 +55,10 @@ namespace MphRead.Entities
             else
             {
                 ObjectMetadata meta = Metadata.GetObjectById((int)data.ModelId);
+                if (meta.Lighting)
+                {
+                    _anyLighting = true;
+                }
                 Recolor = meta.RecolorId;
                 ModelInstance inst = Read.GetModelInstance(meta.Name);
                 if (meta.AnimationIds[0] == 0xFF)
