@@ -118,7 +118,7 @@ namespace MphRead.Entities
 
         public virtual void Initialize(Scene scene)
         {
-            _anyLighting = _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));
+            _anyLighting |= _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));
         }
 
         protected ModelInstance SetUpModel(string name, int animIndex = 0, AnimFlags animFlags = AnimFlags.None, bool firstHunt = false)

@@ -23,25 +23,9 @@ namespace MphRead
             {
                 if (Debugger.IsAttached)
                 {
-                    //Memory.Memory.Start();
-                    //byte[] entity = Repack.RepackMphEntities("Level SP Morphball");
-                    //string entDest = @"D:\Cdrv\MPH\Data\_Export\_pack\Unit3_Land_Ent.bin";
-                    //File.WriteAllBytes(entDest, entity);
-                    //TestMisc.ConvertRoomToMph("Level SP Survivor", "UNIT1_LAND");
-                    //TestMisc.ConvertRoomToFh("MP3 PROVING GROUND", "Level SP Survivor");
-                    IReadOnlyList<Testing.TestPlayer.PlayerControls> controls = Testing.TestPlayer.GetPlayerControls();
-                    IReadOnlyList<Testing.TestPlayer.PlayerValues> values = Testing.TestPlayer.GetPlayerValues();
-                    var dict = new Dictionary<Hunter, Testing.TestPlayer.PlayerValues>();
-                    for (int i = 0; i < values.Count; i++)
-                    {
-                        dict.Add((Hunter)i, values[i]);
-                    }
-                    IReadOnlyList<StringTableEntry> strings = Strings.ReadStringTable(StringTables.HudMessagesMP);
-                    //Utility.Parser.ParseFloat(0x40B4000000000000);
-                    //Utility.Parser.ParseFloat(0xC0B4000000000000);
                     using var renderer = new RenderWindow();
-                    renderer.AddRoom("UNIT2_C4");
-                    //renderer.AddPlayer(Hunter.Trace);
+                    renderer.AddRoom("MP3 PROVING GROUND");
+                    //renderer.AddModel("Crate01");
                     renderer.Run();
                 }
                 else
