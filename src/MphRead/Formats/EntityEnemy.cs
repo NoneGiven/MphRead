@@ -200,7 +200,7 @@ namespace MphRead
         public readonly byte Active; // boolean
         public readonly byte AlwaysActive; // boolean
         public readonly byte ItemChance;
-        public readonly ushort SpawnerModel;
+        public readonly ushort SpawnerHealth;
         public readonly ushort CooldownTime;
         public readonly ushort InitialCooldown;
         public readonly ushort Padding1C6;
@@ -254,7 +254,7 @@ namespace MphRead.Editor
         public bool Active { get; set; }
         public bool AlwaysActive { get; set; }
         public byte ItemChance { get; set; }
-        public ushort SpawnerModel { get; set; }
+        public ushort SpawnerHealth { get; set; }
         public ushort CooldownTime { get; set; }
         public ushort InitialCooldown { get; set; }
         public float ActiveDistance { get; set; } // todo: display sphere
@@ -397,7 +397,7 @@ namespace MphRead.Editor
             Active = raw.Active != 0;
             AlwaysActive = raw.AlwaysActive != 0;
             ItemChance = raw.ItemChance;
-            SpawnerModel = raw.SpawnerModel;
+            SpawnerHealth = raw.SpawnerHealth;
             CooldownTime = raw.CooldownTime;
             InitialCooldown = raw.InitialCooldown;
             ActiveDistance = raw.ActiveDistance.FloatValue;

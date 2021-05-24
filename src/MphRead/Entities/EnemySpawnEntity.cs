@@ -19,7 +19,7 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
-            if (data.SpawnerModel != 0)
+            if (data.SpawnerHealth != 0)
             {
                 // todo: spawner models are actually enemy instances
                 string spawner = "EnemySpawner";

@@ -473,7 +473,7 @@ namespace MphRead.Utility
                         SpawnLimit = enemySpawn.SpawnLimit,
                         SpawnTotal = enemySpawn.SpawnTotal,
                         SpawnNodeName = enemySpawn.SpawnNodeName,
-                        SpawnerModel = 0,
+                        SpawnerHealth = 0,
                         Up = enemySpawn.Up
                     };
                     if (enemySpawn.EnemyType == FhEnemyType.Metroid || enemySpawn.EnemyType == FhEnemyType.Mochtroid1)
@@ -1937,7 +1937,7 @@ namespace MphRead.Utility
             writer.WriteByte(entity.Active);
             writer.WriteByte(entity.AlwaysActive);
             writer.Write(entity.ItemChance);
-            writer.Write(entity.SpawnerModel);
+            writer.Write(entity.SpawnerHealth);
             writer.Write(entity.CooldownTime);
             writer.Write(entity.InitialCooldown);
             writer.Write(padShort); // Padding1C6
