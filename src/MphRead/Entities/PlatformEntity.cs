@@ -98,6 +98,10 @@ namespace MphRead.Entities
             else
             {
                 _meta = meta;
+                if (_meta.Lighting)
+                {
+                    _anyLighting = true;
+                }
                 ModelInstance inst = SetUpModel(_meta.Name);
                 ModelMetadata modelMeta = Metadata.ModelMetadata[_meta.Name];
                 if (modelMeta.AnimationPath != null)
