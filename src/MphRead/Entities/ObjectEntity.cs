@@ -1,4 +1,3 @@
-using System;
 using MphRead.Effects;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
@@ -35,7 +34,7 @@ namespace MphRead.Entities
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _prevTransform = Transform;
             _flags = data.Flags;
-            // todo: bits 0 and 1 should be cleared if entity ID is -1 (and they should also be affected by room state otherwise)
+            // todo: room state affecting animation ID
             _flags &= 0xFB;
             _flags &= 0xF7;
             _flags &= 0xEF;
@@ -44,33 +43,59 @@ namespace MphRead.Entities
                 _effectVolume = CollisionVolume.Transform(data.Volume, Transform);
             }
             _effectInterval = (int)data.EffectInterval * 2;
-            if (data.ModelId == UInt32.MaxValue)
+            if (data.ModelId == -1)
             {
                 AddPlaceholderModel();
-                // todo: this also applies for other models depending on the anim ID
+                // todo: use this for visibility
                 _flags |= 4;
                 // todo: this should get cleared if there's an effect ID and "is_visible" returns false
                 _flags |= 0x10;
             }
             else
             {
-                ObjectMetadata meta = Metadata.GetObjectById((int)data.ModelId);
+                ObjectMetadata meta = Metadata.GetObjectById(data.ModelId);
                 if (meta.Lighting)
                 {
                     _anyLighting = true;
                 }
                 Recolor = meta.RecolorId;
-                ModelInstance inst = Read.GetModelInstance(meta.Name);
-                if (meta.AnimationIds[0] == 0xFF)
-                {
-                    inst.SetAnimation(-1);
-                }
+                ModelInstance inst = SetUpModel(meta.Name);
                 // AlimbicGhost_01, GhostSwitch
                 if (data.ModelId == 0 || data.ModelId == 41)
                 {
                     _scanVisorOnly = true;
                 }
-                _models.Add(inst);
+                int state = (int)_flags & 3;
+                int animIndex = meta.AnimationIds[state];
+                // AlimbicCapsule
+                if (data.ModelId == 45)
+                {
+                    inst.SetAnimation(animIndex, slot: 1, SetFlags.Texcoord);
+                    inst.SetAnimation(animIndex, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node);
+                    if (state == 2)
+                    {
+                        inst.AnimInfo.Flags[0] |= AnimFlags.Paused;
+                    }
+                    else
+                    {
+                        inst.AnimInfo.Flags[0] |= AnimFlags.Ended;
+                        inst.AnimInfo.Frame[0] = inst.AnimInfo.FrameCount[0] - 1;
+                    }
+                }
+                else if (animIndex >= 0)
+                {
+                    AnimFlags animFlags = AnimFlags.None;
+                    // SniperTarget, WallSwitch
+                    if (data.ModelId == 46 && state == 2 || data.ModelId == 53 && state == 1)
+                    {
+                        animFlags = AnimFlags.NoLoop;
+                    }
+                    inst.SetAnimation(animIndex, animFlags);
+                }
+                else
+                {
+                    _flags |= 4;
+                }
                 ModelMetadata modelMeta = Metadata.ModelMetadata[meta.Name];
                 if (modelMeta.CollisionPath != null)
                 {
@@ -78,23 +103,12 @@ namespace MphRead.Entities
                     if (modelMeta.ExtraCollisionPath != null)
                     {
                         // ctodo: disable capsule shield collision when appropriate
+                        // --> in game, collision isn't even set up unless anim ID starts at 2, but we should still set it up ("reactivation")
                         SetCollision(Collision.GetCollision(modelMeta, extra: true), slot: 1);
                     }
                 }
-                // temporary
-                if (inst.Model.Name == "AlimbicCapsule")
-                {
-                    inst.SetAnimation(-1);
-                }
-                else if (inst.Model.Name == "WallSwitch")
-                {
-                    inst.SetAnimation(-1);
-                }
-                else if (inst.Model.Name == "SniperTarget")
-                {
-                    inst.SetAnimation(-1);
-                }
-                else if (inst.Model.Name == "SecretSwitch")
+                // temporary -- room state/end flag processing
+                if (inst.Model.Name == "SecretSwitch" || inst.Model.Name == "AlimbicStatue_lod0")
                 {
                     inst.SetAnimation(-1);
                 }
@@ -106,7 +120,7 @@ namespace MphRead.Entities
             base.Initialize(scene);
             if (_data.EffectId > 0)
             {
-                scene.LoadEffect((int)_data.EffectId);
+                scene.LoadEffect(_data.EffectId);
             }
             if (_data.LinkedEntity != -1)
             {
@@ -144,7 +158,7 @@ namespace MphRead.Entities
                 _effectVolume = CollisionVolume.Transform(_data.Volume, Transform);
                 _prevTransform = Transform;
             }
-            if (_data.EffectId != 0)
+            if (_data.EffectId > 0)
             {
                 bool processEffect = false;
                 if ((_data.EffectFlags & 0x40) != 0)
@@ -190,7 +204,7 @@ namespace MphRead.Entities
                                 }
                                 else
                                 {
-                                    _effectEntry = scene.SpawnEffectGetEntry((int)_data.EffectId, Transform);
+                                    _effectEntry = scene.SpawnEffectGetEntry(_data.EffectId, Transform);
                                     for (int i = 0; i < _effectEntry.Elements.Count; i++)
                                     {
                                         EffectElementEntry element = _effectEntry.Elements[i];
@@ -218,7 +232,7 @@ namespace MphRead.Entities
                                 );
                             }
                             EntityBase? owner = _parent == null ? null : this;
-                            scene.SpawnEffect((int)_data.EffectId, spawnTransform, owner: owner);
+                            scene.SpawnEffect(_data.EffectId, spawnTransform, owner: owner);
                         }
                         _effectIntervalTimer = _effectInterval;
                     }

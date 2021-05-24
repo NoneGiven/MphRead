@@ -3520,9 +3520,9 @@ namespace MphRead
             }
             else if (entity is ObjectEntity obj)
             {
-                if (obj.Data.EffectId != 0)
+                if (obj.Data.EffectId > 0)
                 {
-                    _sb.Append($" ({obj.Data.EffectId}, {Metadata.Effects[(int)obj.Data.EffectId].Name})");
+                    _sb.Append($" ({obj.Data.EffectId}, {Metadata.Effects[obj.Data.EffectId].Name})");
                 }
             }
             else if (entity is CameraSequenceEntity cam)

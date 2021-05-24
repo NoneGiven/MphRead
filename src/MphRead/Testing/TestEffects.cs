@@ -175,7 +175,7 @@ namespace MphRead.Testing
                         if (entity.Type == EntityType.Object)
                         {
                             ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
-                            if (data.EffectId != 0)
+                            if (data.EffectId > 0)
                             {
                                 if (!printed)
                                 {
@@ -185,7 +185,7 @@ namespace MphRead.Testing
                                     Console.WriteLine();
                                     printed = true;
                                 }
-                                Effect effect = effects[(int)data.EffectId];
+                                Effect effect = effects[data.EffectId];
                                 Console.WriteLine($"[ ] Entity {entity.EntityId}, Effect {data.EffectId} ({effect.Name})");
                                 var elems = new List<string>();
                                 foreach (EffectElement element in effect.Elements)
