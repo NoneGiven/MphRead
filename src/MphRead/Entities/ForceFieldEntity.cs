@@ -33,7 +33,8 @@ namespace MphRead.Entities
                     _lockSpawned = true;
                 }
             }
-            return base.Process(scene);
+            UpdateAnimFrames(_models[0], scene);
+            return true;
         }
     }
 }

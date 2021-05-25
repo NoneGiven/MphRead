@@ -9,8 +9,9 @@ namespace MphRead.Entities
     {
         private readonly EnemySpawnEntityData _data;
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x00, 0x00, 0x8B).AsVector4();
-        private bool _spawn = true;
+        private bool _spawn = false;
 
+        public int Flags { get; private set; }
         public EnemySpawnEntityData Data => _data;
 
         // todo: enemy and item spawners should preload the models and effects that will be used when they spawn their entities
@@ -19,30 +20,31 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
-            if (data.SpawnerHealth != 0)
+            AddPlaceholderModel();
+            if (data.EnemyType == EnemyType.ForceFieldLock || data.EnemyType == EnemyType.CarnivorousPlant)
             {
-                // todo: spawner models are actually enemy instances
-                string spawner = "EnemySpawner";
-                if (data.EnemyType == EnemyType.WarWasp || data.EnemyType == EnemyType.BarbedWarWasp)
-                {
-                    spawner = "PlantCarnivarous_Pod";
-                }
-                ModelInstance inst = SetUpModel(spawner);
-                // temporary
-                if (spawner == "EnemySpawner")
-                {
-                    inst.SetAnimation(-1);
-                }
+                _spawn = true;
             }
-            else
+            Flags |= 1;
+            // todo: room state
+            if (data.Active != 0 || data.AlwaysActive != 0)
             {
-                AddPlaceholderModel();
+                Flags |= 2;
             }
         }
 
         public override void Initialize(Scene scene)
         {
             base.Initialize(scene);
+            if (_data.SpawnerHealth != 0)
+            {
+                // todo: health and other stuff
+                EnemyInstanceEntity? enemy = SpawnEnemy(this, EnemyType.Spawner);
+                if (enemy != null)
+                {
+                    scene.AddEntity(enemy);
+                }
+            }
             if (_data.EnemyType == EnemyType.Hunter)
             {
                 var hunter = (Hunter)_data.Fields.S09.HunterId;
@@ -82,9 +84,13 @@ namespace MphRead.Entities
             {
                 return new Enemy49Entity(new EnemyInstanceEntityData(type, spawner));
             }
-            else if (type == EnemyType.CarnivorousPlant)
+            if (type == EnemyType.CarnivorousPlant)
             {
                 return new Enemy51Entity(new EnemyInstanceEntityData(type, spawner));
+            }
+            if (type == EnemyType.Spawner)
+            {
+                return new Enemy40Entity(new EnemyInstanceEntityData(type, spawner));
             }
             //throw new ProgramException("Invalid enemy type."); // also make non-nullable
             return null;
