@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using MphRead.Entities;
 using OpenTK.Mathematics;
 
@@ -28,6 +30,41 @@ namespace MphRead.Editor
             Up = header.UpVector;
             Facing = header.FacingVector;
             NodeName = header.NodeName;
+        }
+
+        protected void PrintValue(string value1, string value2, string name)
+        {
+            if (value1 != value2)
+            {
+                Console.WriteLine($"{name}: {value1} / {value2}");
+            }
+        }
+
+        protected void PrintValue<T>(T value1, T value2, string name) where T : struct
+        {
+            if (!value1.Equals(value2))
+            {
+                Console.WriteLine($"{name}: {value1} / {value2}");
+            }
+        }
+
+        protected void PrintValues<T>(List<T> value1, List<T> value2, string name) where T : struct
+        {
+            if (value1.Count != value2.Count)
+            {
+                Console.WriteLine($"{name}: {value1.Count} / {value2.Count}");
+                for (int i = 0; i < Math.Max(value1.Count, value2.Count); i++)
+                {
+                    Console.WriteLine($"{(i < value1.Count ? value1[i].ToString() : "N/A")} / {(i < value2.Count ? value2[i].ToString() : "N/A")}");
+                }
+            }
+            else if (!Enumerable.SequenceEqual(value1, value2))
+            {
+                for (int i = 0; i < value1.Count; i++)
+                {
+                    Console.WriteLine($"{value1[i]} / {value2[i]}");
+                }
+            }
         }
     }
 
@@ -181,6 +218,77 @@ namespace MphRead.Editor
             LifetimeMsg4Param1 = raw.LifetimeMsg4Param1;
             LifetimeMsg4Param2 = raw.LifetimeMsg4Param2;
         }
+
+        public void CompareTo(PlatformEntityEditor other)
+        {
+            PrintValue(NoPort, other.NoPort, nameof(NoPort));
+            PrintValue(ModelId, other.ModelId, nameof(ModelId));
+            PrintValue(ParentId, other.ParentId, nameof(ParentId));
+            PrintValue(Active, other.Active, nameof(Active));
+            PrintValue(Delay, other.Delay, nameof(Delay));
+            PrintValue(ScanData1, other.ScanData1, nameof(ScanData1));
+            PrintValue(ScanMsgTarget, other.ScanMsgTarget, nameof(ScanMsgTarget));
+            PrintValue(ScanMessage, other.ScanMessage, nameof(ScanMessage));
+            PrintValue(ScanData2, other.ScanData2, nameof(ScanData2));
+            PrintValue(PositionCount, other.PositionCount, nameof(PositionCount));
+            PrintValues(Positions, other.Positions, nameof(Positions));
+            PrintValues(Rotations, other.Rotations, nameof(Rotations));
+            PrintValue(PositionOffset, other.PositionOffset, nameof(PositionOffset));
+            PrintValue(ForwardSpeed, other.ForwardSpeed, nameof(ForwardSpeed));
+            PrintValue(BackwardSpeed, other.BackwardSpeed, nameof(BackwardSpeed));
+            PrintValue(PortalName, other.PortalName, nameof(PortalName));
+            PrintValue(MovementType, other.MovementType, nameof(MovementType));
+            PrintValue(ForCutscene, other.ForCutscene, nameof(ForCutscene));
+            PrintValue(ReverseType, other.ReverseType, nameof(ReverseType));
+            PrintValue(Flags, other.Flags, nameof(Flags));
+            PrintValue(ContactDamage, other.ContactDamage, nameof(ContactDamage));
+            PrintValue(BeamSpawnDir, other.BeamSpawnDir, nameof(BeamSpawnDir));
+            PrintValue(BeamSpawnPos, other.BeamSpawnPos, nameof(BeamSpawnPos));
+            PrintValue(BeamId, other.BeamId, nameof(BeamId));
+            PrintValue(BeamInterval, other.BeamInterval, nameof(BeamInterval));
+            PrintValue(BeamOnIntervals, other.BeamOnIntervals, nameof(BeamOnIntervals));
+            PrintValue(ResistEffectId, other.ResistEffectId, nameof(ResistEffectId));
+            PrintValue(Health, other.Health, nameof(Health));
+            PrintValue(Effectiveness, other.Effectiveness, nameof(Effectiveness));
+            PrintValue(DamageEffectId, other.DamageEffectId, nameof(DamageEffectId));
+            PrintValue(DeadEffectId, other.DeadEffectId, nameof(DeadEffectId));
+            PrintValue(ItemChance, other.ItemChance, nameof(ItemChance));
+            PrintValue(ItemType, other.ItemType, nameof(ItemType));
+            PrintValue(Unused1D0, other.Unused1D0, nameof(Unused1D0));
+            PrintValue(Unused1D4, other.Unused1D4, nameof(Unused1D4));
+            PrintValue(BeamHitMsgTarget, other.BeamHitMsgTarget, nameof(BeamHitMsgTarget));
+            PrintValue(BeamHitMessage, other.BeamHitMessage, nameof(BeamHitMessage));
+            PrintValue(BeamHitMsgParam1, other.BeamHitMsgParam1, nameof(BeamHitMsgParam1));
+            PrintValue(BeamHitMsgParam2, other.BeamHitMsgParam2, nameof(BeamHitMsgParam2));
+            PrintValue(PlayerColMsgTarget, other.PlayerColMsgTarget, nameof(PlayerColMsgTarget));
+            PrintValue(PlayerColMessage, other.PlayerColMessage, nameof(PlayerColMessage));
+            PrintValue(PlayerColMsgParam1, other.PlayerColMsgParam1, nameof(PlayerColMsgParam1));
+            PrintValue(PlayerColMsgParam2, other.PlayerColMsgParam2, nameof(PlayerColMsgParam2));
+            PrintValue(DeadMsgTarget, other.DeadMsgTarget, nameof(DeadMsgTarget));
+            PrintValue(DeadMessage, other.DeadMessage, nameof(DeadMessage));
+            PrintValue(DeadMsgParam1, other.DeadMsgParam1, nameof(DeadMsgParam1));
+            PrintValue(DeadMsgParam2, other.DeadMsgParam2, nameof(DeadMsgParam2));
+            PrintValue(LifetimeMsg1Index, other.LifetimeMsg1Index, nameof(LifetimeMsg1Index));
+            PrintValue(LifetimeMsg1Target, other.LifetimeMsg1Target, nameof(LifetimeMsg1Target));
+            PrintValue(LifetimeMessage1, other.LifetimeMessage1, nameof(LifetimeMessage1));
+            PrintValue(LifetimeMsg1Param1, other.LifetimeMsg1Param1, nameof(LifetimeMsg1Param1));
+            PrintValue(LifetimeMsg1Param2, other.LifetimeMsg1Param2, nameof(LifetimeMsg1Param2));
+            PrintValue(LifetimeMsg2Index, other.LifetimeMsg2Index, nameof(LifetimeMsg2Index));
+            PrintValue(LifetimeMsg2Target, other.LifetimeMsg2Target, nameof(LifetimeMsg2Target));
+            PrintValue(LifetimeMessage2, other.LifetimeMessage2, nameof(LifetimeMessage2));
+            PrintValue(LifetimeMsg2Param1, other.LifetimeMsg2Param1, nameof(LifetimeMsg2Param1));
+            PrintValue(LifetimeMsg2Param2, other.LifetimeMsg2Param2, nameof(LifetimeMsg2Param2));
+            PrintValue(LifetimeMsg3Index, other.LifetimeMsg3Index, nameof(LifetimeMsg3Index));
+            PrintValue(LifetimeMsg3Target, other.LifetimeMsg3Target, nameof(LifetimeMsg3Target));
+            PrintValue(LifetimeMessage3, other.LifetimeMessage3, nameof(LifetimeMessage3));
+            PrintValue(LifetimeMsg3Param1, other.LifetimeMsg3Param1, nameof(LifetimeMsg3Param1));
+            PrintValue(LifetimeMsg3Param2, other.LifetimeMsg3Param2, nameof(LifetimeMsg3Param2));
+            PrintValue(LifetimeMsg4Index, other.LifetimeMsg4Index, nameof(LifetimeMsg4Index));
+            PrintValue(LifetimeMsg4Target, other.LifetimeMsg4Target, nameof(LifetimeMsg4Target));
+            PrintValue(LifetimeMessage4, other.LifetimeMessage4, nameof(LifetimeMessage4));
+            PrintValue(LifetimeMsg4Param1, other.LifetimeMsg4Param1, nameof(LifetimeMsg4Param1));
+            PrintValue(LifetimeMsg4Param2, other.LifetimeMsg4Param2, nameof(LifetimeMsg4Param2));
+        }
     }
 
     public class FhPlatformEntityEditor : EntityEditorBase
@@ -214,6 +322,19 @@ namespace MphRead.Editor
             Speed = raw.Speed.FloatValue;
             PortalName = raw.PortalName.MarshalString();
         }
+
+        public void CompareTo(FhPlatformEntityEditor other)
+        {
+            PrintValue(NoPortal, other.NoPortal, nameof(NoPortal));
+            PrintValue(GroupId, other.GroupId, nameof(GroupId));
+            PrintValue(Unused2C, other.Unused2C, nameof(Unused2C));
+            PrintValue(Delay, other.Delay, nameof(Delay));
+            PrintValue(PositionCount, other.PositionCount, nameof(PositionCount));
+            PrintValue(Volume, other.Volume, nameof(Volume));
+            PrintValues(Positions, other.Positions, nameof(Positions));
+            PrintValue(Speed, other.Speed, nameof(Speed));
+            PrintValue(PortalName, other.PortalName, nameof(PortalName));
+        }
     }
 
     public class ObjectEntityEditor : EntityEditorBase
@@ -246,6 +367,22 @@ namespace MphRead.Editor
             EffectPositionOffset = raw.EffectPositionOffset.ToFloatVector();
             Volume = new CollisionVolume(raw.Volume);
         }
+
+        public void CompareTo(ObjectEntityEditor other)
+        {
+            PrintValue(Flags, other.Flags, nameof(Flags));
+            PrintValue(EffectFlags, other.EffectFlags, nameof(EffectFlags));
+            PrintValue(ModelId, other.ModelId, nameof(ModelId));
+            PrintValue(LinkedEntity, other.LinkedEntity, nameof(LinkedEntity));
+            PrintValue(ScanId, other.ScanId, nameof(ScanId));
+            PrintValue(ScanMsgTarget, other.ScanMsgTarget, nameof(ScanMsgTarget));
+            PrintValue(ScanMessage, other.ScanMessage, nameof(ScanMessage));
+            PrintValue(EffectId, other.EffectId, nameof(EffectId));
+            PrintValue(EffectInterval, other.EffectInterval, nameof(EffectInterval));
+            PrintValue(EffectOnIntervals, other.EffectOnIntervals, nameof(EffectOnIntervals));
+            PrintValue(EffectPositionOffset, other.EffectPositionOffset, nameof(EffectPositionOffset));
+            PrintValue(Volume, other.Volume, nameof(Volume));
+        }
     }
 
     public class PlayerSpawnEntityEditor : EntityEditorBase
@@ -263,6 +400,13 @@ namespace MphRead.Editor
             Availability = raw.Availability;
             Active = raw.Active != 0;
             TeamIndex = raw.TeamIndex;
+        }
+
+        public void CompareTo(PlayerSpawnEntityEditor other)
+        {
+            PrintValue(Availability, other.Availability, nameof(Availability));
+            PrintValue(Active, other.Active, nameof(Active));
+            PrintValue(TeamIndex, other.TeamIndex, nameof(TeamIndex));
         }
     }
 
@@ -296,6 +440,20 @@ namespace MphRead.Editor
             EntityFilename = raw.EntityFilename.MarshalString();
             RoomName = raw.RoomName.MarshalString();
         }
+
+        public void CompareTo(DoorEntityEditor other)
+        {
+            PrintValue(DoorNodeName, other.DoorNodeName, nameof(DoorNodeName));
+            PrintValue(PaletteId, other.PaletteId, nameof(PaletteId));
+            PrintValue(ModelId, other.ModelId, nameof(ModelId));
+            PrintValue(ConnectorId, other.ConnectorId, nameof(ConnectorId));
+            PrintValue(TargetLayerId, other.TargetLayerId, nameof(TargetLayerId));
+            PrintValue(Flags, other.Flags, nameof(Flags));
+            PrintValue(Field42, other.Field42, nameof(Field42));
+            PrintValue(Field43, other.Field43, nameof(Field43));
+            PrintValue(EntityFilename, other.EntityFilename, nameof(EntityFilename));
+            PrintValue(RoomName, other.RoomName, nameof(RoomName));
+        }
     }
 
     public class FhDoorEntityEditor : EntityEditorBase
@@ -313,6 +471,13 @@ namespace MphRead.Editor
             RoomName = raw.RoomName.MarshalString();
             Flags = raw.Flags;
             ModelId = raw.ModelId;
+        }
+
+        public void CompareTo(FhDoorEntityEditor other)
+        {
+            PrintValue(RoomName, other.RoomName, nameof(RoomName));
+            PrintValue(Flags, other.Flags, nameof(Flags));
+            PrintValue(ModelId, other.ModelId, nameof(ModelId));
         }
     }
 
@@ -350,6 +515,22 @@ namespace MphRead.Editor
             CollectedMsgParam1 = raw.CollectedMsgParam1;
             CollectedMsgParam2 = raw.CollectedMsgParam2;
         }
+
+        public void CompareTo(ItemSpawnEntityEditor other)
+        {
+            PrintValue(ParentId, other.ParentId, nameof(ParentId));
+            PrintValue(ItemType, other.ItemType, nameof(ItemType));
+            PrintValue(Enabled, other.Enabled, nameof(Enabled));
+            PrintValue(HasBase, other.HasBase, nameof(HasBase));
+            PrintValue(AlwaysActive, other.AlwaysActive, nameof(AlwaysActive));
+            PrintValue(MaxSpawnCount, other.MaxSpawnCount, nameof(MaxSpawnCount));
+            PrintValue(SpawnInterval, other.SpawnInterval, nameof(SpawnInterval));
+            PrintValue(SpawnDelay, other.SpawnDelay, nameof(SpawnDelay));
+            PrintValue(SomeEntityId, other.SomeEntityId, nameof(SomeEntityId));
+            PrintValue(CollectedMessage, other.CollectedMessage, nameof(CollectedMessage));
+            PrintValue(CollectedMsgParam1, other.CollectedMsgParam1, nameof(CollectedMsgParam1));
+            PrintValue(CollectedMsgParam2, other.CollectedMsgParam2, nameof(CollectedMsgParam2));
+        }
     }
 
     public class FhItemSpawnEntityEditor : EntityEditorBase
@@ -369,6 +550,14 @@ namespace MphRead.Editor
             SpawnLimit = raw.SpawnLimit;
             CooldownTime = raw.CooldownTime;
             Unused2C = raw.Unused2C;
+        }
+
+        public void CompareTo(FhItemSpawnEntityEditor other)
+        {
+            PrintValue(ItemType, other.ItemType, nameof(ItemType));
+            PrintValue(SpawnLimit, other.SpawnLimit, nameof(SpawnLimit));
+            PrintValue(CooldownTime, other.CooldownTime, nameof(CooldownTime));
+            PrintValue(Unused2C, other.Unused2C, nameof(Unused2C));
         }
     }
 
@@ -418,6 +607,28 @@ namespace MphRead.Editor
             ChildMsgParam1 = raw.ChildMsgParam1;
             ChildMsgParam2 = raw.ChildMsgParam2;
         }
+
+        public void CompareTo(TriggerVolumeEntityEditor other)
+        {
+            PrintValue(Subtype, other.Subtype, nameof(Subtype));
+            PrintValue(Volume, other.Volume, nameof(Volume));
+            PrintValue(Active, other.Active, nameof(Active));
+            PrintValue(AlwaysActive, other.AlwaysActive, nameof(AlwaysActive));
+            PrintValue(DeactivateAfterUse, other.DeactivateAfterUse, nameof(DeactivateAfterUse));
+            PrintValue(RepeatDelay, other.RepeatDelay, nameof(RepeatDelay));
+            PrintValue(CheckDelay, other.CheckDelay, nameof(CheckDelay));
+            PrintValue(RequiredStateBit, other.RequiredStateBit, nameof(RequiredStateBit));
+            PrintValue(TriggerFlags, other.TriggerFlags, nameof(TriggerFlags));
+            PrintValue(TriggerThreshold, other.TriggerThreshold, nameof(TriggerThreshold));
+            PrintValue(ParentId, other.ParentId, nameof(ParentId));
+            PrintValue(ParentMessage, other.ParentMessage, nameof(ParentMessage));
+            PrintValue(ParentMsgParam1, other.ParentMsgParam1, nameof(ParentMsgParam1));
+            PrintValue(ParentMsgParam2, other.ParentMsgParam2, nameof(ParentMsgParam2));
+            PrintValue(ChildId, other.ChildId, nameof(ChildId));
+            PrintValue(ChildMessage, other.ChildMessage, nameof(ChildMessage));
+            PrintValue(ChildMsgParam1, other.ChildMsgParam1, nameof(ChildMsgParam1));
+            PrintValue(ChildMsgParam2, other.ChildMsgParam2, nameof(ChildMsgParam2));
+        }
     }
 
     public class FhTriggerVolumeEntityEditor : EntityEditorBase
@@ -457,6 +668,24 @@ namespace MphRead.Editor
             ChildId = raw.ChildId;
             ChildMessage = raw.ChildMessage;
             ChildMsgParam1 = raw.ChildMsgParam1;
+        }
+
+        public void CompareTo(FhTriggerVolumeEntityEditor other)
+        {
+            PrintValue(Subtype, other.Subtype, nameof(Subtype));
+            PrintValue(Box, other.Box, nameof(Box));
+            PrintValue(Sphere, other.Sphere, nameof(Sphere));
+            PrintValue(Cylinder, other.Cylinder, nameof(Cylinder));
+            PrintValue(OneUse, other.OneUse, nameof(OneUse));
+            PrintValue(Cooldown, other.Cooldown, nameof(Cooldown));
+            PrintValue(TriggerFlags, other.TriggerFlags, nameof(TriggerFlags));
+            PrintValue(Threshold, other.Threshold, nameof(Threshold));
+            PrintValue(ParentId, other.ParentId, nameof(ParentId));
+            PrintValue(ParentMessage, other.ParentMessage, nameof(ParentMessage));
+            PrintValue(ParentMsgParam1, other.ParentMsgParam1, nameof(ParentMsgParam1));
+            PrintValue(ChildId, other.ChildId, nameof(ChildId));
+            PrintValue(ChildMessage, other.ChildMessage, nameof(ChildMessage));
+            PrintValue(ChildMsgParam1, other.ChildMsgParam1, nameof(ChildMsgParam1));
         }
     }
 
@@ -504,6 +733,27 @@ namespace MphRead.Editor
             Priority = raw.Priority;
             TriggerFlags = raw.TriggerFlags;
         }
+
+        public void CompareTo(AreaVolumeEntityEditor other)
+        {
+            PrintValue(Volume, other.Volume, nameof(Volume));
+            PrintValue(Active, other.Active, nameof(Active));
+            PrintValue(AlwaysActive, other.AlwaysActive, nameof(AlwaysActive));
+            PrintValue(AllowMultiple, other.AllowMultiple, nameof(AllowMultiple));
+            PrintValue(MessageDelay, other.MessageDelay, nameof(MessageDelay));
+            PrintValue(Unused6A, other.Unused6A, nameof(Unused6A));
+            PrintValue(InsideMessage, other.InsideMessage, nameof(InsideMessage));
+            PrintValue(InsideMsgParam1, other.InsideMsgParam1, nameof(InsideMsgParam1));
+            PrintValue(InsideMsgParam2, other.InsideMsgParam2, nameof(InsideMsgParam2));
+            PrintValue(ParentId, other.ParentId, nameof(ParentId));
+            PrintValue(ExitMessage, other.ExitMessage, nameof(ExitMessage));
+            PrintValue(ExitMsgParam1, other.ExitMsgParam1, nameof(ExitMsgParam1));
+            PrintValue(ExitMsgParam2, other.ExitMsgParam2, nameof(ExitMsgParam2));
+            PrintValue(ChildId, other.ChildId, nameof(ChildId));
+            PrintValue(Cooldown, other.Cooldown, nameof(Cooldown));
+            PrintValue(Priority, other.Priority, nameof(Priority));
+            PrintValue(TriggerFlags, other.TriggerFlags, nameof(TriggerFlags));
+        }
     }
 
     public class FhAreaVolumeEntityEditor : EntityEditorBase
@@ -535,6 +785,20 @@ namespace MphRead.Editor
             ExitMsgParam1 = raw.ExitMsgParam1;
             Cooldown = raw.Cooldown;
             TriggerFlags = raw.TriggerFlags;
+        }
+
+        public void CompareTo(FhAreaVolumeEntityEditor other)
+        {
+            PrintValue(Subtype, other.Subtype, nameof(Subtype));
+            PrintValue(Box, other.Box, nameof(Box));
+            PrintValue(Sphere, other.Sphere, nameof(Sphere));
+            PrintValue(Cylinder, other.Cylinder, nameof(Cylinder));
+            PrintValue(InsideMessage, other.InsideMessage, nameof(InsideMessage));
+            PrintValue(InsideMsgParam1, other.InsideMsgParam1, nameof(InsideMsgParam1));
+            PrintValue(ExitMessage, other.ExitMessage, nameof(ExitMessage));
+            PrintValue(ExitMsgParam1, other.ExitMsgParam1, nameof(ExitMsgParam1));
+            PrintValue(Cooldown, other.Cooldown, nameof(Cooldown));
+            PrintValue(TriggerFlags, other.TriggerFlags, nameof(TriggerFlags));
         }
     }
 
@@ -570,6 +834,21 @@ namespace MphRead.Editor
             BeamType = raw.BeamType;
             TriggerFlags = raw.TriggerFlags;
         }
+
+        public void CompareTo(JumpPadEntityEditor other)
+        {
+            PrintValue(ParentId, other.ParentId, nameof(ParentId));
+            PrintValue(Unused28, other.Unused28, nameof(Unused28));
+            PrintValue(Volume, other.Volume, nameof(Volume));
+            PrintValue(BeamVector, other.BeamVector, nameof(BeamVector));
+            PrintValue(Speed, other.Speed, nameof(Speed));
+            PrintValue(ControlLockTime, other.ControlLockTime, nameof(ControlLockTime));
+            PrintValue(CooldownTime, other.CooldownTime, nameof(CooldownTime));
+            PrintValue(Active, other.Active, nameof(Active));
+            PrintValue(ModelId, other.ModelId, nameof(ModelId));
+            PrintValue(BeamType, other.BeamType, nameof(BeamType));
+            PrintValue(TriggerFlags, other.TriggerFlags, nameof(TriggerFlags));
+        }
     }
 
     public class FhJumpPadEntityEditor : EntityEditorBase
@@ -604,6 +883,21 @@ namespace MphRead.Editor
             BeamType = raw.BeamType;
             TriggerFlags = raw.TriggerFlags;
         }
+
+        public void CompareTo(FhJumpPadEntityEditor other)
+        {
+            PrintValue(VolumeType, other.VolumeType, nameof(VolumeType));
+            PrintValue(Box, other.Box, nameof(Box));
+            PrintValue(Sphere, other.Sphere, nameof(Sphere));
+            PrintValue(Cylinder, other.Cylinder, nameof(Cylinder));
+            PrintValue(CooldownTime, other.CooldownTime, nameof(CooldownTime));
+            PrintValue(BeamVector, other.BeamVector, nameof(BeamVector));
+            PrintValue(Speed, other.Speed, nameof(Speed));
+            PrintValue(ControlLockTime, other.ControlLockTime, nameof(ControlLockTime));
+            PrintValue(ModelId, other.ModelId, nameof(ModelId));
+            PrintValue(BeamType, other.BeamType, nameof(BeamType));
+            PrintValue(TriggerFlags, other.TriggerFlags, nameof(TriggerFlags));
+        }
     }
 
     public class PointModuleEntityEditor : EntityEditorBase
@@ -617,6 +911,13 @@ namespace MphRead.Editor
             NextId = raw.NextId;
             PrevId = raw.PrevId;
             Active = raw.Active != 0;
+        }
+
+        public void CompareTo(PointModuleEntityEditor other)
+        {
+            PrintValue(NextId, other.NextId, nameof(NextId));
+            PrintValue(PrevId, other.PrevId, nameof(PrevId));
+            PrintValue(Active, other.Active, nameof(Active));
         }
     }
 
@@ -633,6 +934,11 @@ namespace MphRead.Editor
         {
             Volume = new CollisionVolume(raw.Volume);
         }
+
+        public void CompareTo(MorphCameraEntityEditor other)
+        {
+            PrintValue(Volume, other.Volume, nameof(Volume));
+        }
     }
 
     public class OctolithFlagEntityEditor : EntityEditorBase
@@ -642,6 +948,11 @@ namespace MphRead.Editor
         public OctolithFlagEntityEditor(Entity header, OctolithFlagEntityData raw) : base(header)
         {
             TeamId = raw.TeamId;
+        }
+
+        public void CompareTo(OctolithFlagEntityEditor other)
+        {
+            PrintValue(TeamId, other.TeamId, nameof(TeamId));
         }
     }
 
@@ -654,6 +965,12 @@ namespace MphRead.Editor
         {
             TeamId = raw.TeamId;
             Volume = new CollisionVolume(raw.Volume);
+        }
+
+        public void CompareTo(FlagBaseEntityEditor other)
+        {
+            PrintValue(TeamId, other.TeamId, nameof(TeamId));
+            PrintValue(Volume, other.Volume, nameof(Volume));
         }
     }
 
@@ -679,6 +996,18 @@ namespace MphRead.Editor
             TargetPosition = raw.TargetPosition.ToFloatVector();
             TeleporterNodeName = raw.NodeName.MarshalString();
         }
+
+        public void CompareTo(TeleporterEntityEditor other)
+        {
+            PrintValue(Field24, other.Field24, nameof(Field24));
+            PrintValue(Field25, other.Field25, nameof(Field25));
+            PrintValue(ArtifactId, other.ArtifactId, nameof(ArtifactId));
+            PrintValue(Active, other.Active, nameof(Active));
+            PrintValue(Invisible, other.Invisible, nameof(Invisible));
+            PrintValue(TargetRoom, other.TargetRoom, nameof(TargetRoom));
+            PrintValue(TargetPosition, other.TargetPosition, nameof(TargetPosition));
+            PrintValue(TeleporterNodeName, other.TeleporterNodeName, nameof(TeleporterNodeName));
+        }
     }
 
     public class NodeDefenseEntityEditor : EntityEditorBase
@@ -688,6 +1017,11 @@ namespace MphRead.Editor
         public NodeDefenseEntityEditor(Entity header, NodeDefenseEntityData raw) : base(header)
         {
             Volume = new CollisionVolume(raw.Volume);
+        }
+
+        public void CompareTo(NodeDefenseEntityEditor other)
+        {
+            PrintValue(Volume, other.Volume, nameof(Volume));
         }
     }
 
@@ -710,6 +1044,17 @@ namespace MphRead.Editor
             Light2Enabled = raw.Light2Enabled != 0;
             Light2Color = raw.Light2Color;
             Light2Vector = raw.Light2Vector.ToFloatVector();
+        }
+
+        public void CompareTo(LightSourceEntityEditor other)
+        {
+            PrintValue(Volume, other.Volume, nameof(Volume));
+            PrintValue(Light1Enabled, other.Light1Enabled, nameof(Light1Enabled));
+            PrintValue(Light1Color, other.Light1Color, nameof(Light1Color));
+            PrintValue(Light1Vector, other.Light1Vector, nameof(Light1Vector));
+            PrintValue(Light2Enabled, other.Light2Enabled, nameof(Light2Enabled));
+            PrintValue(Light2Color, other.Light2Color, nameof(Light2Color));
+            PrintValue(Light2Vector, other.Light2Vector, nameof(Light2Vector));
         }
     }
 
@@ -740,6 +1085,21 @@ namespace MphRead.Editor
             Message3Target = raw.Message3Target;
             Message3 = raw.Message3;
             LinkedEntityId = raw.LinkedEntityId;
+        }
+
+        public void CompareTo(ArtifactEntityEditor other)
+        {
+            PrintValue(ModelId, other.ModelId, nameof(ModelId));
+            PrintValue(ArtifactId, other.ArtifactId, nameof(ArtifactId));
+            PrintValue(Active, other.Active, nameof(Active));
+            PrintValue(HasBase, other.HasBase, nameof(HasBase));
+            PrintValue(Message1Target, other.Message1Target, nameof(Message1Target));
+            PrintValue(Message1, other.Message1, nameof(Message1));
+            PrintValue(Message2Target, other.Message2Target, nameof(Message2Target));
+            PrintValue(Message2, other.Message2, nameof(Message2));
+            PrintValue(Message3Target, other.Message3Target, nameof(Message3Target));
+            PrintValue(Message3, other.Message3, nameof(Message3));
+            PrintValue(LinkedEntityId, other.LinkedEntityId, nameof(LinkedEntityId));
         }
     }
 
@@ -777,6 +1137,24 @@ namespace MphRead.Editor
             Message = raw.Message;
             MessageParam = raw.MessageParam;
         }
+
+        public void CompareTo(CameraSequenceEntityEditor other)
+        {
+            PrintValue(SequenceId, other.SequenceId, nameof(SequenceId));
+            PrintValue(Field25, other.Field25, nameof(Field25));
+            PrintValue(Loop, other.Loop, nameof(Loop));
+            PrintValue(Field27, other.Field27, nameof(Field27));
+            PrintValue(Field28, other.Field28, nameof(Field28));
+            PrintValue(Field29, other.Field29, nameof(Field29));
+            PrintValue(DelayFrames, other.DelayFrames, nameof(DelayFrames));
+            PrintValue(PlayerId1, other.PlayerId1, nameof(PlayerId1));
+            PrintValue(PlayerId2, other.PlayerId2, nameof(PlayerId2));
+            PrintValue(Entity1, other.Entity1, nameof(Entity1));
+            PrintValue(Entity2, other.Entity2, nameof(Entity2));
+            PrintValue(MessageTargetId, other.MessageTargetId, nameof(MessageTargetId));
+            PrintValue(Message, other.Message, nameof(Message));
+            PrintValue(MessageParam, other.MessageParam, nameof(MessageParam));
+        }
     }
 
     public class ForceFieldEntityEditor : EntityEditorBase
@@ -792,6 +1170,14 @@ namespace MphRead.Editor
             Width = raw.Width.FloatValue;
             Height = raw.Height.FloatValue;
             Active = raw.Active != 0;
+        }
+
+        public void CompareTo(ForceFieldEntityEditor other)
+        {
+            PrintValue(ForceFieldType, other.ForceFieldType, nameof(ForceFieldType));
+            PrintValue(Width, other.Width, nameof(Width));
+            PrintValue(Height, other.Height, nameof(Height));
+            PrintValue(Active, other.Active, nameof(Active));
         }
     }
 }

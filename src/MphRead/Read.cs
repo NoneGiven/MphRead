@@ -638,6 +638,12 @@ namespace MphRead
         public static IReadOnlyList<Entity> GetEntities(string path, int layerId, bool firstHunt)
         {
             path = Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path);
+            return GetEntitiesFromPath(path, layerId, firstHunt);
+        }
+
+        public static IReadOnlyList<Entity> GetEntitiesFromPath(string path, int layerId, bool firstHunt)
+        {
+            path = Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path);
             ReadOnlySpan<byte> bytes = ReadBytes(path, firstHunt);
             uint version = BitConverter.ToUInt32(bytes[0..4]);
             if (version == 1)

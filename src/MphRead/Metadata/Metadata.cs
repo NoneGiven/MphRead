@@ -413,6 +413,86 @@ namespace MphRead
             return list[playerCount == 3 ? 1 : (playerCount == 4 ? 2 : 0)];
         }
 
+        public static string GetLayerName(int layerId, bool multiplayer)
+        {
+            if (!multiplayer)
+            {
+                if (layerId == 0)
+                {
+                    return "FirstVisit";
+                }
+                if (layerId == 1)
+                {
+                    return "BossDefeated";
+                }
+                if (layerId == 2)
+                {
+                    return "SpLayer2";
+                }
+                if (layerId == 3)
+                {
+                    return "SpLayer3";
+                }
+                return $"NoLayer{layerId}";
+            }
+            return GetLayerNames(1 << layerId, multiplayer);
+        }
+
+        public static string GetLayerNames(int layerMask, bool multiplayer)
+        {
+            if (multiplayer)
+            {
+                var names = new List<string>();
+                IEnumerable<int> layers = Enumerable.Range(0, 16).Where(i => (layerMask & (1 << i)) != 0);
+                foreach (KeyValuePair<GameMode, IReadOnlyList<int>> kvp in _modeLayers)
+                {
+                    if (kvp.Value.All(v => layers.Contains(v)))
+                    {
+                        names.Add(kvp.Key.ToString());
+                    }
+                    else if (kvp.Value.Count > 1)
+                    {
+                        var players = new List<string>(0);
+                        if (layers.Contains(kvp.Value[0]))
+                        {
+                            players.Add("2P");
+                        }
+                        if (layers.Contains(kvp.Value[1]))
+                        {
+                            players.Add("3P");
+                        }
+                        if (layers.Contains(kvp.Value[2]))
+                        {
+                            players.Add("4P");
+                        }
+                        if (players.Count > 0)
+                        {
+                            names.Add($"{kvp.Key}{String.Join('/', players)}");
+                        }
+                    }
+                }
+                return String.Join(" | ", names);
+            }
+            int masked = layerMask & 3;
+            if (masked == 0)
+            {
+                return "FirstVisit";
+            }
+            if (masked == 1)
+            {
+                return "BossDefeated";
+            }
+            if (masked == 2)
+            {
+                return "SpLayer2";
+            }
+            if (masked == 3)
+            {
+                return "SpLayer3";
+            }
+            return $"UNKNOWN{layerMask}";
+        }
+
         public static readonly Vector3 EmissionOrange = GetColor(0x14F0);
         public static readonly Vector3 EmissionGreen = GetColor(0x1565);
         public static readonly Vector3 EmissionGray = GetColor(0x35AD);
