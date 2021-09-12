@@ -1033,8 +1033,18 @@ namespace MphRead.Utility
             Debug.Assert(meta1.FirstHunt == meta2.FirstHunt);
             Debug.Assert(meta1.EntityPath != null && meta2.EntityPath != null);
             // todo: better game/version selection
-            string path1 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, meta1.EntityPath);
-            string path2 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, meta2.EntityPath);
+            string path1;
+            string path2;
+            if (meta1.FirstHunt)
+            {
+                path1 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, "data", meta1.EntityPath);
+                path2 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, "data", meta2.EntityPath);
+            }
+            else
+            {
+                path1 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, meta1.EntityPath);
+                path2 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, meta2.EntityPath);
+            }
             byte[] bytes1 = File.ReadAllBytes(path1);
             byte[] bytes2 = File.ReadAllBytes(path2);
             bool differences = false;
