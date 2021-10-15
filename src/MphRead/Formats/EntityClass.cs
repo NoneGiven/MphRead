@@ -417,7 +417,7 @@ namespace MphRead.Editor
         public uint ModelId { get; set; }
         public uint ConnectorId { get; set; }
         public byte TargetLayerId { get; set; }
-        public byte Flags { get; set; } // bit 0 - locked
+        public bool Active { get; set; }
         public byte Field42 { get; set; }
         public byte Field43 { get; set; }
         public string EntityFilename { get; set; } = "";
@@ -434,7 +434,7 @@ namespace MphRead.Editor
             ModelId = raw.ModelId;
             ConnectorId = raw.ConnectorId;
             TargetLayerId = raw.TargetLayerId;
-            Flags = raw.Flags;
+            Active = raw.Active != 0;
             Field42 = raw.Field42;
             Field43 = raw.Field43;
             EntityFilename = raw.EntityFilename.MarshalString();
@@ -448,7 +448,7 @@ namespace MphRead.Editor
             PrintValue(ModelId, other.ModelId, nameof(ModelId));
             PrintValue(ConnectorId, other.ConnectorId, nameof(ConnectorId));
             PrintValue(TargetLayerId, other.TargetLayerId, nameof(TargetLayerId));
-            PrintValue(Flags, other.Flags, nameof(Flags));
+            PrintValue(Active, other.Active, nameof(Active));
             PrintValue(Field42, other.Field42, nameof(Field42));
             PrintValue(Field43, other.Field43, nameof(Field43));
             PrintValue(EntityFilename, other.EntityFilename, nameof(EntityFilename));
@@ -459,7 +459,7 @@ namespace MphRead.Editor
     public class FhDoorEntityEditor : EntityEditorBase
     {
         public string RoomName { get; set; } = "";
-        public uint Flags { get; set; }
+        public bool Active { get; set; }
         public uint ModelId { get; set; }
 
         public FhDoorEntityEditor() : base(EntityType.FhDoor)
@@ -469,14 +469,14 @@ namespace MphRead.Editor
         public FhDoorEntityEditor(Entity header, FhDoorEntityData raw) : base(header)
         {
             RoomName = raw.RoomName.MarshalString();
-            Flags = raw.Flags;
+            Active = raw.Active != 0;
             ModelId = raw.ModelId;
         }
 
         public void CompareTo(FhDoorEntityEditor other)
         {
             PrintValue(RoomName, other.RoomName, nameof(RoomName));
-            PrintValue(Flags, other.Flags, nameof(Flags));
+            PrintValue(Active, other.Active, nameof(Active));
             PrintValue(ModelId, other.ModelId, nameof(ModelId));
         }
     }
