@@ -395,7 +395,7 @@ namespace MphRead.Utility
                         Facing = door.Facing,
                         Field42 = 255,
                         Field43 = 255,
-                        Active = door.Active,
+                        Locked = door.Locked,
                         LayerMask = 0xFFFF,
                         ModelId = 0,
                         NodeName = door.NodeName,
@@ -774,7 +774,7 @@ namespace MphRead.Utility
                     {
                         Id = door.Id,
                         Facing = door.Facing,
-                        Active = door.Active,
+                        Locked = door.Locked,
                         ModelId = 0,
                         NodeName = door.NodeName,
                         Position = door.Position,
@@ -1963,7 +1963,7 @@ namespace MphRead.Utility
             writer.Write(entity.ModelId);
             writer.Write(entity.ConnectorId);
             writer.Write(entity.TargetLayerId);
-            writer.WriteByte(entity.Active);
+            writer.WriteByte(entity.Locked);
             writer.Write(entity.Field42);
             writer.Write(entity.Field43);
             writer.WriteString(entity.EntityFilename, 16);
@@ -2483,7 +2483,7 @@ namespace MphRead.Utility
         private static void WriteFhDoor(FhDoorEntityEditor entity, BinaryWriter writer)
         {
             writer.WriteString(entity.RoomName, 16);
-            writer.WriteInt(entity.Active);
+            writer.WriteInt(entity.Locked);
             writer.Write(entity.ModelId);
         }
 

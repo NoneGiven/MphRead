@@ -5333,7 +5333,7 @@ namespace MphRead.Memory
         public int Frames { get => ReadInt32(_off105); set => WriteInt32(_off105, value); }
 
         private const int _off106 = 0x230;
-        public int Field280 { get => ReadInt32(_off106); set => WriteInt32(_off106, value); }
+        public int LoadRoomId { get => ReadInt32(_off106); set => WriteInt32(_off106, value); }
 
         private const int _off107 = 0x234;
         public int Field284 { get => ReadInt32(_off107); set => WriteInt32(_off107, value); }

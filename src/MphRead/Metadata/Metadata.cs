@@ -816,7 +816,7 @@ namespace MphRead
             /* 2 */ "door2_holo"
         };
 
-        // 0-7 are for beam doors, 8 is unused?, 9 is for regular doors
+        // 0-7 are for beam doors, 8 is an unused "bomb door", 9 is for regular doors
         // (only a few rooms use index 0, since the usual thing is to use index 9)
         public static readonly IReadOnlyList<int> DoorPalettes = new List<int>()
         {

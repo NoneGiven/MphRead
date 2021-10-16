@@ -176,9 +176,9 @@ namespace MphRead
         public readonly uint ModelId;
         public readonly uint ConnectorId;
         public readonly byte TargetLayerId;
-        public readonly byte Active; // boolean
-        public readonly byte Field42;
-        public readonly byte Field43;
+        public readonly byte Locked; // boolean
+        public readonly byte OutConnectorId;
+        public readonly byte OutLoaderId;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] EntityFilename;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
@@ -191,7 +191,7 @@ namespace MphRead
         public readonly EntityDataHeader Header;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] RoomName;
-        public readonly uint Active; // boolean
+        public readonly uint Locked; // boolean
         public readonly uint ModelId;
     }
 
