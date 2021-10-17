@@ -254,11 +254,6 @@ namespace MphRead.Entities
         None = 0x0,
         Exploding = 0x1,
         Exploded = 0x2,
-        HasModel = 0x4,
-        Bit03 = 0x8,
-        Bit04 = 0x10,
-        Bit05 = 0x20,
-        Bit06 = 0x40,
-        Bit07 = 0x80
+        HasModel = 0x4
     }
 }

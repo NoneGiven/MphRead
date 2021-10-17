@@ -32,6 +32,7 @@ namespace MphRead
         AreaExit,
         MorphCamera,
         JumpPad,
+        Teleporter,
         Object,
         FlagBase,
         DefenseNode,
