@@ -54,7 +54,7 @@ namespace MphRead.Entities
         public float Speed { get; set; }
         public float InitialSpeed { get; set; }
         public float FinalSpeed { get; set; }
-        public float FieldE0 { get; set; }
+        public float DamageDirMag { get; set; }
         public float RicochetLossH { get; set; }
         public float RicochetLossV { get; set; }
         public float CylinderRadius { get; set; }
@@ -815,7 +815,7 @@ namespace MphRead.Entities
             var color = new Vector3(red, green, blue);
             byte colEffect = weapon.CollisionEffects[charged ? 1 : 0];
             byte dmgDirType = weapon.DmgDirTypes[charged ? 1 : 0];
-            float fieldE0 = GetAmount(weapon.Field48, weapon.Field4C, weapon.Field50);
+            float dmgDirMag = GetAmount(weapon.UnchargedDmgDirMag, weapon.MinChargeDmgDirMag, weapon.ChargedDmgDirMag) / 4096f;
             int damage = (int)GetAmount(weapon.UnchargedDamage, weapon.MinChargeDamage, weapon.ChargedDamage);
             int hsDamage = (int)GetAmount(weapon.HeadshotDamage, weapon.MinChargeHeadshotDamage, weapon.ChargedHeadshotDamage);
             int splashDmg = (int)GetAmount(weapon.SplashDamage, weapon.MinChargeSplashDamage, weapon.ChargedSplashDamage);
@@ -914,7 +914,7 @@ namespace MphRead.Entities
                 beam.CollisionEffect = colEffect;
                 beam.DamageDirType = dmgDirType;
                 beam.SplashDamageType = splashDmgType;
-                beam.FieldE0 = fieldE0;
+                beam.DamageDirMag = dmgDirMag;
                 beam.SpawnPosition = beam.BackPosition = beam.Position = position;
                 for (int j = 0; j < 10; j++)
                 {
