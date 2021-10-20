@@ -763,8 +763,8 @@ namespace MphRead.Entities
                 return;
             }
 
-            bool instant = (charged && weapon.Flags.TestFlag(WeaponFlags.InstantCharged))
-                || (!charged && weapon.Flags.TestFlag(WeaponFlags.InstantUncharged));
+            bool instantAoe = (charged && weapon.Flags.TestFlag(WeaponFlags.AoeCharged))
+                || (!charged && weapon.Flags.TestFlag(WeaponFlags.AoeUncharged));
 
             BeamFlags flags = BeamFlags.None;
             float speed = GetAmount(weapon.UnchargedSpeed, weapon.MinChargeSpeed, weapon.ChargedSpeed) / 4096f / 2; // todo: FPS stuff
@@ -938,7 +938,7 @@ namespace MphRead.Entities
                 beam.RicochetWeapon = ricochetWeapon;
                 beam.Equip = equip;
                 // todo: game state max damage stuff (efficiency?)
-                if (instant)
+                if (instantAoe)
                 {
                     beam.SpawnIceWave(weapon, chargePct, scene);
                     // we don't actually "spawn" the beam projectile
