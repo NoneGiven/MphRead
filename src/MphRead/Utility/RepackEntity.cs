@@ -1932,10 +1932,10 @@ namespace MphRead.Utility
         {
             byte padByte = 0;
             ushort padShort = 0;
-            writer.Write(entity.Flags);
+            writer.Write((byte)entity.Flags);
             writer.Write(padByte); // Padding25
             writer.Write(padShort); // Padding26
-            writer.Write(entity.EffectFlags);
+            writer.Write((uint)entity.EffectFlags);
             writer.Write(entity.ModelId);
             writer.Write(entity.LinkedEntity);
             writer.Write(entity.ScanId);

@@ -1,3 +1,4 @@
+using System;
 using MphRead.Effects;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
@@ -10,7 +11,7 @@ namespace MphRead.Entities
         private CollisionVolume _effectVolume;
         private Matrix4 _prevTransform;
 
-        private uint _flags = 0;
+        private ObjectFlags _flags = 0;
         private int _effectInterval = 0;
         private int _effectIntervalTimer = 0;
         private int _effectIntervalIndex = 0;
@@ -35,10 +36,10 @@ namespace MphRead.Entities
             _prevTransform = Transform;
             _flags = data.Flags;
             // todo: room state affecting animation ID
-            _flags &= 0xFB;
-            _flags &= 0xF7;
-            _flags &= 0xEF;
-            if (data.EffectId > 0 && (data.EffectFlags & 1) != 0)
+            _flags &= ~ObjectFlags.NoAnimation;
+            _flags &= ~ObjectFlags.IsVisible;
+            _flags &= ~ObjectFlags.EntityLinked;
+            if (data.EffectId > 0 && data.EffectFlags.TestFlag(ObjEffFlags.UseEffectVolume))
             {
                 _effectVolume = CollisionVolume.Transform(data.Volume, Transform);
             }
@@ -47,9 +48,9 @@ namespace MphRead.Entities
             {
                 AddPlaceholderModel();
                 // todo: use this for visibility
-                _flags |= 4;
+                _flags |= ObjectFlags.NoAnimation;
                 // todo: this should get cleared if there's an effect ID and "is_visible" returns false
-                _flags |= 0x10;
+                _flags |= ObjectFlags.IsVisible;
             }
             else
             {
@@ -65,7 +66,7 @@ namespace MphRead.Entities
                 {
                     _scanVisorOnly = true;
                 }
-                int state = (int)_flags & 3;
+                int state = (int)(_flags & ObjectFlags.State);
                 int animIndex = meta.AnimationIds[state];
                 // AlimbicCapsule
                 if (data.ModelId == 45)
@@ -94,7 +95,7 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    _flags |= 4;
+                    _flags |= ObjectFlags.NoAnimation;
                 }
                 ModelMetadata modelMeta = Metadata.ModelMetadata[meta.Name];
                 if (modelMeta.CollisionPath != null)
@@ -161,20 +162,20 @@ namespace MphRead.Entities
             if (_data.EffectId > 0)
             {
                 bool processEffect = false;
-                if ((_data.EffectFlags & 0x40) != 0)
+                if (_data.EffectFlags.TestFlag(ObjEffFlags.AlwaysUpdateEffect))
                 {
                     processEffect = true;
                 }
-                else if ((_flags & 0x10) != 0)
+                else if (_data.EffectFlags.TestFlag(ObjEffFlags.AttachEffect))
                 {
-                    if ((_data.EffectFlags & 1) != 0)
+                    if (_data.EffectFlags.TestFlag(ObjEffFlags.UseEffectVolume))
                     {
                         // todo: add an option to disable this check
                         processEffect = _effectVolume.TestPoint(scene.CameraPosition);
                     }
                     else
                     {
-                        processEffect = (_flags & 3) != 0;
+                        processEffect = (_flags & ObjectFlags.State) != 0;
                     }
                 }
                 if (processEffect)
@@ -192,7 +193,7 @@ namespace MphRead.Entities
                     {
                         _effectIntervalIndex++;
                         _effectIntervalIndex %= 16;
-                        if ((_data.EffectFlags & 0x10) != 0)
+                        if (_data.EffectFlags.TestFlag(ObjEffFlags.AttachEffect))
                         {
                             bool previouslyActive = _effectActive;
                             _effectActive = (_data.EffectOnIntervals & (1 << _effectIntervalIndex)) != 0;
@@ -217,7 +218,7 @@ namespace MphRead.Entities
                         {
                             // ptodo: mtxptr stuff
                             Matrix4 spawnTransform = Transform;
-                            if ((_data.EffectFlags & 2) != 0)
+                            if (_data.EffectFlags.TestFlag(ObjEffFlags.UseEffectOffset))
                             {
                                 Vector3 offset = _data.EffectPositionOffset.ToFloatVector();
                                 offset.X *= Fixed.ToFloat(2 * (Rng.GetRandomInt1(0x1000u) - 2048));
@@ -255,7 +256,7 @@ namespace MphRead.Entities
         {
             if (_effectEntry != null)
             {
-                if ((_data.EffectFlags & 0x20) != 0)
+                if (_data.EffectFlags.TestFlag(ObjEffFlags.DestroyEffect))
                 {
                     scene.UnlinkEffectEntry(_effectEntry);
                 }
@@ -273,5 +274,30 @@ namespace MphRead.Entities
                 AddVolumeItem(_effectVolume, Vector3.UnitX, scene);
             }
         }
+    }
+
+    [Flags]
+    public enum ObjectFlags : byte
+    {
+        None = 0x0,
+        StateBit0 = 0x1,
+        StateBit1 = 0x2,
+        State = 0x3,
+        NoAnimation = 0x4,
+        EntityLinked = 0x8,
+        IsVisible = 0x10
+    }
+
+    [Flags]
+    public enum ObjEffFlags : uint
+    {
+        None = 0x0,
+        UseEffectVolume = 0x1,
+        UseEffectOffset = 0x2,
+        RepeatScanMessage = 0x4,
+        WeaponZoom = 0x8,
+        AttachEffect = 0x10,
+        DestroyEffect = 0x20,
+        AlwaysUpdateEffect = 0x40
     }
 }

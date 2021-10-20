@@ -484,7 +484,7 @@ namespace MphRead.Entities
                     Vector3 spawnPos = Matrix.Vec3MultMtx4(_beamSpawnPos, transform);
                     Vector3 spawnDir = Matrix.Vec3MultMtx3(_beamSpawnDir, transform).Normalized();
                     BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, BeamSpawnFlags.None, scene);
-                    if (!_equipInfo.Weapon.Flags.TestFlag(WeaponFlags.Bit10))
+                    if (!_equipInfo.Weapon.Flags.TestFlag(WeaponFlags.RepeatFire))
                     {
                         _beamActive = false;
                     }

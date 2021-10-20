@@ -339,8 +339,8 @@ namespace MphRead.Editor
 
     public class ObjectEntityEditor : EntityEditorBase
     {
-        public byte Flags { get; set; }
-        public uint EffectFlags { get; set; }
+        public ObjectFlags Flags { get; set; }
+        public ObjEffFlags EffectFlags { get; set; }
         public int ModelId { get; set; }
         public short LinkedEntity { get; set; }
         public ushort ScanId { get; set; }

@@ -139,10 +139,10 @@ namespace MphRead
     public readonly struct ObjectEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly byte Flags;
+        public readonly ObjectFlags Flags;
         public readonly byte Padding25;
         public readonly ushort Padding26;
-        public readonly uint EffectFlags;
+        public readonly ObjEffFlags EffectFlags;
         public readonly int ModelId;
         public readonly short LinkedEntity;
         public readonly ushort ScanId;
