@@ -65,7 +65,7 @@ namespace MphRead.Entities
             Flags = data.Flags;
             if (Flags.TestFlag(PlatformFlags.Breakable))
             {
-                Flags |= PlatformFlags.Bit03;
+                Flags |= PlatformFlags.NoBeamColEffect;
                 Flags |= PlatformFlags.HideOnSleep;
                 Flags |= PlatformFlags.BeamTarget;
             }
@@ -768,7 +768,7 @@ namespace MphRead.Entities
                                 || (!_stateBits.TestFlag(PlatStateBits.Reverse) && _fromIndex == _data.PositionCount - 1))
                             {
                                 Deactivate();
-                                if (Flags.TestFlag(PlatformFlags.Bit08))
+                                if (Flags.TestFlag(PlatformFlags.SleepAtEnd))
                                 {
                                     SleepWake(wake: false, instant: false);
                                 }
@@ -873,7 +873,7 @@ namespace MphRead.Entities
         Active = 0x1,
         DisableReflect = 0x2,
         Draw = 0x4,
-        TakeDamage = 0x8,
+        Bit03 = 0x8, // functionless
         Bit04 = 0x10, // functionless
         Bit05 = 0x20, // functionless
         SeekPlayerHeight = 0x40,
@@ -895,12 +895,12 @@ namespace MphRead.Entities
         Hazard = 0x1,
         ContactDamage = 0x2,
         BeamSpawner = 0x4,
-        Bit03 = 0x8, // functionless
+        NoBeamColEffect = 0x8,
         DamagedReflect1 = 0x10,
         DamagedReflect2 = 0x20,
         StandingColOnly = 0x40,
         StartSleep = 0x80,
-        Bit08 = 0x100,
+        SleepAtEnd = 0x100,
         Bit09 = 0x200,
         Bit10 = 0x400,
         Bit11 = 0x800,

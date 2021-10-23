@@ -1048,15 +1048,15 @@ namespace MphRead
             {
                 return new Vector3(1f, 1f, 0.6f);
             }
-            if (eventId == Message.Unknown25) // pale orange
+            if (eventId == Message.Unused25) // pale orange
             {
                 return new Vector3(1f, 0.792f, 0.6f);
             }
-            if (eventId == Message.Unknown35) // yellow
+            if (eventId == Message.PreventFormSwitch) // yellow
             {
                 return new Vector3(0.964f, 1f, 0.058f);
             }
-            if (eventId == Message.Unknown44) // gray
+            if (eventId == Message.PlatformWakeup) // gray
             {
                 return new Vector3(0.5f, 0.5f, 0.5f);
             }
@@ -1080,7 +1080,7 @@ namespace MphRead
             {
                 return new Vector3(0.549f, 0.18f, 0.18f);
             }
-            if (eventId == Message.Unknown12) // dark teal
+            if (eventId == Message.UpdateMusic) // dark teal
             {
                 return new Vector3(0.094f, 0.506f, 0.51f);
             }
@@ -1104,11 +1104,11 @@ namespace MphRead
             {
                 return new Vector3(1f, 0.612f, 0.153f);
             }
-            if (eventId == Message.Unknown33) // lavender
+            if (eventId == Message.UnlockConnectors) // lavender
             {
                 return new Vector3(0.906f, 0.702f, 1f);
             }
-            if (eventId == Message.Unknown34) // pale blue
+            if (eventId == Message.LockConnectors) // pale blue
             {
                 return new Vector3(0.784f, 0.984f, 0.988f);
             }
@@ -1116,23 +1116,23 @@ namespace MphRead
             {
                 return new Vector3(1f, 0.325f, 0.294f);
             }
-            if (eventId == Message.Unknown42) // pink
+            if (eventId == Message.SetTriggerState) // pink
             {
                 return new Vector3(0.988f, 0.463f, 0.824f);
             }
-            if (eventId == Message.Unknown45) // sea green
+            if (eventId == Message.PlatformSleep) // sea green
             {
                 return new Vector3(0.165f, 0.894f, 0.678f);
             }
-            if (eventId == Message.Unknown53) // brown
+            if (eventId == Message.SetPlatformIndex) // brown
             {
                 return new Vector3(0.549f, 0.345f, 0.102f);
             }
-            if (eventId == Message.Unknown54) // pale green
+            if (eventId == Message.PlaySfxScript) // pale green
             {
                 return new Vector3(0.471f, 0.769f, 0.525f);
             }
-            if (eventId == Message.Unknown60) // light orange
+            if (eventId == Message.LoadOubliette) // light orange
             {
                 return new Vector3(1f, 0.765f, 0.49f);
             }

@@ -257,7 +257,7 @@ namespace MphRead.Utility
                     FhMessage.Complete => Message.Complete,
                     FhMessage.Impact => Message.Impact,
                     FhMessage.Death => Message.Death,
-                    FhMessage.Unknown21 => Message.Unknown22,
+                    FhMessage.Unknown21 => Message.Unused22,
                     _ => Message.UnlockOubliette
                 };
             }
@@ -702,7 +702,7 @@ namespace MphRead.Utility
                     Message.Complete => FhMessage.Complete,
                     Message.Impact => FhMessage.Impact,
                     Message.Death => FhMessage.Death,
-                    Message.Unknown22 => FhMessage.Unknown21,
+                    Message.Unused22 => FhMessage.Unknown21,
                     _ => (FhMessage)255
                 };
             }
