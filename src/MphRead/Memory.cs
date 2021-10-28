@@ -15,6 +15,7 @@ namespace MphRead.Memory
             public int EntityListHead { get; }
             public int FrameCount { get; }
             public int PlayerUA { get; }
+            public int Players { get; }
             public int CamSeqData { get; }
             public int GameState { get; }
             public int RoomDesc { get; }
@@ -39,12 +40,13 @@ namespace MphRead.Memory
                 }
             }
 
-            public AddressInfo(int gameState, int entityListHead, int frameCount, int playerUa,
-                int camSeqData, int roomDesc, SaveAddressInfo save)
+            public AddressInfo(int gameState, int entityListHead, int frameCount, int players,
+                int playerUa, int camSeqData, int roomDesc, SaveAddressInfo save)
             {
                 GameState = gameState;
                 EntityListHead = entityListHead;
                 FrameCount = frameCount;
+                Players = players;
                 PlayerUA = playerUa;
                 CamSeqData = camSeqData;
                 RoomDesc = roomDesc;
@@ -60,6 +62,7 @@ namespace MphRead.Memory
                 gameState: 0x20BC420, // todo: class
                 entityListHead: 0x20B85F8,
                 frameCount: 0x20AE514,
+                players: 0x20B00D4, // todo
                 playerUa: 0x20B00D4,
                 camSeqData: 0x2103760,
                 roomDesc: 0x20B84C4, // todo
@@ -75,6 +78,7 @@ namespace MphRead.Memory
                 gameState: 0x20E845C,
                 entityListHead: 0x20E3EE0,
                 frameCount: 0x20D94FC,
+                players: 0x20DB034,
                 playerUa: 0x20DB180,
                 camSeqData: 0x21335E0,
                 roomDesc: 0x20B84C4,
@@ -114,7 +118,7 @@ namespace MphRead.Memory
         public static void Start()
         {
             // FF DE FF E7 FF DE FF E7 FF DE FF E7 @ 0x2004000
-            new Memory(Process.GetProcessById(43444)).Run();
+            new Memory(Process.GetProcessById(46588)).Run();
             /*var procs = Process.GetProcessesByName("NO$GBA").ToList();
             foreach (Process process in procs)
             {
@@ -133,7 +137,7 @@ namespace MphRead.Memory
         private void Run()
         {
             Addresses = AllAddresses["amhp1"];
-            _baseAddress = new IntPtr(0x98C5100);
+            _baseAddress = new IntPtr(0x988E100);
             Task.Run(async () =>
             {
                 // 0x137A9C Cretaphid 1 crystal
@@ -145,174 +149,29 @@ namespace MphRead.Memory
                 //string last = "";
                 string output = "";
                 var sb = new StringBuilder();
-                var ents = new List<int>();
-                var nd3s = new List<int>();
-                var matches = new Dictionary<int, CEntity>();
                 RefreshMemory();
-                //var story = new StorySaveData(this, Addresses.Save.Story);
-                //var type3 = new SaveType3(this, Addresses.Save.Type3);
-                //var settings = new StatsAndSettings(this, Addresses.Save.Settings);
-                //var license = new StorySaveData(this, Addresses.Save.License);
-                //var friends = new StorySaveData(this, Addresses.Save.Friends);
-                //var state = new GameState(this, Addresses.GameState);
-                var state = new KioskGameState(this, Addresses.GameState);
-                IReadOnlyList<StringTableEntry> scans = Strings.ReadStringTable(StringTables.ScanLog);
+                var players = new CPlayer[]
+                {
+                    new CPlayer(this, 0x20DB034),
+                    new CPlayer(this, 0x20DB034 + 0xF30),
+                    new CPlayer(this, 0x20DB034 + 0xF30 * 2),
+                    new CPlayer(this, 0x20DB034 + 0xF30 * 3)
+                };
                 while (true)
                 {
                     sb.Clear();
                     RefreshMemory();
-                    GetEntities();
-                    //byte[] weapon = new byte[0xF0];
-                    //for (int i = 0; i < 0xF0; i++)
-                    //{
-                    //    weapon[i] = _buffer[0x137C7C + i];
-                    //}
-                    //Test.DumpWeaponInfo(Test.ParseWeaponInfo(1, weapon)[0]);
-                    //var camSeqs = new IntPtrArray(this, Addresses.CamSeqData, 175);
-                    //var scanIntro = new CameraSequence(this, camSeqs[5]);
-                    //var keyframe0 = new CameraSequenceKeyframe(this, scanIntro.Keyframes);
-                    //var keyframe1 = new CameraSequenceKeyframe(this, keyframe0.Next);
-                    //var keyframe2 = new CameraSequenceKeyframe(this, keyframe1.Next);
-                    //var beams = _entities.Where(e => e.EntityType == EntityType.BeamProjectile).ToList();
-                    //var player = _entities.FirstOrDefault(e => e.EntityType == EntityType.Player) as CPlayer;
-                    //if (player != null)
-                    //{
-                    //    player.AvailableWeapons = 0xFF;
-                    //    player.AvailableCharges = 0xFF;
-                    //    player.Energy += 99;
-                    //}
-                    //if (player != null)
-                    //{
-                    //    int bit0 = player.SomeFlags & 0x10;
-                    //    int bit1 = player.SomeFlags & 0x40;
-                    //    string output = $"{(bit0 == 0 ? "Cleared" : "Set")} // {(bit1 == 0 ? "Cleared" : "Set")}";
-                    //    if (output != last)
-                    //    {
-                    //        Console.Write($"\r{output}                     ");
-                    //        last = output;
-                    //    }
-                    //}
-                    //Console.Clear();
-                    //foreach (CPlatform plat in _entities.Where(e => e.EntityType == EntityType.Platform).Select(e => (CPlatform)e))
-                    //{
-                    //    Console.WriteLine($"{plat.ModelId}: {plat.State}");
-                    //}
-                    //TestLogic.CompletionValues pcts = TestLogic.GetCompletionValues(story);
-                    //state.AreaId = 8;
-                    //state.BattleTimeLimit = 25200;
-                    //state.TimeLimit = 25200;
-                    //state.BotCount = 1; // todo: work around the allocation thing
-                    //state.Field6[1] = 0;
-                    //state.GameMode = GameMode.Battle;
-                    //state.Hunters[1] = 1;
-                    //state.SuitColors[1] = 1;
-                    //state.MaxPlayers = 2;
-                    //state.PlayerCount = 2;
-                    //state.PointLimit = 7;
-                    //state.RoomId = 105;
-                    //state.SomeFlags = 6160;
-                    //state.LayerId = 255;
-
-                    var ptr1s = new List<uint>() { 0x22AEB28 };
-
-                    int str3 = 0x2AD8E0;
-                    ushort prev = 0;
-                    ushort id = BitConverter.ToUInt16(_buffer, str3 + 2);
-                    Debug.Assert(id == 0);
-                    do
+                    for (int i = 0; i < 4; i++)
                     {
-                        str3 += 0x24;
-                        prev = id;
-                        id = BitConverter.ToUInt16(_buffer, str3 + 2);
-                        if (id != 0)
+                        byte flags = players[i].LoadFlags;
+                        sb.AppendLine(" 7   6   5   4   3   2   1   0");
+                        //             [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ]
+                        for (int b = 7; b >= 0; b--)
                         {
-                            ptr1s.Add(BitConverter.ToUInt32(_buffer, str3 + 0x18));
+                            sb.Append($"[{((flags & (1 << b)) != 0 ? "*" : " ")}] ");
                         }
-                    }
-                    while (id == prev + 1);
-
-                    for (int i = 0; i < ptr1s.Count; i++)
-                    {
-                        Console.Write($"{i,3}: 0x{ptr1s[i]:X1}");
-                        if (i < ptr1s.Count - 1)
-                        {
-                            uint diff = ptr1s[i + 1] - ptr1s[i];
-                            Debug.Assert(diff >= 0xC);
-                            Debug.Assert(diff % 0xC == 0);
-                            Console.Write($" + {diff:X1}");
-                        }
-                        Console.WriteLine();
-                    }
-
-                    ents.Clear();
-                    nd3s.Clear();
-                    matches.Clear();
-                    int none = 0;
-                    foreach (CPlayer player in _entities.Where(e => e.EntityType == EntityType.Player))
-                    {
-                        if (player.IsBot != 0 && player.SlotIndex == 1)
-                        {
-                            int aiAddr = player.AiData.ToInt32();
-                            Debug.Assert(aiAddr != 0);
-                            for (int i = 0; i < 78; i++)
-                            {
-                                int addr = aiAddr + 0x120 + i * 4;
-                                int ptr = BitConverter.ToInt32(_buffer, addr - Offset);
-                                if (ptr == 0)
-                                {
-                                    none++;
-                                }
-                                else if (_entities.Any(e => e.Address.ToInt32() == ptr))
-                                {
-                                    ents.Add(ptr);
-                                }
-                                else
-                                {
-                                    nd3s.Add(ptr);
-                                }
-                            }
-                        }
-                    }
-                    foreach (int addr in nd3s)
-                    {
-                        foreach (CEntity entity in _entities)
-                        {
-                            if (entity.EntityType == EntityType.JumpPad && entity is CJumpPad jumpPad)
-                            {
-                                if (jumpPad.NodedataRelated.ToInt32() == addr)
-                                {
-                                    matches.Add(addr, jumpPad);
-                                }
-                            }
-                            else if (entity.EntityType == EntityType.OctolithFlag && entity is COctolithFlag octo)
-                            {
-                                if (octo.NodedataRelated.ToInt32() == addr)
-                                {
-                                    matches.Add(addr, octo);
-                                }
-                            }
-                            else if (entity.EntityType == EntityType.FlagBase && entity is CFlagBase flag)
-                            {
-                                if (flag.NodedataRelated.ToInt32() == addr)
-                                {
-                                    matches.Add(addr, flag);
-                                }
-                            }
-                            else if (entity.EntityType == EntityType.NodeDefense && entity is CNodeDefense def)
-                            {
-                                if (def.NodedataRelated.ToInt32() == addr)
-                                {
-                                    matches.Add(addr, def);
-                                }
-                            }
-                        }
-                    }
-                    sb.AppendLine($"ents: {ents.Count}");
-                    sb.AppendLine($"nd3s: {nd3s.Count}");
-                    sb.AppendLine($"none: {none}");
-                    if (matches.Count > 0)
-                    {
-                        Debugger.Break();
+                        sb.AppendLine();
+                        sb.AppendLine();
                     }
                     string newOutput = sb.ToString();
                     if (newOutput != output)

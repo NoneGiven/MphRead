@@ -2522,13 +2522,13 @@ namespace MphRead.Memory
         public ushort Field4C2 { get => ReadUInt16(_off142); set => WriteUInt16(_off142, value); }
 
         private const int _off143 = 0x4C4;
-        public int SomeFlags { get => ReadInt32(_off143); set => WriteInt32(_off143, value); }
+        public uint SomeFlags { get => ReadUInt32(_off143); set => WriteUInt32(_off143, value); }
 
         private const int _off144 = 0x4C8;
-        public int MoreFlags { get => ReadInt32(_off144); set => WriteInt32(_off144, value); }
+        public uint MoreFlags { get => ReadUInt32(_off144); set => WriteUInt32(_off144, value); }
 
         private const int _off145 = 0x4CC;
-        public ushort HudFlagsMaybe { get => ReadUInt16(_off145); set => WriteUInt16(_off145, value); }
+        public ushort AbilityFlags { get => ReadUInt16(_off145); set => WriteUInt16(_off145, value); }
 
         private const int _off146 = 0x4CE;
         public byte CurrentWeapon { get => ReadByte(_off146); set => WriteByte(_off146, value); }
@@ -2948,7 +2948,7 @@ namespace MphRead.Memory
         public IntPtr Struct1 { get => ReadPointer(_off284); set => WritePointer(_off284, value); }
 
         private const int _off285 = 0x84C;
-        public byte SomeTriggerFlags { get => ReadByte(_off285); set => WriteByte(_off285, value); }
+        public byte LoadFlags { get => ReadByte(_off285); set => WriteByte(_off285, value); }
 
         private const int _off286 = 0x84D;
         public byte SlotIndex { get => ReadByte(_off286); set => WriteByte(_off286, value); }
