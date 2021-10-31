@@ -955,21 +955,21 @@ namespace MphRead
             return list;
         }
 
-        private static int SpanReadInt(ReadOnlySpan<byte> bytes, ref int offset)
+        public static int SpanReadInt(ReadOnlySpan<byte> bytes, ref int offset)
         {
             int result = MemoryMarshal.Read<int>(bytes[offset..(offset + sizeof(int))]);
             offset += sizeof(int);
             return result;
         }
 
-        private static uint SpanReadUint(ReadOnlySpan<byte> bytes, ref int offset)
+        public static uint SpanReadUint(ReadOnlySpan<byte> bytes, ref int offset)
         {
             uint result = MemoryMarshal.Read<uint>(bytes[offset..(offset + sizeof(uint))]);
             offset += sizeof(uint);
             return result;
         }
 
-        private static ushort SpanReadUshort(ReadOnlySpan<byte> bytes, ref int offset)
+        public static ushort SpanReadUshort(ReadOnlySpan<byte> bytes, ref int offset)
         {
             ushort result = MemoryMarshal.Read<ushort>(bytes[offset..(offset + sizeof(ushort))]);
             offset += sizeof(ushort);

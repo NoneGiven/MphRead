@@ -2299,8 +2299,8 @@ namespace MphRead.Utility
         private static void WriteMphTeleporter(TeleporterEntityEditor entity, BinaryWriter writer)
         {
             ushort padShort = 0;
-            writer.Write(entity.Field24);
-            writer.Write(entity.Field25);
+            writer.Write(entity.LoadIndex);
+            writer.Write(entity.TargetIndex);
             writer.Write(entity.ArtifactId);
             writer.WriteByte(entity.Active);
             writer.WriteByte(entity.Invisible);

@@ -449,8 +449,8 @@ namespace MphRead
     public readonly struct TeleporterEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly byte Field24;
-        public readonly byte Field25;
+        public readonly byte LoadIndex;
+        public readonly byte TargetIndex;
         public readonly byte ArtifactId;
         public readonly byte Active; // boolean
         public readonly byte Invisible; // bolean

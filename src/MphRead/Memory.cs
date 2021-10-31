@@ -118,7 +118,7 @@ namespace MphRead.Memory
         public static void Start()
         {
             // FF DE FF E7 FF DE FF E7 FF DE FF E7 @ 0x2004000
-            new Memory(Process.GetProcessById(46588)).Run();
+            new Memory(Process.GetProcessById(53320)).Run();
             /*var procs = Process.GetProcessesByName("NO$GBA").ToList();
             foreach (Process process in procs)
             {
@@ -137,7 +137,7 @@ namespace MphRead.Memory
         private void Run()
         {
             Addresses = AllAddresses["amhp1"];
-            _baseAddress = new IntPtr(0x988E100);
+            _baseAddress = new IntPtr(0x995E100);
             Task.Run(async () =>
             {
                 // 0x137A9C Cretaphid 1 crystal
@@ -152,27 +152,129 @@ namespace MphRead.Memory
                 RefreshMemory();
                 var players = new CPlayer[]
                 {
-                    new CPlayer(this, 0x20DB034),
-                    new CPlayer(this, 0x20DB034 + 0xF30),
-                    new CPlayer(this, 0x20DB034 + 0xF30 * 2),
-                    new CPlayer(this, 0x20DB034 + 0xF30 * 3)
+                    new CPlayer(this, Addresses.Players),
+                    new CPlayer(this, Addresses.Players + 0xF30),
+                    new CPlayer(this, Addresses.Players + 0xF30 * 2),
+                    new CPlayer(this, Addresses.Players + 0xF30 * 3)
                 };
+                //var states = new List<uint>();
+                //var gameState = new GameState(this, Addresses.GameState);
+                string[] levels = new string[] { "*", "**", "***", "****" };
+                string[] dmgs = new string[] { "Low", "Med", "High", "ERROR" };
                 while (true)
                 {
                     sb.Clear();
                     RefreshMemory();
-                    for (int i = 0; i < 4; i++)
-                    {
-                        byte flags = players[i].LoadFlags;
-                        sb.AppendLine(" 7   6   5   4   3   2   1   0");
-                        //             [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ]
-                        for (int b = 7; b >= 0; b--)
-                        {
-                            sb.Append($"[{((flags & (1 << b)) != 0 ? "*" : " ")}] ");
-                        }
-                        sb.AppendLine();
-                        sb.AppendLine();
-                    }
+                    //for (int i = 0; i < 4; i++)
+                    //{
+                    //    byte flags = players[i].LoadFlags;
+                    //    sb.AppendLine(" 7   6   5   4   3   2   1   0");
+                    //    //             [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ]
+                    //    for (int b = 7; b >= 0; b--)
+                    //    {
+                    //        sb.Append($"[{((flags & (1 << b)) != 0 ? "*" : " ")}] ");
+                    //    }
+                    //    sb.AppendLine();
+                    //    sb.AppendLine();
+                    //}
+                    uint state1 = _buffer[0xCBEA0]
+                        | ((uint)_buffer[0xCBEA1] << 8)
+                        | ((uint)_buffer[0xCBEA2] << 16)
+                        | ((uint)_buffer[0xCBEA3] << 24);
+                    uint state2 = _buffer[0xCBEA4]
+                        | ((uint)_buffer[0xCBEA5] << 8)
+                        | ((uint)_buffer[0xCBEA6] << 16)
+                        | ((uint)_buffer[0xCBEA7] << 24);
+                    uint state3 = _buffer[0xCBEA8]
+                        | ((uint)_buffer[0xCBEA9] << 8)
+                        | ((uint)_buffer[0xCBEAA] << 16)
+                        | ((uint)_buffer[0xCBEAB] << 24);
+
+                    //sb.AppendLine($"     1P Mode: {((state1 & 1) != 0 ? "Yes" : "No")}");
+                    //sb.AppendLine($"    Affinity: {((state1 & 2) != 0 ? "On" : "Off")}");
+                    //sb.AppendLine($"  Auto reset: {((state1 & 4) != 0 ? "On" : "Off")}");
+                    //uint botLevels = (state1 & 0x1F8) >> 3;
+                    //sb.AppendLine($" Bot 2 level: {levels[botLevels & 3]}");
+                    //sb.AppendLine($" Bot 3 level: {levels[(botLevels & 0xC) >> 2]}");
+                    //sb.AppendLine($" Bot 4 level: {levels[(botLevels & 0x30) >> 4]}");
+                    //sb.AppendLine($"Damage level: {dmgs[(state1 & 0x600) >> 9]}");
+                    //sb.AppendLine($" Team damage: {((state1 & 0x800) != 0 ? "On" : "Off")}");
+                    //sb.AppendLine($"    MP Match: {((state1 & 0x1000) != 0 ? "Yes" : "No")}");
+                    //sb.AppendLine($"Player radar: {((state1 & 0x2000) != 0 ? "On" : "Off")}");
+                    //sb.AppendLine($"  Room index: {(state1 & 0x7C000) >> 14}");
+                    //sb.AppendLine($"  Room count: {(state1 & 0xF80000) >> 19}");
+                    //sb.AppendLine($"Player count: {(state1 & 0x7000000) >> 24}");
+                    //sb.AppendLine($"  Bot 1 flag: {((state1 & 0x8000000) != 0 ? "Yes" : "No")}");
+                    //sb.AppendLine($"  Bot 2 flag: {((state1 & 0x10000000) != 0 ? "Yes" : "No")}");
+                    //sb.AppendLine($"  Bot 3 flag: {((state1 & 0x20000000) != 0 ? "Yes" : "No")}");
+                    //sb.AppendLine($"  Bot 4 flag: {((state1 & 0x40000000) != 0 ? "Yes" : "No")}");
+
+                    sb.AppendLine($"       Bit 0: {((state2 & 1) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($"       Bit 1: {((state2 & 2) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($"       Bit 2: {((state2 & 4) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine();
+                    sb.AppendLine($"    Bits 0-2: {state2 & 7}");
+                    sb.AppendLine();
+                    sb.AppendLine($"       Bit 3: {((state2 & 8) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($"       Bit 4: {((state2 & 0x10) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($"       Bit 5: {((state2 & 0x20) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($" Main player: {(state2 & 0xC0) >> 6}");
+                    sb.AppendLine($"       Bit 8: {((state2 & 0x100) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($"       Bit 9: {((state2 & 0x200) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($"      Bit 10: {((state2 & 0x400) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($"      Bit 11: {((state2 & 0x800) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($"      Bit 12: {((state2 & 0x1000) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($"      Bit 13: {((state2 & 0x2000) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($"      Bit 14: {((state2 & 0x4000) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($"      Bit 15: {((state2 & 0x8000) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($"      Bit 16: {((state2 & 0x10000) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($"      Bit 17: {((state2 & 0x20000) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($"      Bit 18: {((state2 & 0x40000) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($"      Bit 19: {((state2 & 0x80000) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($"  Story file: {(state2 & 0x300000) >> 20}");
+                    sb.AppendLine($"  Point goal: {(state2 & 0x3C00000) >> 22}");
+                    sb.AppendLine($"Random arena: {((state2 & 0x4000000) != 0 ? "Yes" : "No")}");
+                    sb.AppendLine($"      Bit 27: {((state2 & 0x8000000) != 0 ? "Set" : "Cleared")}");
+                    sb.AppendLine($"      Bit 28: {((state2 & 0x10000000) != 0 ? "Set" : "Cleared")}");
+
+                    //sb.AppendLine($" Slot 1 team: {((state3 & 1) != 0 ? "1" : "0")}");
+                    //sb.AppendLine($" Slot 2 team: {((state3 & 2) != 0 ? "1" : "0")}");
+                    //sb.AppendLine($" Slot 3 team: {((state3 & 4) != 0 ? "1" : "0")}");
+                    //sb.AppendLine($" Slot 4 team: {((state3 & 8) != 0 ? "1" : "0")}");
+                    //sb.AppendLine($"       Teams: {((state3 & 0x10) != 0 ? "On" : "Off")}");
+                    //sb.AppendLine($"   Time goal: {(state3 & 0x1E0) >> 5}");
+                    //sb.AppendLine($"  Time limit: {(state3 & 0x1E00) >> 9}");
+                    //sb.AppendLine($"  Wi-Fi mode: {((state3 & 0x2000) != 0 ? "Yes" : "No")}");
+                    //sb.AppendLine($"   Worldwide: {((state3 & 0x4000) != 0 ? "Yes" : "No")}");
+                    //sb.AppendLine($"  Match rank: {((state3 & 0x8000) != 0 ? "Yes" : "No")}");
+
+                    //ushort flags = gameState.SomeFlags;
+                    //sb.AppendLine($"Team dmg: {((flags & 1) != 0 ? "Yes" : "No")}");
+                    //sb.AppendLine($"   Teams: {((flags & 2) != 0 ? "Yes" : "No")}");
+                    //sb.AppendLine($"Affinity: {((flags & 4) != 0 ? "Yes" : "No")}");
+                    //sb.AppendLine($"   Radar: {((flags & 8) != 0 ? "Yes" : "No")}");
+                    //sb.AppendLine();
+                    //sb.AppendLine($"   Bit 4: {((flags & 0x10) != 0 ? "Set" : "Cleared")}");
+                    //sb.AppendLine($"   Bit 5: {((flags & 0x20) != 0 ? "Set" : "Cleared")}");
+                    //sb.AppendLine($"  Bit 12: {((flags & 0x1000) != 0 ? "Set" : "Cleared")}");
+                    //sb.AppendLine($"  Bit 15: {((flags & 0x8000) != 0 ? "Set" : "Cleared")}");
+                    //sb.AppendLine();
+                    //uint state = ((uint)flags << 24) >> 30;
+                    //sb.AppendLine($"Bits 6/7: {state}");
+                    //sb.AppendLine();
+                    //sb.AppendLine($"Bits 8/9: {((uint)flags << 22) >> 30}");
+                    //sb.AppendLine();
+                    //sb.AppendLine($"Tele alt: {((flags & 0x400) != 0 ? "Yes" : "No")}");
+                    //sb.AppendLine($"Clean st: {((flags & 0x800) != 0 ? "Yes" : "No")}");
+                    //sb.AppendLine($"Portal S: {((flags & 0x2000) != 0 ? "Yes" : "No")}");
+                    //sb.AppendLine($"Portal D: {((flags & 0x4000) != 0 ? "Yes" : "No")}");
+                    //sb.AppendLine();
+                    //if (states.Count == 0 || states[^1] != state)
+                    //{
+                    //    states.Add(state);
+                    //}
+                    //sb.AppendLine(String.Join(", ", states));
+                    //sb.AppendLine();
                     string newOutput = sb.ToString();
                     if (newOutput != output)
                     {

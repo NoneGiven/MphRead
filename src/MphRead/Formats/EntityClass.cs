@@ -976,8 +976,8 @@ namespace MphRead.Editor
 
     public class TeleporterEntityEditor : EntityEditorBase
     {
-        public byte Field24 { get; set; }
-        public byte Field25 { get; set; }
+        public byte LoadIndex { get; set; }
+        public byte TargetIndex { get; set; }
         public byte ArtifactId { get; set; }
         public bool Active { get; set; }
         public bool Invisible { get; set; }
@@ -987,8 +987,8 @@ namespace MphRead.Editor
 
         public TeleporterEntityEditor(Entity header, TeleporterEntityData raw) : base(header)
         {
-            Field24 = raw.Field24;
-            Field25 = raw.Field25;
+            LoadIndex = raw.LoadIndex;
+            TargetIndex = raw.TargetIndex;
             ArtifactId = raw.ArtifactId;
             Active = raw.Active != 0;
             Invisible = raw.Invisible != 0;
@@ -999,8 +999,8 @@ namespace MphRead.Editor
 
         public void CompareTo(TeleporterEntityEditor other)
         {
-            PrintValue(Field24, other.Field24, nameof(Field24));
-            PrintValue(Field25, other.Field25, nameof(Field25));
+            PrintValue(LoadIndex, other.LoadIndex, nameof(LoadIndex));
+            PrintValue(TargetIndex, other.TargetIndex, nameof(TargetIndex));
             PrintValue(ArtifactId, other.ArtifactId, nameof(ArtifactId));
             PrintValue(Active, other.Active, nameof(Active));
             PrintValue(Invisible, other.Invisible, nameof(Invisible));
