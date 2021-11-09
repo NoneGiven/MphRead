@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using MphRead.Utility;
 
@@ -19,17 +20,17 @@ namespace MphRead.Testing
             IReadOnlyList<WeaponInfo> weapons1P = Weapons.Weapons1P;
             IReadOnlyList<WeaponInfo> weaponsMP = Weapons.WeaponsMP;
             IReadOnlyList<WeaponInfo> enemies = Weapons.EnemyWeapons;
+            IReadOnlyList<WeaponInfo> bosses = Weapons.BossWeapons;
             IReadOnlyList<WeaponInfo> platforms = Weapons.PlatformWeapons;
             IReadOnlyList<WeaponInfo> ricochets = Weapons.Ricochets;
 
-            foreach (WeaponInfo weapon in enemies)
+            foreach (WeaponInfo weap in weapons1P.Concat(weaponsMP).Concat(enemies).Concat(bosses).Concat(platforms).Concat(ricochets))
             {
-                var ids = new HashSet<ushort>();
-                ids.Add(weapon.DrawFuncIds[0]);
-                ids.Add(weapon.DrawFuncIds[1]);
-                if (ids.Contains(6) || ids.Contains(12))
+                if (weap.Flags.TestFlag(WeaponFlags.AutoRelease))
                 {
-                    Debugger.Break();
+                    Console.WriteLine($"{weap.Weapon} ({weap.WeaponType})");
+                    Console.WriteLine($"{weap.Flags}");
+                    Console.WriteLine();
                 }
             }
 

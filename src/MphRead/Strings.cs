@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 
 namespace MphRead
@@ -86,6 +87,65 @@ namespace MphRead
                 folder += "_sp";
             }
             return folder;
+        }
+
+        public static IReadOnlyList<string> ReadTextFile(Language language = Language.English, bool useEnGb = false, bool downloadPlay = false)
+        {
+            string suffix = useEnGb && !downloadPlay ? "en-gb" : "en";
+            if (language == Language.French)
+            {
+                suffix = "fr";
+            }
+            else if (language == Language.German)
+            {
+                suffix = "de";
+            }
+            else if (language == Language.Italian)
+            {
+                suffix = "it";
+            }
+            else if (language == Language.Japanese)
+            {
+                suffix = "jp";
+            }
+            else if (language == Language.Spanish)
+            {
+                suffix = "es";
+            }
+            string prefix = downloadPlay ? "single_" : "";
+            string name = $"{prefix}metroidhunters_text_{suffix}.bin";
+            string path = Path.Combine(Paths.FileSystem, "frontend", name);
+            if (suffix == "en-gb")
+            {
+                path = path.Replace("amhe0", "amhp1");
+            }
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
+            // in practice the entries are always tightly packed in order, but we'll read them through the offsets anyway
+            int offset = 0;
+            var list = new List<uint>();
+            while (true)
+            {
+                uint item = Read.SpanReadUint(bytes, ref offset);
+                if (item == 0)
+                {
+                    break;
+                }
+                list.Add(item);
+            }
+            var strings = new List<string>();
+            foreach (uint item in list)
+            {
+                TextFileEntry entry = Read.DoOffset<TextFileEntry>(bytes, item);
+                Debug.Assert(entry.Offset1 == entry.Offset2);
+                Debug.Assert(entry.Length1 == entry.Length2);
+                string text = Read.ReadString(bytes, entry.Offset1, entry.Length1);
+                while (text.Length != entry.Length1)
+                {
+                    text += '\0';
+                }
+                strings.Add(text);
+            }
+            return strings;
         }
     }
 

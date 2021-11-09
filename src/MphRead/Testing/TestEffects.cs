@@ -215,11 +215,11 @@ namespace MphRead.Testing
                                 }
                                 Console.WriteLine(String.Join(", ", elems));
                                 Console.Write("Spawns: ");
-                                if ((data.EffectFlags & 0x40) != 0)
+                                if (data.EffectFlags.TestFlag(Entities.ObjEffFlags.AlwaysUpdateEffect))
                                 {
                                     Console.WriteLine("Always");
                                 }
-                                else if ((data.EffectFlags & 1) != 0)
+                                else if (data.EffectFlags.TestFlag(Entities.ObjEffFlags.UseEffectVolume))
                                 {
                                     Console.WriteLine("Volume");
                                 }
@@ -227,7 +227,7 @@ namespace MphRead.Testing
                                 {
                                     Console.WriteLine("Anim ID");
                                 }
-                                Console.WriteLine($"Attach: {((data.EffectFlags & 0x10) != 0 ? "Yes" : "No")}");
+                                Console.WriteLine($"Attach: {(data.EffectFlags.TestFlag(Entities.ObjEffFlags.AttachEffect) ? "Yes" : "No")}");
                                 Console.WriteLine($"Linked: {((data.LinkedEntity != -1) ? data.LinkedEntity.ToString() : "No")}");
                                 Console.WriteLine();
                             }

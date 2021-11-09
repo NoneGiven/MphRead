@@ -95,10 +95,12 @@ namespace MphRead.Utility
             Nop();
         }
 
-        private static List<EntityEditorBase> GetFhEntities(string path)
+        private static List<EntityEditorBase> GetFhEntities(string path, bool fullPath = false)
         {
             var entities = new List<EntityEditorBase>();
-            foreach (Entity entity in Read.GetEntities(path, layerId: -1, firstHunt: true))
+            foreach (Entity entity in fullPath
+                ? Read.GetEntitiesFromPath(path, layerId: -1, firstHunt: true)
+                : Read.GetEntities(path, layerId: -1, firstHunt: true))
             {
                 if (entity.Type == EntityType.FhPlatform)
                 {
@@ -144,7 +146,7 @@ namespace MphRead.Utility
             return entities;
         }
 
-        private static List<EntityEditorBase> GetEntities(string path, RepackFilter filter = RepackFilter.All)
+        private static List<EntityEditorBase> GetEntities(string path, RepackFilter filter = RepackFilter.All, bool fullPath = false)
         {
             var entities = new List<EntityEditorBase>();
             int layerId = -1;
@@ -154,7 +156,9 @@ namespace MphRead.Utility
                     ? Metadata.GetMultiplayerEntityLayer(GameMode.Battle, playerCount: 2)
                     : 0;
             }
-            foreach (Entity entity in Read.GetEntities(path, layerId, firstHunt: false))
+            foreach (Entity entity in fullPath
+                ? Read.GetEntitiesFromPath(path, layerId, firstHunt: false)
+                : Read.GetEntities(path, layerId, firstHunt: false))
             {
                 if (entity.Type == EntityType.Platform)
                 {
@@ -253,7 +257,7 @@ namespace MphRead.Utility
                     FhMessage.Complete => Message.Complete,
                     FhMessage.Impact => Message.Impact,
                     FhMessage.Death => Message.Death,
-                    FhMessage.Unknown21 => Message.Unknown22,
+                    FhMessage.Unknown21 => Message.Unused22,
                     _ => Message.UnlockOubliette
                 };
             }
@@ -262,7 +266,7 @@ namespace MphRead.Utility
                 TriggerFlags flags = TriggerFlags.None;
                 if (subtype != FhTriggerType.Threshold)
                 {
-                    if (fhFlags.HasFlag(FhTriggerFlags.Beam))
+                    if (fhFlags.TestFlag(FhTriggerFlags.Beam))
                     {
                         flags |= TriggerFlags.PowerBeam;
                         flags |= TriggerFlags.VoltDriver;
@@ -273,11 +277,11 @@ namespace MphRead.Utility
                         flags |= TriggerFlags.Magmaul;
                         flags |= TriggerFlags.ShockCoil;
                     }
-                    if (fhFlags.HasFlag(FhTriggerFlags.PlayerBiped))
+                    if (fhFlags.TestFlag(FhTriggerFlags.PlayerBiped))
                     {
                         flags |= TriggerFlags.PlayerBiped;
                     }
-                    if (fhFlags.HasFlag(FhTriggerFlags.PlayerAlt))
+                    if (fhFlags.TestFlag(FhTriggerFlags.PlayerAlt))
                     {
                         flags |= TriggerFlags.PlayerAlt;
                     }
@@ -391,7 +395,7 @@ namespace MphRead.Utility
                         Facing = door.Facing,
                         Field42 = 255,
                         Field43 = 255,
-                        Flags = (byte)door.Flags,
+                        Locked = door.Locked,
                         LayerMask = 0xFFFF,
                         ModelId = 0,
                         NodeName = door.NodeName,
@@ -473,7 +477,7 @@ namespace MphRead.Utility
                         SpawnLimit = enemySpawn.SpawnLimit,
                         SpawnTotal = enemySpawn.SpawnTotal,
                         SpawnNodeName = enemySpawn.SpawnNodeName,
-                        SpawnerModel = 0,
+                        SpawnerHealth = 0,
                         Up = enemySpawn.Up
                     };
                     if (enemySpawn.EnemyType == FhEnemyType.Metroid || enemySpawn.EnemyType == FhEnemyType.Mochtroid1)
@@ -698,7 +702,7 @@ namespace MphRead.Utility
                     Message.Complete => FhMessage.Complete,
                     Message.Impact => FhMessage.Impact,
                     Message.Death => FhMessage.Death,
-                    Message.Unknown22 => FhMessage.Unknown21,
+                    Message.Unused22 => FhMessage.Unknown21,
                     _ => (FhMessage)255
                 };
             }
@@ -707,18 +711,18 @@ namespace MphRead.Utility
                 FhTriggerFlags flags = FhTriggerFlags.None;
                 if (subtype == TriggerType.Normal)
                 {
-                    if (mphFlags.HasFlag(TriggerFlags.PowerBeam) || mphFlags.HasFlag(TriggerFlags.VoltDriver)
-                        || mphFlags.HasFlag(TriggerFlags.Missile) || mphFlags.HasFlag(TriggerFlags.Battlehammer)
-                        || mphFlags.HasFlag(TriggerFlags.Imperialist) || mphFlags.HasFlag(TriggerFlags.Judicator)
-                        || mphFlags.HasFlag(TriggerFlags.ShockCoil) || mphFlags.HasFlag(TriggerFlags.ShockCoil))
+                    if (mphFlags.TestFlag(TriggerFlags.PowerBeam) || mphFlags.TestFlag(TriggerFlags.VoltDriver)
+                        || mphFlags.TestFlag(TriggerFlags.Missile) || mphFlags.TestFlag(TriggerFlags.Battlehammer)
+                        || mphFlags.TestFlag(TriggerFlags.Imperialist) || mphFlags.TestFlag(TriggerFlags.Judicator)
+                        || mphFlags.TestFlag(TriggerFlags.ShockCoil) || mphFlags.TestFlag(TriggerFlags.ShockCoil))
                     {
                         flags |= FhTriggerFlags.Beam;
                     }
-                    if (mphFlags.HasFlag(TriggerFlags.PlayerBiped))
+                    if (mphFlags.TestFlag(TriggerFlags.PlayerBiped))
                     {
                         flags |= FhTriggerFlags.PlayerBiped;
                     }
-                    if (mphFlags.HasFlag(TriggerFlags.PlayerAlt))
+                    if (mphFlags.TestFlag(TriggerFlags.PlayerAlt))
                     {
                         flags |= FhTriggerFlags.PlayerAlt;
                     }
@@ -770,7 +774,7 @@ namespace MphRead.Utility
                     {
                         Id = door.Id,
                         Facing = door.Facing,
-                        Flags = door.Flags,
+                        Locked = door.Locked,
                         ModelId = 0,
                         NodeName = door.NodeName,
                         Position = door.Position,
@@ -1020,15 +1024,252 @@ namespace MphRead.Utility
             return converted;
         }
 
+        // todo: better output
         public static void CompareRooms(string room1, string room2, string game1 = "amhe1", string game2 = "amhe1")
         {
+            Console.WriteLine($"Comparing {game1} \"{room1}\" to {game2} \"{room2}\"");
             RoomMetadata meta1 = Metadata.RoomMetadata[room1];
             RoomMetadata meta2 = Metadata.RoomMetadata[room2];
+            Debug.Assert(meta1.FirstHunt == meta2.FirstHunt);
             Debug.Assert(meta1.EntityPath != null && meta2.EntityPath != null);
-            string path1 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, meta1.EntityPath);
-            string path2 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, meta2.EntityPath);
-            CompareEntities(File.ReadAllBytes(path1), File.ReadAllBytes(path2));
+            // todo: better game/version selection
+            string path1;
+            string path2;
+            if (meta1.FirstHunt)
+            {
+                path1 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, "data", meta1.EntityPath);
+                path2 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, "data", meta2.EntityPath);
+            }
+            else
+            {
+                path1 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, meta1.EntityPath);
+                path2 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, meta2.EntityPath);
+            }
+            byte[] bytes1 = File.ReadAllBytes(path1);
+            byte[] bytes2 = File.ReadAllBytes(path2);
+            bool differences = false;
+            if (bytes1.Length != bytes2.Length)
+            {
+                Console.WriteLine($"game1 length = {bytes1.Length}, game2 length = {bytes2.Length}");
+                differences = true;
+            }
+            else if (!Enumerable.SequenceEqual(bytes1, bytes2))
+            {
+                Console.WriteLine("byte sequences differ");
+                differences = true;
+            }
+            if (differences)
+            {
+                EntityHeader header1 = Read.ReadStruct<EntityHeader>(bytes1);
+                EntityHeader header2 = Read.ReadStruct<EntityHeader>(bytes2);
+                Debug.Assert(header1.Version == header2.Version);
+                for (int i = 0; i < 16; i++)
+                {
+                    string prefix = header1.Lengths[i] == header2.Lengths[i] ? "" : "* ";
+                    Console.WriteLine($"{prefix}{Metadata.GetLayerName(i, meta1.Multiplayer)}:" +
+                        $" game1 = {header1.Lengths[i]}, game2 = {header2.Lengths[i]}");
+                }
+                IReadOnlyList<EntityEntry> entries1 = GetEntries(bytes1);
+                IReadOnlyList<EntityEntry> entries2 = GetEntries(bytes2);
+                if (entries1.Count != entries2.Count)
+                {
+                    Console.WriteLine($"game1 entries = {entries1.Count}, game2 entries = {entries2.Count}");
+                }
+                Console.WriteLine();
+                List<EntityEditorBase>? list1 = meta1.FirstHunt ? GetFhEntities(path1, fullPath: true) : GetEntities(path1, fullPath: true);
+                List<EntityEditorBase>? list2 = meta2.FirstHunt ? GetFhEntities(path2, fullPath: true) : GetEntities(path2, fullPath: true);
+                Debug.Assert(list1.Count == entries1.Count);
+                Debug.Assert(list2.Count == entries2.Count);
+                foreach (int entityId in list1.Select(e => e.Id).Concat(list2.Select(e => e.Id)).Distinct().OrderBy(e => e))
+                {
+                    EntityEditorBase? entity1 = list1.SingleOrDefault(e => e.Id == entityId);
+                    EntityEditorBase? entity2 = list2.SingleOrDefault(e => e.Id == entityId);
+                    if (entity1 != null && entity2 == null)
+                    {
+                        Console.WriteLine($"game1 has {entity1.Type} ID = {entity1.Id}");
+                    }
+                    else if (entity1 == null && entity2 != null)
+                    {
+                        Console.WriteLine($"game2 has {entity2.Type} ID = {entity2.Id}");
+                    }
+                    else if (entity1 != null && entity2 != null)
+                    {
+                        Console.WriteLine($"{entity1.Type} {entity1.Id}");
+                        CompareEntities(entity1, entity2, meta1.FirstHunt, meta1.Multiplayer);
+                    }
+                    else
+                    {
+                        Debug.Assert(false, "unreachable");
+                    }
+                    Console.WriteLine();
+                }
+                Console.WriteLine("done");
+            }
+            else
+            {
+                Console.WriteLine("no differences");
+            }
             Nop();
+        }
+
+        private static void CompareEntities(EntityEditorBase entity1, EntityEditorBase entity2, bool firstHunt, bool multiplayer)
+        {
+            Debug.Assert(entity1.Type == entity2.Type);
+            Debug.Assert(entity1.NodeName == entity2.NodeName);
+            if (entity1.LayerMask != entity2.LayerMask)
+            {
+                Console.WriteLine("layer mask:");
+                Console.WriteLine(Metadata.GetLayerNames(entity1.LayerMask, multiplayer));
+                Console.WriteLine(Metadata.GetLayerNames(entity2.LayerMask, multiplayer));
+            }
+            if (entity1.Position != entity2.Position)
+            {
+                Console.WriteLine("position:");
+                Console.WriteLine(entity1.Position);
+                Console.WriteLine(entity2.Position);
+            }
+            if (entity1.Facing != entity2.Facing)
+            {
+                Console.WriteLine("facing:");
+                Console.WriteLine(entity1.Facing);
+                Console.WriteLine(entity2.Facing);
+            }
+            if (entity1.Up != entity2.Up)
+            {
+                Console.WriteLine("up:");
+                Console.WriteLine(entity1.Up);
+                Console.WriteLine(entity2.Up);
+            }
+            if (firstHunt)
+            {
+                if (entity1.Type == EntityType.FhAreaVolume)
+                {
+                    ((FhAreaVolumeEntityEditor)entity1).CompareTo((FhAreaVolumeEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.FhDoor)
+                {
+                    ((FhDoorEntityEditor)entity1).CompareTo((FhDoorEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.FhEnemySpawn)
+                {
+                    ((FhEnemySpawnEntityEditor)entity1).CompareTo((FhEnemySpawnEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.FhItemSpawn)
+                {
+                    ((FhItemSpawnEntityEditor)entity1).CompareTo((FhItemSpawnEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.FhJumpPad)
+                {
+                    ((FhJumpPadEntityEditor)entity1).CompareTo((FhJumpPadEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.FhMorphCamera)
+                {
+                    ((MorphCameraEntityEditor)entity1).CompareTo((MorphCameraEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.FhPlatform)
+                {
+                    ((FhPlatformEntityEditor)entity1).CompareTo((FhPlatformEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.FhPlayerSpawn)
+                {
+                    ((PlayerSpawnEntityEditor)entity1).CompareTo((PlayerSpawnEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.FhPointModule)
+                {
+                    ((PointModuleEntityEditor)entity1).CompareTo((PointModuleEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.FhTriggerVolume)
+                {
+                    ((FhTriggerVolumeEntityEditor)entity1).CompareTo((FhTriggerVolumeEntityEditor)entity2);
+                }
+                else
+                {
+                    Debug.Assert(false, $"Unexpected entity type {entity1.Type}");
+                }
+            }
+            else
+            {
+                if (entity1.Type == EntityType.AreaVolume)
+                {
+                    ((AreaVolumeEntityEditor)entity1).CompareTo((AreaVolumeEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.Artifact)
+                {
+                    ((ArtifactEntityEditor)entity1).CompareTo((ArtifactEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.CameraSequence)
+                {
+                    ((CameraSequenceEntityEditor)entity1).CompareTo((CameraSequenceEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.Door)
+                {
+                    ((DoorEntityEditor)entity1).CompareTo((DoorEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.EnemySpawn)
+                {
+                    ((EnemySpawnEntityEditor)entity1).CompareTo((EnemySpawnEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.FlagBase)
+                {
+                    ((FlagBaseEntityEditor)entity1).CompareTo((FlagBaseEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.ForceField)
+                {
+                    ((ForceFieldEntityEditor)entity1).CompareTo((ForceFieldEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.ItemSpawn)
+                {
+                    ((ItemSpawnEntityEditor)entity1).CompareTo((ItemSpawnEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.JumpPad)
+                {
+                    ((JumpPadEntityEditor)entity1).CompareTo((JumpPadEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.LightSource)
+                {
+                    ((LightSourceEntityEditor)entity1).CompareTo((LightSourceEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.MorphCamera)
+                {
+                    ((MorphCameraEntityEditor)entity1).CompareTo((MorphCameraEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.NodeDefense)
+                {
+                    ((NodeDefenseEntityEditor)entity1).CompareTo((NodeDefenseEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.Object)
+                {
+                    ((ObjectEntityEditor)entity1).CompareTo((ObjectEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.OctolithFlag)
+                {
+                    ((OctolithFlagEntityEditor)entity1).CompareTo((OctolithFlagEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.Platform)
+                {
+                    ((PlatformEntityEditor)entity1).CompareTo((PlatformEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.PlayerSpawn)
+                {
+                    ((PlayerSpawnEntityEditor)entity1).CompareTo((PlayerSpawnEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.PointModule)
+                {
+                    ((PointModuleEntityEditor)entity1).CompareTo((PointModuleEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.Teleporter)
+                {
+                    ((TeleporterEntityEditor)entity1).CompareTo((TeleporterEntityEditor)entity2);
+                }
+                else if (entity1.Type == EntityType.TriggerVolume)
+                {
+                    ((TriggerVolumeEntityEditor)entity1).CompareTo((TriggerVolumeEntityEditor)entity2);
+                }
+                else
+                {
+                    Debug.Assert(false, $"Unexpected entity type {entity1.Type}");
+                }
+            }
         }
 
         private static void CompareEntities(byte[] pack, byte[] file)
@@ -1691,10 +1932,10 @@ namespace MphRead.Utility
         {
             byte padByte = 0;
             ushort padShort = 0;
-            writer.Write(entity.Flags);
+            writer.Write((byte)entity.Flags);
             writer.Write(padByte); // Padding25
             writer.Write(padShort); // Padding26
-            writer.Write(entity.EffectFlags);
+            writer.Write((uint)entity.EffectFlags);
             writer.Write(entity.ModelId);
             writer.Write(entity.LinkedEntity);
             writer.Write(entity.ScanId);
@@ -1722,7 +1963,7 @@ namespace MphRead.Utility
             writer.Write(entity.ModelId);
             writer.Write(entity.ConnectorId);
             writer.Write(entity.TargetLayerId);
-            writer.Write(entity.Flags);
+            writer.WriteByte(entity.Locked);
             writer.Write(entity.Field42);
             writer.Write(entity.Field43);
             writer.WriteString(entity.EntityFilename, 16);
@@ -1937,7 +2178,7 @@ namespace MphRead.Utility
             writer.WriteByte(entity.Active);
             writer.WriteByte(entity.AlwaysActive);
             writer.Write(entity.ItemChance);
-            writer.Write(entity.SpawnerModel);
+            writer.Write(entity.SpawnerHealth);
             writer.Write(entity.CooldownTime);
             writer.Write(entity.InitialCooldown);
             writer.Write(padShort); // Padding1C6
@@ -2058,8 +2299,8 @@ namespace MphRead.Utility
         private static void WriteMphTeleporter(TeleporterEntityEditor entity, BinaryWriter writer)
         {
             ushort padShort = 0;
-            writer.Write(entity.Field24);
-            writer.Write(entity.Field25);
+            writer.Write(entity.LoadIndex);
+            writer.Write(entity.TargetIndex);
             writer.Write(entity.ArtifactId);
             writer.WriteByte(entity.Active);
             writer.WriteByte(entity.Invisible);
@@ -2108,11 +2349,11 @@ namespace MphRead.Utility
         private static void WriteMphCameraSequence(CameraSequenceEntityEditor entity, BinaryWriter writer)
         {
             writer.Write(entity.SequenceId);
-            writer.Write(entity.Field25);
+            writer.WriteByte(entity.Handoff);
             writer.WriteByte(entity.Loop);
-            writer.Write(entity.Field27);
-            writer.Write(entity.Field28);
-            writer.Write(entity.Field29);
+            writer.WriteByte(entity.BlockInput);
+            writer.WriteByte(entity.ForceAltForm);
+            writer.WriteByte(entity.ForceBipedForm);
             writer.Write(entity.DelayFrames);
             writer.Write(entity.PlayerId1);
             writer.Write(entity.PlayerId2);
@@ -2242,7 +2483,7 @@ namespace MphRead.Utility
         private static void WriteFhDoor(FhDoorEntityEditor entity, BinaryWriter writer)
         {
             writer.WriteString(entity.RoomName, 16);
-            writer.Write(entity.Flags);
+            writer.WriteInt(entity.Locked);
             writer.Write(entity.ModelId);
         }
 

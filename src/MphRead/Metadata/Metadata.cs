@@ -413,6 +413,86 @@ namespace MphRead
             return list[playerCount == 3 ? 1 : (playerCount == 4 ? 2 : 0)];
         }
 
+        public static string GetLayerName(int layerId, bool multiplayer)
+        {
+            if (!multiplayer)
+            {
+                if (layerId == 0)
+                {
+                    return "FirstVisit";
+                }
+                if (layerId == 1)
+                {
+                    return "BossDefeated";
+                }
+                if (layerId == 2)
+                {
+                    return "SpLayer2";
+                }
+                if (layerId == 3)
+                {
+                    return "SpLayer3";
+                }
+                return $"NoLayer{layerId}";
+            }
+            return GetLayerNames(1 << layerId, multiplayer);
+        }
+
+        public static string GetLayerNames(int layerMask, bool multiplayer)
+        {
+            if (multiplayer)
+            {
+                var names = new List<string>();
+                IEnumerable<int> layers = Enumerable.Range(0, 16).Where(i => (layerMask & (1 << i)) != 0);
+                foreach (KeyValuePair<GameMode, IReadOnlyList<int>> kvp in _modeLayers)
+                {
+                    if (kvp.Value.All(v => layers.Contains(v)))
+                    {
+                        names.Add(kvp.Key.ToString());
+                    }
+                    else if (kvp.Value.Count > 1)
+                    {
+                        var players = new List<string>(0);
+                        if (layers.Contains(kvp.Value[0]))
+                        {
+                            players.Add("2P");
+                        }
+                        if (layers.Contains(kvp.Value[1]))
+                        {
+                            players.Add("3P");
+                        }
+                        if (layers.Contains(kvp.Value[2]))
+                        {
+                            players.Add("4P");
+                        }
+                        if (players.Count > 0)
+                        {
+                            names.Add($"{kvp.Key}{String.Join('/', players)}");
+                        }
+                    }
+                }
+                return String.Join(" | ", names);
+            }
+            int masked = layerMask & 3;
+            if (masked == 0)
+            {
+                return "FirstVisit";
+            }
+            if (masked == 1)
+            {
+                return "BossDefeated";
+            }
+            if (masked == 2)
+            {
+                return "SpLayer2";
+            }
+            if (masked == 3)
+            {
+                return "SpLayer3";
+            }
+            return $"UNKNOWN{layerMask}";
+        }
+
         public static readonly Vector3 EmissionOrange = GetColor(0x14F0);
         public static readonly Vector3 EmissionGreen = GetColor(0x1565);
         public static readonly Vector3 EmissionGray = GetColor(0x35AD);
@@ -736,7 +816,7 @@ namespace MphRead
             /* 2 */ "door2_holo"
         };
 
-        // 0-7 are for beam doors, 8 is unused?, 9 is for regular doors
+        // 0-7 are for beam doors, 8 is an unused "bomb door", 9 is for regular doors
         // (only a few rooms use index 0, since the usual thing is to use index 9)
         public static readonly IReadOnlyList<int> DoorPalettes = new List<int>()
         {
@@ -968,15 +1048,15 @@ namespace MphRead
             {
                 return new Vector3(1f, 1f, 0.6f);
             }
-            if (eventId == Message.Unknown25) // pale orange
+            if (eventId == Message.Unused25) // pale orange
             {
                 return new Vector3(1f, 0.792f, 0.6f);
             }
-            if (eventId == Message.Unknown35) // yellow
+            if (eventId == Message.PreventFormSwitch) // yellow
             {
                 return new Vector3(0.964f, 1f, 0.058f);
             }
-            if (eventId == Message.Unknown44) // gray
+            if (eventId == Message.PlatformWakeup) // gray
             {
                 return new Vector3(0.5f, 0.5f, 0.5f);
             }
@@ -1000,7 +1080,7 @@ namespace MphRead
             {
                 return new Vector3(0.549f, 0.18f, 0.18f);
             }
-            if (eventId == Message.Unknown12) // dark teal
+            if (eventId == Message.UpdateMusic) // dark teal
             {
                 return new Vector3(0.094f, 0.506f, 0.51f);
             }
@@ -1024,11 +1104,11 @@ namespace MphRead
             {
                 return new Vector3(1f, 0.612f, 0.153f);
             }
-            if (eventId == Message.Unknown33) // lavender
+            if (eventId == Message.UnlockConnectors) // lavender
             {
                 return new Vector3(0.906f, 0.702f, 1f);
             }
-            if (eventId == Message.Unknown34) // pale blue
+            if (eventId == Message.LockConnectors) // pale blue
             {
                 return new Vector3(0.784f, 0.984f, 0.988f);
             }
@@ -1036,23 +1116,23 @@ namespace MphRead
             {
                 return new Vector3(1f, 0.325f, 0.294f);
             }
-            if (eventId == Message.Unknown42) // pink
+            if (eventId == Message.SetTriggerState) // pink
             {
                 return new Vector3(0.988f, 0.463f, 0.824f);
             }
-            if (eventId == Message.Unknown45) // sea green
+            if (eventId == Message.PlatformSleep) // sea green
             {
                 return new Vector3(0.165f, 0.894f, 0.678f);
             }
-            if (eventId == Message.Unknown53) // brown
+            if (eventId == Message.SetPlatformIndex) // brown
             {
                 return new Vector3(0.549f, 0.345f, 0.102f);
             }
-            if (eventId == Message.Unknown54) // pale green
+            if (eventId == Message.PlaySfxScript) // pale green
             {
                 return new Vector3(0.471f, 0.769f, 0.525f);
             }
-            if (eventId == Message.Unknown60) // light orange
+            if (eventId == Message.LoadOubliette) // light orange
             {
                 return new Vector3(1f, 0.765f, 0.49f);
             }

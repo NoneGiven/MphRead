@@ -340,8 +340,9 @@ namespace MphRead.Entities
             {
                 animation = result;
             }
-            if (group != null && animation != null)
+            if (group != null && animation != null && (!inst.Model.FirstHunt || material.TexgenMode != TexgenMode.None))
             {
+                // MPH overwrites a material's None texgen with Texcoord when parsing a texcoord animation; FH does not
                 texcoordMatrix = model.AnimateTexcoords(group, animation.Value, inst.AnimInfo.TexcoordFrame);
             }
             if (material.TexgenMode != TexgenMode.None)

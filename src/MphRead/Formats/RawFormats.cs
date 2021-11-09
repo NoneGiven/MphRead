@@ -559,4 +559,13 @@ namespace MphRead
 
         public string IdString => Id.MarshalString();
     }
+
+    //size: 12
+    public readonly struct TextFileEntry
+    {
+        public readonly uint Offset1;
+        public readonly uint Offset2;
+        public readonly ushort Length1;
+        public readonly ushort Length2;
+    }
 }

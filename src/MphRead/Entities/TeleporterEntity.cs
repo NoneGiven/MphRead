@@ -121,5 +121,22 @@ namespace MphRead.Entities
             }
             return base.GetModelRecolor(inst, index);
         }
+
+        public override void GetDisplayVolumes(Scene scene)
+        {
+            if (scene.ShowVolumes == VolumeDisplay.Teleporter)
+            {
+                CollisionVolume volume;
+                if (_data.Invisible != 0 || _data.ArtifactId < 8)
+                {
+                    volume = new CollisionVolume(Position.AddY(1.0f), 1.0f);
+                }
+                else
+                {
+                    volume = new CollisionVolume(Position.AddY(1.5f), 1.0f);
+                }
+                AddVolumeItem(volume, Vector3.UnitX, scene);
+            }
+        }
     }
 }

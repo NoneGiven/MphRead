@@ -32,6 +32,7 @@ namespace MphRead
         AreaExit,
         MorphCamera,
         JumpPad,
+        Teleporter,
         Object,
         FlagBase,
         DefenseNode,
@@ -1167,7 +1168,7 @@ namespace MphRead
             for (int i = 0; i < entry.Elements.Count; i++)
             {
                 EffectElementEntry element = entry.Elements[i];
-                if (element.Flags.HasFlag(EffElemFlags.DestroyOnDetach))
+                if (element.Flags.TestFlag(EffElemFlags.DestroyOnDetach))
                 {
                     UnlinkEffectElement(element);
                 }
@@ -1296,7 +1297,7 @@ namespace MphRead
                     entry.Elements.Add(element);
                 }
                 element.Position = position;
-                if (element.Flags.HasFlag(EffElemFlags.SpawnUnitVecs))
+                if (element.Flags.TestFlag(EffElemFlags.SpawnUnitVecs))
                 {
                     Vector3 vec1 = Vector3.UnitY;
                     Vector3 vec2 = Vector3.UnitX;
@@ -1329,7 +1330,7 @@ namespace MphRead
                 EffectElementEntry element = _activeElements[i];
                 if (!element.Expired && _elapsedTime > element.ExpirationTime)
                 {
-                    if (element.EffectEntry == null && !element.Flags.HasFlag(EffElemFlags.KeepAlive))
+                    if (element.EffectEntry == null && !element.Flags.TestFlag(EffElemFlags.KeepAlive))
                     {
                         UnlinkEffectElement(element);
                         i--;
@@ -1350,7 +1351,7 @@ namespace MphRead
                 }
                 else
                 {
-                    if (element.Flags.HasFlag(EffElemFlags.ElementExtension))
+                    if (element.Flags.TestFlag(EffElemFlags.ElementExtension))
                     {
                         if (_elapsedTime - element.CreationTime > element.BufferTime)
                         {
@@ -1394,7 +1395,7 @@ namespace MphRead
                             particle.InvokeVecFunc(info, times, ref temp);
                             particle.Speed = temp;
                         }
-                        if (!element.Flags.HasFlag(EffElemFlags.UseTransform))
+                        if (!element.Flags.TestFlag(EffElemFlags.UseTransform))
                         {
                             particle.Position = Matrix.Vec3MultMtx4(particle.Position, element.Transform);
                             particle.Speed = Matrix.Vec3MultMtx3(particle.Speed, element.Transform);
@@ -1505,7 +1506,7 @@ namespace MphRead
                 for (int j = 0; j < element.Particles.Count; j++)
                 {
                     EffectParticle particle = element.Particles[j];
-                    if (element.Flags.HasFlag(EffElemFlags.ElementExtension) && element.Flags.HasFlag(EffElemFlags.ParticleExtension))
+                    if (element.Flags.TestFlag(EffElemFlags.ElementExtension) && element.Flags.TestFlag(EffElemFlags.ParticleExtension))
                     {
                         if (_elapsedTime - particle.CreationTime > element.BufferTime)
                         {
@@ -1576,7 +1577,7 @@ namespace MphRead
                             particle.Rotation = particle.InvokeFloatFunc(info, times);
                         }
                         // todo: frame time scaling for speed/accel
-                        if (element.Flags.HasFlag(EffElemFlags.UseAcceleration))
+                        if (element.Flags.TestFlag(EffElemFlags.UseAcceleration))
                         {
                             particle.Speed = new Vector3(
                                 particle.Speed.X + element.Acceleration.X * (1 / 60f),
@@ -1590,7 +1591,7 @@ namespace MphRead
                             particle.Position.Y + particle.Speed.Y * (1 / 60f),
                             particle.Position.Z + particle.Speed.Z * (1 / 60f)
                         );
-                        if (element.Flags.HasFlag(EffElemFlags.CheckCollision))
+                        if (element.Flags.TestFlag(EffElemFlags.CheckCollision))
                         {
                             CollisionResult res = default;
                             if (CollisionDetection.CheckBetweenPoints(prevPos, particle.Position, TestFlags.None, this, ref res))
@@ -1602,7 +1603,7 @@ namespace MphRead
                     }
                     else
                     {
-                        if (element.Flags.HasFlag(EffElemFlags.SpawnChildEffect) && element.ChildEffectId != 0)
+                        if (element.Flags.TestFlag(EffElemFlags.SpawnChildEffect) && element.ChildEffectId != 0)
                         {
                             Vector3 vec1 = (-particle.Speed).Normalized();
                             Vector3 vec2;
@@ -1925,7 +1926,7 @@ namespace MphRead
                 {
                     EffectParticle particle = element.Particles[j];
                     Matrix4 matrix = _viewMatrix;
-                    if (particle.Owner.Flags.HasFlag(EffElemFlags.UseTransform) && !particle.Owner.Flags.HasFlag(EffElemFlags.UseMesh))
+                    if (particle.Owner.Flags.TestFlag(EffElemFlags.UseTransform) && !particle.Owner.Flags.TestFlag(EffElemFlags.UseMesh))
                     {
                         matrix = particle.Owner.Transform * matrix;
                     }
@@ -3423,6 +3424,7 @@ namespace MphRead
             }
             else if (entity is AreaVolumeEntity area)
             {
+                _sb.Append($" ({area.Data.TriggerFlags})");
                 _sb.AppendLine();
                 _sb.Append($"Entry: {area.Data.InsideMessage}");
                 _sb.Append($", Param1: {area.Data.InsideMsgParam1}, Param2: {area.Data.InsideMsgParam2}");
@@ -3441,6 +3443,7 @@ namespace MphRead
             }
             else if (entity is FhAreaVolumeEntity fhArea)
             {
+                _sb.Append($" ({fhArea.Data.TriggerFlags})");
                 _sb.AppendLine();
                 _sb.Append($"Entry: {fhArea.Data.InsideMessage}");
                 _sb.Append($", Param1: {fhArea.Data.InsideMsgParam1}, Param2: 0");
@@ -3458,6 +3461,7 @@ namespace MphRead
                     _sb.Append($" x{trigger.Data.TriggerThreshold}");
                 }
                 _sb.Append(')');
+                _sb.Append($" ({trigger.Data.TriggerFlags})");
                 _sb.AppendLine();
                 _sb.Append($"Parent: {trigger.Data.ParentMessage}");
                 if (trigger.Data.ParentMessage != Message.None && TryGetEntity(trigger.Data.ParentId, out EntityBase? parent))
@@ -3487,6 +3491,7 @@ namespace MphRead
                 {
                     _sb.Append($" x{fhTrigger.Data.Threshold}");
                 }
+                _sb.Append($" ({fhTrigger.Data.TriggerFlags})");
                 _sb.AppendLine();
                 _sb.Append($"Parent: {fhTrigger.Data.ParentMessage}");
                 if (fhTrigger.Data.ParentMessage != FhMessage.None && TryGetEntity(fhTrigger.Data.ParentId, out EntityBase? parent))

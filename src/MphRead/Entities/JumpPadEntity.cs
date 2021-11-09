@@ -103,12 +103,9 @@ namespace MphRead.Entities
             string name = data.ModelId == 1 ? "balljump" : "jumppad_base";
             SetUpModel(name, firstHunt: true);
             name = data.ModelId == 1 ? "balljump_ray" : "jumppad_ray";
-            ModelInstance beamInst = SetUpModel(name, firstHunt: true);
+            SetUpModel(name, firstHunt: true);
             Vector3 beamVector = data.BeamVector.ToFloatVector().Normalized();
             _beamTransform = GetTransformMatrix(beamVector, beamVector.X != 0 || beamVector.Z != 0 ? Vector3.UnitY : Vector3.UnitX);
-            // anitodo: what prevents the texcoord animation from playing in game?
-            beamInst.SetAnimation(-1);
-            beamInst.SetAnimation(0, 0, SetFlags.Node | SetFlags.Material | SetFlags.Texture);
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)

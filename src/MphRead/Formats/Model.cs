@@ -52,7 +52,7 @@ namespace MphRead
                 {
                     AnimInfo.FrameCount[0] = AnimInfo.Texcoord.Group.FrameCount;
                 }
-                AnimInfo.Frame[0] = animFlags.HasFlag(AnimFlags.Reverse) ? AnimInfo.FrameCount[0] - 1 : 0;
+                AnimInfo.Frame[0] = animFlags.TestFlag(AnimFlags.Reverse) ? AnimInfo.FrameCount[0] - 1 : 0;
             }
             else
             {
@@ -71,7 +71,7 @@ namespace MphRead
                 AnimInfo.Flags[slot] = animFlags;
                 AnimInfo.PrevIndex[slot] = AnimInfo.Index[slot];
                 AnimInfo.Index[slot] = index;
-                if (setFlags.HasFlag(SetFlags.Material))
+                if (setFlags.TestFlag(SetFlags.Material))
                 {
                     AnimInfo.Material.Slot = slot;
                     AnimInfo.Material.Group = Model.AnimationGroups.Material[index];
@@ -80,7 +80,7 @@ namespace MphRead
                         AnimInfo.FrameCount[slot] = AnimInfo.Material.Group.FrameCount;
                     }
                 }
-                if (setFlags.HasFlag(SetFlags.Texcoord))
+                if (setFlags.TestFlag(SetFlags.Texcoord))
                 {
                     AnimInfo.Texcoord.Slot = slot;
                     AnimInfo.Texcoord.Group = Model.AnimationGroups.Texcoord[index];
@@ -89,7 +89,7 @@ namespace MphRead
                         AnimInfo.FrameCount[slot] = AnimInfo.Texcoord.Group.FrameCount;
                     }
                 }
-                if (setFlags.HasFlag(SetFlags.Texture))
+                if (setFlags.TestFlag(SetFlags.Texture))
                 {
                     AnimInfo.Texture.Slot = slot;
                     AnimInfo.Texture.Group = Model.AnimationGroups.Texture[index];
@@ -98,7 +98,7 @@ namespace MphRead
                         AnimInfo.FrameCount[slot] = AnimInfo.Texture.Group.FrameCount;
                     }
                 }
-                if (setFlags.HasFlag(SetFlags.Node))
+                if (setFlags.TestFlag(SetFlags.Node))
                 {
                     AnimInfo.Node.Slot = slot;
                     AnimInfo.Node.Group = Model.AnimationGroups.Node[index];
@@ -107,7 +107,7 @@ namespace MphRead
                         AnimInfo.FrameCount[slot] = AnimInfo.Node.Group.FrameCount;
                     }
                 }
-                AnimInfo.Frame[slot] = animFlags.HasFlag(AnimFlags.Reverse) ? AnimInfo.FrameCount[slot] - 1 : 0;
+                AnimInfo.Frame[slot] = animFlags.TestFlag(AnimFlags.Reverse) ? AnimInfo.FrameCount[slot] - 1 : 0;
             }
             else
             {
@@ -136,11 +136,11 @@ namespace MphRead
             int frame = AnimInfo.Frame[slot];
             int step = AnimInfo.Step[slot];
             int frameCount = AnimInfo.FrameCount[slot];
-            if (!flags.HasFlag(AnimFlags.Paused) && !flags.HasFlag(AnimFlags.Ended))
+            if (!flags.TestFlag(AnimFlags.Paused) && !flags.TestFlag(AnimFlags.Ended))
             {
-                if (flags.HasFlag(AnimFlags.PingPong))
+                if (flags.TestFlag(AnimFlags.PingPong))
                 {
-                    if (flags.HasFlag(AnimFlags.Reverse))
+                    if (flags.TestFlag(AnimFlags.Reverse))
                     {
                         if (frame <= step)
                         {
@@ -150,7 +150,7 @@ namespace MphRead
                         else
                         {
                             AnimInfo.Frame[slot] = frame - step;
-                        } 
+                        }
                     }
                     else
                     {
@@ -163,13 +163,13 @@ namespace MphRead
                         }
                     }
                 }
-                else if (flags.HasFlag(AnimFlags.Reverse))
+                else if (flags.TestFlag(AnimFlags.Reverse))
                 {
                     if (frame > step)
                     {
                         AnimInfo.Frame[slot] = frame - step;
                     }
-                    else if (flags.HasFlag(AnimFlags.NoLoop))
+                    else if (flags.TestFlag(AnimFlags.NoLoop))
                     {
                         AnimInfo.Frame[slot] = 0;
                         AnimInfo.Flags[slot] |= AnimFlags.Ended;
@@ -189,7 +189,7 @@ namespace MphRead
                     AnimInfo.Frame[slot] = frame;
                     if (frame >= frameCount - 1)
                     {
-                        if (flags.HasFlag(AnimFlags.NoLoop))
+                        if (flags.TestFlag(AnimFlags.NoLoop))
                         {
                             AnimInfo.Frame[slot] = frameCount - 1;
                             AnimInfo.Flags[slot] |= AnimFlags.Ended;
@@ -595,7 +595,7 @@ namespace MphRead
                 if (group != null && group.Animations.TryGetValue(material.Name, out MaterialAnimation animation))
                 {
                     int currentFrame = info.MaterialFrame;
-                    if (!material.AnimationFlags.HasFlag(MatAnimFlags.DisableColor))
+                    if (!material.AnimationFlags.TestFlag(MatAnimFlags.DisableColor))
                     {
                         float diffuseR = InterpolateAnimation(group.Colors, animation.DiffuseLutIndexR, currentFrame,
                             animation.DiffuseBlendR, animation.DiffuseLutLengthR, group.FrameCount);
@@ -619,7 +619,7 @@ namespace MphRead
                         material.CurrentAmbient = new Vector3(ambientR / 31.0f, ambientG / 31.0f, ambientB / 31.0f);
                         material.CurrentSpecular = new Vector3(specularR / 31.0f, specularG / 31.0f, specularB / 31.0f);
                     }
-                    if (!material.AnimationFlags.HasFlag(MatAnimFlags.DisableAlpha))
+                    if (!material.AnimationFlags.TestFlag(MatAnimFlags.DisableAlpha))
                     {
                         material.CurrentAlpha = InterpolateAnimation(group.Colors, animation.AlphaLutIndex, currentFrame,
                             animation.AlphaBlend, animation.AlphaLutLength, group.FrameCount) / 31.0f;

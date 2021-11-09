@@ -200,7 +200,7 @@ namespace MphRead
         public readonly byte Active; // boolean
         public readonly byte AlwaysActive; // boolean
         public readonly byte ItemChance;
-        public readonly ushort SpawnerModel;
+        public readonly ushort SpawnerHealth;
         public readonly ushort CooldownTime;
         public readonly ushort InitialCooldown;
         public readonly ushort Padding1C6;
@@ -254,7 +254,7 @@ namespace MphRead.Editor
         public bool Active { get; set; }
         public bool AlwaysActive { get; set; }
         public byte ItemChance { get; set; }
-        public ushort SpawnerModel { get; set; }
+        public ushort SpawnerHealth { get; set; }
         public ushort CooldownTime { get; set; }
         public ushort InitialCooldown { get; set; }
         public float ActiveDistance { get; set; } // todo: display sphere
@@ -397,7 +397,7 @@ namespace MphRead.Editor
             Active = raw.Active != 0;
             AlwaysActive = raw.AlwaysActive != 0;
             ItemChance = raw.ItemChance;
-            SpawnerModel = raw.SpawnerModel;
+            SpawnerHealth = raw.SpawnerHealth;
             CooldownTime = raw.CooldownTime;
             InitialCooldown = raw.InitialCooldown;
             ActiveDistance = raw.ActiveDistance.FloatValue;
@@ -532,6 +532,68 @@ namespace MphRead.Editor
                 Unknown07 = raw.Fields.S12.Field38;
             }
         }
+
+        public void CompareTo(EnemySpawnEntityEditor other)
+        {
+            PrintValue(EnemyType, other.EnemyType, nameof(EnemyType));
+            PrintValue(LinkedEntityId, other.LinkedEntityId, nameof(LinkedEntityId));
+            PrintValue(SpawnLimit, other.SpawnLimit, nameof(SpawnLimit));
+            PrintValue(SpawnTotal, other.SpawnTotal, nameof(SpawnTotal));
+            PrintValue(SpawnCount, other.SpawnCount, nameof(SpawnCount));
+            PrintValue(Active, other.Active, nameof(Active));
+            PrintValue(AlwaysActive, other.AlwaysActive, nameof(AlwaysActive));
+            PrintValue(ItemChance, other.ItemChance, nameof(ItemChance));
+            PrintValue(SpawnerHealth, other.SpawnerHealth, nameof(SpawnerHealth));
+            PrintValue(CooldownTime, other.CooldownTime, nameof(CooldownTime));
+            PrintValue(InitialCooldown, other.InitialCooldown, nameof(InitialCooldown));
+            PrintValue(ActiveDistance, other.ActiveDistance, nameof(ActiveDistance));
+            PrintValue(Field1CC, other.Field1CC, nameof(Field1CC));
+            PrintValue(SpawnNodeName, other.SpawnNodeName, nameof(SpawnNodeName));
+            PrintValue(EntityId1, other.EntityId1, nameof(EntityId1));
+            PrintValue(Message1, other.Message1, nameof(Message1));
+            PrintValue(EntityId2, other.EntityId2, nameof(EntityId2));
+            PrintValue(Message2, other.Message2, nameof(Message2));
+            PrintValue(EntityId3, other.EntityId3, nameof(EntityId3));
+            PrintValue(Message3, other.Message3, nameof(Message3));
+            PrintValue(ItemType, other.ItemType, nameof(ItemType));
+            PrintValue(EnemySubtype, other.EnemySubtype, nameof(EnemySubtype));
+            PrintValue(EnemyVersion, other.EnemyVersion, nameof(EnemyVersion));
+            PrintValue(Volume0, other.Volume0, nameof(Volume0));
+            PrintValue(Volume1, other.Volume1, nameof(Volume1));
+            PrintValue(Volume2, other.Volume2, nameof(Volume2));
+            PrintValue(Volume3, other.Volume3, nameof(Volume3));
+            PrintValue(PathVector, other.PathVector, nameof(PathVector));
+            PrintValue(EnemyFacing, other.EnemyFacing, nameof(EnemyFacing));
+            PrintValue(EnemyPosition, other.EnemyPosition, nameof(EnemyPosition));
+            PrintValue(Unknown00, other.Unknown00, nameof(Unknown00));
+            PrintValue(Unknown01, other.Unknown01, nameof(Unknown01));
+            PrintValue(Unused68, other.Unused68, nameof(Unused68));
+            PrintValue(Unused6C, other.Unused6C, nameof(Unused6C));
+            PrintValue(Unused70, other.Unused70, nameof(Unused70));
+            PrintValue(Unused74, other.Unused74, nameof(Unused74));
+            PrintValue(Unused78, other.Unused78, nameof(Unused78));
+            PrintValue(Unused7C, other.Unused7C, nameof(Unused7C));
+            PrintValue(Unused80, other.Unused80, nameof(Unused80));
+            PrintValue(UnusedA0, other.UnusedA0, nameof(UnusedA0));
+            PrintValue(EnemyHealth, other.EnemyHealth, nameof(EnemyHealth));
+            PrintValue(EnemyDamage, other.EnemyDamage, nameof(EnemyDamage));
+            PrintValues(MovementVectors, other.MovementVectors, nameof(MovementVectors));
+            PrintValue(Unknown02, other.Unknown02, nameof(Unknown02));
+            PrintValue(MovementType, other.MovementType, nameof(MovementType));
+            PrintValue(Hunter, other.Hunter, nameof(Hunter));
+            PrintValue(EncounterType, other.EncounterType, nameof(EncounterType));
+            PrintValue(HunterWeapon, other.HunterWeapon, nameof(HunterWeapon));
+            PrintValue(HunterHealth, other.HunterHealth, nameof(HunterHealth));
+            PrintValue(HunterHealthMax, other.HunterHealthMax, nameof(HunterHealthMax));
+            PrintValue(Unknown03, other.Unknown03, nameof(Unknown03));
+            PrintValue(HunterColor, other.HunterColor, nameof(HunterColor));
+            PrintValue(HunterChance, other.HunterChance, nameof(HunterChance));
+            PrintValue(Unknown04, other.Unknown04, nameof(Unknown04));
+            PrintValue(Unknown05, other.Unknown05, nameof(Unknown05));
+            PrintValue(Unknown06, other.Unknown06, nameof(Unknown06));
+            PrintValue(Unknown07, other.Unknown07, nameof(Unknown07));
+            PrintValue(SpawnerType, other.SpawnerType, nameof(SpawnerType));
+        }
     }
 
     public class FhEnemySpawnEntityEditor : EntityEditorBase
@@ -567,6 +629,22 @@ namespace MphRead.Editor
             SpawnNodeName = raw.NodeName.MarshalString();
             ParentId = raw.ParentId;
             EmptyMessage = raw.EmptyMessage;
+        }
+
+        public void CompareTo(FhEnemySpawnEntityEditor other)
+        {
+            PrintValue(Box, other.Box, nameof(Box));
+            PrintValue(Cylinder, other.Cylinder, nameof(Cylinder));
+            PrintValue(Sphere, other.Sphere, nameof(Sphere));
+            PrintValue(EnemyType, other.EnemyType, nameof(EnemyType));
+            PrintValue(SpawnTotal, other.SpawnTotal, nameof(SpawnTotal));
+            PrintValue(SpawnLimit, other.SpawnLimit, nameof(SpawnLimit));
+            PrintValue(SpawnCount, other.SpawnCount, nameof(SpawnCount));
+            PrintValue(Cooldown, other.Cooldown, nameof(Cooldown));
+            PrintValue(StartFrame, other.StartFrame, nameof(StartFrame));
+            PrintValue(SpawnNodeName, other.SpawnNodeName, nameof(SpawnNodeName));
+            PrintValue(ParentId, other.ParentId, nameof(ParentId));
+            PrintValue(EmptyMessage, other.EmptyMessage, nameof(EmptyMessage));
         }
     }
 }

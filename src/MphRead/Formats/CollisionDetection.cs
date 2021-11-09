@@ -58,11 +58,11 @@ namespace MphRead.Formats
         {
             bool collided = false;
             ushort mask = 0;
-            if (flags.HasFlag(TestFlags.AffectsPlayers))
+            if (flags.TestFlag(TestFlags.AffectsPlayers))
             {
                 mask |= (ushort)CollisionFlags.IgnorePlayers;
             }
-            if (flags.HasFlag(TestFlags.AffectsBeams))
+            if (flags.TestFlag(TestFlags.AffectsBeams))
             {
                 mask |= (ushort)CollisionFlags.IgnoreBeams;
             }
@@ -113,7 +113,7 @@ namespace MphRead.Formats
                                         result.Flags = data.Flags;
                                         result.Distance = dist;
                                         collided = true;
-                                    } 
+                                    }
                                 }
                             }
                         }

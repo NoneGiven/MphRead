@@ -87,7 +87,7 @@ namespace MphRead.Entities
         public override bool Process(Scene scene)
         {
             Debug.Assert(Owner != null);
-            if (!Flags.HasFlag(BombFlags.Exploded))
+            if (!Flags.TestFlag(BombFlags.Exploded))
             {
                 Countdown--;
                 if (Countdown <= 0)
@@ -104,9 +104,9 @@ namespace MphRead.Entities
                     }
                 }
             }
-            if (Flags.HasFlag(BombFlags.Exploding))
+            if (Flags.TestFlag(BombFlags.Exploding))
             {
-                if (Flags.HasFlag(BombFlags.Exploded))
+                if (Flags.TestFlag(BombFlags.Exploded))
                 {
                     return false;
                 }
@@ -254,11 +254,6 @@ namespace MphRead.Entities
         None = 0x0,
         Exploding = 0x1,
         Exploded = 0x2,
-        HasModel = 0x4,
-        Bit03 = 0x8,
-        Bit04 = 0x10,
-        Bit05 = 0x20,
-        Bit06 = 0x40,
-        Bit07 = 0x80
+        HasModel = 0x4
     }
 }

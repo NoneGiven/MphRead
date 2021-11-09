@@ -63,14 +63,14 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             Flags = data.Flags;
-            if (Flags.HasFlag(PlatformFlags.Breakable))
+            if (Flags.TestFlag(PlatformFlags.Breakable))
             {
-                Flags |= PlatformFlags.Bit03;
+                Flags |= PlatformFlags.NoBeamColEffect;
                 Flags |= PlatformFlags.HideOnSleep;
                 Flags |= PlatformFlags.BeamTarget;
             }
             _health = data.Health;
-            if (Flags.HasFlag(PlatformFlags.SyluxShip))
+            if (Flags.TestFlag(PlatformFlags.SyluxShip))
             {
                 _halfHealth = _health / 2;
             }
@@ -134,7 +134,7 @@ namespace MphRead.Entities
             UpdatePosition();
             _animFlags |= PlatAnimFlags.Draw;
             // todo: room state
-            if (Flags.HasFlag(PlatformFlags.SamusShip))
+            if (Flags.TestFlag(PlatformFlags.SamusShip))
             {
                 SleepWake(wake: true, instant: true);
                 _currentAnim = -2;
@@ -145,7 +145,7 @@ namespace MphRead.Entities
             }
             else
             {
-                if (Flags.HasFlag(PlatformFlags.StartSleep))
+                if (Flags.TestFlag(PlatformFlags.StartSleep))
                 {
                     SleepWake(wake: false, instant: true);
                 }
@@ -155,7 +155,7 @@ namespace MphRead.Entities
                 }
                 // todo: more room state
                 //_animFlags |= PlatAnimFlags.Active;
-                if (_animFlags.HasFlag(PlatAnimFlags.Active))
+                if (_animFlags.TestFlag(PlatAnimFlags.Active))
                 {
                     Activate();
                 }
@@ -164,9 +164,9 @@ namespace MphRead.Entities
                     Deactivate();
                 }
                 _currentAnim = -2;
-                if (_animFlags.HasFlag(PlatAnimFlags.HasAnim))
+                if (_animFlags.TestFlag(PlatAnimFlags.HasAnim))
                 {
-                    if (_animFlags.HasFlag(PlatAnimFlags.Active))
+                    if (_animFlags.TestFlag(PlatAnimFlags.Active))
                     {
                         SetPlatAnimation(PlatAnimId.InstantWake, AnimFlags.None);
                     }
@@ -181,7 +181,7 @@ namespace MphRead.Entities
         public override void Initialize(Scene scene)
         {
             base.Initialize(scene);
-            if (Flags.HasFlag(PlatformFlags.SamusShip))
+            if (Flags.TestFlag(PlatformFlags.SamusShip))
             {
                 Model model = _models[0].Model;
                 for (int i = 0; i < model.Nodes.Count; i++)
@@ -221,7 +221,7 @@ namespace MphRead.Entities
             {
                 scene.LoadEffect(_data.DeadEffectId);
             }
-            if (_data.BeamId == 0 && Flags.HasFlag(PlatformFlags.BeamSpawner))
+            if (_data.BeamId == 0 && Flags.TestFlag(PlatformFlags.BeamSpawner))
             {
                 scene.LoadEffect(183);
                 scene.LoadEffect(184);
@@ -289,7 +289,7 @@ namespace MphRead.Entities
             }
             else
             {
-                if (_stateBits.HasFlag(PlatStateBits.Awake))
+                if (_stateBits.TestFlag(PlatStateBits.Awake))
                 {
                     _stateBits |= PlatStateBits.WasAwake;
                 }
@@ -303,7 +303,7 @@ namespace MphRead.Entities
                     SetPlatAnimation(PlatAnimId.Sleep, AnimFlags.NoLoop);
                     _currentAnim = GetAnimation(PlatAnimId.InstantSleep);
                 }
-                if (Flags.HasFlag(PlatformFlags.HideOnSleep))
+                if (Flags.TestFlag(PlatformFlags.HideOnSleep))
                 {
                     // todo: disable collision, stop sfx, room state
                     _animFlags &= ~PlatAnimFlags.Draw;
@@ -363,21 +363,21 @@ namespace MphRead.Entities
         public override bool Process(Scene scene)
         {
             // ptodo: player bonk stuff
-            if (!_animFlags.HasFlag(PlatAnimFlags.DisableReflect))
+            if (!_animFlags.TestFlag(PlatAnimFlags.DisableReflect))
             {
                 bool isTurret = false;
                 bool turretAiming = false;
-                if (Flags.HasFlag(PlatformFlags.SyluxShip) && _parent != null)
+                if (Flags.TestFlag(PlatformFlags.SyluxShip) && _parent != null)
                 {
                     isTurret = true;
-                    if (_stateBits.HasFlag(PlatStateBits.Awake)
+                    if (_stateBits.TestFlag(PlatStateBits.Awake)
                         && _models[0].AnimInfo.Index[0] == GetAnimation(PlatAnimId.InstantWake))
                     {
                         turretAiming = true;
                     }
                 }
-                if (Flags.HasFlag(PlatformFlags.SyluxShip)
-                    && (isTurret || _stateBits.HasFlag(PlatStateBits.Awake) || _stateBits.HasFlag(PlatStateBits.WasAwake)))
+                if (Flags.TestFlag(PlatformFlags.SyluxShip)
+                    && (isTurret || _stateBits.TestFlag(PlatStateBits.Awake) || _stateBits.TestFlag(PlatStateBits.WasAwake)))
                 {
                     Vector3 target = Vector3.Zero;
                     if (isTurret)
@@ -442,7 +442,7 @@ namespace MphRead.Entities
                         _movePercent += _moveIncrement;
                         _curRotation = ComputeRotationSin(_fromRotation, _toRotation, _movePercent);
                     }
-                    if (_animFlags.HasFlag(PlatAnimFlags.SeekPlayerHeight) && PlayerEntity.PlayerCount > 0)
+                    if (_animFlags.TestFlag(PlatAnimFlags.SeekPlayerHeight) && PlayerEntity.PlayerCount > 0)
                     {
                         // also never true in-game
                         PlayerEntity mainPlayer = PlayerEntity.Players[PlayerEntity.MainPlayer];
@@ -452,22 +452,22 @@ namespace MphRead.Entities
                 }
             }
             bool spawnBeam = true;
-            if (!_models[0].IsPlaceholder && Flags.HasFlag(PlatformFlags.SyluxShip))
+            if (!_models[0].IsPlaceholder && Flags.TestFlag(PlatformFlags.SyluxShip))
             {
                 if (_currentAnim != -2)
                 {
                     spawnBeam = false;
                 }
                 else if (_parent != null
-                    && !_parent.StateBits.HasFlag(PlatStateBits.Awake) && !_parent.StateBits.HasFlag(PlatStateBits.WasAwake))
+                    && !_parent.StateBits.TestFlag(PlatStateBits.Awake) && !_parent.StateBits.TestFlag(PlatStateBits.WasAwake))
                 {
                     spawnBeam = false;
                 }
             }
             _stateBits |= PlatStateBits.Awake;
             // btodo: 0 is valid for Sylux turret missiles, but without collision handling those would eat up the effect lists
-            if (spawnBeam && _animFlags.HasFlag(PlatAnimFlags.Draw) && !_animFlags.HasFlag(PlatAnimFlags.DisableReflect)
-                && _stateBits.HasFlag(PlatStateBits.Awake) && Flags.HasFlag(PlatformFlags.BeamSpawner) && _data.BeamId > 0)
+            if (spawnBeam && _animFlags.TestFlag(PlatAnimFlags.Draw) && !_animFlags.TestFlag(PlatAnimFlags.DisableReflect)
+                && _stateBits.TestFlag(PlatStateBits.Awake) && Flags.TestFlag(PlatformFlags.BeamSpawner) && _data.BeamId > 0)
             {
                 if (--_beamIntervalTimer <= 0)
                 {
@@ -484,17 +484,17 @@ namespace MphRead.Entities
                     Vector3 spawnPos = Matrix.Vec3MultMtx4(_beamSpawnPos, transform);
                     Vector3 spawnDir = Matrix.Vec3MultMtx3(_beamSpawnDir, transform).Normalized();
                     BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, BeamSpawnFlags.None, scene);
-                    if (!_equipInfo.Weapon.Flags.HasFlag(WeaponFlags.Bit10))
+                    if (!_equipInfo.Weapon.Flags.TestFlag(WeaponFlags.RepeatFire))
                     {
                         _beamActive = false;
                     }
                 }
             }
-            if (!_models[0].IsPlaceholder && _animFlags.HasFlag(PlatAnimFlags.HasAnim) && _currentAnim >= 0)
+            if (!_models[0].IsPlaceholder && _animFlags.TestFlag(PlatAnimFlags.HasAnim) && _currentAnim >= 0)
             {
                 UpdateAnimFrames(_models[0], scene);
             }
-            if (_currentAnim != -2 && _models[0].AnimInfo.Flags[0].HasFlag(AnimFlags.Ended))
+            if (_currentAnim != -2 && _models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
             {
                 SetPlatAnimation(_currentAnim, AnimFlags.None);
                 _currentAnim = -2;
@@ -540,7 +540,7 @@ namespace MphRead.Entities
 
         public override void GetDrawInfo(Scene scene)
         {
-            if (_animFlags.HasFlag(PlatAnimFlags.Draw) || _models[0].IsPlaceholder)
+            if (_animFlags.TestFlag(PlatAnimFlags.Draw) || _models[0].IsPlaceholder)
             {
                 base.GetDrawInfo(scene);
             }
@@ -559,7 +559,7 @@ namespace MphRead.Entities
         {
             UpdatePosition();
             Vector3 velocity = _posList[_toIndex] - _posList[_fromIndex];
-            float speed = _stateBits.HasFlag(PlatStateBits.Reverse) ? _backwardSpeed : _forwardSpeed;
+            float speed = _stateBits.TestFlag(PlatStateBits.Reverse) ? _backwardSpeed : _forwardSpeed;
             float factor;
             if (_data.ForCutscene != 0)
             {
@@ -735,12 +735,12 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    if (_stateBits.HasFlag(PlatStateBits.Activated))
+                    if (_stateBits.TestFlag(PlatStateBits.Activated))
                     {
                         if (_data.ReverseType == 0)
                         {
                             // reverse when reaching last position
-                            if (_stateBits.HasFlag(PlatStateBits.Reverse))
+                            if (_stateBits.TestFlag(PlatStateBits.Reverse))
                             {
                                 if (_fromIndex == 0)
                                 {
@@ -751,31 +751,31 @@ namespace MphRead.Entities
                             {
                                 _stateBits |= PlatStateBits.Reverse;
                             }
-                            _toIndex = _fromIndex + (_stateBits.HasFlag(PlatStateBits.Reverse) ? -1 : 1);
+                            _toIndex = _fromIndex + (_stateBits.TestFlag(PlatStateBits.Reverse) ? -1 : 1);
                             _state = PlatformState.Moving;
                         }
                         else if (_data.ReverseType == 1)
                         {
                             // wrap around from last position to first
-                            int index = _fromIndex + (_stateBits.HasFlag(PlatStateBits.Reverse) ? -1 : 1);
+                            int index = _fromIndex + (_stateBits.TestFlag(PlatStateBits.Reverse) ? -1 : 1);
                             _toIndex = index % _data.PositionCount;
                             _state = PlatformState.Moving;
                         }
                         else if (_data.ReverseType == 2)
                         {
                             // deactivate when reaching last position and wait for another activation to reverse
-                            if ((_stateBits.HasFlag(PlatStateBits.Reverse) && _fromIndex == 0)
-                                || (!_stateBits.HasFlag(PlatStateBits.Reverse) && _fromIndex == _data.PositionCount - 1))
+                            if ((_stateBits.TestFlag(PlatStateBits.Reverse) && _fromIndex == 0)
+                                || (!_stateBits.TestFlag(PlatStateBits.Reverse) && _fromIndex == _data.PositionCount - 1))
                             {
                                 Deactivate();
-                                if (Flags.HasFlag(PlatformFlags.Bit08))
+                                if (Flags.TestFlag(PlatformFlags.SleepAtEnd))
                                 {
                                     SleepWake(wake: false, instant: false);
                                 }
                             }
                             if (_state != PlatformState.Inactive)
                             {
-                                _toIndex = _fromIndex + (_stateBits.HasFlag(PlatStateBits.Reverse) ? -1 : 1);
+                                _toIndex = _fromIndex + (_stateBits.TestFlag(PlatStateBits.Reverse) ? -1 : 1);
                                 _state = PlatformState.Moving;
                             }
                         }
@@ -792,7 +792,7 @@ namespace MphRead.Entities
                 {
                     _moveTimer--;
                 }
-                else if (_animFlags.HasFlag(PlatAnimFlags.Active))
+                else if (_animFlags.TestFlag(PlatAnimFlags.Active))
                 {
                     Activate();
                 }
@@ -809,7 +809,7 @@ namespace MphRead.Entities
                 {
                     transform.Row3.Xyz += Matrix.Vec3MultMtx3(_posOffset, transform);
                 }
-                if (Flags.HasFlag(PlatformFlags.SyluxShip))
+                if (Flags.TestFlag(PlatformFlags.SyluxShip))
                 {
                     if (_parent != null)
                     {
@@ -873,7 +873,7 @@ namespace MphRead.Entities
         Active = 0x1,
         DisableReflect = 0x2,
         Draw = 0x4,
-        TakeDamage = 0x8,
+        Bit03 = 0x8, // functionless
         Bit04 = 0x10, // functionless
         Bit05 = 0x20, // functionless
         SeekPlayerHeight = 0x40,
@@ -895,12 +895,12 @@ namespace MphRead.Entities
         Hazard = 0x1,
         ContactDamage = 0x2,
         BeamSpawner = 0x4,
-        Bit03 = 0x8, // functionless
+        NoBeamColEffect = 0x8,
         DamagedReflect1 = 0x10,
         DamagedReflect2 = 0x20,
         StandingColOnly = 0x40,
         StartSleep = 0x80,
-        Bit08 = 0x100,
+        SleepAtEnd = 0x100,
         Bit09 = 0x200,
         Bit10 = 0x400,
         Bit11 = 0x800,

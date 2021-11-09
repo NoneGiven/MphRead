@@ -139,10 +139,10 @@ namespace MphRead
     public readonly struct ObjectEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly byte Flags;
+        public readonly ObjectFlags Flags;
         public readonly byte Padding25;
         public readonly ushort Padding26;
-        public readonly uint EffectFlags;
+        public readonly ObjEffFlags EffectFlags;
         public readonly int ModelId;
         public readonly short LinkedEntity;
         public readonly ushort ScanId;
@@ -176,9 +176,9 @@ namespace MphRead
         public readonly uint ModelId;
         public readonly uint ConnectorId;
         public readonly byte TargetLayerId;
-        public readonly byte Flags; // bit 0 - locked
-        public readonly byte Field42;
-        public readonly byte Field43;
+        public readonly byte Locked; // boolean
+        public readonly byte OutConnectorId;
+        public readonly byte OutLoaderId;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] EntityFilename;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
@@ -191,7 +191,7 @@ namespace MphRead
         public readonly EntityDataHeader Header;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] RoomName;
-        public readonly uint Flags;
+        public readonly uint Locked; // boolean
         public readonly uint ModelId;
     }
 
@@ -449,8 +449,8 @@ namespace MphRead
     public readonly struct TeleporterEntityData
     {
         public readonly EntityDataHeader Header;
-        public readonly byte Field24;
-        public readonly byte Field25;
+        public readonly byte LoadIndex;
+        public readonly byte TargetIndex;
         public readonly byte ArtifactId;
         public readonly byte Active; // boolean
         public readonly byte Invisible; // bolean
@@ -509,11 +509,11 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly byte SequenceId;
-        public readonly byte Field25;
+        public readonly byte Handoff; // boolean
         public readonly byte Loop; // boolean
-        public readonly byte Field27;
-        public readonly byte Field28;
-        public readonly byte Field29;
+        public readonly byte BlockInput; // boolean
+        public readonly byte ForceAltForm; // boolean
+        public readonly byte ForceBipedForm; // boolean
         public readonly ushort DelayFrames;
         public readonly byte PlayerId1;
         public readonly byte PlayerId2;

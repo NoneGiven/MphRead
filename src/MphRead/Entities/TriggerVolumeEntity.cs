@@ -1,3 +1,4 @@
+using System;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -77,6 +78,7 @@ namespace MphRead.Entities
     }
 
     // area volumes don't use IncludeBots; jump pads only use PlayerBiped and PlayerAlt
+    [Flags]
     public enum TriggerFlags : uint
     {
         None = 0x0,

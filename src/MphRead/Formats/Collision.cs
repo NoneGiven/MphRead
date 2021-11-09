@@ -188,9 +188,9 @@ namespace MphRead.Formats.Collision
         // bits 5-8
         public Terrain Terrain => (Terrain)(((ushort)Flags & 0x1E0) >> 5);
 
-        public bool IgnorePlayers => Flags.HasFlag(CollisionFlags.IgnorePlayers);
+        public bool IgnorePlayers => Flags.TestFlag(CollisionFlags.IgnorePlayers);
 
-        public bool IgnoreBeams => Flags.HasFlag(CollisionFlags.IgnoreBeams);
+        public bool IgnoreBeams => Flags.TestFlag(CollisionFlags.IgnoreBeams);
 
         // bits 0-1
         public int Axis => LayerMask & 3;

@@ -86,9 +86,9 @@ namespace MphRead
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
                     foreach (Entity entity in entities)
                     {
-                        if (entity.Type == EntityType.Platform)
+                        if (entity.Type == EntityType.Object)
                         {
-                            PlatformEntityData data = ((Entity<PlatformEntityData>)entity).Data;
+                            ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
                         }
                     }
                 }
@@ -98,7 +98,7 @@ namespace MphRead
 
         public static void TestAllEntityMessages()
         {
-            var used = new HashSet<Message>();
+            var used = new Dictionary<Message, List<(string, string)>>();
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)
             {
                 if (meta.Value.EntityPath != null && !meta.Value.FirstHunt)
@@ -106,63 +106,71 @@ namespace MphRead
                     IReadOnlyList<Entity> entities = Read.GetEntities(meta.Value.EntityPath, -1, meta.Value.FirstHunt);
                     foreach (Entity entity in entities)
                     {
+                        void Add(Message msg)
+                        {
+                            if (!used.ContainsKey(msg))
+                            {
+                                used.Add(msg, new List<(string, string)>());
+                            }
+                            used[msg].Add((entity.Type.ToString(), meta.Key));
+                        }
                         if (entity.Type == EntityType.Platform)
                         {
                             PlatformEntityData data = ((Entity<PlatformEntityData>)entity).Data;
-                            used.Add(data.ScanMessage);
-                            used.Add(data.LifetimeMessage1);
-                            used.Add(data.LifetimeMessage2);
-                            used.Add(data.LifetimeMessage3);
-                            used.Add(data.LifetimeMessage4);
-                            used.Add(data.BeamHitMessage);
-                            used.Add(data.DeadMessage);
-                            used.Add(data.PlayerColMessage);
+                            Add(data.ScanMessage);
+                            Add(data.LifetimeMessage1);
+                            Add(data.LifetimeMessage2);
+                            Add(data.LifetimeMessage3);
+                            Add(data.LifetimeMessage4);
+                            Add(data.BeamHitMessage);
+                            Add(data.DeadMessage);
+                            Add(data.PlayerColMessage);
                         }
                         else if (entity.Type == EntityType.Object)
                         {
                             ObjectEntityData data = ((Entity<ObjectEntityData>)entity).Data;
-                            used.Add(data.ScanMessage);
+                            Add(data.ScanMessage);
                         }
                         else if (entity.Type == EntityType.Artifact)
                         {
                             ArtifactEntityData data = ((Entity<ArtifactEntityData>)entity).Data;
-                            used.Add(data.Message1);
-                            used.Add(data.Message2);
-                            used.Add(data.Message3);
+                            Add(data.Message1);
+                            Add(data.Message2);
+                            Add(data.Message3);
                         }
                         else if (entity.Type == EntityType.EnemySpawn)
                         {
                             EnemySpawnEntityData data = ((Entity<EnemySpawnEntityData>)entity).Data;
-                            used.Add(data.Message1);
-                            used.Add(data.Message2);
-                            used.Add(data.Message3);
-                            if (data.EnemyType == EnemyType.Hunter && data.Fields.S09.EncounterType != 0)
-                            {
-                                Console.WriteLine($"EH {meta.Value.InGameName} {(Hunter)data.Fields.S09.HunterId}" +
-                                    $" type {data.Fields.S09.EncounterType}");
-                            }
+                            Add(data.Message1);
+                            Add(data.Message2);
+                            Add(data.Message3);
+                            //if (data.EnemyType == EnemyType.Hunter && data.Fields.S09.EncounterType != 0)
+                            //{
+                            //    Console.WriteLine($"EH {meta.Value.InGameName} {(Hunter)data.Fields.S09.HunterId}" +
+                            //        $" type {data.Fields.S09.EncounterType}");
+                            //}
                         }
                         else if (entity.Type == EntityType.ItemSpawn)
                         {
                             ItemSpawnEntityData data = ((Entity<ItemSpawnEntityData>)entity).Data;
-                            used.Add(data.CollectedMessage);
+                            Add(data.CollectedMessage);
                         }
                         else if (entity.Type == EntityType.CameraSequence)
                         {
                             CameraSequenceEntityData data = ((Entity<CameraSequenceEntityData>)entity).Data;
-                            used.Add(data.Message);
+                            Add(data.Message);
                         }
                         else if (entity.Type == EntityType.AreaVolume)
                         {
                             AreaVolumeEntityData data = ((Entity<AreaVolumeEntityData>)entity).Data;
-                            used.Add(data.InsideMessage);
-                            used.Add(data.ExitMessage);
+                            Add(data.InsideMessage);
+                            Add(data.ExitMessage);
                         }
                         else if (entity.Type == EntityType.TriggerVolume)
                         {
                             TriggerVolumeEntityData data = ((Entity<TriggerVolumeEntityData>)entity).Data;
-                            used.Add(data.ParentMessage);
-                            used.Add(data.ChildMessage);
+                            Add(data.ParentMessage);
+                            Add(data.ChildMessage);
                         }
                     }
                 }
@@ -174,25 +182,35 @@ namespace MphRead
                     var seq = Formats.CameraSequence.Load(i);
                     foreach (CameraSequenceKeyframe frame in seq.Keyframes)
                     {
-                        used.Add((Message)frame.MessageId);
+                        var message = (Message)frame.MessageId;
+                        if (!used.ContainsKey(message))
+                        {
+                            used.Add(message, new List<(string, string)>());
+                        }
+                        used[message].Add(("Keyframe", seq.Name));
                     }
                 }
             }
-            //Console.WriteLine("Used:");
-            //foreach (Message message in used.OrderBy(m => m))
-            //{
-            //    Console.WriteLine(message);
-            //}
-            //Console.WriteLine();
-            //Console.WriteLine("Unused:");
-            //for (int i = 0; i <= 61; i++)
-            //{
-            //    var message = (Message)i;
-            //    if (!used.Contains(message))
-            //    {
-            //        Console.WriteLine(message);
-            //    }
-            //}
+            Console.WriteLine("Used:");
+            foreach (KeyValuePair<Message, List<(string, string)>> kvp in used.OrderBy(k => k.Key))
+            {
+                Console.WriteLine($"* {kvp.Key}");
+                foreach ((string type, string room) in kvp.Value)
+                {
+                    Console.WriteLine($"{type} in {room}");
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine();
+            Console.WriteLine("Unused:");
+            for (int i = 0; i <= 61; i++)
+            {
+                var message = (Message)i;
+                if (!used.ContainsKey(message))
+                {
+                    Console.WriteLine(message);
+                }
+            }
             Nop();
         }
 
