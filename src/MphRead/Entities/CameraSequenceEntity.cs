@@ -114,7 +114,7 @@ namespace MphRead.Entities
                 {
                     scene.SetFade(fadeType, fadeTime, overwrite: false);
                 }
-                // todo: messaging, field2/field3 stuff
+                // todo: messaging, transition timer stuff for handoffs
                 if (curFrame.HoldTime == 0 && curFrame.MoveTime == 0)
                 {
                     // make zero-length frames last for 2 frames (equivalent to 1 frame in game)
