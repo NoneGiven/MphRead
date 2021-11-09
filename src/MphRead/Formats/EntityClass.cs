@@ -1109,8 +1109,8 @@ namespace MphRead.Editor
         public bool Handoff { get; set; }
         public bool Loop { get; set; }
         public bool BlockInput { get; set; }
-        public bool Field28 { get; set; }
-        public bool Field29 { get; set; }
+        public bool ForceAltForm { get; set; }
+        public bool ForceBipedForm { get; set; }
         public ushort DelayFrames { get; set; }
         public byte PlayerId1 { get; set; }
         public byte PlayerId2 { get; set; }
@@ -1126,8 +1126,8 @@ namespace MphRead.Editor
             Handoff = raw.Handoff != 0;
             Loop = raw.Loop != 0;
             BlockInput = raw.BlockInput != 0;
-            Field28 = raw.ForceAltForm != 0;
-            Field29 = raw.ForceBipedForm != 0;
+            ForceAltForm = raw.ForceAltForm != 0;
+            ForceBipedForm = raw.ForceBipedForm != 0;
             DelayFrames = raw.DelayFrames;
             PlayerId1 = raw.PlayerId1;
             PlayerId2 = raw.PlayerId2;
@@ -1144,8 +1144,8 @@ namespace MphRead.Editor
             PrintValue(Handoff, other.Handoff, nameof(Handoff));
             PrintValue(Loop, other.Loop, nameof(Loop));
             PrintValue(BlockInput, other.BlockInput, nameof(BlockInput));
-            PrintValue(Field28, other.Field28, nameof(Field28));
-            PrintValue(Field29, other.Field29, nameof(Field29));
+            PrintValue(ForceAltForm, other.ForceAltForm, nameof(ForceAltForm));
+            PrintValue(ForceBipedForm, other.ForceBipedForm, nameof(ForceBipedForm));
             PrintValue(DelayFrames, other.DelayFrames, nameof(DelayFrames));
             PrintValue(PlayerId1, other.PlayerId1, nameof(PlayerId1));
             PrintValue(PlayerId2, other.PlayerId2, nameof(PlayerId2));

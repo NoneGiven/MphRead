@@ -2352,8 +2352,8 @@ namespace MphRead.Utility
             writer.WriteByte(entity.Handoff);
             writer.WriteByte(entity.Loop);
             writer.WriteByte(entity.BlockInput);
-            writer.WriteByte(entity.Field28);
-            writer.WriteByte(entity.Field29);
+            writer.WriteByte(entity.ForceAltForm);
+            writer.WriteByte(entity.ForceBipedForm);
             writer.Write(entity.DelayFrames);
             writer.Write(entity.PlayerId1);
             writer.Write(entity.PlayerId2);
