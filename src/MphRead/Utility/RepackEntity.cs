@@ -2349,11 +2349,11 @@ namespace MphRead.Utility
         private static void WriteMphCameraSequence(CameraSequenceEntityEditor entity, BinaryWriter writer)
         {
             writer.Write(entity.SequenceId);
-            writer.Write(entity.Field25);
+            writer.WriteByte(entity.Handoff);
             writer.WriteByte(entity.Loop);
-            writer.Write(entity.Field27);
-            writer.Write(entity.Field28);
-            writer.Write(entity.Field29);
+            writer.WriteByte(entity.BlockInput);
+            writer.WriteByte(entity.Field28);
+            writer.WriteByte(entity.Field29);
             writer.Write(entity.DelayFrames);
             writer.Write(entity.PlayerId1);
             writer.Write(entity.PlayerId2);

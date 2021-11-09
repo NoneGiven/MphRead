@@ -3424,6 +3424,7 @@ namespace MphRead
             }
             else if (entity is AreaVolumeEntity area)
             {
+                _sb.Append($" ({area.Data.TriggerFlags})");
                 _sb.AppendLine();
                 _sb.Append($"Entry: {area.Data.InsideMessage}");
                 _sb.Append($", Param1: {area.Data.InsideMsgParam1}, Param2: {area.Data.InsideMsgParam2}");
@@ -3442,6 +3443,7 @@ namespace MphRead
             }
             else if (entity is FhAreaVolumeEntity fhArea)
             {
+                _sb.Append($" ({fhArea.Data.TriggerFlags})");
                 _sb.AppendLine();
                 _sb.Append($"Entry: {fhArea.Data.InsideMessage}");
                 _sb.Append($", Param1: {fhArea.Data.InsideMsgParam1}, Param2: 0");
@@ -3459,6 +3461,7 @@ namespace MphRead
                     _sb.Append($" x{trigger.Data.TriggerThreshold}");
                 }
                 _sb.Append(')');
+                _sb.Append($" ({trigger.Data.TriggerFlags})");
                 _sb.AppendLine();
                 _sb.Append($"Parent: {trigger.Data.ParentMessage}");
                 if (trigger.Data.ParentMessage != Message.None && TryGetEntity(trigger.Data.ParentId, out EntityBase? parent))
@@ -3488,6 +3491,7 @@ namespace MphRead
                 {
                     _sb.Append($" x{fhTrigger.Data.Threshold}");
                 }
+                _sb.Append($" ({fhTrigger.Data.TriggerFlags})");
                 _sb.AppendLine();
                 _sb.Append($"Parent: {fhTrigger.Data.ParentMessage}");
                 if (fhTrigger.Data.ParentMessage != FhMessage.None && TryGetEntity(fhTrigger.Data.ParentId, out EntityBase? parent))

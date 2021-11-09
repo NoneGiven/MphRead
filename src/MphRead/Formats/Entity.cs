@@ -509,11 +509,11 @@ namespace MphRead
     {
         public readonly EntityDataHeader Header;
         public readonly byte SequenceId;
-        public readonly byte Field25;
+        public readonly byte Handoff; // boolean
         public readonly byte Loop; // boolean
-        public readonly byte Field27;
-        public readonly byte Field28;
-        public readonly byte Field29;
+        public readonly byte BlockInput; // boolean
+        public readonly byte ForceAltForm; // boolean
+        public readonly byte ForceBipedForm; // boolean
         public readonly ushort DelayFrames;
         public readonly byte PlayerId1;
         public readonly byte PlayerId2;

@@ -1106,11 +1106,11 @@ namespace MphRead.Editor
     public class CameraSequenceEntityEditor : EntityEditorBase
     {
         public byte SequenceId { get; set; }
-        public byte Field25 { get; set; }
+        public bool Handoff { get; set; }
         public bool Loop { get; set; }
-        public byte Field27 { get; set; }
-        public byte Field28 { get; set; }
-        public byte Field29 { get; set; }
+        public bool BlockInput { get; set; }
+        public bool Field28 { get; set; }
+        public bool Field29 { get; set; }
         public ushort DelayFrames { get; set; }
         public byte PlayerId1 { get; set; }
         public byte PlayerId2 { get; set; }
@@ -1123,11 +1123,11 @@ namespace MphRead.Editor
         public CameraSequenceEntityEditor(Entity header, CameraSequenceEntityData raw) : base(header)
         {
             SequenceId = raw.SequenceId;
-            Field25 = raw.Field25;
+            Handoff = raw.Handoff != 0;
             Loop = raw.Loop != 0;
-            Field27 = raw.Field27;
-            Field28 = raw.Field28;
-            Field29 = raw.Field29;
+            BlockInput = raw.BlockInput != 0;
+            Field28 = raw.ForceAltForm != 0;
+            Field29 = raw.ForceBipedForm != 0;
             DelayFrames = raw.DelayFrames;
             PlayerId1 = raw.PlayerId1;
             PlayerId2 = raw.PlayerId2;
@@ -1141,9 +1141,9 @@ namespace MphRead.Editor
         public void CompareTo(CameraSequenceEntityEditor other)
         {
             PrintValue(SequenceId, other.SequenceId, nameof(SequenceId));
-            PrintValue(Field25, other.Field25, nameof(Field25));
+            PrintValue(Handoff, other.Handoff, nameof(Handoff));
             PrintValue(Loop, other.Loop, nameof(Loop));
-            PrintValue(Field27, other.Field27, nameof(Field27));
+            PrintValue(BlockInput, other.BlockInput, nameof(BlockInput));
             PrintValue(Field28, other.Field28, nameof(Field28));
             PrintValue(Field29, other.Field29, nameof(Field29));
             PrintValue(DelayFrames, other.DelayFrames, nameof(DelayFrames));
