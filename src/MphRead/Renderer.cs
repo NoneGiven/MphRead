@@ -3207,7 +3207,7 @@ namespace MphRead
         {
             Console.Clear();
             Console.Write("Enter model name: ");
-            string[] input = Console.ReadLine().Trim().Split(' ');
+            string[] input = (Console.ReadLine() ?? "").Trim().Split(' ');
             string name = input[0].Trim();
             if (name.Length > 0)
             {
@@ -3232,7 +3232,7 @@ namespace MphRead
         {
             Console.Clear();
             Console.Write("Enter camera position: ");
-            string[] input = Console.ReadLine().Trim().Replace(",", "").Split(' ');
+            string[] input = (Console.ReadLine() ?? "").Trim().Replace(",", "").Split(' ');
             float x = 0;
             float y = 0;
             float z = 0;

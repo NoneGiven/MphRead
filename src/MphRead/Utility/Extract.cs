@@ -29,7 +29,7 @@ namespace MphRead
                 if ((!isFh && !String.IsNullOrWhiteSpace(Paths.FileSystem)) || (isFh && !String.IsNullOrWhiteSpace(Paths.FhFileSystem)))
                 {
                     Console.Write($"A path has already been specified for {(isFh ? "FH" : "MPH")} files. Do you want to update it? (y/n) ");
-                    string input = Console.ReadLine().Trim().ToLower();
+                    string input = (Console.ReadLine() ?? "").Trim().ToLower();
                     if (input != "y" && input != "yes")
                     {
                         return;

@@ -132,7 +132,7 @@ namespace MphRead.Utility
                 Console.Clear();
                 Console.WriteLine("1: POLYGON_ATTR\r\nx: quit");
                 string? type = null;
-                string input = Console.ReadLine();
+                string input = Console.ReadLine() ?? "";
                 if (input == "x" || input == "X")
                 {
                     break;
@@ -154,7 +154,7 @@ namespace MphRead.Utility
                             output = null;
                         }
                         Console.Write("Value: ");
-                        string value = Console.ReadLine();
+                        string value = Console.ReadLine() ?? "";
                         if (value == "x" || value == "X")
                         {
                             break;

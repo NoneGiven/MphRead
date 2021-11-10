@@ -171,7 +171,7 @@ namespace MphRead
                         if (item.Message != null)
                         {
                             Console.Write(item.Message);
-                            _input.Add(new QueueInput(_input.Count, Console.ReadLine()));
+                            _input.Add(new QueueInput(_input.Count, Console.ReadLine() ?? ""));
                         }
                     }
                     _items.RemoveAt(0);

@@ -31,7 +31,7 @@ namespace MphRead
                 else
                 {
                     Console.Write("Enter room name or ID: ");
-                    string room = Console.ReadLine();
+                    string room = Console.ReadLine() ?? "";
                     using var renderer = new RenderWindow();
                     renderer.AddRoom(room);
                     renderer.Run();
