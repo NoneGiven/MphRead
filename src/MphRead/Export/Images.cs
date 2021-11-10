@@ -41,6 +41,7 @@ namespace MphRead.Export
             }
             byte[] buffer = ArrayPool<byte>.Shared.Rent(width * height * 4);
             GL.ReadPixels(0, 0, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, buffer);
+            ArrayPool<byte>.Shared.Return(buffer);
             var image = Image.LoadPixelData<Rgba32>(buffer, width, height);
             _queue.Enqueue((image, name));
         }
