@@ -849,7 +849,7 @@ namespace MphRead
         {
             if (_recording)
             {
-                Images.Screenshot(Size.X, Size.Y, $"frame{_framesRecorded:0000}");
+                Images.Record(Size.X, Size.Y, $"frame{_framesRecorded:0000}");
                 _framesRecorded++;
             }
             if (_advanceOneFrame)

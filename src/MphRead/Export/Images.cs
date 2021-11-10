@@ -1,28 +1,61 @@
 using System;
+using System.Buffers;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using OpenTK.Graphics.OpenGL;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 
 namespace MphRead.Export
 {
     public static class Images
     {
+        private static Task? _task = null;
+        private readonly static ConcurrentQueue<(Image, string)> _queue = new();
+
+        private static async Task DoStuff()
+        {
+            while (true)
+            {
+                while (_queue.TryDequeue(out (Image Image, string Name) result))
+                {
+                    result.Image.Mutate(m => RotateFlipExtensions.RotateFlip(m, RotateMode.None, FlipMode.Vertical));
+                    string path = Path.Combine(Paths.Export, "_screenshots");
+                    Directory.CreateDirectory(path);
+                    await result.Image.SaveAsPngAsync(Path.Combine(path, $"{result.Name}.png"));
+                    result.Image.Dispose();
+                }
+                await Task.Delay(15);
+            }
+        }
+
         public static void Screenshot(int width, int height, string? name = null)
         {
-            using var bitmap = new Bitmap(width, height);
-            var rectangle = new Rectangle(0, 0, width, height);
-            BitmapData data = bitmap.LockBits(rectangle, ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-            GL.ReadPixels(0, 0, width, height, OpenTK.Graphics.OpenGL.PixelFormat.Bgr, PixelType.UnsignedByte, data.Scan0);
-            bitmap.UnlockBits(data);
-            bitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
+            byte[] buffer = new byte[width * height * 4];
+            GL.ReadPixels(0, 0, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, buffer);
+            using var image = Image.LoadPixelData<Rgba32>(buffer, width, height);
+            image.Mutate(m => RotateFlipExtensions.RotateFlip(m, RotateMode.None, FlipMode.Vertical));
             string path = Path.Combine(Paths.Export, "_screenshots");
             Directory.CreateDirectory(path);
             name ??= DateTimeOffset.Now.ToUnixTimeMilliseconds().ToString();
-            bitmap.Save(Path.Combine(path, $"{name}.png"));
+            image.SaveAsPng(Path.Combine(path, $"{name }.png"));
+        }
+
+        public static void Record(int width, int height, string name)
+        {
+            if (_task == null)
+            {
+                _task = Task.Run(async () => await DoStuff());
+            }
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(width * height * 4);
+            GL.ReadPixels(0, 0, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, buffer);
+            var image = Image.LoadPixelData<Rgba32>(buffer, width, height);
+            _queue.Enqueue((image, name));
         }
 
         public static void ExportImages(Model model)
@@ -123,14 +156,13 @@ namespace MphRead.Export
         private static void SaveTexture(string directory, string filename, ushort width, ushort height, IReadOnlyList<ColorRgba> pixels)
         {
             string imagePath = Path.Combine(directory, $"{filename}.png");
-            var bitmap = new Bitmap(width, height);
+            using var image = new Image<Rgba32>(width, height);
             for (int p = 0; p < pixels.Count; p++)
             {
                 ColorRgba pixel = pixels[p];
-                bitmap.SetPixel(p % width, p / width,
-                    Color.FromArgb(pixel.Alpha, pixel.Red, pixel.Green, pixel.Blue));
+                image[p % width, p / width] = new Rgba32(pixel.Red, pixel.Green, pixel.Blue, pixel.Alpha);
             }
-            bitmap.Save(imagePath);
+            image.SaveAsPng(imagePath);
         }
     }
 }
