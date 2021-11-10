@@ -141,3 +141,7 @@ csharp_space_between_square_brackets = false
 # Wrapping preferences
 csharp_preserve_single_line_blocks = true
 csharp_preserve_single_line_statements = false
+csharp_style_implicit_object_creation_when_type_is_apparent=true:silent
+
+dotnet_code_quality.CA1826.exclude_ordefault_methods = true
+dotnet_diagnostic.CA1822.severity = silent

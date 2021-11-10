@@ -131,7 +131,7 @@ namespace MphRead.Archive
 
         public static void Archive(string destinationPath, IEnumerable<string> filePaths)
         {
-            if (filePaths == null || filePaths.Count() == 0)
+            if (filePaths == null || !filePaths.Any())
             {
                 ThrowWrite();
             }

@@ -101,8 +101,8 @@ namespace MphRead.Formats.Sound
             {
                 int transferred = 0;
                 bool low = true;
-                int sampleValue = BitConverter.ToInt16(data.Slice(0, 2));
-                int stepIndex = BitConverter.ToInt16(data.Slice(2, 2));
+                int sampleValue = BitConverter.ToInt16(data[..2]);
+                int stepIndex = BitConverter.ToInt16(data[2..2]);
                 transferred += 4;
                 for (int i = 0; i < sampleCount; i++)
                 {
@@ -315,7 +315,7 @@ namespace MphRead.Formats.Sound
             Debug.Assert(fileCount > 0);
             var files = new List<SfxScriptFile>();
             IReadOnlyList<SfxScriptHeader> headers = Read.DoOffsets<SfxScriptHeader>(bytes, 4, fileCount);
-            IReadOnlyList<string> names = Read.ReadStrings(bytes, headers.Last().Offset + headers.Last().Size, fileCount);
+            IReadOnlyList<string> names = Read.ReadStrings(bytes, headers[^1].Offset + headers[^1].Size, fileCount);
             for (int i = 0; i < headers.Count; i++)
             {
                 SfxScriptHeader header = headers[i];
@@ -333,7 +333,7 @@ namespace MphRead.Formats.Sound
             Debug.Assert(fileCount > 0);
             var files = new List<DgnFile>();
             IReadOnlyList<DgnHeader> headers = Read.DoOffsets<DgnHeader>(bytes, 4, fileCount);
-            IReadOnlyList<string> names = Read.ReadStrings(bytes, headers.Last().Offset + headers.Last().Size, fileCount);
+            IReadOnlyList<string> names = Read.ReadStrings(bytes, headers[^1].Offset + headers[^1].Size, fileCount);
             for (int i = 0; i < headers.Count; i++)
             {
                 DgnHeader header = headers[i];
@@ -436,7 +436,7 @@ namespace MphRead.Formats.Sound
         {
             Id = id;
             Format = WaveFormat.None;
-            _data = new byte[0];
+            _data = Array.Empty<byte>();
         }
 
         public static SoundSample CreateNull(uint id)
