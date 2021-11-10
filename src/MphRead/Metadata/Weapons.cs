@@ -142,6 +142,7 @@ namespace MphRead
             WeaponType = weaponType;
             DrawFuncIds = drawFuncIds;
             Colors = colors;
+            Priority = priority;
             Flags = flags;
             SplashDamage = splashDamage;
             MinChargeSplashDamage = minChargeSplashDamage;

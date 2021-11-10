@@ -544,7 +544,7 @@ namespace MphRead
             int index = result.IndexOf('\0');
             if (index != -1)
             {
-                return result.Substring(0, index);
+                return result[..index];
             }
             return result;
         }
@@ -559,7 +559,7 @@ namespace MphRead
             int index = result.IndexOf('\0');
             if (index != -1)
             {
-                return result.Substring(0, index);
+                return result[..index];
             }
             return result;
         }

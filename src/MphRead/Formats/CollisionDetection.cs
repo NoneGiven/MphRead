@@ -24,7 +24,7 @@ namespace MphRead.Formats
         None = 0x0,
         AffectsPlayers = 0x2000,
         AffectsBeams = 0x4000,
-        IncludeEntities = 0x4000,
+        AffectsScan = 0x8000
     }
 
     public struct CollisionResult

@@ -1030,7 +1030,7 @@ namespace MphRead
 
         public static T DoOffset<T>(ReadOnlySpan<byte> bytes, uint offset) where T : struct
         {
-            return DoOffsets<T>(bytes, offset, 1).First();
+            return DoOffsets<T>(bytes, offset, 1)[0];
         }
 
         public static IReadOnlyList<T> DoOffsets<T>(ReadOnlySpan<byte> bytes, int offset, uint count) where T : struct

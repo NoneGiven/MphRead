@@ -171,7 +171,7 @@ namespace MphRead.Testing
                 bool enums = false;
                 bool embed = false;
                 string cast = "";
-                if (split[0].Contains("*"))
+                if (split[0].Contains('*'))
                 {
                     type = "IntPtr";
                     getter = "ReadPointer";
