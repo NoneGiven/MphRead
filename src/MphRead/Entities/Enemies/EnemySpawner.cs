@@ -24,7 +24,7 @@ namespace MphRead.Entities.Enemies
                 else
                 {
                     inst.SetAnimation(2, AnimFlags.Paused | AnimFlags.Ended);
-                } 
+                }
             }
             // temporary
             if (spawner == "EnemySpawner")

@@ -17,9 +17,9 @@ namespace MphRead.Export
     public static class Images
     {
         private static Task? _task = null;
-        private static readonly ConcurrentQueue<(Image, string)> _queue = new();
-        private static readonly PngEncoder _encoderUncomp = new() { CompressionLevel = PngCompressionLevel.NoCompression };
-        private static readonly PngEncoder _encoderComp = new() { CompressionLevel = PngCompressionLevel.BestSpeed };
+        private static readonly ConcurrentQueue<(Image, string)> _queue = new ConcurrentQueue<(Image, string)>();
+        private static readonly PngEncoder _encoderUncomp = new PngEncoder() { CompressionLevel = PngCompressionLevel.NoCompression };
+        private static readonly PngEncoder _encoderComp = new PngEncoder() { CompressionLevel = PngCompressionLevel.BestSpeed };
 
         public static void Screenshot(int width, int height, string? name = null)
         {
