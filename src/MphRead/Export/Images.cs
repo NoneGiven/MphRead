@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using OpenTK.Graphics.OpenGL;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 
@@ -16,23 +17,9 @@ namespace MphRead.Export
     public static class Images
     {
         private static Task? _task = null;
-        private readonly static ConcurrentQueue<(Image, string)> _queue = new();
-
-        private static async Task DoStuff()
-        {
-            while (true)
-            {
-                while (_queue.TryDequeue(out (Image Image, string Name) result))
-                {
-                    result.Image.Mutate(m => RotateFlipExtensions.RotateFlip(m, RotateMode.None, FlipMode.Vertical));
-                    string path = Path.Combine(Paths.Export, "_screenshots");
-                    Directory.CreateDirectory(path);
-                    await result.Image.SaveAsPngAsync(Path.Combine(path, $"{result.Name}.png"));
-                    result.Image.Dispose();
-                }
-                await Task.Delay(15);
-            }
-        }
+        private static readonly ConcurrentQueue<(Image, string)> _queue = new();
+        private static readonly PngEncoder _encoderUncomp = new() { CompressionLevel = PngCompressionLevel.NoCompression };
+        private static readonly PngEncoder _encoderComp = new() { CompressionLevel = PngCompressionLevel.BestSpeed };
 
         public static void Screenshot(int width, int height, string? name = null)
         {
@@ -43,19 +30,35 @@ namespace MphRead.Export
             string path = Path.Combine(Paths.Export, "_screenshots");
             Directory.CreateDirectory(path);
             name ??= DateTimeOffset.Now.ToUnixTimeMilliseconds().ToString();
-            image.SaveAsPng(Path.Combine(path, $"{name }.png"));
+            image.SaveAsPng(Path.Combine(path, $"{name }.png"), _encoderComp);
         }
 
         public static void Record(int width, int height, string name)
         {
             if (_task == null)
             {
-                _task = Task.Run(async () => await DoStuff());
+                _task = Task.Run(async () => await ProcessQueue());
             }
             byte[] buffer = ArrayPool<byte>.Shared.Rent(width * height * 4);
             GL.ReadPixels(0, 0, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, buffer);
             var image = Image.LoadPixelData<Rgba32>(buffer, width, height);
             _queue.Enqueue((image, name));
+        }
+
+        private static async Task ProcessQueue()
+        {
+            while (true)
+            {
+                while (_queue.TryDequeue(out (Image Image, string Name) result))
+                {
+                    result.Image.Mutate(m => RotateFlipExtensions.RotateFlip(m, RotateMode.None, FlipMode.Vertical));
+                    string path = Path.Combine(Paths.Export, "_screenshots");
+                    Directory.CreateDirectory(path);
+                    await result.Image.SaveAsPngAsync(Path.Combine(path, $"{result.Name}.png"), _encoderUncomp);
+                    result.Image.Dispose();
+                }
+                await Task.Delay(15);
+            }
         }
 
         public static void ExportImages(Model model)
