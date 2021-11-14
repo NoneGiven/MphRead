@@ -25,12 +25,16 @@ namespace MphRead.Export
         {
             byte[] buffer = new byte[width * height * 4];
             GL.ReadPixels(0, 0, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, buffer);
+            for (int i = 3; i < buffer.Length; i += 4)
+            {
+                buffer[i] = 255;
+            }
             using var image = Image.LoadPixelData<Rgba32>(buffer, width, height);
             image.Mutate(m => RotateFlipExtensions.RotateFlip(m, RotateMode.None, FlipMode.Vertical));
             string path = Path.Combine(Paths.Export, "_screenshots");
             Directory.CreateDirectory(path);
             name ??= DateTimeOffset.Now.ToUnixTimeMilliseconds().ToString();
-            image.SaveAsPng(Path.Combine(path, $"{name }.png"), _encoderComp);
+            image.SaveAsPng(Path.Combine(path, $"{name}.png"), _encoderComp);
         }
 
         public static void Record(int width, int height, string name)
@@ -41,8 +45,12 @@ namespace MphRead.Export
             }
             byte[] buffer = ArrayPool<byte>.Shared.Rent(width * height * 4);
             GL.ReadPixels(0, 0, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, buffer);
-            ArrayPool<byte>.Shared.Return(buffer);
+            for (int i = 3; i < width * height * 4; i += 4)
+            {
+                buffer[i] = 255;
+            }
             var image = Image.LoadPixelData<Rgba32>(buffer, width, height);
+            ArrayPool<byte>.Shared.Return(buffer);
             _queue.Enqueue((image, name));
         }
 
