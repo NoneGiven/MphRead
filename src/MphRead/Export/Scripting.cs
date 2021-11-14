@@ -156,7 +156,7 @@ namespace MphRead.Export
             sb.AppendLine();
             sb.AppendLine($"expected_version = '{Program.Version}'");
             sb.AppendLine($"# recolors: {String.Join(", ", model.Recolors.Select(r => r.Name))}");
-            sb.AppendLine($"recolor = '{model.Recolors.First().Name}'");
+            sb.AppendLine($"recolor = '{model.Recolors[0].Name}'");
             sb.AppendLine($"# uv anims: {model.AnimationGroups.Texcoord.Count}, mat anims: {model.AnimationGroups.Material.Count}," +
                 $" node anims: {model.AnimationGroups.Node.Count}, tex anims: {model.AnimationGroups.Texture.Count}");
             int texcoordId = model.AnimationGroups.Texcoord.Count > 0 ? 0 : -1;
@@ -187,7 +187,7 @@ namespace MphRead.Export
                 {
                     sb.AppendIndent();
                     // this assumes this is the same between all recolors, which is the case in MPH
-                    bool alphaPixels = model.Recolors.First()
+                    bool alphaPixels = model.Recolors[0]
                         .GetPixels(material.TextureId, material.PaletteId).Any(p => p.Alpha < 255);
                     sb.AppendLine($"set_texture_alpha('{material.Name}_mat', {material.Alpha}, {(alphaPixels ? "True" : "False")})");
                     bool mirrorX = material.XRepeat == RepeatMode.Mirror;

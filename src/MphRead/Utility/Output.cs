@@ -154,7 +154,7 @@ namespace MphRead
         {
             while (!token.IsCancellationRequested)
             {
-                await _lock.WaitAsync();
+                await _lock.WaitAsync(CancellationToken.None);
                 while (_items.Count > 0)
                 {
                     QueueItem item = _items[0];
@@ -171,13 +171,13 @@ namespace MphRead
                         if (item.Message != null)
                         {
                             Console.Write(item.Message);
-                            _input.Add(new QueueInput(_input.Count, Console.ReadLine()));
+                            _input.Add(new QueueInput(_input.Count, Console.ReadLine() ?? ""));
                         }
                     }
                     _items.RemoveAt(0);
                 }
                 _lock.Release();
-                await Task.Delay(100);
+                await Task.Delay(100, CancellationToken.None);
             }
         }
 

@@ -91,8 +91,9 @@ csharp_prefer_simple_default_expression = false:silent
 csharp_style_pattern_local_over_anonymous_function = true:suggestion
 csharp_style_prefer_index_operator = true:suggestion
 csharp_style_prefer_range_operator = true:suggestion
-csharp_style_unused_value_assignment_preference = discard_variable:silent
-csharp_style_unused_value_expression_statement_preference = discard_variable:silent
+csharp_style_unused_value_assignment_preference = discard_variable:none
+csharp_style_unused_value_expression_statement_preference = discard_variable:none
+dotnet_diagnostic.CA1806.severity = none
 
 #### C# Formatting Rules ####
 
@@ -140,3 +141,9 @@ csharp_space_between_square_brackets = false
 # Wrapping preferences
 csharp_preserve_single_line_blocks = true
 csharp_preserve_single_line_statements = false
+csharp_style_implicit_object_creation_when_type_is_apparent=true:silent
+
+dotnet_code_quality.CA1826.exclude_ordefault_methods = true
+dotnet_diagnostic.CA1836.severity = none
+dotnet_diagnostic.CA2208.severity = none
+dotnet_diagnostic.CA1822.severity = silent

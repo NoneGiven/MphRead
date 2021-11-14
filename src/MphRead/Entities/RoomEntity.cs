@@ -38,7 +38,7 @@ namespace MphRead.Entities
             {
                 // using cached instance messes with placeholders since the room entity doesn't update its instances normally
                 _models.Add(Read.GetModelInstance("pick_wpn_missile", noCache: true));
-                _emptyMatrixStack = new float[0];
+                _emptyMatrixStack = Array.Empty<float>();
             }
             var portals = new List<CollisionPortal>();
             var forceFields = new List<PortalNodeRef>();

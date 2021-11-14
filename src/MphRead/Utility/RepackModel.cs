@@ -1234,7 +1234,7 @@ namespace MphRead.Utility
                 foreach (Node node in nodes)
                 {
                     IEnumerable<int> ids = node.MeshCount == 0 ? node.GetAllMeshIds(nodes, root: true) : node.GetMeshIds();
-                    if (ids.Count() == 0)
+                    if (!ids.Any())
                     {
                         nodeMin.Add(new Vector3i(0, 0, 0));
                         nodeMax.Add(new Vector3i(0, 0, 0));
@@ -1481,7 +1481,7 @@ namespace MphRead.Utility
             writer.Write((ushort)meshes.Count);
             writer.Write((ushort)matrixIdCount);
             Debug.Assert(stream.Position == Sizes.Header);
-            return (stream.ToArray(), texStream == stream ? new byte[0] : texStream.ToArray());
+            return (stream.ToArray(), texStream == stream ? Array.Empty<byte>() : texStream.ToArray());
         }
 
         private static (int primitives, int vertices) GetDlistCounts(IReadOnlyList<RenderInstruction> dlist)

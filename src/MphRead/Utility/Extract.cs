@@ -29,7 +29,7 @@ namespace MphRead
                 if ((!isFh && !String.IsNullOrWhiteSpace(Paths.FileSystem)) || (isFh && !String.IsNullOrWhiteSpace(Paths.FhFileSystem)))
                 {
                     Console.Write($"A path has already been specified for {(isFh ? "FH" : "MPH")} files. Do you want to update it? (y/n) ");
-                    string input = Console.ReadLine().Trim().ToLower();
+                    string input = (Console.ReadLine() ?? "").Trim().ToLower();
                     if (input != "y" && input != "yes")
                     {
                         return;
@@ -39,11 +39,17 @@ namespace MphRead
             ExtractRomFs(header, bytes, rootName: isFh ? "fh" : "mph", hasArchives: !isFh);
             if (isFh)
             {
-                File.WriteAllText("paths.txt", String.Join(Environment.NewLine, Paths.FileSystem, Path.Combine("files", "fh"), Paths.Export));
+                File.WriteAllText("paths.txt", String.Join(Environment.NewLine,
+                    Paths.FileSystem,
+                    Path.GetFullPath(Path.Combine("files", "fh")),
+                    Paths.Export));
             }
             else
             {
-                File.WriteAllText("paths.txt", String.Join(Environment.NewLine, Path.Combine("files", "mph"), Paths.FhFileSystem, Paths.Export));
+                File.WriteAllText("paths.txt", String.Join(Environment.NewLine,
+                    Path.GetFullPath(Path.Combine("files", "mph")),
+                    Paths.FhFileSystem,
+                    Paths.Export));
             }
             Nop();
         }

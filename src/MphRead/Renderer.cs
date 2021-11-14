@@ -849,7 +849,7 @@ namespace MphRead
         {
             if (_recording)
             {
-                Images.Screenshot(Size.X, Size.Y, $"frame{_framesRecorded:0000}");
+                Images.Record(Size.X, Size.Y, $"frame{_framesRecorded:0000}");
                 _framesRecorded++;
             }
             if (_advanceOneFrame)
@@ -3207,7 +3207,7 @@ namespace MphRead
         {
             Console.Clear();
             Console.Write("Enter model name: ");
-            string[] input = Console.ReadLine().Trim().Split(' ');
+            string[] input = (Console.ReadLine() ?? "").Trim().Split(' ');
             string name = input[0].Trim();
             if (name.Length > 0)
             {
@@ -3232,7 +3232,7 @@ namespace MphRead
         {
             Console.Clear();
             Console.Write("Enter camera position: ");
-            string[] input = Console.ReadLine().Trim().Replace(",", "").Split(' ');
+            string[] input = (Console.ReadLine() ?? "").Trim().Replace(",", "").Split(' ');
             float x = 0;
             float y = 0;
             float z = 0;
@@ -3334,6 +3334,7 @@ namespace MphRead
                 VolumeDisplay.AreaExit => "area volumes, exit event",
                 VolumeDisplay.MorphCamera => "morph cameras",
                 VolumeDisplay.JumpPad => "jump pads",
+                VolumeDisplay.Teleporter => "teleporters",
                 VolumeDisplay.Object => "objects",
                 VolumeDisplay.FlagBase => "flag bases",
                 VolumeDisplay.DefenseNode => "defense nodes",
