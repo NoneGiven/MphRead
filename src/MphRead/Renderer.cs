@@ -3334,6 +3334,7 @@ namespace MphRead
                 VolumeDisplay.AreaExit => "area volumes, exit event",
                 VolumeDisplay.MorphCamera => "morph cameras",
                 VolumeDisplay.JumpPad => "jump pads",
+                VolumeDisplay.Teleporter => "teleporters",
                 VolumeDisplay.Object => "objects",
                 VolumeDisplay.FlagBase => "flag bases",
                 VolumeDisplay.DefenseNode => "defense nodes",
