@@ -550,6 +550,10 @@ namespace MphRead.Entities
         {
             return null;
         }
+
+        public virtual void HandleMessage(MessageInfo info)
+        {
+        }
     }
 
     public abstract class SpinningEntityBase : EntityBase

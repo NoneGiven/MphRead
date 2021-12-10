@@ -58,7 +58,7 @@ namespace MphRead
         Type
     }
 
-    public class Scene
+    public partial class Scene
     {
         public Vector2i Size { get; set; }
         private Matrix4 _viewMatrix = Matrix4.Identity;
@@ -124,7 +124,7 @@ namespace MphRead
 
         private float _frameTime = 0;
         private float _elapsedTime = 0;
-        private long _frameCount = 0;
+        private ulong _frameCount = 0;
         private bool _frameAdvanceOn = false;
         private bool _advanceOneFrame = false;
         private bool _recording = false;
@@ -143,7 +143,7 @@ namespace MphRead
         public bool TransformRoomNodes => _transformRoomNodes;
         public bool ShowAllNodes => _showAllNodes;
         public float FrameTime => _frameTime;
-        public long FrameCount => _frameCount;
+        public ulong FrameCount => _frameCount;
         public VolumeDisplay ShowVolumes => _showVolumes;
         public bool ShowForceFields => _showVolumes != VolumeDisplay.Portal;
         public float KillHeight => _killHeight;
@@ -834,6 +834,10 @@ namespace MphRead
             UpdateCameraPosition();
 
             RenderScene();
+            if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
+            {
+                ProcessMessageQueue();
+            }
             if (_frameAdvanceOn && !_advanceOneFrame)
             {
                 Rng.SetRng1(rng1);
@@ -1365,7 +1369,7 @@ namespace MphRead
                         element.Position = element.Transform.Row3.Xyz;
                     }
                     var times = new TimeValues(_elapsedTime, _elapsedTime - element.CreationTime, element.Lifespan);
-                    if (_frameCount % 2 == element.Parity
+                    if (_frameCount % 2 == (ulong)element.Parity
                         && element.Actions.TryGetValue(FuncAction.IncreaseParticleAmount, out FxFuncInfo? info))
                     {
                         // todo: maybe revisit this frame time hack

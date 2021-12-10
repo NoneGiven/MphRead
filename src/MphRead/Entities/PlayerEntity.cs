@@ -555,9 +555,9 @@ namespace MphRead.Entities
                 product.M23 *= -1;
                 product.M32 *= -1;
                 product.M33 *= -1;
-                long frame = scene.FrameCount / 2;
-                float rotZ = ((int)(16 * ((781874935307L * (ulong)(53248 * frame) >> 32) + 2048)) >> 20) * (360 / 4096f);
-                float rotY = ((int)(16 * ((781874935307L * (ulong)(26624 * frame) + 0x80000000000) >> 32)) >> 20) * (360 / 4096f);
+                ulong frame = scene.FrameCount / 2;
+                float rotZ = ((int)(16 * ((781874935307L * (53248 * frame) >> 32) + 2048)) >> 20) * (360 / 4096f);
+                float rotY = ((int)(16 * ((781874935307L * (26624 * frame) + 0x80000000000) >> 32)) >> 20) * (360 / 4096f);
                 var rot = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(rotZ));
                 rot *= Matrix4.CreateRotationY(MathHelper.DegreesToRadians(rotY));
                 product = rot * product;
