@@ -25,22 +25,24 @@ namespace MphRead.Entities
         CollideBeam = 0x40,
         NoMaxDistance = 0x80,
         OnRadar = 0x100,
-        NoVolumeUpdate = 0x200
+        Static = 0x200
     }
 
     public class EnemyInstanceEntity : EntityBase
     {
         protected readonly EnemyInstanceEntityData _data;
-        protected Vector3 _initialPosition; // todo: use init
         private ushort _framesSinceDamage = 510;
-        private ushort _health = 20;
-        private ushort _healthMax = 20;
-        private EntityBase? _owner = null;
-        private CollisionVolume _hurtVolume = default;
-        private CollisionVolume _hurtVolumeInit = default;
+        protected ushort _health = 20;
+        protected ushort _healthMax = 20;
+        protected EntityBase? _owner = null;
+        protected CollisionVolume _hurtVolume = default;
+        protected CollisionVolume _hurtVolumeInit = default;
         private byte _state1 = 0; // todo: names ("next?")
         private byte _state2 = 0;
         private byte _hitPlayers = 0;
+        protected Vector3 _prevPos = Vector3.Zero;
+        protected Vector3 _speed = Vector3.Zero;
+        protected float _boundingRadius = 0;
 
         private bool _onlyMoveHurtVolume = false;
         public EnemyFlags Flags { get; set; }
@@ -61,6 +63,7 @@ namespace MphRead.Entities
             {
                 // todo: linked entity collision transform -- although I don't think this is ever used for enemies/spawners
             }
+            _prevPos = Position;
             if (_data.Type == EnemyType.Gorea1A || _data.Type == EnemyType.GoreaHead || _data.Type == EnemyType.GoreaArm
                 || _data.Type == EnemyType.GoreaLeg || _data.Type == EnemyType.Gorea1B || _data.Type == EnemyType.GoreaSealSphere1
                 || _data.Type == EnemyType.Trocra || _data.Type == EnemyType.Gorea2 || _data.Type == EnemyType.GoreaSealSphere2)
@@ -89,12 +92,18 @@ namespace MphRead.Entities
                 if (_health > 0)
                 {
                     _state1 = _state2;
-                    UpdateHurtVolume();
+                    if (!Flags.TestFlag(EnemyFlags.Static))
+                    {
+                        DoMovement();
+                    }
                     // todo: positional audio, node ref
                     _hitPlayers = 0;
                     // todo: player collision
                     EnemyProcess(scene);
-                    UpdateHurtVolume();
+                    if (!Flags.TestFlag(EnemyFlags.Static))
+                    {
+                        UpdateHurtVolume();
+                    }
                     // node ref
                     return base.Process(scene);
                 }
@@ -110,6 +119,13 @@ namespace MphRead.Entities
             return false;
         }
 
+        private void DoMovement()
+        {
+            _prevPos = Position;
+            Position += _speed;
+            UpdateHurtVolume();
+        }
+
         private void UpdateHurtVolume()
         {
             if (_onlyMoveHurtVolume)
@@ -119,6 +135,14 @@ namespace MphRead.Entities
             else
             {
                 _hurtVolume = CollisionVolume.Transform(_hurtVolume, Transform);
+            }
+        }
+
+        public override void GetDisplayVolumes(Scene scene)
+        {
+            if (scene.ShowVolumes == VolumeDisplay.EnemyHurt)
+            {
+                AddVolumeItem(_hurtVolume, Vector3.UnitX, scene);
             }
         }
 

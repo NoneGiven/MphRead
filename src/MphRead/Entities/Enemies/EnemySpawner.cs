@@ -1,23 +1,23 @@
+using System.Diagnostics;
+
 namespace MphRead.Entities.Enemies
 {
     public class Enemy40Entity : EnemyInstanceEntity
     {
-        private readonly EnemySpawnEntity _owner;
-
         public Enemy40Entity(EnemyInstanceEntityData data) : base(data)
         {
+            var spawner = _owner as EnemySpawnEntity;
+            Debug.Assert(spawner != null);
             Transform = data.Spawner.Transform;
-            _initialPosition = Position;
-            _owner = (EnemySpawnEntity)data.Spawner;
-            string spawner = "EnemySpawner";
-            if (_owner.Data.EnemyType == EnemyType.WarWasp || _owner.Data.EnemyType == EnemyType.BarbedWarWasp)
+            string model = "EnemySpawner";
+            if (spawner.Data.EnemyType == EnemyType.WarWasp || spawner.Data.EnemyType == EnemyType.BarbedWarWasp)
             {
-                spawner = "PlantCarnivarous_Pod";
+                model = "PlantCarnivarous_Pod";
             }
-            ModelInstance inst = SetUpModel(spawner);
-            if (_owner.Data.EnemyType != EnemyType.WarWasp && _owner.Data.EnemyType != EnemyType.BarbedWarWasp)
+            ModelInstance inst = SetUpModel(model);
+            if (spawner.Data.EnemyType != EnemyType.WarWasp && spawner.Data.EnemyType != EnemyType.BarbedWarWasp)
             {
-                if ((_owner.Flags & 2) != 0)
+                if ((spawner.Flags & 2) != 0)
                 {
                     inst.SetAnimation(1);
                 }
@@ -27,7 +27,7 @@ namespace MphRead.Entities.Enemies
                 }
             }
             // temporary
-            if (spawner == "EnemySpawner")
+            if (model == "EnemySpawner")
             {
                 //inst.SetAnimation(-1);
             }

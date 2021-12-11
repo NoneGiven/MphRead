@@ -33,6 +33,7 @@ namespace MphRead
         MorphCamera,
         JumpPad,
         Teleporter,
+        EnemyHurt,
         Object,
         FlagBase,
         DefenseNode,
@@ -257,8 +258,9 @@ namespace MphRead
             {
                 _entityMap.Add(entity.Id, entity);
             }
-            InitEntity(entity);
+            // important to call in this order because the entity may add models (at least in development)
             entity.Initialize(this);
+            InitEntity(entity);
         }
 
         // called before load
@@ -3339,6 +3341,7 @@ namespace MphRead
                 VolumeDisplay.MorphCamera => "morph cameras",
                 VolumeDisplay.JumpPad => "jump pads",
                 VolumeDisplay.Teleporter => "teleporters",
+                VolumeDisplay.EnemyHurt => "enemy hurtboxes",
                 VolumeDisplay.Object => "objects",
                 VolumeDisplay.FlagBase => "flag bases",
                 VolumeDisplay.DefenseNode => "defense nodes",

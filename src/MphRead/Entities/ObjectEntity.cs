@@ -166,17 +166,14 @@ namespace MphRead.Entities
                 {
                     processEffect = true;
                 }
-                else if (_data.EffectFlags.TestFlag(ObjEffFlags.AttachEffect))
+                else if (_data.EffectFlags.TestFlag(ObjEffFlags.UseEffectVolume))
                 {
-                    if (_data.EffectFlags.TestFlag(ObjEffFlags.UseEffectVolume))
-                    {
-                        // todo: add an option to disable this check
-                        processEffect = _effectVolume.TestPoint(scene.CameraPosition);
-                    }
-                    else
-                    {
-                        processEffect = (_flags & ObjectFlags.State) != 0;
-                    }
+                    // todo: add an option to disable this check
+                    processEffect = _effectVolume.TestPoint(scene.CameraPosition);
+                }
+                else if (_flags.TestFlag(ObjectFlags.IsVisible))
+                {
+                    processEffect = (_flags & ObjectFlags.State) != 0;
                 }
                 if (processEffect)
                 {
@@ -298,6 +295,7 @@ namespace MphRead.Entities
         WeaponZoom = 0x8,
         AttachEffect = 0x10,
         DestroyEffect = 0x20,
-        AlwaysUpdateEffect = 0x40
+        AlwaysUpdateEffect = 0x40,
+        Unknown = 0x8000
     }
 }

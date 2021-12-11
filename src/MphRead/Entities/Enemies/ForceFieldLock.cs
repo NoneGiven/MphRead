@@ -6,6 +6,7 @@ namespace MphRead.Entities.Enemies
     {
         private Vector3 _vec1;
         private Vector3 _vec2;
+        private readonly Vector3 _initialPosition;
 
         public Enemy49Entity(EnemyInstanceEntityData data) : base(data)
         {
