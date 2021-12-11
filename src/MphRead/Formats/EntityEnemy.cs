@@ -204,8 +204,8 @@ namespace MphRead
         public readonly ushort CooldownTime;
         public readonly ushort InitialCooldown;
         public readonly ushort Padding1C6;
-        public readonly Fixed ActiveDistance; // todo: display sphere
-        public readonly uint Field1CC; // unused?
+        public readonly Fixed ActiveDistance; // todo: display spheres
+        public readonly Fixed EnemyActiveDistance;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;
         public readonly short EntityId1;
@@ -258,7 +258,7 @@ namespace MphRead.Editor
         public ushort CooldownTime { get; set; }
         public ushort InitialCooldown { get; set; }
         public float ActiveDistance { get; set; } // todo: display sphere
-        public uint Field1CC { get; set; }
+        public float EnemyActiveDistance { get; set; }
         public string SpawnNodeName { get; set; } = "";
         public short EntityId1 { get; set; }
         public Message Message1 { get; set; }
@@ -401,7 +401,7 @@ namespace MphRead.Editor
             CooldownTime = raw.CooldownTime;
             InitialCooldown = raw.InitialCooldown;
             ActiveDistance = raw.ActiveDistance.FloatValue;
-            Field1CC = raw.Field1CC;
+            EnemyActiveDistance = raw.ActiveDistance.FloatValue;
             SpawnNodeName = raw.NodeName.MarshalString();
             EntityId1 = raw.EntityId1;
             Message1 = raw.Message1;
@@ -547,7 +547,7 @@ namespace MphRead.Editor
             PrintValue(CooldownTime, other.CooldownTime, nameof(CooldownTime));
             PrintValue(InitialCooldown, other.InitialCooldown, nameof(InitialCooldown));
             PrintValue(ActiveDistance, other.ActiveDistance, nameof(ActiveDistance));
-            PrintValue(Field1CC, other.Field1CC, nameof(Field1CC));
+            PrintValue(EnemyActiveDistance, other.EnemyActiveDistance, nameof(EnemyActiveDistance));
             PrintValue(SpawnNodeName, other.SpawnNodeName, nameof(SpawnNodeName));
             PrintValue(EntityId1, other.EntityId1, nameof(EntityId1));
             PrintValue(Message1, other.Message1, nameof(Message1));

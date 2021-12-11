@@ -9,6 +9,7 @@ namespace MphRead.Entities.Enemies
         private Vector3 _vec1;
         private Vector3 _vec2;
         private Vector3 _initialPosition;
+        private Vector3 _targetPosition;
         private readonly ForceFieldEntity _forceField;
         private byte _shotFrames = 0;
 
@@ -165,6 +166,34 @@ namespace MphRead.Entities.Enemies
             {
                 _speed *= Fixed.ToFloat(3973);
             }
+        }
+
+        protected override bool EnemyTakeDamage(Effectiveness effectiveness, EntityBase? source, Scene scene)
+        {
+            if (_health > 0)
+            {
+                if (source?.Type == EntityType.BeamProjectile)
+                {
+                    // todo: check if beam owner is main player
+                    var beamSource = (BeamProjectileEntity)source;
+                    if (_shotFrames == 0)
+                    {
+                        if (GetEffectiveness(beamSource.WeaponType) == Effectiveness.Zero)
+                        {
+                            _shotFrames = _forceField.Data.Type == 7 ? (byte)60 : (byte)1;
+                            _targetPosition = scene.CameraPosition; // todo: get_vecs on beam owner
+                            _models[0].SetAnimation(2, AnimFlags.NoLoop);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // todo: handle this in parent
+                // sktodo: also need enemy event handlers
+                scene.SendMessage(Message.Unlock, this, _owner, 0, 0);
+            }
+            return false;
         }
     }
 }

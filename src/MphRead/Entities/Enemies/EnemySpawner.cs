@@ -97,6 +97,7 @@ namespace MphRead.Entities.Enemies
                     }
                     else
                     {
+                        // set health to 0 when dying animation finishes
                         _health = 0;
                     }
                 }
@@ -105,6 +106,20 @@ namespace MphRead.Entities.Enemies
             {
                 _animTimer--;
             }
+        }
+
+        protected override bool EnemyTakeDamage(Effectiveness effectiveness, EntityBase? source, Scene scene)
+        {
+            if (_health == 0 && ModelType == SpawnerModelType.Spawner)
+            {
+                // keep health above 0 to finish playing dying animation
+                if (_models[0].AnimInfo.Index[0] != 0)
+                {
+                    _models[0].SetAnimation(0, AnimFlags.NoLoop);
+                }
+                _health = 1;
+            }
+            return false;
         }
     }
 }

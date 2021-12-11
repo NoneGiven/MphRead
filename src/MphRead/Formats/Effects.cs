@@ -609,6 +609,38 @@ namespace MphRead.Effects
     {
         public int EffectId { get; set; }
         public List<EffectElementEntry> Elements { get; } = new List<EffectElementEntry>(); // todo: pre-size?
+
+        public void SetReadOnlyField(int index, float value)
+        {
+            if (index == 0)
+            {
+                for (int i = 0; i < Elements.Count; i++)
+                {
+                    Elements[i].RoField1 = value;
+                }
+            }
+            else if (index == 1)
+            {
+                for (int i = 0; i < Elements.Count; i++)
+                {
+                    Elements[i].RoField2 = value;
+                }
+            }
+            else if (index == 2)
+            {
+                for (int i = 0; i < Elements.Count; i++)
+                {
+                    Elements[i].RoField3 = value;
+                }
+            }
+            else if (index == 3)
+            {
+                for (int i = 0; i < Elements.Count; i++)
+                {
+                    Elements[i].RoField4 = value;
+                }
+            }
+        }
     }
 
     public class EffectElementEntry : EffectFuncBase
@@ -629,6 +661,10 @@ namespace MphRead.Effects
         public float ParticleAmount { get; set; }
         public bool Expired { get; set; }
         public int ChildEffectId { get; set; }
+        public float RoField1 { get; set; }
+        public float RoField2 { get; set; }
+        public float RoField3 { get; set; }
+        public float RoField4 { get; set; }
 
         public int Parity { get; set; }
         public List<Particle> ParticleDefinitions { get; } = new List<Particle>();
@@ -707,25 +743,25 @@ namespace MphRead.Effects
 
         protected override float FxFunc31(IReadOnlyList<int> param, TimeValues times)
         {
-            // element doesn't have the RoField1 property
+            // element's RoField1 is only for setting on the particle at creation time
             throw new NotImplementedException();
         }
 
         protected override float FxFunc32(IReadOnlyList<int> param, TimeValues times)
         {
-            // element doesn't have the RoField2 property
+            // element's RoField2 is only for setting on the particle at creation time
             throw new NotImplementedException();
         }
 
         protected override float FxFunc33(IReadOnlyList<int> param, TimeValues times)
         {
-            // element doesn't have the RoField3 property
+            // element's RoField3 is only for setting on the particle at creation time
             throw new NotImplementedException();
         }
 
         protected override float FxFunc34(IReadOnlyList<int> param, TimeValues times)
         {
-            // element doesn't have the RoField4 property
+            // element's RoField4 is only for setting on the particle at creation time
             throw new NotImplementedException();
         }
 

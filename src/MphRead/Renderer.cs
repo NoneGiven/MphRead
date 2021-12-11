@@ -1182,7 +1182,7 @@ namespace MphRead
                 }
                 else
                 {
-                    element.Flags &= EffElemFlags.ElementExtension;
+                    element.Flags &= ~EffElemFlags.ElementExtension;
                     element.Flags |= EffElemFlags.KeepAlive; // keep alive until particles expire
                     element.EffectEntry = null;
                     if (setExpired)
@@ -1221,6 +1221,10 @@ namespace MphRead
             entry.ParticleDefinitions.AddRange(element.Particles);
             entry.Parity = (int)(_frameCount % 2);
             entry.Owner = owner;
+            entry.RoField1 = 0;
+            entry.RoField2 = 0;
+            entry.RoField3 = 0;
+            entry.RoField4 = 0;
             _activeElements.Add(entry);
             return entry;
         }
@@ -1414,17 +1418,33 @@ namespace MphRead
                         {
                             particle.RoField1 = particle.InvokeFloatFunc(info, times);
                         }
+                        else
+                        {
+                            particle.RoField1 = element.RoField1;
+                        }
                         if (element.Actions.TryGetValue(FuncAction.SetParticleRoField2, out info))
                         {
                             particle.RoField2 = particle.InvokeFloatFunc(info, times);
+                        }
+                        else
+                        {
+                            particle.RoField2 = element.RoField2;
                         }
                         if (element.Actions.TryGetValue(FuncAction.SetParticleRoField3, out info))
                         {
                             particle.RoField3 = particle.InvokeFloatFunc(info, times);
                         }
+                        else
+                        {
+                            particle.RoField3 = element.RoField3;
+                        }
                         if (element.Actions.TryGetValue(FuncAction.SetParticleRoField4, out info))
                         {
                             particle.RoField4 = particle.InvokeFloatFunc(info, times);
+                        }
+                        else
+                        {
+                            particle.RoField4 = element.RoField4;
                         }
                         if (element.Actions.TryGetValue(FuncAction.SetNewParticleLifespan, out info))
                         {

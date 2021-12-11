@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices.WindowsRuntime;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
@@ -29,12 +30,15 @@ namespace MphRead.Formats
 
     public struct CollisionResult
     {
-        public int Field0;
-        public int Field14;
-        public float Distance; // percentage
-        public Vector3 Position;
-        public Vector4 Plane;
+        public byte Field0;
         public CollisionFlags Flags;
+        public Vector4 Plane;
+        public int Field14;
+        public Vector3 Position;
+        public float Distance; // percentage
+        public int EntityCollision; // todo: this
+        public Vector3 Field2C;
+        public Vector3 Field38;
 
         // bits 5-8
         public Terrain Terrain => (Terrain)(((ushort)Flags & 0x1E0) >> 5);
@@ -67,6 +71,7 @@ namespace MphRead.Formats
                 mask |= (ushort)CollisionFlags.IgnoreBeams;
             }
             float minDist = Single.MaxValue;
+            // todo: check for entity collision
             IReadOnlyList<CollisionCandidate> candidates = GetRoomCandidatesForPoints(point1, point2, scene);
             for (int i = 0; i < candidates.Count; i++)
             {
@@ -105,6 +110,7 @@ namespace MphRead.Formats
                                     );
                                     if (CheckPointOnFace(pos, info, data))
                                     {
+                                        // todo: set entity collision
                                         minDist = dist;
                                         result.Field0 = 0;
                                         result.Field14 = 0;
@@ -565,6 +571,204 @@ namespace MphRead.Formats
                 }
             }
             return _activeItems;
+        }
+
+        public static bool CheckCylinderOverlapVolume(CollisionVolume other, Vector3 bottom, Vector3 top,
+            float radius, ref CollisionResult result)
+        {
+            if (other.Type == VolumeType.Cylinder)
+            {
+                return CheckCylindersOverlap(bottom, top, other.CylinderPosition, other.CylinderVector, other.CylinderDot,
+                    radius + other.CylinderRadius, ref result);
+            }
+            if (other.Type == VolumeType.Sphere)
+            {
+                return CheckCylinderOverlapSphere(bottom, top, other.SpherePosition, radius + other.SphereRadius, ref result);
+            }
+            return false;
+        }
+
+        public static bool CheckCylindersOverlap(Vector3 oneTop, Vector3 oneBottom, Vector3 twoBottom, Vector3 twoVector,
+            float twoDot, float radii, ref CollisionResult result)
+        {
+            float v9 = 0;
+            float v10 = 1;
+            Vector3 a = oneBottom - twoBottom;
+            Vector3 b = oneTop - twoBottom;
+            float v11 = Vector3.Dot(a, twoVector);
+            float v12 = Vector3.Dot(b, twoVector);
+            if (v11 >= 0)
+            {
+                if (v11 > twoDot)
+                {
+                    if (v12 > twoDot)
+                    {
+                        return false;
+                    }
+                    if (v12 <= v11)
+                    {
+                        v9 = (v11 - twoDot) / (v11 - v12);
+                    }
+                    else
+                    {
+                        v9 = (v11 - twoDot) / (v12 - v11);
+                    }
+                }
+            }
+            else
+            {
+                if (v12 < 0)
+                {
+                    return false;
+                }
+                if (v12 <= v11)
+                {
+                    v9 = -v11 / (v11 - v12);
+                }
+                else
+                {
+                    v9 = -v11 / (v12 - v11);
+                }
+            }
+            if (v12 >= 0)
+            {
+                if (v12 > twoDot)
+                {
+                    if (v12 <= v11)
+                    {
+                        v10 = 1 - (v12 - twoDot) / (v11 - v12);
+                    }
+                    else
+                    {
+                        v10 = 1 - (v12 - twoDot) / (v12 - v11);
+                    }
+                }
+            }
+            else if (v12 <= v11)
+            {
+                v10 = 1 - (-v12 / (v11 - v12));
+            }
+            else
+            {
+                v10 = 1 - (-v12 / (v12 - v11));
+            }
+            Vector3 c = twoVector * (v12 - v11);
+            Vector3 d = oneTop - oneBottom;
+            c = d - c;
+            Vector3 e = twoBottom + twoVector * v11;
+            float v15 = Vector3.Dot(c, c);
+            Vector3 f = e - oneBottom;
+            float v16 = Vector3.Dot(c, f);
+            float v17 = v16 / v15;
+            if (v17 >= v9)
+            {
+                if (v17 > v10)
+                {
+                    v17 = v10;
+                }
+            }
+            else
+            {
+                v17 = v9;
+            }
+            Vector3 g = oneBottom + c * v17;
+            Vector3 h = g - e;
+            float v19 = Vector3.Dot(h, h);
+            if (v19 > radii * radii)
+            {
+                return false;
+            }
+            float v20 = MathF.Sqrt(v19);
+            float v21 = MathF.Sqrt(v15);
+            float v22 = v17 - (radii - v20) / v21;
+            if (v22 >= v9)
+            {
+                if (v22 > v10)
+                {
+                    v22 = v10;
+                }
+            }
+            else
+            {
+                v22 = v9;
+            }
+            result.Field0 = 0;
+            result.EntityCollision = 0;
+            result.Flags = CollisionFlags.None;
+            result.Position = oneBottom + d * v22;
+            result.Distance = v22;
+            if (d.X != 0 || d.Y != 0 || d.Z != 0)
+            {
+                d = d.Normalized();
+            }
+            else
+            {
+                d.X = 1;
+            }
+            result.Plane.X = -d.X;
+            result.Plane.Y = -d.Y;
+            result.Plane.Z = -d.Z;
+            return true;
+        }
+
+        public static bool CheckCylinderOverlapSphere(Vector3 cylBot, Vector3 cylTop, Vector3 spherePos,
+            float radii, ref CollisionResult result)
+        {
+            Vector3 a = cylTop - cylBot;
+            float v7 = a.Length;
+            Vector3 b = spherePos - cylBot;
+            if (v7 <= 0)
+            {
+                if (b.LengthSquared <= radii * radii)
+                {
+                    result.Field0 = 0;
+                    result.EntityCollision = 0;
+                    result.Flags = CollisionFlags.None;
+                    result.Distance = 0;
+                    result.Position = cylBot;
+                    result.Plane.X = 1;
+                    result.Plane.Y = 0;
+                    result.Plane.Z = 0;
+                    return true;
+                }
+            }
+            else
+            {
+                a /= v7;
+                float v12 = Vector3.Dot(a, b);
+                if (v12 >= -radii && v12 <= v7 + radii)
+                {
+                    Vector3 c = b - (a * v12);
+                    if (c.LengthSquared <= radii * radii)
+                    {
+                        result.Field0 = 0;
+                        result.EntityCollision = 0;
+                        result.Flags = CollisionFlags.None;
+                        Vector3 pos = spherePos - c;
+                        float v15 = Vector3.Dot(c, c);
+                        float v16 = MathF.Sqrt(radii * radii - v15);
+                        Vector3 d = a * v16;
+                        pos -= d;
+                        result.Position = pos;
+                        float dist = v12 / (v7 + 2 * radii);
+                        if (dist > 1)
+                        {
+                            dist = 1;
+                        }
+                        else if (dist < 0)
+                        {
+                            dist = 0;
+                        }
+                        result.Distance = dist;
+                        Vector3 normal = (pos - spherePos).Normalized();
+                        result.Plane.X = normal.X;
+                        result.Plane.Y = normal.Y;
+                        result.Plane.Z = normal.Z;
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 }

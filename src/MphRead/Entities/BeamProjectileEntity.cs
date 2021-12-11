@@ -48,7 +48,7 @@ namespace MphRead.Entities
         public EntityBase? Target { get; set; }
         public EquipInfo? Equip { get; set; }
 
-        public float DamageInterpolation { get; set; }
+        public int DamageInterpolation { get; set; }
         public int SpeedInterpolation { get; set; }
         public float SpeedDecayTime { get; set; }
         public float Speed { get; set; }
@@ -173,7 +173,7 @@ namespace MphRead.Entities
                 colRes.Plane = new Vector4(-Direction);
                 colRes.Position = Position;
                 SpawnCollisionEffect(colRes, noSplat: true, scene);
-                OnCollision(colRes, scene);
+                OnCollision(colRes, colWith: null, scene);
                 // btodo: sfx etc.
             }
             return true;
@@ -237,7 +237,30 @@ namespace MphRead.Entities
             Debug.Assert(Owner != null);
             if (Owner.Type != EntityType.EnemyInstance)
             {
-                // btodo: collide with enemies
+                for (int i = 0; i < scene.Entities.Count; i++)
+                {
+                    EntityBase entity = scene.Entities[i];
+                    if (entity.Type == EntityType.EnemyInstance)
+                    {
+                        CollisionResult res = default;
+                        var enemy = (EnemyInstanceEntity)entity;
+                        if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam)
+                            && CollisionDetection.CheckCylinderOverlapVolume(enemy.HurtVolume, BackPosition, Position, CylinderRadius, ref res))
+                        {
+                            if (WeaponType == BeamType.OmegaCannon && enemy.EnemyType == EnemyType.GoreaMeteor)
+                            {
+                                enemy.TakeDamage(500, this, scene);
+                            }
+                            else if (res.Distance < minDist)
+                            {
+                                minDist = res.Distance;
+                                anyRes = res;
+                                colWith = enemy;
+                                noColEff = false;
+                            }
+                        }
+                    }
+                }
             }
             // btodo: collide with players, collide with enemy beams
             if (minDist >= 0 && minDist <= 1)
@@ -252,12 +275,50 @@ namespace MphRead.Entities
                 // btodo: sfx and stuff
                 if (colWith != null)
                 {
-                    // btodo: handle collision with entities
+                    // btodo: handle collision with all entities
+                    if (colWith.Type == EntityType.EnemyInstance)
+                    {
+                        var enemy = (EnemyInstanceEntity)colWith;
+                        if (enemy.EnemyType == EnemyType.FireSpawn
+                            || (enemy.Owner?.Type == EntityType.EnemyInstance
+                            && ((EnemyInstanceEntity)enemy.Owner).EnemyType == EnemyType.FireSpawn
+                            && enemy.GetEffectiveness(WeaponType) == Effectiveness.Zero))
+                        {
+                            // FireSpawn or (when ineffective) WeakSpot owned by FireSpawn
+                            Vector3 facing = enemy.Transform.Row2.Xyz.Normalized();
+                            float w = Vector3.Dot(facing, enemy.Position + facing * Fixed.ToFloat(0x3800));
+                            anyRes.Plane = new Vector4(facing, w);
+                            float dot = Vector3.Dot(Position, facing);
+                            anyRes.Position = new Vector3(
+                                Position.X + facing.X * (dot - w),
+                                Position.Y + facing.Y * (dot - w),
+                                Position.Z + facing.Z * (dot - w)
+                            );
+                            ProcessRicochet(anyRes, scene);
+                        }
+                        else
+                        {
+                            float damage = Damage;
+                            if (MaxDistance > 0)
+                            {
+                                float pct = Vector3.Distance(Position, SpawnPosition) / MaxDistance;
+                                damage = GetInterpolatedValue(DamageInterpolation, Damage, 0, pct);
+                            }
+                            if (damage > 0)
+                            {
+                                enemy.TakeDamage((uint)damage, this, scene);
+                                SpawnCollisionEffect(anyRes, noSplat: true, scene);
+                                OnCollision(anyRes, enemy, scene);
+                                // todo: update SFX
+                            }
+                        }
+                        ricochet = false;
+                    }
                 }
                 else
                 {
                     bool reflected = anyRes.Flags.TestFlag(CollisionFlags.ReflectBeams);
-                    // btodo: if colliding with platform or object, check beam reflection
+                    // btodo: if colliding with platform or object, check beam reflection + send event
                     if ((!Flags.TestFlag(BeamFlags.Ricochet) && !reflected)
                         || DrawFuncId == 8 || anyRes.Terrain >= Terrain.Acid)
                     {
@@ -266,7 +327,7 @@ namespace MphRead.Entities
                             bool noSplat = anyRes.Terrain == Terrain.Lava; // btodo: or if entity collision
                             SpawnCollisionEffect(anyRes, noSplat, scene);
                         }
-                        OnCollision(anyRes, scene);
+                        OnCollision(anyRes, colWith: null, scene);
                         ricochet = false;
                     }
                 }
@@ -321,9 +382,9 @@ namespace MphRead.Entities
             // btodo: sfx
         }
 
-        public void OnCollision(CollisionResult colRes, Scene scene)
+        public void OnCollision(CollisionResult colRes, EntityBase? colWith, Scene scene)
         {
-            if (Effect != null)
+            if (Effect != null) // game also checks the HasModel flag, but it's either-or
             {
                 scene.DetachEffectEntry(Effect, setExpired: true);
                 Effect = null;
@@ -332,17 +393,15 @@ namespace MphRead.Entities
             {
                 Debug.Assert(Equip != null);
                 Debug.Assert(Owner != null);
-                // btodo: splash damage
+                CheckSplashDamage(colWith, scene);
                 if (Weapon == BeamType.OmegaCannon)
                 {
                     scene.SetFade(FadeType.FadeInWhite, 15 * (1 / 30f), overwrite: false);
                 }
-                if (RicochetWeapon != null)
+                if (RicochetWeapon != null && (colWith == null || colWith.Type != EntityType.Player))
                 {
-                    // btodo: don't spawn ricochet when hitting player
                     Vector3 factor = Velocity * 7;
                     float dot = Vector3.Dot(colRes.Plane.Xyz, factor);
-                    // colRes.Plane.X + factor.X - colRes.Plane.X * 2 * dot
                     Vector3 spawnDir = new Vector3(
                         colRes.Plane.X + factor.X - colRes.Plane.X * 2 * dot,
                         colRes.Plane.Y + factor.Y - colRes.Plane.Y * 2 * dot,
@@ -367,6 +426,35 @@ namespace MphRead.Entities
             if (Owner != null)
             {
                 // todo: send event
+            }
+        }
+
+        private void CheckSplashDamage(EntityBase? colWith, Scene scene)
+        {
+            // todo: iterate and check players
+            for (int i = 0; i < scene.Entities.Count; i++)
+            {
+                EntityBase entity = scene.Entities[i];
+                if (entity.Type == EntityType.EnemyInstance && entity != colWith)
+                {
+                    var enemy = (EnemyInstanceEntity)entity;
+                    if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam))
+                    {
+                        CollisionResult res = default;
+                        float dist = Vector3.Distance(enemy.Position, Position);
+                        if (dist < BeamScale
+                            && !CollisionDetection.CheckBetweenPoints(Position, enemy.Position, TestFlags.AffectsBeams, scene, ref res))
+                        {
+                            float damage = GetInterpolatedValue(SplashDamageType, SplashDamage, 0, dist / BeamScale);
+                            enemy.TakeDamage((uint)damage, this, scene);
+                            if (Owner != null)
+                            {
+                                scene.SendMessage(Message.Impact, this, Owner, enemy, 0);
+                                // todo: stop beam SFX
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -884,7 +972,7 @@ namespace MphRead.Entities
                     colRes.Position = beam.Position;
                     colRes.Plane = new Vector4(-beam.Direction);
                     beam.RicochetWeapon = null;
-                    beam.OnCollision(colRes, scene);
+                    beam.OnCollision(colRes, colWith: null, scene);
                 }
                 beam.Destroy(scene);
                 scene.RemoveEntity(beam);
@@ -920,7 +1008,6 @@ namespace MphRead.Entities
                 {
                     beam.PastPositions[j] = position;
                 }
-                // btodo: transform
                 beam.Direction = vec1;
                 beam.Up = vec2;
                 beam.VecCross = vecC;
@@ -1115,6 +1202,57 @@ namespace MphRead.Entities
                     {
                         scene.AddEntity(ent);
                     }
+                }
+            }
+        }
+
+        public void SpawnDamageEffect(Effectiveness effectiveness, Scene scene)
+        {
+            if (effectiveness == Effectiveness.Normal || effectiveness == Effectiveness.Double)
+            {
+                int effectId = 0;
+                Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY);
+                transform.Row3.Xyz = Position;
+                bool singlePlayer = true; // todo: check game mode
+                if (effectiveness == Effectiveness.Double)
+                {
+                    // 20 - sprEffectivePB
+                    // 21 - sprEffectiveElectric
+                    // 22 - sprEffectiveMsl
+                    // 23 - sprEffectiveJack
+                    // 24 - sprEffectiveSniper
+                    // 25 - sprEffectiveIce
+                    // 26 - sprEffectiveMortar
+                    // 27 - sprEffectiveGhost
+                    effectId = (int)WeaponType + 20;
+                }
+                else if (singlePlayer)
+                {
+                    // 12 - effectiveHitPB
+                    // 13 - effectiveHitElectric
+                    // 14 - effectiveHitMsl
+                    // 15 - effectiveHitJack
+                    // 16 - effectiveHitSniper
+                    // 17 - effectiveHitIce
+                    // 18 - effectiveHitMortar
+                    // 19 - effectiveHitGhost
+                    effectId = (int)WeaponType + 12;
+                }
+                else
+                {
+                    // 154 - mpEffectivePB
+                    // 155 - mpEffectiveElectric
+                    // 156 - mpEffectiveMsl
+                    // 157 - mpEffectiveJack
+                    // 158 - mpEffectiveSniper
+                    // 159 - mpEffectiveIce
+                    // 160 - mpEffectiveMortar
+                    // 161 - mpEffectiveGhost
+                    effectId = (int)WeaponType + 154;
+                }
+                if (effectId > 0)
+                {
+                    scene.SpawnEffect(effectId, transform);
                 }
             }
         }

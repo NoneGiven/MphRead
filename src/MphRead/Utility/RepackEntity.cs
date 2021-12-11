@@ -462,7 +462,7 @@ namespace MphRead.Utility
                         EntityId2 = -1,
                         EntityId3 = -1,
                         Facing = enemySpawn.Facing,
-                        Field1CC = 143360,
+                        EnemyActiveDistance = 35,
                         InitialCooldown = 0,
                         ItemChance = 100,
                         ItemType = ItemType.None,
@@ -2183,7 +2183,7 @@ namespace MphRead.Utility
             writer.Write(entity.InitialCooldown);
             writer.Write(padShort); // Padding1C6
             writer.WriteFloat(entity.ActiveDistance);
-            writer.Write(entity.Field1CC);
+            writer.WriteFloat(entity.EnemyActiveDistance);
             writer.WriteString(entity.SpawnNodeName, 16);
             writer.Write(entity.EntityId1);
             writer.Write(padShort); // Padding1E2

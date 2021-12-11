@@ -7,6 +7,25 @@ namespace MphRead
 {
     public static partial class Metadata
     {
+        public static int GetEnemyDeathEffect(EnemyType type)
+        {
+            int index = (int)type;
+            if (index > EnemyDeathEffects.Count)
+            {
+                throw new IndexOutOfRangeException();
+            }
+            return EnemyDeathEffects[index];
+        }
+
+        public static readonly IReadOnlyList<int> EnemyDeathEffects = new int[52]
+        {
+            193, 221, 219, 219, 219, 219, 219, 76, 76, 76, 193,
+            108, 221, 76, 76, 76, 76, 6, 6, 76, 77, 76, 76, 77,
+            76, 76, 76, 76, 76, 76, 77, 76, 76, 76, 77, 77, 77,
+            220, 222, 0, 6, 76, 76, 76, 76, 76, 223, 223, 76, 77,
+            0, 220
+        };
+
         public static float GetDamageMultiplier(Effectiveness effectiveness)
         {
             int index = (int)effectiveness;
@@ -17,7 +36,7 @@ namespace MphRead
             return DamageMultipliers[index];
         }
 
-        public static readonly IReadOnlyList<float> DamageMultipliers = new float[] { 0, 0.5f, 1, 2 };
+        public static readonly IReadOnlyList<float> DamageMultipliers = new float[4] { 0, 0.5f, 1, 2 };
 
         public static void LoadEffectiveness(EnemyType type, Effectiveness[] dest)
         {
@@ -56,7 +75,8 @@ namespace MphRead
         // FireSpawn   - 0x8955 - zero Magmaul/Omega Cannon, normal Judicator/Shock Coil, half all else
         // ArcticSpawn - 0xB155 - zero Judicator/Omega Cannon, normal Shock Coil, double Magmaul, half all else
         // ForceFieldLock - types 0-7 are normal from the corresponding beam and zero from all else; type 8 is zero from all (vulerable to bombs)
-        public static readonly IReadOnlyList<int> EnemyEffectiveness = new int[] {
+        public static readonly IReadOnlyList<int> EnemyEffectiveness = new int[52]
+        {
             /*  0 */ 0x2AAAA, // WarWasp
             /*  1 */ 0x2AAAA, // Zoomer
             /*  2 */ 0x2AAAA, // Temroid

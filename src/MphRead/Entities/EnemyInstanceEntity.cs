@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using MphRead.Effects;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -57,7 +58,11 @@ namespace MphRead.Entities
 
         public Effectiveness[] BeamEffectiveness = new Effectiveness[9];
         private bool _onlyMoveHurtVolume = false;
+        private bool _noIneffectiveEffect = false;
         public EnemyFlags Flags { get; set; }
+        public CollisionVolume HurtVolume => _hurtVolume;
+        public EnemyType EnemyType => _data.Type;
+        public EntityBase? Owner => _owner;
 
         public EnemyInstanceEntity(EnemyInstanceEntityData data) : base(EntityType.EnemyInstance)
         {
@@ -81,6 +86,16 @@ namespace MphRead.Entities
                 || _data.Type == EnemyType.Trocra || _data.Type == EnemyType.Gorea2 || _data.Type == EnemyType.GoreaSealSphere2)
             {
                 _onlyMoveHurtVolume = true;
+            }
+            if (_data.Type == EnemyType.Cretaphid || _data.Type == EnemyType.CretaphidEye || _data.Type == EnemyType.CretaphidCrystal
+                || _data.Type == EnemyType.Unknown22 || _data.Type == EnemyType.Gorea1A || _data.Type == EnemyType.GoreaHead
+                || _data.Type == EnemyType.GoreaArm || _data.Type == EnemyType.GoreaLeg || _data.Type == EnemyType.Gorea1B
+                || _data.Type == EnemyType.GoreaSealSphere1 || _data.Type == EnemyType.Trocra || _data.Type == EnemyType.Gorea2
+                || _data.Type == EnemyType.GoreaSealSphere2 || _data.Type == EnemyType.GoreaMeteor || _data.Type == EnemyType.Slench
+                || _data.Type == EnemyType.SlenchShield || _data.Type == EnemyType.SlenchNest || _data.Type == EnemyType.FireSpawn
+                || _data.Type == EnemyType.WeakSpot)
+            {
+                _noIneffectiveEffect = true;
             }
         }
 
@@ -189,7 +204,7 @@ namespace MphRead.Entities
             return false;
         }
 
-        public void TakeDamage(uint damage, EntityBase? source)
+        public void TakeDamage(uint damage, EntityBase? source, Scene scene)
         {
             ushort prevHealth = _health;
             Effectiveness effectiveness = Effectiveness.Normal;
@@ -204,9 +219,7 @@ namespace MphRead.Entities
                 {
                     return;
                 }
-                int index = (int)beamSource.Weapon;
-                Debug.Assert(index < BeamEffectiveness.Length);
-                effectiveness = BeamEffectiveness[index];
+                effectiveness = GetEffectiveness(beamSource.Weapon);
             }
             bool unaffected = false;
             if (effectiveness == Effectiveness.Zero || Flags.TestFlag(EnemyFlags.Invincible)
@@ -235,7 +248,7 @@ namespace MphRead.Entities
                     _health -= (ushort)damage;
                 }
             }
-            if (EnemyTakeDamage(effectiveness, source))
+            if (EnemyTakeDamage(effectiveness, source, scene))
             {
                 _health = prevHealth;
                 unaffected = true;
@@ -243,14 +256,22 @@ namespace MphRead.Entities
             }
             if (unaffected)
             {
-                if (effectiveness == Effectiveness.Zero)
+                if (effectiveness == Effectiveness.Zero && !_noIneffectiveEffect)
                 {
-                    // sktodo: create ineffective effect
+                    // 115 - ineffectivePsycho
+                    Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY);
+                    transform.Row3.Xyz = _hurtVolume.GetCenter();
+                    EffectEntry effect = scene.SpawnEffectGetEntry(115, transform);
+                    effect.SetReadOnlyField(0, _boundingRadius);
+                    scene.DetachEffectEntry(effect, setExpired: false);
                 }
             }
             else
             {
-                // sktodo: create damage effect
+                if (beamSource != null)
+                {
+                    beamSource.SpawnDamageEffect(effectiveness, scene);
+                }
                 if (dead)
                 {
                     // todo: update records
@@ -259,7 +280,19 @@ namespace MphRead.Entities
                         // todo: detach
                     }
                     // todo: play SFX
-                    // sktodo: create death effect
+                    int effectId;
+                    if (EnemyType == EnemyType.FireSpawn)
+                    {
+                        Debug.Assert(_owner?.Type == EntityType.EnemySpawn);
+                        var spawner = (EnemySpawnEntity)_owner;
+                        effectId = spawner.Data.Fields.S06.EnemySubtype == 1 ? 217 : 218;
+                    }
+                    else
+                    {
+                        effectId = Metadata.GetEnemyDeathEffect(EnemyType);
+                    }
+                    Matrix4 transform = Transform.ClearScale();
+                    scene.SpawnEffect(effectId, transform);
                 }
                 else
                 {
@@ -276,14 +309,24 @@ namespace MphRead.Entities
                         break;
                     case EnemyType.Blastcap:
                         _models[0].SetAnimation(0, AnimFlags.NoLoop);
-                        // sktodo: spawn effect
+                        // 3 - blastCapHit
+                        Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY);
+                        transform.Row3.Xyz = Position;
+                        scene.SpawnEffect(3, transform);
                         break;
                     }
                 }
             }
         }
 
-        protected virtual bool EnemyTakeDamage(Effectiveness effectiveness, EntityBase? source)
+        public Effectiveness GetEffectiveness(BeamType beam)
+        {
+            int index = (int)beam;
+            Debug.Assert(index < BeamEffectiveness.Length);
+            return BeamEffectiveness[index];
+        }
+
+        protected virtual bool EnemyTakeDamage(Effectiveness effectiveness, EntityBase? source, Scene scene)
         {
             // when overridden, must return true when unaffected by damage and false otherwise
             return false;
