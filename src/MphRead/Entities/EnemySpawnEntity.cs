@@ -5,13 +5,25 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
+    public enum SpawnerFlags : byte
+    {
+        Suspended = 1,
+        Active = 2,
+        HasModel = 4,
+        PlayAnimation = 8,
+        CounterBit0 = 0x10, // we don't use these
+        CounterBit1 = 0x20,
+        CounterBit2 = 0x40,
+        CounterBit3 = 0x80,
+    }
+
     public class EnemySpawnEntity : EntityBase
     {
         private readonly EnemySpawnEntityData _data;
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x00, 0x00, 0x8B).AsVector4();
         private bool _spawn = false;
 
-        public int Flags { get; private set; }
+        public SpawnerFlags Flags { get; set; }
         public EnemySpawnEntityData Data => _data;
 
         // todo: enemy and item spawners should preload the models and effects that will be used when they spawn their entities
@@ -25,11 +37,11 @@ namespace MphRead.Entities
             {
                 _spawn = true;
             }
-            Flags |= 1;
+            Flags |= SpawnerFlags.Suspended;
             // todo: room state
             if (data.Active != 0 || data.AlwaysActive != 0)
             {
-                Flags |= 2;
+                Flags |= SpawnerFlags.Active;
             }
         }
 
