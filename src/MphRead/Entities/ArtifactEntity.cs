@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class ArtifactEntity : SpinningEntityBase
+    public class ArtifactEntity : EntityBase
     {
         private readonly ArtifactEntityData _data;
         private readonly float _heightOffset;
@@ -11,7 +11,7 @@ namespace MphRead.Entities
         private EntityBase? _parent = null;
         private Vector3 _invPos;
 
-        public ArtifactEntity(ArtifactEntityData data) : base(0.25f, Vector3.UnitY, EntityType.Artifact)
+        public ArtifactEntity(ArtifactEntityData data) : base(EntityType.Artifact)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -19,10 +19,6 @@ namespace MphRead.Entities
             string name = data.ModelId >= 8 ? "Octolith" : $"Artifact0{data.ModelId + 1}";
             ModelInstance inst = SetUpModel(name);
             _heightOffset = data.ModelId >= 8 ? 1.75f : inst.Model.Nodes[0].BoundingRadius;
-            if (data.ModelId >= 8)
-            {
-                _spinModelIndex = 0;
-            }
             if (data.HasBase != 0)
             {
                 SetUpModel("ArtifactBase");

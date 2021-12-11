@@ -35,17 +35,25 @@ namespace MphRead.Entities
             // todo: item spawning logic
             if (_enabled && _spawn)
             {
-                ItemInstanceEntity item = SpawnItem(Position, _data.ItemType);
-                scene.AddEntity(item);
+                SpawnItem(_data.ItemType, Position, chance: null, despawnTime: 0, scene);
                 _spawn = false;
             }
             return base.Process(scene);
         }
 
         // todo: entity node ref
-        public static ItemInstanceEntity SpawnItem(Vector3 position, ItemType itemType)
+        public static void SpawnItemDrop(ItemType type, Vector3 position, uint chance, Scene scene)
         {
-            return new ItemInstanceEntity(new ItemInstanceEntityData(position, itemType));
+            SpawnItem(type, position, chance, despawnTime: 450 * 2, scene); // todo: FPS stuff
+        }
+
+        private static void SpawnItem(ItemType type, Vector3 position, uint? chance, uint despawnTime, Scene scene)
+        {
+            if (type != ItemType.None && (!chance.HasValue || Rng.GetRandomInt2(100) < chance.Value))
+            {
+                var item = new ItemInstanceEntity(new ItemInstanceEntityData(position, type, despawnTime));
+                scene.AddEntity(item);
+            }
         }
     }
 

@@ -101,24 +101,14 @@ namespace MphRead
             }
         }
 
-        public MessageInfo FindMessage(Message message)
-        {
-            return FindMessage(message, startId: 0);
-        }
-
-        public MessageInfo FindMessage(Message message, MessageInfo start)
-        {
-            return FindMessage(message, start.Id);
-        }
-
-        public MessageInfo FindMessage(Message message, ulong startId)
+        public MessageInfo? FindMessage(Message message, MessageInfo? start = null)
         {
             int index = 0;
-            if (startId > 0)
+            if (start.HasValue)
             {
                 for (int i = 0; i < _queue.Count; i++)
                 {
-                    if (_queue[i].Id == startId)
+                    if (_queue[i].Id == start.Value.Id)
                     {
                         break;
                     }
@@ -133,7 +123,7 @@ namespace MphRead
                     return info;
                 }
             }
-            return default;
+            return null;
         }
     }
 }

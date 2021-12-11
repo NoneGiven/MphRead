@@ -913,6 +913,25 @@ namespace MphRead
             }
             return false;
         }
+
+        public Vector3 GetCenter()
+        {
+            if (Type == VolumeType.Box)
+            {
+                Vector3 pos = BoxDot2 * BoxVector2 + BoxPosition;
+                pos = BoxDot3 * BoxVector3 + pos;
+                return BoxDot1 * BoxVector1 + pos;
+            }
+            if (Type == VolumeType.Cylinder)
+            {
+                return CylinderDot * CylinderVector + CylinderPosition;
+            }
+            if (Type == VolumeType.Sphere)
+            {
+                return SpherePosition;
+            }
+            return Vector3.Zero;
+        }
     }
 
     public abstract class DisplayVolume
