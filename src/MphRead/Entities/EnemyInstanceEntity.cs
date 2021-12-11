@@ -71,7 +71,7 @@ namespace MphRead.Entities
 
         public override bool Process(Scene scene)
         {
-            bool inRange = false;
+            bool inRange = true; // todo: should default to false, but with logic for view mode/"camera is player"
             if (_data.Type == EnemyType.Spawner || Flags.TestFlag(EnemyFlags.NoMaxDistance))
             {
                 inRange = true;
