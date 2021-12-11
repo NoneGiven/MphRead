@@ -28,6 +28,7 @@ namespace MphRead.Entities
         Static = 0x200
     }
 
+    // todo: taking damage
     public class EnemyInstanceEntity : EntityBase
     {
         protected readonly EnemyInstanceEntityData _data;
@@ -58,8 +59,7 @@ namespace MphRead.Entities
             // todo: set other properties, etc.
             _owner = _data.Spawner;
             Flags = EnemyFlags.CollidePlayer | EnemyFlags.CollideBeam;
-            var spawner = _data.Spawner as EnemySpawnEntity;
-            if (EnemyInitialize(spawner) && spawner != null)
+            if (EnemyInitialize() && _data.Spawner is EnemySpawnEntity spawner)
             {
                 // todo: linked entity collision transform -- although I don't think this is ever used for enemies/spawners
             }
@@ -99,13 +99,17 @@ namespace MphRead.Entities
                     // todo: positional audio, node ref
                     _hitPlayers = 0;
                     // todo: player collision
-                    EnemyProcess(scene);
+                    bool processed = EnemyProcess(scene);
                     if (!Flags.TestFlag(EnemyFlags.Static))
                     {
                         UpdateHurtVolume();
                     }
-                    // node ref
-                    return base.Process(scene);
+                    // todo: node ref
+                    if (!processed)
+                    {
+                        base.Process(scene);
+                    }
+                    return true;
                 }
                 scene.SendMessage(Message.Destroyed, this, _owner, 0, 0);
                 if (_owner is EnemySpawnEntity spawner)
@@ -117,6 +121,11 @@ namespace MphRead.Entities
             }
             scene.SendMessage(Message.Destroyed, this, _owner, 1, 0);
             return false;
+        }
+
+        protected void ContactDamagePlayer(uint damage, bool knockback)
+        {
+            // todo: test hit bits against main player, do damage + knockback
         }
 
         private void DoMovement()
@@ -155,14 +164,15 @@ namespace MphRead.Entities
             }
         }
 
-        public virtual bool EnemyInitialize(EnemySpawnEntity? spawner)
+        public virtual bool EnemyInitialize()
         {
             // must return true if overriden
             return false;
         }
 
-        public virtual void EnemyProcess(Scene scene)
+        public virtual bool EnemyProcess(Scene scene)
         {
+            return false;
         }
 
         public virtual bool EnemyGetDrawInfo(Scene scene)

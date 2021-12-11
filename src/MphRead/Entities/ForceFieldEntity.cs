@@ -6,15 +6,30 @@ namespace MphRead.Entities
     {
         private readonly ForceFieldEntityData _data;
         private bool _lockSpawned = false;
+        private readonly Vector3 _upVector;
+        private readonly Vector3 _facingVector;
+        private readonly Vector3 _rightVector;
+        private readonly float _width;
+        private readonly float _height;
 
         public ForceFieldEntityData Data => _data;
+        public Vector3 UpVector => _upVector;
+        public Vector3 FacingVector => _facingVector;
+        public Vector3 RightVector => _rightVector;
+        public float Width => _width;
+        public float Height => _height;
 
         public ForceFieldEntity(ForceFieldEntityData data) : base(EntityType.ForceField)
         {
             _data = data;
             Id = data.Header.EntityId;
+            _upVector = data.Header.UpVector.ToFloatVector();
+            _facingVector = data.Header.FacingVector.ToFloatVector();
+            _rightVector = Vector3.Cross(_upVector, _facingVector).Normalized();
+            _width = data.Width.FloatValue;
+            _height = data.Height.FloatValue;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
-            Scale = new Vector3(data.Width.FloatValue, data.Height.FloatValue, 1.0f);
+            Scale = new Vector3(_width, _height, 1.0f);
             Recolor = Metadata.DoorPalettes[(int)data.Type];
             ModelInstance inst = SetUpModel("ForceField");
             // todo: fade in/out "animation"
