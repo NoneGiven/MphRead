@@ -26,11 +26,6 @@ namespace MphRead.Entities.Enemies
                     inst.SetAnimation(2, AnimFlags.Paused | AnimFlags.Ended);
                 }
             }
-            // temporary
-            if (model == "EnemySpawner")
-            {
-                //inst.SetAnimation(-1);
-            }
         }
     }
 }

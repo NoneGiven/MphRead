@@ -18,6 +18,7 @@ namespace MphRead.Entities
         public bool Hidden { get; set; }
         public float Alpha { get; set; } = 1.0f;
 
+        protected float _drawScale = 1;
         protected Matrix4 _transform = Matrix4.Identity;
         protected Vector3 _scale = new Vector3(1, 1, 1);
         protected Vector3 _rotation = Vector3.Zero;
@@ -292,11 +293,11 @@ namespace MphRead.Entities
                         Material material = model.Materials[mesh.MaterialId];
                         Vector3 emission = GetEmission(inst, material, mesh.MaterialId);
                         Matrix4 texcoordMatrix = GetTexcoordMatrix(inst, material, mesh.MaterialId, node, scene);
+                        Vector4? color = inst.IsPlaceholder ? GetOverrideColor(inst, index) : null;
                         SelectionType selectionType = Selection.CheckSelection(this, inst, node, mesh);
                         int? bindingOverride = GetBindingOverride(inst, material, mesh.MaterialId);
-                        scene.AddRenderItem(material, polygonId, Alpha, emission, GetLightInfo(scene),
-                            texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
-                            inst.IsPlaceholder ? GetOverrideColor(inst, index) : null, PaletteOverride, selectionType, bindingOverride);
+                        scene.AddRenderItem(material, polygonId, Alpha, emission, GetLightInfo(scene), texcoordMatrix, node.Animation, mesh.ListId,
+                            model.NodeMatrixIds.Count, model.MatrixStackValues, color, PaletteOverride, selectionType, _drawScale, bindingOverride);
                     }
                     if (node.ChildIndex != -1)
                     {

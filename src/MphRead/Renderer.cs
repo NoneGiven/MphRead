@@ -1650,11 +1650,43 @@ namespace MphRead
             return new RenderItem();
         }
 
+        private readonly float[] _scaleFactors = new float[16];
+
         // for meshes
-        public void AddRenderItem(Material material, int polygonId, float alphaScale, Vector3 emission, LightInfo lightInfo,
-            Matrix4 texcoordMatrix, Matrix4 transform, int listId, int matrixStackCount, IReadOnlyList<float> matrixStack,
-            Vector4? overrideColor, Vector4? paletteOverride, SelectionType selectionType, int? bindingOverride = null)
+        public void AddRenderItem(Material material, int polygonId, float alphaScale, Vector3 emission, LightInfo lightInfo, Matrix4 texcoordMatrix,
+            Matrix4 transform, int listId, int matrixStackCount, IReadOnlyList<float> matrixStack, Vector4? overrideColor, Vector4? paletteOverride,
+            SelectionType selectionType, float scaleFactor = 1, int? bindingOverride = null)
         {
+            static void Multiply3x3(Matrix4 mtx, float f)
+            {
+                mtx.Row0.X *= f;
+                mtx.Row0.Y *= f;
+                mtx.Row0.Z *= f;
+                mtx.Row1.X *= f;
+                mtx.Row1.Y *= f;
+                mtx.Row1.Z *= f;
+                mtx.Row2.X *= f;
+                mtx.Row2.Y *= f;
+                mtx.Row2.Z *= f;
+            }
+
+            _scaleFactors[0] = scaleFactor;
+            _scaleFactors[1] = scaleFactor;
+            _scaleFactors[2] = scaleFactor;
+            _scaleFactors[3] = 1;
+            _scaleFactors[4] = scaleFactor;
+            _scaleFactors[5] = scaleFactor;
+            _scaleFactors[6] = scaleFactor;
+            _scaleFactors[7] = 1;
+            _scaleFactors[8] = scaleFactor;
+            _scaleFactors[9] = scaleFactor;
+            _scaleFactors[10] = scaleFactor;
+            _scaleFactors[11] = 1;
+            _scaleFactors[12] = 1;
+            _scaleFactors[13] = 1;
+            _scaleFactors[14] = 1;
+            _scaleFactors[15] = 1;
+
             RenderItem item = GetRenderItem();
             item.Type = RenderItemType.Mesh;
             item.PolygonId = polygonId;
@@ -1688,13 +1720,15 @@ namespace MphRead
                 item.TextureBindingId = material.TextureBindingId;
             }
             item.TexcoordMatrix = texcoordMatrix;
+            Multiply3x3(transform, scaleFactor);
             item.Transform = transform;
             item.ListId = listId;
             Debug.Assert(matrixStack.Count == 16 * matrixStackCount);
             item.MatrixStackCount = matrixStackCount;
             for (int i = 0; i < matrixStack.Count; i++)
             {
-                item.MatrixStack[i] = matrixStack[i];
+                float value = matrixStack[i];
+                item.MatrixStack[i] = value * _scaleFactors[i - (i / 16) * 16];
             }
             item.OverrideColor = overrideColor;
             item.PaletteOverride = paletteOverride;

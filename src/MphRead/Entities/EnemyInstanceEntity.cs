@@ -138,11 +138,20 @@ namespace MphRead.Entities
             }
         }
 
-        public override void GetDisplayVolumes(Scene scene)
+        public override void GetDrawInfo(Scene scene)
         {
-            if (scene.ShowVolumes == VolumeDisplay.EnemyHurt)
+            if (_health > 0 && Flags.TestFlag(EnemyFlags.Visible))
             {
-                AddVolumeItem(_hurtVolume, Vector3.UnitX, scene);
+                if (!EnemyGetDrawInfo(scene))
+                {
+                    // todo: is_visible
+                    if (_framesSinceDamage < 10)
+                    {
+                        PaletteOverride = Metadata.RedPalette;
+                    }
+                    base.GetDrawInfo(scene);
+                    PaletteOverride = null;
+                }
             }
         }
 
@@ -154,6 +163,20 @@ namespace MphRead.Entities
 
         public virtual void EnemyProcess(Scene scene)
         {
+        }
+
+        public virtual bool EnemyGetDrawInfo(Scene scene)
+        {
+            // must return true if overriden
+            return false;
+        }
+
+        public override void GetDisplayVolumes(Scene scene)
+        {
+            if (scene.ShowVolumes == VolumeDisplay.EnemyHurt)
+            {
+                AddVolumeItem(_hurtVolume, Vector3.UnitX, scene);
+            }
         }
     }
 }
