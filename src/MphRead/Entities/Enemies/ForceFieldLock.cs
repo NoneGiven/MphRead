@@ -168,7 +168,7 @@ namespace MphRead.Entities.Enemies
             }
         }
 
-        protected override bool EnemyTakeDamage(Effectiveness effectiveness, EntityBase? source, Scene scene)
+        protected override bool EnemyTakeDamage(EntityBase? source, Scene scene)
         {
             if (_health > 0)
             {

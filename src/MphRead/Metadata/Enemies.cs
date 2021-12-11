@@ -194,7 +194,7 @@ namespace MphRead
             /* 47 */ 0x2AAAA, // GreaterIthrak
             /* 48 */ 0x2AAAA, // Hunter
             /* 49 */ 0x2AAAA, // ForceFieldLock (not used)
-            /* 50 */ 0x2AAAA, // WeakSpot
+            /* 50 */ 0x2AAAA, // HitZone
             /* 51 */ 0x2AAAA  // CarnivorousPlant
         };
     }

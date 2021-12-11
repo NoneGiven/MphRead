@@ -436,7 +436,7 @@ namespace MphRead
         GreaterIthrak = 47,
         Hunter = 48,
         ForceFieldLock = 49,
-        WeakSpot = 50, // used by 39/46/47
+        HitZone = 50, // used by 39/46/47
         CarnivorousPlant = 51
     }
 

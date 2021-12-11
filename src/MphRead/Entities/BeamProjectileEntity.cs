@@ -279,12 +279,10 @@ namespace MphRead.Entities
                     if (colWith.Type == EntityType.EnemyInstance)
                     {
                         var enemy = (EnemyInstanceEntity)colWith;
-                        if (enemy.EnemyType == EnemyType.FireSpawn
-                            || (enemy.Owner?.Type == EntityType.EnemyInstance
-                            && ((EnemyInstanceEntity)enemy.Owner).EnemyType == EnemyType.FireSpawn
-                            && enemy.GetEffectiveness(WeaponType) == Effectiveness.Zero))
+                        if (enemy.GetEffectiveness(WeaponType) == Effectiveness.Zero && (enemy.EnemyType == EnemyType.FireSpawn
+                            || (enemy.Owner as EnemyInstanceEntity)?.EnemyType == EnemyType.FireSpawn))
                         {
-                            // FireSpawn or (when ineffective) WeakSpot owned by FireSpawn
+                            // when ineffective + FireSpawn or HitZone owned by FireSpawn
                             Vector3 facing = enemy.Transform.Row2.Xyz.Normalized();
                             float w = Vector3.Dot(facing, enemy.Position + facing * Fixed.ToFloat(0x3800));
                             anyRes.Plane = new Vector4(facing, w);

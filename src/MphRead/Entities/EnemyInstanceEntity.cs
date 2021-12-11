@@ -49,9 +49,9 @@ namespace MphRead.Entities
         protected EntityBase? _owner = null;
         protected CollisionVolume _hurtVolume = default;
         protected CollisionVolume _hurtVolumeInit = default;
-        private byte _state1 = 0; // todo: names ("next?")
-        private byte _state2 = 0;
-        private byte _hitPlayers = 0;
+        protected byte _state1 = 0; // todo: names ("next?")
+        protected byte _state2 = 0;
+        protected byte _hitPlayers = 0;
         protected Vector3 _prevPos = Vector3.Zero;
         protected Vector3 _speed = Vector3.Zero;
         protected float _boundingRadius = 0;
@@ -93,7 +93,7 @@ namespace MphRead.Entities
                 || _data.Type == EnemyType.GoreaSealSphere1 || _data.Type == EnemyType.Trocra || _data.Type == EnemyType.Gorea2
                 || _data.Type == EnemyType.GoreaSealSphere2 || _data.Type == EnemyType.GoreaMeteor || _data.Type == EnemyType.Slench
                 || _data.Type == EnemyType.SlenchShield || _data.Type == EnemyType.SlenchNest || _data.Type == EnemyType.FireSpawn
-                || _data.Type == EnemyType.WeakSpot)
+                || _data.Type == EnemyType.HitZone)
             {
                 _noIneffectiveEffect = true;
             }
@@ -248,7 +248,7 @@ namespace MphRead.Entities
                     _health -= (ushort)damage;
                 }
             }
-            if (EnemyTakeDamage(effectiveness, source, scene))
+            if (EnemyTakeDamage(source, scene))
             {
                 _health = prevHealth;
                 unaffected = true;
@@ -326,7 +326,7 @@ namespace MphRead.Entities
             return BeamEffectiveness[index];
         }
 
-        protected virtual bool EnemyTakeDamage(Effectiveness effectiveness, EntityBase? source, Scene scene)
+        protected virtual bool EnemyTakeDamage(EntityBase? source, Scene scene)
         {
             // when overridden, must return true when unaffected by damage and false otherwise
             return false;
