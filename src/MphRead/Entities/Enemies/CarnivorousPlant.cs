@@ -25,7 +25,6 @@ namespace MphRead.Entities.Enemies
             _hurtVolumeInit = new CollisionVolume(new Vector3(0, Fixed.ToFloat(409), 0), _boundingRadius);
             _hurtVolume = CollisionVolume.Transform(_hurtVolumeInit, Transform);
             ObjectMetadata meta = Metadata.GetObjectById(_spawner.Data.Fields.S07.EnemySubtype);
-            // todo: enemy spawners need to load these initially
             SetUpModel(meta.Name);
             return true;
         }

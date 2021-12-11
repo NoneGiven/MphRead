@@ -32,6 +32,7 @@ namespace MphRead.Entities
             Scale = new Vector3(_width, _height, 1.0f);
             Recolor = Metadata.DoorPalettes[(int)data.Type];
             ModelInstance inst = SetUpModel("ForceField");
+            Read.GetModelInstance("ForceFieldLock"); // todo: init needed effects and stuff -- other entities too
             // todo: fade in/out "animation"
             Active = data.Active != 0;
             if (!Active)

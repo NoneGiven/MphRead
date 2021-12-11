@@ -58,6 +58,8 @@ namespace MphRead.Entities
 
         private static readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(64); // in-game: 18
 
+        public PlatformEntityData Data => _data;
+
         public PlatformEntity(PlatformEntityData data) : base(EntityType.Platform)
         {
             _data = data;

@@ -893,7 +893,7 @@ namespace MphRead.Entities
             if ((charged && weapon.Flags.TestFlag(WeaponFlags.LifeDrainCharged))
                 || (!charged && weapon.Flags.TestFlag(WeaponFlags.LifeDrainUncharged)))
             {
-                flags |= BeamFlags.Destroyable;
+                flags |= BeamFlags.LifeDrain;
             }
             byte drawFuncId = weapon.DrawFuncIds[charged ? 1 : 0];
             ushort colorValue = weapon.Colors[charged ? 1 : 0];
@@ -931,7 +931,7 @@ namespace MphRead.Entities
             ushort damageInterpolation = weapon.DamageInterpolations[charged ? 1 : 0];
             float maxDist = GetAmount(weapon.UnchargedDistance, weapon.MinChargeDistance, weapon.ChargedDistance) / 4096f;
             Affliction afflictions = weapon.Afflictions[charged ? 1 : 0];
-            float cylinderRadius = GetAmount(weapon.UnchargedCylRadius, weapon.MinChargeCylRadius, weapon.ChargedCylRadius);
+            float cylinderRadius = GetAmount(weapon.UnchargedCylRadius, weapon.MinChargeCylRadius, weapon.ChargedCylRadius) / 4096f;
             float lifespan = GetAmount(weapon.UnchargedLifespan, weapon.MinChargeLifespan, weapon.ChargedLifespan) * (1 / 30f);
             if (weapon.Flags.TestFlag(WeaponFlags.Continuous))
             {
@@ -1213,7 +1213,6 @@ namespace MphRead.Entities
                 int effectId = 0;
                 Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY);
                 transform.Row3.Xyz = Position;
-                bool singlePlayer = true; // todo: check game mode
                 if (effectiveness == Effectiveness.Double)
                 {
                     // 20 - sprEffectivePB
@@ -1226,7 +1225,7 @@ namespace MphRead.Entities
                     // 27 - sprEffectiveGhost
                     effectId = (int)WeaponType + 20;
                 }
-                else if (singlePlayer)
+                else if (!scene.Multiplayer)
                 {
                     // 12 - effectiveHitPB
                     // 13 - effectiveHitElectric

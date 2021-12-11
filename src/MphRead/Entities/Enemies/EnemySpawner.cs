@@ -23,7 +23,7 @@ namespace MphRead.Entities.Enemies
             _spawner = spawner;
         }
 
-        // this happens in the spawner's set_entity_refs
+        // this happens in the spawner's set_entity_refs in-game
         protected override bool EnemyInitialize()
         {
             Transform = _data.Spawner.Transform; // todo: spawner linked entity

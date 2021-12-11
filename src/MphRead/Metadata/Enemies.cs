@@ -7,6 +7,72 @@ namespace MphRead
 {
     public static partial class Metadata
     {
+        public static string? GetEnemyModelName(EnemyType type)
+        {
+            int index = (int)type;
+            if (index > EnemyModelNames.Count)
+            {
+                throw new IndexOutOfRangeException();
+            }
+            return EnemyModelNames[index];
+        }
+
+        public static readonly IReadOnlyList<string?> EnemyModelNames = new string?[52]
+        {
+            /*  0 */ "warwasp_lod0",
+            /*  1 */ "zoomer",
+            /*  2 */ "Temroid_lod0",
+            /*  3 */ "Chomtroid",
+            /*  4 */ "Chomtroid",
+            /*  5 */ "Chomtroid",
+            /*  6 */ "Chomtroid",
+            /*  7 */ null,
+            /*  8 */ null,
+            /*  9 */ null,
+            /* 10 */ "BarbedWarWasp",
+            /* 11 */ "shriekbat",
+            /* 12 */ "geemer",
+            /* 13 */ null,
+            /* 14 */ null,
+            /* 15 */ null,
+            /* 16 */ "blastcap",
+            /* 17 */ null,
+            /* 18 */ "Alimbic_Turret",
+            /* 19 */ "CylinderBoss",
+            /* 20 */ "CylinderBossEye",
+            /* 21 */ null,
+            /* 22 */ null,
+            /* 23 */ "PsychoBit",
+            /* 24 */ "Gorea1A_lod0",
+            /* 25 */ null,
+            /* 26 */ null,
+            /* 27 */ null,
+            /* 28 */ "Gorea1B_lod0",
+            /* 29 */ null,
+            /* 30 */ "PowerBomb",
+            /* 31 */ "Gorea2_lod0",
+            /* 32 */ null,
+            /* 33 */ "goreaMeteor",
+            /* 34 */ "PsychoBit",
+            /* 35 */ "GuardBot2_lod0",
+            /* 36 */ "GuardBot1",
+            /* 37 */ "DripStank_lod0",
+            /* 38 */ "AlimbicStatue_lod0",
+            /* 39 */ "LavaDemon",
+            /* 40 */ null,
+            /* 41 */ "BigEyeBall",
+            /* 42 */ null,
+            /* 43 */ "BigEyeNest",
+            /* 44 */ null,
+            /* 45 */ "BigEyeTurret",
+            /* 46 */ "SphinkTick_lod0",
+            /* 47 */ "SphinkTick_lod0",
+            /* 48 */ null,
+            /* 49 */ null,
+            /* 50 */ null,
+            /* 51 */ null
+        };
+
         public static int GetEnemyDeathEffect(EnemyType type)
         {
             int index = (int)type;
@@ -20,10 +86,11 @@ namespace MphRead
         public static readonly IReadOnlyList<int> EnemyDeathEffects = new int[52]
         {
             193, 221, 219, 219, 219, 219, 219, 76, 76, 76, 193,
-            108, 221, 76, 76, 76, 76, 6, 6, 76, 77, 76, 76, 77,
-            76, 76, 76, 76, 76, 76, 77, 76, 76, 76, 77, 77, 77,
-            220, 222, 0, 6, 76, 76, 76, 76, 76, 223, 223, 76, 77,
-            0, 220
+            108, 221, 76, 76, 76, 76, 6, 6, 76, 77,
+            76, 76, 77, 76, 76, 76, 76, 76, 76, 77,
+            76, 76, 76, 77, 77, 77, 220, 222, 0, 6,
+            76, 76, 76, 76, 76, 223, 223, 76, 77, 0,
+            220
         };
 
         public static float GetDamageMultiplier(Effectiveness effectiveness)

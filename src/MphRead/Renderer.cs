@@ -131,8 +131,10 @@ namespace MphRead
         private bool _recording = false;
         private int _framesRecorded = 0;
         private bool _roomLoaded = false;
+        private int _roomId = -1;
         public GameMode GameMode { get; private set; } = GameMode.SinglePlayer;
         public bool Multiplayer => GameMode != GameMode.SinglePlayer;
+        public int RoomId => _roomId;
 
         public Matrix4 ViewMatrix => _viewMatrix;
         public Matrix4 ViewInvRotMatrix => _viewInvRotMatrix;
@@ -190,6 +192,8 @@ namespace MphRead
             {
                 _setTitle.Invoke(meta.InGameName);
             }
+            SceneSetup.LoadItemResources(this);
+            SceneSetup.LoadEnemyResources(this);
             foreach (EntityBase entity in entities)
             {
                 _entities.Add(entity);
@@ -230,6 +234,7 @@ namespace MphRead
             {
                 GameMode = mode;
             }
+            _roomId = room.RoomId;
         }
 
         // called before load

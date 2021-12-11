@@ -19,8 +19,10 @@ namespace MphRead.Entities
         private readonly float[]? _emptyMatrixStack;
 
         protected override bool UseNodeTransform => false; // default -- will use transform if setting is enabled
+        public int RoomId { get; private set; }
 
-        public RoomEntity(string name, RoomMetadata meta, CollisionInstance collision, NodeData? nodeData, int layerMask) : base(EntityType.Room)
+        public RoomEntity(string name, RoomMetadata meta, CollisionInstance collision, NodeData? nodeData,
+            int layerMask, int roomId) : base(EntityType.Room)
         {
             ModelInstance inst = Read.GetRoomModelInstance(name);
             _models.Add(inst);
@@ -90,6 +92,7 @@ namespace MphRead.Entities
             _portals = portals;
             _forceFields = forceFields;
             SetCollision(collision);
+            RoomId = roomId;
         }
 
         public override void Initialize(Scene scene)
