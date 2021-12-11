@@ -152,7 +152,7 @@ namespace MphRead.Entities
             }
             else
             {
-                _hurtVolume = CollisionVolume.Transform(_hurtVolume, Transform);
+                _hurtVolume = CollisionVolume.Transform(_hurtVolumeInit, Transform);
             }
         }
 
