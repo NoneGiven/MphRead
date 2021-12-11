@@ -1657,19 +1657,15 @@ namespace MphRead
             Matrix4 transform, int listId, int matrixStackCount, IReadOnlyList<float> matrixStack, Vector4? overrideColor, Vector4? paletteOverride,
             SelectionType selectionType, float scaleFactor = 1, int? bindingOverride = null)
         {
-            static void Multiply3x3(Matrix4 mtx, float f)
-            {
-                mtx.Row0.X *= f;
-                mtx.Row0.Y *= f;
-                mtx.Row0.Z *= f;
-                mtx.Row1.X *= f;
-                mtx.Row1.Y *= f;
-                mtx.Row1.Z *= f;
-                mtx.Row2.X *= f;
-                mtx.Row2.Y *= f;
-                mtx.Row2.Z *= f;
-            }
-
+            transform.Row0.X *= scaleFactor;
+            transform.Row0.Y *= scaleFactor;
+            transform.Row0.Z *= scaleFactor;
+            transform.Row1.X *= scaleFactor;
+            transform.Row1.Y *= scaleFactor;
+            transform.Row1.Z *= scaleFactor;
+            transform.Row2.X *= scaleFactor;
+            transform.Row2.Y *= scaleFactor;
+            transform.Row2.Z *= scaleFactor;
             _scaleFactors[0] = scaleFactor;
             _scaleFactors[1] = scaleFactor;
             _scaleFactors[2] = scaleFactor;
@@ -1686,7 +1682,6 @@ namespace MphRead
             _scaleFactors[13] = 1;
             _scaleFactors[14] = 1;
             _scaleFactors[15] = 1;
-
             RenderItem item = GetRenderItem();
             item.Type = RenderItemType.Mesh;
             item.PolygonId = polygonId;
@@ -1720,7 +1715,6 @@ namespace MphRead
                 item.TextureBindingId = material.TextureBindingId;
             }
             item.TexcoordMatrix = texcoordMatrix;
-            Multiply3x3(transform, scaleFactor);
             item.Transform = transform;
             item.ListId = listId;
             Debug.Assert(matrixStack.Count == 16 * matrixStackCount);
