@@ -20,7 +20,7 @@ namespace MphRead.Entities.Enemies
             _forceField = spawner;
         }
 
-        public override bool EnemyInitialize()
+        protected override bool EnemyInitialize()
         {
             Vector3 position = _forceField.Data.Header.Position.ToFloatVector();
             _vec1 = _forceField.Data.Header.UpVector.ToFloatVector();
@@ -34,14 +34,59 @@ namespace MphRead.Entities.Enemies
             _health = _healthMax = 1;
             _boundingRadius = 0.5f;
             _hurtVolumeInit = new CollisionVolume(Vector3.Zero, _boundingRadius);
-            // todo: effectiveness
+            ClearEffectiveness();
+            switch (_forceField.Data.Type)
+            {
+            case 0:
+                SetEffectiveness(BeamType.PowerBeam, Effectiveness.Normal);
+                break;
+            case 1:
+                SetEffectiveness(BeamType.VoltDriver, Effectiveness.Normal);
+                break;
+            case 2:
+                SetEffectiveness(BeamType.Missile, Effectiveness.Normal);
+                break;
+            case 3:
+                SetEffectiveness(BeamType.Battlehamer, Effectiveness.Normal);
+                break;
+            case 4:
+                SetEffectiveness(BeamType.Imperialist, Effectiveness.Normal);
+                break;
+            case 5:
+                SetEffectiveness(BeamType.Judicator, Effectiveness.Normal);
+                break;
+            case 6:
+                SetEffectiveness(BeamType.Magmaul, Effectiveness.Normal);
+                break;
+            case 7:
+                SetEffectiveness(BeamType.ShockCoil, Effectiveness.Normal);
+                break;
+            case 8:
+                Flags &= ~EnemyFlags.NoBombDamage;
+                break;
+            };
             SetUpModel("ForceFieldLock");
             Recolor = _forceField.Recolor;
             // todo: equip info fields
             return true;
         }
 
-        public override void EnemyProcess(Scene scene)
+        private void ClearEffectiveness()
+        {
+            for (int i = 0; i < BeamEffectiveness.Length; i++)
+            {
+                BeamEffectiveness[i] = Effectiveness.Zero;
+            }
+        }
+
+        private void SetEffectiveness(BeamType type, Effectiveness effectiveness)
+        {
+            int index = (int)type;
+            Debug.Assert(index < BeamEffectiveness.Length);
+            BeamEffectiveness[index] = effectiveness;
+        }
+
+        protected override void EnemyProcess(Scene scene)
         {
             // this is called twice per tick, so the animation plays twice as fast
             if (Active)
@@ -68,10 +113,10 @@ namespace MphRead.Entities.Enemies
                 else
                 {
                     _models[0].SetAnimation(0);
-                } 
+                }
             }
             float width = _forceField.Width - 0.3f;
-            float height = _forceField.Height- 0.3f;
+            float height = _forceField.Height - 0.3f;
             Vector3 between = Position - _initialPosition;
             float rightPct = Vector3.Dot(between, _forceField.RightVector) / width;
             float upPct = Vector3.Dot(between, _forceField.UpVector) / height;
@@ -113,7 +158,7 @@ namespace MphRead.Entities.Enemies
                     else
                     {
                         _models[0].SetAnimation(1, AnimFlags.NoLoop);
-                    } 
+                    }
                 }
             }
             else

@@ -24,7 +24,7 @@ namespace MphRead.Entities.Enemies
         }
 
         // this happens in the spawner's set_entity_refs
-        public override bool EnemyInitialize()
+        protected override bool EnemyInitialize()
         {
             Transform = _data.Spawner.Transform; // todo: spawner linked entity
             _boundingRadius = Fixed.ToFloat(3072);
@@ -59,7 +59,7 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        public override void EnemyProcess(Scene scene)
+        protected override void EnemyProcess(Scene scene)
         {
             // todo: ent col
             if (_spawner.Flags.TestFlag(SpawnerFlags.Active) && !_spawner.Flags.TestFlag(SpawnerFlags.Suspended))

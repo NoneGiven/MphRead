@@ -14,7 +14,7 @@ namespace MphRead.Entities.Enemies
             _spawner = spawner;
         }
 
-        public override bool EnemyInitialize()
+        protected override bool EnemyInitialize()
         {
             Transform = _data.Spawner.Transform;
             _prevPos = Position;
@@ -30,7 +30,7 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        public override void EnemyProcess(Scene scene)
+        protected override void EnemyProcess(Scene scene)
         {
             ContactDamagePlayer(_spawner.Data.Fields.S07.EnemyDamage, knockback: false);
         }

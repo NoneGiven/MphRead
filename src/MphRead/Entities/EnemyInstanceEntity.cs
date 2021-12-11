@@ -1,3 +1,5 @@
+using System;
+using System.Diagnostics;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -14,6 +16,7 @@ namespace MphRead.Entities
         }
     }
 
+    [Flags]
     public enum EnemyFlags : ushort
     {
         Visible = 1,
@@ -28,7 +31,14 @@ namespace MphRead.Entities
         Static = 0x200
     }
 
-    // todo: taking damage
+    public enum Effectiveness : byte
+    {
+        Zero,
+        Half,
+        Normal,
+        Double
+    }
+
     public class EnemyInstanceEntity : EntityBase
     {
         protected readonly EnemyInstanceEntityData _data;
@@ -45,6 +55,7 @@ namespace MphRead.Entities
         protected Vector3 _speed = Vector3.Zero;
         protected float _boundingRadius = 0;
 
+        public Effectiveness[] BeamEffectiveness = new Effectiveness[9];
         private bool _onlyMoveHurtVolume = false;
         public EnemyFlags Flags { get; set; }
 
@@ -58,6 +69,7 @@ namespace MphRead.Entities
             base.Initialize(scene);
             // todo: set other properties, etc.
             _owner = _data.Spawner;
+            Metadata.LoadEffectiveness(_data.Type, BeamEffectiveness);
             Flags = EnemyFlags.CollidePlayer | EnemyFlags.CollideBeam;
             if (EnemyInitialize() && _data.Spawner is EnemySpawnEntity spawner)
             {
@@ -161,19 +173,119 @@ namespace MphRead.Entities
             }
         }
 
-        public virtual bool EnemyInitialize()
+        protected virtual bool EnemyInitialize()
         {
             // must return true if overriden
             return false;
         }
 
-        public virtual void EnemyProcess(Scene scene)
+        protected virtual void EnemyProcess(Scene scene)
         {
         }
 
-        public virtual bool EnemyGetDrawInfo(Scene scene)
+        protected virtual bool EnemyGetDrawInfo(Scene scene)
         {
             // must return true if overriden
+            return false;
+        }
+
+        public void TakeDamage(uint damage, EntityBase? source)
+        {
+            ushort prevHealth = _health;
+            Effectiveness effectiveness = Effectiveness.Normal;
+            BeamProjectileEntity? beamSource = null;
+            if (source?.Type == EntityType.BeamProjectile)
+            {
+                beamSource = (BeamProjectileEntity)source;
+            }
+            if (beamSource != null)
+            {
+                if (beamSource.Owner?.Type == EntityType.EnemyInstance)
+                {
+                    return;
+                }
+                int index = (int)beamSource.Weapon;
+                Debug.Assert(index < BeamEffectiveness.Length);
+                effectiveness = BeamEffectiveness[index];
+            }
+            bool unaffected = false;
+            if (effectiveness == Effectiveness.Zero || Flags.TestFlag(EnemyFlags.Invincible)
+                || (source?.Type == EntityType.Bomb && Flags.TestFlag(EnemyFlags.NoBombDamage)))
+            {
+                unaffected = true;
+            }
+            bool dead = false;
+            if (!unaffected)
+            {
+                if (beamSource?.Owner?.Type == EntityType.Player)
+                {
+                    damage = (uint)(damage * Metadata.GetDamageMultiplier(effectiveness));
+                    if (damage == 0)
+                    {
+                        damage = 1;
+                    }
+                }
+                if (damage >= _health)
+                {
+                    dead = true;
+                    _health = 0;
+                }
+                else
+                {
+                    _health -= (ushort)damage;
+                }
+            }
+            if (EnemyTakeDamage(effectiveness, source))
+            {
+                _health = prevHealth;
+                unaffected = true;
+                dead = false;
+            }
+            if (unaffected)
+            {
+                if (effectiveness == Effectiveness.Zero)
+                {
+                    // sktodo: create ineffective effect
+                }
+            }
+            else
+            {
+                // sktodo: create damage effect
+                if (dead)
+                {
+                    // todo: update records
+                    if (_data.Type == EnemyType.Temroid)
+                    {
+                        // todo: detach
+                    }
+                    // todo: play SFX
+                    // sktodo: create death effect
+                }
+                else
+                {
+                    _framesSinceDamage = 0;
+                    // todo: play SFX
+                    switch (_data.Type)
+                    {
+                    case EnemyType.Zoomer:
+                    case EnemyType.Petrasyl1:
+                    case EnemyType.Petrasyl2:
+                    case EnemyType.Petrasyl3:
+                    case EnemyType.Petrasyl4:
+                        _models[0].SetAnimation(1, AnimFlags.NoLoop);
+                        break;
+                    case EnemyType.Blastcap:
+                        _models[0].SetAnimation(0, AnimFlags.NoLoop);
+                        // sktodo: spawn effect
+                        break;
+                    }
+                }
+            }
+        }
+
+        protected virtual bool EnemyTakeDamage(Effectiveness effectiveness, EntityBase? source)
+        {
+            // when overridden, must return true when unaffected by damage and false otherwise
             return false;
         }
 
