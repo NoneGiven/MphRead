@@ -59,7 +59,7 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        public override bool EnemyProcess(Scene scene)
+        public override void EnemyProcess(Scene scene)
         {
             // todo: ent col
             if (_spawner.Flags.TestFlag(SpawnerFlags.Active) && !_spawner.Flags.TestFlag(SpawnerFlags.Suspended))
@@ -105,7 +105,6 @@ namespace MphRead.Entities.Enemies
             {
                 _animTimer--;
             }
-            return false;
         }
     }
 }

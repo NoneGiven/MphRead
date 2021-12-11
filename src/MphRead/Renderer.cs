@@ -308,7 +308,9 @@ namespace MphRead
             {
                 _freeRenderItems.Enqueue(new RenderItem());
             }
-            for (int i = 0; i < _entities.Count; i++)
+            // entities added during initialization of other entities will already be initialized
+            int count = _entities.Count;
+            for (int i = 0; i < count; i++)
             {
                 _entities[i].Initialize(this);
             }

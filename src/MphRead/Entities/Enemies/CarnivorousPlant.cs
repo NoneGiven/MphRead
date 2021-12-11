@@ -30,10 +30,9 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        public override bool EnemyProcess(Scene scene)
+        public override void EnemyProcess(Scene scene)
         {
             ContactDamagePlayer(_spawner.Data.Fields.S07.EnemyDamage, knockback: false);
-            return false;
         }
     }
 }

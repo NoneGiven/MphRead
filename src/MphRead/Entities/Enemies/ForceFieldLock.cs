@@ -41,8 +41,9 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        public override bool EnemyProcess(Scene scene)
+        public override void EnemyProcess(Scene scene)
         {
+            // this is called twice per tick, so the animation plays twice as fast
             if (Active)
             {
                 for (int i = 0; i < _models.Count; i++)
@@ -119,7 +120,6 @@ namespace MphRead.Entities.Enemies
             {
                 _speed *= Fixed.ToFloat(3973);
             }
-            return true;
         }
     }
 }

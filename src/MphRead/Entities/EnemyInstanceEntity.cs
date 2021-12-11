@@ -81,7 +81,7 @@ namespace MphRead.Entities
             }
             else
             {
-                // sktodo
+                // todo: check range
             }
             if (inRange)
             {
@@ -99,16 +99,13 @@ namespace MphRead.Entities
                     // todo: positional audio, node ref
                     _hitPlayers = 0;
                     // todo: player collision
-                    bool processed = EnemyProcess(scene);
+                    EnemyProcess(scene);
                     if (!Flags.TestFlag(EnemyFlags.Static))
                     {
                         UpdateHurtVolume();
                     }
                     // todo: node ref
-                    if (!processed)
-                    {
-                        base.Process(scene);
-                    }
+                    base.Process(scene);
                     return true;
                 }
                 scene.SendMessage(Message.Destroyed, this, _owner, 0, 0);
@@ -170,9 +167,8 @@ namespace MphRead.Entities
             return false;
         }
 
-        public virtual bool EnemyProcess(Scene scene)
+        public virtual void EnemyProcess(Scene scene)
         {
-            return false;
         }
 
         public virtual bool EnemyGetDrawInfo(Scene scene)

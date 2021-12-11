@@ -5,6 +5,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
+    [Flags]
     public enum SpawnerFlags : byte
     {
         Suspended = 1,
@@ -14,7 +15,7 @@ namespace MphRead.Entities
         CounterBit0 = 0x10, // we don't use these
         CounterBit1 = 0x20,
         CounterBit2 = 0x40,
-        CounterBit3 = 0x80,
+        CounterBit3 = 0x80
     }
 
     public class EnemySpawnEntity : EntityBase
@@ -37,7 +38,7 @@ namespace MphRead.Entities
             {
                 _spawn = true;
             }
-            Flags |= SpawnerFlags.Suspended;
+            // todo: start suspended, update based on range/node ref (w/ "camera is player" option)
             // todo: room state
             if (data.Active != 0 || data.AlwaysActive != 0)
             {
