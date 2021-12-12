@@ -207,6 +207,11 @@ namespace MphRead.Entities
             return false;
         }
 
+        public void SetHealth(ushort health)
+        {
+            _health = health;
+        }
+
         public void TakeDamage(uint damage, EntityBase? source, Scene scene)
         {
             ushort prevHealth = _health;

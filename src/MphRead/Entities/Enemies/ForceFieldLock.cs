@@ -193,7 +193,6 @@ namespace MphRead.Entities.Enemies
             }
             else
             {
-                // todo: handle this in parent
                 scene.SendMessage(Message.Unlock, this, _owner, 0, 0);
             }
             return false;
