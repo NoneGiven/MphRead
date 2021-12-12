@@ -96,14 +96,7 @@ namespace MphRead.Entities
                 if (_lock != null)
                 {
                     _lock.SetHealth(0);
-                    if (!scene.Multiplayer)
-                    {
-                        if (_active)
-                        {
-                            // sktodo
-                        } 
-                        // todo: room state
-                    }
+                    // todo: 1P stuff
                     _active = false;
                     // todo: scan ID
                 } 
