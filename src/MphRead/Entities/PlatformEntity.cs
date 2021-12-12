@@ -400,9 +400,8 @@ namespace MphRead.Entities
                         }
                         else
                         {
-                            // sktodo
                             target = Vector3.UnitZ;
-                            //target = Matrix.Vec3MultMtx3(target, _parent.CollisionTransform);
+                            target = Matrix.Vec3MultMtx3(target, _parent.CollisionTransform);
                         }
                         target = target.Normalized();
                     }
@@ -805,7 +804,6 @@ namespace MphRead.Entities
 
         private Matrix4 GetTransform()
         {
-            // sktodo
             Matrix4 transform;
             if (_data.PositionCount > 0)
             {
@@ -818,12 +816,12 @@ namespace MphRead.Entities
                 {
                     if (_parent != null)
                     {
-                        //transform.Row3.Xyz = Matrix.Vec3MultMtx4(transform.Row3.Xyz, _parent.CollisionTransform);
+                        transform.Row3.Xyz = Matrix.Vec3MultMtx4(transform.Row3.Xyz, _parent.CollisionTransform);
                     }
                 }
                 else if (_parent != null)
                 {
-                    //transform *= _parent.CollisionTransform;
+                    transform *= _parent.CollisionTransform;
                 }
             }
             else
