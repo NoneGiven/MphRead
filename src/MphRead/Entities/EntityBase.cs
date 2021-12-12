@@ -1,7 +1,6 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
@@ -184,7 +183,7 @@ namespace MphRead.Entities
             entCol.MaxDistance = maxDist;
         }
 
-        private void UpdateCollisionTransform(int slot, Matrix4 transform)
+        protected void UpdateCollisionTransform(int slot, Matrix4 transform)
         {
             EntityCollision? entCol = EntityCollision[slot];
             if (entCol != null)

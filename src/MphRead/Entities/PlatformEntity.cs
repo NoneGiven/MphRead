@@ -365,6 +365,8 @@ namespace MphRead.Entities
 
         public override bool Process(Scene scene)
         {
+            UpdateLinkedInverse(0);
+            // todo: visible position stuff
             // ptodo: player bonk stuff
             if (!_animFlags.TestFlag(PlatAnimFlags.DisableReflect))
             {
@@ -503,6 +505,7 @@ namespace MphRead.Entities
                 _currentAnim = -2;
                 _stateBits &= ~PlatStateBits.WasAwake;
             }
+            // sktodo
             // todo: if "is_visible" returns false (and other conditions), don't draw the effects
             Model model = _models[0].Model;
             for (int i = 0; i < 4; i++)
@@ -538,6 +541,7 @@ namespace MphRead.Entities
             {
                 Transform = GetTransform();
             }
+            UpdateCollisionTransform(0, CollisionTransform); // todo: for some reason, the game uses an inverse view matrix when using animation
             return true;
         }
 

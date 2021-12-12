@@ -297,6 +297,8 @@ namespace MphRead.Entities
                 _effectVolume = CollisionVolume.Transform(_data.Volume, Transform);
                 _prevTransform = Transform;
             }
+            UpdateCollisionTransform(0, CollisionTransform); // whether transform or animation, should include parent if any
+            UpdateCollisionTransform(1, CollisionTransform); // the game does this in draw for objects
             UpdateLinkedInverse(0);
             UpdateLinkedInverse(1);
             if (_data.EffectId > 0)
