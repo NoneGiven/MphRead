@@ -104,7 +104,6 @@ namespace MphRead
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
         private readonly Dictionary<int, TextureMap> _texPalMap = new Dictionary<int, TextureMap>();
-        private readonly List<CollisionInstance> _collision = new List<CollisionInstance>();
 
         private int _shaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
@@ -131,6 +130,7 @@ namespace MphRead
         private bool _recording = false;
         private int _framesRecorded = 0;
         private bool _roomLoaded = false;
+        private RoomEntity? _room = null;
         private int _roomId = -1;
         public GameMode GameMode { get; private set; } = GameMode.SinglePlayer;
         public bool Multiplayer => GameMode != GameMode.SinglePlayer;
@@ -156,7 +156,7 @@ namespace MphRead
         public Vector3 Light2Vector => _light2Vector;
         public Vector3 Light2Color => _light2Color;
         public IReadOnlyList<EntityBase> Entities => _entities;
-        public IReadOnlyList<CollisionInstance> Collision => _collision;
+        public RoomEntity? Room => _room;
         public int ActiveCutscene => _activeCutscene;
         // todo: disallow if camera roll is not zero?
         public bool AllowCameraMovement => _activeCutscene == -1 || (_frameAdvanceOn && !_advanceOneFrame);
@@ -187,6 +187,7 @@ namespace MphRead
                 = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId, this);
             _entities.Add(room);
             InitEntity(room);
+            _room = room;
             _cameraMode = CameraMode.Roam;
             if (meta.InGameName != null)
             {
@@ -289,16 +290,6 @@ namespace MphRead
             _entityMap.Remove(entity.Id);
             _entities.Remove(entity);
         }
-
-        //public void AddCollision(CollisionInstance inst)
-        //{
-        //    _collision.Add(inst);
-        //}
-
-        //public void RemoveCollision(CollisionInstance inst)
-        //{
-        //    _collision.Remove(inst);
-        //}
 
         public void OnLoad()
         {
