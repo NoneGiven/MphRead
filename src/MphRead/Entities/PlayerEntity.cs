@@ -166,10 +166,6 @@ namespace MphRead.Entities
         {
             PrevPosition2 = PrevPosition1;
             PrevPosition1 = Position;
-            if (Hunter == Hunter.Spire)
-            {
-                Rotation = Rotation.AddY(0.01f);
-            }
             UpdateLightSources(scene);
             if (_respawnTimer > 0)
             {
