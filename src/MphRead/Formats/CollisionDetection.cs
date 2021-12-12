@@ -290,6 +290,8 @@ namespace MphRead.Formats
                 _activeItems.Remove(item);
                 _inactiveItems.Enqueue(item);
             }
+            // sktodo: why do we even have this collection instead of accessing it through the room?
+            // --> we should have a room instance available on the scene to access things through, instead of making a bunch of screne properties
             if (scene.Collision.Count == 0 || scene.Collision[0].IsEntity)
             {
                 return _activeItems;

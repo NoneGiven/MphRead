@@ -23,9 +23,14 @@ namespace MphRead.Entities
         protected Vector3 _scale = new Vector3(1, 1, 1);
         protected Vector3 _rotation = Vector3.Zero;
         protected Vector3 _position = Vector3.Zero;
-        protected Node? _collisionNode = null;
-        private bool _collisionTransformed = true;
-        public Matrix4 CollisionTransform => _collisionNode == null ? _transform : _collisionNode.Animation;
+
+        private Node? _colAttachNode = null;
+        private bool _drawColUpdated = true;
+        public EntityCollision?[] EntityCollision { get; } = new EntityCollision?[2];
+
+        //protected Node? _collisionNode = null;
+        //private bool _collisionTransformed = true;
+        //public Matrix4 CollisionTransform => _collisionNode == null ? _transform : _collisionNode.Animation;
 
         public Matrix4 Transform
         {
@@ -41,7 +46,7 @@ namespace MphRead.Entities
                     value.ExtractRotation().ToEulerAngles(out _rotation);
                     _position = value.Row3.Xyz;
                     _transform = value;
-                    _collisionTransformed = false;
+                    _drawColUpdated = false;
                 }
             }
         }
@@ -60,7 +65,7 @@ namespace MphRead.Entities
                         * Matrix4.CreateRotationY(Rotation.Y) * Matrix4.CreateRotationX(Rotation.X);
                     _transform.Row3.Xyz = Position;
                     _scale = value;
-                    _collisionTransformed = false;
+                    _drawColUpdated = false;
                 }
             }
         }
@@ -79,7 +84,7 @@ namespace MphRead.Entities
                         * Matrix4.CreateRotationY(value.Y) * Matrix4.CreateRotationX(value.X);
                     _transform.Row3.Xyz = Position;
                     _rotation = value;
-                    _collisionTransformed = false;
+                    _drawColUpdated = false;
                 }
             }
         }
@@ -96,7 +101,7 @@ namespace MphRead.Entities
                 {
                     _transform.Row3.Xyz = value;
                     _position = value;
-                    _collisionTransformed = false;
+                    _drawColUpdated = false;
                 }
             }
         }
@@ -105,8 +110,8 @@ namespace MphRead.Entities
 
         protected bool _anyLighting = false;
         protected readonly List<ModelInstance> _models = new List<ModelInstance>();
-        protected readonly List<CollisionInstance> _collision = new List<CollisionInstance>();
-        protected readonly List<List<Vector3>> _colPoints = new List<List<Vector3>>();
+        //protected readonly List<CollisionInstance> _collision = new List<CollisionInstance>();
+        //protected readonly List<List<Vector3>> _colPoints = new List<List<Vector3>>();
 
         protected virtual bool UseNodeTransform => true;
         protected virtual Vector4? OverrideColor { get; } = null;
@@ -132,13 +137,15 @@ namespace MphRead.Entities
 
         protected void SetCollision(CollisionInstance collision, int slot = 0, ModelInstance? attach = null)
         {
-            CollisionInfo info = collision.Info;
-            Debug.Assert(slot == 0 && _collision.Count == 0 || slot == 1 && _collision.Count == 1);
-            _collision.Add(collision);
-            _colPoints.Add(new List<Vector3>(info.Points.Count));
-            for (int i = 0; i < info.Points.Count; i++)
+            var entCol = new EntityCollision(collision, this);
+            SetCollisionMaxAvg(entCol);
+            EntityCollision[slot] = entCol;
+            _drawColUpdated = false;
+            UpdateCollisionTransform(slot, Transform.ClearScale());
+            UpdateLinkedInverse(slot);
+            for (int i = 0; i < entCol.Collision.Info.Points.Count; i++)
             {
-                _colPoints[slot].Add(Matrix.Vec3MultMtx4(info.Points[i], _transform));
+                entCol.DrawPoints.Add(entCol.Collision.Info.Points[i]);
             }
             if (attach != null)
             {
@@ -147,28 +154,73 @@ namespace MphRead.Entities
                     Node node = attach.Model.Nodes[i];
                     if (node.Name == "attach")
                     {
-                        _collisionNode = node;
+                        _colAttachNode = node;
                         break;
                     }
                 }
             }
         }
 
-        private void UpdateCollision()
+        private void SetCollisionMaxAvg(EntityCollision entCol)
         {
-            if (!_collisionTransformed || _collisionNode != null)
+            int count = entCol.Collision.Info.Points.Count;
+            Vector3 avg = Vector3.Zero;
+            for (int i = 0; i < count; i++)
             {
-                Matrix4 transform = CollisionTransform;
-                for (int i = 0; i < _collision.Count; i++)
+                Vector3 point = entCol.Collision.Info.Points[i];
+                avg.X += point.X;
+                avg.Y += point.Y;
+                avg.Z += point.Z;
+            }
+            avg /= count;
+            entCol.InitialCenter = avg; // centroid
+            float maxDist = 0;
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 point = entCol.Collision.Info.Points[i];
+                float dist = Vector3.Distance(avg, point);
+                if (dist > maxDist)
                 {
-                    CollisionInfo collision = _collision[i].Info;
-                    List<Vector3> colPoints = _colPoints[i];
-                    for (int j = 0; j < collision.Points.Count; j++)
+                    maxDist = dist;
+                }
+            }
+            entCol.MaxDistance = maxDist;
+        }
+
+        private void UpdateCollisionTransform(int slot, Matrix4 transform)
+        {
+            EntityCollision? entCol = EntityCollision[slot];
+            Debug.Assert(entCol != null);
+            entCol.Transform = transform;
+            entCol.Inverse1 = transform.Inverted();
+            entCol.CurrentCenter = Matrix.Vec3MultMtx4(entCol.InitialCenter, transform);
+        }
+
+        private void UpdateLinkedInverse(int slot)
+        {
+            EntityCollision? entCol = EntityCollision[slot];
+            Debug.Assert(entCol != null);
+            entCol.Inverse2 = entCol.Transform.Inverted();
+        }
+
+        private void UpdateDrawCollision()
+        {
+            if (!_drawColUpdated || _colAttachNode != null)
+            {
+                Matrix4 transform = _colAttachNode == null ? _transform : _colAttachNode.Animation;
+                for (int i = 0; i < 2; i++)
+                {
+                    EntityCollision? entCol = EntityCollision[i];
+                    if (entCol != null)
                     {
-                        colPoints[j] = Matrix.Vec3MultMtx4(collision.Points[j], transform);
+                        CollisionInfo collision = entCol.Collision.Info;
+                        for (int j = 0; j < collision.Points.Count; j++)
+                        {
+                            entCol.DrawPoints[j] = Matrix.Vec3MultMtx4(collision.Points[j], transform);
+                        }
                     }
                 }
-                _collisionTransformed = true;
+                _drawColUpdated = true;
             }
         }
 
@@ -251,7 +303,7 @@ namespace MphRead.Entities
             {
                 // if collision is not shown, the "needs update" state will persist until it is
                 // --> this is fine since _colPoints are only for display, not detection
-                UpdateCollision();
+                UpdateDrawCollision();
             }
         }
 
@@ -311,18 +363,15 @@ namespace MphRead.Entities
             }
         }
 
-        protected void GetCollisionDrawInfo(Scene scene)
+        protected virtual void GetCollisionDrawInfo(Scene scene)
         {
-            Debug.Assert(_collision.Count == _colPoints.Count);
-            for (int i = 0; i < _collision.Count; i++)
+            for (int i = 0; i < 2; i++)
             {
-                CollisionInstance collision = _collision[i];
-                if (!collision.Active)
+                EntityCollision? entCol = EntityCollision[i];
+                if (entCol != null && entCol.Collision.Active)
                 {
-                    continue;
+                    entCol.Collision.Info.GetDrawInfo(entCol.DrawPoints, Type, scene);
                 }
-                List<Vector3> colPoints = _colPoints[i];
-                collision.Info.GetDrawInfo(colPoints, Type, scene);
             }
         }
 

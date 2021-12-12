@@ -145,14 +145,15 @@ namespace MphRead.Entities
             ShouldDraw = !_scanVisorOnly || scene.ScanVisor;
             if (_parent != null)
             {
-                if (!_invSetUp)
-                {
-                    _parent.GetDrawInfo(scene); // force update transforms
-                    _invTransform = _transform * _parent.CollisionTransform.Inverted();
-                    _invSetUp = true;
-                }
-                // todo: visible position stuff (get vecs)
-                Transform = _invTransform * _parent.CollisionTransform;
+                // sktodo
+                //if (!_invSetUp)
+                //{
+                //    _parent.GetDrawInfo(scene); // force update transforms
+                //    _invTransform = _transform * _parent.CollisionTransform.Inverted();
+                //    _invSetUp = true;
+                //}
+                //// todo: visible position stuff (get vecs)
+                //Transform = _invTransform * _parent.CollisionTransform;
             }
             if (Transform != _prevTransform)
             {

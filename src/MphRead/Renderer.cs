@@ -290,15 +290,15 @@ namespace MphRead
             _entities.Remove(entity);
         }
 
-        public void AddCollision(CollisionInstance inst)
-        {
-            _collision.Add(inst);
-        }
+        //public void AddCollision(CollisionInstance inst)
+        //{
+        //    _collision.Add(inst);
+        //}
 
-        public void RemoveCollision(CollisionInstance inst)
-        {
-            _collision.Remove(inst);
-        }
+        //public void RemoveCollision(CollisionInstance inst)
+        //{
+        //    _collision.Remove(inst);
+        //}
 
         public void OnLoad()
         {

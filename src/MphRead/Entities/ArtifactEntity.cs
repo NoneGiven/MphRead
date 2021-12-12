@@ -41,13 +41,14 @@ namespace MphRead.Entities
         {
             if (_parent != null)
             {
+                // sktodo
                 if (!_invSetUp)
                 {
                     _parent.GetDrawInfo(scene); // force update transforms
-                    _invPos = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform.Inverted());
+                    //_invPos = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform.Inverted());
                     _invSetUp = true;
                 }
-                Position = Matrix.Vec3MultMtx4(_invPos, _parent.CollisionTransform);
+                //Position = Matrix.Vec3MultMtx4(_invPos, _parent.CollisionTransform);
             }
             return base.Process(scene);
         }
