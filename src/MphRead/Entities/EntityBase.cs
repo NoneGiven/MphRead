@@ -106,8 +106,6 @@ namespace MphRead.Entities
 
         protected bool _anyLighting = false;
         protected readonly List<ModelInstance> _models = new List<ModelInstance>();
-        //protected readonly List<CollisionInstance> _collision = new List<CollisionInstance>();
-        //protected readonly List<List<Vector3>> _colPoints = new List<List<Vector3>>();
 
         protected virtual bool UseNodeTransform => true;
         protected virtual Vector4? OverrideColor { get; } = null;
