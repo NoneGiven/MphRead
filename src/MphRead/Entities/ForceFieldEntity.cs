@@ -47,7 +47,7 @@ namespace MphRead.Entities
             _plane = new Vector4(_facingVector, Vector3.Dot(_facingVector, Position));
             Recolor = Metadata.DoorPalettes[(int)data.Type];
             ModelInstance inst = SetUpModel("ForceField");
-            Read.GetModelInstance("ForceFieldLock"); // todo: init needed effects and stuff -- other entities too
+            Read.GetModelInstance("ForceFieldLock");
             inst.SetAnimation(0);
         }
 
@@ -62,6 +62,7 @@ namespace MphRead.Entities
                     scene.AddEntity(_lock);
                 }
             }
+            scene.LoadEffect(77);
         }
 
         public override bool Process(Scene scene)
