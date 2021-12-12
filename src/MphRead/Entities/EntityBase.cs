@@ -27,10 +27,7 @@ namespace MphRead.Entities
         private Node? _colAttachNode = null;
         private bool _drawColUpdated = true;
         public EntityCollision?[] EntityCollision { get; } = new EntityCollision?[2];
-
-        //protected Node? _collisionNode = null;
-        //private bool _collisionTransformed = true;
-        //public Matrix4 CollisionTransform => _collisionNode == null ? _transform : _collisionNode.Animation;
+        public Matrix4 CollisionTransform => _colAttachNode == null ? _transform : _colAttachNode.Animation;
 
         public Matrix4 Transform
         {
@@ -190,24 +187,28 @@ namespace MphRead.Entities
         private void UpdateCollisionTransform(int slot, Matrix4 transform)
         {
             EntityCollision? entCol = EntityCollision[slot];
-            Debug.Assert(entCol != null);
-            entCol.Transform = transform;
-            entCol.Inverse1 = transform.Inverted();
-            entCol.CurrentCenter = Matrix.Vec3MultMtx4(entCol.InitialCenter, transform);
+            if (entCol != null)
+            {
+                entCol.Transform = transform;
+                entCol.Inverse1 = transform.Inverted();
+                entCol.CurrentCenter = Matrix.Vec3MultMtx4(entCol.InitialCenter, transform);
+            }
         }
 
-        private void UpdateLinkedInverse(int slot)
+        protected void UpdateLinkedInverse(int slot)
         {
             EntityCollision? entCol = EntityCollision[slot];
-            Debug.Assert(entCol != null);
-            entCol.Inverse2 = entCol.Transform.Inverted();
+            if (entCol != null)
+            {
+                entCol.Inverse2 = entCol.Transform.Inverted();
+            }
         }
 
         private void UpdateDrawCollision()
         {
             if (!_drawColUpdated || _colAttachNode != null)
             {
-                Matrix4 transform = _colAttachNode == null ? _transform : _colAttachNode.Animation;
+                Matrix4 transform = CollisionTransform;
                 for (int i = 0; i < 2; i++)
                 {
                     EntityCollision? entCol = EntityCollision[i];
