@@ -63,7 +63,7 @@ namespace MphRead.Entities.Enemies
             return _health > 0;
         }
 
-        public override void HandleMessage(MessageInfo info)
+        public override void HandleMessage(MessageInfo info, Scene scene)
         {
             if (info.Message == Message.SetActive
                 && info.Sender is EnemyInstanceEntity enemy && enemy.EnemyType == EnemyType.FireSpawn)
