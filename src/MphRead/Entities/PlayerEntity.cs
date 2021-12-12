@@ -621,7 +621,8 @@ namespace MphRead.Entities
             Vector3 point2 = point1.AddY(-10);
             // todo: don't draw if main player in first person
             CollisionResult colRes = default;
-            if (CollisionDetection.CheckBetweenPoints(point1, point2, TestFlags.None, scene, ref colRes))
+            if (CollisionDetection.CheckBetweenPoints(point1, point2, TestFlags.None, scene, ref colRes)
+                && colRes.Plane.Y >= Fixed.ToFloat(4))
             {
                 float height = point1.Y - colRes.Position.Y;
                 if (height < 10)

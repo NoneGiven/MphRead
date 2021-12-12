@@ -23,7 +23,6 @@ namespace MphRead.Formats.Collision
         public CollisionInstance Collision { get; }
 
         public List<Vector3> DrawPoints { get; } = new List<Vector3>();
-        public bool DrawNeedsUpdate { get; set; }
 
         public EntityCollision(CollisionInstance collision, EntityBase entity)
         {

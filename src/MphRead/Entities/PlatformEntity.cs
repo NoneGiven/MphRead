@@ -988,7 +988,8 @@ namespace MphRead.Entities
         public override bool Process(Scene scene)
         {
             // todo: collision and stuff
-            _position += _velocity;
+            Vector3 position = _position;
+            position += _velocity;
             if (_moveTimer > 0)
             {
                 _moveTimer--;
@@ -1007,7 +1008,7 @@ namespace MphRead.Entities
                 {
                     _state = MoveState.Wait;
                     _velocity = Vector3.Zero;
-                    _position = _posList[_toIndex]; // the game doesn't do this
+                    position = _posList[_toIndex]; // the game doesn't do this
                     if (_fromIndex == _posList.Count - 1)
                     {
                         _toIndex = _fromIndex - 1;
@@ -1027,7 +1028,7 @@ namespace MphRead.Entities
                 else if (_state == MoveState.MoveBackward)
                 {
                     _velocity = Vector3.Zero;
-                    _position = _posList[_toIndex]; // the game doesn't do this
+                    position = _posList[_toIndex]; // the game doesn't do this
                     if (_toIndex > 0)
                     {
                         _state = MoveState.Wait;
@@ -1043,7 +1044,10 @@ namespace MphRead.Entities
                     _moveTimer = _delay;
                 }
             }
-            return base.Process(scene);
+            Position = position;
+            base.Process(scene);
+            UpdateCollisionTransform(0, Transform);
+            return true;
         }
 
         private void UpdateMovement()

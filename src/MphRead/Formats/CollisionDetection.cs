@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using MphRead.Entities;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
 namespace MphRead.Formats
 {
-    // sktodo: entity collision
     public class CollisionCandidate
     {
+        public EntityCollision? EntityCollision { get; set; }
         public MphCollisionInfo Collision { get; set; }
         public CollisionEntry Entry { get; set; }
 
@@ -35,7 +36,7 @@ namespace MphRead.Formats
         public int Field14;
         public Vector3 Position;
         public float Distance; // percentage
-        public int EntityCollision; // todo: this
+        public EntityCollision? EntityCollision;
         public Vector3 Field2C;
         public Vector3 Field38;
 
@@ -61,6 +62,7 @@ namespace MphRead.Formats
         {
             bool collided = false;
             ushort mask = 0;
+            bool includeEntities = !flags.TestFlag(TestFlags.AffectsScan);
             if (flags.TestFlag(TestFlags.AffectsPlayers))
             {
                 mask |= (ushort)CollisionFlags.IgnorePlayers;
@@ -69,14 +71,29 @@ namespace MphRead.Formats
             {
                 mask |= (ushort)CollisionFlags.IgnoreBeams;
             }
+            EntityCollision? lastEntCol = null;
+            Vector3 transPoint1 = point1;
+            Vector3 transPoint2 = point2;
             float minDist = Single.MaxValue;
-            // todo: check for entity collision
-            IReadOnlyList<CollisionCandidate> candidates = GetRoomCandidatesForPoints(point1, point2, scene);
+            IReadOnlyList<CollisionCandidate> candidates = GetCandidatesForPoints(point1, point2, 0, includeEntities, scene);
             for (int i = 0; i < candidates.Count; i++)
             {
                 CollisionCandidate candidate = candidates[i];
                 MphCollisionInfo info = candidate.Collision;
                 Debug.Assert(candidate.Entry.DataCount > 0);
+                if (candidate.EntityCollision != lastEntCol)
+                {
+                    if (candidate.EntityCollision != null)
+                    {
+                        transPoint1 = Matrix.Vec3MultMtx4(point1, candidate.EntityCollision.Inverse1);
+                        transPoint2 = Matrix.Vec3MultMtx4(point2, candidate.EntityCollision.Inverse1);
+                    }
+                    else
+                    {
+                        transPoint1 = point1;
+                        transPoint2 = point2;
+                    }
+                }
                 for (int j = 0; j < candidate.Entry.DataCount; j++)
                 {
                     // sktodo: counter
@@ -84,10 +101,10 @@ namespace MphRead.Formats
                     if (((ushort)data.Flags & mask) == 0)
                     {
                         Vector4 plane = info.Planes[data.PlaneIndex];
-                        float dot1 = Vector3.Dot(point1, plane.Xyz) - plane.W;
+                        float dot1 = Vector3.Dot(transPoint1, plane.Xyz) - plane.W;
                         if (dot1 > 0)
                         {
-                            float dot2 = Vector3.Dot(point2, plane.Xyz) - plane.W;
+                            float dot2 = Vector3.Dot(transPoint2, plane.Xyz) - plane.W;
                             if (dot2 <= 0)
                             {
                                 float dist = dot1 / (dot1 - dot2);
@@ -103,20 +120,30 @@ namespace MphRead.Formats
                                 {
                                     // point of intersection with plane
                                     var pos = new Vector3(
-                                        point1.X + (point2.X - point1.X) * dist,
-                                        point1.Y + (point2.Y - point1.Y) * dist,
-                                        point1.Z + (point2.Z - point1.Z) * dist
+                                        transPoint1.X + (transPoint2.X - transPoint1.X) * dist,
+                                        transPoint1.Y + (transPoint2.Y - transPoint1.Y) * dist,
+                                        transPoint1.Z + (transPoint2.Z - transPoint1.Z) * dist
                                     );
                                     if (CheckPointOnFace(pos, info, data))
                                     {
-                                        // todo: set entity collision
+                                        if (candidate.EntityCollision != null)
+                                        {
+                                            result.Position = Matrix.Vec3MultMtx4(pos, candidate.EntityCollision.Transform);
+                                            Vector3 normal = Matrix.Vec3MultMtx3(plane.Xyz, candidate.EntityCollision.Transform);
+                                            float w = Vector3.Dot(result.Position, normal);
+                                            result.Plane = new Vector4(normal, w);
+                                        }
+                                        else
+                                        {
+                                            result.Position = pos;
+                                            result.Plane = plane;
+                                        } 
                                         minDist = dist;
                                         result.Field0 = 0;
                                         result.Field14 = 0;
-                                        result.Position = pos;
-                                        result.Plane = plane;
                                         result.Flags = data.Flags;
                                         result.Distance = dist;
+                                        result.EntityCollision = candidate.EntityCollision;
                                         collided = true;
                                     }
                                 }
@@ -282,7 +309,8 @@ namespace MphRead.Formats
             return false;
         }
 
-        private static IReadOnlyList<CollisionCandidate> GetRoomCandidatesForPoints(Vector3 point1, Vector3 point2, Scene scene)
+        private static IReadOnlyList<CollisionCandidate> GetCandidatesForPoints(Vector3 point1, Vector3 point2, float margin,
+            bool includeEntities, Scene scene)
         {
             while (_activeItems.Count > 0)
             {
@@ -290,11 +318,95 @@ namespace MphRead.Formats
                 _activeItems.Remove(item);
                 _inactiveItems.Enqueue(item);
             }
-            if (scene.Room == null)
+            GetRoomCandidatesForPoints(point1, point2, scene);
+            if (includeEntities)
             {
-                return _activeItems;
+                GetEntityCandidatesForPoints(point1, point2, margin, scene);
             }
+            return _activeItems;
+        }
+
+        private static void GetEntityCandidatesForPoints(Vector3 point1, Vector3 point2, float margin, Scene scene)
+        {
+            var limitMin = new Vector3(
+                MathF.Min(MathF.Min(Single.MaxValue, point1.X), point2.X) - margin,
+                MathF.Min(MathF.Min(Single.MaxValue, point1.Y), point2.Y) - margin,
+                MathF.Min(MathF.Min(Single.MaxValue, point1.Z), point2.Z) - margin
+            );
+            var limitMax = new Vector3(
+                MathF.Max(MathF.Max(Single.MinValue, point1.X), point2.X) + margin,
+                MathF.Max(MathF.Max(Single.MinValue, point1.Y), point2.Y) + margin,
+                MathF.Max(MathF.Max(Single.MinValue, point1.Z), point2.Z) + margin
+            );
+            for (int i = 0; i < scene.Entities.Count; i++)
+            {
+                EntityBase entity = scene.Entities[i];
+                if (entity.Type != EntityType.Object && entity.Type != EntityType.Platform)
+                {
+                    continue;
+                }
+                for (int j = 0; j < 2; j++)
+                {
+                    EntityCollision? entCol = entity.EntityCollision[j];
+                    // todo: handle FH collision
+                    if (entCol == null || entCol.Collision.Info.FirstHunt)
+                    {
+                        continue;
+                    }
+                    var entMin = new Vector3(
+                        MathF.Min(Single.MaxValue, entCol.CurrentCenter.X) - entCol.MaxDistance,
+                        MathF.Min(Single.MaxValue, entCol.CurrentCenter.Y) - entCol.MaxDistance,
+                        MathF.Min(Single.MaxValue, entCol.CurrentCenter.Z) - entCol.MaxDistance
+                    );
+                    var entMax = new Vector3(
+                        MathF.Max(Single.MinValue, entCol.CurrentCenter.X) + entCol.MaxDistance,
+                        MathF.Max(Single.MinValue, entCol.CurrentCenter.Y) + entCol.MaxDistance,
+                        MathF.Max(Single.MinValue, entCol.CurrentCenter.Z) + entCol.MaxDistance
+                    );
+                    if (entMin.X <= limitMax.X && entMax.X >= limitMin.X && entMin.Y <= limitMax.Y
+                        && entMax.Y >= limitMin.Y && entMin.Z <= limitMax.Z && entMax.Z >= limitMin.Z)
+                    {
+                        var info = (MphCollisionInfo)entCol.Collision.Info;
+                        int entryIndex = 0;
+                        int xIndex = 0;
+                        int yIndex = 0;
+                        int zIndex = 0;
+                        while (yIndex < info.Header.PartsY)
+                        {
+                            while (zIndex < info.Header.PartsZ)
+                            {
+                                while (xIndex < info.Header.PartsX)
+                                {
+                                    CollisionEntry entry = info.Entries[entryIndex++];
+                                    if (entry.DataCount > 0)
+                                    {
+                                        CollisionCandidate item = _inactiveItems.Dequeue();
+                                        item.Collision = info;
+                                        item.Entry = entry;
+                                        item.EntityCollision = entCol;
+                                        _activeItems.Add(item);
+                                    }
+                                    xIndex++;
+                                }
+                                xIndex = 0;
+                                zIndex++;
+                            }
+                            xIndex = 0;
+                            zIndex = 0;
+                            yIndex++;
+                        }
+                    }
+                }
+            }
+        }
+
+        private static void GetRoomCandidatesForPoints(Vector3 point1, Vector3 point2, Scene scene)
+        {
             // sktodo: handle FH collision
+            if (scene.Room == null || scene.Room.RoomCollision.Info.FirstHunt)
+            {
+                return;
+            }
             var info = (MphCollisionInfo)scene.Room.RoomCollision.Info;
             float size = 4;
             int partsX = info.Header.PartsX;
@@ -342,7 +454,7 @@ namespace MphRead.Formats
             if ((test1 & test2) != 0)
             {
                 // if any coordinate of both points is outside the bounds
-                return _activeItems;
+                return;
             }
             bool inside = false;
             if (test1 == 0)
@@ -454,7 +566,7 @@ namespace MphRead.Formats
             }
             if (!inside)
             {
-                return _activeItems;
+                return;
             }
             Vector3 dir = (point2 - point1).Normalized();
             dir = new Vector3(
@@ -519,6 +631,7 @@ namespace MphRead.Formats
                         CollisionCandidate item = _inactiveItems.Dequeue();
                         item.Collision = info;
                         item.Entry = entry;
+                        item.EntityCollision = null;
                         _activeItems.Add(item);
                     }
                 }
@@ -569,7 +682,6 @@ namespace MphRead.Formats
                     xNext += xInc;
                 }
             }
-            return _activeItems;
         }
 
         public static bool CheckCylinderOverlapVolume(CollisionVolume other, Vector3 bottom, Vector3 top,
@@ -692,7 +804,7 @@ namespace MphRead.Formats
                 v22 = v9;
             }
             result.Field0 = 0;
-            result.EntityCollision = 0;
+            result.EntityCollision = null;
             result.Flags = CollisionFlags.None;
             result.Position = oneBottom + d * v22;
             result.Distance = v22;
@@ -721,7 +833,7 @@ namespace MphRead.Formats
                 if (b.LengthSquared <= radii * radii)
                 {
                     result.Field0 = 0;
-                    result.EntityCollision = 0;
+                    result.EntityCollision = null;
                     result.Flags = CollisionFlags.None;
                     result.Distance = 0;
                     result.Position = cylBot;
@@ -741,7 +853,7 @@ namespace MphRead.Formats
                     if (c.LengthSquared <= radii * radii)
                     {
                         result.Field0 = 0;
-                        result.EntityCollision = 0;
+                        result.EntityCollision = null;
                         result.Flags = CollisionFlags.None;
                         Vector3 pos = spherePos - c;
                         float v15 = Vector3.Dot(c, c);
@@ -787,7 +899,7 @@ namespace MphRead.Formats
             }
             result.Position = cylBot + v11 * (cylTop - cylBot);
             result.Distance = v11;
-            result.EntityCollision = 0;
+            result.EntityCollision = null;
             return true;
         }
     }
