@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using OpenTK.Mathematics;
 
 namespace MphRead
 {
@@ -24,7 +25,8 @@ namespace MphRead
                 if (Debugger.IsAttached)
                 {
                     using var renderer = new RenderWindow();
-                    renderer.AddRoom("MP3 PROVING GROUND");
+                    renderer.AddRoom("UNIT2_C4");
+                    renderer.AddPlayer(Hunter.Kanden);
                     //renderer.AddModel("Crate01");
                     renderer.Run();
                 }
