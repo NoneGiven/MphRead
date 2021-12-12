@@ -128,11 +128,11 @@ namespace MphRead.Entities
             _scaleMtx = Matrix4.CreateScale(Metadata.HunterScales[Hunter]);
             _respawning = respawn;
             // temporary
-            _bipedModel.SetAnimation(8, 0, SetFlags.Node);
             if (Hunter == Hunter.Weavel)
             {
-                //_bipedModel.SetMaterialAnim(-1);
+                _bipedModel.SetAnimation(-1, 0, SetFlags.Material);
             }
+            _bipedModel.SetAnimation(8, 0, SetFlags.Node);
         }
 
         private CollisionVolume _sphere; // bounding sphere for capsule check
