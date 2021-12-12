@@ -10,7 +10,6 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Formats.Collision
 {
-    // sktodo: this
     public class EntityCollision
     {
         public Matrix4 Transform { get; set; }
