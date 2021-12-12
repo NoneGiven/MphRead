@@ -178,17 +178,7 @@ namespace MphRead.Entities.Enemies
             {
                 if (source?.Type == EntityType.BeamProjectile)
                 {
-                    // todo: check if beam owner is main player
-                    var beamSource = (BeamProjectileEntity)source;
-                    if (_shotFrames == 0)
-                    {
-                        if (GetEffectiveness(beamSource.WeaponType) == Effectiveness.Zero)
-                        {
-                            _shotFrames = _forceField.Data.Type == 7 ? (byte)60 : (byte)1;
-                            _targetPosition = scene.CameraPosition; // todo: get_vecs on beam owner
-                            _models[0].SetAnimation(2, AnimFlags.NoLoop);
-                        }
-                    }
+                    
                 }
             }
             else
@@ -196,6 +186,18 @@ namespace MphRead.Entities.Enemies
                 scene.SendMessage(Message.Unlock, this, _owner, 0, 0);
             }
             return false;
+        }
+
+        public void LockHit(EntityBase source, Scene scene)
+        {
+            // todo: check if beam owner is main player
+            var beamSource = (BeamProjectileEntity)source;
+            if (_shotFrames == 0 && GetEffectiveness(beamSource.WeaponType) == Effectiveness.Zero)
+            {
+                _shotFrames = _forceField.Data.Type == 7 ? (byte)60 : (byte)1;
+                _targetPosition = scene.CameraPosition; // todo: get_vecs on beam owner
+                _models[0].SetAnimation(2, AnimFlags.NoLoop);
+            }
         }
     }
 }

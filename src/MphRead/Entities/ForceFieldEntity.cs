@@ -1,3 +1,4 @@
+using MphRead.Entities.Enemies;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -5,7 +6,7 @@ namespace MphRead.Entities
     public class ForceFieldEntity : EntityBase
     {
         private readonly ForceFieldEntityData _data;
-        private EnemyInstanceEntity? _lock;
+        private Enemy49Entity? _lock;
         private readonly Vector3 _upVector;
         private readonly Vector3 _facingVector;
         private readonly Vector3 _rightVector;
@@ -21,6 +22,9 @@ namespace MphRead.Entities
         public Vector4 Plane => _plane;
         public float Width => _width;
         public float Height => _height;
+
+        public new bool Active => _active;
+        public Enemy49Entity? Lock => _lock;
 
         public ForceFieldEntity(ForceFieldEntityData data) : base(EntityType.ForceField)
         {
@@ -56,7 +60,7 @@ namespace MphRead.Entities
             base.Initialize(scene);
             if (_active && _data.Type != 9)
             {
-                _lock = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock);
+                _lock = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock) as Enemy49Entity;
                 if (_lock != null)
                 {
                     scene.AddEntity(_lock);
@@ -109,7 +113,7 @@ namespace MphRead.Entities
                 // todo: scan ID, room state
                 if (_lock == null && _data.Type != 9)
                 {
-                    _lock = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock);
+                    _lock = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock) as Enemy49Entity;
                     if (_lock != null)
                     {
                         scene.AddEntity(_lock);

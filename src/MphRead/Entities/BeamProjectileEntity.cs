@@ -233,6 +233,35 @@ namespace MphRead.Entities
                         anyRes = colRes;
                     }
                 }
+                for (int i = 0; i < scene.Entities.Count; i++)
+                {
+                    EntityBase entity = scene.Entities[i];
+                    if (entity.Type == EntityType.ForceField)
+                    {
+                        // todo: some of these properties are compatible with the entity moving, some aren't
+                        var forceField = (ForceFieldEntity)entity;
+                        if (forceField.Active
+                            && CollisionDetection.CheckCylinderIntersectPlane(BackPosition, Position, forceField.Plane, ref colRes)
+                            && colRes.Distance < minDist)
+                        {
+                            Vector3 between = colRes.Position - forceField.Position;
+                            float dot = Vector3.Dot(between, forceField.UpVector);
+                            if (dot <= forceField.Height && dot >= -forceField.Height)
+                            {
+                                dot = Vector3.Dot(between, forceField.RightVector);
+                                if (dot <= forceField.Width && dot >= -forceField.Width)
+                                {
+                                    minDist = colRes.Distance;
+                                    anyRes = colRes;
+                                    colWith = forceField;
+                                    noColEff = false;
+                                    anyRes.Field0 = 0;
+                                    anyRes.Plane = forceField.Plane;
+                                }
+                            }
+                        }
+                    }
+                }
             }
             Debug.Assert(Owner != null);
             if (Owner.Type != EntityType.EnemyInstance)
@@ -306,11 +335,22 @@ namespace MphRead.Entities
                             {
                                 enemy.TakeDamage((uint)damage, this, scene);
                                 SpawnCollisionEffect(anyRes, noSplat: true, scene);
-                                OnCollision(anyRes, enemy, scene);
+                                OnCollision(anyRes, colWith, scene);
                                 // todo: update SFX
                             }
                         }
                         ricochet = false;
+                    }
+                    else if (colWith.Type == EntityType.ForceField)
+                    {
+                        var forceField = (ForceFieldEntity)colWith;
+                        if (!Flags.TestFlag(BeamFlags.Ricochet))
+                        {
+                            SpawnCollisionEffect(anyRes, noSplat: true, scene);
+                            OnCollision(anyRes, colWith, scene);
+                            // todo: update SFX
+                            forceField.Lock?.LockHit(this, scene);
+                        }
                     }
                 }
                 else

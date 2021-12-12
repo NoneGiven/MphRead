@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices.WindowsRuntime;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
@@ -769,6 +768,27 @@ namespace MphRead.Formats
                 }
             }
             return false;
+        }
+
+        public static bool CheckCylinderIntersectPlane(Vector3 cylBot, Vector3 cylTop, Vector4 plane, ref CollisionResult result)
+        {
+            float v10 = plane.X * (cylTop.X - cylBot.X);
+            float v13 = plane.Y * (cylTop.Y - cylBot.Y);
+            float v14 = plane.Z * (cylTop.Z - cylBot.Z);
+            float sum = v10 + v13 + v14;
+            if (sum == 0)
+            {
+                return false;
+            }
+            float v11 = (plane.W - (plane.X * cylBot.X + plane.Y * cylBot.Y + plane.Z * cylBot.Z)) / sum;
+            if (v11 < 0 || v11 > 1)
+            {
+                return false;
+            }
+            result.Position = cylBot + v11 * (cylTop - cylBot);
+            result.Distance = v11;
+            result.EntityCollision = 0;
+            return true;
         }
     }
 }
