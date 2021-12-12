@@ -51,10 +51,18 @@ namespace MphRead.Entities
         public override void Initialize(Scene scene)
         {
             base.Initialize(scene);
-
-            scene.TryGetEntity(_data.EntityId1, out _entity1);
-            scene.TryGetEntity(_data.EntityId2, out _entity2);
-            scene.TryGetEntity(_data.EntityId3, out _entity3);
+            if (_data.EntityId1 != -1)
+            {
+                scene.TryGetEntity(_data.EntityId1, out _entity1);
+            }
+            if (_data.EntityId2 != -1)
+            {
+                scene.TryGetEntity(_data.EntityId2, out _entity2);
+            }
+            if (_data.EntityId3 != -1)
+            {
+                scene.TryGetEntity(_data.EntityId3, out _entity3);
+            }
             // todo: linked entity
             if (_data.SpawnerHealth > 0)
             {
@@ -95,29 +103,30 @@ namespace MphRead.Entities
             {
                 for (int i = 0; i < _data.SpawnCount; i++)
                 {
+                    EntityBase? spawned;
                     if (_data.EnemyType == EnemyType.Hunter)
                     {
-                        // todo: spawn enemy hunter
+                        spawned = SpawnHunter();
                     }
                     else
                     {
-                        EnemyInstanceEntity? enemy = SpawnEnemy(this, _data.EnemyType);
-                        if (enemy == null)
-                        {
-                            break;
-                        }
-                        scene.AddEntity(enemy);
-                        if (Flags.TestFlag(SpawnerFlags.HasModel))
-                        {
-                            Flags |= SpawnerFlags.PlayAnimation;
-                        }
-                        _spawnedCount++;
-                        _activeCount++;
-                        _cooldownTimer = _data.CooldownTime * 2; // todo: FPS stuff
-                        if (_spawnedCount >= _data.SpawnTotal || _data.SpawnLimit > 0 && _activeCount >= _data.SpawnLimit)
-                        {
-                            break;
-                        }
+                        spawned = SpawnEnemy(this, _data.EnemyType);
+                    }
+                    if (spawned == null)
+                    {
+                        break;
+                    }
+                    scene.AddEntity(spawned);
+                    if (Flags.TestFlag(SpawnerFlags.HasModel))
+                    {
+                        Flags |= SpawnerFlags.PlayAnimation;
+                    }
+                    _spawnedCount++;
+                    _activeCount++;
+                    _cooldownTimer = _data.CooldownTime * 2; // todo: FPS stuff
+                    if (_spawnedCount >= _data.SpawnTotal || _data.SpawnLimit > 0 && _activeCount >= _data.SpawnLimit)
+                    {
+                        break;
                     }
                 }
             }
@@ -126,6 +135,12 @@ namespace MphRead.Entities
                 DeactivateAndSendMessages(scene);
             }
             return base.Process(scene);
+        }
+
+        private PlayerEntity? SpawnHunter()
+        {
+            // todo: spawn enemy hunter
+            return null;
         }
 
         private void DeactivateAndSendMessages(Scene scene)
