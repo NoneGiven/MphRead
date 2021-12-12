@@ -64,6 +64,9 @@ namespace MphRead.Entities
         public EnemyType EnemyType => _data.Type;
         public EntityBase? Owner => _owner;
 
+        protected EquipInfo? _equipInfo;
+        protected static readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(64); // in-game: 64
+
         public EnemyInstanceEntity(EnemyInstanceEntityData data) : base(EntityType.EnemyInstance)
         {
             _data = data;

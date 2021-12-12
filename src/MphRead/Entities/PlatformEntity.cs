@@ -123,6 +123,7 @@ namespace MphRead.Entities
             _beamInterval = (int)data.BeamInterval * 2;
             if (data.BeamId > -1)
             {
+                // todo: ammo pointer
                 Debug.Assert(data.BeamId < Weapons.PlatformWeapons.Count);
                 _equipInfo = new EquipInfo(Weapons.PlatformWeapons[data.BeamId], _beams);
                 _beamSpawnPos = data.BeamSpawnPos.ToFloatVector();

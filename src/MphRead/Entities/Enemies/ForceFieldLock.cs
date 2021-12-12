@@ -68,7 +68,8 @@ namespace MphRead.Entities.Enemies
             };
             SetUpModel("ForceFieldLock");
             Recolor = _forceField.Recolor;
-            // todo: equip info fields
+            // todo: ammo pointer
+            _equipInfo = new EquipInfo(Weapons.Weapons1P[(int)_forceField.Data.Type], _beams);
             return true;
         }
 
@@ -109,9 +110,12 @@ namespace MphRead.Entities.Enemies
                 if (_shotFrames > 0)
                 {
                     _shotFrames--;
-                    // todo: shoot beams
+                    Debug.Assert(_equipInfo != null);
+                    Vector3 spawnDir = (_targetPosition - Position).Normalized();
+                    Vector3 spawnPos = Position + spawnDir * 0.1f;
+                    BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, BeamSpawnFlags.None, scene);
                 }
-                else
+                if (_shotFrames == 0)
                 {
                     _models[0].SetAnimation(0);
                 }
@@ -190,7 +194,6 @@ namespace MphRead.Entities.Enemies
             else
             {
                 // todo: handle this in parent
-                // sktodo: also need enemy event handlers
                 scene.SendMessage(Message.Unlock, this, _owner, 0, 0);
             }
             return false;
