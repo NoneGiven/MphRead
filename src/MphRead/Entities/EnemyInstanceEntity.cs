@@ -351,6 +351,13 @@ namespace MphRead.Entities
             return true;
         }
 
+        protected bool HandleBlockingCollision(Vector3 position, CollisionVolume volume, bool updateSpeed,
+            Action<bool>? a6 = null, Action<bool>? a7 = null)
+        {
+            // sktodo: this
+            return false;
+        }
+
         public override void GetDisplayVolumes(Scene scene)
         {
             if (scene.ShowVolumes == VolumeDisplay.EnemyHurt)

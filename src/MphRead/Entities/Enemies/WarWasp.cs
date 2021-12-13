@@ -276,7 +276,10 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior05(Scene scene)
         {
-            // sktodo: enemy_handle_blocker
+            if (!HandleBlockingCollision(Position, _hurtVolume, updateSpeed: true))
+            {
+                return false;
+            }
             StartMovingToward(_moveTarget, 1.2f);
             SetTransform(_speed.Normalized(), Vector3.UnitY, Position);
             _models[0].SetAnimation(1);
