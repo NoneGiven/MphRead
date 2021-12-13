@@ -116,6 +116,16 @@ namespace MphRead.Entities.Enemies
             }
         }
 
+        protected override void EnemyProcess(Scene scene)
+        {
+            if (_state1 != 4 && _state1 != 5)
+            {
+                ContactDamagePlayer(3, knockback: false);
+            }
+            // todo: play SFX
+            CallStateProcess(scene);
+        }
+
         private void State0(Scene scene)
         {
             Func2161F2C();
