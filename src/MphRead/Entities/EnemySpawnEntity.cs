@@ -39,7 +39,7 @@ namespace MphRead.Entities
             Id = data.Header.EntityId;
             _cooldownTimer = _data.InitialCooldown * 2; // todo: FPS stuff
             // todo: room state
-            if (data.Active != 0 || data.AlwaysActive != 0 || data.EnemyType == EnemyType.FireSpawn)
+            if (data.Active != 0 || data.AlwaysActive != 0)
             {
                 Flags |= SpawnerFlags.Active;
             }
@@ -72,6 +72,12 @@ namespace MphRead.Entities
                     scene.AddEntity(enemy);
                 }
             }
+        }
+
+        public override void SetActive(bool active)
+        {
+            base.SetActive(active);
+            Flags |= SpawnerFlags.Active;
         }
 
         public override bool Process(Scene scene)
