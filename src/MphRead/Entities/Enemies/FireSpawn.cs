@@ -114,6 +114,7 @@ namespace MphRead.Entities.Enemies
         // todo: function names
         private void State0(Scene scene)
         {
+            // the Y component should really be set to zero before normalization -- this causes transform squashing
             Vector3 facing = (scene.CameraPosition - Position).Normalized().WithY(0); // todo: use player position
             Matrix4 transform = GetTransformMatrix(facing, Vector3.UnitY);
             transform.Row3.Xyz = Position;
