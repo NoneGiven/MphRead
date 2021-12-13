@@ -12,6 +12,7 @@ namespace MphRead
         public AnimationInfo AnimInfo { get; } = new AnimationInfo();
         public bool IsPlaceholder { get; set; }
         public bool Active { get; set; } = true;
+        public bool NodeAnimIgnoreRoot { get; set; }
 
         public ModelInstance(Model model)
         {
@@ -293,7 +294,6 @@ namespace MphRead
         Texture = 0x20
     }
 
-    // anitodo: node_anim_ignore_root
     public class AnimationInfo
     {
         public int[] Index { get; } = new int[2] { -1, -1 };
@@ -531,7 +531,7 @@ namespace MphRead
             return transform;
         }
 
-        public void AnimateNodes(int index, bool useNodeTransform, Matrix4 parentTansform, Vector3 scale, AnimationInfo info)
+        public void AnimateNodes(int index, bool useNodeTransform, bool ignoreRoot, Matrix4 parentTansform, Vector3 scale, AnimationInfo info)
         {
             for (int i = index; i != -1;)
             {
@@ -541,7 +541,7 @@ namespace MphRead
                 if (group != null && group.Animations.TryGetValue(node.Name, out NodeAnimation animation))
                 {
                     transform = AnimateNode(group, animation, scale, info.NodeFrame);
-                    if (node.ParentIndex != -1)
+                    if (node.ParentIndex != -1 && !ignoreRoot)
                     {
                         transform *= Nodes[node.ParentIndex].Animation;
                     }
@@ -549,7 +549,7 @@ namespace MphRead
                 node.Animation = transform;
                 if (node.ChildIndex != -1)
                 {
-                    AnimateNodes(node.ChildIndex, useNodeTransform, parentTansform, scale, info);
+                    AnimateNodes(node.ChildIndex, useNodeTransform, ignoreRoot, parentTansform, scale, info);
                 }
                 node.Animation *= parentTansform;
                 i = node.NextIndex;

@@ -169,7 +169,7 @@ namespace MphRead
         public RepeatMode XRepeat { get; }
         public RepeatMode YRepeat { get; }
         public ColorRgb Diffuse { get; }
-        public ColorRgb Ambient { get; }
+        public ColorRgb Ambient { get; set; } // todo: yep
         public ColorRgb Specular { get; }
         public Vector3 CurrentDiffuse { get; set; }
         public Vector3 CurrentAmbient { get; set; }

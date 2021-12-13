@@ -12,6 +12,7 @@ namespace MphRead.Entities.Enemies
         private Vector3 _targetPosition;
         private readonly ForceFieldEntity _forceField;
         private byte _shotFrames = 0;
+        private EquipInfo? _equipInfo;
 
         // todo?: technically this has a custom draw function, but I don't think we need it (unless it's possible to observe the damage flash)
         public Enemy49Entity(EnemyInstanceEntityData data) : base(data)
@@ -21,7 +22,7 @@ namespace MphRead.Entities.Enemies
             _forceField = spawner;
         }
 
-        protected override bool EnemyInitialize()
+        protected override bool EnemyInitialize(Scene scene)
         {
             Vector3 position = _forceField.Data.Header.Position.ToFloatVector();
             _vec1 = _forceField.Data.Header.UpVector.ToFloatVector();

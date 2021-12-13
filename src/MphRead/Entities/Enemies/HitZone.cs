@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MphRead.Entities.Enemies
 {
@@ -23,7 +18,8 @@ namespace MphRead.Entities.Enemies
             Transform = _enemyOwner.Transform.ClearScale();
             if (_enemyOwner.EnemyType == EnemyType.FireSpawn)
             {
-                ContactDamagePlayer(1, knockback: true); // todo: get damage amount from owner values
+                var fireSpawn = (Enemy39Entity)_enemyOwner;
+                ContactDamagePlayer(fireSpawn.Values.ContactDamage, knockback: true);
             }
         }
 
@@ -63,6 +59,13 @@ namespace MphRead.Entities.Enemies
             return _health > 0;
         }
 
+        public void SetUp(ushort health, CollisionVolume hurtVolume, float boundingRadius)
+        {
+            _health = _healthMax = health;
+            _hurtVolumeInit = hurtVolume;
+            _boundingRadius = boundingRadius;
+        }
+
         public override void HandleMessage(MessageInfo info, Scene scene)
         {
             if (info.Message == Message.SetActive
@@ -72,13 +75,13 @@ namespace MphRead.Entities.Enemies
                 {
                     Flags |= EnemyFlags.CollidePlayer;
                     Flags |= EnemyFlags.CollideBeam;
-                    _hitPlayers = 1;
+                    HitPlayers = 1;
                 }
                 else
                 {
                     Flags &= ~EnemyFlags.CollidePlayer;
                     Flags &= ~EnemyFlags.CollideBeam;
-                    _hitPlayers = 0;
+                    HitPlayers = 0;
                 }
             }
         }

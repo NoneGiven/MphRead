@@ -14,7 +14,7 @@ namespace MphRead.Entities.Enemies
             _spawner = spawner;
         }
 
-        protected override bool EnemyInitialize()
+        protected override bool EnemyInitialize(Scene scene)
         {
             Transform = _data.Spawner.Transform;
             _prevPos = Position;

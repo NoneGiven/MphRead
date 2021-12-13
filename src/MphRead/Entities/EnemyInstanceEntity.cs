@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Effects;
 using OpenTK.Mathematics;
@@ -17,29 +18,6 @@ namespace MphRead.Entities
         }
     }
 
-    [Flags]
-    public enum EnemyFlags : ushort
-    {
-        Visible = 1,
-        NoHomingNc = 2,
-        NoHomingCo = 4,
-        Invincible = 8,
-        NoBombDamage = 0x10,
-        CollidePlayer = 0x20,
-        CollideBeam = 0x40,
-        NoMaxDistance = 0x80,
-        OnRadar = 0x100,
-        Static = 0x200
-    }
-
-    public enum Effectiveness : byte
-    {
-        Zero,
-        Half,
-        Normal,
-        Double
-    }
-
     public class EnemyInstanceEntity : EntityBase
     {
         protected readonly EnemyInstanceEntityData _data;
@@ -51,7 +29,7 @@ namespace MphRead.Entities
         protected CollisionVolume _hurtVolumeInit = default;
         protected byte _state1 = 0; // todo: names ("next?")
         protected byte _state2 = 0;
-        protected byte _hitPlayers = 0;
+        public byte HitPlayers { get; set; }
         protected Vector3 _prevPos = Vector3.Zero;
         protected Vector3 _speed = Vector3.Zero;
         protected float _boundingRadius = 0;
@@ -64,7 +42,6 @@ namespace MphRead.Entities
         public EnemyType EnemyType => _data.Type;
         public EntityBase? Owner => _owner;
 
-        protected EquipInfo? _equipInfo;
         protected static readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(64); // in-game: 64
 
         public EnemyInstanceEntity(EnemyInstanceEntityData data) : base(EntityType.EnemyInstance)
@@ -79,7 +56,7 @@ namespace MphRead.Entities
             _owner = _data.Spawner;
             Metadata.LoadEffectiveness(_data.Type, BeamEffectiveness);
             Flags = EnemyFlags.CollidePlayer | EnemyFlags.CollideBeam;
-            if (EnemyInitialize() && _data.Spawner is EnemySpawnEntity spawner)
+            if (EnemyInitialize(scene) && _data.Spawner is EnemySpawnEntity spawner)
             {
                 // todo: linked entity collision transform -- although I don't think this is ever used for enemies/spawners
             }
@@ -127,7 +104,7 @@ namespace MphRead.Entities
                         DoMovement();
                     }
                     // todo: positional audio, node ref
-                    _hitPlayers = 0;
+                    HitPlayers = 0;
                     // todo: player collision
                     EnemyProcess(scene);
                     if (!Flags.TestFlag(EnemyFlags.Static))
@@ -191,7 +168,7 @@ namespace MphRead.Entities
             }
         }
 
-        protected virtual bool EnemyInitialize()
+        protected virtual bool EnemyInitialize(Scene scene)
         {
             // must return true if overriden
             return false;
@@ -340,12 +317,78 @@ namespace MphRead.Entities
             return false;
         }
 
+        protected bool CallSubroutine<T>(IReadOnlyList<EnemySubroutine<T>> subroutines, T enemy, Scene scene) where T : EnemyInstanceEntity
+        {
+            Debug.Assert(enemy == this);
+            EnemySubroutine<T> subroutine = subroutines[_state1];
+            if (subroutine.Behaviors.Count == 0)
+            {
+                return false;
+            }
+            int index = 0;
+            while (!subroutine.Behaviors[index].Function.Invoke(enemy, scene))
+            {
+                index++;
+                if (index >= subroutine.Behaviors.Count)
+                {
+                    return false;
+                }
+            }
+            _state2 = subroutine.Behaviors[index].NextState;
+            return true;
+        }
+
         public override void GetDisplayVolumes(Scene scene)
         {
             if (scene.ShowVolumes == VolumeDisplay.EnemyHurt)
             {
                 AddVolumeItem(_hurtVolume, Vector3.UnitX, scene);
             }
+        }
+    }
+
+    [Flags]
+    public enum EnemyFlags : ushort
+    {
+        Visible = 1,
+        NoHomingNc = 2,
+        NoHomingCo = 4,
+        Invincible = 8,
+        NoBombDamage = 0x10,
+        CollidePlayer = 0x20,
+        CollideBeam = 0x40,
+        NoMaxDistance = 0x80,
+        OnRadar = 0x100,
+        Static = 0x200
+    }
+
+    public enum Effectiveness : byte
+    {
+        Zero,
+        Half,
+        Normal,
+        Double
+    }
+
+    public readonly struct EnemyBehavior<T> where T : EnemyInstanceEntity
+    {
+        public readonly byte NextState;
+        public readonly Func<T, Scene, bool> Function;
+
+        public EnemyBehavior(byte nextState, Func<T, Scene, bool> function)
+        {
+            NextState = nextState;
+            Function = function;
+        }
+    }
+
+    public readonly struct EnemySubroutine<T> where T : EnemyInstanceEntity
+    {
+        public readonly IReadOnlyList<EnemyBehavior<T>> Behaviors { get; }
+
+        public EnemySubroutine(IReadOnlyList<EnemyBehavior<T>> behaviors)
+        {
+            Behaviors = behaviors;
         }
     }
 }

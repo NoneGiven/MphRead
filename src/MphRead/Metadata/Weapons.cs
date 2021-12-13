@@ -41,7 +41,7 @@ namespace MphRead
         public IReadOnlyList<ushort> Colors { get; }
         public byte Priority { get; }
         public WeaponFlags Flags { get; }
-        public ushort SplashDamage { get; }
+        public ushort SplashDamage { get; set; }
         public ushort MinChargeSplashDamage { get; }
         public ushort ChargedSplashDamage { get; }
         public IReadOnlyList<byte> SplashDamageTypes { get; }
@@ -59,10 +59,10 @@ namespace MphRead
         public ushort AmmoCost { get; }
         public ushort MinChargeCost { get; }
         public ushort ChargeCost { get; }
-        public ushort UnchargedDamage { get; }
+        public ushort UnchargedDamage { get; set; } // todo: yep
         public ushort MinChargeDamage { get; }
         public ushort ChargedDamage { get; }
-        public ushort HeadshotDamage { get; }
+        public ushort HeadshotDamage { get; set; }
         public ushort MinChargeHeadshotDamage { get; }
         public ushort ChargedHeadshotDamage { get; }
         public ushort UnchargedLifespan { get; }

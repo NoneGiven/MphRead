@@ -24,7 +24,7 @@ namespace MphRead.Entities.Enemies
         }
 
         // this happens in the spawner's set_entity_refs in-game
-        protected override bool EnemyInitialize()
+        protected override bool EnemyInitialize(Scene scene)
         {
             Transform = _data.Spawner.Transform; // todo: spawner linked entity
             _boundingRadius = Fixed.ToFloat(3072);

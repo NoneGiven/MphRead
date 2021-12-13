@@ -2,11 +2,85 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Entities;
+using MphRead.Entities.Enemies;
 
 namespace MphRead
 {
     public static partial class Metadata
     {
+        public static IReadOnlyList<EnemySubroutine<Enemy39Entity>> Enemy39Subroutines = new EnemySubroutine<Enemy39Entity>[6]
+        {
+            // state 0
+            new EnemySubroutine<Enemy39Entity>(new EnemyBehavior<Enemy39Entity>[1]
+            {
+                new EnemyBehavior<Enemy39Entity>(1, Enemy39Entity.Behavior0)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy39Entity>(new EnemyBehavior<Enemy39Entity>[1]
+            {
+                new EnemyBehavior<Enemy39Entity>(2, Enemy39Entity.Behavior4)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy39Entity>(new EnemyBehavior<Enemy39Entity>[1]
+            {
+                new EnemyBehavior<Enemy39Entity>(3, Enemy39Entity.Behavior3)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy39Entity>(new EnemyBehavior<Enemy39Entity>[1]
+            {
+                new EnemyBehavior<Enemy39Entity>(4, Enemy39Entity.Behavior1)
+            }),
+            // state 4
+            new EnemySubroutine<Enemy39Entity>(new EnemyBehavior<Enemy39Entity>[2]
+            {
+                new EnemyBehavior<Enemy39Entity>(5, Enemy39Entity.Behavior5),
+                new EnemyBehavior<Enemy39Entity>(5, Enemy39Entity.Behavior6)
+            }),
+            // state 5
+            new EnemySubroutine<Enemy39Entity>(new EnemyBehavior<Enemy39Entity>[1]
+            {
+                new EnemyBehavior<Enemy39Entity>(0, Enemy39Entity.Behavior2)
+            }),
+        };
+
+        public static IReadOnlyList<Enemy39Values> Enemy39Values = new Enemy39Values[2]
+        {
+            new Enemy39Values()
+            {
+                HealthMax = 600,
+                BeamDamage = 30,
+                SplashDamage = 15,
+                ContactDamage = 12,
+                Unused8 = 600,
+                AttackDelay = 0,
+                AttackCountMin = 3,
+                AttackCountMax = 6,
+                DiveTimerMin = 1,
+                DiveTimerMax = 40,
+                Unused14 = 0x100010,
+                Unused18 = 50,
+                ScanId = 222,
+                Effectiveness = 0x8955
+            },
+            new Enemy39Values()
+            {
+                HealthMax = 600,
+                BeamDamage = 30,
+                SplashDamage = 0,
+                ContactDamage = 12,
+                Unused8 = 600,
+                AttackDelay = 0,
+                AttackCountMin = 2,
+                AttackCountMax = 5,
+                DiveTimerMin = 1,
+                DiveTimerMax = 50,
+                Unused14 = 0x100010,
+                Unused18 = 50,
+                ScanId = 240,
+                Effectiveness = 0xB155
+            }
+        };
+
         public static string? GetEnemyModelName(EnemyType type)
         {
             int index = (int)type;

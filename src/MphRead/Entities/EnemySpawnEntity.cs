@@ -39,7 +39,7 @@ namespace MphRead.Entities
             Id = data.Header.EntityId;
             _cooldownTimer = _data.InitialCooldown * 2; // todo: FPS stuff
             // todo: room state
-            if (data.Active != 0 || data.AlwaysActive != 0)
+            if (data.Active != 0 || data.AlwaysActive != 0 || data.EnemyType == EnemyType.FireSpawn)
             {
                 Flags |= SpawnerFlags.Active;
             }
@@ -220,6 +220,10 @@ namespace MphRead.Entities
             if (type == EnemyType.Spawner)
             {
                 return new Enemy40Entity(new EnemyInstanceEntityData(type, spawner));
+            }
+            if (type == EnemyType.FireSpawn)
+            {
+                return new Enemy39Entity(new EnemyInstanceEntityData(type, spawner));
             }
             if (type == EnemyType.ForceFieldLock)
             {
