@@ -193,8 +193,6 @@ namespace MphRead
             {
                 _setTitle.Invoke(meta.InGameName);
             }
-            SceneSetup.LoadItemResources(this);
-            SceneSetup.LoadEnemyResources(this);
             foreach (EntityBase entity in entities)
             {
                 _entities.Add(entity);
@@ -202,6 +200,8 @@ namespace MphRead
                 _entityMap.Add(entity.Id, entity);
                 InitEntity(entity);
             }
+            SceneSetup.LoadItemResources(this);
+            SceneSetup.LoadEnemyResources(this);
             _light1Vector = meta.Light1Vector;
             _light1Color = new Vector3(
                 meta.Light1Color.Red / 31.0f,

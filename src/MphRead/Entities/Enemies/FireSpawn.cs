@@ -9,7 +9,7 @@ namespace MphRead.Entities.Enemies
     {
         private readonly EnemySpawnEntity _spawner;
         private int _animFrameCount = 0;
-        private CollisionVolume _activeVolume;
+        private CollisionVolume _activeVolume; // todo: visualize
         private CollisionVolume _locationVolume;
         private readonly EquipInfo[] _equipInfo = new EquipInfo[2];
         private int _wristId = 1;
