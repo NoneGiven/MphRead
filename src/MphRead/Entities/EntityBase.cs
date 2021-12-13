@@ -461,9 +461,11 @@ namespace MphRead.Entities
         protected void SetTransform(Vector3 facing, Vector3 up, Vector3 position)
         {
             Matrix4 transform = GetTransformMatrix(facing, up);
-            transform.ExtractRotation().ToEulerAngles(out Vector3 rotation);
-            Rotation = rotation;
-            Position = position;
+            //transform.ExtractRotation().ToEulerAngles(out Vector3 rotation);
+            //Rotation = rotation;
+            //Position = position;
+            transform.Row3.Xyz = position;
+            Transform = transform;
         }
 
         public static Matrix4 GetTransformMatrix(Vector3 facing, Vector3 up)

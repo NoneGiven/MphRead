@@ -2063,7 +2063,7 @@ namespace MphRead.Utility
                     {
                         writer.WriteVector3(vector);
                     }
-                    writer.Write(entity.Unknown02);
+                    writer.Write(entity.PositionCount);
                     writer.Write(padByte); // Padding1A9
                     writer.Write(padShort); // Padding1AA
                     writer.Write(entity.MovementType);

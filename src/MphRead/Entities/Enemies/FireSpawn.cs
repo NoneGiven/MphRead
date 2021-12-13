@@ -393,6 +393,12 @@ namespace MphRead.Entities.Enemies
         }
 
         #region Boilerplate
+
+        public static bool Behavior0(Enemy39Entity enemy, Scene scene)
+        {
+            return enemy.Behavior0(scene);
+        }
+
         public static bool Behavior1(Enemy39Entity enemy, Scene scene)
         {
             return enemy.Behavior1(scene);
@@ -421,11 +427,6 @@ namespace MphRead.Entities.Enemies
         public static bool Behavior6(Enemy39Entity enemy, Scene scene)
         {
             return enemy.Behavior6(scene);
-        }
-
-        public static bool Behavior0(Enemy39Entity enemy, Scene scene)
-        {
-            return enemy.Behavior0(scene);
         }
 
         #endregion

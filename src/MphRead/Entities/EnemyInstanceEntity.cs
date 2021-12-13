@@ -169,9 +169,11 @@ namespace MphRead.Entities
             }
         }
 
+        /// <summary>
+        /// Must return true if overriden.
+        /// </summary>
         protected virtual bool EnemyInitialize(Scene scene)
         {
-            // must return true if overriden
             return false;
         }
 
@@ -179,9 +181,11 @@ namespace MphRead.Entities
         {
         }
 
+        /// <summary>
+        /// Must return true if overriden.
+        /// </summary>
         protected virtual bool EnemyGetDrawInfo(Scene scene)
         {
-            // must return true if overriden
             return false;
         }
 
@@ -312,9 +316,11 @@ namespace MphRead.Entities
             return BeamEffectiveness[index];
         }
 
+        /// <summary>
+        /// When overridden, must return true when unaffected by damage and false otherwise.
+        /// </summary>
         protected virtual bool EnemyTakeDamage(EntityBase? source, Scene scene)
         {
-            // when overridden, must return true when unaffected by damage and false otherwise
             return false;
         }
 

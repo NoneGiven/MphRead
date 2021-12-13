@@ -147,7 +147,7 @@ namespace MphRead
         public readonly RawCollisionVolume Volume1;
         public readonly RawCollisionVolume Volume2;
         public readonly Vector3FxArray16 MovementVectors;
-        public readonly byte Field1A8;
+        public readonly byte PositionCount;
         public readonly byte Padding1A9;
         public readonly ushort Padding1AA;
         public readonly uint MovementType;
@@ -299,7 +299,7 @@ namespace MphRead.Editor
 
         // war wasp
         public List<Vector3> MovementVectors { get; set; } = new List<Vector3>();
-        public byte Unknown02 { get; set; }
+        public byte PositionCount { get; set; }
         public uint MovementType { get; set; }
 
         // enemy hunter
@@ -463,7 +463,7 @@ namespace MphRead.Editor
                     {
                         MovementVectors.Add(fields.MovementVectors[i].ToFloatVector());
                     }
-                    Unknown02 = fields.Field1A8;
+                    PositionCount = fields.PositionCount;
                     MovementType = fields.MovementType;
                 }
                 if (EnemyType == EnemyType.WarWasp)
@@ -578,7 +578,7 @@ namespace MphRead.Editor
             PrintValue(EnemyHealth, other.EnemyHealth, nameof(EnemyHealth));
             PrintValue(EnemyDamage, other.EnemyDamage, nameof(EnemyDamage));
             PrintValues(MovementVectors, other.MovementVectors, nameof(MovementVectors));
-            PrintValue(Unknown02, other.Unknown02, nameof(Unknown02));
+            PrintValue(PositionCount, other.PositionCount, nameof(PositionCount));
             PrintValue(MovementType, other.MovementType, nameof(MovementType));
             PrintValue(Hunter, other.Hunter, nameof(Hunter));
             PrintValue(EncounterType, other.EncounterType, nameof(EncounterType));

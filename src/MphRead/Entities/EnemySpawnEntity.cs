@@ -223,13 +223,17 @@ namespace MphRead.Entities
         // todo: entity node ref
         public static EnemyInstanceEntity? SpawnEnemy(EntityBase spawner, EnemyType type)
         {
-            if (type == EnemyType.Spawner)
+            if (type == EnemyType.WarWasp)
             {
-                return new Enemy40Entity(new EnemyInstanceEntityData(type, spawner));
+                return new Enemy00Entity(new EnemyInstanceEntityData(type, spawner));
             }
             if (type == EnemyType.FireSpawn)
             {
                 return new Enemy39Entity(new EnemyInstanceEntityData(type, spawner));
+            }
+            if (type == EnemyType.Spawner)
+            {
+                return new Enemy40Entity(new EnemyInstanceEntityData(type, spawner));
             }
             if (type == EnemyType.ForceFieldLock)
             {

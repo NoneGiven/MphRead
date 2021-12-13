@@ -588,6 +588,10 @@ namespace MphRead
 
         private static void LoadItem(ItemType item, Scene scene)
         {
+            if (item == ItemType.None)
+            {
+                return;
+            }
             // todo: affinity weapon replacement
             int index = (int)item;
             Debug.Assert(index < Metadata.Items.Count);
