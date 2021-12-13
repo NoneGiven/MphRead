@@ -33,6 +33,7 @@ namespace MphRead.Entities
         protected Vector3 _prevPos = Vector3.Zero;
         protected Vector3 _speed = Vector3.Zero;
         protected float _boundingRadius = 0;
+        protected Action<Scene>[]? _stateProcesses;
 
         public Effectiveness[] BeamEffectiveness = new Effectiveness[9];
         private bool _onlyMoveHurtVolume = false;
@@ -315,6 +316,12 @@ namespace MphRead.Entities
         {
             // when overridden, must return true when unaffected by damage and false otherwise
             return false;
+        }
+
+        protected void CallStateProcess(Scene scene)
+        {
+            Debug.Assert(_stateProcesses != null && _state1 >= 0 && _state1 < _stateProcesses.Length);
+            _stateProcesses[_state1].Invoke(scene);
         }
 
         protected bool CallSubroutine<T>(IReadOnlyList<EnemySubroutine<T>> subroutines, T enemy, Scene scene) where T : EnemyInstanceEntity

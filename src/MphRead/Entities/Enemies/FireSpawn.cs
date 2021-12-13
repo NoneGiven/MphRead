@@ -31,6 +31,10 @@ namespace MphRead.Entities.Enemies
             var spawner = data.Spawner as EnemySpawnEntity;
             Debug.Assert(spawner != null);
             _spawner = spawner;
+            _stateProcesses = new Action<Scene>[6]
+            {
+                State0, State1, State2, State3, State4, State5
+            };
         }
 
         protected override bool EnemyInitialize(Scene scene)
@@ -389,34 +393,6 @@ namespace MphRead.Entities.Enemies
         }
 
         #region Boilerplate
-        private void CallStateProcess(Scene scene)
-        {
-            if (_state1 == 0)
-            {
-                State0(scene);
-            }
-            else if (_state1 == 1)
-            {
-                State1(scene);
-            }
-            else if (_state1 == 2)
-            {
-                State2(scene);
-            }
-            else if (_state1 == 3)
-            {
-                State3(scene);
-            }
-            else if (_state1 == 4)
-            {
-                State4(scene);
-            }
-            else if (_state1 == 5)
-            {
-                State5(scene);
-            }
-        }
-
         public static bool Behavior1(Enemy39Entity enemy, Scene scene)
         {
             return enemy.Behavior1(scene);
