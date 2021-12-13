@@ -11,7 +11,7 @@ namespace MphRead.Entities.Enemies
         private int _animFrameCount = 0;
         private CollisionVolume _activeVolume;
         private CollisionVolume _locationVolume;
-        private EquipInfo[] _equipInfo = new EquipInfo[2];
+        private readonly EquipInfo[] _equipInfo = new EquipInfo[2];
         private int _wristId = 1;
         private int _tangibilityTimer = 0;
         private int _attackDelay = 0;
@@ -21,8 +21,7 @@ namespace MphRead.Entities.Enemies
         private EffectEntry? _effectEntry = null;
         private Node? _wristNodeL = null;
         private Node? _wristNodeR = null;
-        // node root transform is turned off and these are tracked manually -- probably because of the draw scale factor
-        private Vector3[] _wristPos = new Vector3[2];
+        private readonly Vector3[] _wristPos = new Vector3[2];
         private Enemy50Entity? _hitZone = null;
 
         public Enemy39Values Values { get; private set; }
@@ -49,7 +48,6 @@ namespace MphRead.Entities.Enemies
             Recolor = (int)_spawner.Data.Fields.S06.EnemySubtype;
             Values = Metadata.Enemy39Values[Recolor];
             _health = _healthMax = Values.HealthMax;
-            inst.NodeAnimIgnoreRoot = true;
             inst.SetAnimation(1, AnimFlags.Paused); // just setting to get the frame count, I guess
             _animFrameCount = inst.AnimInfo.FrameCount[0];
             _activeVolume = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume2, Position);
@@ -64,7 +62,6 @@ namespace MphRead.Entities.Enemies
             _equipInfo[1] = new EquipInfo(weapon, _beams);
             _attackDelay = Values.AttackDelay * 2; // todo: FPS stuff
             _attackCount = Values.AttackCountMin + Rng.GetRandomInt2((uint)(Values.AttackCountMax + 1 - Values.AttackCountMin));
-            // todo?: "transform"
             // todo: healthbar name
             if (_spawner.Data.Fields.S06.EnemySubtype == 1)
             {
@@ -104,22 +101,11 @@ namespace MphRead.Entities.Enemies
             ContactDamagePlayer(Values.ContactDamage, knockback: true);
             if (_state1 == 4)
             {
-                Matrix4 transform = Transform;
-                transform *= _drawScale;
-                transform.Row3 = new Vector4(Position, 1);
                 Debug.Assert(_wristNodeL != null);
                 Debug.Assert(_wristNodeR != null);
-                // todo: ???
-                Matrix4 nodeTransform = _wristNodeL.Transform;
-                nodeTransform.Row3.Z += 2;
-                _wristNodeL.Transform = nodeTransform;
-                nodeTransform *= transform;
-                _wristPos[0] = nodeTransform.Row3.Xyz;
-                nodeTransform = _wristNodeR.Transform;
-                nodeTransform.Row3.Z += 2;
-                _wristNodeR.Transform = nodeTransform;
-                nodeTransform *= transform;
-                _wristPos[1] = nodeTransform.Row3.Xyz;
+                // the game set node_anim_ignore_root and tracks these in a different way
+                _wristPos[0] = _wristNodeL.Animation.Row3.Xyz;
+                _wristPos[1] = _wristNodeR.Animation.Row3.Xyz;
             }
             CallStateProcess(scene);
         }
@@ -127,8 +113,10 @@ namespace MphRead.Entities.Enemies
         // todo: function names
         private void State0(Scene scene)
         {
-            Vector3 facing = (scene.CameraPosition - Position).Normalized().WithY(0); // todo: use player position
+            Vector3 position = Position;
+            Vector3 facing = (scene.CameraPosition - position).Normalized().WithY(0); // todo: use player position
             Transform = GetTransformMatrix(facing, Vector3.UnitY);
+            Position = position;
             CallSubroutine(Metadata.Enemy39Subroutines, this, scene);
         }
 
@@ -193,13 +181,13 @@ namespace MphRead.Entities.Enemies
                 {
                     _attackCount--;
                     _attackDelay = Values.AttackDelay * 2; // todo: FPS stuff
-                    Vector3 spawn = scene.CameraPosition.AddY(0.5f) - _wristPos[_wristId]; // todo: use player position
-                    spawn = spawn.Normalized();
+                    Vector3 dir = scene.CameraPosition - _wristPos[_wristId]; // todo: use player position + 0.5 Y
+                    dir = dir.Normalized();
                     EquipInfo equipInfo = _equipInfo[_wristId];
                     equipInfo.Weapon.UnchargedDamage = Values.BeamDamage;
                     equipInfo.Weapon.SplashDamage = Values.SplashDamage;
                     equipInfo.Weapon.HeadshotDamage = Values.BeamDamage;
-                    BeamProjectileEntity.Spawn(this, equipInfo, _wristPos[_wristId], spawn, BeamSpawnFlags.None, scene);
+                    BeamProjectileEntity.Spawn(this, equipInfo, _wristPos[_wristId], dir, BeamSpawnFlags.None, scene);
                     if (_effectEntry != null)
                     {
                         scene.DetachEffectEntry(_effectEntry, setExpired: true);
@@ -212,9 +200,11 @@ namespace MphRead.Entities.Enemies
                     {
                         for (int i = 0; i < _effectEntry.Elements.Count; i++)
                         {
+                            Matrix4 transform = Transform.ClearScale();
+                            transform.Row3.Xyz = _wristPos[_wristId];
                             EffectElementEntry element = _effectEntry.Elements[i];
                             element.Position = _wristPos[_wristId];
-                            element.Transform = Transform.ClearScale().ClearTranslation();
+                            element.Transform = transform;
                         }
                     }
                 }

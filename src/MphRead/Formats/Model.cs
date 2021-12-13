@@ -531,7 +531,7 @@ namespace MphRead
             return transform;
         }
 
-        public void AnimateNodes(int index, bool useNodeTransform, bool ignoreRoot, Matrix4 parentTansform, Vector3 scale, AnimationInfo info)
+        public void AnimateNodes(int index, bool useNodeTransform, Matrix4 parentTansform, Vector3 scale, AnimationInfo info)
         {
             for (int i = index; i != -1;)
             {
@@ -541,7 +541,7 @@ namespace MphRead
                 if (group != null && group.Animations.TryGetValue(node.Name, out NodeAnimation animation))
                 {
                     transform = AnimateNode(group, animation, scale, info.NodeFrame);
-                    if (node.ParentIndex != -1 && !ignoreRoot)
+                    if (node.ParentIndex != -1)
                     {
                         transform *= Nodes[node.ParentIndex].Animation;
                     }
@@ -549,7 +549,7 @@ namespace MphRead
                 node.Animation = transform;
                 if (node.ChildIndex != -1)
                 {
-                    AnimateNodes(node.ChildIndex, useNodeTransform, ignoreRoot, parentTansform, scale, info);
+                    AnimateNodes(node.ChildIndex, useNodeTransform, parentTansform, scale, info);
                 }
                 node.Animation *= parentTansform;
                 i = node.NextIndex;

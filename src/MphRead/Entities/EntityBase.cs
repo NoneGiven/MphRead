@@ -293,7 +293,7 @@ namespace MphRead.Entities
             model.AnimateTextures(inst.AnimInfo);
             model.ComputeNodeMatrices(index: 0);
             Matrix4 transform = GetModelTransform(inst, index);
-            model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, inst.NodeAnimIgnoreRoot, transform, model.Scale, inst.AnimInfo);
+            model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, inst.AnimInfo);
             model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
             // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
             scene.UpdateMaterials(model, GetModelRecolor(inst, index));
