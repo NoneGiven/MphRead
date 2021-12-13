@@ -78,7 +78,7 @@ namespace MphRead.Entities.Enemies
             }
             if (_movementType != 0)
             {
-                Func2161E30();
+                StartMovingTowardPosition();
             }
             return true;
         }
@@ -93,14 +93,14 @@ namespace MphRead.Entities.Enemies
         }
 
         // todo: function names
-        private void Func2161E30()
+        private void StartMovingTowardPosition()
         {
             _moveTarget = _movePositions[_moveIndex];
             StartMovingToward(_moveTarget, step: _movementType == 3 ? 0.25f : 0.2f);
             SetTransform(_speed.Normalized(), Vector3.UnitY, Position);
         }
 
-        private void Func2161F2C()
+        private void MoveInCircle()
         {
             if (_movementType == 0)
             {
@@ -128,7 +128,7 @@ namespace MphRead.Entities.Enemies
 
         private void State0(Scene scene)
         {
-            Func2161F2C();
+            MoveInCircle();
             if (Position != _moveTarget && _movementType != 0)
             {
                 SetTransform((_moveTarget - Position).Normalized(), Vector3.UnitY, Position);
@@ -209,7 +209,7 @@ namespace MphRead.Entities.Enemies
             }
             else
             {
-                Func2161E30();
+                StartMovingTowardPosition();
                 _models[0].SetAnimation(1);
             }
             return true;
@@ -276,7 +276,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior05(Scene scene)
         {
-            // sktodo: sub_204FA3C
+            // sktodo: enemy_handle_blocker
             StartMovingToward(_moveTarget, 1.2f);
             SetTransform(_speed.Normalized(), Vector3.UnitY, Position);
             _models[0].SetAnimation(1);
@@ -306,21 +306,8 @@ namespace MphRead.Entities.Enemies
             {
                 return false;
             }
-            DoThing1();
+            ReachTargetOrReversePattern();
             return true;
-        }
-
-        private void DoThing1()
-        {
-            _speed = _moveTarget - Position;
-            if (_speed.Length == 0)
-            {
-                _stepCount = 0;
-            }
-            else
-            {
-                DoThing2();
-            }
         }
 
         private bool Behavior08(Scene scene)
@@ -329,11 +316,24 @@ namespace MphRead.Entities.Enemies
             {
                 return false;
             }
-            DoThing2();
+            ReversePattern();
             return true;
         }
 
-        private void DoThing2()
+        private void ReachTargetOrReversePattern()
+        {
+            _speed = _moveTarget - Position;
+            if (_speed.Length == 0)
+            {
+                _stepCount = 0;
+            }
+            else
+            {
+                ReversePattern();
+            }
+        }
+
+        private void ReversePattern()
         {
             _pattern = _nextPattern;
             if (_pattern == 0)
@@ -346,7 +346,7 @@ namespace MphRead.Entities.Enemies
                 _finalMoveIndex = 0;
                 _moveIndex = (byte)(_moveIndex == 0 ? _maxMoveIndex : _moveIndex - 1);
             }
-            Func2161E30();
+            StartMovingTowardPosition();
         }
 
         private bool Behavior09(Scene scene)
@@ -370,7 +370,7 @@ namespace MphRead.Entities.Enemies
             {
                 return false;
             }
-            DoThing1();
+            ReachTargetOrReversePattern();
             return true;
         }
 
