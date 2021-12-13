@@ -40,8 +40,9 @@ namespace MphRead.Entities.Enemies
             Flags |= EnemyFlags.OnRadar;
             Flags &= ~EnemyFlags.CollidePlayer;
             Vector3 position = _data.Spawner.Position;
-            Transform = GetTransformMatrix((scene.CameraPosition - position).Normalized(), Vector3.UnitY); // todo: use player position
-            Position = position;
+            Matrix4 transform = GetTransformMatrix((scene.CameraPosition - position).Normalized(), Vector3.UnitY); // todo: use player position
+            transform.Row3.Xyz = position;
+            Transform = transform;
             _boundingRadius = 1;
             _hurtVolumeInit = new CollisionVolume(new Vector3(0, Fixed.ToFloat(13516), Fixed.ToFloat(11059)), 0.5f);
             ModelInstance inst = SetUpModel("LavaDemon");
