@@ -113,10 +113,10 @@ namespace MphRead.Entities.Enemies
         // todo: function names
         private void State0(Scene scene)
         {
-            Vector3 position = Position;
-            Vector3 facing = (scene.CameraPosition - position).Normalized().WithY(0); // todo: use player position
-            Transform = GetTransformMatrix(facing, Vector3.UnitY);
-            Position = position;
+            Vector3 facing = (scene.CameraPosition - Position).Normalized().WithY(0); // todo: use player position
+            Matrix4 transform = GetTransformMatrix(facing, Vector3.UnitY);
+            transform.Row3.Xyz = Position;
+            Transform = transform;
             CallSubroutine(Metadata.Enemy39Subroutines, this, scene);
         }
 
