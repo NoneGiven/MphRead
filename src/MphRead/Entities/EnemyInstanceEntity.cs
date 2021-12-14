@@ -365,6 +365,11 @@ namespace MphRead.Entities
                 AddVolumeItem(_hurtVolume, Vector3.UnitX, scene);
             }
         }
+
+        public static Vector3 RotateVector(Vector3 vec, Vector3 axis, float angle)
+        {
+            return vec * Matrix3.CreateFromAxisAngle(axis, MathHelper.DegreesToRadians(angle));
+        }
     }
 
     [Flags]

@@ -200,7 +200,7 @@ namespace MphRead.Formats.Collision
         public readonly CollisionFlags Flags;
         public readonly ushort LayerMask;
         public readonly ushort PaddingA;
-        public readonly ushort PointIndexCount;
+        public readonly ushort PointIndexCount; // does not include the copy of the first index at the end of the sequence
         public readonly ushort PointStartIndex;
 
         // bits 3-4

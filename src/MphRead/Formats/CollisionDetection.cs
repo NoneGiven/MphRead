@@ -28,12 +28,17 @@ namespace MphRead.Formats
         AffectsScan = 0x8000
     }
 
+    // Field0 is set in check_between_points_sphere and check_blocker_in_radius
+    // Flags and Plane are set in check_blocker_between_points, check_between_points_sphere, and check_blocker_in_radius
+    // Field14 is set in check_between_points_sphere and check_blocker_in_radius
+    // Position, Distance, and EntityCollision are set in check_blocker_between_points and check_between_points_sphere
+    // Field2C and Field38 are set in check_between_points_sphere
     public struct CollisionResult
     {
         public byte Field0;
         public CollisionFlags Flags;
         public Vector4 Plane;
-        public int Field14;
+        public float Field14;
         public Vector3 Position;
         public float Distance; // percentage
         public EntityCollision? EntityCollision;
@@ -98,54 +103,55 @@ namespace MphRead.Formats
                 {
                     // sktodo: counter
                     CollisionData data = info.Data[info.DataIndices[candidate.Entry.DataStartIndex + j]];
-                    if (((ushort)data.Flags & mask) == 0)
+                    if (((ushort)data.Flags & mask) != 0)
                     {
-                        Vector4 plane = info.Planes[data.PlaneIndex];
-                        float dot1 = Vector3.Dot(transPoint1, plane.Xyz) - plane.W;
-                        if (dot1 > 0)
+                        continue;
+                    }
+                    Vector4 plane = info.Planes[data.PlaneIndex];
+                    float dot1 = Vector3.Dot(transPoint1, plane.Xyz) - plane.W;
+                    if (dot1 > 0)
+                    {
+                        float dot2 = Vector3.Dot(transPoint2, plane.Xyz) - plane.W;
+                        if (dot2 <= 0)
                         {
-                            float dot2 = Vector3.Dot(transPoint2, plane.Xyz) - plane.W;
-                            if (dot2 <= 0)
+                            float dist = dot1 / (dot1 - dot2);
+                            if (dist > 1)
                             {
-                                float dist = dot1 / (dot1 - dot2);
-                                if (dist > 1)
+                                dist = 1;
+                            }
+                            else if (dist < 0)
+                            {
+                                dist = 0;
+                            }
+                            if (dist < minDist)
+                            {
+                                // point of intersection with plane
+                                var pos = new Vector3(
+                                    transPoint1.X + (transPoint2.X - transPoint1.X) * dist,
+                                    transPoint1.Y + (transPoint2.Y - transPoint1.Y) * dist,
+                                    transPoint1.Z + (transPoint2.Z - transPoint1.Z) * dist
+                                );
+                                if (CheckPointOnFace(pos, info, data))
                                 {
-                                    dist = 1;
-                                }
-                                else if (dist < 0)
-                                {
-                                    dist = 0;
-                                }
-                                if (dist < minDist)
-                                {
-                                    // point of intersection with plane
-                                    var pos = new Vector3(
-                                        transPoint1.X + (transPoint2.X - transPoint1.X) * dist,
-                                        transPoint1.Y + (transPoint2.Y - transPoint1.Y) * dist,
-                                        transPoint1.Z + (transPoint2.Z - transPoint1.Z) * dist
-                                    );
-                                    if (CheckPointOnFace(pos, info, data))
+                                    if (candidate.EntityCollision != null)
                                     {
-                                        if (candidate.EntityCollision != null)
-                                        {
-                                            result.Position = Matrix.Vec3MultMtx4(pos, candidate.EntityCollision.Transform);
-                                            Vector3 normal = Matrix.Vec3MultMtx3(plane.Xyz, candidate.EntityCollision.Transform);
-                                            float w = Vector3.Dot(result.Position, normal);
-                                            result.Plane = new Vector4(normal, w);
-                                        }
-                                        else
-                                        {
-                                            result.Position = pos;
-                                            result.Plane = plane;
-                                        } 
-                                        minDist = dist;
-                                        result.Field0 = 0;
-                                        result.Field14 = 0;
-                                        result.Flags = data.Flags;
-                                        result.Distance = dist;
-                                        result.EntityCollision = candidate.EntityCollision;
-                                        collided = true;
+                                        result.Position = Matrix.Vec3MultMtx4(pos, candidate.EntityCollision.Transform);
+                                        Vector3 normal = Matrix.Vec3MultMtx3(plane.Xyz, candidate.EntityCollision.Transform);
+                                        float w = Vector3.Dot(result.Position, normal);
+                                        result.Plane = new Vector4(normal, w);
                                     }
+                                    else
+                                    {
+                                        result.Position = pos;
+                                        result.Plane = plane;
+                                    }
+                                    minDist = dist;
+                                    result.Field0 = 0;
+                                    result.Field14 = 0;
+                                    result.Flags = data.Flags;
+                                    result.Distance = dist;
+                                    result.EntityCollision = candidate.EntityCollision;
+                                    collided = true;
                                 }
                             }
                         }
@@ -309,8 +315,7 @@ namespace MphRead.Formats
             return false;
         }
 
-        private static IReadOnlyList<CollisionCandidate> GetCandidatesForPoints(Vector3 point1, Vector3 point2, float margin,
-            bool includeEntities, Scene scene)
+        private static void ClearCandidates()
         {
             while (_activeItems.Count > 0)
             {
@@ -318,26 +323,264 @@ namespace MphRead.Formats
                 _activeItems.Remove(item);
                 _inactiveItems.Enqueue(item);
             }
-            GetRoomCandidatesForPoints(point1, point2, scene);
-            if (includeEntities)
+        }
+
+        public static int CheckInRadius(Vector3 point, float radius, int limit, bool a6, TestFlags flags, Scene scene, CollisionResult[] results)
+        {
+            ushort mask = 0;
+            if (flags.TestFlag(TestFlags.AffectsPlayers))
             {
-                GetEntityCandidatesForPoints(point1, point2, margin, scene);
+                mask |= (ushort)CollisionFlags.IgnorePlayers;
+            }
+            if (flags.TestFlag(TestFlags.AffectsBeams))
+            {
+                mask |= (ushort)CollisionFlags.IgnoreBeams;
+            }
+            var limitMin = new Vector3(point.X - radius, point.Y - radius, point.Z - radius);
+            var limitMax = new Vector3(point.X + radius, point.Y + radius, point.Z + radius);
+            IReadOnlyList<CollisionCandidate> candidates
+                = GetCandidatesForLimits(null, Vector3.Zero, 0, limitMin, limitMax, includeEntities: false, scene);
+            int count = 0;
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                CollisionCandidate candidate = candidates[i];
+                MphCollisionInfo info = candidate.Collision;
+                Debug.Assert(candidate.Entry.DataCount > 0);
+                for (int j = 0; j < candidate.Entry.DataCount; j++)
+                {
+                    // sktodo: counter
+                    CollisionData data = info.Data[info.DataIndices[candidate.Entry.DataStartIndex + j]];
+                    if (((ushort)data.Flags & mask) != 0)
+                    {
+                        continue;
+                    }
+                    if (count == limit)
+                    {
+                        break;
+                    }
+                    Vector4 plane = info.Planes[data.PlaneIndex];
+                    float dot = Vector3.Dot(point, plane.Xyz) - plane.W;
+                    float resDot = dot;
+                    if (dot <= 0 || dot > radius)
+                    {
+                        continue;
+                    }
+
+                    float GetEdgeDotDifference(int pIndex)
+                    {
+                        int index = data.PointStartIndex + pIndex;
+                        Vector3 point1 = info.Points[info.PointIndices[index]];
+                        // index + 1 may exceed the count, in which case we get the copy of the first index
+                        Vector3 point2 = info.Points[info.PointIndices[index + 1]];
+                        Vector3 edgeDir = (point1 - point2).Normalized();
+                        var cross = Vector3.Cross(edgeDir, plane.Xyz);
+                        float dot1 = Vector3.Dot(cross, point2);
+                        float dot2 = Vector3.Dot(point, cross);
+                        return dot2 - dot1;
+                    }
+
+                    bool noNegCos = true;
+                    bool foundBlocker = false;
+                    int p1 = 0;
+                    for (; p1 < data.PointIndexCount; p1++)
+                    {
+                        float dotDiff = GetEdgeDotDifference(p1);
+                        if (dotDiff < -0.03125f)
+                        {
+                            noNegCos = false;
+                            break;
+                        }
+                    }
+                    if (noNegCos)
+                    {
+                        results[count].Field0 = 0;
+                        results[count].Plane = plane;
+                        foundBlocker = true;
+                    }
+                    if (!foundBlocker)
+                    {
+                        Debug.Assert(data.PointIndexCount > 0);
+                        // pick up where left off with the p1 index
+                        float dotDiff = GetEdgeDotDifference(p1);
+                        // the game continues in the next loop based on this condition, but the condition doesn't change, so the whole loop is skipped
+                        if (dotDiff < 0 && dotDiff >= -radius)
+                        {
+                            for (int p2 = 0; p2 < data.PointIndexCount; p2++)
+                            {
+                                int index = data.PointStartIndex + p2;
+                                Vector3 point1 = info.Points[info.PointIndices[index]];
+                                // index + 1 may exceed the count, in which case we get the copy of the first index
+                                Vector3 point2 = info.Points[info.PointIndices[index + 1]];
+                                Vector3 edge = point2 - point1;
+                                float dot1 = Vector3.Dot(edge, edge);
+                                float dot2 = Vector3.Dot(edge, point - point1);
+                                float div = dot2 / dot1;
+                                if (div < 0 || div >= 1)
+                                {
+                                    Vector3 vec1 = point - point1;
+                                    float mag1 = vec1.Length;
+                                    if (mag1 > radius)
+                                    {
+                                        continue;
+                                    }
+                                    foundBlocker = true;
+                                    resDot = mag1;
+                                    results[count].Field0 = 2;
+                                    if (a6)
+                                    {
+                                        results[count].Plane = plane;
+                                    }
+                                    else
+                                    {
+                                        results[count].Plane = new Vector4(vec1 / mag1, plane.W);
+                                    }
+                                    break;
+                                }
+                                Vector3 vec2 = point - (point1 + edge * div);
+                                float mag2 = vec2.Length;
+                                if (mag2 <= radius)
+                                {
+                                    foundBlocker = true;
+                                    resDot = mag2;
+                                    results[count].Field0 = 1;
+                                    if (a6)
+                                    {
+                                        results[count].Plane = plane;
+                                    }
+                                    else
+                                    {
+                                        results[count].Plane = new Vector4(vec2 / mag2, plane.W);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (foundBlocker)
+                    {
+                        results[count].Flags = data.Flags;
+                        results[count].EntityCollision = null;
+                        results[count].Field14 = resDot;
+                        count++;
+                    }
+                }
+                if (count == limit)
+                {
+                    break;
+                }
+            }
+            return count;
+        }
+
+        private static IReadOnlyList<CollisionCandidate> GetCandidatesForLimits(Vector3? point1, Vector3 point2, float margin,
+            Vector3? limitMin, Vector3 limitMax, bool includeEntities, Scene scene)
+        {
+            // for some reason, this is used both for querying with points and with limits
+            ClearCandidates();
+            if (limitMin == null)
+            {
+                Debug.Assert(point1 != null);
+                limitMin = new Vector3(
+                    MathF.Min(MathF.Min(Single.MaxValue, point1.Value.X), point2.X) - margin,
+                    MathF.Min(MathF.Min(Single.MaxValue, point1.Value.Y), point2.Y) - margin,
+                    MathF.Min(MathF.Min(Single.MaxValue, point1.Value.Z), point2.Z) - margin
+                );
+                limitMax = new Vector3(
+                    MathF.Max(MathF.Max(Single.MinValue, point1.Value.X), point2.X) + margin,
+                    MathF.Max(MathF.Max(Single.MinValue, point1.Value.Y), point2.Y) + margin,
+                    MathF.Max(MathF.Max(Single.MinValue, point1.Value.Z), point2.Z) + margin
+                );
+            }
+            GetRoomCandidatesForLimits(limitMin.Value, limitMax, scene);
+            if (includeEntities && point1 != null)
+            {
+                GetEntityCandidates(limitMin.Value, limitMax, scene);
             }
             return _activeItems;
         }
 
-        private static void GetEntityCandidatesForPoints(Vector3 point1, Vector3 point2, float margin, Scene scene)
+        private static void GetRoomCandidatesForLimits(Vector3 limitMin, Vector3 limitMax, Scene scene)
         {
-            var limitMin = new Vector3(
-                MathF.Min(MathF.Min(Single.MaxValue, point1.X), point2.X) - margin,
-                MathF.Min(MathF.Min(Single.MaxValue, point1.Y), point2.Y) - margin,
-                MathF.Min(MathF.Min(Single.MaxValue, point1.Z), point2.Z) - margin
-            );
-            var limitMax = new Vector3(
-                MathF.Max(MathF.Max(Single.MinValue, point1.X), point2.X) + margin,
-                MathF.Max(MathF.Max(Single.MinValue, point1.Y), point2.Y) + margin,
-                MathF.Max(MathF.Max(Single.MinValue, point1.Z), point2.Z) + margin
-            );
+            // sktodo: handle FH collision
+            if (scene.Room == null || scene.Room.RoomCollision.Info.FirstHunt)
+            {
+                return;
+            }
+            var info = (MphCollisionInfo)scene.Room.RoomCollision.Info;
+            float size = 4;
+            int partsX = info.Header.PartsX;
+            int partsY = info.Header.PartsY;
+            int partsZ = info.Header.PartsZ;
+            Vector3 minPos = info.MinPosition;
+            int minXPart = (int)((limitMin.X - minPos.X) / size);
+            int maxXPart = (int)((limitMax.X - minPos.X) / size);
+            int minYPart = (int)((limitMin.Y - minPos.Y) / size);
+            int maxYPart = (int)((limitMax.Y - minPos.Y) / size);
+            int minZPart = (int)((limitMin.Z - minPos.Z) / size);
+            int maxZPart = (int)((limitMax.Z - minPos.Z) / size);
+            if (maxXPart >= 0 && minXPart <= partsX && maxYPart >= 0 && minYPart <= partsY && maxZPart >= 0 && minZPart <= partsZ)
+            {
+                minXPart = Math.Max(minXPart, 0);
+                minYPart = Math.Max(minYPart, 0);
+                minZPart = Math.Max(minZPart, 0);
+                maxXPart = Math.Min(maxXPart, partsX - 1);
+                maxYPart = Math.Min(maxYPart, partsY - 1);
+                maxZPart = Math.Min(maxZPart, partsZ - 1);
+                int xIndex = minXPart;
+                int yIndex = minYPart;
+                int zIndex = minZPart;
+                while (yIndex <= maxYPart)
+                {
+                    while (zIndex <= maxZPart)
+                    {
+                        while (xIndex <= maxXPart)
+                        {
+                            int entryIndex = yIndex * (partsX + partsZ) + zIndex * partsX + xIndex;
+                            CollisionEntry entry = info.Entries[entryIndex++];
+                            if (entry.DataCount > 0)
+                            {
+                                CollisionCandidate item = _inactiveItems.Dequeue();
+                                item.Collision = info;
+                                item.Entry = entry;
+                                item.EntityCollision = null;
+                                _activeItems.Add(item);
+                            }
+                            xIndex++;
+                        }
+                        xIndex = minXPart;
+                        zIndex++;
+                    }
+                    xIndex = minXPart;
+                    zIndex = minZPart;
+                    yIndex++;
+                }
+            }
+        }
+
+        private static IReadOnlyList<CollisionCandidate> GetCandidatesForPoints(Vector3 point1, Vector3 point2, float margin,
+            bool includeEntities, Scene scene)
+        {
+            ClearCandidates();
+            GetRoomCandidatesForPoints(point1, point2, scene);
+            if (includeEntities)
+            {
+                var limitMin = new Vector3(
+                    MathF.Min(MathF.Min(Single.MaxValue, point1.X), point2.X) - margin,
+                    MathF.Min(MathF.Min(Single.MaxValue, point1.Y), point2.Y) - margin,
+                    MathF.Min(MathF.Min(Single.MaxValue, point1.Z), point2.Z) - margin
+                );
+                var limitMax = new Vector3(
+                    MathF.Max(MathF.Max(Single.MinValue, point1.X), point2.X) + margin,
+                    MathF.Max(MathF.Max(Single.MinValue, point1.Y), point2.Y) + margin,
+                    MathF.Max(MathF.Max(Single.MinValue, point1.Z), point2.Z) + margin
+                );
+                GetEntityCandidates(limitMin, limitMax, scene);
+            }
+            return _activeItems;
+        }
+
+        private static void GetEntityCandidates(Vector3 limitMin, Vector3 limitMax, Scene scene)
+        {
             for (int i = 0; i < scene.Entities.Count; i++)
             {
                 EntityBase entity = scene.Entities[i];

@@ -9,8 +9,8 @@ namespace MphRead.Entities.Enemies
     {
         private readonly EnemySpawnEntity _spawner;
         private uint _movementType; // todo: enum
-        private CollisionVolume _volume1;
-        private CollisionVolume _volume2;
+        private CollisionVolume _movementVolume;
+        private CollisionVolume _homeVolume;
         private float _stepDistance = 0;
         private byte _nextPattern = 0;
         private byte _pattern = 0; // todo: enum
@@ -47,9 +47,9 @@ namespace MphRead.Entities.Enemies
             Flags |= EnemyFlags.OnRadar;
             _boundingRadius = 1;
             _hurtVolumeInit = new CollisionVolume(new Vector3(0, Fixed.ToFloat(-1843), 0), Fixed.ToFloat(5734));
-            _volume2 = CollisionVolume.Move(_spawner.Data.Fields.S01.WarWasp.Volume2, Position);
-            _volume1 = CollisionVolume.Move(_spawner.Data.Fields.S01.WarWasp.Volume1, Position);
-            SetUpModel("warwasp_lod0", animIndex: 1);
+            _homeVolume = CollisionVolume.Move(_spawner.Data.Fields.S01.WarWasp.Volume2, Position);
+            _movementVolume = CollisionVolume.Move(_spawner.Data.Fields.S01.WarWasp.Volume1, Position);
+            SetUpModel(Metadata.EnemyModelNames[0], animIndex: 1);
             _stepDistance = 0.2f;
             _attackDelay = 30 * 2; // todo: FPS stuff
             _attackTarget = _initPos = Position;
@@ -58,14 +58,14 @@ namespace MphRead.Entities.Enemies
                 _moveIndex = 1;
                 _maxMoveIndex = 3;
                 _finalMoveIndex = _maxMoveIndex;
-                float xx = _volume1.BoxVector3.X * _volume1.BoxDot1;
-                float xz = _volume1.BoxVector3.X * _volume1.BoxDot3;
-                float zx = _volume1.BoxVector3.Z * _volume1.BoxDot1;
-                float zz = _volume1.BoxVector3.Z * _volume1.BoxDot3;
-                _movePositions[0] = _volume1.BoxPosition;
-                _movePositions[1] = _volume1.BoxPosition.AddX(xz).AddZ(zz);
-                _movePositions[2] = _volume1.BoxPosition.AddX(xz - zx).AddZ(zz + xx);
-                _movePositions[3] = _volume1.BoxPosition.AddX(-zx).AddZ(xx);
+                float xx = _movementVolume.BoxVector3.X * _movementVolume.BoxDot1;
+                float xz = _movementVolume.BoxVector3.X * _movementVolume.BoxDot3;
+                float zx = _movementVolume.BoxVector3.Z * _movementVolume.BoxDot1;
+                float zz = _movementVolume.BoxVector3.Z * _movementVolume.BoxDot3;
+                _movePositions[0] = _movementVolume.BoxPosition;
+                _movePositions[1] = _movementVolume.BoxPosition.AddX(xz).AddZ(zz);
+                _movePositions[2] = _movementVolume.BoxPosition.AddX(xz - zx).AddZ(zz + xx);
+                _movePositions[3] = _movementVolume.BoxPosition.AddX(-zx).AddZ(xx);
             }
             else if (_movementType == 2 || _movementType == 3)
             {
@@ -110,8 +110,8 @@ namespace MphRead.Entities.Enemies
                     _circleAngle -= 360;
                 }
                 float angle = MathHelper.DegreesToRadians(_circleAngle);
-                _speed.X = _initPos.X + MathF.Sin(angle) * _volume1.CylinderRadius;
-                _speed.Z = _initPos.Z + MathF.Cos(angle) * _volume1.CylinderRadius;
+                _speed.X = _initPos.X + MathF.Sin(angle) * _movementVolume.CylinderRadius;
+                _speed.Z = _initPos.Z + MathF.Cos(angle) * _movementVolume.CylinderRadius;
                 SetTransform(_speed.Normalized(), Vector3.UnitY, Position);
             }
         }
@@ -253,7 +253,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior03(Scene scene)
         {
-            if (_movementType == 3 || !_volume2.TestPoint(scene.CameraPosition)) // todo: use player position
+            if (_movementType == 3 || !_homeVolume.TestPoint(scene.CameraPosition)) // todo: use player position
             {
                 return false;
             }
@@ -305,7 +305,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior07(Scene scene)
         {
-            if (_volume2.TestPoint(Position))
+            if (_homeVolume.TestPoint(Position))
             {
                 return false;
             }
@@ -315,7 +315,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior08(Scene scene)
         {
-            if (_volume2.TestPoint(scene.CameraPosition)) // todo: use player position  
+            if (_homeVolume.TestPoint(scene.CameraPosition)) // todo: use player position  
             {
                 return false;
             }

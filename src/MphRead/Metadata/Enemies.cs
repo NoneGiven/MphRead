@@ -136,10 +136,15 @@ namespace MphRead
             {
                 throw new IndexOutOfRangeException();
             }
-            return EnemyModelNames[index];
+            string name = EnemyModelNames[index];
+            if (name == "")
+            {
+                return null;
+            }
+            return name;
         }
 
-        public static readonly IReadOnlyList<string?> EnemyModelNames = new string?[52]
+        public static readonly IReadOnlyList<string> EnemyModelNames = new string[52]
         {
             /*  0 */ "warwasp_lod0",
             /*  1 */ "zoomer",
@@ -148,32 +153,32 @@ namespace MphRead
             /*  4 */ "Chomtroid",
             /*  5 */ "Chomtroid",
             /*  6 */ "Chomtroid",
-            /*  7 */ null,
-            /*  8 */ null,
-            /*  9 */ null,
+            /*  7 */ "",
+            /*  8 */ "",
+            /*  9 */ "",
             /* 10 */ "BarbedWarWasp",
             /* 11 */ "shriekbat",
             /* 12 */ "geemer",
-            /* 13 */ null,
-            /* 14 */ null,
-            /* 15 */ null,
+            /* 13 */ "",
+            /* 14 */ "",
+            /* 15 */ "",
             /* 16 */ "blastcap",
-            /* 17 */ null,
+            /* 17 */ "",
             /* 18 */ "Alimbic_Turret",
             /* 19 */ "CylinderBoss",
             /* 20 */ "CylinderBossEye",
-            /* 21 */ null,
-            /* 22 */ null,
+            /* 21 */ "",
+            /* 22 */ "",
             /* 23 */ "PsychoBit",
             /* 24 */ "Gorea1A_lod0",
-            /* 25 */ null,
-            /* 26 */ null,
-            /* 27 */ null,
+            /* 25 */ "",
+            /* 26 */ "",
+            /* 27 */ "",
             /* 28 */ "Gorea1B_lod0",
-            /* 29 */ null,
+            /* 29 */ "",
             /* 30 */ "PowerBomb",
             /* 31 */ "Gorea2_lod0",
-            /* 32 */ null,
+            /* 32 */ "",
             /* 33 */ "goreaMeteor",
             /* 34 */ "PsychoBit",
             /* 35 */ "GuardBot2_lod0",
@@ -181,18 +186,18 @@ namespace MphRead
             /* 37 */ "DripStank_lod0",
             /* 38 */ "AlimbicStatue_lod0",
             /* 39 */ "LavaDemon",
-            /* 40 */ null,
+            /* 40 */ "",
             /* 41 */ "BigEyeBall",
-            /* 42 */ null,
+            /* 42 */ "",
             /* 43 */ "BigEyeNest",
-            /* 44 */ null,
+            /* 44 */ "",
             /* 45 */ "BigEyeTurret",
             /* 46 */ "SphinkTick_lod0",
             /* 47 */ "SphinkTick_lod0",
-            /* 48 */ null,
-            /* 49 */ null,
-            /* 50 */ null,
-            /* 51 */ null
+            /* 48 */ "",
+            /* 49 */ "",
+            /* 50 */ "",
+            /* 51 */ ""
         };
 
         public static int GetEnemyDeathEffect(EnemyType type)

@@ -49,12 +49,11 @@ namespace MphRead.Entities.Enemies
             Transform = transform;
             _boundingRadius = 1;
             _hurtVolumeInit = new CollisionVolume(new Vector3(0, Fixed.ToFloat(13516), Fixed.ToFloat(11059)), 0.5f);
-            ModelInstance inst = SetUpModel("LavaDemon");
+            ModelInstance inst = SetUpModel("LavaDemon", animIndex: 1, AnimFlags.Paused);
             Recolor = (int)_spawner.Data.Fields.S06.EnemySubtype;
             Values = Metadata.Enemy39Values[Recolor];
             _health = _healthMax = Values.HealthMax;
-            inst.SetAnimation(1, AnimFlags.Paused); // just setting to get the frame count, I guess
-            _animFrameCount = inst.AnimInfo.FrameCount[0];
+            _animFrameCount = inst.AnimInfo.FrameCount[0]; // just set to get the frame count, I guess
             _activeVolume = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume2, Position);
             _locationVolume = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume1, Position);
             Metadata.LoadEffectiveness(Values.Effectiveness, BeamEffectiveness);

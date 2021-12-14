@@ -102,6 +102,10 @@ namespace MphRead.Entities
             }
         }
 
+        public Vector3 RightVector => Transform.Row0.Xyz.Normalized();
+        public Vector3 UpVector => Transform.Row1.Xyz.Normalized();
+        public Vector3 FacingVector => Transform.Row2.Xyz.Normalized();
+
         public virtual Vector3 TargetPosition => Position;
 
         protected bool _anyLighting = false;
@@ -470,16 +474,16 @@ namespace MphRead.Entities
 
         public static Matrix4 GetTransformMatrix(Vector3 facing, Vector3 up)
         {
-            Vector3 cross1 = Vector3.Cross(up, facing).Normalized();
-            var cross2 = Vector3.Cross(facing, cross1);
+            Vector3 right = Vector3.Cross(up, facing).Normalized();
+            up = Vector3.Cross(facing, right);
             Matrix4 transform = default;
-            transform.M11 = cross1.X;
-            transform.M12 = cross1.Y;
-            transform.M13 = cross1.Z;
+            transform.M11 = right.X;
+            transform.M12 = right.Y;
+            transform.M13 = right.Z;
             transform.M14 = 0;
-            transform.M21 = cross2.X;
-            transform.M22 = cross2.Y;
-            transform.M23 = cross2.Z;
+            transform.M21 = up.X;
+            transform.M22 = up.Y;
+            transform.M23 = up.Z;
             transform.M24 = 0;
             transform.M31 = facing.X;
             transform.M32 = facing.Y;
