@@ -48,6 +48,7 @@ namespace MphRead.Entities.Enemies
             SetUpModel(Metadata.EnemyModelNames[1]);
             _field1A0 = _field1AC = up;
             _angleInc = Fixed.ToFloat(Rng.GetRandomInt2(0x3000)) + 3;
+            _angleInc /= 2; // todo: FPS stuff
             _maxAngle = Fixed.ToFloat(Rng.GetRandomInt2(0)) + 40;
             _angleCos = MathF.Cos(MathHelper.DegreesToRadians(_angleInc));
             _homeVolume = CollisionVolume.Move(SpawnFields.Volume1, _spawner.Data.Header.Position.ToFloatVector());
@@ -85,7 +86,7 @@ namespace MphRead.Entities.Enemies
                     _field194 = Vector3.Cross(UpVector, facing).Normalized();
                     if (Vector3.Dot(_field194, _direction) < Fixed.ToFloat(-4091))
                     {
-                        _direction = RotateVector(_direction, UpVector, 1);
+                        _direction = RotateVector(_direction, UpVector, 1 / 2f); // todo: FPS stuff
                     }
                     _seekingVolume = true;
                 }
@@ -138,15 +139,15 @@ namespace MphRead.Entities.Enemies
                     vec = vec.Normalized();
                     _field1AC = vec;
                 }
-                Vector3 upVec = UpVector + (_field1AC - UpVector) * 0.2f;
+                Vector3 upVec = UpVector + (_field1AC - UpVector) * (Fixed.ToFloat(819) / 2); // todo: FPS stuff
                 upVec = upVec.Normalized();
                 Vector3 facingVec = Vector3.Cross(upVec, _direction).Normalized();
                 SetTransform(facingVec, upVec, position);
             }
-            _speed = UpVector * -0.06f;
+            _speed = UpVector * (Fixed.ToFloat(-245) / 2); // todo: FPS stuff
             if (_seekingVolume)
             {
-                _direction += (_field194 - _direction) * 0.2f;
+                _direction += (_field194 - _direction) * (Fixed.ToFloat(819) / 2); // todo: FPS stuff
                 _direction = _direction.Normalized();
                 if (Vector3.Dot(_field194, _direction) > _angleCos)
                 {
@@ -160,7 +161,7 @@ namespace MphRead.Entities.Enemies
                 float dot = Vector3.Dot(_field1AC, UpVector);
                 if (dot >= Fixed.ToFloat(3712))
                 {
-                    _speed += FacingVector * Fixed.ToFloat(204);
+                    _speed += FacingVector * (Fixed.ToFloat(204) / 2); // todo: FPS stuff
                     if (dot >= Fixed.ToFloat(4095))
                     {
                         _field1A0 = _field1AC;
