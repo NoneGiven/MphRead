@@ -21,7 +21,7 @@ namespace MphRead.Entities
     public class EnemyInstanceEntity : EntityBase
     {
         protected readonly EnemyInstanceEntityData _data;
-        private ushort _framesSinceDamage = 510;
+        protected ushort _framesSinceDamage = 510;
         protected ushort _health = 20;
         protected ushort _healthMax = 20;
         protected EntityBase? _owner = null;
@@ -194,6 +194,10 @@ namespace MphRead.Entities
             _health = health;
         }
 
+        protected virtual void Detach()
+        {
+        }
+
         public void TakeDamage(uint damage, EntityBase? source, Scene scene)
         {
             ushort prevHealth = _health;
@@ -265,9 +269,9 @@ namespace MphRead.Entities
                 if (dead)
                 {
                     // todo: update records
-                    if (_data.Type == EnemyType.Temroid)
+                    if (_data.Type == EnemyType.Temroid) // condition is not strictly necessary
                     {
-                        // todo: detach
+                        Detach();
                     }
                     // todo: play SFX
                     int effectId;

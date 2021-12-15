@@ -231,6 +231,10 @@ namespace MphRead.Entities
             {
                 return new Enemy01Entity(new EnemyInstanceEntityData(type, spawner));
             }
+            if (type == EnemyType.Temroid)
+            {
+                return new Enemy02Entity(new EnemyInstanceEntityData(type, spawner));
+            }
             if (type == EnemyType.FireSpawn)
             {
                 return new Enemy39Entity(new EnemyInstanceEntityData(type, spawner));

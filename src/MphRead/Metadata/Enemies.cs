@@ -56,6 +56,74 @@ namespace MphRead
             })
         };
 
+        public static IReadOnlyList<EnemySubroutine<Enemy02Entity>> Enemy02Subroutines = new EnemySubroutine<Enemy02Entity>[11]
+        {
+            // state 0
+            new EnemySubroutine<Enemy02Entity>(new EnemyBehavior<Enemy02Entity>[2]
+            {
+                new EnemyBehavior<Enemy02Entity>(2, Enemy02Entity.Behavior04),
+                new EnemyBehavior<Enemy02Entity>(1, Enemy02Entity.Behavior05)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy02Entity>(new EnemyBehavior<Enemy02Entity>[4]
+            {
+                new EnemyBehavior<Enemy02Entity>(7, Enemy02Entity.Behavior09),
+                new EnemyBehavior<Enemy02Entity>(7, Enemy02Entity.Behavior10),
+                new EnemyBehavior<Enemy02Entity>(10, Enemy02Entity.Behavior11),
+                new EnemyBehavior<Enemy02Entity>(2, Enemy02Entity.Behavior12)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy02Entity>(new EnemyBehavior<Enemy02Entity>[1]
+            {
+                new EnemyBehavior<Enemy02Entity>(3, Enemy02Entity.Behavior00)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy02Entity>(new EnemyBehavior<Enemy02Entity>[1]
+            {
+                new EnemyBehavior<Enemy02Entity>(4, Enemy02Entity.Behavior00)
+            }),
+            // state 4
+            new EnemySubroutine<Enemy02Entity>(new EnemyBehavior<Enemy02Entity>[1]
+            {
+                new EnemyBehavior<Enemy02Entity>(5, Enemy02Entity.Behavior00)
+            }),
+            // state 5
+            new EnemySubroutine<Enemy02Entity>(new EnemyBehavior<Enemy02Entity>[2]
+            {
+                new EnemyBehavior<Enemy02Entity>(1, Enemy02Entity.Behavior02),
+                new EnemyBehavior<Enemy02Entity>(8, Enemy02Entity.Behavior03)
+            }),
+            // state 6
+            new EnemySubroutine<Enemy02Entity>(new EnemyBehavior<Enemy02Entity>[1]
+            {
+                new EnemyBehavior<Enemy02Entity>(9, Enemy02Entity.Behavior00)
+            }),
+            // state 7
+            new EnemySubroutine<Enemy02Entity>(new EnemyBehavior<Enemy02Entity>[3]
+            {
+                new EnemyBehavior<Enemy02Entity>(1, Enemy02Entity.Behavior04),
+                new EnemyBehavior<Enemy02Entity>(1, Enemy02Entity.Behavior05),
+                new EnemyBehavior<Enemy02Entity>(0, Enemy02Entity.Behavior06)
+            }),
+            // state 8
+            new EnemySubroutine<Enemy02Entity>(new EnemyBehavior<Enemy02Entity>[3]
+            {
+                new EnemyBehavior<Enemy02Entity>(6, Enemy02Entity.Behavior07),
+                new EnemyBehavior<Enemy02Entity>(6, Enemy02Entity.Behavior02),
+                new EnemyBehavior<Enemy02Entity>(6, Enemy02Entity.Behavior08)
+            }),
+            // state 9
+            new EnemySubroutine<Enemy02Entity>(new EnemyBehavior<Enemy02Entity>[1]
+            {
+                new EnemyBehavior<Enemy02Entity>(7, Enemy02Entity.Behavior00)
+            }),
+            // state 10
+            new EnemySubroutine<Enemy02Entity>(new EnemyBehavior<Enemy02Entity>[1]
+            {
+                new EnemyBehavior<Enemy02Entity>(7, Enemy02Entity.Behavior01)
+            })
+        };
+
         public static IReadOnlyList<EnemySubroutine<Enemy39Entity>> Enemy39Subroutines = new EnemySubroutine<Enemy39Entity>[6]
         {
             // state 0

@@ -15,7 +15,8 @@ namespace MphRead.Entities.Enemies
         private float _curAngle = 0;
         private float _maxAngle = 0;
         private float _angleCos = 0;
-        private Vector3 _field194;
+        private Vector3 _intendedDir;
+        // sktodo: implement vector visualization with line loops and use it to classify these fields
         private Vector3 _field1A0;
         private Vector3 _field1AC;
         private int _volumeCheckDelay = 0;
@@ -83,8 +84,8 @@ namespace MphRead.Entities.Enemies
                             facing = SpawnData.Header.FacingVector.ToFloatVector().WithY(0);
                         }
                     }
-                    _field194 = Vector3.Cross(UpVector, facing).Normalized();
-                    if (Vector3.Dot(_field194, _direction) < Fixed.ToFloat(-4091))
+                    _intendedDir = Vector3.Cross(UpVector, facing).Normalized();
+                    if (Vector3.Dot(_intendedDir, _direction) < Fixed.ToFloat(-4091))
                     {
                         _direction = RotateVector(_direction, UpVector, 1 / 2f); // todo: FPS stuff
                     }
@@ -93,9 +94,11 @@ namespace MphRead.Entities.Enemies
             }
             Vector3 testPos = Position + UpVector * _boundingRadius;
             var results = new CollisionResult[8];
-            int colCount = CollisionDetection.CheckInRadius(testPos, _boundingRadius, limit: 8, a6: true, TestFlags.None, scene, results);
+            int colCount = CollisionDetection.CheckInRadius(testPos, _boundingRadius, limit: 8,
+                getSimpleNormal: true, TestFlags.None, scene, results);
             if (colCount > 0)
             {
+                Vector3 facing = FacingVector;
                 Vector3 vec = Vector3.Zero;
                 for (int i = 0; i < colCount; i++)
                 {
@@ -104,7 +107,7 @@ namespace MphRead.Entities.Enemies
                     float radMinusDot = _boundingRadius - dot;
                     if (radMinusDot > 0 && radMinusDot < _boundingRadius && result.Field0 == 0 && Vector3.Dot(result.Plane.Xyz, _speed) < 0)
                     {
-                        // sktodo
+                        // sktodo: convert this to float math
                         int rmd = (int)(radMinusDot * 4096);
                         float DoThing(float value)
                         {
@@ -125,7 +128,7 @@ namespace MphRead.Entities.Enemies
                         var b = new Vector3(DoThing(result.Plane.X), DoThing(result.Plane.Y), DoThing(result.Plane.Z));
                         testPos += b;
                     }
-                    float facingDot = Vector3.Dot(result.Plane.Xyz, FacingVector);
+                    float facingDot = Vector3.Dot(result.Plane.Xyz, facing);
                     if (Vector3.Dot(_field1A0, result.Plane.Xyz) < Fixed.ToFloat(4094)
                         && (dot < _boundingRadius - Fixed.ToFloat(408) && facingDot >= Fixed.ToFloat(-143)
                          || dot >= _boundingRadius - Fixed.ToFloat(408) && facingDot <= Fixed.ToFloat(143)))
@@ -147,11 +150,11 @@ namespace MphRead.Entities.Enemies
             _speed = UpVector * (Fixed.ToFloat(-245) / 2); // todo: FPS stuff
             if (_seekingVolume)
             {
-                _direction += (_field194 - _direction) * (Fixed.ToFloat(819) / 2); // todo: FPS stuff
+                _direction += (_intendedDir - _direction) * (Fixed.ToFloat(819) / 2); // todo: FPS stuff
                 _direction = _direction.Normalized();
-                if (Vector3.Dot(_field194, _direction) > _angleCos)
+                if (Vector3.Dot(_intendedDir, _direction) > _angleCos)
                 {
-                    _direction = _field194;
+                    _direction = _intendedDir;
                     _seekingVolume = false;
                     _curAngle = 0;
                 }

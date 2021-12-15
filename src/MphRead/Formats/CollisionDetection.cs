@@ -325,7 +325,8 @@ namespace MphRead.Formats
             }
         }
 
-        public static int CheckInRadius(Vector3 point, float radius, int limit, bool a6, TestFlags flags, Scene scene, CollisionResult[] results)
+        public static int CheckInRadius(Vector3 point, float radius, int limit, bool getSimpleNormal,
+            TestFlags flags, Scene scene, CollisionResult[] results)
         {
             ushort mask = 0;
             if (flags.TestFlag(TestFlags.AffectsPlayers))
@@ -426,7 +427,7 @@ namespace MphRead.Formats
                                     foundBlocker = true;
                                     resDot = mag1;
                                     results[count].Field0 = 2;
-                                    if (a6)
+                                    if (getSimpleNormal)
                                     {
                                         results[count].Plane = plane;
                                     }
@@ -443,7 +444,7 @@ namespace MphRead.Formats
                                     foundBlocker = true;
                                     resDot = mag2;
                                     results[count].Field0 = 1;
-                                    if (a6)
+                                    if (getSimpleNormal)
                                     {
                                         results[count].Plane = plane;
                                     }

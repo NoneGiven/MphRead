@@ -44,9 +44,7 @@ namespace MphRead
         public readonly uint Unused80;
         public readonly Vector3Fx Facing;
         public readonly Vector3Fx Position;
-        public readonly uint Field9C;
-        public readonly uint UnusedA0;
-        public readonly uint FieldA4;
+        public readonly Vector3Fx IdleRange;
     }
 
     // size: 400 (100 + 75 * 4)
@@ -282,8 +280,7 @@ namespace MphRead.Editor
         // temroid, petrasyl
         public Vector3 EnemyFacing { get; set; }
         public Vector3 EnemyPosition { get; set; }
-        public uint Unknown00 { get; set; }
-        public uint Unknown01 { get; set; }
+        public Vector3 IdleRange { get; set; }
         public uint Unused68 { get; set; }
         public uint Unused6C { get; set; }
         public uint Unused70 { get; set; }
@@ -291,7 +288,8 @@ namespace MphRead.Editor
         public uint Unused78 { get; set; }
         public uint Unused7C { get; set; }
         public uint Unused80 { get; set; }
-        public uint UnusedA0 { get; set; }
+        public uint Unknown00 { get; set; }
+        public uint Unknown01 { get; set; }
 
         // carnivorous plant
         public ushort EnemyHealth { get; set; }
@@ -430,8 +428,7 @@ namespace MphRead.Editor
                 Volume0 = new CollisionVolume(raw.Fields.S03.Volume0);
                 EnemyPosition = raw.Fields.S03.Position.ToFloatVector();
                 EnemyFacing = raw.Fields.S03.Facing.ToFloatVector();
-                Unknown00 = raw.Fields.S03.Field9C;
-                Unknown01 = raw.Fields.S03.FieldA4;
+                IdleRange = raw.Fields.S03.IdleRange.ToFloatVector();
                 Unused68 = raw.Fields.S03.Unused68;
                 Unused6C = raw.Fields.S03.Unused6C;
                 Unused70 = raw.Fields.S03.Unused70;
@@ -439,7 +436,6 @@ namespace MphRead.Editor
                 Unused78 = raw.Fields.S03.Unused78;
                 Unused7C = raw.Fields.S03.Unused7C;
                 Unused80 = raw.Fields.S03.Unused80;
-                UnusedA0 = raw.Fields.S03.UnusedA0;
             }
             else if (spawnerType == 4)
             {
@@ -565,8 +561,7 @@ namespace MphRead.Editor
             PrintValue(PathVector, other.PathVector, nameof(PathVector));
             PrintValue(EnemyFacing, other.EnemyFacing, nameof(EnemyFacing));
             PrintValue(EnemyPosition, other.EnemyPosition, nameof(EnemyPosition));
-            PrintValue(Unknown00, other.Unknown00, nameof(Unknown00));
-            PrintValue(Unknown01, other.Unknown01, nameof(Unknown01));
+            PrintValue(IdleRange, other.IdleRange, nameof(IdleRange));
             PrintValue(Unused68, other.Unused68, nameof(Unused68));
             PrintValue(Unused6C, other.Unused6C, nameof(Unused6C));
             PrintValue(Unused70, other.Unused70, nameof(Unused70));
@@ -574,7 +569,6 @@ namespace MphRead.Editor
             PrintValue(Unused78, other.Unused78, nameof(Unused78));
             PrintValue(Unused7C, other.Unused7C, nameof(Unused7C));
             PrintValue(Unused80, other.Unused80, nameof(Unused80));
-            PrintValue(UnusedA0, other.UnusedA0, nameof(UnusedA0));
             PrintValue(EnemyHealth, other.EnemyHealth, nameof(EnemyHealth));
             PrintValue(EnemyDamage, other.EnemyDamage, nameof(EnemyDamage));
             PrintValues(MovementVectors, other.MovementVectors, nameof(MovementVectors));

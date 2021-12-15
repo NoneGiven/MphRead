@@ -486,8 +486,7 @@ namespace MphRead.Utility
                         mphSpawn.Volume1 = enemySpawn.Box;
                         mphSpawn.Facing = Vector3.UnitZ;
                         mphSpawn.Position = Vector3.Zero;
-                        mphSpawn.Unknown00 = 0;
-                        mphSpawn.Unknown01 = 0;
+                        mphSpawn.IdleRange = Vector3.One; // sktodo
                     }
                     else if (enemySpawn.EnemyType == FhEnemyType.Mochtroid2 || enemySpawn.EnemyType == FhEnemyType.Mochtroid3
                         || enemySpawn.EnemyType == FhEnemyType.Mochtroid4)
@@ -2028,9 +2027,7 @@ namespace MphRead.Utility
                 writer.Write(entity.Unused80);
                 writer.WriteVector3(entity.EnemyFacing);
                 writer.WriteVector3(entity.EnemyPosition);
-                writer.Write(entity.Unknown00);
-                writer.Write(entity.UnusedA0);
-                writer.Write(entity.Unknown01);
+                writer.WriteVector3(entity.IdleRange);
                 for (int i = 0; i < 68; i++)
                 {
                     writer.Write(padInt);

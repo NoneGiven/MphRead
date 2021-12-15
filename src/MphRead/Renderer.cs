@@ -3573,6 +3573,10 @@ namespace MphRead
             {
                 _sb.Append($" ({enemySpawn.Data.EnemyType})");
             }
+            else if (entity is EnemyInstanceEntity enemyInst)
+            {
+                _sb.Append($" ({enemyInst.EnemyType})");
+            }
             else if (entity is ItemSpawnEntity itemSpawn)
             {
                 _sb.Append($" ({itemSpawn.Data.ItemType})");
