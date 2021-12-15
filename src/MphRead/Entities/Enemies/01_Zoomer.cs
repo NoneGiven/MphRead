@@ -11,11 +11,10 @@ namespace MphRead.Entities.Enemies
         private EnemySpawnEntityData SpawnData => _spawner.Data;
         private EnemySpawnFields00 SpawnFields => _spawner.Data.Fields.S00;
         private Vector3 _direction;
-        private float _field174 = 0;
-        private float _field178 = 0;
-        private float _field17C = 0;
-        private float _field180 = 0;
-        private float _field184 = 0;
+        private float _angleInc = 0;
+        private float _curAngle = 0;
+        private float _maxAngle = 0;
+        private float _angleCos = 0;
         private Vector3 _field194;
         private Vector3 _field1A0;
         private Vector3 _field1AC;
@@ -36,8 +35,9 @@ namespace MphRead.Entities.Enemies
             var facing = new Vector3(Rng.GetRandomInt2(4096) / 4096f, 0, Rng.GetRandomInt2(4096) / 4096f);
             if (facing.X == 0 && facing.Z == 0)
             {
-                facing = _spawner.Transform.Row2.Xyz.Normalized();
+                facing = _spawner.Transform.Row2.Xyz;
             }
+            facing = facing.Normalized(); // the game doesn't do this
             var up = new Vector3(0, _spawner.Transform.Row1.Y, 0);
             SetTransform(facing, up, _spawner.Position);
             Flags |= EnemyFlags.Visible;
@@ -47,11 +47,9 @@ namespace MphRead.Entities.Enemies
             _hurtVolumeInit = new CollisionVolume(SpawnFields.Volume0);
             SetUpModel(Metadata.EnemyModelNames[1]);
             _field1A0 = _field1AC = up;
-            _field174 = Fixed.ToFloat(Rng.GetRandomInt2(0x3000)) + 3;
-            _field17C = Fixed.ToFloat(Rng.GetRandomInt2(0)) + 40;
-            float angle = MathHelper.DegreesToRadians(_field174);
-            _field184 = MathF.Sin(angle);
-            _field180 = MathF.Cos(angle);
+            _angleInc = Fixed.ToFloat(Rng.GetRandomInt2(0x3000)) + 3;
+            _maxAngle = Fixed.ToFloat(Rng.GetRandomInt2(0)) + 40;
+            _angleCos = MathF.Cos(MathHelper.DegreesToRadians(_angleInc));
             _homeVolume = CollisionVolume.Move(SpawnFields.Volume1, _spawner.Data.Header.Position.ToFloatVector());
             _direction = Vector3.Cross(facing, up).Normalized();
             return true;
@@ -150,11 +148,11 @@ namespace MphRead.Entities.Enemies
             {
                 _direction += (_field194 - _direction) * 0.2f;
                 _direction = _direction.Normalized();
-                if (Vector3.Dot(_field194, _direction) > _field180)
+                if (Vector3.Dot(_field194, _direction) > _angleCos)
                 {
                     _direction = _field194;
                     _seekingVolume = false;
-                    _field178 = 0;
+                    _curAngle = 0;
                 }
             }
             else if (colCount > 0)
@@ -166,14 +164,12 @@ namespace MphRead.Entities.Enemies
                     if (dot >= Fixed.ToFloat(4095))
                     {
                         _field1A0 = _field1AC;
-                        _field178 += _field174;
-                        if (_field178 > _field17C || _field178 < -_field17C)
+                        _curAngle += _angleInc;
+                        if (_curAngle > _maxAngle || _curAngle < -_maxAngle)
                         {
-                            _field174 *= -1;
-                            _field184 *= -1;
+                            _angleInc *= -1;
                         }
-                        float angle = MathHelper.RadiansToDegrees(MathF.Atan2(_field184, _field180));
-                        Vector3 direction = RotateVector(FacingVector, UpVector, angle);
+                        Vector3 direction = RotateVector(FacingVector, UpVector, _angleInc);
                         _direction = Vector3.Cross(direction, UpVector).Normalized();
                     }
                 }
