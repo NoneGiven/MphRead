@@ -108,7 +108,7 @@ namespace MphRead.Entities.Enemies
                         int rmd = (int)(radMinusDot * 4096);
                         float DoThing(float value)
                         {
-                            int n = (int)(value* 4096);
+                            int n = (int)(value * 4096);
                             int v20 = n * rmd;
                             int v21 = (int)((ulong)(n * (long)rmd) >> 32);
                             int v22;

@@ -422,7 +422,7 @@ namespace MphRead.Formats.Collision
 
         public override void GetDrawInfo(IReadOnlyList<Vector3> points, EntityType entityType, Scene scene)
         {
-            //Entities.EntityBase? target = scene.Entities.FirstOrDefault(e => e.Type == EntityType.Model);
+            //EntityBase? target = scene.Entities.FirstOrDefault(e => e.Type == EntityType.Model);
             //if (target != null)
             //{
             //    GetPartition(target.Position, points, entityType, scene);
@@ -526,7 +526,7 @@ namespace MphRead.Formats.Collision
             return yInc * Header.PartsX * Header.PartsZ + zInc * Header.PartsX + xInc;
         }
 
-        public void GetPartition(Vector3 point, List<Vector3> points, EntityType entityType, Scene scene)
+        public void GetPartition(Vector3 point, IReadOnlyList<Vector3> points, EntityType entityType, Scene scene)
         {
             int entryIndex = EntryIndexFromPoint(point);
             int polygonId = scene.GetNextPolygonId();

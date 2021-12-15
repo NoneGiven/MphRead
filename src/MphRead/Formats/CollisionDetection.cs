@@ -535,7 +535,7 @@ namespace MphRead.Formats
                     {
                         while (xIndex <= maxXPart)
                         {
-                            int entryIndex = yIndex * (partsX + partsZ) + zIndex * partsX + xIndex;
+                            int entryIndex = yIndex * partsX * partsZ + zIndex * partsX + xIndex;
                             CollisionEntry entry = info.Entries[entryIndex++];
                             if (entry.DataCount > 0)
                             {
