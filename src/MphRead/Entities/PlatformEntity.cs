@@ -186,27 +186,10 @@ namespace MphRead.Entities
             base.Initialize(scene);
             if (Flags.TestFlag(PlatformFlags.SamusShip))
             {
-                Model model = _models[0].Model;
-                for (int i = 0; i < model.Nodes.Count; i++)
-                {
-                    Node node = model.Nodes[i];
-                    if (node.Name == "R_Turret")
-                    {
-                        _effectNodeIds[0] = i;
-                    }
-                    else if (node.Name == "R_Turret1")
-                    {
-                        _effectNodeIds[1] = i;
-                    }
-                    else if (node.Name == "R_Turret2")
-                    {
-                        _effectNodeIds[2] = i;
-                    }
-                    else if (node.Name == "R_Turret3")
-                    {
-                        _effectNodeIds[3] = i;
-                    }
-                }
+                _effectNodeIds[0] = _models[0].Model.GetNodeIndexByName("R_Turret");
+                _effectNodeIds[1] = _models[0].Model.GetNodeIndexByName("R_Turret1");
+                _effectNodeIds[2] = _models[0].Model.GetNodeIndexByName("R_Turret2");
+                _effectNodeIds[3] = _models[0].Model.GetNodeIndexByName("R_Turret3");
                 if (_effectNodeIds[0] != -1 || _effectNodeIds[1] != -1 || _effectNodeIds[2] != -1 || _effectNodeIds[3] != -1)
                 {
                     scene.LoadEffect(_nozzleEffectId);
@@ -514,11 +497,7 @@ namespace MphRead.Entities
                 {
                     Matrix4 transform = Matrix.GetTransform4(Vector3.UnitX, Vector3.UnitY, new Vector3(0, 2, 0));
                     _effects[i] = scene.SpawnEffectGetEntry(_nozzleEffectId, transform);
-                    for (int j = 0; j < _effects[i]!.Elements.Count; j++)
-                    {
-                        EffectElementEntry element = _effects[i]!.Elements[j];
-                        element.Flags |= EffElemFlags.ElementExtension;
-                    }
+                    _effects[i]!.SetElementExtension(true);
                 }
                 if (_effects[i] != null)
                 {
@@ -529,12 +508,7 @@ namespace MphRead.Entities
                         transform.M33 * 1.5f + transform.M43
                     );
                     transform = Matrix.GetTransform4(new Vector3(transform.Row1), new Vector3(transform.Row2), position);
-                    for (int j = 0; j < _effects[i]!.Elements.Count; j++)
-                    {
-                        EffectElementEntry element = _effects[i]!.Elements[j];
-                        element.Position = position;
-                        element.Transform = transform;
-                    }
+                    _effects[i]!.Transform(position, transform);
                 }
             }
             if (_data.PositionCount > 0)

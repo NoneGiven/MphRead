@@ -72,18 +72,8 @@ namespace MphRead.Entities.Enemies
                 inst.Model.Materials[0].Ambient = new ColorRgb(148, 222, 255);
             }
             inst.SetAnimation(3, AnimFlags.Paused);
-            for (int i = 0; i < inst.Model.Nodes.Count; i++)
-            {
-                Node node = inst.Model.Nodes[i];
-                if (node.Name == "Wrist_L")
-                {
-                    _wristNodeL = node;
-                }
-                else if (node.Name == "Wrist_R")
-                {
-                    _wristNodeR = node;
-                }
-            }
+            _wristNodeL = inst.Model.GetNodeByName("Wrist_L");
+            _wristNodeR = inst.Model.GetNodeByName("Wrist_R");
             _hitZone = EnemySpawnEntity.SpawnEnemy(this, EnemyType.HitZone) as Enemy50Entity;
             if (_hitZone != null)
             {
@@ -203,14 +193,7 @@ namespace MphRead.Entities.Enemies
                 {
                     if (_effectEntry != null)
                     {
-                        for (int i = 0; i < _effectEntry.Elements.Count; i++)
-                        {
-                            Matrix4 transform = Transform.ClearScale();
-                            transform.Row3.Xyz = _wristPos[_wristId];
-                            EffectElementEntry element = _effectEntry.Elements[i];
-                            element.Position = _wristPos[_wristId];
-                            element.Transform = transform;
-                        }
+                        _effectEntry.Transform(_wristPos[_wristId], Transform.ClearScale());
                     }
                 }
                 _animFrameCount--;
@@ -225,11 +208,7 @@ namespace MphRead.Entities.Enemies
             _effectEntry = scene.SpawnEffectGetEntry(effectId, transform);
             if (_effectEntry != null)
             {
-                for (int i = 0; i < _effectEntry.Elements.Count; i++)
-                {
-                    EffectElementEntry element = _effectEntry.Elements[i];
-                    element.Flags |= EffElemFlags.ElementExtension;
-                }
+                _effectEntry.SetElementExtension(true);
             }
         }
 

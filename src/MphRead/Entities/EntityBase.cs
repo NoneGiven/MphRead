@@ -147,15 +147,7 @@ namespace MphRead.Entities
             }
             if (attach != null)
             {
-                for (int i = 0; i < attach.Model.Nodes.Count; i++)
-                {
-                    Node node = attach.Model.Nodes[i];
-                    if (node.Name == "attach")
-                    {
-                        _colAttachNode = node;
-                        break;
-                    }
-                }
+                _colAttachNode = attach.Model.GetNodeByName("attach");
             }
         }
 
@@ -492,6 +484,30 @@ namespace MphRead.Entities
             transform.M41 = 0;
             transform.M42 = 0;
             transform.M43 = 0;
+            transform.M44 = 1;
+            return transform;
+        }
+
+        public static Matrix4 GetTransformMatrix(Vector3 facing, Vector3 up, Vector3 position)
+        {
+            Vector3 right = Vector3.Cross(up, facing).Normalized();
+            up = Vector3.Cross(facing, right);
+            Matrix4 transform = default;
+            transform.M11 = right.X;
+            transform.M12 = right.Y;
+            transform.M13 = right.Z;
+            transform.M14 = 0;
+            transform.M21 = up.X;
+            transform.M22 = up.Y;
+            transform.M23 = up.Z;
+            transform.M24 = 0;
+            transform.M31 = facing.X;
+            transform.M32 = facing.Y;
+            transform.M33 = facing.Z;
+            transform.M34 = 0;
+            transform.M41 = position.X;
+            transform.M42 = position.Y;
+            transform.M43 = position.Z;
             transform.M44 = 1;
             return transform;
         }

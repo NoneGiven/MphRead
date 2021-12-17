@@ -610,6 +610,47 @@ namespace MphRead.Effects
         public int EffectId { get; set; }
         public List<EffectElementEntry> Elements { get; } = new List<EffectElementEntry>(); // todo: pre-size?
 
+        public void Transform(Vector3 position, Matrix4 transform)
+        {
+            transform.Row3.Xyz = position;
+            for (int i = 0; i < Elements.Count; i++)
+            {
+                EffectElementEntry element = Elements[i];
+                element.Position = position;
+                element.Transform = transform;
+            }
+        }
+
+        public void SetElementExtension(bool set)
+        {
+            if (set)
+            {
+                SetElementExtension();
+            }
+            else
+            {
+                ClearElementExtension();
+            } 
+        }
+
+        private void SetElementExtension()
+        {
+            for (int i = 0; i < Elements.Count; i++)
+            {
+                EffectElementEntry element = Elements[i];
+                element.Flags |= EffElemFlags.ElementExtension;
+            }
+        }
+
+        private void ClearElementExtension()
+        {
+            for (int i = 0; i < Elements.Count; i++)
+            {
+                EffectElementEntry element = Elements[i];
+                element.Flags &= ~EffElemFlags.ElementExtension;
+            }
+        }
+
         public void SetReadOnlyField(int index, float value)
         {
             if (index == 0)

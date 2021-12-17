@@ -92,16 +92,19 @@ namespace MphRead
             Value = value;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float ToFloat(long value)
         {
             return value / (float)(1 << 12);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float ToFloat(uint value)
         {
             return (int)value / (float)(1 << 12);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float ToFloat(int value)
         {
             return value / (float)(1 << 12);
@@ -112,6 +115,7 @@ namespace MphRead
             return ToFloat(Int32.Parse(value, System.Globalization.NumberStyles.HexNumber));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int ToInt(float value)
         {
             return (int)(value * 4096);

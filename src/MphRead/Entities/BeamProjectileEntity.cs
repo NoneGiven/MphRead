@@ -160,12 +160,7 @@ namespace MphRead.Entities
             }
             else if (Effect != null)
             {
-                for (int i = 0; i < Effect.Elements.Count; i++)
-                {
-                    EffectElementEntry element = Effect.Elements[i];
-                    element.Position = Position;
-                    element.Transform = Transform.ClearScale();
-                }
+                Effect.Transform(Position, Transform.ClearScale());
             }
             if (Lifespan <= 0)
             {
@@ -245,10 +240,10 @@ namespace MphRead.Entities
                             && colRes.Distance < minDist)
                         {
                             Vector3 between = colRes.Position - forceField.Position;
-                            float dot = Vector3.Dot(between, forceField.UpVector);
+                            float dot = Vector3.Dot(between, forceField.FieldUpVector);
                             if (dot <= forceField.Height && dot >= -forceField.Height)
                             {
-                                dot = Vector3.Dot(between, forceField.RightVector);
+                                dot = Vector3.Dot(between, forceField.FieldRightVector);
                                 if (dot <= forceField.Width && dot >= -forceField.Width)
                                 {
                                     minDist = colRes.Distance;
@@ -843,22 +838,25 @@ namespace MphRead.Entities
             return equip.Beams[^1];
         }
 
-        public static void Spawn(EntityBase owner, EquipInfo equip, Vector3 position, Vector3 direction, BeamSpawnFlags spawnFlags, Scene scene)
+        public static BeamResultFlags Spawn(EntityBase owner, EquipInfo equip, Vector3 position, Vector3 direction,
+            BeamSpawnFlags spawnFlags, Scene scene)
         {
+            BeamResultFlags result = BeamResultFlags.Spawned;
             WeaponInfo weapon = equip.Weapon;
             bool charged = false;
             float chargePct = 0;
             if (weapon.Flags.TestFlag(WeaponFlags.CanCharge))
             {
+                // todo: FPS stuff
                 if (weapon.Flags.TestFlag(WeaponFlags.PartialCharge))
                 {
-                    if (equip.ChargeLevel >= weapon.MinCharge)
+                    if (equip.ChargeLevel >= weapon.MinCharge * 2)
                     {
                         charged = true;
-                        chargePct = (equip.ChargeLevel - weapon.MinCharge) / (float)(weapon.FullCharge - weapon.MinCharge);
+                        chargePct = (equip.ChargeLevel - weapon.MinCharge * 2) / (float)(weapon.FullCharge * 2 - weapon.MinCharge * 2);
                     }
                 }
-                else if (equip.ChargeLevel >= weapon.FullCharge)
+                else if (equip.ChargeLevel >= weapon.FullCharge * 2)
                 {
                     charged = true;
                     chargePct = 1;
@@ -868,7 +866,17 @@ namespace MphRead.Entities
             {
                 return chargePct <= 0 ? unchargedAmt : minChargeAmt + ((fullChargeAmt - minChargeAmt) * chargePct);
             }
-            // btodo: calculate cost, Shock Coil frame stuff, pointer to ammo, return false if not enough
+            int cost = (int)GetAmount(weapon.AmmoCost, weapon.MinChargeCost, weapon.ChargeCost);
+            if (weapon.Flags.TestFlag(WeaponFlags.Continuous))
+            {
+                // btodo: Shock Coil frame stuff for ammo cost
+            }
+            int ammo = equip.GetAmmo?.Invoke() ?? -1;
+            if (ammo >= 0 && cost > ammo)
+            {
+                return BeamResultFlags.NoSpawn;
+            }
+            equip.SetAmmo?.Invoke(ammo - cost);
             if (!spawnFlags.TestFlag(BeamSpawnFlags.NoMuzzle))
             {
                 byte effectId = weapon.MuzzleEffects[charged ? 1 : 0];
@@ -886,7 +894,7 @@ namespace MphRead.Entities
             int projectiles = (int)GetAmount(weapon.Projectiles, weapon.MinChargeProjectiles, weapon.ChargedProjectiles);
             if (projectiles <= 0)
             {
-                return;
+                return result;
             }
 
             bool instantAoe = (charged && weapon.Flags.TestFlag(WeaponFlags.AoeCharged))
@@ -959,7 +967,7 @@ namespace MphRead.Entities
                 hsDamage = 150 * hsDamage / 100;
                 splashDmg = 150 * splashDmg / 100;
             }
-            if (weapon.Weapon == BeamType.Imperialist && !equip.Flags.TestFlag(EquipFlags.Zoomed))
+            if (weapon.Weapon == BeamType.Imperialist && !equip.Zoomed)
             {
                 damage /= 2;
                 hsDamage /= 2;
@@ -1071,7 +1079,7 @@ namespace MphRead.Entities
                     beam.Flags = BeamFlags.Collided;
                     beam.Lifespan = 0;
                     beam.Destroy(scene);
-                    return;
+                    return result;
                 }
                 if (maxSpread > 0)
                 {
@@ -1114,11 +1122,7 @@ namespace MphRead.Entities
                         Matrix4 transform = GetTransformMatrix(effVec2, effVec1);
                         transform.Row3.Xyz = beam.Position;
                         beam.Effect = scene.SpawnEffectGetEntry(effectId, transform);
-                        for (int j = 0; j < beam.Effect.Elements.Count; j++)
-                        {
-                            EffectElementEntry element = beam.Effect.Elements[j];
-                            element.Flags |= EffElemFlags.ElementExtension;
-                        }
+                        beam.Effect.SetElementExtension(true);
                     }
                 }
                 // btodo: the latter two parts of this condition are just one code path
@@ -1158,6 +1162,7 @@ namespace MphRead.Entities
                                             {
                                                 beam.Target = entity;
                                                 homingDistance = div1;
+                                                result |= BeamResultFlags.Homing;
                                             }
                                         }
                                     }
@@ -1168,6 +1173,7 @@ namespace MphRead.Entities
                 }
                 scene.AddEntity(beam);
             }
+            return result;
         }
 
         private void SpawnIceWave(WeaponInfo weapon, float chargePct, Scene scene)
@@ -1339,6 +1345,11 @@ namespace MphRead.Entities
             }
             return Vector3.Cross(Vector3.UnitZ, vec1).Normalized();
         }
+
+        public static void StopChargeSfx(BeamType beam, Hunter hunter)
+        {
+            //  todo: SFX stuff
+        }
     }
 
     [Flags]
@@ -1368,5 +1379,13 @@ namespace MphRead.Entities
         Charged = 0x2,
         NoMuzzle = 0x4,
         PrimeHunter = 0x8
+    }
+
+    [Flags]
+    public enum BeamResultFlags : byte
+    {
+        NoSpawn = 0x0,
+        Spawned = 0x1,
+        Homing = 0x2 // for continuous only
     }
 }

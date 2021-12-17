@@ -133,6 +133,7 @@ namespace MphRead
         private RoomEntity? _room = null;
         private int _roomId = -1;
         public GameMode GameMode { get; private set; } = GameMode.SinglePlayer;
+        public int PlayerCount { get; private set; } = 1;
         public bool Multiplayer => GameMode != GameMode.SinglePlayer;
         public int RoomId => _roomId;
 
@@ -269,14 +270,25 @@ namespace MphRead
             InitEntity(entity);
         }
 
-        // called before load
         public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null)
         {
-            var entity = PlayerEntity.Spawn(hunter, recolor, position, facing);
-            if (entity != null)
+            if (_roomLoaded)
             {
-                _entities.Add(entity);
-                InitEntity(entity);
+                // sktodo: this should also be PEN
+                var entity = PlayerEntity.Spawn(hunter, recolor, position, facing);
+                if (entity != null)
+                {
+                    _entities.Add(entity);
+                    InitEntity(entity);
+                }
+            }
+            else
+            {
+                var player = PlayerEntityNew.Create(hunter, recolor);
+                if (player != null)
+                {
+                    player.LoadFlags |= LoadFlags.SlotActive;
+                }
             }
         }
 
@@ -309,6 +321,16 @@ namespace MphRead
             for (int i = 0; i < count; i++)
             {
                 _entities[i].Initialize(this);
+            }
+            // todo: probably revisit this
+            foreach (PlayerEntityNew player in PlayerEntityNew.Players)
+            {
+                if (player.LoadFlags.TestFlag(LoadFlags.SlotActive))
+                {
+                    _entities.Add(player);
+                    player.Initialize(this);
+                    InitEntity(player);
+                }
             }
             OutputStart();
         }

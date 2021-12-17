@@ -124,23 +124,23 @@ namespace MphRead.Entities.Enemies
             float width = _forceField.Width - 0.3f;
             float height = _forceField.Height - 0.3f;
             Vector3 between = Position - _initialPosition;
-            float rightPct = Vector3.Dot(between, _forceField.RightVector) / width;
-            float upPct = Vector3.Dot(between, _forceField.UpVector) / height;
+            float rightPct = Vector3.Dot(between, _forceField.FieldRightVector) / width;
+            float upPct = Vector3.Dot(between, _forceField.FieldUpVector) / height;
             // percentage of the lock's distance toward the "bounding oval"
             float pct = rightPct * rightPct + upPct * upPct;
             if (pct >= 1)
             {
-                float dot1 = Vector3.Dot(between, _forceField.FacingVector);
-                between = (between - _forceField.FacingVector * dot1).Normalized();
+                float dot1 = Vector3.Dot(between, _forceField.FieldFacingVector);
+                between = (between - _forceField.FieldFacingVector * dot1).Normalized();
                 float dot2 = Vector3.Dot(_speed, between) * 2;
                 _speed -= between * dot2;
                 float inv = 1 / MathF.Sqrt(pct);
                 float rf = rightPct * inv * width;
                 float uf = upPct * inv * height;
                 Position = new Vector3(
-                    _initialPosition.X + _forceField.RightVector.X * rf + _forceField.UpVector.X * uf,
-                    _initialPosition.Y + _forceField.RightVector.Y * rf + _forceField.UpVector.Y * uf,
-                    _initialPosition.Z + _forceField.RightVector.Z * rf + _forceField.UpVector.Z * uf
+                    _initialPosition.X + _forceField.FieldRightVector.X * rf + _forceField.FieldUpVector.X * uf,
+                    _initialPosition.Y + _forceField.FieldRightVector.Y * rf + _forceField.FieldUpVector.Y * uf,
+                    _initialPosition.Z + _forceField.FieldRightVector.Z * rf + _forceField.FieldUpVector.Z * uf
                 );
             }
             float magSqr = _speed.X * _speed.X + _speed.Y * _speed.Y + _speed.Z * _speed.Z;
@@ -155,9 +155,9 @@ namespace MphRead.Entities.Enemies
                             float randRight = Rng.GetRandomInt2(0x666) / 4096f - 0.2f;
                             float randUp = Rng.GetRandomInt2(0x666) / 4096f - 0.2f;
                             _speed = new Vector3(
-                                _forceField.UpVector.X * randUp + _forceField.RightVector.X * randRight,
-                                _forceField.UpVector.Y * randUp + _forceField.RightVector.Y * randRight,
-                                _forceField.UpVector.Z * randUp + _forceField.RightVector.Z * randRight
+                                _forceField.FieldUpVector.X * randUp + _forceField.FieldRightVector.X * randRight,
+                                _forceField.FieldUpVector.Y * randUp + _forceField.FieldRightVector.Y * randRight,
+                                _forceField.FieldUpVector.Z * randUp + _forceField.FieldRightVector.Z * randRight
                             );
                         }
                     }

@@ -16,9 +16,9 @@ namespace MphRead.Entities
         private bool _active = false; // todo: start replace/removing the Active property on EntityBase
 
         public ForceFieldEntityData Data => _data;
-        public Vector3 UpVector => _upVector;
-        public Vector3 FacingVector => _facingVector;
-        public Vector3 RightVector => _rightVector;
+        public Vector3 FieldUpVector => _upVector;
+        public Vector3 FieldFacingVector => _facingVector;
+        public Vector3 FieldRightVector => _rightVector;
         public Vector4 Plane => _plane;
         public float Width => _width;
         public float Height => _height;

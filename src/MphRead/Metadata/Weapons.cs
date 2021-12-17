@@ -6,10 +6,11 @@ namespace MphRead
 {
     public class EquipInfo
     {
-        public EquipFlags Flags { get; set; }
+        public bool Zoomed { get; set; } // replaces Flags
         public WeaponInfo Weapon { get; set; }
         public BeamProjectileEntity[] Beams { get; set; }
-        //unsigned __int16 *ammo_ptr;
+        public Func<int> GetAmmo { get; set; }
+        public Action<int> SetAmmo { get; set; }
         public ushort ChargeLevel { get; set; }
         public ushort SmokeLevel { get; set; }
 
@@ -17,12 +18,16 @@ namespace MphRead
         {
             Weapon = null!;
             Beams = null!;
+            GetAmmo = null!;
+            SetAmmo = null!;
         }
 
         public EquipInfo(WeaponInfo weapon, BeamProjectileEntity[] beams)
         {
             Weapon = weapon;
             Beams = beams;
+            GetAmmo = null!;
+            SetAmmo = null!;
         }
     }
 
@@ -274,6 +279,26 @@ namespace MphRead
             }
             return null;
         }
+
+        public static BeamType GetAffinityBeam(Hunter hunter)
+        {
+            return AffinityWeapons[(int)hunter];
+        }
+
+        public static readonly IReadOnlyList<BeamType> AffinityWeapons = new List<BeamType>()
+        {
+            BeamType.Missile,
+            BeamType.VoltDriver,
+            BeamType.Imperialist,
+            BeamType.ShockCoil,
+            BeamType.Judicator,
+            BeamType.Magmaul,
+            BeamType.Battlehamer,
+            BeamType.PowerBeam
+        };
+
+        // todo: this needs to be able to change
+        public static IReadOnlyList<WeaponInfo> Current => Weapons1P;
 
         public static readonly IReadOnlyList<WeaponInfo> Weapons1P = new List<WeaponInfo>()
         {

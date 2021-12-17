@@ -18,11 +18,14 @@ namespace MphRead.Entities
         }
     }
 
+    // todo: linked entity, despawn timer, other stuff
     public class ItemInstanceEntity : SpinningEntityBase
     {
         public ItemType ItemType { get; }
         private EffectEntry? _effectEntry = null;
         private const int _effectId = 144; // artifactKeyEffect
+
+        private short DespawnTimer { get; set; } = -1;
 
         public ItemInstanceEntity(ItemInstanceEntityData data) : base(0.35f, Vector3.UnitY, 0, 0, EntityType.ItemInstance)
         {
@@ -36,15 +39,17 @@ namespace MphRead.Entities
             base.Initialize(scene);
             if (ItemType == ItemType.ArtifactKey)
             {
-                scene.LoadEffect(_effectId);
+                scene.LoadEffect(_effectId); // todo: needs to be loaded by the spawner
                 Matrix4 transform = Matrix.GetTransform4(Vector3.UnitX, Vector3.UnitY, Position);
                 _effectEntry = scene.SpawnEffectGetEntry(_effectId, transform);
-                for (int i = 0; i < _effectEntry.Elements.Count; i++)
-                {
-                    EffectElementEntry element = _effectEntry.Elements[i];
-                    element.Flags |= EffElemFlags.ElementExtension;
-                }
+                _effectEntry.SetElementExtension(true);
             }
+        }
+
+        public void OnPickedUp()
+        {
+            DespawnTimer = 0;
+            // todo: the rest
         }
 
         public override void Destroy(Scene scene)

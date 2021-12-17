@@ -35,7 +35,7 @@ namespace MphRead.Entities
         protected float _boundingRadius = 0;
         protected Action<Scene>[]? _stateProcesses;
 
-        public Effectiveness[] BeamEffectiveness = new Effectiveness[9];
+        public readonly Effectiveness[] BeamEffectiveness = new Effectiveness[9];
         private bool _onlyMoveHurtVolume = false;
         private bool _noIneffectiveEffect = false;
         public EnemyFlags Flags { get; set; }

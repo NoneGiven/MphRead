@@ -765,6 +765,32 @@ namespace MphRead
             return true;
         }
 
+        public Node? GetNodeByName(string name)
+        {
+            for (int i = 0; i < Nodes.Count; i++)
+            {
+                Node node = Nodes[i];
+                if (node.Name == name)
+                {
+                    return node;
+                }
+            }
+            return null;
+        }
+
+        public int GetNodeIndexByName(string name)
+        {
+            for (int i = 0; i < Nodes.Count; i++)
+            {
+                Node node = Nodes[i];
+                if (node.Name == name)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
         public IReadOnlyList<ColorRgba> GetPixels(int textureId, int paletteId, int recolorId)
         {
             Recolor recolor = Recolors[recolorId];

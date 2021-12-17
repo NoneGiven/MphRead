@@ -345,11 +345,7 @@ namespace MphRead.Entities
                                 else
                                 {
                                     _effectEntry = scene.SpawnEffectGetEntry(_data.EffectId, Transform);
-                                    for (int i = 0; i < _effectEntry.Elements.Count; i++)
-                                    {
-                                        EffectElementEntry element = _effectEntry.Elements[i];
-                                        element.Flags |= EffElemFlags.ElementExtension;
-                                    }
+                                    _effectEntry.SetElementExtension(true);
                                 }
                             }
                         }
@@ -381,12 +377,7 @@ namespace MphRead.Entities
             }
             if (_effectEntry != null)
             {
-                for (int i = 0; i < _effectEntry.Elements.Count; i++)
-                {
-                    EffectElementEntry element = _effectEntry.Elements[i];
-                    element.Position = Position;
-                    element.Transform = Transform.ClearScale();
-                }
+                _effectEntry.Transform(Position, Transform.ClearScale());
             }
             if (_data.ModelId == 0 && _models[0].AnimInfo.Index[0] == 3 && _models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
             {

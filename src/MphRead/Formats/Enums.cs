@@ -121,8 +121,9 @@ namespace MphRead
         Missile = 7
     }
 
-    public enum BeamType : byte
+    public enum BeamType : sbyte
     {
+        None = -1,
         PowerBeam = 0,
         VoltDriver = 1,
         Missile = 2,

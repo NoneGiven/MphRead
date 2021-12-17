@@ -231,14 +231,28 @@ namespace MphRead
                 LoadBeamEffectResources(scene);
                 LoadBeamProjectileResources(scene);
                 LoadRoomResources(scene);
+                for (int i = 0; i < 4; i++)
+                {
+                    PlayerEntityNew player = PlayerEntityNew.Players[i];
+                    if (player.LoadFlags.TestFlag(LoadFlags.SlotActive))
+                    {
+                        LoadCommonHunterResources(scene);
+                        LoadHunterResources(player.Hunter, scene);
+                    }
+                }
             }
+        }
+
+        public static void LoadCommonHunterResources(Scene scene)
+        {
+            scene.LoadModel("doubleDamage_img");
+            scene.LoadModel("alt_ice");
+            scene.LoadModel("gunSmoke");
+            PlayerEntityNew.GeneratePlayerVolumes();
         }
 
         public static void LoadHunterResources(Hunter hunter, Scene scene)
         {
-            // todo: lods
-            scene.LoadModel("doubleDamage_img");
-            scene.LoadModel("alt_ice");
             scene.LoadModel(hunter == Hunter.Noxus || hunter == Hunter.Trace ? "nox_ice" : "samus_ice");
             foreach (string modelName in Metadata.HunterModels[hunter])
             {
