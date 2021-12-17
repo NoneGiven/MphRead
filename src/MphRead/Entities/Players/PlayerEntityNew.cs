@@ -229,15 +229,16 @@ namespace MphRead.Entities
         private byte _field552 = 0;
         private byte _field553 = 0;
 
+        public EnemySpawnEntity? EnemySpawner => _enemySpawner;
         public EnemyInstanceEntity? AttachedEnemy { get; set; } = null;
-        public EntityBase? _field35C = null;
-        public MorphCameraEntity? _camPos = null;
-        public OctolithFlagEntity? _octolithFlag = null;
-        public JumpPadEntity? _lastJumpPad = null;
-        public EnemySpawnEntityData? _enemySpawner = null;
-        public EntityBase? _burnedBy = null;
-        public EntityBase? _lastTarget = null;
-        public PlayerEntityNew? _shockCoilTarget = null;
+        private EntityBase? _field35C = null;
+        private MorphCameraEntity? _camPos = null;
+        private OctolithFlagEntity? _octolithFlag = null;
+        private JumpPadEntity? _lastJumpPad = null;
+        private EnemySpawnEntity? _enemySpawner = null;
+        private EntityBase? _burnedBy = null;
+        private EntityBase? _lastTarget = null;
+        private PlayerEntityNew? _shockCoilTarget = null;
 
         public bool IsAltForm => Flags1.TestFlag(PlayerFlags1.AltForm);
         public bool IsMorphing => Flags1.TestFlag(PlayerFlags1.Morphing);

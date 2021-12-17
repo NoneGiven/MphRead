@@ -491,7 +491,7 @@ namespace MphRead.Editor
         public ushort MaxSpawnCount { get; set; }
         public ushort SpawnInterval { get; set; }
         public ushort SpawnDelay { get; set; }
-        public short SomeEntityId { get; set; } // todo: parent? child?
+        public short NotifyEntityId { get; set; } // todo: parent? child?
         public Message CollectedMessage { get; set; }
         public uint CollectedMsgParam1 { get; set; }
         public uint CollectedMsgParam2 { get; set; }
@@ -510,7 +510,7 @@ namespace MphRead.Editor
             MaxSpawnCount = raw.MaxSpawnCount;
             SpawnInterval = raw.SpawnInterval;
             SpawnDelay = raw.SpawnDelay;
-            SomeEntityId = raw.SomeEntityId;
+            NotifyEntityId = raw.NotifyEntityId;
             CollectedMessage = raw.CollectedMessage;
             CollectedMsgParam1 = raw.CollectedMsgParam1;
             CollectedMsgParam2 = raw.CollectedMsgParam2;
@@ -526,7 +526,7 @@ namespace MphRead.Editor
             PrintValue(MaxSpawnCount, other.MaxSpawnCount, nameof(MaxSpawnCount));
             PrintValue(SpawnInterval, other.SpawnInterval, nameof(SpawnInterval));
             PrintValue(SpawnDelay, other.SpawnDelay, nameof(SpawnDelay));
-            PrintValue(SomeEntityId, other.SomeEntityId, nameof(SomeEntityId));
+            PrintValue(NotifyEntityId, other.NotifyEntityId, nameof(NotifyEntityId));
             PrintValue(CollectedMessage, other.CollectedMessage, nameof(CollectedMessage));
             PrintValue(CollectedMsgParam1, other.CollectedMsgParam1, nameof(CollectedMsgParam1));
             PrintValue(CollectedMsgParam2, other.CollectedMsgParam2, nameof(CollectedMsgParam2));

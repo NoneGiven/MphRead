@@ -441,7 +441,7 @@ namespace MphRead.Utility
                         NodeName = itemSpawn.NodeName,
                         ParentId = 0xFFFF,
                         Position = itemSpawn.Position,
-                        SomeEntityId = -1,
+                        NotifyEntityId = -1,
                         SpawnDelay = 0,
                         SpawnInterval = itemSpawn.CooldownTime,
                         Up = itemSpawn.Up
@@ -1981,7 +1981,7 @@ namespace MphRead.Utility
             writer.Write(entity.MaxSpawnCount);
             writer.Write(entity.SpawnInterval);
             writer.Write(entity.SpawnDelay);
-            writer.Write(entity.SomeEntityId);
+            writer.Write(entity.NotifyEntityId);
             writer.Write((uint)entity.CollectedMessage);
             writer.Write(entity.CollectedMsgParam1);
             writer.Write(entity.CollectedMsgParam2);

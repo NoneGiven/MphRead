@@ -8,9 +8,9 @@ namespace MphRead.Entities
     {
         public readonly Vector3 Position;
         public readonly ItemType ItemType;
-        public readonly uint DespawnTimer;
+        public readonly int DespawnTimer;
 
-        public ItemInstanceEntityData(Vector3 position, ItemType type, uint despawnTimer)
+        public ItemInstanceEntityData(Vector3 position, ItemType type, int despawnTimer)
         {
             Position = position;
             ItemType = type;
@@ -18,20 +18,28 @@ namespace MphRead.Entities
         }
     }
 
-    // todo: linked entity, despawn timer, other stuff
+    // todo: preallocation
     public class ItemInstanceEntity : SpinningEntityBase
     {
         public ItemType ItemType { get; }
         private EffectEntry? _effectEntry = null;
-        private const int _effectId = 144; // artifactKeyEffect
+        private bool _linkDone = false;
 
-        private short DespawnTimer { get; set; } = -1;
+        public int DespawnTimer { get; set; } = -1;
+        public ItemSpawnEntity? Owner { get; set; }
 
         public ItemInstanceEntity(ItemInstanceEntityData data) : base(0.35f, Vector3.UnitY, 0, 0, EntityType.ItemInstance)
         {
-            Position = data.Position.AddY(0.65f);
-            SetUpModel(Metadata.Items[(int)data.ItemType]);
+            Position = data.Position;
+            // todo: scan ID
+            // todo: replace with affinity weapon based on game state
             ItemType = data.ItemType;
+            // todo: node ref
+            SetUpModel(Metadata.Items[(int)data.ItemType]);
+            if (data.DespawnTimer > 0)
+            {
+                DespawnTimer = data.DespawnTimer;
+            }
         }
 
         public override void Initialize(Scene scene)
@@ -39,17 +47,75 @@ namespace MphRead.Entities
             base.Initialize(scene);
             if (ItemType == ItemType.ArtifactKey)
             {
-                scene.LoadEffect(_effectId); // todo: needs to be loaded by the spawner
                 Matrix4 transform = Matrix.GetTransform4(Vector3.UnitX, Vector3.UnitY, Position);
-                _effectEntry = scene.SpawnEffectGetEntry(_effectId, transform);
+                _effectEntry = scene.SpawnEffectGetEntry(144, transform); // artifactKeyEffect
                 _effectEntry.SetElementExtension(true);
             }
         }
 
-        public void OnPickedUp()
+        public override bool Process(Scene scene)
+        {
+            if (!_linkDone)
+            {
+                // todo: linked entity (position only)
+                _linkDone = true;
+            }
+            // todo: inv pos
+            // todo: position audio, node ref
+            if (_effectEntry != null)
+            {
+                Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY, Position);
+                _effectEntry.Transform(Position, transform);
+            }
+            if (DespawnTimer > 0)
+            {
+                DespawnTimer--;
+            }
+            if (DespawnTimer == 0)
+            {
+                if (Owner != null)
+                {
+                    Owner.Item = null;
+                    if (!scene.Multiplayer)
+                    {
+                        // todo: room state
+                        if (!Owner.AlwaysActive)
+                        {
+                            Owner.Active = false;
+                        }
+                    }
+                }
+                if (_effectEntry != null)
+                {
+                    scene.DetachEffectEntry(_effectEntry, setExpired: false);
+                    _effectEntry = null;
+                }
+                return false;
+            }
+            // todo: play SFX
+            if (Owner == null && !scene.Multiplayer && PlayerEntityNew.MainPlayer.EquipInfo.Weapon != null)
+            {
+                EquipInfo equip = PlayerEntityNew.MainPlayer.EquipInfo;
+                if (equip.ChargeLevel >= equip.Weapon.MinCharge * 2) // todo: FPS stuff
+                {
+                    // todo: visualize
+                    Vector3 between = PlayerEntityNew.MainPlayer.Position - Position;
+                    float distance = between.Length;
+                    if (distance < 20 && distance != 0)
+                    {
+                        float factor = (20 - distance) / (80 * distance); // hyperbolic function
+                        Position += between * factor;
+                    }
+                }
+            }
+            return base.Process(scene);
+        }
+
+        public void OnPickedUp(Scene scene)
         {
             DespawnTimer = 0;
-            // todo: the rest
+            Owner?.OnItemPickedUp(scene);
+            // todo: update logbook
         }
 
         public override void Destroy(Scene scene)

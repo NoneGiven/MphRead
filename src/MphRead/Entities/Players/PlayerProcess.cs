@@ -441,7 +441,7 @@ namespace MphRead.Entities
             UpdateGunAnimation();
             _gunModel.UpdateAnimFrames();
             // todo: update weapon SFX
-            PickUpItems();
+            PickUpItems(scene);
             // skhere
             return true;
         }
@@ -451,7 +451,7 @@ namespace MphRead.Entities
             // sktodo: process input
         }
 
-        private void PickUpItems()
+        private void PickUpItems(Scene scene)
         {
             // todo: also return if the following are all true - cur camseq, block input flag set, IsMainPlayer
             if (_health == 0 || (IsBot && !_scene.Multiplayer) || IgnoreItemPickups)
@@ -605,7 +605,7 @@ namespace MphRead.Entities
                 }
                 if (pickedUp)
                 {
-                    item.OnPickedUp();
+                    item.OnPickedUp(scene);
                 }
             }
         }

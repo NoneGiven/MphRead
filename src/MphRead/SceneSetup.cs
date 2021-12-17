@@ -588,6 +588,10 @@ namespace MphRead
                 if (entity is ItemSpawnEntity itemSpawner)
                 {
                     LoadItem(itemSpawner.Data.ItemType, scene);
+                    if (itemSpawner.Data.HasBase != 0)
+                    {
+                        scene.LoadModel("items_base");
+                    } 
                 }
                 else if (entity is EnemySpawnEntity enemySpawner && enemySpawner.Data.ItemChance > 0)
                 {
