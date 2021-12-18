@@ -55,6 +55,7 @@ namespace MphRead.Entities
                         UpdateTransforms(_altModel, _altTransform, Recolor);
                         GetDrawItems(_altModel, _altModel.Model.Nodes[0], _curAlpha);
                     }
+                    PaletteOverride = null;
                     if (_frozenGfxTimer > 0)
                     {
                         float radius = _volume.SphereRadius + 0.2f;
@@ -67,7 +68,8 @@ namespace MphRead.Entities
                     {
                         DrawMorphBallTrail();
                     }
-                    PaletteOverride = null;
+                    _altTransform.Row3.Xyz = Vector3.Zero;
+                    Flags2 |= PlayerFlags2.DrawnThirdPerson;
                 }
                 else if (drawBiped)
                 {
@@ -111,14 +113,40 @@ namespace MphRead.Entities
                         node.Animation *= transform; // todo?: could do this in the shader
                     }
                     model.UpdateMatrixStack(_scene.ViewInvRotMatrix, _scene.ViewInvRotYMatrix);
-                    if (_timeSinceDamage < Values.DamageFlashTime * 2) // todo: FPS stuff
+                    if (_health > 0)
                     {
-                        PaletteOverride = Metadata.RedPalette;
+                        if (_timeSinceDamage < Values.DamageFlashTime * 2) // todo: FPS stuff
+                        {
+                            PaletteOverride = Metadata.RedPalette;
+                        }
+                        if (IsMainPlayer && _bipedModel1.AnimInfo.Index[0] == (int)PlayerAnimation.Unmorph) // todo: and no camseq
+                        {
+                            // sktodo: unmorph alpha factor
+                        }
+                        UpdateMaterials(_bipedModel1, Recolor);
+                        GetDrawItems(_bipedModel1, _bipedModel1.Model.Nodes[0], _curAlpha);
+                        PaletteOverride = null;
+                        if (_chargeEffect != null || _muzzleEffect != null)
+                        {
+                            // sktodo
+                        }
+                        if (_frozenGfxTimer > 0)
+                        {
+                            for (int j = 0; j < _bipedIceModel.Model.Nodes.Count; j++)
+                            {
+                                _bipedIceModel.Model.Nodes[j].Animation = _bipedModel1.Model.Nodes[j].Animation;
+                            }
+                            // identity matrices are fine since the ice model doesn't have any billboard nodes
+                            _bipedIceModel.Model.UpdateMatrixStack(Matrix4.Identity, Matrix4.Identity);
+                            GetDrawItems(_bipedIceModel, _bipedIceModel.Model.Nodes[0], alpha: 1);
+                        }
                     }
-                    UpdateMaterials(_bipedModel1, Recolor);
-                    GetDrawItems(_bipedModel1, _bipedModel1.Model.Nodes[0], _curAlpha);
-                    // skhere
-                    PaletteOverride = null;
+                    _altTransform = transform; // not sure why this is done
+                    if (_health == 0)
+                    {
+                        DrawDeathParticles();
+                    }
+                    Flags2 |= PlayerFlags2.DrawnThirdPerson;
                 }
                 else if (AttachedEnemy == null && _field6D0 == 0)
                 {
@@ -433,6 +461,63 @@ namespace MphRead.Entities
                     material.ScaleS, material.ScaleT, _mbTrailSegments, matrixStack, uvsAndVerts, count, _trailBindingId1);
             }
             ArrayPool<float>.Shared.Return(matrixStack);
+        }
+
+        // todo: FPS stuff
+        private void DrawDeathParticles()
+        {
+            // get current percentage through the first 1/3 of the respawn cooldown
+            float timePct = 1 - ((_respawnTimer - (2 / 3f * _respawnTime)) / (1 / 3f * _respawnTime));
+            if (timePct < 0 || timePct > 1)
+            {
+                return;
+            }
+            float scale = timePct / 2 + 0.1f;
+            // todo: the angle stuff could be removed
+            float angle = MathF.Sin(MathHelper.DegreesToRadians(270 - 90 * timePct));
+            float sin270 = MathF.Sin(MathHelper.DegreesToRadians(270));
+            float sin180 = MathF.Sin(MathHelper.DegreesToRadians(180));
+            float offset = (angle - sin270) / (sin180 - sin270);
+            for (int j = 1; j < _bipedModel1.Model.Nodes.Count; j++)
+            {
+                Node node = _bipedModel1.Model.Nodes[j];
+                var nodePos = new Vector3(node.Animation.Row3);
+                nodePos.Y += offset;
+                if (node.ChildIndex != -1)
+                {
+                    Debug.Assert(node.ChildIndex > 0);
+                    var childPos = new Vector3(_bipedModel1.Model.Nodes[node.ChildIndex].Animation.Row3);
+                    childPos.Y += offset;
+                    for (int k = 1; k < 5; k++)
+                    {
+                        var segPos = new Vector3(
+                            nodePos.X + k * (childPos.X - nodePos.X) / 5,
+                            nodePos.Y + k * (childPos.Y - nodePos.Y) / 5,
+                            nodePos.Z + k * (childPos.Z - nodePos.Z) / 5
+                        );
+                        segPos += (segPos - Position).Normalized() * offset;
+                        _scene.AddSingleParticle(SingleType.Death, segPos, Vector3.One, 1 - timePct, scale);
+                    }
+                }
+                if (node.NextIndex != -1)
+                {
+                    Debug.Assert(node.NextIndex > 0);
+                    var nextPos = new Vector3(_bipedModel1.Model.Nodes[node.NextIndex].Animation.Row3);
+                    nextPos.Y += offset;
+                    for (int k = 1; k < 5; k++)
+                    {
+                        var segPos = new Vector3(
+                            nodePos.X + k * (nextPos.X - nodePos.X) / 5,
+                            nodePos.Y + k * (nextPos.Y - nodePos.Y) / 5,
+                            nodePos.Z + k * (nextPos.Z - nodePos.Z) / 5
+                        );
+                        segPos += (segPos - Position).Normalized() * offset;
+                        _scene.AddSingleParticle(SingleType.Death, segPos, Vector3.One, 1 - timePct, scale);
+                    }
+                }
+                nodePos += (nodePos - Position).Normalized() * offset;
+                _scene.AddSingleParticle(SingleType.Death, nodePos, Vector3.One, 1 - timePct, scale);
+            }
         }
 
         public override void GetDrawInfo(Scene scene)
