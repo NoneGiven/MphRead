@@ -144,9 +144,10 @@ namespace MphRead.Entities
                         }
                         if (_frozenGfxTimer > 0)
                         {
-                            for (int j = 0; j < _bipedIceModel.Model.Nodes.Count; j++)
+                            for (int i = 0; i < _bipedIceModel.Model.Nodes.Count; i++)
                             {
-                                _bipedIceModel.Model.Nodes[j].Animation = _bipedModel1.Model.Nodes[j].Animation;
+                                _bipedIceModel.Model.Nodes[i].Animation = _bipedModel1.Model.Nodes[i].Animation;
+                                _bipedIceTransforms[i] = _bipedModel1.Model.Nodes[i].Animation;
                             }
                             // identity matrices are fine since the ice model doesn't have any billboard nodes
                             _bipedIceModel.Model.UpdateMatrixStack(Matrix4.Identity, Matrix4.Identity);
@@ -154,7 +155,7 @@ namespace MphRead.Entities
                             GetDrawItems(_bipedIceModel, _bipedIceModel.Model.Nodes[0], alpha: 1, recolor: 0);
                         }
                     }
-                    _altTransform = transform; // not sure why this is done
+                    _altTransform = transform;
                     if (_health == 0)
                     {
                         DrawDeathParticles();
@@ -258,9 +259,9 @@ namespace MphRead.Entities
             if (node.Enabled)
             {
                 int start = node.MeshId / 2;
-                for (int k = 0; k < node.MeshCount; k++)
+                for (int i = 0; i < node.MeshCount; i++)
                 {
-                    Mesh mesh = model.Meshes[start + k];
+                    Mesh mesh = model.Meshes[start + i];
                     if (!mesh.Visible)
                     {
                         continue;
@@ -492,9 +493,9 @@ namespace MphRead.Entities
             float sin270 = MathF.Sin(MathHelper.DegreesToRadians(270));
             float sin180 = MathF.Sin(MathHelper.DegreesToRadians(180));
             float offset = (angle - sin270) / (sin180 - sin270);
-            for (int j = 1; j < _bipedModel1.Model.Nodes.Count; j++)
+            for (int i = 1; i < _bipedModel1.Model.Nodes.Count; i++)
             {
-                Node node = _bipedModel1.Model.Nodes[j];
+                Node node = _bipedModel1.Model.Nodes[i];
                 var nodePos = new Vector3(node.Animation.Row3);
                 nodePos.Y += offset;
                 if (node.ChildIndex != -1)
@@ -502,12 +503,12 @@ namespace MphRead.Entities
                     Debug.Assert(node.ChildIndex > 0);
                     var childPos = new Vector3(_bipedModel1.Model.Nodes[node.ChildIndex].Animation.Row3);
                     childPos.Y += offset;
-                    for (int k = 1; k < 5; k++)
+                    for (int j = 1; j < 5; j++)
                     {
                         var segPos = new Vector3(
-                            nodePos.X + k * (childPos.X - nodePos.X) / 5,
-                            nodePos.Y + k * (childPos.Y - nodePos.Y) / 5,
-                            nodePos.Z + k * (childPos.Z - nodePos.Z) / 5
+                            nodePos.X + j * (childPos.X - nodePos.X) / 5,
+                            nodePos.Y + j * (childPos.Y - nodePos.Y) / 5,
+                            nodePos.Z + j * (childPos.Z - nodePos.Z) / 5
                         );
                         segPos += (segPos - Position).Normalized() * offset;
                         _scene.AddSingleParticle(SingleType.Death, segPos, Vector3.One, 1 - timePct, scale);
@@ -518,12 +519,12 @@ namespace MphRead.Entities
                     Debug.Assert(node.NextIndex > 0);
                     var nextPos = new Vector3(_bipedModel1.Model.Nodes[node.NextIndex].Animation.Row3);
                     nextPos.Y += offset;
-                    for (int k = 1; k < 5; k++)
+                    for (int j = 1; j < 5; j++)
                     {
                         var segPos = new Vector3(
-                            nodePos.X + k * (nextPos.X - nodePos.X) / 5,
-                            nodePos.Y + k * (nextPos.Y - nodePos.Y) / 5,
-                            nodePos.Z + k * (nextPos.Z - nodePos.Z) / 5
+                            nodePos.X + j * (nextPos.X - nodePos.X) / 5,
+                            nodePos.Y + j * (nextPos.Y - nodePos.Y) / 5,
+                            nodePos.Z + j * (nextPos.Z - nodePos.Z) / 5
                         );
                         segPos += (segPos - Position).Normalized() * offset;
                         _scene.AddSingleParticle(SingleType.Death, segPos, Vector3.One, 1 - timePct, scale);

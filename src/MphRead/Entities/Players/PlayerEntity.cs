@@ -170,6 +170,7 @@ namespace MphRead.Entities
         private int _trailBindingId1 = 0;
         private int _trailBindingId2 = 0;
         private int _doubleDmgBindingId = 0;
+        private readonly Matrix4[] _bipedIceTransforms = new Matrix4[19];
 
         // todo?: could save space with a union
         private readonly Node?[] _spireAltNodes = new Node?[4];
@@ -522,6 +523,10 @@ namespace MphRead.Entities
                 _spireAltNodes[3] = null;
             }
             // todo: respawn and/or checkpoint or something
+            for (int i = 0; i < _bipedIceTransforms.Length; i++)
+            {
+                _bipedIceTransforms[i] = Matrix4.Identity;
+            }
         }
 
         public void Spawn(Vector3 pos, Vector3 facing, Vector3 up, bool respawn) // todo: node ref

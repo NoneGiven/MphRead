@@ -802,11 +802,6 @@ namespace MphRead.Entities
             return true;
         }
 
-        private void ProcessInput()
-        {
-            // sktodo: process input
-        }
-
         private void PickUpItems(Scene scene)
         {
             // todo: also return if the following are all true - cur camseq, block input flag set, IsMainPlayer
@@ -1327,6 +1322,74 @@ namespace MphRead.Entities
                 _burnEffect = _scene.SpawnEffectGetEntry(effectId, facing, up, position);
                 _burnEffect.SetElementExtension(true);
             }
+        }
+
+        private void CreateIceBreakEffectGun()
+        {
+            int effectId = 231; // iceShatter
+            Vector3 playerUp = UpVector;
+            Vector3 up = FacingVector;
+            Vector3 facing;
+            if (up.Z <= -0.9f || up.Z >= 0.9f)
+            {
+                facing = Vector3.Cross(Vector3.UnitX, up).Normalized();
+            }
+            else
+            {
+                facing = Vector3.Cross(Vector3.UnitZ, up).Normalized();
+            }
+            Vector3 position = _scene.CameraPosition + up / 2; // todo: use camera info pos
+            Vector3 spawnPos = position;
+            _scene.SpawnEffect(effectId, facing, up, spawnPos);
+            spawnPos = position + _gunVec2 * 0.4f;
+            _scene.SpawnEffect(effectId, facing, up, spawnPos);
+            spawnPos = position - _gunVec2 * 0.4f;
+            _scene.SpawnEffect(effectId, facing, up, spawnPos);
+            spawnPos = position + playerUp * 0.4f;
+            _scene.SpawnEffect(effectId, facing, up, spawnPos);
+            spawnPos = position - playerUp * 0.4f;
+            _scene.SpawnEffect(effectId, facing, up, spawnPos);
+        }
+
+        private void CreateIceBreakEffectBiped(Model model, Matrix4 transform)
+        {
+            Debug.Assert(model.Nodes.Count > 1);
+            int effectId = 231; // iceShatter
+            for (int i = 1; i < model.Nodes.Count; i++)
+            {
+                Node node = model.Nodes[i];
+                Vector3 pos = _bipedIceTransforms[i].Row3.Xyz;
+                Vector3 up;
+                if (node.ChildIndex <= 0)
+                {
+                    up = (pos - Position).Normalized();
+                }
+                else
+                {
+                    up = (_bipedIceTransforms[node.ChildIndex].Row3.Xyz - pos).Normalized();
+                }
+                Vector3 facing;
+                if (up.Z <= -0.9f || up.Z >= 0.9f)
+                {
+                    facing = Vector3.Cross(Vector3.UnitX, up).Normalized();
+                }
+                else
+                {
+                    facing = Vector3.Cross(Vector3.UnitZ, up).Normalized();
+                }
+                _scene.SpawnEffect(effectId, facing, up, pos);
+            }
+        }
+
+        private void CreateIceBreakEffectAlt()
+        {
+
+            int effectId = 231; // iceShatter
+            _scene.SpawnEffect(effectId, Vector3.UnitX, Vector3.UnitY, _volume.SpherePosition);
+            _scene.SpawnEffect(effectId, Vector3.UnitY, Vector3.UnitX, _volume.SpherePosition);
+            _scene.SpawnEffect(effectId, Vector3.UnitY, -Vector3.UnitX, _volume.SpherePosition);
+            _scene.SpawnEffect(effectId, Vector3.UnitY, Vector3.UnitX, _volume.SpherePosition);
+            _scene.SpawnEffect(effectId, Vector3.UnitY, -Vector3.UnitX, _volume.SpherePosition);
         }
 
         private void Func2015D34(int a2, Vector3 a3)
