@@ -6,6 +6,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
+    [Flags]
     public enum LoadFlags : byte
     {
         None = 0,
@@ -615,7 +616,7 @@ namespace MphRead.Entities
             Speed = Vector3.Zero;
             if (respawn)
             {
-                pos = pos.AddY(1);
+                pos = pos.AddY(0.5f); // skdebug
             }
             SetTransform(facing, up, pos);
             PrevPosition = Position;
@@ -684,7 +685,7 @@ namespace MphRead.Entities
             _field4E8 = Vector3.Zero;
             _altTransform = Matrix4.Identity;
             _timeSinceMorphCamera = UInt16.MaxValue;
-            SetBipedAnimation(PlayerAnimation.Spawn, AnimFlags.NoLoop);
+            SetBipedAnimation(PlayerAnimation.Idle, AnimFlags.None); // skdebug
             _altModel.SetAnimation(0, AnimFlags.Paused);
             SetGunAnimation(GunAnimation.Idle, AnimFlags.NoLoop);
             _gunSmokeModel.SetAnimation(0);
@@ -1128,7 +1129,7 @@ namespace MphRead.Entities
                 return;
             }
             // todo: if IsBot and some flag, return
-            if (!flags.TestFlag(DamageFlags.Death | DamageFlags.IgnoreInvuln | DamageFlags.NoDmgInvuln))
+            if (!flags.TestAny(DamageFlags.Death | DamageFlags.IgnoreInvuln | DamageFlags.NoDmgInvuln))
             {
                 if (_damageInvulnTimer > 0)
                 {
@@ -1631,6 +1632,7 @@ namespace MphRead.Entities
         }
     }
 
+    [Flags]
     public enum DamageFlags : int
     {
         None = 0,
@@ -1645,6 +1647,7 @@ namespace MphRead.Entities
         ByPlayer = 0x100
     }
 
+    [Flags]
     public enum PlayerFlags1 : uint
     {
         None = 0,
@@ -1682,6 +1685,7 @@ namespace MphRead.Entities
         DrawGunSmoke = 0x80000000
     }
 
+    [Flags]
     public enum PlayerFlags2 : uint
     {
         None = 0,
@@ -1705,6 +1709,7 @@ namespace MphRead.Entities
         UnequipOmegaCannon = 0x20000
     }
 
+    [Flags]
     public enum AbilityFlags : short
     {
         None = 0,

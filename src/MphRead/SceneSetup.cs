@@ -273,17 +273,17 @@ namespace MphRead
             scene.LoadModel("KandenAlt_TailBomb");
             scene.LoadModel("arcWelder");
             scene.LoadModel("arcWelder1");
-            scene.LoadEffect(9);
-            scene.LoadEffect(113);
-            scene.LoadEffect(119);
-            scene.LoadEffect(129);
-            scene.LoadEffect(145);
-            scene.LoadEffect(146);
-            scene.LoadEffect(149);
-            scene.LoadEffect(150);
-            scene.LoadEffect(151);
-            scene.LoadEffect(152);
-            scene.LoadEffect(153);
+            scene.LoadEffect(9); // bombStart
+            scene.LoadEffect(113); // bombStartSylux
+            scene.LoadEffect(119); // bombStartMP
+            scene.LoadEffect(129); // collapsingStreaks
+            scene.LoadEffect(145); // bombBlue
+            scene.LoadEffect(146); // bombSylux
+            scene.LoadEffect(149); // bombStartSyluxG
+            scene.LoadEffect(150); // bombStartSyluxO
+            scene.LoadEffect(151); // bombStartSyluxP
+            scene.LoadEffect(152); // bombStartSyluxR
+            scene.LoadEffect(153); // bombStartSyluxW
         }
 
         private static void LoadBeamEffectResources(Scene scene)
@@ -300,83 +300,83 @@ namespace MphRead
             scene.LoadModel("trail");
             scene.LoadModel("electroTrail");
             scene.LoadModel("arcWelder");
-            scene.LoadEffect(57);
-            scene.LoadEffect(58);
-            scene.LoadEffect(59);
-            scene.LoadEffect(60);
-            scene.LoadEffect(61);
-            scene.LoadEffect(62);
-            scene.LoadEffect(63);
-            scene.LoadEffect(78);
-            scene.LoadEffect(85);
-            scene.LoadEffect(86);
-            scene.LoadEffect(92);
-            scene.LoadEffect(98);
-            scene.LoadEffect(99);
-            scene.LoadEffect(100);
-            scene.LoadEffect(121);
-            scene.LoadEffect(122);
-            scene.LoadEffect(123);
-            scene.LoadEffect(124);
-            scene.LoadEffect(125);
-            scene.LoadEffect(126);
-            scene.LoadEffect(130);
-            scene.LoadEffect(134);
-            scene.LoadEffect(137);
-            scene.LoadEffect(140);
-            scene.LoadEffect(141);
-            scene.LoadEffect(142);
-            scene.LoadEffect(171);
-            scene.LoadEffect(211);
-            scene.LoadEffect(237);
-            scene.LoadEffect(238);
-            scene.LoadEffect(246);
+            scene.LoadEffect(57); // muzzleElc
+            scene.LoadEffect(58); // muzzleGst
+            scene.LoadEffect(59); // muzzleIce
+            scene.LoadEffect(60); // muzzleJak
+            scene.LoadEffect(61); // muzzleMrt
+            scene.LoadEffect(62); // muzzlePB
+            scene.LoadEffect(63); // muzzleSnp
+            scene.LoadEffect(78); // iceWave
+            scene.LoadEffect(85); // electroCharge
+            scene.LoadEffect(86); // electroHit
+            scene.LoadEffect(92); // powerBeamCharge
+            scene.LoadEffect(98); // powerBeamChargeNoSplat
+            scene.LoadEffect(99); // powerBeamHolo
+            scene.LoadEffect(100); // powerBeamLava
+            scene.LoadEffect(121); // powerBeamHoloBG
+            scene.LoadEffect(122); // powerBeamHoloB
+            scene.LoadEffect(123); // powerBeamIce
+            scene.LoadEffect(124); // powerBeamRock
+            scene.LoadEffect(125); // powerBeamSand
+            scene.LoadEffect(126); // powerBeamSnow
+            scene.LoadEffect(130); // fireProjectile
+            scene.LoadEffect(134); // hammerProjectile
+            scene.LoadEffect(137); // electroProjectile
+            scene.LoadEffect(140); // energyRippleB
+            scene.LoadEffect(141); // energyRippleBG
+            scene.LoadEffect(142); // energyRippleO
+            scene.LoadEffect(171); // electroChargeNA
+            scene.LoadEffect(211); // mortarProjectile
+            scene.LoadEffect(237); // electroProjectileUncharged
+            scene.LoadEffect(238); // enemyProjectile1
+            scene.LoadEffect(246); // enemyMortarProjectile
         }
 
         private static void LoadRoomResources(Scene scene)
         {
-            scene.LoadEffect(1);
-            scene.LoadEffect(2);
-            scene.LoadEffect(5);
-            scene.LoadEffect(6);
-            scene.LoadEffect(7);
-            scene.LoadEffect(8);
-            scene.LoadEffect(11);
-            scene.LoadEffect(12);
-            scene.LoadEffect(13);
-            scene.LoadEffect(14);
-            scene.LoadEffect(15);
-            scene.LoadEffect(16);
-            scene.LoadEffect(17);
-            scene.LoadEffect(18);
-            scene.LoadEffect(19);
-            scene.LoadEffect(20);
-            scene.LoadEffect(21);
-            scene.LoadEffect(22);
-            scene.LoadEffect(23);
-            scene.LoadEffect(24);
-            scene.LoadEffect(25);
-            scene.LoadEffect(26);
-            scene.LoadEffect(27);
-            scene.LoadEffect(28);
-            scene.LoadEffect(31);
-            scene.LoadEffect(33);
-            scene.LoadEffect(99);
-            scene.LoadEffect(115);
-            scene.LoadEffect(154);
-            scene.LoadEffect(155);
-            scene.LoadEffect(156);
-            scene.LoadEffect(157);
-            scene.LoadEffect(158);
-            scene.LoadEffect(159);
-            scene.LoadEffect(160);
-            scene.LoadEffect(161);
-            scene.LoadEffect(173);
-            scene.LoadEffect(190);
-            scene.LoadEffect(191);
-            scene.LoadEffect(192);
-            scene.LoadEffect(231);
-            scene.LoadEffect(239);
+            scene.LoadEffect(1); // powerBeam
+            scene.LoadEffect(2); // powerBeamNoSplat
+            scene.LoadEffect(5); // missile1
+            scene.LoadEffect(6); // mortar1
+            scene.LoadEffect(7); // shotGunCol
+            scene.LoadEffect(8); // shotGunShrapnel
+            scene.LoadEffect(11); // jackHammerCol
+            scene.LoadEffect(12); // effectiveHitPB
+            scene.LoadEffect(13); // effectiveHitElectric
+            scene.LoadEffect(14); // effectiveHitMsl
+            scene.LoadEffect(15); // effectiveHitJack
+            scene.LoadEffect(16); // effectiveHitSniper
+            scene.LoadEffect(17); // effectiveHitIce
+            scene.LoadEffect(18); // effectiveHitMortar
+            scene.LoadEffect(19); // effectiveHitGhost
+            scene.LoadEffect(20); // sprEffectivePB
+            scene.LoadEffect(21); // sprEffectiveElectric
+            scene.LoadEffect(22); // sprEffectiveMsl
+            scene.LoadEffect(23); // sprEffectiveJack
+            scene.LoadEffect(24); // sprEffectiveSniper
+            scene.LoadEffect(25); // sprEffectiveIce
+            scene.LoadEffect(26); // sprEffectiveMortar
+            scene.LoadEffect(27); // sprEffectiveGhost
+            scene.LoadEffect(28); // sniperCol
+            scene.LoadEffect(31); // spawnEffect
+            scene.LoadEffect(33); // spawnEffectMP
+            scene.LoadEffect(99); // powerBeamHolo
+            scene.LoadEffect(115); // ineffectivePsycho
+            scene.LoadEffect(154); // mpEffectivePB
+            scene.LoadEffect(155); // mpEffectiveElectric
+            scene.LoadEffect(156); // mpEffectiveMsl
+            scene.LoadEffect(157); // mpEffectiveJack
+            scene.LoadEffect(158); // mpEffectiveSniper
+            scene.LoadEffect(159); // mpEffectiveIce
+            scene.LoadEffect(160); // mpEffectiveMortar
+            scene.LoadEffect(161); // mpEffectiveGhost
+            scene.LoadEffect(173); // jackHammerColNA
+            scene.LoadEffect(190); // missileCharged
+            scene.LoadEffect(191); // mortarCharged
+            scene.LoadEffect(192); // mortarChargedAffinity
+            scene.LoadEffect(231); // iceShatter
+            scene.LoadEffect(239); // enemyCol1
             // todo: lore
             scene.LoadModel(Read.GetSingleParticle(SingleType.Death).Model);
             scene.LoadModel(Read.GetSingleParticle(SingleType.Fuzzball).Model);

@@ -534,6 +534,24 @@ namespace MphRead
             }
             return (Unsafe.As<T, long>(ref value) | Unsafe.As<T, long>(ref flags)) == Unsafe.As<T, long>(ref value);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe bool TestAny<T>(this T value, T flags) where T : unmanaged, Enum
+        {
+            if (sizeof(T) == 1)
+            {
+                return (Unsafe.As<T, byte>(ref value) & Unsafe.As<T, byte>(ref flags)) != 0;
+            }
+            if (sizeof(T) == 2)
+            {
+                return (Unsafe.As<T, short>(ref value) & Unsafe.As<T, short>(ref flags)) != 0;
+            }
+            if (sizeof(T) == 4)
+            {
+                return (Unsafe.As<T, int>(ref value) & Unsafe.As<T, int>(ref flags)) != 0;
+            }
+            return (Unsafe.As<T, long>(ref value) & Unsafe.As<T, long>(ref flags)) != 0;
+        }
     }
 
     public static class MarshalExtensions
