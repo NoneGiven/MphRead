@@ -686,6 +686,7 @@ namespace MphRead.Entities
             {
                 if (IsMorphing)
                 {
+                    Flags1 &= ~PlayerFlags1.Morphing;
                     UpdateForm(altForm: true);
                 }
                 else if (IsUnmorphing)
