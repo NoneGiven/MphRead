@@ -746,7 +746,6 @@ namespace MphRead.Entities
             _mbTrailIndices[SlotIndex] = 0;
         }
 
-        // todo: FPS stuff
         private void UpdateMorphBallTrail()
         {
             for (int i = 0; i < _mbTrailSegments; i++)

@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Diagnostics;
 using MphRead.Formats;
 using OpenTK.Mathematics;
 
@@ -15,7 +16,7 @@ namespace MphRead.Entities
             }
             if (Hunter == Hunter.Spire && Flags2.TestFlag(PlayerFlags2.AltAttack))
             {
-                // sktodo: update spire alt animation
+                PrepareSpireAltAttack();
             }
             int lod = 0;
             Flags2 &= ~PlayerFlags2.Lod1;
@@ -35,11 +36,41 @@ namespace MphRead.Entities
                 drawBiped = !IsMainPlayer || _viewType != 0 || _viewSwayTimer < Values.ViewSwayTime * 2; // todo: FPS stuff
                 if (IsAltForm)
                 {
-                    // skhere
+                    _altTransform.Row3.Xyz = Position;
+                    if (_timeSinceDamage < Values.DamageFlashTime * 2) // todo: FPS stuff
+                    {
+                        PaletteOverride = Metadata.RedPalette;
+                    }
+                    if (Hunter == Hunter.Kanden)
+                    {
+                        DrawKandenAlt();
+                    }
+                    else if (Hunter == Hunter.Spire && Flags2.TestFlag(PlayerFlags2.AltAttack))
+                    {
+                        DrawSpireAltAttack();
+                    }
+                    else
+                    {
+                        UpdateTransforms(_altModel, _altTransform, Recolor);
+                        GetDrawItems(_altModel, _altModel.Model.Nodes[0], _curAlpha);
+                    }
+                    if (_frozenGfxTimer > 0)
+                    {
+                        float radius = _volume.SphereRadius + 0.2f;
+                        Matrix4 transform = Matrix4.CreateScale(radius) * _altTransform;
+                        transform.Row3.Y += Fixed.ToFloat(Values.AltColYPos);
+                        UpdateTransforms(_altIceModel, transform, Recolor);
+                        GetDrawItems(_altIceModel, _altIceModel.Model.Nodes[0], alpha: 1);
+                    }
+                    if (Hunter == Hunter.Samus && !Flags2.TestFlag(PlayerFlags2.Cloaking))
+                    {
+                        DrawMorphBallTrail();
+                    }
+                    PaletteOverride = null;
                 }
                 else if (drawBiped)
                 {
-
+                    // skhere
                 }
                 else if (AttachedEnemy == null && _field6D0 == 0)
                 {
@@ -68,6 +99,21 @@ namespace MphRead.Entities
                 }
             }
             // todo: draw lost octolith
+        }
+
+        private void DrawKandenAlt()
+        {
+            // sktodo
+        }
+
+        private void PrepareSpireAltAttack()
+        {
+            // sktodo
+        }
+
+        private void DrawSpireAltAttack()
+        {
+            // sktodo
         }
 
         private void UpdateTransforms(ModelInstance inst, Matrix4 transform, int recolor)
@@ -251,6 +297,67 @@ namespace MphRead.Entities
                     }
                 }
             }
+        }
+
+        // sktodo: confirm
+        private void DrawMorphBallTrail()
+        {
+            Debug.Assert(_trailModel != null);
+            Material material = _trailModel.Model.Materials[0];
+            Debug.Assert(_trailModel.Model.Recolors[0].Textures[material.TextureId].Width == 32);
+            float[] matrixStack = ArrayPool<float>.Shared.Rent(16 * _mbTrailSegments);
+            for (int i = 0; i < _mbTrailSegments; i++)
+            {
+                Matrix4 matrix = _mbTrailMatrices[SlotIndex, i];
+                matrixStack[i * 16] = matrix.Row0.X;
+                matrixStack[i * 16 + 1] = matrix.Row0.Y;
+                matrixStack[i * 16 + 2] = matrix.Row0.Z;
+                matrixStack[i * 16 + 3] = matrix.Row0.W;
+                matrixStack[i * 16 + 4] = matrix.Row1.X;
+                matrixStack[i * 16 + 5] = matrix.Row1.Y;
+                matrixStack[i * 16 + 6] = matrix.Row1.Z;
+                matrixStack[i * 16 + 7] = matrix.Row1.W;
+                matrixStack[i * 16 + 8] = matrix.Row2.X;
+                matrixStack[i * 16 + 9] = matrix.Row2.Y;
+                matrixStack[i * 16 + 10] = matrix.Row2.Z;
+                matrixStack[i * 16 + 11] = matrix.Row2.W;
+                matrixStack[i * 16 + 12] = matrix.Row3.X;
+                matrixStack[i * 16 + 13] = matrix.Row3.Y;
+                matrixStack[i * 16 + 14] = matrix.Row3.Z;
+                matrixStack[i * 16 + 15] = matrix.Row3.W;
+            }
+            int count = 0;
+            int index = _mbTrailIndices[SlotIndex];
+            Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(8 * _mbTrailSegments);
+            for (int i = 0; i < _mbTrailSegments; i++)
+            {
+                // going backwards with wrap-around
+                int mtxId1 = index - 1 - i + (index - 1 - i < 0 ? 9 : 0);
+                int mtxId2 = mtxId1 - 1 + (mtxId1 - 1 < 0 ? 9 : 0);
+                float alpha1 = _mbTrailAlphas[SlotIndex, mtxId1];
+                float alpha2 = _mbTrailAlphas[SlotIndex, mtxId2];
+                if (alpha1 > 0 && alpha2 > 0)
+                {
+                    float uvS1 = (31 - (int)(alpha1 * 31)) / 32f;
+                    float uvS2 = (31 - (int)(alpha2 * 31)) / 32f;
+                    uvsAndVerts[i * 8] = new Vector3(uvS1, 0, mtxId1);
+                    uvsAndVerts[i * 8 + 1] = new Vector3(0, 0.375f, 0);
+                    uvsAndVerts[i * 8 + 2] = new Vector3(uvS1, 1, mtxId1);
+                    uvsAndVerts[i * 8 + 3] = new Vector3(0, -0.375f, 0);
+                    uvsAndVerts[i * 8 + 4] = new Vector3(uvS2, 1, mtxId2);
+                    uvsAndVerts[i * 8 + 5] = new Vector3(0, -0.375f, 0);
+                    uvsAndVerts[i * 8 + 6] = new Vector3(uvS2, 0, mtxId2);
+                    uvsAndVerts[i * 8 + 7] = new Vector3(0, 0.375f, 0);
+                    count++;
+                }
+            }
+            if (count > 0)
+            {
+                var color = new Vector3(1, 27 / 31f, 11 / 31f);
+                _scene.AddRenderItem(RenderItemType.TrailStack, _scene.GetNextPolygonId(), color, material.XRepeat, material.YRepeat,
+                    material.ScaleS, material.ScaleT, _mbTrailSegments, matrixStack, uvsAndVerts, count, _trailBindingId1);
+            }
+            ArrayPool<float>.Shared.Return(matrixStack);
         }
 
         public override void GetDrawInfo(Scene scene)

@@ -560,7 +560,10 @@ namespace MphRead.Entities
                     _furlEffect = null;
                 }
             }
-            UpdateMorphBallTrail();
+            if (Hunter == Hunter.Samus && _scene.FrameCount % 2 == 0) // todo: FPS stuff
+            {
+                UpdateMorphBallTrail();
+            }
             if (_timeSinceDamage != UInt16.MaxValue)
             {
                 _timeSinceDamage++;
