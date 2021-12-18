@@ -526,7 +526,8 @@ namespace MphRead.Entities
             return base.GetEmission(inst, material, index);
         }
 
-        protected override Matrix4 GetTexcoordMatrix(ModelInstance inst, Material material, int materialId, Node node, Scene scene)
+        protected override Matrix4 GetTexcoordMatrix(ModelInstance inst, Material material, int materialId,
+            Node node, Scene scene, int recolor = -1)
         {
             if (_doubleDamage && (Hunter != Hunter.Spire || !(inst == _gunModel && materialId == 0))
                 && material.Lighting > 0 && node.BillboardMode == BillboardMode.None)
@@ -567,7 +568,7 @@ namespace MphRead.Entities
                 product.Transpose();
                 return product;
             }
-            return base.GetTexcoordMatrix(inst, material, materialId, node, scene);
+            return base.GetTexcoordMatrix(inst, material, materialId, node, scene, recolor);
         }
 
         private void ResetMorphBallTrail()

@@ -62,7 +62,7 @@ namespace MphRead.Entities
                         Matrix4 transform = Matrix4.CreateScale(radius) * _altTransform;
                         transform.Row3.Y += Fixed.ToFloat(Values.AltColYPos);
                         UpdateTransforms(_altIceModel, transform, recolor: 0);
-                        GetDrawItems(_altIceModel, _altIceModel.Model.Nodes[0], alpha: 1);
+                        GetDrawItems(_altIceModel, _altIceModel.Model.Nodes[0], alpha: 1, recolor: 0);
                     }
                     if (Hunter == Hunter.Samus && !Flags2.TestFlag(PlayerFlags2.Cloaking))
                     {
@@ -150,7 +150,8 @@ namespace MphRead.Entities
                             }
                             // identity matrices are fine since the ice model doesn't have any billboard nodes
                             _bipedIceModel.Model.UpdateMatrixStack(Matrix4.Identity, Matrix4.Identity);
-                            GetDrawItems(_bipedIceModel, _bipedIceModel.Model.Nodes[0], alpha: 1);
+                            UpdateMaterials(_bipedIceModel, recolor: 0);
+                            GetDrawItems(_bipedIceModel, _bipedIceModel.Model.Nodes[0], alpha: 1, recolor: 0);
                         }
                     }
                     _altTransform = transform; // not sure why this is done
@@ -171,7 +172,7 @@ namespace MphRead.Entities
                         drawPos = Matrix.Vec3MultMtx4(drawPos, transform);
                         transform.Row3.Xyz = drawPos;
                         UpdateTransforms(_gunSmokeModel, transform, recolor: 0);
-                        GetDrawItems(_gunSmokeModel, _gunSmokeModel.Model.Nodes[0], _smokeAlpha);
+                        GetDrawItems(_gunSmokeModel, _gunSmokeModel.Model.Nodes[0], _smokeAlpha, recolor: 0);
                     }
                 }
             }
@@ -243,7 +244,7 @@ namespace MphRead.Entities
             _scene.UpdateMaterials(model, recolor);
         }
 
-        private void GetDrawItems(ModelInstance inst, Node node, float alpha, int polygonId = -1)
+        private void GetDrawItems(ModelInstance inst, Node node, float alpha, int polygonId = -1, int recolor = -1)
         {
             if (alpha <= 0)
             {
@@ -266,7 +267,7 @@ namespace MphRead.Entities
                     }
                     Material material = model.Materials[mesh.MaterialId];
                     Vector3 emission = GetEmission(inst, material, mesh.MaterialId);
-                    Matrix4 texcoordMatrix = GetTexcoordMatrix(inst, material, mesh.MaterialId, node, _scene);
+                    Matrix4 texcoordMatrix = GetTexcoordMatrix(inst, material, mesh.MaterialId, node, _scene, recolor);
                     Vector4? color = null;
                     SelectionType selectionType = SelectionType.None;
                     int? bindingOverride = GetBindingOverride(inst, material, mesh.MaterialId);
@@ -275,12 +276,12 @@ namespace MphRead.Entities
                 }
                 if (node.ChildIndex != -1)
                 {
-                    GetDrawItems(inst, model.Nodes[node.ChildIndex], alpha, polygonId);
+                    GetDrawItems(inst, model.Nodes[node.ChildIndex], alpha, polygonId, recolor);
                 }
             }
             if (node.NextIndex != -1)
             {
-                GetDrawItems(inst, model.Nodes[node.NextIndex], alpha, polygonId);
+                GetDrawItems(inst, model.Nodes[node.NextIndex], alpha, polygonId, recolor);
             }
         }
 
@@ -310,7 +311,8 @@ namespace MphRead.Entities
             return base.GetEmission(inst, material, index);
         }
 
-        protected override Matrix4 GetTexcoordMatrix(ModelInstance inst, Material material, int materialId, Node node, Scene scene)
+        protected override Matrix4 GetTexcoordMatrix(ModelInstance inst, Material material, int materialId,
+            Node node, Scene scene, int recolor)
         {
             if (_doubleDmgTimer > 0 && (Hunter != Hunter.Spire || !(inst == _gunModel && materialId == 0))
                 && material.Lighting > 0 && node.BillboardMode == BillboardMode.None)
@@ -351,7 +353,7 @@ namespace MphRead.Entities
                 product.Transpose();
                 return product;
             }
-            return base.GetTexcoordMatrix(inst, material, materialId, node, scene);
+            return base.GetTexcoordMatrix(inst, material, materialId, node, scene, recolor);
         }
 
         private void DrawShadow()

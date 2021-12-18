@@ -374,7 +374,8 @@ namespace MphRead.Entities
             return Vector3.Zero;
         }
 
-        protected virtual Matrix4 GetTexcoordMatrix(ModelInstance inst, Material material, int materialId, Node node, Scene scene)
+        protected virtual Matrix4 GetTexcoordMatrix(ModelInstance inst, Material material, int materialId,
+            Node node, Scene scene, int recolor = -1)
         {
             Model model = inst.Model;
             Matrix4 texcoordMatrix = Matrix4.Identity;
@@ -414,7 +415,7 @@ namespace MphRead.Entities
                 }
                 if (material.TexgenMode == TexgenMode.Normal)
                 {
-                    Texture texture = model.Recolors[Recolor].Textures[material.TextureId];
+                    Texture texture = model.Recolors[recolor == -1 ? Recolor : recolor].Textures[material.TextureId];
                     Matrix4 product = node.Animation.Keep3x3();
                     Matrix4 texgenMatrix = Matrix4.Identity;
                     // in-game, there's only one uniform scale factor for models

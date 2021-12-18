@@ -419,14 +419,11 @@ namespace MphRead.Entities
             _models.Add(_bipedIceModel);
             _models.Add(_altIceModel);
             _models.Add(_doubleDmgModel);
-            if (Hunter == Hunter.Samus)
-            {
-                _trailModel = Read.GetModelInstance("trail");
-                Material material = _trailModel.Model.Materials[0];
-                _trailBindingId1 = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
-                material = _trailModel.Model.Materials[1];
-                _trailBindingId2 = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
-            }
+            _trailModel = Read.GetModelInstance("trail");
+            Material material = _trailModel.Model.Materials[0];
+            _trailBindingId1 = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
+            material = _trailModel.Model.Materials[1];
+            _trailBindingId2 = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
             _doubleDmgBindingId = scene.BindGetTexture(_doubleDmgModel.Model, 0, 0, 0);
             base.Initialize(scene);
             // todo: respawn node ref
@@ -566,7 +563,7 @@ namespace MphRead.Entities
                 _spireAltUp = Vector3.UnitX;
                 for (int i = 0; i < _spireAltVecs.Length; i++)
                 {
-                    _kandenSegPos[i] = Vector3.Zero;
+                    _spireAltVecs[i] = Vector3.Zero;
                 }
             }
             else if (Hunter == Hunter.Weavel)
