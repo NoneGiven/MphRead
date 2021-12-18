@@ -154,8 +154,7 @@ namespace MphRead.Entities
     public partial class PlayerEntityNew : EntityBase
     {
         private Scene _scene = null!;
-        private readonly ModelInstance[] _bipedModels1 = new ModelInstance[2];
-        private readonly ModelInstance[] _bipedModels2 = new ModelInstance[2];
+        private readonly ModelInstance[] _bipedModelLods = new ModelInstance[2];
         private ModelInstance _bipedModel1 = null!;
         private ModelInstance _bipedModel2 = null!;
         private ModelInstance _altModel = null!;
@@ -167,13 +166,16 @@ namespace MphRead.Entities
         private ModelInstance _trailModel = null!;
         private readonly Node?[] _spineNodes = new Node?[2];
         private readonly Node?[] _shootNodes = new Node?[2];
+        private int _trailBindingId1 = 0;
+        private int _trailBindingId2 = 0;
+        private int _doubleDmgBindingId = 0;
 
         // todo?: could save space with a union
         private readonly Node?[] _spireAltNodes = new Node?[4];
         private Vector3 _spireField0; // pos?
         private Vector3 _spireFieldC; // prev pos?
-        private Vector3 _spireField720; // up vec?
-        private Vector3 _spireField72C; // facing/right vec?
+        private Vector3 _spireAltFacing;
+        private Vector3 _spireAltUp;
         private readonly Vector3[] _spireAltVecs = new Vector3[16];
         private readonly Vector3[] _kandenSegPos = new Vector3[5];
         private readonly Matrix4[] _kandenSegMtx = new Matrix4[5];
@@ -222,6 +224,7 @@ namespace MphRead.Entities
         private ushort _altAttackTime = 0;
         private float _altSpinSpeed = 0;
 
+        public Team Team { get; private set; } = Team.None;
         public int TeamIndex { get; private set; }
         public int SlotIndex { get; private set; }
         public bool IsBot { get; set; }
@@ -325,6 +328,8 @@ namespace MphRead.Entities
         private short _jumpPadControlLockMin = 0;
         private ushort _timeSinceJumpPad = 0;
 
+        private const ushort _respawnTime = 90 * 2; // todo: FPS stuff
+
         private ushort _timeSinceInput = 0;
         private ushort _timeSinceShot = 0;
         private ushort _timeSinceDamage = 0;
@@ -363,6 +368,7 @@ namespace MphRead.Entities
         private float _curAlpha = 1;
         private float _targetAlpha = 1;
         private float _smokeAlpha = 0;
+        private int _viewType = 1; // todo: update this and use an enum
 
         // debug/viewer
         public bool IgnoreItemPickups { get; set; }
@@ -394,20 +400,18 @@ namespace MphRead.Entities
         {
             _scene = scene;
             _models.Clear();
-            _bipedModels1[0] = Read.GetModelInstance(Metadata.HunterModels[Hunter][0]);
-            _bipedModels1[1] = Read.GetModelInstance(Metadata.HunterModels[Hunter][1]);
-            _bipedModels2[0] = Read.GetModelInstance(Metadata.HunterModels[Hunter][0]);
-            _bipedModels2[1] = Read.GetModelInstance(Metadata.HunterModels[Hunter][1]);
-            _bipedModel1 = _bipedModels1[0];
-            _bipedModel2 = _bipedModels2[0];
+            _bipedModelLods[0] = Read.GetModelInstance(Metadata.HunterModels[Hunter][0]);
+            _bipedModelLods[1] = Read.GetModelInstance(Metadata.HunterModels[Hunter][1]);
+            _bipedModel1 = Read.GetModelInstance(Metadata.HunterModels[Hunter][0]);
+            _bipedModel2 = Read.GetModelInstance(Metadata.HunterModels[Hunter][0]);
             _altModel = Read.GetModelInstance(Metadata.HunterModels[Hunter][2]);
             _gunModel = Read.GetModelInstance(Metadata.HunterModels[Hunter][3]);
             _gunSmokeModel = Read.GetModelInstance("gunSmoke");
             _bipedIceModel = Read.GetModelInstance(Hunter == Hunter.Noxus || Hunter == Hunter.Trace ? "nox_ice" : "samus_ice");
             _altIceModel = Read.GetModelInstance("alt_ice");
             _doubleDmgModel = Read.GetModelInstance("doubleDamage_img");
-            _models.Add(_bipedModels1[0]);
-            _models.Add(_bipedModels1[1]);
+            _models.Add(_bipedModel1);
+            _models.Add(_bipedModel2);
             _models.Add(_altModel);
             _models.Add(_gunModel);
             _models.Add(_gunSmokeModel);
@@ -417,7 +421,12 @@ namespace MphRead.Entities
             if (Hunter == Hunter.Samus)
             {
                 _trailModel = Read.GetModelInstance("trail");
+                Material material = _trailModel.Model.Materials[0];
+                _trailBindingId1 = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
+                material = _trailModel.Model.Materials[1];
+                _trailBindingId2 = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
             }
+            _doubleDmgBindingId = scene.BindGetTexture(_doubleDmgModel.Model, 0, 0, 0);
             base.Initialize(scene);
             // todo: respawn node ref
             // todo: update controls
@@ -474,7 +483,7 @@ namespace MphRead.Entities
             _abilities = AbilityFlags.None;
             _field43A = 0;
             _field450 = 0;
-            TeamIndex = SlotIndex; // todo: use game state
+            TeamIndex = SlotIndex; // todo: use game state and set Team
             _field4E8 = Vector3.Zero;
             _altTransform = Matrix4.Identity;
             _viewSwayTimer = (ushort)(Values.ViewSwayTime * 2); // todo: FPS stuff (use floats)
@@ -491,8 +500,8 @@ namespace MphRead.Entities
             string shootNodeName = Hunter == Hunter.Guardian ? "Head_1" : "R_elbow";
             for (int i = 0; i < 2; i++)
             {
-                _spineNodes[i] = _bipedModels1[i].Model.GetNodeByName("Spine_1");
-                _shootNodes[i] = _bipedModels1[i].Model.GetNodeByName(shootNodeName);
+                _spineNodes[i] = _bipedModelLods[i].Model.GetNodeByName("Spine_1");
+                _shootNodes[i] = _bipedModelLods[i].Model.GetNodeByName(shootNodeName);
             }
             if (Hunter == Hunter.Spire)
             {
@@ -552,8 +561,8 @@ namespace MphRead.Entities
                 _abilities |= AbilityFlags.SpireAltAttack;
                 _spireField0 = pos;
                 _spireFieldC = pos;
-                _spireField720 = Vector3.UnitY;
-                _spireField72C = Vector3.UnitX;
+                _spireAltFacing = Vector3.UnitY;
+                _spireAltUp = Vector3.UnitX;
                 for (int i = 0; i < _spireAltVecs.Length; i++)
                 {
                     _kandenSegPos[i] = Vector3.Zero;
@@ -672,8 +681,6 @@ namespace MphRead.Entities
             _field4E8 = Vector3.Zero;
             _altTransform = Matrix4.Identity;
             _timeSinceMorphCamera = UInt16.MaxValue;
-            _bipedModel1 = _bipedModels1[0];
-            _bipedModel2 = _bipedModels2[0];
             SetBipedAnimation(PlayerAnimation.Spawn, AnimFlags.NoLoop);
             _altModel.SetAnimation(0, AnimFlags.Paused);
             SetGunAnimation(GunAnimation.Idle, AnimFlags.NoLoop);
@@ -1332,7 +1339,7 @@ namespace MphRead.Entities
                     _scene.SetFade(FadeType.FadeInWhite, 90 * 1 / 30f, overwrite: true);
                 }
                 Speed = Vector3.Zero;
-                _respawnTimer = 90 * 2; // todo: FPS stuff
+                _respawnTimer = _respawnTime;
                 _timeSinceDead = 0;
                 if (!_scene.Multiplayer)
                 {

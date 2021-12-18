@@ -15,7 +15,6 @@ namespace MphRead.Entities
                 LoadFlags |= LoadFlags.Disconnected;
                 LoadFlags &= ~LoadFlags.Active;
             }
-            // sktodo: need to set this flag somewhere
             if (!LoadFlags.TestFlag(LoadFlags.Active))
             {
                 if (scene.Multiplayer)

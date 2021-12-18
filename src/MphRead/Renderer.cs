@@ -287,7 +287,9 @@ namespace MphRead
                 var player = PlayerEntityNew.Create(hunter, recolor);
                 if (player != null)
                 {
+                    // todo: revisit flags
                     player.LoadFlags |= LoadFlags.SlotActive;
+                    player.LoadFlags |= LoadFlags.Active;
                 }
             }
         }
@@ -1981,10 +1983,14 @@ namespace MphRead
                 {
                     continue;
                 }
-                ((PlayerEntityNew)entity).Draw();
-                if (_showVolumes != VolumeDisplay.None)
+                var player = (PlayerEntityNew)entity;
+                if (player.LoadFlags.TestFlag(LoadFlags.Active))
                 {
-                    entity.GetDisplayVolumes(this);
+                    player.Draw();
+                    if (_showVolumes != VolumeDisplay.None)
+                    {
+                        entity.GetDisplayVolumes(this);
+                    }
                 }
             }
             for (int i = 0; i < _entities.Count; i++)

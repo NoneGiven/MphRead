@@ -8,13 +8,19 @@ namespace MphRead
 {
     public class ModelInstance
     {
-        public Model Model { get; }
+        public Model Model { get; private set; }
         public AnimationInfo AnimInfo { get; } = new AnimationInfo();
         public bool IsPlaceholder { get; set; }
         public bool Active { get; set; } = true;
         public bool NodeAnimIgnoreRoot { get; set; }
 
         public ModelInstance(Model model)
+        {
+            Model = model;
+        }
+
+        // should only be needed by the player entity
+        public void SetModel(Model model)
         {
             Model = model;
         }

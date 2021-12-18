@@ -624,6 +624,12 @@ namespace MphRead.Entities
         public virtual void HandleMessage(MessageInfo info, Scene scene)
         {
         }
+
+        protected bool IsVisible()
+        {
+            // sktodo: this
+            return true;
+        }
     }
 
     public class ModelEntity : EntityBase
