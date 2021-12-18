@@ -191,7 +191,7 @@ namespace MphRead.Entities
         {
             new PlayerEntityNew(0), new PlayerEntityNew(1), new PlayerEntityNew(2), new PlayerEntityNew(3)
         };
-        private bool IsMainPlayer => this == MainPlayer;
+        private bool IsMainPlayer => this == MainPlayer && !FreeCamera;
 
         private const int UA = 0;
         private const int Missiles = 1;
@@ -368,10 +368,11 @@ namespace MphRead.Entities
         private float _curAlpha = 1;
         private float _targetAlpha = 1;
         private float _smokeAlpha = 0;
-        private int _viewType = 1; // todo: update this and use an enum
+        private int _viewType = 0; // todo: update this and use an enum
 
         // debug/viewer
         public bool IgnoreItemPickups { get; set; }
+        public static bool FreeCamera { get; set; } = true;
 
         private PlayerEntityNew(int slotIndex) : base(EntityType.Player)
         {
