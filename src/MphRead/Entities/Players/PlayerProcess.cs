@@ -1625,5 +1625,26 @@ namespace MphRead.Entities
                 _deathaltEffect = null;
             }
         }
+
+        public void DebugInput(OpenTK.Windowing.GraphicsLibraryFramework.KeyboardState keyboardState)
+        {
+            Vector3 facing = FacingVector;
+            if (keyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up))
+            {
+                if (facing.Y < 1)
+                {
+                    facing.Y += 0.02f;
+                    SetTransform(facing.Normalized(), UpVector, Position);
+                }
+            }
+            else if (keyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down))
+            {
+                if (facing.Y > -1)
+                {
+                    facing.Y -= 0.02f;
+                    SetTransform(facing.Normalized(), UpVector, Position);
+                }
+            }
+        }
     }
 }

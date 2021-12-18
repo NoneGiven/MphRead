@@ -79,7 +79,7 @@ namespace MphRead.Entities
                     // todo: we can just figure out the angle directly from the facing vector
                     Vector3 facing = FacingVector;
                     float limit = Fixed.ToFloat(2896);
-                    float cos = MathF.Sqrt(1 / (facing.Y * facing.Y));
+                    float cos = MathF.Sqrt(1 - facing.Y * facing.Y);
                     float sin = facing.Y;
                     if (MathF.Abs(facing.Y) > limit)
                     {
@@ -90,7 +90,7 @@ namespace MphRead.Entities
                     spineNode.AfterTransform = Matrix4.CreateRotationZ(angle);
                     _bipedModel1.Model.AnimateNodes(index: 0, false, Matrix4.Identity, Vector3.One, _bipedModel1.AnimInfo);
                     spineNode.ChildIndex = spineChildId;
-                    _bipedModel1.Model.AnimateNodes(spineChildId, false, spineNode.Animation, Vector3.One, _bipedModel2.AnimInfo);
+                    _bipedModel1.Model.AnimateNodes(spineChildId, false, Matrix4.Identity, Vector3.One, _bipedModel2.AnimInfo);
                     _bipedModel1.Model.UpdateMatrixStack(_scene.ViewInvRotMatrix, _scene.ViewInvRotYMatrix);
                     spineNode.AfterTransform = null;
                     if (_timeSinceDamage < Values.DamageFlashTime * 2) // todo: FPS stuff
