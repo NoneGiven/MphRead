@@ -610,7 +610,7 @@ namespace MphRead.Entities
             Speed = Vector3.Zero;
             if (respawn)
             {
-                pos = pos.AddY(0.5f); // skdebug
+                pos = pos.AddY(1);
             }
             SetTransform(facing, up, pos);
             PrevPosition = Position;
@@ -679,7 +679,7 @@ namespace MphRead.Entities
             _field4E8 = Vector3.Zero;
             _altTransform = Matrix4.Identity;
             _timeSinceMorphCamera = UInt16.MaxValue;
-            SetBipedAnimation(PlayerAnimation.Idle, AnimFlags.None); // skdebug
+            SetBipedAnimation(PlayerAnimation.Spawn, AnimFlags.NoLoop);
             _altModel.SetAnimation(0, AnimFlags.Paused);
             SetGunAnimation(GunAnimation.Idle, AnimFlags.NoLoop);
             _gunSmokeModel.SetAnimation(0);
