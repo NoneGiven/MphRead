@@ -37,7 +37,7 @@ namespace MphRead.Entities
                 drawBiped = !IsMainPlayer || _viewType != 0 || _viewSwayTimer < Values.ViewSwayTime * 2; // todo: FPS stuff
                 if (IsAltForm)
                 {
-                    _altTransform.Row3.Xyz = Position;
+                    _modelTransform.Row3.Xyz = Position;
                     if (_timeSinceDamage < Values.DamageFlashTime * 2) // todo: FPS stuff
                     {
                         PaletteOverride = Metadata.RedPalette;
@@ -52,14 +52,14 @@ namespace MphRead.Entities
                     }
                     else
                     {
-                        UpdateTransforms(_altModel, _altTransform, Recolor);
+                        UpdateTransforms(_altModel, _modelTransform, Recolor);
                         GetDrawItems(_altModel, _altModel.Model.Nodes[0], _curAlpha);
                     }
                     PaletteOverride = null;
                     if (_frozenGfxTimer > 0)
                     {
                         float radius = _volume.SphereRadius + 0.2f;
-                        Matrix4 transform = Matrix4.CreateScale(radius) * _altTransform;
+                        Matrix4 transform = Matrix4.CreateScale(radius) * _modelTransform;
                         transform.Row3.Y += Fixed.ToFloat(Values.AltColYPos);
                         UpdateTransforms(_altIceModel, transform, recolor: 0);
                         GetDrawItems(_altIceModel, _altIceModel.Model.Nodes[0], alpha: 1, recolor: 0);
@@ -68,7 +68,7 @@ namespace MphRead.Entities
                     {
                         DrawMorphBallTrail();
                     }
-                    _altTransform.Row3.Xyz = Vector3.Zero;
+                    _modelTransform.Row3.Xyz = Vector3.Zero;
                     Flags2 |= PlayerFlags2.DrawnThirdPerson;
                 }
                 else if (drawBiped)
@@ -155,7 +155,7 @@ namespace MphRead.Entities
                             GetDrawItems(_bipedIceModel, _bipedIceModel.Model.Nodes[0], alpha: 1, recolor: 0);
                         }
                     }
-                    _altTransform = transform;
+                    _modelTransform = transform;
                     if (_health == 0)
                     {
                         DrawDeathParticles();
@@ -221,7 +221,7 @@ namespace MphRead.Entities
 
         private void DrawSpireAltAttack()
         {
-            _altModel.Model.Nodes[0].Animation = _altTransform;
+            _altModel.Model.Nodes[0].Animation = _modelTransform;
             UpdateMaterials(_altModel, Recolor);
             GetDrawItems(_altModel, _altModel.Model.Nodes[0], _curAlpha);
         }

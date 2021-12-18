@@ -248,7 +248,7 @@ namespace MphRead.Entities
         private Vector3 _light1Color;
         private Vector3 _light2Vector;
         private Vector3 _light2Color;
-        private Matrix4 _altTransform = Matrix4.Identity;
+        private Matrix4 _modelTransform = Matrix4.Identity;
 
         // todo: visualize
         private CollisionVolume _volumeUnxf; // todo: names
@@ -490,7 +490,7 @@ namespace MphRead.Entities
             _field450 = 0;
             TeamIndex = SlotIndex; // todo: use game state and set Team
             _field4E8 = Vector3.Zero;
-            _altTransform = Matrix4.Identity;
+            _modelTransform = Matrix4.Identity;
             _viewSwayTimer = (ushort)(Values.ViewSwayTime * 2); // todo: FPS stuff (use floats)
             ResetCameraInfo();
             // todo: update camera info
@@ -688,7 +688,7 @@ namespace MphRead.Entities
             _boostCharge = 0;
             _altAttackCooldown = 0;
             _field4E8 = Vector3.Zero;
-            _altTransform = Matrix4.Identity;
+            _modelTransform = Matrix4.Identity;
             _timeSinceMorphCamera = UInt16.MaxValue;
             SetBipedAnimation(PlayerAnimation.Idle, AnimFlags.None); // skdebug
             _altModel.SetAnimation(0, AnimFlags.Paused);
@@ -767,7 +767,7 @@ namespace MphRead.Entities
             }
             if (IsAltForm)
             {
-                Vector3 row0 = _altTransform.Row0.Xyz;
+                Vector3 row0 = _modelTransform.Row0.Xyz;
                 if (Vector3.Dot(Vector3.UnitY, row0) < 0.5f && _hspeedMag >= Fixed.ToFloat(1269))
                 {
                     Vector3 cross = Vector3.Cross(row0, Vector3.UnitY).Normalized();

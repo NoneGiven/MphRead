@@ -1093,20 +1093,20 @@ namespace MphRead.Entities
         {
             _field4E8 = _gunVec2;
             Vector3 up = UpVector;
-            _altTransform.Row0.X = _gunVec2.X; // right?
-            _altTransform.Row0.Y = 0;
-            _altTransform.Row0.Z = _gunVec2.Z;
-            _altTransform.Row1.X = up.X;
-            _altTransform.Row1.Y = up.Y;
-            _altTransform.Row1.Z = up.Z;
-            _altTransform.Row2.X = _field70; // facing?
-            _altTransform.Row2.Y = 0;
-            _altTransform.Row2.Z = _field74;
-            _altTransform.Row2.Xyz = Vector3.Cross(_altTransform.Row0.Xyz, _altTransform.Row1.Xyz);
-            _altTransform.Row1.Xyz = Vector3.Cross(_altTransform.Row2.Xyz, _altTransform.Row0.Xyz);
-            _altTransform.Row0.Xyz = Vector3.Normalize(_altTransform.Row0.Xyz);
-            _altTransform.Row1.Xyz = Vector3.Normalize(_altTransform.Row1.Xyz);
-            _altTransform.Row2.Xyz = Vector3.Normalize(_altTransform.Row2.Xyz);
+            _modelTransform.Row0.X = _gunVec2.X; // right?
+            _modelTransform.Row0.Y = 0;
+            _modelTransform.Row0.Z = _gunVec2.Z;
+            _modelTransform.Row1.X = up.X;
+            _modelTransform.Row1.Y = up.Y;
+            _modelTransform.Row1.Z = up.Z;
+            _modelTransform.Row2.X = _field70; // facing?
+            _modelTransform.Row2.Y = 0;
+            _modelTransform.Row2.Z = _field74;
+            _modelTransform.Row2.Xyz = Vector3.Cross(_modelTransform.Row0.Xyz, _modelTransform.Row1.Xyz);
+            _modelTransform.Row1.Xyz = Vector3.Cross(_modelTransform.Row2.Xyz, _modelTransform.Row0.Xyz);
+            _modelTransform.Row0.Xyz = Vector3.Normalize(_modelTransform.Row0.Xyz);
+            _modelTransform.Row1.Xyz = Vector3.Normalize(_modelTransform.Row1.Xyz);
+            _modelTransform.Row2.Xyz = Vector3.Normalize(_modelTransform.Row2.Xyz);
         }
 
         private void EnterAltForm()
@@ -1119,7 +1119,7 @@ namespace MphRead.Entities
             var vec = new Vector3(_field70, 0, _field74);
             Func2015D34(Values.AltGroundedNoGrav != 0 ? 2 : 1, vec);
             InitAltTransform();
-            _altTransform.Row3.Xyz = Vector3.Zero;
+            _modelTransform.Row3.Xyz = Vector3.Zero;
             if (Hunter == Hunter.Spire)
             {
                 for (int i = 0; i < _spireAltVecs.Length; i++)

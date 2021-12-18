@@ -45,7 +45,7 @@ namespace MphRead.Entities
                         else if (Flags2.TestFlag(PlayerFlags2.DrawnThirdPerson))
                         {
                             int lod = Flags2.TestFlag(PlayerFlags2.Lod1) ? 1 : 0;
-                            CreateIceBreakEffectBiped(_bipedModelLods[lod].Model, _altTransform);
+                            CreateIceBreakEffectBiped(_bipedModelLods[lod].Model, _modelTransform);
                         }
                     }
                 }
@@ -74,12 +74,12 @@ namespace MphRead.Entities
 
         private void ProcessTouchInput()
         {
-            // sktodo
+            // todo: touch input
         }
 
         private void ProcessBiped()
         {
-            // sktodo
+            // skhere
         }
 
         private void ProcessAlt()
