@@ -1300,12 +1300,24 @@ namespace MphRead
             }
         }
 
+        public EffectEntry SpawnEffectGetEntry(int effectId, Vector3 facing, Vector3 up, Vector3 position, EntityBase? owner = null)
+        {
+            Matrix4 transform = EntityBase.GetTransformMatrix(facing, up, position);
+            return SpawnEffectGetEntry(effectId, transform, owner);
+        }
+
         public EffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform, EntityBase? owner = null)
         {
             EffectEntry entry = InitEffectEntry();
             entry.EffectId = effectId;
             SpawnEffect(effectId, transform, child: false, entry, owner);
             return entry;
+        }
+
+        public void SpawnEffect(int effectId, Vector3 facing, Vector3 up, Vector3 position, bool child = false, EntityBase? owner = null)
+        {
+            Matrix4 transform = EntityBase.GetTransformMatrix(facing, up, position);
+            SpawnEffect(effectId, transform, child, entry: null, owner);
         }
 
         public void SpawnEffect(int effectId, Matrix4 transform, bool child = false, EntityBase? owner = null)
@@ -1958,10 +1970,27 @@ namespace MphRead
                 }
             }
 
+            if (_room != null)
+            {
+                _room.GetDrawInfo(this);
+            }
             for (int i = 0; i < _entities.Count; i++)
             {
                 EntityBase entity = _entities[i];
-                if (_destroyedEntities.Contains(entity))
+                if (entity.Type != EntityType.Player || _destroyedEntities.Contains(entity))
+                {
+                    continue;
+                }
+                ((PlayerEntityNew)entity).Draw();
+                if (_showVolumes != VolumeDisplay.None)
+                {
+                    entity.GetDisplayVolumes(this);
+                }
+            }
+            for (int i = 0; i < _entities.Count; i++)
+            {
+                EntityBase entity = _entities[i];
+                if (entity.Type == EntityType.Player || entity.Type == EntityType.Room || _destroyedEntities.Contains(entity))
                 {
                     continue;
                 }
@@ -1996,19 +2025,22 @@ namespace MphRead
             for (int i = 0; i < _activeElements.Count; i++)
             {
                 EffectElementEntry element = _activeElements[i];
-                for (int j = 0; j < element.Particles.Count; j++)
+                if (element.Flags.TestFlag(EffElemFlags.DrawEnabled))
                 {
-                    EffectParticle particle = element.Particles[j];
-                    Matrix4 matrix = _viewMatrix;
-                    if (particle.Owner.Flags.TestFlag(EffElemFlags.UseTransform) && !particle.Owner.Flags.TestFlag(EffElemFlags.UseMesh))
+                    for (int j = 0; j < element.Particles.Count; j++)
                     {
-                        matrix = particle.Owner.Transform * matrix;
-                    }
-                    particle.InvokeSetVecsFunc(matrix);
-                    particle.InvokeDrawFunc(1);
-                    if (particle.ShouldDraw)
-                    {
-                        particle.AddRenderItem(this);
+                        EffectParticle particle = element.Particles[j];
+                        Matrix4 matrix = _viewMatrix;
+                        if (particle.Owner.Flags.TestFlag(EffElemFlags.UseTransform) && !particle.Owner.Flags.TestFlag(EffElemFlags.UseMesh))
+                        {
+                            matrix = particle.Owner.Transform * matrix;
+                        }
+                        particle.InvokeSetVecsFunc(matrix);
+                        particle.InvokeDrawFunc(1);
+                        if (particle.ShouldDraw)
+                        {
+                            particle.AddRenderItem(this);
+                        }
                     }
                 }
             }

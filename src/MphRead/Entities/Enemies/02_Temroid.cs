@@ -213,13 +213,17 @@ namespace MphRead.Entities.Enemies
 
         protected override void Detach()
         {
-            // todo: update main player's attached enemy reference
+            if (PlayerEntityNew.MainPlayer.AttachedEnemy == this)
+            {
+                PlayerEntityNew.MainPlayer.AttachedEnemy = null;
+            }
             _field1D0 = false;
         }
 
-        public void UpdateAttached(PlayerEntity player)
+        public void UpdateAttached(PlayerEntityNew player)
         {
-            // todo: this
+            Vector3 position = player.Position + player.FacingVector / 2; // todo: use camera info pos
+            SetTransform(-player.FacingVector, UpVector, position);
         }
 
         protected override void EnemyProcess(Scene scene)

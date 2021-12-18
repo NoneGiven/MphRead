@@ -149,6 +149,11 @@ namespace MphRead.Entities
             return SpawnItem(type, position, scene, chance, despawnTime: 450 * 2); // todo: FPS stuff
         }
 
+        public static ItemInstanceEntity? SpawnItem(ItemType type, Vector3 position, int despawnTime, Scene scene)
+        {
+            return SpawnItem(type, position, scene, chance: null, despawnTime);
+        }
+
         private static ItemInstanceEntity? SpawnItem(ItemType type, Vector3 position, Scene scene,
             uint? chance = null, int despawnTime = 0)
         {

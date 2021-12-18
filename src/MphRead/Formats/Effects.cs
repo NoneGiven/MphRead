@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
 using MphRead.Entities;
 using OpenTK.Mathematics;
 
@@ -610,6 +611,28 @@ namespace MphRead.Effects
         public int EffectId { get; set; }
         public List<EffectElementEntry> Elements { get; } = new List<EffectElementEntry>(); // todo: pre-size?
 
+        public bool IsFinished
+        {
+            get
+            {
+                for (int i = 0; i < Elements.Count; i++)
+                {
+                    EffectElementEntry element = Elements[i];
+                    if (!element.Expired || element.Particles.Count > 0)
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+
+        public void Transform(Vector3 facing, Vector3 up, Vector3 position)
+        {
+            Matrix4 transform = EntityBase.GetTransformMatrix(facing, up);
+            Transform(position, transform);
+        }
+
         public void Transform(Vector3 position, Matrix4 transform)
         {
             transform.Row3.Xyz = position;
@@ -630,7 +653,19 @@ namespace MphRead.Effects
             else
             {
                 ClearElementExtension();
-            } 
+            }
+        }
+
+        public void SetDrawEnabled(bool set)
+        {
+            if (set)
+            {
+                SetDrawEnabled();
+            }
+            else
+            {
+                ClearDrawEnabled();
+            }
         }
 
         private void SetElementExtension()
@@ -648,6 +683,24 @@ namespace MphRead.Effects
             {
                 EffectElementEntry element = Elements[i];
                 element.Flags &= ~EffElemFlags.ElementExtension;
+            }
+        }
+
+        private void SetDrawEnabled()
+        {
+            for (int i = 0; i < Elements.Count; i++)
+            {
+                EffectElementEntry element = Elements[i];
+                element.Flags |= EffElemFlags.DrawEnabled;
+            }
+        }
+
+        private void ClearDrawEnabled()
+        {
+            for (int i = 0; i < Elements.Count; i++)
+            {
+                EffectElementEntry element = Elements[i];
+                element.Flags &= ~EffElemFlags.DrawEnabled;
             }
         }
 

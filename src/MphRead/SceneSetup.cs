@@ -262,6 +262,10 @@ namespace MphRead
             {
                 scene.LoadModel("trail");
             }
+            if (hunter == Hunter.Kanden)
+            {
+                PlayerEntityNew.GenerateKandenAltNodeDistances();
+            }
         }
 
         private static void LoadBombResources(Scene scene)
@@ -591,7 +595,7 @@ namespace MphRead
                     if (itemSpawner.Data.HasBase != 0)
                     {
                         scene.LoadModel("items_base");
-                    } 
+                    }
                 }
                 else if (entity is EnemySpawnEntity enemySpawner && enemySpawner.Data.ItemChance > 0)
                 {

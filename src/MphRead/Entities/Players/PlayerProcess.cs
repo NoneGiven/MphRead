@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using MphRead.Entities.Enemies;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -209,14 +210,12 @@ namespace MphRead.Entities
                 if (_deathaltEffect == null)
                 {
                     int effectId = 181; // deathBall
-                    Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY, _volume.SpherePosition);
-                    _deathaltEffect = _scene.SpawnEffectGetEntry(effectId, transform);
+                    _deathaltEffect = _scene.SpawnEffectGetEntry(effectId, Vector3.UnitX, Vector3.UnitY, _volume.SpherePosition);
                     _deathaltEffect.SetElementExtension(true);
                 }
                 else
                 {
-                    Matrix4 transform = GetTransformMatrix(Vector3.UnitY, Vector3.UnitX);
-                    _deathaltEffect.Transform(_volume.SpherePosition, transform);
+                    _deathaltEffect.Transform(Vector3.UnitY, Vector3.UnitX, _volume.SpherePosition);
                 }
             }
             else if (_deathaltEffect != null)
@@ -442,7 +441,361 @@ namespace MphRead.Entities
             _gunModel.UpdateAnimFrames();
             // todo: update weapon SFX
             PickUpItems(scene);
-            // skhere
+            if (!IsAltForm)
+            {
+                Vector3 facing = FacingVector;
+                Vector3 up = UpVector;
+                _gunDrawPos = Fixed.ToFloat(Values.FieldB8) * facing
+                    + _scene.CameraPosition
+                    + Fixed.ToFloat(Values.FieldB0) * _gunVec2
+                    + Fixed.ToFloat(Values.FieldB4) * up; // todo: use camera info position
+                _gunDrawPos.Y += Fixed.ToFloat(20) * MathF.Cos(_gunViewBob);
+                _aimVec = _aimPosition - _gunDrawPos;
+                float dot = Vector3.Dot(_aimVec, facing);
+                Vector3 vec = facing * dot;
+                _aimVec = vec - _aimVec + vec / 2;
+                _muzzlePos = _gunDrawPos + _aimVec * Fixed.ToFloat(Values.MuzzleOffset);
+            }
+            if (_muzzleEffect != null)
+            {
+                int id = Metadata.MuzzleEffectIds[(int)BeamType.ShockCoil];
+                if (_muzzleEffect.IsFinished || _muzzleEffect.EffectId == id && !Flags1.TestFlag(PlayerFlags1.ShotUncharged))
+                {
+                    _scene.UnlinkEffectEntry(_muzzleEffect);
+                    _muzzleEffect = null;
+                }
+                else if (IsMainPlayer)
+                {
+                    _muzzleEffect.Transform(_gunVec2, _gunVec1, _muzzlePos);
+                }
+            }
+            if (EquipInfo.ChargeLevel < EquipInfo.Weapon.MinCharge * 2) // todo: FPS stuff
+            {
+                if (_chargeEffect != null)
+                {
+                    _scene.UnlinkEffectEntry(_chargeEffect);
+                    _chargeEffect = null;
+                }
+            }
+            else
+            {
+                if (EquipInfo.ChargeLevel == EquipInfo.Weapon.MinCharge * 2) // todo: FPS stuff
+                {
+                    if (_chargeEffect != null)
+                    {
+                        _scene.UnlinkEffectEntry(_chargeEffect);
+                        _chargeEffect = null;
+                    }
+                    int effectId = Metadata.ChargeEffectIds[(int)CurrentWeapon];
+                    _chargeEffect = _scene.SpawnEffectGetEntry(effectId, _gunVec2, _gunVec1, _muzzlePos);
+                    if (!IsMainPlayer && _chargeEffect != null)
+                    {
+                        _chargeEffect.SetDrawEnabled(false);
+                    }
+                    Flags2 &= ~PlayerFlags2.ChargeEffect;
+                }
+                else if (EquipInfo.ChargeLevel == EquipInfo.Weapon.FullCharge * 2) // todo: FPS stuff
+                {
+                    if (!Flags2.TestFlag(PlayerFlags2.ChargeEffect))
+                    {
+                        if (_chargeEffect != null)
+                        {
+                            _scene.UnlinkEffectEntry(_chargeEffect);
+                            _chargeEffect = null;
+                        }
+                        int effectId = Metadata.ChargeLoopEffectIds[(int)CurrentWeapon];
+                        _chargeEffect = _scene.SpawnEffectGetEntry(effectId, _gunVec2, _gunVec1, _muzzlePos);
+                        if (_chargeEffect != null)
+                        {
+                            _chargeEffect.SetElementExtension(true);
+                            Flags2 |= PlayerFlags2.ChargeEffect;
+                            if (!IsMainPlayer)
+                            {
+                                _chargeEffect.SetDrawEnabled(false);
+                            }
+                        }
+                    }
+                    // todo: set camera shake
+                }
+                if (IsMainPlayer && _chargeEffect != null)
+                {
+                    _chargeEffect.Transform(_gunVec2, _gunVec1, _muzzlePos);
+                }
+            }
+            if (_frozenTimer == 0)
+            {
+                UpdateAnimFrames(_bipedModel1, _scene);
+                UpdateAnimFrames(_bipedModel2, _scene);
+            }
+            if (IsAltForm || IsMorphing && _frozenTimer == 0)
+            {
+                UpdateAnimFrames(_altModel, _scene);
+            }
+            if (_boostEffect != null)
+            {
+                _boostEffect.Transform(_gunVec2, FacingVector, Position);
+                if (!IsAltForm && !IsMorphing)
+                {
+                    _scene.UnlinkEffectEntry(_boostEffect);
+                    _boostEffect = null;
+                }
+                else if (!Flags1.TestFlag(PlayerFlags1.Boosting))
+                {
+                    if (_boostEffect.IsFinished)
+                    {
+                        _scene.UnlinkEffectEntry(_boostEffect);
+                        _boostEffect = null;
+                    }
+                    else
+                    {
+                        _boostEffect.SetElementExtension(false);
+                    }
+                }
+            }
+            if (_furlEffect != null)
+            {
+                _furlEffect.Transform(_gunVec2, FacingVector, Position);
+                if (!IsAltForm && !IsMorphing || _furlEffect.IsFinished)
+                {
+                    _scene.UnlinkEffectEntry(_furlEffect);
+                    _furlEffect = null;
+                }
+            }
+            UpdateMorphBallTrail();
+            if (_timeSinceDamage != UInt16.MaxValue)
+            {
+                _timeSinceDamage++;
+            }
+            if (_timeSincePickup != UInt16.MaxValue)
+            {
+                _timeSincePickup++;
+            }
+            if (_timeSinceHeal != UInt16.MaxValue)
+            {
+                _timeSinceHeal++;
+            }
+            if (!Flags1.TestFlag(PlayerFlags1.Standing) && _timeSinceStanding != UInt16.MaxValue)
+            {
+                _timeSinceStanding++;
+            }
+            if (_field449 != UInt16.MaxValue)
+            {
+                _field449++;
+            }
+            // todo: check input
+            _timeSinceInput = 0;
+            if (_field88 < 60 && _field88 > -60 && !EquipInfo.Zoomed && _health > 0)
+            {
+                if (_timeSinceInput == Values.SwayStartTime * 2) // todo: FPS stuff
+                {
+                    _field40C = 0;
+                    float factor1 = (Rng.GetRandomInt2(Values.SwayLimit) - Values.SwayLimit / 2) / 4096f;
+                    float factor2 = (Rng.GetRandomInt2(Values.SwayLimit) - Values.SwayLimit / 2) / 4096f;
+                    _field410 = FacingVector;
+                    _field41C = _field410;
+                    _field428 = _field410;
+                    _field41C += _gunVec2 * factor1 + UpVector * factor2;
+                }
+                else if (_timeSinceInput > Values.SwayStartTime * 2) // todo: FPS stuff
+                {
+                    _field40C += 1 / (Values.SwayIncrement / 4096f) / 2; // todo: FPS stuff
+                    if (_field40C >= 1)
+                    {
+                        _field40C = 0;
+                        float factor1 = (Rng.GetRandomInt2(Values.SwayLimit) - Values.SwayLimit / 2) / 4096f;
+                        float factor2 = (Rng.GetRandomInt2(Values.SwayLimit) - Values.SwayLimit / 2) / 4096f;
+                        _field410 = _field41C;
+                        _field41C = _field428;
+                        _field41C += _gunVec2 * factor1 + UpVector * factor2;
+                    }
+                    float angle = 180 * _field40C + 180;
+                    float factor = (MathF.Cos(MathHelper.DegreesToRadians(angle)) + 1) / 2;
+                    Vector3 facing = _field410 + (_field41C - _field410) * factor;
+                    SetTransform(facing.Normalized(), UpVector, Position);
+                }
+            }
+            if (AttachedEnemy != null && !IsAltForm && (_bipedModel2.AnimInfo.Index[0] != (int)PlayerAnimation.Unmorph
+                || _bipedModel2.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended)))
+            {
+                if (AttachedEnemy.EnemyType == EnemyType.Temroid)
+                {
+                    ((Enemy02Entity)AttachedEnemy).UpdateAttached(this);
+                }
+                else if (AttachedEnemy.EnemyType == EnemyType.Quadtroid)
+                {
+                    // todo: update attached Quadtroid
+                }
+            }
+            if (EquipInfo.SmokeLevel < EquipInfo.Weapon.SmokeStart * 2) // todo: FPS stuff
+            {
+                if (EquipInfo.SmokeLevel > EquipInfo.Weapon.SmokeMinimum * 2) // todo: FPS stuff
+                {
+                    if (Flags1.TestFlag(PlayerFlags1.DrawGunSmoke) && _smokeAlpha < 1)
+                    {
+                        _smokeAlpha = Math.Min(_smokeAlpha + 1 / 31f / 2, 1); // todo: FPS stuff
+                    }
+                }
+                else if (_smokeAlpha > 0)
+                {
+                    _smokeAlpha = Math.Max(_smokeAlpha - 1 / 31f / 2, 0); // todo: FPS stuff
+                }
+                else if (Flags1.TestFlag(PlayerFlags1.DrawGunSmoke))
+                {
+                    EquipInfo.SmokeLevel = 0;
+                    Flags1 &= ~PlayerFlags1.DrawGunSmoke;
+                }
+            }
+            else
+            {
+                if (!Flags1.TestFlag(PlayerFlags1.DrawGunSmoke))
+                {
+                    Flags1 |= PlayerFlags1.DrawGunSmoke;
+                    _gunSmokeModel.SetAnimation(0);
+                }
+                if (_smokeAlpha < 1)
+                {
+                    _smokeAlpha = Math.Min(_smokeAlpha + 1 / 31f / 2, 1); // todo: FPS stuff
+                }
+            }
+            if (Flags1.TestFlag(PlayerFlags1.DrawGunSmoke))
+            {
+                UpdateAnimFrames(_gunSmokeModel, _scene);
+            }
+            if (_health == 0)
+            {
+                if (_timeSinceDead != UInt16.MaxValue)
+                {
+                    _timeSinceDead++;
+                }
+                if (!_scene.Multiplayer)
+                {
+                    // todo: death countdown, lost octolith, story save, etc.
+                }
+                else if (_respawnTimer <= 1)
+                {
+                    Flags2 |= PlayerFlags2.HideModel;
+                }
+            }
+            if (!EquipInfo.Zoomed)
+            {
+                // todo: return to normal FOV
+            }
+            if (_bipedModel2.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
+            {
+                if (IsMorphing)
+                {
+                    UpdateForm(altForm: true);
+                }
+                else if (IsUnmorphing)
+                {
+                    // todo: camera node ref
+                    Flags1 &= ~PlayerFlags1.Unmorphing;
+                    if (_burnTimer > 0)
+                    {
+                        CreateBurnEffect();
+                    }
+                }
+            }
+            UpdateLightSources();
+            // todo: node ref updates
+            if (Flags1.TestFlag(PlayerFlags1.Standing) && (_timeStanding == 0 || _scene.FrameCount % (4 * 2) == 0) // todo: FPS stuff
+                && (Flags1.TestFlag(PlayerFlags1.OnAcid) || (Flags1.TestFlag(PlayerFlags1.OnLava) && Hunter != Hunter.Spire)))
+            {
+                DamageFlags flags = DamageFlags.IgnoreInvuln;
+                if (Flags1.TestFlag(PlayerFlags1.OnLava))
+                {
+                    flags |= DamageFlags.NoSfx;
+                }
+                TakeDamage(1, flags, direction: null, source: null);
+            }
+            Debug.Assert(_scene.Room != null);
+            if (_scene.Multiplayer)
+            {
+                if (Position.Y < _scene.Room.Metadata.PlayerMin.Y)
+                {
+                    TakeDamage(0, DamageFlags.Death, direction: null, source: null);
+                }
+                Position = Vector3.Clamp(Position, _scene.Room.Metadata.PlayerMin.WithY(Position.Y), _scene.Room.Metadata.PlayerMax);
+            }
+            if (Position.Y < _scene.Room.Metadata.KillHeight)
+            {
+                TakeDamage(0, DamageFlags.Death, direction: null, source: null);
+            }
+            // todo: update license stats
+            Flags2 &= ~PlayerFlags2.NoFormSwitch;
+            if (_doubleDmgTimer > 0)
+            {
+                _doubleDmgTimer--;
+                if (IsMainPlayer)
+                {
+                    // the game checks this last, so it might create and destroy the effect on the same frame
+                    if (_doubleDmgTimer == 0)
+                    {
+                        // todo: stop SFX
+                        if (_doubleDmgEffect != null)
+                        {
+                            _scene.UnlinkEffectEntry(_doubleDmgEffect);
+                            _doubleDmgEffect = null;
+                        }
+                    }
+                    else
+                    {
+                        if (!IsAltForm && !IsMorphing && !IsUnmorphing)
+                        {
+                            if (_doubleDmgEffect != null)
+                            {
+                                _doubleDmgEffect.Transform(UpVector, _gunVec1, _muzzlePos);
+                            }
+                            else
+                            {
+                                _doubleDmgEffect = _scene.SpawnEffectGetEntry(244, UpVector, _gunVec1, _muzzlePos); // doubleDamageGun
+                                _doubleDmgEffect.SetElementExtension(true);
+                            }
+                        }
+                        else if (_doubleDmgEffect != null)
+                        {
+                            _scene.UnlinkEffectEntry(_doubleDmgEffect);
+                            _doubleDmgEffect = null;
+                        }
+                        if (_doubleDmgTimer == 210 * 2) // todo: FPS stuff
+                        {
+                            // todo: update SFX and HUD
+                        }
+                        else if (_doubleDmgTimer == 120 * 2) // todo: FPS stuff
+                        {
+                            // todo: update SFX and HUD
+                        }
+                    }
+                }
+            }
+            if (_burnTimer > 0)
+            {
+                _burnTimer--;
+                if (_burnTimer % (8 * 2) == 0)
+                {
+                    TakeDamage(1, DamageFlags.NoSfx | DamageFlags.Burn | DamageFlags.NoDmgInvuln, direction: null, _burnedBy);
+                }
+                if (_burnEffect != null)
+                {
+                    // todo: destroy effect if in camseq which blocks input
+                    // else...
+                    if (!IsMainPlayer || IsAltForm || IsMorphing)
+                    {
+                        var facing = new Vector3(_field70, 0, _field74);
+                        _burnEffect.Transform(facing, Vector3.UnitY, _volume.SpherePosition);
+                    }
+                    else
+                    {
+                        _burnEffect.Transform(UpVector, _gunVec1, _muzzlePos);
+                    }
+                }
+            }
+            else if (_burnEffect != null)
+            {
+                _scene.UnlinkEffectEntry(_burnEffect);
+                _burnEffect = null;
+            }
+            // todo?: something for wifi
             return true;
         }
 
@@ -561,7 +914,7 @@ namespace MphRead.Entities
                     _deathaltTimer = 900 * 2; // todo: FPS stuff
                     if (!IsAltForm && !IsMorphing)
                     {
-                        SwitchForms(force: true);
+                        TrySwitchForms(force: true);
                     }
                     // todo: play SFX
                     break;
@@ -695,9 +1048,287 @@ namespace MphRead.Entities
             }
         }
 
-        private void SwitchForms(bool force = false)
+        private bool TrySwitchForms(bool force = false)
         {
-            // sktodo
+            if (!force && (IsMorphing || IsUnmorphing || _frozenTimer > 0 || _field6D0 != 0 || _deathaltTimer > 0
+                    || Flags2.TestFlag(PlayerFlags2.NoFormSwitch)
+                    || !IsAltForm && Flags2.TestFlag(PlayerFlags2.BipedStuck)
+                    || IsAltForm && _morphCamera != null))
+            {
+                // todo: play SFX
+                return false;
+            }
+            if (Hunter == Hunter.Guardian) // todo: playable Guardian
+            {
+                return false;
+            }
+
+            void AfterSwitch()
+            {
+                Flags1 &= ~PlayerFlags1.Bit30;
+                UpdateZoom(false);
+                EquipInfo.ChargeLevel = 0;
+                EquipInfo.SmokeLevel = 0;
+                if (_burnTimer > 0)
+                {
+                    CreateBurnEffect();
+                }
+            }
+
+            if (!IsAltForm)
+            {
+                EnterAltForm();
+                AfterSwitch();
+                return true;
+            }
+            if (!Flags1.TestFlag(PlayerFlags1.NoUnmorph))
+            {
+                ExitAltForm();
+                AfterSwitch();
+                return true;
+            }
+            // todo: play SFX
+            return false;
+        }
+
+        private void InitAltTransform()
+        {
+            _field4E8 = _gunVec2;
+            Vector3 up = UpVector;
+            _altTransform.Row0.X = _gunVec2.X; // right?
+            _altTransform.Row0.Y = 0;
+            _altTransform.Row0.Z = _gunVec2.Z;
+            _altTransform.Row1.X = up.X;
+            _altTransform.Row1.Y = up.Y;
+            _altTransform.Row1.Z = up.Z;
+            _altTransform.Row2.X = _field70; // facing?
+            _altTransform.Row2.Y = 0;
+            _altTransform.Row2.Z = _field74;
+            _altTransform.Row2.Xyz = Vector3.Cross(_altTransform.Row0.Xyz, _altTransform.Row1.Xyz);
+            _altTransform.Row1.Xyz = Vector3.Cross(_altTransform.Row2.Xyz, _altTransform.Row0.Xyz);
+            _altTransform.Row0.Xyz = Vector3.Normalize(_altTransform.Row0.Xyz);
+            _altTransform.Row1.Xyz = Vector3.Normalize(_altTransform.Row1.Xyz);
+            _altTransform.Row2.Xyz = Vector3.Normalize(_altTransform.Row2.Xyz);
+        }
+
+        private void EnterAltForm()
+        {
+            _field6F4 = _field70;
+            _field6F8 = _field74;
+            _field6FC = _gunVec2.X;
+            _field700 = _gunVec2.Z;
+            Flags1 |= PlayerFlags1.Morphing;
+            var vec = new Vector3(_field70, 0, _field74);
+            Func2015D34(Values.AltGroundedNoGrav != 0 ? 2 : 1, vec);
+            InitAltTransform();
+            _altTransform.Row3.Xyz = Vector3.Zero;
+            if (Hunter == Hunter.Spire)
+            {
+                for (int i = 0; i < _spireAltVecs.Length; i++)
+                {
+                    _spireAltVecs[i] = Vector3.Zero;
+                }
+                _altModel.SetAnimation((int)SpireAltAnim.Attack, AnimFlags.Paused);
+            }
+            else if (Hunter == Hunter.Noxus)
+            {
+                _altSpinSpeed = Fixed.ToFloat(Values.AltSpinSpeed);
+                _field524 = 0;
+                _field528 = 0;
+                _field52C = 0;
+                _field530 = 0;
+                _field534 = 0;
+                // animation frames updated later based on attack timer
+                _altModel.SetAnimation((int)NoxusAltAnim.Extend, AnimFlags.Paused);
+            }
+            else if (Hunter == Hunter.Weavel)
+            {
+                _altModel.SetAnimation((int)WeavelAltAnim.Idle);
+                Flags2 |= PlayerFlags2.Halfturret;
+                // todo: spawn halfturret
+            }
+            else if (Hunter == Hunter.Samus)
+            {
+                _furlEffect = _scene.SpawnEffectGetEntry(30, _gunVec2, FacingVector, Position); // samusFurl
+            }
+            else if (Hunter == Hunter.Kanden)
+            {
+                _altModel.SetAnimation((int)KandenAltAnim.Idle, AnimFlags.Paused);
+            }
+            else if (Hunter == Hunter.Trace)
+            {
+                _altModel.SetAnimation((int)TraceAltAnim.Idle);
+            }
+            else if (Hunter == Hunter.Sylux)
+            {
+                _altModel.SetAnimation((int)SyluxAltAnim.Idle);
+            }
+            if (EquipInfo.ChargeLevel > 0)
+            {
+                // todo: stop SFX
+                SetGunAnimation(GunAnimation.Idle, AnimFlags.NoLoop);
+            }
+            EquipInfo.ChargeLevel = 0;
+            SetBipedAnimation(PlayerAnimation.Morph, AnimFlags.NoLoop);
+            // todo: play SFX
+        }
+
+        private void ExitAltForm()
+        {
+            if (Flags2.TestFlag(PlayerFlags2.Halfturret))
+            {
+                // todo: update health, destroy turret
+            }
+            Flags1 &= ~PlayerFlags1.Morphing;
+            Flags1 |= PlayerFlags1.Unmorphing;
+            Func2015D34(0, RightVector);
+            if (_boostCharge > 0)
+            {
+                // todo: update SFX
+            }
+            _boostCharge = 0;
+            SetBipedAnimation(PlayerAnimation.Unmorph, AnimFlags.NoLoop);
+            if (Flags2.TestFlag(PlayerFlags2.AltAttack))
+            {
+                EndAltFormAttack();
+            }
+            UpdateZoom(false);
+            EquipInfo.ChargeLevel = 0;
+            EquipInfo.SmokeLevel = 0;
+            // todo: play SFX
+            if (IsAltForm)
+            {
+                UpdateForm(altForm: false);
+            }
+        }
+
+        private void UpdateForm(bool altForm)
+        {
+            if (altForm)
+            {
+                Flags1 |= PlayerFlags1.AltForm;
+            }
+            else
+            {
+                Flags1 &= ~PlayerFlags1.AltForm;
+            }
+            // todo: update HUD if main player
+            // todo: scan IDs
+            if (altForm)
+            {
+                CollisionVolume altVolume = PlayerVolumes[(int)Hunter, 2];
+                Position += _volumeUnxf.SpherePosition - altVolume.SpherePosition;
+                _volumeUnxf = altVolume;
+                InitAltTransform();
+                _field80 = _field70;
+                _field84 = _field74;
+                if (Hunter == Hunter.Kanden)
+                {
+                    _kandenSegPos[0] = Position;
+                    var facing = new Vector3(_field70, 0, _field74);
+                    _kandenSegMtx[0] = GetTransformMatrix(facing, Vector3.UnitY, Position);
+                    Debug.Assert(_kandenSegPos.Length == _kandenSegMtx.Length);
+                    for (int i = 1; i < _kandenSegPos.Length; i++)
+                    {
+                        float dist = KandenAltNodeDistances[i - 1];
+                        _kandenSegPos[i] = _kandenSegPos[i - 1] + facing * dist;
+                        Matrix4 matrix = _kandenSegMtx[i - 1];
+                        matrix.Row3.Xyz = _kandenSegPos[i];
+                        _kandenSegMtx[i] = matrix;
+                    }
+                }
+                else if (Hunter == Hunter.Spire)
+                {
+                    _scene.SpawnEffect(37, Vector3.UnitX, Vector3.UnitY, Position); // spireAltSlam
+                    // todo: set camera shake
+                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    {
+                        EntityBase entity = _scene.Entities[i];
+                        if (entity.Type != EntityType.Player || entity == this)
+                        {
+                            continue;
+                        }
+                        var other = (PlayerEntityNew)entity;
+                        if (other.Flags1.TestFlag(PlayerFlags1.Standing) && Vector3.DistanceSquared(Position, other.Position) < 16)
+                        {
+                            // todo: set camera shake
+                            if (other.Speed.Y < 0.15f)
+                            {
+                                other.Speed = other.Speed.WithY(0.15f);
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                _gunVec1 = FacingVector;
+                CollisionVolume bipedVolume = PlayerVolumes[(int)Hunter, 0];
+                Position += _volumeUnxf.SpherePosition - bipedVolume.SpherePosition;
+                _volumeUnxf = bipedVolume;
+            }
+            // todo: stop SFX
+        }
+
+        private void EndAltFormAttack()
+        {
+            if (Hunter == Hunter.Samus)
+            {
+                Flags1 &= ~PlayerFlags1.Boosting;
+            }
+            else if (Hunter == Hunter.Trace || Hunter == Hunter.Weavel)
+            {
+                // todo: if bot and encounter state, set cooldown to 10 * 2
+                // else...
+                _altAttackCooldown = (ushort)(Values.AltAttackCooldown * 2); // todo: FPS stuff
+            }
+            else if (Hunter == Hunter.Noxus)
+            {
+                if (_altAttackTime > 0)
+                {
+                    // todo: update SFX
+                    _altModel.SetAnimation((int)NoxusAltAnim.Extend, AnimFlags.Paused);
+                    _altAttackTime = 0;
+                }
+            }
+            Flags2 &= ~PlayerFlags2.AltAttack;
+        }
+
+        private void CreateBurnEffect()
+        {
+            if (_burnEffect != null)
+            {
+                _scene.UnlinkEffectEntry(_burnEffect);
+                _burnEffect = null;
+            }
+            if (!IsUnmorphing)
+            {
+                Vector3 up;
+                Vector3 facing;
+                Vector3 position;
+                int effectId;
+                if (IsAltForm || IsMorphing || !IsMainPlayer)
+                {
+                    position = _volume.SpherePosition;
+                    up = Vector3.UnitY;
+                    facing = new Vector3(_field70, 0, _field74);
+                    effectId = IsAltForm || IsMorphing ? 187 : 189; // flamingAltForm or flamingHunter
+                }
+                else
+                {
+                    position = _muzzlePos;
+                    up = _gunVec1;
+                    facing = UpVector;
+                    effectId = 188; // flamingGun
+                }
+                _burnEffect = _scene.SpawnEffectGetEntry(effectId, facing, up, position);
+                _burnEffect.SetElementExtension(true);
+            }
+        }
+
+        private void Func2015D34(int a2, Vector3 a3)
+        {
+            // todo: this
         }
 
         private PlayerSpawnEntity? GetRespawnPoint()
@@ -789,14 +1420,208 @@ namespace MphRead.Entities
             return count;
         }
 
+        private const float _colorStep = 8 / 255f;
+
+        // todo?: FPS stuff
+        private void UpdateLightSources()
+        {
+            static float UpdateChannel(float current, float source, float frames)
+            {
+                float diff = source - current;
+                if (MathF.Abs(diff) < _colorStep)
+                {
+                    return source;
+                }
+                int factor;
+                if (current > source)
+                {
+                    factor = (int)MathF.Truncate((diff + _colorStep) / (8 * _colorStep));
+                    if (factor <= -1)
+                    {
+                        return current + (factor - 1) * _colorStep * frames;
+                    }
+                    return current - _colorStep * frames;
+                }
+                factor = (int)MathF.Truncate(diff / (8 * _colorStep));
+                if (factor >= 1)
+                {
+                    return current + factor * _colorStep * frames;
+                }
+                return current + _colorStep * frames;
+            }
+            bool hasLight1 = false;
+            bool hasLight2 = false;
+            Vector3 light1Color = _light1Color;
+            Vector3 light1Vector = _light1Vector;
+            Vector3 light2Color = _light2Color;
+            Vector3 light2Vector = _light2Vector;
+            float frames = _scene.FrameTime * 30;
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.LightSource)
+                {
+                    continue;
+                }
+                var lightSource = (LightSourceEntity)entity;
+                if (lightSource.Volume.TestPoint(_volume.SpherePosition))
+                {
+                    if (lightSource.Light1Enabled)
+                    {
+                        hasLight1 = true;
+                        light1Vector.X += (lightSource.Light1Vector.X - light1Vector.X) / 8f * frames;
+                        light1Vector.Y += (lightSource.Light1Vector.Y - light1Vector.Y) / 8f * frames;
+                        light1Vector.Z += (lightSource.Light1Vector.Z - light1Vector.Z) / 8f * frames;
+                        light1Color.X = UpdateChannel(light1Color.X, lightSource.Light1Color.X, frames);
+                        light1Color.Y = UpdateChannel(light1Color.Y, lightSource.Light1Color.Y, frames);
+                        light1Color.Z = UpdateChannel(light1Color.Z, lightSource.Light1Color.Z, frames);
+                    }
+                    if (lightSource.Light2Enabled)
+                    {
+                        hasLight2 = true;
+                        light2Vector.X += (lightSource.Light2Vector.X - light2Vector.X) / 8f * frames;
+                        light2Vector.Y += (lightSource.Light2Vector.Y - light2Vector.Y) / 8f * frames;
+                        light2Vector.Z += (lightSource.Light2Vector.Z - light2Vector.Z) / 8f * frames;
+                        light2Color.X = UpdateChannel(light2Color.X, lightSource.Light2Color.X, frames);
+                        light2Color.Y = UpdateChannel(light2Color.Y, lightSource.Light2Color.Y, frames);
+                        light2Color.Z = UpdateChannel(light2Color.Z, lightSource.Light2Color.Z, frames);
+                    }
+                }
+            }
+            if (!hasLight1)
+            {
+                light1Vector.X += (_scene.Light1Vector.X - light1Vector.X) / 8f * frames;
+                light1Vector.Y += (_scene.Light1Vector.Y - light1Vector.Y) / 8f * frames;
+                light1Vector.Z += (_scene.Light1Vector.Z - light1Vector.Z) / 8f * frames;
+                light1Color.X = UpdateChannel(light1Color.X, _scene.Light1Color.X, frames);
+                light1Color.Y = UpdateChannel(light1Color.Y, _scene.Light1Color.Y, frames);
+                light1Color.Z = UpdateChannel(light1Color.Z, _scene.Light1Color.Z, frames);
+            }
+            if (!hasLight2)
+            {
+                light2Vector.X += (_scene.Light2Vector.X - light2Vector.X) / 8f * frames;
+                light2Vector.Y += (_scene.Light2Vector.Y - light2Vector.Y) / 8f * frames;
+                light2Vector.Z += (_scene.Light2Vector.Z - light2Vector.Z) / 8f * frames;
+                light2Color.X = UpdateChannel(light2Color.X, _scene.Light2Color.X, frames);
+                light2Color.Y = UpdateChannel(light2Color.Y, _scene.Light2Color.Y, frames);
+                light2Color.Z = UpdateChannel(light2Color.Z, _scene.Light2Color.Z, frames);
+            }
+            _light1Color = light1Color;
+            _light1Vector = light1Vector.Normalized();
+            _light2Color = light2Color;
+            _light2Vector = light2Vector.Normalized();
+        }
+
         protected override LightInfo GetLightInfo(Scene scene)
         {
             return new LightInfo(_light1Vector, _light1Color, _light2Vector, _light2Color);
         }
 
-        public override void GetDrawInfo(Scene scene)
+        public override void HandleMessage(MessageInfo info, Scene scene)
         {
-            // sktodo
+            if (info.Message == Message.Damage)
+            {
+                TakeDamage((uint)info.Param1, DamageFlags.IgnoreInvuln, direction: null, source: null);
+            }
+            else if (info.Message == Message.Death)
+            {
+                TakeDamage((uint)info.Param1, DamageFlags.Deathalt, direction: null, source: null);
+            }
+            else if (info.Message == Message.Gravity)
+            {
+                float gravity = (float)info.Param1;
+                if (!Flags1.TestFlag(PlayerFlags1.Standing) && !Flags2.TestFlag(PlayerFlags2.AltAttack)
+                    && gravity != 0 && _jumpPadControlLock == 0)
+                {
+                    Flags2 |= PlayerFlags2.GravityOverride;
+                    _gravity = gravity;
+                }
+            }
+            else if (info.Message == Message.SetCamSeqAi)
+            {
+                // todo: update bot AI flag
+            }
+            else if (info.Message == Message.Impact)
+            {
+                if (info.Param1 is EntityBase target && target != this
+                    && (target.Type == EntityType.EnemyInstance || target.Type == EntityType.Halfturret || target.Type == EntityType.Player))
+                {
+                    _lastTarget = target;
+                    _timeSinceHitTarget = 0;
+                    if (info.Sender != null)
+                    {
+                        Debug.Assert(info.Sender.Type == EntityType.BeamProjectile);
+                        var beam = (BeamProjectileEntity)info.Sender;
+                        if (beam.WeaponType == BeamType.ShockCoil)
+                        {
+                            if (target == _shockCoilTarget)
+                            {
+                                _shockCoilTimer++;
+                            }
+                            else
+                            {
+                                _shockCoilTimer = 0;
+                                _shockCoilTarget = target;
+                            }
+                        }
+                    }
+                }
+            }
+            else if (info.Message == Message.PreventFormSwitch)
+            {
+                Flags2 |= PlayerFlags2.NoFormSwitch;
+            }
+            else if (info.Message == Message.DripMoatPlatform)
+            {
+                if ((int)info.Param1 == 0)
+                {
+                    Flags2 &= ~PlayerFlags2.BipedLock;
+                }
+                else
+                {
+                    Flags2 |= PlayerFlags2.BipedLock;
+                }
+            }
+        }
+
+        public override void Destroy(Scene scene)
+        {
+            // todo: stop SFX
+            if (_furlEffect != null)
+            {
+                scene.UnlinkEffectEntry(_furlEffect);
+                _furlEffect = null;
+            }
+            if (_boostEffect != null)
+            {
+                scene.UnlinkEffectEntry(_boostEffect);
+                _boostEffect = null;
+            }
+            if (_burnEffect != null)
+            {
+                scene.UnlinkEffectEntry(_burnEffect);
+                _burnEffect = null;
+            }
+            if (_chargeEffect != null)
+            {
+                scene.UnlinkEffectEntry(_chargeEffect);
+                _chargeEffect = null;
+            }
+            if (_muzzleEffect != null)
+            {
+                scene.UnlinkEffectEntry(_muzzleEffect);
+                _muzzleEffect = null;
+            }
+            if (_doubleDmgEffect != null)
+            {
+                scene.UnlinkEffectEntry(_doubleDmgEffect);
+                _doubleDmgEffect = null;
+            }
+            if (_deathaltEffect != null)
+            {
+                scene.UnlinkEffectEntry(_deathaltEffect);
+                _deathaltEffect = null;
+            }
         }
     }
 }

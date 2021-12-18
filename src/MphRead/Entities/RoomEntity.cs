@@ -21,6 +21,7 @@ namespace MphRead.Entities
 
         protected override bool UseNodeTransform => false; // default -- will use transform if setting is enabled
         public int RoomId { get; private set; }
+        public RoomMetadata Metadata => _meta;
 
         public RoomEntity(string name, RoomMetadata meta, CollisionInstance collision, NodeData? nodeData,
             int layerMask, int roomId) : base(EntityType.Room)

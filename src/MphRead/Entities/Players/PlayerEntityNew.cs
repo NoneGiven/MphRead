@@ -60,8 +60,9 @@ namespace MphRead.Entities
         }
     }
 
-    public enum PlayerAnimation : byte
+    public enum PlayerAnimation : sbyte
     {
+        None = -1,
         Morph = 0,
         Flourish = 1,
         WalkForward = 2,
@@ -107,11 +108,47 @@ namespace MphRead.Entities
         Shot = 12
     }
 
+    public enum TraceAltAnim : byte
+    {
+        Idle = 0,
+        Attack = 1,
+        MoveLeft = 2,
+        MoveForward = 3,
+        MoveRight = 4,
+        MoveBackward = 5
+    }
+
+    public enum WeavelAltAnim : byte
+    {
+        Idle = 0,
+        Attack = 1,
+        MoveLeft = 2,
+        MoveForward = 3,
+        MoveRight = 4,
+        Turn = 5,
+        MoveBackward = 6
+    }
+
     public enum KandenAltAnim : byte
     {
         Idle = 0,
         TailOut = 1,
         TailIn = 2
+    }
+
+    public enum NoxusAltAnim : byte
+    {
+        Extend = 0
+    }
+
+    public enum SyluxAltAnim : byte
+    {
+        Idle = 0
+    }
+
+    public enum SpireAltAnim : byte
+    {
+        Attack = 0
     }
 
     public partial class PlayerEntityNew : EntityBase
@@ -139,6 +176,7 @@ namespace MphRead.Entities
         private Vector3 _spireField72C; // facing/right vec?
         private readonly Vector3[] _spireAltVecs = new Vector3[16];
         private readonly Vector3[] _kandenSegPos = new Vector3[5];
+        private readonly Matrix4[] _kandenSegMtx = new Matrix4[5];
         private byte _syluxBombCount = 0;
         private readonly BombEntity?[] _syluxBombs = new BombEntity?[3];
 
@@ -181,6 +219,8 @@ namespace MphRead.Entities
         private byte _bombOveruse = 0;
         private ushort _boostCharge = 0;
         private ushort _altAttackCooldown = 0;
+        private ushort _altAttackTime = 0;
+        private float _altSpinSpeed = 0;
 
         public int TeamIndex { get; private set; }
         public int SlotIndex { get; private set; }
@@ -192,12 +232,13 @@ namespace MphRead.Entities
 
         private const int _mbTrailSegments = 9;
         private static readonly Matrix4[,] _mbTrailMatrices = new Matrix4[MaxPlayers, _mbTrailSegments];
-        private static readonly int[,] _mbTrailAlphas = new int[MaxPlayers, _mbTrailSegments];
+        private static readonly float[,] _mbTrailAlphas = new float[MaxPlayers, _mbTrailSegments];
         private static readonly int[] _mbTrailIndices = new int[MaxPlayers];
         private Vector3 _light1Vector;
         private Vector3 _light1Color;
         private Vector3 _light2Vector;
         private Vector3 _light2Color;
+        private Matrix4 _altTransform = Matrix4.Identity;
 
         // todo: visualize
         private CollisionVolume _volumeUnxf; // todo: names
@@ -208,37 +249,61 @@ namespace MphRead.Entities
         private Vector3 _aimPosition;
         private float _gunViewBob = 0;
         private float _walkViewBob = 0;
+        private Vector3 _muzzlePos;
         private Vector3 _gunDrawPos;
         private Vector3 _aimVec;
 
-        private float _field88 = 0; // some angle?
+        // something alt form angle related
+        private float _field70 = 0;
+        private float _field74 = 0;
+        private float _field78 = 0;
+        private float _field7C = 0;
+        private float _field80 = 0;
+        private float _field84 = 0;
+
+        private float _field88 = 0; // angle related to view sway
+        private float _field40C = 0; // view sway percentage
+        private Vector3 _field410;
+        private Vector3 _field41C;
+        private Vector3 _field428;
+
         private short _fieldE4 = 0;
         private short _fieldE6 = 0;
         private float _fieldE8 = 0;
         private short _field2BC = 0;
         private byte _field360 = 0;
-        private short _field40C = 0;
         private byte _field447 = 0;
         private ushort _field43A = 0;
         private int _field450 = 0;
-        private byte _field449 = 0;
         private byte _field4AC = 0;
-        private Vector3 _field4E8;
+        private Vector3 _field4E8; // stores gun vec 2
+        private float _field4EC = 0;
+        private float _field4F0 = 0;
+        private float _field524 = 0;
+        private float _field528 = 0;
+        private float _field52C = 0;
+        private float _field530 = 0;
+        private float _field534 = 0;
         private byte _field53E = 0;
         private byte _field551 = 0;
         private byte _field552 = 0;
         private byte _field553 = 0;
+        private byte _field6D0 = 0;
+        private float _field6F4 = 0; // set from other fields when entering alt form
+        private float _field6F8 = 0;
+        private float _field6FC = 0;
+        private float _field700 = 0;
 
         public EnemySpawnEntity? EnemySpawner => _enemySpawner;
         public EnemyInstanceEntity? AttachedEnemy { get; set; } = null;
         private EntityBase? _field35C = null;
-        private MorphCameraEntity? _camPos = null;
+        private MorphCameraEntity? _morphCamera = null;
         private OctolithFlagEntity? _octolithFlag = null;
         private JumpPadEntity? _lastJumpPad = null;
         private EnemySpawnEntity? _enemySpawner = null;
         private EntityBase? _burnedBy = null;
         private EntityBase? _lastTarget = null;
-        private PlayerEntityNew? _shockCoilTarget = null;
+        private EntityBase? _shockCoilTarget = null;
 
         public bool IsAltForm => Flags1.TestFlag(PlayerFlags1.AltForm);
         public bool IsMorphing => Flags1.TestFlag(PlayerFlags1.Morphing);
@@ -253,13 +318,14 @@ namespace MphRead.Entities
         public Vector3 IdlePosition { get; private set; }
         private short _someSpeedCounter = 0;
         private float _hSpeedCap = 0;
-        private float _hspeedMag = 0;
+        private float _hspeedMag = 0; // todo: all FPS stuff with speed
+        private float _gravity = 0;
 
         private short _jumpPadControlLock = 0;
         private short _jumpPadControlLockMin = 0;
         private ushort _timeSinceJumpPad = 0;
 
-        private ulong _timeSinceInput = 0;
+        private ushort _timeSinceInput = 0;
         private ushort _timeSinceShot = 0;
         private ushort _timeSinceDamage = 0;
         private ushort _timeSincePickup = 0;
@@ -272,6 +338,7 @@ namespace MphRead.Entities
         private ushort _cloakTimer = 0;
         private ushort _deathaltTimer = 0;
         private ushort _frozenTimer = 0;
+        private ushort _frozenGfxTimer = 0;
         private ushort _disruptedTimer = 0;
         private ushort _burnTimer = 0;
         private ushort _timeSinceFrozen = 0;
@@ -279,13 +346,20 @@ namespace MphRead.Entities
         private ushort _hidingTimer = 0;
         private ushort _timeSinceButtonTouch = 0;
         private ushort _timeStanding = 0;
+        private ushort _timeSinceStanding = 0;
+        private ushort _field449 = 0;
         private ushort _timeSinceHitTarget = 0;
         private ushort _shockCoilTimer = 0;
         private ushort _timeSinceMorphCamera = 0;
 
         private EffectEntry? _deathaltEffect = null;
+        private EffectEntry? _doubleDmgEffect = null;
+        private EffectEntry? _burnEffect = null;
+        private EffectEntry? _furlEffect = null;
+        private EffectEntry? _boostEffect = null;
+        private EffectEntry? _muzzleEffect = null;
+        private EffectEntry? _chargeEffect = null;
 
-        private bool _frozen = false;
         private float _curAlpha = 1;
         private float _targetAlpha = 1;
         private float _smokeAlpha = 0;
@@ -402,7 +476,8 @@ namespace MphRead.Entities
             _field450 = 0;
             TeamIndex = SlotIndex; // todo: use game state
             _field4E8 = Vector3.Zero;
-            _viewSwayTimer = (ushort)(Values.ViewSwayTime * 2); // todo: FPS stuff
+            _altTransform = Matrix4.Identity;
+            _viewSwayTimer = (ushort)(Values.ViewSwayTime * 2); // todo: FPS stuff (use floats)
             ResetCameraInfo();
             // todo: update camera info
             _field2BC = 0;
@@ -516,7 +591,7 @@ namespace MphRead.Entities
             Metadata.LoadEffectiveness(0x2AAAA, BeamEffectiveness);
             _frozenTimer = 0;
             _timeSinceFrozen = 255;
-            _frozen = false;
+            _frozenGfxTimer = 0;
             _hidingTimer = 0;
             _curAlpha = 1;
             _targetAlpha = 1;
@@ -535,7 +610,13 @@ namespace MphRead.Entities
             IdlePosition = Position;
             _gunVec2 = Vector3.Cross(up, facing).Normalized();
             _gunVec1 = facing;
-            // sktodo: field_70 stuff
+            float factor = 1 / MathF.Sqrt(facing.X * facing.X + facing.Z * facing.Z);
+            _field70 = facing.X * factor;
+            _field74 = facing.Z * factor;
+            _field78 = _field74;
+            _field7C = -_field70;
+            _field80 = _field70;
+            _field84 = _field74;
             _aimPosition = (Position + _gunVec1 * Fixed.ToFloat(Values.AimDistance)).AddY(Fixed.ToFloat(Values.AimYOffset));
             Acceleration = Vector3.Zero;
             _someSpeedCounter = 0;
@@ -589,6 +670,7 @@ namespace MphRead.Entities
             _boostCharge = 0;
             _altAttackCooldown = 0;
             _field4E8 = Vector3.Zero;
+            _altTransform = Matrix4.Identity;
             _timeSinceMorphCamera = UInt16.MaxValue;
             _bipedModel1 = _bipedModels1[0];
             _bipedModel2 = _bipedModels2[0];
@@ -597,7 +679,7 @@ namespace MphRead.Entities
             SetGunAnimation(GunAnimation.Idle, AnimFlags.NoLoop);
             _gunSmokeModel.SetAnimation(0);
             _smokeAlpha = 0;
-            _camPos = null;
+            _morphCamera = null;
             _octolithFlag = null;
             ResetMorphBallTrail();
             // todo: stop SFX, play SFX, update SFX handle
@@ -622,8 +704,7 @@ namespace MphRead.Entities
             {
                 // spawnEffectMP or spawnEffect
                 int effectId = _scene.Multiplayer && _scene.PlayerCount > 2 ? 33 : 31;
-                Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY, Position);
-                _scene.SpawnEffect(effectId, transform);
+                _scene.SpawnEffect(effectId, Vector3.UnitX, Vector3.UnitY, Position);
             }
         }
 
@@ -655,6 +736,38 @@ namespace MphRead.Entities
                 _mbTrailAlphas[SlotIndex, i] = 0;
             }
             _mbTrailIndices[SlotIndex] = 0;
+        }
+
+        // todo: FPS stuff
+        private void UpdateMorphBallTrail()
+        {
+            for (int i = 0; i < _mbTrailSegments; i++)
+            {
+                float alpha = _mbTrailAlphas[SlotIndex, i] - 3 / 31f / 2; // todo: FPS stuff
+                if (alpha < 0)
+                {
+                    alpha = 0;
+                }
+                _mbTrailAlphas[SlotIndex, i] = alpha;
+            }
+            if (IsAltForm)
+            {
+                Vector3 row0 = _altTransform.Row0.Xyz;
+                if (Vector3.Dot(Vector3.UnitY, row0) < 0.5f && _hspeedMag >= Fixed.ToFloat(1269))
+                {
+                    Vector3 cross = Vector3.Cross(row0, Vector3.UnitY).Normalized();
+                    var cross2 = Vector3.Cross(cross, row0);
+                    int index = _mbTrailIndices[SlotIndex];
+                    _mbTrailAlphas[SlotIndex, index] = 25 / 31f;
+                    _mbTrailMatrices[SlotIndex, index] = new Matrix4(
+                        row0.X, row0.Y, row0.Z, 0,
+                        cross2.X, cross2.Y, cross2.Z, 0,
+                        cross.X, cross.Y, cross.Z, 0,
+                        Position.X, Position.Y, Position.Z, 1
+                    );
+                    _mbTrailIndices[SlotIndex] = (index + 1) % _mbTrailSegments;
+                }
+            }
         }
 
         private void InitializeWeapon()
@@ -994,6 +1107,482 @@ namespace MphRead.Entities
             }
         }
 
+        public void TakeDamage(uint damage, DamageFlags flags, Vector3? direction, EntityBase? source)
+        {
+            if (_health == 0)
+            {
+                return;
+            }
+            // todo: if in camseq which blocks input, return unless death, in which case do something and proceed
+            if (_spawnInvulnTimer > 0 && !flags.TestFlag(DamageFlags.Death) && !flags.TestFlag(DamageFlags.IgnoreInvuln))
+            {
+                return;
+            }
+            // todo: if IsBot and some flag, return
+            if (!flags.TestFlag(DamageFlags.Death | DamageFlags.IgnoreInvuln | DamageFlags.NoDmgInvuln))
+            {
+                if (_damageInvulnTimer > 0)
+                {
+                    return;
+                }
+                _damageInvulnTimer = (ushort)(Values.DamageInvuln * 2); // todo: FPS stuff
+            }
+            PlayerEntityNew? attacker = null;
+            EntityBase? halfturret = null;
+            BombEntity? bomb = null;
+            BeamProjectileEntity? beam = null;
+            if (source != null)
+            {
+                if (source.Type == EntityType.BeamProjectile)
+                {
+                    beam = (BeamProjectileEntity)source;
+                    Effectiveness effectiveness = BeamEffectiveness[(int)beam.WeaponType]; // todo: how does this handle platform beams etc.?
+                    if (effectiveness == Effectiveness.Zero)
+                    {
+                        return;
+                    }
+                    if (beam.Owner?.Type == EntityType.Player)
+                    {
+                        attacker = (PlayerEntityNew)beam.Owner;
+                    }
+                    else if (beam.Owner?.Type == EntityType.Halfturret)
+                    {
+                        // todo: set halfturret's owner as attacker
+                        halfturret = beam.Owner;
+                    }
+                    if (damage > 0)
+                    {
+                        damage = (uint)(damage * Metadata.DamageMultipliers[(int)effectiveness]);
+                        if (damage == 0)
+                        {
+                            damage = 1;
+                        }
+                    }
+                    if (!IsMainPlayer)
+                    {
+                        beam.SpawnDamageEffect(effectiveness, _scene);
+                    }
+                }
+                else if (source.Type == EntityType.Player)
+                {
+                    attacker = (PlayerEntityNew)source;
+                    if (attacker._doubleDmgTimer > 0)
+                    {
+                        damage *= 2;
+                    }
+                }
+                else if (source.Type == EntityType.Bomb)
+                {
+                    bomb = (BombEntity)source;
+                    // todo: set bomb's owner as attacker
+                }
+            }
+            bool ignoreDamage = false;
+            if (!_scene.Multiplayer && IsBot && attacker == this)
+            {
+                // todo: also ignore if teams are on, friendly fire isn't, and attacker is not null, not self, and is same team as self
+                ignoreDamage = true;
+                damage = 0;
+            }
+            if (!ignoreDamage && flags.TestFlag(DamageFlags.Headshot) && attacker == MainPlayer) // todo: and not on wifi
+            {
+                // todo: draw HUD string
+            }
+            if (attacker != null && attacker != this && beam != null)
+            {
+                // todo: update stats
+            }
+            if (damage > 0)
+            {
+                // todo: apply damage multiplier from settings
+            }
+            if (Flags2.TestFlag(PlayerFlags2.Halfturret) && attacker != null && !ignoreDamage)
+            {
+                // todo: update halfturret
+            }
+            if (flags.TestFlag(DamageFlags.Halfturret) && !ignoreDamage) // todo: and either main player or not wifi
+            {
+                // todo: update damage for halfturret
+            }
+            if (IsBot)
+            {
+                // todo: bot stuff
+            }
+            bool dead = false;
+            // todo?: something for wifi
+            // else...
+            // todo: if bot and some AI flags, set dead
+            // else...
+            if (_health <= damage || flags.TestFlag(DamageFlags.Death))
+            {
+                dead = true;
+            }
+            // todo?: something for wifi
+            if (attacker != null)
+            {
+                if (attacker == MainPlayer)
+                {
+                    // todo: update HUD
+                }
+                if (attacker != this)
+                {
+                    // todo: update stats
+                    attacker._hidingTimer = 0;
+                    _hidingTimer = 0;
+                }
+            }
+            if (dead)
+            {
+                // todo?: the game encodes the beam in the damage flags for wifi stuff
+                BeamType beamType = BeamType.Platform;
+                if (beam != null)
+                {
+                    beamType = beam.WeaponType;
+                }
+                if (source == attacker || halfturret != null || bomb != null)
+                {
+                    // halfturret, bomb, or direct hit by player (not beam)
+                    // --> also if there's no source and no attacker
+                    flags |= DamageFlags.ByPlayer;
+                }
+                _scene.SendMessage(Message.Destroyed, this, null, 0, 0, delay: 1);
+                if (EnemySpawner != null)
+                {
+                    _scene.SendMessage(Message.Destroyed, this, EnemySpawner, 0, 0);
+                    Debug.Assert(EnemySpawner.Type == EntityType.EnemySpawn);
+                    ItemSpawnEntity.SpawnItemDrop(EnemySpawner.Data.ItemType, Position, EnemySpawner.Data.ItemChance, _scene);
+                }
+                // todo: update HUD
+                if (Flags2.TestFlag(PlayerFlags2.Halfturret))
+                {
+                    // todo: destroy halfturret
+                }
+                _healthRecovery = 0;
+                _ammoRecovery[0] = 0;
+                _ammoRecovery[1] = 0;
+                EquipInfo.ChargeLevel = 0;
+                // todo: set camera shake to 0
+                _doubleDmgTimer = 0;
+                _deathaltTimer = 0;
+                _cloakTimer = 0;
+                Flags2 &= ~PlayerFlags2.Cloaking;
+                // todo: update kill streak, license info, and HUD
+                _frozenTimer = 0;
+                _frozenGfxTimer = 0;
+                _disruptedTimer = 0;
+                _burnTimer = 0;
+                if (_furlEffect != null)
+                {
+                    _scene.UnlinkEffectEntry(_furlEffect);
+                    _furlEffect = null;
+                }
+                if (_boostEffect != null)
+                {
+                    _scene.UnlinkEffectEntry(_boostEffect);
+                    _boostEffect = null;
+                }
+                if (_burnEffect != null)
+                {
+                    if (_burnEffect.EffectId == 188) // flamingGun
+                    {
+                        _scene.UnlinkEffectEntry(_burnEffect);
+                    }
+                    else
+                    {
+                        _scene.DetachEffectEntry(_burnEffect, setExpired: false);
+                    }
+                    _burnEffect = null;
+                }
+                if (_chargeEffect != null)
+                {
+                    _scene.UnlinkEffectEntry(_chargeEffect);
+                    _chargeEffect = null;
+                }
+                if (_muzzleEffect != null)
+                {
+                    _scene.UnlinkEffectEntry(_muzzleEffect);
+                    _muzzleEffect = null;
+                }
+                if (_doubleDmgEffect != null)
+                {
+                    _scene.UnlinkEffectEntry(_doubleDmgEffect);
+                    _doubleDmgEffect = null;
+                }
+                if (_deathaltEffect != null)
+                {
+                    _scene.UnlinkEffectEntry(_deathaltEffect);
+                    _deathaltEffect = null;
+                }
+                if (_health > 0)
+                {
+                    // todo: update SFX and music
+                }
+                // todo: if bot and some AI flags, set health
+                // else...
+                _health = 0;
+                UpdateZoom(false);
+                if (_boostCharge > 0)
+                {
+                    // todo: update SFX
+                }
+                _boostCharge = 0;
+                // todo: update stats
+                if (IsMainPlayer && beamType == BeamType.OmegaCannon)
+                {
+                    _scene.SetFade(FadeType.FadeInWhite, 90 * 1 / 30f, overwrite: true);
+                }
+                Speed = Vector3.Zero;
+                _respawnTimer = 90 * 2; // todo: FPS stuff
+                _timeSinceDead = 0;
+                if (!_scene.Multiplayer)
+                {
+                    if (IsAltForm)
+                    {
+                        int effectId = IsMainPlayer ? 10 : 216; // ballDeath or deathAlt
+                        _scene.SpawnEffect(effectId, Vector3.UnitX, Vector3.UnitY, Position);
+                    }
+                    if (IsBot) // todo: and the planet's story save boss state is 2
+                    {
+                        // todo: determine whether to unlock doors
+                    }
+                    if (IsMainPlayer)
+                    {
+                        // todo: update story save, death countdown, lost octolith, etc.
+                    }
+                }
+                else // multiplayer
+                {
+                    if (attacker != null)
+                    {
+                        if (IsMainPlayer)
+                        {
+                            // todo: update HUD, draw HUD strings
+                        }
+                        if (attacker == this)
+                        {
+                            // todo: update suicides
+                        }
+                        else
+                        {
+                            // todo: update license info, draw more HUD strings, update kill streak
+                            // todo: gain health if prime hunter
+                        }
+                    }
+                    else
+                    {
+                        // todo: update suicides
+                    }
+                    if (IsAltForm || IsMorphing)
+                    {
+                        _scene.SpawnEffect(216, Vector3.UnitX, Vector3.UnitY, Position); // deathAlt
+                    }
+                    if (attacker == null || attacker == this)
+                    {
+                        // todo: update camera info to look ahead
+                    }
+                    else
+                    {
+                        // todo: update camera info to look at attacker
+                    }
+                    if (IsPrimeHunter)
+                    {
+                        IsPrimeHunter = false;
+                        // todo: draw HUD message
+                    }
+                }
+                if (_scene.Multiplayer && attacker != null && attacker != this)
+                {
+                    ItemType itemType = ItemType.UASmall;
+                    if (attacker.EquipInfo.Weapon.AmmoType == 1)
+                    {
+                        itemType = ItemType.MissileSmall;
+                    }
+                    Vector3 position = _volume.SpherePosition.AddY(0.35f);
+                    ItemSpawnEntity.SpawnItem(itemType, position, 300 * 2, _scene); // todo: FPS stuff
+                }
+            }
+            else // not dead
+            {
+                bool skipSfx = false;
+                _health -= (int)damage; // todo?: if wifi, only do this if main player
+                if (beam != null && !ignoreDamage)
+                {
+                    if (beam.Afflictions.TestFlag(Affliction.Freeze))
+                    {
+                        if (flags.TestFlag(DamageFlags.Halfturret))
+                        {
+                            // todo: play SFX
+                            // todo: update halfturret for freeze
+                        }
+                        else // todo?: if wifi, only do this if main player
+                        {
+                            // todo: play SFX, update HUD
+                            int time = (_scene.Multiplayer || attacker != null ? 75 : 30) * 2; // todo: FPS stuff
+                            if (_frozenTimer == 0)
+                            {
+                                if (_timeSinceFrozen > 60 * 2) // todo: FPS stuff
+                                {
+                                    _frozenTimer = (ushort)time;
+                                }
+                                else if (_frozenTimer < 15 * 2) // todo: FPS stuff
+                                {
+                                    _frozenTimer = 15 * 2; // todo: FPS stuff
+                                }
+                                _frozenGfxTimer = (ushort)(_frozenTimer + 5 * 2); // todo: FPS stuff
+                            }
+                            EndAltFormAttack();
+                        }
+                    }
+                    if (beam.Afflictions.TestFlag(Affliction.Disrupt) && !flags.TestFlag(DamageFlags.Halfturret))
+                    {
+                        _disruptedTimer = 60 * 2; // todo: FPS stuff
+                        if (IsMainPlayer)
+                        {
+                            skipSfx = true;
+                            // todo: update HUD, play SFX
+                        }
+                    }
+                    if (beam.Afflictions.TestFlag(Affliction.Burn))
+                    {
+                        if (flags.TestFlag(DamageFlags.Halfturret))
+                        {
+                            // todo: update halfturret for burn
+                        }
+                        else // todo?: if wifi, only do this if main player
+                        {
+                            // todo: if the attacker is a bot with some encounter state, use 75 * 2 frames
+                            ushort time = 150 * 2; // todo: FPS stuff
+                            _burnedBy = beam.Owner;
+                            _burnTimer = time;
+                            CreateBurnEffect();
+                        }
+                    }
+                }
+                if (!skipSfx && !flags.TestFlag(DamageFlags.NoSfx))
+                {
+                    // todo: play SFX
+                }
+                if (IsMainPlayer && !IsAltForm)
+                {
+                    // tood: play SFX
+                }
+            }
+            _timeSinceDamage = 0;
+            if (_health > 0 && _frozenTimer == 0)
+            {
+                Vector3? hitDirection = null;
+                if (direction.HasValue)
+                {
+                    if (!IsAltForm)
+                    {
+                        if (!flags.TestFlag(DamageFlags.Halfturret))
+                        {
+                            // todo: FPS stuff
+                            Vector3 speed = Speed + direction.Value.WithY(0) / 2;
+                            if (direction.Value.Y <= 0)
+                            {
+                                speed.Y += direction.Value.Y / 2;
+                            }
+                            else if (speed.Y < 0.25f / 2)
+                            {
+                                speed.Y += direction.Value.Y / 2;
+                                if (speed.Y > 0.25f / 2)
+                                {
+                                    speed.Y = 0.25f / 2;
+                                }
+                            }
+                            Speed = speed;
+                        }
+                        if (direction.Value != Vector3.Zero)
+                        {
+                            hitDirection = direction.Value;
+                        }
+                        else if (beam != null)
+                        {
+                            hitDirection = beam.Velocity;
+                        }
+                    }
+                    else if (!flags.TestFlag(DamageFlags.Halfturret))
+                    {
+                        Speed += (direction.Value * 0.4f).WithY(0) / 2; // todo: FPS stuff
+                    }
+                }
+                else if (attacker != null)
+                {
+                    hitDirection = Position - attacker.Position;
+                }
+                if (hitDirection.HasValue && !IsAltForm)
+                {
+                    // todo: clean this up
+                    float hitZ = hitDirection.Value.Z;
+                    float hitX = -hitDirection.Value.X;
+                    float v126 = -hitZ * _field74;
+                    float v123 = -hitZ * _gunVec2.Z;
+                    float v124 = hitX * _gunVec2.X + v123;
+                    if (v124 < 0)
+                    {
+                        v123 = -v124;
+                    }
+                    float v125 = hitX * _field70;
+                    float v127 = v125 + v126;
+                    if (v124 >= 0)
+                    {
+                        v123 = v124;
+                    }
+                    float v128;
+                    if (v127 >= 0)
+                    {
+                        v128 = v125 + v126;
+                    }
+                    else
+                    {
+                        v128 = -v127;
+                    }
+                    PlayerAnimation anim = PlayerAnimation.None;
+                    if (v128 <= v123)
+                    {
+                        if (v124 <= 0)
+                        {
+                            anim = PlayerAnimation.DamageLeft;
+                            // todo: update HUD
+                        }
+                        else
+                        {
+                            anim = PlayerAnimation.DamageRight;
+                            // todo: update HUD
+                        }
+                    }
+                    else if (v127 <= 0)
+                    {
+                        anim = PlayerAnimation.DamageFront;
+                        // todo: update HUD
+                    }
+                    else
+                    {
+                        anim = PlayerAnimation.DamageBack;
+                        // todo: update HUD
+                    }
+                    if (anim != PlayerAnimation.None)
+                    {
+                        SetBipedAnimation(anim, AnimFlags.NoLoop, setBiped1: false, setBiped2: true, setIfMorphing: false);
+                    }
+                }
+            }
+            if (_health > 0 && !IsAltForm)
+            {
+                float shake = 0.3f;
+                if (!flags.TestFlag(DamageFlags.Burn))
+                {
+                    shake = Math.Max(damage * 0.01f, 0.05f);
+                }
+                // todo: set camera shake
+            }
+            if (IsMainPlayer)
+            {
+                // todo: do something (HUD or camera-related?)
+            }
+        }
+
         public static readonly CollisionVolume[,] PlayerVolumes = new CollisionVolume[8, 3];
 
         public static void GeneratePlayerVolumes()
@@ -1014,6 +1603,37 @@ namespace MphRead.Entities
                 PlayerVolumes[i, 2] = new CollisionVolume(center, radius);
             }
         }
+
+        public static readonly float[] KandenAltNodeDistances = new float[4];
+
+        public static void GenerateKandenAltNodeDistances()
+        {
+            if (KandenAltNodeDistances[0] == 0 && KandenAltNodeDistances[1] == 0
+                && KandenAltNodeDistances[2] == 0 && KandenAltNodeDistances[3] == 0)
+            {
+                IReadOnlyList<RawNode> nodes = Read.GetModelInstance("KandenAlt_lod0").Model.RawNodes;
+                for (int i = 0; i < 4; i++)
+                {
+                    Vector3 pos1 = nodes[i].Transform.Four.ToFloatVector();
+                    Vector3 pos2 = nodes[i + 1].Transform.Four.ToFloatVector();
+                    KandenAltNodeDistances[i] = Vector3.Distance(pos1, pos2);
+                }
+            }
+        }
+    }
+
+    public enum DamageFlags : int
+    {
+        None = 0,
+        NoDmgInvuln = 1,
+        IgnoreInvuln = 2,
+        Death = 4,
+        Halfturret = 8,
+        Headshot = 0x10,
+        Deathalt = 0x20,
+        Burn = 0x40,
+        NoSfx = 0x80,
+        ByPlayer = 0x100
     }
 
     public enum PlayerFlags1 : uint
@@ -1137,12 +1757,12 @@ namespace MphRead.Entities
         public readonly int FieldA0;
         public readonly int FieldA4;
         public readonly int FieldA8;
-        public readonly short DmgInvuln;
-        public readonly ushort DmgFlashDuration;
+        public readonly short DamageInvuln;
+        public readonly ushort DamageFlashTime;
         public readonly int FieldB0;
         public readonly int FieldB4;
         public readonly int FieldB8;
-        public readonly int SmokeZOffset;
+        public readonly int MuzzleOffset;
         public readonly int BombCooldown;
         public readonly int BombSelfRadius;
         public readonly int BombSelfRadiusSquared;
@@ -1202,8 +1822,8 @@ namespace MphRead.Entities
             int altColYPos, ushort boostChargeMin, ushort boostChargeMax, int boostSpeedMin, int boostSpeedMax, int altHSpeedCapIncrement,
             int field58, int field5C, int walkBobMax, int aimDistance, ushort viewSwayTime, ushort padding6A, int normalFov, int field70,
             int aimYOffset, int field78, int field7C, int field80, int field84, int field88, int field8C, int field90, int minPickupHeight,
-            int maxPickupHeight, int bipedColRadius, int fieldA0, int fieldA4, int fieldA8, short dmgInvuln, ushort dmgFlashDuration,
-            int fieldB0, int fieldB4, int fieldB8, int smokeZOffset, int bombCooldown, int bombSelfRadius, int bombSelfRadiusSquared,
+            int maxPickupHeight, int bipedColRadius, int fieldA0, int fieldA4, int fieldA8, short damageInvuln, ushort damageFlashTime,
+            int fieldB0, int fieldB4, int fieldB8, int muzzleOffset, int bombCooldown, int bombSelfRadius, int bombSelfRadiusSquared,
             int bombRadius, int bombRadiusSquared, int bombJumpSpeed, int bombRefillTime, short bombDamage, short bombEnemyDamage,
             short fieldE0, short spawnInvulnerability, ushort fieldE4, ushort paddingE6, int fieldE8, int fieldEC, int swayStartTime,
             int swayIncrement, int swayLimit, int gunIdleTime, short mpAmmoCap, byte ammoRecharge, byte padding103, ushort energyTank,
@@ -1258,12 +1878,12 @@ namespace MphRead.Entities
             FieldA0 = fieldA0;
             FieldA4 = fieldA4;
             FieldA8 = fieldA8;
-            DmgInvuln = dmgInvuln;
-            DmgFlashDuration = dmgFlashDuration;
+            DamageInvuln = damageInvuln;
+            DamageFlashTime = damageFlashTime;
             FieldB0 = fieldB0;
             FieldB4 = fieldB4;
             FieldB8 = fieldB8;
-            SmokeZOffset = smokeZOffset;
+            MuzzleOffset = muzzleOffset;
             BombCooldown = bombCooldown;
             BombSelfRadius = bombSelfRadius;
             BombSelfRadiusSquared = bombSelfRadiusSquared;

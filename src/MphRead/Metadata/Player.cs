@@ -5,6 +5,21 @@ namespace MphRead
 {
     public static partial class Metadata
     {
+        public static readonly int[] MuzzleEffectIds = new int[9]
+        {
+            62, 57, 62, 60, 63, 59, 61, 58, 62
+        };
+
+        public static readonly int[] ChargeEffectIds = new int[9]
+        {
+            169, 165, 170, 169, 169, 166, 168, 169, 169
+        };
+
+        public static readonly int[] ChargeLoopEffectIds = new int[9]
+        {
+            198, 194, 197, 198, 198, 195, 196, 198, 198
+        };
+
         public static readonly int[,,] GunAnimationIds = new int[8, 13, 10]
         {
             // Samus
@@ -194,12 +209,12 @@ namespace MphRead
                 fieldA0: 3317,
                 fieldA4: 8192,
                 fieldA8: 122880,
-                dmgInvuln: 15,
-                dmgFlashDuration: 2,
+                damageInvuln: 15,
+                damageFlashTime: 2,
                 fieldB0: -409,
                 fieldB4: -614,
                 fieldB8: 204,
-                smokeZOffset: 1548,
+                muzzleOffset: 1548,
                 bombCooldown: 2293760,
                 bombSelfRadius: 4096,
                 bombSelfRadiusSquared: 4096,
@@ -300,12 +315,12 @@ namespace MphRead
                 fieldA0: 3317,
                 fieldA4: 8192,
                 fieldA8: 122880,
-                dmgInvuln: 15,
-                dmgFlashDuration: 2,
+                damageInvuln: 15,
+                damageFlashTime: 2,
                 fieldB0: -409,
                 fieldB4: -614,
                 fieldB8: 204,
-                smokeZOffset: 1351,
+                muzzleOffset: 1351,
                 bombCooldown: 2293790,
                 bombSelfRadius: 4096,
                 bombSelfRadiusSquared: 4096,
@@ -406,12 +421,12 @@ namespace MphRead
                 fieldA0: 3317,
                 fieldA4: 8192,
                 fieldA8: 122880,
-                dmgInvuln: 15,
-                dmgFlashDuration: 2,
+                damageInvuln: 15,
+                damageFlashTime: 2,
                 fieldB0: -409,
                 fieldB4: -614,
                 fieldB8: 204,
-                smokeZOffset: 1548,
+                muzzleOffset: 1548,
                 bombCooldown: 2293760,
                 bombSelfRadius: 4096,
                 bombSelfRadiusSquared: 4096,
@@ -512,12 +527,12 @@ namespace MphRead
                 fieldA0: 3317,
                 fieldA4: 8192,
                 fieldA8: 122880,
-                dmgInvuln: 15,
-                dmgFlashDuration: 2,
+                damageInvuln: 15,
+                damageFlashTime: 2,
                 fieldB0: -409,
                 fieldB4: -614,
                 fieldB8: 204,
-                smokeZOffset: 2048,
+                muzzleOffset: 2048,
                 bombCooldown: 2293763,
                 bombSelfRadius: 3072,
                 bombSelfRadiusSquared: 2304,
@@ -618,12 +633,12 @@ namespace MphRead
                 fieldA0: 3317,
                 fieldA4: 8192,
                 fieldA8: 122880,
-                dmgInvuln: 15,
-                dmgFlashDuration: 2,
+                damageInvuln: 15,
+                damageFlashTime: 2,
                 fieldB0: -409,
                 fieldB4: -614,
                 fieldB8: 204,
-                smokeZOffset: 1617,
+                muzzleOffset: 1617,
                 bombCooldown: 2293760,
                 bombSelfRadius: 4096,
                 bombSelfRadiusSquared: 4096,
@@ -724,12 +739,12 @@ namespace MphRead
                 fieldA0: 3317,
                 fieldA4: 8192,
                 fieldA8: 122880,
-                dmgInvuln: 15,
-                dmgFlashDuration: 2,
+                damageInvuln: 15,
+                damageFlashTime: 2,
                 fieldB0: -409,
                 fieldB4: -614,
                 fieldB8: 204,
-                smokeZOffset: 1617,
+                muzzleOffset: 1617,
                 bombCooldown: 2293760,
                 bombSelfRadius: 4096,
                 bombSelfRadiusSquared: 4096,
@@ -830,12 +845,12 @@ namespace MphRead
                 fieldA0: 3317,
                 fieldA4: 8192,
                 fieldA8: 122880,
-                dmgInvuln: 15,
-                dmgFlashDuration: 2,
+                damageInvuln: 15,
+                damageFlashTime: 2,
                 fieldB0: -409,
                 fieldB4: -614,
                 fieldB8: 204,
-                smokeZOffset: 1548,
+                muzzleOffset: 1548,
                 bombCooldown: 2293760,
                 bombSelfRadius: 4096,
                 bombSelfRadiusSquared: 4096,
@@ -936,12 +951,12 @@ namespace MphRead
                 fieldA0: 3317,
                 fieldA4: 8192,
                 fieldA8: 122880,
-                dmgInvuln: 15,
-                dmgFlashDuration: 2,
+                damageInvuln: 15,
+                damageFlashTime: 2,
                 fieldB0: 0,
                 fieldB4: 0,
                 fieldB8: 204,
-                smokeZOffset: 1548,
+                muzzleOffset: 1548,
                 bombCooldown: 2293760,
                 bombSelfRadius: 4096,
                 bombSelfRadiusSquared: 4096,

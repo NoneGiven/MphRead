@@ -1023,7 +1023,6 @@ namespace MphRead.Entities
                 beam.Destroy(scene);
                 scene.RemoveEntity(beam);
                 beam._models.Clear();
-                // btodo: draw gun smoke
                 if (!charged)
                 {
                     equip.SmokeLevel += weapon.SmokeShotAmount;

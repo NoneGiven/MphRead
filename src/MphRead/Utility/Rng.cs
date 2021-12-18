@@ -18,6 +18,16 @@ namespace MphRead
             return (uint)((rng >> 16) * (long)value / 0x10000L);
         }
 
+        public static uint GetRandomInt1(int value)
+        {
+            return GetRandomInt1((uint)value);
+        }
+
+        public static uint GetRandomInt2(int value)
+        {
+            return GetRandomInt2((uint)value);
+        }
+
         public static uint GetRandomInt1(uint value)
         {
             Rng1 *= 0x7FF8A3ED;
