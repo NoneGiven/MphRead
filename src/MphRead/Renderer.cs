@@ -1987,10 +1987,8 @@ namespace MphRead
                 if (player.LoadFlags.TestFlag(LoadFlags.Active))
                 {
                     player.Draw();
-                    if (_showVolumes != VolumeDisplay.None)
-                    {
-                        entity.GetDisplayVolumes(this);
-                    }
+                    // skdebug
+                    entity.GetDisplayVolumes(this);
                 }
             }
             for (int i = 0; i < _entities.Count; i++)

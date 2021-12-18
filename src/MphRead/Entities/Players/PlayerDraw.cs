@@ -16,7 +16,7 @@ namespace MphRead.Entities
             }
             if (Hunter == Hunter.Spire && Flags2.TestFlag(PlayerFlags2.AltAttack))
             {
-                PrepareSpireAltAttack();
+                UpdateSpireAltAttack();
             }
             int lod = 0;
             Flags2 &= ~PlayerFlags2.Lod1;
@@ -70,7 +70,7 @@ namespace MphRead.Entities
                 }
                 else if (drawBiped)
                 {
-                    // skhere
+                    // sktodo
                 }
                 else if (AttachedEnemy == null && _field6D0 == 0)
                 {
@@ -103,17 +103,35 @@ namespace MphRead.Entities
 
         private void DrawKandenAlt()
         {
-            // sktodo
+            for (int i = 0; i < _kandenSegMtx.Length; i++)
+            {
+                _altModel.Model.Nodes[i].Animation = _kandenSegMtx[i];
+            }
+            GetDrawItems(_altModel, _altModel.Model.Nodes[0], _curAlpha);
         }
 
-        private void PrepareSpireAltAttack()
+        private void UpdateSpireAltAttack()
         {
-            // sktodo
+            Matrix4 transform = GetTransformMatrix(_spireAltFacing, _spireAltUp);
+            _spireAltNodes[2]!.BeforeTransform = transform;
+            _spireAltNodes[3]!.BeforeTransform = transform;
+            _altModel.Model.AnimateNodes(index: 0, useNodeTransform: false, Matrix4.Identity, Vector3.One, _altModel.AnimInfo);
+            _spireAltNodes[2]!.BeforeTransform = null;
+            _spireAltNodes[3]!.BeforeTransform = null;
+            Matrix4 animation = _spireAltNodes[0]!.Animation;
+            animation.Row3.Xyz += Position;
+            _spireAltNodes[0]!.Animation = animation;
+            _spireRockPosL = animation.Row3.Xyz;
+            animation = _spireAltNodes[1]!.Animation;
+            animation.Row3.Xyz += Position;
+            _spireAltNodes[1]!.Animation = animation;
+            _spireRockPosR = animation.Row3.Xyz;
         }
 
         private void DrawSpireAltAttack()
         {
-            // sktodo
+            _altModel.Model.Nodes[0].Animation = _altTransform;
+            GetDrawItems(_altModel, _altModel.Model.Nodes[0], _curAlpha);
         }
 
         private void UpdateTransforms(ModelInstance inst, Matrix4 transform, int recolor)
@@ -122,7 +140,7 @@ namespace MphRead.Entities
             model.AnimateMaterials(inst.AnimInfo);
             model.AnimateTextures(inst.AnimInfo);
             model.ComputeNodeMatrices(index: 0);
-            model.AnimateNodes(index: 0, UseNodeTransform || _scene.TransformRoomNodes, transform, model.Scale, inst.AnimInfo);
+            model.AnimateNodes(index: 0, UseNodeTransform, transform, model.Scale, inst.AnimInfo);
             model.UpdateMatrixStack(_scene.ViewInvRotMatrix, _scene.ViewInvRotYMatrix);
             _scene.UpdateMaterials(model, recolor);
         }
@@ -299,7 +317,6 @@ namespace MphRead.Entities
             }
         }
 
-        // sktodo: confirm
         private void DrawMorphBallTrail()
         {
             Debug.Assert(_trailModel != null);

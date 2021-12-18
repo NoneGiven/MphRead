@@ -557,6 +557,14 @@ namespace MphRead
                 {
                     AnimateNodes(node.ChildIndex, useNodeTransform, parentTansform, scale, info);
                 }
+                if (node.AfterTransform.HasValue)
+                {
+                    node.Animation = node.AfterTransform.Value * node.Animation * parentTansform;
+                }
+                else if (node.BeforeTransform.HasValue)
+                {
+                    node.Animation = node.Animation * parentTansform * node.BeforeTransform.Value;
+                }
                 node.Animation *= parentTansform;
                 i = node.NextIndex;
             }

@@ -172,8 +172,8 @@ namespace MphRead.Entities
 
         // todo?: could save space with a union
         private readonly Node?[] _spireAltNodes = new Node?[4];
-        private Vector3 _spireField0; // pos?
-        private Vector3 _spireFieldC; // prev pos?
+        private Vector3 _spireRockPosL; // positions after animation
+        private Vector3 _spireRockPosR;
         private Vector3 _spireAltFacing;
         private Vector3 _spireAltUp;
         private readonly Vector3[] _spireAltVecs = new Vector3[16];
@@ -560,8 +560,8 @@ namespace MphRead.Entities
             else if (Hunter == Hunter.Spire)
             {
                 _abilities |= AbilityFlags.SpireAltAttack;
-                _spireField0 = pos;
-                _spireFieldC = pos;
+                _spireRockPosL = pos;
+                _spireRockPosR = pos;
                 _spireAltFacing = Vector3.UnitY;
                 _spireAltUp = Vector3.UnitX;
                 for (int i = 0; i < _spireAltVecs.Length; i++)

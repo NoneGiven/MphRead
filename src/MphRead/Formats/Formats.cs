@@ -28,6 +28,8 @@ namespace MphRead
         public Vector3 MaxBounds { get; }
         public BillboardMode BillboardMode { get; }
         public Matrix4 Transform { get; set; } = Matrix4.Identity;
+        public Matrix4? BeforeTransform { get; set; }
+        public Matrix4? AfterTransform { get; set; }
         public Matrix4 Animation { get; set; } = Matrix4.Identity;
 
         public IEnumerable<int> GetMeshIds()
