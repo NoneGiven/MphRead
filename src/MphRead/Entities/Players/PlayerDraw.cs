@@ -76,8 +76,7 @@ namespace MphRead.Entities
                     // _bipedModel1 and _bipedModel2 are sharing a Model
                     // we want to animate it first up to the spine with _bipedModel1's animation info, then the rest with _bipedModel2's info
                     Node spineNode = _spineNodes[lod]!;
-                    int spineChildId = spineNode.ChildIndex;
-                    spineNode.ChildIndex = -1;
+                    spineNode.AnimIgnoreChild = true;
                     // todo: we can just figure out the angle directly from the facing vector
                     Vector3 facing = FacingVector;
                     float limit = Fixed.ToFloat(2896);
@@ -92,8 +91,8 @@ namespace MphRead.Entities
                     spineNode.AfterTransform = Matrix4.CreateRotationZ(angle);
                     Model model = _bipedModel1.Model;
                     model.AnimateNodes(index: 0, false, Matrix4.Identity, Vector3.One, _bipedModel1.AnimInfo);
-                    spineNode.ChildIndex = spineChildId;
-                    model.AnimateNodes(spineChildId, false, Matrix4.Identity, Vector3.One, _bipedModel2.AnimInfo);
+                    spineNode.AnimIgnoreChild = false;
+                    model.AnimateNodes(spineNode.ChildIndex, false, Matrix4.Identity, Vector3.One, _bipedModel2.AnimInfo);
                     spineNode.AfterTransform = null;
                     float scale = Metadata.HunterScales[Hunter];
                     float bottom = Fixed.ToFloat(Values.MinPickupHeight);

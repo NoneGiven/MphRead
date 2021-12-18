@@ -553,7 +553,7 @@ namespace MphRead
                     }
                 }
                 node.Animation = transform;
-                if (node.ChildIndex != -1)
+                if (node.ChildIndex != -1 && !node.AnimIgnoreChild)
                 {
                     AnimateNodes(node.ChildIndex, useNodeTransform, parentTansform, scale, info);
                 }

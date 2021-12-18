@@ -15,9 +15,10 @@ namespace MphRead
     {
         public string Name { get; }
         public int ParentIndex { get; }
-        public int ChildIndex { get; set; } // todo: yep
+        public int ChildIndex { get; } 
         public int NextIndex { get; }
         public bool Enabled { get; set; }
+        public bool AnimIgnoreChild { get; set; }
         public int MeshCount { get; }
         public int MeshId { get; }
         public Vector3 Scale { get; set; }
