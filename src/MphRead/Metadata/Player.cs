@@ -1,10 +1,23 @@
 using System.Collections.Generic;
 using MphRead.Entities;
+using OpenTK.Mathematics;
 
 namespace MphRead
 {
     public static partial class Metadata
     {
+        public static readonly Vector3[] MuzzleOffests = new Vector3[8]
+        {
+            new Vector3(0.63f, -0.02f, 0),
+            new Vector3(0.6f, 0, 0),
+            new Vector3(1.2f, 0, -0.2f),
+            new Vector3(0.765f, -0.05f, -0.16f),
+            new Vector3(1.11f, 0.15f, 0),
+            new Vector3(0.71f, 0, 0),
+            new Vector3(0.89f, 0.15f, -0.172f),
+            new Vector3(0, 0, 0.32f)
+        };
+
         public static readonly int[] MuzzleEffectIds = new int[9]
         {
             62, 57, 62, 60, 63, 59, 61, 58, 62

@@ -73,8 +73,7 @@ namespace MphRead.Entities
                 }
                 else if (drawBiped)
                 {
-                    // _bipedModel1 and _bipedModel2 are sharing a Model
-                    // we want to animate it first up to the spine with _bipedModel1's animation info, then the rest with _bipedModel2's info
+                    // we want to animate first up to the spine with _bipedModel1's animation info, then the rest with _bipedModel2's info
                     Node spineNode = _spineNodes[lod]!;
                     spineNode.AnimIgnoreChild = true;
                     // todo: we can just figure out the angle directly from the facing vector
@@ -118,16 +117,30 @@ namespace MphRead.Entities
                         {
                             PaletteOverride = Metadata.RedPalette;
                         }
+                        float alpha = _curAlpha;
                         if (IsMainPlayer && _bipedModel1.AnimInfo.Index[0] == (int)PlayerAnimation.Unmorph) // todo: and no camseq
                         {
-                            // sktodo: unmorph alpha factor
+                            alpha -= alpha * _bipedModel1.AnimInfo.Frame[0] / _bipedModel1.AnimInfo.FrameCount[0];
+                            alpha = Math.Clamp(alpha, 0, 1);
                         }
-                        UpdateMaterials(_bipedModel1, Recolor);
-                        GetDrawItems(_bipedModel1, _bipedModel1.Model.Nodes[0], _curAlpha);
+                        UpdateMaterials(_bipedModel2, Recolor);
+                        GetDrawItems(_bipedModel2, _bipedModel2.Model.Nodes[0], alpha);
                         PaletteOverride = null;
                         if (_chargeEffect != null || _muzzleEffect != null)
                         {
-                            // sktodo
+                            Vector3 muzzlePos = Metadata.MuzzleOffests[(int)Hunter];
+                            muzzlePos = Matrix.Vec3MultMtx4(muzzlePos, _shootNodes[lod]!.Animation);
+                            muzzlePos = Matrix.Vec3MultMtx4(muzzlePos, transform);
+                            if (_chargeEffect != null)
+                            {
+                                _chargeEffect.SetDrawEnabled(true);
+                                _chargeEffect.Transform(_gunVec2, _gunVec1, muzzlePos);
+                            }
+                            if (_muzzleEffect != null)
+                            {
+                                _muzzleEffect.SetDrawEnabled(true);
+                                _muzzleEffect.Transform(_gunVec2, _gunVec1, muzzlePos);
+                            }
                         }
                         if (_frozenGfxTimer > 0)
                         {
