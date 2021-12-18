@@ -15,7 +15,7 @@ namespace MphRead
     {
         public string Name { get; }
         public int ParentIndex { get; }
-        public int ChildIndex { get; }
+        public int ChildIndex { get; set; } // todo: yep
         public int NextIndex { get; }
         public bool Enabled { get; set; }
         public int MeshCount { get; }

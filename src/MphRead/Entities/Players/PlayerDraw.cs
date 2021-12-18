@@ -1,3 +1,4 @@
+using System;
 using System.Buffers;
 using System.Diagnostics;
 using MphRead.Formats;
@@ -59,7 +60,7 @@ namespace MphRead.Entities
                         float radius = _volume.SphereRadius + 0.2f;
                         Matrix4 transform = Matrix4.CreateScale(radius) * _altTransform;
                         transform.Row3.Y += Fixed.ToFloat(Values.AltColYPos);
-                        UpdateTransforms(_altIceModel, transform, Recolor);
+                        UpdateTransforms(_altIceModel, transform, recolor: 0);
                         GetDrawItems(_altIceModel, _altIceModel.Model.Nodes[0], alpha: 1);
                     }
                     if (Hunter == Hunter.Samus && !Flags2.TestFlag(PlayerFlags2.Cloaking))
@@ -70,7 +71,36 @@ namespace MphRead.Entities
                 }
                 else if (drawBiped)
                 {
-                    // sktodo
+                    // _bipedModel1 and _bipedModel2 are sharing a Model
+                    // we want to animate it first up to the spine with _bipedModel1's animation info, then the rest with _bipedModel2's info
+                    Node spineNode = _spineNodes[lod]!;
+                    int spineChildId = spineNode.ChildIndex;
+                    spineNode.ChildIndex = -1;
+                    // todo: we can just figure out the angle directly from the facing vector
+                    Vector3 facing = FacingVector;
+                    float limit = Fixed.ToFloat(2896);
+                    float cos = MathF.Sqrt(1 / (facing.Y * facing.Y));
+                    float sin = facing.Y;
+                    if (MathF.Abs(facing.Y) > limit)
+                    {
+                        cos = limit;
+                        sin = facing.Y <= 0 ? -limit : limit;
+                    }
+                    float angle = MathF.Atan2(sin, cos);
+                    spineNode.AfterTransform = Matrix4.CreateRotationZ(angle);
+                    _bipedModel1.Model.AnimateNodes(index: 0, false, Matrix4.Identity, Vector3.One, _bipedModel1.AnimInfo);
+                    spineNode.ChildIndex = spineChildId;
+                    _bipedModel1.Model.AnimateNodes(spineChildId, false, spineNode.Animation, Vector3.One, _bipedModel2.AnimInfo);
+                    _bipedModel1.Model.UpdateMatrixStack(_scene.ViewInvRotMatrix, _scene.ViewInvRotYMatrix);
+                    spineNode.AfterTransform = null;
+                    if (_timeSinceDamage < Values.DamageFlashTime * 2) // todo: FPS stuff
+                    {
+                        PaletteOverride = Metadata.RedPalette;
+                    }
+                    UpdateMaterials(_bipedModel1, Recolor);
+                    GetDrawItems(_bipedModel1, _bipedModel1.Model.Nodes[0], _curAlpha);
+                    // skhere
+                    PaletteOverride = null;
                 }
                 else if (AttachedEnemy == null && _field6D0 == 0)
                 {
@@ -82,7 +112,7 @@ namespace MphRead.Entities
                         var drawPos = new Vector3(0, 0, Fixed.ToFloat(Values.MuzzleOffset));
                         drawPos = Matrix.Vec3MultMtx4(drawPos, transform);
                         transform.Row3.Xyz = drawPos;
-                        UpdateTransforms(_gunSmokeModel, transform, Recolor);
+                        UpdateTransforms(_gunSmokeModel, transform, recolor: 0);
                         GetDrawItems(_gunSmokeModel, _gunSmokeModel.Model.Nodes[0], _smokeAlpha);
                     }
                 }
@@ -107,6 +137,7 @@ namespace MphRead.Entities
             {
                 _altModel.Model.Nodes[i].Animation = _kandenSegMtx[i];
             }
+            UpdateMaterials(_altModel, Recolor);
             GetDrawItems(_altModel, _altModel.Model.Nodes[0], _curAlpha);
         }
 
@@ -131,6 +162,7 @@ namespace MphRead.Entities
         private void DrawSpireAltAttack()
         {
             _altModel.Model.Nodes[0].Animation = _altTransform;
+            UpdateMaterials(_altModel, Recolor);
             GetDrawItems(_altModel, _altModel.Model.Nodes[0], _curAlpha);
         }
 
@@ -142,6 +174,14 @@ namespace MphRead.Entities
             model.ComputeNodeMatrices(index: 0);
             model.AnimateNodes(index: 0, UseNodeTransform, transform, model.Scale, inst.AnimInfo);
             model.UpdateMatrixStack(_scene.ViewInvRotMatrix, _scene.ViewInvRotYMatrix);
+            _scene.UpdateMaterials(model, recolor);
+        }
+
+        private void UpdateMaterials(ModelInstance inst, int recolor)
+        {
+            Model model = inst.Model;
+            model.AnimateMaterials(inst.AnimInfo);
+            model.AnimateTextures(inst.AnimInfo);
             _scene.UpdateMaterials(model, recolor);
         }
 
