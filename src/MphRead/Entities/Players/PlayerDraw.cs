@@ -6,7 +6,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public partial class PlayerEntityNew
+    public partial class PlayerEntity
     {
         public void Draw()
         {

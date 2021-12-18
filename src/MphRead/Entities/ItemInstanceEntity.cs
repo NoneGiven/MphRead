@@ -93,13 +93,13 @@ namespace MphRead.Entities
                 return false;
             }
             // todo: play SFX
-            if (Owner == null && !scene.Multiplayer && PlayerEntityNew.MainPlayer.EquipInfo.Weapon != null)
+            if (Owner == null && !scene.Multiplayer && PlayerEntity.MainPlayer.EquipInfo.Weapon != null)
             {
-                EquipInfo equip = PlayerEntityNew.MainPlayer.EquipInfo;
+                EquipInfo equip = PlayerEntity.MainPlayer.EquipInfo;
                 if (equip.ChargeLevel >= equip.Weapon.MinCharge * 2) // todo: FPS stuff
                 {
                     // todo: visualize
-                    Vector3 between = PlayerEntityNew.MainPlayer.Position - Position;
+                    Vector3 between = PlayerEntity.MainPlayer.Position - Position;
                     float distance = between.Length;
                     if (distance < 20 && distance != 0)
                     {

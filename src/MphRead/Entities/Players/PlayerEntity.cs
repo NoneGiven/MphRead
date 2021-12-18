@@ -151,7 +151,7 @@ namespace MphRead.Entities
         Attack = 0
     }
 
-    public partial class PlayerEntityNew : EntityBase
+    public partial class PlayerEntity : EntityBase
     {
         private Scene _scene = null!;
         private readonly ModelInstance[] _bipedModelLods = new ModelInstance[2];
@@ -184,12 +184,13 @@ namespace MphRead.Entities
 
         // todo: these settings can change
         public static int MainPlayerIndex { get; set; } = 0;
+        public static int PlayerCount { get; set; } = 0; // todo: update this
         public static int MaxPlayers { get; set; } = 4;
         public static int PlayersCreated { get; set; } = 0;
-        public static PlayerEntityNew MainPlayer => Players[MainPlayerIndex];
-        public static IReadOnlyList<PlayerEntityNew> Players { get; } = new PlayerEntityNew[4]
+        public static PlayerEntity MainPlayer => Players[MainPlayerIndex];
+        public static IReadOnlyList<PlayerEntity> Players { get; } = new PlayerEntity[4]
         {
-            new PlayerEntityNew(0), new PlayerEntityNew(1), new PlayerEntityNew(2), new PlayerEntityNew(3)
+            new PlayerEntity(0), new PlayerEntity(1), new PlayerEntity(2), new PlayerEntity(3)
         };
         private bool IsMainPlayer => this == MainPlayer && !FreeCamera;
 
@@ -209,6 +210,10 @@ namespace MphRead.Entities
         private readonly AvailableArray _availableCharges = new AvailableArray();
         private AbilityFlags _abilities;
         private readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(16); // in-game: 5
+        // todo: deal with bombs
+        public BombEntity[] Bombs { get; } = new BombEntity[3];
+        public int BombMax { get; private set; }
+        public int BombCount { get; set; }
         public EquipInfo EquipInfo { get; } = new EquipInfo();
         public BeamType CurrentWeapon { get; private set; }
         public BeamType PreviousWeapon { get; private set; }
@@ -374,18 +379,18 @@ namespace MphRead.Entities
         public bool IgnoreItemPickups { get; set; }
         public static bool FreeCamera { get; set; } = true;
 
-        private PlayerEntityNew(int slotIndex) : base(EntityType.Player)
+        private PlayerEntity(int slotIndex) : base(EntityType.Player)
         {
             SlotIndex = slotIndex;
         }
 
-        public static PlayerEntityNew? Create(Hunter hunter, int recolor)
+        public static PlayerEntity? Create(Hunter hunter, int recolor)
         {
             if (PlayersCreated >= MaxPlayers)
             {
                 return null;
             }
-            PlayerEntityNew player = Players[PlayersCreated++];
+            PlayerEntity player = Players[PlayersCreated++];
             player.Hunter = hunter;
             player.Recolor = recolor;
             if (player.IsBot)
@@ -1131,7 +1136,7 @@ namespace MphRead.Entities
                 }
                 _damageInvulnTimer = (ushort)(Values.DamageInvuln * 2); // todo: FPS stuff
             }
-            PlayerEntityNew? attacker = null;
+            PlayerEntity? attacker = null;
             EntityBase? halfturret = null;
             BombEntity? bomb = null;
             BeamProjectileEntity? beam = null;
@@ -1147,7 +1152,7 @@ namespace MphRead.Entities
                     }
                     if (beam.Owner?.Type == EntityType.Player)
                     {
-                        attacker = (PlayerEntityNew)beam.Owner;
+                        attacker = (PlayerEntity)beam.Owner;
                     }
                     else if (beam.Owner?.Type == EntityType.Halfturret)
                     {
@@ -1169,7 +1174,7 @@ namespace MphRead.Entities
                 }
                 else if (source.Type == EntityType.Player)
                 {
-                    attacker = (PlayerEntityNew)source;
+                    attacker = (PlayerEntity)source;
                     if (attacker._doubleDmgTimer > 0)
                     {
                         damage *= 2;

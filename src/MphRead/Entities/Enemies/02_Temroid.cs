@@ -213,14 +213,14 @@ namespace MphRead.Entities.Enemies
 
         protected override void Detach()
         {
-            if (PlayerEntityNew.MainPlayer.AttachedEnemy == this)
+            if (PlayerEntity.MainPlayer.AttachedEnemy == this)
             {
-                PlayerEntityNew.MainPlayer.AttachedEnemy = null;
+                PlayerEntity.MainPlayer.AttachedEnemy = null;
             }
             _field1D0 = false;
         }
 
-        public void UpdateAttached(PlayerEntityNew player)
+        public void UpdateAttached(PlayerEntity player)
         {
             Vector3 position = player.Position + player.FacingVector / 2; // todo: use camera info pos
             SetTransform(-player.FacingVector, UpVector, position);

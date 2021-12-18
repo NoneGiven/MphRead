@@ -6,7 +6,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public partial class PlayerEntityNew
+    public partial class PlayerEntity
     {
         public override bool Process(Scene scene)
         {
@@ -1250,7 +1250,7 @@ namespace MphRead.Entities
                         {
                             continue;
                         }
-                        var other = (PlayerEntityNew)entity;
+                        var other = (PlayerEntity)entity;
                         if (other.Flags1.TestFlag(PlayerFlags1.Standing) && Vector3.DistanceSquared(Position, other.Position) < 16)
                         {
                             // todo: set camera shake

@@ -7,7 +7,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class PlayerEntity : EntityBase
+    public class PlayerEntityOld : EntityBase
     {
         public Hunter Hunter { get; private set; }
         public Team Team { get; set; }
@@ -63,26 +63,26 @@ namespace MphRead.Entities
         public Vector3 PrevPosition1 { get; private set; }
         public Vector3 PrevPosition2 { get; private set; }
 
-        public static readonly PlayerEntity[] Players = new PlayerEntity[4]
+        public static readonly PlayerEntityOld[] Players = new PlayerEntityOld[4]
         {
-            new PlayerEntity(), new PlayerEntity(), new PlayerEntity(), new PlayerEntity()
+            new PlayerEntityOld(), new PlayerEntityOld(), new PlayerEntityOld(), new PlayerEntityOld()
         };
 
-        private PlayerEntity() : base(EntityType.Player)
+        private PlayerEntityOld() : base(EntityType.Player)
         {
             _dblDmgModel = Read.GetModelInstance("doubleDamage_img");
             _altIceModel = Read.GetModelInstance("alt_ice");
             _models.Add(_altIceModel);
         }
 
-        public static PlayerEntity? Spawn(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null, bool respawn = false)
+        public static PlayerEntityOld? Spawn(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null, bool respawn = false)
         {
             int slot = PlayerCount++;
             if (slot >= MaxPlayers)
             {
                 return null;
             }
-            PlayerEntity player = Players[slot];
+            PlayerEntityOld player = Players[slot];
             player.Slot = slot;
             player.Setup(hunter, recolor, position, facing, respawn);
             return player;
@@ -258,7 +258,7 @@ namespace MphRead.Entities
             {
                 transform = Matrix4.CreateTranslation(Position.AddY(Fixed.ToFloat(1000)));
             }
-            BombEntity.Spawn(this, transform, scene);
+            //BombEntity.Spawn(this, transform, scene);
             // todo: bomb cooldown/refill stuff
         }
 

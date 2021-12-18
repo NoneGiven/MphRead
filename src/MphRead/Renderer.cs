@@ -274,8 +274,8 @@ namespace MphRead
         {
             if (_roomLoaded)
             {
-                // sktodo: this should also be PEN
-                var entity = PlayerEntity.Spawn(hunter, recolor, position, facing);
+                // todo: eventually replace with new entity
+                var entity = PlayerEntityOld.Spawn(hunter, recolor, position, facing);
                 if (entity != null)
                 {
                     _entities.Add(entity);
@@ -284,12 +284,13 @@ namespace MphRead
             }
             else
             {
-                var player = PlayerEntityNew.Create(hunter, recolor);
+                var player = PlayerEntity.Create(hunter, recolor);
                 if (player != null)
                 {
                     // todo: revisit flags
                     player.LoadFlags |= LoadFlags.SlotActive;
                     player.LoadFlags |= LoadFlags.Active;
+                    PlayerEntity.PlayerCount++;
                 }
             }
         }
@@ -325,7 +326,7 @@ namespace MphRead
                 _entities[i].Initialize(this);
             }
             // todo: probably revisit this
-            foreach (PlayerEntityNew player in PlayerEntityNew.Players)
+            foreach (PlayerEntity player in PlayerEntity.Players)
             {
                 if (player.LoadFlags.TestFlag(LoadFlags.SlotActive))
                 {
@@ -1983,7 +1984,7 @@ namespace MphRead
                 {
                     continue;
                 }
-                var player = (PlayerEntityNew)entity;
+                var player = (PlayerEntity)entity;
                 if (player.LoadFlags.TestFlag(LoadFlags.Active))
                 {
                     player.Draw();
@@ -2755,14 +2756,14 @@ namespace MphRead
             {
                 if (Selection.Entity != null && Selection.Entity.Type == EntityType.Player)
                 {
-                    ((PlayerEntity)Selection.Entity).Shoot = true;
+                    ((PlayerEntityOld)Selection.Entity).Shoot = true;
                 }
             }
             else if (e.Key == Keys.B && e.Alt)
             {
                 if (Selection.Entity != null && Selection.Entity.Type == EntityType.Player)
                 {
-                    ((PlayerEntity)Selection.Entity).Bomb = true;
+                    ((PlayerEntityOld)Selection.Entity).Bomb = true;
                 }
             }
             else if (Selection.OnKeyDown(e, this))

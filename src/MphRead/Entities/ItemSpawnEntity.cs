@@ -124,7 +124,7 @@ namespace MphRead.Entities
                         {
                             continue;
                         }
-                        var player = (PlayerEntityNew)entity;
+                        var player = (PlayerEntity)entity;
                         if (player.EnemySpawner == info.Sender) // todo: confirm this works
                         {
                             Position = player.Position; // todo: use get_vecs

@@ -233,7 +233,7 @@ namespace MphRead
                 LoadRoomResources(scene);
                 for (int i = 0; i < 4; i++)
                 {
-                    PlayerEntityNew player = PlayerEntityNew.Players[i];
+                    PlayerEntity player = PlayerEntity.Players[i];
                     if (player.LoadFlags.TestFlag(LoadFlags.SlotActive))
                     {
                         LoadCommonHunterResources(scene);
@@ -248,7 +248,7 @@ namespace MphRead
             scene.LoadModel("doubleDamage_img");
             scene.LoadModel("alt_ice");
             scene.LoadModel("gunSmoke");
-            PlayerEntityNew.GeneratePlayerVolumes();
+            PlayerEntity.GeneratePlayerVolumes();
         }
 
         public static void LoadHunterResources(Hunter hunter, Scene scene)
@@ -264,7 +264,7 @@ namespace MphRead
             }
             if (hunter == Hunter.Kanden)
             {
-                PlayerEntityNew.GenerateKandenAltNodeDistances();
+                PlayerEntity.GenerateKandenAltNodeDistances();
             }
         }
 

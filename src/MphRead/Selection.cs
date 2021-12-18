@@ -299,7 +299,7 @@ namespace MphRead
                 Entity.Position = position;
                 if (Entity.Type == EntityType.Player)
                 {
-                    var player = (PlayerEntityNew)Entity;
+                    var player = (PlayerEntity)Entity;
                     player.DebugInput(keyboardState);
                 }
                 else

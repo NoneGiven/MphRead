@@ -375,7 +375,7 @@ namespace MphRead.Entities
                         {
                             if (PlayerEntity.PlayerCount > 0)
                             {
-                                PlayerEntity mainPlayer = PlayerEntity.Players[PlayerEntity.MainPlayer];
+                                PlayerEntity mainPlayer = PlayerEntity.MainPlayer;
                                 target = new Vector3(
                                     mainPlayer.Position.X - _curPosition.X,
                                     mainPlayer.Position.Y + 1 - _curPosition.Y,
@@ -392,7 +392,7 @@ namespace MphRead.Entities
                     }
                     else if (PlayerEntity.PlayerCount > 0)
                     {
-                        PlayerEntity mainPlayer = PlayerEntity.Players[PlayerEntity.MainPlayer];
+                        PlayerEntity mainPlayer = PlayerEntity.MainPlayer;
                         target = new Vector3(
                             mainPlayer.Position.X - _curPosition.X,
                             0,
@@ -433,7 +433,7 @@ namespace MphRead.Entities
                     if (_animFlags.TestFlag(PlatAnimFlags.SeekPlayerHeight) && PlayerEntity.PlayerCount > 0)
                     {
                         // also never true in-game
-                        PlayerEntity mainPlayer = PlayerEntity.Players[PlayerEntity.MainPlayer];
+                        PlayerEntity mainPlayer = PlayerEntity.MainPlayer;
                         float offset = (mainPlayer.Position.Y - _curPosition.Y) * Fixed.ToFloat(20);
                         _curPosition.Y += offset;
                     }
