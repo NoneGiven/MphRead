@@ -155,8 +155,8 @@ namespace MphRead.Entities
     {
         private Scene _scene = null!;
         private readonly ModelInstance[] _bipedModelLods = new ModelInstance[2];
-        private ModelInstance _bipedModel1 = null!;
-        private ModelInstance _bipedModel2 = null!;
+        private ModelInstance _bipedModel1 = null!; // legs
+        private ModelInstance _bipedModel2 = null!; // torso
         private ModelInstance _altModel = null!;
         private ModelInstance _gunModel = null!;
         private ModelInstance _gunSmokeModel = null!;
@@ -247,8 +247,8 @@ namespace MphRead.Entities
         private CollisionVolume _volumeUnxf; // todo: names
         private CollisionVolume _volume;
 
-        private Vector3 _gunVec1;
-        private Vector3 _gunVec2;
+        private Vector3 _gunVec1; // facing? (aim?)
+        private Vector3 _gunVec2; // right? (turn?)
         private Vector3 _aimPosition;
         private float _gunViewBob = 0;
         private float _walkViewBob = 0;
@@ -613,7 +613,7 @@ namespace MphRead.Entities
             Speed = Vector3.Zero;
             if (respawn)
             {
-                pos = pos.AddY(1);
+                pos = pos.AddY(0.5f); // skdebug
             }
             SetTransform(facing, up, pos);
             PrevPosition = Position;
@@ -682,7 +682,7 @@ namespace MphRead.Entities
             _field4E8 = Vector3.Zero;
             _altTransform = Matrix4.Identity;
             _timeSinceMorphCamera = UInt16.MaxValue;
-            SetBipedAnimation(PlayerAnimation.Idle, AnimFlags.None);
+            SetBipedAnimation(PlayerAnimation.Idle, AnimFlags.None); // skdebug
             _altModel.SetAnimation(0, AnimFlags.Paused);
             SetGunAnimation(GunAnimation.Idle, AnimFlags.NoLoop);
             _gunSmokeModel.SetAnimation(0);

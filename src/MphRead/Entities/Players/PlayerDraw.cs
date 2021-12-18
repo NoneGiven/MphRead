@@ -88,11 +88,29 @@ namespace MphRead.Entities
                     }
                     float angle = MathF.Atan2(sin, cos);
                     spineNode.AfterTransform = Matrix4.CreateRotationZ(angle);
-                    _bipedModel1.Model.AnimateNodes(index: 0, false, Matrix4.Identity, Vector3.One, _bipedModel1.AnimInfo);
+                    Model model = _bipedModel1.Model;
+                    model.AnimateNodes(index: 0, false, Matrix4.Identity, Vector3.One, _bipedModel1.AnimInfo);
                     spineNode.ChildIndex = spineChildId;
-                    _bipedModel1.Model.AnimateNodes(spineChildId, false, Matrix4.Identity, Vector3.One, _bipedModel2.AnimInfo);
-                    _bipedModel1.Model.UpdateMatrixStack(_scene.ViewInvRotMatrix, _scene.ViewInvRotYMatrix);
+                    model.AnimateNodes(spineChildId, false, Matrix4.Identity, Vector3.One, _bipedModel2.AnimInfo);
                     spineNode.AfterTransform = null;
+                    float scale = Metadata.HunterScales[Hunter];
+                    float bottom = Fixed.ToFloat(Values.MinPickupHeight);
+                    var lateral = new Vector3(_field70, 0, _field74);
+                    Matrix4 transform = Matrix4.Identity;
+                    transform.Row0.Xyz = -_gunVec2;
+                    transform.Row1.Xyz = Vector3.Cross(lateral, _gunVec2);
+                    transform.Row2.Xyz = -lateral;
+                    transform.Row3.Xyz = Position;
+                    transform.Row3.Y += bottom + bottom * (1 - scale);
+                    transform.Row0.Xyz *= scale;
+                    transform.Row1.Xyz *= scale;
+                    transform.Row2.Xyz *= scale;
+                    for (int i = 0; i < model.Nodes.Count; i++)
+                    {
+                        Node node = model.Nodes[i];
+                        node.Animation *= transform; // todo?: could do this in the shader
+                    }
+                    model.UpdateMatrixStack(_scene.ViewInvRotMatrix, _scene.ViewInvRotYMatrix);
                     if (_timeSinceDamage < Values.DamageFlashTime * 2) // todo: FPS stuff
                     {
                         PaletteOverride = Metadata.RedPalette;
