@@ -1299,7 +1299,9 @@ namespace MphRead
             foreach (EffectElement element in effect.Elements)
             {
                 // the model may already be loaded; meshes with a ListId will be skipped
-                GenerateLists(Read.GetModelInstance(element.ModelName).Model, isRoom: false);
+                Model model = Read.GetModelInstance(element.ModelName).Model;
+                InitTextures(model);
+                GenerateLists(model, isRoom: false);
             }
         }
 
