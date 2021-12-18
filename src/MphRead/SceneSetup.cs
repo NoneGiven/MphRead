@@ -231,14 +231,19 @@ namespace MphRead
                 LoadBeamEffectResources(scene);
                 LoadBeamProjectileResources(scene);
                 LoadRoomResources(scene);
+                bool anyActive = false;
                 for (int i = 0; i < 4; i++)
                 {
                     PlayerEntity player = PlayerEntity.Players[i];
                     if (player.LoadFlags.TestFlag(LoadFlags.SlotActive))
                     {
-                        LoadCommonHunterResources(scene);
+                        anyActive = true;
                         LoadHunterResources(player.Hunter, scene);
                     }
+                }
+                if (anyActive)
+                {
+                    LoadCommonHunterResources(scene);
                 }
             }
         }
@@ -248,6 +253,10 @@ namespace MphRead
             scene.LoadModel("doubleDamage_img");
             scene.LoadModel("alt_ice");
             scene.LoadModel("gunSmoke");
+            scene.LoadModel("trail");
+            // todo?: same as above
+            scene.LoadEffect(216); // deathAlt
+            scene.LoadEffect(10); // ballDeath
             PlayerEntity.GeneratePlayerVolumes();
         }
 
@@ -260,22 +269,33 @@ namespace MphRead
             }
             if (hunter == Hunter.Samus)
             {
-                scene.LoadModel("trail");
+                scene.LoadEffect(30); // samusFurl
+                scene.LoadEffect(136); // samusDash
             }
-            if (hunter == Hunter.Kanden)
+            else if (hunter == Hunter.Kanden)
             {
                 PlayerEntity.GenerateKandenAltNodeDistances();
+            }
+            else if (hunter == Hunter.Spire)
+            {
+                scene.LoadEffect(37); // spireAltSlam
+            }
+            else if (hunter == Hunter.Noxus)
+            {
+                scene.LoadEffect(235); // noxHit
             }
         }
 
         private static void LoadBombResources(Scene scene)
         {
+            // todo?: not all of these need to be loaded depending on the hunters/mode
             scene.LoadModel("KandenAlt_TailBomb");
             scene.LoadModel("arcWelder");
             scene.LoadModel("arcWelder1");
             scene.LoadEffect(9); // bombStart
             scene.LoadEffect(113); // bombStartSylux
             scene.LoadEffect(119); // bombStartMP
+            scene.LoadEffect(128); // bombKanden
             scene.LoadEffect(129); // collapsingStreaks
             scene.LoadEffect(145); // bombBlue
             scene.LoadEffect(146); // bombSylux
@@ -380,6 +400,49 @@ namespace MphRead
             // todo: lore
             scene.LoadModel(Read.GetSingleParticle(SingleType.Death).Model);
             scene.LoadModel(Read.GetSingleParticle(SingleType.Fuzzball).Model);
+        }
+
+        public static void LoadObjectResources(Scene scene)
+        {
+            foreach (EntityBase entity in scene.Entities)
+            {
+                if (entity is ObjectEntity obj && obj.Data.EffectId != 0)
+                {
+                    scene.LoadEffect(obj.Data.EffectId);
+                }
+            }
+        }
+
+        public static void LoadPlatformResources(Scene scene)
+        {
+            foreach (EntityBase entity in scene.Entities)
+            {
+                if (entity is PlatformEntity platform)
+                {
+                    if (platform.Data.ResistEffectId != 0)
+                    {
+                        scene.LoadEffect(platform.Data.ResistEffectId);
+                    }
+                    if (platform.Data.DamageEffectId != 0)
+                    {
+                        scene.LoadEffect(platform.Data.DamageEffectId);
+                    }
+                    if (platform.Data.DeadEffectId != 0)
+                    {
+                        scene.LoadEffect(platform.Data.DeadEffectId);
+                    }
+                    if (platform.Data.Flags.TestFlag(PlatformFlags.SamusShip))
+                    {
+                        scene.LoadEffect(182); // nozzleJet
+                    }
+                    if (platform.Data.Flags.TestFlag(PlatformFlags.BeamSpawner) && platform.Data.BeamId == 0)
+                    {
+                        scene.LoadEffect(183); // syluxMissile
+                        scene.LoadEffect(184); // syluxMissileCol
+                        scene.LoadEffect(185); // syluxMissileFlash
+                    }
+                }
+            }
         }
 
         public static void LoadEnemyResources(Scene scene)
