@@ -164,7 +164,7 @@ namespace MphRead.Entities
                 }
                 else if (AttachedEnemy == null && _field6D0 == 0 && Hunter != Hunter.Guardian)
                 {
-                    Matrix4 transform = GetTransformMatrix(_aimVec.Normalized(), UpVector, _gunDrawPos);
+                    Matrix4 transform = GetTransformMatrix(_aimVec, UpVector, _gunDrawPos);
                     UpdateTransforms(_gunModel, transform, Recolor);
                     GetDrawItems(_gunModel, _gunModel.Model.Nodes[0], _curAlpha);
                     if (Flags1.TestFlag(PlayerFlags1.DrawGunSmoke))

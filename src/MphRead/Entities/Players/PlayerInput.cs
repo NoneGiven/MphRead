@@ -1,4 +1,5 @@
 using System;
+using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace MphRead.Entities
@@ -85,6 +86,7 @@ namespace MphRead.Entities
             {
                 EquipInfo.SmokeLevel -= EquipInfo.Weapon.SmokeDrain;
             }
+            Vector3 speedDelta = Vector3.Zero;
             PlayerAnimation anim1 = PlayerAnimation.None;
             PlayerAnimation anim2 = PlayerAnimation.None;
             AnimFlags animFlags1 = AnimFlags.None;
@@ -128,23 +130,90 @@ namespace MphRead.Entities
                 {
                     // unimpl-controls: the game also tests for either the free strafe flag, or the strafe button held
                     // and later, for up/down, it tests for either flag, or the look button not held
+
+                    void MoveRightLeft(PlayerAnimation walkAnim, int sign)
+                    {
+                        Flags1 |= PlayerFlags1.Strafing;
+                        Flags1 |= PlayerFlags1.MovingBiped;
+                        if (Flags1.TestFlag(PlayerFlags1.Standing))
+                        {
+                            Flags1 |= PlayerFlags1.Walking;
+                        }
+                        else
+                        {
+                            Flags1 &= ~PlayerFlags1.Walking;
+                        }
+                        float traction = Fixed.ToFloat(Values.StrafeBipedTraction);
+                        if (_jumpPadControlLockMin > 0)
+                        {
+                            traction *= Fixed.ToFloat(Values.JumpPadSlideFactor);
+                        }
+                        else if (Flags1.TestFlag(PlayerFlags1.Standing) && _slipperiness != 0)
+                        {
+                            traction *= Metadata.TractionFactors[_slipperiness];
+                        }
+                        speedDelta.X -= _field78 * traction * sign;
+                        speedDelta.Z -= _field7C * traction * sign;
+                        if (!Controls.MoveUp.IsDown && !Controls.MoveDown.IsDown
+                            && Flags1.TestFlag(PlayerFlags1.Grounded) && _timeSinceJumpPad > 7 * 2) // todo: FPS stuff
+                        {
+                            anim1 = walkAnim;
+                        }
+                        if (!EquipInfo.Zoomed)
+                        {
+                            // todo: update field684 (using sign)
+                        }
+                    }
+
+                    void MoveForwardBack(PlayerAnimation walkAnim, int sign)
+                    {
+                        Flags1 |= PlayerFlags1.MovingBiped;
+                        if (Flags1.TestFlag(PlayerFlags1.Standing))
+                        {
+                            Flags1 |= PlayerFlags1.Walking;
+                        }
+                        else
+                        {
+                            Flags1 &= ~PlayerFlags1.Walking;
+                        }
+                        float traction = Fixed.ToFloat(Values.WalkBipedTraction);
+                        if (_jumpPadControlLockMin > 0)
+                        {
+                            traction *= Fixed.ToFloat(Values.JumpPadSlideFactor);
+                        }
+                        else if (Flags1.TestFlag(PlayerFlags1.Standing) && _slipperiness != 0)
+                        {
+                            traction *= Metadata.TractionFactors[_slipperiness];
+                        }
+                        speedDelta.X += _field70 * traction * sign;
+                        speedDelta.Z += _field74 * traction * sign;
+                        if (Flags1.TestFlag(PlayerFlags1.Grounded) && _timeSinceJumpPad > 7 * 2) // todo: FPS stuff
+                        {
+                            anim1 = walkAnim;
+                        }
+                        if (!EquipInfo.Zoomed)
+                        {
+                            // todo: update field688 (using sign)
+                        }
+                    }
+
                     if (Controls.MoveRight.IsDown)
                     {
-
+                        MoveRightLeft(PlayerAnimation.WalkRight, sign: 1);
                     }
                     else if (Controls.MoveLeft.IsDown)
                     {
-
+                        MoveRightLeft(PlayerAnimation.WalkLeft, sign: -1);
                     }
                     // todo: update HUD x shift
                     // tood: update field684
                     if (Controls.MoveUp.IsDown)
                     {
-
+                        MoveForwardBack(PlayerAnimation.WalkForward, sign: 1);
                     }
                     else if (Controls.MoveDown.IsDown)
                     {
-
+                        MoveForwardBack(PlayerAnimation.WalkBackward, sign: -1);
                     }
                     // todo: update HUD y shift
                     // tood: update field684
@@ -199,8 +268,10 @@ namespace MphRead.Entities
             }
             ProcessMovement();
             UpdateCamera();
+            UpdateAimVecs();
             if (_frozenTimer == 0 && _health > 0 && _field6D0 == 0)
             {
+                // skhere
                 if (anim1 == PlayerAnimation.None)
                 {
                     if (Flags1.TestFlag(PlayerFlags1.Grounded))
@@ -234,7 +305,6 @@ namespace MphRead.Entities
                     SetBiped2Animation(anim2, animFlags2);
                 }
             }
-            // skhere
         }
 
         private void ProcessAlt()

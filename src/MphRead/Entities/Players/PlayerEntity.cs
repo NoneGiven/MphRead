@@ -330,6 +330,7 @@ namespace MphRead.Entities
         private float _hSpeedCap = 0;
         private float _hspeedMag = 0; // todo: all FPS stuff with speed
         private float _gravity = 0;
+        private int _slipperiness = 0;
 
         private PlayerAnimation Biped1Anim => (PlayerAnimation)_bipedModel1.AnimInfo.Index[0];
         private PlayerAnimation Biped2Anim => (PlayerAnimation)_bipedModel2.AnimInfo.Index[0];
@@ -1841,7 +1842,7 @@ namespace MphRead.Entities
         public readonly int FallDamageMax;
         public readonly int Field114;
         public readonly int Field118;
-        public readonly int JumppadSlideFactor;
+        public readonly int JumpPadSlideFactor;
         public readonly int Field120;
         public readonly int Field124;
         public readonly int Field128;
@@ -1875,7 +1876,7 @@ namespace MphRead.Entities
             short fieldE0, short spawnInvulnerability, ushort aimMinTouchTime, ushort paddingE6, int fieldE8, int fieldEC, int swayStartTime,
             int swayIncrement, int swayLimit, int gunIdleTime, short mpAmmoCap, byte ammoRecharge, byte padding103, ushort energyTank,
             short field106, byte altGroundedNoGrav, byte padding109, ushort padding10A, int fallDamageSpeed, int fallDamageMax, int field114,
-            int field118, int jumppadSlideFactor, int field120, int field124, int field128, int altSpinSpeed, int field130, int field134,
+            int field118, int jumpPadSlideFactor, int field120, int field124, int field128, int altSpinSpeed, int field130, int field134,
             int field138, int field13C, int field140, int field144, int field148, int field14C, short field150, ushort altAttackStartup,
             int field154, int field158, int lungeHSpeed, int lungeVSpeed, ushort altAttackDamage, short altAttackCooldown)
         {
@@ -1962,7 +1963,7 @@ namespace MphRead.Entities
             FallDamageMax = fallDamageMax;
             Field114 = field114;
             Field118 = field118;
-            JumppadSlideFactor = jumppadSlideFactor;
+            JumpPadSlideFactor = jumpPadSlideFactor;
             Field120 = field120;
             Field124 = field124;
             Field128 = field128;

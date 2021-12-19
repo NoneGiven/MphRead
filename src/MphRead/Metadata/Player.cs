@@ -6,6 +6,11 @@ namespace MphRead
 {
     public static partial class Metadata
     {
+        public static readonly float[] TractionFactors = new float[4]
+        {
+            1, 0.2f, 0.6f, 0.5f
+        };
+
         public static readonly Vector3[] MuzzleOffests = new Vector3[8]
         {
             new Vector3(0.63f, -0.02f, 0),
@@ -259,7 +264,7 @@ namespace MphRead
                 fallDamageMax: 70,
                 field114: 24576,
                 field118: 245,
-                jumppadSlideFactor: 0,
+                jumpPadSlideFactor: 0,
                 field120: 122880,
                 field124: 16384,
                 field128: 122880,
@@ -365,7 +370,7 @@ namespace MphRead
                 fallDamageMax: 70,
                 field114: 24576,
                 field118: 245,
-                jumppadSlideFactor: 0,
+                jumpPadSlideFactor: 0,
                 field120: 122880,
                 field124: 16384,
                 field128: 122880,
@@ -471,7 +476,7 @@ namespace MphRead
                 fallDamageMax: 70,
                 field114: 24576,
                 field118: 245,
-                jumppadSlideFactor: 0,
+                jumpPadSlideFactor: 0,
                 field120: 122880,
                 field124: 16384,
                 field128: 122880,
@@ -577,7 +582,7 @@ namespace MphRead
                 fallDamageMax: 70,
                 field114: 24576,
                 field118: 245,
-                jumppadSlideFactor: 0,
+                jumpPadSlideFactor: 0,
                 field120: 122880,
                 field124: 16384,
                 field128: 122880,
@@ -683,7 +688,7 @@ namespace MphRead
                 fallDamageMax: 70,
                 field114: 24576,
                 field118: 245,
-                jumppadSlideFactor: 0,
+                jumpPadSlideFactor: 0,
                 field120: 122880,
                 field124: 16384,
                 field128: 122880,
@@ -789,7 +794,7 @@ namespace MphRead
                 fallDamageMax: 70,
                 field114: 24576,
                 field118: 245,
-                jumppadSlideFactor: 0,
+                jumpPadSlideFactor: 0,
                 field120: 122880,
                 field124: 16384,
                 field128: 122880,
@@ -895,7 +900,7 @@ namespace MphRead
                 fallDamageMax: 70,
                 field114: 24576,
                 field118: 245,
-                jumppadSlideFactor: 0,
+                jumpPadSlideFactor: 0,
                 field120: 122880,
                 field124: 16384,
                 field128: 122880,
@@ -1001,7 +1006,7 @@ namespace MphRead
                 fallDamageMax: 70,
                 field114: 24576,
                 field118: 245,
-                jumppadSlideFactor: 0,
+                jumpPadSlideFactor: 0,
                 field120: 122880,
                 field124: 16384,
                 field128: 122880,

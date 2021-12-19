@@ -442,18 +442,7 @@ namespace MphRead.Entities
             PickUpItems(scene);
             if (!IsAltForm)
             {
-                Vector3 facing = FacingVector;
-                Vector3 up = UpVector;
-                _gunDrawPos = Fixed.ToFloat(Values.FieldB8) * facing
-                    + _scene.CameraPosition
-                    + Fixed.ToFloat(Values.FieldB0) * _gunVec2
-                    + Fixed.ToFloat(Values.FieldB4) * up; // todo: use camera info position
-                _gunDrawPos.Y += Fixed.ToFloat(20) * MathF.Cos(_gunViewBob);
-                _aimVec = _aimPosition - _gunDrawPos;
-                float dot = Vector3.Dot(_aimVec, facing);
-                Vector3 vec = facing * dot;
-                _aimVec = vec - _aimVec + vec / 2;
-                _muzzlePos = _gunDrawPos + _aimVec * Fixed.ToFloat(Values.MuzzleOffset);
+                UpdateAimVecs();
             }
             if (_muzzleEffect != null)
             {
@@ -1087,6 +1076,22 @@ namespace MphRead.Entities
             }
             // todo: play SFX
             return false;
+        }
+
+        private void UpdateAimVecs()
+        {
+            Vector3 facing = FacingVector;
+            Vector3 up = UpVector;
+            _gunDrawPos = Fixed.ToFloat(Values.FieldB8) * facing
+                + _scene.CameraPosition
+                + Fixed.ToFloat(Values.FieldB0) * _gunVec2
+                + Fixed.ToFloat(Values.FieldB4) * up; // todo: use camera info position
+            _gunDrawPos.Y += Fixed.ToFloat(20) * MathF.Cos(MathHelper.DegreesToRadians(_gunViewBob));
+            _aimVec = _aimPosition - _gunDrawPos;
+            float dot = Vector3.Dot(_aimVec, facing);
+            Vector3 vec = facing * dot;
+            _aimVec = (_aimVec + (vec - _aimVec) / 2).Normalized();
+            _muzzlePos = _gunDrawPos + _aimVec * Fixed.ToFloat(Values.MuzzleOffset);
         }
 
         private void InitAltTransform()
