@@ -130,7 +130,7 @@ namespace MphRead.Entities
                         {
                             Vector3 muzzlePos = Metadata.MuzzleOffests[(int)Hunter];
                             muzzlePos = Matrix.Vec3MultMtx4(muzzlePos, _shootNodes[lod]!.Animation);
-                            muzzlePos = Matrix.Vec3MultMtx4(muzzlePos, transform);
+                            //muzzlePos = Matrix.Vec3MultMtx4(muzzlePos, transform);
                             if (_chargeEffect != null)
                             {
                                 _chargeEffect.SetDrawEnabled(true);

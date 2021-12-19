@@ -305,29 +305,29 @@ namespace MphRead.Entities
                                 {
                                     anim2 = PlayerAnimation.Charge;
                                 }
-                                if (EquipInfo.ChargeLevel >= EquipWeapon.FullCharge * 2) // todo: FPS stuff
+                            }
+                            if (EquipInfo.ChargeLevel >= EquipWeapon.FullCharge * 2) // todo: FPS stuff
+                            {
+                                EquipInfo.SmokeLevel += EquipWeapon.SmokeChargeAmount;
+                                EquipInfo.SmokeLevel = (ushort)Math.Min(EquipInfo.SmokeLevel, EquipWeapon.SmokeStart * 2); // todo: FPS stuff
+                            }
+                            else
+                            {
+                                EquipInfo.ChargeLevel++;
+                                int minCharge = EquipWeapon.MinCharge * 2; // todo: FPS stuff
+                                if (EquipInfo.ChargeLevel > minCharge)
                                 {
-                                    EquipInfo.SmokeLevel += EquipWeapon.SmokeChargeAmount;
-                                    EquipInfo.SmokeLevel = (ushort)Math.Min(EquipInfo.SmokeLevel, EquipWeapon.SmokeStart * 2); // todo: FPS stuff
-                                }
-                                else
-                                {
-                                    EquipInfo.ChargeLevel++;
-                                    int minCharge = EquipWeapon.MinCharge * 2; // todo: FPS stuff
-                                    if (EquipInfo.ChargeLevel > minCharge)
+                                    int fullCharge = EquipWeapon.FullCharge * 2; // todo: FPS stuff
+                                    int chargeCost = EquipWeapon.ChargeCost * 2; // todo: FPS stuff
+                                    int minCost = EquipWeapon.MinChargeCost * 2; // todo: FPS stuff
+                                    int cost = minCost + (chargeCost - minCost) * (EquipInfo.ChargeLevel - minCharge) / (fullCharge - minCharge);
+                                    if (EquipInfo.GetAmmo() < cost)
                                     {
-                                        int fullCharge = EquipWeapon.FullCharge * 2; // todo: FPS stuff
-                                        int chargeCost = EquipWeapon.ChargeCost * 2; // todo: FPS stuff
-                                        int minCost = EquipWeapon.MinChargeCost * 2; // todo: FPS stuff
-                                        int cost = minCost + (chargeCost - minCost) * (EquipInfo.ChargeLevel - minCharge) / (fullCharge - minCharge);
-                                        if (EquipInfo.GetAmmo() < cost)
-                                        {
-                                            EquipInfo.ChargeLevel--;
-                                        }
+                                        EquipInfo.ChargeLevel--;
                                     }
                                 }
-                                // todo?: auto release
                             }
+                            // todo?: auto release
                         }
                         if (releaseCharge)
                         {
@@ -455,7 +455,15 @@ namespace MphRead.Entities
             }
             else
             {
-                // sktodo: PB autofire
+                if (_powerBeamAutofire < UInt16.MaxValue)
+                {
+                    _powerBeamAutofire++;
+                }
+                // basically adds 0, 1, or 2 to the base autofire cooldown depending on how long the PB has repeated fire
+                // --> could add more, but the min charge is reaached quickly
+                int pbAuto = Math.Min((int)_powerBeamAutofire, 90 * 2); // todo: FPS stuff
+                pbAuto = (int)(pbAuto * 15 * 2 / (90f * 2));
+                _autofireCooldown = (ushort)((pbAuto + EquipWeapon.AutofireCooldown) * 2); // todo: FPS stuff
             }
             // todo: autofire cooldown case can be bypassed if a certain bot AI flag is set
             if (_timeSinceShot < EquipWeapon.ShotCooldown * 2 // todo: FPS stuff
@@ -514,14 +522,23 @@ namespace MphRead.Entities
             {
                 Flags1 |= PlayerFlags1.ShotCharged;
             }
-            if (_muzzleEffect == null || EquipWeapon.Flags.TestFlag(WeaponFlags.Continuous))
+            if (_muzzleEffect == null || !EquipWeapon.Flags.TestFlag(WeaponFlags.Continuous))
             {
-                // sktodo: spawn effect
+                if (_muzzleEffect != null)
+                {
+                    _scene.UnlinkEffectEntry(_muzzleEffect);
+                    _muzzleEffect = null;
+                }
+                int effectId = Metadata.MuzzleEffectIds[(int)CurrentWeapon];
+                _muzzleEffect = _scene.SpawnEffectGetEntry(effectId, _gunVec2, _gunVec1, _muzzlePos);
+                if (!IsMainPlayer)
+                {
+                    _muzzleEffect.SetDrawEnabled(false);
+                }
             }
             // todo: play SFX
             EquipInfo.Weapon = curWeapon;
             UnequipOmegaCannon(); // todo?: set the flag if wifi
-            // skhere
             return true;
         }
 

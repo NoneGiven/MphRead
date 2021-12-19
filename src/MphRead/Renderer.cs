@@ -1192,6 +1192,7 @@ namespace MphRead
                 EffectElementEntry element = entry.Elements[i];
                 UnlinkEffectElement(element);
             }
+            entry.Elements.Clear();
             _inactiveEffects.Enqueue(entry);
         }
 
