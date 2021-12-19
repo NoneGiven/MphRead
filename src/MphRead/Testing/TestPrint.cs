@@ -345,6 +345,14 @@ namespace MphRead.Testing
                     size = 0x9C;
                     embed = true;
                 }
+                else if (split[0] == "ButtonControlUnion")
+                {
+                    type = "ButtonControlUnion";
+                    getter = "";
+                    setter = "";
+                    size = 4;
+                    embed = true;
+                }
                 else if (split[0] == "PlayerInputProbably")
                 {
                     type = "PlayerInput";

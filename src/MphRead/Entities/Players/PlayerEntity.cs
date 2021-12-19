@@ -277,9 +277,9 @@ namespace MphRead.Entities
         private Vector3 _field41C;
         private Vector3 _field428;
 
-        private short _fieldE4 = 0;
-        private short _fieldE6 = 0;
+        private float _fieldE4 = 0;
         private float _fieldE8 = 0;
+
         private short _field2BC = 0;
         private byte _field360 = 0;
         private byte _field447 = 0;
@@ -330,6 +330,23 @@ namespace MphRead.Entities
         private float _hSpeedCap = 0;
         private float _hspeedMag = 0; // todo: all FPS stuff with speed
         private float _gravity = 0;
+
+        private PlayerAnimation Biped1Anim => (PlayerAnimation)_bipedModel1.AnimInfo.Index[0];
+        private PlayerAnimation Biped2Anim => (PlayerAnimation)_bipedModel2.AnimInfo.Index[0];
+        private int Biped1Frame => _bipedModel1.AnimInfo.Frame[0];
+        private int Biped2Frame => _bipedModel2.AnimInfo.Frame[0];
+        private int Biped1FrameCount => _bipedModel1.AnimInfo.Frame[0];
+        private int Biped2FrameCount => _bipedModel2.AnimInfo.Frame[0];
+        private AnimFlags Biped1Flags
+        {
+            get => _bipedModel1.AnimInfo.Flags[0];
+            set => _bipedModel1.AnimInfo.Flags[0] = value;
+        }
+        private AnimFlags Biped2Flags
+        {
+            get => _bipedModel2.AnimInfo.Flags[0];
+            set => _bipedModel2.AnimInfo.Flags[0] = value;
+        }
 
         private short _jumpPadControlLock = 0;
         private short _jumpPadControlLockMin = 0;
@@ -641,7 +658,6 @@ namespace MphRead.Entities
             // todo: room node ref
             _field88 = 0;
             _fieldE4 = 0;
-            _fieldE6 = 0;
             _fieldE8 = 0;
             _gunViewBob = 0;
             _walkViewBob = 0;
@@ -1793,7 +1809,7 @@ namespace MphRead.Entities
         public readonly short BombEnemyDamage;
         public readonly short FieldE0;
         public readonly short SpawnInvulnerability;
-        public readonly ushort FieldE4;
+        public readonly ushort AimMinTouchTime;
         public readonly ushort PaddingE6;
         public readonly int FieldE8;
         public readonly int FieldEC;
@@ -1844,7 +1860,7 @@ namespace MphRead.Entities
             int maxPickupHeight, int bipedColRadius, int fieldA0, int fieldA4, int fieldA8, short damageInvuln, ushort damageFlashTime,
             int fieldB0, int fieldB4, int fieldB8, int muzzleOffset, int bombCooldown, int bombSelfRadius, int bombSelfRadiusSquared,
             int bombRadius, int bombRadiusSquared, int bombJumpSpeed, int bombRefillTime, short bombDamage, short bombEnemyDamage,
-            short fieldE0, short spawnInvulnerability, ushort fieldE4, ushort paddingE6, int fieldE8, int fieldEC, int swayStartTime,
+            short fieldE0, short spawnInvulnerability, ushort aimMinTouchTime, ushort paddingE6, int fieldE8, int fieldEC, int swayStartTime,
             int swayIncrement, int swayLimit, int gunIdleTime, short mpAmmoCap, byte ammoRecharge, byte padding103, ushort energyTank,
             short field106, byte altGroundedNoGrav, byte padding109, ushort padding10A, int fallDamageSpeed, int fallDamageMax, int field114,
             int field118, int jumppadSlideFactor, int field120, int field124, int field128, int altSpinSpeed, int field130, int field134,
@@ -1914,7 +1930,7 @@ namespace MphRead.Entities
             BombEnemyDamage = bombEnemyDamage;
             FieldE0 = fieldE0;
             SpawnInvulnerability = spawnInvulnerability;
-            FieldE4 = fieldE4;
+            AimMinTouchTime = aimMinTouchTime;
             PaddingE6 = paddingE6;
             FieldE8 = fieldE8;
             FieldEC = fieldEC;

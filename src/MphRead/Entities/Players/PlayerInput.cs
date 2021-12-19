@@ -79,10 +79,58 @@ namespace MphRead.Entities
 
         private void ProcessBiped()
         {
+            // todo: set a field if cam seq, main player, and 1P mode
+            if (EquipInfo.SmokeLevel < EquipInfo.Weapon.SmokeDrain)
+            {
+                EquipInfo.SmokeLevel = 0;
+            }
+            else
+            {
+                EquipInfo.SmokeLevel -= EquipInfo.Weapon.SmokeDrain;
+            }
+            if (_frozenTimer == 0 && _health > 0 && _field6D0 == 0)
+            {
+                if (Biped1Anim == PlayerAnimation.Turn)
+                {
+                    if (Biped1Frame <= Biped1FrameCount / 2)
+                    {
+                        Biped1Flags |= AnimFlags.Reverse;
+                    }
+                    else
+                    {
+                        Biped1Flags &= ~AnimFlags.Reverse;
+                    }
+                    Biped1Flags |= AnimFlags.NoLoop;
+                }
+                if (Biped2Anim == PlayerAnimation.Turn)
+                {
+                    if (Biped2Frame <= Biped2FrameCount / 2)
+                    {
+                        Biped2Flags |= AnimFlags.Reverse;
+                    }
+                    else
+                    {
+                        Biped2Flags &= ~AnimFlags.Reverse;
+                    }
+                    Biped2Flags |= AnimFlags.NoLoop;
+                }
+            }
+            ProcessMovement();
+            UpdateCamera();
             // skhere
         }
 
         private void ProcessAlt()
+        {
+            // sktodo
+        }
+
+        private void ProcessMovement()
+        {
+            // sktodo
+        }
+
+        private void UpdateCamera()
         {
             // sktodo
         }
