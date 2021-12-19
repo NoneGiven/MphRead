@@ -166,12 +166,14 @@ namespace MphRead
         public const int DisplaySphereSectors = 24;
 
         private readonly KeyboardState _keyboardState;
+        private readonly MouseState _mouseState;
         private readonly Action<string> _setTitle;
 
-        public Scene(Vector2i size, KeyboardState keyboardState, Action<string> setTitle)
+        public Scene(Vector2i size, KeyboardState keyboardState, MouseState mouseState, Action<string> setTitle)
         {
             Size = size;
             _keyboardState = keyboardState;
+            _mouseState = mouseState;
             _setTitle = setTitle;
         }
 
@@ -844,6 +846,7 @@ namespace MphRead
                 _frameTime = (float)frameTime;
             }
             LoadAndUnload();
+            PlayerEntity.ProcessInput(_keyboardState, _mouseState);
             OnKeyHeld();
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
@@ -3765,7 +3768,7 @@ namespace MphRead
 
         public RenderWindow() : base(_gameWindowSettings, _nativeWindowSettings)
         {
-            Scene = new Scene(Size, KeyboardState, (string title) =>
+            Scene = new Scene(Size, KeyboardState, MouseState, (string title) =>
             {
                 Title = title;
             });

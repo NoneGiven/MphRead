@@ -280,7 +280,7 @@ namespace MphRead.Entities
         private float _fieldE4 = 0;
         private float _fieldE8 = 0;
 
-        private short _field2BC = 0;
+        private ushort _timeIdle = 0;
         private byte _field360 = 0;
         private byte _field447 = 0;
         private ushort _field43A = 0;
@@ -376,6 +376,7 @@ namespace MphRead.Entities
         private ushort _timeSinceButtonTouch = 0;
         private ushort _timeStanding = 0;
         private ushort _timeSinceStanding = 0;
+        private ushort _timeSinceGrounded = 0;
         private ushort _field449 = 0;
         private ushort _timeSinceHitTarget = 0;
         private ushort _shockCoilTimer = 0;
@@ -511,7 +512,7 @@ namespace MphRead.Entities
             _viewSwayTimer = (ushort)(Values.ViewSwayTime * 2); // todo: FPS stuff (use floats)
             ResetCameraInfo();
             // todo: update camera info
-            _field2BC = 0;
+            _timeIdle = 0;
             _timeSinceInput = 0;
             _field40C = 0;
             _doubleDmgTimer = 0;
@@ -718,6 +719,7 @@ namespace MphRead.Entities
             _lastJumpPad = null;
             _jumpPadControlLock = 0;
             _jumpPadControlLockMin = 0;
+            _timeSinceJumpPad = UInt16.MaxValue; // the game doesn't do this
             // todo: update HUD effects
             // todo: update camera info vecs
             _light1Vector = _scene.Light1Vector;
@@ -738,6 +740,16 @@ namespace MphRead.Entities
                 int effectId = _scene.Multiplayer && _scene.PlayerCount > 2 ? 33 : 31;
                 _scene.SpawnEffect(effectId, Vector3.UnitX, Vector3.UnitY, Position);
             }
+        }
+
+        private void SetBiped1Animation(PlayerAnimation anim, AnimFlags animFlags)
+        {
+            SetBipedAnimation(anim, animFlags, setBiped1: true, setBiped2: false, setIfMorphing: false);
+        }
+
+        private void SetBiped2Animation(PlayerAnimation anim, AnimFlags animFlags)
+        {
+            SetBipedAnimation(anim, animFlags, setBiped1: false, setBiped2: true, setIfMorphing: false);
         }
 
         private void SetBipedAnimation(PlayerAnimation anim, AnimFlags animFlags, bool setBiped1 = true,
