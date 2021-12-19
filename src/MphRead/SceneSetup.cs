@@ -255,8 +255,17 @@ namespace MphRead
             scene.LoadModel("gunSmoke");
             scene.LoadModel("trail");
             // todo?: same as above
-            scene.LoadEffect(216); // deathAlt
             scene.LoadEffect(10); // ballDeath
+            scene.LoadEffect(216); // deathAlt
+            scene.LoadEffect(187); // flamingAltForm
+            scene.LoadEffect(188); // flamingGun
+            scene.LoadEffect(189); // flamingHunter
+            for (int i = 0; i < 9; i++)
+            {
+                scene.LoadEffect(Metadata.MuzzleEffectIds[i]);
+                scene.LoadEffect(Metadata.ChargeEffectIds[i]);
+                scene.LoadEffect(Metadata.ChargeLoopEffectIds[i]);
+            }
             PlayerEntity.GeneratePlayerVolumes();
         }
 
