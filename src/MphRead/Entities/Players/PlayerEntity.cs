@@ -327,7 +327,7 @@ namespace MphRead.Entities
         public Vector3 PrevPosition { get; set; }
         public Vector3 PrevCamPos { get; set; }
         public Vector3 IdlePosition { get; private set; }
-        private short _someSpeedCounter = 0;
+        private ushort _accelerationTimer = 0;
         private float _hSpeedCap = 0;
         private float _hspeedMag = 0; // todo: all FPS stuff with speed
         private float _gravity = 0;
@@ -353,6 +353,7 @@ namespace MphRead.Entities
         private short _jumpPadControlLock = 0;
         private short _jumpPadControlLockMin = 0;
         private ushort _timeSinceJumpPad = 0;
+        private Vector3 _jumpPadAccel;
 
         private const ushort _respawnTime = 90 * 2; // todo: FPS stuff
 
@@ -659,7 +660,7 @@ namespace MphRead.Entities
             _field84 = _field74;
             _aimPosition = (Position + _gunVec1 * Fixed.ToFloat(Values.AimDistance)).AddY(Fixed.ToFloat(Values.AimYOffset));
             Acceleration = Vector3.Zero;
-            _someSpeedCounter = 0;
+            _accelerationTimer = 0;
             // todo: room node ref
             _field88 = 0;
             _fieldE4 = 0;

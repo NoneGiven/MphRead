@@ -549,7 +549,126 @@ namespace MphRead.Entities
 
         private void ProcessMovement()
         {
-            // sktodo
+            if (_accelerationTimer > 0)
+            {
+                _accelerationTimer--;
+                Speed += Acceleration;
+            }
+            var hSpeed = new Vector3(Speed.X, 0, Speed.Z);
+            float hSpeedMag = hSpeed.Length;
+            if (hSpeedMag == 0)
+            {
+                _hspeedMag = 0;
+            }
+            else
+            {
+                hSpeed /= hSpeedMag;
+                if (Values.AltGroundedNoGrav == 0)
+                {
+                    if (hSpeedMag > Fixed.ToFloat(Values.Field5C) / 2) // todo: FPS stuff
+                    {
+                        _field80 = hSpeed.X;
+                        _field84 = hSpeed.Z;
+                    }
+                    if ((IsAltForm || IsMorphing) && hSpeedMag > Fixed.ToFloat(Values.Field58) / 2) // todo: FPS stuff
+                    {
+                        _field70 = hSpeed.X;
+                        _field74 = hSpeed.Z;
+                        var face = new Vector3(_field70, 0, _field74);
+                        _gunVec1 = face;
+                        float add = _gunVec1.X * Fixed.ToFloat(Values.AimDistance);
+                        _aimPosition = Position.AddX(add).AddZ(add);
+                        SetTransform(face, UpVector, Position);
+                    }
+                }
+                if (IsAltForm)
+                {
+                    float altMin = Fixed.ToFloat(Values.AltMinHSpeed) / 2; // todo: FPS stuff
+                    if (_hSpeedCap <= altMin)
+                    {
+                        _hSpeedCap = altMin;
+                    }
+                    else if (_hspeedMag > _hSpeedCap)
+                    {
+                        _hSpeedCap -= Fixed.ToFloat(Values.AltHSpeedCapIncrement) / 2; // todo: FPS stuff
+                    }
+                    else
+                    {
+                        _hSpeedCap = _hspeedMag;
+                    }
+                }
+                else
+                {
+                    bool strafing = Flags1.TestFlag(PlayerFlags1.Strafing);
+                    _hSpeedCap = Fixed.ToFloat(strafing ? Values.StrafeSpeedCap : Values.WalkSpeedCap) / 2; // todo: FPS stuff
+                }
+                if (IsPrimeHunter && !IsAltForm)
+                {
+                    _hSpeedCap = 0.4f / 2; // todo: FPS stuff
+                }
+                _hspeedMag = hSpeedMag;
+            }
+            // todo: sett how much of this overwrites stuff done above
+            Vector3 facing = FacingVector;
+            float hMag = MathF.Sqrt(facing.X * facing.X + facing.Z * facing.Z);
+            _field70 = facing.X / hMag;
+            _field74 = facing.Z / hMag;
+            _gunVec2 = new Vector3(_field74, 0, -_field70);
+            _field78 = _gunVec2.X;
+            _field7C = _gunVec2.Z;
+            Vector3 up = Vector3.Cross(facing, _gunVec2).Normalized();
+            SetTransform(facing, up, Position);
+            if (Values.AltGroundedNoGrav != 0)
+            {
+                _field80 = _field70;
+                _field84 = _field74;
+            }
+            _aimPosition = _gunVec1 * Fixed.ToFloat(Values.AimDistance);
+            _aimPosition += _scene.CameraPosition; // todo: use camera info pos
+            // unimpl-controls: this calculation is different when exact aim is not set
+            hMag = MathF.Sqrt(_gunVec1.X * _gunVec1.X + _gunVec1.Z * _gunVec1.Z);
+            _field88 = MathHelper.DegreesToRadians(MathF.Atan2(_gunVec1.Y, hMag));
+            if (_field88 > 75 || _field88 < -75)
+            {
+                // todo: update aim
+            }
+            if (Flags1.TestFlag(PlayerFlags1.UsedJumpPad))
+            {
+                float prevX = Speed.X;
+                Speed = Speed.AddX(-_jumpPadAccel.X);
+                if (prevX <= 0 && Speed.X > 0 || prevX > 0 && Speed.X < 0)
+                {
+                    _jumpPadAccel.X += Speed.X;
+                    Speed = Speed.WithX(0);
+                }
+                float prevZ = Speed.Z;
+                Speed = Speed.AddZ(-_jumpPadAccel.Z);
+                if (prevZ <= 0 && Speed.Z > 0 || prevZ > 0 && Speed.Z < 0)
+                {
+                    _jumpPadAccel.Z += Speed.Z;
+                    Speed = Speed.WithZ(0);
+                }
+            }
+            float slideSpeed = 0;
+            float speedFactor = 0;
+            if (IsAltForm || IsMorphing)
+            {
+
+            }
+            else if (Flags1.TestFlag(PlayerFlags1.Standing))
+            {
+
+            }
+            else
+            {
+
+            }
+            if (Flags1.TestFlag(PlayerFlags1.Standing))
+            {
+
+            }
+            // todo: play SFX
+            // skhere
         }
 
         private void UpdateCamera()
