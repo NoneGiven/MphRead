@@ -217,6 +217,7 @@ namespace MphRead.Entities
         public int BombMax { get; private set; }
         public int BombCount { get; set; }
         public EquipInfo EquipInfo { get; } = new EquipInfo();
+        private WeaponInfo EquipWeapon => EquipInfo.Weapon;
         public BeamType CurrentWeapon { get; private set; }
         public BeamType PreviousWeapon { get; private set; }
         public BeamType WeaponSelection { get; private set; }
@@ -355,6 +356,8 @@ namespace MphRead.Entities
 
         private const ushort _respawnTime = 90 * 2; // todo: FPS stuff
 
+        private ushort _autofireCooldown = 0;
+        private ushort _powerBeamAutofire = 0;
         private ushort _timeSinceInput = 0;
         private ushort _timeSinceShot = 0;
         private ushort _timeSinceDamage = 0;
@@ -636,7 +639,7 @@ namespace MphRead.Entities
             _burnedBy = null;
             _burnTimer = 0;
             _timeSinceButtonTouch = 255;
-            _hSpeedCap = Fixed.ToFloat(Values.WalkSpeedCap);
+            _hSpeedCap = Fixed.ToFloat(Values.WalkSpeedCap) / 2; // todo: FPS stuff
             Speed = Vector3.Zero;
             if (respawn)
             {

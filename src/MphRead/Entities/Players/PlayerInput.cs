@@ -271,7 +271,137 @@ namespace MphRead.Entities
             UpdateAimVecs();
             if (_frozenTimer == 0 && _health > 0 && _field6D0 == 0)
             {
-                // skhere
+                // todo: scan visor
+                // else...
+                if (!IsUnmorphing)
+                {
+                    if (Controls.Shoot.IsPressed || (Controls.Shoot.IsDown && Flags2.TestFlag(PlayerFlags2.NoShotsFired)))
+                    {
+                        Flags2 |= PlayerFlags2.Shooting;
+                        Flags2 &= ~PlayerFlags2.NoShotsFired;
+                    }
+                    else if (!Controls.Shoot.IsDown)
+                    {
+                        Flags2 &= ~PlayerFlags2.Shooting;
+                    }
+                    if (!_availableCharges[CurrentWeapon] || !EquipWeapon.Flags.TestFlag(WeaponFlags.CanCharge))
+                    {
+                        EquipInfo.ChargeLevel = 0;
+                    }
+                    else
+                    {
+                        bool releaseCharge = false;
+                        if (!Flags2.TestFlag(PlayerFlags2.Shooting) || EquipInfo.GetAmmo() < EquipWeapon.ChargeCost)
+                        {
+                            releaseCharge = true; // charge released/insufficient
+                        }
+                        else
+                        {
+                            if (EquipInfo.ChargeLevel > 0 && GunAnimation != GunAnimation.MissileClose)
+                            {
+                                // todo: play SFX
+                                if (Biped2Flags.TestFlag(AnimFlags.Ended) || Biped2Anim == PlayerAnimation.Charge
+                                    || Biped2Anim == PlayerAnimation.Shoot && Biped2Frame > 8)
+                                {
+                                    anim2 = PlayerAnimation.Charge;
+                                }
+                                if (EquipInfo.ChargeLevel >= EquipWeapon.FullCharge * 2) // todo: FPS stuff
+                                {
+                                    EquipInfo.SmokeLevel += EquipWeapon.SmokeChargeAmount;
+                                    EquipInfo.SmokeLevel = (ushort)Math.Min(EquipInfo.SmokeLevel, EquipWeapon.SmokeStart * 2); // todo: FPS stuff
+                                }
+                                else
+                                {
+                                    EquipInfo.ChargeLevel++;
+                                    int minCharge = EquipWeapon.MinCharge * 2; // todo: FPS stuff
+                                    if (EquipInfo.ChargeLevel > minCharge)
+                                    {
+                                        int fullCharge = EquipWeapon.FullCharge * 2; // todo: FPS stuff
+                                        int chargeCost = EquipWeapon.ChargeCost * 2; // todo: FPS stuff
+                                        int minCost = EquipWeapon.MinChargeCost * 2; // todo: FPS stuff
+                                        int cost = minCost + (chargeCost - minCost) * (EquipInfo.ChargeLevel - minCharge) / (fullCharge - minCharge);
+                                        if (EquipInfo.GetAmmo() < cost)
+                                        {
+                                            EquipInfo.ChargeLevel--;
+                                        }
+                                    }
+                                }
+                                // todo?: auto release
+                            }
+                        }
+                        if (releaseCharge)
+                        {
+                            if (EquipInfo.ChargeLevel >= 2 * 2) // todo: FPS stuff
+                            {
+                                // todo: stop SFX
+                            }
+                            if (EquipInfo.ChargeLevel >= EquipWeapon.MinCharge * 2) // todo: FPS stuff
+                            {
+                                TryFireWeapon();
+                                anim2 = PlayerAnimation.ChargeShoot;
+                                animFlags2 = AnimFlags.NoLoop;
+                            }
+                            EquipInfo.ChargeLevel = 0;
+                        }
+                    }
+                    if (EquipWeapon.Flags.TestFlag(WeaponFlags.CanZoom))
+                    {
+                        if (Controls.Zoom.IsPressed)
+                        {
+                            UpdateZoom(!EquipInfo.Zoomed);
+                        }
+                        if (EquipInfo.Zoomed)
+                        {
+                            // todo: zoom camera FOV
+                        }
+                    }
+                    if (Controls.Shoot.IsPressed && EquipInfo.ChargeLevel <= 1 * 2 // todo: FPS stuff
+                        || EquipWeapon.Flags.TestFlag(WeaponFlags.RepeatFire) && Flags2.TestFlag(PlayerFlags2.Shooting)
+                        && (!EquipWeapon.Flags.TestFlag(WeaponFlags.CanCharge) || EquipInfo.ChargeLevel < EquipWeapon.MinCharge * 2)) // todo: FPS stuff
+                    {
+                        if (TryFireWeapon())
+                        {
+                            anim2 = PlayerAnimation.Shoot;
+                            animFlags2 |= AnimFlags.NoLoop;
+                            if (Biped2Anim == PlayerAnimation.Shoot)
+                            {
+                                SetBiped2Animation(PlayerAnimation.Shoot, Biped2Flags);
+                            }
+                        }
+                    }
+                    // todo: or if main player in cam seq which forces alt
+                    if (!Flags2.TestFlag(PlayerFlags2.BipedStuck) && _abilities.TestFlag(AbilityFlags.AltForm) && Controls.Morph.IsPressed)
+                    {
+                        // the game doesn't require pressed here, but presumably the control scheme would have the pressed flag
+                        // todo: use the ability flag for the morph touch button too, even though the game doesn't
+                        TrySwitchForms();
+                        anim1 = PlayerAnimation.Morph;
+                        anim2 = PlayerAnimation.Morph;
+                    }
+                }
+                float magBefore = MathF.Sqrt(Speed.X * Speed.X + Speed.Z * Speed.Z);
+                Speed += speedDelta / 2; // todo: FPS stuff
+                float magAfter = MathF.Sqrt(Speed.X * Speed.X + Speed.Z * Speed.Z);
+                if (magAfter > magBefore && magAfter > _hSpeedCap)
+                {
+                    float factor;
+                    if (magBefore <= _hSpeedCap)
+                    {
+                        factor = _hSpeedCap / magAfter;
+                    }
+                    else
+                    {
+                        factor = magBefore / magAfter;
+                    }
+                    Speed = Speed.WithX(Speed.X * factor).WithZ(Speed.Z * factor);
+                }
+                if (EquipInfo.Zoomed)
+                {
+                    Vector3 facing = FacingVector;
+                    Vector3 diff = _gunVec1 - facing;
+                    facing += diff * 0.3f / 2; // todo: FPS stuff
+                    SetTransform(facing.Normalized(), UpVector, Position);
+                }
                 if (anim1 == PlayerAnimation.None)
                 {
                     if (Flags1.TestFlag(PlayerFlags1.Grounded))
@@ -305,6 +435,94 @@ namespace MphRead.Entities
                     SetBiped2Animation(anim2, animFlags2);
                 }
             }
+        }
+
+        private bool TryFireWeapon()
+        {
+            if (!Flags2.TestFlag(PlayerFlags2.Cloaking))
+            {
+                _cloakTimer = 0;
+            }
+            if (AttachedEnemy != null)
+            {
+                return false;
+            }
+            bool pressed = Controls.Shoot.IsPressed;
+            if (pressed || CurrentWeapon != BeamType.PowerBeam)
+            {
+                _autofireCooldown = (ushort)(EquipWeapon.AutofireCooldown * 2); // todo: FPS stuff
+                _powerBeamAutofire = 0;
+            }
+            else
+            {
+                // sktodo: PB autofire
+            }
+            // todo: autofire cooldown case can be bypassed if a certain bot AI flag is set
+            if (_timeSinceShot < EquipWeapon.ShotCooldown * 2 // todo: FPS stuff
+                || !pressed && _timeSinceShot < _autofireCooldown
+                || GunAnimation == GunAnimation.UpDown)
+            {
+                return false;
+            }
+            Vector3 shotVec = _aimPosition - _muzzlePos;
+            if (_disruptedTimer > 0)
+            {
+                // random values between -3 and 3
+                shotVec.X += Fixed.ToFloat((int)Rng.GetRandomInt2(24576) - 12288);
+                shotVec.Y += Fixed.ToFloat((int)Rng.GetRandomInt2(24576) - 12288);
+                shotVec.Z += Fixed.ToFloat((int)Rng.GetRandomInt2(24576) - 12288);
+            }
+            shotVec = shotVec.Normalized();
+            WeaponInfo curWeapon = EquipInfo.Weapon;
+            if (IsPrimeHunter)
+            {
+                // todo?: make this more solid to avoid e.g. the battlehammer ammo cost thing
+                EquipInfo.Weapon = Weapons.Current[(int)CurrentWeapon + 9];
+            }
+            if (IsBot && !_scene.Multiplayer)
+            {
+                // todo: update bot 1P weapon
+            }
+            BeamSpawnFlags flags = BeamSpawnFlags.NoMuzzle;
+            if (_doubleDmgTimer > 0)
+            {
+                flags |= BeamSpawnFlags.DoubleDamage;
+            }
+            else if (IsPrimeHunter)
+            {
+                flags |= BeamSpawnFlags.PrimeHunter;
+            }
+            BeamResultFlags result = BeamProjectileEntity.Spawn(this, EquipInfo, _muzzlePos, shotVec, flags, _scene);
+            if (result == BeamResultFlags.NoSpawn)
+            {
+                EquipInfo.Weapon = curWeapon;
+                // todo: play SFX
+                return false;
+            }
+            // todo: update license stats
+            _timeSinceShot = 0;
+            // todo: update HUD
+            if (CurrentWeapon == BeamType.Missile)
+            {
+                Flags1 |= PlayerFlags1.ShotMissile;
+            }
+            if (EquipInfo.ChargeLevel < EquipWeapon.MinCharge * 2) // todo: FPS stuff
+            {
+                Flags1 |= PlayerFlags1.ShotUncharged;
+            }
+            else
+            {
+                Flags1 |= PlayerFlags1.ShotCharged;
+            }
+            if (_muzzleEffect == null || EquipWeapon.Flags.TestFlag(WeaponFlags.Continuous))
+            {
+                // sktodo: spawn effect
+            }
+            // todo: play SFX
+            EquipInfo.Weapon = curWeapon;
+            UnequipOmegaCannon(); // todo?: set the flag if wifi
+            // skhere
+            return true;
         }
 
         private void ProcessAlt()

@@ -1947,8 +1947,9 @@ namespace MphRead
             if (_frameCount != 0 && (!_frameAdvanceOn || _advanceOneFrame))
             {
                 _elapsedTime += 1 / 60f; // todo: FPS stuff
-                _singleParticleCount = 0;
             }
+            // do this even when frame advance is on, since these are added by draw functions, not process functions
+            _singleParticleCount = 0;
             _decalItems.Clear();
             _nonDecalItems.Clear();
             _translucentItems.Clear();

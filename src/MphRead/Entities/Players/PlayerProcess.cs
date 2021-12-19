@@ -1083,9 +1083,9 @@ namespace MphRead.Entities
             Vector3 facing = FacingVector;
             Vector3 up = UpVector;
             _gunDrawPos = Fixed.ToFloat(Values.FieldB8) * facing
-                + _scene.CameraPosition
+                + _scene.CameraPosition // todo: use camera info position
                 + Fixed.ToFloat(Values.FieldB0) * _gunVec2
-                + Fixed.ToFloat(Values.FieldB4) * up; // todo: use camera info position
+                + Fixed.ToFloat(Values.FieldB4) * up;
             _gunDrawPos.Y += Fixed.ToFloat(20) * MathF.Cos(MathHelper.DegreesToRadians(_gunViewBob));
             _aimVec = _aimPosition - _gunDrawPos;
             float dot = Vector3.Dot(_aimVec, facing);
