@@ -332,6 +332,7 @@ namespace MphRead.Entities
         private float _hspeedMag = 0; // todo: all FPS stuff with speed
         private float _gravity = 0;
         private int _slipperiness = 0;
+        private Terrain _terrain;
 
         private PlayerAnimation Biped1Anim => (PlayerAnimation)_bipedModel1.AnimInfo.Index[0];
         private PlayerAnimation Biped2Anim => (PlayerAnimation)_bipedModel2.AnimInfo.Index[0];
@@ -382,10 +383,14 @@ namespace MphRead.Entities
         private ushort _timeStanding = 0;
         private ushort _timeSinceStanding = 0;
         private ushort _timeSinceGrounded = 0;
+        private ushort _field438 = 0;
+        private Vector3 _fieldC0;
         private ushort _field449 = 0;
+        private float _field44C = 0; // basically landing speed/force?
         private ushort _timeSinceHitTarget = 0;
         private ushort _shockCoilTimer = 0;
         private ushort _timeSinceMorphCamera = 0;
+        private ushort _horizColTimer = 0;
 
         private EffectEntry? _deathaltEffect = null;
         private EffectEntry? _doubleDmgEffect = null;
@@ -640,7 +645,7 @@ namespace MphRead.Entities
             _burnedBy = null;
             _burnTimer = 0;
             _timeSinceButtonTouch = 255;
-            _hSpeedCap = Fixed.ToFloat(Values.WalkSpeedCap) / 2; // todo: FPS stuff
+            _hSpeedCap = Fixed.ToFloat(Values.WalkSpeedCap); // todo: FPS stuff?
             Speed = Vector3.Zero;
             if (respawn)
             {
@@ -1525,18 +1530,18 @@ namespace MphRead.Entities
                     {
                         if (!flags.TestFlag(DamageFlags.Halfturret))
                         {
-                            // todo: FPS stuff
-                            Vector3 speed = Speed + direction.Value.WithY(0) / 2;
+                            // todo: FPS stuff?
+                            Vector3 speed = Speed + direction.Value.WithY(0);
                             if (direction.Value.Y <= 0)
                             {
-                                speed.Y += direction.Value.Y / 2;
+                                speed.Y += direction.Value.Y;
                             }
-                            else if (speed.Y < 0.25f / 2)
+                            else if (speed.Y < 0.25f)
                             {
-                                speed.Y += direction.Value.Y / 2;
-                                if (speed.Y > 0.25f / 2)
+                                speed.Y += direction.Value.Y;
+                                if (speed.Y > 0.25f)
                                 {
-                                    speed.Y = 0.25f / 2;
+                                    speed.Y = 0.25f;
                                 }
                             }
                             Speed = speed;
@@ -1552,7 +1557,7 @@ namespace MphRead.Entities
                     }
                     else if (!flags.TestFlag(DamageFlags.Halfturret))
                     {
-                        Speed += (direction.Value * 0.4f).WithY(0) / 2; // todo: FPS stuff
+                        Speed += (direction.Value * 0.4f).WithY(0); // todo: FPS stuff?
                     }
                 }
                 else if (attacker != null)
@@ -1737,7 +1742,7 @@ namespace MphRead.Entities
         GravityOverride = 0x80,
         NoFormSwitch = 0x100,
         BipedLock = 0x200,
-        Bit10 = 0x400,
+        AltFormGravity = 0x400,
         Lod1 = 0x800,
         DrawnThirdPerson = 0x1000,
         RadarReveal = 0x2000,

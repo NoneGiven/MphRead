@@ -6,6 +6,11 @@ namespace MphRead
 {
     public static partial class Metadata
     {
+        public static readonly float[] SlipSpeedFactors = new float[4]
+        {
+            0, -0.5f, 0.9f, 0.94f
+        };
+
         public static readonly float[] TractionFactors = new float[4]
         {
             1, 0.2f, 0.6f, 0.5f

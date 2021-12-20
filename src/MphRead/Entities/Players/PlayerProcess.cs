@@ -241,8 +241,7 @@ namespace MphRead.Entities
             else
             {
                 _targetAlpha = 1;
-                if ((Hunter == Hunter.Trace || IsPrimeHunter)
-                    && _hspeedMag < 0.05f && Speed.Y < 0.05f && Speed.Y > -0.05f) // todo: or prime hunter
+                if ((Hunter == Hunter.Trace || IsPrimeHunter) && _hspeedMag < 0.05f && Speed.Y < 0.05f && Speed.Y > -0.05f)
                 {
                     if (_cloakTimer >= 30 * 2) // todo: FPS stuff
                     {
@@ -1112,6 +1111,27 @@ namespace MphRead.Entities
             _modelTransform.Row0.Xyz = Vector3.Normalize(_modelTransform.Row0.Xyz);
             _modelTransform.Row1.Xyz = Vector3.Normalize(_modelTransform.Row1.Xyz);
             _modelTransform.Row2.Xyz = Vector3.Normalize(_modelTransform.Row2.Xyz);
+        }
+
+        private void UpdateAltTransform()
+        {
+            // sktodo
+            if (Hunter == Hunter.Noxus)
+            {
+
+            }
+            else if (Hunter == Hunter.Kanden)
+            {
+
+            }
+            else if (Hunter == Hunter.Samus || Hunter == Hunter.Spire)
+            {
+
+            }
+            else
+            {
+
+            }
         }
 
         private void EnterAltForm()

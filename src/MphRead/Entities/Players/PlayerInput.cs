@@ -229,11 +229,11 @@ namespace MphRead.Entities
                         }
                         if (IsPrimeHunter)
                         {
-                            Speed = Speed.WithY(0.35f / 2); // todo: FPS stuff
+                            Speed = Speed.WithY(0.35f); // todo: FPS stuff?
                         }
                         else
                         {
-                            Speed = Speed.WithY(Fixed.ToFloat(Values.JumpSpeed) / 2); // todo: FPS stuff
+                            Speed = Speed.WithY(Fixed.ToFloat(Values.JumpSpeed)); // todo: FPS stuff?
                         }
                         _timeSinceGrounded = 8 * 2; // todo: FPS stuff
                         // todo: play SFX
@@ -380,7 +380,7 @@ namespace MphRead.Entities
                     }
                 }
                 float magBefore = MathF.Sqrt(Speed.X * Speed.X + Speed.Z * Speed.Z);
-                Speed += speedDelta / 2; // todo: FPS stuff
+                Speed += speedDelta; // todo: FPS stuff?
                 float magAfter = MathF.Sqrt(Speed.X * Speed.X + Speed.Z * Speed.Z);
                 if (magAfter > magBefore && magAfter > _hSpeedCap)
                 {
@@ -552,7 +552,7 @@ namespace MphRead.Entities
             if (_accelerationTimer > 0)
             {
                 _accelerationTimer--;
-                Speed += Acceleration;
+                Speed += Acceleration / 2; // todo: FPS stuff
             }
             var hSpeed = new Vector3(Speed.X, 0, Speed.Z);
             float hSpeedMag = hSpeed.Length;
@@ -565,12 +565,12 @@ namespace MphRead.Entities
                 hSpeed /= hSpeedMag;
                 if (Values.AltGroundedNoGrav == 0)
                 {
-                    if (hSpeedMag > Fixed.ToFloat(Values.Field5C) / 2) // todo: FPS stuff
+                    if (hSpeedMag > Fixed.ToFloat(Values.Field5C)) // todo: FPS stuff?
                     {
                         _field80 = hSpeed.X;
                         _field84 = hSpeed.Z;
                     }
-                    if ((IsAltForm || IsMorphing) && hSpeedMag > Fixed.ToFloat(Values.Field58) / 2) // todo: FPS stuff
+                    if ((IsAltForm || IsMorphing) && hSpeedMag > Fixed.ToFloat(Values.Field58)) // todo: FPS stuff?
                     {
                         _field70 = hSpeed.X;
                         _field74 = hSpeed.Z;
@@ -583,14 +583,14 @@ namespace MphRead.Entities
                 }
                 if (IsAltForm)
                 {
-                    float altMin = Fixed.ToFloat(Values.AltMinHSpeed) / 2; // todo: FPS stuff
+                    float altMin = Fixed.ToFloat(Values.AltMinHSpeed); // todo: FPS stuff?
                     if (_hSpeedCap <= altMin)
                     {
                         _hSpeedCap = altMin;
                     }
                     else if (_hspeedMag > _hSpeedCap)
                     {
-                        _hSpeedCap -= Fixed.ToFloat(Values.AltHSpeedCapIncrement) / 2; // todo: FPS stuff
+                        _hSpeedCap -= Fixed.ToFloat(Values.AltHSpeedCapIncrement); // todo: FPS stuff?
                     }
                     else
                     {
@@ -600,11 +600,11 @@ namespace MphRead.Entities
                 else
                 {
                     bool strafing = Flags1.TestFlag(PlayerFlags1.Strafing);
-                    _hSpeedCap = Fixed.ToFloat(strafing ? Values.StrafeSpeedCap : Values.WalkSpeedCap) / 2; // todo: FPS stuff
+                    _hSpeedCap = Fixed.ToFloat(strafing ? Values.StrafeSpeedCap : Values.WalkSpeedCap); // todo: FPS stuff?
                 }
                 if (IsPrimeHunter && !IsAltForm)
                 {
-                    _hSpeedCap = 0.4f / 2; // todo: FPS stuff
+                    _hSpeedCap = 0.4f; // todo: FPS stuff?
                 }
                 _hspeedMag = hSpeedMag;
             }
@@ -634,40 +634,258 @@ namespace MphRead.Entities
             }
             if (Flags1.TestFlag(PlayerFlags1.UsedJumpPad))
             {
+                // todo: FPS stuff
                 float prevX = Speed.X;
-                Speed = Speed.AddX(-_jumpPadAccel.X);
+                Speed = Speed.AddX(-_jumpPadAccel.X / 2);
                 if (prevX <= 0 && Speed.X > 0 || prevX > 0 && Speed.X < 0)
                 {
-                    _jumpPadAccel.X += Speed.X;
+                    _jumpPadAccel.X += Speed.X / 2;
                     Speed = Speed.WithX(0);
                 }
                 float prevZ = Speed.Z;
-                Speed = Speed.AddZ(-_jumpPadAccel.Z);
+                Speed = Speed.AddZ(-_jumpPadAccel.Z / 2);
                 if (prevZ <= 0 && Speed.Z > 0 || prevZ > 0 && Speed.Z < 0)
                 {
-                    _jumpPadAccel.Z += Speed.Z;
+                    _jumpPadAccel.Z += Speed.Z / 2;
                     Speed = Speed.WithZ(0);
                 }
             }
-            float slideSpeed = 0;
-            float speedFactor = 0;
+            float slideSfxPct = 0;
+            float speedFactor;
             if (IsAltForm || IsMorphing)
             {
-
+                if (Flags2.TestFlag(PlayerFlags2.AltAttack) && (Hunter == Hunter.Trace || Hunter == Hunter.Weavel))
+                {
+                    speedFactor = 0.96f;
+                }
+                else if (Flags1.TestFlag(PlayerFlags1.Standing))
+                {
+                    speedFactor = Fixed.ToFloat(Values.AltGroundSpeedFactor);
+                }
+                else
+                {
+                    speedFactor = Fixed.ToFloat(Values.AirSpeedFactor);
+                }
             }
             else if (Flags1.TestFlag(PlayerFlags1.Standing))
             {
-
+                if (Flags1.TestFlag(PlayerFlags1.Strafing))
+                {
+                    speedFactor = Fixed.ToFloat(Values.StrafeSpeedFactor);
+                }
+                else if (Flags1.TestFlag(PlayerFlags1.Walking))
+                {
+                    speedFactor = Fixed.ToFloat(Values.WalkSpeedFactor);
+                }
+                else
+                {
+                    speedFactor = Fixed.ToFloat(Values.StandSpeedFactor);
+                }
             }
             else
             {
-
+                speedFactor = Fixed.ToFloat(Values.AirSpeedFactor);
             }
-            if (Flags1.TestFlag(PlayerFlags1.Standing))
+            if (Flags1.TestFlag(PlayerFlags1.Standing) && _slipperiness != 0)
             {
-
+                speedFactor += (1 - speedFactor) * Metadata.SlipSpeedFactors[_slipperiness];
+                if (!Flags1.TestFlag(PlayerFlags1.MovingBiped))
+                {
+                    slideSfxPct = _hspeedMag / _hSpeedCap * (16 - 1 / 4096f);
+                }
             }
-            // todo: play SFX
+            // todo: play SFX (with slideSfxPct)
+            Speed = Speed.WithX(Speed.X * speedFactor).WithZ(Speed.Z * speedFactor);
+            if (Flags1.TestFlag(PlayerFlags1.UsedJumpPad))
+            {
+                Speed = Speed.AddX(_jumpPadAccel.X / 2); // todo: FPS stuff
+                Speed = Speed.AddZ(_jumpPadAccel.Z / 2); // todo: FPS stuff
+            }
+            if (Flags1.TestFlag(PlayerFlags1.Standing) && _timeSinceJumpPad > 5 * 2) // todo: FPS stuff
+            {
+                _lastJumpPad = null;
+                Flags1 &= ~PlayerFlags1.UsedJumpPad;
+                _jumpPadControlLock = 0;
+                _jumpPadControlLockMin = 0;
+            }
+            if (IsAltForm)
+            {
+                Flags2 |= PlayerFlags2.AltFormGravity;
+            }
+            else if (Speed.Y <= 0.01f)
+            {
+                Flags2 &= ~PlayerFlags2.AltFormGravity;
+            }
+            if (_health > 0)
+            {
+                if (_jumpPadControlLock == 0 && !Flags2.TestFlag(PlayerFlags2.BipedStuck))
+                {
+                    if (Flags2.TestFlag(PlayerFlags2.GravityOverride))
+                    {
+                        Flags2 &= ~PlayerFlags2.GravityOverride;
+                    }
+                    else
+                    {
+                        if (IsAltForm || Flags2.TestFlag(PlayerFlags2.AltFormGravity))
+                        {
+                            if (Flags1.TestFlag(PlayerFlags1.Standing) && _slipperiness == 0 && Values.AltGroundedNoGrav != 0)
+                            {
+                                _gravity = 0;
+                            }
+                            else if (Flags1.TestFlag(PlayerFlags1.Standing))
+                            {
+                                _gravity = Fixed.ToFloat(Values.AltGroundGravity);
+                            }
+                            else
+                            {
+                                _gravity = Fixed.ToFloat(Values.AltAirGravity);
+                            }
+                        }
+                        else if (Flags1.TestFlag(PlayerFlags1.Standing) && _slipperiness == 0)
+                        {
+                            _gravity = 0;
+                        }
+                        else
+                        {
+                            _gravity = Fixed.ToFloat(Values.BipedGravity);
+                        }
+                    }
+                    Speed = Speed.AddY(_gravity / 2); // todo: FPS stuff
+                }
+                Vector3 position = Position + Speed / 2; // todo: FPS stuff
+                if (AttachedEnemy?.EnemyType == EnemyType.Quadtroid)
+                {
+                    position.X = Position.X;
+                    position.Z = Position.Z;
+                }
+                Position = position;
+                // unimpl-controls: the game does more calculation here if exact aim is off
+                // --> does so outside of the _health > 0 condition, before the player collision check (which is inside another _health > 0)
+                CheckPlayerCollision();
+            }
+            if (Hunter == Hunter.Kanden && IsAltForm && Flags1.TestFlag(PlayerFlags1.Standing))
+            {
+                for (int i = 1; i < _kandenSegPos.Length; i++)
+                {
+                    _kandenSegPos[i] = _kandenSegPos[i].AddY(-0.1f);
+                }
+            }
+            // todo?: update position for entity collision
+            if (!Flags1.TestFlag(PlayerFlags1.CollidingLateral))
+            {
+                _horizColTimer = 0;
+            }
+            else if (_horizColTimer != UInt16.MaxValue)
+            {
+                _horizColTimer++;
+            }
+            bool standingPrev = Flags1.TestFlag(PlayerFlags1.Standing);
+            bool noUnmorphPev = Flags1.TestFlag(PlayerFlags1.NoUnmorph);
+            Flags1 &= ~PlayerFlags1.Standing;
+            Flags1 &= ~PlayerFlags1.StandingPrevious;
+            Flags1 &= ~PlayerFlags1.NoUnmorph;
+            Flags1 &= ~PlayerFlags1.NoUnmorphPrevious;
+            Flags1 &= ~PlayerFlags1.OnLava;
+            Flags1 &= ~PlayerFlags1.OnAcid;
+            Flags2 &= ~PlayerFlags2.SpireClimbing;
+            Flags1 &= ~PlayerFlags1.CollidingLateral;
+            Flags1 &= ~PlayerFlags1.NoUnmorph;
+            Flags1 &= ~PlayerFlags1.CollidingEntity;
+            Flags1 &= ~PlayerFlags1.Standing;
+            if (standingPrev)
+            {
+                Flags1 |= PlayerFlags1.StandingPrevious;
+            }
+            if (noUnmorphPev)
+            {
+                Flags1 |= PlayerFlags1.NoUnmorphPrevious;
+            }
+            Vector3 prevC0 = _fieldC0;
+            _fieldC0 = Vector3.Zero;
+            CheckCollision();
+            if (_field449 > 0 && _field449 < 30 * 2) // todo: FPS stuff
+            {
+                _fieldC0 = prevC0;
+            }
+            else if (_fieldC0 != Vector3.Zero)
+            {
+                _fieldC0 = _fieldC0.Normalized();
+            }
+            else
+            {
+                _fieldC0 = Vector3.UnitY;
+            }
+            // todo: stop SFX if terrain changed
+            if (Flags1.TestFlag(PlayerFlags1.Standing) && !Flags1.TestFlag(PlayerFlags1.StandingPrevious))
+            {
+                // landing
+                _timeStanding = 0;
+                if (PrevSpeed.Y >= 0)
+                {
+                    _field44C = 0;
+                }
+                else
+                {
+                    _field44C = -PrevSpeed.Y * 0.35f;
+                    if (_field44C > Fixed.ToFloat(800))
+                    {
+                        _field44C = Fixed.ToFloat(800);
+                    }
+                    if (PrevSpeed.Y < -0.65f)
+                    {
+                        // todo: set camera shake
+                    }
+                }
+            }
+            else if (_timeStanding != UInt16.MaxValue)
+            {
+                _timeStanding++;
+            }
+            if (IsAltForm)
+            {
+                UpdateAltTransform();
+            }
+            if (Flags1.TestFlag(PlayerFlags1.Grounded))
+            {
+                Flags1 |= PlayerFlags1.GroundedPrevious;
+            }
+            else
+            {
+                Flags1 &= ~PlayerFlags1.GroundedPrevious;
+            }
+            if (Flags1.TestFlag(PlayerFlags1.Standing) || Flags2.TestFlag(PlayerFlags2.SpireClimbing))
+            {
+                _field438 = _timeSinceGrounded;
+                _timeSinceGrounded = 0;
+                Flags1 |= PlayerFlags1.Grounded;
+            }
+            else if (_timeSinceGrounded < 90 * 2) // todo: FPS stuff
+            {
+                _timeSinceGrounded++;
+                if (_timeSinceGrounded >= 8 * 2) // todo: FPS stuff
+                {
+                    Flags1 &= ~PlayerFlags1.Grounded;
+                    // todo: clear SFX field
+                }
+            }
+            bool burning = false;
+            if (_health > 0 && (_burnTimer > 0 || Hunter != Hunter.Spire
+                && Flags1.TestFlag(PlayerFlags1.OnLava) && Flags1.TestFlag(PlayerFlags1.Grounded)))
+            {
+                burning = true;
+            }
+            // todo: update burning SFX
+            if ((!IsAltForm || Hunter == Hunter.Weavel) && Flags1.TestFlag(PlayerFlags1.Grounded))
+            {
+                if (Flags1.TestFlag(PlayerFlags1.MovingBiped))
+                {
+                    // todo: play SFX
+                }
+                else
+                {
+                    // todo: stop SFX
+                } 
+            }
             // skhere
         }
 
