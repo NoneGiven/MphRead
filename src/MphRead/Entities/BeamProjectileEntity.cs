@@ -391,7 +391,7 @@ namespace MphRead.Entities
                 Direction.Z - 2 * colRes.Plane.Z * dot2
             );
             float dot3 = Vector3.Dot(colRes.Position, colRes.Plane.Xyz);
-            float factor = 0.01f - dot3 - colRes.Plane.W;
+            float factor = 0.01f - (dot3 - colRes.Plane.W);
             BackPosition = Position = new Vector3(
                 colRes.Position.X + colRes.Plane.X * factor,
                 colRes.Position.Y + colRes.Plane.Y * factor,
