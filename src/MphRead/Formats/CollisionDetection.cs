@@ -408,12 +408,12 @@ namespace MphRead.Formats
                         continue;
                     }
                     Vector4 plane = info.Planes[data.PlaneIndex];
-                    float dot1 = Vector3.Dot(point1, plane.Xyz) - plane.W;
+                    float dot1 = Vector3.Dot(transPoint1, plane.Xyz) - plane.W;
                     if (dot1 <= 0)
                     {
                         continue;
                     }
-                    float dot2 = Vector3.Dot(point2, plane.Xyz) - plane.W;
+                    float dot2 = Vector3.Dot(transPoint2, plane.Xyz) - plane.W;
                     if (dot2 > radius)
                     {
                         continue;
@@ -423,7 +423,7 @@ namespace MphRead.Formats
                     {
                         pct = Math.Clamp(dot1 / (dot1 - dot2), 0, 1);
                     }
-                    Vector3 vec = point1 + (point2 - point1) * pct;
+                    Vector3 vec = transPoint1 + (transPoint2 - transPoint1) * pct;
 
                     float GetEdgeDotDifference(int pIndex)
                     {

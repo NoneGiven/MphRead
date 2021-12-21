@@ -1439,7 +1439,8 @@ namespace MphRead.Entities
                     continue;
                 }
                 var candidate = (PlayerSpawnEntity)entity;
-                if (candidate.IsActive && candidate.Cooldown == 0 && (_scene.FrameCount > 0 || !candidate.Availability))
+                // skdebug - 1P spawns
+                if ((candidate.IsActive || !_scene.Room!.Metadata.Multiplayer) && candidate.Cooldown == 0 && (_scene.FrameCount > 0 || !candidate.Availability))
                 {
                     // todo: if CTF mode, check team index
                     float minDistSqr = 100;
