@@ -7,6 +7,12 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
+    public struct DamageResult
+    {
+        public bool TakeDamage;
+        public uint Damage;
+    }
+
     public partial class PlayerEntity
     {
         private EntityCollision? _collidedEntCol = null;
@@ -125,7 +131,18 @@ namespace MphRead.Entities
                 }
             }
             // todo: collide with doors and force fields
-            // sktodo: collision damage and update volume
+            DamageResult dmgRes = default;
+            dmgRes.Damage = 1;
+            dmgRes.TakeDamage = _terrainDamage;
+            if (_collidedEntCol != null)
+            {
+                // todo: query collision damage from entity
+            }
+            if (dmgRes.TakeDamage)
+            {
+                TakeDamage(dmgRes.Damage, DamageFlags.IgnoreInvuln, direction: null, source: null);
+            }
+            _volume = CollisionVolume.Move(_volumeUnxf, Position);
         }
 
         private void HandleCollision(CollisionResult result)
@@ -512,7 +529,6 @@ namespace MphRead.Entities
             {
                 Flags2 |= PlayerFlags2.SpireClimbing;
             }
-            // skhere
             Position = position;
             _volume = CollisionVolume.Move(_volumeUnxf, Position);
         }
