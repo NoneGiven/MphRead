@@ -206,7 +206,7 @@ namespace MphRead.Entities
                         MoveRightLeft(PlayerAnimation.WalkLeft, sign: -1);
                     }
                     // todo: update HUD x shift
-                    // tood: update field684
+                    // todo: update field684
                     if (Controls.MoveUp.IsDown)
                     {
                         MoveForwardBack(PlayerAnimation.WalkForward, sign: 1);
@@ -216,7 +216,7 @@ namespace MphRead.Entities
                         MoveForwardBack(PlayerAnimation.WalkBackward, sign: -1);
                     }
                     // todo: update HUD y shift
-                    // tood: update field684
+                    // todo: update field684
                     // unimpl-controls: in the up/down code path, the game processes aim reset if that flag is off
                     if (_jumpPadControlLockMin == 0 && Controls.Jump.IsPressed
                         && !Flags1.TestAny(PlayerFlags1.NoAimInput | PlayerFlags1.UsedJump))
@@ -608,7 +608,7 @@ namespace MphRead.Entities
                 }
                 _hspeedMag = hSpeedMag;
             }
-            // todo: sett how much of this overwrites stuff done above
+            // todo: check how much of this overwrites stuff done above
             Vector3 facing = FacingVector;
             float hMag = MathF.Sqrt(facing.X * facing.X + facing.Z * facing.Z);
             _field70 = facing.X / hMag;
@@ -884,7 +884,7 @@ namespace MphRead.Entities
                 else
                 {
                     // todo: stop SFX
-                } 
+                }
             }
             // skhere
         }

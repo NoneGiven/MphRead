@@ -453,7 +453,6 @@ namespace MphRead.Formats
                         if (dotDiff < -0.03125f)
                         {
                             fullCollision = false;
-                            // sktodo: add result
                             if (includeOffset && dotDiff >= -radius)
                             {
                                 // unimpl-collision: see note below
@@ -790,7 +789,7 @@ namespace MphRead.Formats
                 for (int j = 0; j < 2; j++)
                 {
                     EntityCollision? entCol = entity.EntityCollision[j];
-                    // todo: handle FH collision
+                    // sktodo: handle FH collision
                     if (entCol == null || entCol.Collision.Info.FirstHunt)
                     {
                         continue;
