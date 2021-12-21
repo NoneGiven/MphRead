@@ -355,9 +355,13 @@ namespace MphRead.Formats
             return CheckSphereBetweenPoints(null, point1, point2, radius, limit, includeOffset, flags, scene, results, hasCandidates: false);
         }
 
+        // todo: revisit this approach
+        private static readonly HashSet<CollisionData> _temp = new HashSet<CollisionData>(64);
+
         public static int CheckSphereBetweenPoints(IReadOnlyList<CollisionCandidate>? candidates, Vector3 point1, Vector3 point2, float radius,
             int limit, bool includeOffset, TestFlags flags, Scene scene, CollisionResult[] results, bool hasCandidates)
         {
+            _temp.Clear();
             int count = 0;
             ushort mask = 0;
             bool includeEntities = !flags.TestFlag(TestFlags.AffectsScan);
@@ -401,11 +405,14 @@ namespace MphRead.Formats
                     {
                         break;
                     }
-                    // todo: counter
                     CollisionData data = info.Data[info.DataIndices[candidate.Entry.DataStartIndex + j]];
-                    if (((ushort)data.Flags & mask) != 0)
+                    if (((ushort)data.Flags & mask) != 0 || _temp.Contains(data))
                     {
                         continue;
+                    }
+                    if (candidate.EntityCollision == null)
+                    {
+                        _temp.Add(data);
                     }
                     Vector4 plane = info.Planes[data.PlaneIndex];
                     float dot1 = Vector3.Dot(transPoint1, plane.Xyz) - plane.W;
@@ -428,14 +435,14 @@ namespace MphRead.Formats
                     float GetEdgeDotDifference(int pIndex)
                     {
                         int index = data.PointStartIndex + pIndex;
-                        Vector3 point1 = info.Points[info.PointIndices[index]];
+                        Vector3 dataPoint1 = info.Points[info.PointIndices[index]];
                         // index + 1 may exceed the count, in which case we get the copy of the first index
-                        Vector3 point2 = info.Points[info.PointIndices[index + 1]];
-                        Vector3 edgeDir = (point1 - point2).Normalized();
+                        Vector3 dataPoint2 = info.Points[info.PointIndices[index + 1]];
+                        Vector3 edgeDir = (dataPoint1 - dataPoint2).Normalized();
                         var cross = Vector3.Cross(edgeDir, plane.Xyz);
-                        float dot1 = Vector3.Dot(cross, point2);
-                        float dot2 = Vector3.Dot(vec, cross);
-                        return dot2 - dot1;
+                        float crossDot1 = Vector3.Dot(cross, dataPoint2);
+                        float crossDot2 = Vector3.Dot(vec, cross);
+                        return crossDot2 - crossDot1;
                     }
 
                     Debug.Assert(data.PointIndexCount > 0);
@@ -450,8 +457,9 @@ namespace MphRead.Formats
                             if (includeOffset && dotDiff >= -radius)
                             {
                                 // unimpl-collision: see note below
-                                Vector3 edgePoint1 = info.Points[info.PointIndices[p1]];
-                                Vector3 edgePoint2 = info.Points[info.PointIndices[p1 + 1]];
+                                int epIndex = data.PointStartIndex + p1;
+                                Vector3 edgePoint1 = info.Points[info.PointIndices[epIndex]];
+                                Vector3 edgePoint2 = info.Points[info.PointIndices[epIndex + 1]];
                                 CollisionResult result = results[count];
                                 result.Field0 = 1;
                                 result.EntityCollision = candidate.EntityCollision;

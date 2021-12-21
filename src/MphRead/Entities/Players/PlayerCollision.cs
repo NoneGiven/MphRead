@@ -307,12 +307,12 @@ namespace MphRead.Entities
                     {
                         return;
                     }
-                    if (between.Y <= yBotAdd)
+                    if (betweenY <= yBotAdd)
                     {
                         between = new Vector3(
-                            Position.X - result.EdgePoint1.X + edge.X * v11,
+                            Position.X - (result.EdgePoint1.X + edge.X * v11),
                             yBotAdd - betweenY,
-                            Position.Z - result.EdgePoint1.Z + edge.Z * v11
+                            Position.Z - (result.EdgePoint1.Z + edge.Z * v11)
                         );
                         float magSqr = between.LengthSquared;
                         if (magSqr >= 0.25f)
@@ -326,8 +326,8 @@ namespace MphRead.Entities
                     else
                     {
                         float radius = Fixed.ToFloat(Values.BipedColRadius);
-                        float betweenX = Position.X - result.EdgePoint1.X + edge.X * v11;
-                        float betweenZ = Position.Z - result.EdgePoint1.Z + edge.Z * v11;
+                        float betweenX = Position.X - (result.EdgePoint1.X + edge.X * v11);
+                        float betweenZ = Position.Z - (result.EdgePoint1.Z + edge.Z * v11);
                         float v31 = betweenX * betweenX + betweenZ * betweenZ;
                         if (v31 >= radius * radius)
                         {
@@ -336,7 +336,7 @@ namespace MphRead.Entities
                         float v32 = MathF.Sqrt(v31);
                         result.Plane.Xyz = new Vector3(betweenX / v32, 0, betweenZ / v32);
                         v2 = radius - v32;
-                        if (between.Y > Position.Y)
+                        if (betweenY > Position.Y)
                         {
                             v163 = true;
                         }
