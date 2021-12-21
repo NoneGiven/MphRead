@@ -167,7 +167,6 @@ namespace MphRead.Entities
             {
                 return;
             }
-
             float v2;
             if (IsAltForm)
             {
@@ -197,7 +196,7 @@ namespace MphRead.Entities
                     v2 = dot * dot;
                 }
             }
-            if (result.Field0 == 0)
+            else if (result.Field0 == 0)
             {
                 float radius = Fixed.ToFloat(Values.BipedColRadius);
                 Vector3 vec1 = Position.AddY(Fixed.ToFloat(Values.MaxPickupHeight) - radius);
