@@ -46,7 +46,7 @@ namespace MphRead.Entities
             Flags1 &= ~PlayerFlags1.ShotCharged;
             Flags1 &= ~PlayerFlags1.ShotMissile;
             Flags1 &= ~PlayerFlags1.ShotUncharged;
-            _field4AC = 0;
+            _crushBits = 0;
             if (_respawnTimer > 0)
             {
                 _respawnTimer--;

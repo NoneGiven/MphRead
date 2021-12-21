@@ -32,18 +32,21 @@ namespace MphRead.Formats
     // Flags and Plane are set in check_blocker_between_points, check_between_points_sphere, and check_blocker_in_radius
     // Field14 is set in check_between_points_sphere and check_blocker_in_radius
     // Position, Distance, and EntityCollision are set in check_blocker_between_points and check_between_points_sphere
-    // Field2C and Field38 are set in check_between_points_sphere
+    // EdgePoint1 and EdgePoint2 are set in check_between_points_sphere
     public struct CollisionResult
     {
-        public byte Field0;
+        public byte Field0; // todo: field name
         public CollisionFlags Flags;
         public Vector4 Plane;
-        public float Field14;
+        public float Field14; // todo: field name
         public Vector3 Position;
         public float Distance; // percentage
         public EntityCollision? EntityCollision;
-        public Vector3 Field2C;
-        public Vector3 Field38;
+        public Vector3 EdgePoint1; // when one side of sphere overlaps with the collision
+        public Vector3 EdgePoint2;
+
+        // bits 3-4
+        public int Slipperiness => ((ushort)Flags & 0x18) >> 3;
 
         // bits 5-8
         public Terrain Terrain => (Terrain)(((ushort)Flags & 0x1E0) >> 5);
@@ -62,8 +65,19 @@ namespace MphRead.Formats
             }
         }
 
-        // sktodo: allow passing in a candidate list, query if not passed
+        public static bool CheckBetweenPoints(IReadOnlyList<CollisionCandidate> candidates, Vector3 point1, Vector3 point2,
+            TestFlags flags, Scene scene, ref CollisionResult result)
+        {
+            return CheckBetweenPoints(candidates, point1, point2, flags, scene, ref result, hasCandidates: true);
+        }
+
         public static bool CheckBetweenPoints(Vector3 point1, Vector3 point2, TestFlags flags, Scene scene, ref CollisionResult result)
+        {
+            return CheckBetweenPoints(null, point1, point2, flags, scene, ref result, hasCandidates: false);
+        }
+
+        private static bool CheckBetweenPoints(IReadOnlyList<CollisionCandidate>? candidates, Vector3 point1, Vector3 point2,
+            TestFlags flags, Scene scene, ref CollisionResult result, bool hasCandidates)
         {
             bool collided = false;
             ushort mask = 0;
@@ -80,7 +94,11 @@ namespace MphRead.Formats
             Vector3 transPoint1 = point1;
             Vector3 transPoint2 = point2;
             float minDist = Single.MaxValue;
-            IReadOnlyList<CollisionCandidate> candidates = GetCandidatesForPoints(point1, point2, 0, includeEntities, scene);
+            if (!hasCandidates)
+            {
+                candidates = GetCandidatesForPoints(point1, point2, 0, includeEntities, scene);
+            }
+            Debug.Assert(candidates != null);
             for (int i = 0; i < candidates.Count; i++)
             {
                 CollisionCandidate candidate = candidates[i];
@@ -101,7 +119,7 @@ namespace MphRead.Formats
                 }
                 for (int j = 0; j < candidate.Entry.DataCount; j++)
                 {
-                    // sktodo: counter
+                    // todo: counter
                     CollisionData data = info.Data[info.DataIndices[candidate.Entry.DataStartIndex + j]];
                     if (((ushort)data.Flags & mask) != 0)
                     {
@@ -325,9 +343,181 @@ namespace MphRead.Formats
             }
         }
 
+        public static int CheckSphereBetweenPoints(IReadOnlyList<CollisionCandidate> candidates, Vector3 point1, Vector3 point2, float radius,
+            int limit, bool includeOffset, TestFlags flags, Scene scene, CollisionResult[] results)
+        {
+            return CheckSphereBetweenPoints(candidates, point1, point2, radius, limit, includeOffset, flags, scene, results, hasCandidates: true);
+        }
+
+        public static int CheckSphereBetweenPoints(Vector3 point1, Vector3 point2, float radius, int limit, bool includeOffset,
+            TestFlags flags, Scene scene, CollisionResult[] results)
+        {
+            return CheckSphereBetweenPoints(null, point1, point2, radius, limit, includeOffset, flags, scene, results, hasCandidates: false);
+        }
+
+        public static int CheckSphereBetweenPoints(IReadOnlyList<CollisionCandidate>? candidates, Vector3 point1, Vector3 point2, float radius,
+            int limit, bool includeOffset, TestFlags flags, Scene scene, CollisionResult[] results, bool hasCandidates)
+        {
+            int count = 0;
+            ushort mask = 0;
+            bool includeEntities = !flags.TestFlag(TestFlags.AffectsScan);
+            if (flags.TestFlag(TestFlags.AffectsPlayers))
+            {
+                mask |= (ushort)CollisionFlags.IgnorePlayers;
+            }
+            if (flags.TestFlag(TestFlags.AffectsBeams))
+            {
+                mask |= (ushort)CollisionFlags.IgnoreBeams;
+            }
+            EntityCollision? lastEntCol = null;
+            Vector3 transPoint1 = point1;
+            Vector3 transPoint2 = point2;
+            if (!hasCandidates)
+            {
+                candidates = GetCandidatesForLimits(point1, point2, radius, null, Vector3.Zero, includeEntities: false, scene);
+            }
+            Debug.Assert(candidates != null);
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                CollisionCandidate candidate = candidates[i];
+                MphCollisionInfo info = candidate.Collision;
+                Debug.Assert(candidate.Entry.DataCount > 0);
+                if (candidate.EntityCollision != lastEntCol)
+                {
+                    if (candidate.EntityCollision != null)
+                    {
+                        transPoint1 = Matrix.Vec3MultMtx4(point1, candidate.EntityCollision.Inverse1);
+                        transPoint2 = Matrix.Vec3MultMtx4(point2, candidate.EntityCollision.Inverse1);
+                    }
+                    else
+                    {
+                        transPoint1 = point1;
+                        transPoint2 = point2;
+                    }
+                }
+                for (int j = 0; j < candidate.Entry.DataCount; j++)
+                {
+                    if (count == limit)
+                    {
+                        break;
+                    }
+                    // todo: counter
+                    CollisionData data = info.Data[info.DataIndices[candidate.Entry.DataStartIndex + j]];
+                    if (((ushort)data.Flags & mask) != 0)
+                    {
+                        continue;
+                    }
+                    Vector4 plane = info.Planes[data.PlaneIndex];
+                    float dot1 = Vector3.Dot(point1, plane.Xyz) - plane.W;
+                    if (dot1 <= 0)
+                    {
+                        continue;
+                    }
+                    float dot2 = Vector3.Dot(point2, plane.Xyz) - plane.W;
+                    if (dot2 > radius)
+                    {
+                        continue;
+                    }
+                    float pct = 1;
+                    if (dot1 != dot2)
+                    {
+                        pct = Math.Clamp(dot1 / (dot1 - dot2), 0, 1);
+                    }
+                    Vector3 vec = point1 + (point2 - point1) * pct;
+
+                    float GetEdgeDotDifference(int pIndex)
+                    {
+                        int index = data.PointStartIndex + pIndex;
+                        Vector3 point1 = info.Points[info.PointIndices[index]];
+                        // index + 1 may exceed the count, in which case we get the copy of the first index
+                        Vector3 point2 = info.Points[info.PointIndices[index + 1]];
+                        Vector3 edgeDir = (point1 - point2).Normalized();
+                        var cross = Vector3.Cross(edgeDir, plane.Xyz);
+                        float dot1 = Vector3.Dot(cross, point2);
+                        float dot2 = Vector3.Dot(vec, cross);
+                        return dot2 - dot1;
+                    }
+
+                    Debug.Assert(data.PointIndexCount > 0);
+                    bool fullCollision = true;
+                    for (int p1 = 0; p1 < data.PointIndexCount; p1++)
+                    {
+                        float dotDiff = GetEdgeDotDifference(p1);
+                        if (dotDiff < -0.03125f)
+                        {
+                            fullCollision = false;
+                            // sktodo: add result
+                            if (includeOffset && dotDiff >= -radius)
+                            {
+                                // unimpl-collision: see note below
+                                Vector3 edgePoint1 = info.Points[info.PointIndices[p1]];
+                                Vector3 edgePoint2 = info.Points[info.PointIndices[p1 + 1]];
+                                CollisionResult result = results[count];
+                                result.Field0 = 1;
+                                result.EntityCollision = candidate.EntityCollision;
+                                result.Flags = data.Flags;
+                                result.Field14 = dot2;
+                                result.Distance = pct;
+                                if (candidate.EntityCollision != null)
+                                {
+                                    Vector3 normal = Matrix.Vec3MultMtx3(plane.Xyz, candidate.EntityCollision.Transform);
+                                    Vector3 wVec = Matrix.Vec3MultMtx4(plane.Xyz * plane.W, candidate.EntityCollision.Transform);
+                                    float w = Vector3.Dot(wVec, normal);
+                                    result.Plane = new Vector4(normal, w);
+                                    result.Position = Matrix.Vec3MultMtx4(vec, candidate.EntityCollision.Transform);
+                                    result.EdgePoint1 = Matrix.Vec3MultMtx4(edgePoint1, candidate.EntityCollision.Transform);
+                                    result.EdgePoint2 = Matrix.Vec3MultMtx4(edgePoint2, candidate.EntityCollision.Transform);
+                                }
+                                else
+                                {
+                                    result.Plane = plane;
+                                    result.Position = vec;
+                                    result.EdgePoint1 = edgePoint1;
+                                    result.EdgePoint2 = edgePoint2;
+                                }
+                                results[count++] = result;
+                            }
+                            break;
+                        }
+                    }
+                    if (fullCollision)
+                    {
+                        // unimpl-collision: if a flag is set, only successuively closer results are added (inserted at the front of the list)
+                        CollisionResult result = results[count];
+                        result.Field0 = 0;
+                        result.EntityCollision = candidate.EntityCollision;
+                        result.Flags = data.Flags;
+                        result.Field14 = dot2;
+                        result.Distance = pct;
+                        if (candidate.EntityCollision != null)
+                        {
+                            Vector3 normal = Matrix.Vec3MultMtx3(plane.Xyz, candidate.EntityCollision.Transform);
+                            Vector3 wVec = Matrix.Vec3MultMtx4(plane.Xyz * plane.W, candidate.EntityCollision.Transform);
+                            float w = Vector3.Dot(wVec, normal);
+                            result.Plane = new Vector4(normal, w);
+                            result.Position = Matrix.Vec3MultMtx4(vec, candidate.EntityCollision.Transform);
+                        }
+                        else
+                        {
+                            result.Plane = plane;
+                            result.Position = vec;
+                        }
+                        results[count++] = result;
+                    }
+
+                }
+                if (count == limit)
+                {
+                    break;
+                }
+            }
+            return count;
+        }
+
         public static int CheckInRadius(Vector3 point, float radius, int limit, bool getSimpleNormal,
             TestFlags flags, Scene scene, CollisionResult[] results)
         {
+            int count = 0;
             ushort mask = 0;
             if (flags.TestFlag(TestFlags.AffectsPlayers))
             {
@@ -341,7 +531,6 @@ namespace MphRead.Formats
             var limitMax = new Vector3(point.X + radius, point.Y + radius, point.Z + radius);
             IReadOnlyList<CollisionCandidate> candidates
                 = GetCandidatesForLimits(null, Vector3.Zero, 0, limitMin, limitMax, includeEntities: false, scene);
-            int count = 0;
             for (int i = 0; i < candidates.Count; i++)
             {
                 CollisionCandidate candidate = candidates[i];
@@ -349,15 +538,15 @@ namespace MphRead.Formats
                 Debug.Assert(candidate.Entry.DataCount > 0);
                 for (int j = 0; j < candidate.Entry.DataCount; j++)
                 {
-                    // sktodo: counter
+                    if (count == limit)
+                    {
+                        break;
+                    }
+                    // todo: counter
                     CollisionData data = info.Data[info.DataIndices[candidate.Entry.DataStartIndex + j]];
                     if (((ushort)data.Flags & mask) != 0)
                     {
                         continue;
-                    }
-                    if (count == limit)
-                    {
-                        break;
                     }
                     Vector4 plane = info.Planes[data.PlaneIndex];
                     float dot = Vector3.Dot(point, plane.Xyz) - plane.W;
@@ -380,6 +569,7 @@ namespace MphRead.Formats
                         return dot2 - dot1;
                     }
 
+                    Debug.Assert(data.PointIndexCount > 0);
                     bool noNegCos = true;
                     bool foundBlocker = false;
                     int p1 = 0;
@@ -473,7 +663,7 @@ namespace MphRead.Formats
             return count;
         }
 
-        private static IReadOnlyList<CollisionCandidate> GetCandidatesForLimits(Vector3? point1, Vector3 point2, float margin,
+        public static IReadOnlyList<CollisionCandidate> GetCandidatesForLimits(Vector3? point1, Vector3 point2, float margin,
             Vector3? limitMin, Vector3 limitMax, bool includeEntities, Scene scene)
         {
             // for some reason, this is used both for querying with points and with limits
@@ -558,7 +748,7 @@ namespace MphRead.Formats
             }
         }
 
-        private static IReadOnlyList<CollisionCandidate> GetCandidatesForPoints(Vector3 point1, Vector3 point2, float margin,
+        public static IReadOnlyList<CollisionCandidate> GetCandidatesForPoints(Vector3 point1, Vector3 point2, float margin,
             bool includeEntities, Scene scene)
         {
             ClearCandidates();

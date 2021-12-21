@@ -40,6 +40,7 @@ namespace MphRead.Entities
         private int _toIndex = 1;
         private readonly int _delay;
         private int _moveTimer;
+        private int _recoilTimer;
         private readonly float _forwardSpeed;
         private readonly float _backwardSpeed;
         private int _currentAnim = 0;
@@ -59,6 +60,7 @@ namespace MphRead.Entities
         private static readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(64); // in-game: 18
 
         public PlatformEntityData Data => _data;
+        public Vector3 Velocity => _velocity;
 
         public PlatformEntity(PlatformEntityData data) : base(EntityType.Platform)
         {
@@ -130,10 +132,11 @@ namespace MphRead.Entities
                 _beamSpawnDir = data.BeamSpawnDir.ToFloatVector();
                 _beamIntervalIndex = 15;
             }
-            _delay = data.Delay * 2;
+            _delay = data.Delay * 2; // todo: FPS stuff
             _moveTimer = _delay;
-            _forwardSpeed = data.ForwardSpeed.FloatValue / 2f;
-            _backwardSpeed = data.ForwardSpeed.FloatValue / 2f;
+            _recoilTimer = 0;
+            _forwardSpeed = data.ForwardSpeed.FloatValue / 2f; // todo: FPS stuff
+            _backwardSpeed = data.ForwardSpeed.FloatValue / 2f; // todo: FPS stuff
             UpdatePosition();
             _animFlags |= PlatAnimFlags.Draw;
             // todo: room state
@@ -678,11 +681,29 @@ namespace MphRead.Entities
             }
         }
 
+        public void Recoil()
+        {
+            if (_state == PlatformState.Moving && !Flags.TestFlag(PlatformFlags.NoRecoil) && _data.ForCutscene == 0)
+            {
+                _recoilTimer = 31 * 2; // todo: FPS stuff
+                _moveTimer += 60 * 2; // todo: FPS stuff
+                _velocity.Y *= -1;
+            }
+        }
+
         private void UpdateState()
         {
             if (_state == PlatformState.Moving)
             {
-                // todo: recoil timer
+                if (_recoilTimer > 0)
+                {
+                    // when recoil collision is detected, recoil_timer is set to 31f (and 60f is added to move_timer)
+                    _recoilTimer--;
+                    if (_recoilTimer == 0)
+                    {
+                        _velocity.Y *= -1;
+                    }
+                }
                 if (_moveTimer > 0)
                 {
                     _moveTimer--;

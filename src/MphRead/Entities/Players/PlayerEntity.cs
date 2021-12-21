@@ -286,7 +286,7 @@ namespace MphRead.Entities
         private byte _field447 = 0;
         private ushort _field43A = 0;
         private int _field450 = 0;
-        private byte _field4AC = 0;
+        private byte _crushBits = 0;
         private Vector3 _field4E8; // stores gun vec 2
         private float _field4EC = 0;
         private float _field4F0 = 0;
@@ -331,8 +331,9 @@ namespace MphRead.Entities
         private float _hSpeedCap = 0;
         private float _hspeedMag = 0; // todo: all FPS stuff with speed
         private float _gravity = 0;
-        private int _slipperiness = 0;
-        private Terrain _terrain;
+        private int _slipperiness = 0; // from stand_ter_flags
+        private Terrain _standTerrain; // from stand_ter_flags
+        private bool _terrainDamage = false; // from touch_ter_flags
 
         private PlayerAnimation Biped1Anim => (PlayerAnimation)_bipedModel1.AnimInfo.Index[0];
         private PlayerAnimation Biped2Anim => (PlayerAnimation)_bipedModel2.AnimInfo.Index[0];
@@ -1764,6 +1765,18 @@ namespace MphRead.Entities
         SpireAltAttack = 0x200,
         TraceAltAttack = 0x400,
         WeavelAltAttack = 0x1000
+    }
+
+    [Flags]
+    public enum CrushFlags : byte
+    {
+        None = 0,
+        Bit0 = 1,
+        Bit1 = 2,
+        Bit2 = 4,
+        Bit3 = 8,
+        Bit4 = 0x10,
+        Bit5 = 0x20
     }
 
     public readonly struct PlayerValues
