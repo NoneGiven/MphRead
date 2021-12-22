@@ -411,7 +411,6 @@ namespace MphRead.Entities
                 }
                 PastPositions[0] = Position;
             }
-            Console.WriteLine(scene.FrameCount % 2);
             // btodo: sfx
         }
 
