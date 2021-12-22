@@ -890,7 +890,6 @@ namespace MphRead.Entities
                     // todo: stop SFX
                 }
             }
-            // skhere
         }
 
         private void UpdateCamera()
