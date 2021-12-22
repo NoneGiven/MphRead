@@ -297,7 +297,15 @@ namespace MphRead
                     rotation.Z -= _twoPi;
                 }
                 Entity.Position = position;
-                Entity.Rotation = rotation;
+                if (Entity.Type == EntityType.Player)
+                {
+                    var player = (PlayerEntity)Entity;
+                    player.DebugInput(keyboardState);
+                }
+                else
+                {
+                    Entity.Rotation = rotation;
+                }
             }
         }
 

@@ -33,6 +33,7 @@ namespace MphRead
         MorphCamera,
         JumpPad,
         Teleporter,
+        EnemyHurt,
         Object,
         FlagBase,
         DefenseNode,
@@ -58,7 +59,7 @@ namespace MphRead
         Type
     }
 
-    public class Scene
+    public partial class Scene
     {
         public Vector2i Size { get; set; }
         private Matrix4 _viewMatrix = Matrix4.Identity;
@@ -103,7 +104,6 @@ namespace MphRead
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
         private readonly Dictionary<int, TextureMap> _texPalMap = new Dictionary<int, TextureMap>();
-        private readonly List<CollisionInstance> _collision = new List<CollisionInstance>();
 
         private int _shaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
@@ -124,14 +124,18 @@ namespace MphRead
 
         private float _frameTime = 0;
         private float _elapsedTime = 0;
-        private long _frameCount = 0;
+        private ulong _frameCount = 0;
         private bool _frameAdvanceOn = false;
         private bool _advanceOneFrame = false;
         private bool _recording = false;
         private int _framesRecorded = 0;
         private bool _roomLoaded = false;
+        private RoomEntity? _room = null;
+        private int _roomId = -1;
         public GameMode GameMode { get; private set; } = GameMode.SinglePlayer;
+        public int PlayerCount { get; private set; } = 1;
         public bool Multiplayer => GameMode != GameMode.SinglePlayer;
+        public int RoomId => _roomId;
 
         public Matrix4 ViewMatrix => _viewMatrix;
         public Matrix4 ViewInvRotMatrix => _viewInvRotMatrix;
@@ -143,7 +147,7 @@ namespace MphRead
         public bool TransformRoomNodes => _transformRoomNodes;
         public bool ShowAllNodes => _showAllNodes;
         public float FrameTime => _frameTime;
-        public long FrameCount => _frameCount;
+        public ulong FrameCount => _frameCount;
         public VolumeDisplay ShowVolumes => _showVolumes;
         public bool ShowForceFields => _showVolumes != VolumeDisplay.Portal;
         public float KillHeight => _killHeight;
@@ -153,7 +157,7 @@ namespace MphRead
         public Vector3 Light2Vector => _light2Vector;
         public Vector3 Light2Color => _light2Color;
         public IReadOnlyList<EntityBase> Entities => _entities;
-        public IReadOnlyList<CollisionInstance> Collision => _collision;
+        public RoomEntity? Room => _room;
         public int ActiveCutscene => _activeCutscene;
         // todo: disallow if camera roll is not zero?
         public bool AllowCameraMovement => _activeCutscene == -1 || (_frameAdvanceOn && !_advanceOneFrame);
@@ -162,12 +166,14 @@ namespace MphRead
         public const int DisplaySphereSectors = 24;
 
         private readonly KeyboardState _keyboardState;
+        private readonly MouseState _mouseState;
         private readonly Action<string> _setTitle;
 
-        public Scene(Vector2i size, KeyboardState keyboardState, Action<string> setTitle)
+        public Scene(Vector2i size, KeyboardState keyboardState, MouseState mouseState, Action<string> setTitle)
         {
             Size = size;
             _keyboardState = keyboardState;
+            _mouseState = mouseState;
             _setTitle = setTitle;
         }
 
@@ -184,6 +190,7 @@ namespace MphRead
                 = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId, this);
             _entities.Add(room);
             InitEntity(room);
+            _room = room;
             _cameraMode = CameraMode.Roam;
             if (meta.InGameName != null)
             {
@@ -196,6 +203,8 @@ namespace MphRead
                 _entityMap.Add(entity.Id, entity);
                 InitEntity(entity);
             }
+            SceneSetup.LoadItemResources(this);
+            SceneSetup.LoadEnemyResources(this);
             _light1Vector = meta.Light1Vector;
             _light1Color = new Vector3(
                 meta.Light1Color.Red / 31.0f,
@@ -229,6 +238,7 @@ namespace MphRead
             {
                 GameMode = mode;
             }
+            _roomId = room.RoomId;
         }
 
         // called before load
@@ -257,18 +267,33 @@ namespace MphRead
             {
                 _entityMap.Add(entity.Id, entity);
             }
-            InitEntity(entity);
+            // important to call in this order because the entity may add models (at least in development)
             entity.Initialize(this);
+            InitEntity(entity);
         }
 
-        // called before load
         public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null)
         {
-            var entity = PlayerEntity.Spawn(hunter, recolor, position, facing);
-            if (entity != null)
+            if (_roomLoaded)
             {
-                _entities.Add(entity);
-                InitEntity(entity);
+                // todo: eventually replace with new entity
+                var entity = PlayerEntityOld.Spawn(hunter, recolor, position, facing);
+                if (entity != null)
+                {
+                    _entities.Add(entity);
+                    InitEntity(entity);
+                }
+            }
+            else
+            {
+                var player = PlayerEntity.Create(hunter, recolor);
+                if (player != null)
+                {
+                    // todo: revisit flags
+                    player.LoadFlags |= LoadFlags.SlotActive;
+                    player.LoadFlags |= LoadFlags.Active;
+                    PlayerEntity.PlayerCount++;
+                }
             }
         }
 
@@ -281,16 +306,6 @@ namespace MphRead
         {
             _entityMap.Remove(entity.Id);
             _entities.Remove(entity);
-        }
-
-        public void AddCollision(CollisionInstance inst)
-        {
-            _collision.Add(inst);
-        }
-
-        public void RemoveCollision(CollisionInstance inst)
-        {
-            _collision.Remove(inst);
         }
 
         public void OnLoad()
@@ -306,9 +321,21 @@ namespace MphRead
             {
                 _freeRenderItems.Enqueue(new RenderItem());
             }
-            for (int i = 0; i < _entities.Count; i++)
+            // entities added during initialization of other entities will already be initialized
+            int count = _entities.Count;
+            for (int i = 0; i < count; i++)
             {
                 _entities[i].Initialize(this);
+            }
+            // todo: probably revisit this
+            foreach (PlayerEntity player in PlayerEntity.Players)
+            {
+                if (player.LoadFlags.TestFlag(LoadFlags.SlotActive))
+                {
+                    _entities.Add(player);
+                    player.Initialize(this);
+                    InitEntity(player);
+                }
             }
             OutputStart();
         }
@@ -819,6 +846,7 @@ namespace MphRead
                 _frameTime = (float)frameTime;
             }
             LoadAndUnload();
+            PlayerEntity.ProcessInput(_keyboardState, _mouseState);
             OnKeyHeld();
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
@@ -834,6 +862,10 @@ namespace MphRead
             UpdateCameraPosition();
 
             RenderScene();
+            if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
+            {
+                ProcessMessageQueue();
+            }
             if (_frameAdvanceOn && !_advanceOneFrame)
             {
                 Rng.SetRng1(rng1);
@@ -1160,6 +1192,7 @@ namespace MphRead
                 EffectElementEntry element = entry.Elements[i];
                 UnlinkEffectElement(element);
             }
+            entry.Elements.Clear();
             _inactiveEffects.Enqueue(entry);
         }
 
@@ -1174,7 +1207,7 @@ namespace MphRead
                 }
                 else
                 {
-                    element.Flags &= EffElemFlags.ElementExtension;
+                    element.Flags &= ~EffElemFlags.ElementExtension;
                     element.Flags |= EffElemFlags.KeepAlive; // keep alive until particles expire
                     element.EffectEntry = null;
                     if (setExpired)
@@ -1213,6 +1246,10 @@ namespace MphRead
             entry.ParticleDefinitions.AddRange(element.Particles);
             entry.Parity = (int)(_frameCount % 2);
             entry.Owner = owner;
+            entry.RoField1 = 0;
+            entry.RoField2 = 0;
+            entry.RoField3 = 0;
+            entry.RoField4 = 0;
             _activeElements.Add(entry);
             return entry;
         }
@@ -1266,8 +1303,16 @@ namespace MphRead
             foreach (EffectElement element in effect.Elements)
             {
                 // the model may already be loaded; meshes with a ListId will be skipped
-                GenerateLists(Read.GetModelInstance(element.ModelName).Model, isRoom: false);
+                Model model = Read.GetModelInstance(element.ModelName).Model;
+                InitTextures(model);
+                GenerateLists(model, isRoom: false);
             }
+        }
+
+        public EffectEntry SpawnEffectGetEntry(int effectId, Vector3 facing, Vector3 up, Vector3 position, EntityBase? owner = null)
+        {
+            Matrix4 transform = EntityBase.GetTransformMatrix(facing, up, position);
+            return SpawnEffectGetEntry(effectId, transform, owner);
         }
 
         public EffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform, EntityBase? owner = null)
@@ -1276,6 +1321,12 @@ namespace MphRead
             entry.EffectId = effectId;
             SpawnEffect(effectId, transform, child: false, entry, owner);
             return entry;
+        }
+
+        public void SpawnEffect(int effectId, Vector3 facing, Vector3 up, Vector3 position, bool child = false, EntityBase? owner = null)
+        {
+            Matrix4 transform = EntityBase.GetTransformMatrix(facing, up, position);
+            SpawnEffect(effectId, transform, child, entry: null, owner);
         }
 
         public void SpawnEffect(int effectId, Matrix4 transform, bool child = false, EntityBase? owner = null)
@@ -1365,7 +1416,7 @@ namespace MphRead
                         element.Position = element.Transform.Row3.Xyz;
                     }
                     var times = new TimeValues(_elapsedTime, _elapsedTime - element.CreationTime, element.Lifespan);
-                    if (_frameCount % 2 == element.Parity
+                    if (_frameCount % 2 == (ulong)element.Parity
                         && element.Actions.TryGetValue(FuncAction.IncreaseParticleAmount, out FxFuncInfo? info))
                     {
                         // todo: maybe revisit this frame time hack
@@ -1406,17 +1457,33 @@ namespace MphRead
                         {
                             particle.RoField1 = particle.InvokeFloatFunc(info, times);
                         }
+                        else
+                        {
+                            particle.RoField1 = element.RoField1;
+                        }
                         if (element.Actions.TryGetValue(FuncAction.SetParticleRoField2, out info))
                         {
                             particle.RoField2 = particle.InvokeFloatFunc(info, times);
+                        }
+                        else
+                        {
+                            particle.RoField2 = element.RoField2;
                         }
                         if (element.Actions.TryGetValue(FuncAction.SetParticleRoField3, out info))
                         {
                             particle.RoField3 = particle.InvokeFloatFunc(info, times);
                         }
+                        else
+                        {
+                            particle.RoField3 = element.RoField3;
+                        }
                         if (element.Actions.TryGetValue(FuncAction.SetParticleRoField4, out info))
                         {
                             particle.RoField4 = particle.InvokeFloatFunc(info, times);
+                        }
+                        else
+                        {
+                            particle.RoField4 = element.RoField4;
                         }
                         if (element.Actions.TryGetValue(FuncAction.SetNewParticleLifespan, out info))
                         {
@@ -1644,11 +1711,38 @@ namespace MphRead
             return new RenderItem();
         }
 
+        private readonly float[] _scaleFactors = new float[16];
+
         // for meshes
-        public void AddRenderItem(Material material, int polygonId, float alphaScale, Vector3 emission, LightInfo lightInfo,
-            Matrix4 texcoordMatrix, Matrix4 transform, int listId, int matrixStackCount, IReadOnlyList<float> matrixStack,
-            Vector4? overrideColor, Vector4? paletteOverride, SelectionType selectionType, int? bindingOverride = null)
+        public void AddRenderItem(Material material, int polygonId, float alphaScale, Vector3 emission, LightInfo lightInfo, Matrix4 texcoordMatrix,
+            Matrix4 transform, int listId, int matrixStackCount, IReadOnlyList<float> matrixStack, Vector4? overrideColor, Vector4? paletteOverride,
+            SelectionType selectionType, float scaleFactor = 1, int? bindingOverride = null)
         {
+            transform.Row0.X *= scaleFactor;
+            transform.Row0.Y *= scaleFactor;
+            transform.Row0.Z *= scaleFactor;
+            transform.Row1.X *= scaleFactor;
+            transform.Row1.Y *= scaleFactor;
+            transform.Row1.Z *= scaleFactor;
+            transform.Row2.X *= scaleFactor;
+            transform.Row2.Y *= scaleFactor;
+            transform.Row2.Z *= scaleFactor;
+            _scaleFactors[0] = scaleFactor;
+            _scaleFactors[1] = scaleFactor;
+            _scaleFactors[2] = scaleFactor;
+            _scaleFactors[3] = 1;
+            _scaleFactors[4] = scaleFactor;
+            _scaleFactors[5] = scaleFactor;
+            _scaleFactors[6] = scaleFactor;
+            _scaleFactors[7] = 1;
+            _scaleFactors[8] = scaleFactor;
+            _scaleFactors[9] = scaleFactor;
+            _scaleFactors[10] = scaleFactor;
+            _scaleFactors[11] = 1;
+            _scaleFactors[12] = 1;
+            _scaleFactors[13] = 1;
+            _scaleFactors[14] = 1;
+            _scaleFactors[15] = 1;
             RenderItem item = GetRenderItem();
             item.Type = RenderItemType.Mesh;
             item.PolygonId = polygonId;
@@ -1688,7 +1782,8 @@ namespace MphRead
             item.MatrixStackCount = matrixStackCount;
             for (int i = 0; i < matrixStack.Count; i++)
             {
-                item.MatrixStack[i] = matrixStack[i];
+                float value = matrixStack[i];
+                item.MatrixStack[i] = value * _scaleFactors[i - (i / 16) * 16];
             }
             item.OverrideColor = overrideColor;
             item.PaletteOverride = paletteOverride;
@@ -1853,8 +1948,9 @@ namespace MphRead
             if (_frameCount != 0 && (!_frameAdvanceOn || _advanceOneFrame))
             {
                 _elapsedTime += 1 / 60f; // todo: FPS stuff
-                _singleParticleCount = 0;
             }
+            // do this even when frame advance is on, since these are added by draw functions, not process functions
+            _singleParticleCount = 0;
             _decalItems.Clear();
             _nonDecalItems.Clear();
             _translucentItems.Clear();
@@ -1884,10 +1980,29 @@ namespace MphRead
                 }
             }
 
+            if (_room != null)
+            {
+                _room.GetDrawInfo(this);
+            }
             for (int i = 0; i < _entities.Count; i++)
             {
                 EntityBase entity = _entities[i];
-                if (_destroyedEntities.Contains(entity))
+                if (entity.Type != EntityType.Player || _destroyedEntities.Contains(entity))
+                {
+                    continue;
+                }
+                var player = (PlayerEntity)entity;
+                if (player.LoadFlags.TestFlag(LoadFlags.Active))
+                {
+                    player.Draw();
+                    // skdebug
+                    entity.GetDisplayVolumes(this);
+                }
+            }
+            for (int i = 0; i < _entities.Count; i++)
+            {
+                EntityBase entity = _entities[i];
+                if (entity.Type == EntityType.Player || entity.Type == EntityType.Room || _destroyedEntities.Contains(entity))
                 {
                     continue;
                 }
@@ -1922,19 +2037,22 @@ namespace MphRead
             for (int i = 0; i < _activeElements.Count; i++)
             {
                 EffectElementEntry element = _activeElements[i];
-                for (int j = 0; j < element.Particles.Count; j++)
+                if (element.Flags.TestFlag(EffElemFlags.DrawEnabled))
                 {
-                    EffectParticle particle = element.Particles[j];
-                    Matrix4 matrix = _viewMatrix;
-                    if (particle.Owner.Flags.TestFlag(EffElemFlags.UseTransform) && !particle.Owner.Flags.TestFlag(EffElemFlags.UseMesh))
+                    for (int j = 0; j < element.Particles.Count; j++)
                     {
-                        matrix = particle.Owner.Transform * matrix;
-                    }
-                    particle.InvokeSetVecsFunc(matrix);
-                    particle.InvokeDrawFunc(1);
-                    if (particle.ShouldDraw)
-                    {
-                        particle.AddRenderItem(this);
+                        EffectParticle particle = element.Particles[j];
+                        Matrix4 matrix = _viewMatrix;
+                        if (particle.Owner.Flags.TestFlag(EffElemFlags.UseTransform) && !particle.Owner.Flags.TestFlag(EffElemFlags.UseMesh))
+                        {
+                            matrix = particle.Owner.Transform * matrix;
+                        }
+                        particle.InvokeSetVecsFunc(matrix);
+                        particle.InvokeDrawFunc(1);
+                        if (particle.ShouldDraw)
+                        {
+                            particle.AddRenderItem(this);
+                        }
                     }
                 }
             }
@@ -2645,14 +2763,14 @@ namespace MphRead
             {
                 if (Selection.Entity != null && Selection.Entity.Type == EntityType.Player)
                 {
-                    ((PlayerEntity)Selection.Entity).Shoot = true;
+                    ((PlayerEntityOld)Selection.Entity).Shoot = true;
                 }
             }
             else if (e.Key == Keys.B && e.Alt)
             {
                 if (Selection.Entity != null && Selection.Entity.Type == EntityType.Player)
                 {
-                    ((PlayerEntity)Selection.Entity).Bomb = true;
+                    ((PlayerEntityOld)Selection.Entity).Bomb = true;
                 }
             }
             else if (Selection.OnKeyDown(e, this))
@@ -3335,6 +3453,7 @@ namespace MphRead
                 VolumeDisplay.MorphCamera => "morph cameras",
                 VolumeDisplay.JumpPad => "jump pads",
                 VolumeDisplay.Teleporter => "teleporters",
+                VolumeDisplay.EnemyHurt => "enemy hurtboxes",
                 VolumeDisplay.Object => "objects",
                 VolumeDisplay.FlagBase => "flag bases",
                 VolumeDisplay.DefenseNode => "defense nodes",
@@ -3520,6 +3639,10 @@ namespace MphRead
             {
                 _sb.Append($" ({enemySpawn.Data.EnemyType})");
             }
+            else if (entity is EnemyInstanceEntity enemyInst)
+            {
+                _sb.Append($" ({enemyInst.EnemyType})");
+            }
             else if (entity is ItemSpawnEntity itemSpawn)
             {
                 _sb.Append($" ({itemSpawn.Data.ItemType})");
@@ -3647,7 +3770,7 @@ namespace MphRead
 
         public RenderWindow() : base(_gameWindowSettings, _nativeWindowSettings)
         {
-            Scene = new Scene(Size, KeyboardState, (string title) =>
+            Scene = new Scene(Size, KeyboardState, MouseState, (string title) =>
             {
                 Title = title;
             });

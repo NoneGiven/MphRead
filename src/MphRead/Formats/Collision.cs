@@ -5,10 +5,31 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using MphRead.Entities;
 using OpenTK.Mathematics;
 
 namespace MphRead.Formats.Collision
 {
+    public class EntityCollision
+    {
+        public Matrix4 Transform { get; set; }
+        public Matrix4 Inverse1 { get; set; } // todo: do we need both?
+        public Matrix4 Inverse2 { get; set; }
+        public Vector3 InitialCenter { get; set; }
+        public Vector3 CurrentCenter { get; set; }
+        public float MaxDistance { get; set; }
+        public EntityBase Entity { get; }
+        public CollisionInstance Collision { get; }
+
+        public List<Vector3> DrawPoints { get; } = new List<Vector3>();
+
+        public EntityCollision(CollisionInstance collision, EntityBase entity)
+        {
+            Collision = collision;
+            Entity = entity;
+        }
+    }
+
     public static class Collision
     {
         private static readonly Dictionary<string, CollisionInfo> _cache = new Dictionary<string, CollisionInfo>();
@@ -179,7 +200,7 @@ namespace MphRead.Formats.Collision
         public readonly CollisionFlags Flags;
         public readonly ushort LayerMask;
         public readonly ushort PaddingA;
-        public readonly ushort PointIndexCount;
+        public readonly ushort PointIndexCount; // does not include the copy of the first index at the end of the sequence
         public readonly ushort PointStartIndex;
 
         // bits 3-4
@@ -358,7 +379,7 @@ namespace MphRead.Formats.Collision
             FirstHunt = firstHunt;
         }
 
-        public abstract void GetDrawInfo(List<Vector3> points, EntityType entityType, Scene scene);
+        public abstract void GetDrawInfo(IReadOnlyList<Vector3> points, EntityType entityType, Scene scene);
     }
 
     public class MphCollisionInfo : CollisionInfo
@@ -399,9 +420,9 @@ namespace MphRead.Formats.Collision
             /* 11 */ new Vector4(0.85f, 0.85f, 0.85f, 1f) // unused (dark gray)
         };
 
-        public override void GetDrawInfo(List<Vector3> points, EntityType entityType, Scene scene)
+        public override void GetDrawInfo(IReadOnlyList<Vector3> points, EntityType entityType, Scene scene)
         {
-            //Entities.EntityBase? target = scene.Entities.FirstOrDefault(e => e.Type == EntityType.Model);
+            //EntityBase? target = scene.Entities.FirstOrDefault(e => e.Type == EntityType.Model);
             //if (target != null)
             //{
             //    GetPartition(target.Position, points, entityType, scene);
@@ -505,7 +526,7 @@ namespace MphRead.Formats.Collision
             return yInc * Header.PartsX * Header.PartsZ + zInc * Header.PartsX + xInc;
         }
 
-        public void GetPartition(Vector3 point, List<Vector3> points, EntityType entityType, Scene scene)
+        public void GetPartition(Vector3 point, IReadOnlyList<Vector3> points, EntityType entityType, Scene scene)
         {
             int entryIndex = EntryIndexFromPoint(point);
             int polygonId = scene.GetNextPolygonId();
@@ -704,7 +725,7 @@ namespace MphRead.Formats.Collision
             TreeNodes = treeNodes;
         }
 
-        public override void GetDrawInfo(List<Vector3> points, EntityType entityType, Scene scene)
+        public override void GetDrawInfo(IReadOnlyList<Vector3> points, EntityType entityType, Scene scene)
         {
             //GetPartition(points, scene);
             //return;

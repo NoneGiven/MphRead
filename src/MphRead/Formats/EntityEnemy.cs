@@ -44,9 +44,7 @@ namespace MphRead
         public readonly uint Unused80;
         public readonly Vector3Fx Facing;
         public readonly Vector3Fx Position;
-        public readonly uint Field9C;
-        public readonly uint UnusedA0;
-        public readonly uint FieldA4;
+        public readonly Vector3Fx IdleRange;
     }
 
     // size: 400 (100 + 75 * 4)
@@ -147,7 +145,7 @@ namespace MphRead
         public readonly RawCollisionVolume Volume1;
         public readonly RawCollisionVolume Volume2;
         public readonly Vector3FxArray16 MovementVectors;
-        public readonly byte Field1A8;
+        public readonly byte PositionCount;
         public readonly byte Padding1A9;
         public readonly ushort Padding1AA;
         public readonly uint MovementType;
@@ -204,8 +202,8 @@ namespace MphRead
         public readonly ushort CooldownTime;
         public readonly ushort InitialCooldown;
         public readonly ushort Padding1C6;
-        public readonly Fixed ActiveDistance; // todo: display sphere
-        public readonly uint Field1CC; // unused?
+        public readonly Fixed ActiveDistance; // todo: display spheres
+        public readonly Fixed EnemyActiveDistance;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;
         public readonly short EntityId1;
@@ -258,7 +256,7 @@ namespace MphRead.Editor
         public ushort CooldownTime { get; set; }
         public ushort InitialCooldown { get; set; }
         public float ActiveDistance { get; set; } // todo: display sphere
-        public uint Field1CC { get; set; }
+        public float EnemyActiveDistance { get; set; }
         public string SpawnNodeName { get; set; } = "";
         public short EntityId1 { get; set; }
         public Message Message1 { get; set; }
@@ -282,8 +280,7 @@ namespace MphRead.Editor
         // temroid, petrasyl
         public Vector3 EnemyFacing { get; set; }
         public Vector3 EnemyPosition { get; set; }
-        public uint Unknown00 { get; set; }
-        public uint Unknown01 { get; set; }
+        public Vector3 IdleRange { get; set; }
         public uint Unused68 { get; set; }
         public uint Unused6C { get; set; }
         public uint Unused70 { get; set; }
@@ -291,7 +288,8 @@ namespace MphRead.Editor
         public uint Unused78 { get; set; }
         public uint Unused7C { get; set; }
         public uint Unused80 { get; set; }
-        public uint UnusedA0 { get; set; }
+        public uint Unknown00 { get; set; }
+        public uint Unknown01 { get; set; }
 
         // carnivorous plant
         public ushort EnemyHealth { get; set; }
@@ -299,7 +297,7 @@ namespace MphRead.Editor
 
         // war wasp
         public List<Vector3> MovementVectors { get; set; } = new List<Vector3>();
-        public byte Unknown02 { get; set; }
+        public byte PositionCount { get; set; }
         public uint MovementType { get; set; }
 
         // enemy hunter
@@ -401,7 +399,7 @@ namespace MphRead.Editor
             CooldownTime = raw.CooldownTime;
             InitialCooldown = raw.InitialCooldown;
             ActiveDistance = raw.ActiveDistance.FloatValue;
-            Field1CC = raw.Field1CC;
+            EnemyActiveDistance = raw.ActiveDistance.FloatValue;
             SpawnNodeName = raw.NodeName.MarshalString();
             EntityId1 = raw.EntityId1;
             Message1 = raw.Message1;
@@ -430,8 +428,7 @@ namespace MphRead.Editor
                 Volume0 = new CollisionVolume(raw.Fields.S03.Volume0);
                 EnemyPosition = raw.Fields.S03.Position.ToFloatVector();
                 EnemyFacing = raw.Fields.S03.Facing.ToFloatVector();
-                Unknown00 = raw.Fields.S03.Field9C;
-                Unknown01 = raw.Fields.S03.FieldA4;
+                IdleRange = raw.Fields.S03.IdleRange.ToFloatVector();
                 Unused68 = raw.Fields.S03.Unused68;
                 Unused6C = raw.Fields.S03.Unused6C;
                 Unused70 = raw.Fields.S03.Unused70;
@@ -439,7 +436,6 @@ namespace MphRead.Editor
                 Unused78 = raw.Fields.S03.Unused78;
                 Unused7C = raw.Fields.S03.Unused7C;
                 Unused80 = raw.Fields.S03.Unused80;
-                UnusedA0 = raw.Fields.S03.UnusedA0;
             }
             else if (spawnerType == 4)
             {
@@ -463,7 +459,7 @@ namespace MphRead.Editor
                     {
                         MovementVectors.Add(fields.MovementVectors[i].ToFloatVector());
                     }
-                    Unknown02 = fields.Field1A8;
+                    PositionCount = fields.PositionCount;
                     MovementType = fields.MovementType;
                 }
                 if (EnemyType == EnemyType.WarWasp)
@@ -547,7 +543,7 @@ namespace MphRead.Editor
             PrintValue(CooldownTime, other.CooldownTime, nameof(CooldownTime));
             PrintValue(InitialCooldown, other.InitialCooldown, nameof(InitialCooldown));
             PrintValue(ActiveDistance, other.ActiveDistance, nameof(ActiveDistance));
-            PrintValue(Field1CC, other.Field1CC, nameof(Field1CC));
+            PrintValue(EnemyActiveDistance, other.EnemyActiveDistance, nameof(EnemyActiveDistance));
             PrintValue(SpawnNodeName, other.SpawnNodeName, nameof(SpawnNodeName));
             PrintValue(EntityId1, other.EntityId1, nameof(EntityId1));
             PrintValue(Message1, other.Message1, nameof(Message1));
@@ -565,8 +561,7 @@ namespace MphRead.Editor
             PrintValue(PathVector, other.PathVector, nameof(PathVector));
             PrintValue(EnemyFacing, other.EnemyFacing, nameof(EnemyFacing));
             PrintValue(EnemyPosition, other.EnemyPosition, nameof(EnemyPosition));
-            PrintValue(Unknown00, other.Unknown00, nameof(Unknown00));
-            PrintValue(Unknown01, other.Unknown01, nameof(Unknown01));
+            PrintValue(IdleRange, other.IdleRange, nameof(IdleRange));
             PrintValue(Unused68, other.Unused68, nameof(Unused68));
             PrintValue(Unused6C, other.Unused6C, nameof(Unused6C));
             PrintValue(Unused70, other.Unused70, nameof(Unused70));
@@ -574,11 +569,10 @@ namespace MphRead.Editor
             PrintValue(Unused78, other.Unused78, nameof(Unused78));
             PrintValue(Unused7C, other.Unused7C, nameof(Unused7C));
             PrintValue(Unused80, other.Unused80, nameof(Unused80));
-            PrintValue(UnusedA0, other.UnusedA0, nameof(UnusedA0));
             PrintValue(EnemyHealth, other.EnemyHealth, nameof(EnemyHealth));
             PrintValue(EnemyDamage, other.EnemyDamage, nameof(EnemyDamage));
             PrintValues(MovementVectors, other.MovementVectors, nameof(MovementVectors));
-            PrintValue(Unknown02, other.Unknown02, nameof(Unknown02));
+            PrintValue(PositionCount, other.PositionCount, nameof(PositionCount));
             PrintValue(MovementType, other.MovementType, nameof(MovementType));
             PrintValue(Hunter, other.Hunter, nameof(Hunter));
             PrintValue(EncounterType, other.EncounterType, nameof(EncounterType));

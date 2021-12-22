@@ -6,10 +6,11 @@ namespace MphRead
 {
     public class EquipInfo
     {
-        public EquipFlags Flags { get; set; }
+        public bool Zoomed { get; set; } // replaces Flags
         public WeaponInfo Weapon { get; set; }
         public BeamProjectileEntity[] Beams { get; set; }
-        //unsigned __int16 *ammo_ptr;
+        public Func<int> GetAmmo { get; set; }
+        public Action<int> SetAmmo { get; set; }
         public ushort ChargeLevel { get; set; }
         public ushort SmokeLevel { get; set; }
 
@@ -17,12 +18,16 @@ namespace MphRead
         {
             Weapon = null!;
             Beams = null!;
+            GetAmmo = null!;
+            SetAmmo = null!;
         }
 
         public EquipInfo(WeaponInfo weapon, BeamProjectileEntity[] beams)
         {
             Weapon = weapon;
             Beams = beams;
+            GetAmmo = null!;
+            SetAmmo = null!;
         }
     }
 
@@ -41,12 +46,12 @@ namespace MphRead
         public IReadOnlyList<ushort> Colors { get; }
         public byte Priority { get; }
         public WeaponFlags Flags { get; }
-        public ushort SplashDamage { get; }
+        public ushort SplashDamage { get; set; }
         public ushort MinChargeSplashDamage { get; }
         public ushort ChargedSplashDamage { get; }
         public IReadOnlyList<byte> SplashDamageTypes { get; }
         public byte ShotCooldown { get; }
-        public byte ShotCooldownRelated { get; }
+        public byte AutofireCooldown { get; }
         public byte AmmoType { get; }
         public IReadOnlyList<byte> CollisionEffects { get; }
         public IReadOnlyList<byte> MuzzleEffects { get; }
@@ -59,10 +64,10 @@ namespace MphRead
         public ushort AmmoCost { get; }
         public ushort MinChargeCost { get; }
         public ushort ChargeCost { get; }
-        public ushort UnchargedDamage { get; }
+        public ushort UnchargedDamage { get; set; } // todo: yep
         public ushort MinChargeDamage { get; }
         public ushort ChargedDamage { get; }
-        public ushort HeadshotDamage { get; }
+        public ushort HeadshotDamage { get; set; }
         public ushort MinChargeHeadshotDamage { get; }
         public ushort ChargedHeadshotDamage { get; }
         public ushort UnchargedLifespan { get; }
@@ -124,7 +129,7 @@ namespace MphRead
 
         public WeaponInfo(BeamType weapon, BeamType weaponType, byte[] drawFuncIds, ushort[] colors, byte priority, WeaponFlags flags,
             ushort splashDamage, ushort minChargeSplashDamage, ushort chargedSplashDamage, byte[] splashDmgTypes, byte shotCooldown,
-            byte shotCooldownRelated, byte ammoType, byte[] beamTypes, byte[] muzzleEffects, byte[] dmgDirTypes, byte[] dmgInterp,
+            byte autofireCooldown, byte ammoType, byte[] beamTypes, byte[] muzzleEffects, byte[] dmgDirTypes, byte[] dmgInterp,
             Affliction[] afflictions, byte padding21, ushort minCharge, ushort fullCharge, ushort ammoCost, ushort minChargeCost, ushort chargeCost,
             ushort unchargedDamage, ushort minChargeDamage, ushort chargedDamage, ushort headshotDamage, ushort minChargeHeadshotDamage,
             ushort chargedHeadshotDamage, ushort unchargedLifespan, ushort minChargeLifespan, ushort chargedLifespan, ushort[] speedDecay,
@@ -149,7 +154,7 @@ namespace MphRead
             ChargedSplashDamage = chargedSplashDamage;
             SplashDamageTypes = splashDmgTypes;
             ShotCooldown = shotCooldown;
-            ShotCooldownRelated = shotCooldownRelated;
+            AutofireCooldown = autofireCooldown;
             AmmoType = ammoType;
             CollisionEffects = beamTypes;
             MuzzleEffects = muzzleEffects;
@@ -275,6 +280,26 @@ namespace MphRead
             return null;
         }
 
+        public static BeamType GetAffinityBeam(Hunter hunter)
+        {
+            return AffinityWeapons[(int)hunter];
+        }
+
+        public static readonly IReadOnlyList<BeamType> AffinityWeapons = new List<BeamType>()
+        {
+            BeamType.Missile,
+            BeamType.VoltDriver,
+            BeamType.Imperialist,
+            BeamType.ShockCoil,
+            BeamType.Judicator,
+            BeamType.Magmaul,
+            BeamType.Battlehamer,
+            BeamType.PowerBeam
+        };
+
+        // todo: this needs to be able to change
+        public static IReadOnlyList<WeaponInfo> Current => Weapons1P;
+
         public static readonly IReadOnlyList<WeaponInfo> Weapons1P = new List<WeaponInfo>()
         {
             new WeaponInfo(
@@ -290,7 +315,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 5,
-                shotCooldownRelated: 5,
+                autofireCooldown: 5,
                 ammoType: 0,
                 beamTypes: new byte[] { 4, 95 },
                 muzzleEffects: new byte[] { 65, 65 },
@@ -374,7 +399,7 @@ namespace MphRead
                 chargedSplashDamage: 56,
                 splashDmgTypes: new byte[] { 2, 2 },
                 shotCooldown: 5,
-                shotCooldownRelated: 5,
+                autofireCooldown: 5,
                 ammoType: 0,
                 beamTypes: new byte[] { 89, 174 },
                 muzzleEffects: new byte[] { 60, 60 },
@@ -458,7 +483,7 @@ namespace MphRead
                 chargedSplashDamage: 32,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 20,
-                shotCooldownRelated: 20,
+                autofireCooldown: 20,
                 ammoType: 1,
                 beamTypes: new byte[] { 8, 193 },
                 muzzleEffects: new byte[] { 65, 65 },
@@ -542,7 +567,7 @@ namespace MphRead
                 chargedSplashDamage: 8,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 10,
-                shotCooldownRelated: 10,
+                autofireCooldown: 10,
                 ammoType: 0,
                 beamTypes: new byte[] { 176, 176 },
                 muzzleEffects: new byte[] { 63, 63 },
@@ -626,7 +651,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 60,
-                shotCooldownRelated: 60,
+                autofireCooldown: 60,
                 ammoType: 0,
                 beamTypes: new byte[] { 31, 31 },
                 muzzleEffects: new byte[] { 66, 66 },
@@ -710,7 +735,7 @@ namespace MphRead
                 chargedSplashDamage: 10,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 15,
-                shotCooldownRelated: 15,
+                autofireCooldown: 15,
                 ammoType: 0,
                 beamTypes: new byte[] { 10, 10 },
                 muzzleEffects: new byte[] { 62, 62 },
@@ -795,7 +820,7 @@ namespace MphRead
                 chargedSplashDamage: 28,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 20,
-                shotCooldownRelated: 15,
+                autofireCooldown: 15,
                 ammoType: 0,
                 beamTypes: new byte[] { 9, 194 },
                 muzzleEffects: new byte[] { 64, 64 },
@@ -879,7 +904,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 0,
-                shotCooldownRelated: 0,
+                autofireCooldown: 0,
                 ammoType: 0,
                 beamTypes: new byte[] { 255, 255 },
                 muzzleEffects: new byte[] { 62, 62 },
@@ -963,7 +988,7 @@ namespace MphRead
                 chargedSplashDamage: 200,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 60,
-                shotCooldownRelated: 60,
+                autofireCooldown: 60,
                 ammoType: 0,
                 beamTypes: new byte[] { 248, 248 },
                 muzzleEffects: new byte[] { 60, 60 },
@@ -1047,7 +1072,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 4,
-                shotCooldownRelated: 4,
+                autofireCooldown: 4,
                 ammoType: 0,
                 beamTypes: new byte[] { 4, 95 },
                 muzzleEffects: new byte[] { 65, 65 },
@@ -1131,7 +1156,7 @@ namespace MphRead
                 chargedSplashDamage: 56,
                 splashDmgTypes: new byte[] { 2, 2 },
                 shotCooldown: 5,
-                shotCooldownRelated: 5,
+                autofireCooldown: 5,
                 ammoType: 0,
                 beamTypes: new byte[] { 89, 88 },
                 muzzleEffects: new byte[] { 60, 60 },
@@ -1215,7 +1240,7 @@ namespace MphRead
                 chargedSplashDamage: 32,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 20,
-                shotCooldownRelated: 20,
+                autofireCooldown: 20,
                 ammoType: 1,
                 beamTypes: new byte[] { 8, 193 },
                 muzzleEffects: new byte[] { 65, 65 },
@@ -1299,7 +1324,7 @@ namespace MphRead
                 chargedSplashDamage: 12,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 15,
-                shotCooldownRelated: 15,
+                autofireCooldown: 15,
                 ammoType: 0,
                 beamTypes: new byte[] { 14, 14 },
                 muzzleEffects: new byte[] { 63, 63 },
@@ -1383,7 +1408,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 60,
-                shotCooldownRelated: 60,
+                autofireCooldown: 60,
                 ammoType: 0,
                 beamTypes: new byte[] { 31, 31 },
                 muzzleEffects: new byte[] { 66, 66 },
@@ -1467,7 +1492,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 15,
-                shotCooldownRelated: 15,
+                autofireCooldown: 15,
                 ammoType: 0,
                 beamTypes: new byte[] { 10, 0 },
                 muzzleEffects: new byte[] { 62, 62 },
@@ -1552,7 +1577,7 @@ namespace MphRead
                 chargedSplashDamage: 18,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 20,
-                shotCooldownRelated: 20,
+                autofireCooldown: 20,
                 ammoType: 0,
                 beamTypes: new byte[] { 9, 195 },
                 muzzleEffects: new byte[] { 64, 64 },
@@ -1636,7 +1661,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 0,
-                shotCooldownRelated: 0,
+                autofireCooldown: 0,
                 ammoType: 0,
                 beamTypes: new byte[] { 255, 255 },
                 muzzleEffects: new byte[] { 62, 62 },
@@ -1720,7 +1745,7 @@ namespace MphRead
                 chargedSplashDamage: 60,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 60,
-                shotCooldownRelated: 60,
+                autofireCooldown: 60,
                 ammoType: 0,
                 beamTypes: new byte[] { 248, 248 },
                 muzzleEffects: new byte[] { 60, 60 },
@@ -1808,7 +1833,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 5,
-                shotCooldownRelated: 5,
+                autofireCooldown: 5,
                 ammoType: 0,
                 beamTypes: new byte[] { 4, 95 },
                 muzzleEffects: new byte[] { 65, 65 },
@@ -1892,7 +1917,7 @@ namespace MphRead
                 chargedSplashDamage: 56,
                 splashDmgTypes: new byte[] { 2, 2 },
                 shotCooldown: 5,
-                shotCooldownRelated: 5,
+                autofireCooldown: 5,
                 ammoType: 0,
                 beamTypes: new byte[] { 89, 174 },
                 muzzleEffects: new byte[] { 60, 60 },
@@ -1976,7 +2001,7 @@ namespace MphRead
                 chargedSplashDamage: 32,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 20,
-                shotCooldownRelated: 20,
+                autofireCooldown: 20,
                 ammoType: 1,
                 beamTypes: new byte[] { 8, 193 },
                 muzzleEffects: new byte[] { 65, 65 },
@@ -2060,7 +2085,7 @@ namespace MphRead
                 chargedSplashDamage: 8,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 10,
-                shotCooldownRelated: 10,
+                autofireCooldown: 10,
                 ammoType: 0,
                 beamTypes: new byte[] { 176, 176 },
                 muzzleEffects: new byte[] { 63, 63 },
@@ -2144,7 +2169,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 60,
-                shotCooldownRelated: 60,
+                autofireCooldown: 60,
                 ammoType: 0,
                 beamTypes: new byte[] { 31, 31 },
                 muzzleEffects: new byte[] { 66, 66 },
@@ -2228,7 +2253,7 @@ namespace MphRead
                 chargedSplashDamage: 10,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 15,
-                shotCooldownRelated: 15,
+                autofireCooldown: 15,
                 ammoType: 0,
                 beamTypes: new byte[] { 10, 10 },
                 muzzleEffects: new byte[] { 62, 62 },
@@ -2313,7 +2338,7 @@ namespace MphRead
                 chargedSplashDamage: 28,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 20,
-                shotCooldownRelated: 15,
+                autofireCooldown: 15,
                 ammoType: 0,
                 beamTypes: new byte[] { 9, 194 },
                 muzzleEffects: new byte[] { 64, 64 },
@@ -2397,7 +2422,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 0,
-                shotCooldownRelated: 0,
+                autofireCooldown: 0,
                 ammoType: 0,
                 beamTypes: new byte[] { 255, 255 },
                 muzzleEffects: new byte[] { 62, 62 },
@@ -2481,7 +2506,7 @@ namespace MphRead
                 chargedSplashDamage: 200,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 60,
-                shotCooldownRelated: 60,
+                autofireCooldown: 60,
                 ammoType: 0,
                 beamTypes: new byte[] { 248, 248 },
                 muzzleEffects: new byte[] { 60, 60 },
@@ -2565,7 +2590,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 4,
-                shotCooldownRelated: 4,
+                autofireCooldown: 4,
                 ammoType: 0,
                 beamTypes: new byte[] { 4, 95 },
                 muzzleEffects: new byte[] { 65, 65 },
@@ -2649,7 +2674,7 @@ namespace MphRead
                 chargedSplashDamage: 56,
                 splashDmgTypes: new byte[] { 2, 2 },
                 shotCooldown: 5,
-                shotCooldownRelated: 5,
+                autofireCooldown: 5,
                 ammoType: 0,
                 beamTypes: new byte[] { 89, 88 },
                 muzzleEffects: new byte[] { 60, 60 },
@@ -2733,7 +2758,7 @@ namespace MphRead
                 chargedSplashDamage: 32,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 20,
-                shotCooldownRelated: 20,
+                autofireCooldown: 20,
                 ammoType: 1,
                 beamTypes: new byte[] { 8, 193 },
                 muzzleEffects: new byte[] { 65, 65 },
@@ -2817,7 +2842,7 @@ namespace MphRead
                 chargedSplashDamage: 12,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 15,
-                shotCooldownRelated: 15,
+                autofireCooldown: 15,
                 ammoType: 0,
                 beamTypes: new byte[] { 14, 14 },
                 muzzleEffects: new byte[] { 63, 63 },
@@ -2901,7 +2926,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 60,
-                shotCooldownRelated: 60,
+                autofireCooldown: 60,
                 ammoType: 0,
                 beamTypes: new byte[] { 31, 31 },
                 muzzleEffects: new byte[] { 66, 66 },
@@ -2985,7 +3010,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 15,
-                shotCooldownRelated: 15,
+                autofireCooldown: 15,
                 ammoType: 0,
                 beamTypes: new byte[] { 10, 0 },
                 muzzleEffects: new byte[] { 62, 62 },
@@ -3070,7 +3095,7 @@ namespace MphRead
                 chargedSplashDamage: 18,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 20,
-                shotCooldownRelated: 20,
+                autofireCooldown: 20,
                 ammoType: 0,
                 beamTypes: new byte[] { 9, 195 },
                 muzzleEffects: new byte[] { 64, 64 },
@@ -3154,7 +3179,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 0,
-                shotCooldownRelated: 0,
+                autofireCooldown: 0,
                 ammoType: 0,
                 beamTypes: new byte[] { 255, 255 },
                 muzzleEffects: new byte[] { 62, 62 },
@@ -3238,7 +3263,7 @@ namespace MphRead
                 chargedSplashDamage: 60,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 60,
-                shotCooldownRelated: 60,
+                autofireCooldown: 60,
                 ammoType: 0,
                 beamTypes: new byte[] { 248, 248 },
                 muzzleEffects: new byte[] { 60, 60 },
@@ -3327,7 +3352,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 3,
-                shotCooldownRelated: 3,
+                autofireCooldown: 3,
                 ammoType: 0,
                 beamTypes: new byte[] { 242, 242 },
                 muzzleEffects: new byte[] { 65, 65 },
@@ -3412,7 +3437,7 @@ namespace MphRead
                 chargedSplashDamage: 32,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 8,
-                shotCooldownRelated: 8,
+                autofireCooldown: 8,
                 ammoType: 0,
                 beamTypes: new byte[] { 89, 88 },
                 muzzleEffects: new byte[] { 60, 60 },
@@ -3497,7 +3522,7 @@ namespace MphRead
                 chargedSplashDamage: 30,
                 splashDmgTypes: new byte[] { 2, 2 },
                 shotCooldown: 20,
-                shotCooldownRelated: 20,
+                autofireCooldown: 20,
                 ammoType: 1,
                 beamTypes: new byte[] { 8, 8 },
                 muzzleEffects: new byte[] { 65, 65 },
@@ -3581,7 +3606,7 @@ namespace MphRead
                 chargedSplashDamage: 2,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 8,
-                shotCooldownRelated: 8,
+                autofireCooldown: 8,
                 ammoType: 0,
                 beamTypes: new byte[] { 176, 176 },
                 muzzleEffects: new byte[] { 63, 63 },
@@ -3666,7 +3691,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 60,
-                shotCooldownRelated: 60,
+                autofireCooldown: 60,
                 ammoType: 0,
                 beamTypes: new byte[] { 31, 31 },
                 muzzleEffects: new byte[] { 66, 66 },
@@ -3751,7 +3776,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 15,
-                shotCooldownRelated: 15,
+                autofireCooldown: 15,
                 ammoType: 0,
                 beamTypes: new byte[] { 10, 0 },
                 muzzleEffects: new byte[] { 62, 62 },
@@ -3836,7 +3861,7 @@ namespace MphRead
                 chargedSplashDamage: 58,
                 splashDmgTypes: new byte[] { 2, 2 },
                 shotCooldown: 20,
-                shotCooldownRelated: 20,
+                autofireCooldown: 20,
                 ammoType: 0,
                 beamTypes: new byte[] { 9, 9 },
                 muzzleEffects: new byte[] { 64, 64 },
@@ -3921,7 +3946,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 0,
-                shotCooldownRelated: 0,
+                autofireCooldown: 0,
                 ammoType: 0,
                 beamTypes: new byte[] { 255, 255 },
                 muzzleEffects: new byte[] { 62, 62 },
@@ -4006,7 +4031,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 3,
-                shotCooldownRelated: 3,
+                autofireCooldown: 3,
                 ammoType: 0,
                 beamTypes: new byte[] { 4, 4 },
                 muzzleEffects: new byte[] { 65, 65 },
@@ -4091,7 +4116,7 @@ namespace MphRead
                 chargedSplashDamage: 15,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 3,
-                shotCooldownRelated: 3,
+                autofireCooldown: 3,
                 ammoType: 0,
                 beamTypes: new byte[] { 113, 113 },
                 muzzleEffects: new byte[] { 65, 65 },
@@ -4176,7 +4201,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 3,
-                shotCooldownRelated: 3,
+                autofireCooldown: 3,
                 ammoType: 0,
                 beamTypes: new byte[] { 134, 134 },
                 muzzleEffects: new byte[] { 65, 65 },
@@ -4265,7 +4290,7 @@ namespace MphRead
                 chargedSplashDamage: 1,
                 splashDmgTypes: new byte[] { 3, 3 },
                 shotCooldown: 8,
-                shotCooldownRelated: 8,
+                autofireCooldown: 8,
                 ammoType: 0,
                 beamTypes: new byte[] { 14, 14 },
                 muzzleEffects: new byte[] { 63, 63 },
@@ -4350,7 +4375,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 8,
-                shotCooldownRelated: 8,
+                autofireCooldown: 8,
                 ammoType: 0,
                 beamTypes: new byte[] { 142, 142 },
                 muzzleEffects: new byte[] { 60, 60 },
@@ -4436,7 +4461,7 @@ namespace MphRead
                 chargedSplashDamage: 5,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 1,
-                shotCooldownRelated: 1,
+                autofireCooldown: 1,
                 ammoType: 1,
                 beamTypes: new byte[] { 71, 71 },
                 muzzleEffects: new byte[] { 65, 65 },
@@ -4525,7 +4550,7 @@ namespace MphRead
                 chargedSplashDamage: 2,
                 splashDmgTypes: new byte[] { 2, 2 },
                 shotCooldown: 20,
-                shotCooldownRelated: 20,
+                autofireCooldown: 20,
                 ammoType: 1,
                 beamTypes: new byte[] { 187, 187 },
                 muzzleEffects: new byte[] { 188, 188 },
@@ -4610,7 +4635,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 3,
-                shotCooldownRelated: 3,
+                autofireCooldown: 3,
                 ammoType: 0,
                 beamTypes: new byte[] { 255, 255 },
                 muzzleEffects: new byte[] { 65, 65 },
@@ -4695,7 +4720,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 0,
-                shotCooldownRelated: 0,
+                autofireCooldown: 0,
                 ammoType: 0,
                 beamTypes: new byte[] { 255, 255 },
                 muzzleEffects: new byte[] { 61, 61 },
@@ -4779,7 +4804,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 0,
-                shotCooldownRelated: 0,
+                autofireCooldown: 0,
                 ammoType: 0,
                 beamTypes: new byte[] { 255, 255 },
                 muzzleEffects: new byte[] { 62, 62 },
@@ -4867,7 +4892,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 20,
-                shotCooldownRelated: 20,
+                autofireCooldown: 20,
                 ammoType: 0,
                 beamTypes: new byte[] { 11, 11 },
                 muzzleEffects: new byte[] { 255, 255 },
@@ -4951,7 +4976,7 @@ namespace MphRead
                 chargedSplashDamage: 1,
                 splashDmgTypes: new byte[] { 2, 2 },
                 shotCooldown: 20,
-                shotCooldownRelated: 20,
+                autofireCooldown: 20,
                 ammoType: 0,
                 beamTypes: new byte[] { 9, 9 },
                 muzzleEffects: new byte[] { 255, 255 },
@@ -5035,7 +5060,7 @@ namespace MphRead
                 chargedSplashDamage: 0,
                 splashDmgTypes: new byte[] { 0, 0 },
                 shotCooldown: 20,
-                shotCooldownRelated: 20,
+                autofireCooldown: 20,
                 ammoType: 0,
                 beamTypes: new byte[] { 11, 11 },
                 muzzleEffects: new byte[] { 255, 255 },
@@ -5119,7 +5144,7 @@ namespace MphRead
                 chargedSplashDamage: 1,
                 splashDmgTypes: new byte[] { 2, 2 },
                 shotCooldown: 20,
-                shotCooldownRelated: 20,
+                autofireCooldown: 20,
                 ammoType: 0,
                 beamTypes: new byte[] { 9, 9 },
                 muzzleEffects: new byte[] { 255, 255 },

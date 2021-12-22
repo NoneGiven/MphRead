@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
 using MphRead.Entities;
 using OpenTK.Mathematics;
 
@@ -609,6 +610,131 @@ namespace MphRead.Effects
     {
         public int EffectId { get; set; }
         public List<EffectElementEntry> Elements { get; } = new List<EffectElementEntry>(); // todo: pre-size?
+
+        public bool IsFinished
+        {
+            get
+            {
+                for (int i = 0; i < Elements.Count; i++)
+                {
+                    EffectElementEntry element = Elements[i];
+                    if (!element.Expired || element.Particles.Count > 0)
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+
+        public void Transform(Vector3 facing, Vector3 up, Vector3 position)
+        {
+            Matrix4 transform = EntityBase.GetTransformMatrix(facing, up);
+            Transform(position, transform);
+        }
+
+        public void Transform(Vector3 position, Matrix4 transform)
+        {
+            transform.Row3.Xyz = position;
+            for (int i = 0; i < Elements.Count; i++)
+            {
+                EffectElementEntry element = Elements[i];
+                element.Position = position;
+                element.Transform = transform;
+            }
+        }
+
+        public void SetElementExtension(bool set)
+        {
+            if (set)
+            {
+                SetElementExtension();
+            }
+            else
+            {
+                ClearElementExtension();
+            }
+        }
+
+        public void SetDrawEnabled(bool set)
+        {
+            if (set)
+            {
+                SetDrawEnabled();
+            }
+            else
+            {
+                ClearDrawEnabled();
+            }
+        }
+
+        private void SetElementExtension()
+        {
+            for (int i = 0; i < Elements.Count; i++)
+            {
+                EffectElementEntry element = Elements[i];
+                element.Flags |= EffElemFlags.ElementExtension;
+            }
+        }
+
+        private void ClearElementExtension()
+        {
+            for (int i = 0; i < Elements.Count; i++)
+            {
+                EffectElementEntry element = Elements[i];
+                element.Flags &= ~EffElemFlags.ElementExtension;
+            }
+        }
+
+        private void SetDrawEnabled()
+        {
+            for (int i = 0; i < Elements.Count; i++)
+            {
+                EffectElementEntry element = Elements[i];
+                element.Flags |= EffElemFlags.DrawEnabled;
+            }
+        }
+
+        private void ClearDrawEnabled()
+        {
+            for (int i = 0; i < Elements.Count; i++)
+            {
+                EffectElementEntry element = Elements[i];
+                element.Flags &= ~EffElemFlags.DrawEnabled;
+            }
+        }
+
+        public void SetReadOnlyField(int index, float value)
+        {
+            if (index == 0)
+            {
+                for (int i = 0; i < Elements.Count; i++)
+                {
+                    Elements[i].RoField1 = value;
+                }
+            }
+            else if (index == 1)
+            {
+                for (int i = 0; i < Elements.Count; i++)
+                {
+                    Elements[i].RoField2 = value;
+                }
+            }
+            else if (index == 2)
+            {
+                for (int i = 0; i < Elements.Count; i++)
+                {
+                    Elements[i].RoField3 = value;
+                }
+            }
+            else if (index == 3)
+            {
+                for (int i = 0; i < Elements.Count; i++)
+                {
+                    Elements[i].RoField4 = value;
+                }
+            }
+        }
     }
 
     public class EffectElementEntry : EffectFuncBase
@@ -629,6 +755,10 @@ namespace MphRead.Effects
         public float ParticleAmount { get; set; }
         public bool Expired { get; set; }
         public int ChildEffectId { get; set; }
+        public float RoField1 { get; set; }
+        public float RoField2 { get; set; }
+        public float RoField3 { get; set; }
+        public float RoField4 { get; set; }
 
         public int Parity { get; set; }
         public List<Particle> ParticleDefinitions { get; } = new List<Particle>();
@@ -707,25 +837,25 @@ namespace MphRead.Effects
 
         protected override float FxFunc31(IReadOnlyList<int> param, TimeValues times)
         {
-            // element doesn't have the RoField1 property
+            // element's RoField1 is only for setting on the particle at creation time
             throw new NotImplementedException();
         }
 
         protected override float FxFunc32(IReadOnlyList<int> param, TimeValues times)
         {
-            // element doesn't have the RoField2 property
+            // element's RoField2 is only for setting on the particle at creation time
             throw new NotImplementedException();
         }
 
         protected override float FxFunc33(IReadOnlyList<int> param, TimeValues times)
         {
-            // element doesn't have the RoField3 property
+            // element's RoField3 is only for setting on the particle at creation time
             throw new NotImplementedException();
         }
 
         protected override float FxFunc34(IReadOnlyList<int> param, TimeValues times)
         {
-            // element doesn't have the RoField4 property
+            // element's RoField4 is only for setting on the particle at creation time
             throw new NotImplementedException();
         }
 

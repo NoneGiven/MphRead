@@ -66,11 +66,7 @@ namespace MphRead.Entities
             if (effectId != 0)
             {
                 Effect = scene.SpawnEffectGetEntry(effectId, Transform);
-                for (int i = 0; i < Effect.Elements.Count; i++)
-                {
-                    EffectElementEntry element = Effect.Elements[i];
-                    element.Flags |= EffElemFlags.ElementExtension;
-                }
+                Effect.SetElementExtension(true);
             }
             if (_trailModel != null)
             {

@@ -441,7 +441,7 @@ namespace MphRead.Utility
                         NodeName = itemSpawn.NodeName,
                         ParentId = 0xFFFF,
                         Position = itemSpawn.Position,
-                        SomeEntityId = -1,
+                        NotifyEntityId = -1,
                         SpawnDelay = 0,
                         SpawnInterval = itemSpawn.CooldownTime,
                         Up = itemSpawn.Up
@@ -462,7 +462,7 @@ namespace MphRead.Utility
                         EntityId2 = -1,
                         EntityId3 = -1,
                         Facing = enemySpawn.Facing,
-                        Field1CC = 143360,
+                        EnemyActiveDistance = 35,
                         InitialCooldown = 0,
                         ItemChance = 100,
                         ItemType = ItemType.None,
@@ -486,8 +486,7 @@ namespace MphRead.Utility
                         mphSpawn.Volume1 = enemySpawn.Box;
                         mphSpawn.Facing = Vector3.UnitZ;
                         mphSpawn.Position = Vector3.Zero;
-                        mphSpawn.Unknown00 = 0;
-                        mphSpawn.Unknown01 = 0;
+                        mphSpawn.IdleRange = Vector3.One; // sktodo
                     }
                     else if (enemySpawn.EnemyType == FhEnemyType.Mochtroid2 || enemySpawn.EnemyType == FhEnemyType.Mochtroid3
                         || enemySpawn.EnemyType == FhEnemyType.Mochtroid4)
@@ -1982,7 +1981,7 @@ namespace MphRead.Utility
             writer.Write(entity.MaxSpawnCount);
             writer.Write(entity.SpawnInterval);
             writer.Write(entity.SpawnDelay);
-            writer.Write(entity.SomeEntityId);
+            writer.Write(entity.NotifyEntityId);
             writer.Write((uint)entity.CollectedMessage);
             writer.Write(entity.CollectedMsgParam1);
             writer.Write(entity.CollectedMsgParam2);
@@ -2028,9 +2027,7 @@ namespace MphRead.Utility
                 writer.Write(entity.Unused80);
                 writer.WriteVector3(entity.EnemyFacing);
                 writer.WriteVector3(entity.EnemyPosition);
-                writer.Write(entity.Unknown00);
-                writer.Write(entity.UnusedA0);
-                writer.Write(entity.Unknown01);
+                writer.WriteVector3(entity.IdleRange);
                 for (int i = 0; i < 68; i++)
                 {
                     writer.Write(padInt);
@@ -2063,7 +2060,7 @@ namespace MphRead.Utility
                     {
                         writer.WriteVector3(vector);
                     }
-                    writer.Write(entity.Unknown02);
+                    writer.Write(entity.PositionCount);
                     writer.Write(padByte); // Padding1A9
                     writer.Write(padShort); // Padding1AA
                     writer.Write(entity.MovementType);
@@ -2183,7 +2180,7 @@ namespace MphRead.Utility
             writer.Write(entity.InitialCooldown);
             writer.Write(padShort); // Padding1C6
             writer.WriteFloat(entity.ActiveDistance);
-            writer.Write(entity.Field1CC);
+            writer.WriteFloat(entity.EnemyActiveDistance);
             writer.WriteString(entity.SpawnNodeName, 16);
             writer.Write(entity.EntityId1);
             writer.Write(padShort); // Padding1E2

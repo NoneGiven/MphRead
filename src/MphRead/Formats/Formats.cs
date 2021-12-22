@@ -15,9 +15,10 @@ namespace MphRead
     {
         public string Name { get; }
         public int ParentIndex { get; }
-        public int ChildIndex { get; }
+        public int ChildIndex { get; } 
         public int NextIndex { get; }
         public bool Enabled { get; set; }
+        public bool AnimIgnoreChild { get; set; }
         public int MeshCount { get; }
         public int MeshId { get; }
         public Vector3 Scale { get; set; }
@@ -28,6 +29,8 @@ namespace MphRead
         public Vector3 MaxBounds { get; }
         public BillboardMode BillboardMode { get; }
         public Matrix4 Transform { get; set; } = Matrix4.Identity;
+        public Matrix4? BeforeTransform { get; set; }
+        public Matrix4? AfterTransform { get; set; }
         public Matrix4 Animation { get; set; } = Matrix4.Identity;
 
         public IEnumerable<int> GetMeshIds()
@@ -169,7 +172,7 @@ namespace MphRead
         public RepeatMode XRepeat { get; }
         public RepeatMode YRepeat { get; }
         public ColorRgb Diffuse { get; }
-        public ColorRgb Ambient { get; }
+        public ColorRgb Ambient { get; set; } // todo: yep
         public ColorRgb Specular { get; }
         public Vector3 CurrentDiffuse { get; set; }
         public Vector3 CurrentAmbient { get; set; }
@@ -912,6 +915,25 @@ namespace MphRead
                 return Vector3.Distance(SpherePosition, point) <= SphereRadius;
             }
             return false;
+        }
+
+        public Vector3 GetCenter()
+        {
+            if (Type == VolumeType.Box)
+            {
+                Vector3 pos = BoxDot2 * BoxVector2 + BoxPosition;
+                pos = BoxDot3 * BoxVector3 + pos;
+                return BoxDot1 * BoxVector1 + pos;
+            }
+            if (Type == VolumeType.Cylinder)
+            {
+                return CylinderDot * CylinderVector + CylinderPosition;
+            }
+            if (Type == VolumeType.Sphere)
+            {
+                return SpherePosition;
+            }
+            return Vector3.Zero;
         }
     }
 

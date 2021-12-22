@@ -92,16 +92,19 @@ namespace MphRead
             Value = value;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float ToFloat(long value)
         {
             return value / (float)(1 << 12);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float ToFloat(uint value)
         {
             return (int)value / (float)(1 << 12);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float ToFloat(int value)
         {
             return value / (float)(1 << 12);
@@ -112,6 +115,7 @@ namespace MphRead
             return ToFloat(Int32.Parse(value, System.Globalization.NumberStyles.HexNumber));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int ToInt(float value)
         {
             return (int)(value * 4096);
@@ -529,6 +533,24 @@ namespace MphRead
                 return (Unsafe.As<T, int>(ref value) | Unsafe.As<T, int>(ref flags)) == Unsafe.As<T, int>(ref value);
             }
             return (Unsafe.As<T, long>(ref value) | Unsafe.As<T, long>(ref flags)) == Unsafe.As<T, long>(ref value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe bool TestAny<T>(this T value, T flags) where T : unmanaged, Enum
+        {
+            if (sizeof(T) == 1)
+            {
+                return (Unsafe.As<T, byte>(ref value) & Unsafe.As<T, byte>(ref flags)) != 0;
+            }
+            if (sizeof(T) == 2)
+            {
+                return (Unsafe.As<T, short>(ref value) & Unsafe.As<T, short>(ref flags)) != 0;
+            }
+            if (sizeof(T) == 4)
+            {
+                return (Unsafe.As<T, int>(ref value) & Unsafe.As<T, int>(ref flags)) != 0;
+            }
+            return (Unsafe.As<T, long>(ref value) & Unsafe.As<T, long>(ref flags)) != 0;
         }
     }
 

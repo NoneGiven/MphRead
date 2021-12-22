@@ -7,7 +7,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities
 {
-    public class PlayerEntity : EntityBase
+    public class PlayerEntityOld : EntityBase
     {
         public Hunter Hunter { get; private set; }
         public Team Team { get; set; }
@@ -63,26 +63,26 @@ namespace MphRead.Entities
         public Vector3 PrevPosition1 { get; private set; }
         public Vector3 PrevPosition2 { get; private set; }
 
-        public static readonly PlayerEntity[] Players = new PlayerEntity[4]
+        public static readonly PlayerEntityOld[] Players = new PlayerEntityOld[4]
         {
-            new PlayerEntity(), new PlayerEntity(), new PlayerEntity(), new PlayerEntity()
+            new PlayerEntityOld(), new PlayerEntityOld(), new PlayerEntityOld(), new PlayerEntityOld()
         };
 
-        private PlayerEntity() : base(EntityType.Player)
+        private PlayerEntityOld() : base(EntityType.Player)
         {
             _dblDmgModel = Read.GetModelInstance("doubleDamage_img");
             _altIceModel = Read.GetModelInstance("alt_ice");
             _models.Add(_altIceModel);
         }
 
-        public static PlayerEntity? Spawn(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null, bool respawn = false)
+        public static PlayerEntityOld? Spawn(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null, bool respawn = false)
         {
             int slot = PlayerCount++;
             if (slot >= MaxPlayers)
             {
                 return null;
             }
-            PlayerEntity player = Players[slot];
+            PlayerEntityOld player = Players[slot];
             player.Slot = slot;
             player.Setup(hunter, recolor, position, facing, respawn);
             return player;
@@ -128,11 +128,11 @@ namespace MphRead.Entities
             _scaleMtx = Matrix4.CreateScale(Metadata.HunterScales[Hunter]);
             _respawning = respawn;
             // temporary
-            _bipedModel.SetAnimation(8, 0, SetFlags.Node);
             if (Hunter == Hunter.Weavel)
             {
-                //_bipedModel.SetMaterialAnim(-1);
+                _bipedModel.SetAnimation(-1, 0, SetFlags.Material);
             }
+            _bipedModel.SetAnimation(8, 0, SetFlags.Node);
         }
 
         private CollisionVolume _sphere; // bounding sphere for capsule check
@@ -166,10 +166,6 @@ namespace MphRead.Entities
         {
             PrevPosition2 = PrevPosition1;
             PrevPosition1 = Position;
-            if (Hunter == Hunter.Spire)
-            {
-                Rotation = Rotation.AddY(0.01f);
-            }
             UpdateLightSources(scene);
             if (_respawnTimer > 0)
             {
@@ -205,8 +201,8 @@ namespace MphRead.Entities
             Vector3 direction = (-Vector3.UnitZ * spawnTransform).Normalized();
             if (type == -1)
             {
-                WeaponInfo weapon = Weapons.Weapons1P[14];
-                bool charged = true;
+                WeaponInfo weapon = Weapons.Weapons1P[0];
+                bool charged = false;
                 BeamProjectileEntity.Spawn(this, new EquipInfo(weapon, _beams) { ChargeLevel = charged ? weapon.FullCharge : (ushort)0 },
                     gunPos, direction, BeamSpawnFlags.NoMuzzle, scene);
             }
@@ -262,7 +258,7 @@ namespace MphRead.Entities
             {
                 transform = Matrix4.CreateTranslation(Position.AddY(Fixed.ToFloat(1000)));
             }
-            BombEntity.Spawn(this, transform, scene);
+            //BombEntity.Spawn(this, transform, scene);
             // todo: bomb cooldown/refill stuff
         }
 
@@ -530,7 +526,8 @@ namespace MphRead.Entities
             return base.GetEmission(inst, material, index);
         }
 
-        protected override Matrix4 GetTexcoordMatrix(ModelInstance inst, Material material, int materialId, Node node, Scene scene)
+        protected override Matrix4 GetTexcoordMatrix(ModelInstance inst, Material material, int materialId,
+            Node node, Scene scene, int recolor = -1)
         {
             if (_doubleDamage && (Hunter != Hunter.Spire || !(inst == _gunModel && materialId == 0))
                 && material.Lighting > 0 && node.BillboardMode == BillboardMode.None)
@@ -555,9 +552,9 @@ namespace MphRead.Entities
                 product.M23 *= -1;
                 product.M32 *= -1;
                 product.M33 *= -1;
-                long frame = scene.FrameCount / 2;
-                float rotZ = ((int)(16 * ((781874935307L * (ulong)(53248 * frame) >> 32) + 2048)) >> 20) * (360 / 4096f);
-                float rotY = ((int)(16 * ((781874935307L * (ulong)(26624 * frame) + 0x80000000000) >> 32)) >> 20) * (360 / 4096f);
+                ulong frame = scene.FrameCount / 2;
+                float rotZ = ((int)(16 * ((781874935307L * (53248 * frame) >> 32) + 2048)) >> 20) * (360 / 4096f);
+                float rotY = ((int)(16 * ((781874935307L * (26624 * frame) + 0x80000000000) >> 32)) >> 20) * (360 / 4096f);
                 var rot = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(rotZ));
                 rot *= Matrix4.CreateRotationY(MathHelper.DegreesToRadians(rotY));
                 product = rot * product;
@@ -571,7 +568,7 @@ namespace MphRead.Entities
                 product.Transpose();
                 return product;
             }
-            return base.GetTexcoordMatrix(inst, material, materialId, node, scene);
+            return base.GetTexcoordMatrix(inst, material, materialId, node, scene, recolor);
         }
 
         private void ResetMorphBallTrail()
@@ -625,7 +622,8 @@ namespace MphRead.Entities
             Vector3 point2 = point1.AddY(-10);
             // todo: don't draw if main player in first person
             CollisionResult colRes = default;
-            if (CollisionDetection.CheckBetweenPoints(point1, point2, TestFlags.None, scene, ref colRes))
+            if (CollisionDetection.CheckBetweenPoints(point1, point2, TestFlags.None, scene, ref colRes)
+                && colRes.Plane.Y >= Fixed.ToFloat(4))
             {
                 float height = point1.Y - colRes.Position.Y;
                 if (height < 10)

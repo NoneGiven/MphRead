@@ -612,35 +612,35 @@ namespace MphRead
         {
             {
                 Hunter.Samus,
-                new List<string>() { "Samus_lod0", "SamusAlt_lod0", "SamusGun" }
+                new List<string>() { "Samus_lod0", "Samus_lod1", "SamusAlt_lod0", "SamusGun" }
             },
             {
                 Hunter.Kanden,
-                new List<string>() { "Kanden_lod0", "KandenAlt_lod0", "KandenGun" }
+                new List<string>() { "Kanden_lod0", "Kanden_lod1", "KandenAlt_lod0", "KandenGun" }
             },
             {
                 Hunter.Trace,
-                new List<string>() { "Trace_lod0", "TraceAlt_lod0", "TraceGun" }
+                new List<string>() { "Trace_lod0", "Trace_lod1", "TraceAlt_lod0", "TraceGun" }
             },
             {
                 Hunter.Sylux,
-                new List<string>() { "Sylux_lod0", "SyluxAlt_lod0", "SyluxGun" }
+                new List<string>() { "Sylux_lod0", "Sylux_lod1", "SyluxAlt_lod0", "SyluxGun" }
             },
             {
                 Hunter.Noxus,
-                new List<string>() { "Nox_lod0", "NoxAlt_lod0", "NoxGun" }
+                new List<string>() { "Nox_lod0", "Nox_lod1", "NoxAlt_lod0", "NoxGun" }
             },
             {
                 Hunter.Spire,
-                new List<string>() { "Spire_lod0", "SpireAlt_lod0", "SpireGun" }
+                new List<string>() { "Spire_lod0", "Spire_lod1", "SpireAlt_lod0", "SpireGun" }
             },
             {
                 Hunter.Weavel,
-                new List<string>() { "Weavel_lod0", "WeavelAlt_lod0", "WeavelGun" }
+                new List<string>() { "Weavel_lod0", "Weavel_lod1", "WeavelAlt_lod0", "WeavelGun" }
             },
             {
                 Hunter.Guardian,
-                new List<string>() { "Guardian_lod0", "SamusAlt_lod0", "SamusGun" }
+                new List<string>() { "Guardian_lod0", "Guardian_lod1", "SamusAlt_lod0", "SamusGun" }
             }
         };
 

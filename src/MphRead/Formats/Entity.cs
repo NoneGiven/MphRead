@@ -208,7 +208,7 @@ namespace MphRead
         public readonly ushort MaxSpawnCount;
         public readonly ushort SpawnInterval;
         public readonly ushort SpawnDelay;
-        public readonly short SomeEntityId; // todo: parent? child?
+        public readonly short NotifyEntityId; // todo: parent? child?
         public readonly Message CollectedMessage;
         public readonly uint CollectedMsgParam1;
         public readonly uint CollectedMsgParam2;

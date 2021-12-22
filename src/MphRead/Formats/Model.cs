@@ -8,12 +8,19 @@ namespace MphRead
 {
     public class ModelInstance
     {
-        public Model Model { get; }
+        public Model Model { get; private set; }
         public AnimationInfo AnimInfo { get; } = new AnimationInfo();
         public bool IsPlaceholder { get; set; }
         public bool Active { get; set; } = true;
+        public bool NodeAnimIgnoreRoot { get; set; }
 
         public ModelInstance(Model model)
+        {
+            Model = model;
+        }
+
+        // should only be needed by the player entity
+        public void SetModel(Model model)
         {
             Model = model;
         }
@@ -293,7 +300,6 @@ namespace MphRead
         Texture = 0x20
     }
 
-    // anitodo: node_anim_ignore_root
     public class AnimationInfo
     {
         public int[] Index { get; } = new int[2] { -1, -1 };
@@ -547,9 +553,17 @@ namespace MphRead
                     }
                 }
                 node.Animation = transform;
-                if (node.ChildIndex != -1)
+                if (node.ChildIndex != -1 && !node.AnimIgnoreChild)
                 {
                     AnimateNodes(node.ChildIndex, useNodeTransform, parentTansform, scale, info);
+                }
+                if (node.AfterTransform.HasValue)
+                {
+                    node.Animation = node.AfterTransform.Value * node.Animation * parentTansform;
+                }
+                else if (node.BeforeTransform.HasValue)
+                {
+                    node.Animation = node.Animation * parentTansform * node.BeforeTransform.Value;
                 }
                 node.Animation *= parentTansform;
                 i = node.NextIndex;
@@ -763,6 +777,32 @@ namespace MphRead
                 parentIndex = parent.ParentIndex;
             }
             return true;
+        }
+
+        public Node? GetNodeByName(string name)
+        {
+            for (int i = 0; i < Nodes.Count; i++)
+            {
+                Node node = Nodes[i];
+                if (node.Name == name)
+                {
+                    return node;
+                }
+            }
+            return null;
+        }
+
+        public int GetNodeIndexByName(string name)
+        {
+            for (int i = 0; i < Nodes.Count; i++)
+            {
+                Node node = Nodes[i];
+                if (node.Name == name)
+                {
+                    return i;
+                }
+            }
+            return -1;
         }
 
         public IReadOnlyList<ColorRgba> GetPixels(int textureId, int paletteId, int recolorId)

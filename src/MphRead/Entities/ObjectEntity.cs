@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
@@ -19,8 +20,9 @@ namespace MphRead.Entities
         private EffectEntry? _effectEntry = null;
         public bool _effectActive = false;
         private readonly bool _scanVisorOnly = false;
+        private int _state = 0;
+        private ObjectMetadata? _meta;
 
-        private bool _invSetUp = false;
         private EntityBase? _parent = null;
         private Matrix4 _invTransform;
 
@@ -54,26 +56,26 @@ namespace MphRead.Entities
             }
             else
             {
-                ObjectMetadata meta = Metadata.GetObjectById(data.ModelId);
-                if (meta.Lighting)
+                _meta = Metadata.GetObjectById(data.ModelId);
+                if (_meta.Lighting)
                 {
                     _anyLighting = true;
                 }
-                Recolor = meta.RecolorId;
-                ModelInstance inst = SetUpModel(meta.Name);
+                Recolor = _meta.RecolorId;
+                ModelInstance inst = SetUpModel(_meta.Name);
                 // AlimbicGhost_01, GhostSwitch
                 if (data.ModelId == 0 || data.ModelId == 41)
                 {
                     _scanVisorOnly = true;
                 }
-                int state = (int)(_flags & ObjectFlags.State);
-                int animIndex = meta.AnimationIds[state];
+                _state = (int)(_flags & ObjectFlags.State);
+                int animIndex = _meta.AnimationIds[_state];
                 // AlimbicCapsule
                 if (data.ModelId == 45)
                 {
                     inst.SetAnimation(animIndex, slot: 1, SetFlags.Texcoord);
                     inst.SetAnimation(animIndex, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node);
-                    if (state == 2)
+                    if (_state == 2)
                     {
                         inst.AnimInfo.Flags[0] |= AnimFlags.Paused;
                     }
@@ -87,7 +89,7 @@ namespace MphRead.Entities
                 {
                     AnimFlags animFlags = AnimFlags.None;
                     // SniperTarget, WallSwitch
-                    if (data.ModelId == 46 && state == 2 || data.ModelId == 53 && state == 1)
+                    if (data.ModelId == 46 && _state == 2 || data.ModelId == 53 && _state == 1)
                     {
                         animFlags = AnimFlags.NoLoop;
                     }
@@ -97,14 +99,14 @@ namespace MphRead.Entities
                 {
                     _flags |= ObjectFlags.NoAnimation;
                 }
-                ModelMetadata modelMeta = Metadata.ModelMetadata[meta.Name];
+                ModelMetadata modelMeta = Metadata.ModelMetadata[_meta.Name];
                 if (modelMeta.CollisionPath != null)
                 {
                     SetCollision(Collision.GetCollision(modelMeta), attach: inst);
                     if (modelMeta.ExtraCollisionPath != null)
                     {
                         // ctodo: disable capsule shield collision when appropriate
-                        // --> in game, collision isn't even set up unless anim ID starts at 2, but we should still set it up ("reactivation")
+                        // --> in game, collision isn't even set up unless state starts at 2, but we should still set it up ("reactivation")
                         SetCollision(Collision.GetCollision(modelMeta, extra: true), slot: 1);
                     }
                 }
@@ -140,17 +142,153 @@ namespace MphRead.Entities
             }
         }
 
+        private void UpdateState(int state, Scene scene)
+        {
+            if (_state == state)
+            {
+                return;
+            }
+            Debug.Assert(_meta != null);
+            int animId = _meta.AnimationIds[state];
+            if (animId < 0)
+            {
+                _flags |= ObjectFlags.NoAnimation;
+            }
+            else
+            {
+                bool needsUpdate = true;
+                if (_data.ModelId == 45) // AlimbicCapsule
+                {
+                    if (state <= 1)
+                    {
+                        // todo: play SFX
+                        _models[0].SetAnimation(animId, 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node, AnimFlags.NoLoop);
+                        // todo: unlink/deactivate collision in slot 1
+                    }
+                    needsUpdate = false;
+                }
+                else if (_data.ModelId == 46) // SniperTarget
+                {
+                    if (state == 0)
+                    {
+                        if (_models[0].AnimInfo.Index[0] == _meta.AnimationIds[0])
+                        {
+                            _models[0].AnimInfo.Flags[0] &= ~AnimFlags.Ended;
+                            _models[0].AnimInfo.Flags[0] &= ~AnimFlags.Reverse;
+                            _models[0].AnimInfo.Flags[0] |= AnimFlags.NoLoop;
+                        }
+                        else
+                        {
+                            _models[0].SetAnimation(animId, AnimFlags.NoLoop);
+                        }
+                        needsUpdate = false;
+                    }
+                    else if (state != 1)
+                    {
+                        _models[0].SetAnimation(animId, AnimFlags.NoLoop);
+                        // todo: play SFX
+                        needsUpdate = false;
+                    }
+                    else if (_models[0].AnimInfo.Index[0] == _meta.AnimationIds[0])
+                    {
+                        _models[0].AnimInfo.Flags[0] &= ~AnimFlags.Ended;
+                        _models[0].AnimInfo.Flags[0] |= AnimFlags.Reverse;
+                        _models[0].AnimInfo.Flags[0] |= AnimFlags.NoLoop;
+                        needsUpdate = false;
+                    }
+                }
+                else if (_data.ModelId == 53) // WallSwitch
+                {
+                    _models[0].SetAnimation(animId, AnimFlags.NoLoop);
+                    // todo: play SFX
+                    needsUpdate = false;
+                }
+                else if (_data.ModelId >= 47 && _data.ModelId <= 52 && (state == 1 || state == 2)) // SecretSwitch
+                {
+                    if (state == 1 && _state == 0)
+                    {
+                        return;
+                    }
+                    // todo: play SFX
+                    _models[0].SetAnimation(animId, AnimFlags.NoLoop);
+                    needsUpdate = false;
+                }
+                if (needsUpdate)
+                {
+                    _models[0].SetAnimation(animId);
+                }
+            }
+            _state = state;
+            _effectIntervalTimer = 0;
+            _effectIntervalIndex = 15;
+            // todo: room state
+            if (state != 0 || _data.ModelId == 53) // WallSwitch
+            {
+                // todo: scan ID
+            }
+            else
+            {
+                RemoveEffect(scene);
+                // todo: scan ID
+            }
+        }
+
         public override bool Process(Scene scene)
         {
+            base.Process(scene);
+            if (_data.ModelId == 46) // SniperTarget
+            {
+                if (_state != 2)
+                {
+                    // todo: check distance to player
+                    Vector3 between = scene.CameraPosition - Position;
+                    // todo: send message to the associated volume
+                    if (Vector3.Dot(between, between) >= 15 * 15)
+                    {
+                        UpdateState(1, scene);
+                        if (_models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
+                        {
+                            Debug.Assert(_meta != null);
+                            _models[0].SetAnimation(_meta.AnimationIds[_state]);
+                        }
+                    }
+                    else
+                    {
+                        UpdateState(0, scene);
+                    }
+                }
+            }
+            else if (_data.ModelId == 53) // WallSwitch
+            {
+                if (_state == 1 && _models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
+                {
+                    UpdateState(2, scene);
+                }
+            }
+            else if (_data.ModelId >= 47 && _data.ModelId <= 52) // SecretSwitch
+            {
+                // todo: update audio
+                if (_state == 1 && _models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
+                {
+                    UpdateState(0, scene);
+                }
+            }
+            if (_state == 0)
+            {
+                return true;
+            }
+            if (!_flags.TestFlag(ObjectFlags.EntityLinked))
+            {
+                if (_data.LinkedEntity != -1 && scene.TryGetEntity(_data.LinkedEntity, out EntityBase? entity))
+                {
+                    _parent = entity;
+                    _invTransform = _transform * _parent.CollisionTransform.Inverted();
+                }
+                _flags |= ObjectFlags.EntityLinked;
+            }
             ShouldDraw = !_scanVisorOnly || scene.ScanVisor;
             if (_parent != null)
             {
-                if (!_invSetUp)
-                {
-                    _parent.GetDrawInfo(scene); // force update transforms
-                    _invTransform = _transform * _parent.CollisionTransform.Inverted();
-                    _invSetUp = true;
-                }
                 // todo: visible position stuff (get vecs)
                 Transform = _invTransform * _parent.CollisionTransform;
             }
@@ -159,6 +297,10 @@ namespace MphRead.Entities
                 _effectVolume = CollisionVolume.Transform(_data.Volume, Transform);
                 _prevTransform = Transform;
             }
+            UpdateCollisionTransform(0, CollisionTransform); // whether transform or animation, should include parent if any
+            UpdateCollisionTransform(1, CollisionTransform); // the game does this in draw for objects
+            UpdateLinkedInverse(0);
+            UpdateLinkedInverse(1);
             if (_data.EffectId > 0)
             {
                 bool processEffect = false;
@@ -166,17 +308,14 @@ namespace MphRead.Entities
                 {
                     processEffect = true;
                 }
-                else if (_data.EffectFlags.TestFlag(ObjEffFlags.AttachEffect))
+                else if (_data.EffectFlags.TestFlag(ObjEffFlags.UseEffectVolume))
                 {
-                    if (_data.EffectFlags.TestFlag(ObjEffFlags.UseEffectVolume))
-                    {
-                        // todo: add an option to disable this check
-                        processEffect = _effectVolume.TestPoint(scene.CameraPosition);
-                    }
-                    else
-                    {
-                        processEffect = (_flags & ObjectFlags.State) != 0;
-                    }
+                    // todo: add an option to disable this check
+                    processEffect = _effectVolume.TestPoint(scene.CameraPosition);
+                }
+                else if (_flags.TestFlag(ObjectFlags.IsVisible))
+                {
+                    processEffect = (_flags & ObjectFlags.State) != 0;
                 }
                 if (processEffect)
                 {
@@ -206,11 +345,7 @@ namespace MphRead.Entities
                                 else
                                 {
                                     _effectEntry = scene.SpawnEffectGetEntry(_data.EffectId, Transform);
-                                    for (int i = 0; i < _effectEntry.Elements.Count; i++)
-                                    {
-                                        EffectElementEntry element = _effectEntry.Elements[i];
-                                        element.Flags |= EffElemFlags.ElementExtension;
-                                    }
+                                    _effectEntry.SetElementExtension(true);
                                 }
                             }
                         }
@@ -242,14 +377,13 @@ namespace MphRead.Entities
             }
             if (_effectEntry != null)
             {
-                for (int i = 0; i < _effectEntry.Elements.Count; i++)
-                {
-                    EffectElementEntry element = _effectEntry.Elements[i];
-                    element.Position = Position;
-                    element.Transform = Transform.ClearScale();
-                }
+                _effectEntry.Transform(Position, Transform.ClearScale());
             }
-            return base.Process(scene);
+            if (_data.ModelId == 0 && _models[0].AnimInfo.Index[0] == 3 && _models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
+            {
+                _models[0].SetAnimation((int)Rng.GetRandomInt1(2));
+            }
+            return true;
         }
 
         private void RemoveEffect(Scene scene)
@@ -298,6 +432,7 @@ namespace MphRead.Entities
         WeaponZoom = 0x8,
         AttachEffect = 0x10,
         DestroyEffect = 0x20,
-        AlwaysUpdateEffect = 0x40
+        AlwaysUpdateEffect = 0x40,
+        Unknown = 0x8000
     }
 }

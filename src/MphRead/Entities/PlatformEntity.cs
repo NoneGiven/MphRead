@@ -40,6 +40,7 @@ namespace MphRead.Entities
         private int _toIndex = 1;
         private readonly int _delay;
         private int _moveTimer;
+        private int _recoilTimer;
         private readonly float _forwardSpeed;
         private readonly float _backwardSpeed;
         private int _currentAnim = 0;
@@ -57,6 +58,9 @@ namespace MphRead.Entities
         private float _moveIncrement = 0;
 
         private static readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(64); // in-game: 18
+
+        public PlatformEntityData Data => _data;
+        public Vector3 Velocity => _velocity;
 
         public PlatformEntity(PlatformEntityData data) : base(EntityType.Platform)
         {
@@ -121,16 +125,18 @@ namespace MphRead.Entities
             _beamInterval = (int)data.BeamInterval * 2;
             if (data.BeamId > -1)
             {
+                // todo: ammo pointer
                 Debug.Assert(data.BeamId < Weapons.PlatformWeapons.Count);
                 _equipInfo = new EquipInfo(Weapons.PlatformWeapons[data.BeamId], _beams);
                 _beamSpawnPos = data.BeamSpawnPos.ToFloatVector();
                 _beamSpawnDir = data.BeamSpawnDir.ToFloatVector();
                 _beamIntervalIndex = 15;
             }
-            _delay = data.Delay * 2;
+            _delay = data.Delay * 2; // todo: FPS stuff
             _moveTimer = _delay;
-            _forwardSpeed = data.ForwardSpeed.FloatValue / 2f;
-            _backwardSpeed = data.ForwardSpeed.FloatValue / 2f;
+            _recoilTimer = 0;
+            _forwardSpeed = data.ForwardSpeed.FloatValue / 2f; // todo: FPS stuff
+            _backwardSpeed = data.ForwardSpeed.FloatValue / 2f; // todo: FPS stuff
             UpdatePosition();
             _animFlags |= PlatAnimFlags.Draw;
             // todo: room state
@@ -183,27 +189,10 @@ namespace MphRead.Entities
             base.Initialize(scene);
             if (Flags.TestFlag(PlatformFlags.SamusShip))
             {
-                Model model = _models[0].Model;
-                for (int i = 0; i < model.Nodes.Count; i++)
-                {
-                    Node node = model.Nodes[i];
-                    if (node.Name == "R_Turret")
-                    {
-                        _effectNodeIds[0] = i;
-                    }
-                    else if (node.Name == "R_Turret1")
-                    {
-                        _effectNodeIds[1] = i;
-                    }
-                    else if (node.Name == "R_Turret2")
-                    {
-                        _effectNodeIds[2] = i;
-                    }
-                    else if (node.Name == "R_Turret3")
-                    {
-                        _effectNodeIds[3] = i;
-                    }
-                }
+                _effectNodeIds[0] = _models[0].Model.GetNodeIndexByName("R_Turret");
+                _effectNodeIds[1] = _models[0].Model.GetNodeIndexByName("R_Turret1");
+                _effectNodeIds[2] = _models[0].Model.GetNodeIndexByName("R_Turret2");
+                _effectNodeIds[3] = _models[0].Model.GetNodeIndexByName("R_Turret3");
                 if (_effectNodeIds[0] != -1 || _effectNodeIds[1] != -1 || _effectNodeIds[2] != -1 || _effectNodeIds[3] != -1)
                 {
                     scene.LoadEffect(_nozzleEffectId);
@@ -362,6 +351,8 @@ namespace MphRead.Entities
 
         public override bool Process(Scene scene)
         {
+            UpdateLinkedInverse(0);
+            // todo: visible position stuff
             // ptodo: player bonk stuff
             if (!_animFlags.TestFlag(PlatAnimFlags.DisableReflect))
             {
@@ -387,7 +378,7 @@ namespace MphRead.Entities
                         {
                             if (PlayerEntity.PlayerCount > 0)
                             {
-                                PlayerEntity mainPlayer = PlayerEntity.Players[PlayerEntity.MainPlayer];
+                                PlayerEntity mainPlayer = PlayerEntity.MainPlayer;
                                 target = new Vector3(
                                     mainPlayer.Position.X - _curPosition.X,
                                     mainPlayer.Position.Y + 1 - _curPosition.Y,
@@ -404,7 +395,7 @@ namespace MphRead.Entities
                     }
                     else if (PlayerEntity.PlayerCount > 0)
                     {
-                        PlayerEntity mainPlayer = PlayerEntity.Players[PlayerEntity.MainPlayer];
+                        PlayerEntity mainPlayer = PlayerEntity.MainPlayer;
                         target = new Vector3(
                             mainPlayer.Position.X - _curPosition.X,
                             0,
@@ -445,7 +436,7 @@ namespace MphRead.Entities
                     if (_animFlags.TestFlag(PlatAnimFlags.SeekPlayerHeight) && PlayerEntity.PlayerCount > 0)
                     {
                         // also never true in-game
-                        PlayerEntity mainPlayer = PlayerEntity.Players[PlayerEntity.MainPlayer];
+                        PlayerEntity mainPlayer = PlayerEntity.MainPlayer;
                         float offset = (mainPlayer.Position.Y - _curPosition.Y) * Fixed.ToFloat(20);
                         _curPosition.Y += offset;
                     }
@@ -500,6 +491,7 @@ namespace MphRead.Entities
                 _currentAnim = -2;
                 _stateBits &= ~PlatStateBits.WasAwake;
             }
+            // sktodo
             // todo: if "is_visible" returns false (and other conditions), don't draw the effects
             Model model = _models[0].Model;
             for (int i = 0; i < 4; i++)
@@ -508,11 +500,7 @@ namespace MphRead.Entities
                 {
                     Matrix4 transform = Matrix.GetTransform4(Vector3.UnitX, Vector3.UnitY, new Vector3(0, 2, 0));
                     _effects[i] = scene.SpawnEffectGetEntry(_nozzleEffectId, transform);
-                    for (int j = 0; j < _effects[i]!.Elements.Count; j++)
-                    {
-                        EffectElementEntry element = _effects[i]!.Elements[j];
-                        element.Flags |= EffElemFlags.ElementExtension;
-                    }
+                    _effects[i]!.SetElementExtension(true);
                 }
                 if (_effects[i] != null)
                 {
@@ -523,18 +511,14 @@ namespace MphRead.Entities
                         transform.M33 * 1.5f + transform.M43
                     );
                     transform = Matrix.GetTransform4(new Vector3(transform.Row1), new Vector3(transform.Row2), position);
-                    for (int j = 0; j < _effects[i]!.Elements.Count; j++)
-                    {
-                        EffectElementEntry element = _effects[i]!.Elements[j];
-                        element.Position = position;
-                        element.Transform = transform;
-                    }
+                    _effects[i]!.Transform(position, transform);
                 }
             }
             if (_data.PositionCount > 0)
             {
                 Transform = GetTransform();
             }
+            UpdateCollisionTransform(0, CollisionTransform); // todo: for some reason, the game uses an inverse view matrix when using animation
             return true;
         }
 
@@ -697,11 +681,29 @@ namespace MphRead.Entities
             }
         }
 
+        public void Recoil()
+        {
+            if (_state == PlatformState.Moving && !Flags.TestFlag(PlatformFlags.NoRecoil) && _data.ForCutscene == 0)
+            {
+                _recoilTimer = 31 * 2; // todo: FPS stuff
+                _moveTimer += 60 * 2; // todo: FPS stuff
+                _velocity.Y *= -1;
+            }
+        }
+
         private void UpdateState()
         {
             if (_state == PlatformState.Moving)
             {
-                // todo: recoil timer
+                if (_recoilTimer > 0)
+                {
+                    // when recoil collision is detected, recoil_timer is set to 31f (and 60f is added to move_timer)
+                    _recoilTimer--;
+                    if (_recoilTimer == 0)
+                    {
+                        _velocity.Y *= -1;
+                    }
+                }
                 if (_moveTimer > 0)
                 {
                     _moveTimer--;
@@ -826,7 +828,7 @@ namespace MphRead.Entities
                 transform = Transform;
                 if (_parent != null)
                 {
-                    transform.Row3.Xyz = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform);
+                    //transform.Row3.Xyz = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform);
                 }
             }
             return transform;
@@ -981,7 +983,8 @@ namespace MphRead.Entities
         public override bool Process(Scene scene)
         {
             // todo: collision and stuff
-            _position += _velocity;
+            Vector3 position = _position;
+            position += _velocity;
             if (_moveTimer > 0)
             {
                 _moveTimer--;
@@ -1000,7 +1003,7 @@ namespace MphRead.Entities
                 {
                     _state = MoveState.Wait;
                     _velocity = Vector3.Zero;
-                    _position = _posList[_toIndex]; // the game doesn't do this
+                    position = _posList[_toIndex]; // the game doesn't do this
                     if (_fromIndex == _posList.Count - 1)
                     {
                         _toIndex = _fromIndex - 1;
@@ -1020,7 +1023,7 @@ namespace MphRead.Entities
                 else if (_state == MoveState.MoveBackward)
                 {
                     _velocity = Vector3.Zero;
-                    _position = _posList[_toIndex]; // the game doesn't do this
+                    position = _posList[_toIndex]; // the game doesn't do this
                     if (_toIndex > 0)
                     {
                         _state = MoveState.Wait;
@@ -1036,7 +1039,10 @@ namespace MphRead.Entities
                     _moveTimer = _delay;
                 }
             }
-            return base.Process(scene);
+            Position = position;
+            base.Process(scene);
+            UpdateCollisionTransform(0, Transform);
+            return true;
         }
 
         private void UpdateMovement()

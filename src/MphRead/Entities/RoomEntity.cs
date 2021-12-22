@@ -11,6 +11,7 @@ namespace MphRead.Entities
 {
     public class RoomEntity : EntityBase
     {
+        public CollisionInstance RoomCollision { get; }
         private readonly IReadOnlyList<CollisionPortal> _portals = new List<CollisionPortal>();
         private readonly IReadOnlyList<PortalNodeRef> _forceFields = new List<PortalNodeRef>();
         private IReadOnlyList<Node> Nodes => _models[0].Model.Nodes;
@@ -19,8 +20,11 @@ namespace MphRead.Entities
         private readonly float[]? _emptyMatrixStack;
 
         protected override bool UseNodeTransform => false; // default -- will use transform if setting is enabled
+        public int RoomId { get; private set; }
+        public RoomMetadata Metadata => _meta;
 
-        public RoomEntity(string name, RoomMetadata meta, CollisionInstance collision, NodeData? nodeData, int layerMask) : base(EntityType.Room)
+        public RoomEntity(string name, RoomMetadata meta, CollisionInstance collision, NodeData? nodeData,
+            int layerMask, int roomId) : base(EntityType.Room)
         {
             ModelInstance inst = Read.GetRoomModelInstance(name);
             _models.Add(inst);
@@ -89,17 +93,13 @@ namespace MphRead.Entities
             Debug.Assert(model.Nodes.Any(n => n.IsRoomPartNode));
             _portals = portals;
             _forceFields = forceFields;
-            SetCollision(collision);
+            RoomCollision = collision; // todo: transform if connector
+            RoomId = roomId;
         }
 
-        public override void Initialize(Scene scene)
+        protected override void GetCollisionDrawInfo(Scene scene)
         {
-            base.Initialize(scene);
-            if (_collision.Count > 0)
-            {
-                Debug.Assert(_collision.Count == 1);
-                scene.AddCollision(_collision[0]);
-            }
+            RoomCollision.Info.GetDrawInfo(RoomCollision.Info.Points, Type, scene);
         }
 
         public override void GetDrawInfo(Scene scene)

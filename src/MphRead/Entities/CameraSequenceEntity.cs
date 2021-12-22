@@ -97,6 +97,11 @@ namespace MphRead.Entities
                 float frameLength = curFrame.HoldTime + curFrame.MoveTime;
                 float fadeOutStart = frameLength - curFrame.FadeOutTime;
                 CalculateFrameValues(scene);
+                if (_keyframeElapsed < 1 / 30f && curFrame.MessageId != 0)
+                {
+                    // game sets the keyframe as the sender
+                    scene.SendMessage((Message)curFrame.MessageId, this, curFrame.TargetEntity, curFrame.MessageParam, 0);
+                }
                 FadeType fadeType = FadeType.None;
                 float fadeTime = 0;
                 if (curFrame.FadeInType != FadeType.None && _keyframeElapsed <= 2 / 30f)
@@ -114,7 +119,7 @@ namespace MphRead.Entities
                 {
                     scene.SetFade(fadeType, fadeTime, overwrite: false);
                 }
-                // todo: messaging, transition timer stuff for handoffs
+                // todo: transition timer stuff for handoffs
                 if (curFrame.HoldTime == 0 && curFrame.MoveTime == 0)
                 {
                     // make zero-length frames last for 2 frames (equivalent to 1 frame in game)
