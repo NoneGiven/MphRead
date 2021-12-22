@@ -770,7 +770,11 @@ namespace MphRead.Entities
                     _kandenSegPos[i] = _kandenSegPos[i].AddY(-0.1f);
                 }
             }
-            // todo?: update position for entity collision
+            if (_standingEntCol != null)
+            {
+                Vector3 position = Matrix.Vec3MultMtx4(Position, _standingEntCol.Inverse2);
+                Position = Matrix.Vec3MultMtx4(position, _standingEntCol.Transform);
+            }
             if (!Flags1.TestFlag(PlayerFlags1.CollidingLateral))
             {
                 _horizColTimer = 0;
