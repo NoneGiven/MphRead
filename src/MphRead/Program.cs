@@ -9,7 +9,7 @@ namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 17, 0, 0);
+        public static Version Version { get; } = new Version(0, 17, 1, 0);
 
         private static void Main(string[] args)
         {
