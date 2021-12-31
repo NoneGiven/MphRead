@@ -195,7 +195,7 @@ namespace MphRead.Entities
             }
             Material material = _trailModel.Model.Materials[0];
             scene.AddRenderItem(RenderItemType.TrailMulti, alpha: 1, scene.GetNextPolygonId(), Vector3.One, material.XRepeat, material.YRepeat,
-                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(point1), uvsAndVerts, _bindingId, count);
+                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(point1), uvsAndVerts, _bindingId, trailCount: count);
         }
 
         public override void Destroy(Scene scene)

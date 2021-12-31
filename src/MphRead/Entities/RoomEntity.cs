@@ -199,7 +199,7 @@ namespace MphRead.Entities
                         }
                         Material material = model.Materials[mesh.MaterialId];
                         scene.AddRenderItem(material, polygonId, 1, Vector3.Zero, GetLightInfo(scene), Matrix4.Identity,
-                            transform, mesh.ListId, 0, _emptyMatrixStack, color, null, SelectionType.None);
+                            transform, mesh.ListId, 0, _emptyMatrixStack, color, null, SelectionType.None, node.BillboardMode);
                     }
                 }
             }
@@ -235,7 +235,7 @@ namespace MphRead.Entities
                     SelectionType selectionType = Selection.CheckSelection(this, inst, node, mesh);
                     scene.AddRenderItem(material, polygonId, alpha, emission: Vector3.Zero, GetLightInfo(scene),
                         texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
-                        overrideColor: null, paletteOverride: null, selectionType);
+                        overrideColor: null, paletteOverride: null, selectionType, node.BillboardMode);
                 }
             }
         }

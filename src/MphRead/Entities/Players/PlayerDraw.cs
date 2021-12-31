@@ -110,7 +110,7 @@ namespace MphRead.Entities
                         Node node = model.Nodes[i];
                         node.Animation *= transform; // todo?: could do this in the shader
                     }
-                    model.UpdateMatrixStack(_scene.ViewInvRotMatrix, _scene.ViewInvRotYMatrix);
+                    model.UpdateMatrixStack();
                     if (_health > 0)
                     {
                         if (_timeSinceDamage < Values.DamageFlashTime * 2) // todo: FPS stuff
@@ -149,8 +149,7 @@ namespace MphRead.Entities
                                 _bipedIceModel.Model.Nodes[i].Animation = _bipedModel1.Model.Nodes[i].Animation;
                                 _bipedIceTransforms[i] = _bipedModel1.Model.Nodes[i].Animation;
                             }
-                            // identity matrices are fine since the ice model doesn't have any billboard nodes
-                            _bipedIceModel.Model.UpdateMatrixStack(Matrix4.Identity, Matrix4.Identity);
+                            _bipedIceModel.Model.UpdateMatrixStack();
                             UpdateMaterials(_bipedIceModel, recolor: 0);
                             GetDrawItems(_bipedIceModel, _bipedIceModel.Model.Nodes[0], alpha: 1, recolor: 0);
                         }
@@ -233,7 +232,7 @@ namespace MphRead.Entities
             model.AnimateTextures(inst.AnimInfo);
             model.ComputeNodeMatrices(index: 0);
             model.AnimateNodes(index: 0, UseNodeTransform, transform, model.Scale, inst.AnimInfo);
-            model.UpdateMatrixStack(_scene.ViewInvRotMatrix, _scene.ViewInvRotYMatrix);
+            model.UpdateMatrixStack();
             _scene.UpdateMaterials(model, recolor);
         }
 
@@ -272,8 +271,9 @@ namespace MphRead.Entities
                     Vector4? color = null;
                     SelectionType selectionType = SelectionType.None;
                     int? bindingOverride = GetBindingOverride(inst, material, mesh.MaterialId);
-                    _scene.AddRenderItem(material, polygonId, alpha, emission, GetLightInfo(_scene), texcoordMatrix, node.Animation, mesh.ListId,
-                        model.NodeMatrixIds.Count, model.MatrixStackValues, color, PaletteOverride, selectionType, _drawScale, bindingOverride);
+                    _scene.AddRenderItem(material, polygonId, alpha, emission, GetLightInfo(_scene), texcoordMatrix,
+                        node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues, color,
+                        PaletteOverride, selectionType, node.BillboardMode, _drawScale, bindingOverride);
                 }
                 if (node.ChildIndex != -1)
                 {
@@ -319,19 +319,19 @@ namespace MphRead.Entities
                 && material.Lighting > 0 && node.BillboardMode == BillboardMode.None)
             {
                 Texture texture = _doubleDmgModel.Model.Recolors[0].Textures[0];
-                Matrix4 product = node.Animation.Keep3x3();
+                // product should start with the upper 3x3 of the node animation result,
+                // texgenMatrix should be multiplied with the view matrix if lighting is enabled,
+                // and the result should be transposed.
+                // these steps are done in the shader so the view matrix can be updated when frame advance is on.
+                // strictly speaking, the use_light check in the shader is not the same as what the game does,
+                // since the game checks if *any* material in the model uses lighting, but the result is the same.
                 Matrix4 texgenMatrix = Matrix4.Identity;
                 // in-game, there's only one uniform scale factor for models
                 if (inst.Model.Scale.X != 1 || inst.Model.Scale.Y != 1 || inst.Model.Scale.Z != 1)
                 {
                     texgenMatrix = Matrix4.CreateScale(inst.Model.Scale) * texgenMatrix;
                 }
-                // in-game, bit 0 is set on creation if any materials have lighting enabled
-                if (_anyLighting || (inst.Model.Header.Flags & 1) > 0)
-                {
-                    texgenMatrix = scene.ViewMatrix * texgenMatrix;
-                }
-                product *= texgenMatrix;
+                Matrix4 product = texgenMatrix;
                 product.M12 *= -1;
                 product.M13 *= -1;
                 product.M22 *= -1;
@@ -344,14 +344,13 @@ namespace MphRead.Entities
                 var rot = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(rotZ));
                 rot *= Matrix4.CreateRotationY(MathHelper.DegreesToRadians(rotY));
                 product = rot * product;
-                product *= (1.0f / (texture.Width / 2));
+                product *= 1.0f / (texture.Width / 2);
                 product = new Matrix4(
                     product.Row0 * 16.0f,
                     product.Row1 * 16.0f,
                     product.Row2 * 16.0f,
                     product.Row3
                 );
-                product.Transpose();
                 return product;
             }
             return base.GetTexcoordMatrix(inst, material, materialId, node, scene, recolor);

@@ -290,7 +290,7 @@ namespace MphRead.Entities
             model.ComputeNodeMatrices(index: 0);
             Matrix4 transform = GetModelTransform(inst, index);
             model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, inst.AnimInfo);
-            model.UpdateMatrixStack(scene.ViewInvRotMatrix, scene.ViewInvRotYMatrix);
+            model.UpdateMatrixStack();
             // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
             scene.UpdateMaterials(model, GetModelRecolor(inst, index));
             if (scene.ShowCollision)
@@ -342,8 +342,9 @@ namespace MphRead.Entities
                         Vector4? color = inst.IsPlaceholder ? GetOverrideColor(inst, index) : null;
                         SelectionType selectionType = Selection.CheckSelection(this, inst, node, mesh);
                         int? bindingOverride = GetBindingOverride(inst, material, mesh.MaterialId);
-                        scene.AddRenderItem(material, polygonId, Alpha, emission, GetLightInfo(scene), texcoordMatrix, node.Animation, mesh.ListId,
-                            model.NodeMatrixIds.Count, model.MatrixStackValues, color, PaletteOverride, selectionType, _drawScale, bindingOverride);
+                        scene.AddRenderItem(material, polygonId, Alpha, emission, GetLightInfo(scene), texcoordMatrix,
+                            node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues, color,
+                            PaletteOverride, selectionType, node.BillboardMode, _drawScale, bindingOverride);
                     }
                     if (node.ChildIndex != -1)
                     {
@@ -416,19 +417,19 @@ namespace MphRead.Entities
                 if (material.TexgenMode == TexgenMode.Normal)
                 {
                     Texture texture = model.Recolors[recolor == -1 ? Recolor : recolor].Textures[material.TextureId];
-                    Matrix4 product = node.Animation.Keep3x3();
+                    // product should start with the upper 3x3 of the node animation result,
+                    // texgenMatrix should be multiplied with the view matrix if lighting is enabled,
+                    // and the result should be transposed.
+                    // these steps are done in the shader so the view matrix can be updated when frame advance is on.
+                    // strictly speaking, the use_light check in the shader is not the same as what the game does,
+                    // since the game checks if *any* material in the model uses lighting, but the result is the same.
                     Matrix4 texgenMatrix = Matrix4.Identity;
                     // in-game, there's only one uniform scale factor for models
                     if (model.Scale.X != 1 || model.Scale.Y != 1 || model.Scale.Z != 1)
                     {
-                        texgenMatrix = Matrix4.CreateScale(model.Scale) * texgenMatrix;
+                        texgenMatrix = Matrix4.CreateScale(model.Scale);
                     }
-                    // in-game, bit 0 is set on creation if any materials have lighting enabled
-                    if (_anyLighting || (model.Header.Flags & 1) > 0)
-                    {
-                        texgenMatrix = scene.ViewMatrix * texgenMatrix;
-                    }
-                    product *= texgenMatrix;
+                    Matrix4 product = texgenMatrix;
                     product.M12 *= -1;
                     product.M13 *= -1;
                     product.M22 *= -1;
@@ -437,14 +438,13 @@ namespace MphRead.Entities
                     product.M33 *= -1;
                     product *= materialMatrix;
                     product *= texcoordMatrix;
-                    product *= (1.0f / (texture.Width / 2));
+                    product *= 1.0f / (texture.Width / 2);
                     texcoordMatrix = new Matrix4(
                         product.Row0 * 16.0f,
                         product.Row1 * 16.0f,
                         product.Row2 * 16.0f,
                         product.Row3
                     );
-                    texcoordMatrix.Transpose();
                 }
             }
             return texcoordMatrix;

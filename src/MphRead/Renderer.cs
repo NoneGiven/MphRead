@@ -129,6 +129,7 @@ namespace MphRead
         private bool _advanceOneFrame = false;
         private bool _recording = false;
         private int _framesRecorded = 0;
+        private bool ProcessFrame => _frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame;
         private bool _roomLoaded = false;
         private RoomEntity? _room = null;
         private int _roomId = -1;
@@ -390,6 +391,7 @@ namespace MphRead
             _shaderLocations.MaterialAlpha = GL.GetUniformLocation(_shaderProgramId, "mat_alpha");
             _shaderLocations.MaterialMode = GL.GetUniformLocation(_shaderProgramId, "mat_mode");
             _shaderLocations.ViewMatrix = GL.GetUniformLocation(_shaderProgramId, "view_mtx");
+            _shaderLocations.ViewInvMatrix = GL.GetUniformLocation(_shaderProgramId, "view_inv_mtx");
             _shaderLocations.ProjectionMatrix = GL.GetUniformLocation(_shaderProgramId, "proj_mtx");
             _shaderLocations.TextureMatrix = GL.GetUniformLocation(_shaderProgramId, "tex_mtx");
             _shaderLocations.TexgenMode = GL.GetUniformLocation(_shaderProgramId, "texgen_mode");
@@ -833,10 +835,8 @@ namespace MphRead
             }
         }
 
-        public void OnRenderFrame(double frameTime)
+        public void OnUpdateFrame(double frameTime)
         {
-            uint rng1 = Rng.Rng1;
-            uint rng2 = Rng.Rng2;
             if (_recording || Debugger.IsAttached)
             {
                 _frameTime = 1 / 60f; // todo: FPS stuff
@@ -849,6 +849,30 @@ namespace MphRead
             PlayerEntity.ProcessInput(_keyboardState, _mouseState);
             OnKeyHeld();
 
+            TransformCamera();
+            UpdateCameraPosition();
+
+            if (ProcessFrame)
+            {
+                UpdateScene();
+                ProcessMessageQueue();
+                _elapsedTime += 1 / 60f; // todo: FPS stuff
+                _frameCount++;
+            }
+        }
+
+        public void AfterUpdateFrame()
+        {
+            if (_recording)
+            {
+                Images.Record(Size.X, Size.Y, $"frame{_framesRecorded:0000}");
+                _framesRecorded++;
+            }
+            _advanceOneFrame = false;
+        }
+
+        public void OnRenderFrame()
+        {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
             GL.ClearStencil(0);
 
@@ -858,36 +882,83 @@ namespace MphRead
             var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(_cameraFov, aspect, 0.0625f, _useClip ? _farClip : 10000f);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref perspectiveMatrix);
 
-            TransformCamera();
-            UpdateCameraPosition();
-
-            RenderScene();
-            if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
+            UpdateUniforms();
+            // pass 1: opaque
+            GL.ColorMask(true, true, true, true);
+            GL.Enable(EnableCap.AlphaTest);
+            GL.AlphaFunc(AlphaFunction.Equal, 1.0f);
+            GL.DepthFunc(DepthFunction.Less);
+            GL.DepthMask(true);
+            GL.Enable(EnableCap.StencilTest);
+            GL.StencilMask(0xFF);
+            GL.StencilOp(StencilOp.Zero, StencilOp.Zero, StencilOp.Zero);
+            GL.StencilFunc(StencilFunction.Always, 0, 0xFF);
+            for (int i = 0; i < _nonDecalItems.Count; i++)
             {
-                ProcessMessageQueue();
+                RenderItem item = _nonDecalItems[i];
+                RenderItem(item);
             }
-            if (_frameAdvanceOn && !_advanceOneFrame)
+            GL.Disable(EnableCap.AlphaTest);
+            // pass 2: decal
+            GL.Enable(EnableCap.PolygonOffsetFill);
+            GL.PolygonOffset(-1, -1);
+            // todo?: decals shouldn't render unless they have ~equal depth to the previous polygon,
+            // which means the rendering order here needs to be the same as it is in-game
+            GL.DepthFunc(DepthFunction.Lequal);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            for (int i = 0; i < _decalItems.Count; i++)
             {
-                Rng.SetRng1(rng1);
-                Rng.SetRng2(rng2);
+                RenderItem item = _decalItems[i];
+                RenderItem(item);
             }
-            if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
+            GL.PolygonOffset(0, 0);
+            GL.Disable(EnableCap.PolygonOffsetFill);
+            // pass 3: mark transparent faces in stencil
+            GL.Enable(EnableCap.AlphaTest);
+            GL.AlphaFunc(AlphaFunction.Less, 1.0f);
+            GL.ColorMask(false, false, false, false);
+            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
+            for (int i = 0; i < _translucentItems.Count; i++)
             {
-                _frameCount++;
+                RenderItem item = _translucentItems[i];
+                GL.StencilFunc(StencilFunction.Greater, item.PolygonId, 0xFF);
+                RenderItem(item);
             }
-        }
-
-        public void AfterRenderFrame()
-        {
-            if (_recording)
+            // pass 4: rebuild depth buffer
+            GL.Clear(ClearBufferMask.DepthBufferBit);
+            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
+            GL.StencilFunc(StencilFunction.Always, 0, 0xFF);
+            GL.AlphaFunc(AlphaFunction.Equal, 1.0f);
+            for (int i = 0; i < _nonDecalItems.Count; i++)
             {
-                Images.Record(Size.X, Size.Y, $"frame{_framesRecorded:0000}");
-                _framesRecorded++;
+                RenderItem item = _nonDecalItems[i];
+                RenderItem(item);
             }
-            if (_advanceOneFrame)
+            // pass 5: translucent (behind)
+            GL.AlphaFunc(AlphaFunction.Less, 1.0f);
+            GL.ColorMask(true, true, true, true);
+            GL.DepthMask(false);
+            GL.DepthFunc(DepthFunction.Lequal);
+            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
+            for (int i = 0; i < _translucentItems.Count; i++)
             {
-                _advanceOneFrame = false;
+                RenderItem item = _translucentItems[i];
+                GL.StencilFunc(StencilFunction.Notequal, item.PolygonId, 0xFF);
+                RenderItem(item);
             }
+            // pass 6: translucent (before)
+            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
+            for (int i = 0; i < _translucentItems.Count; i++)
+            {
+                RenderItem item = _translucentItems[i];
+                GL.StencilFunc(StencilFunction.Equal, item.PolygonId, 0xFF);
+                RenderItem(item);
+            }
+            GL.DepthMask(true);
+            GL.Disable(EnableCap.Blend);
+            GL.Disable(EnableCap.AlphaTest);
+            GL.Disable(EnableCap.StencilTest);
         }
 
         private void LoadAndUnload()
@@ -1716,7 +1787,7 @@ namespace MphRead
         // for meshes
         public void AddRenderItem(Material material, int polygonId, float alphaScale, Vector3 emission, LightInfo lightInfo, Matrix4 texcoordMatrix,
             Matrix4 transform, int listId, int matrixStackCount, IReadOnlyList<float> matrixStack, Vector4? overrideColor, Vector4? paletteOverride,
-            SelectionType selectionType, float scaleFactor = 1, int? bindingOverride = null)
+            SelectionType selectionType, BillboardMode billboardMode, float scaleFactor = 1, int? bindingOverride = null)
         {
             transform.Row0.X *= scaleFactor;
             transform.Row0.Y *= scaleFactor;
@@ -1750,6 +1821,7 @@ namespace MphRead
             item.PolygonMode = material.PolygonMode;
             item.RenderMode = material.RenderMode;
             item.CullingMode = material.Culling;
+            item.BillboardMode = billboardMode;
             item.Wireframe = material.Wireframe != 0;
             item.Lighting = material.Lighting != 0;
             item.NoLines = false;
@@ -1813,6 +1885,7 @@ namespace MphRead
             item.PolygonMode = PolygonMode.Modulate;
             item.RenderMode = RenderMode.Translucent;
             item.CullingMode = cullingMode;
+            item.BillboardMode = BillboardMode.None;
             item.Wireframe = false;
             item.Lighting = false;
             item.NoLines = noLines;
@@ -1842,7 +1915,7 @@ namespace MphRead
 
         // for effects/trails
         public void AddRenderItem(RenderItemType type, float alpha, int polygonId, Vector3 color, RepeatMode xRepeat, RepeatMode yRepeat,
-            float scaleS, float scaleT, Matrix4 transform, Vector3[] uvsAndVerts, int bindingId, int trailCount = 8)
+            float scaleS, float scaleT, Matrix4 transform, Vector3[] uvsAndVerts, int bindingId, BillboardMode billboardMode = BillboardMode.None, int trailCount = 8)
         {
             RenderItem item = GetRenderItem();
             item.Type = type;
@@ -1851,6 +1924,7 @@ namespace MphRead
             item.PolygonMode = PolygonMode.Modulate;
             item.RenderMode = RenderMode.Translucent;
             item.CullingMode = CullingMode.Neither;
+            item.BillboardMode = billboardMode; // sktodo
             item.Wireframe = false;
             item.Lighting = false;
             item.NoLines = false;
@@ -1888,6 +1962,7 @@ namespace MphRead
             item.PolygonMode = PolygonMode.Modulate;
             item.RenderMode = RenderMode.Translucent;
             item.CullingMode = CullingMode.Neither;
+            item.BillboardMode = BillboardMode.None;
             item.Wireframe = false;
             item.Lighting = false;
             item.NoLines = false;
@@ -1943,13 +2018,8 @@ namespace MphRead
             return _nextPolygonId++;
         }
 
-        private void RenderScene()
+        private void UpdateScene()
         {
-            if (_frameCount != 0 && (!_frameAdvanceOn || _advanceOneFrame))
-            {
-                _elapsedTime += 1 / 60f; // todo: FPS stuff
-            }
-            // do this even when frame advance is on, since these are added by draw functions, not process functions
             _singleParticleCount = 0;
             _decalItems.Clear();
             _nonDecalItems.Clear();
@@ -1966,17 +2036,14 @@ namespace MphRead
             _nextPolygonId = 1;
             _destroyedEntities.Clear();
 
-            if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
+            for (int i = 0; i < _entities.Count; i++)
             {
-                for (int i = 0; i < _entities.Count; i++)
+                EntityBase entity = _entities[i];
+                if (!entity.Process(this))
                 {
-                    EntityBase entity = _entities[i];
-                    if (!entity.Process(this))
-                    {
-                        // todo: need to handle destroying vs. unloading etc.
-                        entity.Destroy(this);
-                        _destroyedEntities.Add(entity);
-                    }
+                    // todo: need to handle destroying vs. unloading etc.
+                    entity.Destroy(this);
+                    _destroyedEntities.Add(entity);
                 }
             }
 
@@ -2022,17 +2089,11 @@ namespace MphRead
                 RemoveEntity(entity);
             }
 
-            if (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame)
-            {
-                ProcessEffects();
-            }
-            var camVec1 = new Vector3(_viewMatrix.M11, _viewMatrix.M12, _viewMatrix.M13 * -1);
-            var camVec2 = new Vector3(_viewMatrix.M21, _viewMatrix.M22, _viewMatrix.M23 * -1);
-            var camVec3 = new Vector3(_viewMatrix.M31, _viewMatrix.M32, _viewMatrix.M33 * -1);
+            ProcessEffects();
             for (int i = 0; i < _singleParticleCount; i++)
             {
                 SingleParticle single = _singleParticles[i];
-                single.Process(camVec1, camVec2, camVec3, 1);
+                single.Process();
             }
             for (int i = 0; i < _activeElements.Count; i++)
             {
@@ -2042,6 +2103,7 @@ namespace MphRead
                     for (int j = 0; j < element.Particles.Count; j++)
                     {
                         EffectParticle particle = element.Particles[j];
+                        // sktodo: remove view matrix
                         Matrix4 matrix = _viewMatrix;
                         if (particle.Owner.Flags.TestFlag(EffElemFlags.UseTransform) && !particle.Owner.Flags.TestFlag(EffElemFlags.UseMesh))
                         {
@@ -2064,84 +2126,6 @@ namespace MphRead
                     single.AddRenderItem(this);
                 }
             }
-
-            UpdateUniforms();
-            // pass 1: opaque
-            GL.ColorMask(true, true, true, true);
-            GL.Enable(EnableCap.AlphaTest);
-            GL.AlphaFunc(AlphaFunction.Equal, 1.0f);
-            GL.DepthFunc(DepthFunction.Less);
-            GL.DepthMask(true);
-            GL.Enable(EnableCap.StencilTest);
-            GL.StencilMask(0xFF);
-            GL.StencilOp(StencilOp.Zero, StencilOp.Zero, StencilOp.Zero);
-            GL.StencilFunc(StencilFunction.Always, 0, 0xFF);
-            for (int i = 0; i < _nonDecalItems.Count; i++)
-            {
-                RenderItem item = _nonDecalItems[i];
-                RenderItem(item);
-            }
-            GL.Disable(EnableCap.AlphaTest);
-            // pass 2: decal
-            GL.Enable(EnableCap.PolygonOffsetFill);
-            GL.PolygonOffset(-1, -1);
-            // todo?: decals shouldn't render unless they have ~equal depth to the previous polygon,
-            // which means the rendering order here needs to be the same as it is in-game
-            GL.DepthFunc(DepthFunction.Lequal);
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-            for (int i = 0; i < _decalItems.Count; i++)
-            {
-                RenderItem item = _decalItems[i];
-                RenderItem(item);
-            }
-            GL.PolygonOffset(0, 0);
-            GL.Disable(EnableCap.PolygonOffsetFill);
-            // pass 3: mark transparent faces in stencil
-            GL.Enable(EnableCap.AlphaTest);
-            GL.AlphaFunc(AlphaFunction.Less, 1.0f);
-            GL.ColorMask(false, false, false, false);
-            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
-            for (int i = 0; i < _translucentItems.Count; i++)
-            {
-                RenderItem item = _translucentItems[i];
-                GL.StencilFunc(StencilFunction.Greater, item.PolygonId, 0xFF);
-                RenderItem(item);
-            }
-            // pass 4: rebuild depth buffer
-            GL.Clear(ClearBufferMask.DepthBufferBit);
-            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
-            GL.StencilFunc(StencilFunction.Always, 0, 0xFF);
-            GL.AlphaFunc(AlphaFunction.Equal, 1.0f);
-            for (int i = 0; i < _nonDecalItems.Count; i++)
-            {
-                RenderItem item = _nonDecalItems[i];
-                RenderItem(item);
-            }
-            // pass 5: translucent (behind)
-            GL.AlphaFunc(AlphaFunction.Less, 1.0f);
-            GL.ColorMask(true, true, true, true);
-            GL.DepthMask(false);
-            GL.DepthFunc(DepthFunction.Lequal);
-            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
-            for (int i = 0; i < _translucentItems.Count; i++)
-            {
-                RenderItem item = _translucentItems[i];
-                GL.StencilFunc(StencilFunction.Notequal, item.PolygonId, 0xFF);
-                RenderItem(item);
-            }
-            // pass 6: translucent (before)
-            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
-            for (int i = 0; i < _translucentItems.Count; i++)
-            {
-                RenderItem item = _translucentItems[i];
-                GL.StencilFunc(StencilFunction.Equal, item.PolygonId, 0xFF);
-                RenderItem(item);
-            }
-            GL.DepthMask(true);
-            GL.Disable(EnableCap.Blend);
-            GL.Disable(EnableCap.AlphaTest);
-            GL.Disable(EnableCap.StencilTest);
         }
 
         private void UpdateUniforms()
@@ -2284,6 +2268,16 @@ namespace MphRead
                 Matrix4 transform = item.Transform;
                 GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
             }
+            Matrix4 viewInv = Matrix4.Identity;
+            if (item.BillboardMode == BillboardMode.Sphere)
+            {
+                viewInv = _viewInvRotMatrix;
+            }
+            else if (item.BillboardMode == BillboardMode.Cylinder)
+            {
+                viewInv = _viewInvRotYMatrix;
+            }
+            GL.UniformMatrix4(_shaderLocations.ViewInvMatrix, transpose: false, ref viewInv);
 
             DoMaterial(item);
             // texgen actually uses the transform from the current node, not the matrix stack
@@ -3809,11 +3803,17 @@ namespace MphRead
             base.OnLoad();
         }
 
+        protected override void OnUpdateFrame(FrameEventArgs args)
+        {
+            Scene.OnUpdateFrame(args.Time);
+            Scene.AfterUpdateFrame();
+            base.OnUpdateFrame(args);
+        }
+
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            Scene.OnRenderFrame(args.Time);
+            Scene.OnRenderFrame();
             SwapBuffers();
-            Scene.AfterRenderFrame();
             base.OnRenderFrame(args);
         }
 

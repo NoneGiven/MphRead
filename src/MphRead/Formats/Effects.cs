@@ -43,51 +43,23 @@ namespace MphRead.Effects
         public Vector2 Texcoord3 { get; private set; }
         public Vector3 Vertex3 { get; private set; }
 
-        public void Process(Vector3 vec1, Vector3 vec2, Vector3 vec3, float scaleFactor)
+        public void Process()
         {
             ShouldDraw = false;
             if (Alpha > 0)
             {
                 ShouldDraw = true;
-                float v24 = vec1.X + vec1.Y;
-                float v23 = vec2.X + vec2.Y;
-                float v27 = vec1.X - vec1.Y;
-                float v26 = vec2.X - vec2.Y;
-                float v19 = vec3.Y - vec3.X;
-                float v25 = vec3.X - vec3.Y;
-                float v30 = -(vec1.X + vec1.Y);
-                float v29 = -(vec2.X + vec2.Y);
-                float v28 = -(vec3.X + vec3.Y);
-                float v20 = vec2.Y - vec2.X;
-                float v21 = vec1.Y - vec1.X;
-                float v22 = vec3.X + vec3.Y;
-
                 // bottom left
-                float x = (Position.X + v21 * Scale) / scaleFactor;
-                float y = (Position.Y + v20 * Scale) / scaleFactor;
-                float z = (Position.Z + v19 * Scale) / scaleFactor;
-                Vertex0 = new Vector3(x, y, z);
+                Vertex0 = new Vector3(-Scale, Scale, 0);
                 Texcoord0 = new Vector2(0, 0);
-
                 // bottom right
-                x = (Position.X + v24 * Scale) / scaleFactor;
-                y = (Position.Y + v23 * Scale) / scaleFactor;
-                z = (Position.Z + v22 * Scale) / scaleFactor;
-                Vertex1 = new Vector3(x, y, z);
+                Vertex1 = new Vector3(Scale, Scale, 0);
                 Texcoord1 = new Vector2(1, 0);
-
                 // top right
-                x = (Position.X + v27 * Scale) / scaleFactor;
-                y = (Position.Y + v26 * Scale) / scaleFactor;
-                z = (Position.Z + v25 * Scale) / scaleFactor;
-                Vertex2 = new Vector3(x, y, z);
+                Vertex2 = new Vector3(Scale, -Scale, 0);
                 Texcoord2 = new Vector2(1, 1);
-
                 // top left
-                x = (Position.X + v30 * Scale) / scaleFactor;
-                y = (Position.Y + v29 * Scale) / scaleFactor;
-                z = (Position.Z + v28 * Scale) / scaleFactor;
-                Vertex3 = new Vector3(x, y, z);
+                Vertex3 = new Vector3(-Scale, -Scale, 0);
                 Texcoord3 = new Vector2(0, 1);
             }
         }
@@ -118,9 +90,9 @@ namespace MphRead.Effects
             {
                 scaleT = material.ScaleT;
             }
-            Matrix4 transform = Matrix4.Identity;
+            var transform = Matrix4.CreateTranslation(Position);
             scene.AddRenderItem(RenderItemType.Particle, Alpha, scene.GetNextPolygonId(), Color, xRepeat, yRepeat,
-                scaleS, scaleT, transform, uvsAndVerts, bindingId);
+                scaleS, scaleT, transform, uvsAndVerts, bindingId, BillboardMode.Sphere);
         }
     }
 
@@ -1064,6 +1036,10 @@ namespace MphRead.Effects
             return Fixed.ToFloat(param[0]);
         }
 
+        // sktodo: remove view matrix and set appropriate billboard type on render item,
+        // and test each type to make sure we don't break anything
+        // --> C0 ("perpendicular billboard") will probably need special handling
+        // LASTLY, REVERT TO OLD VERSION AND TEST EVERYTHING W/ COMPARISONS (MB reflection, capsule shield texgen, etc.)
         private void SetVecsB0(Matrix4 viewMatrix)
         {
             var vec1 = new Vector3(viewMatrix.M11, viewMatrix.M21, viewMatrix.M31);
@@ -1392,15 +1368,8 @@ namespace MphRead.Effects
                 Node node = Owner.Nodes[ParticleId];
                 Mesh mesh = Owner.Model.Meshes[node.MeshId / 2];
                 Material material = Owner.Model.Materials[MaterialId];
-                Matrix4 transform;
-                if (BillboardNode)
-                {
-                    transform = scene.ViewInvRotMatrix * NodeTransform;
-                }
-                else
-                {
-                    transform = NodeTransform;
-                }
+                Matrix4 transform = NodeTransform;
+                BillboardMode billboardMode = BillboardNode ? BillboardMode.Sphere : BillboardMode.None;
                 Matrix4 texcoordMtx = Matrix4.Identity;
                 if (material.TexgenMode == TexgenMode.Texcoord)
                 {
@@ -1414,7 +1383,7 @@ namespace MphRead.Effects
                 Debug.Assert(model.NodeMatrixIds.Count == 0);
                 scene.UpdateMaterials(model, 0); // probably not necessary unless the model has texture animation
                 scene.AddRenderItem(material, scene.GetNextPolygonId(), 1, Vector3.Zero, LightInfo.Zero, texcoordMtx,
-                    transform, mesh.ListId, 0, Array.Empty<float>(), null, null, SelectionType.None);
+                    transform, mesh.ListId, 0, Array.Empty<float>(), null, null, SelectionType.None, billboardMode);
             }
             else
             {

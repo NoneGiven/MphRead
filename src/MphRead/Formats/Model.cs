@@ -726,19 +726,15 @@ namespace MphRead
             return first + (second - first) * factor;
         }
 
-        public void UpdateMatrixStack(Matrix4 viewInvRot, Matrix4 viewInvRotY)
+        public void UpdateMatrixStack()
         {
             for (int i = 0; i < NodeMatrixIds.Count; i++)
             {
                 Node node = Nodes[NodeMatrixIds[i]];
                 Matrix4 transform = node.Animation;
-                if (node.BillboardMode == BillboardMode.Sphere)
+                if (node.BillboardMode == BillboardMode.Sphere || node.BillboardMode == BillboardMode.Cylinder)
                 {
-                    transform = viewInvRot * transform.ClearRotation();
-                }
-                else if (node.BillboardMode == BillboardMode.Cylinder)
-                {
-                    transform = viewInvRotY * transform.ClearRotation();
+                    transform = transform.ClearRotation();
                 }
                 SetMatrixStackValues(i, transform);
             }

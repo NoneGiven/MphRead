@@ -692,7 +692,7 @@ namespace MphRead.Entities
             Material material = _trailModel.Model.Materials[0];
             float alpha = Math.Clamp(Lifespan * 30 * 8, 0, 31) / 31;
             scene.AddRenderItem(RenderItemType.TrailMulti, alpha, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
-                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[0]), uvsAndVerts, _bindingId, count);
+                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[0]), uvsAndVerts, _bindingId, trailCount: count);
         }
 
         private void DrawTrail3(float height, Scene scene)
@@ -771,7 +771,7 @@ namespace MphRead.Entities
 
             Material material = _trailModel.Model.Materials[0];
             scene.AddRenderItem(RenderItemType.TrailMulti, alpha: 1, scene.GetNextPolygonId(), Color, material.XRepeat, material.YRepeat,
-                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[8]), uvsAndVerts, _bindingId, count);
+                material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[8]), uvsAndVerts, _bindingId, trailCount: count);
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
