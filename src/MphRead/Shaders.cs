@@ -20,6 +20,7 @@ uniform vec4 fog_color;
 uniform float far_plane;
 uniform mat4 proj_mtx;
 uniform mat4 view_mtx;
+uniform mat4 view_inv_mtx;
 uniform mat4 tex_mtx;
 uniform int texgen_mode;
 uniform mat4[32] mtx_stack;
@@ -42,7 +43,8 @@ vec3 light_calc(vec3 light_vec, vec3 light_col, vec3 normal_vec, vec3 dif_col, v
 
 void main()
 {
-    mat4 model_mtx = mtx_stack[int(gl_MultiTexCoord0.z)];
+    // view_inv_mtx is set for billboard transforms
+    mat4 model_mtx = mtx_stack[int(gl_MultiTexCoord0.z)] * view_inv_mtx;
     gl_Position = proj_mtx * view_mtx * model_mtx * gl_Vertex;
     vec4 vtx_color = show_colors ? gl_Color : vec4(1.0);
     vec3 normal = normalize(mat3(model_mtx) * gl_Normal);
@@ -68,9 +70,13 @@ void main()
             texcoord = vec2(tex_mtx * vec4(gl_MultiTexCoord0.xy, 0, 1));
         }
         else if (texgen_mode == 2 || texgen_mode == 3) {
+            mat4 tex_mul = tex_mtx;
+            if (texgen_mode == 2) {
+                tex_mul = transpose(tex_mtx * (use_light ? view_mtx : mat4(1.0)) * mat4(mat3(model_mtx)));
+            }
             mat2x4 texgen_mtx = mat2x4(
-                vec4(tex_mtx[0][0], tex_mtx[0][1], tex_mtx[0][2], gl_MultiTexCoord0.x),
-                vec4(tex_mtx[1][0], tex_mtx[1][1], tex_mtx[1][2], gl_MultiTexCoord0.y)
+                vec4(tex_mul[0][0], tex_mul[0][1], tex_mul[0][2], gl_MultiTexCoord0.x),
+                vec4(tex_mul[1][0], tex_mul[1][1], tex_mul[1][2], gl_MultiTexCoord0.y)
             );
             if (texgen_mode == 2) {
                 texcoord = vec4(gl_Normal, 1.0) * texgen_mtx;
@@ -187,6 +193,7 @@ void main()
         public int MaterialAlpha { get; set; }
         public int MaterialMode { get; set; }
         public int ViewMatrix { get; set; }
+        public int ViewInvMatrix { get; set; }
         public int ProjectionMatrix { get; set; }
         public int TextureMatrix { get; set; }
         public int TexgenMode { get; set; }

@@ -46,6 +46,7 @@ namespace MphRead
         public PolygonMode PolygonMode { get; set; }
         public RenderMode RenderMode { get; set; }
         public CullingMode CullingMode { get; set; }
+        public BillboardMode BillboardMode { get; set; }
         public bool Wireframe { get; set; }
         public bool Lighting { get; set; }
         public bool NoLines { get; set; }

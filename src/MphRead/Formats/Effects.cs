@@ -3,7 +3,6 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Security.Cryptography;
 using MphRead.Entities;
 using OpenTK.Mathematics;
 
@@ -44,51 +43,23 @@ namespace MphRead.Effects
         public Vector2 Texcoord3 { get; private set; }
         public Vector3 Vertex3 { get; private set; }
 
-        public void Process(Vector3 vec1, Vector3 vec2, Vector3 vec3, float scaleFactor)
+        public void Process()
         {
             ShouldDraw = false;
             if (Alpha > 0)
             {
                 ShouldDraw = true;
-                float v24 = vec1.X + vec1.Y;
-                float v23 = vec2.X + vec2.Y;
-                float v27 = vec1.X - vec1.Y;
-                float v26 = vec2.X - vec2.Y;
-                float v19 = vec3.Y - vec3.X;
-                float v25 = vec3.X - vec3.Y;
-                float v30 = -(vec1.X + vec1.Y);
-                float v29 = -(vec2.X + vec2.Y);
-                float v28 = -(vec3.X + vec3.Y);
-                float v20 = vec2.Y - vec2.X;
-                float v21 = vec1.Y - vec1.X;
-                float v22 = vec3.X + vec3.Y;
-
                 // bottom left
-                float x = (Position.X + v21 * Scale) / scaleFactor;
-                float y = (Position.Y + v20 * Scale) / scaleFactor;
-                float z = (Position.Z + v19 * Scale) / scaleFactor;
-                Vertex0 = new Vector3(x, y, z);
+                Vertex0 = new Vector3(-Scale, Scale, 0);
                 Texcoord0 = new Vector2(0, 0);
-
                 // bottom right
-                x = (Position.X + v24 * Scale) / scaleFactor;
-                y = (Position.Y + v23 * Scale) / scaleFactor;
-                z = (Position.Z + v22 * Scale) / scaleFactor;
-                Vertex1 = new Vector3(x, y, z);
+                Vertex1 = new Vector3(Scale, Scale, 0);
                 Texcoord1 = new Vector2(1, 0);
-
                 // top right
-                x = (Position.X + v27 * Scale) / scaleFactor;
-                y = (Position.Y + v26 * Scale) / scaleFactor;
-                z = (Position.Z + v25 * Scale) / scaleFactor;
-                Vertex2 = new Vector3(x, y, z);
+                Vertex2 = new Vector3(Scale, -Scale, 0);
                 Texcoord2 = new Vector2(1, 1);
-
                 // top left
-                x = (Position.X + v30 * Scale) / scaleFactor;
-                y = (Position.Y + v29 * Scale) / scaleFactor;
-                z = (Position.Z + v28 * Scale) / scaleFactor;
-                Vertex3 = new Vector3(x, y, z);
+                Vertex3 = new Vector3(-Scale, -Scale, 0);
                 Texcoord3 = new Vector2(0, 1);
             }
         }
@@ -119,9 +90,9 @@ namespace MphRead.Effects
             {
                 scaleT = material.ScaleT;
             }
-            Matrix4 transform = Matrix4.Identity;
+            var transform = Matrix4.CreateTranslation(Position);
             scene.AddRenderItem(RenderItemType.Particle, Alpha, scene.GetNextPolygonId(), Color, xRepeat, yRepeat,
-                scaleS, scaleT, transform, uvsAndVerts, bindingId);
+                scaleS, scaleT, transform, uvsAndVerts, bindingId, BillboardMode.Sphere);
         }
     }
 
@@ -938,7 +909,7 @@ namespace MphRead.Effects
         public Vector2 Texcoord3 { get; private set; }
         public Vector3 Vertex3 { get; private set; }
         public bool DrawNode { get; private set; }
-        public bool BillboardNode { get; private set; }
+        public BillboardMode BillboardMode { get; private set; }
         public Matrix4 NodeTransform { get; private set; }
 
         public override IReadOnlyDictionary<uint, FxFuncInfo> Funcs
@@ -1065,15 +1036,15 @@ namespace MphRead.Effects
             return Fixed.ToFloat(param[0]);
         }
 
-        private void SetVecsB0(Matrix4 viewMatrix)
+        private void SetVecsB0()
         {
-            var vec1 = new Vector3(viewMatrix.M11, viewMatrix.M21, viewMatrix.M31);
-            var vec2 = new Vector3(-viewMatrix.M12, -viewMatrix.M22, -viewMatrix.M32);
-            EffectVec1 = vec1;
-            EffectVec2 = vec2;
+            // the game uses the view matrix here, which we defer to the shader
+            EffectVec1 = Vector3.UnitX;
+            EffectVec2 = -Vector3.UnitY;
+            BillboardMode = BillboardMode.Sphere;
         }
 
-        private void SetVecsBC(Matrix4 viewMatrix)
+        private void SetVecsBC()
         {
             Matrix3 identity = Matrix3.Identity;
             var vec1 = new Vector3(identity.M11, identity.M21, identity.M31);
@@ -1084,6 +1055,7 @@ namespace MphRead.Effects
 
         private void SetVecsC0(Matrix4 viewMatrix)
         {
+            // sktodo: move view matrix transform to the shader
             Matrix3 identity = Matrix3.Identity;
             var vec1 = new Vector3(-identity.M12, -identity.M22, -identity.M32);
             var vec2 = new Vector3(viewMatrix.M13, viewMatrix.M23, viewMatrix.M33);
@@ -1091,9 +1063,11 @@ namespace MphRead.Effects
             EffectVec2 = vec2;
         }
 
-        private void SetVecsD4(Matrix4 viewMatrix)
+        private void SetVecsD4()
         {
             Debug.Assert(false, "SetVecsD4 was called");
+            // todo?: if this needs to be implemented, revisit what it actually does and make it work in the shader
+            Matrix4 viewMatrix = Matrix4.Identity;
             var vec1 = Vector3.Normalize(Speed);
             var vec2 = new Vector3(viewMatrix.M13, viewMatrix.M23, viewMatrix.M33);
             var vec3 = Vector3.Cross(vec2, vec1);
@@ -1109,30 +1083,30 @@ namespace MphRead.Effects
             EffectVec3 = vec3;
         }
 
-        private void SetVecsD8(Matrix4 viewMatrix)
+        private void SetVecsD8()
         {
-            BillboardNode = true;
+            BillboardMode = BillboardMode.Sphere;
         }
 
         public void InvokeSetVecsFunc(Matrix4 viewMatrix)
         {
-            BillboardNode = false;
+            BillboardMode = BillboardMode.None;
             switch (SetVecsId)
             {
             case 1:
-                SetVecsB0(viewMatrix);
+                SetVecsB0();
                 break;
             case 2:
-                SetVecsBC(viewMatrix);
+                SetVecsBC();
                 break;
             case 3:
                 SetVecsC0(viewMatrix);
                 break;
             case 4:
-                SetVecsD4(viewMatrix);
+                SetVecsD4();
                 break;
             case 5:
-                SetVecsD8(viewMatrix);
+                SetVecsD8();
                 break;
             default:
                 throw new ProgramException("Invalid set vecs func.");
@@ -1148,9 +1122,9 @@ namespace MphRead.Effects
                 Vector3 ev1 = EffectVec1 * Scale;
                 Vector3 ev2 = EffectVec2 * Scale;
 
-                float v19 = Position.X + (-ev1.X / 2) + (ev2.X / 2);
-                float v22 = Position.Y + (-ev1.Y / 2) + (ev2.Y / 2);
-                float v23 = Position.Z + (-ev1.Z / 2) + (ev2.Z / 2);
+                float v19 = (-ev1.X / 2) + (ev2.X / 2);
+                float v22 = (-ev1.Y / 2) + (ev2.Y / 2);
+                float v23 = (-ev1.Z / 2) + (ev2.Z / 2);
 
                 // top left
                 float x = v19 / scaleFactor;
@@ -1221,9 +1195,9 @@ namespace MphRead.Effects
                 float v28 = (EffectVec1.Y * sin1 + EffectVec2.Y * cos1) * Scale;
                 float v29 = (EffectVec1.Z * sin1 + EffectVec2.Z * cos1) * Scale;
 
-                float v27 = Position.X + (-v20 / 2) + (v26 / 2);
-                float v30 = Position.Y + (-v24 / 2) + (v28 / 2);
-                float v31 = Position.Z + (-v25 / 2) + (v29 / 2);
+                float v27 = (-v20 / 2) + (v26 / 2);
+                float v30 = (-v24 / 2) + (v28 / 2);
+                float v31 = (-v25 / 2) + (v29 / 2);
 
                 // top left
                 float x = v27 / scaleFactor;
@@ -1285,7 +1259,7 @@ namespace MphRead.Effects
                 {
                     ev4 = new Vector4(Position, 1);
                 }
-                if (BillboardNode)
+                if (BillboardMode == BillboardMode.Sphere)
                 {
                     NodeTransform = Matrix4.CreateScale(Scale) * Matrix4.CreateTranslation(new Vector3(ev4));
                 }
@@ -1309,9 +1283,9 @@ namespace MphRead.Effects
                 Vector3 cross = Vector3.Cross(EffectVec1, EffectVec2).Normalized();
                 Vector3 ev1 = EffectVec1 * Scale;
                 cross *= Rotation;
-                float v20 = Position.X + -ev1.X / 2 + cross.X / 2;
-                float v21 = Position.Y + -ev1.Y / 2 + cross.Y / 2;
-                float v22 = Position.Z + -ev1.Z / 2 + cross.Z / 2;
+                float v20 = -ev1.X / 2 + cross.X / 2;
+                float v21 = -ev1.Y / 2 + cross.Y / 2;
+                float v22 = -ev1.Z / 2 + cross.Z / 2;
 
                 // top left
                 float x = v20 / scaleFactor;
@@ -1393,15 +1367,7 @@ namespace MphRead.Effects
                 Node node = Owner.Nodes[ParticleId];
                 Mesh mesh = Owner.Model.Meshes[node.MeshId / 2];
                 Material material = Owner.Model.Materials[MaterialId];
-                Matrix4 transform;
-                if (BillboardNode)
-                {
-                    transform = scene.ViewInvRotMatrix * NodeTransform;
-                }
-                else
-                {
-                    transform = NodeTransform;
-                }
+                Matrix4 transform = NodeTransform;
                 Matrix4 texcoordMtx = Matrix4.Identity;
                 if (material.TexgenMode == TexgenMode.Texcoord)
                 {
@@ -1415,7 +1381,7 @@ namespace MphRead.Effects
                 Debug.Assert(model.NodeMatrixIds.Count == 0);
                 scene.UpdateMaterials(model, 0); // probably not necessary unless the model has texture animation
                 scene.AddRenderItem(material, scene.GetNextPolygonId(), 1, Vector3.Zero, LightInfo.Zero, texcoordMtx,
-                    transform, mesh.ListId, 0, Array.Empty<float>(), null, null, SelectionType.None);
+                    transform, mesh.ListId, 0, Array.Empty<float>(), null, null, SelectionType.None, BillboardMode);
             }
             else
             {
@@ -1442,13 +1408,13 @@ namespace MphRead.Effects
                 {
                     scaleT = material.ScaleT;
                 }
-                Matrix4 transform = Matrix4.Identity;
+                var transform = Matrix4.CreateTranslation(Position);
                 if (Owner.Flags.TestFlag(EffElemFlags.UseTransform))
                 {
-                    transform = Owner.Transform;
+                    transform = Owner.Transform * transform;
                 }
                 scene.AddRenderItem(RenderItemType.Particle, Alpha, scene.GetNextPolygonId(), Color, xRepeat, yRepeat,
-                    scaleS, scaleT, transform, uvsAndVerts, bindingId);
+                    scaleS, scaleT, transform, uvsAndVerts, bindingId, BillboardMode);
             }
         }
     }

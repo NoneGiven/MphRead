@@ -388,8 +388,7 @@ namespace MphRead.Entities
             {
                 _bipedIceModel.Model.Nodes[j].Animation = _bipedModel.Model.Nodes[j].Animation;
             }
-            // identity matrices are fine since the ice model doesn't have any billboard nodes
-            _bipedIceModel.Model.UpdateMatrixStack(Matrix4.Identity, Matrix4.Identity);
+            _bipedIceModel.Model.UpdateMatrixStack();
         }
 
         private const float _colorStep = 8 / 255f;

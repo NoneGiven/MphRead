@@ -14,7 +14,7 @@ namespace MphRead.Export
         {
             int indent = 1;
             sb.AppendIndent("uv_anims = [", indent);
-            foreach (TexcoordAnimationGroup group in model.AnimationGroups.Texcoord)
+            foreach (TexcoordAnimationGroup group in model.AnimationGroups.Texcoord.Where(g => g.Animations.Any()))
             {
                 sb.AppendIndent("{", indent + 1);
                 foreach (KeyValuePair<string, TexcoordAnimation> kvp in group.Animations)
@@ -42,7 +42,7 @@ namespace MphRead.Export
             }
             sb.AppendIndent("]", indent);
             sb.AppendIndent("mat_anims = [", indent);
-            foreach (MaterialAnimationGroup group in model.AnimationGroups.Material)
+            foreach (MaterialAnimationGroup group in model.AnimationGroups.Material.Where(g => g.Animations.Any()))
             {
                 sb.AppendIndent("{", indent + 1);
                 foreach (KeyValuePair<string, MaterialAnimation> kvp in group.Animations)
@@ -85,7 +85,7 @@ namespace MphRead.Export
                     }
                 }
             }
-            foreach (TextureAnimationGroup group in model.AnimationGroups.Texture)
+            foreach (TextureAnimationGroup group in model.AnimationGroups.Texture.Where(g => g.Animations.Any()))
             {
                 sb.AppendIndent("{", indent + 1);
                 foreach (KeyValuePair<string, TextureAnimation> kvp in group.Animations)
@@ -108,7 +108,7 @@ namespace MphRead.Export
 
 
             sb.AppendIndent("node_anims = [", indent);
-            foreach (NodeAnimationGroup group in model.AnimationGroups.Node)
+            foreach (NodeAnimationGroup group in model.AnimationGroups.Node.Where(g => g.Animations.Any()))
             {
                 sb.AppendIndent("{", indent + 1);
                 foreach (KeyValuePair<string, NodeAnimation> kvp in group.Animations)
@@ -157,12 +157,15 @@ namespace MphRead.Export
             sb.AppendLine($"expected_version = '{Program.Version}'");
             sb.AppendLine($"# recolors: {String.Join(", ", model.Recolors.Select(r => r.Name))}");
             sb.AppendLine($"recolor = '{model.Recolors[0].Name}'");
-            sb.AppendLine($"# uv anims: {model.AnimationGroups.Texcoord.Count}, mat anims: {model.AnimationGroups.Material.Count}," +
-                $" node anims: {model.AnimationGroups.Node.Count}, tex anims: {model.AnimationGroups.Texture.Count}");
-            int texcoordId = model.AnimationGroups.Texcoord.Count > 0 ? 0 : -1;
-            int materialId = model.AnimationGroups.Material.Count > 0 ? 0 : -1;
-            int nodeId = model.AnimationGroups.Node.Count > 0 ? 0 : -1;
-            int textureId = model.AnimationGroups.Texture.Count > 0 ? 0 : -1;
+            int uvAnimCount = model.AnimationGroups.Texcoord.Count(g => g.Animations.Any());
+            int matAnimCount = model.AnimationGroups.Material.Count(g => g.Animations.Any());
+            int nodeAnimCount = model.AnimationGroups.Node.Count(g => g.Animations.Any());
+            int texAnimCount = model.AnimationGroups.Texture.Count(g => g.Animations.Any());
+            sb.AppendLine($"# uv anims: {uvAnimCount}, mat anims: {matAnimCount}, node anims: {nodeAnimCount}, tex anims: {texAnimCount}");
+            int texcoordId = uvAnimCount > 0 ? 0 : -1;
+            int materialId = matAnimCount > 0 ? 0 : -1;
+            int nodeId = nodeAnimCount > 0 ? 0 : -1;
+            int textureId = texAnimCount > 0 ? 0 : -1;
             sb.AppendLine($"uv_index = {texcoordId}");
             sb.AppendLine($"mat_index = {materialId}");
             sb.AppendLine($"node_index = {nodeId}");
@@ -172,7 +175,7 @@ namespace MphRead.Export
             sb.AppendIndent();
             sb.AppendLine("cleanup()");
             sb.AppendIndent();
-            string daePath = Path.Combine(Paths.Export, model.Name, $"{model.Name}_{{suffix}}.dae");
+            string daePath = Path.GetFullPath(Path.Combine(Paths.Export, model.Name, $"{model.Name}_{{suffix}}.dae"));
             sb.AppendLine("bpy.ops.wm.collada_import(filepath =");
             sb.AppendIndent();
             sb.AppendIndent();

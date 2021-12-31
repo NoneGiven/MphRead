@@ -361,7 +361,12 @@ namespace MphRead.Entities
                 if (!v163 || !Flags1.TestFlag(PlayerFlags1.StandingPrevious))
                 {
                     // jumping into a wall/ceiling or landing/slopes/etc. -- update y
-                    position.Y += result.Plane.Y * v2;
+                    // hack: mimic the collision response for 1 frame at 30 FPS in the game
+                    // --> move downward when hitting ceiling to avoid getting stuck in corners
+                    // --> compensate for halved gravity so we can't go up steeper slopes
+                    // todo?: the response when moving into walls laterally is also not accurate ("wall sliding")
+                    // --> needs a hack; just doubling it results in jittering
+                    position.Y += result.Plane.Y * v2 * (result.Plane.Y > 0 ? 0.5f : 2) * 2; // todo: FPS stuff
                 }
                 float dot = Vector3.Dot(Speed, result.Plane.Xyz);
                 if (dot < 0)
