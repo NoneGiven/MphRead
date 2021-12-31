@@ -228,6 +228,7 @@ namespace MphRead.Entities
         private byte _bombAmount = 0;
         private byte _bombOveruse = 0;
         private ushort _boostCharge = 0;
+        private ushort _boostDamage = 0;
         private ushort _altAttackCooldown = 0;
         private ushort _altAttackTime = 0;
         private float _altSpinSpeed = 0;
@@ -300,10 +301,10 @@ namespace MphRead.Entities
         private byte _field552 = 0;
         private byte _field553 = 0;
         private byte _field6D0 = 0;
-        private float _field6F4 = 0; // set from other fields when entering alt form
-        private float _field6F8 = 0;
-        private float _field6FC = 0;
-        private float _field700 = 0;
+        private float _altRollFbX = 0; // set from other fields when entering alt form
+        private float _altRollFbZ = 0;
+        private float _altRollLrX = 0;
+        private float _altRollLrZ = 0;
 
         public EnemySpawnEntity? EnemySpawner => _enemySpawner;
         public EnemyInstanceEntity? AttachedEnemy { get; set; } = null;
@@ -1518,7 +1519,7 @@ namespace MphRead.Entities
                 }
                 if (IsMainPlayer && !IsAltForm)
                 {
-                    // tood: play SFX
+                    // todo: play SFX
                 }
             }
             _timeSinceDamage = 0;
@@ -1797,7 +1798,7 @@ namespace MphRead.Entities
         public readonly int StrafeSpeedFactor;
         public readonly int AirSpeedFactor;
         public readonly int StandSpeedFactor;
-        public readonly int Field3C;
+        public readonly int RollAltTraction;
         public readonly int AltColRadius;
         public readonly int AltColYPos;
         public readonly ushort BoostChargeMin;
@@ -1888,7 +1889,7 @@ namespace MphRead.Entities
 
         public PlayerValues(Hunter hunter, int walkBipedTraction, int strafeBipedTraction, int walkSpeedCap, int strafeSpeedCap,
             int altMinHSpeed, int boostSpeedCap, int bipedGravity, int altAirGravity, int altGroundGravity, int jumpSpeed, int walkSpeedFactor,
-            int altGroundSpeedFactor, int strafeSpeedFactor, int airSpeedFactor, int standSpeedFactor, int field3C, int altColRadius,
+            int altGroundSpeedFactor, int strafeSpeedFactor, int airSpeedFactor, int standSpeedFactor, int rollAltTraction, int altColRadius,
             int altColYPos, ushort boostChargeMin, ushort boostChargeMax, int boostSpeedMin, int boostSpeedMax, int altHSpeedCapIncrement,
             int field58, int field5C, int walkBobMax, int aimDistance, ushort viewSwayTime, ushort padding6A, int normalFov, int field70,
             int aimYOffset, int field78, int field7C, int field80, int field84, int field88, int field8C, int field90, int minPickupHeight,
@@ -1918,7 +1919,7 @@ namespace MphRead.Entities
             StrafeSpeedFactor = strafeSpeedFactor;
             AirSpeedFactor = airSpeedFactor;
             StandSpeedFactor = standSpeedFactor;
-            Field3C = field3C;
+            RollAltTraction = rollAltTraction;
             AltColRadius = altColRadius;
             AltColYPos = altColYPos;
             BoostChargeMin = boostChargeMin;

@@ -294,7 +294,7 @@ namespace MphRead.Entities
                     _targetAlpha = 1;
                 }
             }
-            else if (IsMorphing || IsUnmorphing)
+            else if (IsAltForm || IsMorphing)
             {
                 _curAlpha -= 2 / 31f / 2; // todo FPS stuff
                 if (_curAlpha < 0)
@@ -1136,10 +1136,10 @@ namespace MphRead.Entities
 
         private void EnterAltForm()
         {
-            _field6F4 = _field70;
-            _field6F8 = _field74;
-            _field6FC = _gunVec2.X;
-            _field700 = _gunVec2.Z;
+            _altRollFbX = _field70;
+            _altRollFbZ = _field74;
+            _altRollLrX = _gunVec2.X;
+            _altRollLrZ = _gunVec2.Z;
             Flags1 |= PlayerFlags1.Morphing;
             var vec = new Vector3(_field70, 0, _field74);
             Func2015D34(Values.AltGroundedNoGrav != 0 ? 2 : 1, vec);

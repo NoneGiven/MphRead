@@ -846,7 +846,10 @@ namespace MphRead
                 _frameTime = (float)frameTime;
             }
             LoadAndUnload();
-            PlayerEntity.ProcessInput(_keyboardState, _mouseState);
+            if (ProcessFrame)
+            {
+                PlayerEntity.ProcessInput(_keyboardState, _mouseState);
+            }
             OnKeyHeld();
 
             TransformCamera();
@@ -3159,7 +3162,7 @@ namespace MphRead
             }
             if (_cameraMode == CameraMode.Roam)
             {
-                float moveStep = _keyboardState.IsKeyDown(Keys.LeftShift) || _keyboardState.IsKeyDown(Keys.RightShift) ? 0.5f : 0.1f;
+                float moveStep = _keyboardState.IsKeyDown(Keys.LeftShift) || _keyboardState.IsKeyDown(Keys.RightShift) ? 0.5f : 0;
                 float rotStepDeg = _keyboardState.IsKeyDown(Keys.LeftShift) || _keyboardState.IsKeyDown(Keys.RightShift) ? 3 : 1.5f;
                 float rotStep = MathHelper.DegreesToRadians(rotStepDeg);
                 if (_keyboardState.IsKeyDown(Keys.W)) // move forward
