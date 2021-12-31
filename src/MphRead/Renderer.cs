@@ -1914,8 +1914,9 @@ namespace MphRead
         }
 
         // for effects/trails
-        public void AddRenderItem(RenderItemType type, float alpha, int polygonId, Vector3 color, RepeatMode xRepeat, RepeatMode yRepeat,
-            float scaleS, float scaleT, Matrix4 transform, Vector3[] uvsAndVerts, int bindingId, BillboardMode billboardMode = BillboardMode.None, int trailCount = 8)
+        public void AddRenderItem(RenderItemType type, float alpha, int polygonId, Vector3 color,
+            RepeatMode xRepeat, RepeatMode yRepeat, float scaleS, float scaleT, Matrix4 transform, Vector3[] uvsAndVerts,
+            int bindingId, BillboardMode billboardMode = BillboardMode.None, int trailCount = 8)
         {
             RenderItem item = GetRenderItem();
             item.Type = type;
@@ -1924,7 +1925,7 @@ namespace MphRead
             item.PolygonMode = PolygonMode.Modulate;
             item.RenderMode = RenderMode.Translucent;
             item.CullingMode = CullingMode.Neither;
-            item.BillboardMode = billboardMode; // sktodo
+            item.BillboardMode = billboardMode;
             item.Wireframe = false;
             item.Lighting = false;
             item.NoLines = false;
@@ -2103,7 +2104,6 @@ namespace MphRead
                     for (int j = 0; j < element.Particles.Count; j++)
                     {
                         EffectParticle particle = element.Particles[j];
-                        // sktodo: remove view matrix
                         Matrix4 matrix = _viewMatrix;
                         if (particle.Owner.Flags.TestFlag(EffElemFlags.UseTransform) && !particle.Owner.Flags.TestFlag(EffElemFlags.UseMesh))
                         {
