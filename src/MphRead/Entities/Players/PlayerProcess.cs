@@ -1115,23 +1115,64 @@ namespace MphRead.Entities
 
         private void UpdateAltTransform()
         {
-            // sktodo
             if (Hunter == Hunter.Noxus)
             {
-
+                _altWobble += (5 - _altWobble) / 32 / 2; // todo: FPS stuff
+                _altWobble = Math.Clamp(_altWobble, Fixed.ToFloat(Values.AltMinWobble), Fixed.ToFloat(Values.AltMaxWobble));
+                _field524 -= _field524 / 8 / 2; // todo: FPS stuff
+                _field52C -= _field52C / 8 / 2; // todo: FPS stuff
+                _field524 += -(_field524 + Fixed.ToFloat(25) * (Speed.X - PrevSpeed.X)) / 32 / 2; // todo: FPS stuff
+                _field52C += -(_field52C + Fixed.ToFloat(25) * (Speed.Z - PrevSpeed.Z)) / 32 / 2; // todo: FPS stuff
+                _field528 = 0;
+                float minSpinAccel = Fixed.ToFloat(Values.AltMinSpinAccel);
+                float maxSpinAccel = Fixed.ToFloat(Values.AltMaxSpinAccel);
+                _altSpinSpeed += (minSpinAccel
+                    + (_altAttackTime * (maxSpinAccel - minSpinAccel) / (Values.AltAttackStartup * 2))
+                    - _altSpinSpeed) / 32 / 2; // todo: FPS stuff
+                _altSpinSpeed = Math.Clamp(_altSpinSpeed, Fixed.ToFloat(Values.AltMinSpinSpeed), Fixed.ToFloat(Values.AltMaxSpinSpeed));
+                _altSpinRot += _altSpinSpeed / 2; // todo: FPS stuff
+                while (_altSpinRot > 360)
+                {
+                    _altSpinRot -= 360;
+                }
+                var rotX = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_altWobble));
+                var rotY = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_altSpinRot));
+                Matrix4 transform = rotX * rotY;
+                float mag = MathF.Sqrt(_field52C * _field52C + _field524 * _field524);
+                if (mag != 0)
+                {
+                    var axis = new Vector3(_field52C / mag, 0, -_field524 / mag);
+                    float angle = mag * Fixed.ToFloat(Values.Field13C);
+                    angle = MathF.Min(angle, Fixed.ToFloat(Values.Field120));
+                    var rotAxis = Matrix4.CreateFromAxisAngle(axis, MathHelper.DegreesToRadians(angle));
+                    transform *= rotAxis;
+                }
+                _modelTransform = transform;
             }
             else if (Hunter == Hunter.Kanden)
             {
-
+                UpdateStinglarvaSegments();
             }
             else if (Hunter == Hunter.Samus || Hunter == Hunter.Spire)
             {
+                if (Hunter == Hunter.Spire || Flags1.TestFlag(PlayerFlags1.CollidingEntity))
+                {
+                    // skhere
+                }
+                else
+                {
 
+                }
             }
             else
             {
-
+                _modelTransform = GetTransformMatrix(new Vector3(_field80, 0, _field84), Vector3.UnitY);
             }
+        }
+
+        private void UpdateStinglarvaSegments()
+        {
+            // sktodo
         }
 
         private void EnterAltForm()
@@ -1155,12 +1196,12 @@ namespace MphRead.Entities
             }
             else if (Hunter == Hunter.Noxus)
             {
-                _altSpinSpeed = Fixed.ToFloat(Values.AltSpinSpeed);
+                _altSpinSpeed = Fixed.ToFloat(Values.AltMinSpinAccel);
                 _field524 = 0;
                 _field528 = 0;
                 _field52C = 0;
-                _field530 = 0;
-                _field534 = 0;
+                _altSpinRot = 0;
+                _altWobble = 0;
                 // animation frames updated later based on attack timer
                 _altModel.SetAnimation((int)NoxusAltAnim.Extend, AnimFlags.Paused);
             }
