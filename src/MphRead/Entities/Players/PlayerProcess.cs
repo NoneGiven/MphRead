@@ -1119,10 +1119,10 @@ namespace MphRead.Entities
             {
                 _altWobble += (5 - _altWobble) / 32 / 2; // todo: FPS stuff
                 _altWobble = Math.Clamp(_altWobble, Fixed.ToFloat(Values.AltMinWobble), Fixed.ToFloat(Values.AltMaxWobble));
-                _field524 -= _field524 / 8 / 2; // todo: FPS stuff
-                _field52C -= _field52C / 8 / 2; // todo: FPS stuff
-                _field524 += -(_field524 + Fixed.ToFloat(25) * (Speed.X - PrevSpeed.X)) / 32 / 2; // todo: FPS stuff
-                _field52C += -(_field52C + Fixed.ToFloat(25) * (Speed.Z - PrevSpeed.Z)) / 32 / 2; // todo: FPS stuff
+                _altTiltX -= _altTiltX / 8 / 2; // todo: FPS stuff
+                _altTiltZ -= _altTiltZ / 8 / 2; // todo: FPS stuff
+                _altTiltX += -(_altTiltX + Fixed.ToFloat(25) * (Speed.X - PrevSpeed.X)) / 32 / 2; // todo: FPS stuff
+                _altTiltZ += -(_altTiltZ + Fixed.ToFloat(25) * (Speed.Z - PrevSpeed.Z)) / 32 / 2; // todo: FPS stuff
                 _field528 = 0;
                 float minSpinAccel = Fixed.ToFloat(Values.AltMinSpinAccel);
                 float maxSpinAccel = Fixed.ToFloat(Values.AltMaxSpinAccel);
@@ -1138,12 +1138,12 @@ namespace MphRead.Entities
                 var rotX = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_altWobble));
                 var rotY = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_altSpinRot));
                 Matrix4 transform = rotX * rotY;
-                float mag = MathF.Sqrt(_field52C * _field52C + _field524 * _field524);
+                float mag = MathF.Sqrt(_altTiltX * _altTiltX + _altTiltZ * _altTiltZ);
                 if (mag != 0)
                 {
-                    var axis = new Vector3(_field52C / mag, 0, -_field524 / mag);
-                    float angle = mag * Fixed.ToFloat(Values.Field13C);
-                    angle = MathF.Min(angle, Fixed.ToFloat(Values.Field120));
+                    var axis = new Vector3(_altTiltZ / mag, 0, -_altTiltX / mag);
+                    float angle = mag * Fixed.ToFloat(Values.AltTiltAngleMax);
+                    angle = MathF.Min(angle, Fixed.ToFloat(Values.AltTiltAngleCap));
                     var rotAxis = Matrix4.CreateFromAxisAngle(axis, MathHelper.DegreesToRadians(angle));
                     transform *= rotAxis;
                 }
@@ -1197,9 +1197,9 @@ namespace MphRead.Entities
             else if (Hunter == Hunter.Noxus)
             {
                 _altSpinSpeed = Fixed.ToFloat(Values.AltMinSpinAccel);
-                _field524 = 0;
+                _altTiltX = 0;
                 _field528 = 0;
-                _field52C = 0;
+                _altTiltZ = 0;
                 _altSpinRot = 0;
                 _altWobble = 0;
                 // animation frames updated later based on attack timer

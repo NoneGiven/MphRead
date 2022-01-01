@@ -386,7 +386,18 @@ namespace MphRead.Entities
                     }
                     if (Hunter == Hunter.Noxus && IsAltForm && v165)
                     {
-                        // sktodo: Vhoscythe bounce
+                        float magSqr = PrevSpeed.X * result.Plane.X + PrevSpeed.Z * result.Plane.Z;
+                        if (magSqr < 0)
+                        {
+                            float tilt = Fixed.ToFloat(Values.AltBounceTilt) * -magSqr;
+                            _altTiltX += result.Plane.X * tilt;
+                            _altTiltZ += result.Plane.Z * tilt;
+                            _altWobble += Fixed.ToFloat(Values.AltBounceWobble) * -magSqr;
+                            _altSpinSpeed -= Fixed.ToFloat(Values.AltBounceSpin) * -magSqr;
+                            var rotMtx = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(40));
+                            Vector3 axis = Matrix.Vec3MultMtx3(result.Plane.Xyz, rotMtx);
+                            Speed = Speed.AddX(axis.X * (-magSqr / 2)).AddZ(axis.Z * (-magSqr / 2));
+                        }
                     }
                     Speed += result.Plane.Xyz * -dot;
                     if (!v163 && !IsAltForm && result.Field0 != 1)

@@ -291,9 +291,9 @@ namespace MphRead.Entities
         private Vector3 _field4E8; // stores gun vec 2
         private float _field4EC = 0;
         private float _field4F0 = 0;
-        private float _field524 = 0;
+        private float _altTiltX = 0;
         private float _field528 = 0;
-        private float _field52C = 0;
+        private float _altTiltZ = 0;
         private float _altSpinRot = 0;
         private float _altWobble = 0;
         private byte _field53E = 0;
@@ -1866,17 +1866,17 @@ namespace MphRead.Entities
         public readonly int Field114;
         public readonly int Field118;
         public readonly int JumpPadSlideFactor;
-        public readonly int Field120;
+        public readonly int AltTiltAngleCap;
         public readonly int AltMinWobble;
         public readonly int AltMaxWobble;
         public readonly int AltMinSpinAccel;
         public readonly int AltMaxSpinAccel;
         public readonly int AltMinSpinSpeed;
         public readonly int AltMaxSpinSpeed;
-        public readonly int Field13C;
-        public readonly int Field140;
-        public readonly int Field144;
-        public readonly int Field148;
+        public readonly int AltTiltAngleMax;
+        public readonly int AltBounceWobble;
+        public readonly int AltBounceTilt;
+        public readonly int AltBounceSpin;
         public readonly int Field14C;
         public readonly short Field150;
         public readonly ushort AltAttackStartup;
@@ -1899,8 +1899,8 @@ namespace MphRead.Entities
             short fieldE0, short spawnInvulnerability, ushort aimMinTouchTime, ushort paddingE6, int fieldE8, int fieldEC, int swayStartTime,
             int swayIncrement, int swayLimit, int gunIdleTime, short mpAmmoCap, byte ammoRecharge, byte padding103, ushort energyTank,
             short field106, byte altGroundedNoGrav, byte padding109, ushort padding10A, int fallDamageSpeed, int fallDamageMax, int field114,
-            int field118, int jumpPadSlideFactor, int field120, int altMinWobble, int altMaxWobble, int altMinSpinAccel, int altMaxSpinAccel, int altMinSpinSpeed,
-            int altMaxSpinSpeed, int field13C, int field140, int field144, int field148, int field14C, short field150, ushort altAttackStartup,
+            int field118, int jumpPadSlideFactor, int altTiltAngleCap, int altMinWobble, int altMaxWobble, int altMinSpinAccel, int altMaxSpinAccel, int altMinSpinSpeed,
+            int altMaxSpinSpeed, int altTiltAngleMax, int altBounceWobble, int altBounceTilt, int altBounceSpin, int field14C, short field150, ushort altAttackStartup,
             int field154, int field158, int lungeHSpeed, int lungeVSpeed, ushort altAttackDamage, short altAttackCooldown)
         {
             Hunter = hunter;
@@ -1987,17 +1987,17 @@ namespace MphRead.Entities
             Field114 = field114;
             Field118 = field118;
             JumpPadSlideFactor = jumpPadSlideFactor;
-            Field120 = field120;
+            AltTiltAngleCap = altTiltAngleCap;
             AltMinWobble = altMinWobble;
             AltMaxWobble = altMaxWobble;
             AltMinSpinAccel = altMinSpinAccel;
             AltMaxSpinAccel = altMaxSpinAccel;
             AltMinSpinSpeed = altMinSpinSpeed;
             AltMaxSpinSpeed = altMaxSpinSpeed;
-            Field13C = field13C;
-            Field140 = field140;
-            Field144 = field144;
-            Field148 = field148;
+            AltTiltAngleMax = altTiltAngleMax;
+            AltBounceWobble = altBounceWobble;
+            AltBounceTilt = altBounceTilt;
+            AltBounceSpin = altBounceSpin;
             Field14C = field14C;
             Field150 = field150;
             AltAttackStartup = altAttackStartup;
