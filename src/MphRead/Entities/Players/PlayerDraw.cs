@@ -37,10 +37,6 @@ namespace MphRead.Entities
                 drawBiped = !IsMainPlayer || _viewType != 0 || _viewSwayTimer < Values.ViewSwayTime * 2; // todo: FPS stuff
                 if (IsAltForm)
                 {
-                    // sktodo:
-                    // - red flash is visible when dying in alt form; probably shouldn't be
-                    // - red flash causes Morph Ball glow to become opaque
-                    // --> might also happen with glow decals on Trace etc.?
                     _modelTransform.Row3.Xyz = Position;
                     if (_timeSinceDamage < Values.DamageFlashTime * 2) // todo: FPS stuff
                     {

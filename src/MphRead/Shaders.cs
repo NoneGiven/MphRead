@@ -124,7 +124,7 @@ void main()
     // mat_mode: 0 - modulate, 1 - decal, 2 - toon
     vec4 col;
     if (use_texture) {
-        vec4 texcolor = use_pal_override ? pal_override_color : texture2D(tex, texcoord);
+        vec4 texcolor = use_pal_override ? vec4(pal_override_color.xyz, texture2D(tex, texcoord).w) : texture2D(tex, texcoord);
         if (mat_mode == 1) {
             col = vec4(
                 (texcolor.r * texcolor.a + color.r * (1 - texcolor.a)),
