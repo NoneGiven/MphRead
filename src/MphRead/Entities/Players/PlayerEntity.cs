@@ -223,10 +223,10 @@ namespace MphRead.Entities
         public BeamType WeaponSelection { get; private set; }
         public readonly Effectiveness[] BeamEffectiveness = new Effectiveness[9];
         public GunAnimation GunAnimation { get; private set; }
-        private byte _bombCooldown = 0;
-        private byte _bombRefillTimer = 0;
-        private byte _bombAmount = 0;
-        private byte _bombOveruse = 0;
+        private ushort _bombCooldown = 0;
+        private ushort _bombRefillTimer = 0;
+        private byte _bombAmmo = 0;
+        private ushort _bombOveruse = 0;
         private ushort _boostCharge = 0;
         private ushort _boostDamage = 0;
         private ushort _altAttackCooldown = 0;
@@ -511,7 +511,7 @@ namespace MphRead.Entities
             _field553 = 0;
             _bombCooldown = 0;
             _bombRefillTimer = 0;
-            _bombAmount = 3;
+            _bombAmmo = 3;
             _field53E = 1;
             _damageInvulnTimer = 0;
             _spawnInvulnTimer = 0;
@@ -703,7 +703,7 @@ namespace MphRead.Entities
             _bombCooldown = 0;
             _bombOveruse = 0;
             _bombRefillTimer = 0;
-            _bombAmount = 3;
+            _bombAmmo = 3;
             _field53E = 1;
             _damageInvulnTimer = 0;
             if (IsBot && !_scene.Multiplayer)

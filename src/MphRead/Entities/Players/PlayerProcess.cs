@@ -168,23 +168,23 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    _bombAmount = 3;
+                    _bombAmmo = 3;
                 }
             }
             else if (Hunter == Hunter.Sylux)
             {
                 if (_bombCooldown > 0)
                 {
-                    _bombAmount = 0;
+                    _bombAmmo = 0;
                 }
                 else
                 {
-                    _bombAmount = (byte)(3 - _syluxBombCount);
+                    _bombAmmo = (byte)(3 - _syluxBombCount);
                 }
             }
             else
             {
-                _bombAmount = 1;
+                _bombAmmo = 1;
             }
             if (_bombCooldown > 0)
             {

@@ -11,9 +11,13 @@ namespace MphRead.Entities
         public BombFlags Flags { get; private set; }
         public PlayerEntity? Owner { get; private set; }
         public BombType BombType { get; private set; }
-        public int BombIndex { get; private set; }
+        public int BombIndex { get; set; }
 
         public int Countdown { get; set; }
+        public float Radius { get; set; }
+        public float SelfRadius { get; set; }
+        public ushort Damage { get; set; }
+        public ushort EnemyDamage { get; set; }
 
         public EffectEntry? Effect { get; private set; }
         private ModelInstance? _trailModel = null;
@@ -216,7 +220,7 @@ namespace MphRead.Entities
             Owner = null;
         }
 
-        public static void Spawn(PlayerEntity owner, Matrix4 transform, Scene scene)
+        public static BombEntity? Spawn(PlayerEntity owner, Matrix4 transform, Scene scene)
         {
             BombType type = BombType.MorphBall;
             if (owner.Hunter == Hunter.Kanden)
@@ -231,16 +235,16 @@ namespace MphRead.Entities
             if (bomb == null)
             {
                 Debug.Assert(false, "Failed to spawn bomb");
-                return;
+                return null;
             }
             owner.Bombs[owner.BombCount] = bomb;
             bomb.Owner = owner;
             bomb.BombType = type;
-            bomb.BombIndex = owner.BombCount++;
             bomb.Transform = transform;
             bomb.Recolor = owner.Recolor;
             bomb.Flags = BombFlags.None;
             scene.AddEntity(bomb);
+            return bomb;
         }
     }
 

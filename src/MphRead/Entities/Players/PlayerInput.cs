@@ -690,7 +690,7 @@ namespace MphRead.Entities
                 if (!IsMorphing)
                 {
                     if (_abilities.TestFlag(AbilityFlags.Bombs) && Controls.AltAttack.IsPressed
-                        && _bombAmount > 0 && _bombCooldown == 0 && _field35C == null)
+                        && _bombAmmo > 0 && _bombCooldown == 0 && _field35C == null)
                     {
                         SpawnBomb();
                     }
@@ -927,7 +927,66 @@ namespace MphRead.Entities
 
         private void SpawnBomb()
         {
-            // sktodo
+            // todo?: wi-fi condition and alternate function for spawning Lockjaw bombs
+            Matrix4 transform = Matrix4.Identity;
+            if (Hunter == Hunter.Kanden)
+            {
+                Matrix4 segMtx = _kandenSegMtx[4];
+                transform = GetTransformMatrix(segMtx.Row2.Xyz, segMtx.Row1.Xyz, _kandenSegPos[4]);
+            }
+            else
+            {
+                if (Hunter == Hunter.Sylux && _syluxBombCount >= 3)
+                {
+                    _syluxBombs[2]!.Countdown = 0;
+                    _syluxBombs[1]!.Countdown = 0;
+                    _syluxBombs[0]!.Countdown = 0;
+                    return;
+                }
+                transform = GetTransformMatrix(Vector3.UnitZ, Vector3.UnitY, Position.AddY(Fixed.ToFloat(-1000)));
+            }
+            var bomb = BombEntity.Spawn(this, transform, _scene);
+            if (bomb != null)
+            {
+                if (Hunter == Hunter.Sylux)
+                {
+                    _syluxBombs[_syluxBombCount] = bomb;
+                    bomb.BombIndex = _syluxBombCount++;
+                    // todo?: wifi stuff
+                }
+                // todo: node ref
+                bomb.Radius = Fixed.ToFloat(Values.BombRadius);
+                bomb.SelfRadius = Fixed.ToFloat(Values.BombSelfRadius);
+                // todo: if bot and encounter state, set damage values
+                // else...
+                bomb.Damage = (ushort)Values.BombDamage;
+                bomb.EnemyDamage = (ushort)Values.BombEnemyDamage;
+                if (_doubleDmgTimer > 0)
+                {
+                    bomb.Damage *= 2;
+                    bomb.EnemyDamage *= 2;
+                }
+                if (_bombAmmo >= 2)
+                {
+                    _bombRefillTimer = (ushort)(Values.BombRefillTime * 2); // todo: FPS stuff
+                }
+                _bombAmmo--;
+                _bombCooldown = (ushort)(Values.BombCooldown * 2); // todo: FPS stuff
+                if (Hunter == Hunter.Kanden)
+                {
+                    _altModel.SetAnimation((int)KandenAltAnim.TailOut, AnimFlags.NoLoop);
+                }
+                else if (Hunter == Hunter.Sylux && _syluxBombCount == 3)
+                {
+                    // todo: FPS stuff
+                    _bombOveruse += 27 * 2;
+                    if (_bombOveruse >= 100 * 2)
+                    {
+                        _bombCooldown = 150 * 2;
+                    }
+                }
+                // todo: play SFX
+            }
         }
 
         private void EndAltAttack()
