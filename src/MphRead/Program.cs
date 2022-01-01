@@ -24,6 +24,7 @@ namespace MphRead
                 if (Debugger.IsAttached)
                 {
                     using var renderer = new RenderWindow();
+                    renderer.AddPlayer(Hunter.Samus);
                     renderer.AddRoom("MP3 PROVING GROUND");
                     //renderer.AddModel("Crate01");
                     renderer.Run();
