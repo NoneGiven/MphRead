@@ -72,8 +72,7 @@ namespace MphRead.Entities
                     MathF.Max(MathF.Max(Single.MinValue, point1.Y), point2.Y) + margin,
                     MathF.Max(MathF.Max(Single.MinValue, point1.Z), point2.Z) + margin
                 );
-                point2.Y = Position.Y + Fixed.ToFloat(Values.MaxPickupHeight);
-                limitMin.Y = MathF.Min(limitMin.Y, point2.Y);
+                limitMin.Y = MathF.Min(limitMin.Y, Position.Y + Fixed.ToFloat(Values.MaxPickupHeight));
             }
             else
             {
@@ -366,7 +365,7 @@ namespace MphRead.Entities
                     // --> compensate for halved gravity so we can't go up steeper slopes
                     // todo?: the response when moving into walls laterally is also not accurate ("wall sliding")
                     // --> needs a hack; just doubling it results in jittering
-                    position.Y += result.Plane.Y * v2 * (result.Plane.Y > 0 ? 0.5f : 2) * 2; // todo: FPS stuff
+                    position.Y += result.Plane.Y * v2 * (result.Plane.Y > 0 ? 0.5f / 2 : 2 * 2); // todo: FPS stuff
                 }
                 float dot = Vector3.Dot(Speed, result.Plane.Xyz);
                 if (dot < 0)
