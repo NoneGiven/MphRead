@@ -273,7 +273,7 @@ namespace MphRead.Entities
                     UpdateState(0, scene);
                 }
             }
-            if (_state == 0)
+            if (_state == 0 && _data.EffectId == 0)
             {
                 return true;
             }
