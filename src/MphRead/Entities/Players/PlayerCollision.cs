@@ -454,6 +454,30 @@ namespace MphRead.Entities
             }
             if (IsAltForm)
             {
+                if (Hunter == Hunter.Spire)
+                {
+
+                }
+                else if (Hunter == Hunter.Sylux && result.Field0 == 0 && result.Plane.Y > Fixed.ToFloat(3138)
+                    && !Flags1.TestFlag(PlayerFlags1.NoUnmorphPrevious))
+                {
+                    Vector3 pos = Position.AddY(Fixed.ToFloat(Values.AltColYPos) - Fixed.ToFloat(Values.AltColRadius) - 0.3f);
+                    float dot = result.Plane.W - Vector3.Dot(pos, result.Plane.Xyz);
+                    if (dot >= 0)
+                    {
+                        v164 = true;
+                        Speed = Speed.AddY(Fixed.ToFloat(Values.AltAirGravity));
+                        if (Speed.Y < 0.25f)
+                        {
+                            if (Speed.Y < 0)
+                            {
+                                Speed = Speed.WithY(Speed.Y * Fixed.ToFloat(4034));
+                            }
+                            Speed = Speed.AddY(dot * 0.2f);
+                            Speed = Speed.WithY(Math.Min(Speed.Y, 0.25f));
+                        }
+                    }
+                }
                 // skhere
             }
             if (result.EntityCollision != null)
