@@ -548,7 +548,7 @@ namespace MphRead.Entities
                     _furlEffect = null;
                 }
             }
-            if (Hunter == Hunter.Samus && _scene.FrameCount % 2 == 0) // todo: FPS stuff
+            if (Hunter == Hunter.Samus)
             {
                 UpdateMorphBallTrail();
             }

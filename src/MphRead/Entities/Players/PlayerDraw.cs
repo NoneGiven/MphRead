@@ -448,8 +448,8 @@ namespace MphRead.Entities
             for (int i = 0; i < _mbTrailSegments; i++)
             {
                 // going backwards with wrap-around
-                int mtxId1 = index - 1 - i + (index - 1 - i < 0 ? 9 : 0);
-                int mtxId2 = mtxId1 - 1 + (mtxId1 - 1 < 0 ? 9 : 0);
+                int mtxId1 = index - 1 - i + (index - 1 - i < 0 ? _mbTrailSegments : 0);
+                int mtxId2 = mtxId1 - 1 + (mtxId1 - 1 < 0 ? _mbTrailSegments : 0);
                 float alpha1 = _mbTrailAlphas[SlotIndex, mtxId1];
                 float alpha2 = _mbTrailAlphas[SlotIndex, mtxId2];
                 if (alpha1 > 0 && alpha2 > 0)

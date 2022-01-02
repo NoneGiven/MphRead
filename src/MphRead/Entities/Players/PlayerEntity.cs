@@ -239,7 +239,7 @@ namespace MphRead.Entities
         public PlayerValues Values { get; private set; }
         public bool IsPrimeHunter { get; set; } // todo: use game state
 
-        private const int _mbTrailSegments = 9;
+        private const int _mbTrailSegments = 9 * 2;
         private static readonly Matrix4[,] _mbTrailMatrices = new Matrix4[MaxPlayers, _mbTrailSegments];
         private static readonly float[,] _mbTrailAlphas = new float[MaxPlayers, _mbTrailSegments];
         private static readonly int[] _mbTrailIndices = new int[MaxPlayers];
