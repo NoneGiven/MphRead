@@ -117,9 +117,11 @@ namespace MphRead.Entities
                     Vector3 dir = Vector3.Zero;
                     if (!halfturret)
                     {
-                        float factor = MathF.Sqrt(dir.X * dir.X + dir.Z * dir.Z) * 4;
-                        dir.X = (target.Position.X - attacker.Position.X) / factor;
-                        dir.Z = (target.Position.Z - attacker.Position.Z) / factor;
+                        float x = target.Position.X - attacker.Position.X;
+                        float z = target.Position.Z - attacker.Position.Z;
+                        float factor = MathF.Sqrt(x * x + z * z) * 4;
+                        dir.X = x / factor;
+                        dir.Z = z / factor;
                     }
                     ushort damage = attacker.Values.AltAttackDamage;
                     // todo: if attacker is bot with encounter state, uses alternate damage value
