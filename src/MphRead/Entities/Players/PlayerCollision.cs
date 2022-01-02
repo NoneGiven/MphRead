@@ -149,7 +149,7 @@ namespace MphRead.Entities
                 float radius = target.Volume.SphereRadius;
                 if (between.Y > -radius && between.Y < radius)
                 {
-                    float hMagSqr = between.X * between.Z + between.Z * between.Z;
+                    float hMagSqr = between.X * between.X + between.Z * between.Z;
                     float radAddSqr = radius + 1.8f;
                     radAddSqr *= radAddSqr;
                     if (hMagSqr < radAddSqr)
