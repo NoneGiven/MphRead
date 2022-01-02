@@ -1233,7 +1233,6 @@ namespace MphRead.Entities
                 _kandenSegPos[i] = _kandenSegPos[i - 1] - dir;
                 _kandenSegMtx[i].Row3.Xyz = _kandenSegPos[i];
             }
-            // skhere
         }
 
         private void EnterAltForm()
