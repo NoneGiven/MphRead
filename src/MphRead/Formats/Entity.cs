@@ -173,7 +173,7 @@ namespace MphRead
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;
         public readonly uint PaletteId;
-        public readonly uint ModelId;
+        public readonly DoorType DoorType;
         public readonly uint ConnectorId;
         public readonly byte TargetLayerId;
         public readonly byte Locked; // boolean

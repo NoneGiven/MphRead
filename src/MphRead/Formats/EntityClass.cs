@@ -414,7 +414,7 @@ namespace MphRead.Editor
     {
         public string DoorNodeName { get; set; } = "";
         public uint PaletteId { get; set; }
-        public uint ModelId { get; set; }
+        public DoorType DoorType { get; set; }
         public uint ConnectorId { get; set; }
         public byte TargetLayerId { get; set; }
         public bool Locked { get; set; }
@@ -431,7 +431,7 @@ namespace MphRead.Editor
         {
             DoorNodeName = raw.NodeName.MarshalString();
             PaletteId = raw.PaletteId;
-            ModelId = raw.ModelId;
+            DoorType = raw.DoorType;
             ConnectorId = raw.ConnectorId;
             TargetLayerId = raw.TargetLayerId;
             Locked = raw.Locked != 0;
@@ -445,7 +445,7 @@ namespace MphRead.Editor
         {
             PrintValue(DoorNodeName, other.DoorNodeName, nameof(DoorNodeName));
             PrintValue(PaletteId, other.PaletteId, nameof(PaletteId));
-            PrintValue(ModelId, other.ModelId, nameof(ModelId));
+            PrintValue(DoorType, other.DoorType, nameof(DoorType));
             PrintValue(ConnectorId, other.ConnectorId, nameof(ConnectorId));
             PrintValue(TargetLayerId, other.TargetLayerId, nameof(TargetLayerId));
             PrintValue(Locked, other.Locked, nameof(Locked));

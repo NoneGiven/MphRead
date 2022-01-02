@@ -334,13 +334,13 @@ namespace MphRead.Entities
                     HandleCollision(results[i]);
                 }
             }
-            // todo: collide with doors and force fields
+            // sktodo: collide with doors and force fields
             DamageResult dmgRes = default;
             dmgRes.Damage = 1;
             dmgRes.TakeDamage = _terrainDamage;
             if (_collidedEntCol != null)
             {
-                // todo: query collision damage from entity
+                // sktodo: query collision damage from entity
             }
             if (dmgRes.TakeDamage)
             {

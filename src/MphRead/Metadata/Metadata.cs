@@ -374,12 +374,14 @@ namespace MphRead
         public string Name { get; }
         public string LockName { get; }
         public float LockOffset { get; }
+        public float Radius { get; }
 
-        public DoorMetadata(string name, string lockName, float lockOffset)
+        public DoorMetadata(string name, string lockName, float lockOffset, float radius)
         {
             Name = name;
             LockName = lockName;
             LockOffset = lockOffset;
+            Radius = radius;
         }
     }
 
@@ -803,10 +805,10 @@ namespace MphRead
 
         public static readonly IReadOnlyList<DoorMetadata> Doors = new List<DoorMetadata>()
         {
-            /* 0 */ new DoorMetadata("AlimbicDoor", "AlimbicDoorLock", 1.39990234f),
-            /* 1 */ new DoorMetadata("AlimbicMorphBallDoor", "AlimbicMorphBallDoorLock", 0.6999512f),
-            /* 2 */ new DoorMetadata("AlimbicBossDoor", "AlimbicBossDoorLock", 3.5f),
-            /* 3 */ new DoorMetadata("AlimbicThinDoor", "ThinDoorLock", 1.39990234f)
+            /* 0 */ new DoorMetadata("AlimbicDoor", "AlimbicDoorLock", 1.4f, 2.4f),
+            /* 1 */ new DoorMetadata("AlimbicMorphBallDoor", "AlimbicMorphBallDoorLock", 0.7f, 1.0f),
+            /* 2 */ new DoorMetadata("AlimbicBossDoor", "AlimbicBossDoorLock", 3.5f, 3.5f),
+            /* 3 */ new DoorMetadata("AlimbicThinDoor", "ThinDoorLock", 1.4f, 2.0f)
         };
 
         public static readonly IReadOnlyList<string> FhDoors = new List<string>()
