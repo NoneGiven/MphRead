@@ -454,9 +454,38 @@ namespace MphRead.Entities
             }
             if (IsAltForm)
             {
-                if (Hunter == Hunter.Spire)
+                if (Hunter == Hunter.Spire && result.Field0 == 0)
                 {
-
+                    for (int i = 0; i < _spireAltVecs.Length; i++)
+                    {
+                        Vector3 vec = Position + _spireAltVecs[i];
+                        float dot = result.Plane.W - Vector3.Dot(vec, result.Plane.Xyz);
+                        if (dot >= 0)
+                        {
+                            Debug.Assert(vec != Position);
+                            v164 = true;
+                            // todo: revisit these calculations and improve the wall climbing "stickiness" issue
+                            // --> related to the need for a hack to get pushed out more by horizontal collision (without jittering)
+                            Position += result.Plane.Xyz * dot;
+                            vec = new Vector3(Position.X - vec.X, 0, Position.Z - vec.Z).Normalized();
+                            vec.X *= dot / 4;
+                            vec.Z *= dot / 4;
+                            vec.X *= _hSpeedMag + 0.1f;
+                            vec.Z *= _hSpeedMag + 0.1f;
+                            Speed += vec / 2;
+                            if (result.Plane.Y > Fixed.ToFloat(-357) && Speed.Y < 0.15f)
+                            {
+                                v166 = true;
+                                float yFactor = _hSpeedMag;
+                                if (Speed.Y < 0.01f)
+                                {
+                                    yFactor += 0.3f;
+                                }
+                                Speed = Speed.AddY(4 * dot * yFactor / 2);
+                                Speed = Speed.WithY(Math.Min(Speed.Y, 0.15f));
+                            }
+                        }
+                    }
                 }
                 else if (Hunter == Hunter.Sylux && result.Field0 == 0 && result.Plane.Y > Fixed.ToFloat(3138)
                     && !Flags1.TestFlag(PlayerFlags1.NoUnmorphPrevious))
@@ -478,7 +507,6 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                // skhere
             }
             if (result.EntityCollision != null)
             {
