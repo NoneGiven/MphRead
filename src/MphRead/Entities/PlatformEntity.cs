@@ -42,10 +42,11 @@ namespace MphRead.Entities
         private EntityBase? _hitMessageTarget = null;
         private EntityBase? _playerColMessageTarget = null;
         private EntityBase? _deathMessageTarget = null;
-        private EntityBase?[] _lifetimeMessageTargets = new EntityBase?[4];
-        private Message[] _lifetimeMessages = new Message[4];
-        private uint[] _lifetimeMessageParam1s = new uint[4];
-        private uint[] _lifetimeMessageParam2s = new uint[4];
+        private readonly EntityBase?[] _lifetimeMessageTargets = new EntityBase?[4];
+        private readonly Message[] _lifetimeMessages = new Message[4];
+        private readonly uint[] _lifetimeMessageParam1s = new uint[4];
+        private readonly uint[] _lifetimeMessageParam2s = new uint[4];
+        private readonly int[] _lifetimeMessageIndices = new int[4];
 
         private PlatAnimFlags _animFlags = PlatAnimFlags.None;
         private PlatStateFlags _stateFlags = PlatStateFlags.None;
@@ -255,6 +256,10 @@ namespace MphRead.Entities
             _lifetimeMessageParam2s[1] = _data.LifetimeMsg2Param2;
             _lifetimeMessageParam2s[2] = _data.LifetimeMsg3Param2;
             _lifetimeMessageParam2s[3] = _data.LifetimeMsg4Param2;
+            _lifetimeMessageIndices[0] = _data.LifetimeMsg1Index;
+            _lifetimeMessageIndices[1] = _data.LifetimeMsg2Index;
+            _lifetimeMessageIndices[2] = _data.LifetimeMsg3Index;
+            _lifetimeMessageIndices[3] = _data.LifetimeMsg4Index;
             if (_data.ParentId != -1)
             {
                 if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent) && parent.Type == EntityType.Platform)
@@ -351,7 +356,10 @@ namespace MphRead.Entities
             // todo: more room state
             if (_state == PlatformState.Inactive)
             {
-                // todo: messaging
+                if (Flags.TestFlag(PlatformFlags.DripMoat))
+                {
+                    scene.SendMessage(Message.DripMoatPlatform, this, PlayerEntity.MainPlayer, 1, 0);
+                }
                 if (_data.PositionCount >= 2)
                 {
                     UpdateMovement();
@@ -376,7 +384,11 @@ namespace MphRead.Entities
             {
                 _state = PlatformState.Inactive;
                 _animFlags &= ~PlatAnimFlags.Active;
-                // todo: more room state, messaging
+                // todo: more room state
+                if (Flags.TestFlag(PlatformFlags.DripMoat))
+                {
+                    scene.SendMessage(Message.DripMoatPlatform, this, PlayerEntity.MainPlayer, 0, 0);
+                }
             }
         }
 
@@ -462,7 +474,7 @@ namespace MphRead.Entities
                     _curRotation = rotation.Normalized();
                     if (_data.MovementType == 0)
                     {
-                        UpdateState();
+                        UpdateState(scene);
                         _curPosition += _velocity;
                     }
                 }
@@ -477,7 +489,7 @@ namespace MphRead.Entities
                     }
                     else if (_data.MovementType == 0)
                     {
-                        UpdateState();
+                        UpdateState(scene);
                         _curPosition += _velocity;
                         _movePercent += _moveIncrement;
                         _curRotation = ComputeRotationSin(_fromRotation, _toRotation, _movePercent);
@@ -567,10 +579,12 @@ namespace MphRead.Entities
             {
                 Transform = GetTransform();
             }
-            UpdateCollisionTransform(0, CollisionTransform); // todo: for some reason, the game uses an inverse view matrix when using animation
+            // todo?: for some reason, the game uses an inverse view matrix when using animation
+            UpdateCollisionTransform(0, CollisionTransform);
             return true;
         }
 
+        // todo: use more flags
         public override void GetDrawInfo(Scene scene)
         {
             if (_animFlags.TestFlag(PlatAnimFlags.Draw) || _models[0].IsPlaceholder)
@@ -712,24 +726,6 @@ namespace MphRead.Entities
             ).Normalized();
         }
 
-        private void ProcessLifetimeEvent(int index, Message message, short targetId, uint param1)
-        {
-            if (_fromIndex == index && targetId == Id)
-            {
-                if (message == Message.Activate || (message == Message.SetActive && param1 != 0))
-                {
-                    Activate();
-                    _beamIntervalTimer = _beamInterval;
-                    _beamIntervalIndex = 15;
-                    _beamActive = false;
-                }
-                else if (message == Message.SetActive && param1 == 0)
-                {
-                    Deactivate();
-                }
-            }
-        }
-
         public void Recoil()
         {
             if (_state == PlatformState.Moving && !Flags.TestFlag(PlatformFlags.NoRecoil) && _data.ForCutscene == 0)
@@ -740,7 +736,7 @@ namespace MphRead.Entities
             }
         }
 
-        private void UpdateState()
+        private void UpdateState(Scene scene)
         {
             if (_state == PlatformState.Moving)
             {
@@ -761,12 +757,20 @@ namespace MphRead.Entities
                 else
                 {
                     _fromIndex = _toIndex;
-                    // ptodo: remove debug code
-                    ProcessLifetimeEvent(_data.LifetimeMsg1Index, _data.LifetimeMessage1, _data.LifetimeMsg1Target, _data.LifetimeMsg1Param1);
-                    ProcessLifetimeEvent(_data.LifetimeMsg2Index, _data.LifetimeMessage2, _data.LifetimeMsg2Target, _data.LifetimeMsg2Param1);
-                    ProcessLifetimeEvent(_data.LifetimeMsg3Index, _data.LifetimeMessage3, _data.LifetimeMsg3Target, _data.LifetimeMsg3Param1);
-                    ProcessLifetimeEvent(_data.LifetimeMsg4Index, _data.LifetimeMessage4, _data.LifetimeMsg4Target, _data.LifetimeMsg4Param1);
-                    // todo: messaging, room state
+                    for (int i = 0; i < _lifetimeMessages.Length; i++)
+                    {
+                        if (_lifetimeMessageIndices[i] == _fromIndex)
+                        {
+                            Message message = _lifetimeMessages[i];
+                            EntityBase? target = _lifetimeMessageTargets[i];
+                            if (message != Message.None && target != null)
+                            {
+                                scene.SendMessage(message, this, target,
+                                    _lifetimeMessageParam1s[i], _lifetimeMessageParam2s[i]);
+                            }
+                        }
+                    }
+                    // todo: room state etc.
                     if (_state != PlatformState.Inactive)
                     {
                         _state = PlatformState.Waiting;
@@ -1172,10 +1176,10 @@ namespace MphRead.Entities
         StandingColOnly = 0x40,
         StartSleep = 0x80,
         SleepAtEnd = 0x100,
-        Bit09 = 0x200,
-        Bit10 = 0x400,
-        Bit11 = 0x800,
-        Bit12 = 0x1000,
+        DripMoat = 0x200,
+        SkipNodeRef = 0x400,
+        DrawIfNodeRef = 0x800,
+        DrawAlways = 0x1000,
         HideOnSleep = 0x2000,
         SyluxShip = 0x4000,
         Bit15 = 0x8000,
@@ -1185,7 +1189,7 @@ namespace MphRead.Entities
         SamusShip = 0x80000,
         Breakable = 0x100000,
         Bit21 = 0x200000,
-        Bit22 = 0x400000,
+        DrawIfCull = 0x400000,
         NoRecoil = 0x800000,
         Bit24 = 0x1000000,
         Bit25 = 0x2000000,
