@@ -1249,7 +1249,7 @@ namespace MphRead.Entities
                     axis /= mag;
                     float atan = MathF.Atan2(mag, dot);
                     atan -= MathHelper.DegreesToRadians(45);
-                    var rotMtx = Matrix4.CreateFromAxisAngle(axis, angle);
+                    var rotMtx = Matrix4.CreateFromAxisAngle(axis, atan);
                     dir = Matrix.Vec3MultMtx3(dir, rotMtx);
                 }
                 _kandenSegMtx[i] = GetTransformMatrix(dir, _kandenSegMtx[0].Row1.Xyz);
