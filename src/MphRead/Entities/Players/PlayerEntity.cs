@@ -207,6 +207,7 @@ namespace MphRead.Entities
         private int[] _ammo = new int[2];
         private readonly int[] _ammoRecovery = new int[2];
         private readonly bool[] _tickedAmmoRecovery = new bool[2];
+        public int Health => _health;
         private readonly BeamType[] _weaponSlots = new BeamType[3];
         private readonly AvailableArray _availableWeapons = new AvailableArray();
         private readonly AvailableArray _availableCharges = new AvailableArray();
@@ -251,6 +252,7 @@ namespace MphRead.Entities
         // todo: visualize
         private CollisionVolume _volumeUnxf; // todo: names
         private CollisionVolume _volume;
+        public CollisionVolume Volume => _volume;
 
         private Vector3 _gunVec1; // facing? (aim?)
         private Vector3 _gunVec2; // right? (turn?)
@@ -349,8 +351,8 @@ namespace MphRead.Entities
             set => _bipedModel2.AnimInfo.Flags[0] = value;
         }
 
-        private short _jumpPadControlLock = 0;
-        private short _jumpPadControlLockMin = 0;
+        private ushort _jumpPadControlLock = 0;
+        private ushort _jumpPadControlLockMin = 0;
         private ushort _timeSinceJumpPad = 0;
         private Vector3 _jumpPadAccel;
 

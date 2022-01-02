@@ -1,3 +1,4 @@
+using System.Reflection.Metadata;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -6,12 +7,15 @@ namespace MphRead.Entities
     {
         private readonly JumpPadEntityData _data;
         private readonly Matrix4 _beamTransform;
+        private readonly Vector3 _beamVector;
         private CollisionVolume _volume;
         private Vector3 _prevPos;
 
         private bool _invSetUp = false;
         private EntityBase? _parent = null;
         private Vector3 _invPos;
+
+        private ushort _cooldownTimer = 0;
 
         public JumpPadEntity(JumpPadEntityData data) : base(EntityType.JumpPad)
         {
@@ -26,6 +30,7 @@ namespace MphRead.Entities
             Vector3 beamVector = data.BeamVector.ToFloatVector().Normalized();
             _beamTransform = GetTransformMatrix(beamVector, beamVector.X != 0 || beamVector.Z != 0 ? Vector3.UnitY : Vector3.UnitX);
             _beamTransform.Row3.Y = 0.25f;
+            _beamVector = Matrix.Vec3MultMtx3(beamVector, Transform) * _data.Speed.FloatValue;
             // todo: room state
             Active = data.Active != 0;
             beamInst.Active = Active;
@@ -58,6 +63,48 @@ namespace MphRead.Entities
             {
                 _volume = CollisionVolume.Move(_data.Volume, Position);
                 _prevPos = Position;
+            }
+            if (Active && _cooldownTimer == 0)
+            {
+                for (int i = 0; i < scene.Entities.Count; i++)
+                {
+                    EntityBase entity = scene.Entities[i];
+                    if (entity.Type != EntityType.Player)
+                    {
+                        continue;
+                    }
+                    var player = (PlayerEntity)entity;
+                    if (player.Health == 0)
+                    {
+                        continue;
+                    }
+                    Vector3 position;
+                    if (player.IsAltForm)
+                    {
+                        if (!_data.TriggerFlags.TestFlag(TriggerFlags.PlayerAlt))
+                        {
+                            continue;
+                        }
+                        position = player.Volume.SpherePosition;
+                    }
+                    else
+                    {
+                        if (!_data.TriggerFlags.TestFlag(TriggerFlags.PlayerBiped))
+                        {
+                            continue;
+                        }
+                        position = player.Position;
+                    }
+                    if (_volume.TestPoint(position))
+                    {
+                        player.ActivateJumpPad(this, _beamVector, _data.ControlLockTime);
+                        _cooldownTimer = (ushort)(_data.CooldownTime * 2); // todo: FPS stuff
+                    }
+                }
+            }
+            if (_cooldownTimer > 0)
+            {
+                _cooldownTimer--;
             }
             return base.Process(scene);
         }

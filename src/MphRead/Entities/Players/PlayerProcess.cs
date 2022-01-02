@@ -790,6 +790,31 @@ namespace MphRead.Entities
             return true;
         }
 
+        public void ActivateJumpPad(JumpPadEntity jumpPad, Vector3 vector, ushort lockTime)
+        {
+            Speed = vector;
+            _jumpPadAccel = vector;
+            _lastJumpPad = jumpPad;
+            Flags1 |= PlayerFlags1.UsedJumpPad;
+            _jumpPadControlLock = lockTime;
+            _jumpPadControlLockMin = Math.Max(lockTime, (ushort)(5 * 2)); // todo: FPS stuff
+            _timeSinceJumpPad = 0;
+            Flags1 &= ~PlayerFlags1.UsedJump;
+            Flags1 |= PlayerFlags1.Standing;
+            if (IsAltForm)
+            {
+                float accelY = _jumpPadAccel.Y;
+                float altGrav = Fixed.ToFloat(Values.AltAirGravity);
+                float bipedGrav = Fixed.ToFloat(Values.BipedGravity);
+                float altFactor = -accelY / altGrav;
+                float bipedFactor = -accelY / bipedGrav;
+                float lockInc = ((accelY * bipedFactor) + (bipedGrav * (bipedFactor * bipedFactor) / 2)
+                    - ((accelY * altFactor) + (altGrav * (altFactor * altFactor) / 2)))
+                    / accelY + 2;
+                _jumpPadControlLock += (ushort)(lockInc * 2); // todo: FPS stuff
+            }
+        }
+
         private void PickUpItems(Scene scene)
         {
             // todo: also return if the following are all true - cur camseq, block input flag set, IsMainPlayer
