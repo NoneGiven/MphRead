@@ -361,7 +361,7 @@ namespace MphRead.Entities
                     {
                         if (!noColEff || Flags.TestFlag(BeamFlags.ForceEffect))
                         {
-                            bool noSplat = anyRes.Terrain == Terrain.Lava; // btodo: or if entity collision
+                            bool noSplat = anyRes.Terrain == Terrain.Lava || anyRes.EntityCollision != null;
                             SpawnCollisionEffect(anyRes, noSplat, scene);
                         }
                         OnCollision(anyRes, colWith: null, scene);
